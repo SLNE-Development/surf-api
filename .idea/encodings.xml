@@ -19,5 +19,7 @@
     <file url="file://$PROJECT_DIR$/surf-api-velocity/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/surf-api-velocity/surf-api-velocity-api/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/surf-api-velocity/surf-api-velocity-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/surf-api-velocity/surf-api-velocity-server/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/surf-api-velocity/surf-api-velocity-server/src/main/resources" charset="UTF-8" />
   </component>
 </project>
