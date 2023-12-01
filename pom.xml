@@ -15,9 +15,147 @@
     </modules>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <java.version>17</java.version>
+        <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
+        <versions.guava>32.1.2-jre</versions.guava>
+        <versions.caffeine>3.1.8</versions.caffeine>
+        <versions.gson>2.10.1</versions.gson>
+        <versions.commons-lang3>3.13.0</versions.commons-lang3>
+        <versions.commons-text>1.11.0</versions.commons-text>
     </properties>
+
+    <description>API for Surf plugins</description>
+    <url>https://space.slne.dev/p/surf/repositories/surf-api</url>
+    <organization>
+        <name>SLNE Development</name>
+        <url>https://space.slne.dev/</url>
+    </organization>
+    <developers>
+        <developer>
+            <name>twisti</name>
+            <email>twisti@slne.dev</email>
+            <url>https://space.slne.dev/m/twisti</url>
+            <organization>SLNE Development</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>Europe/Berlin</timezone>
+        </developer>
+    </developers>
+
+
+    <distributionManagement>
+        <repository>
+            <id>space-maven</id>
+            <!--suppress MavenModelInspection -->
+            <url>${repositoryUrl}</url>
+        </repository>
+        <snapshotRepository>
+            <id>space-maven</id>
+            <!--suppress MavenModelInspection -->
+            <url>${repositoryUrl}</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+
+        <repository>
+            <id>sonatype</id>
+            <name>Sonatype</name>
+            <url>https://repository.sonatype.org/content/groups/public/</url>
+        </repository>
+
+        <repository>
+            <id>papermc</id>
+            <name>Paper MC</name>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+
+        <repository>
+            <id>codemc-releases</id>
+            <name>CodeMC Releases</name>
+            <url>https://repo.codemc.io/repository/maven-releases/</url>
+        </repository>
+
+        <repository>
+            <id>codemc-snapshots</id>
+            <name>CodeMC Snapshots</name>
+            <url>https://repo.codemc.io/repository/maven-snapshots/</url>
+        </repository>
+
+        <repository>
+            <id>sonatype-snapshots</id>
+            <name>Sonatype Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${versions.guava}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${versions.caffeine}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${versions.gson}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${versions.commons-lang3}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${versions.commons-text}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
 </project>
