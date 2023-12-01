@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.maven;
+package dev.slne.surf.surfapi.core.server.maven;
 
 import java.io.IOException;
 import java.util.Properties;

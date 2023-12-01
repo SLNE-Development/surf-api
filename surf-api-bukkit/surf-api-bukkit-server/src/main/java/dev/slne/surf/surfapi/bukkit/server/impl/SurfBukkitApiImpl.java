@@ -1,0 +1,23 @@
+package dev.slne.surf.surfapi.bukkit.server.impl;
+
+import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
+import dev.slne.surf.surfapi.core.server.SurfCoreApiImpl;
+
+/**
+ * The SurfBukkitApiImpl class is an implementation of the SurfBukkitApi interface.
+ * It extends the SurfCoreApiImpl class and provides additional functionality specific to the Bukkit platform.
+ * This class provides access to the SurfBukkitApi instance.
+ * It is recommended to use the static {@link SurfBukkitApi#get()} method to retrieve the instance.
+ *
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * SurfBukkitApi surfApi = SurfBukkitApi.get();
+ * }</pre>
+ * </p>
+ *
+ * @see SurfBukkitApi
+ * @see SurfCoreApiImpl
+ */
+public class SurfBukkitApiImpl extends SurfCoreApiImpl implements SurfBukkitApi {
+}

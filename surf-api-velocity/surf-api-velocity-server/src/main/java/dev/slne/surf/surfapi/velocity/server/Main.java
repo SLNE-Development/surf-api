@@ -1,4 +1,4 @@
-package dev.slne.surf;
+package dev.slne.surf.surfapi.velocity.server;
 
 public class Main {
     public static void main(String[] args) {

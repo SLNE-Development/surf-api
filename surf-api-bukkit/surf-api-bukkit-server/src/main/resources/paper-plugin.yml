@@ -1,0 +1,13 @@
+name: SurfAPIBukkit
+api-version: '1.20'
+version: ${project.version}
+description: 'An API for surf servers.'
+website: '${project.url}'
+
+authors:
+  - twisti
+
+
+main: 'dev.slne.surf.surfapi.bukkit.server.BukkitMain'
+bootstrapper: 'dev.slne.surf.surfapi.bukkit.server.BukkitBoostrapper'
+loader: 'dev.slne.surf.surfapi.bukkit.server.BukkitLoader'
