@@ -1,21 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.api;
 
+import dev.slne.surf.surfapi.core.api.SurfCoreApiAccess;
 import org.jetbrains.annotations.ApiStatus;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * The SurfBukkitApiAccess class provides a static access point to the SurfBukkitApi instance.
  * It allows setting and retrieving the SurfCoreApi instance.
  */
 @ApiStatus.NonExtendable
-public class SurfBukkitApiAccess {
-    /**
-     * This variable holds the instance of the SurfBukkitApi.
-     * It is a private static variable with a single instance that can be accessed through the SurfBukkitApiAccess class.
-     */
-    private static SurfBukkitApi INSTANCE;
-
+@ApiStatus.Internal
+public final class SurfBukkitApiAccess extends SurfCoreApiAccess {
     /**
      * Sets the instance of the SurfBukkitApi.
      *
@@ -24,9 +18,7 @@ public class SurfBukkitApiAccess {
      */
     @ApiStatus.Internal
     public static void setInstance(SurfBukkitApi instance) {
-        checkState(INSTANCE == null, "SurfBukkitApi instance has already been initialized.");
-
-        INSTANCE = instance;
+        SurfCoreApiAccess.setInstance(instance);
     }
 
     /**
@@ -37,6 +29,6 @@ public class SurfBukkitApiAccess {
      */
     @ApiStatus.Internal
     public static SurfBukkitApi getInstance() {
-        return checkNotNull(INSTANCE, "SurfBukkitApi instance has not been initialized yet.");
+        return (SurfBukkitApi) SurfCoreApiAccess.getInstance();
     }
 }

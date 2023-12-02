@@ -18,7 +18,7 @@
         <java.version>17</java.version>
         <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.source>18</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <versions.guava>32.1.2-jre</versions.guava>

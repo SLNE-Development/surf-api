@@ -9,6 +9,7 @@ import static com.google.common.base.Preconditions.*;
  * It allows setting and retrieving the SurfCoreApi instance.
  */
 @ApiStatus.NonExtendable
+@ApiStatus.Internal
 public class SurfCoreApiAccess {
     /**
      * This variable holds the instance of the SurfCoreApi.
@@ -24,7 +25,7 @@ public class SurfCoreApiAccess {
      */
     @ApiStatus.Internal
     public static void setInstance(SurfCoreApi instance) {
-        checkState(INSTANCE == null, "SurfCoreApi instance has already been initialized.");
+        checkState(INSTANCE == null, "SurfApi instance has already been initialized.");
 
         INSTANCE = instance;
     }
@@ -37,6 +38,6 @@ public class SurfCoreApiAccess {
      */
     @ApiStatus.Internal
     public static SurfCoreApi getInstance() {
-        return checkNotNull(INSTANCE, "SurfCoreApi instance has not been initialized yet.");
+        return checkNotNull(INSTANCE, "SurfApi instance has not been initialized yet.");
     }
 }

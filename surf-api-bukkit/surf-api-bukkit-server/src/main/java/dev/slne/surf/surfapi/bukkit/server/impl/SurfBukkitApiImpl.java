@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.server.impl;
 
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
 import dev.slne.surf.surfapi.core.server.SurfCoreApiImpl;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The SurfBukkitApiImpl class is an implementation of the SurfBukkitApi interface.
@@ -19,5 +20,6 @@ import dev.slne.surf.surfapi.core.server.SurfCoreApiImpl;
  * @see SurfBukkitApi
  * @see SurfCoreApiImpl
  */
+@ApiStatus.Internal
 public class SurfBukkitApiImpl extends SurfCoreApiImpl implements SurfBukkitApi {
 }
