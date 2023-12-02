@@ -8,6 +8,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
+import dev.slne.surf.surfapi.velocity.api.SurfVelocityApi;
 import dev.slne.surf.surfapi.velocity.api.SurfVelocityApiAccess;
 import dev.slne.surf.surfapi.velocity.server.impl.SurfVelocityApiImpl;
 import org.jetbrains.annotations.Contract;

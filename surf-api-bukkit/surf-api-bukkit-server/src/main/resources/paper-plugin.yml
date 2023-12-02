@@ -7,7 +7,33 @@ website: '${project.url}'
 authors:
   - twisti
 
-
 main: 'dev.slne.surf.surfapi.bukkit.server.BukkitMain'
 bootstrapper: 'dev.slne.surf.surfapi.bukkit.server.BukkitBoostrapper'
 loader: 'dev.slne.surf.surfapi.bukkit.server.BukkitLoader'
+
+dependencies:
+  server:
+    ProtocolLib:
+      load: BEFORE
+      join-classpath: true
+      required: false
+    ProtocolSupport:
+      load: BEFORE
+      join-classpath: true
+      required: false
+    ViaVersion:
+      load: BEFORE
+      join-classpath: true
+      required: false
+    ViaBackwards:
+      load: BEFORE
+      join-classpath: true
+      required: false
+    ViaRewind:
+      load: BEFORE
+      join-classpath: true
+      required: false
+    Geyser-Spigot:
+      load: BEFORE
+      join-classpath: true
+      required: false

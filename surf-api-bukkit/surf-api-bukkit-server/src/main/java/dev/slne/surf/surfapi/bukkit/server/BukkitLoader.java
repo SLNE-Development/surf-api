@@ -35,6 +35,7 @@ public class BukkitLoader implements PluginLoader {
         addRepo("codemc-releases", "https://repo.codemc.io/repository/maven-releases/");
         addRepo("codemc-snapshots", "https://repo.codemc.io/repository/maven-snapshots/");
         addRepo("sonatype-snapshots", "https://oss.sonatype.org/content/repositories/snapshots/");
+        addRepo("jitpack", "https://jitpack.io/");
 
         // Dependencies
         addDependency("com.google.guava", "guava", GUAVA_VERSION);
@@ -42,6 +43,8 @@ public class BukkitLoader implements PluginLoader {
         addDependency("com.google.code.gson", "gson", GSON_VERSION);
         addDependency("org.apache.commons", "commons-lang3", COMMONS_LANG3_VERSION);
         addDependency("org.apache.commons", "commons-text", COMMONS_TEXT_VERSION);
+        addDependency("com.github.retrooper.packetevents", "spigot", PACKET_EVENTS_SPIGOT_VERSION);
+        addDependency("com.github.Tofaa2", "EntityLib", ENTITY_LIB_VERSION);
 
         pluginClasspathBuilder.addLibrary(resolver);
     }

@@ -15,10 +15,10 @@
     </modules>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>18</java.version>
         <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <versions.guava>32.1.2-jre</versions.guava>
@@ -26,6 +26,8 @@
         <versions.gson>2.10.1</versions.gson>
         <versions.commons-lang3>3.13.0</versions.commons-lang3>
         <versions.commons-text>1.11.0</versions.commons-text>
+        <versions.packet-events-spigot>2.1.0</versions.packet-events-spigot>
+        <versions.entity-lib>master-SNAPSHOT</versions.entity-lib>
     </properties>
 
     <description>API for Surf plugins</description>
@@ -101,6 +103,12 @@
                 <updatePolicy>always</updatePolicy>
                 <checksumPolicy>warn</checksumPolicy>
             </snapshots>
+        </repository>
+
+        <repository>
+            <id>jitpack.io</id>
+            <name>JitPack</name>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 

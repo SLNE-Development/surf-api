@@ -1,11 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.server;
 
-import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApiAccess;
 import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl;
-import dev.slne.surf.surfapi.core.api.SurfCoreApiAccess;
+import dev.slne.surf.surfapi.bukkit.server.packet.PacketApiLoader;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,29 +18,36 @@ public class BukkitMain extends JavaPlugin {
 
     private final CoreInstance coreInstance = new CoreInstance();
     private final SurfBukkitApiImpl surfBukkitApi = new SurfBukkitApiImpl();
+    private final PacketApiLoader packetApiLoader = new PacketApiLoader(this);
 
     @Override
     public void onLoad() {
+        packetApiLoader.onLoad();
         SurfBukkitApiAccess.setInstance(surfBukkitApi);
         coreInstance.onLoad();
-
-
     }
 
     @Override
     public void onEnable() {
+        packetApiLoader.onEnable();
         coreInstance.onEnable();
-
-
     }
 
     @Override
     public void onDisable() {
         coreInstance.onDisable();
-
-
+        packetApiLoader.onDisable();
     }
 
+    /**
+     * Retrieves the SurfBukkitApi instance.
+     *
+     * @return The SurfBukkitApi instance.
+     */
+    @ApiStatus.Internal
+    public SurfBukkitApiImpl getSurfBukkitApi() {
+        return surfBukkitApi;
+    }
 
     /**
      * Retrieves the instance of the BukkitMain class.

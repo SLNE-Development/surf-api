@@ -60,6 +60,16 @@ public final class MavenVersions {
      */
     public static final String COMMONS_TEXT_VERSION;
 
+    /**
+     * The version of the Packet Events artifact.
+     */
+    public static final String PACKET_EVENTS_SPIGOT_VERSION;
+
+    /**
+     * The version of the Entity Lib artifact.
+     */
+    public static final String ENTITY_LIB_VERSION;
+
     static {
         // load properties file
         Properties properties = new Properties();
@@ -75,5 +85,7 @@ public final class MavenVersions {
         GSON_VERSION = properties.getProperty("gson");
         COMMONS_LANG3_VERSION = properties.getProperty("commons-lang3");
         COMMONS_TEXT_VERSION = properties.getProperty("commons-text");
+        PACKET_EVENTS_SPIGOT_VERSION = properties.getProperty("packet-events-spigot");
+        ENTITY_LIB_VERSION = properties.getProperty("entity-lib");
     }
 }

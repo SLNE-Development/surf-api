@@ -1,7 +1,9 @@
 package dev.slne.surf.surfapi.bukkit.server.impl;
 
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
-import dev.slne.surf.surfapi.core.server.SurfCoreApiImpl;
+import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
+import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
+import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -21,5 +23,9 @@ import org.jetbrains.annotations.ApiStatus;
  * @see SurfCoreApiImpl
  */
 @ApiStatus.Internal
-public class SurfBukkitApiImpl extends SurfCoreApiImpl implements SurfBukkitApi {
+public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> implements SurfBukkitApi {
+
+    public SurfBukkitApiImpl() {
+        super(new SurfBukkitPacketApiImpl());
+    }
 }
