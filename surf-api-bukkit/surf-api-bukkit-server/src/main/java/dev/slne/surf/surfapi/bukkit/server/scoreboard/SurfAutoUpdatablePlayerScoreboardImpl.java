@@ -31,6 +31,7 @@ public class SurfAutoUpdatablePlayerScoreboardImpl extends SurfAutoUpdatableScor
     @Override
     public void update() {
         super.update();
-        Bukkit.getOnlinePlayers().forEach(this::addViewer);
+        assert scoreboard != null;
+        Bukkit.getOnlinePlayers().forEach(scoreboard::addPlayer);
     }
 }
