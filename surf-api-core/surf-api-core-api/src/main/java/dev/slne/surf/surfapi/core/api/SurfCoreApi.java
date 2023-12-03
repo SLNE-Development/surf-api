@@ -4,6 +4,8 @@ import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 
+import java.util.UUID;
+
 /**
  * The main API class for the SurfCoreApi.
  */
@@ -19,6 +21,14 @@ public interface SurfCoreApi {
      * @return the SurfCorePacketApi instance
      */
     SurfCorePacketApi getPacketApi();
+
+    /**
+     * Sends a player to a specified server.
+     *
+     * @param playerUuid the UUID of the player to send
+     * @param server the name of the server to send the player to
+     */
+    void sendPlayerToServer(UUID playerUuid, String server);
 
     /**
      * Retrieves the instance of the SurfCoreApi.

@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.server;
 
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApiAccess;
 import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl;
+import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager;
 import dev.slne.surf.surfapi.bukkit.server.packet.PacketApiLoader;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
@@ -24,6 +25,7 @@ public class BukkitMain extends JavaPlugin {
     private final CoreInstance coreInstance = new CoreInstance();
     private final SurfBukkitApiImpl surfBukkitApi = new SurfBukkitApiImpl();
     private final PacketApiLoader packetApiLoader = new PacketApiLoader(this);
+    private final ListenerManager listenerManager = new ListenerManager(this);
     private ScoreboardLibrary scoreboardLibrary;
 
     @Override
@@ -35,6 +37,7 @@ public class BukkitMain extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        listenerManager.registerListeners();
         packetApiLoader.onEnable();
         coreInstance.onEnable();
 
@@ -51,6 +54,7 @@ public class BukkitMain extends JavaPlugin {
         coreInstance.onDisable();
         packetApiLoader.onDisable();
         scoreboardLibrary.close();
+        listenerManager.unregisterListeners();
     }
 
     /**
