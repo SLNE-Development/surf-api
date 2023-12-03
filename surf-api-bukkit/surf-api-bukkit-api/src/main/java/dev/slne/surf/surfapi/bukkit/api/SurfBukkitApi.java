@@ -1,9 +1,13 @@
 package dev.slne.surf.surfapi.bukkit.api;
 
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
+import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
+import net.kyori.adventure.text.Component;
+import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the API for SurfBukkit.
@@ -18,6 +22,27 @@ public interface SurfBukkitApi extends SurfCoreApi {
      */
     @Override
     SurfBukkitPacketApi getPacketApi();
+
+    /**
+     * Retrieves the {@link ScoreboardLibrary} instance.
+     *
+     * @return the {@link ScoreboardLibrary} instance
+     */
+    ScoreboardLibrary getScoreboardLibrary();
+
+    /**
+     * Creates a SurfScoreboardBuilder with the given title.
+     * <p>
+     * You should use {@link SurfScoreboardBuilder#builder(Component)} directly.
+     * </p>
+     *
+     * @param title the title of the scoreboard
+     * @return a SurfScoreboardBuilder with the given title
+     */
+    @ApiStatus.Obsolete
+    default SurfScoreboardBuilder createScoreboard(@NotNull Component title) {
+        return SurfScoreboardBuilder.builder(title);
+    }
 
     /**
      * Retrieves the instance of SurfBukkitApi.

@@ -2,8 +2,10 @@ package dev.slne.surf.surfapi.bukkit.server.impl;
 
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
+import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
+import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -27,5 +29,10 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
 
     public SurfBukkitApiImpl() {
         super(new SurfBukkitPacketApiImpl());
+    }
+
+    @Override
+    public ScoreboardLibrary getScoreboardLibrary() {
+        return BukkitMain.getInstance().getScoreboardLibrary();
     }
 }
