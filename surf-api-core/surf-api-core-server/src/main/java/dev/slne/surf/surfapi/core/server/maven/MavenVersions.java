@@ -70,6 +70,11 @@ public final class MavenVersions {
      */
     public static final String ENTITY_LIB_VERSION;
 
+    /**
+     * The version of the Scoreboard Library artifact.
+     */
+    public static final String SCOREBOARD_LIBRARY_VERSION;
+
     static {
         // load properties file
         Properties properties = new Properties();
@@ -87,5 +92,6 @@ public final class MavenVersions {
         COMMONS_TEXT_VERSION = properties.getProperty("commons-text");
         PACKET_EVENTS_SPIGOT_VERSION = properties.getProperty("packet-events-spigot");
         ENTITY_LIB_VERSION = properties.getProperty("entity-lib");
+        SCOREBOARD_LIBRARY_VERSION = properties.getProperty("scoreboard-lib");
     }
 }

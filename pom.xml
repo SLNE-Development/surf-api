@@ -28,6 +28,7 @@
         <versions.commons-text>1.11.0</versions.commons-text>
         <versions.packet-events-spigot>2.1.0</versions.packet-events-spigot>
         <versions.entity-lib>master-SNAPSHOT</versions.entity-lib>
+        <versions.scoreboard-library>2.0.0</versions.scoreboard-library>
     </properties>
 
     <description>API for Surf plugins</description>

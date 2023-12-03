@@ -45,6 +45,10 @@ public class BukkitLoader implements PluginLoader {
         addDependency("org.apache.commons", "commons-text", COMMONS_TEXT_VERSION);
         addDependency("com.github.retrooper.packetevents", "spigot", PACKET_EVENTS_SPIGOT_VERSION);
         addDependency("com.github.Tofaa2", "EntityLib", ENTITY_LIB_VERSION);
+        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-api", SCOREBOARD_LIBRARY_VERSION);
+        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-implementation", SCOREBOARD_LIBRARY_VERSION);
+        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-packetevents", SCOREBOARD_LIBRARY_VERSION);
+        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-modern", SCOREBOARD_LIBRARY_VERSION);
 
         pluginClasspathBuilder.addLibrary(resolver);
     }
