@@ -2,11 +2,15 @@ package dev.slne.surf.surfapi.bukkit.server.impl;
 
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
+import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
+import dev.slne.surf.surfapi.bukkit.server.scoreboard.SurfScoreboardBuilderImpl;
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
+import net.kyori.adventure.text.Component;
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The SurfBukkitApiImpl class is an implementation of the SurfBukkitApi interface.
@@ -34,5 +38,10 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
     @Override
     public ScoreboardLibrary getScoreboardLibrary() {
         return BukkitMain.getInstance().getScoreboardLibrary();
+    }
+
+    @Override
+    public SurfScoreboardBuilder createScoreboard(@NotNull Component title) {
+        return new SurfScoreboardBuilderImpl(title);
     }
 }

@@ -32,17 +32,11 @@ public interface SurfBukkitApi extends SurfCoreApi {
 
     /**
      * Creates a SurfScoreboardBuilder with the given title.
-     * <p>
-     * You should use {@link SurfScoreboardBuilder#builder(Component)} directly.
-     * </p>
      *
      * @param title the title of the scoreboard
      * @return a SurfScoreboardBuilder with the given title
      */
-    @ApiStatus.Obsolete
-    default SurfScoreboardBuilder createScoreboard(@NotNull Component title) {
-        return SurfScoreboardBuilder.builder(title);
-    }
+    SurfScoreboardBuilder createScoreboard(@NotNull Component title);
 
     /**
      * Retrieves the instance of SurfBukkitApi.
