@@ -5,6 +5,7 @@ import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitInteractListener;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
 import dev.slne.surf.surfapi.bukkit.server.exceptions.packet.UnableToSetupEntityCounterException;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
+import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.entity.WrapperEntity;
@@ -68,6 +69,7 @@ public final class PacketApiLoader {
      */
     public void onEnable() {
         PacketEvents.getAPI().init();
+        PacketEvents.getAPI().getEventManager().registerListener(PacketLoreListener.INSTANCE);
     }
 
     /**

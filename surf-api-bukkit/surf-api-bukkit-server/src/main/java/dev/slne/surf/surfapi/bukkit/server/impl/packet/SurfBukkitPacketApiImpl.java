@@ -3,7 +3,9 @@ package dev.slne.surf.surfapi.bukkit.server.impl.packet;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitInteractListener;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfEntity;
+import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
 import dev.slne.surf.surfapi.bukkit.api.packet.meta.EntityType;
+import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener;
 import dev.slne.surf.surfapi.core.server.impl.packet.SurfCorePacketApiImpl;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -15,6 +17,7 @@ import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.entity.WrapperEntity;
 import me.tofaa.entitylib.meta.EntityMeta;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,6 +113,21 @@ public class SurfBukkitPacketApiImpl extends SurfCorePacketApiImpl implements Su
             ComponentLogger.logger().warn("Failed to cast entity with ID {} to SurfEntity", entityId, e);
             return Optional.empty();
         }
+    }
+
+    @Override
+    public void registerPacketLoreListener(@NotNull NamespacedKey identifier, @NotNull SurfBukkitPacketLoreHandler listener) {
+        checkNotNull(identifier, "identifier");
+        checkNotNull(listener, "listener");
+
+        PacketLoreListener.INSTANCE.register(identifier, listener);
+    }
+
+    @Override
+    public void unregisterPacketLoreListener(@NotNull NamespacedKey identifier) {
+        checkNotNull(identifier, "identifier");
+
+        PacketLoreListener.INSTANCE.unregister(identifier);
     }
 
     /**
