@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.api.packet.entity;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitInteractListener;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
-import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.entity.WrapperEntity;
 import me.tofaa.entitylib.meta.EntityMeta;
 import org.bukkit.Location;
