@@ -26,7 +26,9 @@ public class SurfPatternedVisualizerImpl extends SurfVisualizerImpl implements S
         visualPoints.stream().findFirst().ifPresent(location -> checkState(location.getWorld().equals(point.getWorld()), "All points must be in the same world"));
         visualPoints.add(point.clone());
 
-        restartVisualizing();
+        if (running) {
+            restartVisualizing();
+        }
     }
 
     @Override
@@ -39,19 +41,31 @@ public class SurfPatternedVisualizerImpl extends SurfVisualizerImpl implements S
     public void setVisualMaterial(Material material, Consumer<BlockDisplayMeta> consumer) {
         visualMaterial = material;
         visualMaterialConsumer = consumer;
-        restartVisualizing();
+
+        if (running) {
+            restartVisualizing();
+        }
     }
 
     @Override
     public void setVisualHeight(int height) {
         visualPoints.forEach(location -> location.setY(height));
         this.renderAtHighestPoint = false;
-        restartVisualizing();
+
+        if (running) {
+            restartVisualizing();
+        }
     }
 
     @Override
     public void setRenderAtHighestPoint(boolean renderAtHighestPoint) {
         this.renderAtHighestPoint = renderAtHighestPoint;
+    }
+
+    @Override
+    public boolean startVisualizing() {
+        restartVisualizing();
+        return super.startVisualizing();
     }
 
     private void restartVisualizing() {

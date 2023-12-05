@@ -16,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -27,6 +28,8 @@ public class SurfVisualizerImpl implements SurfVisualizer {
     private final Object2ObjectMap<Location, SurfEntity<BlockDisplayMeta>> entities = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     private final Object2ObjectMap<UUID, List<Location>> inDistance = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     private final Object2ObjectMap<UUID, List<Location>> oldInDistance = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    protected @Nullable VisualizerTask task;
+    protected boolean running = false;
 
     public SurfVisualizerImpl() {
     }
@@ -68,6 +71,11 @@ public class SurfVisualizerImpl implements SurfVisualizer {
 
     @Override
     public boolean startVisualizing() {
+        if (running) {
+            ComponentLogger.logger().warn("Tried to start visualizing while already running!");
+            return false;
+        }
+
         if (visualLocations.isEmpty()) {
             ComponentLogger.logger().warn("Tried to start visualizing with no visual locations!");
             return false;
@@ -78,6 +86,8 @@ public class SurfVisualizerImpl implements SurfVisualizer {
             viewers.forEach(blockDisplayMetaSurfEntity::addViewer);
         });
 
+        task = new VisualizerTask();
+        task.start();
         return true;
     }
 
@@ -95,11 +105,20 @@ public class SurfVisualizerImpl implements SurfVisualizer {
 
     @Override
     public boolean stopVisualizing() {
+        if (!running) {
+            ComponentLogger.logger().warn("Tried to stop visualizing while not running!");
+            return false;
+        }
+
+        assert task != null : "Task is null while running!";
+
         entities.values().forEach(SurfEntity::remove);
+        entities.clear();
+        task.cancel();
         return true;
     }
 
-    private class VisualizerTask extends BukkitRunnable {
+    protected class VisualizerTask extends BukkitRunnable {
 
         public void start() {
             this.runTaskTimerAsynchronously(BukkitMain.getInstance(), 0, 20L);
