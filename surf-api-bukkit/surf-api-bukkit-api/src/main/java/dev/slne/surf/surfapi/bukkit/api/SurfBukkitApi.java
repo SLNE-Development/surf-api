@@ -4,6 +4,7 @@ import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations;
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult;
+import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi;
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.util.Result;
 import net.kyori.adventure.text.Component;
@@ -29,6 +30,8 @@ public interface SurfBukkitApi extends SurfCoreApi {
      */
     @Override
     SurfBukkitPacketApi getPacketApi();
+
+    SurfBukkitVisualizerApi getVisualizerApi();
 
     /**
      * Retrieves the {@link ScoreboardLibrary} instance.
