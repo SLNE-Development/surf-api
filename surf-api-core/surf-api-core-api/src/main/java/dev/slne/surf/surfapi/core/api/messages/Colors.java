@@ -10,12 +10,12 @@ public interface Colors {
      * PRIMARY color (#3b92d1).
      * Generally not used in our system. However, an example of its use could be for titles, subtitles, etc.
      */
-    TextColor PRIMARY = TextColor.fromHexString("#3b92d1");
+    TextColor PRIMARY = TextColor.color(0x3b92d1);
     /**
      * SECONDARY color (#5b5b5b).
      * Also seldom used in our system. Could be used for elements like subtitles.
      */
-    TextColor SECONDARY = TextColor.fromHexString("#5b5b5b");
+    TextColor SECONDARY = TextColor.color(0x5b5b5b);
 
     /**
      * INFO color (#40d1db).
@@ -23,35 +23,35 @@ public interface Colors {
      * Exceptions include queued user actions that update after a delay (e.g., status changes not related to Success or Danger),
      * and for toggle messages (e.g., "You have [deactivated/activated] the chat").
      */
-    TextColor INFO = TextColor.fromHexString("#40d1db");
+    TextColor INFO = TextColor.color(0x40d1db);
     /**
      * SUCCESS color (#65ff64).
      * Indicates a positive outcome of an action performed by the user. Used only in direct response to the user.
      */
-    TextColor SUCCESS = TextColor.fromHexString("#65ff64");
+    TextColor SUCCESS = TextColor.color(0x65ff64);
     /**
      * WARNING color (#f9c353).
      * Used as a direct warning to the user. This could be a response to a user action or a system notification,
      * and serves as a precursor to Danger.
      */
-    TextColor WARNING = TextColor.fromHexString("#f9c353");
+    TextColor WARNING = TextColor.color(0xf9c353);
     /**
      * ERROR (or DANGER) color (#ee3d51).
      * Represents error messages directed at the user. These can follow a direct action by the user,
      * or serve as a warning about potential issues.
      */
-    TextColor ERROR = TextColor.fromHexString("#ee3d51");
+    TextColor ERROR = TextColor.color(0xee3d51);
 
     /**
      * VARIABLE_KEY color (#3b92d1).
      * Mainly used as a key in listings (e.g., "Key 1: Value", "Key 2: Value", etc.).
      */
-    TextColor VARIABLE_KEY = TextColor.fromHexString("#3b92d1");
+    TextColor VARIABLE_KEY = TextColor.color(0x3b92d1);
     /**
      * VARIABLE_VALUE color (#f9c353).
      * Primarily used in listings and chat messages as a variable (e.g., "Your property [PROPERTY] has been sold.").
      */
-    TextColor VARIABLE_VALUE = TextColor.fromHexString("#f9c353");
+    TextColor VARIABLE_VALUE = TextColor.color(0xf9c353);
 
     /**
      * SPACER color (GRAY).
@@ -67,7 +67,7 @@ public interface Colors {
      * PREFIX color (#3b92d1).
      * Used for the color of every prefix to provide a uniform appearance.
      */
-    TextColor PREFIX = TextColor.fromHexString("#3b92d1");
+    TextColor PREFIX = TextColor.color(0x3b92d1);
     // ----------------------------------------------------- //
 
     // -------------------- Default Colors -------------------- //
