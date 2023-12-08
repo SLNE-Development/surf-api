@@ -8,6 +8,7 @@ import me.tofaa.entitylib.meta.EntityMeta;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -109,7 +110,7 @@ public record SurfEntity<T extends EntityMeta>(WrapperEntity entity, Class<T> me
      * @param player the player viewer to be added
      * @return true if the viewer was successfully added, false otherwise
      */
-    public boolean addViewer(Player player) {
+    public boolean addViewer(@NotNull Player player) {
         return entity.addViewer(player.getUniqueId());
     }
 
@@ -128,7 +129,7 @@ public record SurfEntity<T extends EntityMeta>(WrapperEntity entity, Class<T> me
      *
      * @param player the player whose viewer will be removed
      */
-    public void removeViewer(Player player) {
+    public void removeViewer(@NotNull Player player) {
         entity.removeViewer(player.getUniqueId());
     }
 
