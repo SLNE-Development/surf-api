@@ -6,6 +6,7 @@ plugins {
 dependencies {
     compileOnlyApi(libs.adventure.api)
     compileOnlyApi(libs.adventure.text.logger.slf4j)
+    compileOnlyApi(libs.spongepowered.configurate.yaml)
 }
 
 //tasks {
