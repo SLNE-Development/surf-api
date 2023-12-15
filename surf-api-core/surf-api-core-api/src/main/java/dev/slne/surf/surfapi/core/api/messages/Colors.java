@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.api.messages;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
@@ -67,7 +68,7 @@ public interface Colors {
      * PREFIX color (#3b92d1).
      * Used for the color of every prefix to provide a uniform appearance.
      */
-    TextColor PREFIX = TextColor.color(0x3b92d1);
+    TextColor PREFIX_COLOR = TextColor.color(0x3b92d1);
     // ----------------------------------------------------- //
 
     // -------------------- Default Colors -------------------- //
@@ -136,4 +137,13 @@ public interface Colors {
      */
     NamedTextColor WHITE = NamedTextColor.WHITE;
     // --------------------------------------------------------- //
+
+    // -------------------- Prefix -------------------- //
+    /**
+     * The prefix for all Surf plugins
+     */
+    Component PREFIX = Component.text(">> ", DARK_SPACER)
+            .append(Component.text("Surf", PREFIX_COLOR))
+            .append(Component.text(" | ", DARK_SPACER));
+    // ------------------------------------------------ //
 }
