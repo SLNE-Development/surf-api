@@ -24,7 +24,7 @@ public class SurfCoreApiAccess {
      * @throws IllegalStateException if the SurfCoreApi instance has already been initialized
      */
     @ApiStatus.Internal
-    public static void setInstance(SurfCoreApi instance) {
+    protected static void setInstance(SurfCoreApi instance) {
         checkState(INSTANCE == null, "SurfApi instance has already been initialized.");
 
         INSTANCE = instance;
@@ -37,7 +37,7 @@ public class SurfCoreApiAccess {
      * @throws NullPointerException if the SurfCoreApi instance has not been initialized yet
      */
     @ApiStatus.Internal
-    public static SurfCoreApi getInstance() {
+    protected static SurfCoreApi getInstance() {
         return checkNotNull(INSTANCE, "SurfApi instance has not been initialized yet.");
     }
 }

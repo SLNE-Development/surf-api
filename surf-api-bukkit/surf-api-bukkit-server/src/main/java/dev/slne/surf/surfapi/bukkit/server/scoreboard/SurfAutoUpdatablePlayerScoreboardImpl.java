@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.megavex.scoreboardlibrary.api.sidebar.component.SidebarComponent;
 import net.megavex.scoreboardlibrary.api.sidebar.component.animation.CollectionSidebarAnimation;
+import net.megavex.scoreboardlibrary.api.sidebar.component.animation.SidebarAnimation;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,7 +15,7 @@ import java.util.List;
 @ApiStatus.Internal
 public class SurfAutoUpdatablePlayerScoreboardImpl extends SurfAutoUpdatableScoreboardImpl implements SurfAutoUpdatablePlayerScoreboard {
 
-    public SurfAutoUpdatablePlayerScoreboardImpl(Component title, int maxLines, SidebarComponent sidebarComponent, List<CollectionSidebarAnimation<Component>> animations) {
+    public SurfAutoUpdatablePlayerScoreboardImpl(Component title, int maxLines, SidebarComponent sidebarComponent, List<SidebarAnimation<Component>> animations) {
         super(title, maxLines, sidebarComponent, animations);
     }
 

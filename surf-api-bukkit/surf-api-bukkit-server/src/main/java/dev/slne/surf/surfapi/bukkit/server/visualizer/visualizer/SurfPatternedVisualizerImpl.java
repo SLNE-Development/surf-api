@@ -32,6 +32,15 @@ public class SurfPatternedVisualizerImpl extends SurfVisualizerImpl implements S
     }
 
     @Override
+    public void removeVisualPoint(Location point) {
+        visualPoints.remove(point);
+
+        if (running) {
+            restartVisualizing();
+        }
+    }
+
+    @Override
     public void setVisualMaterial(Material material) {
         setVisualMaterial(material, blockDisplayMeta -> {
         });

@@ -82,8 +82,6 @@ public class VelocityMain extends CoreInstance {
      * @param server            The ProxyServer object associated with the VelocityMain instance.
      * @param logger            The Logger object associated with the VelocityMain instance.
      * @param dataDirectory     The path of the data directory associated with the VelocityMain instance.
-     * @param pluginDescription The PluginDescription object associated with the VelocityMain instance.
-     * @param pluginContainer   The PluginContainer object associated with the VelocityMain instance.
      * @param executorService   The ExecutorService used by the VelocityMain instance.
      */
     @Inject

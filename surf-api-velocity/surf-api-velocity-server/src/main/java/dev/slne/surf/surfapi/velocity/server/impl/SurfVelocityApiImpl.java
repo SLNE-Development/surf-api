@@ -34,7 +34,7 @@ public class SurfVelocityApiImpl extends SurfCoreApiImpl<SurfVelocityPacketApi> 
      * It provides additional functionality specific to Surf Velocity.
      * <p>
      * Example usage:
-     * {@snippet : SurfCoreApiImpl<SurfVelocityPacketApi> surfApi = new SurfVelocityApiImpl();}
+     * {@code  SurfCoreApiImpl<SurfVelocityPacketApi> surfApi = new SurfVelocityApiImpl();}
      */
     public SurfVelocityApiImpl() {
         super(new SurfVelocityPacketApiImpl());

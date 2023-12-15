@@ -1,9 +1,12 @@
 package dev.slne.surf.surfapi.core.api.util;
 
+import org.apache.commons.lang3.function.TriConsumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import sun.misc.Unsafe;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +20,18 @@ import static com.google.common.base.Preconditions.*;
  */
 @ApiStatus.NonExtendable
 public class Util {
+
+    private static final Unsafe UNSAFE;
+
+    static {
+        try {
+            final Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+            unsafeField.setAccessible(true);
+            UNSAFE = (Unsafe) unsafeField.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * The Util class provides utility methods for modifying objects and creating collections.
@@ -62,5 +77,48 @@ public class Util {
     @Contract("_ -> new")
     public static <T> Set<T> makeSet(Consumer<Set<T>> set) {
         return make(new HashSet<>(), set);
+    }
+
+    public static void setStaticFinalField(Field field, Object value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putObject(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, int value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putInt(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, long value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putLong(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, boolean value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putBoolean(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, byte value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putByte(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, short value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putShort(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, float value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putFloat(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, double value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putDouble(fieldBase, fieldOffset, value));
+    }
+
+    public static void setStaticFinalField(Field field, char value) {
+        processField(field, (unsafe, fieldBase, fieldOffset) -> unsafe.putChar(fieldBase, fieldOffset, value));
+    }
+
+    private static void processField(Field field, TriConsumer<Unsafe, Object, Long> putOperation) {
+        final Object fieldBase = UNSAFE.staticFieldBase(field);
+        final long fieldOffset = UNSAFE.staticFieldOffset(field);
+
+        putOperation.accept(UNSAFE, fieldBase, fieldOffset);
     }
 }

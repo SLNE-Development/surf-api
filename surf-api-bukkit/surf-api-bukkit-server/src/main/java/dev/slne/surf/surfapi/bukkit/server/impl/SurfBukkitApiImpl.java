@@ -23,7 +23,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -38,7 +40,7 @@ import static com.google.common.base.Preconditions.*;
  * <pre>{@code
  * SurfBukkitApi surfApi = SurfBukkitApi.get();
  * }</pre>
- * </p>
+ *
  *
  * @see SurfBukkitApi
  * @see SurfCoreApiImpl
@@ -133,4 +135,5 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
 
         return results;
     }
+
 }

@@ -37,7 +37,7 @@ public interface SurfCoreApi {
      * @throws NullPointerException if the SurfCoreApi instance has not been initialized yet
      */
     @Contract(pure = true)
-    static SurfCoreApi get() {
+    static SurfCoreApi getCore() {
         return SurfCoreApiAccess.getInstance();
     }
 }

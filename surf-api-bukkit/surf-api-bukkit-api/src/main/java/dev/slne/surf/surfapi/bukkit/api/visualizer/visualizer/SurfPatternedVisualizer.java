@@ -21,6 +21,8 @@ public interface SurfPatternedVisualizer extends SurfVisualizer {
 
     void addVisualPoint(Location point);
 
+    void removeVisualPoint(Location point);
+
     void setVisualMaterial(Material material);
 
     void setVisualMaterial(Material material, Consumer<BlockDisplayMeta> consumer);

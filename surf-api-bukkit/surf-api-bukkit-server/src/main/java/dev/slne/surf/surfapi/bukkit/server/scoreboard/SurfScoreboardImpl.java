@@ -6,7 +6,8 @@ import net.kyori.adventure.text.Component;
 import net.megavex.scoreboardlibrary.api.sidebar.Sidebar;
 import net.megavex.scoreboardlibrary.api.sidebar.component.ComponentSidebarLayout;
 import net.megavex.scoreboardlibrary.api.sidebar.component.SidebarComponent;
-import net.megavex.scoreboardlibrary.api.sidebar.component.animation.CollectionSidebarAnimation;
+import net.megavex.scoreboardlibrary.api.sidebar.component.animation.FramedSidebarAnimation;
+import net.megavex.scoreboardlibrary.api.sidebar.component.animation.SidebarAnimation;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -21,12 +22,12 @@ public class SurfScoreboardImpl implements SurfScoreboard {
     protected final Component title;
     protected final int maxLines;
     protected final SidebarComponent sidebarComponent;
-    protected final List<CollectionSidebarAnimation<Component>> animations;
+    protected final List<SidebarAnimation<Component>> animations;
     protected @Nullable Sidebar scoreboard;
     protected @Nullable ComponentSidebarLayout sidebarLayout;
     protected boolean enabled = false;
 
-    public SurfScoreboardImpl(Component title, int maxLines, SidebarComponent sidebarComponent, List<CollectionSidebarAnimation<Component>> animations) {
+    public SurfScoreboardImpl(Component title, int maxLines, SidebarComponent sidebarComponent, List<SidebarAnimation<Component>> animations) {
         this.title = title;
         this.maxLines = maxLines;
         this.sidebarComponent = sidebarComponent;
@@ -59,6 +60,8 @@ public class SurfScoreboardImpl implements SurfScoreboard {
         sidebarLayout = new ComponentSidebarLayout(SidebarComponent.staticLine(title), sidebarComponent);
 
         sidebarLayout.apply(scoreboard);
+
+        enabled = true;
     }
 
     @Override
@@ -68,7 +71,11 @@ public class SurfScoreboardImpl implements SurfScoreboard {
         assert scoreboard != null : "scoreboard is null";
 
         scoreboard.close();
-        animations.forEach(frameSwitcher -> frameSwitcher.switchFrame(0));
+        animations.forEach(frameSwitcher -> {
+            if (frameSwitcher instanceof FramedSidebarAnimation<Component> animation) {
+                animation.switchFrame(0);
+            }
+        });
 
         scoreboard = null;
         sidebarLayout = null;
@@ -82,7 +89,7 @@ public class SurfScoreboardImpl implements SurfScoreboard {
         assert scoreboard != null : "scoreboard is null";
         assert sidebarLayout != null : "sidebarLayout is null";
 
-        animations.forEach(CollectionSidebarAnimation::nextFrame);
+        animations.forEach(SidebarAnimation::nextFrame);
         sidebarLayout.apply(scoreboard);
     }
 }

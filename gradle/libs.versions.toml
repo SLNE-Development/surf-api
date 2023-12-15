@@ -1,0 +1,42 @@
+[versions]
+paper-api-version = "1.20.2-R0.1-SNAPSHOT"
+paper-mojangapi-version = "1.20.2-R0.1-SNAPSHOT"
+packetevents-version = "2.1.0"
+entitylib-version = "master-SNAPSHOT"
+scoreboard-library-version = "2.0.0"
+commandapi-version = "9.2.0"
+scoreboard-library-implementation-version = "2.0.0"
+scoreboard-library-packetevents-version = "2.0.0"
+scoreboard-library-modern-version = "2.0.0"
+adventure-api-version = "4.14.0"
+adventure-text-logger-slf4j-version = "4.14.0"
+velocity-api-version = "3.2.0-SNAPSHOT"
+guava-version = "32.1.2-jre"
+caffeine-version = "3.1.8"
+gson-version = "2.10.1"
+commons-lang3-version = "3.13.0"
+commons-text-version = "1.11.0"
+plugin-yml-version-paper = "0.6.0"
+
+
+[libraries]
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api-version" }
+paper-mojangapi = { module = "io.papermc.paper:paper-mojangapi", version.ref = "paper-mojangapi-version" }
+packetevents = { module = "com.github.retrooper.packetevents:spigot", version.ref = "packetevents-version" }
+entitylib = { module = "com.github.Tofaa2:EntityLib", version.ref = "entitylib-version" }
+scoreboard-library = { module = "com.github.megavexnetwork.scoreboard-library:scoreboard-library-api", version.ref = "scoreboard-library-version" }
+commandapi = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi-version" }
+scoreboard-library-implementation = { module = "com.github.megavexnetwork.scoreboard-library:scoreboard-library-implementation", version.ref = "scoreboard-library-implementation-version" }
+scoreboard-library-packetevents = { module = "com.github.megavexnetwork.scoreboard-library:scoreboard-library-packetevents", version.ref = "scoreboard-library-packetevents-version" }
+scoreboard-library-modern = { module = "com.github.megavexnetwork.scoreboard-library:scoreboard-library-modern", version.ref = "scoreboard-library-modern-version" }
+adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure-api-version" }
+adventure-text-logger-slf4j = { module = "net.kyori:adventure-text-logger-slf4j", version.ref = "adventure-text-logger-slf4j-version" }
+velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api-version" }
+guava = { module = "com.google.guava:guava", version.ref = "guava-version" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine-version" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson-version" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3-version" }
+commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text-version" }
+
+[plugins]
+plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-version-paper" }

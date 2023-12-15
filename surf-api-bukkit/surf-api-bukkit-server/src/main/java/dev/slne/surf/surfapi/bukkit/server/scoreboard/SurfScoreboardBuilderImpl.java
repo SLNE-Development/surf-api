@@ -28,7 +28,7 @@ public class SurfScoreboardBuilderImpl implements SurfScoreboardBuilder {
 
     private final Component title;
     private final SidebarComponent.Builder sidebarComponentBuilder;
-    private final List<CollectionSidebarAnimation<Component>> animations = new ArrayList<>();
+    private final List<SidebarAnimation<Component>> animations = new ArrayList<>();
     private int maxLines = DEFAULT_MAX_LINES;
 
     public SurfScoreboardBuilderImpl(@NotNull Component title) {
@@ -87,7 +87,9 @@ public class SurfScoreboardBuilderImpl implements SurfScoreboardBuilder {
         checkNotNull(start, "start");
         checkNotNull(end, "end");
 
-        sidebarComponentBuilder.addAnimatedLine(createGradientAnimation(text, start.asHexString(), end.asHexString()));
+        SidebarAnimation<Component> gradient = createGradientAnimation(text, start.asHexString(), end.asHexString());
+        sidebarComponentBuilder.addAnimatedLine(gradient);
+        animations.add(gradient);
         return this;
     }
 

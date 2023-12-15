@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.core.server.impl;
 
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -34,5 +35,10 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
     @Override
     public PacketImpl getPacketApi() {
         return packetApi;
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 }

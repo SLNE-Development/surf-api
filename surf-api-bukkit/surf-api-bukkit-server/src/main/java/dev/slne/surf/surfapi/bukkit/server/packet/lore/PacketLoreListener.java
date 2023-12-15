@@ -11,6 +11,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCr
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
+import dev.slne.surf.surfapi.core.api.util.Util;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -58,12 +60,12 @@ public final class PacketLoreListener extends PacketListenerAbstract {
      *
      * @see SurfBukkitPacketLoreHandler
      */
-    private final Component lorePrefix = Component.text("§q");
+    private final Component lorePrefix;
     /**
      * Represents the prefix string used for lore modifications.
      * <p>
      * Lore modifications are handled by implementing the {@link SurfBukkitPacketLoreHandler} interface. The lore handlers can modify the lore of an item stack by adding, removing
-     *, or modifying existing lore components.
+     * , or modifying existing lore components.
      * <p>
      * The lore prefix string is used to identify and manage the specific lore modifications made by the lore handlers. It is appended to the beginning of each lore component added
      * by the handlers.
@@ -75,6 +77,19 @@ public final class PacketLoreListener extends PacketListenerAbstract {
      */
     private PacketLoreListener() {
         super(PacketListenerPriority.LOWEST);
+
+
+        // We need to do this ugly hack to disable the warning message that is printed when
+        // legacy formatting is detected.
+        try {
+            Class<?> textComponentImpl = Class.forName("net.kyori.adventure.text.TextComponentImpl");
+            Field field = textComponentImpl.getDeclaredField("WARN_WHEN_LEGACY_FORMATTING_DETECTED");
+            Util.setStaticFinalField(field, false);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+
+        lorePrefix = Component.text(lorePrefixString);
     }
 
     /**
@@ -115,7 +130,7 @@ public final class PacketLoreListener extends PacketListenerAbstract {
 
             packet.setItems(updatedItems);
         } else if (packetType.equals(PacketType.Play.Server.SET_SLOT)) {
-            final WrapperPlayServerSetSlot packet  = new WrapperPlayServerSetSlot(event);
+            final WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
             ItemStack item = packet.getItem();
 
             if (item != null) {

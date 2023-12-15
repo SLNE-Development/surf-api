@@ -1,21 +1,18 @@
 package dev.slne.surf.surfapi.bukkit.server.packet;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitInteractListener;
+import dev.slne.surf.surfapi.bukkit.api.packet.entity.interact.SurfBukkitInteractListener;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
-import dev.slne.surf.surfapi.bukkit.server.exceptions.packet.UnableToSetupEntityCounterException;
-import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
+import dev.slne.surf.surfapi.bukkit.server.impl.packet.entity.SurfBukkitPacketEntityApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.entity.WrapperEntity;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import net.minecraft.world.entity.Entity;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,8 +57,8 @@ public final class PacketApiLoader {
      */
     public void onLoad() {
         setupPacketEvents();
-        setupEntityLib();
-        setupEntityCounter();
+//        setupEntityLib();
+//        setupEntityCounter();
     }
 
     /**
@@ -70,6 +67,7 @@ public final class PacketApiLoader {
     public void onEnable() {
         PacketEvents.getAPI().init();
         PacketEvents.getAPI().getEventManager().registerListener(PacketLoreListener.INSTANCE);
+        setupEntityLib();
     }
 
     /**
@@ -99,91 +97,100 @@ public final class PacketApiLoader {
         EntityLib.enableEntityInteractions();
         EntityLib.setInteractionProcessor((wrapperEntity, interactAction, interactionHand, user) -> {
             final Player player = Bukkit.getPlayer(user.getUUID());
-            final List<SurfBukkitInteractListener> listeners = ((SurfBukkitPacketApiImpl) plugin.getSurfBukkitApi().getPacketApi()).getInteractListeners();
+            final List<SurfBukkitInteractListener> listeners = ((SurfBukkitPacketEntityApiImpl) plugin.getSurfBukkitApi().getPacketApi().getEntityApi()).getInteractListeners();
 
             for (SurfBukkitInteractListener listener : listeners) {
                 listener.onInteract(wrapperEntity, interactAction, interactionHand, user, player);
             }
         });
+        WrapperEntity.ID_PROVIDER = Entity::nextEntityId;
     }
 
-    /**
-     * Sets up the entity counter by performing the following steps:
-     * 1. Retrieves the NMS entity class using {@link #getNmsEntityClass()}.
-     * 2. Retrieves the entity counter field using {@link #getEntityCounterField(Class)}.
-     * 3. Initializes the entity counter by calling {@link #initializeEntityCounter(Field)}.
-     * If any of these steps fail, an {@link UnableToSetupEntityCounterException} is thrown.
-     */
-    private void setupEntityCounter() {
-        try {
-            Class<?> nmsEntity = getNmsEntityClass();
-            Field entityCounter = getEntityCounterField(nmsEntity);
-            initializeEntityCounter(entityCounter);
-        } catch (UnableToSetupEntityCounterException e) {
-            ComponentLogger.logger().warn("Unable to setup entity counter. This is a bug, please report it to the developers.", e);
-        }
-    }
+//    /**
+//     * Sets up the entity counter by performing the following steps:
+//     * 1. Retrieves the NMS entity class using {@link #getNmsEntityClass()}.
+//     * 2. Retrieves the entity counter field using {@link #getEntityCounterField(Class)}.
+//     * 3. Initializes the entity counter by calling {@link #initializeEntityCounter(Field)}.
+//     * If any of these steps fail, an {@link UnableToSetupEntityCounterException} is thrown.
+//     */
+//    private void setupEntityCounter() {
 
-    /**
-     * Retrieves the NMS (net.minecraft.world.entity.Entity) entity class.
-     * This method is used to get the class object representing the NMS entity class.
-     *
-     * @return The NMS entity class.
-     * @throws UnableToSetupEntityCounterException If the NMS entity class is not found.
-     */
-    private @NotNull Class<?> getNmsEntityClass() throws UnableToSetupEntityCounterException {
-        try {
-            return Class.forName("net.minecraft.world.entity.Entity");
-        } catch (ClassNotFoundException e) {
-            throw new UnableToSetupEntityCounterException("Class not found: net.minecraft.world.entity.Entity", e);
-        }
-    }
+        //        try {
+//            Class<?> nmsEntity = getNmsEntityClass();
+//            Field entityCounter = getEntityCounterField(nmsEntity);
+//            initializeEntityCounter(entityCounter);
+//        } catch (UnableToSetupEntityCounterException e) {
+//            ComponentLogger.logger().warn("Unable to setup entity counter. This is a bug, please report it to the developers.", e);
+//        }
+//    }
 
-    /**
-     * Retrieves the entity counter field of the given NMS entity class.
-     *
-     * @param nmsEntity The NMS entity class.
-     * @return The entity counter field.
-     * @throws UnableToSetupEntityCounterException If the entity counter field is not found.
-     */
-    private Field getEntityCounterField(@NotNull Class<?> nmsEntity) throws UnableToSetupEntityCounterException {
-        try {
-            return nmsEntity.getField("ENTITY_COUNTER");
-        } catch (NoSuchFieldException e) {
-            return getObfuscatedEntityCounterField(nmsEntity);
-        }
-    }
-
-    /**
-     * Retrieves the obfuscated entity counter field of the given NMS entity class.
-     *
-     * @param nmsEntity The NMS entity class.
-     * @return The obfuscated entity counter field.
-     * @throws UnableToSetupEntityCounterException If the obfuscated entity counter field is not found.
-     */
-    private @NotNull Field getObfuscatedEntityCounterField(@NotNull Class<?> nmsEntity) throws UnableToSetupEntityCounterException {
-        try {
-            return nmsEntity.getField("b");
-        } catch (NoSuchFieldException ex) {
-            throw new UnableToSetupEntityCounterException("Could not find net.minecraft.world.entity.Entity.ENTITY_COUNTER field", ex);
-        }
-    }
-
-    /**
-     * Initializes the entity counter field by retrieving the field object through reflection.
-     * It sets the accessibility of the field to true, gets the current value of the field,
-     * and sets the ID_PROVIDER to be a lambda function that increments and returns the value of the field.
-     *
-     * @param entityCounter The entity counter field.
-     * @throws UnableToSetupEntityCounterException If an error occurs while setting up the entity counter.
-     */
-    private void initializeEntityCounter(@NotNull Field entityCounter) throws UnableToSetupEntityCounterException {
-        try {
-            entityCounter.setAccessible(true);
-            entityCounterAtomic = (AtomicInteger) entityCounter.get(null);
-            WrapperEntity.ID_PROVIDER = entityCounterAtomic::getAndIncrement;
-        } catch (IllegalAccessException e) {
-            throw new UnableToSetupEntityCounterException("Could not access net.minecraft.world.entity.Entity.ENTITY_COUNTER field", e);
-        }
-    }
+//    /**
+//     * Retrieves the NMS (net.minecraft.world.entity.Entity) entity class.
+//     * This method is used to get the class object representing the NMS entity class.
+//     *
+//     * @return The NMS entity class.
+//     * @throws UnableToSetupEntityCounterException If the NMS entity class is not found.
+//     */
+//    private @NotNull Class<?> getNmsEntityClass() throws UnableToSetupEntityCounterException {
+//        try {
+//            return Class.forName("net.minecraft.world.entity.Entity");
+//        } catch (ClassNotFoundException e) {
+//            throw new UnableToSetupEntityCounterException("Class not found: net.minecraft.world.entity.Entity", e);
+//        }
+//    }
+//
+//    /**
+//     * Retrieves the entity counter field of the given NMS entity class.
+//     *
+//     * @param nmsEntity The NMS entity class.
+//     * @return The entity counter field.
+//     * @throws UnableToSetupEntityCounterException If the entity counter field is not found.
+//     */
+//    private Field getEntityCounterField(@NotNull Class<?> nmsEntity) throws UnableToSetupEntityCounterException {
+//        try {
+//            return nmsEntity.getField("ENTITY_COUNTER");
+//        } catch (NoSuchFieldException e) {
+//            return getObfuscatedEntityCounterField(nmsEntity);
+//        }
+//    }
+//
+//    /**
+//     * Retrieves the obfuscated entity counter field of the given NMS entity class.
+//     *
+//     * @param nmsEntity The NMS entity class.
+//     * @return The obfuscated entity counter field.
+//     * @throws UnableToSetupEntityCounterException If the obfuscated entity counter field is not found.
+//     */
+//    private @NotNull Field getObfuscatedEntityCounterField(@NotNull Class<?> nmsEntity) throws UnableToSetupEntityCounterException {
+//        try {
+//            List<Field> list = Arrays.stream(nmsEntity.getDeclaredFields())
+//                    .filter(field -> field.getType().equals(AtomicInteger.class))
+////                    .filter(field -> Modifier.isStatic(field.getModifiers()))
+//                    .toList();
+//            System.err.println("#######################");
+//            list.forEach(System.err::println);
+//            System.err.println("#######################");
+//            return nmsEntity.getDeclaredField("d");
+//        } catch (NoSuchFieldException ex) {
+//            throw new UnableToSetupEntityCounterException("Could not find net.minecraft.world.entity.Entity.ENTITY_COUNTER field", ex);
+//        }
+//    }
+//
+//    /**
+//     * Initializes the entity counter field by retrieving the field object through reflection.
+//     * It sets the accessibility of the field to true, gets the current value of the field,
+//     * and sets the ID_PROVIDER to be a lambda function that increments and returns the value of the field.
+//     *
+//     * @param entityCounter The entity counter field.
+//     * @throws UnableToSetupEntityCounterException If an error occurs while setting up the entity counter.
+//     */
+//    private void initializeEntityCounter(@NotNull Field entityCounter) throws UnableToSetupEntityCounterException {
+//        try {
+//            entityCounter.setAccessible(true);
+//            entityCounterAtomic = (AtomicInteger) entityCounter.get(null);
+//            WrapperEntity.ID_PROVIDER = entityCounterAtomic::getAndIncrement;
+//        } catch (IllegalAccessException e) {
+//            throw new UnableToSetupEntityCounterException("Could not access net.minecraft.world.entity.Entity.ENTITY_COUNTER field", e);
+//        }
+//    }
 }

@@ -26,12 +26,14 @@ public class BukkitMain extends JavaPlugin {
     private final SurfBukkitApiImpl surfBukkitApi = new SurfBukkitApiImpl();
     private final PacketApiLoader packetApiLoader = new PacketApiLoader(this);
     private final ListenerManager listenerManager = new ListenerManager(this);
+
     private ScoreboardLibrary scoreboardLibrary;
 
     @Override
     public void onLoad() {
         packetApiLoader.onLoad();
         SurfBukkitApiAccess.setInstance(surfBukkitApi);
+
         coreInstance.onLoad();
     }
 
@@ -44,7 +46,7 @@ public class BukkitMain extends JavaPlugin {
         try {
             scoreboardLibrary = ScoreboardLibrary.loadScoreboardLibrary(this);
         } catch (NoPacketAdapterAvailableException e) {
-            getComponentLogger().warn("No packet adapter available, using NoopScoreboardLibrary...");
+            getComponentLogger().error("No packet adapter available, using NoopScoreboardLibrary...", e);
             scoreboardLibrary = new NoopScoreboardLibrary();
         }
     }

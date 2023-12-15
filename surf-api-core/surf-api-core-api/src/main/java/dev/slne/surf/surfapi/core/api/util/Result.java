@@ -17,8 +17,6 @@ public class Result<T> {
     /**
      * The Result class is a generic class that represents the result of a computation.
      * It provides methods to complete the result and to register a callback that will be executed when the result is complete.
-     *
-     * @param <T> the type of the result value
      */
     public Result() {
     }
@@ -27,7 +25,6 @@ public class Result<T> {
      * Constructor for creating a Result object with an initial value.
      *
      * @param value the initial value of the Result object
-     * @param <T> the type of the value
      */
     public Result(T value) {
         this.value = value;

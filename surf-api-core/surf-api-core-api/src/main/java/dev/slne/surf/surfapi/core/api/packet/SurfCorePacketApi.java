@@ -7,6 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 public interface SurfCorePacketApi {
 
     static SurfCorePacketApi get() {
-        return SurfCoreApi.get().getPacketApi();
+        return SurfCoreApi.getCore().getPacketApi();
     }
 }

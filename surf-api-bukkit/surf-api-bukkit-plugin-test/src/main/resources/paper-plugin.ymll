@@ -1,0 +1,15 @@
+name: SurfAPIBukkitPluginTest
+version: 1.0.0
+main: dev.slne.surf.surfapi.bukkit.test.BukkitPluginMain
+api-version: 1.20
+
+dependencies:
+  server:
+    CommandAPI:
+      load: BEFORE
+      required: true
+      join-classpath: true
+    SurfAPIBukkit:
+      load: BEFORE
+      required: true
+      join-classpath: true

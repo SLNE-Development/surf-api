@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer;
 
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
-import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfEntity;
+import dev.slne.surf.surfapi.bukkit.api.packet.entity.entities.SurfEntity;
 import dev.slne.surf.surfapi.bukkit.api.packet.meta.EntityType;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;

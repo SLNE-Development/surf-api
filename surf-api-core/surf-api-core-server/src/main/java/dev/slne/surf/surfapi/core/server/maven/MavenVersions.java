@@ -20,7 +20,6 @@ import java.util.Properties;
  * String lang3Version = MavenVersions.COMMONS_LANG3_VERSION;
  * String textVersion = MavenVersions.COMMONS_TEXT_VERSION;
  * }</pre>
- * </p>
  *
  * <p>
  * Note: The properties file "maven-versions.properties" must be present on the classpath and should contain the following keys:
@@ -31,7 +30,6 @@ import java.util.Properties;
  *   <li>commons-lang3</li>
  *   <li>commons-text</li>
  * </ul>
- * </p>
  */
 public final class MavenVersions {
 

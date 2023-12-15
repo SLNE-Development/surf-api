@@ -1,0 +1,27 @@
+package dev.slne.surf.surfapi.bukkit.test;
+
+import dev.jorel.commandapi.CommandAPI;
+import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+
+public class BukkitPluginMain extends JavaPlugin {
+
+    @Override
+    public void onLoad() {
+    }
+
+    @Override
+    public void onEnable() {
+        new SurfApiTestCommand().register();
+    }
+
+    @Override
+    public void onDisable() {
+        CommandAPI.unregister("surfapitest");
+    }
+
+    public static @NotNull BukkitPluginMain getInstance() {
+        return getPlugin(BukkitPluginMain.class);
+    }
+}
