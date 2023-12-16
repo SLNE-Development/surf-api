@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.core.api.config.transformation;
 
-import dev.slne.surf.surfapi.core.api.config.Configuration;
-import org.spongepowered.configurate.ConfigurationNode;
+import dev.slne.surf.surfapi.core.api.config.ConfigurationConstants;
 import org.spongepowered.configurate.NodePath;
 import org.spongepowered.configurate.transformation.ConfigurationTransformation;
 
@@ -29,11 +28,6 @@ public class Transformations {
     }
 
     public static ConfigurationTransformation.VersionedBuilder versionedBuilder() {
-        return ConfigurationTransformation.versionedBuilder().versionKey(Configuration.VERSION_FIELD);
-    }
-
-    @FunctionalInterface
-    public interface DefaultsAware {
-        void apply(final ConfigurationTransformation.Builder builder, final Configurations.ContextMap contextMap, final ConfigurationNode defaultsNode);
+        return ConfigurationTransformation.versionedBuilder().versionKey(ConfigurationConstants.VERSION_FIELD);
     }
 }

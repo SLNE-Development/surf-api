@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 public class ComponentSerializer extends ScalarSerializer<Component> {
 
-    protected ComponentSerializer() {
+    public ComponentSerializer() {
         super(Component.class);
     }
 

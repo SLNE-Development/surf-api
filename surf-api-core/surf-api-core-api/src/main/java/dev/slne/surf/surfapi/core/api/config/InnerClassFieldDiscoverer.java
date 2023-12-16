@@ -10,13 +10,14 @@ import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import static io.leangen.geantyref.GenericTypeReflector.erase;
 
-public class InnerClassFieldDiscoverer implements FieldDiscoverer<Map<Field, Object>> {
+public final class InnerClassFieldDiscoverer implements FieldDiscoverer<Map<Field, Object>> {
     private final Map<Class<?>, Object> instanceMap = new HashMap<>();
     private final Map<Class<?>, Object> overrides;
     @SuppressWarnings("unchecked")
@@ -122,5 +123,13 @@ public class InnerClassFieldDiscoverer implements FieldDiscoverer<Map<Field, Obj
 
     private Map<Class<?>, Object> overrides() {
         return this.overrides;
+    }
+
+    public static FieldDiscoverer<?> basicConfig() {
+        return new InnerClassFieldDiscoverer(Collections.emptyMap());
+    }
+
+    public static FieldDiscoverer<?> discoverer(Map<Class<?>, Object> overrides) {
+        return new InnerClassFieldDiscoverer(overrides);
     }
 }
