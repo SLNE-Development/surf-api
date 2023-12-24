@@ -24,6 +24,7 @@ public class ConfigExample {
                 "test.yml",
                 TestConfig.CONFIG_VERSION,
                 "This is a test config header",
+                TestConfig::get,
                 versionedBuilder -> versionedBuilder,
                 builder -> builder
         );
@@ -35,7 +36,7 @@ public class ConfigExample {
         }
     }
 
-    @SuppressWarnings({"CanBeFinal", "FieldCanBeLocal", "FieldMayBeFinal", "NotNullFieldNotInitialized", "InnerClassMayBeStatic"})
+    @SuppressWarnings({"unused", "InnerClassMayBeStatic"})
     private static class TestConfig extends ConfigurationPart {
         public static final int CONFIG_VERSION = 1;
         private static TestConfig instance;

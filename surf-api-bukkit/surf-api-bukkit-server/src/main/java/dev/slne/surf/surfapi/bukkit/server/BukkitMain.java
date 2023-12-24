@@ -5,7 +5,6 @@ import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager;
 import dev.slne.surf.surfapi.bukkit.server.packet.PacketApiLoader;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
-import io.papermc.paper.configuration.GlobalConfiguration;
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
 import net.megavex.scoreboardlibrary.api.exception.NoPacketAdapterAvailableException;
 import net.megavex.scoreboardlibrary.api.noop.NoopScoreboardLibrary;
@@ -50,8 +49,6 @@ public class BukkitMain extends JavaPlugin {
             getComponentLogger().error("No packet adapter available, using NoopScoreboardLibrary...", e);
             scoreboardLibrary = new NoopScoreboardLibrary();
         }
-
-        GlobalConfiguration.get()
     }
 
     @Override

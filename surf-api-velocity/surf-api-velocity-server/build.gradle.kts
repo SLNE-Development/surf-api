@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-core-server"))
-    api(project(":surf-api-velocity-api"))
+    api(project(":surf-api-core:surf-api-core-server"))
+    api(project(":surf-api-velocity:surf-api-velocity-api"))
 }
 
 description = "surf-api-velocity-server"

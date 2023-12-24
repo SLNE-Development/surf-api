@@ -31,7 +31,9 @@ public class CreatePacketEntity extends CommandAPICommand {
             org.bukkit.entity.EntityType entityType = commandArguments.getUnchecked("entityType");
 
             final UUID entityUuid = UUID.randomUUID();
-            EntityType.EntityType0<EntityMeta> byName = EntityType.getByName(entityType.key().asString());
+            EntityType.EntityType0<EntityMeta> byName = EntityType.getByName(entityType.key().value());
+            commandSender.sendMessage(entityType.key().asString() + " -> " + EntityType.COW.getType().getName().toString());
+            commandSender.sendMessage((entityType.key().value()));
 
             if (byName instanceof EntityType.LivingEntityType<?> livingEntityType) {
                 SurfLivingEntity<?> testLivingEntity = SurfBukkitApi.get().getPacketApi().getEntityApi().createEntity(entityUuid, livingEntityType, entityMeta -> {
@@ -44,6 +46,7 @@ public class CreatePacketEntity extends CommandAPICommand {
 
                 testLivingEntity.getEquipment().setHelmet(ItemStack.builder().type(ItemTypes.DIAMOND_HELMET).build());
                 testLivingEntity.addViewer(commandSender);
+                testLivingEntity.spawn(commandSender.getLocation());
                 ENTITY_MAP.put(entityUuid, testLivingEntity);
             } else {
                 SurfEntity<EntityMeta> testEntity = SurfBukkitPacketApi.get().createEntity(entityUuid, byName, entityMeta -> {

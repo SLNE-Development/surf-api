@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
+    api(project(":surf-api-core:surf-api-core-api"))
     compileOnlyApi(libs.paper.api)
     compileOnlyApi(libs.paper.mojangapi)
-    api(project(":surf-api-core-api"))
     compileOnlyApi(libs.packetevents)
     compileOnlyApi(libs.entitylib)
     compileOnlyApi(libs.scoreboard.library)

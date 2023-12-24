@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     compileOnlyApi(libs.velocity.api)
-    api(project(":surf-api-core-api"))
+    api(project(":surf-api-core:surf-api-core-api"))
 }
 
 description = "surf-api-velocity-api"

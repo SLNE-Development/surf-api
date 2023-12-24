@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.packet.meta;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.google.common.base.MoreObjects;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -168,7 +169,7 @@ public final class EntityType<T extends EntityMeta> {
     @Contract(value = "_, _ -> new", pure = true)
     private static <T extends EntityMeta> @NotNull EntityType0<T> create(Class<T> metaClass, com.github.retrooper.packetevents.protocol.entity.type.EntityType type) {
         final EntityType0<T> newEntityType = new EntityType0<>(metaClass, type);
-        BY_NAME.put(type.getName().getNamespace(), newEntityType);
+        BY_NAME.put(type.getName().getKey(), newEntityType);
         return newEntityType;
     }
 
@@ -178,7 +179,7 @@ public final class EntityType<T extends EntityMeta> {
     @Contract(value = "_, _ -> new", pure = true)
     private static <T extends LivingEntityMeta> @NotNull LivingEntityType<T> createL(Class<T> metaClass, com.github.retrooper.packetevents.protocol.entity.type.EntityType type) {
         final LivingEntityType<T> newEntityType = new LivingEntityType<>(metaClass, type);
-        BY_NAME.put(type.getName().getNamespace(), newEntityType);
+        BY_NAME.put(type.getName().getKey(), newEntityType);
         return newEntityType;
     }
 
@@ -191,15 +192,21 @@ public final class EntityType<T extends EntityMeta> {
      * @param <T>  the type of the entity
      * @return the entity type with the given name
      */
+    @SuppressWarnings("unchecked")
     public static <T extends EntityMeta> EntityType0<T> getByName(String name) {
-        return (EntityType0<T>) BY_NAME.get(name);
+        return (EntityType0<T>) BY_NAME.get(name.contains(":") ? name.substring(name.indexOf(":") + 1) : name);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends LivingEntityMeta> LivingEntityType<T> getLivingByName(String name) {
-        final EntityType0<?> type0 = BY_NAME.get(name);
+        final EntityType0<?> type0 = getByName(name);
         checkState(type0 instanceof LivingEntityType, "EntityType is not a LivingEntityType");
 
-        return (LivingEntityType<T>) type0;
+        try {
+            return (LivingEntityType<T>) type0;
+        } catch (ClassCastException e) {
+            throw new IllegalStateException("The given entity type is not the same as the requested type", e);
+        }
     }
 
     // ---------------------------------------------------------------------------------------------------------------//
@@ -245,6 +252,14 @@ public final class EntityType<T extends EntityMeta> {
         @Contract(pure = true)
         public com.github.retrooper.packetevents.protocol.entity.type.EntityType getType() {
             return type;
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("metaClass", metaClass)
+                    .add("type", type.getName().toString())
+                    .toString();
         }
     }
 

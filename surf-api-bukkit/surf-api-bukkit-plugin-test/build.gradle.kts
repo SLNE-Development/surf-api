@@ -11,7 +11,7 @@ plugins {
 description = "surf-api-bukkit-plugin-test"
 
 dependencies {
-    compileOnlyApi(project(":surf-api-bukkit-api"))
+    compileOnlyApi(project(":surf-api-bukkit:surf-api-bukkit-api"))
     compileOnlyApi(libs.commandapi)
 }
 
@@ -39,7 +39,7 @@ paper {
 
 tasks {
     runServer {
-        minecraftVersion("1.20.2")
+        minecraftVersion("1.20.4")
 
         downloadPlugins {
             modrinth("commandapi", "9.3.0")

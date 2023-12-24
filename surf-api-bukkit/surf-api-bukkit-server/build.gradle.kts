@@ -11,8 +11,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-bukkit-api"))
-    api(project(":surf-api-core-server"))
+    api(project(":surf-api-bukkit:surf-api-bukkit-api"))
+    api(project(":surf-api-core:surf-api-core-server"))
 
     // -------------------- Paper Libraries -------------------- //
     paperLibrary(libs.scoreboard.library.implementation)
@@ -57,6 +57,7 @@ paper {
 
     // Plugin Dependencies
     serverDependencies {
+
         registerSoft("ProtocolLib")
         registerSoft("ProtocolSupport")
         registerSoft("ViaVersion")
