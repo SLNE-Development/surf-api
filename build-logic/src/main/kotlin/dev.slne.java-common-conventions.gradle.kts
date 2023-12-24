@@ -1,6 +1,7 @@
 plugins {
     // Apply the java Plugin to add support for Java.
     java
+    `maven-publish`
     id("net.linguica.maven-settings")
 }
 
@@ -25,6 +26,26 @@ java {
     }
     withSourcesJar()
     withJavadocJar()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifact(tasks["sourcesJar"])
+            artifact(tasks["javadocJar"])
+        }
+    }
+    repositories {
+        maven {
+            name = "slne-space"
+            url = uri(System.getenv("REPOSITORY_URL"))
+            credentials {
+                username = System.getenv("JB_SPACE_CLIENT_ID")
+                password = System.getenv("JB_SPACE_CLIENT_SECRET")
+            }
+        }
+    }
 }
 
 tasks {
