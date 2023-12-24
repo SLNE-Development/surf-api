@@ -39,7 +39,7 @@ publishing {
     repositories {
         maven {
             name = "slne-space"
-            url = uri(System.getenv("REPOSITORY_URL"))
+            url = uri(System.getProperty("REPOSITORY_URL"))
             credentials {
                 username = System.getenv("JB_SPACE_CLIENT_ID")
                 password = System.getenv("JB_SPACE_CLIENT_SECRET")
