@@ -19,6 +19,7 @@ import me.tofaa.entitylib.meta.EntityMeta;
 import me.tofaa.entitylib.meta.types.LivingEntityMeta;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.bukkit.Bukkit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +51,10 @@ public class SurfBukkitPacketEntityApiImpl implements SurfBukkitPacketEntityApi 
         interactListenerMap.defaultReturnValue(new ArrayList<>()); // prevent NPEs
 
         registerInteractListener((clickedEntity, interactAction, interactionHand, user, player) -> {
+            Bukkit.broadcastMessage("Global Interact event!");
             final List<SurfBukkitInteractListener> listeners = interactListenerMap.get(clickedEntity.getUuid());
 
+            Bukkit.broadcastMessage("listeners: " + listeners);
             for (SurfBukkitInteractListener listener : listeners) {
                 listener.onInteract(clickedEntity, interactAction, interactionHand, user, player);
             }
@@ -155,15 +158,17 @@ public class SurfBukkitPacketEntityApiImpl implements SurfBukkitPacketEntityApi 
         final SurfLivingEntity<M> surfLivingEntity = new SurfLivingEntity<>(checkNotNull(entity), type.getMetaClass());
 
         surfLivingEntity.editMetadata(changeMeta);
+
+        checkNotExists(entities, uuid, "UUID");
+        checkNotExists(entitiesById, entity.getEntityId(), "ID");
         entities.put(uuid, surfLivingEntity);
-        checkState(
-                !entitiesById.containsKey(entity.getEntityId()),
-                "entity with ID %s already exists",
-                entity.getEntityId()
-        );
         entitiesById.put(entity.getEntityId(), surfLivingEntity);
 
         return surfLivingEntity;
+    }
+
+    private void checkNotExists(Map<?, ?> map, Object key, String type) {
+        checkState(!map.containsKey(key), "entity with %s '%s' already exists", type, key);
     }
 
     @Override
