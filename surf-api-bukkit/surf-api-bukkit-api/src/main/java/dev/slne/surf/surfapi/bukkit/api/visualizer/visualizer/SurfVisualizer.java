@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer;
 
+import dev.slne.surf.surfapi.core.api.packet.entity.entities.display.PacketBlockDisplay;
 import me.tofaa.entitylib.meta.other.BlockDisplayMeta;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,7 +16,7 @@ public interface SurfVisualizer {
 
     void addVisualLocation(Location visualLocation, Material material);
 
-    void addVisualLocation(Location visualLocation, Material material, Consumer<BlockDisplayMeta> consumer);
+    void addVisualLocation(Location visualLocation, Material material, Consumer<PacketBlockDisplay> consumer);
 
     void removeVisualLocation(Location visualLocation);
 

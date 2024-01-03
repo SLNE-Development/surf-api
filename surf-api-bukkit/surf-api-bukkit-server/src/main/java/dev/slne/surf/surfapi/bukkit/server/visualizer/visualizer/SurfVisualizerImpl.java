@@ -1,15 +1,13 @@
 package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer;
 
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
-import dev.slne.surf.surfapi.bukkit.api.packet.entity.entities.SurfEntity;
-import dev.slne.surf.surfapi.bukkit.api.packet.meta.EntityType;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
+import dev.slne.surf.surfapi.core.api.packet.entity.entities.display.PacketBlockDisplay;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import me.tofaa.entitylib.meta.other.BlockDisplayMeta;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -25,7 +23,7 @@ public class SurfVisualizerImpl implements SurfVisualizer {
 
     protected final Object2ObjectMap<Location, Material> visualLocations = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     private final Set<UUID> viewers = Collections.synchronizedSet(new HashSet<>());
-    private final Object2ObjectMap<Location, SurfEntity<BlockDisplayMeta>> entities = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    private final Object2ObjectMap<Location, PacketBlockDisplay> entities = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     private final Object2ObjectMap<UUID, List<Location>> inDistance = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     private final Object2ObjectMap<UUID, List<Location>> oldInDistance = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     protected @Nullable VisualizerTask task;
@@ -46,10 +44,10 @@ public class SurfVisualizerImpl implements SurfVisualizer {
     }
 
     @Override
-    public void addVisualLocation(Location visualLocation, Material material, Consumer<BlockDisplayMeta> consumer) {
+    public void addVisualLocation(Location visualLocation, Material material, Consumer<PacketBlockDisplay> consumer) {
         visualLocations.put(visualLocation, material);
-        entities.put(visualLocation, SurfBukkitPacketApi.get().createEntity(UUID.randomUUID(), EntityType.BLOCK_DISPLAY, blockDisplayMeta -> {
-            blockDisplayMeta.setBlockId(SpigotConversionUtil.fromBukkitBlockData(material.createBlockData()).getGlobalId());
+        entities.put(visualLocation, SurfBukkitPacketApi.get().getPacketEntityApi().spawnEntity(PacketBlockDisplay.class, UUID.randomUUID(), blockDisplayMeta -> {
+            blockDisplayMeta.blockState(SpigotConversionUtil.fromBukkitBlockData(material.createBlockData()));
             consumer.accept(blockDisplayMeta);
         }));
     }
@@ -57,15 +55,15 @@ public class SurfVisualizerImpl implements SurfVisualizer {
     @Override
     public void removeVisualLocation(Location visualLocation) {
         visualLocations.remove(visualLocation);
-        SurfEntity<BlockDisplayMeta> removed = entities.remove(visualLocation);
+        PacketBlockDisplay removed = entities.remove(visualLocation);
         if (removed != null) {
-            removed.remove();
+//            removed.remove(); TODO
         }
     }
 
     protected void removeAllVisualLocations() {
         visualLocations.clear();
-        entities.values().forEach(SurfEntity::remove);
+//        entities.values().forEach(SurfEntity::remove); TODO
         entities.clear();
     }
 
@@ -82,7 +80,7 @@ public class SurfVisualizerImpl implements SurfVisualizer {
         }
 
         entities.forEach((location, blockDisplayMetaSurfEntity) -> {
-            blockDisplayMetaSurfEntity.spawn(location);
+            blockDisplayMetaSurfEntity.spawn(SpigotConversionUtil.fromBukkitLocation(location));
             viewers.forEach(blockDisplayMetaSurfEntity::addViewer);
         });
 
@@ -94,13 +92,13 @@ public class SurfVisualizerImpl implements SurfVisualizer {
     @Override
     public void addViewer(Player player) {
         viewers.add(player.getUniqueId());
-        entities.values().forEach(blockDisplayMetaSurfEntity -> blockDisplayMetaSurfEntity.addViewer(player));
+        entities.values().forEach(blockDisplayMetaSurfEntity -> blockDisplayMetaSurfEntity.addViewer(player.getUniqueId()));
     }
 
     @Override
     public void removeViewer(Player player) {
         viewers.remove(player.getUniqueId());
-        entities.values().forEach(blockDisplayMetaSurfEntity -> blockDisplayMetaSurfEntity.removeViewer(player));
+        entities.values().forEach(blockDisplayMetaSurfEntity -> blockDisplayMetaSurfEntity.removeViewer(player.getUniqueId()));
     }
 
     @Override
@@ -112,7 +110,7 @@ public class SurfVisualizerImpl implements SurfVisualizer {
 
         assert task != null : "Task is null while running!";
 
-        entities.values().forEach(SurfEntity::remove);
+//        entities.values().forEach(SurfEntity::remove); TODO
         entities.clear();
         task.cancel();
         return true;
@@ -148,13 +146,13 @@ public class SurfVisualizerImpl implements SurfVisualizer {
                         .toList();
 
                 for (Location location : toRemove) {
-                    SurfEntity<BlockDisplayMeta> entity = entities.get(location);
+                    PacketBlockDisplay entity = entities.get(location);
 
                     if (entity == null) {
                         continue;
                     }
 
-                    entity.removeViewer(player);
+                    entity.removeViewer(player.getUniqueId());
                 }
             }
         }

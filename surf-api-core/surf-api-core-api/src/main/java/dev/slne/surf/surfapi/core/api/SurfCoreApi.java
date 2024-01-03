@@ -3,7 +3,9 @@ package dev.slne.surf.surfapi.core.api;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -29,6 +31,8 @@ public interface SurfCoreApi {
      * @param server the name of the server to send the player to
      */
     void sendPlayerToServer(UUID playerUuid, String server);
+
+    Optional<Object> getPlayer(@NotNull UUID playerUuid);
 
     /**
      * Retrieves the instance of the SurfCoreApi.

@@ -19,6 +19,8 @@ commons-lang3-version = "3.13.0"
 commons-text-version = "1.11.0"
 plugin-yml-version-paper = "0.6.0"
 spongepowered-configurate-yaml-version = "4.1.2"
+spongepowered-math-version = "2.0.1"
+fastutil-version = "8.5.12"
 
 
 [libraries]
@@ -41,6 +43,8 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson-version" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3-version" }
 commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text-version" }
 spongepowered-configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "spongepowered-configurate-yaml-version" }
+spongepowered-math = { module = "org.spongepowered:math", version.ref = "spongepowered-math-version" }
+fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil-version" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-version-paper" }

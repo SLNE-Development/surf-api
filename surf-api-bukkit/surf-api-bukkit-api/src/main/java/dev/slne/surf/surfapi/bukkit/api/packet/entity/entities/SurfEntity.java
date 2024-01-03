@@ -48,7 +48,7 @@ public sealed class SurfEntity<M extends EntityMeta> permits SurfLivingEntity {
      * @param listener the SurfBukkitInteractListener to register for interact events
      */
     public void setOnInteract(SurfBukkitInteractListener listener) {
-        SurfBukkitPacketEntityApi.get().registerInteractListener(entity.getUuid(), listener);
+//        SurfBukkitPacketEntityApi.get().registerInteractListener(entity.getUuid(), listener);
     }
 
     /**

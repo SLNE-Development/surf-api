@@ -1,22 +1,22 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity;
 
-import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
-import com.github.retrooper.packetevents.protocol.item.ItemStack;
-import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.player.HumanoidArm;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfBukkitPacketEntityApi;
-import dev.slne.surf.surfapi.bukkit.api.packet.entity.entities.SurfLivingEntity;
-import dev.slne.surf.surfapi.bukkit.api.packet.meta.EntityType;
 import dev.slne.surf.surfapi.core.api.messages.Colors;
+import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketEntityApi;
+import dev.slne.surf.surfapi.core.api.packet.entity.BillboardConstraints;
+import dev.slne.surf.surfapi.core.api.packet.entity.Brightness;
+import dev.slne.surf.surfapi.core.api.packet.entity.entities.display.PacketBlockDisplay;
+import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.PacketPlayer;
+import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.monster.zombie.PacketZombie;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import me.tofaa.entitylib.EntityLib;
-import me.tofaa.entitylib.entity.WrapperEntity;
-import me.tofaa.entitylib.meta.mobs.monster.zombie.ZombieMeta;
-import me.tofaa.entitylib.meta.mobs.passive.CowMeta;
-import me.tofaa.entitylib.meta.types.PlayerMeta;
 import net.kyori.adventure.text.Component;
+import org.spongepowered.math.vector.Vector3f;
 
+import java.awt.*;
+import java.util.Random;
 import java.util.UUID;
 
 public class CreateHardcoded extends CommandAPICommand {
@@ -27,7 +27,8 @@ public class CreateHardcoded extends CommandAPICommand {
         withSubcommands(
                 new CreateHardcodedPlayer("player"),
                 new CreateHardcodedCow("cow"),
-                new CreateHardcodedZombie("zombie")
+                new CreateHardcodedZombie("zombie"),
+                new CreateHardcodedBlockDisplay("blockdisplay")
         );
     }
 
@@ -36,31 +37,30 @@ public class CreateHardcoded extends CommandAPICommand {
             super(commandName);
 
             executesPlayer((player, commandArguments) -> {
-                SurfLivingEntity<PlayerMeta> packetPlayer = SurfBukkitPacketEntityApi.get().createEntity(
+                PacketPlayer packetPlayer = SurfBukkitPacketEntityApi.get().spawnEntity(
+                        PacketPlayer.class,
                         UUID.randomUUID(),
-                        EntityType.PLAYER,
                         playerMeta -> {
-                            playerMeta.setCustomName(Component.text("Hardcoded Player", Colors.WARNING));
-                            playerMeta.setCustomNameVisible(true);
-                            playerMeta.setActiveHand(HumanoidArm.LEFT);
-                            playerMeta.setHasGlowingEffect(true);
-                            playerMeta.setInRiptideSpinAttack(true);
-                            playerMeta.setOnFire(true);
+                            playerMeta.displayName(Component.text("Hardcoded Player", Colors.WARNING));
+                            playerMeta.activeHand(HumanoidArm.LEFT);
+                            playerMeta.glowingEffect(true);
+                            playerMeta.inRiptideAttack(true);
+                            playerMeta.onFire(true);
                         });
 
-                packetPlayer.getEquipment().setHelmet(new ItemStack.Builder().type(ItemTypes.DIAMOND_HELMET).build());
+//                packetPlayer.getEquipment().setHelmet(new ItemStack.Builder().type(ItemTypes.DIAMOND_HELMET).build());
+//
+//                packetPlayer.setOnInteract((clickedEntity, interactAction, interactionHand, user, player1) -> {
+//                    // send all params to player1
+//                    player1.sendMessage("clickedEntity: " + clickedEntity);
+//                    player1.sendMessage("interactAction: " + interactAction);
+//                    player1.sendMessage("interactionHand: " + interactionHand);
+//                    player1.sendMessage("user: " + user);
+//                    player1.sendMessage("player1: " + player1);
+//                });
 
-                packetPlayer.setOnInteract((clickedEntity, interactAction, interactionHand, user, player1) -> {
-                    // send all params to player1
-                    player1.sendMessage("clickedEntity: " + clickedEntity);
-                    player1.sendMessage("interactAction: " + interactAction);
-                    player1.sendMessage("interactionHand: " + interactionHand);
-                    player1.sendMessage("user: " + user);
-                    player1.sendMessage("player1: " + player1);
-                });
-
-                packetPlayer.spawn(player.getLocation());
-                packetPlayer.addViewer(player);
+                packetPlayer.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+                packetPlayer.addViewer(player.getUniqueId());
 
                 player.sendMessage("Created hardcoded player");
             });
@@ -104,20 +104,20 @@ public class CreateHardcoded extends CommandAPICommand {
 //                    e.printStackTrace();
 //                }
 
-                WrapperEntity entity = EntityLib.createEntity(UUID.randomUUID(), EntityTypes.COW);
-                CowMeta meta = (CowMeta) entity.getMeta();
-
-                meta.setCustomName(Component.text("Hardcoded Cow", Colors.WARNING));
-                meta.setCustomNameVisible(true);
-                meta.setActiveHand(HumanoidArm.LEFT);
-                meta.setHasGlowingEffect(true);
-                meta.setOnFire(true);
-
-                UUID uuid = player.getUniqueId();
-                entity.addViewer(uuid);
-                entity.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
-
-                EntityLib.sendPacket(uuid, entity.getMeta().createPacket());
+//                WrapperEntity entity = EntityLib.createEntity(UUID.randomUUID(), EntityTypes.COW);
+//                CowMeta meta = (CowMeta) entity.getMeta();
+//
+//                meta.setCustomName(Component.text("Hardcoded Cow", Colors.WARNING));
+//                meta.setCustomNameVisible(true);
+//                meta.setActiveHand(HumanoidArm.LEFT);
+//                meta.setHasGlowingEffect(true);
+//                meta.setOnFire(true);
+//
+//                UUID uuid = player.getUniqueId();
+//                entity.addViewer(uuid);
+//                entity.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+//
+//                EntityLib.sendPacket(uuid, entity.getMeta().createPacket());
 
                 player.sendMessage("Created hardcoded cow");
             });
@@ -129,32 +129,53 @@ public class CreateHardcoded extends CommandAPICommand {
             super(commandName);
 
             executesPlayer((player, commandArguments) -> {
-                SurfLivingEntity<ZombieMeta> packetZombie = SurfBukkitPacketEntityApi.get().createEntity(
+                PacketZombie<?> packetZombie = SurfBukkitPacketEntityApi.get().spawnEntity(
+                        PacketZombie.class,
                         UUID.randomUUID(),
-                        EntityType.ZOMBIE,
                         zombieMeta -> {
-                            zombieMeta.setCustomName(Component.text("Hardcoded Zombie", Colors.WARNING));
-                            zombieMeta.setCustomNameVisible(true);
-                            zombieMeta.setActiveHand(HumanoidArm.LEFT);
-                            zombieMeta.setHasGlowingEffect(true);
-                            zombieMeta.setBecomingDrowned(true);
+                            zombieMeta.displayName(Component.text("Hardcoded Zombie", Colors.WARNING));
+                            zombieMeta.activeHand(HumanoidArm.LEFT);
+                            zombieMeta.glowingEffect(true);
+                            zombieMeta.becomingDrowned(true);
                         });
 
-                packetZombie.getEquipment().setHelmet(new ItemStack.Builder().type(ItemTypes.DIAMOND_HELMET).build());
+//                packetZombie.getEquipment().setHelmet(new ItemStack.Builder().type(ItemTypes.DIAMOND_HELMET).build());
+//
+//                packetZombie.setOnInteract((clickedEntity, interactAction, interactionHand, user, player1) -> {
+//                    // send all params to player1
+//                    player1.sendMessage("clickedEntity: " + clickedEntity);
+//                    player1.sendMessage("interactAction: " + interactAction);
+//                    player1.sendMessage("interactionHand: " + interactionHand);
+//                    player1.sendMessage("user: " + user);
+//                    player1.sendMessage("player1: " + player1);
+//                });
 
-                packetZombie.setOnInteract((clickedEntity, interactAction, interactionHand, user, player1) -> {
-                    // send all params to player1
-                    player1.sendMessage("clickedEntity: " + clickedEntity);
-                    player1.sendMessage("interactAction: " + interactAction);
-                    player1.sendMessage("interactionHand: " + interactionHand);
-                    player1.sendMessage("user: " + user);
-                    player1.sendMessage("player1: " + player1);
+//                packetZombie.spawn(player.getLocation());
+//                packetZombie.addViewer(player);
+                boolean success2 = packetZombie.addViewer(player.getUniqueId());
+                boolean success = packetZombie.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+
+                player.sendMessage("Created hardcoded zombie: " + success + " " + success2);
+            });
+        }
+    }
+
+    public static class CreateHardcodedBlockDisplay extends CommandAPICommand {
+
+        public CreateHardcodedBlockDisplay(String commandName) {
+            super(commandName);
+
+            executesPlayer((player, commandArguments) -> {
+                PacketBlockDisplay packetBlockDisplay = SurfCorePacketEntityApi.get().spawnEntity(PacketBlockDisplay.class, UUID.randomUUID(), blockDisplay -> {
+                    blockDisplay.blockState(StateTypes.STONE);
+                    blockDisplay.brightness(new Brightness(1, 1));
+                    blockDisplay.billboardConstraints(BillboardConstraints.CENTER);
+                    blockDisplay.scale(Vector3f.createRandomDirection(new Random()));
+                    blockDisplay.glowColorOverride(Color.ORANGE);
                 });
 
-                packetZombie.spawn(player.getLocation());
-                packetZombie.addViewer(player);
-
-                player.sendMessage("Created hardcoded zombie");
+                packetBlockDisplay.addViewer(player.getUniqueId());
+                packetBlockDisplay.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
             });
         }
     }

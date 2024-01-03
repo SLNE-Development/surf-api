@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer;
 
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfPatternedVisualizer;
-import me.tofaa.entitylib.meta.other.BlockDisplayMeta;
+import dev.slne.surf.surfapi.core.api.packet.entity.entities.display.PacketBlockDisplay;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,7 +18,7 @@ public class SurfPatternedVisualizerImpl extends SurfVisualizerImpl implements S
     private final Set<Location> visualPoints = Collections.synchronizedSet(new HashSet<>());
     private boolean renderAtHighestPoint = true;
     private Material visualMaterial = DEFAULT_MATERIAL;
-    private Consumer<BlockDisplayMeta> visualMaterialConsumer = blockDisplayMeta -> {
+    private Consumer<PacketBlockDisplay> visualMaterialConsumer = blockDisplayMeta -> {
     };
 
     @Override
@@ -47,7 +47,7 @@ public class SurfPatternedVisualizerImpl extends SurfVisualizerImpl implements S
     }
 
     @Override
-    public void setVisualMaterial(Material material, Consumer<BlockDisplayMeta> consumer) {
+    public void setVisualMaterial(Material material, Consumer<PacketBlockDisplay> consumer) {
         visualMaterial = material;
         visualMaterialConsumer = consumer;
 

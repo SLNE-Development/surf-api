@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.*;
@@ -85,6 +86,11 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
 
             player.sendPluginMessage(BukkitMain.getInstance(), "BungeeCord", out.toByteArray());
         }
+    }
+
+    @Override
+    public Optional<Object> getPlayer(@NotNull UUID playerUuid) {
+        return Optional.ofNullable(Bukkit.getPlayer(checkNotNull(playerUuid, "playerUuid")));
     }
 
     @Override

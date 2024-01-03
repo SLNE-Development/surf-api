@@ -13,4 +13,5 @@ dependencies {
     compileOnlyApi("com.google.code.gson:gson:2.10.1")
     compileOnlyApi("org.apache.commons:commons-lang3:3.13.0")
     compileOnlyApi("org.apache.commons:commons-text:1.11.0")
+    compileOnlyApi("it.unimi.dsi:fastutil:8.5.12")
 }

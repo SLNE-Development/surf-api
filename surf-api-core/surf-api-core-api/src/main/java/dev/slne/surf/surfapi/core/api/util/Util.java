@@ -1,5 +1,14 @@
 package dev.slne.surf.surfapi.core.api.util;
 
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectMaps;
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -7,11 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -120,5 +129,40 @@ public class Util {
         final long fieldOffset = UNSAFE.staticFieldOffset(field);
 
         putOperation.accept(UNSAFE, fieldBase, fieldOffset);
+    }
+
+    public static <T extends Enum<T>> @NotNull Object2ObjectMap<String, T> byStringIdMap(@NotNull Class<T> enumClass, Function<T, String> idMapper) {
+        return Object2ObjectMaps.synchronize(Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(
+                Arrays.stream(enumClass.getEnumConstants()).collect(Collectors.toMap(idMapper, Function.identity()))
+        )));
+    }
+
+    public static <T extends Enum<T>> @NotNull Int2ObjectMap<T> byIdMap(@NotNull Class<T> enumClass, @NotNull ToIntFunction<T> idMapper) {
+        return byIdMap(idMapper, enumClass.getEnumConstants());
+    }
+
+    public static <T extends Enum<T> & ById> @NotNull Int2ObjectMap<T> byIdMap(T[] values) {
+        return byIdMap(ById::id, values);
+    }
+
+    public static<T extends Enum<T>> Int2ObjectMap<T> byIdMap(ToIntFunction<T> idMapper, T[] values) {
+        return Int2ObjectMaps.synchronize(Int2ObjectMaps.unmodifiable(new Int2ObjectOpenHashMap<>(
+                Arrays.stream(values).collect(Collectors.toMap(idMapper::applyAsInt, Function.identity()))
+        )));
+    }
+
+    public static <T extends Enum<T> & ById.ByByteId> @NotNull Byte2ObjectMap<T> byByteIdMap(T[] values) {
+        return byByteIdMap(ById.ByByteId::id, values);
+    }
+
+    public static<T extends Enum<T>> @NotNull Byte2ObjectMap<T> byByteIdMap(@NotNull ToByteFunction<T> idMapper, T[] values) {
+        return Byte2ObjectMaps.synchronize(Byte2ObjectMaps.unmodifiable(new Byte2ObjectOpenHashMap<>(
+                Arrays.stream(values).collect(Collectors.toMap(idMapper::applyAsByte, Function.identity()))
+        )));
+    }
+
+    @FunctionalInterface
+    public interface ToByteFunction<T> {
+        byte applyAsByte(T value);
     }
 }

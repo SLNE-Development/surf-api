@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.UUIDArgument;
-import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfBukkitPacketEntityApi;
 
 import java.util.UUID;
 
@@ -19,7 +18,8 @@ public class RemovePacketEntity extends CommandAPICommand {
 
             assert entityUuid != null;
 
-            SurfBukkitPacketEntityApi.get().deleteEntity(entityUuid);
+            // TODO
+//            SurfBukkitPacketEntityApi.get().deleteEntity(entityUuid);
             CreatePacketEntity.getEntityMap().remove(entityUuid);
 
             commandSender.sendMessage("Removed entity with UUID " + entityUuid);

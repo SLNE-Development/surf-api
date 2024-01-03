@@ -26,6 +26,10 @@ dependencies {
     paperLibrary(libs.gson)
     paperLibrary(libs.commons.lang3)
     paperLibrary(libs.commons.text)
+    paperLibrary(libs.spongepowered.configurate.yaml)
+    paperLibrary(libs.spongepowered.math)
+    paperLibrary(libs.fastutil)
+    paperLibrary("xyz.jpenilla:reflection-remapper:0.1.0")
     paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
 }
 

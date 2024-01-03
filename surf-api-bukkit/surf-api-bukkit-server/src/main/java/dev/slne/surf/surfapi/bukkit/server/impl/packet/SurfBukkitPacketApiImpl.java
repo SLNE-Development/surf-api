@@ -20,7 +20,7 @@ public class SurfBukkitPacketApiImpl extends SurfCorePacketApiImpl implements Su
     }
 
     @Override
-    public SurfBukkitPacketEntityApi getEntityApi() {
+    public SurfBukkitPacketEntityApi getPacketEntityApi() {
         return packetEntityApi;
     }
 
