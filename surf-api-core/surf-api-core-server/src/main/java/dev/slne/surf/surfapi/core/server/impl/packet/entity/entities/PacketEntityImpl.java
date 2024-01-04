@@ -213,7 +213,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
         if (displayName == null) {
             set(CUSTOM_NAME_VISIBLE_INDEX, false);
         } else {
-            set(CUSTOM_NAME_VISIBLE_INDEX, false);
+            set(CUSTOM_NAME_VISIBLE_INDEX, true);
             set(CUSTOM_NAME_INDEX, ADV_COMPONENT, displayName);
         }
         afterSet();
@@ -270,9 +270,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
         }
 
         this.location = location;
-        var packet = spawnPacket();
-        sendPacketToAllViewers(version -> packet);
-        sendPacketToAllViewers(this::metadataPacket);
+        viewers.forEach(this::spawn);
         spawned = true;
 
         return true;
@@ -289,7 +287,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
             return false;
         }
 
-        sendPacketToAllViewers(this::despawnPacket);
+        viewers.forEach(this::despawn);
 
         spawned = false;
         this.location = null;
@@ -325,8 +323,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
     public boolean addViewer(@NotNull UUID uuid) {
         final boolean success = viewers.add(checkNotNull(uuid, "Cannot add viewer with null uuid"));
         if (success && isSpawned()) {
-            sendPacketToViewer(uuid, version -> spawnPacket());
-            sendPacketToViewer(uuid, this::metadataPacket);
+            spawn(uuid);
         }
 
         return success;
@@ -337,10 +334,18 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
         final boolean success = viewers.remove(checkNotNull(checkNotNull(uuid, "Cannot remove viewer with null uuid")));
 
         if (success) {
-            sendPacketToViewer(uuid, this::despawnPacket);
+            despawn(uuid);
         }
 
         return success;
+    }
+
+    protected void spawn(UUID uuid) {
+        sendPacketsToViewer(uuid, version1 -> spawnPacket(), this::metadataPacket);
+    }
+
+    protected void despawn(UUID uuid) {
+        sendPacketToViewer(uuid, this::despawnPacket);
     }
 
     protected PacketWrapper<?> spawnPacket() {
@@ -401,6 +406,20 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
         surfCoreApi.getPlayer(viewer).ifPresent(player -> {
             final User user = playerManager.getUser(player);
             user.sendPacket(packet.apply(user.getClientVersion()));
+        });
+    }
+
+    @SafeVarargs
+    protected final void sendPacketsToViewer(UUID viewer, Function<ClientVersion, PacketWrapper<?>>... packets) {
+        final PlayerManager playerManager = PacketEvents.getAPI().getPlayerManager();
+        final SurfCoreApi surfCoreApi = SurfCoreApi.getCore();
+
+        surfCoreApi.getPlayer(viewer).ifPresent(player -> {
+            final User user = playerManager.getUser(player);
+            final ClientVersion clientVersion = user.getClientVersion();
+            for (Function<ClientVersion, PacketWrapper<?>> packet : packets) {
+                user.sendPacket(packet.apply(clientVersion));
+            }
         });
     }
 

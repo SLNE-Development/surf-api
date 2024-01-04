@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.core.server.impl.packet.entity.entities.living;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.HumanoidArm;
-import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnLivingEntity;
@@ -16,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.UUID;
-
-import static com.google.common.base.Preconditions.*;
 
 public abstract class PacketLivingEntityImpl<Impl extends PacketLivingEntity<Impl>> extends PacketEntityImpl<Impl> implements PacketLivingEntity<Impl> {
 
@@ -137,31 +134,15 @@ public abstract class PacketLivingEntityImpl<Impl extends PacketLivingEntity<Imp
     }
 
     @Override
-    public boolean spawn(@NotNull Location location) {
-        checkNotNull(location, "Cannot spawn entity at null location");
-
-        if (isSpawned()) {
-            return false;
+    protected void spawn(UUID uuid) {
+        if (isVersionNewerThanOrEquals(ClientVersion.V_1_18_2, uuid)) {
+            super.spawn(uuid);
+        } else {
+            sendPacketToViewer(uuid, this::until1_18_2_spawnPacket);
         }
-
-        this.location = location;
-        sendPacketToAllViewers(this::spawnPacket);
-        spawned = true;
-
-        return true;
     }
 
-    @Override
-    public boolean addViewer(@NotNull UUID uuid) {
-        final boolean success = viewers.add(checkNotNull(uuid, "Cannot add viewer with null uuid"));
-        if (success && isSpawned()) {
-            sendPacketToViewer(uuid, this::spawnPacket);
-        }
-
-        return success;
-    }
-
-    protected PacketWrapper<?> spawnPacket(ClientVersion version) {
+    protected PacketWrapper<?> until1_18_2_spawnPacket(ClientVersion version) {
         assert location != null : "Cannot spawn entity at null location";
 
         return new WrapperPlayServerSpawnLivingEntity(

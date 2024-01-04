@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.server.impl.packet.entity.entities;
 
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataType;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityMetadataProvider;
@@ -10,6 +11,7 @@ import com.github.retrooper.packetevents.protocol.world.PaintingType;
 import com.github.retrooper.packetevents.util.Quaternion4f;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.google.common.base.MoreObjects;
+import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.util.pos.rot.PreciseRotation;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -216,12 +218,11 @@ public abstract class PacketEntityCommon implements EntityMetadataProvider {
         set(index, BYTE, mask);
     }
 
-    protected static Vector3i toPacketEvents(org.spongepowered.math.vector.Vector3i sponge) {
-        return new Vector3i(sponge.x(), sponge.y(), sponge.z());
-    }
-
-    protected static org.spongepowered.math.vector.Vector3i fromPacketEvents(Vector3i packetEvents) {
-        return new org.spongepowered.math.vector.Vector3i(packetEvents.x, packetEvents.y, packetEvents.z);
+    protected boolean isVersionNewerThanOrEquals(ClientVersion version, UUID uuid) {
+        return SurfCoreApi.getCore().getPlayer(uuid)
+                .map(player -> PacketEvents.getAPI().getPlayerManager().getUser(player)
+                        .getClientVersion().isNewerThanOrEquals(version))
+                .orElse(true);
     }
 
     @Override
@@ -247,5 +248,13 @@ public abstract class PacketEntityCommon implements EntityMetadataProvider {
                 version.getProtocolVersion(),
                 Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>())
         );
+    }
+
+    protected static Vector3i toPacketEvents(org.spongepowered.math.vector.Vector3i sponge) {
+        return new Vector3i(sponge.x(), sponge.y(), sponge.z());
+    }
+
+    protected static org.spongepowered.math.vector.Vector3i fromPacketEvents(Vector3i packetEvents) {
+        return new org.spongepowered.math.vector.Vector3i(packetEvents.x, packetEvents.y, packetEvents.z);
     }
 }

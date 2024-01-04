@@ -6,7 +6,6 @@ import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
-import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
@@ -232,23 +231,11 @@ public final class PacketPlayerImpl extends PacketLivingEntityImpl<PacketPlayer>
     }
 
     @Override
-    public boolean spawn(@NotNull Location location) {
-        checkNotNull(location, "Cannot spawn entity at null location");
-
-        if (isSpawned()) {
-            return false;
-        }
-
-        this.location = location;
-        sendPacketToAllViewers(this::infoAllPacket);
-        sendPacketToAllViewers(this::spawnPacket);
-        spawned = true;
-
-        return true;
+    protected void spawn(UUID uuid) {
+        sendPacketsToViewer(uuid, this::infoAllPacket, this::spawnPlayerPacket);
     }
 
-    @Override
-    protected PacketWrapper<?> spawnPacket(ClientVersion version) {
+    private PacketWrapper<?> spawnPlayerPacket(ClientVersion version) {
         assert location != null;
         return new WrapperPlayServerSpawnPlayer(entityId(), uuid(), location, this.entityData(version));
     }

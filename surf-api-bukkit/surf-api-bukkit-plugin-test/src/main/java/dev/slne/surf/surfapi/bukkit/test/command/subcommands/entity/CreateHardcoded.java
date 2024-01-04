@@ -1,7 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.HumanoidArm;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnLivingEntity;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfBukkitPacketEntityApi;
 import dev.slne.surf.surfapi.core.api.messages.Colors;
@@ -10,12 +18,16 @@ import dev.slne.surf.surfapi.core.api.packet.entity.BillboardConstraints;
 import dev.slne.surf.surfapi.core.api.packet.entity.Brightness;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.display.PacketBlockDisplay;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.PacketPlayer;
+import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.ageable.animal.PacketCow;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.monster.zombie.PacketZombie;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import net.kyori.adventure.text.Component;
 import org.spongepowered.math.vector.Vector3f;
 
 import java.awt.*;
+import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -28,7 +40,8 @@ public class CreateHardcoded extends CommandAPICommand {
                 new CreateHardcodedPlayer("player"),
                 new CreateHardcodedCow("cow"),
                 new CreateHardcodedZombie("zombie"),
-                new CreateHardcodedBlockDisplay("blockdisplay")
+                new CreateHardcodedBlockDisplay("blockdisplay"),
+                new CreateHardcodedCowRaw("cowraw")
         );
     }
 
@@ -171,11 +184,61 @@ public class CreateHardcoded extends CommandAPICommand {
                     blockDisplay.brightness(new Brightness(1, 1));
                     blockDisplay.billboardConstraints(BillboardConstraints.CENTER);
                     blockDisplay.scale(Vector3f.createRandomDirection(new Random()));
+                    blockDisplay.glowingEffect(true);
                     blockDisplay.glowColorOverride(Color.ORANGE);
                 });
 
                 packetBlockDisplay.addViewer(player.getUniqueId());
                 packetBlockDisplay.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+            });
+        }
+    }
+
+    public static class CreateHardcodedCowRaw extends CommandAPICommand {
+
+        public CreateHardcodedCowRaw(String commandName) {
+            super(commandName);
+
+            executesPlayer((player, commandArguments) -> {
+                List<EntityData> entityData = List.of(new EntityData(PacketCow.IS_BABY_INDEX, EntityDataTypes.BOOLEAN, true));
+
+                int entityID = SpigotReflectionUtil.generateEntityId();
+                WrapperPlayServerSpawnLivingEntity spawnPacket = new WrapperPlayServerSpawnLivingEntity( // removed in 1.18.2
+                        entityID,
+                        UUID.randomUUID(),
+                        EntityTypes.COW,
+                        SpigotConversionUtil.fromBukkitLocation(player.getLocation()),
+                        1,
+                        Vector3d.zero(),
+                        entityData
+                );
+
+                WrapperPlayServerSpawnEntity packet = new WrapperPlayServerSpawnEntity(
+                        entityID,
+                        Optional.of(UUID.randomUUID()),
+                        EntityTypes.COW,
+                        SpigotConversionUtil.fromBukkitLocation(player.getLocation()).getPosition(),
+                        player.getPitch(),
+                        player.getYaw(),
+                        1,
+                        1,
+                        Optional.empty()
+                );
+
+                WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(
+                        entityID,
+                        entityData
+                );
+
+                System.err.println(spawnPacket.getPacketId());
+                System.err.println(packet.getPacketId());
+
+//                PacketEvents.getAPI().getPlayerManager().sendPacket(player, spawnPacket);
+
+                PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
+                PacketEvents.getAPI().getPlayerManager().sendPacket(player, metadataPacket);
+
+                player.sendMessage("Created hardcoded cow");
             });
         }
     }

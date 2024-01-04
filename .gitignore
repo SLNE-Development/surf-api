@@ -43,3 +43,4 @@ build/
 ../.gradle/
 ../../.gradle/
 ../../../.gradle/
+/surf-api-bukkit/surf-api-bukkit-plugin-test/run/
