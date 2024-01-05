@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.player.HumanoidArm;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnLivingEntity;
@@ -64,7 +65,8 @@ public class CreateHardcoded extends CommandAPICommand {
                             playerMeta.showOnTabList(true);
                             playerMeta.gameMode(GameMode.CREATIVE);
                             playerMeta.skinProperties(player.getUniqueId(), true);
-                            playerMeta.interactCooldown(5, TimeUnit.SECONDS, true);
+//                            playerMeta.interactCooldown(5, TimeUnit.SECONDS, true);
+                            playerMeta.interactCooldown(WrapperPlayClientInteractEntity.InteractAction.INTERACT_AT, 5, TimeUnit.SECONDS);
                             playerMeta.interactHandler((entity, interactAction, interactionHand, user) -> {
                                 // send all params to player
 //                                if (interactAction.equals(WrapperPlayClientInteractEntity.InteractAction.INTERACT)) {
@@ -145,6 +147,21 @@ public class CreateHardcoded extends CommandAPICommand {
 //                entity.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
 //
 //                EntityLib.sendPacket(uuid, entity.getMeta().createPacket());
+
+                PacketCow<?> packetCow = SurfBukkitPacketEntityApi.get().spawnEntity(
+                        PacketCow.class,
+                        UUID.randomUUID(),
+                        cowMeta -> {
+                            cowMeta.displayName(Component.text("Hardcoded Cow", Colors.WARNING));
+                            cowMeta.activeHand(HumanoidArm.LEFT);
+                            cowMeta.glowingEffect(true);
+                            cowMeta.onFire(true);
+                            cowMeta.numberOfArrows(50);
+                            cowMeta.baby(true);
+                        });
+
+                packetCow.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+                packetCow.addViewer(player.getUniqueId());
 
                 player.sendMessage("Created hardcoded cow");
             });

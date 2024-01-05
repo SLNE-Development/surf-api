@@ -264,7 +264,7 @@ public final class PacketPlayerImpl extends PacketLivingEntityImpl<PacketPlayer>
 
     @Override
     protected void spawn(UUID uuid) {
-        sendPacketsToViewer(uuid, this::infoAllPacket, this::spawnPlayerPacket);
+        sendPacketsToViewer(uuid, this::infoAllPacket, this::spawnPlayerPacket, this::metadataPacket);
     }
 
     @Override
