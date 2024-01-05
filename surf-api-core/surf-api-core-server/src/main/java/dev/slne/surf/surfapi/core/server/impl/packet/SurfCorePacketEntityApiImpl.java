@@ -69,6 +69,8 @@ public abstract class SurfCorePacketEntityApiImpl implements SurfCorePacketEntit
                 final InteractionHand hand = packet.getHand();
                 final User user = event.getUser();
 
+                System.err.println("Interact: " + packet.getEntityId());
+
                 if (packetEntity == null) {
                     return;
                 }
@@ -106,6 +108,8 @@ public abstract class SurfCorePacketEntityApiImpl implements SurfCorePacketEntit
         final Function<UUID, T> constructor = registry.get(entityClass);
         final T entity = constructor.apply(checkNotNull(uuid, "UUID may not be null"));
 
+        registerEntity(entity);
+
         if (initializer != null) {
             entity.startBatchUpdate();
             initializer.accept(entity);
@@ -113,5 +117,10 @@ public abstract class SurfCorePacketEntityApiImpl implements SurfCorePacketEntit
         }
 
         return entity;
+    }
+
+    private <T extends PacketEntity<T>> void registerEntity(T entity) {
+        entitiesById.put(entity.entityId(), entity);
+        entitiesByUuid.put(entity.uuid(), entity);
     }
 }

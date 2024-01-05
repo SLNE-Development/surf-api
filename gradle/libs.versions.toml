@@ -1,7 +1,7 @@
 [versions]
 paper-api-version = "1.20.2-R0.1-SNAPSHOT"
 paper-mojangapi-version = "1.20.2-R0.1-SNAPSHOT"
-packetevents-version = "2.1.0"
+packetevents-version = "2.2.0"
 entitylib-version = "master-SNAPSHOT" # master-SNAPSHOT
 scoreboard-library-version = "2.0.0"
 commandapi-version = "9.2.0"
@@ -9,8 +9,8 @@ scoreboard-library-implementation-version = "2.0.0"
 scoreboard-library-packetevents-version = "2.0.0"
 scoreboard-library-modern-version = "2.0.0"
 adventure-api-version = "4.14.0"
-adventure-text-logger-slf4j-version = "4.14.0"
-adventure-text-minimessage-version = "4.14.0"
+adventure-text-logger-slf4j-version = { ref = "adventure-api-version" }
+adventure-text-minimessage-version = { ref = "adventure-api-version"}
 velocity-api-version = "3.2.0-SNAPSHOT"
 guava-version = "32.1.2-jre"
 caffeine-version = "3.1.8"
@@ -21,12 +21,14 @@ plugin-yml-version-paper = "0.6.0"
 spongepowered-configurate-yaml-version = "4.1.2"
 spongepowered-math-version = "2.0.1"
 fastutil-version = "8.5.12"
+okhttp-version = "4.12.0"
 
 
 [libraries]
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api-version" }
 paper-mojangapi = { module = "io.papermc.paper:paper-mojangapi", version.ref = "paper-mojangapi-version" }
-packetevents = { module = "com.github.retrooper.packetevents:spigot", version.ref = "packetevents-version" }
+packetevents-spigot = { module = "com.github.retrooper.packetevents:spigot", version.ref = "packetevents-version" }
+packetevents-api = { module = "com.github.retrooper.packetevents:api", version.ref = "packetevents-version" }
 entitylib = { module = "com.github.twisti-dev:EntityLib", version.ref = "entitylib-version" }
 scoreboard-library = { module = "com.github.megavexnetwork.scoreboard-library:scoreboard-library-api", version.ref = "scoreboard-library-version" }
 commandapi = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi-version" }
@@ -36,6 +38,10 @@ scoreboard-library-modern = { module = "com.github.megavexnetwork.scoreboard-lib
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure-api-version" }
 adventure-text-logger-slf4j = { module = "net.kyori:adventure-text-logger-slf4j", version.ref = "adventure-text-logger-slf4j-version" }
 adventure-text-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure-text-minimessage-version" }
+adventure-serializer-gson = { module = "net.kyori:adventure-text-serializer-gson", version.ref = "adventure-api-version" }
+adventure-serializer-legacy = { module = "net.kyori:adventure-text-serializer-legacy", version.ref = "adventure-api-version" }
+adventure-serializer-plain = { module = "net.kyori:adventure-text-serializer-plain", version.ref = "adventure-api-version" }
+adventure-serializer-ansi = { module = "net.kyori:adventure-text-serializer-ansi", version.ref = "adventure-api-version" }
 velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api-version" }
 guava = { module = "com.google.guava:guava", version.ref = "guava-version" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine-version" }
@@ -45,6 +51,7 @@ commons-text = { module = "org.apache.commons:commons-text", version.ref = "comm
 spongepowered-configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "spongepowered-configurate-yaml-version" }
 spongepowered-math = { module = "org.spongepowered:math", version.ref = "spongepowered-math-version" }
 fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil-version" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp-version" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-version-paper" }

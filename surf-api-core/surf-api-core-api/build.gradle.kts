@@ -7,9 +7,15 @@ dependencies {
     compileOnlyApi(libs.adventure.api)
     compileOnlyApi(libs.adventure.text.logger.slf4j)
     compileOnlyApi(libs.adventure.text.minimessage)
-    compileOnlyApi("com.github.retrooper.packetevents:api:2.2.0")
+    compileOnlyApi(libs.adventure.serializer.gson)
+    compileOnlyApi(libs.adventure.serializer.legacy)
+    compileOnlyApi(libs.adventure.serializer.plain)
+    compileOnlyApi(libs.adventure.serializer.ansi)
+    compileOnlyApi(libs.packetevents.api)
     compileOnlyApi(libs.spongepowered.configurate.yaml)
     compileOnlyApi(libs.spongepowered.math)
+    compileOnlyApi(libs.okhttp)
+    compileOnlyApi(libs.fastutil)
 }
 
 description = "surf-api-core-api"

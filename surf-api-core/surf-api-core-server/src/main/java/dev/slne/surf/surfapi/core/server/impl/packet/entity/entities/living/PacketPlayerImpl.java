@@ -5,20 +5,26 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate.Action;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.PacketPlayer;
+import dev.slne.surf.surfapi.core.server.util.PlayerSkinFetcher;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -32,7 +38,33 @@ public final class PacketPlayerImpl extends PacketLivingEntityImpl<PacketPlayer>
     public PacketPlayerImpl(UUID uuid) {
         super(uuid, EntityTypes.PLAYER);
 
-        this.npcProfile = new UserProfile(uuid, PlainTextComponentSerializer.plainText().serialize(displayName().orElse(Component.text("Player"))));
+        this.npcProfile = new UserProfile(uuid, LegacyComponentSerializer.legacySection().serialize(displayName().orElse(Component.text("Player"))));
+    }
+
+    @Override
+    public List<TextureProperty> skinProperties() {
+        return npcProfile.getTextureProperties();
+    }
+
+    @Override
+    public void skinProperties(@NotNull List<TextureProperty> skinProperties) {
+        checkNotNull(skinProperties, "skinProperties");
+
+        npcProfile.setTextureProperties(skinProperties);
+    }
+
+    @Override
+    public @NotNull CompletableFuture<Void> skinProperties(@NotNull UUID playerUuid, boolean respawn) {
+        final CompletableFuture<Void> future = new CompletableFuture<>();
+        PlayerSkinFetcher.INSTANCE.fetchSkin(playerUuid, textureProperties -> {
+            skinProperties(textureProperties);
+            if (respawn) {
+                respawn();
+            }
+            future.complete(null);
+        });
+
+        return future;
     }
 
     @Override
@@ -235,9 +267,25 @@ public final class PacketPlayerImpl extends PacketLivingEntityImpl<PacketPlayer>
         sendPacketsToViewer(uuid, this::infoAllPacket, this::spawnPlayerPacket);
     }
 
+    @Override
+    protected void despawn(UUID uuid) {
+        sendPacketToViewer(uuid, version -> {
+            if (version.isNewerThanOrEquals(ClientVersion.V_1_19_3)) {
+                return new WrapperPlayServerPlayerInfoRemove(uuid());
+            } else {
+                return new WrapperPlayServerPlayerInfo(WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER);
+            }
+        });
+        super.despawn(uuid);
+    }
+
     private PacketWrapper<?> spawnPlayerPacket(ClientVersion version) {
         assert location != null;
-        return new WrapperPlayServerSpawnPlayer(entityId(), uuid(), location, this.entityData(version));
+        if (version.isNewerThanOrEquals(ClientVersion.V_1_20_2)) {
+            return spawnPacket();
+        } else {
+            return new WrapperPlayServerSpawnPlayer(entityId(), uuid(), location, this.entityData(version));
+        }
     }
 
     private PacketWrapper<?> infoPacket(ClientVersion version, Action modernAction, WrapperPlayServerPlayerInfo.Action legacyAction) {

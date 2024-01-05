@@ -4,6 +4,7 @@ import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApiAccess;
 import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager;
 import dev.slne.surf.surfapi.bukkit.server.packet.PacketApiLoader;
+import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
 import net.megavex.scoreboardlibrary.api.exception.NoPacketAdapterAvailableException;
@@ -31,6 +32,7 @@ public class BukkitMain extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        Reflection.class.getClassLoader(); // initialize Reflection
         packetApiLoader.onLoad();
         SurfBukkitApiAccess.setInstance(surfBukkitApi);
 

@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.player.HumanoidArm;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class CreateHardcoded extends CommandAPICommand {
 
@@ -59,7 +61,19 @@ public class CreateHardcoded extends CommandAPICommand {
                             playerMeta.glowingEffect(true);
                             playerMeta.inRiptideAttack(true);
                             playerMeta.onFire(true);
-                        });
+                            playerMeta.showOnTabList(true);
+                            playerMeta.gameMode(GameMode.CREATIVE);
+                            playerMeta.skinProperties(player.getUniqueId(), true);
+                            playerMeta.interactCooldown(5, TimeUnit.SECONDS, true);
+                            playerMeta.interactHandler((entity, interactAction, interactionHand, user) -> {
+                                // send all params to player
+//                                if (interactAction.equals(WrapperPlayClientInteractEntity.InteractAction.INTERACT)) {
+                                    player.sendMessage("Hello: " + user.getName());
+//                                }
+                                player.sendMessage(interactAction.name());
+                            });
+                        }
+                );
 
 //                packetPlayer.getEquipment().setHelmet(new ItemStack.Builder().type(ItemTypes.DIAMOND_HELMET).build());
 //

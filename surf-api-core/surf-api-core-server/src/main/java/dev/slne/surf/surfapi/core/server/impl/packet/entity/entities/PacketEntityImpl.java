@@ -9,6 +9,7 @@ import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity.InteractAction;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
@@ -23,13 +24,18 @@ import dev.slne.surf.surfapi.core.api.packet.entity.interact.SurfInteractHandler
 import dev.slne.surf.surfapi.core.api.util.LocationFactory;
 import dev.slne.surf.surfapi.core.api.util.pos.RelativeLocation;
 import dev.slne.surf.surfapi.core.server.impl.packet.SurfCorePacketEntityApiImpl;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes.ADV_COMPONENT;
@@ -40,24 +46,69 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     protected static final int NO_DATA = 0;
 
-    protected final Set<UUID> viewers;
+    private final @NotNull UUID uuid;
     private final int entityId;
-    private final UUID uuid;
 
-    private SurfInteractHandler<T> interactHandler;
     protected @Nullable Location location;
-    private Vector3d velocityAtSpawn = null;
-    protected int shooterEntityId = -1;
-    protected boolean spawned = false;
-    protected boolean batchUpdate = false;
+    private @Nullable Vector3d velocityAtSpawn;
+    protected int shooterEntityId;
+    protected boolean spawned;
+    protected boolean batchUpdate;
 
-    public PacketEntityImpl(UUID uuid, EntityType type) {
+    protected final @NotNull Set<UUID> viewers;
+    protected final @NotNull Object2LongMap<UUID> onCooldown;
+    protected final @NotNull Object2LongMap<InteractAction> cooldownMillis;
+    protected boolean overrideCooldown;
+    protected long overrideCooldownMillis;
+
+    private @Nullable SurfInteractHandler<T> interactHandler;
+    protected @NotNull SurfInteractHandler<T> internalInteractHandler;
+
+    public PacketEntityImpl(@NotNull UUID uuid, EntityType type) {
         super(type);
 
-        this.viewers = Collections.synchronizedSet(new HashSet<>());
         this.uuid = uuid;
         this.entityId = SurfCorePacketEntityApi.get().idProvider().nextEntityId();
 
+        this.location = null;
+        this.velocityAtSpawn = null;
+        this.shooterEntityId = -1;
+        this.spawned = false;
+        this.batchUpdate = false;
+
+        this.viewers = Collections.synchronizedSet(new HashSet<>());
+        this.onCooldown = Object2LongMaps.synchronize(new Object2LongOpenHashMap<>());
+        this.cooldownMillis = Object2LongMaps.synchronize(new Object2LongOpenHashMap<>(InteractAction.VALUES.length));
+        this.overrideCooldown = false;
+        this.overrideCooldownMillis = 0L;
+
+        this.interactHandler = null;
+        this.internalInteractHandler = createInternalInteractHandler();
+
+        init();
+    }
+
+    private SurfInteractHandler<T> createInternalInteractHandler() {
+        return (entity, interactAction, interactionHand, user) -> {
+            if (interactHandler == null) {
+                return;
+            }
+
+            final long currentTimeMillis = System.currentTimeMillis();
+            final long cooldownMillis = overrideCooldown ? overrideCooldownMillis : this.cooldownMillis.getLong(interactAction);
+
+            if (currentTimeMillis - onCooldown.getLong(user.getUUID()) < cooldownMillis) {
+                return;
+            }
+
+            onCooldown.put(user.getUUID(), currentTimeMillis);
+            interactHandler.handle(entity, interactAction, interactionHand, user);
+        };
+    }
+
+    protected void init() {
+        onCooldown.defaultReturnValue(0L);
+        cooldownMillis.defaultReturnValue(0L);
         addSupportedVersion(LATEST_CLIENT_VERSION); // TODO: add support for other versions
     }
 
@@ -251,7 +302,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public final Optional<SurfInteractHandler<T>> interactHandler() {
-        return Optional.ofNullable(interactHandler);
+        return Optional.of(internalInteractHandler);
     }
 
     @Override
@@ -259,6 +310,41 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
         this.interactHandler = interactHandler;
 
         ((SurfCorePacketEntityApiImpl) SurfCorePacketEntityApi.get()).registerInteractListener();
+    }
+
+    @Override
+    public void interactCooldown(long cooldown, @NotNull TimeUnit timeUnit, boolean soft) {
+        final long millis = timeUnit.toMillis(cooldown);
+        this.cooldownMillis.defaultReturnValue(millis);
+
+        if (!soft) {
+            this.overrideCooldown = true;
+            this.overrideCooldownMillis = millis;
+            this.cooldownMillis.clear();
+        } else {
+            this.overrideCooldown = false;
+        }
+    }
+
+    @Override
+    public void interactCooldown(InteractAction action, long cooldown, @NotNull TimeUnit timeUnit) {
+        if (!overrideCooldown) {
+            this.cooldownMillis.put(action, timeUnit.toMillis(cooldown));
+        } else {
+            ComponentLogger.logger().warn("Interact cooldown is overridden, cooldown for action {} will be ignored " +
+                    "and not set", action);
+        }
+    }
+
+    @Override
+    public void resetInteractCooldown() {
+        this.overrideCooldown = false;
+        this.overrideCooldownMillis = 0L;
+    }
+
+    @Override
+    public void resetInteractCooldown(InteractAction action) {
+        this.cooldownMillis.removeLong(action);
     }
 
     @Override
@@ -274,6 +360,20 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
         spawned = true;
 
         return true;
+    }
+
+    @Override
+    public boolean respawn(@NotNull Location location) {
+        return despawn() && spawn(location);
+    }
+
+    @Override
+    public boolean respawn() {
+        if (!isSpawned()) {
+            return false;
+        }
+
+        return respawn(checkNotNull(location, "Cannot respawn entity with null location"));
     }
 
     @Override

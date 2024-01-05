@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.core.api.packet.entity.entities;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityMetadataProvider;
 import com.github.retrooper.packetevents.protocol.entity.pose.EntityPose;
 import com.github.retrooper.packetevents.protocol.world.Location;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.slne.surf.surfapi.core.api.packet.entity.interact.SurfInteractHandler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @ApiStatus.NonExtendable
 public interface PacketEntity<Impl extends PacketEntity<Impl>> extends EntityMetadataProvider {
@@ -105,7 +107,56 @@ public interface PacketEntity<Impl extends PacketEntity<Impl>> extends EntityMet
 
     void interactHandler(@Nullable SurfInteractHandler<Impl> interactHandler);
 
+    /**
+     * Sets the interact cooldown for this entity for every player
+     * <p>
+     * If the player is trying to interact with this entity while the cooldown is active, the interaction will be
+     * ignored otherwise the provided interact handler from {@link #interactHandler(SurfInteractHandler)} will be
+     * called.
+     * </p>
+     *
+     * @param cooldown the cooldown in the provided time unit
+     * @param timeUnit the time unit of the cooldown
+     * @param soft     if {@code true} this will not override any cooldown
+     *                 set by {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long, TimeUnit)}
+     *                 if {@code false} this will override any cooldown set by
+     *                 {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long, TimeUnit)}
+     *                 also for future calls to {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long, TimeUnit)}
+     */
+    void interactCooldown(long cooldown, @NotNull TimeUnit timeUnit, boolean soft);
+
+    /**
+     * Resets the interact cooldown for this entity and allows the cooldown to be set for
+     * specific interactions again
+     */
+    void resetInteractCooldown();
+
+    /**
+     * Sets the interact cooldown for the provided interaction
+     * <p>
+     * If the player is trying to interact with this entity while the cooldown is active, the interaction will be
+     * ignored otherwise the provided interact handler from {@link #interactHandler(SurfInteractHandler)} will be
+     * called.
+     * </p>
+     *
+     * @param action    the interaction to set the cooldown for
+     * @param cooldown  the cooldown in the provided time unit
+     * @param timeUnit  the time unit of the cooldown
+     */
+    void interactCooldown(WrapperPlayClientInteractEntity.InteractAction action, long cooldown, @NotNull TimeUnit timeUnit);
+
+    /**
+     * Resets the interact cooldown for the provided interaction
+     *
+     * @param action the interaction to reset the cooldown for
+     */
+    void resetInteractCooldown(WrapperPlayClientInteractEntity.InteractAction action);
+
     boolean spawn(@NotNull Location location);
+
+    boolean respawn(@NotNull Location location);
+
+    boolean respawn();
 
     boolean isSpawned();
 
@@ -120,8 +171,4 @@ public interface PacketEntity<Impl extends PacketEntity<Impl>> extends EntityMet
     void startBatchUpdate();
 
     void pushBatchUpdate();
-
-    default boolean respawn(@NotNull Location location) {
-        return despawn() && spawn(location);
-    }
 }

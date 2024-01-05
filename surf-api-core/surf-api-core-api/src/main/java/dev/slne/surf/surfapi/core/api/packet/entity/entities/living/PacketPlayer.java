@@ -2,11 +2,16 @@ package dev.slne.surf.surfapi.core.api.packet.entity.entities.living;
 
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import dev.slne.surf.surfapi.core.api.packet.entity.annotation.CanBeSpawned;
+import dev.slne.surf.surfapi.core.api.packet.entity.annotation.NeedsRespawn;
 import dev.slne.surf.surfapi.core.api.packet.entity.annotation.Useless;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.*;
@@ -20,6 +25,33 @@ public interface PacketPlayer extends PacketLivingEntity<PacketPlayer>, Spawnabl
     byte CAPE_ENABLED_BIT = 0x01, JACKET_ENABLED_BIT = 0x02, LEFT_SLEEVE_ENABLED_BIT = 0x04,
             RIGHT_SLEEVE_ENABLED_BIT = 0x08, LEFT_PANTS_LEG_ENABLED_BIT = 0x10, RIGHT_PANTS_LEG_ENABLED_BIT = 0x20,
             HAT_ENABLED_BIT = 0x40, UNUSED_ENABLED_BIT = (byte) 0x80;
+
+    List<TextureProperty> skinProperties();
+
+    @NeedsRespawn
+    void skinProperties(@NotNull List<TextureProperty> skinProperties);
+
+    /**
+     * Fetches the skin properties asynchronously and calls
+     * {@link #skinProperties(List)} when done.
+     *
+     * @param playerUuid The UUID of the player to fetch the
+     *                   skin properties of.
+     * @param respawn    Whether to respawn the player after
+     *                   the skin properties have been fetched
+     *                   to apply the skin.
+     * @return A {@link CompletableFuture} that completes when the
+     * skin properties have been fetched and {@link #skinProperties(List)}
+     * has been called.
+     */
+    CompletableFuture<Void> skinProperties(@NotNull UUID playerUuid, boolean respawn);
+
+    default void changeSkin(List<TextureProperty> skinProperties) {
+        checkNotNull(skinProperties, "skinProperties");
+
+        skinProperties(skinProperties);
+        respawn();
+    }
 
     float additionalHearts();
 
