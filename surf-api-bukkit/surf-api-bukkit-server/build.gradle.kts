@@ -69,6 +69,12 @@ paper {
         registerSoft("ViaBackwards")
         registerSoft("ViaRewind")
         registerSoft("Geyser-Spigot")
+
+        register("CommandAPI") {
+            required = true
+            joinClasspath = true
+            load = RelativeLoadOrder.BEFORE
+        }
     }
 }
 

@@ -10,13 +10,11 @@ import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity.InteractAction;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import com.google.common.base.MoreObjects;
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketEntityApi;
+import dev.slne.surf.surfapi.core.api.packet.entity.EntityStatus;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.PacketEntity;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Shootable;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.SpawnVelocity;
@@ -55,9 +53,9 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
     protected boolean spawned;
     protected boolean batchUpdate;
 
-    protected final @NotNull Set<UUID> viewers;
-    protected final @NotNull Object2LongMap<UUID> onCooldown;
-    protected final @NotNull Object2LongMap<InteractAction> cooldownMillis;
+    protected @NotNull Set<UUID> viewers;
+    protected @NotNull Object2LongMap<UUID> onCooldown;
+    protected @NotNull Object2LongMap<InteractAction> cooldownMillis;
     protected boolean overrideCooldown;
     protected long overrideCooldownMillis;
 
@@ -120,6 +118,22 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
     @Override
     public final int entityId() {
         return entityId;
+    }
+
+    @Override
+    public void animate(WrapperPlayServerEntityAnimation.EntityAnimationType animation) {
+        checkDeleted();
+
+        final WrapperPlayServerEntityAnimation packet = new WrapperPlayServerEntityAnimation(entityId, checkNotNull(animation, "Animation may not be null"));
+        sendPacketToAllViewers(version -> packet);
+    }
+
+    @Override
+    public void entityStatus(@NotNull EntityStatus status) {
+        checkDeleted();
+
+        final WrapperPlayServerEntityStatus packet = new WrapperPlayServerEntityStatus(entityId, checkNotNull(status, "Status may not be null").getStatusId());
+        sendPacketToAllViewers(version -> packet);
     }
 
     @Override
@@ -272,11 +286,13 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public final @NotNull Vector3d velocityAtSpawn() {
+        checkDeleted();
         return velocityAtSpawn == null ? Vector3d.zero() : velocityAtSpawn;
     }
 
     @Override
     public final void velocityAtSpawn(@NotNull Vector3d velocityAtSpawn) {
+        checkDeleted();
         this.velocityAtSpawn = checkNotNull(velocityAtSpawn, "Velocity at spawn may not be null");
     }
 
@@ -288,6 +304,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
     @Override
     @OverridingMethodsMustInvokeSuper
     public void shooterEntityId(int shooterEntityId) {
+        checkDeleted();
         this.shooterEntityId = shooterEntityId;
     }
 
@@ -307,6 +324,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public final void interactHandler(@Nullable SurfInteractHandler<T> interactHandler) {
+        checkDeleted();
         this.interactHandler = interactHandler;
 
         ((SurfCorePacketEntityApiImpl) SurfCorePacketEntityApi.get()).registerInteractListener();
@@ -314,6 +332,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public void interactCooldown(long cooldown, @NotNull TimeUnit timeUnit, boolean soft) {
+        checkDeleted();
         final long millis = timeUnit.toMillis(cooldown);
         this.cooldownMillis.defaultReturnValue(millis);
 
@@ -328,6 +347,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public void interactCooldown(InteractAction action, long cooldown, @NotNull TimeUnit timeUnit) {
+        checkDeleted();
         if (!overrideCooldown) {
             this.cooldownMillis.put(action, timeUnit.toMillis(cooldown));
         } else {
@@ -338,17 +358,20 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public void resetInteractCooldown() {
+        checkDeleted();
         this.overrideCooldown = false;
         this.overrideCooldownMillis = 0L;
     }
 
     @Override
     public void resetInteractCooldown(InteractAction action) {
+        checkDeleted();
         this.cooldownMillis.removeLong(action);
     }
 
     @Override
     public boolean spawn(@NotNull Location location) {
+        checkDeleted();
         checkNotNull(location, "Cannot spawn entity at null location");
 
         if (isSpawned()) {
@@ -364,11 +387,13 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public boolean respawn(@NotNull Location location) {
+        checkDeleted();
         return despawn() && spawn(location);
     }
 
     @Override
     public boolean respawn() {
+        checkDeleted();
         if (!isSpawned()) {
             return false;
         }
@@ -378,11 +403,13 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public final boolean isSpawned() {
+        checkDeleted();
         return spawned;
     }
 
     @Override
     public final boolean despawn() {
+        checkDeleted();
         if (!isSpawned()) {
             return false;
         }
@@ -397,6 +424,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public final boolean teleport(@NotNull Location location) {
+        checkDeleted();
         checkNotNull(location, "Cannot teleport to null location");
 
         if (!isSpawned()) {
@@ -421,6 +449,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public boolean addViewer(@NotNull UUID uuid) {
+        checkDeleted();
         final boolean success = viewers.add(checkNotNull(uuid, "Cannot add viewer with null uuid"));
         if (success && isSpawned()) {
             spawn(uuid);
@@ -431,6 +460,7 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
 
     @Override
     public boolean removeViewer(@NotNull UUID uuid) {
+        checkDeleted();
         final boolean success = viewers.remove(checkNotNull(checkNotNull(uuid, "Cannot remove viewer with null uuid")));
 
         if (success) {
@@ -441,11 +471,31 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
     }
 
     protected void spawn(UUID uuid) {
+        checkDeleted();
         sendPacketsToViewer(uuid, version1 -> spawnPacket(), this::metadataPacket);
     }
 
     protected void despawn(UUID uuid) {
+        checkDeleted();
         sendPacketToViewer(uuid, this::despawnPacket);
+    }
+
+    @Override
+    @SuppressWarnings("DataFlowIssue") // We are deleting the entity, so we don't care about the warnings
+    public void delete() {
+        super.delete();
+
+        if (isSpawned()) {
+            despawn();
+        }
+
+        viewers = null;
+        onCooldown = null;
+        cooldownMillis = null;
+        interactHandler = null;
+        internalInteractHandler = null;
+        location = null;
+        velocityAtSpawn = null;
     }
 
     protected PacketWrapper<?> spawnPacket() {

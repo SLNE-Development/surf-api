@@ -2,14 +2,9 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntityTypeArgument;
-import dev.slne.surf.surfapi.bukkit.api.packet.entity.entities.SurfEntity;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class CreatePacketEntity extends CommandAPICommand {
-    private static final Map<UUID, SurfEntity<?>> ENTITY_MAP = new ConcurrentHashMap<>();
+//    private static final Map<UUID, SurfEntity<?>> ENTITY_MAP = new ConcurrentHashMap<>();
 
     public CreatePacketEntity(String commandName) {
         super(commandName);
@@ -64,7 +59,7 @@ public class CreatePacketEntity extends CommandAPICommand {
         });
     }
 
-    public static Map<UUID, SurfEntity<?>> getEntityMap() {
-        return ENTITY_MAP;
-    }
+//    public static Map<UUID, SurfEntity<?>> getEntityMap() {
+//        return ENTITY_MAP;
+//    }
 }

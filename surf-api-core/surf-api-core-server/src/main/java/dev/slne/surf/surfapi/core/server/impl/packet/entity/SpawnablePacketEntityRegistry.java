@@ -126,9 +126,10 @@ import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.*;
 
-public class SpawnablePacketEntityRegistry {
+public final class SpawnablePacketEntityRegistry {
     private final Object2ObjectMap<Class<? extends PacketEntity<?>>, Function<UUID, ? extends PacketEntity<?>>> constructors;
 
+    @SuppressWarnings("unchecked")
     public SpawnablePacketEntityRegistry() {
         this.constructors = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
 
@@ -252,6 +253,7 @@ public class SpawnablePacketEntityRegistry {
         constructors.put(clazz, constructor);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends PacketEntity<T>> Function<UUID, T> get(Class<T> clazz) {
         checkNotNull(clazz, "Entity class may not be null");
         checkState(constructors.containsKey(clazz), "Entity class '%s' is not valid for spawning!", clazz);

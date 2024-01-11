@@ -8,8 +8,8 @@ dependencies {
     compileOnlyApi(libs.paper.api)
     compileOnlyApi(libs.paper.mojangapi)
     compileOnlyApi(libs.packetevents.spigot)
-    compileOnlyApi(libs.entitylib)
     compileOnlyApi(libs.scoreboard.library)
+    compileOnlyApi(libs.commandapi)
 }
 
 description = "surf-api-bukkit-api"

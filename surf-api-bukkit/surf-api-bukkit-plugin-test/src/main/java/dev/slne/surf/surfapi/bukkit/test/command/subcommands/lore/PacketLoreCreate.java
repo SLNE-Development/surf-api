@@ -2,7 +2,6 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.lore;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.NamespacedKeyArgument;
-import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApiAccess;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
 import dev.slne.surf.surfapi.core.api.messages.Colors;
 import net.kyori.adventure.text.Component;

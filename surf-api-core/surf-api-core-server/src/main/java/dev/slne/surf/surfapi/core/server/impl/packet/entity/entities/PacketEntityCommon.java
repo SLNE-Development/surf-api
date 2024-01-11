@@ -22,16 +22,19 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.math.vector.Vector3f;
 import org.spongepowered.math.vector.Vector4f;
 
+import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.util.*;
 
 import static com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes.*;
+import static com.google.common.base.Preconditions.*;
 
 public abstract class PacketEntityCommon implements EntityMetadataProvider {
 
     protected static final ClientVersion LATEST_CLIENT_VERSION = ClientVersion.getLatest();
 
-    private final Int2ObjectMap<Int2ObjectMap<EntityData>> protocolToDataVersion;
-    protected final EntityType type;
+    private Int2ObjectMap<Int2ObjectMap<EntityData>> protocolToDataVersion;
+    protected EntityType type;
+    protected boolean deleted = false;
 
     protected PacketEntityCommon(EntityType type) {
         this.type = type;
@@ -58,6 +61,7 @@ public abstract class PacketEntityCommon implements EntityMetadataProvider {
     }
 
     protected <Data> void setForVersion(ClientVersion clientVersion, int index, EntityDataType<Data> type, Data value) {
+        checkDeleted();
         protocolToDataVersion.computeIfPresent(clientVersion.getProtocolVersion(), (protocolVersion, indexToEntityDatas) -> {
             final EntityData data = indexToEntityDatas.get(index);
 
@@ -140,6 +144,7 @@ public abstract class PacketEntityCommon implements EntityMetadataProvider {
 
     @SuppressWarnings("unchecked")
     protected <Data> Data get(int index, @Nullable Data defaultReturnValue) {
+        checkDeleted();
         final Int2ObjectMap<EntityData> map = protocolToDataVersion.get(LATEST_CLIENT_VERSION.getProtocolVersion());
         final EntityData data = map.get(index);
 
@@ -225,12 +230,24 @@ public abstract class PacketEntityCommon implements EntityMetadataProvider {
                 .orElse(true);
     }
 
+    protected void checkDeleted() {
+        checkState(!deleted, "Entity has been deleted therefore it cannot be modified");
+    }
+
     @Override
     public List<EntityData> entityData(ClientVersion clientVersion) {
         return new ArrayList<>(protocolToDataVersion.getOrDefault(
                 clientVersion.getProtocolVersion(),
                 protocolToDataVersion.get(LATEST_CLIENT_VERSION.getProtocolVersion())
         ).values());
+    }
+
+    @OverridingMethodsMustInvokeSuper
+    public void delete() {
+        deleted = true;
+
+        protocolToDataVersion = null;
+        type = null;
     }
 
     @Override

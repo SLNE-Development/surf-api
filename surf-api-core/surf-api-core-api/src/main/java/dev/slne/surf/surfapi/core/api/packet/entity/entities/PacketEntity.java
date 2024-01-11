@@ -4,6 +4,8 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityMetadataProv
 import com.github.retrooper.packetevents.protocol.entity.pose.EntityPose;
 import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
+import dev.slne.surf.surfapi.core.api.packet.entity.EntityStatus;
 import dev.slne.surf.surfapi.core.api.packet.entity.interact.SurfInteractHandler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
@@ -35,6 +37,10 @@ public interface PacketEntity<Impl extends PacketEntity<Impl>> extends EntityMet
     UUID uuid();
 
     int entityId();
+
+    void animate(WrapperPlayServerEntityAnimation.EntityAnimationType animation);
+
+    void entityStatus(@NotNull EntityStatus status);
 
     boolean onFire();
 
