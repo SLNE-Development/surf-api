@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.core.api;
 
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
+import dev.slne.surf.surfapi.core.api.reflection.SurfReflection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,9 @@ public interface SurfCoreApi {
     void sendPlayerToServer(UUID playerUuid, String server);
 
     Optional<Object> getPlayer(@NotNull UUID playerUuid);
+
+    @ApiStatus.Experimental
+    SurfReflection getReflection();
 
     /**
      * Retrieves the instance of the SurfCoreApi.

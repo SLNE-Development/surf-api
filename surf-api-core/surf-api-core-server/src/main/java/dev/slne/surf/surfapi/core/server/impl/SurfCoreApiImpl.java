@@ -2,6 +2,8 @@ package dev.slne.surf.surfapi.core.server.impl;
 
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
+import dev.slne.surf.surfapi.core.api.reflection.SurfReflection;
+import dev.slne.surf.surfapi.core.server.impl.reflection.SurfReflectionImpl;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -23,6 +25,8 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
      */
     private final PacketImpl packetApi;
 
+    private final SurfReflection reflection;
+
     /**
      * Creates a new instance of the SurfCoreApiImpl class with the provided PacketImpl object.
      *
@@ -30,11 +34,17 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
      */
     protected SurfCoreApiImpl(PacketImpl packetApi) {
         this.packetApi = packetApi;
+        this.reflection = new SurfReflectionImpl();
     }
 
     @Override
     public PacketImpl getPacketApi() {
         return packetApi;
+    }
+
+    @Override
+    public SurfReflection getReflection() {
+        return reflection;
     }
 
     @Override

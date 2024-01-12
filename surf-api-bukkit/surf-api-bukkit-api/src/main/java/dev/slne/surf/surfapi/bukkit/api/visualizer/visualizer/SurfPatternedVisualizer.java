@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer;
 
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.display.PacketBlockDisplay;
-import me.tofaa.entitylib.meta.other.BlockDisplayMeta;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.jetbrains.annotations.ApiStatus;
