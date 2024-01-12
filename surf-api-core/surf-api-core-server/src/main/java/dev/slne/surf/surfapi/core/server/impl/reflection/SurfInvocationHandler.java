@@ -28,7 +28,10 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
     private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
     private final Class<T> proxyClass;
+<<<<<<< HEAD
     private final Class<?> proxiedClass;
+=======
+>>>>>>> origin/self-entity-api
     private final Object2ObjectMap<Method, MethodHandle> normalCache;
     private final Object2ObjectMap<Method, MethodHandle> getterCache;
     private final Object2ObjectMap<Method, MethodHandle> setterCache;
