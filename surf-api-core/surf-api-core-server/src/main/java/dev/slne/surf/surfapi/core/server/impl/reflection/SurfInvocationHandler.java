@@ -28,10 +28,7 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
     private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
     private final Class<T> proxyClass;
-<<<<<<< HEAD
     private final Class<?> proxiedClass;
-=======
->>>>>>> origin/self-entity-api
     private final Object2ObjectMap<Method, MethodHandle> normalCache;
     private final Object2ObjectMap<Method, MethodHandle> getterCache;
     private final Object2ObjectMap<Method, MethodHandle> setterCache;
@@ -165,7 +162,7 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
             } else if (constructorAnnotation != null) {
                 normalCache.put(method, normalizeMethodHandleType(sneaky(() -> lookup.unreflectConstructor(findConstructor(proxiedClass, method)))));
             } else {
-                checkState(staticAnnotation != null || method.getParameterCount() > 0, "method %s must have at least one parameter", method);
+                checkState(staticAnnotation != null || method.getParameterCount() > 0, "method %s must have at least one parameter %s %s", method, staticAnnotation, method.getParameterCount());
                 normalCache.put(method, normalizeMethodHandleType(sneaky(() -> lookup.unreflect(findMethod(proxiedClass, method, nameAnnotation, staticAnnotation)))));
             }
         }
@@ -211,11 +208,13 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
                                         @CheckForNull Field fieldAnnotation,
                                         @CheckForNull Static staticAnnotation,
                                         @CheckForNull Constructor constructorAnnotation) {
-        if (nameAnnotation != null) {
+
+
+        if (nameAnnotation != null && !nameAnnotation.value().isBlank()) {
             return nameAnnotation.value();
-        } else if (fieldAnnotation != null) {
+        } else if (fieldAnnotation != null && !fieldAnnotation.name().isBlank()) {
             return fieldAnnotation.name();
-        } else if (staticAnnotation != null) {
+        } else if (staticAnnotation != null && !staticAnnotation.name().isBlank()) {
             return staticAnnotation.name();
         } else if (constructorAnnotation != null) {
             return method.getReturnType().getSimpleName();
