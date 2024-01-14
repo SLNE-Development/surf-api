@@ -1,6 +1,5 @@
-package dev.slne.surf.surfapi.bukkit.test.command.subcommands;
+package dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection;
 
-import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.SpigotRestartCommandProxy;
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.reflection.SurfReflection;
 

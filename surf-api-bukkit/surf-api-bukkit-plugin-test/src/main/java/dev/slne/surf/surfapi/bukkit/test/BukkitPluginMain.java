@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.bukkit.test;
 
 import dev.jorel.commandapi.CommandAPI;
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand;
-import dev.slne.surf.surfapi.bukkit.test.command.subcommands.Reflection;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
