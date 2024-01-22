@@ -56,7 +56,7 @@ public final class PacketLoreListener extends PacketListenerAbstract {
     /**
      * A map of lore handlers for modifying the lore of an item stack.
      */
-    private final Object2ObjectMap<Plugin, SurfBukkitPacketLoreHandler> loreHandlersGlobal = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    private final Object2ObjectMap<Plugin, List<SurfBukkitPacketLoreHandler>> loreHandlersGlobal = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     /**
      * Private final variable representing the lore prefix for modifying the lore of an item stack.
      * <p>
@@ -163,8 +163,10 @@ public final class PacketLoreListener extends PacketListenerAbstract {
                 }
             });
 
-            loreHandlersGlobal.forEach((plugin, handler) -> {
-                handler.handleLore(lore, pdc, bukkitStack);
+            loreHandlersGlobal.forEach((plugin, handlers) -> {
+                if (plugin.isEnabled()) {
+                    handlers.forEach(handler -> handler.handleLore(lore, pdc, bukkitStack));
+                }
             });
 
             meta.lore(lore.stream().map(lorePrefix::append).toList());
@@ -211,7 +213,7 @@ public final class PacketLoreListener extends PacketListenerAbstract {
     }
 
     public void register(Plugin plugin, SurfBukkitPacketLoreHandler listener) {
-        loreHandlersGlobal.put(plugin, listener);
+        loreHandlersGlobal.computeIfAbsent(plugin, __ -> new ArrayList<>()).add(listener);
     }
 
     /**
