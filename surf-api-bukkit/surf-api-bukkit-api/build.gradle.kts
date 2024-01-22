@@ -10,6 +10,7 @@ dependencies {
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.scoreboard.library)
     compileOnlyApi(libs.commandapi)
+    compileOnlyApi(libs.reflection.remapper)
 }
 
 description = "surf-api-bukkit-api"

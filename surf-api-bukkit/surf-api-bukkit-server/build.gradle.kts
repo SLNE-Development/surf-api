@@ -29,7 +29,7 @@ dependencies {
     paperLibrary(libs.spongepowered.math)
     paperLibrary(libs.okhttp)
     paperLibrary(libs.fastutil)
-    paperLibrary("xyz.jpenilla:reflection-remapper:0.1.0")
+    paperLibrary(libs.reflection.remapper)
 }
 
 paper {
