@@ -7,7 +7,6 @@ plugins {
     id("dev.slne.java-library-conventions")
     id("dev.slne.java-shadow-conventions")
     alias(libs.plugins.plugin.yml.paper)
-    id("io.papermc.paperweight.userdev") version "1.5.11"
 }
 
 dependencies {
@@ -31,16 +30,6 @@ dependencies {
     paperLibrary(libs.okhttp)
     paperLibrary(libs.fastutil)
     paperLibrary("xyz.jpenilla:reflection-remapper:0.1.0")
-    paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
-}
-
-tasks {
-//    assemble {
-//        dependsOn(reobfJar)
-//    }
-    build {
-        dependsOn(reobfJar)
-    }
 }
 
 paper {
