@@ -161,8 +161,26 @@ public class Util {
         )));
     }
 
+    public static <K extends Enum<K>, V> @NotNull Object2ObjectMap<K, V> byEnumMap(@NotNull Class<K> enumClass, Function<K, V> valueMapper) {
+        return Object2ObjectMaps.synchronize(Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(
+                Arrays.stream(enumClass.getEnumConstants()).collect(Collectors.toMap(Function.identity(), valueMapper))
+        )));
+    }
+
+    public static <K extends Enum<K> & ByEnum<V>, V> @NotNull Object2ObjectMap<K, V> byEnumMap(@NotNull Class<K> enumClass) {
+        return Object2ObjectMaps.synchronize(Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(
+                Arrays.stream(enumClass.getEnumConstants()).collect(Collectors.toMap(Function.identity(), ByEnum::value))
+        )));
+    }
+
+
     @FunctionalInterface
     public interface ToByteFunction<T> {
         byte applyAsByte(T value);
+    }
+
+    @FunctionalInterface
+    public interface ByEnum<T> {
+        T value();
     }
 }
