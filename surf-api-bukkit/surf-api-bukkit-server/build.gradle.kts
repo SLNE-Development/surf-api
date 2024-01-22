@@ -26,7 +26,7 @@ dependencies {
     paperLibrary(libs.gson)
     paperLibrary(libs.commons.lang3)
     paperLibrary(libs.commons.text)
-    paperLibrary(libs.spongepowered.configurate.yaml)
+    paperLibrary(libs.dazzleconf)
     paperLibrary(libs.spongepowered.math)
     paperLibrary(libs.okhttp)
     paperLibrary(libs.fastutil)

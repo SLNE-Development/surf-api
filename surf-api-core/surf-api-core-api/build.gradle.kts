@@ -12,7 +12,7 @@ dependencies {
     compileOnlyApi(libs.adventure.serializer.plain)
     compileOnlyApi(libs.adventure.serializer.ansi)
     compileOnlyApi(libs.packetevents.api)
-    compileOnlyApi(libs.spongepowered.configurate.yaml)
+    compileOnlyApi(libs.dazzleconf)
     compileOnlyApi(libs.spongepowered.math)
     compileOnlyApi(libs.okhttp)
     compileOnlyApi(libs.fastutil)
