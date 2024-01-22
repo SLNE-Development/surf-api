@@ -140,10 +140,11 @@ public enum EntityStatus {
      * But you can trigger these changes manually through other packets or prevent those changes on the client.
      * <p>
      * Examples:
+     * <ul>
      * <li>Create an 'Infinity Bow' without the first arrow in your inventory constantly changing in quantity.</li>
      * <li>Create a custom found that is infinite, and prevent the stack quantity from decreasing.</li>
      * <li>...</li>
-     *
+     * </ul>
      * <b>Note:</b> This works together with the 'Hand data' so this will have to be updated accordingly to 'finish' the interaction manually.
      */
     FINISH_USE_ITEM(9, PacketPlayer.class),
@@ -197,9 +198,11 @@ public enum EntityStatus {
      * Spawn explosion particle.
      * <p>
      * Used when:
+     * <ul>
      * <li>A silverfish enters a block</li>
      * <li>A silverfish exits a block</li>
      * <li>A mob spawner (or minecart mob spawner) spawns an entity (only with entities that support this status)</li>
+     * </ul>
      */
     SPAWN_EXPLOSION_PARTICLE(20, PacketMob.class),
 
