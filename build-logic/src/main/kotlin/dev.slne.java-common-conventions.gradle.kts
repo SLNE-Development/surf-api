@@ -1,5 +1,3 @@
-import gradle.kotlin.dsl.accessors._abb8f9cfab9d4e658865fefa5a3bea72.javaToolchains
-
 plugins {
     // Apply the java Plugin to add support for Java.
     java
@@ -27,7 +25,7 @@ java {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
     withSourcesJar()
-    withJavadocJar()
+//    withJavadocJar() // TODO: 22.01.2024 15:14 - does not work with '@apiNote' for some weird reasons
 }
 
 publishing {
@@ -55,6 +53,5 @@ tasks {
     }
     javadoc {
         options.encoding = Charsets.UTF_8.name()
-        javadocTool.set(javaToolchains.javadocToolFor(java.toolchain))
     }
 }
