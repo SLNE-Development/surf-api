@@ -7,6 +7,7 @@ import dev.slne.surf.surfapi.bukkit.server.impl.packet.entity.SurfBukkitPacketEn
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener;
 import dev.slne.surf.surfapi.core.server.impl.packet.SurfCorePacketApiImpl;
 import org.bukkit.NamespacedKey;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import static com.google.common.base.Preconditions.*;
@@ -30,6 +31,21 @@ public class SurfBukkitPacketApiImpl extends SurfCorePacketApiImpl implements Su
         checkNotNull(listener, "listener");
 
         PacketLoreListener.INSTANCE.register(identifier, listener);
+    }
+
+    @Override
+    public void registerPacketLoreListenerGlobal(@NotNull Plugin plugin, @NotNull SurfBukkitPacketLoreHandler listener) {
+        checkNotNull(plugin, "plugin");
+        checkNotNull(listener, "listener");
+
+        PacketLoreListener.INSTANCE.register(plugin, listener);
+    }
+
+    @Override
+    public void unregisterPacketLoreListener(@NotNull Plugin plugin) {
+        checkNotNull(plugin, "plugin");
+
+        PacketLoreListener.INSTANCE.unregister(plugin);
     }
 
     @Override

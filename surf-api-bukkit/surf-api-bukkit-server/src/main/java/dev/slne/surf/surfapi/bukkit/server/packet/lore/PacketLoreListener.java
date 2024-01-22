@@ -20,6 +20,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,10 @@ public final class PacketLoreListener extends PacketListenerAbstract {
      * A map of lore handlers for modifying the lore of an item stack.
      */
     private final Object2ObjectMap<NamespacedKey, SurfBukkitPacketLoreHandler> loreHandlers = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    /**
+     * A map of lore handlers for modifying the lore of an item stack.
+     */
+    private final Object2ObjectMap<Plugin, SurfBukkitPacketLoreHandler> loreHandlersGlobal = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     /**
      * Private final variable representing the lore prefix for modifying the lore of an item stack.
      * <p>
@@ -158,6 +163,10 @@ public final class PacketLoreListener extends PacketListenerAbstract {
                 }
             });
 
+            loreHandlersGlobal.forEach((plugin, handler) -> {
+                handler.handleLore(lore, pdc, bukkitStack);
+            });
+
             meta.lore(lore.stream().map(lorePrefix::append).toList());
         });
 
@@ -201,6 +210,10 @@ public final class PacketLoreListener extends PacketListenerAbstract {
         loreHandlers.put(identifier, listener);
     }
 
+    public void register(Plugin plugin, SurfBukkitPacketLoreHandler listener) {
+        loreHandlersGlobal.put(plugin, listener);
+    }
+
     /**
      * Removes a registered lore handler with the specified identifier.
      *
@@ -208,5 +221,9 @@ public final class PacketLoreListener extends PacketListenerAbstract {
      */
     public void unregister(NamespacedKey identifier) {
         loreHandlers.remove(identifier);
+    }
+
+    public void unregister(Plugin plugin) {
+        loreHandlersGlobal.remove(plugin);
     }
 }

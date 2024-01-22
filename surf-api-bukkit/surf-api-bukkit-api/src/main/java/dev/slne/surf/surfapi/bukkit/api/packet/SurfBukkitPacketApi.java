@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandlerSimple;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
 import org.bukkit.NamespacedKey;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,11 +47,37 @@ public interface SurfBukkitPacketApi extends SurfCorePacketApi {
     }
 
     /**
+     * Registers a packet lore listener to listen for all items.
+     *
+     * @param plugin   the plugin registering the listener
+     * @param listener the listener to register
+     */
+    void registerPacketLoreListenerGlobal(@NotNull Plugin plugin, @NotNull SurfBukkitPacketLoreHandler listener);
+
+    /**
+     * Registers a packet lore listener to listen for all items.
+     *
+     * @param plugin   the plugin registering the listener
+     * @param listener the listener to register
+     */
+    default void registerPacketLoreListenerGlobal(@NotNull Plugin plugin,
+                                                  @NotNull SurfBukkitPacketLoreHandlerSimple listener) {
+        registerPacketLoreListenerGlobal(plugin, (SurfBukkitPacketLoreHandler) listener);
+    }
+
+    /**
      * Unregisters a packet lore listener identified by the given identifier.
      *
      * @param identifier the identifier of the packet lore listener to unregister
      */
     void unregisterPacketLoreListener(@NotNull NamespacedKey identifier);
+
+    /**
+     * Unregisters a packet lore listener identified by the given plugin.
+     *
+     * @param plugin the plugin of the packet lore listener to unregister
+     */
+    void unregisterPacketLoreListener(@NotNull Plugin plugin);
 
     /**
      * Retrieves the SurfBukkitPacketApi instance.
