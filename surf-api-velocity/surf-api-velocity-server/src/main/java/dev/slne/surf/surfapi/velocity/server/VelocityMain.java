@@ -5,12 +5,13 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
-import dev.slne.surf.surfapi.velocity.api.SurfVelocityApi;
 import dev.slne.surf.surfapi.velocity.api.SurfVelocityApiAccess;
 import dev.slne.surf.surfapi.velocity.server.impl.SurfVelocityApiImpl;
+import dev.slne.surf.surfapi.velocity.server.packet.PacketApiLoader;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 
@@ -50,18 +51,9 @@ public class VelocityMain extends CoreInstance {
      * The Logger instance associated with the VelocityMain class.
      */
     private final Logger logger;
-    /**
-     * The dataDirectory variable represents the path of the data directory associated with the VelocityMain instance.
-     * <p>
-     * The data directory is the location where the plugin stores and retrieves data files during its execution.
-     * It is typically used to store configuration files, database files, or any other kind of data required by the plugin.
-     * <p>
-     * This variable is declared as private and final, indicating that its value cannot be changed once it is assigned,
-     * and it is only accessible within the VelocityMain class.
-     * <p>
-     * Example usage:
-     * Path directory = dataDirectory;
-     */
+
+    private final PluginContainer pluginContainer;
+
     private final Path dataDirectory;
 
     /**
@@ -72,6 +64,8 @@ public class VelocityMain extends CoreInstance {
 
     private final SurfVelocityApiImpl surfVelocityApiImpl;
 
+    private final PacketApiLoader packetApiLoader;
+
     /**
      * The VelocityMain class represents the main class of the Surf API Velocity plugin. It is responsible for initializing the plugin and exposing various methods for accessing different
      * components of the plugin.
@@ -79,36 +73,43 @@ public class VelocityMain extends CoreInstance {
      * The constructor of VelocityMain initializes the main objects required by the plugin, such as the server, logger, data directory, plugin description, plugin container, and executor
      * service.
      *
-     * @param server            The ProxyServer object associated with the VelocityMain instance.
-     * @param logger            The Logger object associated with the VelocityMain instance.
-     * @param dataDirectory     The path of the data directory associated with the VelocityMain instance.
-     * @param executorService   The ExecutorService used by the VelocityMain instance.
+     * @param server          The ProxyServer object associated with the VelocityMain instance.
+     * @param logger          The Logger object associated with the VelocityMain instance.
+     * @param dataDirectory   The path of the data directory associated with the VelocityMain instance.
+     * @param executorService The ExecutorService used by the VelocityMain instance.
      */
     @Inject
     public VelocityMain(ProxyServer server,
                         Logger logger,
+                        PluginContainer pluginContainer,
                         @DataDirectory Path dataDirectory,
                         ExecutorService executorService) {
 
         this.server = server;
         this.logger = logger;
+        this.pluginContainer = pluginContainer;
         this.dataDirectory = dataDirectory;
         this.executorService = executorService;
+        this.packetApiLoader = new PacketApiLoader(server, pluginContainer);
 
         instance = this;
         this.surfVelocityApiImpl = new SurfVelocityApiImpl();
         SurfVelocityApiAccess.setInstance(this.surfVelocityApiImpl);
+
+        packetApiLoader.onLoad();
         onLoad();
     }
 
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        packetApiLoader.onEnable();
         onEnable();
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
+        packetApiLoader.onDisable();
         onDisable();
     }
 
@@ -168,5 +169,9 @@ public class VelocityMain extends CoreInstance {
     @Contract(pure = true)
     public static VelocityMain getInstance() {
         return checkNotNull(instance, "instance");
+    }
+
+    public PluginContainer getPluginContainer() {
+        return pluginContainer;
     }
 }

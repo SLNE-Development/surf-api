@@ -11,8 +11,6 @@ dependencies {
     api(libs.commons.lang3)
     api(libs.commons.text)
     api(libs.okhttp)
-    // TODO: PacketEvents
-
     annotationProcessor(libs.velocity.api)
 }
 

@@ -30,6 +30,7 @@ paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api-ve
 paper-mojangapi = { module = "io.papermc.paper:paper-mojangapi", version.ref = "paper-mojangapi-version" }
 packetevents-spigot = { module = "com.github.retrooper.packetevents:spigot", version.ref = "packetevents-version" }
 packetevents-api = { module = "com.github.retrooper.packetevents:api", version.ref = "packetevents-version" }
+packetevents-velocity = { module = "com.github.retrooper.packetevents:velocity", version.ref = "packetevents-version" }
 entitylib = { module = "com.github.twisti-dev:EntityLib", version.ref = "entitylib-version" }
 scoreboard-library = { module = "com.github.megavexnetwork.scoreboard-library:scoreboard-library-api", version.ref = "scoreboard-library-version" }
 commandapi = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi-version" }
