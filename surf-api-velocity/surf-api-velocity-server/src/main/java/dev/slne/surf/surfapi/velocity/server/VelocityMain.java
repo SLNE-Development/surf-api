@@ -12,7 +12,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
 import dev.slne.surf.surfapi.velocity.api.SurfVelocityApiAccess;
 import dev.slne.surf.surfapi.velocity.server.impl.SurfVelocityApiImpl;
-import dev.slne.surf.surfapi.velocity.server.packet.PacketApiLoader;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 
@@ -68,8 +67,6 @@ public class VelocityMain extends CoreInstance {
 
     private final SurfVelocityApiImpl surfVelocityApiImpl;
 
-    private final PacketApiLoader packetApiLoader;
-
     /**
      * The VelocityMain class represents the main class of the Surf API Velocity plugin. It is responsible for initializing the plugin and exposing various methods for accessing different
      * components of the plugin.
@@ -94,26 +91,22 @@ public class VelocityMain extends CoreInstance {
         this.pluginContainer = pluginContainer;
         this.dataDirectory = dataDirectory;
         this.executorService = executorService;
-        this.packetApiLoader = new PacketApiLoader(server, pluginContainer);
 
         instance = this;
         this.surfVelocityApiImpl = new SurfVelocityApiImpl();
         SurfVelocityApiAccess.setInstance(this.surfVelocityApiImpl);
 
-        packetApiLoader.onLoad();
         onLoad();
     }
 
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        packetApiLoader.onEnable();
         onEnable();
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
-        packetApiLoader.onDisable();
         onDisable();
     }
 
