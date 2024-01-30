@@ -14,6 +14,7 @@ import space.arim.dazzleconf.ext.snakeyaml.CommentMode;
 import space.arim.dazzleconf.ext.snakeyaml.SnakeYamlConfigurationFactory;
 import space.arim.dazzleconf.ext.snakeyaml.SnakeYamlOptions;
 import space.arim.dazzleconf.helper.ConfigurationHelper;
+import space.arim.dazzleconf.sorter.AnnotationBasedSorter;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -84,6 +85,8 @@ public final class SurfConfigManager<C> {
                 configClass,
                 new ConfigurationOptions.Builder()
                         .addSerialisers(DefaultSerializers.DEFAULTS)
+                        .setCreateSingleElementCollections(true)
+                        .sorter(new AnnotationBasedSorter())
                         .build(),
                 options
         );
