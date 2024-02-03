@@ -483,8 +483,6 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
     @Override
     @SuppressWarnings("DataFlowIssue") // We are deleting the entity, so we don't care about the warnings
     public void delete() {
-        super.delete();
-
         if (isSpawned()) {
             despawn();
         }
@@ -496,6 +494,8 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends Packet
         internalInteractHandler = null;
         location = null;
         velocityAtSpawn = null;
+
+        super.delete();
     }
 
     protected PacketWrapper<?> spawnPacket() {
