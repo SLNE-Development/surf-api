@@ -11,7 +11,7 @@ dependencies {
     api(libs.commons.lang3)
     api(libs.commons.text)
     api(libs.okhttp)
-    implementation(libs.fastutil)
+//    implementation(libs.fastutil)
     annotationProcessor(libs.velocity.api)
 }
 

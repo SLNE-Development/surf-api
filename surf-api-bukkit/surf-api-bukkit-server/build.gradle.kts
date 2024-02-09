@@ -28,7 +28,7 @@ dependencies {
     paperLibrary(libs.dazzleconf)
     paperLibrary(libs.spongepowered.math)
     paperLibrary(libs.okhttp)
-    paperLibrary(libs.fastutil)
+//    paperLibrary(libs.fastutil)
     paperLibrary(libs.reflection.remapper)
 }
 

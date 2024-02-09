@@ -15,7 +15,7 @@ dependencies {
     compileOnlyApi(libs.dazzleconf)
     compileOnlyApi(libs.spongepowered.math)
     compileOnlyApi(libs.okhttp)
-    compileOnlyApi(libs.fastutil)
+//    compileOnlyApi(libs.fastutil)
 }
 
 description = "surf-api-core-api"
