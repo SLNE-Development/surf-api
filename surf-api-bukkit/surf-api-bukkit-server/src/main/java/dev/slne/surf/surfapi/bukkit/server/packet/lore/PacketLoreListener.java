@@ -195,7 +195,12 @@ public final class PacketLoreListener extends PacketListenerAbstract {
 
             if (lore != null) {
                 lore.removeIf(component -> PLAIN_TEXT_SERIALIZER.serialize(component).startsWith(lorePrefixString));
-                meta.lore(lore);
+
+                if (lore.isEmpty()) {
+                    meta.lore(null);
+                } else {
+                    meta.lore(lore);
+                }
             }
         });
 
