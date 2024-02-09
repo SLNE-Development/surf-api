@@ -11,7 +11,7 @@ dependencies {
     api(libs.commons.lang3)
     api(libs.commons.text)
     api(libs.okhttp)
-    implementation(libs.fastutil)
+    api(libs.fastutil)
     annotationProcessor(libs.velocity.api)
 }
 
@@ -77,7 +77,11 @@ tasks {
 //        exclude("it/unimi/dsi/fastutil/*Swapper*")
 //        exclude("it/unimi/dsi/fastutil/package-info*")
 
-        relocate("it.unimi.dsi.fastutil", "dev.slne.fastutil")
+//        relocate("it.unimi.dsi.fastutil", "dev.slne.fastutil")
+        //  it.unimi.dsi.fastutil.objects.ObjectSets
+//        exclude("it/unimi/dsi/fastutil/object/ObjectSets")
+//        exclude("it/unimi/dsi/fastutil/object/Object2BooleanMaps")
+//        exclude("it/unimi/dsi/fastutil/objects/ObjectArraySet")
     }
 }
 
