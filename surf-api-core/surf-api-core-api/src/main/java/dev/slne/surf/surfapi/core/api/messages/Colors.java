@@ -47,12 +47,12 @@ public interface Colors {
      * VARIABLE_KEY color (#3b92d1).
      * Mainly used as a key in listings (e.g., "Key 1: Value", "Key 2: Value", etc.).
      */
-    TextColor VARIABLE_KEY = TextColor.color(0x3b92d1);
+    TextColor VARIABLE_KEY = Colors.INFO;
     /**
      * VARIABLE_VALUE color (#f9c353).
      * Primarily used in listings and chat messages as a variable (e.g., "Your property [PROPERTY] has been sold.").
      */
-    TextColor VARIABLE_VALUE = TextColor.color(0xf9c353);
+    TextColor VARIABLE_VALUE = Colors.WARNING;
 
     /**
      * SPACER color (GRAY).
@@ -68,7 +68,7 @@ public interface Colors {
      * PREFIX color (#3b92d1).
      * Used for the color of every prefix to provide a uniform appearance.
      */
-    TextColor PREFIX_COLOR = TextColor.color(0x3b92d1);
+    TextColor PREFIX_COLOR = Colors.PRIMARY;
     // ----------------------------------------------------- //
 
     // -------------------- Default Colors -------------------- //
