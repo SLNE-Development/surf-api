@@ -169,7 +169,8 @@ public final class PacketLoreListener extends PacketListenerAbstract {
                 }
             });
 
-            meta.lore(lore.stream().map(lorePrefix::append).toList());
+            final List<Component> parsed = lore.stream().map(lorePrefix::append).toList();
+            meta.lore(parsed.isEmpty() ? null : parsed);
         });
 
         return SpigotConversionUtil.fromBukkitItemStack(bukkitStack);
