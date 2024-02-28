@@ -7,14 +7,15 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity.RemovePacket
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity.ShowHidePacketEntity;
 
 public class PacketEntityTest extends CommandAPICommand {
-    public PacketEntityTest(String commandName) {
-        super(commandName);
 
-        withSubcommands(
-                new CreatePacketEntity("create"),
-                new ShowHidePacketEntity("showhide"),
-                new RemovePacketEntity("remove"),
-                new CreateHardcoded("hardcoded")
-        );
-    }
+  public PacketEntityTest(String commandName) {
+    super(commandName);
+
+    withSubcommands(
+        new CreatePacketEntity("create"),
+        new ShowHidePacketEntity("showhide"),
+        new RemovePacketEntity("remove"),
+        new CreateHardcoded("hardcoded")
+    );
+  }
 }

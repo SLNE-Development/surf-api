@@ -5,4 +5,5 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
 public interface PacketStray extends PacketAbstractSkeleton<PacketStray>, Spawnable {
+
 }

@@ -6,11 +6,11 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 @CanBeSpawned
 public interface PacketBat extends PacketAmbientCreature<PacketBat>, Spawnable {
 
-    int BAT_BIT_MASK_INDEX = 16;
+  int BAT_BIT_MASK_INDEX = 16;
 
-    byte HANGING_BIT = 0x01;
+  byte HANGING_BIT = 0x01;
 
-    boolean hanging();
+  boolean hanging();
 
-    void hanging(boolean hanging);
+  void hanging(boolean hanging);
 }

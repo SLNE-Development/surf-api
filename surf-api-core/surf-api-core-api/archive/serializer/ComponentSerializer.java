@@ -9,17 +9,17 @@ import java.util.function.Predicate;
 
 public class ComponentSerializer extends ScalarSerializer<Component> {
 
-    public ComponentSerializer() {
-        super(Component.class);
-    }
+  public ComponentSerializer() {
+    super(Component.class);
+  }
 
-    @Override
-    public Component deserialize(Type type, Object obj) {
-        return MiniMessage.miniMessage().deserialize(obj.toString());
-    }
+  @Override
+  public Component deserialize(Type type, Object obj) {
+    return MiniMessage.miniMessage().deserialize(obj.toString());
+  }
 
-    @Override
-    protected Object serialize(Component item, Predicate<Class<?>> typeSupported) {
-        return MiniMessage.miniMessage().serialize(item);
-    }
+  @Override
+  protected Object serialize(Component item, Predicate<Class<?>> typeSupported) {
+    return MiniMessage.miniMessage().serialize(item);
+  }
 }

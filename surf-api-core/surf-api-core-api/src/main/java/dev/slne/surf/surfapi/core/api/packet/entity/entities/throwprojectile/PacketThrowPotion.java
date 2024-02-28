@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 @CanBeSpawned
 public interface PacketThrowPotion extends PacketThrowItemProjectile<PacketThrowPotion>, Spawnable {
 
-    @ApiStatus.Obsolete // Always splash potion - anything else is unsupported
-    @Override
-    void item(ItemStack item);
+  @ApiStatus.Obsolete // Always splash potion - anything else is unsupported
+  @Override
+  void item(ItemStack item);
 }

@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 public interface SpawnVelocity {
 
-    @NotNull
-    Vector3d velocityAtSpawn();
+  @NotNull
+  Vector3d velocityAtSpawn();
 
-    @NeedsRespawn
-    void velocityAtSpawn(@NotNull Vector3d velocityAtSpawn);
+  @NeedsRespawn
+  void velocityAtSpawn(@NotNull Vector3d velocityAtSpawn);
 }

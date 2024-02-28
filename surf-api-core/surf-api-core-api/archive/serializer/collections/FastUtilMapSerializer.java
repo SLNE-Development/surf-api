@@ -15,55 +15,66 @@ import java.util.function.Function;
 
 public abstract class FastUtilMapSerializer<M extends Map<?, ?>> implements TypeSerializer<M> {
 
-    private final Function<Map<?, ?>, ? extends M> factory;
+  private final Function<Map<?, ?>, ? extends M> factory;
 
-    protected FastUtilMapSerializer(final Function<Map<?, ?>, ? extends M> factory) {
-        this.factory = factory;
+  protected FastUtilMapSerializer(final Function<Map<?, ?>, ? extends M> factory) {
+    this.factory = factory;
+  }
+
+  @Override
+  public M deserialize(final Type type, final ConfigurationNode node)
+      throws SerializationException {
+    @Nullable final Map<?, ?> map = (Map<?, ?>) node.get(
+        this.createBaseMapType((ParameterizedType) type));
+    return this.factory.apply(map == null ? Collections.emptyMap() : map);
+  }
+
+  @Override
+  public void serialize(final Type type, @Nullable final M obj, final ConfigurationNode node)
+      throws SerializationException {
+    if (obj == null || obj.isEmpty()) {
+      node.raw(null);
+    } else {
+      final Type baseMapType = this.createBaseMapType((ParameterizedType) type);
+      node.set(baseMapType, obj);
+    }
+  }
+
+  protected abstract Type createBaseMapType(final ParameterizedType type);
+
+  public static final class SomethingToPrimitive<M extends Map<?, ?>> extends
+      FastUtilMapSerializer<M> {
+
+    private final Type primitiveType;
+
+    public SomethingToPrimitive(final Function<Map<?, ?>, ? extends M> factory,
+        final Type primitiveType) {
+      super(factory);
+      this.primitiveType = primitiveType;
     }
 
     @Override
-    public M deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
-        @Nullable final Map<?, ?> map = (Map<?, ?>) node.get(this.createBaseMapType((ParameterizedType) type));
-        return this.factory.apply(map == null ? Collections.emptyMap() : map);
+    protected Type createBaseMapType(final ParameterizedType type) {
+      return TypeFactory.parameterizedClass(Map.class, type.getActualTypeArguments()[0],
+          GenericTypeReflector.box(this.primitiveType));
+    }
+  }
+
+  public static final class PrimitiveToSomething<M extends Map<?, ?>> extends
+      FastUtilMapSerializer<M> {
+
+    private final Type primitiveType;
+
+    public PrimitiveToSomething(final Function<Map<?, ?>, ? extends M> factory,
+        final Type primitiveType) {
+      super(factory);
+      this.primitiveType = primitiveType;
     }
 
     @Override
-    public void serialize(final Type type, @Nullable final M obj, final ConfigurationNode node) throws SerializationException {
-        if (obj == null || obj.isEmpty()) {
-            node.raw(null);
-        } else {
-            final Type baseMapType = this.createBaseMapType((ParameterizedType) type);
-            node.set(baseMapType, obj);
-        }
+    protected Type createBaseMapType(final ParameterizedType type) {
+      return TypeFactory.parameterizedClass(Map.class, GenericTypeReflector.box(this.primitiveType),
+          type.getActualTypeArguments()[0]);
     }
-
-    protected abstract Type createBaseMapType(final ParameterizedType type);
-
-    public static final class SomethingToPrimitive<M extends Map<?, ?>> extends FastUtilMapSerializer<M> {
-        private final Type primitiveType;
-
-        public SomethingToPrimitive(final Function<Map<?, ?>, ? extends M> factory, final Type primitiveType) {
-            super(factory);
-            this.primitiveType = primitiveType;
-        }
-
-        @Override
-        protected Type createBaseMapType(final ParameterizedType type) {
-            return TypeFactory.parameterizedClass(Map.class, type.getActualTypeArguments()[0], GenericTypeReflector.box(this.primitiveType));
-        }
-    }
-
-    public static final class PrimitiveToSomething<M extends Map<?, ?>> extends FastUtilMapSerializer<M> {
-        private final Type primitiveType;
-
-        public PrimitiveToSomething(final Function<Map<?, ?>, ? extends M> factory, final Type primitiveType) {
-            super(factory);
-            this.primitiveType = primitiveType;
-        }
-
-        @Override
-        protected Type createBaseMapType(final ParameterizedType type) {
-            return TypeFactory.parameterizedClass(Map.class, GenericTypeReflector.box(this.primitiveType), type.getActualTypeArguments()[0]);
-        }
-    }
+  }
 }

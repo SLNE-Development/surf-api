@@ -10,11 +10,11 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketEyeOfEnder extends PacketEntity<PacketEyeOfEnder>, Spawnable {
 
-    int ITEM_INDEX = 8;
+  int ITEM_INDEX = 8;
 
-    ItemStack item();
+  ItemStack item();
 
-    @ApiStatus.Obsolete
-        // Always ender eye
-    void item(@NotNull ItemStack item);
+  @ApiStatus.Obsolete
+    // Always ender eye
+  void item(@NotNull ItemStack item);
 }

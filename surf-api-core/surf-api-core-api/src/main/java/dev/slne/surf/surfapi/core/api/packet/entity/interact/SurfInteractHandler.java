@@ -8,16 +8,17 @@ import org.jetbrains.annotations.ApiStatus;
 
 public interface SurfInteractHandler<E extends PacketEntity<E>> {
 
-    @ApiStatus.OverrideOnly
-    void handle(E entity, InteractAction interactAction, InteractionHand interactionHand, User user);
+  @ApiStatus.OverrideOnly
+  void handle(E entity, InteractAction interactAction, InteractionHand interactionHand, User user);
 
-    /**
-     * Internal method, do not use (Java generics are not reified)
-     */
-    @SuppressWarnings("unchecked")
-    @ApiStatus.Internal
-    @ApiStatus.NonExtendable
-    default void handleInternal(PacketEntity<?> entity, InteractAction interactAction, InteractionHand interactionHand, User user) {
-        handle((E) entity, interactAction, interactionHand, user);
-    }
+  /**
+   * Internal method, do not use (Java generics are not reified)
+   */
+  @SuppressWarnings("unchecked")
+  @ApiStatus.Internal
+  @ApiStatus.NonExtendable
+  default void handleInternal(PacketEntity<?> entity, InteractAction interactAction,
+      InteractionHand interactionHand, User user) {
+    handle((E) entity, interactAction, interactionHand, user);
+  }
 }

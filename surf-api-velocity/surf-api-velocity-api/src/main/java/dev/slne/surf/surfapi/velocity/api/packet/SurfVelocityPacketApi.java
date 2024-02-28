@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 public interface SurfVelocityPacketApi extends SurfCorePacketApi {
 
-    static SurfVelocityPacketApi get() {
-        return SurfVelocityApi.get().getPacketApi();
-    }
+  static SurfVelocityPacketApi get() {
+    return SurfVelocityApi.get().getPacketApi();
+  }
 }

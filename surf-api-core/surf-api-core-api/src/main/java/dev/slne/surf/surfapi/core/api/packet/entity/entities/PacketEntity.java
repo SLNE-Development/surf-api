@@ -7,6 +7,9 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientIn
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
 import dev.slne.surf.surfapi.core.api.packet.entity.EntityStatus;
 import dev.slne.surf.surfapi.core.api.packet.entity.interact.SurfInteractHandler;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -14,167 +17,166 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 @ApiStatus.NonExtendable
 public interface PacketEntity<Impl extends PacketEntity<Impl>> extends EntityMetadataProvider {
 
-    /**
-     * Index numbers for packets
-     */
-    int ENTITY_BIT_MASK_INDEX = 0, AIR_TICKS_INDEX = 1, CUSTOM_NAME_INDEX = 2, CUSTOM_NAME_VISIBLE_INDEX = 3,
-            IS_SILENT_INDEX = 4, HAS_NO_GRAVITY_INDEX = 5, POSE_INDEX = 6, TICKS_FROZEN_IN_POWDERED_SNOW = 7;
+  /**
+   * Index numbers for packets
+   */
+  int ENTITY_BIT_MASK_INDEX = 0, AIR_TICKS_INDEX = 1, CUSTOM_NAME_INDEX = 2, CUSTOM_NAME_VISIBLE_INDEX = 3,
+      IS_SILENT_INDEX = 4, HAS_NO_GRAVITY_INDEX = 5, POSE_INDEX = 6, TICKS_FROZEN_IN_POWDERED_SNOW = 7;
 
-    /**
-     * Bit masks for the {@link #ENTITY_BIT_MASK_INDEX}
-     */
-    byte IS_ON_FIRE_BYTE = 0x01, IS_CROUCHING = 0x02, IS_SPRINTING = 0x08, IS_SWIMMING = 0x10, IS_INVISIBLE = 0x20,
-            HAS_GLOWING_EFFECT = 0x40, IS_FLYING_WITH_ELYTRA = (byte) 0x80;
+  /**
+   * Bit masks for the {@link #ENTITY_BIT_MASK_INDEX}
+   */
+  byte IS_ON_FIRE_BYTE = 0x01, IS_CROUCHING = 0x02, IS_SPRINTING = 0x08, IS_SWIMMING = 0x10, IS_INVISIBLE = 0x20,
+      HAS_GLOWING_EFFECT = 0x40, IS_FLYING_WITH_ELYTRA = (byte) 0x80;
 
-    @NotNull
-    UUID uuid();
+  @NotNull
+  UUID uuid();
 
-    int entityId();
+  int entityId();
 
-    void animate(WrapperPlayServerEntityAnimation.EntityAnimationType animation);
+  void animate(WrapperPlayServerEntityAnimation.EntityAnimationType animation);
 
-    void entityStatus(@NotNull EntityStatus status);
+  void entityStatus(@NotNull EntityStatus status);
 
-    boolean onFire();
+  boolean onFire();
 
-    void onFire(boolean onFire);
+  void onFire(boolean onFire);
 
-    boolean sneaking();
+  boolean sneaking();
 
-    void sneaking(boolean sneaking);
+  void sneaking(boolean sneaking);
 
-    boolean sprinting();
+  boolean sprinting();
 
-    void sprinting(boolean sprinting);
+  void sprinting(boolean sprinting);
 
-    boolean invisible();
+  boolean invisible();
 
-    void invisible(boolean invisible);
+  void invisible(boolean invisible);
 
-    int airTicks();
+  int airTicks();
 
-    void airTicks(int airTicks);
+  void airTicks(int airTicks);
 
-    boolean glowingEffect();
+  boolean glowingEffect();
 
-    void glowingEffect(boolean glowingEffect);
+  void glowingEffect(boolean glowingEffect);
 
-    boolean swimming();
+  boolean swimming();
 
-    void swimming(boolean swimming);
+  void swimming(boolean swimming);
 
-    boolean flyingWithElytra();
+  boolean flyingWithElytra();
 
-    void flyingWithElytra(boolean flyingWithElytra);
+  void flyingWithElytra(boolean flyingWithElytra);
 
-    boolean silent();
+  boolean silent();
 
-    void silent(boolean silent);
+  void silent(boolean silent);
 
-    boolean noGravity();
+  boolean noGravity();
 
-    void noGravity(boolean noGravity);
+  void noGravity(boolean noGravity);
 
-    int ticksFrozenInPowderedSnow();
+  int ticksFrozenInPowderedSnow();
 
-    void ticksFrozenInPowderedSnow(int ticksFrozenInPowderedSnow);
+  void ticksFrozenInPowderedSnow(int ticksFrozenInPowderedSnow);
 
-    @NotNull
-    EntityPose entityPose();
+  @NotNull
+  EntityPose entityPose();
 
-    void entityPose(@NotNull EntityPose entityPose);
+  void entityPose(@NotNull EntityPose entityPose);
 
-    Optional<Component> displayName();
+  Optional<Component> displayName();
 
-    void displayName(@Nullable Component displayName);
+  void displayName(@Nullable Component displayName);
 
-    default void displayName(@Nullable ComponentLike displayName) {
-        displayName(displayName != null ? displayName.asComponent() : null);
+  default void displayName(@Nullable ComponentLike displayName) {
+    displayName(displayName != null ? displayName.asComponent() : null);
+  }
+
+  default void displayName(@Nullable String displayNameMiniMessage) {
+    if (displayNameMiniMessage != null) {
+      displayName(miniMessage().deserialize(displayNameMiniMessage));
+    } else {
+      displayName((Component) null);
     }
+  }
 
-    default void displayName(@Nullable String displayNameMiniMessage) {
-        if (displayNameMiniMessage != null) {
-            displayName(miniMessage().deserialize(displayNameMiniMessage));
-        } else {
-            displayName((Component) null);
-        }
-    }
+  MiniMessage miniMessage();
 
-    MiniMessage miniMessage();
+  Optional<SurfInteractHandler<Impl>> interactHandler();
 
-    Optional<SurfInteractHandler<Impl>> interactHandler();
+  void interactHandler(@Nullable SurfInteractHandler<Impl> interactHandler);
 
-    void interactHandler(@Nullable SurfInteractHandler<Impl> interactHandler);
+  /**
+   * Sets the interact cooldown for this entity for every player
+   * <p>
+   * If the player is trying to interact with this entity while the cooldown is active, the
+   * interaction will be ignored otherwise the provided interact handler from
+   * {@link #interactHandler(SurfInteractHandler)} will be called.
+   * </p>
+   *
+   * @param cooldown the cooldown in the provided time unit
+   * @param timeUnit the time unit of the cooldown
+   * @param soft     if {@code true} this will not override any cooldown set by
+   *                 {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long,
+   *                 TimeUnit)} if {@code false} this will override any cooldown set by
+   *                 {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long,
+   *                 TimeUnit)} also for future calls to
+   *                 {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long,
+   *                 TimeUnit)}
+   */
+  void interactCooldown(long cooldown, @NotNull TimeUnit timeUnit, boolean soft);
 
-    /**
-     * Sets the interact cooldown for this entity for every player
-     * <p>
-     * If the player is trying to interact with this entity while the cooldown is active, the interaction will be
-     * ignored otherwise the provided interact handler from {@link #interactHandler(SurfInteractHandler)} will be
-     * called.
-     * </p>
-     *
-     * @param cooldown the cooldown in the provided time unit
-     * @param timeUnit the time unit of the cooldown
-     * @param soft     if {@code true} this will not override any cooldown
-     *                 set by {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long, TimeUnit)}
-     *                 if {@code false} this will override any cooldown set by
-     *                 {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long, TimeUnit)}
-     *                 also for future calls to {@link #interactCooldown(WrapperPlayClientInteractEntity.InteractAction, long, TimeUnit)}
-     */
-    void interactCooldown(long cooldown, @NotNull TimeUnit timeUnit, boolean soft);
+  /**
+   * Resets the interact cooldown for this entity and allows the cooldown to be set for specific
+   * interactions again
+   */
+  void resetInteractCooldown();
 
-    /**
-     * Resets the interact cooldown for this entity and allows the cooldown to be set for
-     * specific interactions again
-     */
-    void resetInteractCooldown();
+  /**
+   * Sets the interact cooldown for the provided interaction
+   * <p>
+   * If the player is trying to interact with this entity while the cooldown is active, the
+   * interaction will be ignored otherwise the provided interact handler from
+   * {@link #interactHandler(SurfInteractHandler)} will be called.
+   * </p>
+   *
+   * @param action   the interaction to set the cooldown for
+   * @param cooldown the cooldown in the provided time unit
+   * @param timeUnit the time unit of the cooldown
+   */
+  void interactCooldown(WrapperPlayClientInteractEntity.InteractAction action, long cooldown,
+      @NotNull TimeUnit timeUnit);
 
-    /**
-     * Sets the interact cooldown for the provided interaction
-     * <p>
-     * If the player is trying to interact with this entity while the cooldown is active, the interaction will be
-     * ignored otherwise the provided interact handler from {@link #interactHandler(SurfInteractHandler)} will be
-     * called.
-     * </p>
-     *
-     * @param action    the interaction to set the cooldown for
-     * @param cooldown  the cooldown in the provided time unit
-     * @param timeUnit  the time unit of the cooldown
-     */
-    void interactCooldown(WrapperPlayClientInteractEntity.InteractAction action, long cooldown, @NotNull TimeUnit timeUnit);
+  /**
+   * Resets the interact cooldown for the provided interaction
+   *
+   * @param action the interaction to reset the cooldown for
+   */
+  void resetInteractCooldown(WrapperPlayClientInteractEntity.InteractAction action);
 
-    /**
-     * Resets the interact cooldown for the provided interaction
-     *
-     * @param action the interaction to reset the cooldown for
-     */
-    void resetInteractCooldown(WrapperPlayClientInteractEntity.InteractAction action);
+  boolean spawn(@NotNull Location location);
 
-    boolean spawn(@NotNull Location location);
+  boolean respawn(@NotNull Location location);
 
-    boolean respawn(@NotNull Location location);
+  boolean respawn();
 
-    boolean respawn();
+  boolean isSpawned();
 
-    boolean isSpawned();
+  boolean despawn();
 
-    boolean despawn();
+  boolean teleport(@NotNull Location location);
 
-    boolean teleport(@NotNull Location location);
+  boolean addViewer(@NotNull UUID uuid);
 
-    boolean addViewer(@NotNull UUID uuid);
+  boolean removeViewer(@NotNull UUID uuid);
 
-    boolean removeViewer(@NotNull UUID uuid);
+  void startBatchUpdate();
 
-    void startBatchUpdate();
-
-    void pushBatchUpdate();
+  void pushBatchUpdate();
 }

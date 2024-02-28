@@ -8,18 +8,19 @@ import org.jetbrains.annotations.NotNull;
 
 @CanBeSpawned
 public interface PacketItemDisplay extends PacketDisplay<PacketItemDisplay>, Spawnable {
-    int ITEM_INDEX = 23, DISPLAY_TRANSFORM_INDEX = 24;
 
-    @NotNull
-    ItemStack item();
+  int ITEM_INDEX = 23, DISPLAY_TRANSFORM_INDEX = 24;
 
-    /**
-     * @param item the item to display
-     * @see ItemStack#EMPTY
-     */
-    void item(@NotNull ItemStack item);
+  @NotNull
+  ItemStack item();
 
-    ItemDisplayTransform itemDisplayTransform();
+  /**
+   * @param item the item to display
+   * @see ItemStack#EMPTY
+   */
+  void item(@NotNull ItemStack item);
 
-    void itemDisplayTransform(ItemDisplayTransform displayTransform);
+  ItemDisplayTransform itemDisplayTransform();
+
+  void itemDisplayTransform(ItemDisplayTransform displayTransform);
 }

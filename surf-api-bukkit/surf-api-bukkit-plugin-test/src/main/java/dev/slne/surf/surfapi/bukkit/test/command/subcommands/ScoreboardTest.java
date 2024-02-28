@@ -6,13 +6,14 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.scoreboard.StartSco
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.scoreboard.StopScoreboard;
 
 public class ScoreboardTest extends CommandAPICommand {
-    public ScoreboardTest(String commandName) {
-        super(commandName);
 
-        withSubcommands(
-                new CreateScoreboard("create"),
-                new StartScoreboard("start"),
-                new StopScoreboard("stop")
-        );
-    }
+  public ScoreboardTest(String commandName) {
+    super(commandName);
+
+    withSubcommands(
+        new CreateScoreboard("create"),
+        new StartScoreboard("start"),
+        new StopScoreboard("stop")
+    );
+  }
 }

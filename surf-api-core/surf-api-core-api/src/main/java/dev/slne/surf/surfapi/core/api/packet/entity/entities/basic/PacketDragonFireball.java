@@ -7,5 +7,7 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.SpawnVelocity;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
-public interface PacketDragonFireball extends PacketEntity<PacketDragonFireball>, SpawnVelocity, Shootable, Spawnable {
+public interface PacketDragonFireball extends PacketEntity<PacketDragonFireball>, SpawnVelocity,
+    Shootable, Spawnable {
+
 }

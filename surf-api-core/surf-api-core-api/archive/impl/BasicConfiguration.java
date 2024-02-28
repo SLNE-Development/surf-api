@@ -15,52 +15,54 @@ import java.util.function.UnaryOperator;
 
 public class BasicConfiguration<C> extends Configuration<C> {
 
-    private final Consumer<C> configSetter;
-    private final @Nullable String header;
-    private final @Nullable UnaryOperator<ConfigurationTransformation.VersionedBuilder> versionUpdater;
-    private final @Nullable UnaryOperator<ConfigurationTransformation.Builder> transformationUpdater;
+  private final Consumer<C> configSetter;
+  private final @Nullable String header;
+  private final @Nullable UnaryOperator<ConfigurationTransformation.VersionedBuilder> versionUpdater;
+  private final @Nullable UnaryOperator<ConfigurationTransformation.Builder> transformationUpdater;
 
-    public BasicConfiguration(Path folder,
-                              Class<C> configClass,
-                              Consumer<C> configSetter,
-                              String configFileName,
-                              int configVersion,
-                              @Nullable String header,
-                              Supplier<C> getterSupplier,
-                              @Nullable UnaryOperator<ConfigurationTransformation.VersionedBuilder> versionUpdater,
-                              @Nullable UnaryOperator<ConfigurationTransformation.Builder> transformationUpdater) {
+  public BasicConfiguration(Path folder,
+      Class<C> configClass,
+      Consumer<C> configSetter,
+      String configFileName,
+      int configVersion,
+      @Nullable String header,
+      Supplier<C> getterSupplier,
+      @Nullable UnaryOperator<ConfigurationTransformation.VersionedBuilder> versionUpdater,
+      @Nullable UnaryOperator<ConfigurationTransformation.Builder> transformationUpdater) {
 
-        super(folder, configClass, configFileName, configVersion, getterSupplier);
-        this.configSetter = configSetter;
+    super(folder, configClass, configFileName, configVersion, getterSupplier);
+    this.configSetter = configSetter;
 
-        this.header = header;
-        this.versionUpdater = versionUpdater;
-        this.transformationUpdater = transformationUpdater;
+    this.header = header;
+    this.versionUpdater = versionUpdater;
+    this.transformationUpdater = transformationUpdater;
+  }
+
+  @Override
+  protected YamlConfigurationLoader.Builder createYamlConfigurationLoaderBuilder() {
+    return super.createYamlConfigurationLoaderBuilder()
+        .defaultOptions(options -> options.header(header));
+  }
+
+  @Override
+  public C initializeConfig() throws ConfigurateException {
+    C c = super.initializeConfig();
+    configSetter.accept(c);
+    return c;
+  }
+
+  @Override
+  protected void applyConfigTransformers(ConfigurationNode node) throws ConfigurateException {
+    if (transformationUpdater != null) {
+      ConfigurationTransformation.Builder builder = transformationUpdater.apply(
+          ConfigurationTransformation.builder());
+      builder.build().apply(node);
     }
 
-    @Override
-    protected YamlConfigurationLoader.Builder createYamlConfigurationLoaderBuilder() {
-        return super.createYamlConfigurationLoaderBuilder()
-                .defaultOptions(options -> options.header(header));
+    if (versionUpdater != null) {
+      ConfigurationTransformation.VersionedBuilder versionedBuilder = versionUpdater.apply(
+          Transformations.versionedBuilder());
+      versionedBuilder.build().apply(node);
     }
-
-    @Override
-    public C initializeConfig() throws ConfigurateException {
-        C c = super.initializeConfig();
-        configSetter.accept(c);
-        return c;
-    }
-
-    @Override
-    protected void applyConfigTransformers(ConfigurationNode node) throws ConfigurateException {
-        if (transformationUpdater != null) {
-            ConfigurationTransformation.Builder builder = transformationUpdater.apply(ConfigurationTransformation.builder());
-            builder.build().apply(node);
-        }
-
-        if (versionUpdater != null) {
-            ConfigurationTransformation.VersionedBuilder versionedBuilder = versionUpdater.apply(Transformations.versionedBuilder());
-            versionedBuilder.build().apply(node);
-        }
-    }
+  }
 }

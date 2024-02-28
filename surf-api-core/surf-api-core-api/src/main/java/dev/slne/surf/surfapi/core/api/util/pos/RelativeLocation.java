@@ -5,25 +5,29 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 
 public interface RelativeLocation {
 
-    double x();
+  static RelativeLocation of(double deltaX, double deltaY, double deltaZ, float deltaYaw,
+      float deltaPitch) {
+    return new RelativeLocationImpl(deltaX, deltaY, deltaZ, deltaYaw, deltaPitch);
+  }
 
-    double y();
+  static RelativeLocation of(Location locationA, Location locationB) {
+    return of(locationA.getX() - locationB.getX(), locationA.getY() - locationB.getY(),
+        locationA.getZ() - locationB.getZ(), locationA.getYaw() - locationB.getYaw(),
+        locationA.getPitch() - locationB.getPitch());
+  }
 
-    double z();
+  double x();
 
-    float yaw();
+  double y();
 
-    float pitch();
+  double z();
 
-    default WrapperPlayServerEntityRelativeMoveAndRotation toPacket(int entityId, boolean onGround) {
-        return new WrapperPlayServerEntityRelativeMoveAndRotation(entityId, x(), y(), z(), yaw(), pitch(), onGround);
-    }
+  float yaw();
 
-    static RelativeLocation of(double deltaX, double deltaY, double deltaZ, float deltaYaw, float deltaPitch) {
-        return new RelativeLocationImpl(deltaX, deltaY, deltaZ, deltaYaw, deltaPitch);
-    }
+  float pitch();
 
-    static RelativeLocation of(Location locationA, Location locationB) {
-        return of(locationA.getX() - locationB.getX(), locationA.getY() - locationB.getY(), locationA.getZ() - locationB.getZ(), locationA.getYaw() - locationB.getYaw(), locationA.getPitch() - locationB.getPitch());
-    }
+  default WrapperPlayServerEntityRelativeMoveAndRotation toPacket(int entityId, boolean onGround) {
+    return new WrapperPlayServerEntityRelativeMoveAndRotation(entityId, x(), y(), z(), yaw(),
+        pitch(), onGround);
+  }
 }

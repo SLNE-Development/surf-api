@@ -7,15 +7,15 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketPufferFish extends PacketAbstractFish<PacketPufferFish>, Spawnable {
 
-    int PUFF_STATE_INDEX = 17;
+  int PUFF_STATE_INDEX = 17;
 
-    PuffState puffState();
+  PuffState puffState();
 
-    void puffState(@NotNull PuffState puffState);
+  void puffState(@NotNull PuffState puffState);
 
-    enum PuffState {
-        NONE,
-        MIDDLE,
-        FULL
-    }
+  enum PuffState {
+    NONE,
+    MIDDLE,
+    FULL
+  }
 }

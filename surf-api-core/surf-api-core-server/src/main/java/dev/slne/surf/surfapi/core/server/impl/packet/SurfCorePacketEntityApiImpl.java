@@ -1,5 +1,9 @@
 package dev.slne.surf.surfapi.core.server.impl.packet;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
 import com.github.retrooper.packetevents.event.simple.PacketPlayReceiveEvent;
@@ -33,6 +37,16 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import javax.annotation.CheckForNull;
 import net.kyori.adventure.key.Key;
 import org.checkerframework.common.value.qual.ArrayLenRange;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,246 +57,264 @@ import org.spongepowered.math.vector.Vector3d;
 import org.spongepowered.math.vector.Vector3f;
 import org.spongepowered.math.vector.Vector3i;
 
-import javax.annotation.CheckForNull;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static com.google.common.base.Preconditions.*;
-
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
 public abstract class SurfCorePacketEntityApiImpl implements SurfCorePacketEntityApi {
 
-    private boolean interactListenerRegistered = false;
-    private @NotNull EntityIdProvider idProvider;
-    private final SpawnablePacketEntityRegistry registry;
-    private final Set<SurfInteractHandler<? extends PacketEntity<?>>> interactHandlers;
-    private final Int2ObjectMap<PacketEntity<?>> entitiesById;
-    private final Object2ObjectMap<UUID, PacketEntity<?>> entitiesByUuid;
+  private final SpawnablePacketEntityRegistry registry;
+  private final Set<SurfInteractHandler<? extends PacketEntity<?>>> interactHandlers;
+  private final Int2ObjectMap<PacketEntity<?>> entitiesById;
+  private final Object2ObjectMap<UUID, PacketEntity<?>> entitiesByUuid;
+  private boolean interactListenerRegistered = false;
+  private @NotNull EntityIdProvider idProvider;
 
-    protected SurfCorePacketEntityApiImpl(@NotNull EntityIdProvider defaultIdProvider) {
-        this.idProvider = defaultIdProvider;
-        this.registry = new SpawnablePacketEntityRegistry();
-        this.interactHandlers = Collections.synchronizedSet(new HashSet<>());
-        this.entitiesByUuid = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
-        this.entitiesById = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
+  protected SurfCorePacketEntityApiImpl(@NotNull EntityIdProvider defaultIdProvider) {
+    this.idProvider = defaultIdProvider;
+    this.registry = new SpawnablePacketEntityRegistry();
+    this.interactHandlers = Collections.synchronizedSet(new HashSet<>());
+    this.entitiesByUuid = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    this.entitiesById = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
+  }
+
+  public void registerInteractListener() {
+    if (interactListenerRegistered) {
+      return;
     }
 
-    public void registerInteractListener() {
-        if (interactListenerRegistered) {
-            return;
+    PacketEvents.getAPI().getEventManager().registerListener(new SimplePacketListenerAbstract() {
+      @Override
+      public void onPacketPlayReceive(PacketPlayReceiveEvent event) {
+        if (!event.getPacketType().equals(PacketType.Play.Client.INTERACT_ENTITY)) {
+          return;
         }
 
-        PacketEvents.getAPI().getEventManager().registerListener(new SimplePacketListenerAbstract() {
-            @Override
-            public void onPacketPlayReceive(PacketPlayReceiveEvent event) {
-                if (!event.getPacketType().equals(PacketType.Play.Client.INTERACT_ENTITY)) {
-                    return;
-                }
+        final WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
+        final PacketEntity<?> packetEntity = entitiesById.get(packet.getEntityId());
+        final WrapperPlayClientInteractEntity.InteractAction action = packet.getAction();
+        final InteractionHand hand = packet.getHand();
+        final User user = event.getUser();
 
-                final WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
-                final PacketEntity<?> packetEntity = entitiesById.get(packet.getEntityId());
-                final WrapperPlayClientInteractEntity.InteractAction action = packet.getAction();
-                final InteractionHand hand = packet.getHand();
-                final User user = event.getUser();
+        System.err.println("Interact: " + packet.getEntityId());
 
-                System.err.println("Interact: " + packet.getEntityId());
-
-                if (packetEntity == null) {
-                    return;
-                }
-
-                packetEntity.interactHandler().ifPresent(handler -> handler.handleInternal(packetEntity, action, hand, user));
-
-                for (SurfInteractHandler<? extends PacketEntity<?>> handler : interactHandlers) {
-                    handler.handleInternal(packetEntity, action, hand, user);
-                }
-            }
-        });
-        interactListenerRegistered = true;
-    }
-
-    @Override
-    public void idProvider(@NotNull EntityIdProvider provider) {
-        this.idProvider = checkNotNull(provider, "Id provider may not be null");
-    }
-
-    @Override
-    public @NotNull EntityIdProvider idProvider() {
-        return idProvider;
-    }
-
-    @Override
-    public <T extends PacketEntity<T>> void registerInteractHandler(SurfInteractHandler<T> handler) {
-        interactHandlers.add(checkNotNull(handler, "Handler may not be null"));
-        registerInteractListener();
-    }
-
-    @Override
-    public <T extends PacketEntity<T> & Spawnable> T spawnEntity(@NotNull Class<T> entityClass, @NotNull UUID uuid, @Nullable Consumer<T> initializer) {
-        checkState(!entitiesByUuid.containsKey(uuid), "Entity with UUID %s already exists", uuid);
-
-        final Function<UUID, T> constructor = registry.get(entityClass);
-        final T entity = constructor.apply(checkNotNull(uuid, "UUID may not be null"));
-
-        registerEntity(entity);
-
-        if (initializer != null) {
-            entity.startBatchUpdate();
-            initializer.accept(entity);
-            entity.pushBatchUpdate();
+        if (packetEntity == null) {
+          return;
         }
 
-        return entity;
-    }
+        packetEntity.interactHandler()
+            .ifPresent(handler -> handler.handleInternal(packetEntity, action, hand, user));
 
-    @Override
-    public <T extends PacketEntity<T>> Optional<T> getEntity(@NotNull UUID uuid) {
-        return Optional.ofNullable((T) entitiesByUuid.get(uuid));
-    }
-
-    @Override
-    public <T extends PacketEntity<T>> Optional<T> getEntity(@NotNull UUID uuid, Class<T> entityClass) {
-        final PacketEntity<?> entity = entitiesByUuid.get(uuid);
-
-        if (entity == null) {
-            return Optional.empty();
+        for (SurfInteractHandler<? extends PacketEntity<?>> handler : interactHandlers) {
+          handler.handleInternal(packetEntity, action, hand, user);
         }
+      }
+    });
+    interactListenerRegistered = true;
+  }
 
-        checkState(entityClass.isInstance(entity), "Entity with UUID '%s' is not an instance of '%s' (it's '%s')", uuid, entityClass, entity.getClass());
+  @Override
+  public void idProvider(@NotNull EntityIdProvider provider) {
+    this.idProvider = checkNotNull(provider, "Id provider may not be null");
+  }
 
-        return Optional.ofNullable((T) entity);
+  @Override
+  public @NotNull EntityIdProvider idProvider() {
+    return idProvider;
+  }
+
+  @Override
+  public <T extends PacketEntity<T>> void registerInteractHandler(SurfInteractHandler<T> handler) {
+    interactHandlers.add(checkNotNull(handler, "Handler may not be null"));
+    registerInteractListener();
+  }
+
+  @Override
+  public <T extends PacketEntity<T> & Spawnable> T spawnEntity(@NotNull Class<T> entityClass,
+      @NotNull UUID uuid, @Nullable Consumer<T> initializer) {
+    checkState(!entitiesByUuid.containsKey(uuid), "Entity with UUID %s already exists", uuid);
+
+    final Function<UUID, T> constructor = registry.get(entityClass);
+    final T entity = constructor.apply(checkNotNull(uuid, "UUID may not be null"));
+
+    registerEntity(entity);
+
+    if (initializer != null) {
+      entity.startBatchUpdate();
+      initializer.accept(entity);
+      entity.pushBatchUpdate();
     }
 
-    @Override
-    public <T extends PacketEntity<T>> Optional<T> getEntity(@Range(from = 0L, to = Integer.MAX_VALUE) int entityId) {
-        return Optional.ofNullable((T) entitiesById.get(entityId));
+    return entity;
+  }
+
+  @Override
+  public <T extends PacketEntity<T>> Optional<T> getEntity(@NotNull UUID uuid) {
+    return Optional.ofNullable((T) entitiesByUuid.get(uuid));
+  }
+
+  @Override
+  public <T extends PacketEntity<T>> Optional<T> getEntity(@NotNull UUID uuid,
+      Class<T> entityClass) {
+    final PacketEntity<?> entity = entitiesByUuid.get(uuid);
+
+    if (entity == null) {
+      return Optional.empty();
     }
 
-    @Override
-    public <T extends PacketEntity<T>> Optional<T> getEntity(@Range(from = 0L, to = Integer.MAX_VALUE) int entityId, Class<T> entityClass) {
-        final PacketEntity<?> entity = entitiesById.get(entityId);
+    checkState(entityClass.isInstance(entity),
+        "Entity with UUID '%s' is not an instance of '%s' (it's '%s')", uuid, entityClass,
+        entity.getClass());
 
-        if (entity == null) {
-            return Optional.empty();
-        }
+    return Optional.ofNullable((T) entity);
+  }
 
-        checkState(entityClass.isInstance(entity), "Entity with entityId '%s' is not an instance of '%s' (it's '%s')", entityId, entityClass, entity.getClass());
+  @Override
+  public <T extends PacketEntity<T>> Optional<T> getEntity(
+      @Range(from = 0L, to = Integer.MAX_VALUE) int entityId) {
+    return Optional.ofNullable((T) entitiesById.get(entityId));
+  }
 
-        return Optional.ofNullable((T) entity);
+  @Override
+  public <T extends PacketEntity<T>> Optional<T> getEntity(
+      @Range(from = 0L, to = Integer.MAX_VALUE) int entityId, Class<T> entityClass) {
+    final PacketEntity<?> entity = entitiesById.get(entityId);
+
+    if (entity == null) {
+      return Optional.empty();
     }
 
-    public <T extends PacketEntity<T>> void deleteEntity(@NotNull T entity) {
-        checkNotNull(entity, "Entity may not be null");
+    checkState(entityClass.isInstance(entity),
+        "Entity with entityId '%s' is not an instance of '%s' (it's '%s')", entityId, entityClass,
+        entity.getClass());
 
-        entitiesById.remove(entity.entityId());
-        entitiesByUuid.remove(entity.uuid());
-        ((PacketEntityImpl<T>) entity).delete();
+    return Optional.ofNullable((T) entity);
+  }
+
+  public <T extends PacketEntity<T>> void deleteEntity(@NotNull T entity) {
+    checkNotNull(entity, "Entity may not be null");
+
+    entitiesById.remove(entity.entityId());
+    entitiesByUuid.remove(entity.uuid());
+    ((PacketEntityImpl<T>) entity).delete();
+  }
+
+  @Override
+  public PacketExperienceOrb spawnExperienceOrb(@NotNull Vector3i position, short experience,
+      UUID @NotNull ... viewers) {
+    checkNotNull(position, "Position may not be null");
+    checkNotNull(viewers, "Viewers may not be null");
+
+    final PacketExperienceOrb orb = new PacketExperienceOrbImpl(position, experience);
+
+    for (UUID viewer : viewers) {
+      orb.addViewer(viewer);
     }
 
-    @Override
-    public PacketExperienceOrb spawnExperienceOrb(@NotNull Vector3i position, short experience, UUID @NotNull ... viewers) {
-        checkNotNull(position, "Position may not be null");
-        checkNotNull(viewers, "Viewers may not be null");
+    return orb;
+  }
 
-        final PacketExperienceOrb orb = new PacketExperienceOrbImpl(position, experience);
+  @Override
+  public void spawnExplosion(@NotNull Vector3d position,
+      @Range(from = 0, to = (long) Float.MAX_VALUE) float power,
+      @Nullable List<Vector3i> relativeAffectedBlocks,
+      @Nullable Vector3f playerVelocity,
+      @Nullable Particle smallExplosionParticle,
+      @Nullable Particle largeExplosionParticle,
+      WrapperPlayServerExplosion.@Nullable BlockInteraction blockAction,
+      @Nullable Key explosionSound,
+      @Nullable Float explosionSoundRange,
+      @ArrayLenRange(from = 1) UUID @NotNull ... viewers) {
+    checkNotNull(position, "Position may not be null");
+    checkNotNull(viewers, "Viewers may not be null");
+    checkArgument(explosionSoundRange == null || explosionSoundRange >= 0,
+        "Explosion sound range may not be less than 0");
+    checkArgument(power >= 0, "Power may not be less than 0");
 
-        for (UUID viewer : viewers) {
-            orb.addViewer(viewer);
-        }
+    final WrapperPlayServerExplosion packet = new WrapperPlayServerExplosion(
+        new com.github.retrooper.packetevents.util.Vector3d(position.x(), position.y(),
+            position.z()),
+        power,
+        relativeAffectedBlocks == null ? new ArrayList<>() : relativeAffectedBlocks.stream().map(
+            vector3i -> new com.github.retrooper.packetevents.util.Vector3i(vector3i.x(),
+                vector3i.y(), vector3i.z())).toList(),
+        playerVelocity == null ? com.github.retrooper.packetevents.util.Vector3f.zero()
+            : new com.github.retrooper.packetevents.util.Vector3f(playerVelocity.x(),
+                playerVelocity.y(), playerVelocity.z()),
+        smallExplosionParticle == null ? ParticleFactory.of(ParticleTypes.EXPLOSION)
+            : smallExplosionParticle,
+        largeExplosionParticle == null ? ParticleFactory.of(ParticleTypes.EXPLOSION_EMITTER)
+            : largeExplosionParticle,
+        blockAction == null ? WrapperPlayServerExplosion.BlockInteraction.DESTROY_BLOCKS
+            : blockAction,
+        explosionSound == null ? ResourceLocation.minecraft("entity.generic.explode")
+            : new ResourceLocation(explosionSound.namespace(), explosionSound.value()),
+        explosionSoundRange == null ? 0 : explosionSoundRange
+    );
+    final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
 
-        return orb;
+    for (UUID viewer : viewers) {
+      packetApi.sendPacket(viewer, packet);
     }
+  }
 
-    @Override
-    public void spawnExplosion(@NotNull Vector3d position,
-                               @Range(from = 0, to = (long) Float.MAX_VALUE) float power,
-                               @Nullable List<Vector3i> relativeAffectedBlocks,
-                               @Nullable Vector3f playerVelocity,
-                               @Nullable Particle smallExplosionParticle,
-                               @Nullable Particle largeExplosionParticle,
-                               WrapperPlayServerExplosion.@Nullable BlockInteraction blockAction,
-                               @Nullable Key explosionSound,
-                               @Nullable Float explosionSoundRange,
-                               @ArrayLenRange(from = 1) UUID @NotNull ... viewers) {
-        checkNotNull(position, "Position may not be null");
-        checkNotNull(viewers, "Viewers may not be null");
-        checkArgument(explosionSoundRange == null || explosionSoundRange >= 0, "Explosion sound range may not be less than 0");
-        checkArgument(power >= 0, "Power may not be less than 0");
+  @Override
+  public <T> void gameEvent(GameEvent.Type<T> type, @CheckForNull T value,
+      UUID @NotNull ... viewers) {
+    checkNotNull(type, "Type may not be null");
+    checkNotNull(viewers, "Viewers may not be null");
 
-        final WrapperPlayServerExplosion packet = new WrapperPlayServerExplosion(
-                new com.github.retrooper.packetevents.util.Vector3d(position.x(), position.y(), position.z()),
-                power,
-                relativeAffectedBlocks == null ? new ArrayList<>() : relativeAffectedBlocks.stream().map(vector3i -> new com.github.retrooper.packetevents.util.Vector3i(vector3i.x(), vector3i.y(), vector3i.z())).toList(),
-                playerVelocity == null ? com.github.retrooper.packetevents.util.Vector3f.zero() : new com.github.retrooper.packetevents.util.Vector3f(playerVelocity.x(), playerVelocity.y(), playerVelocity.z()),
-                smallExplosionParticle == null ? ParticleFactory.of(ParticleTypes.EXPLOSION) : smallExplosionParticle,
-                largeExplosionParticle == null ? ParticleFactory.of(ParticleTypes.EXPLOSION_EMITTER) : largeExplosionParticle,
-                blockAction == null ? WrapperPlayServerExplosion.BlockInteraction.DESTROY_BLOCKS : blockAction,
-                explosionSound == null ? ResourceLocation.minecraft("entity.generic.explode") : new ResourceLocation(explosionSound.namespace(), explosionSound.value()),
-                explosionSoundRange == null ? 0 : explosionSoundRange
-        );
-        final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
+    final WrapperPlayServerChangeGameState packet = new WrapperPlayServerChangeGameState(
+        type.getId(),
+        value == null ? 0 : type.encode(value)
+    );
 
-        for (UUID viewer : viewers) {
-            packetApi.sendPacket(viewer, packet);
-        }
+    final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
+    for (UUID viewer : viewers) {
+      packetApi.sendPacket(viewer, packet);
     }
+  }
 
-    @Override
-    public <T> void gameEvent(GameEvent.Type<T> type, @CheckForNull T value, UUID @NotNull ... viewers) {
-        checkNotNull(type, "Type may not be null");
-        checkNotNull(viewers, "Viewers may not be null");
+  @Override
+  public void playHurtAnimation(int entityId, float yaw, UUID @NotNull ... viewers) {
+    checkNotNull(viewers, "Viewers may not be null");
 
-        final WrapperPlayServerChangeGameState packet = new WrapperPlayServerChangeGameState(
-                type.getId(),
-                value == null ? 0 : type.encode(value)
-        );
+    final WrapperPlayServerHurtAnimation packet = new WrapperPlayServerHurtAnimation(entityId, yaw);
 
-        final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
-        for (UUID viewer : viewers) {
-            packetApi.sendPacket(viewer, packet);
-        }
+    final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
+    for (UUID viewer : viewers) {
+      packetApi.sendPacket(viewer, packet);
     }
+  }
 
-    @Override
-    public void playHurtAnimation(int entityId, float yaw, UUID @NotNull ... viewers) {
-        checkNotNull(viewers, "Viewers may not be null");
+  @Override
+  public <T> void worldEvent(WorldEvent.@NotNull Type<T> type, Vector3i position, @Nullable T value,
+      UUID @NotNull ... viewers) {
+    sendWorldEvent(type.getId(), position, value == null ? 0 : type.encode(value), false, viewers);
+  }
 
-        final WrapperPlayServerHurtAnimation packet = new WrapperPlayServerHurtAnimation(entityId, yaw);
+  @Override
+  public <T> void worldEvent(WorldEvent.@NotNull AllowBooleanType<T> type, Vector3i position,
+      @Nullable T value, boolean global, UUID @NotNull ... viewers) {
+    sendWorldEvent(type.getId(), position, value == null ? 0 : type.encode(value), global, viewers);
+  }
 
-        final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
-        for (UUID viewer : viewers) {
-            packetApi.sendPacket(viewer, packet);
-        }
+  private void sendWorldEvent(int id, @NotNull Vector3i position, int data, boolean global,
+      UUID @NotNull ... viewers) {
+    final WrapperPlayServerWorldEvent packet = new WrapperPlayServerWorldEvent(
+        id,
+        new com.github.retrooper.packetevents.util.Vector3i(position.x(), position.y(),
+            position.z()),
+        data,
+        global
+    );
+
+    final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
+    for (UUID viewer : viewers) {
+      packetApi.sendPacket(viewer, packet);
     }
+  }
 
-    @Override
-    public <T> void worldEvent(WorldEvent.@NotNull Type<T> type, Vector3i position, @Nullable T value, UUID @NotNull ... viewers) {
-        sendWorldEvent(type.getId(), position, value == null ? 0 : type.encode(value), false, viewers);
-    }
-
-    @Override
-    public <T> void worldEvent(WorldEvent.@NotNull AllowBooleanType<T> type, Vector3i position, @Nullable T value, boolean global, UUID @NotNull ... viewers) {
-        sendWorldEvent(type.getId(), position, value == null ? 0 : type.encode(value), global, viewers);
-    }
-
-    private void sendWorldEvent(int id, @NotNull Vector3i position, int data, boolean global, UUID @NotNull ... viewers) {
-        final WrapperPlayServerWorldEvent packet = new WrapperPlayServerWorldEvent(
-                id,
-                new com.github.retrooper.packetevents.util.Vector3i(position.x(), position.y(), position.z()),
-                data,
-                global
-        );
-
-        final SurfCorePacketApi packetApi = SurfCorePacketApi.get();
-        for (UUID viewer : viewers) {
-            packetApi.sendPacket(viewer, packet);
-        }
-    }
-
-    private <T extends PacketEntity<T>> void registerEntity(T entity) {
-        entitiesById.put(entity.entityId(), entity);
-        entitiesByUuid.put(entity.uuid(), entity);
-    }
+  private <T extends PacketEntity<T>> void registerEntity(T entity) {
+    entitiesById.put(entity.entityId(), entity);
+    entitiesByUuid.put(entity.uuid(), entity);
+  }
 }

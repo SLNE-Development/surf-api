@@ -9,13 +9,14 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public class SurfBukkitVisualizerApiImpl implements SurfBukkitVisualizerApi {
-    @Override
-    public SurfVisualizer createVisualizer() {
-        return new SurfVisualizerImpl();
-    }
 
-    @Override
-    public SurfPatternedVisualizer createPatternedVisualizer() {
-        return new SurfPatternedVisualizerImpl();
-    }
+  @Override
+  public SurfVisualizer createVisualizer() {
+    return new SurfVisualizerImpl();
+  }
+
+  @Override
+  public SurfPatternedVisualizer createPatternedVisualizer() {
+    return new SurfPatternedVisualizerImpl();
+  }
 }

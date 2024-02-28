@@ -7,7 +7,7 @@ import xyz.jpenilla.reflectionremapper.proxy.annotation.Static;
 @Proxies(className = "net.minecraft.world.entity.Entity")
 public interface EntityProxy {
 
-    @Static
-    @MethodName("nextEntityId")
-    int generateEntityId();
+  @Static
+  @MethodName("nextEntityId")
+  int generateEntityId();
 }

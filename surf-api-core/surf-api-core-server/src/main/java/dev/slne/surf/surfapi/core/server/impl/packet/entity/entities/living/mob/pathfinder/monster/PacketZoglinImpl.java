@@ -5,20 +5,21 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfind
 
 import java.util.UUID;
 
-public final class PacketZoglinImpl extends PacketMonsterImpl<PacketZoglin> implements PacketZoglin {
+public final class PacketZoglinImpl extends PacketMonsterImpl<PacketZoglin> implements
+    PacketZoglin {
 
-    public PacketZoglinImpl(UUID uuid) {
-        super(uuid, EntityTypes.ZOGLIN);
-    }
+  public PacketZoglinImpl(UUID uuid) {
+    super(uuid, EntityTypes.ZOGLIN);
+  }
 
-    @Override
-    public boolean baby() {
-        return get(BABY_INDEX, false);
-    }
+  @Override
+  public boolean baby() {
+    return get(BABY_INDEX, false);
+  }
 
-    @Override
-    public void baby(boolean baby) {
-        set(BABY_INDEX, baby);
-        afterSet();
-    }
+  @Override
+  public void baby(boolean baby) {
+    set(BABY_INDEX, baby);
+    afterSet();
+  }
 }

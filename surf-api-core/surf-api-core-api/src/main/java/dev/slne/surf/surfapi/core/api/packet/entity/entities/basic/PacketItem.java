@@ -9,9 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 @CanBeSpawned
 public interface PacketItem extends PacketEntity<PacketItem>, SpawnVelocity, Spawnable {
-    int ITEM_INDEX = 8;
 
-    ItemStack item();
+  int ITEM_INDEX = 8;
 
-    void item(@NotNull ItemStack item);
+  ItemStack item();
+
+  void item(@NotNull ItemStack item);
 }

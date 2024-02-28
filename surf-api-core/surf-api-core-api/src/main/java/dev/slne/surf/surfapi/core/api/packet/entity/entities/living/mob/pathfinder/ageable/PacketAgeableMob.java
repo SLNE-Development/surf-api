@@ -2,11 +2,12 @@ package dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfin
 
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.PacketPathfinderMob;
 
-public interface PacketAgeableMob<Impl extends PacketPathfinderMob<Impl>> extends PacketPathfinderMob<Impl> {
+public interface PacketAgeableMob<Impl extends PacketPathfinderMob<Impl>> extends
+    PacketPathfinderMob<Impl> {
 
-    int IS_BABY_INDEX = 16;
+  int IS_BABY_INDEX = 16;
 
-    boolean baby();
+  boolean baby();
 
-    void baby(boolean baby);
+  void baby(boolean baby);
 }

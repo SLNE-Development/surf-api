@@ -4,5 +4,7 @@ import dev.slne.surf.surfapi.core.api.packet.entity.annotation.CanBeSpawned;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
-public interface PacketWanderingTrader extends PacketAbstractVillager<PacketWanderingTrader>, Spawnable {
+public interface PacketWanderingTrader extends PacketAbstractVillager<PacketWanderingTrader>,
+    Spawnable {
+
 }

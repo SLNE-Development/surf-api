@@ -3,4 +3,5 @@ package dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfin
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.ageable.PacketAgeableMob;
 
 public interface PacketAnimal<Impl extends PacketAnimal<Impl>> extends PacketAgeableMob<Impl> {
+
 }

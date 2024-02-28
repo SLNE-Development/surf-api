@@ -9,22 +9,25 @@ import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfPatternedVisua
 import org.bukkit.Location;
 
 public class AddVisualizerPoint extends CommandAPICommand {
-    public AddVisualizerPoint(String commandName) {
-        super(commandName);
 
-        withArguments(new StringArgument("visualizerName")
-                .replaceSuggestions(ArgumentSuggestions.stringCollection(__ -> CreateVisualizer.getVisualizerMap().keySet())),
-                new LocationArgument("pointLocation", LocationType.PRECISE_POSITION, false));
+  public AddVisualizerPoint(String commandName) {
+    super(commandName);
 
-        executes((commandSender, commandArguments) -> {
-            String visualizerName = commandArguments.getUnchecked("visualizerName");
-            Location pointLocation = commandArguments.getUnchecked("pointLocation");
+    withArguments(new StringArgument("visualizerName")
+            .replaceSuggestions(ArgumentSuggestions.stringCollection(
+                __ -> CreateVisualizer.getVisualizerMap().keySet())),
+        new LocationArgument("pointLocation", LocationType.PRECISE_POSITION, false));
 
-            SurfPatternedVisualizer surfVisualizer = CreateVisualizer.getVisualizerMap().get(visualizerName);
+    executes((commandSender, commandArguments) -> {
+      String visualizerName = commandArguments.getUnchecked("visualizerName");
+      Location pointLocation = commandArguments.getUnchecked("pointLocation");
 
-            surfVisualizer.addVisualPoint(pointLocation);
+      SurfPatternedVisualizer surfVisualizer = CreateVisualizer.getVisualizerMap()
+          .get(visualizerName);
 
-            commandSender.sendMessage("Visualizer point added");
-        });
-    }
+      surfVisualizer.addVisualPoint(pointLocation);
+
+      commandSender.sendMessage("Visualizer point added");
+    });
+  }
 }

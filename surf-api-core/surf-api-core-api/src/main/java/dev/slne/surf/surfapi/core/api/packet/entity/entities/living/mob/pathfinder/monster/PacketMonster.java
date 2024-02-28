@@ -3,4 +3,5 @@ package dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfin
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.PacketPathfinderMob;
 
 public interface PacketMonster<Impl extends PacketMonster<Impl>> extends PacketPathfinderMob<Impl> {
+
 }

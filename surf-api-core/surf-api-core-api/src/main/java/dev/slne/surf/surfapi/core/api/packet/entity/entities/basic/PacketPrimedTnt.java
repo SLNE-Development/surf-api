@@ -7,20 +7,19 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 @CanBeSpawned
 public interface PacketPrimedTnt extends PacketEntity<PacketPrimedTnt>, Spawnable {
 
-    int FUSE_TICKS_INDEX = 8;
+  int FUSE_TICKS_INDEX = 8;
 
-    /**
-     * Set the number of ticks until the TNT blows up after being primed.
-     *
-     * @param fuseTicks The fuse ticks
-     */
-    void fuseTicks(int fuseTicks);
+  /**
+   * Set the number of ticks until the TNT blows up after being primed.
+   *
+   * @param fuseTicks The fuse ticks
+   */
+  void fuseTicks(int fuseTicks);
 
-    /**
-     * Retrieve the number of ticks until the explosion of this TNTPrimed
-     * entity
-     *
-     * @return the number of ticks until this TNTPrimed explodes
-     */
-    int fuseTicks();
+  /**
+   * Retrieve the number of ticks until the explosion of this TNTPrimed entity
+   *
+   * @return the number of ticks until this TNTPrimed explodes
+   */
+  int fuseTicks();
 }

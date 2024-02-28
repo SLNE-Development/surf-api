@@ -5,12 +5,13 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.lore.PacketLoreAppl
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.lore.PacketLoreCreate;
 
 public class PacketLoreTest extends CommandAPICommand {
-    public PacketLoreTest(String commandName) {
-        super(commandName);
 
-        withSubcommands(
-                new PacketLoreCreate("create"),
-                new PacketLoreApply("apply")
-        );
-    }
+  public PacketLoreTest(String commandName) {
+    super(commandName);
+
+    withSubcommands(
+        new PacketLoreCreate("create"),
+        new PacketLoreApply("apply")
+    );
+  }
 }

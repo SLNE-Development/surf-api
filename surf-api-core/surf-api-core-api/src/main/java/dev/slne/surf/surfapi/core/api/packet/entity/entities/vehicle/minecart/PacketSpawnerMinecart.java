@@ -4,5 +4,7 @@ import dev.slne.surf.surfapi.core.api.packet.entity.annotation.CanBeSpawned;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
-public interface PacketSpawnerMinecart extends PacketAbstractMinecart<PacketSpawnerMinecart>, Spawnable {
+public interface PacketSpawnerMinecart extends PacketAbstractMinecart<PacketSpawnerMinecart>,
+    Spawnable {
+
 }

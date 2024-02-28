@@ -7,31 +7,31 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketHorse extends PacketAbstractHorse<PacketHorse>, Spawnable {
 
-    int VARIANT_INDEX = 18;
+  int VARIANT_INDEX = 18;
 
-    Color color();
+  Color color();
 
-    void color(@NotNull Color color);
+  void color(@NotNull Color color);
 
-    Style style();
+  Style style();
 
-    void style(@NotNull Style style);
+  void style(@NotNull Style style);
 
-    enum Style {
-        NONE,
-        WHITE,
-        WHITEFIELD,
-        WHITE_DOTS,
-        BLACK_DOTS
-    }
+  enum Style {
+    NONE,
+    WHITE,
+    WHITEFIELD,
+    WHITE_DOTS,
+    BLACK_DOTS
+  }
 
-    enum Color {
-        WHITE,
-        CREAMY,
-        CHESTNUT,
-        BROWN,
-        BLACK,
-        GRAY,
-        DARK_BROWN
-    }
+  enum Color {
+    WHITE,
+    CREAMY,
+    CHESTNUT,
+    BROWN,
+    BLACK,
+    GRAY,
+    DARK_BROWN
+  }
 }

@@ -4,34 +4,35 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfPatternedVisualizer;
-import org.bukkit.Material;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.Material;
 
 public class CreateVisualizer extends CommandAPICommand {
-    private static final Map<String, SurfPatternedVisualizer> VISUALIZER_MAP = new ConcurrentHashMap<>();
 
-    public CreateVisualizer(String commandName) {
-        super(commandName);
+  private static final Map<String, SurfPatternedVisualizer> VISUALIZER_MAP = new ConcurrentHashMap<>();
 
-        withArguments(new StringArgument("visualizerName"));
+  public CreateVisualizer(String commandName) {
+    super(commandName);
 
-        executes((commandSender, commandArguments) -> {
-            String visualizerName = commandArguments.getUnchecked("visualizerName");
+    withArguments(new StringArgument("visualizerName"));
 
-            SurfPatternedVisualizer patternedVisualizer = SurfBukkitVisualizerApi.get().createPatternedVisualizer();
-            patternedVisualizer.setVisualMaterial(Material.GREEN_STAINED_GLASS);
-            patternedVisualizer.setRenderAtHighestPoint(true);
-            patternedVisualizer.setVisualHeight(5);
+    executes((commandSender, commandArguments) -> {
+      String visualizerName = commandArguments.getUnchecked("visualizerName");
 
-            VISUALIZER_MAP.put(visualizerName, patternedVisualizer);
+      SurfPatternedVisualizer patternedVisualizer = SurfBukkitVisualizerApi.get()
+          .createPatternedVisualizer();
+      patternedVisualizer.setVisualMaterial(Material.GREEN_STAINED_GLASS);
+      patternedVisualizer.setRenderAtHighestPoint(true);
+      patternedVisualizer.setVisualHeight(5);
 
-            commandSender.sendMessage("Visualizer created");
-        });
-    }
+      VISUALIZER_MAP.put(visualizerName, patternedVisualizer);
 
-    public static Map<String, SurfPatternedVisualizer> getVisualizerMap() {
-        return VISUALIZER_MAP;
-    }
+      commandSender.sendMessage("Visualizer created");
+    });
+  }
+
+  public static Map<String, SurfPatternedVisualizer> getVisualizerMap() {
+    return VISUALIZER_MAP;
+  }
 }

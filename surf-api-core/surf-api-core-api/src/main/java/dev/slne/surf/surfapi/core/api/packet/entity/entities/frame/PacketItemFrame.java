@@ -10,20 +10,21 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 import org.jetbrains.annotations.NotNull;
 
 @CanBeSpawned
-public interface PacketItemFrame<Impl extends PacketItemFrame<Impl>> extends PacketEntity<Impl>, Spawnable {
+public interface PacketItemFrame<Impl extends PacketItemFrame<Impl>> extends PacketEntity<Impl>,
+    Spawnable {
 
-    int ITEM_INDEX = 8, ROTATION_INDEX = 9;
+  int ITEM_INDEX = 8, ROTATION_INDEX = 9;
 
-    ItemStack item();
+  ItemStack item();
 
-    void item(@NotNull ItemStack item);
+  void item(@NotNull ItemStack item);
 
-    Rotation rotation();
+  Rotation rotation();
 
-    void rotation(@NotNull Rotation rotation);
+  void rotation(@NotNull Rotation rotation);
 
-    Orientation faceDirection();
+  Orientation faceDirection();
 
-    @NeedsRespawn
-    void faceDirection(@NotNull Orientation faceDirection);
+  @NeedsRespawn
+  void faceDirection(@NotNull Orientation faceDirection);
 }

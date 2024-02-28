@@ -7,19 +7,20 @@ import org.jetbrains.annotations.ApiStatus;
 
 
 /**
- * Implementation of the {@link SurfBukkitPacketEntityApi} interface.
- * Provides methods for registering and unregistering interact listeners,
- * creating entities, deleting entities, and retrieving entities by ID or UUID.
+ * Implementation of the {@link SurfBukkitPacketEntityApi} interface. Provides methods for
+ * registering and unregistering interact listeners, creating entities, deleting entities, and
+ * retrieving entities by ID or UUID.
  */
 @ApiStatus.Internal
-public class SurfBukkitPacketEntityApiImpl extends SurfCorePacketEntityApiImpl implements SurfBukkitPacketEntityApi {
+public class SurfBukkitPacketEntityApiImpl extends SurfCorePacketEntityApiImpl implements
+    SurfBukkitPacketEntityApi {
 
-    public SurfBukkitPacketEntityApiImpl() {
-        super(new BukkitEntityIdProvider());
-    }
+  public SurfBukkitPacketEntityApiImpl() {
+    super(new BukkitEntityIdProvider());
+  }
 
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this);
-    }
+  @Override
+  public String toString() {
+    return ToStringBuilder.reflectionToString(this);
+  }
 }

@@ -6,4 +6,5 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfind
 
 @CanBeSpawned
 public interface PacketVindicator extends PacketAbstractIllager<PacketVindicator>, Spawnable {
+
 }

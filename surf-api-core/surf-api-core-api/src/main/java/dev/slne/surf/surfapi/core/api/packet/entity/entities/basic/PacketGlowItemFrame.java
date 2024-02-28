@@ -6,4 +6,5 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.frame.PacketItemFra
 
 @CanBeSpawned
 public interface PacketGlowItemFrame extends PacketItemFrame<PacketGlowItemFrame>, Spawnable {
+
 }

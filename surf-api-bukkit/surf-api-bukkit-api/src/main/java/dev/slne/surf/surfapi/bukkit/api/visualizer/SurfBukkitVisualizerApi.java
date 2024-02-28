@@ -8,11 +8,11 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 public interface SurfBukkitVisualizerApi {
 
-    SurfVisualizer createVisualizer();
+  static SurfBukkitVisualizerApi get() {
+    return SurfBukkitApi.get().getVisualizerApi();
+  }
 
-    SurfPatternedVisualizer createPatternedVisualizer();
+  SurfVisualizer createVisualizer();
 
-    static SurfBukkitVisualizerApi get() {
-        return SurfBukkitApi.get().getVisualizerApi();
-    }
+  SurfPatternedVisualizer createPatternedVisualizer();
 }

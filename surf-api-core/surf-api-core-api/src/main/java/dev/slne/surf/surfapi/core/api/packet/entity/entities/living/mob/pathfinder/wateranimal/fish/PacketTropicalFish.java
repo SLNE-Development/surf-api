@@ -6,64 +6,65 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 @CanBeSpawned
 public interface PacketTropicalFish extends PacketAbstractFish<PacketTropicalFish>, Spawnable {
 
-    int VARIANT_INDEX = 17;
+  int VARIANT_INDEX = 17;
 
-    Pattern variant();
+  Pattern variant();
 
-    void variant(@NotNull Pattern variant);
+  void variant(@NotNull Pattern variant);
 
-    DyeColor patternColor();
+  DyeColor patternColor();
 
-    void patternColor(@NotNull DyeColor patternColor);
+  void patternColor(@NotNull DyeColor patternColor);
 
-    DyeColor bodyColor();
+  DyeColor bodyColor();
 
-    void bodyColor(@NotNull DyeColor bodyColor);
+  void bodyColor(@NotNull DyeColor bodyColor);
 
-    enum Pattern {
-        KOB(0, false),
-        SUNSTREAK(1, false),
-        SNOOPER(2, false),
-        DASHER(3, false),
-        BRINELY(4, false),
-        SPOTTY(5, false),
-        FLOPPER(0, true),
-        STRIPEY(1, true),
-        GLITTER(2, true),
-        BLOCKFISH(3, true),
-        BETTY(4, true),
-        CLAYFISH(5, true);
+  enum Pattern {
+    KOB(0, false),
+    SUNSTREAK(1, false),
+    SNOOPER(2, false),
+    DASHER(3, false),
+    BRINELY(4, false),
+    SPOTTY(5, false),
+    FLOPPER(0, true),
+    STRIPEY(1, true),
+    GLITTER(2, true),
+    BLOCKFISH(3, true),
+    BETTY(4, true),
+    CLAYFISH(5, true);
 
-        private static final Int2ObjectMap<Pattern> BY_DATA;
-        private final int variant;
-        private final boolean large;
+    private static final Int2ObjectMap<Pattern> BY_DATA;
 
-        Pattern(int variant, boolean large) {
-            this.variant = variant;
-            this.large = large;
-        }
-
-        public int getDataValue() {
-            return this.variant << 8 | ((this.large) ? 1 : 0);
-        }
-
-        public static Pattern getByData(int data) {
-            return BY_DATA.get(data);
-        }
-
-        static {
-            BY_DATA = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>(
-                    Arrays.stream(values()).collect(Collectors.toMap(Pattern::getDataValue, Function.identity()))
-            ));
-        }
+    static {
+      BY_DATA = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>(
+          Arrays.stream(values())
+              .collect(Collectors.toMap(Pattern::getDataValue, Function.identity()))
+      ));
     }
+
+    private final int variant;
+    private final boolean large;
+
+    Pattern(int variant, boolean large) {
+      this.variant = variant;
+      this.large = large;
+    }
+
+    public static Pattern getByData(int data) {
+      return BY_DATA.get(data);
+    }
+
+    public int getDataValue() {
+      return this.variant << 8 | ((this.large) ? 1 : 0);
+    }
+  }
 }

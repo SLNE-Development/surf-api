@@ -11,14 +11,14 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketPainting extends PacketEntity<PacketPainting>, Spawnable {
 
-    int PAINTING_INDEX = 8;
+  int PAINTING_INDEX = 8;
 
-    PaintingType painting();
+  PaintingType painting();
 
-    void painting(@NotNull PaintingType painting);
+  void painting(@NotNull PaintingType painting);
 
-    Orientation orientation();
+  Orientation orientation();
 
-    @NeedsRespawn
-    void orientation(@NotNull Orientation orientation);
+  @NeedsRespawn
+  void orientation(@NotNull Orientation orientation);
 }

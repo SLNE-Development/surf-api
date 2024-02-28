@@ -7,19 +7,24 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
 
 public class PacketLoreApply extends CommandAPICommand {
-    public PacketLoreApply(String commandName) {
-        super(commandName);
 
-        withArguments(new NamespacedKeyArgument("key")
-                .replaceSuggestions(ArgumentSuggestions.strings(__ -> PacketLoreCreate.getKeys().stream().map(NamespacedKey::asString).toArray(String[]::new))));
+  public PacketLoreApply(String commandName) {
+    super(commandName);
 
-        executesPlayer((player, commandArguments) -> {
-            NamespacedKey key = commandArguments.getUnchecked("key");
+    withArguments(new NamespacedKeyArgument("key")
+        .replaceSuggestions(ArgumentSuggestions.strings(
+            __ -> PacketLoreCreate.getKeys().stream().map(NamespacedKey::asString)
+                .toArray(String[]::new))));
 
-            assert key != null;
+    executesPlayer((player, commandArguments) -> {
+      NamespacedKey key = commandArguments.getUnchecked("key");
 
-            player.getInventory().getItemInMainHand().editMeta(itemMeta -> itemMeta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true));
-            player.sendMessage("Applied packet lore!");
-        });
-    }
+      assert key != null;
+
+      player.getInventory().getItemInMainHand().editMeta(
+          itemMeta -> itemMeta.getPersistentDataContainer()
+              .set(key, PersistentDataType.BOOLEAN, true));
+      player.sendMessage("Applied packet lore!");
+    });
+  }
 }

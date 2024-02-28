@@ -7,10 +7,12 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.SpawnVelocity;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
-public interface PacketWitherSkull extends PacketEntity<PacketWitherSkull>, SpawnVelocity, Shootable, Spawnable {
-    int INVULNERABLE_INDEX = 8;
+public interface PacketWitherSkull extends PacketEntity<PacketWitherSkull>, SpawnVelocity,
+    Shootable, Spawnable {
 
-    boolean invulnerable();
+  int INVULNERABLE_INDEX = 8;
 
-    void invulnerable(boolean invulnerable);
+  boolean invulnerable();
+
+  void invulnerable(boolean invulnerable);
 }

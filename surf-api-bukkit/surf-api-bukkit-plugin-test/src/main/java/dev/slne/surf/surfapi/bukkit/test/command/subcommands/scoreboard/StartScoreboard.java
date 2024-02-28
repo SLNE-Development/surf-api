@@ -6,20 +6,22 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfAutoUpdatablePlayerScoreboard;
 
 public class StartScoreboard extends CommandAPICommand {
-    public StartScoreboard(String commandName) {
-        super(commandName);
 
-         withArguments(new StringArgument("name")
-                 .replaceSuggestions(ArgumentSuggestions.strings(__ -> CreateScoreboard.getScoreboards().keySet().toArray(String[]::new))));
+  public StartScoreboard(String commandName) {
+    super(commandName);
 
-         executes((commandSender, commandArguments) -> {
-             String name = commandArguments.getUnchecked("name");
-             assert name != null;
+    withArguments(new StringArgument("name")
+        .replaceSuggestions(ArgumentSuggestions.strings(
+            __ -> CreateScoreboard.getScoreboards().keySet().toArray(String[]::new))));
 
-             SurfAutoUpdatablePlayerScoreboard scoreboard = CreateScoreboard.getScoreboards().get(name);
+    executes((commandSender, commandArguments) -> {
+      String name = commandArguments.getUnchecked("name");
+      assert name != null;
 
-             assert scoreboard != null;
-             scoreboard.enable();
-         });
-    }
+      SurfAutoUpdatablePlayerScoreboard scoreboard = CreateScoreboard.getScoreboards().get(name);
+
+      assert scoreboard != null;
+      scoreboard.enable();
+    });
+  }
 }

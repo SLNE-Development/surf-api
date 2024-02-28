@@ -34,151 +34,157 @@ import static com.google.common.base.Preconditions.*;
 
 public abstract class Configuration<C> {
 
-    private final Path folder;
-    private final Class<C> configClass;
-    private final ComponentLogger logger;
-    private final int configVersion;
-    private final Supplier<C> getterSupplier;
-    private final String configFileName;
+  private final Path folder;
+  private final Class<C> configClass;
+  private final ComponentLogger logger;
+  private final int configVersion;
+  private final Supplier<C> getterSupplier;
+  private final String configFileName;
 
-    public Configuration(@NotNull Path folder,
-                         @NotNull Class<C> configClass,
-                         @NotNull  String configFileName,
-                         final int configVersion,
-                         Supplier<C> getterSupplier) {
+  public Configuration(@NotNull Path folder,
+      @NotNull Class<C> configClass,
+      @NotNull String configFileName,
+      final int configVersion,
+      Supplier<C> getterSupplier) {
 
-        this.folder = folder;
-        this.configClass = configClass;
-        this.configFileName = configFileName;
-        this.configVersion = configVersion;
-        this.getterSupplier = getterSupplier;
+    this.folder = folder;
+    this.configClass = configClass;
+    this.configFileName = configFileName;
+    this.configVersion = configVersion;
+    this.getterSupplier = getterSupplier;
 
-        logger = ComponentLogger.logger("Configuration: " + configFileName);
+    logger = ComponentLogger.logger("Configuration: " + configFileName);
+  }
+
+  @Contract(pure = true)
+  static <T> @NotNull CheckedFunction<ConfigurationNode, T, SerializationException> creator(
+      Class<T> type, boolean refreshNode) {
+    return node -> {
+      final T instance = node.require(type);
+      if (refreshNode) {
+        node.set(type, instance);
+      }
+      return instance;
+    };
+  }
+
+  @Contract(pure = true)
+  static <T> @NotNull CheckedFunction<ConfigurationNode, T, SerializationException> reloader(
+      Class<T> type, T instance) {
+    return node -> {
+      final ObjectMapper.Mutable<T> mutable = (ObjectMapper.Mutable<T>) ((ObjectMapper.Factory) checkNotNull(
+          node.options().serializers().get(type),
+          "No serializer for type %s",
+          type
+      )).get(type);
+
+      mutable.load(instance, node);
+
+      return instance;
+    };
+  }
+
+  @OverridingMethodsMustInvokeSuper
+  protected ObjectMapper.Factory.Builder createObjectMapperFactoryBuilder() {
+    return ObjectMapper.factoryBuilder();
+  }
+
+  private ObjectMapper.Factory.Builder createObjectMapperFactoryBuilderInternal() {
+    return createObjectMapperFactoryBuilder()
+        .addConstraint(Constraint.class, new Constraint.Factory())
+        .addConstraint(Constraints.Min.class, Number.class, new Constraints.Min.Factory())
+        .addConstraint(Constraints.Max.class, Number.class, new Constraints.Max.Factory())
+        .addConstraint(Constraints.Range.class, Number.class, new Constraints.Range.Factory())
+        .addDiscoverer(InnerClassFieldDiscoverer.basicConfig());
+  }
+
+  protected YamlConfigurationLoader.Builder createYamlConfigurationLoaderBuilder() {
+    return ConfigurationLoaders.naturallySorted();
+  }
+
+  private YamlConfigurationLoader.Builder createYamlConfigurationLoaderBuilderInternal() {
+    return createYamlConfigurationLoaderBuilder()
+        .defaultOptions(options -> options
+            .serializers(builder -> builder
+                .register(MapSerializer.TYPE, new MapSerializer(false))
+                .register(new ComponentSerializer())
+                .register(IntOr.Default.SERIALIZER)
+                .register(IntOr.Disabled.SERIALIZER)
+                .register(DoubleOrDefault.SERIALIZER)
+                .register(BooleanOrDefault.SERIALIZER)
+                .register(Duration.SERIALIZER)));
+  }
+
+  protected boolean isConfigType(final Type type) {
+    return ConfigurationPart.class.isAssignableFrom(GenericTypeReflector.erase(type));
+  }
+
+  @OverridingMethodsMustInvokeSuper
+  public C initializeConfig() throws ConfigurateException {
+    return initializeConfig(creator(configClass, true));
+  }
+
+  @OverridingMethodsMustInvokeSuper
+  public void reloadConfig() {
+    try {
+      this.initializeConfig(reloader(configClass, getterSupplier.get()));
+    } catch (ConfigurateException e) {
+      logger.error("Unable to reload config", e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected final C initializeConfig(
+      final CheckedFunction<ConfigurationNode, C, SerializationException> creator)
+      throws ConfigurateException {
+    final Path configFile = folder.resolve(configFileName);
+    final YamlConfigurationLoader loader = createYamlConfigurationLoaderBuilderInternal()
+        .defaultOptions(
+            applyObjectMapperFactory(createObjectMapperFactoryBuilderInternal().build()))
+        .path(configFile)
+        .build();
+    final ConfigurationNode node;
+
+    if (Files.exists(configFile)) {
+      node = loader.load();
+    } else {
+      node = CommentedConfigurationNode.root(loader.defaultOptions());
+      node.node(ConfigurationConstants.VERSION_FIELD).raw(configVersion);
     }
 
-    @OverridingMethodsMustInvokeSuper
-    protected  ObjectMapper.Factory.Builder createObjectMapperFactoryBuilder() {
-        return ObjectMapper.factoryBuilder();
-    }
-
-    private ObjectMapper.Factory.Builder createObjectMapperFactoryBuilderInternal() {
-        return createObjectMapperFactoryBuilder()
-                .addConstraint(Constraint.class, new Constraint.Factory())
-                .addConstraint(Constraints.Min.class, Number.class, new Constraints.Min.Factory())
-                .addConstraint(Constraints.Max.class, Number.class, new Constraints.Max.Factory())
-                .addConstraint(Constraints.Range.class, Number.class, new Constraints.Range.Factory())
-                .addDiscoverer(InnerClassFieldDiscoverer.basicConfig());
-    }
-
-    protected YamlConfigurationLoader.Builder createYamlConfigurationLoaderBuilder() {
-        return ConfigurationLoaders.naturallySorted();
-    }
-
-    private YamlConfigurationLoader.Builder createYamlConfigurationLoaderBuilderInternal() {
-        return createYamlConfigurationLoaderBuilder()
-                .defaultOptions(options -> options
-                        .serializers(builder -> builder
-                                .register(MapSerializer.TYPE, new MapSerializer(false))
-                                .register(new ComponentSerializer())
-                                .register(IntOr.Default.SERIALIZER)
-                                .register(IntOr.Disabled.SERIALIZER)
-                                .register(DoubleOrDefault.SERIALIZER)
-                                .register(BooleanOrDefault.SERIALIZER)
-                                .register(Duration.SERIALIZER)));
-    }
-
-    protected boolean isConfigType(final Type type) {
-        return ConfigurationPart.class.isAssignableFrom(GenericTypeReflector.erase(type));
-    }
-
-    @OverridingMethodsMustInvokeSuper
-    public C initializeConfig() throws ConfigurateException {
-        return initializeConfig(creator(configClass, true));
-    }
-
-    @OverridingMethodsMustInvokeSuper
-    public void reloadConfig() {
-        try {
-            this.initializeConfig(reloader(configClass, getterSupplier.get()));
-        } catch (ConfigurateException e) {
-            logger.error("Unable to reload config", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected final C initializeConfig(final CheckedFunction<ConfigurationNode, C, SerializationException> creator) throws ConfigurateException {
-        final Path configFile = folder.resolve(configFileName);
-        final YamlConfigurationLoader loader = createYamlConfigurationLoaderBuilderInternal()
-                .defaultOptions(applyObjectMapperFactory(createObjectMapperFactoryBuilderInternal().build()))
-                .path(configFile)
-                .build();
-        final ConfigurationNode node;
-
-        if (Files.exists(configFile)) {
-            node = loader.load();
-        } else {
-            node = CommentedConfigurationNode.root(loader.defaultOptions());
-            node.node(ConfigurationConstants.VERSION_FIELD).raw(configVersion);
-        }
-
-        applyConfigTransformers(node);
+    applyConfigTransformers(node);
 
 //        final BasicConfigurationNode defaults = BasicConfigurationNode.root(loader.defaultOptions());
 //        node.mergeFrom(defaults);
 
+    final C config = creator.apply(node);
+    trySaveFileNode(loader, node, configFileName);
 
-        final C config = creator.apply(node);
-        trySaveFileNode(loader, node, configFileName);
+    return config;
+  }
 
-        return config;
+  @ApiStatus.OverrideOnly
+  protected void applyConfigTransformers(final ConfigurationNode node) throws ConfigurateException {
+  }
+
+  private void trySaveFileNode(YamlConfigurationLoader loader, ConfigurationNode node,
+      String filename) throws ConfigurateException {
+    try {
+      loader.save(node);
+    } catch (ConfigurateException exception) {
+      if (exception.getCause() instanceof AccessDeniedException) {
+        logger.warn("Unable to save Config %s, access denied".formatted(filename), exception);
+      } else {
+        logger.error("Unable to save Config %s".formatted(filename), exception);
+        throw exception;
+      }
     }
+  }
 
-    @ApiStatus.OverrideOnly
-    protected void applyConfigTransformers(final ConfigurationNode node) throws ConfigurateException {
-    }
-
-    private void trySaveFileNode(YamlConfigurationLoader loader, ConfigurationNode node, String filename) throws ConfigurateException {
-        try {
-            loader.save(node);
-        } catch (ConfigurateException exception) {
-            if (exception.getCause() instanceof AccessDeniedException) {
-                logger.warn("Unable to save Config %s, access denied".formatted(filename), exception);
-            } else {
-                logger.error("Unable to save Config %s".formatted(filename), exception);
-                throw exception;
-            }
-        }
-    }
-
-    private UnaryOperator<ConfigurationOptions> applyObjectMapperFactory(final ObjectMapper.Factory factory) {
-        return options -> options.serializers(builder -> builder
-                .register(this::isConfigType, factory.asTypeSerializer())
-                .registerAnnotatedObjects(factory));
-    }
-
-    @Contract(pure = true)
-    static <T> @NotNull CheckedFunction<ConfigurationNode, T, SerializationException> creator(Class<T> type, boolean refreshNode) {
-        return node -> {
-            final T instance = node.require(type);
-            if (refreshNode) {
-                node.set(type, instance);
-            }
-            return instance;
-        };
-    }
-
-    @Contract(pure = true)
-    static <T> @NotNull CheckedFunction<ConfigurationNode, T, SerializationException> reloader(Class<T> type, T instance) {
-        return node -> {
-            final ObjectMapper.Mutable<T> mutable = (ObjectMapper.Mutable<T>) ((ObjectMapper.Factory) checkNotNull(
-                    node.options().serializers().get(type),
-                    "No serializer for type %s",
-                    type
-            )).get(type);
-
-            mutable.load(instance, node);
-
-            return instance;
-        };
-    }
+  private UnaryOperator<ConfigurationOptions> applyObjectMapperFactory(
+      final ObjectMapper.Factory factory) {
+    return options -> options.serializers(builder -> builder
+        .register(this::isConfigType, factory.asTypeSerializer())
+        .registerAnnotatedObjects(factory));
+  }
 }

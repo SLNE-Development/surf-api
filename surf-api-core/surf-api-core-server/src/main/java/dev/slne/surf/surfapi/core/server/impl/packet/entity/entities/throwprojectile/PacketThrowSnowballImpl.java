@@ -5,14 +5,14 @@ import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.throwprojectile.PacketThrowSnowball;
 import dev.slne.surf.surfapi.core.api.util.ItemStackFactory;
-
 import java.util.UUID;
 
-public final class PacketThrowSnowballImpl extends PacketThrowItemProjectileImpl<PacketThrowSnowball> implements PacketThrowSnowball {
+public final class PacketThrowSnowballImpl extends
+    PacketThrowItemProjectileImpl<PacketThrowSnowball> implements PacketThrowSnowball {
 
-    private static final ItemStack SNOWBALL = ItemStackFactory.of(ItemTypes.SNOWBALL);
+  private static final ItemStack SNOWBALL = ItemStackFactory.of(ItemTypes.SNOWBALL);
 
-    public PacketThrowSnowballImpl(UUID uuid) {
-        super(uuid, EntityTypes.SNOWBALL, SNOWBALL.copy());
-    }
+  public PacketThrowSnowballImpl(UUID uuid) {
+    super(uuid, EntityTypes.SNOWBALL, SNOWBALL.copy());
+  }
 }

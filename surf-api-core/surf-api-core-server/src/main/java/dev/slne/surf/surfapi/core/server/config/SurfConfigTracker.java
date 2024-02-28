@@ -5,30 +5,32 @@ import dev.slne.surf.surfapi.core.api.config.SurfConfigManager.ConfigFileNamePat
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.file.Path;
+import javax.annotation.ParametersAreNonnullByDefault;
+import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 @ParametersAreNonnullByDefault
 public final class SurfConfigTracker {
-    private final Object2ObjectMap<Class<?>, SurfConfigManager<?>> configManagers;
 
-    public SurfConfigTracker() {
-        configManagers = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
-    }
+  private final Object2ObjectMap<Class<?>, SurfConfigManager<?>> configManagers;
 
-    public <C> C getConfig(Class<C> configClass) {
-        return (C) configManagers.get(configClass).getConfig();
-    }
+  public SurfConfigTracker() {
+    configManagers = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+  }
 
-    public <C> C reloadConfig(Class<C> configClass) {
-        return (C) configManagers.get(configClass).reloadConfig();
-    }
+  public <C> C getConfig(Class<C> configClass) {
+    return (C) configManagers.get(configClass).getConfig();
+  }
 
-    public <C> void registerConfig(Class<C> configClass, Path configFolder, @ConfigFileNamePattern String configFileName) {
-        configManagers.put(configClass, SurfConfigManager.create(configClass, configFolder, configFileName));
-    }
+  public <C> C reloadConfig(Class<C> configClass) {
+    return (C) configManagers.get(configClass).reloadConfig();
+  }
+
+  public <C> void registerConfig(Class<C> configClass, Path configFolder,
+      @ConfigFileNamePattern String configFileName) {
+    configManagers.put(configClass,
+        SurfConfigManager.create(configClass, configFolder, configFileName));
+  }
 }

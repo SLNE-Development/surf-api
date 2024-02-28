@@ -7,4 +7,5 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
 public interface PacketLlamaSpit extends PacketEntity<PacketLlamaSpit>, Spawnable, SpawnVelocity {
+
 }

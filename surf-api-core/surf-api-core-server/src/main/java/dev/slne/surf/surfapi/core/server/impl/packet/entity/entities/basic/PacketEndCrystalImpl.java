@@ -6,35 +6,38 @@ import com.github.retrooper.packetevents.util.Vector3i;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.basic.PacketEndCrystal;
 import dev.slne.surf.surfapi.core.server.impl.packet.entity.entities.PacketEntityCommon;
 import dev.slne.surf.surfapi.core.server.impl.packet.entity.entities.PacketEntityImpl;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Optional;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 
-public class PacketEndCrystalImpl extends PacketEntityImpl<PacketEndCrystal> implements PacketEndCrystal {
-    public PacketEndCrystalImpl(UUID uuid) {
-        super(uuid, EntityTypes.END_CRYSTAL);
-    }
+public class PacketEndCrystalImpl extends PacketEntityImpl<PacketEndCrystal> implements
+    PacketEndCrystal {
 
-    @Override
-    public Optional<org.spongepowered.math.vector.Vector3i> beamTarget() {
-        return get(BEAM_TARGET_INDEX, Optional.<Vector3i>empty()).map(PacketEntityCommon::fromPacketEvents);
-    }
+  public PacketEndCrystalImpl(UUID uuid) {
+    super(uuid, EntityTypes.END_CRYSTAL);
+  }
 
-    @Override
-    public void beamTarget(@Nullable org.spongepowered.math.vector.Vector3i beamTarget) {
-        set(BEAM_TARGET_INDEX, EntityDataTypes.OPTIONAL_BLOCK_POSITION, Optional.ofNullable(beamTarget).map(PacketEntityCommon::toPacketEvents));
-        afterSet();
-    }
+  @Override
+  public Optional<org.spongepowered.math.vector.Vector3i> beamTarget() {
+    return get(BEAM_TARGET_INDEX, Optional.<Vector3i>empty()).map(
+        PacketEntityCommon::fromPacketEvents);
+  }
 
-    @Override
-    public boolean showBottom() {
-        return get(SHOW_BOTTOM_INDEX, true);
-    }
+  @Override
+  public void beamTarget(@Nullable org.spongepowered.math.vector.Vector3i beamTarget) {
+    set(BEAM_TARGET_INDEX, EntityDataTypes.OPTIONAL_BLOCK_POSITION,
+        Optional.ofNullable(beamTarget).map(PacketEntityCommon::toPacketEvents));
+    afterSet();
+  }
 
-    @Override
-    public void showBottom(boolean showBottom) {
-        set(SHOW_BOTTOM_INDEX, showBottom);
-        afterSet();
-    }
+  @Override
+  public boolean showBottom() {
+    return get(SHOW_BOTTOM_INDEX, true);
+  }
+
+  @Override
+  public void showBottom(boolean showBottom) {
+    set(SHOW_BOTTOM_INDEX, showBottom);
+    afterSet();
+  }
 }

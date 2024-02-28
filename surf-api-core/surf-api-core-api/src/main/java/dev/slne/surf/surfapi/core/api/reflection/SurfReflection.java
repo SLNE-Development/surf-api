@@ -1,24 +1,23 @@
 package dev.slne.surf.surfapi.core.api.reflection;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
-import org.jetbrains.annotations.ApiStatus;
-
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import static com.google.common.base.Preconditions.*;
+import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 @ParametersAreNonnullByDefault
 public interface SurfReflection {
 
-    <T> T createProxy(Class<T> clazz, ClassLoader classLoader);
+  static SurfReflection get() {
+    return SurfCoreApi.getCore().getReflection();
+  }
 
-    default <T> T createProxy(Class<T> clazz) {
-        return createProxy(clazz, checkNotNull(clazz, "clazz").getClassLoader());
-    }
+  <T> T createProxy(Class<T> clazz, ClassLoader classLoader);
 
-    static SurfReflection get() {
-        return SurfCoreApi.getCore().getReflection();
-    }
+  default <T> T createProxy(Class<T> clazz) {
+    return createProxy(clazz, checkNotNull(clazz, "clazz").getClassLoader());
+  }
 }

@@ -5,11 +5,11 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflecti
 
 public class ReflectionTest extends CommandAPICommand {
 
-    public ReflectionTest(String commandName) {
-        super(commandName);
+  public ReflectionTest(String commandName) {
+    super(commandName);
 
-        executes((commandSender, commandArguments) -> {
-           Reflection.RESTART_COMMAND.restart();
-        });
-    }
+    executes((commandSender, commandArguments) -> {
+      Reflection.RESTART_COMMAND.restart();
+    });
+  }
 }

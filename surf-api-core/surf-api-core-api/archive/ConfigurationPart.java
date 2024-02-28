@@ -5,8 +5,8 @@ package dev.slne.surf.surfapi.core.api.config;
  */
 public abstract class ConfigurationPart {
 
-    public static abstract class Post extends ConfigurationPart {
+  public static abstract class Post extends ConfigurationPart {
 
-        public abstract void postProcess();
-    }
+    public abstract void postProcess();
+  }
 }

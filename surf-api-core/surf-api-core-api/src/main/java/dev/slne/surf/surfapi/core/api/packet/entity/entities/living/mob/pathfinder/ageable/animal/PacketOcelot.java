@@ -5,19 +5,20 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
 public interface PacketOcelot extends PacketAnimal<PacketOcelot>, Spawnable {
-    int TRUSTING_INDEX = 17;
 
-    /**
-     * Checks if this ocelot trusts players.
-     *
-     * @return true if it trusts players
-     */
-    boolean trusting();
+  int TRUSTING_INDEX = 17;
 
-    /**
-     * Sets if this ocelot trusts players.
-     *
-     * @param trusting true if it trusts players
-     */
-    void trusting(boolean trusting);
+  /**
+   * Checks if this ocelot trusts players.
+   *
+   * @return true if it trusts players
+   */
+  boolean trusting();
+
+  /**
+   * Sets if this ocelot trusts players.
+   *
+   * @param trusting true if it trusts players
+   */
+  void trusting(boolean trusting);
 }

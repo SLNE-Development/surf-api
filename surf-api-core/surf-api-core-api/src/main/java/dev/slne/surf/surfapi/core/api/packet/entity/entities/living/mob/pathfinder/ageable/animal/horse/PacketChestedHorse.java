@@ -4,11 +4,12 @@ import dev.slne.surf.surfapi.core.api.packet.entity.annotation.CanBeSpawned;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
-public interface PacketChestedHorse<Impl extends PacketChestedHorse<Impl>> extends PacketAbstractHorse<Impl>, Spawnable {
+public interface PacketChestedHorse<Impl extends PacketChestedHorse<Impl>> extends
+    PacketAbstractHorse<Impl>, Spawnable {
 
-    int HAS_CHEST_INDEX = 18;
+  int HAS_CHEST_INDEX = 18;
 
-    boolean hasChest();
+  boolean hasChest();
 
-    void hasChest(boolean hasChest);
+  void hasChest(boolean hasChest);
 }

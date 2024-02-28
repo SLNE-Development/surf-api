@@ -8,33 +8,33 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketSheep extends PacketAnimal<PacketSheep>, Spawnable {
 
-    /**
-     * The index of the sheep's flag.
-     */
-    int SHEEP_FLAG_INDEX = 17;
+  /**
+   * The index of the sheep's flag.
+   */
+  int SHEEP_FLAG_INDEX = 17;
 
-    /**
-     * The flags of the sheep.
-     */
-    byte COLOR_FLAG = 0x0F, SHEARED_FLAG = 0x10;
+  /**
+   * The flags of the sheep.
+   */
+  byte COLOR_FLAG = 0x0F, SHEARED_FLAG = 0x10;
 
-    /**
-     * @return The color of the sheep.
-     */
-    DyeColor sheepColor();
+  /**
+   * @return The color of the sheep.
+   */
+  DyeColor sheepColor();
 
-    /**
-     * @param color The color of the sheep.
-     */
-    void sheepColor(@NotNull DyeColor color);
+  /**
+   * @param color The color of the sheep.
+   */
+  void sheepColor(@NotNull DyeColor color);
 
-    /**
-     * @return Whether the sheep is sheared.
-     */
-    boolean sheared();
+  /**
+   * @return Whether the sheep is sheared.
+   */
+  boolean sheared();
 
-    /**
-     * @param sheared Whether the sheep is sheared.
-     */
-    void sheared(boolean sheared);
+  /**
+   * @param sheared Whether the sheep is sheared.
+   */
+  void sheared(boolean sheared);
 }

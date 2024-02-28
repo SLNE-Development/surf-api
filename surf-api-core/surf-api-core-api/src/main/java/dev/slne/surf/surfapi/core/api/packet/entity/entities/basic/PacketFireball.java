@@ -9,11 +9,13 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 import org.jetbrains.annotations.NotNull;
 
 @CanBeSpawned
-public interface PacketFireball extends PacketEntity<PacketFireball>, SpawnVelocity, Shootable, Spawnable {
-    int ITEM_INDEX = 8;
+public interface PacketFireball extends PacketEntity<PacketFireball>, SpawnVelocity, Shootable,
+    Spawnable {
 
-    @NotNull
-    ItemStack displayItem();
+  int ITEM_INDEX = 8;
 
-    void displayItem(@NotNull ItemStack displayItem);
+  @NotNull
+  ItemStack displayItem();
+
+  void displayItem(@NotNull ItemStack displayItem);
 }

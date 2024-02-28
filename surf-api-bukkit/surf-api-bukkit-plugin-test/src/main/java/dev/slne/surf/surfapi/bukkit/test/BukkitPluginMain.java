@@ -8,22 +8,22 @@ import org.jetbrains.annotations.NotNull;
 
 public class BukkitPluginMain extends JavaPlugin {
 
-    @Override
-    public void onLoad() {
-    }
+  public static @NotNull BukkitPluginMain getInstance() {
+    return getPlugin(BukkitPluginMain.class);
+  }
 
-    @Override
-    public void onEnable() {
-        new SurfApiTestCommand().register();
-        Reflection.class.getClassLoader(); // initialize Reflection
-    }
+  @Override
+  public void onLoad() {
+  }
 
-    @Override
-    public void onDisable() {
-        CommandAPI.unregister("surfapitest");
-    }
+  @Override
+  public void onEnable() {
+    new SurfApiTestCommand().register();
+    Reflection.class.getClassLoader(); // initialize Reflection
+  }
 
-    public static @NotNull BukkitPluginMain getInstance() {
-        return getPlugin(BukkitPluginMain.class);
-    }
+  @Override
+  public void onDisable() {
+    CommandAPI.unregister("surfapitest");
+  }
 }

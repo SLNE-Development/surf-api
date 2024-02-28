@@ -8,8 +8,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * You can use this class to build a command exception message. For example, if a command fails to parse the input, you
- * can use this class to build a message that shows the user where the error occurred.
+ * You can use this class to build a command exception message. For example, if a command fails to
+ * parse the input, you can use this class to build a message that shows the user where the error
+ * occurred.
  * <p>
  * The message will be built with the following format:
  * <pre>
@@ -45,83 +46,84 @@ import org.jetbrains.annotations.Nullable;
  * </p>
  */
 public class CommandExceptionBuilder {
-    public static final int CONTEXT_AMOUNT = 10;
 
-    private final String detailErrorMessage;
-    private final String input;
-    private final int cursor;
+  public static final int CONTEXT_AMOUNT = 10;
 
-    @Contract(pure = true)
-    public CommandExceptionBuilder(@Nullable String detailErrorMessage, String input, int cursor) {
-        this.detailErrorMessage = detailErrorMessage;
-        this.input = input;
-        this.cursor = cursor;
+  private final String detailErrorMessage;
+  private final String input;
+  private final int cursor;
+
+  @Contract(pure = true)
+  public CommandExceptionBuilder(@Nullable String detailErrorMessage, String input, int cursor) {
+    this.detailErrorMessage = detailErrorMessage;
+    this.input = input;
+    this.cursor = cursor;
+  }
+
+  /**
+   * Builds the command exception message with the default prefix ({@link Colors#PREFIX}).
+   *
+   * @return The built message
+   */
+  public Component build() {
+    return build(Colors.PREFIX);
+  }
+
+  /**
+   * Builds the command exception message with the given prefix.
+   *
+   * @param prefix The prefix to add to the message
+   * @return The built message
+   */
+  public Component build(@Nullable Component prefix) {
+    final TextComponent.Builder builder = Component.text();
+    final Component context = getContext();
+
+    if (prefix != null) {
+      builder.append(prefix);
     }
 
-    /**
-     * Builds the command exception message with the default prefix ({@link Colors#PREFIX}).
-     *
-     * @return The built message
-     */
-    public Component build() {
-        return build(Colors.PREFIX);
+    if (detailErrorMessage != null) {
+      builder.append(Component.text(detailErrorMessage, Colors.WARNING));
+
+      builder.appendNewline();
+      if (prefix != null) {
+        builder.append(prefix);
+      }
     }
 
-    /**
-     * Builds the command exception message with the given prefix.
-     *
-     * @param prefix The prefix to add to the message
-     * @return The built message
-     */
-    public Component build(@Nullable Component prefix) {
-        final TextComponent.Builder builder = Component.text();
-        final Component context = getContext();
-
-        if (prefix != null) {
-            builder.append(prefix);
-        }
-
-        if (detailErrorMessage != null) {
-            builder.append(Component.text(detailErrorMessage, Colors.WARNING));
-
-            builder.appendNewline();
-            if (prefix != null) {
-                builder.append(prefix);
-            }
-        }
-
-        if (context != null) {
-            builder.append(Component.text("At position " + cursor + ": ", Colors.ERROR));
-            builder.append(context);
-        }
-
-        return builder.build();
+    if (context != null) {
+      builder.append(Component.text("At position " + cursor + ": ", Colors.ERROR));
+      builder.append(context);
     }
 
-    /**
-     * Gets the context of the error.
-     *
-     * @return The context of the error
-     */
-    protected @Nullable Component getContext() {
-        if (input == null || cursor < 0) {
-            return null;
-        }
+    return builder.build();
+  }
 
-        final TextComponent.Builder builder = Component.text();
-        final int cursor = Math.min(input.length(), this.cursor);
-        final int start = Math.max(0, cursor - CONTEXT_AMOUNT);
-
-        if (cursor > CONTEXT_AMOUNT) {
-            builder.append(Component.text("...", Colors.ERROR));
-        }
-
-        for (int i = start; i < cursor; i++) {
-            builder.append(Component.text(input.charAt(i), Colors.ERROR, TextDecoration.UNDERLINED));
-        }
-
-        builder.append(Component.text("<--[HERE]", Colors.ERROR));
-
-        return builder.build();
+  /**
+   * Gets the context of the error.
+   *
+   * @return The context of the error
+   */
+  protected @Nullable Component getContext() {
+    if (input == null || cursor < 0) {
+      return null;
     }
+
+    final TextComponent.Builder builder = Component.text();
+    final int cursor = Math.min(input.length(), this.cursor);
+    final int start = Math.max(0, cursor - CONTEXT_AMOUNT);
+
+    if (cursor > CONTEXT_AMOUNT) {
+      builder.append(Component.text("...", Colors.ERROR));
+    }
+
+    for (int i = start; i < cursor; i++) {
+      builder.append(Component.text(input.charAt(i), Colors.ERROR, TextDecoration.UNDERLINED));
+    }
+
+    builder.append(Component.text("<--[HERE]", Colors.ERROR));
+
+    return builder.build();
+  }
 }

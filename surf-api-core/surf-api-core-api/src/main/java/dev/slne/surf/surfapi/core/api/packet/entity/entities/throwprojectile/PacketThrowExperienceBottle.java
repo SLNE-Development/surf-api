@@ -6,9 +6,10 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 import org.jetbrains.annotations.ApiStatus;
 
 @CanBeSpawned
-public interface PacketThrowExperienceBottle extends PacketThrowItemProjectile<PacketThrowExperienceBottle>, Spawnable {
+public interface PacketThrowExperienceBottle extends
+    PacketThrowItemProjectile<PacketThrowExperienceBottle>, Spawnable {
 
-    @ApiStatus.Obsolete // Always experience bottle - anything else is unsupported
-    @Override
-    void item(ItemStack item);
+  @ApiStatus.Obsolete // Always experience bottle - anything else is unsupported
+  @Override
+  void item(ItemStack item);
 }

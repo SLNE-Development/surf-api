@@ -10,88 +10,100 @@ import java.util.regex.Pattern;
 
 public final class Duration {
 
-    private static final Pattern SPACE = Pattern.compile(" ");
-    private static final Pattern NOT_NUMERIC = Pattern.compile("[^-\\d.]");
-    public static final Serializer SERIALIZER = new Serializer();
+  public static final Serializer SERIALIZER = new Serializer();
+  private static final Pattern SPACE = Pattern.compile(" ");
+  private static final Pattern NOT_NUMERIC = Pattern.compile("[^-\\d.]");
+  private final long seconds;
+  private final String value;
 
-    private final long seconds;
-    private final String value;
+  private Duration(String value) {
+    this.value = value;
+    this.seconds = getSeconds(value);
+  }
 
-    private Duration(String value) {
-        this.value = value;
-        this.seconds = getSeconds(value);
+  public static Duration of(String time) {
+    return new Duration(time);
+  }
+
+  private static int getSeconds(String str) {
+    str = SPACE.matcher(str).replaceAll("");
+    final char unit = str.charAt(str.length() - 1);
+    str = NOT_NUMERIC.matcher(str).replaceAll("");
+    double num;
+    try {
+      num = Double.parseDouble(str);
+    } catch (Exception e) {
+      num = 0D;
     }
-
-    public long seconds() {
-        return this.seconds;
+    switch (unit) {
+      case 'd':
+        num *= (double) 60 * 60 * 24;
+        break;
+      case 'h':
+        num *= (double) 60 * 60;
+        break;
+      case 'm':
+        num *= 60;
+        break;
+      default:
+      case 's':
+        break;
     }
+    return (int) num;
+  }
 
-    public long ticks() {
-        return this.seconds * 20;
+  public long seconds() {
+    return this.seconds;
+  }
+
+  public long ticks() {
+    return this.seconds * 20;
+  }
+
+  public String value() {
+    return this.value;
+  }
+
+  @Override
+  public boolean equals(@Nullable Object o) {
+    if (this == o) {
+      return true;
     }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Duration duration = (Duration) o;
+    return seconds == duration.seconds && this.value.equals(duration.value);
+  }
 
-    public String value() {
-        return this.value;
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.seconds, this.value);
+  }
+
+  @Override
+  public String toString() {
+    return "Duration{" +
+        "seconds=" + this.seconds +
+        ", value='" + this.value + '\'' +
+        '}';
+  }
+
+  private static final class Serializer extends ScalarSerializer<Duration> {
+
+    private Serializer() {
+      super(Duration.class);
     }
 
     @Override
-    public boolean equals(@Nullable Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Duration duration = (Duration) o;
-        return seconds == duration.seconds && this.value.equals(duration.value);
+    public Duration deserialize(Type type, Object obj) {
+      return new Duration(obj.toString());
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(this.seconds, this.value);
+    protected Object serialize(Duration item, Predicate<Class<?>> typeSupported) {
+      return item.value();
     }
-
-    @Override
-    public String toString() {
-        return "Duration{" +
-                "seconds=" + this.seconds +
-                ", value='" + this.value + '\'' +
-                '}';
-    }
-
-    public static Duration of(String time) {
-        return new Duration(time);
-    }
-
-    private static int getSeconds(String str) {
-        str = SPACE.matcher(str).replaceAll("");
-        final char unit = str.charAt(str.length() - 1);
-        str = NOT_NUMERIC.matcher(str).replaceAll("");
-        double num;
-        try {
-            num = Double.parseDouble(str);
-        } catch (Exception e) {
-            num = 0D;
-        }
-        switch (unit) {
-            case 'd': num *= (double) 60*60*24; break;
-            case 'h': num *= (double) 60*60; break;
-            case 'm': num *= 60; break;
-            default: case 's': break;
-        }
-        return (int) num;
-    }
-
-    private static final class Serializer extends ScalarSerializer<Duration> {
-        private Serializer() {
-            super(Duration.class);
-        }
-
-        @Override
-        public Duration deserialize(Type type, Object obj) {
-            return new Duration(obj.toString());
-        }
-
-        @Override
-        protected Object serialize(Duration item, Predicate<Class<?>> typeSupported) {
-            return item.value();
-        }
-    }
+  }
 }
 

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 public interface SurfBukkitPacketEntityApi extends SurfCorePacketEntityApi {
 
-//
+  //
 //    void deleteEntity(@NotNull UUID uuid);
 //
 //    /**
@@ -27,7 +27,7 @@ public interface SurfBukkitPacketEntityApi extends SurfCorePacketEntityApi {
 //     * @return an Optional representing the SurfEntity with the specified entityId, or an empty Optional if no entity is found
 //     */
 //    <T extends EntityMeta> Optional<SurfEntity<T>> getEntity(@Range(from = 0L, to = Long.MAX_VALUE) int entityId);
-    static SurfBukkitPacketEntityApi get() {
-        return SurfBukkitPacketApi.get().getPacketEntityApi();
-    }
+  static SurfBukkitPacketEntityApi get() {
+    return SurfBukkitPacketApi.get().getPacketEntityApi();
+  }
 }

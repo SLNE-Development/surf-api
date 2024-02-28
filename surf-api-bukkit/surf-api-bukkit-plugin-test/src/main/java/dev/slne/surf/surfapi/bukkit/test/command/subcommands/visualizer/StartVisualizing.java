@@ -5,18 +5,20 @@ import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;
 
 public class StartVisualizing extends CommandAPICommand {
-    public StartVisualizing(String commandName) {
-        super(commandName);
 
-        withArguments(new StringArgument("visualizerName")
-                .replaceSuggestions(ArgumentSuggestions.stringCollection(__ -> CreateVisualizer.getVisualizerMap().keySet())));
+  public StartVisualizing(String commandName) {
+    super(commandName);
 
-        executes((commandSender, commandArguments) -> {
-            String visualizerName = commandArguments.getUnchecked("visualizerName");
+    withArguments(new StringArgument("visualizerName")
+        .replaceSuggestions(ArgumentSuggestions.stringCollection(
+            __ -> CreateVisualizer.getVisualizerMap().keySet())));
 
-            CreateVisualizer.getVisualizerMap().get(visualizerName).startVisualizing();
+    executes((commandSender, commandArguments) -> {
+      String visualizerName = commandArguments.getUnchecked("visualizerName");
 
-            commandSender.sendMessage("Visualizer started");
-        });
-    }
+      CreateVisualizer.getVisualizerMap().get(visualizerName).startVisualizing();
+
+      commandSender.sendMessage("Visualizer started");
+    });
+  }
 }

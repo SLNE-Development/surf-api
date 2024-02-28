@@ -3,75 +3,77 @@ package dev.slne.surf.surfapi.core.server.impl.packet.entity.entities.living.mob
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import dev.slne.surf.surfapi.core.api.packet.entity.DyeColor;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.wateranimal.fish.PacketTropicalFish;
+import java.util.UUID;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
+public final class PacketTropicalFishImpl extends
+    PacketAbstractFishImpl<PacketTropicalFish> implements PacketTropicalFish {
 
-public final class PacketTropicalFishImpl extends PacketAbstractFishImpl<PacketTropicalFish> implements PacketTropicalFish {
+  public PacketTropicalFishImpl(UUID uuid) {
+    super(uuid, EntityTypes.TROPICAL_FISH);
+  }
 
-    public PacketTropicalFishImpl(UUID uuid) {
-        super(uuid, EntityTypes.TROPICAL_FISH);
-    }
+  @Contract(pure = true)
+  private static DyeColor getPatternColor(int data) {
+    return DyeColor.getByWoolData((byte) ((data >> 24) & 0xFF));
+  }
 
-    @Override
-    public Pattern variant() {
-        return getPattern(getPackedVariant());
-    }
+  @Contract(pure = true)
+  private static DyeColor getBodyColor(int data) {
+    return DyeColor.getByWoolData((byte) ((data >> 16) & 0xFF));
+  }
 
-    @Override
-    public void variant(@NotNull Pattern variant) {
-        set(VARIANT_INDEX, getData(patternColor(), bodyColor(), variant));
-        afterSet();
-    }
+  public static Pattern getPattern(int data) {
+    return Pattern.getByData(data);
+  }
 
-    @Override
-    public DyeColor patternColor() {
-        return getPatternColor(getPackedVariant());
-    }
+  private static int getData(@NotNull DyeColor patternColor, @NotNull DyeColor bodyColor,
+      @NotNull Pattern variant) {
+    return patternColor.getWoolData() << 24 | bodyColor.getWoolData() << 16
+        | variant.getDataValue();
+  }
 
-    @Override
-    public void patternColor(@NotNull DyeColor patternColor) {
-        set(VARIANT_INDEX, getData(patternColor, bodyColor(), variant()));
-        afterSet();
-    }
+  @Override
+  public Pattern variant() {
+    return getPattern(getPackedVariant());
+  }
 
-    @Override
-    public DyeColor bodyColor() {
-        return getBodyColor(getPackedVariant());
-    }
+  @Override
+  public void variant(@NotNull Pattern variant) {
+    set(VARIANT_INDEX, getData(patternColor(), bodyColor(), variant));
+    afterSet();
+  }
 
-    @Override
-    public void bodyColor(@NotNull DyeColor bodyColor) {
-        set(VARIANT_INDEX, getData(patternColor(), bodyColor, variant()));
-        afterSet();
-    }
+  @Override
+  public DyeColor patternColor() {
+    return getPatternColor(getPackedVariant());
+  }
 
-    private int getPackedVariant() {
-        return get(VARIANT_INDEX, 0);
-    }
+  @Override
+  public void patternColor(@NotNull DyeColor patternColor) {
+    set(VARIANT_INDEX, getData(patternColor, bodyColor(), variant()));
+    afterSet();
+  }
 
-    @Contract(pure = true)
-    @Override
-    public int getData() {
-        return 0;
-    }
+  @Override
+  public DyeColor bodyColor() {
+    return getBodyColor(getPackedVariant());
+  }
 
-    @Contract(pure = true)
-    private static DyeColor getPatternColor(int data) {
-        return DyeColor.getByWoolData((byte) ((data >> 24) & 0xFF));
-    }
+  @Override
+  public void bodyColor(@NotNull DyeColor bodyColor) {
+    set(VARIANT_INDEX, getData(patternColor(), bodyColor, variant()));
+    afterSet();
+  }
 
-    @Contract(pure = true)
-    private static DyeColor getBodyColor(int data) {
-        return DyeColor.getByWoolData((byte) ((data >> 16) & 0xFF));
-    }
+  private int getPackedVariant() {
+    return get(VARIANT_INDEX, 0);
+  }
 
-    public static Pattern getPattern(int data) {
-        return Pattern.getByData(data);
-    }
-
-    private static int getData(@NotNull DyeColor patternColor, @NotNull DyeColor bodyColor, @NotNull Pattern variant) {
-        return patternColor.getWoolData() << 24 | bodyColor.getWoolData() << 16 | variant.getDataValue();
-    }
+  @Contract(pure = true)
+  @Override
+  public int getData() {
+    return 0;
+  }
 }

@@ -8,13 +8,13 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketSniffer extends PacketAnimal<PacketSniffer>, Spawnable {
 
-    int STATE_INDEX = 17, DROP_SEED_AT_TICK_INDEX = 18;
+  int STATE_INDEX = 17, DROP_SEED_AT_TICK_INDEX = 18;
 
-    SnifferState state();
+  SnifferState state();
 
-    void state(@NotNull SnifferState state);
+  void state(@NotNull SnifferState state);
 
-    int dropSeedAtTick();
+  int dropSeedAtTick();
 
-    void dropSeedAtTick(int dropSeedAtTick);
+  void dropSeedAtTick(int dropSeedAtTick);
 }

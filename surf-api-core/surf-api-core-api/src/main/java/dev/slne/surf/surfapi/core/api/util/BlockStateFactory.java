@@ -1,356 +1,379 @@
 package dev.slne.surf.surfapi.core.api.util;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.github.retrooper.packetevents.protocol.world.BlockFace;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
-import com.github.retrooper.packetevents.protocol.world.states.enums.*;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Attachment;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Axis;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Bloom;
+import com.github.retrooper.packetevents.protocol.world.states.enums.East;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Face;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Half;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Hinge;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Instrument;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Leaves;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Mode;
+import com.github.retrooper.packetevents.protocol.world.states.enums.North;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Orientation;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Part;
+import com.github.retrooper.packetevents.protocol.world.states.enums.SculkSensorPhase;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Shape;
+import com.github.retrooper.packetevents.protocol.world.states.enums.South;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Thickness;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Tilt;
+import com.github.retrooper.packetevents.protocol.world.states.enums.TrialSpawnerState;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Type;
+import com.github.retrooper.packetevents.protocol.world.states.enums.VerticalDirection;
+import com.github.retrooper.packetevents.protocol.world.states.enums.West;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
-import org.jetbrains.annotations.NotNull;
-
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import static com.google.common.base.Preconditions.*;
+import org.jetbrains.annotations.NotNull;
 
 public interface BlockStateFactory {
 
-    static Builder builder(@NotNull StateType stateType) {
-        return new BlockStateFactoryImpl.BuilderImpl(checkNotNull(stateType, "stateType").createBlockState().clone());
-    }
+  static Builder builder(@NotNull StateType stateType) {
+    return new BlockStateFactoryImpl.BuilderImpl(
+        checkNotNull(stateType, "stateType").createBlockState().clone());
+  }
 
-    static Builder builder(@NotNull WrappedBlockState wrappedBlockState) {
-        return new BlockStateFactoryImpl.BuilderImpl(checkNotNull(wrappedBlockState, "wrappedBlockState").clone());
-    }
+  static Builder builder(@NotNull WrappedBlockState wrappedBlockState) {
+    return new BlockStateFactoryImpl.BuilderImpl(
+        checkNotNull(wrappedBlockState, "wrappedBlockState").clone());
+  }
 
-    static WrappedBlockState of(@NotNull StateType stateType) {
-        return checkNotNull(stateType, "stateType").createBlockState().clone();
-    }
+  static WrappedBlockState of(@NotNull StateType stateType) {
+    return checkNotNull(stateType, "stateType").createBlockState().clone();
+  }
 
-    @ParametersAreNonnullByDefault
-    @SuppressWarnings("unused")
-    interface Builder {
-        int age();
+  @ParametersAreNonnullByDefault
+  @SuppressWarnings("unused")
+  interface Builder {
 
-        Builder age(int age);
+    int age();
 
-        boolean attached();
+    Builder age(int age);
 
-        Builder attached(boolean attached);
+    boolean attached();
 
-        Attachment attachment();
+    Builder attached(boolean attached);
 
-        Builder attachment(@NotNull Attachment attachment);
+    Attachment attachment();
 
-        Axis axis();
+    Builder attachment(@NotNull Attachment attachment);
 
-        Builder axis(@NotNull Axis axis);
+    Axis axis();
 
-        boolean berries();
+    Builder axis(@NotNull Axis axis);
 
-        Builder berries(boolean berries);
+    boolean berries();
 
-        int bites();
+    Builder berries(boolean berries);
 
-        Builder bites(int bites);
+    int bites();
 
-        boolean bottom();
+    Builder bites(int bites);
 
-        Builder bottom(boolean bottom);
+    boolean bottom();
 
-        int candles();
+    Builder bottom(boolean bottom);
 
-        Builder candles(int candles);
+    int candles();
 
-        int charges();
+    Builder candles(int candles);
 
-        Builder charges(int charges);
+    int charges();
 
-        boolean conditional();
+    Builder charges(int charges);
 
-        Builder conditional(boolean conditional);
+    boolean conditional();
 
-        int delay();
+    Builder conditional(boolean conditional);
 
-        Builder delay(int delay);
+    int delay();
 
-        boolean disarmed();
+    Builder delay(int delay);
 
-        Builder disarmed(boolean disarmed);
+    boolean disarmed();
 
-        int distance();
+    Builder disarmed(boolean disarmed);
 
-        Builder distance(int distance);
+    int distance();
 
-        boolean down();
+    Builder distance(int distance);
 
-        Builder down(boolean down);
+    boolean down();
 
-        boolean drag();
+    Builder down(boolean down);
 
-        Builder drag(boolean drag);
+    boolean drag();
 
-        int eggs();
+    Builder drag(boolean drag);
 
-        Builder eggs(int eggs);
+    int eggs();
 
-        boolean enabled();
+    Builder eggs(int eggs);
 
-        Builder enabled(boolean enabled);
+    boolean enabled();
 
-        boolean extended();
+    Builder enabled(boolean enabled);
 
-        Builder extended(boolean extended);
+    boolean extended();
 
-        boolean eye();
+    Builder extended(boolean extended);
 
-        Builder eye(boolean eye);
+    boolean eye();
 
-        Face face();
+    Builder eye(boolean eye);
 
-        Builder face(@NotNull Face face);
+    Face face();
 
-        BlockFace facing();
+    Builder face(@NotNull Face face);
 
-        Builder facing(@NotNull BlockFace facing);
+    BlockFace facing();
 
-        Half half();
+    Builder facing(@NotNull BlockFace facing);
 
-        Builder half(@NotNull Half half);
+    Half half();
 
-        boolean hanging();
+    Builder half(@NotNull Half half);
 
-        Builder hanging(boolean hanging);
+    boolean hanging();
 
-        boolean hasBook();
+    Builder hanging(boolean hanging);
 
-        Builder hasBook(boolean hasBook);
+    boolean hasBook();
 
-        boolean hasBottle0();
+    Builder hasBook(boolean hasBook);
 
-        Builder hasBottle0(boolean hasBottle0);
+    boolean hasBottle0();
 
-        boolean hasBottle1();
+    Builder hasBottle0(boolean hasBottle0);
 
-        Builder hasBottle1(boolean hasBottle1);
+    boolean hasBottle1();
 
-        boolean hasBottle2();
+    Builder hasBottle1(boolean hasBottle1);
 
-        Builder hasBottle2(boolean hasBottle2);
+    boolean hasBottle2();
 
-        boolean hasRecord();
+    Builder hasBottle2(boolean hasBottle2);
 
-        Builder hasRecord(boolean hasRecord);
+    boolean hasRecord();
 
-        int hatch();
+    Builder hasRecord(boolean hasRecord);
 
-        Builder hatch(int hatch);
+    int hatch();
 
-        Hinge hinge();
+    Builder hatch(int hatch);
 
-        Builder hinge(@NotNull Hinge hinge);
+    Hinge hinge();
 
-        int honeyLevel();
+    Builder hinge(@NotNull Hinge hinge);
 
-        Builder honeyLevel(int honeyLevel);
+    int honeyLevel();
 
-        boolean inWall();
+    Builder honeyLevel(int honeyLevel);
 
-        Builder inWall(boolean inWall);
+    boolean inWall();
 
-        Instrument instrument();
+    Builder inWall(boolean inWall);
 
-        Builder instrument(@NotNull Instrument instrument);
+    Instrument instrument();
 
-        boolean inverted();
+    Builder instrument(@NotNull Instrument instrument);
 
-        Builder inverted(boolean inverted);
+    boolean inverted();
 
-        int layers();
+    Builder inverted(boolean inverted);
 
-        Builder layers(int layers);
+    int layers();
 
-        Leaves leaves();
+    Builder layers(int layers);
 
-        Builder leaves(Leaves leaves);
+    Leaves leaves();
 
-        int level();
+    Builder leaves(Leaves leaves);
 
-        Builder level(int level);
+    int level();
 
-        boolean lit();
+    Builder level(int level);
 
-        Builder lit(boolean lit);
+    boolean lit();
 
-        boolean locked();
+    Builder lit(boolean lit);
 
-        Builder locked(boolean locked);
+    boolean locked();
 
-        Mode mode();
+    Builder locked(boolean locked);
 
-        Builder mode(@NotNull Mode mode);
+    Mode mode();
 
-        int moisture();
+    Builder mode(@NotNull Mode mode);
 
-        Builder moisture(int moisture);
+    int moisture();
 
-        North north();
+    Builder moisture(int moisture);
 
-        Builder north(@NotNull North north);
+    North north();
 
-        int note();
+    Builder north(@NotNull North north);
 
-        Builder note(int note);
+    int note();
 
-        boolean occupied();
+    Builder note(int note);
 
-        Builder occupied(boolean occupied);
+    boolean occupied();
 
-        boolean shrieking();
+    Builder occupied(boolean occupied);
 
-        Builder shrieking(boolean shrieking);
+    boolean shrieking();
 
-        boolean canSummon();
+    Builder shrieking(boolean shrieking);
 
-        Builder canSummon(boolean canSummon);
+    boolean canSummon();
 
-        boolean open();
+    Builder canSummon(boolean canSummon);
 
-        Builder open(boolean open);
+    boolean open();
 
-        Orientation orientation();
+    Builder open(boolean open);
 
-        Builder orientation(Orientation orientation);
+    Orientation orientation();
 
-        Part part();
+    Builder orientation(Orientation orientation);
 
-        Builder part(Part part);
+    Part part();
 
-        boolean persistent();
+    Builder part(Part part);
 
-        Builder persistent(boolean persistent);
+    boolean persistent();
 
-        int pickles();
+    Builder persistent(boolean persistent);
 
-        Builder pickles(int pickles);
+    int pickles();
 
-        int power();
+    Builder pickles(int pickles);
 
-        Builder power(int power);
+    int power();
 
-        boolean powered();
+    Builder power(int power);
 
-        Builder powered(boolean powered);
+    boolean powered();
 
-        int rotation();
+    Builder powered(boolean powered);
 
-        Builder rotation(int rotation);
+    int rotation();
 
-        SculkSensorPhase sculkSensorPhase();
+    Builder rotation(int rotation);
 
-        Builder sculkSensorPhase(SculkSensorPhase sculkSensorPhase);
+    SculkSensorPhase sculkSensorPhase();
 
-        Shape shape();
+    Builder sculkSensorPhase(SculkSensorPhase sculkSensorPhase);
 
-        Builder shape(Shape shape);
+    Shape shape();
 
-        boolean short_();
+    Builder shape(Shape shape);
 
-        Builder short_(boolean short_);
+    boolean short_();
 
-        boolean signalFire();
+    Builder short_(boolean short_);
 
-        Builder signalFire(boolean signalFire);
+    boolean signalFire();
 
-        boolean slotZeroOccupied();
+    Builder signalFire(boolean signalFire);
 
-        Builder slotZeroOccupied(boolean slotZeroOccupied);
+    boolean slotZeroOccupied();
 
-        boolean slotOneOccupied();
+    Builder slotZeroOccupied(boolean slotZeroOccupied);
 
-        Builder slotOneOccupied(boolean slotOneOccupied);
+    boolean slotOneOccupied();
 
-        boolean slotTwoOccupied();
+    Builder slotOneOccupied(boolean slotOneOccupied);
 
-        Builder slotTwoOccupied(boolean slotTwoOccupied);
+    boolean slotTwoOccupied();
 
-        boolean slotThreeOccupied();
+    Builder slotTwoOccupied(boolean slotTwoOccupied);
 
-        Builder slotThreeOccupied(boolean slotThreeOccupied);
+    boolean slotThreeOccupied();
 
-        boolean slotFourOccupied();
+    Builder slotThreeOccupied(boolean slotThreeOccupied);
 
-        Builder slotFourOccupied(boolean slotFourOccupied);
+    boolean slotFourOccupied();
 
-        boolean slotFiveOccupied();
+    Builder slotFourOccupied(boolean slotFourOccupied);
 
-        Builder slotFiveOccupied(boolean slotFiveOccupied);
+    boolean slotFiveOccupied();
 
-        boolean snowy();
+    Builder slotFiveOccupied(boolean slotFiveOccupied);
 
-        Builder snowy(boolean snowy);
+    boolean snowy();
 
-        int stage();
+    Builder snowy(boolean snowy);
 
-        Builder stage(int stage);
+    int stage();
 
-        South south();
+    Builder stage(int stage);
 
-        Builder south(South south);
+    South south();
 
-        Thickness thickness();
+    Builder south(South south);
 
-        Builder thickness(Thickness thickness);
+    Thickness thickness();
 
-        Tilt tilt();
+    Builder thickness(Thickness thickness);
 
-        Builder tilt(Tilt tilt);
+    Tilt tilt();
 
-        boolean triggered();
+    Builder tilt(Tilt tilt);
 
-        Builder triggered(boolean triggered);
+    boolean triggered();
 
-        Type typeData();
+    Builder triggered(boolean triggered);
 
-        Builder typeData(Type type);
+    Type typeData();
 
-        boolean unstable();
+    Builder typeData(Type type);
 
-        Builder unstable(boolean unstable);
+    boolean unstable();
 
-        boolean up();
+    Builder unstable(boolean unstable);
 
-        Builder up(boolean up);
+    boolean up();
 
-        VerticalDirection verticalDirection();
+    Builder up(boolean up);
 
-        Builder verticalDirection(VerticalDirection verticalDirection);
+    VerticalDirection verticalDirection();
 
-        boolean waterlogged();
+    Builder verticalDirection(VerticalDirection verticalDirection);
 
-        Builder waterlogged(boolean waterlogged);
+    boolean waterlogged();
 
-        East east();
+    Builder waterlogged(boolean waterlogged);
 
-        Builder east(East east);
+    East east();
 
-        West west();
+    Builder east(East east);
 
-        Builder west(West west);
+    West west();
 
-        Bloom bloom();
+    Builder west(West west);
 
-        Builder bloom(Bloom bloom);
+    Bloom bloom();
 
-        boolean cracked();
+    Builder bloom(Bloom bloom);
 
-        Builder cracked(boolean cracked);
+    boolean cracked();
 
-        boolean crafting();
+    Builder cracked(boolean cracked);
 
-        Builder crafting(boolean crafting);
+    boolean crafting();
 
-        TrialSpawnerState trialSpawnerState();
+    Builder crafting(boolean crafting);
 
-        Builder trialSpawnerState(TrialSpawnerState trialSpawnerState);
+    TrialSpawnerState trialSpawnerState();
 
-        WrappedBlockState build();
-    }
+    Builder trialSpawnerState(TrialSpawnerState trialSpawnerState);
+
+    WrappedBlockState build();
+  }
 }

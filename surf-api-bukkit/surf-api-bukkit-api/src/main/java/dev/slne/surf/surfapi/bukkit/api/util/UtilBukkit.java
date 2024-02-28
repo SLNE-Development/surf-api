@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Contract;
  */
 public final class UtilBukkit extends Util {
 
-    /**
-     * A utility class that extends Util and provides additional helper methods specific to Bukkit.
-     */
-    @Contract(" -> fail")
-    private UtilBukkit() {
-        super();
-    }
+  /**
+   * A utility class that extends Util and provides additional helper methods specific to Bukkit.
+   */
+  @Contract(" -> fail")
+  private UtilBukkit() {
+    super();
+  }
 }

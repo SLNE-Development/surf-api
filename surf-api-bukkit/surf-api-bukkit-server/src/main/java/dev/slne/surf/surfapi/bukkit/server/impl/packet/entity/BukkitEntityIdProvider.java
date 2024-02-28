@@ -4,8 +4,9 @@ import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection;
 import dev.slne.surf.surfapi.core.api.packet.entity.EntityIdProvider;
 
 public class BukkitEntityIdProvider implements EntityIdProvider {
-    @Override
-    public int nextEntityId() {
-        return Reflection.ENTITY_PROXY.generateEntityId();
-    }
+
+  @Override
+  public int nextEntityId() {
+    return Reflection.ENTITY_PROXY.generateEntityId();
+  }
 }

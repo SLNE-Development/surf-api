@@ -5,11 +5,12 @@ import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations;
 
 public class SmoothTimeSkip extends CommandAPICommand {
-    public SmoothTimeSkip(String commandName) {
-        super(commandName);
 
-        executes((commandSender, commandArguments) -> {
-            SurfBukkitApi.get().skipTimeSmoothly(SkipOperations.NEXT_DAY);
-        });
-    }
+  public SmoothTimeSkip(String commandName) {
+    super(commandName);
+
+    executes((commandSender, commandArguments) -> {
+      SurfBukkitApi.get().skipTimeSmoothly(SkipOperations.NEXT_DAY);
+    });
+  }
 }

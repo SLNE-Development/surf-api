@@ -2,5 +2,7 @@ package dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfin
 
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.monster.raider.PacketRaider;
 
-public interface PacketAbstractIllager<Impl extends PacketAbstractIllager<Impl>> extends PacketRaider<Impl> {
+public interface PacketAbstractIllager<Impl extends PacketAbstractIllager<Impl>> extends
+    PacketRaider<Impl> {
+
 }

@@ -6,9 +6,10 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 import org.jetbrains.annotations.ApiStatus;
 
 @CanBeSpawned
-public interface PacketThrowEnderPearl extends PacketThrowItemProjectile<PacketThrowEnderPearl>, Spawnable {
+public interface PacketThrowEnderPearl extends PacketThrowItemProjectile<PacketThrowEnderPearl>,
+    Spawnable {
 
-    @ApiStatus.Obsolete // Always ender pearl - anything else is unsupported
-    @Override
-    void item(ItemStack item);
+  @ApiStatus.Obsolete // Always ender pearl - anything else is unsupported
+  @Override
+  void item(ItemStack item);
 }

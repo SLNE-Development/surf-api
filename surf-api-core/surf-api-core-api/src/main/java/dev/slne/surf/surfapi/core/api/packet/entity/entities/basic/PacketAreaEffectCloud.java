@@ -10,21 +10,21 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketAreaEffectCloud extends PacketEntity<PacketAreaEffectCloud>, Spawnable {
 
-    int RADIUS_INDEX = 8, COLOR_INDEX = 9, SINGLE_POINT_INDEX = 10, PARTICLE_INDEX = 11;
+  int RADIUS_INDEX = 8, COLOR_INDEX = 9, SINGLE_POINT_INDEX = 10, PARTICLE_INDEX = 11;
 
-    float radius();
+  float radius();
 
-    void radius(float radius);
+  void radius(float radius);
 
-    TextColor color();
+  TextColor color();
 
-    void color(@NotNull TextColor color);
+  void color(@NotNull TextColor color);
 
-    boolean singlePoint();
+  boolean singlePoint();
 
-    void singlePoint(boolean singlePoint);
+  void singlePoint(boolean singlePoint);
 
-    Particle particle();
+  Particle particle();
 
-    void particle(@NotNull Particle particle);
+  void particle(@NotNull Particle particle);
 }

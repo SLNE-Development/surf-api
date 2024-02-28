@@ -10,52 +10,53 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketParrot extends PacketTameableAnimal<PacketParrot>, Spawnable {
 
-    int VARIANT_INDEX = 19;
+  int VARIANT_INDEX = 19;
 
+  /**
+   * Get the variant of this parrot.
+   *
+   * @return parrot variant
+   */
+  Variant variant();
+
+  /**
+   * Set the variant of this parrot.
+   *
+   * @param variant parrot variant
+   */
+  void variant(@NotNull Variant variant);
+
+  /**
+   * Represents the variant of a parrot - ie its color.
+   */
+  enum Variant {
     /**
-     * Get the variant of this parrot.
-     *
-     * @return parrot variant
+     * Classic parrot - red with colored wingtips.
      */
-    Variant variant();
-
+    RED,
     /**
-     * Set the variant of this parrot.
-     *
-     * @param variant parrot variant
+     * Royal blue colored parrot.
      */
-    void variant(@NotNull Variant variant);
-
+    BLUE,
     /**
-     * Represents the variant of a parrot - ie its color.
+     * Green colored parrot.
      */
-    enum Variant {
-        /**
-         * Classic parrot - red with colored wingtips.
-         */
-        RED,
-        /**
-         * Royal blue colored parrot.
-         */
-        BLUE,
-        /**
-         * Green colored parrot.
-         */
-        GREEN,
-        /**
-         * Cyan colored parrot.
-         */
-        CYAN,
-        /**
-         * Gray colored parrot.
-         */
-        GRAY;
+    GREEN,
+    /**
+     * Cyan colored parrot.
+     */
+    CYAN,
+    /**
+     * Gray colored parrot.
+     */
+    GRAY;
 
-        public static final Int2ObjectMap<Variant> BY_ID = Util.byIdMap(Variant.class, Variant::ordinal);
+    public static final Int2ObjectMap<Variant> BY_ID = Util.byIdMap(Variant.class,
+        Variant::ordinal);
 
-        @Contract(pure = true)
-        public int getId() {
-            return ordinal();
-        }
+    @Contract(pure = true)
+    public int getId() {
+      return ordinal();
     }
+  }
 }

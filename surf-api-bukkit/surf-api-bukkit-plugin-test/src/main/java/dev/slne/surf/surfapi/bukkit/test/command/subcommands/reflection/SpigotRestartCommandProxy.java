@@ -6,6 +6,6 @@ import dev.slne.surf.surfapi.core.api.reflection.annontation.SurfProxy;
 @SurfProxy(qualifiedName = "org.spigotmc.RestartCommand")
 public interface SpigotRestartCommandProxy {
 
-    @Static
-    void restart();
+  @Static
+  void restart();
 }

@@ -2,12 +2,12 @@ package dev.slne.surf.surfapi.core.server.impl.packet.entity.entities.living.mob
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.ageable.animal.horse.PacketTraderLlama;
-
 import java.util.UUID;
 
-public final class PacketTraderLlamaImpl extends PacketLlamaImpl<PacketTraderLlama> implements PacketTraderLlama {
+public final class PacketTraderLlamaImpl extends PacketLlamaImpl<PacketTraderLlama> implements
+    PacketTraderLlama {
 
-    public PacketTraderLlamaImpl(UUID uuid) {
-        super(uuid, EntityTypes.TRADER_LLAMA);
-    }
+  public PacketTraderLlamaImpl(UUID uuid) {
+    super(uuid, EntityTypes.TRADER_LLAMA);
+  }
 }

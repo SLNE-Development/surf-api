@@ -1,45 +1,43 @@
 package dev.slne.surf.surfapi.core.api.util.pos.rot;
 
 import com.github.retrooper.packetevents.util.Vector3f;
+import javax.annotation.concurrent.Immutable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public interface PreciseRotation {
 
-    float x();
+  @Contract("_, _, _ -> new")
+  static @NotNull PreciseRotation of(float x, float y, float z) {
+    return new PreciseRotationImpl(x, y, z);
+  }
 
-    float y();
+  @Contract("_ -> new")
+  static @NotNull PreciseRotation fromPacketEvents(@NotNull Vector3f packetEvents) {
+    return of(packetEvents.x, packetEvents.y, packetEvents.z);
+  }
 
-    float z();
+  @Contract(pure = true)
+  static PreciseRotation zero() {
+    return PreciseRotationImpl.ZERO;
+  }
 
-    @Contract("_, _, _ -> new")
-    default PreciseRotation add(float x, float y, float z) {
-        return of(x() + x, y() + y, z() + z);
-    }
+  float x();
 
-    @Contract("_, _, _ -> new")
-    default PreciseRotation subtract(float x, float y, float z) {
-        return add(-x, -y, -z);
-    }
+  float y();
 
-    Vector3f toPacketEvents();
+  float z();
 
+  @Contract("_, _, _ -> new")
+  default PreciseRotation add(float x, float y, float z) {
+    return of(x() + x, y() + y, z() + z);
+  }
 
-    @Contract("_, _, _ -> new")
-    static @NotNull PreciseRotation of(float x, float y, float z) {
-        return new PreciseRotationImpl(x, y, z);
-    }
+  @Contract("_, _, _ -> new")
+  default PreciseRotation subtract(float x, float y, float z) {
+    return add(-x, -y, -z);
+  }
 
-    @Contract("_ -> new")
-    static @NotNull PreciseRotation fromPacketEvents(@NotNull Vector3f packetEvents) {
-        return of(packetEvents.x, packetEvents.y, packetEvents.z);
-    }
-
-    @Contract(pure = true)
-    static PreciseRotation zero() {
-        return PreciseRotationImpl.ZERO;
-    }
+  Vector3f toPacketEvents();
 }

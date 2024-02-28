@@ -5,13 +5,6 @@ import dev.slne.surf.surfapi.core.api.messages.Colors;
 import io.papermc.paper.plugin.loader.PluginClasspathBuilder;
 import io.papermc.paper.plugin.loader.PluginLoader;
 import io.papermc.paper.plugin.loader.library.impl.MavenLibraryResolver;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
-import org.eclipse.aether.artifact.DefaultArtifact;
-import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.repository.RemoteRepository;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,27 +12,33 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * The BukkitLoader class is an implementation of the PluginLoader interface.
- * It is responsible for loading and configuring the classpath for Bukkit plugins.
- * It uses a MavenLibraryResolver to resolve dependencies and add them to the classpath.
+ * The BukkitLoader class is an implementation of the PluginLoader interface. It is responsible for
+ * loading and configuring the classpath for Bukkit plugins. It uses a MavenLibraryResolver to
+ * resolve dependencies and add them to the classpath.
  */
 @SuppressWarnings({"UnstableApiUsage", "unused"})
 public class BukkitLoader implements PluginLoader {
 
-    /**
-     * The resolver variable is an instance of the MavenLibraryResolver class.
-     * It is used to resolve dependencies and add them to the classpath for the BukkitLoader class.
-     * The resolver is initialized with the default constructor.
-     */
-    private final MavenLibraryResolver resolver = new MavenLibraryResolver();
+  /**
+   * The resolver variable is an instance of the MavenLibraryResolver class. It is used to resolve
+   * dependencies and add them to the classpath for the BukkitLoader class. The resolver is
+   * initialized with the default constructor.
+   */
+  private final MavenLibraryResolver resolver = new MavenLibraryResolver();
 
-    private ComponentLogger logger;
+  private ComponentLogger logger;
 
-    @Override
-    public void classloader(@NotNull PluginClasspathBuilder pluginClasspathBuilder) {
-        logger = pluginClasspathBuilder.getContext().getLogger();
+  @Override
+  public void classloader(@NotNull PluginClasspathBuilder pluginClasspathBuilder) {
+    logger = pluginClasspathBuilder.getContext().getLogger();
 
 //        // Repositories
 //        addRepo("central", "https://repo1.maven.org/maven2/");
@@ -63,77 +62,81 @@ public class BukkitLoader implements PluginLoader {
 //        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-packetevents", SCOREBOARD_LIBRARY_VERSION);
 //        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-modern", SCOREBOARD_LIBRARY_VERSION);
 
-        final PluginLibraries libraries = loadFromFile();
-        libraries.asRepositories().forEach(resolver::addRepository);
-        libraries.asDependencies().forEach(resolver::addDependency);
+    final PluginLibraries libraries = loadFromFile();
+    libraries.asRepositories().forEach(resolver::addRepository);
+    libraries.asDependencies().forEach(resolver::addDependency);
 
-        pluginClasspathBuilder.addLibrary(resolver);
+    pluginClasspathBuilder.addLibrary(resolver);
+  }
+
+  /**
+   * Adds a repository URL to the MavenLibraryResolver.
+   *
+   * @param id  The ID of the repository.
+   * @param url The URL of the repository.
+   */
+  private void addRepo(@NotNull String id, @NotNull String url) {
+    resolver.addRepository(new RemoteRepository.Builder(id, "default", url).build());
+  }
+
+  /**
+   * Adds a dependency to the resolver.
+   *
+   * @param group    The group ID of the dependency.
+   * @param artifact The artifact ID of the dependency.
+   * @param version  The version of the dependency.
+   */
+  private void addDependency(@NotNull String group, @NotNull String artifact,
+      @NotNull String version) {
+    resolver.addDependency(
+        new Dependency(new DefaultArtifact("%s:%s:%s".formatted(group, artifact, version)), null));
+  }
+
+  /**
+   * Loads the plugin libraries from the paper-libraries.json file.
+   *
+   * @return The plugin libraries.
+   */
+  private PluginLibraries loadFromFile() {
+    try (final InputStream inputStream = getClass().getResourceAsStream("/paper-libraries.json")) {
+      if (inputStream != null) {
+        return new Gson().fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8),
+            PluginLibraries.class);
+      } else {
+        logger.warn(Component.text("Failed to load paper-libraries.json", Colors.WARNING));
+        return new PluginLibraries(Map.of(), List.of());
+      }
+    } catch (IOException exception) {
+      throw new RuntimeException("Failed to load paper-libraries.json", exception);
     }
 
+  }
+
+  /**
+   * The PluginLibraries class is a private record class. It is used to store the plugin libraries
+   * loaded from the paper-libraries.json file.
+   */
+  private record PluginLibraries(Map<String, String> repositories, List<String> dependencies) {
+
     /**
-     * Adds a repository URL to the MavenLibraryResolver.
+     * Converts the plugin libraries to a stream of dependencies.
      *
-     * @param id The ID of the repository.
-     * @param url The URL of the repository.
+     * @return The stream of dependencies.
      */
-    private void addRepo(@NotNull String id, @NotNull String url) {
-        resolver.addRepository(new RemoteRepository.Builder(id, "default", url).build());
+    private Stream<Dependency> asDependencies() {
+      return dependencies.stream()
+          .map(dependency -> new Dependency(new DefaultArtifact(dependency), null));
     }
 
     /**
-     * Adds a dependency to the resolver.
+     * Converts the plugin libraries to a stream of repositories.
      *
-     * @param group   The group ID of the dependency.
-     * @param artifact   The artifact ID of the dependency.
-     * @param version   The version of the dependency.
+     * @return The stream of repositories.
      */
-    private void addDependency(@NotNull String group, @NotNull String artifact, @NotNull String version) {
-        resolver.addDependency(new Dependency(new DefaultArtifact("%s:%s:%s".formatted(group, artifact, version)), null));
+    private Stream<RemoteRepository> asRepositories() {
+      return repositories.entrySet().stream()
+          .map(entry -> new RemoteRepository.Builder(entry.getKey(), "default",
+              entry.getValue()).build());
     }
-
-    /**
-     * Loads the plugin libraries from the paper-libraries.json file.
-     *
-     * @return The plugin libraries.
-     */
-    private PluginLibraries loadFromFile() {
-        try (final InputStream inputStream = getClass().getResourceAsStream("/paper-libraries.json")) {
-            if (inputStream != null) {
-                return new Gson().fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8), PluginLibraries.class);
-            } else {
-                logger.warn(Component.text("Failed to load paper-libraries.json", Colors.WARNING));
-                return new PluginLibraries(Map.of(), List.of());
-            }
-        } catch (IOException exception) {
-            throw new RuntimeException("Failed to load paper-libraries.json", exception);
-        }
-
-    }
-
-    /**
-     * The PluginLibraries class is a private record class.
-     * It is used to store the plugin libraries loaded from the paper-libraries.json file.
-     */
-    private record PluginLibraries(Map<String, String> repositories, List<String> dependencies) {
-
-        /**
-         * Converts the plugin libraries to a stream of dependencies.
-         *
-         * @return The stream of dependencies.
-         */
-        private Stream<Dependency> asDependencies() {
-            return dependencies.stream()
-                    .map(dependency -> new Dependency(new DefaultArtifact(dependency), null));
-        }
-
-        /**
-         * Converts the plugin libraries to a stream of repositories.
-         *
-         * @return The stream of repositories.
-         */
-        private Stream<RemoteRepository> asRepositories() {
-            return repositories.entrySet().stream()
-                    .map(entry -> new RemoteRepository.Builder(entry.getKey(), "default", entry.getValue()).build());
-        }
-    }
+  }
 }

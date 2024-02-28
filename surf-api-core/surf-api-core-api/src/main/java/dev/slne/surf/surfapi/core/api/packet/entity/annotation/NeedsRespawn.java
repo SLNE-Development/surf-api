@@ -6,10 +6,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * If this annotation is present, the entity must be respawned after invoking the method to see the changes.
+ * If this annotation is present, the entity must be respawned after invoking the method to see the
+ * changes.
  */
 @Retention(RetentionPolicy.SOURCE)
 @java.lang.annotation.Target(ElementType.METHOD)
 @Documented
 public @interface NeedsRespawn {
+
 }

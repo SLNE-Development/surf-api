@@ -4,8 +4,8 @@ import dev.slne.surf.surfapi.core.api.packet.entity.annotation.NeedsRespawn;
 
 public interface Shootable {
 
-    int shooterEntityId();
+  int shooterEntityId();
 
-    @NeedsRespawn
-    void shooterEntityId(int shooterEntityId);
+  @NeedsRespawn
+  void shooterEntityId(int shooterEntityId);
 }

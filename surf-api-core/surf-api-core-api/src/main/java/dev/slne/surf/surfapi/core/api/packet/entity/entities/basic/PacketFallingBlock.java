@@ -13,18 +13,18 @@ import org.jetbrains.annotations.NotNull;
 @CanBeSpawned
 public interface PacketFallingBlock extends PacketEntity<PacketFallingBlock>, Spawnable {
 
-    int SPAWN_POSITION_INDEX = 8;
+  int SPAWN_POSITION_INDEX = 8;
 
-    Vector3i spawnPosition();
+  Vector3i spawnPosition();
 
-    void spawnPosition(@NotNull Vector3i spawnPosition);
+  void spawnPosition(@NotNull Vector3i spawnPosition);
 
-    WrappedBlockState blockState();
+  WrappedBlockState blockState();
 
-    @NeedsRespawn
-    void blockState(@NotNull WrappedBlockState blockState);
+  @NeedsRespawn
+  void blockState(@NotNull WrappedBlockState blockState);
 
-    default void blockState(@NotNull StateType type) {
-        blockState(BlockStateFactory.of(type));
-    }
+  default void blockState(@NotNull StateType type) {
+    blockState(BlockStateFactory.of(type));
+  }
 }

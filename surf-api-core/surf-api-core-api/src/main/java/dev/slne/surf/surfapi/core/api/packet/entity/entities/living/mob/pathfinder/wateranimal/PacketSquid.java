@@ -4,5 +4,7 @@ import dev.slne.surf.surfapi.core.api.packet.entity.annotation.CanBeSpawned;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.Spawnable;
 
 @CanBeSpawned
-public interface PacketSquid<Impl extends PacketSquid<Impl>> extends PacketWaterAnimal<Impl>, Spawnable {
+public interface PacketSquid<Impl extends PacketSquid<Impl>> extends PacketWaterAnimal<Impl>,
+    Spawnable {
+
 }

@@ -36,46 +36,48 @@ import java.util.concurrent.TimeUnit;
 
 public class CreateHardcoded extends CommandAPICommand {
 
-    public CreateHardcoded(String commandName) {
-        super(commandName);
+  public CreateHardcoded(String commandName) {
+    super(commandName);
 
-        withSubcommands(
-                new CreateHardcodedPlayer("player"),
-                new CreateHardcodedCow("cow"),
-                new CreateHardcodedZombie("zombie"),
-                new CreateHardcodedBlockDisplay("blockdisplay"),
-                new CreateHardcodedCowRaw("cowraw")
-        );
-    }
+    withSubcommands(
+        new CreateHardcodedPlayer("player"),
+        new CreateHardcodedCow("cow"),
+        new CreateHardcodedZombie("zombie"),
+        new CreateHardcodedBlockDisplay("blockdisplay"),
+        new CreateHardcodedCowRaw("cowraw")
+    );
+  }
 
-    public static class CreateHardcodedPlayer extends CommandAPICommand {
-        public CreateHardcodedPlayer(String commandName) {
-            super(commandName);
+  public static class CreateHardcodedPlayer extends CommandAPICommand {
 
-            executesPlayer((player, commandArguments) -> {
-                PacketPlayer packetPlayer = SurfBukkitPacketEntityApi.get().spawnEntity(
-                        PacketPlayer.class,
-                        UUID.randomUUID(),
-                        playerMeta -> {
-                            playerMeta.displayName(Component.text("Hardcoded Player", Colors.WARNING));
-                            playerMeta.activeHand(HumanoidArm.LEFT);
-                            playerMeta.glowingEffect(true);
-                            playerMeta.inRiptideAttack(true);
-                            playerMeta.onFire(true);
-                            playerMeta.showOnTabList(true);
-                            playerMeta.gameMode(GameMode.CREATIVE);
-                            playerMeta.skinProperties(player.getUniqueId(), true);
+    public CreateHardcodedPlayer(String commandName) {
+      super(commandName);
+
+      executesPlayer((player, commandArguments) -> {
+        PacketPlayer packetPlayer = SurfBukkitPacketEntityApi.get().spawnEntity(
+            PacketPlayer.class,
+            UUID.randomUUID(),
+            playerMeta -> {
+              playerMeta.displayName(Component.text("Hardcoded Player", Colors.WARNING));
+              playerMeta.activeHand(HumanoidArm.LEFT);
+              playerMeta.glowingEffect(true);
+              playerMeta.inRiptideAttack(true);
+              playerMeta.onFire(true);
+              playerMeta.showOnTabList(true);
+              playerMeta.gameMode(GameMode.CREATIVE);
+              playerMeta.skinProperties(player.getUniqueId(), true);
 //                            playerMeta.interactCooldown(5, TimeUnit.SECONDS, true);
-                            playerMeta.interactCooldown(WrapperPlayClientInteractEntity.InteractAction.INTERACT_AT, 5, TimeUnit.SECONDS);
-                            playerMeta.interactHandler((entity, interactAction, interactionHand, user) -> {
-                                // send all params to player
+              playerMeta.interactCooldown(
+                  WrapperPlayClientInteractEntity.InteractAction.INTERACT_AT, 5, TimeUnit.SECONDS);
+              playerMeta.interactHandler((entity, interactAction, interactionHand, user) -> {
+                // send all params to player
 //                                if (interactAction.equals(WrapperPlayClientInteractEntity.InteractAction.INTERACT)) {
-                                    player.sendMessage("Hello: " + user.getName());
+                player.sendMessage("Hello: " + user.getName());
 //                                }
-                                player.sendMessage(interactAction.name());
-                            });
-                        }
-                );
+                player.sendMessage(interactAction.name());
+              });
+            }
+        );
 
 //                packetPlayer.getEquipment().setHelmet(new ItemStack.Builder().type(ItemTypes.DIAMOND_HELMET).build());
 //
@@ -88,19 +90,20 @@ public class CreateHardcoded extends CommandAPICommand {
 //                    player1.sendMessage("player1: " + player1);
 //                });
 
-                packetPlayer.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
-                packetPlayer.addViewer(player.getUniqueId());
+        packetPlayer.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+        packetPlayer.addViewer(player.getUniqueId());
 
-                player.sendMessage("Created hardcoded player");
-            });
-        }
+        player.sendMessage("Created hardcoded player");
+      });
     }
+  }
 
-    public static class CreateHardcodedCow extends CommandAPICommand {
-        public CreateHardcodedCow(String commandName) {
-            super(commandName);
+  public static class CreateHardcodedCow extends CommandAPICommand {
 
-            executesPlayer((player, commandArguments) -> {
+    public CreateHardcodedCow(String commandName) {
+      super(commandName);
+
+      executesPlayer((player, commandArguments) -> {
 //                try {
 //                    SurfLivingEntity<CowMeta> packetCow = SurfBukkitPacketEntityApi.get().createEntity(
 //                            UUID.randomUUID(),
@@ -148,40 +151,41 @@ public class CreateHardcoded extends CommandAPICommand {
 //
 //                EntityLib.sendPacket(uuid, entity.getMeta().createPacket());
 
-                PacketCow<?> packetCow = SurfBukkitPacketEntityApi.get().spawnEntity(
-                        PacketCow.class,
-                        UUID.randomUUID(),
-                        cowMeta -> {
-                            cowMeta.displayName(Component.text("Hardcoded Cow", Colors.WARNING));
-                            cowMeta.activeHand(HumanoidArm.LEFT);
-                            cowMeta.glowingEffect(true);
-                            cowMeta.onFire(true);
-                            cowMeta.numberOfArrows(50);
-                            cowMeta.baby(true);
-                        });
-
-                packetCow.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
-                packetCow.addViewer(player.getUniqueId());
-
-                player.sendMessage("Created hardcoded cow");
+        PacketCow<?> packetCow = SurfBukkitPacketEntityApi.get().spawnEntity(
+            PacketCow.class,
+            UUID.randomUUID(),
+            cowMeta -> {
+              cowMeta.displayName(Component.text("Hardcoded Cow", Colors.WARNING));
+              cowMeta.activeHand(HumanoidArm.LEFT);
+              cowMeta.glowingEffect(true);
+              cowMeta.onFire(true);
+              cowMeta.numberOfArrows(50);
+              cowMeta.baby(true);
             });
-        }
+
+        packetCow.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+        packetCow.addViewer(player.getUniqueId());
+
+        player.sendMessage("Created hardcoded cow");
+      });
     }
+  }
 
-    public static class CreateHardcodedZombie extends CommandAPICommand {
-        public CreateHardcodedZombie(String commandName) {
-            super(commandName);
+  public static class CreateHardcodedZombie extends CommandAPICommand {
 
-            executesPlayer((player, commandArguments) -> {
-                PacketZombie<?> packetZombie = SurfBukkitPacketEntityApi.get().spawnEntity(
-                        PacketZombie.class,
-                        UUID.randomUUID(),
-                        zombieMeta -> {
-                            zombieMeta.displayName(Component.text("Hardcoded Zombie", Colors.WARNING));
-                            zombieMeta.activeHand(HumanoidArm.LEFT);
-                            zombieMeta.glowingEffect(true);
-                            zombieMeta.becomingDrowned(true);
-                        });
+    public CreateHardcodedZombie(String commandName) {
+      super(commandName);
+
+      executesPlayer((player, commandArguments) -> {
+        PacketZombie<?> packetZombie = SurfBukkitPacketEntityApi.get().spawnEntity(
+            PacketZombie.class,
+            UUID.randomUUID(),
+            zombieMeta -> {
+              zombieMeta.displayName(Component.text("Hardcoded Zombie", Colors.WARNING));
+              zombieMeta.activeHand(HumanoidArm.LEFT);
+              zombieMeta.glowingEffect(true);
+              zombieMeta.becomingDrowned(true);
+            });
 
 //                packetZombie.getEquipment().setHelmet(new ItemStack.Builder().type(ItemTypes.DIAMOND_HELMET).build());
 //
@@ -196,81 +200,85 @@ public class CreateHardcoded extends CommandAPICommand {
 
 //                packetZombie.spawn(player.getLocation());
 //                packetZombie.addViewer(player);
-                boolean success2 = packetZombie.addViewer(player.getUniqueId());
-                boolean success = packetZombie.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+        boolean success2 = packetZombie.addViewer(player.getUniqueId());
+        boolean success = packetZombie.spawn(
+            SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
 
-                player.sendMessage("Created hardcoded zombie: " + success + " " + success2);
-            });
-        }
+        player.sendMessage("Created hardcoded zombie: " + success + " " + success2);
+      });
     }
+  }
 
-    public static class CreateHardcodedBlockDisplay extends CommandAPICommand {
+  public static class CreateHardcodedBlockDisplay extends CommandAPICommand {
 
-        public CreateHardcodedBlockDisplay(String commandName) {
-            super(commandName);
+    public CreateHardcodedBlockDisplay(String commandName) {
+      super(commandName);
 
-            executesPlayer((player, commandArguments) -> {
-                PacketBlockDisplay packetBlockDisplay = SurfCorePacketEntityApi.get().spawnEntity(PacketBlockDisplay.class, UUID.randomUUID(), blockDisplay -> {
-                    blockDisplay.blockState(StateTypes.STONE);
-                    blockDisplay.brightness(new Brightness(1, 1));
-                    blockDisplay.billboardConstraints(BillboardConstraints.CENTER);
-                    blockDisplay.scale(Vector3f.createRandomDirection(new Random()));
-                    blockDisplay.glowingEffect(true);
-                    blockDisplay.glowColorOverride(Color.ORANGE);
-                });
-
-                packetBlockDisplay.addViewer(player.getUniqueId());
-                packetBlockDisplay.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+      executesPlayer((player, commandArguments) -> {
+        PacketBlockDisplay packetBlockDisplay = SurfCorePacketEntityApi.get()
+            .spawnEntity(PacketBlockDisplay.class, UUID.randomUUID(), blockDisplay -> {
+              blockDisplay.blockState(StateTypes.STONE);
+              blockDisplay.brightness(new Brightness(1, 1));
+              blockDisplay.billboardConstraints(BillboardConstraints.CENTER);
+              blockDisplay.scale(Vector3f.createRandomDirection(new Random()));
+              blockDisplay.glowingEffect(true);
+              blockDisplay.glowColorOverride(Color.ORANGE);
             });
-        }
+
+        packetBlockDisplay.addViewer(player.getUniqueId());
+        packetBlockDisplay.spawn(SpigotConversionUtil.fromBukkitLocation(player.getLocation()));
+      });
     }
+  }
 
-    public static class CreateHardcodedCowRaw extends CommandAPICommand {
+  public static class CreateHardcodedCowRaw extends CommandAPICommand {
 
-        public CreateHardcodedCowRaw(String commandName) {
-            super(commandName);
+    public CreateHardcodedCowRaw(String commandName) {
+      super(commandName);
 
-            executesPlayer((player, commandArguments) -> {
-                List<EntityData> entityData = List.of(new EntityData(PacketCow.IS_BABY_INDEX, EntityDataTypes.BOOLEAN, true));
+      executesPlayer((player, commandArguments) -> {
+        List<EntityData> entityData = List.of(
+            new EntityData(PacketCow.IS_BABY_INDEX, EntityDataTypes.BOOLEAN, true));
 
-                int entityID = SpigotReflectionUtil.generateEntityId();
-                WrapperPlayServerSpawnLivingEntity spawnPacket = new WrapperPlayServerSpawnLivingEntity( // removed in 1.18.2
-                        entityID,
-                        UUID.randomUUID(),
-                        EntityTypes.COW,
-                        SpigotConversionUtil.fromBukkitLocation(player.getLocation()),
-                        1,
-                        Vector3d.zero(),
-                        entityData
-                );
+        int entityID = SpigotReflectionUtil.generateEntityId();
+        WrapperPlayServerSpawnLivingEntity spawnPacket = new WrapperPlayServerSpawnLivingEntity(
+            // removed in 1.18.2
+            entityID,
+            UUID.randomUUID(),
+            EntityTypes.COW,
+            SpigotConversionUtil.fromBukkitLocation(player.getLocation()),
+            1,
+            Vector3d.zero(),
+            entityData
+        );
 
-                WrapperPlayServerSpawnEntity packet = new WrapperPlayServerSpawnEntity(
-                        entityID,
-                        Optional.of(UUID.randomUUID()),
-                        EntityTypes.COW,
-                        SpigotConversionUtil.fromBukkitLocation(player.getLocation()).getPosition(),
-                        player.getPitch(),
-                        player.getYaw(),
-                        1,
-                        1,
-                        Optional.empty()
-                );
+        WrapperPlayServerSpawnEntity packet = new WrapperPlayServerSpawnEntity(
+            entityID,
+            Optional.of(UUID.randomUUID()),
+            EntityTypes.COW,
+            SpigotConversionUtil.fromBukkitLocation(player.getLocation()).getPosition(),
+            player.getPitch(),
+            player.getYaw(),
+            1,
+            1,
+            Optional.empty()
+        );
 
-                WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(
-                        entityID,
-                        entityData
-                );
+        WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(
+            entityID,
+            entityData
+        );
 
-                System.err.println(spawnPacket.getPacketId());
-                System.err.println(packet.getPacketId());
+        System.err.println(spawnPacket.getPacketId());
+        System.err.println(packet.getPacketId());
 
 //                PacketEvents.getAPI().getPlayerManager().sendPacket(player, spawnPacket);
 
-                PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
-                PacketEvents.getAPI().getPlayerManager().sendPacket(player, metadataPacket);
+        PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
+        PacketEvents.getAPI().getPlayerManager().sendPacket(player, metadataPacket);
 
-                player.sendMessage("Created hardcoded cow");
-            });
-        }
+        player.sendMessage("Created hardcoded cow");
+      });
     }
+  }
 }

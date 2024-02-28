@@ -1,6 +1,10 @@
 package dev.slne.surf.surfapi.core.api.reflection.annontation;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Marks a method in a {@link SurfProxy} as a Field.
@@ -10,12 +14,12 @@ import java.lang.annotation.*;
 @Documented
 public @interface Field {
 
-    String name() default "";
+  String name() default "";
 
-    Type type();
+  Type type();
 
-    enum Type {
-        SETTER,
-        GETTER
-    }
+  enum Type {
+    SETTER,
+    GETTER
+  }
 }

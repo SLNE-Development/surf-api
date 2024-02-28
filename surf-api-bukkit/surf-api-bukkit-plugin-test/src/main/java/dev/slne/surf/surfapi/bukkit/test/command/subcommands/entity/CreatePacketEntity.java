@@ -6,12 +6,12 @@ import dev.jorel.commandapi.arguments.EntityTypeArgument;
 public class CreatePacketEntity extends CommandAPICommand {
 //    private static final Map<UUID, SurfEntity<?>> ENTITY_MAP = new ConcurrentHashMap<>();
 
-    public CreatePacketEntity(String commandName) {
-        super(commandName);
+  public CreatePacketEntity(String commandName) {
+    super(commandName);
 
-        withArguments(new EntityTypeArgument("entityType"));
+    withArguments(new EntityTypeArgument("entityType"));
 
-        executesPlayer((commandSender, commandArguments) -> {
+    executesPlayer((commandSender, commandArguments) -> {
 //            org.bukkit.entity.EntityType entityType = commandArguments.getUnchecked("entityType");
 //
 //            final UUID entityUuid = UUID.randomUUID();
@@ -56,8 +56,8 @@ public class CreatePacketEntity extends CommandAPICommand {
 //            });
 //
 //            commandSender.sendMessage("Created entity with UUID " + entityUuid);
-        });
-    }
+    });
+  }
 
 //    public static Map<UUID, SurfEntity<?>> getEntityMap() {
 //        return ENTITY_MAP;

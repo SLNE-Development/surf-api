@@ -2,5 +2,7 @@ package dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfin
 
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.monster.PacketMonster;
 
-public interface PacketAbstractSkeleton<Impl extends PacketAbstractSkeleton<Impl>> extends PacketMonster<Impl> {
+public interface PacketAbstractSkeleton<Impl extends PacketAbstractSkeleton<Impl>> extends
+    PacketMonster<Impl> {
+
 }
