@@ -56,4 +56,6 @@ public interface SurfCoreApi {
   <C> C getConfig(@NotNull Class<C> configClass);
 
   <C> C reloadConfig(@NotNull Class<C> configClass);
+
+  Path getDataFolder();
 }

@@ -17,6 +17,7 @@ import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler;
 import dev.slne.surf.surfapi.bukkit.server.visualizer.SurfBukkitVisualizerApiImpl;
 import dev.slne.surf.surfapi.core.api.util.Result;
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -90,6 +91,11 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
   @Override
   public Optional<Object> getPlayer(@NotNull UUID playerUuid) {
     return Optional.ofNullable(Bukkit.getPlayer(checkNotNull(playerUuid, "playerUuid")));
+  }
+
+  @Override
+  public Path getDataFolder() {
+    return BukkitMain.getInstance().getDataFolder().toPath();
   }
 
   @Override

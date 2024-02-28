@@ -1,9 +1,17 @@
 package dev.slne.surf.surfapi.core.api.messages;
 
+import dev.slne.surf.surfapi.core.api.config.SurfApiConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
+/**
+ * A class that contains all the colors used in the Surf system. This class is used to provide a
+ * uniform appearance across all Surf plugins.
+ *
+ * @see <a href="https://discord.com/channels/1094422317783851108/1096084922499862658">Simons dc
+ * post</a>
+ */
 @SuppressWarnings("unused")
 public interface Colors {
   // -------------------- Surf Colors -------------------- //
@@ -71,9 +79,7 @@ public interface Colors {
   /**
    * The prefix for all Surf plugins
    */
-  Component PREFIX = Component.text(">> ", DARK_SPACER)
-      .append(Component.text("Surf", PREFIX_COLOR))
-      .append(Component.text(" | ", DARK_SPACER));
+  Component PREFIX = SurfApiConfig.getInstance().prefix();
   /**
    * Represents the color black.
    */

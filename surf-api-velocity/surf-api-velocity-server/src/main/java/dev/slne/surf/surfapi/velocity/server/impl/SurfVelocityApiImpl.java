@@ -8,6 +8,7 @@ import dev.slne.surf.surfapi.velocity.api.SurfVelocityApi;
 import dev.slne.surf.surfapi.velocity.api.packet.SurfVelocityPacketApi;
 import dev.slne.surf.surfapi.velocity.server.VelocityMain;
 import dev.slne.surf.surfapi.velocity.server.impl.packet.SurfVelocityPacketApiImpl;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -59,5 +60,10 @@ public class SurfVelocityApiImpl extends SurfCoreApiImpl<SurfVelocityPacketApi> 
   public Optional<Object> getPlayer(@NotNull UUID playerUuid) {
     return Optional.ofNullable(
         VelocityMain.getInstance().getServer().getPlayer(playerUuid).orElse(null));
+  }
+
+  @Override
+  public Path getDataFolder() {
+    return VelocityMain.getInstance().getDataDirectory();
   }
 }

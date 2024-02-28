@@ -34,7 +34,7 @@ public final class DefaultSerializers {
     }
 
     @Override
-    public Object serialise(Component value, Decomposer decomposer) {
+    public String serialise(Component value, Decomposer decomposer) {
       return MiniMessage.miniMessage().serialize(value);
     }
   }
