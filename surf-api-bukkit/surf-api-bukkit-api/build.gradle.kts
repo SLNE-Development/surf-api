@@ -9,7 +9,7 @@ dependencies {
     compileOnlyApi(libs.paper.mojangapi)
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.scoreboard.library)
-    compileOnlyApi(libs.commandapi)
+    compileOnlyApi(libs.commandapi.bukkit)
     compileOnlyApi(libs.reflection.remapper)
 }
 

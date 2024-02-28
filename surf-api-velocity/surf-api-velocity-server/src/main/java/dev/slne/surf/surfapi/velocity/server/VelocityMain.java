@@ -28,7 +28,8 @@ import org.slf4j.Logger;
         "twisti"
     },
     dependencies = {
-        @Dependency(id = "packetevents")
+        @Dependency(id = "packetevents"),
+        @Dependency(id = "commandapi")
     }
 )
 public class VelocityMain extends CoreInstance {

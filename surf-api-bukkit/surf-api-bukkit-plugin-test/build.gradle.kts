@@ -12,7 +12,7 @@ description = "surf-api-bukkit-plugin-test"
 
 dependencies {
     compileOnlyApi(project(":surf-api-bukkit:surf-api-bukkit-api"))
-    compileOnlyApi(libs.commandapi)
+    compileOnlyApi(libs.commandapi.bukkit)
 }
 
 paper {

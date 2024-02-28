@@ -16,6 +16,7 @@ dependencies {
     compileOnlyApi(libs.spongepowered.math)
     compileOnlyApi(libs.okhttp)
     compileOnlyApi(libs.fastutil)
+    compileOnlyApi(libs.commandapi.core)
 }
 
 description = "surf-api-core-api"
