@@ -4,7 +4,7 @@ plugins {
     id("dev.slne.java-library-conventions")
     id("dev.slne.java-shadow-conventions")
 
-    id("xyz.jpenilla.run-paper") version "2.2.2"
+    id("xyz.jpenilla.run-paper") version "2.2.3"
     alias(libs.plugins.plugin.yml.paper)
 }
 
