@@ -89,6 +89,6 @@ public interface PacketLlama<Impl extends PacketLlama<Impl>> extends PacketChest
         /**
          * A gray llama.
          */
-        GRAY;
+        GRAY
     }
 }

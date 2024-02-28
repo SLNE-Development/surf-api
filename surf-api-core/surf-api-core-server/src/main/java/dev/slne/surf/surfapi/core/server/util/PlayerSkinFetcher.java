@@ -32,7 +32,7 @@ public class PlayerSkinFetcher {
 
     private List<TextureProperty> fetchSkin(@NotNull UUID uuid) {
         final Request request = new Request.Builder()
-                .url("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.toString() + "?unsigned=false")
+                .url("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false")
                 .build();
 
         final Call call = client.newCall(request);

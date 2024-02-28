@@ -84,6 +84,6 @@ public interface PacketAxolotl extends PacketAnimal<PacketAxolotl>, Spawnable {
         /**
          * Blue axolotl.
          */
-        BLUE;
+        BLUE
     }
 }
