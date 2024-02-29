@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.command;
 
 import dev.jorel.commandapi.CommandAPICommand;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.CommandExceptionTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PacketEntityTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PacketLoreTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PrefixConfigTest;
@@ -21,7 +22,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
         new SmoothTimeSkip("smoothtimeskip"),
         new PacketEntityTest("packetentity"),
         new ReflectionTest("reflection"),
-        new PrefixConfigTest("prefixconfig")
+        new PrefixConfigTest("prefixconfig"),
+        new CommandExceptionTest("commandexception")
     );
   }
 }

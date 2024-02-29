@@ -17,6 +17,7 @@ dependencies {
     compileOnlyApi(libs.okhttp)
     compileOnlyApi(libs.fastutil)
     compileOnlyApi(libs.commandapi.core)
+    compileOnlyApi(libs.brigadier)
 }
 
 description = "surf-api-core-api"
