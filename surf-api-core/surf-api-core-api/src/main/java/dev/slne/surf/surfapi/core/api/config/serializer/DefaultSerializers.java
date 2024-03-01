@@ -43,7 +43,6 @@ public final class DefaultSerializers {
           builder.tag("spacer", colorTag(Colors.SPACER));
           builder.tag("dark_spacer", colorTag(Colors.DARK_SPACER));
           builder.tag("prefix_color", colorTag(Colors.PREFIX_COLOR));
-          builder.tag("prefix", Tag.selfClosingInserting(Colors.PREFIX));
         });
     private static MiniMessage miniMessage = builder.build();
     private static boolean modified = false;
