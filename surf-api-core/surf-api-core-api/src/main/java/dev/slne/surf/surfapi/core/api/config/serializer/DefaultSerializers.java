@@ -32,17 +32,17 @@ public final class DefaultSerializers {
 
     private static final MiniMessage.Builder builder = MiniMessage.builder()
         .editTags(builder -> {
-          builder.tag("primary", colorTag(Colors.PRIMARY));
-          builder.tag("secondary", colorTag(Colors.SECONDARY));
-          builder.tag("info", colorTag(Colors.INFO));
-          builder.tag("success", colorTag(Colors.SUCCESS));
-          builder.tag("warning", colorTag(Colors.WARNING));
-          builder.tag("error", colorTag(Colors.ERROR));
-          builder.tag("variable_key", colorTag(Colors.VARIABLE_KEY));
-          builder.tag("variable_value", colorTag(Colors.VARIABLE_VALUE));
-          builder.tag("spacer", colorTag(Colors.SPACER));
-          builder.tag("dark_spacer", colorTag(Colors.DARK_SPACER));
-          builder.tag("prefix_color", colorTag(Colors.PREFIX_COLOR));
+          builder.tag("primary", (__, ___) -> colorTag(Colors.PRIMARY));
+          builder.tag("secondary", (__, ___) -> colorTag(Colors.SECONDARY));
+          builder.tag("info", (__, ___) -> colorTag(Colors.INFO));
+          builder.tag("success", (__, ___) -> colorTag(Colors.SUCCESS));
+          builder.tag("warning", (__, ___) -> colorTag(Colors.WARNING));
+          builder.tag("error", (__, ___) -> colorTag(Colors.ERROR));
+          builder.tag("variable_key", (__, ___) -> colorTag(Colors.VARIABLE_KEY));
+          builder.tag("variable_value", (__, ___) -> colorTag(Colors.VARIABLE_VALUE));
+          builder.tag("spacer", (__, ___) -> colorTag(Colors.SPACER));
+          builder.tag("dark_spacer", (__, ___) -> colorTag(Colors.DARK_SPACER));
+          builder.tag("prefix_color", (__, ___) -> colorTag(Colors.PREFIX_COLOR));
         });
     private static MiniMessage miniMessage = builder.build();
     private static boolean modified = false;
