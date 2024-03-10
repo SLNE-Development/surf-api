@@ -1,6 +1,6 @@
 [versions]
-paper-api-version = "1.20.2-R0.1-SNAPSHOT"
-paper-mojangapi-version = "1.20.2-R0.1-SNAPSHOT"
+paper-api-version = "1.20.4-R0.1-SNAPSHOT"
+paper-mojangapi-version = "1.20.4-R0.1-SNAPSHOT"
 packetevents-version = "2.2.1"
 entitylib-version = "master-SNAPSHOT" # master-SNAPSHOT
 scoreboard-library-version = "2.0.0"
@@ -12,7 +12,7 @@ scoreboard-library-modern-version = "2.0.0"
 adventure-api-version = "4.14.0"
 adventure-text-logger-slf4j-version = { ref = "adventure-api-version" }
 adventure-text-minimessage-version = { ref = "adventure-api-version"}
-velocity-api-version = "3.2.0-SNAPSHOT"
+velocity-api-version = "3.3.0-SNAPSHOT"
 guava-version = "32.1.2-jre"
 caffeine-version = "3.1.8"
 gson-version = "2.10.1"
