@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.core.api.messages;
 
-import dev.slne.surf.surfapi.core.api.config.SurfApiConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -79,7 +78,9 @@ public interface Colors {
   /**
    * The prefix for all Surf plugins
    */
-  Component PREFIX = SurfApiConfig.getInstance().prefix();
+  Component PREFIX = Component.text(">> ", Colors.DARK_SPACER)
+      .append(Component.text("Surf", Colors.PREFIX_COLOR))
+      .append(Component.text(" | ", Colors.DARK_SPACER));
   /**
    * Represents the color black.
    */
