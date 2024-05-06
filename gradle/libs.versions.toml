@@ -6,9 +6,9 @@ entitylib-version = "master-SNAPSHOT" # master-SNAPSHOT
 commandapi-version = "9.3.0"
 commandapi-version-snapshot = "9.3.0-SNAPSHOT"
 scoreboard-library-version = "2.1.7"
-scoreboard-library-implementation-version = "2.1.7"
-scoreboard-library-packetevents-version = "2.1.7"
-scoreboard-library-modern-version = "2.1.7"
+scoreboard-library-implementation-version = "2.1.8"
+scoreboard-library-packetevents-version = "2.1.8"
+scoreboard-library-modern-version = "2.1.8"
 adventure-api-version = "4.16.0"
 adventure-text-logger-slf4j-version = { ref = "adventure-api-version" }
 adventure-text-minimessage-version = { ref = "adventure-api-version"}
