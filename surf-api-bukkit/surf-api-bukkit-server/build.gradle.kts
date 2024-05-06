@@ -18,7 +18,7 @@ dependencies {
     paperLibrary(libs.scoreboard.library.packetevents)
     paperLibrary(libs.scoreboard.library.modern)
     paperLibrary(libs.packetevents.spigot)
-    paperLibrary(libs.entitylib)
+    // paperLibrary(libs.entitylib)
     paperLibrary(libs.scoreboard.library)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
