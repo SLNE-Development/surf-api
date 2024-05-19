@@ -30,6 +30,7 @@ import space.arim.dazzleconf.sorter.AnnotationBasedSorter;
 @ApiStatus.NonExtendable
 @ApiStatus.Experimental
 @ParametersAreNonnullByDefault
+@Deprecated(forRemoval = true)
 public final class SurfConfigManager<C> {
 
   private static final ComponentLogger LOGGER = ComponentLogger.logger("SurfConfigManager");

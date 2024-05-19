@@ -18,6 +18,8 @@ dependencies {
     compileOnlyApi(libs.fastutil)
     compileOnlyApi(libs.commandapi.core)
     compileOnlyApi(libs.brigadier)
+    compileOnlyApi(libs.configurate.yaml)
+    compileOnlyApi(libs.configurate.jackson)
 }
 
 description = "surf-api-core-api"

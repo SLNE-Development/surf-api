@@ -11,6 +11,7 @@ dependencies {
     compileOnlyApi(libs.scoreboard.library)
     compileOnlyApi(libs.commandapi.bukkit)
     compileOnlyApi(libs.reflection.remapper)
+    compileOnlyApi(libs.more.persistent.data.types)
 }
 
 description = "surf-api-bukkit-api"

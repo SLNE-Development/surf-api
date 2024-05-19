@@ -16,6 +16,7 @@ repositories {
     maven("https://jitpack.io")
     maven("https://libraries.minecraft.net")
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
+    maven("https://hub.jeff-media.com/nexus/repository/jeff-media-public/")
 }
 
 group = "dev.slne.surf"
@@ -39,7 +40,9 @@ publishing {
     repositories {
         maven {
             name = "slne-space"
-            url = uri(System.getenv("REPOSITORY_URL") ?: "https://packages.slne.dev/maven/p/surf/maven")
+            url = uri(
+                System.getenv("REPOSITORY_URL") ?: "https://packages.slne.dev/maven/p/surf/maven"
+            )
             credentials {
                 username = System.getenv("JB_SPACE_CLIENT_ID")
                 password = System.getenv("JB_SPACE_CLIENT_SECRET")

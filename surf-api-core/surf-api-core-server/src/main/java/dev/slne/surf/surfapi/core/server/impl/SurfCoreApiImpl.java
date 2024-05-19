@@ -4,9 +4,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.config.SurfConfigManager;
+import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern;
+import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernJsonConfigFileNamePattern;
+import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernYamlConfigFileNamePattern;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
 import dev.slne.surf.surfapi.core.api.reflection.SurfReflection;
 import dev.slne.surf.surfapi.core.server.config.SurfConfigTracker;
+import dev.slne.surf.surfapi.core.server.config.SurfModernConfigTracker;
 import dev.slne.surf.surfapi.core.server.impl.reflection.SurfReflectionImpl;
 import java.nio.file.Path;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -33,6 +37,7 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
 
   private final SurfReflection reflection;
   private final SurfConfigTracker configTracker;
+  private final SurfModernConfigTracker modernConfigTracker;
 
   /**
    * Creates a new instance of the SurfCoreApiImpl class with the provided PacketImpl object.
@@ -43,6 +48,7 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
     this.packetApi = packetApi;
     this.reflection = new SurfReflectionImpl();
     this.configTracker = new SurfConfigTracker();
+    this.modernConfigTracker = new SurfModernConfigTracker();
   }
 
   @Override
@@ -79,6 +85,50 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
     checkNotNull(configClass, "configClass");
 
     return configTracker.reloadConfig(configClass);
+  }
+
+  @Override
+  public <C> C createModernJsonConfig(@NotNull Class<C> configClass, @NotNull Path configFolder,
+      @NotNull @ModernJsonConfigFileNamePattern String configFileName) {
+    checkNotNull(configClass, "configClass");
+    checkNotNull(configFolder, "configFolder");
+    checkNotNull(configFileName, "configFileName");
+
+    final SurfConfigManagerModern<C> manager = SurfConfigManagerModern.json(configClass,
+        configFolder, configFileName);
+
+    modernConfigTracker.registerConfig(configClass, manager);
+
+    return manager.getConfig();
+  }
+
+  @Override
+  public <C> C createModernYamlConfig(@NotNull Class<C> configClass, @NotNull Path configFolder,
+      @NotNull @ModernYamlConfigFileNamePattern String configFileName) {
+    checkNotNull(configClass, "configClass");
+    checkNotNull(configFolder, "configFolder");
+    checkNotNull(configFileName, "configFileName");
+
+    final SurfConfigManagerModern<C> manager = SurfConfigManagerModern.yaml(configClass,
+        configFolder, configFileName);
+
+    modernConfigTracker.registerConfig(configClass, manager);
+
+    return manager.getConfig();
+  }
+
+  @Override
+  public <C> C getModernConfig(@NotNull Class<C> configClass) {
+    checkNotNull(configClass, "configClass");
+
+    return modernConfigTracker.getConfig(configClass).orElseThrow();
+  }
+
+  @Override
+  public <C> C reloadModernConfig(@NotNull Class<C> configClass) {
+    checkNotNull(configClass, "configClass");
+
+    return modernConfigTracker.reloadConfig(configClass);
   }
 
   @Override

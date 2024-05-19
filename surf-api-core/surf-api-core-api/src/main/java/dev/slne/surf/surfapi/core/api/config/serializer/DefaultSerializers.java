@@ -22,6 +22,7 @@ import space.arim.dazzleconf.serialiser.ValueSerialiser;
  * {@link dev.slne.surf.surfapi.core.api.config.SurfConfigManager#create(Class, Path, String)}
  */
 @ApiStatus.NonExtendable
+@Deprecated(forRemoval = true)
 public final class DefaultSerializers {
 
   public static final List<ValueSerialiser<?>> DEFAULTS = List.of(

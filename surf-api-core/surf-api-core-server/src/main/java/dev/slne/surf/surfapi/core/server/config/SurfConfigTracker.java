@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 @ApiStatus.Experimental
 @ParametersAreNonnullByDefault
+@Deprecated(forRemoval = true)
 public final class SurfConfigTracker {
 
   private final Object2ObjectMap<Class<?>, SurfConfigManager<?>> configManagers;
