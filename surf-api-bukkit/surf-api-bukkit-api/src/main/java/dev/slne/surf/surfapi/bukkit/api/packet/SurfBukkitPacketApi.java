@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.packet;
 
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfBukkitPacketEntityApi;
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandlerSimple;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
@@ -35,6 +36,8 @@ public interface SurfBukkitPacketApi extends SurfCorePacketApi {
    */
   @Override
   SurfBukkitPacketEntityApi getPacketEntityApi();
+
+  SurfBukkitPacketListenerApi getPacketListenerApi();
 
   /**
    * Registers a listener for modifying the lore of an item stack.

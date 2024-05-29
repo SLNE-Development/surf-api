@@ -7,11 +7,18 @@ plugins {
     id("dev.slne.java-library-conventions")
     id("dev.slne.java-shadow-conventions")
     alias(libs.plugins.plugin.yml.paper)
+    id("io.papermc.paperweight.userdev") apply true
+}
+
+tasks.assemble {
+    dependsOn("reobfJar")
 }
 
 dependencies {
     api(project(":surf-api-bukkit:surf-api-bukkit-api"))
     api(project(":surf-api-core:surf-api-core-server"))
+
+    paperweight.paperDevBundle(libs.paper.api.get().version)
 
     // -------------------- Paper Libraries -------------------- //
     paperLibrary(libs.scoreboard.library.implementation)

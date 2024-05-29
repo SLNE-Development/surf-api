@@ -6,6 +6,8 @@ plugins {
 
     id("xyz.jpenilla.run-paper") version "2.2.3"
     alias(libs.plugins.plugin.yml.paper)
+
+    id("io.papermc.paperweight.userdev") apply true
 }
 
 description = "surf-api-bukkit-plugin-test"
@@ -13,6 +15,12 @@ description = "surf-api-bukkit-plugin-test"
 dependencies {
     compileOnlyApi(project(":surf-api-bukkit:surf-api-bukkit-api"))
     compileOnlyApi(libs.commandapi.bukkit)
+
+    paperweight.paperDevBundle(libs.paper.api.get().version)
+}
+
+tasks.assemble {
+    dependsOn("reobfJar")
 }
 
 paper {
@@ -42,7 +50,7 @@ tasks {
         minecraftVersion("1.20.4")
 
         downloadPlugins {
-            modrinth("commandapi", "9.3.0")
+            modrinth("commandapi", "9.4.2")
         }
     }
 }

@@ -4,8 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfBukkitPacketEntityApi;
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.entity.SurfBukkitPacketEntityApiImpl;
+import dev.slne.surf.surfapi.bukkit.server.impl.packet.listener.SurfBukkitPacketListenerApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener;
 import dev.slne.surf.surfapi.core.server.impl.packet.SurfCorePacketApiImpl;
 import org.bukkit.NamespacedKey;
@@ -15,14 +17,21 @@ import org.jetbrains.annotations.NotNull;
 public class SurfBukkitPacketApiImpl extends SurfCorePacketApiImpl implements SurfBukkitPacketApi {
 
   private final SurfBukkitPacketEntityApiImpl packetEntityApi;
+  private final SurfBukkitPacketListenerApiImpl packetListenerApi;
 
   public SurfBukkitPacketApiImpl() {
     packetEntityApi = new SurfBukkitPacketEntityApiImpl();
+    packetListenerApi = new SurfBukkitPacketListenerApiImpl();
   }
 
   @Override
   public SurfBukkitPacketEntityApi getPacketEntityApi() {
     return packetEntityApi;
+  }
+
+  @Override
+  public SurfBukkitPacketListenerApi getPacketListenerApi() {
+    return packetListenerApi;
   }
 
   @Override
