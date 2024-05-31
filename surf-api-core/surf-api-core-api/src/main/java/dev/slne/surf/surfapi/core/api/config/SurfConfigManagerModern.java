@@ -111,8 +111,8 @@ public final class SurfConfigManagerModern<C> {
       final ScopedConfigurationNode<?> node = loader.load();
       final C config = node.get(configClass);
 
-      node.set(configClass, config);
       loader.save(node);
+      node.set(configClass, config);
 
       return new SurfConfigManagerModern<>(configClass, config, loader, node);
     } catch (SerializationException e) {

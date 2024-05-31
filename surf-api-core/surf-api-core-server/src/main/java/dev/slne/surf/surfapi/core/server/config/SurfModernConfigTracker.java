@@ -21,6 +21,12 @@ public class SurfModernConfigTracker {
   }
 
   public <C> Optional<C> getConfig(Class<C> configClass) {
+    System.err.println("####################");
+    configManagers.forEach((aClass, surfConfigManagerModern) -> {
+      System.out.println(aClass + " " + surfConfigManagerModern);
+    });
+    System.err.println("####################");
+
     return Optional.ofNullable((SurfConfigManagerModern<C>) configManagers.get(configClass))
         .map(SurfConfigManagerModern::getConfig);
   }
