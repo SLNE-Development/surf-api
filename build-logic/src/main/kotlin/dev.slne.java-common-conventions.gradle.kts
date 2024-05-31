@@ -6,6 +6,7 @@ plugins {
 }
 
 repositories {
+    maven("https://repo.slne.dev/repository/maven-proxy")
     maven("https://repo.slne.dev/repository/maven-public") {name = "maven-public"}
 }
 
