@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api;
 
+import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations;
@@ -42,6 +43,8 @@ public interface SurfBukkitApi extends SurfCoreApi {
   SurfBukkitPacketApi getPacketApi();
 
   SurfBukkitVisualizerApi getVisualizerApi();
+
+  SurfBukkitNmsBridge getNmsBridge();
 
   /**
    * Retrieves the {@link ScoreboardLibrary} instance.

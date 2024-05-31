@@ -11,6 +11,7 @@ import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations;
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.scoreboard.SurfScoreboardBuilderImpl;
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler;
@@ -50,16 +51,23 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
     SurfBukkitApi {
 
   private final SurfBukkitVisualizerApiImpl visualizerApi;
+  private final SurfBukkitNmsBridgeImpl nmsBridge;
 
   public SurfBukkitApiImpl() {
     super(new SurfBukkitPacketApiImpl());
 
     this.visualizerApi = new SurfBukkitVisualizerApiImpl();
+    this.nmsBridge = new SurfBukkitNmsBridgeImpl();
   }
 
   @Override
   public SurfBukkitVisualizerApi getVisualizerApi() {
     return visualizerApi;
+  }
+
+  @Override
+  public SurfBukkitNmsBridgeImpl getNmsBridge() {
+    return nmsBridge;
   }
 
   @Override
