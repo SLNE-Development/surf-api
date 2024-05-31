@@ -14,6 +14,7 @@ import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity.InteractAction;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBundle;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
@@ -486,7 +487,12 @@ public abstract class PacketEntityImpl<T extends PacketEntity<T>> extends
 
   protected void spawn(UUID uuid) {
     checkDeleted();
-    sendPacketsToViewer(uuid, version1 -> spawnPacket(), this::metadataPacket);
+
+    sendPacketsToViewer(uuid,
+        __ -> new WrapperPlayServerBundle(),
+        version1 -> spawnPacket(),
+        this::metadataPacket,
+        __ -> new WrapperPlayServerBundle());
   }
 
   protected void despawn(UUID uuid) {
