@@ -47,6 +47,9 @@ paper {
 
 tasks {
     runServer {
+        dependsOn(":surf-api-bukkit:surf-api-bukkit-server:reobfJar")
+        pluginJars.from(project(":surf-api-bukkit:surf-api-bukkit-server").tasks.reobfJar)
+
         minecraftVersion("1.20.4")
 
         downloadPlugins {

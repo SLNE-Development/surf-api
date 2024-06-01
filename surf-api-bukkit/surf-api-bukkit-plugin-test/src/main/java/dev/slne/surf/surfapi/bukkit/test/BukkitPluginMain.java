@@ -4,12 +4,15 @@ import dev.jorel.commandapi.CommandAPI;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection;
+import dev.slne.surf.surfapi.bukkit.test.config.TestConfig;
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener;
+import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public class BukkitPluginMain extends JavaPlugin {
 
+  @SuppressWarnings("unused")
   public static @NotNull BukkitPluginMain getInstance() {
     return getPlugin(BukkitPluginMain.class);
   }
@@ -17,6 +20,12 @@ public class BukkitPluginMain extends JavaPlugin {
   @Override
   public void onLoad() {
     SurfBukkitPacketListenerApi.get().registerListeners(new ChatListener());
+
+    TestConfig config = SurfCoreApi.getCore()
+        .createModernYamlConfig(TestConfig.class, getDataFolder().toPath(), "test.yml");
+
+    System.err.println(config.testLinkedList);
+    System.err.println(config.testObjectLinkedList);
   }
 
   @Override
