@@ -8,6 +8,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.world.level.block.Block;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Player;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsCommonBridgeImpl implements SurfBukkitNmsCommonBridge, NmsUtil {
@@ -24,5 +25,12 @@ public final class SurfBukkitNmsCommonBridgeImpl implements SurfBukkitNmsCommonB
     checkNotNull(blockData, "blockData");
 
     return Block.getId(toNms(blockData));
+  }
+
+  @Override
+  public int generateNextInventoryId(Player player) {
+    checkNotNull(player, "player");
+
+    return toNms(player).nextContainerCounter();
   }
 }
