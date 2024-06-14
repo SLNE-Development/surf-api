@@ -20,6 +20,7 @@ dependencies {
     compileOnlyApi(libs.brigadier)
     compileOnlyApi(libs.configurate.yaml)
     compileOnlyApi(libs.configurate.jackson)
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
 }
 
 description = "surf-api-core-api"

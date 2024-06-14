@@ -7,9 +7,8 @@ plugins {
 
 repositories {
     maven("https://repo.slne.dev/repository/maven-proxy")
-    maven("https://repo.slne.dev/repository/maven-public") {name = "maven-public"}
+    maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
 }
-
 group = "dev.slne.surf"
 version = "1.0-SNAPSHOT"
 

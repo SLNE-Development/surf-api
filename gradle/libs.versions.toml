@@ -27,6 +27,7 @@ reflection-remapper-version = "0.1.1"
 brigadier-version = "1.0.18"
 configurate-version = "4.1.2"
 more-persistent-data-types-version = "2.4.0"
+com-github-stefvanschie-inventoryframework-IF-version = "0.10.14"
 
 
 [libraries]
@@ -65,6 +66,7 @@ brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier-version"
 configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate-version" }
 configurate-jackson = { module = "org.spongepowered:configurate-jackson", version.ref = "configurate-version" }
 more-persistent-data-types = { module = "com.jeff_media:MorePersistentDataTypes", version.ref = "more-persistent-data-types-version" }
+com-github-stefvanschie-inventoryframework-IF = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "com-github-stefvanschie-inventoryframework-IF-version" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-version-paper" }
