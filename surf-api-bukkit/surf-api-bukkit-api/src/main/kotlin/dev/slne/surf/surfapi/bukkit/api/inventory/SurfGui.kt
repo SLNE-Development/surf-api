@@ -36,6 +36,10 @@ interface SurfGui {
         val guiItem = SurfGuiItem(item)
         guiItem.init()
 
+        if (!guiItem.condition()) {
+            return
+        }
+
         if (this@SurfGui is SinglePlayerGui) {
             if (guiItem.itemPermission?.let { player.hasPermission(it) } == false) {
                 return

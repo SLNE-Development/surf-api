@@ -16,6 +16,8 @@ class SurfGuiItem : GuiItem {
     var itemPermission: String? = null
         private set
 
+    var condition: () -> Boolean = { true }
+
     fun SinglePlayerGui.permission(permission: String) {
         itemPermission = permission
     }
