@@ -6,9 +6,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.craftbukkit.v1_20_R3.block.data.CraftBlockData;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_20_R3.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.block.data.CraftBlockData;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus.Internal;
 

@@ -3,8 +3,6 @@ pluginManagement {
     includeBuild("build-logic")
 }
 
-
-
 rootProject.name = "surf-api"
 include(":surf-api-core:surf-api-core-api")
 include(":surf-api-core:surf-api-core-server")

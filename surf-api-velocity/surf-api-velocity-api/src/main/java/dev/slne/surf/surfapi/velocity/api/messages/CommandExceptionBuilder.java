@@ -5,7 +5,8 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @deprecated Moved to {@link dev.slne.surf.surfapi.core.api.command.builder.CommandExceptionBuilder}
+ * @deprecated Moved to
+ * {@link dev.slne.surf.surfapi.core.api.command.builder.CommandExceptionBuilder}
  */
 @ScheduledForRemoval(inVersion = "1.1.0")
 @Deprecated(forRemoval = true, since = "1.0.0")

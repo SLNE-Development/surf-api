@@ -24,7 +24,8 @@ public interface SurfCommandUtil {
   }
 
   @Contract("_ -> fail")
-  static void failWithBuilder(@NotNull CommandExceptionBuilder builder) throws WrapperCommandSyntaxException {
+  static void failWithBuilder(@NotNull CommandExceptionBuilder builder)
+      throws WrapperCommandSyntaxException {
     throw createException(builder.build());
   }
 }

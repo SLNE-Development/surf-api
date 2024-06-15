@@ -1,5 +1,4 @@
 plugins {
-    // Apply the java Plugin to add support for Java.
     java
     `maven-publish`
     id("net.linguica.maven-settings")
@@ -7,16 +6,15 @@ plugins {
 
 repositories {
     maven("https://repo.slne.dev/repository/maven-proxy")
-    maven("https://repo.slne.dev/repository/maven-public") {name = "maven-public"}
+    maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
 }
 
 group = "dev.slne.surf"
-version = "1.0-SNAPSHOT"
+version = "1.21-1.0.0-SNAPSHOT"
 
-// Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
     withSourcesJar()
 //    withJavadocJar() // TODO: 22.01.2024 15:14 - does not work with '@apiNote' for some weird reasons

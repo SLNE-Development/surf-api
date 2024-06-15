@@ -24,15 +24,14 @@ import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfind
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.living.mob.pathfinder.monster.zombie.PacketZombie;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
-import net.kyori.adventure.text.Component;
-import org.spongepowered.math.vector.Vector3f;
-
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import net.kyori.adventure.text.Component;
+import org.spongepowered.math.vector.Vector3f;
 
 public class CreateHardcoded extends CommandAPICommand {
 

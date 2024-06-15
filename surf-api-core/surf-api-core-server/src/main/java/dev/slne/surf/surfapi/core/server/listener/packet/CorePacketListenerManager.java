@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.NotNull;
 
 public final class CorePacketListenerManager {
+
   public static final CorePacketListenerManager INSTANCE = new CorePacketListenerManager();
 
   private final ObjectSet<PacketListenerCommon> listeners;
