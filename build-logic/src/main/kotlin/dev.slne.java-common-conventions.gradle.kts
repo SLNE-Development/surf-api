@@ -12,7 +12,6 @@ repositories {
 group = "dev.slne.surf"
 version = "2.0-SNAPSHOT"
 
-// Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
