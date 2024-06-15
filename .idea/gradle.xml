@@ -29,6 +29,7 @@
             <option value="$PROJECT_DIR$/surf-api-core" />
             <option value="$PROJECT_DIR$/surf-api-core/surf-api-core-api" />
             <option value="$PROJECT_DIR$/surf-api-core/surf-api-core-server" />
+            <option value="$PROJECT_DIR$/surf-api-generator" />
             <option value="$PROJECT_DIR$/surf-api-velocity" />
             <option value="$PROJECT_DIR$/surf-api-velocity/surf-api-velocity-api" />
             <option value="$PROJECT_DIR$/surf-api-velocity/surf-api-velocity-server" />
