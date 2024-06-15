@@ -1,5 +1,4 @@
 plugins {
-    // Apply the java Plugin to add support for Java.
     java
     `maven-publish`
     id("net.linguica.maven-settings")
