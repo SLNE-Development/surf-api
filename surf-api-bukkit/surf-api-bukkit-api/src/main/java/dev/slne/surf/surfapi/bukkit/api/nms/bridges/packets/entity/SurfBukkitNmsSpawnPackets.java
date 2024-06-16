@@ -19,6 +19,8 @@ import org.spongepowered.math.vector.Vector3f;
 @ParametersAreNonnullByDefault
 public interface SurfBukkitNmsSpawnPackets {
 
+  PacketOperation despawn(int... entityIds);
+
   PacketOperation spawnItemDisplay(int entityId, FinePosition position,
       Consumer<ItemDisplaySettings> settingsConsumer);
 

@@ -12,6 +12,7 @@ import io.papermc.paper.adventure.PaperAdventure;
 import io.papermc.paper.math.FinePosition;
 import java.util.function.Consumer;
 import javax.annotation.ParametersAreNonnullByDefault;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
@@ -22,6 +23,14 @@ import net.minecraft.world.entity.EntityType;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPackets, NmsUtil {
+
+  @Override
+  public PacketOperationImpl despawn(int... entityIds) {
+    return new PacketOperationImpl((player, packets) -> {
+      packets.add(new ClientboundRemoveEntitiesPacket(entityIds));
+      return packets;
+    });
+  }
 
   @Override
   public PacketOperationImpl spawnItemDisplay(int entityId, FinePosition position,
