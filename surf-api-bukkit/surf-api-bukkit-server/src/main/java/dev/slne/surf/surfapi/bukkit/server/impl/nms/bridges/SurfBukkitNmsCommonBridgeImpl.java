@@ -1,11 +1,13 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ComposterBlock;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
@@ -17,7 +19,7 @@ public final class SurfBukkitNmsCommonBridgeImpl implements SurfBukkitNmsCommonB
   public int getStateId(Material material) {
     checkNotNull(material, "material");
 
-    return Block.getId(toNms(material).defaultBlockState());
+    return Block.getId(toNmsBlock(material).defaultBlockState());
   }
 
   @Override
@@ -32,5 +34,21 @@ public final class SurfBukkitNmsCommonBridgeImpl implements SurfBukkitNmsCommonB
     checkNotNull(player, "player");
 
     return toNms(player).nextContainerCounter();
+  }
+
+  @Override
+  public void addCompostable(Material material, float levelIncreaseChance) {
+    checkNotNull(material, "material");
+    checkState(material.isItem(), "material must be an item");
+
+    ComposterBlock.COMPOSTABLES.put(toNmsItem(material), levelIncreaseChance);
+  }
+
+  @Override
+  public void removeCompostable(Material material) {
+    checkNotNull(material, "material");
+    checkState(material.isItem(), "material must be an item");
+
+    ComposterBlock.COMPOSTABLES.removeFloat(toNmsItem(material));
   }
 }

@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.bukkit.server.nms;
 import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display.BillboardConstraints;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -28,8 +29,12 @@ public interface NmsUtil {
     return ((CraftPlayer) player).getHandle();
   }
 
-  default Block toNms(Material material) {
+  default Block toNmsBlock(Material material) {
     return CraftMagicNumbers.getBlock(material);
+  }
+
+  default Item toNmsItem(Material material) {
+    return CraftMagicNumbers.getItem(material);
   }
 
   default BlockState toNms(BlockData blockData) {
@@ -54,5 +59,9 @@ public interface NmsUtil {
 
   default ItemDisplayContext toNms(ItemDisplayTransform itemDisplayTransform) {
     return ItemDisplayContext.BY_ID.apply(itemDisplayTransform.ordinal());
+  }
+
+  default org.bukkit.inventory.ItemStack toBukkit(ItemStack itemStack) {
+    return CraftItemStack.asCraftMirror(itemStack);
   }
 }
