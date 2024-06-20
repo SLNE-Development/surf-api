@@ -15,7 +15,8 @@ public final class ChatPacketListener extends PacketListenerAbstract {
   }
 
   @Override
-  public void onPacketSend(PacketSendEvent event) { // TODO: 02.03.2024 00:34 - packet events need to fix their wrapper
+  public void onPacketSend(
+      PacketSendEvent event) { // TODO: 02.03.2024 00:34 - packet events need to fix their wrapper
     if (event.getPacketType() != Server.SYSTEM_CHAT_MESSAGE) {
       return;
     }

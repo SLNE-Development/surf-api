@@ -1,12 +1,12 @@
 plugins {
     id("dev.slne.java-library-conventions")
     id("dev.slne.java-shadow-conventions")
+    id("io.papermc.paperweight.userdev") version "1.7.1"
 }
 
 dependencies {
     api(project(":surf-api-core:surf-api-core-api"))
-    compileOnlyApi(libs.paper.api)
-    compileOnlyApi(libs.paper.mojangapi)
+    paperweight.paperDevBundle(libs.paper.api.get().version)
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.scoreboard.library)
     compileOnlyApi(libs.commandapi.bukkit)

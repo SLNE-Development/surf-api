@@ -2,7 +2,6 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.UUIDArgument;
-
 import java.util.UUID;
 
 public class RemovePacketEntity extends CommandAPICommand {

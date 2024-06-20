@@ -36,6 +36,7 @@ public interface SurfApiConfig {
   }
 
   class Holder {
+
     private static final Supplier<SurfApiConfig> INSTANCE = Suppliers.memoize(
         () -> SurfCoreApi.getCore()
             .createConfig(SurfApiConfig.class, SurfCoreApi.getCore().getDataFolder(),
