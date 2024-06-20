@@ -3,8 +3,8 @@ paper-api-version = "1.20.4-R0.1-SNAPSHOT"
 paper-mojangapi-version = "1.20.4-R0.1-SNAPSHOT"
 packetevents-version = "2.3.0"
 entitylib-version = "master-SNAPSHOT" # master-SNAPSHOT
-commandapi-version = "9.4.1"
-commandapi-version-snapshot = "9.4.0-SNAPSHOT"
+commandapi-version = "9.5.1"
+commandapi-version-snapshot = "9.5.0-SNAPSHOT"
 scoreboard-library-version = "2.1.7"
 scoreboard-library-implementation-version = "2.1.8"
 scoreboard-library-packetevents-version = "2.1.8"
@@ -39,6 +39,7 @@ packetevents-velocity = { module = "com.github.retrooper.packetevents:velocity",
 entitylib = { module = "com.github.twisti-dev:EntityLib", version.ref = "entitylib-version" }
 scoreboard-library = { module = "net.megavex:scoreboard-library-api", version.ref = "scoreboard-library-version" }
 commandapi-bukkit = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi-version" }
+commandapi-bukkit-kotlin = { module = "dev.jorel:commandapi-bukkit-kotlin", version.ref = "commandapi-version" }
 commandapi-core = { module = "dev.jorel:commandapi-core", version.ref = "commandapi-version" }
 commandapi-velocity = { module = "dev.jorel:commandapi-velocity-core", version.ref = "commandapi-version-snapshot" }
 scoreboard-library-implementation = { module = "net.megavex:scoreboard-library-implementation", version.ref = "scoreboard-library-implementation-version" }

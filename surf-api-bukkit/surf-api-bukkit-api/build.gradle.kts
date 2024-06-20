@@ -13,6 +13,7 @@ dependencies {
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
     api(libs.com.github.stefvanschie.inventoryframework.`if`)
+    api(libs.commandapi.bukkit.kotlin)
 }
 
 description = "surf-api-bukkit-api"
