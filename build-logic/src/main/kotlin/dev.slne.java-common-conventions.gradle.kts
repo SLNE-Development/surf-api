@@ -8,9 +8,8 @@ repositories {
     maven("https://repo.slne.dev/repository/maven-proxy")
     maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
 }
-
 group = "dev.slne.surf"
-version = "1.21-1.0.0-SNAPSHOT"
+version = "1.20.4-1.0.0-SNAPSHOT"
 
 java {
     toolchain {

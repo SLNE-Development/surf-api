@@ -6,6 +6,7 @@ import xyz.jpenilla.reflectionremapper.proxy.ReflectionProxyFactory;
 public final class Reflection {
 
   public static final ServerStatsCounterProxy SERVER_STATS_COUNTER_PROXY;
+  public static final SynchedEntityDataProxy SYNCHED_ENTITY_DATA_PROXY;
 
   static {
     final ReflectionRemapper remapper = ReflectionRemapper.forReobfMappingsInPaperJar();
@@ -13,6 +14,7 @@ public final class Reflection {
         Reflection.class.getClassLoader());
 
     SERVER_STATS_COUNTER_PROXY = proxyFactory.reflectionProxy(ServerStatsCounterProxy.class);
+    SYNCHED_ENTITY_DATA_PROXY = proxyFactory.reflectionProxy(SynchedEntityDataProxy.class);
 
     // gc the remapper
     System.gc();
