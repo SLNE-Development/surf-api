@@ -17,6 +17,10 @@ public interface SurfBukkitNmsCommonBridge {
 
   int generateNextInventoryId(Player player);
 
+  void addCompostable(Material material, float levelIncreaseChance);
+
+  void removeCompostable(Material material);
+
   static SurfBukkitNmsCommonBridge get() {
     return SurfBukkitNmsBridge.get().getCommonBridge();
   }

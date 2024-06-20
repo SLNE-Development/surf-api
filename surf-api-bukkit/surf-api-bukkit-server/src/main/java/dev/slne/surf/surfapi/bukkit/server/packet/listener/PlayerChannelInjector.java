@@ -19,7 +19,7 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.login.ClientboundGameProfilePacket;
 import net.minecraft.server.level.ServerPlayer;
-import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -91,7 +91,7 @@ public class PlayerChannelInjector implements Listener {
 
       if (player == null
           && msg instanceof ClientboundGameProfilePacket clientboundGameProfilePacket) {
-        final UUID uuid = clientboundGameProfilePacket.gameProfile().getId();
+        final UUID uuid = clientboundGameProfilePacket.getGameProfile().getId();
         @Nullable final ServerPlayer player = playerInjectorCache.get(uuid);
 
         if (player != null) {

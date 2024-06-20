@@ -19,7 +19,7 @@ dependencies {
     implementation("com.squareup:javapoet:1.13.0")
     implementation("org.jetbrains:annotations:24.1.0")
     implementation(libs.paper.api)
-    implementation(libs.paper.mojangapi)
+//    implementation(libs.paper.mojangapi)
     implementation(project(":surf-api-core:surf-api-core-api"))
 }
 
