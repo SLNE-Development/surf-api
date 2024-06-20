@@ -8,11 +8,11 @@ dependencies {
     api(project(":surf-api-core:surf-api-core-api"))
     paperweight.paperDevBundle(libs.paper.api.get().version)
     compileOnlyApi(libs.packetevents.spigot)
-    compileOnlyApi(libs.scoreboard.library)
+    compileOnlyApi(libs.scoreboard.library.api)
     compileOnlyApi(libs.commandapi.bukkit)
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
-    api(libs.com.github.stefvanschie.inventoryframework.`if`)
+    api(libs.inventoryframework)
     api(libs.commandapi.bukkit.kotlin)
 }
 
