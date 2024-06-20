@@ -1,6 +1,6 @@
 [versions]
-paper-api-version = "1.21-R0.1-SNAPSHOT"
-paper-mojangapi-version = "1.21-R0.1-SNAPSHOT"
+paper-api-version = "1.20.4-R0.1-SNAPSHOT"
+paper-mojangapi-version = "1.20.4-R0.1-SNAPSHOT"
 packetevents-version = "2.3.0"
 entitylib-version = "master-SNAPSHOT" # master-SNAPSHOT
 commandapi-version = "9.5.1"
