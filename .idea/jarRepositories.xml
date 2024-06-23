@@ -106,5 +106,15 @@
       <option name="name" value="maven" />
       <option name="url" value="https://repo.slne.dev/repository/maven-proxy" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven-releases" />
+      <option name="name" value="maven-releases" />
+      <option name="url" value="https://repo.slne.dev/repository/maven-releases" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven-snapshots" />
+      <option name="name" value="maven-snapshots" />
+      <option name="url" value="https://repo.slne.dev/repository/maven-snapshots" />
+    </remote-repository>
   </component>
 </project>

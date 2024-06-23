@@ -1,3 +1,4 @@
+import dev.slne.surf.surfapi.PluginType
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 
 plugins {
@@ -8,12 +9,17 @@ plugins {
     alias(libs.plugins.plugin.yml.paper)
 
     id("io.papermc.paperweight.userdev") apply true
+    id("dev.slne.surf.surfapi") version "1.0.1"
 }
 
 description = "surf-api-bukkit-plugin-test"
 
+surfApi {
+    pluginType.set(PluginType.BUKKIT_API)
+}
+
 dependencies {
-    compileOnlyApi(project(":surf-api-bukkit:surf-api-bukkit-api"))
+//    compileOnlyApi(project(":surf-api-bukkit:surf-api-bukkit-api"))
     compileOnlyApi(libs.commandapi.bukkit)
 
     paperweight.paperDevBundle(libs.paper.api.get().version)
