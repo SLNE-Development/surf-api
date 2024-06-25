@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.api.util;
 
+import com.google.common.base.MoreObjects;
 import java.util.Map;
 import java.util.Objects;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
@@ -131,10 +132,10 @@ public record Pair<A, B>(A a, B b) implements Map.Entry<A, B> {
    * @return a string representation of the Pair object
    */
   @Override
-  public String toString() {
-    return "Pair{" +
-        "a=" + a +
-        ", b=" + b +
-        '}';
+  public @NotNull String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("a", a)
+        .add("b", b)
+        .toString();
   }
 }

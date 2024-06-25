@@ -5,11 +5,8 @@ plugins {
 }
 
 repositories {
-    mavenLocal()
     maven("https://repo.slne.dev/repository/maven-proxy")
     maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
-    maven("https://repo.slne.dev/repository/maven-snapshots") { name = "maven-snapshots" }
-    maven("https://repo.slne.dev/repository/maven-releases") { name = "maven-releases" }
 }
 group = "dev.slne.surf"
 version = "1.20.4-1.0.0-SNAPSHOT"

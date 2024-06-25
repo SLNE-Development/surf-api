@@ -3,7 +3,6 @@ plugins {
     id("io.papermc.paperweight.userdev") version "1.7.1" apply false
     id("io.papermc.paperweight.core") version "1.7.1"
     kotlin("jvm") version "2.0.0" apply false
-    id("net.linguica.maven-settings") version "0.5"
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
@@ -21,7 +20,6 @@ repositories {
 
 allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "net.linguica.maven-settings")
 
     repositories {
         mavenCentral()
