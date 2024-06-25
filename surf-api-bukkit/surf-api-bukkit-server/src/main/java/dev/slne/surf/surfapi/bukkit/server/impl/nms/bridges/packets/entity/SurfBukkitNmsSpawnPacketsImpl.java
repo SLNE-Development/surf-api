@@ -12,6 +12,7 @@ import io.papermc.paper.adventure.PaperAdventure;
 import io.papermc.paper.math.FinePosition;
 import java.util.function.Consumer;
 import javax.annotation.ParametersAreNonnullByDefault;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,7 +54,7 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
       display.setItemStack(toNms(settings.getItemStack()));
       display.setItemTransform(toNms(settings.getItemDisplayTransform()));
 
-      packets.add(display.getAddEntityPacket());
+      packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
       packets.add(new ClientboundSetEntityDataPacket(entityId,
           Reflection.SYNCHED_ENTITY_DATA_PROXY.packAll(display.getEntityData())));
       return packets;
@@ -97,7 +98,7 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
         }
       }
 
-      packets.add(display.getAddEntityPacket());
+      packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
       packets.add(new ClientboundSetEntityDataPacket(entityId,
           Reflection.SYNCHED_ENTITY_DATA_PROXY.packAll(display.getEntityData())));
       return packets;

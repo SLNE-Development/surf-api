@@ -34,13 +34,13 @@ public final class PacketOperationImpl implements PacketOperation, NmsUtil {
   @FunctionalInterface
   public interface Operation {
 
-    LinkedList<Packet<ClientGamePacketListener>> apply(Player player,
-        LinkedList<Packet<ClientGamePacketListener>> packets);
+    LinkedList<Packet<? super ClientGamePacketListener>> apply(Player player,
+        LinkedList<Packet<? super ClientGamePacketListener>> packets);
 
     default Operation andThen(Operation after) {
       Objects.requireNonNull(after);
       return (player, packets) -> {
-        LinkedList<Packet<ClientGamePacketListener>> result = apply(player, packets);
+        LinkedList<Packet<? super ClientGamePacketListener>> result = apply(player, packets);
         return after.apply(player, result);
       };
     }

@@ -1,7 +1,6 @@
 [versions]
 # Paper
-paper-api = "1.20.4-R0.1-SNAPSHOT"
-paper-mojangapi = "1.20.4-R0.1-SNAPSHOT"
+paper-api = "1.21-R0.1-SNAPSHOT"
 
 # Packet Events
 packetevents = "2.3.0"
@@ -43,7 +42,6 @@ inventoryframework = "0.10.14"
 [libraries]
 # Paper
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
-paper-mojangapi = { module = "io.papermc.paper:paper-mojangapi", version.ref = "paper-mojangapi" }
 
 # Packet Events
 packetevents-spigot = { module = "com.github.retrooper.packetevents:spigot", version.ref = "packetevents" }

@@ -42,7 +42,7 @@ dependencies {
 
 paper {
     name = "SurfBukkitAPI"
-    apiVersion = "1.20"
+    apiVersion = "1.21"
     description = "Surf API for Bukkit"
     website = "https://slne.dev"
     authors = listOf("twisti", "SLNE Development Team")
