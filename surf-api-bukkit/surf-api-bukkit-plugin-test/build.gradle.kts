@@ -28,7 +28,7 @@ paper {
     name = "SurfBukkitPluginTest"
     description = "Test plugin for Surf API for Bukkit"
     author = "twisti"
-    apiVersion = "1.20"
+    apiVersion = "1.21"
 
     serverDependencies {
         register("CommandAPI") {
@@ -50,7 +50,7 @@ tasks {
         dependsOn(":surf-api-bukkit:surf-api-bukkit-server:reobfJar")
 //        pluginJars.from(project(":surf-api-bukkit:surf-api-bukkit-server").tasks.reobfJar)
 
-        minecraftVersion("1.20.4")
+        minecraftVersion("1.21")
 
         downloadPlugins {
             modrinth("commandapi", "9.5.1")
