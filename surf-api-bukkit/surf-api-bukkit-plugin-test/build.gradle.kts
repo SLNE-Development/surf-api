@@ -53,7 +53,7 @@ tasks {
         minecraftVersion("1.20.4")
 
         downloadPlugins {
-            modrinth("commandapi", "9.4.2")
+            modrinth("commandapi", "9.5.1")
         }
     }
 }
