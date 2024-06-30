@@ -3,7 +3,7 @@
 paper-api = "1.21-R0.1-SNAPSHOT"
 
 # Packet Events
-packetevents = "2.3.0"
+packetevents = "2.4.0-SNAPSHOT"
 
 # Command API
 commandapi = "9.5.1"
@@ -44,9 +44,9 @@ inventoryframework = "0.10.14"
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 
 # Packet Events
-packetevents-spigot = { module = "com.github.retrooper.packetevents:spigot", version.ref = "packetevents" }
-packetevents-api = { module = "com.github.retrooper.packetevents:api", version.ref = "packetevents" }
-packetevents-velocity = { module = "com.github.retrooper.packetevents:velocity", version.ref = "packetevents" }
+packetevents-spigot = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
+packetevents-api = { module = "com.github.retrooper:packetevents-api", version.ref = "packetevents" }
+packetevents-velocity = { module = "com.github.retrooper:packetevents-velocity", version.ref = "packetevents" }
 
 # Entity Library
 
