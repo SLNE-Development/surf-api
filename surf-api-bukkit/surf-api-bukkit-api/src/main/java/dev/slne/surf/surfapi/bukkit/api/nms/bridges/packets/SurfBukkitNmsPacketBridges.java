@@ -9,6 +9,8 @@ public interface SurfBukkitNmsPacketBridges {
 
   SurfBukkitNmsSpawnPackets getSpawnPackets();
 
+  PacketOperation createEmptyPacketOperation();
+
   static SurfBukkitNmsPacketBridges get() {
     return SurfBukkitNmsBridge.get().getPacketBridges();
   }
