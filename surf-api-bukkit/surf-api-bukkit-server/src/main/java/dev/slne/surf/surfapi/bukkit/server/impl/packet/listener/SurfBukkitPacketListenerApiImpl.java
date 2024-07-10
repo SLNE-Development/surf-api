@@ -2,6 +2,8 @@ package dev.slne.surf.surfapi.bukkit.server.impl.packet.listener;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.flogger.FluentLogger;
+import com.google.common.flogger.StackSize;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListener;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult;
@@ -20,16 +22,13 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Method;
 import java.util.List;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketListenerApi {
 
-  // @formatter:off
-  private static final ComponentLogger LOGGER = ComponentLogger.logger("SurfBukkitPacketListenerApi");
-  // @formatter:on
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   private final Object2ObjectMap<Class<?>, ObjectList<ListenerMethod>> clientboundListenerMethods;
   private final Object2ObjectMap<Class<?>, ObjectList<ListenerMethod>> serverboundListenerMethods;
@@ -54,7 +53,10 @@ public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketLi
           registerListenerMethod(listener, lookup, method, serverboundListenerMethods);
         }
       } catch (final IllegalAccessException e) {
-        LOGGER.error("Failed to register listener method: {}", method.getName(), e);
+        logger.atSevere()
+            .withStackTrace(StackSize.MEDIUM)
+            .log("Failed to register listener method '%s.%s' due to illegal access",
+                method.getDeclaringClass().getPackageName(), method.getName());
       }
     }
   }
@@ -101,7 +103,9 @@ public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketLi
         callListener(listenerMethod, serverPlayer, packet, results);
       }
     } catch (final Throwable t) {
-      LOGGER.error("Failed to handle clientbound packet", t);
+      logger.atSevere()
+          .withCause(t)
+          .log("Failed to handle clientbound packet");
     }
 
     return reduceResults(results);
@@ -120,7 +124,9 @@ public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketLi
         callListener(listenerMethod, serverPlayer, packet, results);
       }
     } catch (Throwable t) {
-      LOGGER.error("Failed to handle serverbound packet", t);
+      logger.atSevere()
+          .withCause(t)
+          .log("Failed to handle serverbound packet");
     }
 
     return reduceResults(results);

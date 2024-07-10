@@ -38,6 +38,7 @@ brigadier = "1.0.18"
 configurate = "4.1.2"
 more-persistent-data-types = "2.4.0"
 inventoryframework = "0.10.14"
+flogger = "0.8"
 
 [libraries]
 # Paper
@@ -89,6 +90,7 @@ configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref 
 configurate-jackson = { module = "org.spongepowered:configurate-jackson", version.ref = "configurate" }
 more-persistent-data-types = { module = "com.jeff_media:MorePersistentDataTypes", version.ref = "more-persistent-data-types" }
 inventoryframework = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "inventoryframework" }
+flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-paper" }
