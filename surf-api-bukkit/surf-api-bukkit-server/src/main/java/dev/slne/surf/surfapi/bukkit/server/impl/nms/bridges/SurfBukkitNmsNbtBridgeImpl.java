@@ -2,16 +2,14 @@ package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.flogger.FluentLogger;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsNbtBridge;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentPatch;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.component.CustomData;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsNbtBridgeImpl implements SurfBukkitNmsNbtBridge, NmsUtil {
 
-  private static final ComponentLogger LOGGER = ComponentLogger.logger("SurfBukkitNmsNbtBridge");
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   @Override
   public ItemStack makeItemStackEntityInvisible(ItemStack itemStack) {
@@ -45,11 +43,13 @@ public final class SurfBukkitNmsNbtBridgeImpl implements SurfBukkitNmsNbtBridge,
     checkNotNull(itemStack, "itemStack");
     checkNotNull(key, "key");
 
-    LOGGER.warn(
-        "Using deprecated method getNbtString(ItemStack, String) in SurfBukkitNmsNbtBridgeImpl."
-            + " ItemStacks now use DataComponents and nbt keys are not used. Please update your"
-            + " code to use DataComponents instead."
-    );
+    logger.atWarning()
+        .atMostEvery(30, TimeUnit.SECONDS)
+        .log(
+            "Using deprecated method getNbtString(ItemStack, String) in SurfBukkitNmsNbtBridgeImpl."
+                + " ItemStacks now use DataComponents and nbt keys are not used. Please update your"
+                + " code to use DataComponents instead."
+        );
 
     final net.minecraft.world.item.ItemStack nmsStack = toNms(itemStack);
     return nmsStack.getComponents().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)

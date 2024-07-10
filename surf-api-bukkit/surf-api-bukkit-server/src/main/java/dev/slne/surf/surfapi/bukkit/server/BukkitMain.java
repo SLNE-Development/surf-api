@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.server;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.flogger.FluentLogger;
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApiAccess;
 import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * the instance of the plugin.
  */
 public class BukkitMain extends JavaPlugin {
+
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   private final CoreInstance coreInstance = new CoreInstance();
   private final SurfBukkitApiImpl surfBukkitApi = new SurfBukkitApiImpl();
@@ -61,7 +64,9 @@ public class BukkitMain extends JavaPlugin {
     try {
       scoreboardLibrary = ScoreboardLibrary.loadScoreboardLibrary(this);
     } catch (NoPacketAdapterAvailableException e) {
-      getComponentLogger().error("No packet adapter available, using NoopScoreboardLibrary...", e);
+      logger.atSevere()
+          .withCause(e)
+          .log("No packet adapter available, using NoopScoreboardLibrary...");
       scoreboardLibrary = new NoopScoreboardLibrary();
     }
   }

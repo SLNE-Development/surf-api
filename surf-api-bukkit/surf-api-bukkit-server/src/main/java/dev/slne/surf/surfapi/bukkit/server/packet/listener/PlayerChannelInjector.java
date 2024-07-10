@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.packet.listener;
 
+import com.google.common.flogger.FluentLogger;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.listener.SurfBukkitPacketListenerApiImpl;
@@ -15,7 +16,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.login.ClientboundGameProfilePacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class PlayerChannelInjector implements Listener {
 
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
   public static final PlayerChannelInjector INSTANCE = new PlayerChannelInjector();
 
-  private static final ComponentLogger LOGGER = ComponentLogger.logger("PlayerChannelInjector");
   private static final Key CHANNEL_KEY = Key.key("surf-api", "packet-listener");
   private static final String CHANNEL_NAME = "surf_api_packet_listener";
 
@@ -114,7 +114,9 @@ public class PlayerChannelInjector implements Listener {
           cancelled = true;
         }
       } catch (Throwable t) {
-        LOGGER.error("Failed to handle clientbound packet", t);
+        logger.atSevere()
+            .withCause(t)
+            .log("Failed to handle clientbound packet");
         throw t;
       } finally {
         if (!cancelled) {
@@ -140,7 +142,9 @@ public class PlayerChannelInjector implements Listener {
           cancelled = true;
         }
       } catch (Throwable t) {
-        LOGGER.error("Failed to handle serverbound packet", t);
+        logger.atSevere()
+            .withCause(t)
+            .log("Failed to handle serverbound packet");
         throw t;
       } finally {
         if (!cancelled) {
