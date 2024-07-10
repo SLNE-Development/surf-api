@@ -3,15 +3,20 @@ package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.flogger.FluentLogger;
+import com.google.common.flogger.StackSize;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import org.bukkit.entity.Player;
 
 public final class PacketOperationImpl implements PacketOperation, NmsUtil {
+
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   private Operation operation;
 
@@ -29,7 +34,10 @@ public final class PacketOperationImpl implements PacketOperation, NmsUtil {
     final var packets = operation.apply(player, new LinkedList<>());
 
     if (packets.isEmpty()) {
-      // TODO: 10.07.2024 18:41 - log
+      logger.atInfo()
+          .atMostEvery(60, TimeUnit.SECONDS)
+          .withStackTrace(StackSize.SMALL)
+          .log("No packets to send for player '%s'. Is this intended behaviour?", player.getName());
       return;
     }
 
