@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.api.config;
 
+import com.google.common.flogger.FluentLogger;
 import dev.slne.surf.surfapi.core.api.config.serializer.ModernSerializers;
 import java.io.Serial;
 import java.lang.annotation.Documented;
@@ -8,8 +9,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.file.Path;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
@@ -26,7 +25,7 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 public final class SurfConfigManagerModern<C> {
 
-  private static final ComponentLogger LOGGER = ComponentLogger.logger("SurfConfigManagerModern");
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
   private static final @Language("RegExp") String YAML_CONFIG_FILE_NAME_PATTERN = "^[a-zA-Z0-9_-]+\\.(yml|yaml)$";
   private static final @Language("RegExp") String JSON_CONFIG_FILE_NAME_PATTERN = "^[a-zA-Z0-9_-]+\\.(json)$";
 
@@ -56,7 +55,9 @@ public final class SurfConfigManagerModern<C> {
       node.set(configClass, config);
       loader.save(node);
     } catch (ConfigurateException e) {
-      LOGGER.error("Failed to save config", e);
+      logger.atSevere()
+          .withCause(e)
+          .log("Failed to save config");
       throw new RuntimeException(e);
     }
   }
@@ -72,7 +73,9 @@ public final class SurfConfigManagerModern<C> {
 
       return config;
     } catch (ConfigurateException e) {
-      LOGGER.error("Failed to reload config", e);
+      logger.atSevere()
+          .withCause(e)
+          .log("Failed to reload config");
       throw new RuntimeException(e);
     }
   }
@@ -116,14 +119,14 @@ public final class SurfConfigManagerModern<C> {
 
       return new SurfConfigManagerModern<>(configClass, config, loader, node);
     } catch (SerializationException e) {
-      LOGGER.error(
-          Component.text("Failed to load config, please verify the file is correct")
-              .append(Component.text(
-                  "You can use a tool like %s to verify the file".formatted(verifyToolUrl))),
-          e);
+      logger.atSevere()
+          .withCause(e)
+          .log("Failed to load config due to serialization error");
       throw new SerializationConfigException(e);
     } catch (ConfigurateException e) {
-      LOGGER.error("Failed to load config", e);
+      logger.atSevere()
+          .withCause(e)
+          .log("Failed to load config");
       throw new LoadConfigException(e);
     }
   }

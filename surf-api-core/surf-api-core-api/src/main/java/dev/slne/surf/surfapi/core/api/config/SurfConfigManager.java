@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.core.api.config;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.flogger.FluentLogger;
 import dev.slne.surf.surfapi.core.api.config.serializer.DefaultSerializers;
 import java.io.IOException;
 import java.lang.annotation.Documented;
@@ -10,13 +11,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.CheckForNull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import space.arim.dazzleconf.ConfigurationFactory;
 import space.arim.dazzleconf.ConfigurationOptions;
 import space.arim.dazzleconf.error.ConfigFormatSyntaxException;
@@ -33,8 +36,9 @@ import space.arim.dazzleconf.sorter.AnnotationBasedSorter;
 @Deprecated(forRemoval = true)
 public final class SurfConfigManager<C> {
 
-  private static final ComponentLogger LOGGER = ComponentLogger.logger("SurfConfigManager");
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
   private static final @Language("RegExp") String CONFIG_FILE_NAME_PATTERN = "^[a-zA-Z0-9_-]+\\.(yml|yaml)$";
+  private static final Logger log = LoggerFactory.getLogger(SurfConfigManager.class);
 
   private final ConfigurationHelper<C> helper;
   private volatile C config;
@@ -71,22 +75,29 @@ public final class SurfConfigManager<C> {
     try {
       config = helper.reloadConfigData();
     } catch (IOException e) {
-      LOGGER.error("Failed to reload config", e);
+      logger.atSevere()
+          .withCause(e)
+          .atMostEvery(10, TimeUnit.SECONDS)
+          .log("Failed to reload config");
       throw new RuntimeException(e);
     } catch (ConfigFormatSyntaxException e) {
       config = helper.getFactory().loadDefaults();
-      LOGGER.error("""
-          Failed to reload config due to syntax error.
-          Using default config instead.
-          Check the YAML syntax with a tool like https://yamlchecker.com/
-          """, e);
+      logger.atSevere()
+          .withCause(e)
+          .log("""
+              Failed to reload config due to syntax error.
+              Using default config instead.
+              Check the YAML syntax with a tool like https://yamlchecker.com/
+              """);
     } catch (InvalidConfigException e) {
       config = helper.getFactory().loadDefaults();
-      LOGGER.error("""
-          Failed to reload config due to invalid config.
-          Using default config instead.
-          Check the config values and try again.
-          """, e);
+      logger.atSevere()
+          .withCause(e)
+          .log("""
+              Failed to reload config due to invalid config.
+              Using default config instead.
+              Check the config values and try again.
+              """);
     }
 
     return config;

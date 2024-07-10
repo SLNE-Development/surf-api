@@ -38,6 +38,7 @@ dependencies {
     paperLibrary(libs.configurate.yaml)
     paperLibrary(libs.configurate.jackson)
     paperLibrary(libs.more.persistent.data.types)
+    paperLibrary(libs.flogger)
 }
 
 paper {

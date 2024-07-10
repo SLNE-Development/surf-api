@@ -12,6 +12,7 @@ dependencies {
     api(libs.commons.text)
     api(libs.okhttp)
     api(libs.fastutil)
+    api(libs.flogger)
     annotationProcessor(libs.velocity.api)
 }
 
