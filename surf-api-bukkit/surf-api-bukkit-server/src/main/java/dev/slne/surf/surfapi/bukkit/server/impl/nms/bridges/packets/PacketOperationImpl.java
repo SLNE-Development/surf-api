@@ -1,9 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import java.util.LinkedList;
-import java.util.Objects;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
@@ -17,17 +19,34 @@ public final class PacketOperationImpl implements PacketOperation, NmsUtil {
     this.operation = operation;
   }
 
-  @Override
-  public void execute(Player player) {
-    toNms(player).connection.send(new ClientboundBundlePacket(
-        Objects.requireNonNull(operation).apply(player, new LinkedList<>())));
-
+  public PacketOperationImpl() {
+    this.operation = Operation.empty();
   }
 
   @Override
-  public PacketOperationImpl add(PacketOperation operation) {
-    final PacketOperationImpl other = (PacketOperationImpl) operation;
-    this.operation = this.operation.andThen(other.operation);
+  public void execute(Player player) {
+    final var connection = toNms(player).connection;
+    final var packets = operation.apply(player, new LinkedList<>());
+
+    if (packets.isEmpty()) {
+      // TODO: 10.07.2024 18:41 - log
+      return;
+    }
+
+    if (packets.size() == 1) {
+      connection.send(packets.getFirst());
+      return;
+    }
+
+    connection.send(new ClientboundBundlePacket(packets));
+  }
+
+  @Override
+  public PacketOperationImpl add(PacketOperation other) {
+    checkArgument(other instanceof PacketOperationImpl,
+        "operation must be an instance of PacketOperationImpl");
+
+    this.operation = this.operation.andThen(((PacketOperationImpl) other).operation);
     return this;
   }
 
@@ -38,11 +57,13 @@ public final class PacketOperationImpl implements PacketOperation, NmsUtil {
         LinkedList<Packet<? super ClientGamePacketListener>> packets);
 
     default Operation andThen(Operation after) {
-      Objects.requireNonNull(after);
-      return (player, packets) -> {
-        LinkedList<Packet<? super ClientGamePacketListener>> result = apply(player, packets);
-        return after.apply(player, result);
-      };
+      checkNotNull(after, "after");
+
+      return (player, packets) -> after.apply(player, apply(player, packets));
+    }
+
+    static Operation empty() {
+      return (player, packets) -> packets;
     }
   }
 }

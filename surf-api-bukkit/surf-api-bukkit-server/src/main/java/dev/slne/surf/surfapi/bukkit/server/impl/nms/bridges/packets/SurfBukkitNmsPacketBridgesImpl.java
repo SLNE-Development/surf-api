@@ -15,4 +15,9 @@ public final class SurfBukkitNmsPacketBridgesImpl implements SurfBukkitNmsPacket
   public SurfBukkitNmsSpawnPacketsImpl getSpawnPackets() {
     return spawnPackets;
   }
+
+  @Override
+  public PacketOperationImpl createEmptyPacketOperation() {
+    return new PacketOperationImpl();
+  }
 }
