@@ -2,6 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
@@ -48,7 +49,29 @@
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.30/f195ee86e6c896ea47a1d39defbe20eb59cd149d/lombok-1.18.30.jar" />
+        </processorPath>
+        <module name="dev.slne.surf.surf-api.surf-api-core.surf-api-core-server.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-plugin-test.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-velocity.surf-api-velocity-api.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-core.surf-api-core-api.main" />
+        <module name="surf-api.surf-api-generator.main" />
+        <module name="dev.slne.surf.surf-api.surf-api-core.surf-api-core-api.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-api.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-plugin-test.main" />
+        <module name="dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-server.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-server.main" />
+        <module name="surf-api.surf-api-generator.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-api.main" />
+        <module name="dev.slne.surf.surf-api.surf-api-velocity.surf-api-velocity-server.test" />
+        <module name="dev.slne.surf.surf-api.surf-api-core.surf-api-core-server.main" />
+        <module name="dev.slne.surf.surf-api.surf-api-velocity.surf-api-velocity-api.main" />
+      </profile>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.velocitypowered/velocity-api/3.3.0-SNAPSHOT/921fe06af59ac0dbbfde17f2e20842b002437fa3/velocity-api-3.3.0-SNAPSHOT.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.30/f195ee86e6c896ea47a1d39defbe20eb59cd149d/lombok-1.18.30.jar" />
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.moandjiezana.toml/toml4j/0.7.2/a03337911d0bd2c40932aca3946edb30d0e7d0c/toml4j-0.7.2.jar" />
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.spongepowered/configurate-gson/4.1.2/3e5c7a0ea73e95ce6139fa72f1b6d36eb531ab81/configurate-gson-4.1.2.jar" />
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/net.kyori/adventure-text-logger-slf4j/4.16.0/a2e7eadb8d26481fb3da619a761cf3a47a1da43f/adventure-text-logger-slf4j-4.16.0.jar" />
