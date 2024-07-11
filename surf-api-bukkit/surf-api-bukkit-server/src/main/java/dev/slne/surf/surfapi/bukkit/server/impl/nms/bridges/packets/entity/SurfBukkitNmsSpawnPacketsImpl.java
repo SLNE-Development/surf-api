@@ -13,6 +13,7 @@ import io.papermc.paper.math.FinePosition;
 import java.util.function.Consumer;
 import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;

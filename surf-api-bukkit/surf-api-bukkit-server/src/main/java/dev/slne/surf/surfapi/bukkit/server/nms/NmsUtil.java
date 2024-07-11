@@ -1,6 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.server.nms;
 
+import io.papermc.paper.math.BlockPosition;
 import javax.annotation.ParametersAreNonnullByDefault;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display.BillboardConstraints;
 import net.minecraft.world.item.Item;
@@ -10,6 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.craftbukkit.block.CraftBlockState;
 import org.bukkit.craftbukkit.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+@SuppressWarnings("UnstableApiUsage")
 @Internal
 @ParametersAreNonnullByDefault
 public interface NmsUtil {
@@ -39,6 +43,10 @@ public interface NmsUtil {
 
   default BlockState toNms(BlockData blockData) {
     return ((CraftBlockData) blockData).getState();
+  }
+
+  default BlockState toNms(org.bukkit.block.BlockState blockState) {
+    return ((CraftBlockState) blockState).getHandle();
   }
 
   default Vector3f toNms(org.spongepowered.math.vector.Vector3f vector) {
@@ -63,5 +71,9 @@ public interface NmsUtil {
 
   default org.bukkit.inventory.ItemStack toBukkit(ItemStack itemStack) {
     return CraftItemStack.asCraftMirror(itemStack);
+  }
+
+  default BlockPos toNms(BlockPosition position) {
+    return new BlockPos(position.blockX(), position.blockY(), position.blockZ());
   }
 }
