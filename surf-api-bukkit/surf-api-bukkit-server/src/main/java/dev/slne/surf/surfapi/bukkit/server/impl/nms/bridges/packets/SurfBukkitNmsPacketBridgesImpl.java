@@ -18,6 +18,6 @@ public final class SurfBukkitNmsPacketBridgesImpl implements SurfBukkitNmsPacket
 
   @Override
   public PacketOperationImpl createEmptyPacketOperation() {
-    return new PacketOperationImpl();
+    return PacketOperationImpl.empty();
   }
 }

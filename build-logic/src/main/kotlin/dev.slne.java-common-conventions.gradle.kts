@@ -2,6 +2,7 @@ plugins {
     java
     `maven-publish`
     id("net.linguica.maven-settings")
+    id("io.freefair.lombok")
 }
 
 repositories {
@@ -10,7 +11,7 @@ repositories {
 }
 
 group = "dev.slne.surf"
-version = "1.21-1.2.0-SNAPSHOT"
+version = "1.21-1.3.0-SNAPSHOT"
 
 java {
     toolchain {
