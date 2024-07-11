@@ -21,6 +21,7 @@ import org.bukkit.entity.Display.Billboard;
 import org.bukkit.entity.ItemDisplay.ItemDisplayTransform;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -45,6 +46,8 @@ public interface NmsUtil {
     return ((CraftBlockData) blockData).getState();
   }
 
+  default Vector3f toNms(@Nullable org.spongepowered.math.vector.Vector3f vector) {
+    return vector == null ? null : new Vector3f(vector.x(), vector.y(), vector.z());
   default BlockState toNms(org.bukkit.block.BlockState blockState) {
     return ((CraftBlockState) blockState).getHandle();
   }
@@ -53,8 +56,8 @@ public interface NmsUtil {
     return new Vector3f(vector.x(), vector.y(), vector.z());
   }
 
-  default Quaternionf toNms(org.spongepowered.math.imaginary.Quaternionf quaternion) {
-    return new Quaternionf(quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w());
+  default Quaternionf toNms(@Nullable org.spongepowered.math.imaginary.Quaternionf quaternion) {
+    return quaternion == null ? null : new Quaternionf(quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w());
   }
 
   default BillboardConstraints toNms(Billboard billboard) {

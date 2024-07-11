@@ -9,6 +9,7 @@ import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
@@ -20,11 +21,11 @@ public final class PacketOperationImpl implements PacketOperation, NmsUtil {
 
   private Operation operation;
 
-  public PacketOperationImpl(Operation operation) {
+  private PacketOperationImpl(Operation operation) {
     this.operation = operation;
   }
 
-  public PacketOperationImpl() {
+  private PacketOperationImpl() {
     this.operation = Operation.empty();
   }
 
@@ -56,6 +57,21 @@ public final class PacketOperationImpl implements PacketOperation, NmsUtil {
 
     this.operation = this.operation.andThen(((PacketOperationImpl) other).operation);
     return this;
+  }
+
+  public static PacketOperationImpl empty() {
+    return new PacketOperationImpl();
+  }
+
+  public static PacketOperationImpl complex(Operation operation) {
+    return new PacketOperationImpl(operation);
+  }
+
+  public static PacketOperationImpl simple(Function<Player, Packet<? super ClientGamePacketListener>> packetSupplier) {
+    return new PacketOperationImpl((player, packets) -> {
+      packets.add(packetSupplier.apply(player));
+      return packets;
+    });
   }
 
   @FunctionalInterface

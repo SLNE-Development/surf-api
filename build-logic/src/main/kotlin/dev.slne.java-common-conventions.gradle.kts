@@ -2,6 +2,7 @@ plugins {
     java
     `maven-publish`
     id("net.linguica.maven-settings")
+    id("io.freefair.lombok")
 }
 
 repositories {

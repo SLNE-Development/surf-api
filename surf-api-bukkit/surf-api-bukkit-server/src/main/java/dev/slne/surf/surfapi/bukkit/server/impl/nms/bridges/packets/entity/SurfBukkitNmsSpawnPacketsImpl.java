@@ -10,7 +10,7 @@ import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection;
 import io.papermc.paper.adventure.PaperAdventure;
 import io.papermc.paper.math.FinePosition;
-import java.util.function.Consumer;
+import it.unimi.dsi.fastutil.ints.IntList;
 import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
@@ -22,28 +22,32 @@ import net.minecraft.world.entity.Display.ItemDisplay;
 import net.minecraft.world.entity.Display.TextDisplay;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import org.jetbrains.annotations.NotNull;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPackets, NmsUtil {
 
   @Override
-  public PacketOperationImpl despawn(int... entityIds) {
-    return new PacketOperationImpl((player, packets) -> {
-      packets.add(new ClientboundRemoveEntitiesPacket(entityIds));
-      return packets;
-    });
+  public PacketOperation despawn(IntList entityIds) {
+    checkNotNull(entityIds, "entityIds");
+
+    return PacketOperationImpl.simple(player -> new ClientboundRemoveEntitiesPacket(entityIds));
   }
 
   @Override
-  public PacketOperationImpl spawnItemDisplay(int entityId, FinePosition position,
-      Consumer<ItemDisplaySettings> settingsConsumer) {
+  public PacketOperationImpl despawn(int... entityIds) {
+    checkNotNull(entityIds, "entityIds");
+
+    return PacketOperationImpl.simple(player -> new ClientboundRemoveEntitiesPacket(entityIds));
+  }
+
+  @Override
+  public PacketOperation spawnItemDisplay(int entityId, FinePosition position,
+      ItemDisplaySettings settings) {
     checkNotNull(position, "position");
-    checkNotNull(settingsConsumer, "settingsConsumer");
+    checkNotNull(settings, "settings");
 
-    return new PacketOperationImpl((player, packets) -> {
-      final ItemDisplaySettings settings = new ItemDisplaySettings();
-      settingsConsumer.accept(settings);
-
+    return PacketOperationImpl.complex((player, packets) -> {
       final ServerPlayer serverPlayer = toNms(player);
 
       final ItemDisplay display = new ItemDisplay(EntityType.ITEM_DISPLAY, serverPlayer.level());
@@ -64,14 +68,11 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
 
   @Override
   public PacketOperation spawnTextDisplay(int entityId, FinePosition position,
-      Consumer<TextDisplaySettings> settingsConsumer) {
+      TextDisplaySettings settings) {
     checkNotNull(position, "position");
-    checkNotNull(settingsConsumer, "settingsConsumer");
+    checkNotNull(settings, "settings");
 
-    return new PacketOperationImpl((player, packets) -> {
-      final TextDisplaySettings settings = new TextDisplaySettings();
-      settingsConsumer.accept(settings);
-
+    return PacketOperationImpl.complex((player, packets) -> {
       final ServerPlayer serverPlayer = toNms(player);
 
       final TextDisplay display = new TextDisplay(EntityType.TEXT_DISPLAY, serverPlayer.level());
