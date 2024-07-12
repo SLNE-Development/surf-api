@@ -1,8 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server;
 
-import com.google.common.flogger.FluentLogger;
 import com.google.gson.Gson;
-import dev.slne.surf.surfapi.core.api.messages.Colors;
 import io.papermc.paper.plugin.loader.PluginClasspathBuilder;
 import io.papermc.paper.plugin.loader.PluginLoader;
 import io.papermc.paper.plugin.loader.library.impl.MavenLibraryResolver;
@@ -13,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -34,10 +32,11 @@ public class BukkitLoader implements PluginLoader {
    */
   private final MavenLibraryResolver resolver = new MavenLibraryResolver();
 
-  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+  private ComponentLogger logger;
 
   @Override
   public void classloader(@NotNull PluginClasspathBuilder pluginClasspathBuilder) {
+    this.logger = pluginClasspathBuilder.getContext().getLogger();
 //        // Repositories
 //        addRepo("central", "https://repo1.maven.org/maven2/");
 //        addRepo("sonatype", "https://repository.sonatype.org/content/groups/public/");
@@ -101,7 +100,7 @@ public class BukkitLoader implements PluginLoader {
         return new Gson().fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8),
             PluginLibraries.class);
       } else {
-        logger.atWarning().log("Failed to load paper-libraries.json");
+        logger.warn("Failed to load paper-libraries.json");
         return new PluginLibraries(Map.of(), List.of());
       }
     } catch (IOException exception) {
