@@ -91,6 +91,7 @@ configurate-jackson = { module = "org.spongepowered:configurate-jackson", versio
 more-persistent-data-types = { module = "com.jeff_media:MorePersistentDataTypes", version.ref = "more-persistent-data-types" }
 inventoryframework = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "inventoryframework" }
 flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
+flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-paper" }

@@ -39,6 +39,7 @@ dependencies {
     paperLibrary(libs.configurate.jackson)
     paperLibrary(libs.more.persistent.data.types)
     paperLibrary(libs.flogger)
+    paperLibrary(libs.flogger.slf4j.backend)
 }
 
 paper {
