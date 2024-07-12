@@ -13,6 +13,7 @@ dependencies {
     api(libs.okhttp)
     api(libs.fastutil)
     api(libs.flogger)
+    runtimeOnly(libs.flogger.slf4j.backend)
     annotationProcessor(libs.velocity.api)
 }
 
