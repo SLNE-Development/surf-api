@@ -2,30 +2,47 @@ package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.entity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.flogger.FluentLogger;
+import com.google.common.flogger.StackSize;
 import com.mojang.math.Transformation;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SurfBukkitNmsSpawnPackets;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.PacketOperationImpl;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection;
 import io.papermc.paper.adventure.PaperAdventure;
+import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.math.FinePosition;
 import it.unimi.dsi.fastutil.ints.IntList;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
-import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Display.ItemDisplay;
 import net.minecraft.world.entity.Display.TextDisplay;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignText;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPackets, NmsUtil {
+
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   @Override
   public PacketOperation despawn(IntList entityIds) {
@@ -105,6 +122,43 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
           Reflection.SYNCHED_ENTITY_DATA_PROXY.packAll(display.getEntityData())));
       return packets;
     });
+  }
+
+  @Override
+  public PacketOperation updateSign(int entityId, BlockPosition position,
+      SignBlockUpdateSettings settings) {
+
+    return PacketOperationImpl.complex((player, packets) -> {
+      final CompoundTag nbt = new CompoundTag();
+      final HolderLookup.Provider registryLookup = MinecraftServer.getServer().registryAccess();
+      writeUpdateSignToTag(nbt, registryLookup, settings.getFrontText(), settings.getBackText());
+
+      packets.add(new ClientboundBlockEntityDataPacket(toNms(position), BlockEntityType.SIGN, nbt));
+      return packets;
+    });
+  }
+
+  private void writeUpdateSignToTag(CompoundTag nbt, HolderLookup.Provider registryLookup, @NotNull
+  SignBlockUpdateSettings.SignText frontText, @NotNull SignBlockUpdateSettings.SignText backText) {
+
+    writeTextToTag(nbt, registryLookup, frontText, "front_text", true);
+    writeTextToTag(nbt, registryLookup, backText, "back_text", false);
+  }
+
+  private void writeTextToTag(CompoundTag nbt, HolderLookup.Provider registryLookup,
+      SignBlockUpdateSettings.SignText text, String tagText, boolean isFrontText) {
+    final DynamicOps<Tag> nbtOps = registryLookup.createSerializationContext(NbtOps.INSTANCE);
+    final DataResult<Tag> textTag = SignText.DIRECT_CODEC.encodeStart(nbtOps, toNms(text));
+
+    textTag.resultOrPartial(s -> logFailedEncodeText(s, isFrontText))
+        .ifPresent(textElement -> nbt.put(tagText, textElement));
+  }
+
+  private void logFailedEncodeText(String string, boolean front) {
+    logger.atSevere()
+        .withStackTrace(StackSize.MEDIUM)
+        .atMostEvery(5, TimeUnit.SECONDS)
+        .log("Failed to encode %s text: %s", front ? "front" : "back", string);
   }
 
   private Transformation getTransformation(DisplaySettings settings) {

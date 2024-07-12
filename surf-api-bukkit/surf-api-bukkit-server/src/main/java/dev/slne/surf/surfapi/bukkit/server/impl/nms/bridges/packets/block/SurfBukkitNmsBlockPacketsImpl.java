@@ -9,20 +9,27 @@ import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import io.papermc.paper.math.BlockPosition;
 import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
-import org.bukkit.block.BlockState;
+import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
+import org.bukkit.Server;
+import org.bukkit.block.data.BlockData;
 
 @SuppressWarnings("UnstableApiUsage")
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsBlockPacketsImpl implements SurfBukkitNmsBlockPackets, NmsUtil {
 
   @Override
-  public PacketOperation updateBlockState(BlockPosition position, BlockState state) {
+  public PacketOperation updateBlockData(BlockPosition position, BlockData blockData) {
     checkNotNull(position, "position");
-    checkNotNull(state, "state");
+    checkNotNull(blockData, "blockData");
+    return PacketOperationImpl.simple(
+        player -> new ClientboundBlockUpdatePacket(toNms(position), toNms(blockData)));
+  }
 
-    return new PacketOperationImpl((player, packets) -> {
-      packets.add(new ClientboundBlockUpdatePacket(toNms(position), toNms(state)));
-      return packets;
-    });
+  @Override
+  public PacketOperation resetBlock(BlockPosition position) {
+    checkNotNull(position, "position");
+
+    return PacketOperationImpl.simple(
+        player -> new ClientboundBlockUpdatePacket(toNms(player).level(), toNms(position)));
   }
 }
