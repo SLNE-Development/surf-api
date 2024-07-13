@@ -12,6 +12,7 @@ import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -109,6 +110,7 @@ public interface SurfBukkitNmsSpawnPackets {
   @NoArgsConstructor(access = AccessLevel.PRIVATE)
   @NonExtendable
   @Setter
+  @ToString
   class SignBlockUpdateSettings {
 
     private @NotNull
@@ -127,6 +129,7 @@ public interface SurfBukkitNmsSpawnPackets {
     @SuperBuilder(toBuilder = true)
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     @NonExtendable
+    @ToString
     public static class SignText {
 
       private @NotNull Component line1, line2, line3, line4;

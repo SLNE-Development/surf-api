@@ -14,6 +14,7 @@ import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.SurfBukkitNmsCommonB
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.SurfBukkitNmsNbtBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.SurfBukkitNmsStatsBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.SurfBukkitNmsPacketBridgesImpl;
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -112,24 +113,27 @@ public final class SurfBukkitNmsBridgeImpl implements SurfBukkitNmsBridge {
   }
 
   public<Packet extends NmsServerboundPacket> @Nullable Packet handleServerboundPacket(Packet packet, Player player) {
-    final ObjectSet<NmsServerboundPacketListener<?>> listeners = serverboundPacketListeners.get(packet.getClass());
+    Class<?> clazz = packet.getPacketClass();
+    final ObjectSet<NmsServerboundPacketListener<?>> listeners = serverboundPacketListeners.get(
+        clazz);
 
     if (listeners == null) {
       return packet;
     }
 
-    return listeners.stream()
+    Packet processedPacket = listeners.stream()
         .map(listener -> (NmsServerboundPacketListener<Packet>) listener)
         .map(listener -> listener.handleServerboundPacket(packet, player))
         .reduce(PacketListenerResult::combine)
         .filter(result -> result == PacketListenerResult.CANCEL)
         .<Packet>map(result -> null)
         .orElse(packet);
+    return processedPacket;
   }
 
   public<Packet extends NmsClientboundPacket> @Nullable Packet handleClientboundPacket(Packet packet, Player player) {
     final ObjectSet<NmsClientboundPacketListener<?>> listeners = clientboundPacketListeners.get(
-        packet.getClass());
+        NmsPacketImpl.getFromApi(packet).getNmsClass());
 
     if (listeners == null) {
       return packet;

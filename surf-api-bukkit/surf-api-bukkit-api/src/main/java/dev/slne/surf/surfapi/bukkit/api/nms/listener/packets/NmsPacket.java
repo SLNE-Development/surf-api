@@ -5,4 +5,5 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable;
 @NonExtendable
 public interface NmsPacket {
 
+  Class<?> getPacketClass();
 }

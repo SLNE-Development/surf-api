@@ -9,6 +9,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SurfBukkitNmsSpawnPackets;
+import dev.slne.surf.surfapi.bukkit.server.annotation.VerifyOnMinecraftUpdate;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.PacketOperationImpl;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection;
@@ -36,6 +37,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.bukkit.Server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,6 +141,7 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
     });
   }
 
+  @VerifyOnMinecraftUpdate
   private void writeUpdateSignToTag(CompoundTag nbt, HolderLookup.Provider registryLookup, @NotNull
   SignBlockUpdateSettings.SignText frontText, @NotNull SignBlockUpdateSettings.SignText backText) {
 
@@ -145,6 +149,7 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
     writeTextToTag(nbt, registryLookup, backText, "back_text", false);
   }
 
+  @VerifyOnMinecraftUpdate
   private void writeTextToTag(CompoundTag nbt, HolderLookup.Provider registryLookup,
       SignBlockUpdateSettings.SignText text, String tagText, boolean isFrontText) {
     final DynamicOps<Tag> nbtOps = registryLookup.createSerializationContext(NbtOps.INSTANCE);
