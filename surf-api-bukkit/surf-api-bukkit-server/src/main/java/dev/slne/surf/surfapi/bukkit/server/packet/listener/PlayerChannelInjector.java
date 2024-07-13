@@ -1,8 +1,14 @@
 package dev.slne.surf.surfapi.bukkit.server.packet.listener;
 
 import com.google.common.flogger.FluentLogger;
+import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge;
+import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.NmsClientboundPacket;
+import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.NmsServerboundPacket;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult;
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl;
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl;
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.PacketRegistry;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.listener.SurfBukkitPacketListenerApiImpl;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -25,6 +31,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PlayerChannelInjector implements Listener {
@@ -75,20 +82,49 @@ public class PlayerChannelInjector implements Listener {
   }
 
 
+  /**
+   * Handles packet processing for both clientbound and serverbound packets in a Netty channel. This
+   * class extends {@link ChannelDuplexHandler} to intercept and process packets at both the read
+   * and write stages. It associates a {@link ServerPlayer} with the channel, and utilizes packet
+   * listeners to handle and potentially modify packets.
+   */
   private final class PacketHandler extends ChannelDuplexHandler {
 
     private volatile ServerPlayer player;
 
+    /**
+     * Called when the channel is unregistered from the event loop. This method ensures that the
+     * superclass's unregistered method is also called.
+     *
+     * @param ctx the {@link ChannelHandlerContext} which this {@link ChannelHandler} belongs to
+     * @throws Exception if an error occurs while unregistering the channel
+     */
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
 
       super.channelUnregistered(ctx);
     }
 
+    /**
+     * Intercepts the write operation in the Netty pipeline. This method handles the clientbound
+     * packets, potentially modifying or canceling them based on custom logic.
+     *
+     * @param ctx     the {@link ChannelHandlerContext} which this {@link ChannelHandler} belongs
+     *                to
+     * @param msg     the message to write
+     * @param promise the {@link ChannelPromise} to be notified once the operation completes
+     * @throws Exception if an error occurs during the write operation
+     */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
-        throws Exception {
+        throws Exception { // server -> client
 
+      if (!(msg instanceof Packet<?> packet)) { // not our packet
+        super.write(ctx, msg, promise);
+        return;
+      }
+
+      // first we set the player if it isn't set yet
       if (player == null
           && msg instanceof ClientboundGameProfilePacket clientboundGameProfilePacket) {
         final UUID uuid = clientboundGameProfilePacket.gameProfile().getId();
@@ -99,19 +135,20 @@ public class PlayerChannelInjector implements Listener {
         }
       }
 
-      if (!(msg instanceof Packet<?> packet)) {
-        super.write(ctx, msg, promise);
-        return;
-      }
-
       boolean cancelled = false;
 
       try {
-        final PacketListenerResult result = ((SurfBukkitPacketListenerApiImpl) SurfBukkitPacketListenerApi.get()).handleClientboundPacket(
-            packet, player);
+        // first we try to handle the packet with the nms packet listener
+        final PacketListenerResult result = getPacketListenerApi().handleClientboundPacket(packet,
+            player);
 
         if (result == PacketListenerResult.CANCEL) {
+          // no need to handle the packet further
           cancelled = true;
+        } else {
+          // then we try to handle the packet with the api packet listener
+          msg = handleClientboundPacketFromBridge(packet);
+          cancelled = (msg == null);
         }
       } catch (Throwable t) {
         logger.atSevere()
@@ -125,9 +162,18 @@ public class PlayerChannelInjector implements Listener {
       }
     }
 
+    /**
+     * Intercepts the read operation in the Netty pipeline. This method handles the serverbound
+     * packets, potentially modifying or canceling them based on custom logic.
+     *
+     * @param ctx the {@link ChannelHandlerContext} which this {@link ChannelHandler} belongs to
+     * @param msg the message to read
+     * @throws Exception if an error occurs during the read operation
+     */
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-      if (!(msg instanceof Packet<?> packet)) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg)
+        throws Exception { // client -> server
+      if (!(msg instanceof Packet<?> packet)) { // not our packet
         super.channelRead(ctx, msg);
         return;
       }
@@ -135,11 +181,17 @@ public class PlayerChannelInjector implements Listener {
       boolean cancelled = false;
 
       try {
-        final PacketListenerResult result = ((SurfBukkitPacketListenerApiImpl) SurfBukkitPacketListenerApi.get()).handleServerboundPacket(
+        // first we try to handle the packet with the nms packet listener
+        final PacketListenerResult result = getPacketListenerApi().handleServerboundPacket(
             packet, player);
 
         if (result == PacketListenerResult.CANCEL) {
+          // no need to handle the packet further
           cancelled = true;
+        } else {
+          // then we try to handle the packet with the api packet listener
+          msg = handleServerboundPacketFromBridge(packet);
+          cancelled = (msg == null);
         }
       } catch (Throwable t) {
         logger.atSevere()
@@ -151,6 +203,72 @@ public class PlayerChannelInjector implements Listener {
           super.channelRead(ctx, msg);
         }
       }
+    }
+
+    /**
+     * Handles serverbound packets by bridging them to the appropriate handler and potentially
+     * modifying them.
+     *
+     * @param packet the serverbound packet to handle
+     * @return the modified packet, or {@code null} if the packet was canceled
+     */
+    private @Nullable Packet<?> handleServerboundPacketFromBridge(Packet<?> packet) {
+      final NmsServerboundPacket apiPacket = PacketRegistry.createServerboundPacketOrNull(packet);
+
+      if (apiPacket != null) { // we have an api packet wrapper for this packet
+        final NmsServerboundPacket resultApi = getBridge().handleServerboundPacket(apiPacket,
+            player.getBukkitEntity());
+
+        if (resultApi != null) { // we may have a modified packet
+          return NmsPacketImpl.getFromApi(resultApi).getNmsPacket();
+        }
+      } else {
+        return packet; // no api packet wrapper, so we just return the original packet
+      }
+
+      return null; // the packet was canceled
+    }
+
+    /**
+     * Handles clientbound packets by bridging them to the appropriate handler and potentially
+     * modifying them.
+     *
+     * @param packet the clientbound packet to handle
+     * @return the modified packet, or {@code null} if the packet was canceled
+     */
+    private @Nullable Packet<?> handleClientboundPacketFromBridge(Packet<?> packet) {
+      final NmsClientboundPacket apiPacket = PacketRegistry.createClientboundPacketOrNull(packet);
+
+      if (apiPacket != null) {
+        final NmsClientboundPacket resultApi = getBridge().handleClientboundPacket(apiPacket,
+            player.getBukkitEntity());
+
+        if (resultApi != null) {
+          return NmsPacketImpl.getFromApi(resultApi).getNmsPacket();
+        }
+      } else {
+        return packet;
+      }
+
+      return null;
+    }
+
+    /**
+     * Returns the SurfBukkit NMS bridge implementation.
+     *
+     * @return The SurfBukkit NMS bridge.
+     */
+    private @NotNull SurfBukkitNmsBridgeImpl getBridge() {
+      return (SurfBukkitNmsBridgeImpl) SurfBukkitNmsBridge.get();
+    }
+
+    /**
+     * Returns the SurfBukkit packet listener API implementation.
+     *
+     * @return The SurfBukkit packet listener API.
+     */
+    private @NotNull SurfBukkitPacketListenerApiImpl getPacketListenerApi() {
+      return (SurfBukkitPacketListenerApiImpl) SurfBukkitPacketListenerApi.get();
     }
   }
 }

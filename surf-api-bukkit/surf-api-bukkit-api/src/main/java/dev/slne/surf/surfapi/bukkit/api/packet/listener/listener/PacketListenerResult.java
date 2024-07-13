@@ -8,5 +8,9 @@ public enum PacketListenerResult {
   /**
    * Stop processing the packet and cancel the event.
    */
-  CANCEL
+  CANCEL;
+
+  public PacketListenerResult combine(PacketListenerResult other) {
+    return this == CANCEL || other == CANCEL ? CANCEL : CONTINUE;
+  }
 }
