@@ -2,14 +2,22 @@ package dev.slne.surf.surfapi.bukkit.api.nms.bridges;
 
 import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge;
 import javax.annotation.ParametersAreNonnullByDefault;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 @NonExtendable
 @ParametersAreNonnullByDefault
 public interface SurfBukkitNmsNbtBridge {
 
-  ItemStack makeItemStackEntityInvisible(ItemStack itemStack);
+  @ScheduledForRemoval(inVersion = "1.21-2.0.0-SNAPSHOT")
+  @Deprecated(forRemoval = true)
+  default ItemStack makeItemStackEntityInvisible(ItemStack itemStack) {
+    return makeItemStackEntityInvisible(itemStack, EntityType.ITEM_FRAME);
+  }
+
+  ItemStack makeItemStackEntityInvisible(ItemStack itemStack, EntityType invisibleEntityType);
 
   /**
    * Get the NBT string from the item stack with the given key

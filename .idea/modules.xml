@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-generator/Workspace.surf-api.surf-api-generator.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-generator/Workspace.surf-api.surf-api-generator.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-generator/Workspace.surf-api.surf-api-generator.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-generator/Workspace.surf-api.surf-api-generator.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-bukkit/surf-api-bukkit-api/dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-api.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-bukkit/surf-api-bukkit-api/dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-api.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-bukkit/surf-api-bukkit-api/dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-api.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-bukkit/surf-api-bukkit-api/dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-api.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-bukkit/surf-api-bukkit-plugin-test/dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-plugin-test.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-bukkit/surf-api-bukkit-plugin-test/dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-plugin-test.main.iml" />
