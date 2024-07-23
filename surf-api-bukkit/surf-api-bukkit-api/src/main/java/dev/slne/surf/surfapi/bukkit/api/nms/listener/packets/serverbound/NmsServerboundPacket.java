@@ -4,7 +4,7 @@ import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.NmsPacket;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 
 @NonExtendable
-public sealed interface NmsServerboundPacket extends NmsPacket permits RenameItemPacket,
-    SignUpdatePacket {
+public sealed interface NmsServerboundPacket extends NmsPacket permits CommandSuggestionPacket,
+    RenameItemPacket, SignUpdatePacket {
 
 }

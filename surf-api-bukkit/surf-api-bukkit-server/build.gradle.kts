@@ -40,6 +40,7 @@ dependencies {
     paperLibrary(libs.more.persistent.data.types)
     paperLibrary(libs.flogger)
     paperLibrary(libs.flogger.slf4j.backend)
+    paperLibrary(libs.commons.math4.core)
 }
 
 paper {
