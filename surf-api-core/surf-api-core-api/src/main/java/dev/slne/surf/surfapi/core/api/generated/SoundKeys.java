@@ -1538,6 +1538,46 @@ public final class SoundKeys {
     public static final Key BLOCK_CHORUS_FLOWER_GROW = key("block.chorus_flower.grow");
 
     /**
+     *  {@code minecraft:block.cobweb.break}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_COBWEB_BREAK = key("block.cobweb.break");
+
+    /**
+     *  {@code minecraft:block.cobweb.fall}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_COBWEB_FALL = key("block.cobweb.fall");
+
+    /**
+     *  {@code minecraft:block.cobweb.hit}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_COBWEB_HIT = key("block.cobweb.hit");
+
+    /**
+     *  {@code minecraft:block.cobweb.place}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_COBWEB_PLACE = key("block.cobweb.place");
+
+    /**
+     *  {@code minecraft:block.cobweb.step}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_COBWEB_STEP = key("block.cobweb.step");
+
+    /**
      *  {@code minecraft:block.comparator.click}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
@@ -2616,6 +2656,46 @@ public final class SoundKeys {
      *  
      */
     public static final Key BLOCK_HANGING_SIGN_WAXED_INTERACT_FAIL = key("block.hanging_sign.waxed_interact_fail");
+
+    /**
+     *  {@code minecraft:block.heavy_core.break}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_HEAVY_CORE_BREAK = key("block.heavy_core.break");
+
+    /**
+     *  {@code minecraft:block.heavy_core.fall}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_HEAVY_CORE_FALL = key("block.heavy_core.fall");
+
+    /**
+     *  {@code minecraft:block.heavy_core.hit}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_HEAVY_CORE_HIT = key("block.heavy_core.hit");
+
+    /**
+     *  {@code minecraft:block.heavy_core.place}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_HEAVY_CORE_PLACE = key("block.heavy_core.place");
+
+    /**
+     *  {@code minecraft:block.heavy_core.step}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_HEAVY_CORE_STEP = key("block.heavy_core.step");
 
     /**
      *  {@code minecraft:block.honey_block.break}
@@ -5210,12 +5290,28 @@ public final class SoundKeys {
     public static final Key BLOCK_SWEET_BERRY_BUSH_PLACE = key("block.sweet_berry_bush.place");
 
     /**
+     *  {@code minecraft:block.trial_spawner.about_to_spawn_item}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_TRIAL_SPAWNER_ABOUT_TO_SPAWN_ITEM = key("block.trial_spawner.about_to_spawn_item");
+
+    /**
      *  {@code minecraft:block.trial_spawner.ambient}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
      *  
      */
     public static final Key BLOCK_TRIAL_SPAWNER_AMBIENT = key("block.trial_spawner.ambient");
+
+    /**
+     *  {@code minecraft:block.trial_spawner.ambient_ominous}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_TRIAL_SPAWNER_AMBIENT_OMINOUS = key("block.trial_spawner.ambient_ominous");
 
     /**
      *  {@code minecraft:block.trial_spawner.break}
@@ -5266,6 +5362,14 @@ public final class SoundKeys {
     public static final Key BLOCK_TRIAL_SPAWNER_HIT = key("block.trial_spawner.hit");
 
     /**
+     *  {@code minecraft:block.trial_spawner.ominous_activate}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_TRIAL_SPAWNER_OMINOUS_ACTIVATE = key("block.trial_spawner.ominous_activate");
+
+    /**
      *  {@code minecraft:block.trial_spawner.open_shutter}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
@@ -5280,6 +5384,22 @@ public final class SoundKeys {
      *  
      */
     public static final Key BLOCK_TRIAL_SPAWNER_PLACE = key("block.trial_spawner.place");
+
+    /**
+     *  {@code minecraft:block.trial_spawner.spawn_item}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_TRIAL_SPAWNER_SPAWN_ITEM = key("block.trial_spawner.spawn_item");
+
+    /**
+     *  {@code minecraft:block.trial_spawner.spawn_item_begin}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_TRIAL_SPAWNER_SPAWN_ITEM_BEGIN = key("block.trial_spawner.spawn_item_begin");
 
     /**
      *  {@code minecraft:block.trial_spawner.spawn_mob}
@@ -5408,6 +5528,118 @@ public final class SoundKeys {
      *  
      */
     public static final Key BLOCK_TUFF_BRICKS_STEP = key("block.tuff_bricks.step");
+
+    /**
+     *  {@code minecraft:block.vault.activate}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_ACTIVATE = key("block.vault.activate");
+
+    /**
+     *  {@code minecraft:block.vault.ambient}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_AMBIENT = key("block.vault.ambient");
+
+    /**
+     *  {@code minecraft:block.vault.break}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_BREAK = key("block.vault.break");
+
+    /**
+     *  {@code minecraft:block.vault.close_shutter}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_CLOSE_SHUTTER = key("block.vault.close_shutter");
+
+    /**
+     *  {@code minecraft:block.vault.deactivate}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_DEACTIVATE = key("block.vault.deactivate");
+
+    /**
+     *  {@code minecraft:block.vault.eject_item}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_EJECT_ITEM = key("block.vault.eject_item");
+
+    /**
+     *  {@code minecraft:block.vault.fall}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_FALL = key("block.vault.fall");
+
+    /**
+     *  {@code minecraft:block.vault.hit}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_HIT = key("block.vault.hit");
+
+    /**
+     *  {@code minecraft:block.vault.insert_item}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_INSERT_ITEM = key("block.vault.insert_item");
+
+    /**
+     *  {@code minecraft:block.vault.insert_item_fail}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_INSERT_ITEM_FAIL = key("block.vault.insert_item_fail");
+
+    /**
+     *  {@code minecraft:block.vault.open_shutter}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_OPEN_SHUTTER = key("block.vault.open_shutter");
+
+    /**
+     *  {@code minecraft:block.vault.place}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_PLACE = key("block.vault.place");
+
+    /**
+     *  {@code minecraft:block.vault.reject_rewarded_player}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_REJECT_REWARDED_PLAYER = key("block.vault.reject_rewarded_player");
+
+    /**
+     *  {@code minecraft:block.vault.step}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_VAULT_STEP = key("block.vault.step");
 
     /**
      *  {@code minecraft:block.vine.break}
@@ -5584,6 +5816,14 @@ public final class SoundKeys {
      *  
      */
     public static final Key BLOCK_WET_SPONGE_BREAK = key("block.wet_sponge.break");
+
+    /**
+     *  {@code minecraft:block.wet_sponge.dries}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key BLOCK_WET_SPONGE_DRIES = key("block.wet_sponge.dries");
 
     /**
      *  {@code minecraft:block.wet_sponge.fall}
@@ -5824,6 +6064,110 @@ public final class SoundKeys {
      *  
      */
     public static final Key ENTITY_ALLAY_ITEM_THROWN = key("entity.allay.item_thrown");
+
+    /**
+     *  {@code minecraft:entity.armadillo.ambient}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_AMBIENT = key("entity.armadillo.ambient");
+
+    /**
+     *  {@code minecraft:entity.armadillo.brush}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_BRUSH = key("entity.armadillo.brush");
+
+    /**
+     *  {@code minecraft:entity.armadillo.death}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_DEATH = key("entity.armadillo.death");
+
+    /**
+     *  {@code minecraft:entity.armadillo.eat}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_EAT = key("entity.armadillo.eat");
+
+    /**
+     *  {@code minecraft:entity.armadillo.hurt}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_HURT = key("entity.armadillo.hurt");
+
+    /**
+     *  {@code minecraft:entity.armadillo.hurt_reduced}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_HURT_REDUCED = key("entity.armadillo.hurt_reduced");
+
+    /**
+     *  {@code minecraft:entity.armadillo.land}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_LAND = key("entity.armadillo.land");
+
+    /**
+     *  {@code minecraft:entity.armadillo.peek}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_PEEK = key("entity.armadillo.peek");
+
+    /**
+     *  {@code minecraft:entity.armadillo.roll}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_ROLL = key("entity.armadillo.roll");
+
+    /**
+     *  {@code minecraft:entity.armadillo.scute_drop}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_SCUTE_DROP = key("entity.armadillo.scute_drop");
+
+    /**
+     *  {@code minecraft:entity.armadillo.step}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_STEP = key("entity.armadillo.step");
+
+    /**
+     *  {@code minecraft:entity.armadillo.unroll_finish}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_UNROLL_FINISH = key("entity.armadillo.unroll_finish");
+
+    /**
+     *  {@code minecraft:entity.armadillo.unroll_start}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_ARMADILLO_UNROLL_START = key("entity.armadillo.unroll_start");
 
     /**
      *  {@code minecraft:entity.armor_stand.break}
@@ -6082,12 +6426,68 @@ public final class SoundKeys {
     public static final Key ENTITY_BOAT_PADDLE_WATER = key("entity.boat.paddle_water");
 
     /**
+     *  {@code minecraft:entity.bogged.ambient}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BOGGED_AMBIENT = key("entity.bogged.ambient");
+
+    /**
+     *  {@code minecraft:entity.bogged.death}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BOGGED_DEATH = key("entity.bogged.death");
+
+    /**
+     *  {@code minecraft:entity.bogged.hurt}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BOGGED_HURT = key("entity.bogged.hurt");
+
+    /**
+     *  {@code minecraft:entity.bogged.shear}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BOGGED_SHEAR = key("entity.bogged.shear");
+
+    /**
+     *  {@code minecraft:entity.bogged.step}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BOGGED_STEP = key("entity.bogged.step");
+
+    /**
+     *  {@code minecraft:entity.breeze.charge}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BREEZE_CHARGE = key("entity.breeze.charge");
+
+    /**
      *  {@code minecraft:entity.breeze.death}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
      *  
      */
     public static final Key ENTITY_BREEZE_DEATH = key("entity.breeze.death");
+
+    /**
+     *  {@code minecraft:entity.breeze.deflect}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BREEZE_DEFLECT = key("entity.breeze.deflect");
 
     /**
      *  {@code minecraft:entity.breeze.hurt}
@@ -6152,6 +6552,22 @@ public final class SoundKeys {
      *  
      */
     public static final Key ENTITY_BREEZE_SLIDE = key("entity.breeze.slide");
+
+    /**
+     *  {@code minecraft:entity.breeze.whirl}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BREEZE_WHIRL = key("entity.breeze.whirl");
+
+    /**
+     *  {@code minecraft:entity.breeze.wind_burst}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_BREEZE_WIND_BURST = key("entity.breeze.wind_burst");
 
     /**
      *  {@code minecraft:entity.camel.ambient}
@@ -6576,6 +6992,14 @@ public final class SoundKeys {
      *  
      */
     public static final Key ENTITY_DONKEY_HURT = key("entity.donkey.hurt");
+
+    /**
+     *  {@code minecraft:entity.donkey.jump}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_DONKEY_JUMP = key("entity.donkey.jump");
 
     /**
      *  {@code minecraft:entity.dragon_fireball.explode}
@@ -7304,14 +7728,6 @@ public final class SoundKeys {
      *  
      */
     public static final Key ENTITY_GENERIC_SWIM = key("entity.generic.swim");
-
-    /**
-     *  {@code minecraft:entity.generic.wind_burst}
-     *          
-     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
-     *  
-     */
-    public static final Key ENTITY_GENERIC_WIND_BURST = key("entity.generic.wind_burst");
 
     /**
      *  {@code minecraft:entity.ghast.ambient}
@@ -8346,6 +8762,14 @@ public final class SoundKeys {
     public static final Key ENTITY_MULE_HURT = key("entity.mule.hurt");
 
     /**
+     *  {@code minecraft:entity.mule.jump}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_MULE_JUMP = key("entity.mule.jump");
+
+    /**
      *  {@code minecraft:entity.ocelot.ambient}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
@@ -8520,6 +8944,14 @@ public final class SoundKeys {
      *  
      */
     public static final Key ENTITY_PARROT_IMITATE_BLAZE = key("entity.parrot.imitate.blaze");
+
+    /**
+     *  {@code minecraft:entity.parrot.imitate.bogged}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_PARROT_IMITATE_BOGGED = key("entity.parrot.imitate.bogged");
 
     /**
      *  {@code minecraft:entity.parrot.imitate.breeze}
@@ -10746,6 +11178,22 @@ public final class SoundKeys {
     public static final Key ENTITY_WARDEN_TENDRIL_CLICKS = key("entity.warden.tendril_clicks");
 
     /**
+     *  {@code minecraft:entity.wind_charge.throw}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_WIND_CHARGE_THROW = key("entity.wind_charge.throw");
+
+    /**
+     *  {@code minecraft:entity.wind_charge.wind_burst}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ENTITY_WIND_CHARGE_WIND_BURST = key("entity.wind_charge.wind_burst");
+
+    /**
      *  {@code minecraft:entity.witch.ambient}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
@@ -11178,6 +11626,30 @@ public final class SoundKeys {
     public static final Key ENTITY_ZOMBIFIED_PIGLIN_HURT = key("entity.zombified_piglin.hurt");
 
     /**
+     *  {@code minecraft:event.mob_effect.bad_omen}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key EVENT_MOB_EFFECT_BAD_OMEN = key("event.mob_effect.bad_omen");
+
+    /**
+     *  {@code minecraft:event.mob_effect.raid_omen}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key EVENT_MOB_EFFECT_RAID_OMEN = key("event.mob_effect.raid_omen");
+
+    /**
+     *  {@code minecraft:event.mob_effect.trial_omen}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key EVENT_MOB_EFFECT_TRIAL_OMEN = key("event.mob_effect.trial_omen");
+
+    /**
      *  {@code minecraft:event.raid.horn}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
@@ -11264,6 +11736,22 @@ public final class SoundKeys {
      *  
      */
     public static final Key ITEM_ARMOR_EQUIP_TURTLE = key("item.armor.equip_turtle");
+
+    /**
+     *  {@code minecraft:item.armor.equip_wolf}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_ARMOR_EQUIP_WOLF = key("item.armor.equip_wolf");
+
+    /**
+     *  {@code minecraft:item.armor.unequip_wolf}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_ARMOR_UNEQUIP_WOLF = key("item.armor.unequip_wolf");
 
     /**
      *  {@code minecraft:item.axe.scrape}
@@ -11730,12 +12218,44 @@ public final class SoundKeys {
     public static final Key ITEM_LODESTONE_COMPASS_LOCK = key("item.lodestone_compass.lock");
 
     /**
+     *  {@code minecraft:item.mace.smash_air}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_MACE_SMASH_AIR = key("item.mace.smash_air");
+
+    /**
+     *  {@code minecraft:item.mace.smash_ground}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_MACE_SMASH_GROUND = key("item.mace.smash_ground");
+
+    /**
+     *  {@code minecraft:item.mace.smash_ground_heavy}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_MACE_SMASH_GROUND_HEAVY = key("item.mace.smash_ground_heavy");
+
+    /**
      *  {@code minecraft:item.nether_wart.plant}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
      *  
      */
     public static final Key ITEM_NETHER_WART_PLANT = key("item.nether_wart.plant");
+
+    /**
+     *  {@code minecraft:item.ominous_bottle.dispose}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_OMINOUS_BOTTLE_DISPOSE = key("item.ominous_bottle.dispose");
 
     /**
      *  {@code minecraft:item.shield.block}
@@ -11848,6 +12368,38 @@ public final class SoundKeys {
      *  
      */
     public static final Key ITEM_TRIDENT_THUNDER = key("item.trident.thunder");
+
+    /**
+     *  {@code minecraft:item.wolf_armor.break}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_WOLF_ARMOR_BREAK = key("item.wolf_armor.break");
+
+    /**
+     *  {@code minecraft:item.wolf_armor.crack}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_WOLF_ARMOR_CRACK = key("item.wolf_armor.crack");
+
+    /**
+     *  {@code minecraft:item.wolf_armor.damage}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_WOLF_ARMOR_DAMAGE = key("item.wolf_armor.damage");
+
+    /**
+     *  {@code minecraft:item.wolf_armor.repair}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key ITEM_WOLF_ARMOR_REPAIR = key("item.wolf_armor.repair");
 
     /**
      *  {@code minecraft:music.creative}
@@ -12146,6 +12698,22 @@ public final class SoundKeys {
     public static final Key MUSIC_DISC_CHIRP = key("music_disc.chirp");
 
     /**
+     *  {@code minecraft:music_disc.creator}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key MUSIC_DISC_CREATOR = key("music_disc.creator");
+
+    /**
+     *  {@code minecraft:music_disc.creator_music_box}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key MUSIC_DISC_CREATOR_MUSIC_BOX = key("music_disc.creator_music_box");
+
+    /**
      *  {@code minecraft:music_disc.far}
      *          
      *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
@@ -12184,6 +12752,14 @@ public final class SoundKeys {
      *  
      */
     public static final Key MUSIC_DISC_PIGSTEP = key("music_disc.pigstep");
+
+    /**
+     *  {@code minecraft:music_disc.precipice}
+     *          
+     *  @apiNote This field is version-dependant and may be removed in future Minecraft versions
+     *  
+     */
+    public static final Key MUSIC_DISC_PRECIPICE = key("music_disc.precipice");
 
     /**
      *  {@code minecraft:music_disc.relic}

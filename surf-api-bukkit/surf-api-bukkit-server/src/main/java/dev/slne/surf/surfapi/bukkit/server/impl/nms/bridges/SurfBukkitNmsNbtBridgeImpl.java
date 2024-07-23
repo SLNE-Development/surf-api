@@ -11,6 +11,7 @@ import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.component.CustomData;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,13 +21,15 @@ public final class SurfBukkitNmsNbtBridgeImpl implements SurfBukkitNmsNbtBridge,
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   @Override
-  public ItemStack makeItemStackEntityInvisible(ItemStack itemStack) {
+  public ItemStack makeItemStackEntityInvisible(ItemStack itemStack, EntityType entityType) {
     checkNotNull(itemStack, "itemStack");
+    checkNotNull(entityType, "entityType");
 
     final net.minecraft.world.item.ItemStack nmsStack = toNms(itemStack);
 
     final CompoundTag nbt = new CompoundTag();
     nbt.putBoolean("Invisible", true);
+    nbt.putString("id", entityType.getKey().asString());
 
     final DataComponentPatch patch = DataComponentPatch.builder()
         .set(DataComponents.ENTITY_DATA, CustomData.of(nbt))
