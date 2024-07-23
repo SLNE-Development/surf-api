@@ -21,6 +21,7 @@ dependencies {
     compileOnlyApi(libs.configurate.yaml)
     compileOnlyApi(libs.configurate.jackson)
     compileOnlyApi(libs.flogger)
+    compileOnlyApi(libs.commons.math4.core)
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
 }
 

@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets;
 
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.NmsClientboundPacket;
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.NmsServerboundPacket;
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverbound.CommandSuggestionPacketImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverbound.RenameItemPacketImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverbound.SignUpdatePacketImpl;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -9,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
+import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
 import net.minecraft.network.protocol.game.ServerboundRenameItemPacket;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +22,11 @@ public final class PacketRegistry {
   private static final Object2ObjectMap<Class<? extends Packet<?>>, ClientboundPacketFactory<?, ?>> CLIENTBOUND_PACKETS = new Object2ObjectOpenHashMap<>();
 
   static {
+    // @formatter:off
     registerServerboundPacket(ServerboundSignUpdatePacket.class, SignUpdatePacketImpl::new);
     registerServerboundPacket(ServerboundRenameItemPacket.class, RenameItemPacketImpl::new);
+    registerServerboundPacket(ServerboundCommandSuggestionPacket.class, CommandSuggestionPacketImpl::new);
+    // @formatter:on
   }
 
   private static <Nms extends Packet<ServerGamePacketListener>, Api extends NmsServerboundPacket> void registerServerboundPacket(

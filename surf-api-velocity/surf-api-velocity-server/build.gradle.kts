@@ -13,6 +13,7 @@ dependencies {
     api(libs.okhttp)
     api(libs.fastutil)
     api(libs.flogger)
+    api(libs.commons.math4.core)
     runtimeOnly(libs.flogger.slf4j.backend)
     annotationProcessor(libs.velocity.api)
 }
