@@ -46,7 +46,7 @@ public final class LibLoader {
   }
 
   public void loadLibs() {
-    loadLib("IF-0.10.15.zip", "1.20");
+//    loadLib("IF-0.10.15.zip", "1.20");
   }
 
   private void loadLib(String jarName) {
