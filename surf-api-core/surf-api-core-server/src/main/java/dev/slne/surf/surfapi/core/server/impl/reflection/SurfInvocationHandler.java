@@ -12,12 +12,17 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import javax.annotation.CheckForNull;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
@@ -58,10 +63,19 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
         .asType(MethodType.methodType(Object.class, Object[].class));
   }
 
-  private static java.lang.reflect.Field findField(Class<?> clazz, String name)
+  private static java.lang.reflect.Field findField(Class<?> clazz, String name,
+      boolean overrideFinal)
       throws NoSuchFieldException {
-    final java.lang.reflect.Field field = clazz.getDeclaredField(name);
-    field.setAccessible(true);
+    java.lang.reflect.Field field = FieldUtils.getField(clazz, name, true);
+
+    if (field == null) {
+      throw new NoSuchFieldException(name);
+    }
+
+    if (overrideFinal) {
+      throw new UnsupportedOperationException("Not yet implemented");
+    }
+
     return field;
   }
 
@@ -73,20 +87,18 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
     return constructor;
   }
 
+  @SneakyThrows
   private static Method findMethod(Class<?> clazz,
       Method original,
       @CheckForNull Name nameAnnotation,
       @CheckForNull Static staticAnnotation) throws NoSuchMethodException {
     final Class<?>[] params = Arrays.stream(original.getParameters())
-        .skip(staticAnnotation != null ? 1 : 0)
+        .skip(staticAnnotation == null ? 1 : 0)
         .map(Parameter::getType)
         .toArray(Class[]::new);
-    final Method method = clazz.getDeclaredMethod(
-        getMethodName(original, nameAnnotation, null, staticAnnotation, null), params);
+    final String methodName = getMethodName(original, nameAnnotation, null, staticAnnotation, null);
 
-    method.setAccessible(true);
-
-    return method;
+    return MethodUtils.getMatchingAccessibleMethod(clazz, methodName, params);
   }
 
   private static String getMethodName(Method method,
@@ -191,7 +203,7 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
       if (args == null) {
         return methodHandle.invokeExact();
       } else {
-        return methodHandle.invokeExact(args);
+        return methodHandle.invokeWithArguments(args);
       }
     }
 
@@ -234,21 +246,24 @@ public final class SurfInvocationHandler<T> implements InvocationHandler {
       if (fieldAnnotation != null) {
         final MethodHandle methodHandle = sneaky(() -> lookup.unreflectGetter(
             findField(proxiedClass,
-                getMethodName(method, nameAnnotation, fieldAnnotation, staticAnnotation, null))));
+                getMethodName(method, nameAnnotation, fieldAnnotation, staticAnnotation, null),
+                fieldAnnotation.overrideFinal())));
 
         if (staticAnnotation != null) {
-          checkPramCount(method, 0);
           if (fieldAnnotation.type() == Field.Type.GETTER) {
+            checkPramCount(method, 0);
             staticGetterCache.put(method, methodHandle.asType(MethodType.methodType(Object.class)));
           } else {
+            checkPramCount(method, 1);
             staticSetterCache.put(method, methodHandle.asType(MethodType.methodType(Object.class)));
           }
         } else {
-          checkPramCount(method, 1);
           if (fieldAnnotation.type() == Field.Type.GETTER) {
+            checkPramCount(method, 1);
             getterCache.put(method,
                 methodHandle.asType(MethodType.methodType(Object.class, Object.class)));
           } else {
+            checkPramCount(method, 2);
             setterCache.put(method,
                 methodHandle.asType(MethodType.methodType(Object.class, Object.class)));
           }

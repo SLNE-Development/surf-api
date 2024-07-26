@@ -15,6 +15,11 @@ import org.jetbrains.annotations.ApiStatus;
 @ParametersAreNonnullByDefault
 public final class SurfReflectionImpl implements SurfReflection {
 
+  public static final SurfReflectionImpl INSTANCE = new SurfReflectionImpl();
+
+  private SurfReflectionImpl() {
+  }
+
   @Override
   public <T> T createProxy(Class<T> clazz, ClassLoader classLoader) {
     checkNotNull(clazz, "clazz");

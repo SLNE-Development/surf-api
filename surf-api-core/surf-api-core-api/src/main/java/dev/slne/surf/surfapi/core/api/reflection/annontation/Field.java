@@ -5,6 +5,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 
 /**
  * Marks a method in a {@link SurfProxy} as a Field.
@@ -17,6 +18,9 @@ public @interface Field {
   String name() default "";
 
   Type type();
+
+  @Experimental
+  boolean overrideFinal() default false;
 
   enum Type {
     SETTER,

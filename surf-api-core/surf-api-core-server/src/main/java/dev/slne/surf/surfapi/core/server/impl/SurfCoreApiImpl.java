@@ -35,7 +35,6 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
    */
   private final PacketImpl packetApi;
 
-  private final SurfReflection reflection;
   private final SurfConfigTracker configTracker;
   private final SurfModernConfigTracker modernConfigTracker;
 
@@ -46,7 +45,6 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
    */
   protected SurfCoreApiImpl(PacketImpl packetApi) {
     this.packetApi = packetApi;
-    this.reflection = new SurfReflectionImpl();
     this.configTracker = new SurfConfigTracker();
     this.modernConfigTracker = new SurfModernConfigTracker();
   }
@@ -58,7 +56,7 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
 
   @Override
   public SurfReflection getReflection() {
-    return reflection;
+    return SurfReflectionImpl.INSTANCE;
   }
 
   @Override
