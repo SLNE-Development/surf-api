@@ -23,4 +23,7 @@
   <component name="ProjectType">
     <option name="id" value="jpab" />
   </component>
+  <component name="TaskProjectConfiguration">
+    <server type="Gitlab" url="http://git.slne.dev" />
+  </component>
 </project>

@@ -20,6 +20,9 @@ import io.papermc.paper.network.ChannelInitializeListenerHolder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import net.minecraft.network.protocol.Packet;
@@ -43,21 +46,34 @@ public class PlayerChannelInjector implements Listener {
   private static final String CHANNEL_NAME = "surf_api_packet_listener";
 
   private final Object2ObjectMap<UUID, ServerPlayer> playerInjectorCache;
+  private final ObjectSet<Channel> injectedChannels;
 
   private PlayerChannelInjector() {
     this.playerInjectorCache = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    this.injectedChannels = ObjectSets.synchronize(new ObjectOpenHashSet<>());
   }
 
   public void register() {
-    ChannelInitializeListenerHolder.addListener(CHANNEL_KEY, channel -> {
-      final ChannelPipeline pipeline = channel.pipeline();
+    ChannelInitializeListenerHolder.addListener(CHANNEL_KEY,
+        this::injectChannel);
+  }
 
-      if (pipeline.get(CHANNEL_NAME) != null) {
-        return;
+  private PacketHandler injectChannel(Channel channel) {
+    final PacketHandler channelHandler = new PacketHandler();
+
+    channel.eventLoop().submit(() -> {
+      if (injectedChannels.add(channel)) {
+        final ChannelPipeline pipeline = channel.pipeline();
+
+        if (pipeline.get(CHANNEL_NAME) != null) {
+          return;
+        }
+
+        pipeline.addBefore("packet_handler", CHANNEL_NAME, channelHandler);
       }
-
-      pipeline.addBefore("packet_handler", CHANNEL_NAME, new PacketHandler());
     });
+
+    return channelHandler;
   }
 
   @EventHandler(priority = EventPriority.LOWEST)
@@ -78,7 +94,11 @@ public class PlayerChannelInjector implements Listener {
         packetHandler.player = player; // Just in case the player is not set yet
         playerInjectorCache.remove(player.getUUID());
       }
+
+      return;
     }
+
+    injectChannel(channel).player = player;
   }
 
 
@@ -101,7 +121,7 @@ public class PlayerChannelInjector implements Listener {
      */
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-
+      injectedChannels.remove(ctx.channel());
       super.channelUnregistered(ctx);
     }
 
@@ -128,7 +148,7 @@ public class PlayerChannelInjector implements Listener {
       if (player == null
           && msg instanceof ClientboundGameProfilePacket clientboundGameProfilePacket) {
         final UUID uuid = clientboundGameProfilePacket.gameProfile().getId();
-        @Nullable final ServerPlayer player = playerInjectorCache.get(uuid);
+        @Nullable final ServerPlayer player = playerInjectorCache.remove(uuid);
 
         if (player != null) {
           this.player = player;
@@ -150,15 +170,17 @@ public class PlayerChannelInjector implements Listener {
           msg = handleClientboundPacketFromBridge(packet);
           cancelled = (msg == null);
         }
+      } catch (OutOfMemoryError error) {
+        throw error;
       } catch (Throwable t) {
         logger.atSevere()
             .withCause(t)
             .log("Failed to handle clientbound packet");
-        throw t;
-      } finally {
-        if (!cancelled) {
-          super.write(ctx, msg, promise);
-        }
+        super.write(ctx, msg, promise);
+      }
+
+      if (!cancelled) {
+        super.write(ctx, msg, promise);
       }
     }
 
@@ -193,15 +215,17 @@ public class PlayerChannelInjector implements Listener {
           msg = handleServerboundPacketFromBridge(packet);
           cancelled = (msg == null);
         }
+      } catch (OutOfMemoryError error) {
+        throw error;
       } catch (Throwable t) {
         logger.atSevere()
             .withCause(t)
             .log("Failed to handle serverbound packet");
-        throw t;
-      } finally {
-        if (!cancelled) {
-          super.channelRead(ctx, msg);
-        }
+        super.channelRead(ctx, msg);
+      }
+
+      if (!cancelled) {
+        super.channelRead(ctx, msg);
       }
     }
 
