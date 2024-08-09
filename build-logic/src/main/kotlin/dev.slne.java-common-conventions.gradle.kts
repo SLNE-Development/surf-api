@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.org.apache.http.client.methods.RequestBuilder.options
+
 plugins {
     java
     `maven-publish`
@@ -37,8 +39,12 @@ publishing {
 
 tasks {
     compileJava {
-        options.encoding = Charsets.UTF_8.name()
-        options.compilerArgs.add("-parameters")
+        options.apply {
+            encoding = Charsets.UTF_8.name()
+            compilerArgs.apply {
+                add("-parameters")
+            }
+        }
     }
     javadoc {
         options.encoding = Charsets.UTF_8.name()
