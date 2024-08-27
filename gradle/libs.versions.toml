@@ -3,7 +3,7 @@
 paper-api = "1.21-R0.1-SNAPSHOT"
 
 # Packet Events
-packetevents = "2.4.0-SNAPSHOT"
+packetevents = "2.5.0-SNAPSHOT"
 
 # Command API
 commandapi = "9.5.1"
