@@ -38,7 +38,7 @@ reflection-remapper = "0.1.1"
 brigadier = "1.0.18"
 configurate = "4.1.2"
 more-persistent-data-types = "2.4.0"
-inventoryframework = "0.10.14"
+inventoryframework = "0.10.16"
 flogger = "0.8"
 
 [libraries]

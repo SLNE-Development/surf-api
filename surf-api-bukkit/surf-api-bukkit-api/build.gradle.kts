@@ -12,7 +12,7 @@ dependencies {
     compileOnlyApi(libs.commandapi.bukkit)
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
-    api(libs.inventoryframework)
+    compileOnlyApi(libs.inventoryframework)
     api(libs.commandapi.bukkit.kotlin)
 }
 

@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 
@@ -24,6 +25,7 @@ dependencies {
     paperLibrary(libs.scoreboard.library.implementation)
     paperLibrary(libs.scoreboard.library.modern)
     paperLibrary(libs.scoreboard.library.api)
+    paperLibrary(libs.inventoryframework)
     api(libs.packetevents.spigot)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
@@ -43,8 +45,10 @@ dependencies {
     paperLibrary(libs.commons.math4.core)
 }
 
+
 paper {
     name = "surf-bukkit-api"
+    provides = listOf("SurfBukkitAPI")
     apiVersion = "1.21"
     description = "Surf API for Bukkit"
     website = "https://slne.dev"

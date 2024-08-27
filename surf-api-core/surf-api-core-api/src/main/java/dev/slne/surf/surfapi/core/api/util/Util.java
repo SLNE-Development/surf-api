@@ -143,6 +143,11 @@ public class Util {
     putOperation.accept(UNSAFE, fieldBase, fieldOffset);
   }
 
+
+  public static Unsafe getUnsafe() {
+    return UNSAFE;
+  }
+
   public static <T extends Enum<T>> @NotNull Object2ObjectMap<String, T> byStringIdMap(
       @NotNull Class<T> enumClass, Function<T, String> idMapper) {
     return Object2ObjectMaps.synchronize(

@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.flogger.FluentLogger;
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApiAccess;
 import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl;
+import dev.slne.surf.surfapi.bukkit.server.libs.LibLoader;
 import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager;
 import dev.slne.surf.surfapi.bukkit.server.packet.PacketApiLoader;
 import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection;
@@ -51,6 +52,8 @@ public class BukkitMain extends JavaPlugin {
     Reflection.class.getClassLoader(); // initialize Reflection
     packetApiLoader.onLoad();
     SurfBukkitApiAccess.setInstance(surfBukkitApi);
+
+    new LibLoader(getClassLoader()).loadLibs();
 
     coreInstance.onLoad();
   }
