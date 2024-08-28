@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.packet;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
 import dev.slne.surf.surfapi.bukkit.server.packet.listener.PlayerChannelInjector;
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener;
@@ -40,7 +41,9 @@ public final class PacketApiLoader {
    */
   public void onEnable() {
     PacketEvents.getAPI().init();
-    PacketEvents.getAPI().getEventManager().registerListener(PacketLoreListener.INSTANCE);
+//    PacketEvents.getAPI().getEventManager().registerListener(PacketLoreListener.INSTANCE);
+
+    SurfBukkitPacketListenerApi.get().registerListeners(PacketLoreListener.INSTANCE);
 
     PlayerChannelInjector.INSTANCE.register();
     plugin.getServer().getPluginManager().registerEvents(PlayerChannelInjector.INSTANCE, plugin);

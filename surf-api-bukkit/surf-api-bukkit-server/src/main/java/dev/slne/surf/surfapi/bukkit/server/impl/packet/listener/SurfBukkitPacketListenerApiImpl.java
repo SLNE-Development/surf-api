@@ -24,6 +24,7 @@ import java.util.List;
 import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketListenerApi {
@@ -90,17 +91,21 @@ public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketLi
     }
   }
 
-  public PacketListenerResult handleClientboundPacket(final Packet<?> packet,
+  public Packet<?> handleClientboundPacket(final Packet<?> packet,
       final net.minecraft.server.level.ServerPlayer serverPlayer) {
     final ObjectList<ListenerMethod> methods = clientboundListenerMethods.get(packet.getClass());
-    final ObjectSet<PacketListenerResult> results = new ObjectArraySet<>();
+    Packet<?> result = packet;
 
     if (methods == null) {
-      return PacketListenerResult.CONTINUE;
+      return packet;
     }
     try {
       for (final ListenerMethod listenerMethod : methods) {
-        callListener(listenerMethod, serverPlayer, packet, results);
+        result = callListener(listenerMethod, serverPlayer, packet);
+
+        if (result == null) {
+          break;
+        }
       }
     } catch (final Throwable t) {
       logger.atSevere()
@@ -108,20 +113,24 @@ public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketLi
           .log("Failed to handle clientbound packet");
     }
 
-    return reduceResults(results);
+    return result;
   }
 
-  public PacketListenerResult handleServerboundPacket(final Packet<?> packet,
+  public Packet<?> handleServerboundPacket(final Packet<?> packet,
       final net.minecraft.server.level.ServerPlayer serverPlayer) {
     final ObjectList<ListenerMethod> methods = serverboundListenerMethods.get(packet.getClass());
-    final ObjectSet<PacketListenerResult> results = new ObjectArraySet<>();
+    Packet<?> result = packet;
 
     if (methods == null) {
-      return PacketListenerResult.CONTINUE;
+      return packet;
     }
     try {
       for (final ListenerMethod listenerMethod : methods) {
-        callListener(listenerMethod, serverPlayer, packet, results);
+        result = callListener(listenerMethod, serverPlayer, packet);
+
+        if (result == null) {
+          break;
+        }
       }
     } catch (Throwable t) {
       logger.atSevere()
@@ -129,25 +138,31 @@ public final class SurfBukkitPacketListenerApiImpl implements SurfBukkitPacketLi
           .log("Failed to handle serverbound packet");
     }
 
-    return reduceResults(results);
+    return result;
   }
 
-  private void callListener(final ListenerMethod listenerMethod, ServerPlayer serverPlayer,
-      Packet<?> packet, ObjectSet<PacketListenerResult> results) throws Throwable {
+  private @Nullable Packet<?> callListener(final ListenerMethod listenerMethod, ServerPlayer serverPlayer,
+      Packet<?> packet) throws Throwable {
     if (listenerMethod.hasPlayerParameter) {
       final Object player = listenerMethod.hasServerPlayerParameter ? serverPlayer
           : serverPlayer.getBukkitEntity();
       final Object result = listenerMethod.methodHandle.invoke(listenerMethod.listener, packet,
           player);
-      if (result instanceof final PacketListenerResult listenerResult) {
-        results.add(listenerResult);
+      if (result instanceof final PacketListenerResult listenerResult && listenerResult == PacketListenerResult.CANCEL) {
+        return null;
+      } else if (result instanceof final Packet<?> newPacket) {
+        return newPacket;
       }
     } else {
       final Object result = listenerMethod.methodHandle.invoke(listenerMethod.listener, packet);
-      if (result instanceof final PacketListenerResult listenerResult) {
-        results.add(listenerResult);
+      if (result instanceof final PacketListenerResult listenerResult && listenerResult == PacketListenerResult.CANCEL) {
+        return null;
+      } else if (result instanceof final Packet<?> newPacket) {
+        return newPacket;
       }
     }
+
+    return packet;
   }
 
   private PacketListenerResult reduceResults(ObjectSet<PacketListenerResult> results) {

@@ -16,8 +16,6 @@ scoreboard-library-modern = "2.1.10"
 
 # Adventure
 adventure-api = "4.17.0"
-adventure-text-logger-slf4j = { ref = "adventure-api" }
-adventure-text-minimessage = { ref = "adventure-api" }
 
 # Velocity
 velocity-api = "3.3.0-SNAPSHOT"
@@ -65,8 +63,8 @@ scoreboard-library-modern = { module = "net.megavex:scoreboard-library-modern", 
 
 # Adventure
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure-api" }
-adventure-text-logger-slf4j = { module = "net.kyori:adventure-text-logger-slf4j", version.ref = "adventure-text-logger-slf4j" }
-adventure-text-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure-text-minimessage" }
+adventure-text-logger-slf4j = { module = "net.kyori:adventure-text-logger-slf4j", version.ref = "adventure-api" }
+adventure-text-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure-api" }
 adventure-serializer-gson = { module = "net.kyori:adventure-text-serializer-gson", version.ref = "adventure-api" }
 adventure-serializer-legacy = { module = "net.kyori:adventure-text-serializer-legacy", version.ref = "adventure-api" }
 adventure-serializer-plain = { module = "net.kyori:adventure-text-serializer-plain", version.ref = "adventure-api" }

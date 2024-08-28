@@ -159,10 +159,9 @@ public class PlayerChannelInjector implements Listener {
 
       try {
         // first we try to handle the packet with the nms packet listener
-        final PacketListenerResult result = getPacketListenerApi().handleClientboundPacket(packet,
-            player);
+        packet = getPacketListenerApi().handleClientboundPacket(packet, player);
 
-        if (result == PacketListenerResult.CANCEL) {
+        if (packet == null) {
           // no need to handle the packet further
           cancelled = true;
         } else {
@@ -204,10 +203,9 @@ public class PlayerChannelInjector implements Listener {
 
       try {
         // first we try to handle the packet with the nms packet listener
-        final PacketListenerResult result = getPacketListenerApi().handleServerboundPacket(
-            packet, player);
+        packet = getPacketListenerApi().handleServerboundPacket(packet, player);
 
-        if (result == PacketListenerResult.CANCEL) {
+        if (packet == null) {
           // no need to handle the packet further
           cancelled = true;
         } else {

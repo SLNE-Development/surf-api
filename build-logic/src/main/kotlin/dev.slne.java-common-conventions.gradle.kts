@@ -1,5 +1,3 @@
-import org.gradle.internal.impldep.org.apache.http.client.methods.RequestBuilder.options
-
 plugins {
     java
     `maven-publish`
@@ -8,12 +6,12 @@ plugins {
 }
 
 repositories {
-    maven("https://repo.slne.dev/repository/maven-proxy") { name ="maven-proxy" }
+    maven("https://repo.slne.dev/repository/maven-proxy") { name = "maven-proxy" }
     maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
 }
 
 group = "dev.slne.surf"
-version = "1.21-1.6.1-SNAPSHOT"
+version = "1.21-1.7.0-SNAPSHOT"
 
 java {
     toolchain {

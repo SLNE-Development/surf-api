@@ -1,41 +1,34 @@
 package dev.slne.surf.surfapi.bukkit.server.packet.lore;
 
-import com.github.retrooper.packetevents.event.PacketListenerAbstract;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
-import com.github.retrooper.packetevents.event.PacketReceiveEvent;
-import com.github.retrooper.packetevents.event.PacketSendEvent;
-import com.github.retrooper.packetevents.protocol.item.ItemStack;
-import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCreativeInventoryAction;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListener;
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.ClientboundListener;
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.ServerboundListener;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
-import dev.slne.surf.surfapi.core.api.util.Util;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import io.papermc.paper.adventure.PaperAdventure;
+import io.papermc.paper.persistence.PersistentDataContainerView;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
+import net.minecraft.world.item.component.ItemLore;
 import org.bukkit.NamespacedKey;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
 
 /**
  * PacketLoreListener is a class that implements PacketListenerAbstract and is responsible for
  * handling the modification of lore on item stacks in packet events.
  */
 @ApiStatus.Internal
-public final class PacketLoreListener extends PacketListenerAbstract {
+public final class PacketLoreListener implements PacketListener {
 
   /**
    * Represents an instance of the PacketLoreListener class. This variable is used to access the
@@ -44,10 +37,6 @@ public final class PacketLoreListener extends PacketListenerAbstract {
    * PacketLoreListener class.
    */
   public static final PacketLoreListener INSTANCE = new PacketLoreListener();
-  /**
-   * Serializer used to convert components to plain text.
-   */
-  private static final PlainTextComponentSerializer PLAIN_TEXT_SERIALIZER = PlainTextComponentSerializer.plainText();
 
   /**
    * A map of lore handlers for modifying the lore of an item stack.
@@ -67,7 +56,7 @@ public final class PacketLoreListener extends PacketListenerAbstract {
    *
    * @see SurfBukkitPacketLoreHandler
    */
-  private final Component lorePrefix;
+  private final net.minecraft.network.chat.MutableComponent lorePrefix;
   /**
    * Represents the prefix string used for lore modifications.
    * <p>
@@ -85,19 +74,17 @@ public final class PacketLoreListener extends PacketListenerAbstract {
    * Represents a listener for packet events that modifies the lore of an item stack.
    */
   private PacketLoreListener() {
-    super(PacketListenerPriority.LOWEST);
+//    // We need to do this ugly hack to disable the warning message that is printed when
+//    // legacy formatting is detected.
+//    try {
+//      Class<?> textComponentImpl = Class.forName("net.kyori.adventure.text.TextComponentImpl");
+//      Field field = textComponentImpl.getDeclaredField("WARN_WHEN_LEGACY_FORMATTING_DETECTED");
+//      Util.setStaticFinalField(field, false);
+//    } catch (ReflectiveOperationException e) {
+//      throw new RuntimeException(e);
+//    }
 
-    // We need to do this ugly hack to disable the warning message that is printed when
-    // legacy formatting is detected.
-    try {
-      Class<?> textComponentImpl = Class.forName("net.kyori.adventure.text.TextComponentImpl");
-      Field field = textComponentImpl.getDeclaredField("WARN_WHEN_LEGACY_FORMATTING_DETECTED");
-      Util.setStaticFinalField(field, false);
-    } catch (ReflectiveOperationException e) {
-      throw new RuntimeException(e);
-    }
-
-    lorePrefix = Component.text(lorePrefixString);
+    lorePrefix = net.minecraft.network.chat.Component.literal(lorePrefixString);
   }
 
   /**
@@ -108,14 +95,9 @@ public final class PacketLoreListener extends PacketListenerAbstract {
    *
    * @param event The PacketReceiveEvent object containing information about the received packet.
    */
-  @Override
-  public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-    if (event.getPacketType().equals(PacketType.Play.Client.CREATIVE_INVENTORY_ACTION)) {
-      final WrapperPlayClientCreativeInventoryAction packet = new WrapperPlayClientCreativeInventoryAction(
-          event);
-
-      packet.setItemStack(getCleanItemStack(packet.getItemStack()));
-    }
+  @ServerboundListener
+  public void onPacketReceive(ServerboundSetCreativeModeSlotPacket event) {
+    makeCleanItemStack(event.itemStack());
   }
 
   /**
@@ -124,96 +106,70 @@ public final class PacketLoreListener extends PacketListenerAbstract {
    *
    * @param event The PacketSendEvent containing information about the packet being sent.
    */
-  @Override
-  public void onPacketSend(@NotNull PacketSendEvent event) {
-    PacketTypeCommon packetType = event.getPacketType();
-
-    if (packetType.equals(PacketType.Play.Server.WINDOW_ITEMS)) {
-      final WrapperPlayServerWindowItems packet = new WrapperPlayServerWindowItems(event);
-      final List<ItemStack> updatedItems = new ArrayList<>();
-
-      for (ItemStack item : packet.getItems()) {
-        if (item != null) {
-          updatedItems.add(getUpdatedItemStack(item));
-        }
-      }
-
-      packet.setItems(updatedItems);
-    } else if (packetType.equals(PacketType.Play.Server.SET_SLOT)) {
-      final WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
-      ItemStack item = packet.getItem();
-
-      if (item != null) {
-        packet.setItem(getUpdatedItemStack(item));
-      }
+  @ClientboundListener
+  public void onWindowItem(ClientboundContainerSetContentPacket event) {
+    for (final net.minecraft.world.item.ItemStack item : event.getItems()) {
+      makeUpdatedItemStack(item);
     }
   }
 
-  /**
-   * Returns an updated version of the given ItemStack by modifying its lore components.
-   *
-   * @param item The ItemStack to be updated.
-   * @return An updated version of the ItemStack.
-   */
-  private ItemStack getUpdatedItemStack(@NotNull ItemStack item) {
-    final org.bukkit.inventory.ItemStack bukkitStack = SpigotConversionUtil.toBukkitItemStack(item)
-        .clone();
-
-    bukkitStack.editMeta(meta -> {
-      final PersistentDataContainer pdc = meta.getPersistentDataContainer();
-      final List<Component> lore = Optional.ofNullable(meta.lore()).map(ArrayList::new)
-          .orElse(new ArrayList<>());
-
-      loreHandlers.forEach((identifier, handler) -> {
-        if (pdc.has(identifier)) {
-          handler.handleLore(lore, pdc, bukkitStack);
-        }
-      });
-
-      loreHandlersGlobal.forEach((plugin, handlers) -> {
-        if (plugin.isEnabled()) {
-          handlers.forEach(handler -> handler.handleLore(lore, pdc, bukkitStack));
-        }
-      });
-
-      final List<Component> parsed = lore.stream().map(lorePrefix::append).toList();
-      meta.lore(parsed.isEmpty() ? null : parsed);
-    });
-
-    return SpigotConversionUtil.fromBukkitItemStack(bukkitStack);
+  @ClientboundListener
+  public void onContainerData(ClientboundContainerSetSlotPacket event) {
+    makeUpdatedItemStack(event.getItem());
   }
 
-  /**
-   * Returns a clean version of the given ItemStack by removing specific lore components. If the
-   * input stack is null, null is returned.
-   *
-   * @param stack The ItemStack to be cleaned.
-   * @return A clean version of the ItemStack.
-   */
-  @Contract("null -> null")
-  private ItemStack getCleanItemStack(ItemStack stack) {
+  private net.minecraft.world.item.ItemStack makeUpdatedItemStack(
+      @NotNull net.minecraft.world.item.ItemStack item) {
+    final org.bukkit.inventory.ItemStack bukkitStack = item.asBukkitMirror();
+    final PersistentDataContainerView pdc = bukkitStack.getPersistentDataContainer();
+    final ItemLore nmsLore = item.get(DataComponents.LORE);
+    final List<Component> lore = nmsLore != null ? nmsLore.lines()
+        .stream()
+        .map(PaperAdventure::asAdventure)
+        .collect(Collectors.toList())
+        : new ArrayList<>();
+
+    loreHandlers.forEach((identifier, handler) -> {
+      if (pdc.has(identifier)) {
+        handler.handleLore(lore, pdc, bukkitStack);
+      }
+    });
+
+    loreHandlersGlobal.forEach((plugin, handlers) -> {
+      if (plugin.isEnabled()) {
+        handlers.forEach(handler -> handler.handleLore(lore, pdc, bukkitStack));
+      }
+    });
+
+    final ItemLore updatedNmsLore = new ItemLore(lore.stream()
+        .map(PaperAdventure::asVanilla)
+        .map(lorePrefix::append)
+        .collect(Collectors.toList()));
+
+    item.set(DataComponents.LORE, updatedNmsLore);
+
+    return item;
+  }
+
+  private net.minecraft.world.item.ItemStack makeCleanItemStack(
+      net.minecraft.world.item.ItemStack stack) {
     if (stack == null) {
       return null;
     }
 
-    org.bukkit.inventory.ItemStack bukkitItemStack = SpigotConversionUtil.toBukkitItemStack(stack);
+    final ItemLore lore = stack.getComponents().get(DataComponents.LORE);
 
-    bukkitItemStack.editMeta(meta -> {
-      final List<Component> lore = meta.lore();
+    if (lore == null) {
+      return stack;
+    }
 
-      if (lore != null) {
-        lore.removeIf(
-            component -> PLAIN_TEXT_SERIALIZER.serialize(component).startsWith(lorePrefixString));
+    final List<net.minecraft.network.chat.Component> filteredLores = lore.lines().stream()
+        .filter(component -> !component.getString().startsWith(lorePrefixString))
+        .toList();
 
-        if (lore.isEmpty()) {
-          meta.lore(null);
-        } else {
-          meta.lore(lore);
-        }
-      }
-    });
+    stack.set(DataComponents.LORE, new ItemLore(filteredLores));
 
-    return SpigotConversionUtil.fromBukkitItemStack(bukkitItemStack);
+    return stack;
   }
 
   /**

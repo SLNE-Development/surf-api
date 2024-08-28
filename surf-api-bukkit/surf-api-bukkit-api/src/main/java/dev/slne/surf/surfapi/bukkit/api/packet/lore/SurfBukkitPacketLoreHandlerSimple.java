@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.packet.lore;
 
+import io.papermc.paper.persistence.PersistentDataContainerView;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
@@ -19,7 +20,7 @@ public interface SurfBukkitPacketLoreHandlerSimple extends SurfBukkitPacketLoreH
    * @param itemStack     {@inheritDoc}
    */
   @Override
-  default void handleLore(List<Component> loreToDisplay, PersistentDataContainer dataContainer,
+  default void handleLore(List<Component> loreToDisplay, PersistentDataContainerView dataContainer,
       ItemStack itemStack) {
     handleLore(loreToDisplay);
   }
