@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable;
 @ParametersAreNonnullByDefault
 public interface SurfBukkitNmsCommonBridge {
 
+  int nextEntityId();
+
   int getStateId(Material material);
 
   int getStateId(BlockData blockData);
@@ -23,5 +25,9 @@ public interface SurfBukkitNmsCommonBridge {
 
   static SurfBukkitNmsCommonBridge get() {
     return SurfBukkitNmsBridge.get().getCommonBridge();
+  }
+
+  static int getNextEntityId() {
+    return get().nextEntityId();
   }
 }

@@ -6,14 +6,22 @@ import static com.google.common.base.Preconditions.checkState;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import javax.annotation.ParametersAreNonnullByDefault;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ComposterBlock;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsCommonBridgeImpl implements SurfBukkitNmsCommonBridge, NmsUtil {
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public int nextEntityId() {
+    return Bukkit.getUnsafe().nextEntityId();
+  }
 
   @Override
   public int getStateId(Material material) {
