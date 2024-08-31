@@ -16,6 +16,8 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Material;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Display.Billboard;
 import org.bukkit.entity.ItemDisplay.ItemDisplayTransform;
 import org.bukkit.entity.TextDisplay.TextAlignment;
@@ -71,6 +73,21 @@ public interface SurfBukkitNmsSpawnPackets {
       SignBlockUpdateSettings settings
   );
 
+  PacketOperation spawnBlockDisplay(
+      int entityId,
+      FinePosition position,
+      BlockDisplaySettings settings
+  );
+
+  default PacketOperation spawnBlockDisplay(
+      int entityId,
+      FinePosition position,
+      UnaryOperator<BlockDisplaySettings.BlockDisplaySettingsBuilder<?, ?>> settings
+  ) {
+    return spawnBlockDisplay(entityId, position,
+        settings.apply(BlockDisplaySettings.builder()).build());
+  }
+
   @Getter
   @SuperBuilder
   @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -99,10 +116,19 @@ public interface SurfBukkitNmsSpawnPackets {
   @NonExtendable
   class TextDisplaySettings extends DisplaySettings {
 
-    private Component text = Component.empty();
-    private int lineWidth = 200;
-    private TextColor backgroundColor = TextColor.color(0x40000000);
-    private TextAlignment textAlignment = TextAlignment.CENTER;
+    private @Default Component text = Component.empty();
+    private @Default int lineWidth = 200;
+    private @Default TextColor backgroundColor = TextColor.color(0x40000000);
+    private @Default TextAlignment textAlignment = TextAlignment.CENTER;
+  }
+
+  @Getter
+  @SuperBuilder
+  @NoArgsConstructor(access = AccessLevel.PRIVATE)
+  @NonExtendable
+  class BlockDisplaySettings extends DisplaySettings {
+
+    private @Default BlockData blockData = Material.AIR.createBlockData();
   }
 
   @Getter

@@ -25,7 +25,7 @@ dependencies {
     paperLibrary(libs.scoreboard.library.implementation)
     paperLibrary(libs.scoreboard.library.modern)
     paperLibrary(libs.scoreboard.library.api)
-    paperLibrary(libs.inventoryframework)
+    api(libs.inventoryframework)
     api(libs.packetevents.spigot)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
@@ -66,7 +66,6 @@ paper {
 
     // Plugin Dependencies
     serverDependencies {
-
         registerSoft("ProtocolLib")
         registerSoft("ProtocolSupport")
         registerSoft("ViaVersion")

@@ -30,17 +30,14 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.Display.BlockDisplay;
 import net.minecraft.world.entity.Display.ItemDisplay;
 import net.minecraft.world.entity.Display.TextDisplay;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.bukkit.Server;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @ParametersAreNonnullByDefault
 public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPackets, NmsUtil {
@@ -80,8 +77,7 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
       display.setItemTransform(toNms(settings.getItemDisplayTransform()));
 
       packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
-      packets.add(new ClientboundSetEntityDataPacket(entityId,
-          Reflection.SYNCHED_ENTITY_DATA_PROXY.packAll(display.getEntityData())));
+      packets.add(createSetEntityDataPacket(entityId, display));
       return packets;
     });
   }
@@ -121,8 +117,7 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
       }
 
       packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
-      packets.add(new ClientboundSetEntityDataPacket(entityId,
-          Reflection.SYNCHED_ENTITY_DATA_PROXY.packAll(display.getEntityData())));
+      packets.add(createSetEntityDataPacket(entityId, display));
       return packets;
     });
   }
@@ -139,6 +134,34 @@ public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPa
       packets.add(new ClientboundBlockEntityDataPacket(toNms(position), BlockEntityType.SIGN, nbt));
       return packets;
     });
+  }
+
+  @Override
+  public PacketOperation spawnBlockDisplay(
+      int entityId,
+      FinePosition position,
+      BlockDisplaySettings settings
+  ) {
+    return PacketOperationImpl.complex((player, packets) -> {
+      final ServerPlayer serverPlayer = toNms(player);
+      final BlockDisplay display = new BlockDisplay(EntityType.BLOCK_DISPLAY, serverPlayer.level());
+
+      display.setId(entityId);
+      setPosition(display, position);
+      applySettings(display, settings);
+
+      display.setBlockState(toNms(settings.getBlockData()));
+
+      packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
+      packets.add(createSetEntityDataPacket(entityId, display));
+
+      return packets;
+    });
+  }
+
+  @SuppressWarnings("DataFlowIssue") // false positive
+  private ClientboundSetEntityDataPacket createSetEntityDataPacket(int entityId, Entity entity) {
+    return new ClientboundSetEntityDataPacket(entityId, entity.getEntityData().packAll());
   }
 
   @VerifyOnMinecraftUpdate
