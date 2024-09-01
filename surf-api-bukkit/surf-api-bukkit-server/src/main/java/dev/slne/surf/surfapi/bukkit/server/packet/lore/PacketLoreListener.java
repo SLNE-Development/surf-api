@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.format.TextDecoration.State;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
@@ -146,6 +148,7 @@ public final class PacketLoreListener implements PacketListener {
     });
 
     final ItemLore updatedNmsLore = new ItemLore(lore.stream()
+        .map(component -> component.decorationIfAbsent(TextDecoration.ITALIC, State.FALSE))
         .map(PaperAdventure::asVanilla)
         .map(loreComponent -> lorePrefix.copy().append(loreComponent))
         .collect(Collectors.toList()));
