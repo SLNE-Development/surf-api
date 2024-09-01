@@ -120,6 +120,10 @@ public final class PacketLoreListener implements PacketListener {
 
   private net.minecraft.world.item.ItemStack makeUpdatedItemStack(
       @NotNull net.minecraft.world.item.ItemStack item) {
+    if (item.isEmpty()) {
+      return item;
+    }
+
     final org.bukkit.inventory.ItemStack bukkitStack = item.asBukkitMirror();
     final PersistentDataContainerView pdc = bukkitStack.getPersistentDataContainer();
     final ItemLore nmsLore = item.get(DataComponents.LORE);
@@ -143,7 +147,7 @@ public final class PacketLoreListener implements PacketListener {
 
     final ItemLore updatedNmsLore = new ItemLore(lore.stream()
         .map(PaperAdventure::asVanilla)
-        .map(lorePrefix::append)
+        .map(loreComponent -> lorePrefix.copy().append(loreComponent))
         .collect(Collectors.toList()));
 
     item.set(DataComponents.LORE, updatedNmsLore);
