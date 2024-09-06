@@ -21,6 +21,7 @@ import org.spongepowered.configurate.loader.AbstractConfigurationLoader;
 import org.spongepowered.configurate.loader.AbstractConfigurationLoader.Builder;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 public final class SurfConfigManagerModern<C> {
@@ -84,7 +85,8 @@ public final class SurfConfigManagerModern<C> {
   public static <C> @NotNull SurfConfigManagerModern<C> yaml(Class<C> configClass,
       @NotNull Path configFolder,
       @ModernYamlConfigFileNamePattern String configFileName) {
-    return buildConfigManager("https://yamlchecker.com/", YamlConfigurationLoader.builder(),
+    return buildConfigManager("https://yamlchecker.com/", YamlConfigurationLoader.builder()
+            .nodeStyle(NodeStyle.BLOCK),
         configClass, configFolder, configFileName);
   }
 
@@ -106,8 +108,8 @@ public final class SurfConfigManagerModern<C> {
   ) {
     final L loader = builder
         .path(configFolder.resolve(configFileName))
-        .defaultOptions(
-            configurationOptions -> configurationOptions.serializers(ModernSerializers.SERIALIZERS))
+        .defaultOptions(options -> options.serializers(ModernSerializers.SERIALIZERS)
+            .shouldCopyDefaults(true))
         .build();
 
     try {
