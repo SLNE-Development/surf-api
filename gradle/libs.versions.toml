@@ -47,6 +47,7 @@ paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 packetevents-spigot = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
 packetevents-api = { module = "com.github.retrooper:packetevents-api", version.ref = "packetevents" }
 packetevents-velocity = { module = "com.github.retrooper:packetevents-velocity", version.ref = "packetevents" }
+packetevents-netty-common = { module = "com.github.retrooper:packetevents-netty-common", version.ref = "packetevents" }
 
 # Entity Library
 
