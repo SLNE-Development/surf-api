@@ -13,8 +13,8 @@ public abstract class SurfCorePacketApiImpl implements SurfCorePacketApi {
 
   @Override
   public void sendPacket(UUID viewer, PacketWrapper<?> packet) {
-    PacketEvents.getAPI().getPlayerManager()
-        .sendPacket(SurfCoreApi.getCore().getPlayer(viewer), packet);
+    SurfCoreApi.getCore().getPlayer(viewer)
+        .ifPresent(player -> PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet));
   }
 
   @Override
