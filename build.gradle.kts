@@ -11,7 +11,7 @@ paperweight {
     paramMappingsRepo = paperMavenPublicUrl
     remapRepo = paperMavenPublicUrl
     decompileRepo = paperMavenPublicUrl
-    minecraftVersion = "1.21"
+    minecraftVersion = "1.20.6"
 }
 
 repositories {
@@ -27,7 +27,7 @@ allprojects {
 }
 
 dependencies {
-    paramMappings("net.fabricmc:yarn:1.21+build.1:mergedv2")
+    paramMappings("net.fabricmc:yarn:1.20.6+build.1:mergedv2")
     remapper("net.fabricmc:tiny-remapper:0.10.3:fat")
     decompiler("org.vineflower:vineflower:1.10.1")
 //    spigotDecompiler("io.papermc:patched-spigot-fernflower:0.1+build.13")

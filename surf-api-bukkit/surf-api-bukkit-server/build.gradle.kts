@@ -1,4 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 
@@ -49,7 +48,7 @@ dependencies {
 paper {
     name = "surf-bukkit-api"
     provides = listOf("SurfBukkitAPI")
-    apiVersion = "1.21"
+    apiVersion = "1.20"
     description = "Surf API for Bukkit"
     website = "https://slne.dev"
     authors = listOf("twisti", "SLNE Development Team")

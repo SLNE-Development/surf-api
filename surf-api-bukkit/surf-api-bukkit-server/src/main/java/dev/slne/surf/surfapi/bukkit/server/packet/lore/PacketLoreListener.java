@@ -5,7 +5,6 @@ import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.Clie
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.ServerboundListener;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
 import io.papermc.paper.adventure.PaperAdventure;
-import io.papermc.paper.persistence.PersistentDataContainerView;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -21,6 +20,7 @@ import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
 import net.minecraft.world.item.component.ItemLore;
 import org.bukkit.NamespacedKey;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public final class PacketLoreListener implements PacketListener {
     }
 
     final org.bukkit.inventory.ItemStack bukkitStack = item.asBukkitMirror();
-    final PersistentDataContainerView pdc = bukkitStack.getPersistentDataContainer();
+    final PersistentDataContainer pdc = bukkitStack.getItemMeta().getPersistentDataContainer();
     final ItemLore nmsLore = item.get(DataComponents.LORE);
     final List<Component> lore = nmsLore != null ? nmsLore.lines()
         .stream()

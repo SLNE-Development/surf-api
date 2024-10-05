@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.api.packet.lore;
 
-import io.papermc.paper.persistence.PersistentDataContainerView;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
@@ -23,6 +22,6 @@ public interface SurfBukkitPacketLoreHandler {
    * @param dataContainer The persistent data container associated with the item stack.
    * @param itemStack     The item stack to modify.
    */
-  void handleLore(List<Component> loreToDisplay, PersistentDataContainerView dataContainer,
+  void handleLore(List<Component> loreToDisplay, PersistentDataContainer dataContainer,
       ItemStack itemStack);
 }

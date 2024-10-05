@@ -16,7 +16,7 @@ public class InventoryFrameworkTest extends CommandAPICommand {
       testGui.setOnGlobalClick(event -> event.setCancelled(true));
 
       final StaticPane pane = new StaticPane(0, 0, 9, 1);
-      pane.fillWith(ItemStack.of(Material.DIAMOND), event -> {
+      pane.fillWith(new ItemStack(Material.DIAMOND), event -> {
         event.setCancelled(true);
         event.getWhoClicked().sendMessage("You clicked on a diamond!");
       });
