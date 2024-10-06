@@ -3,6 +3,7 @@
 package dev.slne.surf.surfapi.bukkit.api.hook.papi.expansion
 
 import dev.slne.surf.surfapi.bukkit.api.util.UtilBukkit
+import org.bukkit.OfflinePlayer
 
 open class PapiExpansion @JvmOverloads constructor(
     val identifier: String,
@@ -18,4 +19,6 @@ open class PapiExpansion @JvmOverloads constructor(
     }
 
     val placeholders = placeholder.associateBy { it.placeholder }
+
+    open fun parseWithNoParams(player: OfflinePlayer): String? = null
 }
