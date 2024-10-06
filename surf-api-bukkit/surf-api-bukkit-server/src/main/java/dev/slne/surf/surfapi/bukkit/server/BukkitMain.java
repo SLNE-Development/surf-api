@@ -63,6 +63,7 @@ public class BukkitMain extends JavaPlugin {
     listenerManager.registerListeners();
     packetApiLoader.onEnable();
     coreInstance.onEnable();
+    surfBukkitApi.onEnable();
 
     try {
       scoreboardLibrary = ScoreboardLibrary.loadScoreboardLibrary(this);

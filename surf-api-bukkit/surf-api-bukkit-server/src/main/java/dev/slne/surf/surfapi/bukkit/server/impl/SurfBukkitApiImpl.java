@@ -5,12 +5,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
+import dev.slne.surf.surfapi.bukkit.api.hook.SurfBukkitHookManager;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations;
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
+import dev.slne.surf.surfapi.bukkit.server.hook.SurfBukkitHookManagerImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.scoreboard.SurfScoreboardBuilderImpl;
@@ -52,12 +54,18 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
 
   private final SurfBukkitVisualizerApiImpl visualizerApi;
   private final SurfBukkitNmsBridgeImpl nmsBridge;
+  private final SurfBukkitHookManagerImpl hookManager;
 
   public SurfBukkitApiImpl() {
     super(new SurfBukkitPacketApiImpl());
 
     this.visualizerApi = new SurfBukkitVisualizerApiImpl();
     this.nmsBridge = new SurfBukkitNmsBridgeImpl();
+    this.hookManager = new SurfBukkitHookManagerImpl();
+  }
+
+  public void onEnable() {
+    hookManager.onEnable();
   }
 
   @Override
@@ -68,6 +76,11 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
   @Override
   public SurfBukkitNmsBridgeImpl getNmsBridge() {
     return nmsBridge;
+  }
+
+  @Override
+  public SurfBukkitHookManager getHookManager() {
+    return hookManager;
   }
 
   @Override

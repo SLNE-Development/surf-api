@@ -1,4 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 
@@ -20,6 +19,8 @@ dependencies {
     api(project(":surf-api-core:surf-api-core-server"))
 
     paperweight.paperDevBundle(libs.paper.api.get().version)
+
+    compileOnly(libs.placeholder.api)
 
     // -------------------- Paper Libraries -------------------- //
     paperLibrary(libs.scoreboard.library.implementation)
@@ -72,6 +73,7 @@ paper {
         registerSoft("ViaBackwards")
         registerSoft("ViaRewind")
         registerSoft("Geyser-Spigot")
+        registerSoft("PlaceholderAPI")
 
         register("CommandAPI") {
             required = true

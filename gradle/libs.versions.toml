@@ -6,19 +6,22 @@ paper-api = "1.21-R0.1-SNAPSHOT"
 packetevents = "2.5.0-SNAPSHOT"
 
 # Command API
-commandapi = "9.5.1"
+commandapi = "9.5.3"
 commandapi-snapshot = "9.5.0-SNAPSHOT"
 
 # Scoreboard Library
-scoreboard-library = "2.1.10"
-scoreboard-library-implementation = "2.1.10"
-scoreboard-library-modern = "2.1.10"
+scoreboard-library = "2.1.12"
+scoreboard-library-implementation = "2.1.12"
+scoreboard-library-modern = "2.1.12"
 
 # Adventure
 adventure-api = "4.17.0"
 
 # Velocity
 velocity-api = "3.3.0-SNAPSHOT"
+
+# PAPI
+placeholder-api = "2.11.6"
 
 # Miscellaneous Libraries
 guava = "33.2.1-jre"
@@ -73,6 +76,9 @@ adventure-serializer-ansi = { module = "net.kyori:adventure-text-serializer-ansi
 
 # Velocity
 velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api" }
+
+# PAPI
+placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }
 
 # Miscellaneous Libraries
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
