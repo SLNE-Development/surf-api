@@ -7,7 +7,7 @@ abstract class PapiPlaceholder(
 ) {
 
     init {
-        require(!placeholder.contains("%") && !placeholder.contains("{") && placeholder.contains("_")) {
+        require(!placeholder.contains("%") && !placeholder.contains("{") && !placeholder.contains("_")) {
             "Placeholder may not contain %, {} or _"
         }
     }
