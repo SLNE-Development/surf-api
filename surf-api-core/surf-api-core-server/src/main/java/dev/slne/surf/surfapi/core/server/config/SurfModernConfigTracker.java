@@ -33,4 +33,8 @@ public class SurfModernConfigTracker {
   public <C> void registerConfig(Class<C> configClass, SurfConfigManagerModern<C> configManager) {
     configManagers.put(configClass, configManager);
   }
+
+  public <C> SurfConfigManagerModern<C> getConfigManager(Class<C> configClass) {
+    return (SurfConfigManagerModern<C>) configManagers.get(configClass);
+  }
 }

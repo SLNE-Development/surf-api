@@ -130,6 +130,13 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
   }
 
   @Override
+  public <C> SurfConfigManagerModern<C> getModernConfigManager(@NotNull Class<C> configClass) {
+    checkNotNull(configClass, "configClass");
+
+    return modernConfigTracker.getConfigManager(configClass);
+  }
+
+  @Override
   public String toString() {
     return ToStringBuilder.reflectionToString(this);
   }
