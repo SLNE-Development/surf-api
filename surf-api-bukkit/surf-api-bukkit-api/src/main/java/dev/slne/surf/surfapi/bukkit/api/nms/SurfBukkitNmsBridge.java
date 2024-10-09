@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.nms;
 
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge;
+import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsItemBridge;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsNbtBridge;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsStatsBridge;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.SurfBukkitNmsPacketBridges;
@@ -22,6 +23,8 @@ public interface SurfBukkitNmsBridge {
   SurfBukkitNmsPacketBridges getPacketBridges();
 
   SurfBukkitNmsNbtBridge getNbtBridge();
+
+  SurfBukkitNmsItemBridge getItemBridge();
 
   void registerServerboundPacketListener(NmsServerboundPacketListener<?> listener);
 

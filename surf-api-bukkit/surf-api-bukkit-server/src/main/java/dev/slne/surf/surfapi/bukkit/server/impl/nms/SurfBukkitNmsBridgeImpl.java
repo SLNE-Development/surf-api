@@ -5,12 +5,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.flogger.FluentLogger;
 import com.google.common.flogger.StackSize;
 import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge;
+import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsItemBridge;
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.NmsClientboundPacketListener;
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.NmsServerboundPacketListener;
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.NmsClientboundPacket;
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.NmsServerboundPacket;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.SurfBukkitNmsCommonBridgeImpl;
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.SurfBukkitNmsItemBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.SurfBukkitNmsNbtBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.SurfBukkitNmsStatsBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.SurfBukkitNmsPacketBridgesImpl;
@@ -21,12 +23,9 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
-import java.util.Optional;
-import java.util.stream.Stream;
 import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.minecraft.network.protocol.Packet;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -49,6 +48,11 @@ public final class SurfBukkitNmsBridgeImpl implements SurfBukkitNmsBridge {
   private final Object2ObjectMap<Class<?>, ObjectSet<NmsServerboundPacketListener<?>>> serverboundPacketListeners = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
   private final Object2ObjectMap<Class<?>, ObjectSet<NmsClientboundPacketListener<?>>> clientboundPacketListeners = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
   // @formatter:on
+
+  @Override
+  public SurfBukkitNmsItemBridge getItemBridge() {
+    return SurfBukkitNmsItemBridgeImpl.INSTANCE;
+  }
 
   @Override
   public void registerServerboundPacketListener(NmsServerboundPacketListener<?> listener) {

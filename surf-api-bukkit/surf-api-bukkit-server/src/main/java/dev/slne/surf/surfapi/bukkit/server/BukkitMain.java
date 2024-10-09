@@ -49,9 +49,9 @@ public class BukkitMain extends JavaPlugin {
 
   @Override
   public void onLoad() {
-    Reflection.class.getClassLoader(); // initialize Reflection
     packetApiLoader.onLoad();
     SurfBukkitApiAccess.setInstance(surfBukkitApi);
+    Reflection.class.getClassLoader(); // initialize Reflection
 
     new LibLoader(getClassLoader()).loadLibs();
 

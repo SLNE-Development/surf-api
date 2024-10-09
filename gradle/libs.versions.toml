@@ -41,6 +41,7 @@ configurate = "4.1.2"
 more-persistent-data-types = "2.4.0"
 inventoryframework = "0.10.17"
 flogger = "0.8"
+aide-reflection = "1.3"
 
 [libraries]
 # Paper
@@ -99,6 +100,7 @@ more-persistent-data-types = { module = "com.jeff_media:MorePersistentDataTypes"
 inventoryframework = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "inventoryframework" }
 flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
 flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
+aide-reflection = { module = "tech.hiddenproject:aide-reflection", version.ref = "aide-reflection" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-paper" }

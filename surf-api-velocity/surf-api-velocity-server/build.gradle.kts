@@ -14,6 +14,7 @@ dependencies {
     api(libs.fastutil)
     api(libs.flogger)
     api(libs.commons.math4.core)
+    api(libs.aide.reflection)
     runtimeOnly(libs.flogger.slf4j.backend)
     annotationProcessor(libs.velocity.api)
 }

@@ -44,6 +44,7 @@ dependencies {
     paperLibrary(libs.flogger)
     paperLibrary(libs.flogger.slf4j.backend)
     paperLibrary(libs.commons.math4.core)
+    paperLibrary(libs.aide.reflection)
 }
 
 
