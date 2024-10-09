@@ -49,9 +49,9 @@ public class BukkitMain extends JavaPlugin {
 
   @Override
   public void onLoad() {
-    Reflection.class.getClassLoader(); // initialize Reflection
     packetApiLoader.onLoad();
     SurfBukkitApiAccess.setInstance(surfBukkitApi);
+    Reflection.class.getClassLoader(); // initialize Reflection
 
     new LibLoader(getClassLoader()).loadLibs();
 
@@ -63,6 +63,7 @@ public class BukkitMain extends JavaPlugin {
     listenerManager.registerListeners();
     packetApiLoader.onEnable();
     coreInstance.onEnable();
+    surfBukkitApi.onEnable();
 
     try {
       scoreboardLibrary = ScoreboardLibrary.loadScoreboardLibrary(this);

@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
@@ -92,55 +93,106 @@ public class Util {
   }
 
   public static void setStaticFinalField(Field field, Object value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putObject(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, Object value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putObject(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, int value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putInt(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, int value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putInt(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, long value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putLong(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, long value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putLong(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, boolean value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putBoolean(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, boolean value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putBoolean(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, byte value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putByte(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, byte value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putByte(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, short value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putShort(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, short value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putShort(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, float value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putFloat(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, float value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putFloat(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, double value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putDouble(fieldBase, fieldOffset, value));
   }
 
+  public static void setFinalField(Field field, Object instance, double value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putDouble(instance, fieldOffset, value));
+  }
+
   public static void setStaticFinalField(Field field, char value) {
-    processField(field,
+    processStaticFinalField(field,
         (unsafe, fieldBase, fieldOffset) -> unsafe.putChar(fieldBase, fieldOffset, value));
   }
 
-  private static void processField(Field field, TriConsumer<Unsafe, Object, Long> putOperation) {
+  public static void setFinalField(Field field, Object instance, char value) {
+    processFinalField(field,
+        (unsafe, fieldOffset) -> unsafe.putChar(instance, fieldOffset, value));
+  }
+
+  private static void processStaticFinalField(Field field, TriConsumer<Unsafe, Object, Long> putOperation) {
     final Object fieldBase = UNSAFE.staticFieldBase(field);
     final long fieldOffset = UNSAFE.staticFieldOffset(field);
 
     putOperation.accept(UNSAFE, fieldBase, fieldOffset);
+  }
+
+  private static void processFinalField(Field field, BiConsumer<Unsafe, Long> putOperation) {
+    final long fieldOffset = UNSAFE.objectFieldOffset(field);
+
+    putOperation.accept(UNSAFE, fieldOffset);
   }
 
 

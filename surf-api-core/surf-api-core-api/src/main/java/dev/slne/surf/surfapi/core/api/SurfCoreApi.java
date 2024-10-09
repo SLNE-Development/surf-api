@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.core.api;
 
 import dev.slne.surf.surfapi.core.api.config.SurfConfigManager.ConfigFileNamePattern;
+import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern;
 import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernJsonConfigFileNamePattern;
 import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernYamlConfigFileNamePattern;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
@@ -71,6 +72,8 @@ public interface SurfCoreApi {
   <C> C getModernConfig(@NotNull Class<C> configClass);
 
   <C> C reloadModernConfig(@NotNull Class<C> configClass);
+
+  <C> SurfConfigManagerModern<C> getModernConfigManager(@NotNull Class<C> configClass);
 
   Path getDataFolder();
 }

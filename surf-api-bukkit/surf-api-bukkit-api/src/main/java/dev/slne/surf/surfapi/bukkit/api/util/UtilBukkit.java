@@ -6,6 +6,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A utility class that extends Util and provides additional helper methods specific to Bukkit.
@@ -26,6 +27,19 @@ public final class UtilBukkit extends Util {
       return new NamespacedKey(plugin, name);
     } catch (final Exception e) {
       throw new IllegalStateException("Failed to get the providing plugin", e);
+    }
+  }
+
+  public static @Nullable JavaPlugin getCallingPlugin() {
+    return getCallingPlugin(2);
+  }
+
+  public static @Nullable JavaPlugin getCallingPlugin(int depth) {
+    try {
+      final Class<?> callerClass = STACK_WALKER.walk(frames -> frames.skip(depth).findFirst().get().getDeclaringClass());
+      return JavaPlugin.getProvidingPlugin(callerClass);
+    } catch (final Exception e) {
+      return null;
     }
   }
 

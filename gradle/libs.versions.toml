@@ -6,19 +6,22 @@ paper-api = "1.20.6-R0.1-SNAPSHOT"
 packetevents = "2.5.0-SNAPSHOT"
 
 # Command API
-commandapi = "9.5.1"
+commandapi = "9.5.3"
 commandapi-snapshot = "9.5.0-SNAPSHOT"
 
 # Scoreboard Library
-scoreboard-library = "2.1.10"
-scoreboard-library-implementation = "2.1.10"
-scoreboard-library-modern = "2.1.10"
+scoreboard-library = "2.1.12"
+scoreboard-library-implementation = "2.1.12"
+scoreboard-library-modern = "2.1.12"
 
 # Adventure
 adventure-api = "4.17.0"
 
 # Velocity
 velocity-api = "3.3.0-SNAPSHOT"
+
+# PAPI
+placeholder-api = "2.11.6"
 
 # Miscellaneous Libraries
 guava = "33.2.1-jre"
@@ -38,6 +41,7 @@ configurate = "4.1.2"
 more-persistent-data-types = "2.4.0"
 inventoryframework = "0.10.17"
 flogger = "0.8"
+aide-reflection = "1.3"
 
 [libraries]
 # Paper
@@ -74,6 +78,9 @@ adventure-serializer-ansi = { module = "net.kyori:adventure-text-serializer-ansi
 # Velocity
 velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api" }
 
+# PAPI
+placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }
+
 # Miscellaneous Libraries
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
@@ -93,6 +100,7 @@ more-persistent-data-types = { module = "com.jeff_media:MorePersistentDataTypes"
 inventoryframework = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "inventoryframework" }
 flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
 flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
+aide-reflection = { module = "tech.hiddenproject:aide-reflection", version.ref = "aide-reflection" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-paper" }
