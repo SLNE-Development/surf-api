@@ -64,7 +64,7 @@ paper {
     generateLibrariesJson = true
 
     // Other
-    foliaSupported = false
+    foliaSupported = true
 
     // Plugin Dependencies
     serverDependencies {
