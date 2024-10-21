@@ -23,7 +23,7 @@ dependencies {
     compileOnlyApi(libs.flogger)
     compileOnlyApi(libs.commons.math4.core)
     compileOnlyApi(libs.aide.reflection)
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 }
 
 description = "surf-api-core-api"
