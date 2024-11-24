@@ -1,8 +1,9 @@
 plugins {
     java
+    `java-library`
     id("io.papermc.paperweight.userdev") version "1.7.1" apply false
     id("io.papermc.paperweight.core") version "1.7.1"
-    kotlin("jvm") version "2.0.0" apply false
+    kotlin("jvm") version libs.versions.kotlinVersion apply false
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
@@ -20,9 +21,16 @@ repositories {
 
 allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.gradle.java-library")
+
 
     repositories {
         mavenCentral()
+    }
+
+    dependencies {
+        compileOnlyApi(kotlin("stdlib"))
+        compileOnlyApi(rootProject.libs.kotlinxCoroutines.core)
     }
 }
 
