@@ -13,7 +13,9 @@ dependencies {
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
     compileOnlyApi(libs.inventoryframework)
+
     api(libs.commandapi.bukkit.kotlin)
+    compileOnlyApi(libs.mccoroutine.folia.api)
 }
 
 description = "surf-api-bukkit-api"

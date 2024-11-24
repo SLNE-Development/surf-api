@@ -1,5 +1,6 @@
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
+import org.gradle.kotlin.dsl.NamedDomainObjectContainerScope
 
 description = "surf-api-bukkit-server"
 
@@ -45,6 +46,8 @@ dependencies {
     paperLibrary(libs.flogger.slf4j.backend)
     paperLibrary(libs.commons.math4.core)
     paperLibrary(libs.aide.reflection)
+    paperLibrary(libs.mccoroutine.folia.api)
+    paperLibrary(libs.mccoroutine.folia.core)
 }
 
 

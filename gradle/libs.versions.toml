@@ -23,6 +23,9 @@ velocity-api = "3.3.0-SNAPSHOT"
 # PAPI
 placeholder-api = "2.11.6"
 
+# McCoroutine
+mccoroutine = "2.20.0"
+
 # Miscellaneous Libraries
 guava = "33.2.1-jre"
 caffeine = "3.1.8"
@@ -80,6 +83,10 @@ velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "vel
 
 # PAPI
 placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }
+
+# McCoroutine
+mccoroutine-folia-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-folia-api", version.ref = "mccoroutine" }
+mccoroutine-folia-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-folia-core", version.ref = "mccoroutine" }
 
 # Miscellaneous Libraries
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
