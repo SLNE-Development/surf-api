@@ -30,8 +30,10 @@ dependencies {
     api(libs.commons.math4.core)
     implementation(libs.packetevents.netty.common)
     runtimeOnly(libs.flogger.slf4j.backend)
+
     api(kotlin("stdlib"))
     api(libs.kotlinxCoroutines.core)
+    api(libs.kotlin.reflect)
 }
 
 private fun <T : ModuleDependency> T.exclude(provider: Provider<MinimalExternalModuleDependency>) =

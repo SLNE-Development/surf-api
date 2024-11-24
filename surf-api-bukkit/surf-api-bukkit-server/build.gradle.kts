@@ -51,6 +51,7 @@ dependencies {
 
     paperLibrary(kotlin("stdlib"))
     paperLibrary(libs.kotlinxCoroutines.core)
+    paperLibrary(libs.kotlin.reflect)
 }
 
 

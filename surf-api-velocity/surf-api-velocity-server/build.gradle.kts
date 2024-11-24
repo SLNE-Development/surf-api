@@ -20,6 +20,7 @@ dependencies {
 
     api(kotlin("stdlib"))
     api(libs.kotlinxCoroutines.core)
+    api(libs.kotlin.reflect)
 }
 
 tasks {

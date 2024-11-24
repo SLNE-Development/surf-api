@@ -55,7 +55,8 @@ aide-reflection = "1.3"
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 
 # Kotlin
-kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines"}
+kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
 
 # Packet Events
 packetevents-spigot = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }

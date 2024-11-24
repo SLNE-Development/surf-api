@@ -31,6 +31,7 @@ allprojects {
     dependencies {
         compileOnlyApi(kotlin("stdlib"))
         compileOnlyApi(rootProject.libs.kotlinxCoroutines.core)
+        compileOnlyApi(rootProject.libs.kotlin.reflect)
     }
 }
 
