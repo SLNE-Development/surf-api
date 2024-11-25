@@ -11,7 +11,7 @@ repositories {
 }
 
 group = "dev.slne.surf"
-version = "1.21-1.11.2-SNAPSHOT"
+version = "1.21-1.11.3-SNAPSHOT"
 
 java {
     toolchain {

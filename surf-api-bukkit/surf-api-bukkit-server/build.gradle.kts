@@ -48,10 +48,6 @@ dependencies {
     paperLibrary(libs.aide.reflection)
     paperLibrary(libs.mccoroutine.folia.api)
     paperLibrary(libs.mccoroutine.folia.core)
-
-    paperLibrary(kotlin("stdlib"))
-    paperLibrary(libs.kotlinxCoroutines.core)
-    paperLibrary(libs.kotlin.reflect)
 }
 
 

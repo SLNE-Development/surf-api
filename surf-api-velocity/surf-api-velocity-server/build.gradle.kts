@@ -17,10 +17,6 @@ dependencies {
     api(libs.aide.reflection)
     runtimeOnly(libs.flogger.slf4j.backend)
     annotationProcessor(libs.velocity.api)
-
-    api(kotlin("stdlib"))
-    api(libs.kotlinxCoroutines.core)
-    api(libs.kotlin.reflect)
 }
 
 tasks {

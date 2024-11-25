@@ -29,9 +29,9 @@ allprojects {
     }
 
     dependencies {
-        compileOnlyApi(kotlin("stdlib"))
-        compileOnlyApi(rootProject.libs.kotlinxCoroutines.core)
-        compileOnlyApi(rootProject.libs.kotlin.reflect)
+        api(kotlin("stdlib"))
+        api(rootProject.libs.kotlinxCoroutines.core)
+        api(rootProject.libs.kotlin.reflect)
     }
 }
 
