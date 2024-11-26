@@ -31,6 +31,7 @@ allprojects {
     dependencies {
         api(kotlin("stdlib", rootProject.libs.versions.kotlinVersion.get()))
         api(rootProject.libs.kotlinxCoroutines.core)
+        api(rootProject.libs.kotlinxCoroutines.reactive)
         api(rootProject.libs.kotlinxCoroutines.reactor)
         api(rootProject.libs.kotlin.reflect)
     }
