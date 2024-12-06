@@ -5,13 +5,24 @@ import org.bukkit.event.Event
 import org.bukkit.event.EventPriority
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
+import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
+import kotlin.reflect.KClass
 
 
 /**
  * Shortcut for unregistering all events in this listener.
  */
 fun Listener.unregister() = HandlerList.unregisterAll(this)
+
+fun <T : Event> Listener.register(
+    plugin: Plugin,
+    eventClass: KClass<T>,
+    priority: EventPriority = EventPriority.NORMAL,
+    ignoreCancelled: Boolean = false,
+    executor: (Listener, Event) -> Unit,
+) = pluginManager.registerEvent(eventClass.java, this, priority, executor, plugin, ignoreCancelled)
+
 
 /**
  * Registers the event with a custom event [executor].
@@ -25,10 +36,14 @@ inline fun <reified T : Event> Listener.register(
     priority: EventPriority = EventPriority.NORMAL,
     ignoreCancelled: Boolean = false,
     noinline executor: (Listener, Event) -> Unit,
-) {
-    val plugin = JavaPlugin.getProvidingPlugin(this::class.java)
-    pluginManager.registerEvent(T::class.java, this, priority, executor, plugin, ignoreCancelled)
-}
+) = register(
+    JavaPlugin.getProvidingPlugin(this::class.java),
+    T::class,
+    priority,
+    ignoreCancelled,
+    executor
+)
+
 
 /**
  * This class represents a [Listener] with
@@ -41,14 +56,13 @@ abstract class SingleListener<T : Event>(
     abstract fun T.onEvent()
 }
 
-/**
- * Registers the [SingleListener] with its
- * event listener.
- */
-inline fun <reified T : Event> SingleListener<T>.register() {
-    val plugin = JavaPlugin.getProvidingPlugin(this::class.java)
+@Suppress("UNCHECKED_CAST")
+fun <T : Event> SingleListener<T>.register(
+    plugin: Plugin,
+    eventClass: KClass<T>,
+) {
     pluginManager.registerEvent(
-        T::class.java,
+        eventClass.java,
         this,
         priority,
         { _, event -> (event as? T)?.onEvent() },
@@ -57,9 +71,33 @@ inline fun <reified T : Event> SingleListener<T>.register() {
     )
 }
 
+/**
+ * Registers the [SingleListener] with its
+ * event listener.
+ */
+inline fun <reified T : Event> SingleListener<T>.register() =
+    register(JavaPlugin.getProvidingPlugin(this::class.java), T::class)
+
+fun Listener.register(plugin: Plugin) = pluginManager.registerEvents(this, plugin)
+
 @Suppress("NOTHING_TO_INLINE")
-inline fun Listener.register() {
-    pluginManager.registerEvents(this, JavaPlugin.getProvidingPlugin(this::class.java))
+inline fun Listener.register() = register(JavaPlugin.getProvidingPlugin(this::class.java))
+
+fun <T : Event> listen(
+    plugin: Plugin,
+    eventClass: KClass<T>,
+    priority: EventPriority = EventPriority.NORMAL,
+    ignoreCancelled: Boolean = false,
+    register: Boolean = true,
+    onEvent: T.() -> Unit,
+): SingleListener<T> {
+    val listener = object : SingleListener<T>(priority, ignoreCancelled) {
+        override fun T.onEvent() {
+            onEvent()
+        }
+    }
+    if (register) listener.register(plugin, eventClass)
+    return listener
 }
 
 /**
@@ -69,17 +107,16 @@ inline fun Listener.register() {
  * @param register if the event should be registered immediately
  * @param onEvent the event callback
  */
-inline fun <reified T : Event> listen(
+inline fun <reified T : Event> Any.listen(
     priority: EventPriority = EventPriority.NORMAL,
     ignoreCancelled: Boolean = false,
     register: Boolean = true,
-    crossinline onEvent: T.() -> Unit,
-): SingleListener<T> {
-    val listener = object : SingleListener<T>(priority, ignoreCancelled) {
-        override fun T.onEvent() {
-            onEvent()
-        }
-    }
-    if (register) listener.register()
-    return listener
-}
+    noinline onEvent: T.() -> Unit,
+): SingleListener<T> = listen(
+    JavaPlugin.getProvidingPlugin(this::class.java),
+    T::class,
+    priority,
+    ignoreCancelled,
+    register,
+    onEvent
+)
