@@ -101,6 +101,7 @@ public class VelocityMain extends CoreInstance {
     this.surfVelocityApiImpl = new SurfVelocityApiImpl();
     SurfVelocityApiAccess.setInstance(this.surfVelocityApiImpl);
 
+    new SuspendingEventHandler(server.getEventManager()).register();
     onLoad();
   }
 
