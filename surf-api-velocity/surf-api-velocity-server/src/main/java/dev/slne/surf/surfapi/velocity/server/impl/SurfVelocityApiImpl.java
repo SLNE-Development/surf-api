@@ -2,7 +2,10 @@ package dev.slne.surf.surfapi.velocity.server.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.auto.service.AutoService;
 import com.velocitypowered.api.proxy.ProxyServer;
+import dev.slne.surf.surfapi.core.api.SurfCoreApi;
+import dev.slne.surf.surfapi.core.api.util.UtilKt;
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
 import dev.slne.surf.surfapi.velocity.api.SurfVelocityApi;
 import dev.slne.surf.surfapi.velocity.api.packet.SurfVelocityPacketApi;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * </p>
  */
 @ApiStatus.Internal
+@AutoService(SurfCoreApi.class)
 public class SurfVelocityApiImpl extends SurfCoreApiImpl<SurfVelocityPacketApi> implements
     SurfVelocityApi {
 
@@ -39,6 +43,7 @@ public class SurfVelocityApiImpl extends SurfCoreApiImpl<SurfVelocityPacketApi> 
    */
   public SurfVelocityApiImpl() {
     super(new SurfVelocityPacketApiImpl());
+    UtilKt.checkInstantiationByServiceLoader();
   }
 
   @Override

@@ -12,8 +12,6 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
-import dev.slne.surf.surfapi.velocity.api.SurfVelocityApiAccess;
-import dev.slne.surf.surfapi.velocity.server.impl.SurfVelocityApiImpl;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import org.jetbrains.annotations.Contract;
@@ -67,7 +65,6 @@ public class VelocityMain extends CoreInstance {
    */
   private final ExecutorService executorService;
 
-  private final SurfVelocityApiImpl surfVelocityApiImpl;
 
   /**
    * The VelocityMain class represents the main class of the Surf API Velocity plugin. It is
@@ -98,8 +95,6 @@ public class VelocityMain extends CoreInstance {
     this.executorService = executorService;
 
     instance = this;
-    this.surfVelocityApiImpl = new SurfVelocityApiImpl();
-    SurfVelocityApiAccess.setInstance(this.surfVelocityApiImpl);
 
     new SuspendingEventHandler(server.getEventManager()).register();
     onLoad();
@@ -162,15 +157,6 @@ public class VelocityMain extends CoreInstance {
    */
   public ExecutorService getExecutorService() {
     return executorService;
-  }
-
-  /**
-   * Retrieves the SurfVelocityApiImpl object associated with the VelocityMain instance.
-   *
-   * @return The SurfVelocityApiImpl object.
-   */
-  public SurfVelocityApiImpl getSurfVelocityApiImpl() {
-    return surfVelocityApiImpl;
   }
 
   public PluginContainer getPluginContainer() {

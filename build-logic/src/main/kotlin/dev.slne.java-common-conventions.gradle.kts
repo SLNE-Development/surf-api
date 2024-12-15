@@ -1,6 +1,3 @@
-import jdk.javadoc.internal.tool.resources.javadoc
-import jdk.tools.jlink.resources.plugins
-
 plugins {
     java
     `maven-publish`
@@ -14,7 +11,7 @@ repositories {
 }
 
 group = "dev.slne.surf"
-version = "1.21-1.12.1-SNAPSHOT"
+version = "1.21-1.13.0-SNAPSHOT"
 
 java {
     toolchain {

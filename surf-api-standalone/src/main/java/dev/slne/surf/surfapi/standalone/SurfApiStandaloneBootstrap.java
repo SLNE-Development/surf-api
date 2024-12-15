@@ -11,7 +11,6 @@ import com.github.retrooper.packetevents.netty.NettyManager;
 import com.github.retrooper.packetevents.protocol.ProtocolVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
 import dev.slne.surf.surfapi.core.server.CoreInstance;
-import dev.slne.surf.surfapi.standalone.impl.SurfStandaloneApiImpl;
 import io.github.retrooper.packetevents.impl.netty.NettyManagerImpl;
 import io.github.retrooper.packetevents.impl.netty.manager.player.PlayerManagerAbstract;
 import io.github.retrooper.packetevents.impl.netty.manager.protocol.ProtocolManagerAbstract;
@@ -32,9 +31,6 @@ public final class SurfApiStandaloneBootstrap {
   @Contract(pure = true)
   public static void bootstrap() {
     preparePacketEvents();
-
-    final SurfStandaloneApiImpl surfStandaloneApiImpl = new SurfStandaloneApiImpl();
-    SurfStandaloneApiAccess.setInstance(surfStandaloneApiImpl);
 
     coreInstance = new CoreInstance();
     coreInstance.onLoad();

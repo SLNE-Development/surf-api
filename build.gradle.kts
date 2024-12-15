@@ -4,6 +4,7 @@ plugins {
     id("io.papermc.paperweight.userdev") version "1.7.1" apply false
     id("io.papermc.paperweight.core") version "1.7.1"
     kotlin("jvm") version libs.versions.kotlinVersion apply false
+    kotlin("kapt") version libs.versions.kotlinVersion
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
@@ -22,6 +23,7 @@ repositories {
 allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.gradle.java-library")
+    apply(plugin = "org.jetbrains.kotlin.kapt")
 
 
     repositories {
@@ -34,6 +36,8 @@ allprojects {
         api(rootProject.libs.kotlinxCoroutines.reactive)
         api(rootProject.libs.kotlinxCoroutines.reactor)
         api(rootProject.libs.kotlin.reflect)
+        implementation("com.google.auto.service:auto-service:1.1.1")
+        "kapt"("com.google.auto.service:auto-service:1.1.1")
     }
 }
 

@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.server;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.flogger.FluentLogger;
-import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApiAccess;
 import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.libs.LibLoader;
 import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager;
@@ -14,7 +13,6 @@ import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
 import net.megavex.scoreboardlibrary.api.exception.NoPacketAdapterAvailableException;
 import net.megavex.scoreboardlibrary.api.noop.NoopScoreboardLibrary;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +26,6 @@ public class BukkitMain extends JavaPlugin {
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   private final CoreInstance coreInstance = new CoreInstance();
-  private final SurfBukkitApiImpl surfBukkitApi = new SurfBukkitApiImpl();
   private final PacketApiLoader packetApiLoader = new PacketApiLoader(this);
   private final ListenerManager listenerManager = new ListenerManager(this);
 
@@ -50,7 +47,6 @@ public class BukkitMain extends JavaPlugin {
   @Override
   public void onLoad() {
     packetApiLoader.onLoad();
-    SurfBukkitApiAccess.setInstance(surfBukkitApi);
     Reflection.class.getClassLoader(); // initialize Reflection
 
     new LibLoader(getClassLoader()).loadLibs();
@@ -63,7 +59,7 @@ public class BukkitMain extends JavaPlugin {
     listenerManager.registerListeners();
     packetApiLoader.onEnable();
     coreInstance.onEnable();
-    surfBukkitApi.onEnable();
+    SurfBukkitApiImpl.get().onEnable();
 
     try {
       scoreboardLibrary = ScoreboardLibrary.loadScoreboardLibrary(this);
@@ -83,15 +79,6 @@ public class BukkitMain extends JavaPlugin {
     listenerManager.unregisterListeners();
   }
 
-  /**
-   * Retrieves the SurfBukkitApi instance.
-   *
-   * @return The SurfBukkitApi instance.
-   */
-  @ApiStatus.Internal
-  public SurfBukkitApiImpl getSurfBukkitApi() {
-    return surfBukkitApi;
-  }
 
   /**
    * Retrieves the ScoreboardLibrary instance.

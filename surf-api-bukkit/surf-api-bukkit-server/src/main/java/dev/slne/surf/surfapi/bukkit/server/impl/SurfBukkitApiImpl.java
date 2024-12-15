@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.server.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.auto.service.AutoService;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi;
@@ -18,7 +19,9 @@ import dev.slne.surf.surfapi.bukkit.server.impl.packet.SurfBukkitPacketApiImpl;
 import dev.slne.surf.surfapi.bukkit.server.scoreboard.SurfScoreboardBuilderImpl;
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler;
 import dev.slne.surf.surfapi.bukkit.server.visualizer.SurfBukkitVisualizerApiImpl;
+import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.util.Result;
+import dev.slne.surf.surfapi.core.api.util.UtilKt;
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -49,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
  * @see SurfCoreApiImpl
  */
 @ApiStatus.Internal
+@AutoService(SurfCoreApi.class)
 public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> implements
     SurfBukkitApi {
 
@@ -58,6 +62,8 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
 
   public SurfBukkitApiImpl() {
     super(new SurfBukkitPacketApiImpl());
+
+    UtilKt.checkInstantiationByServiceLoader();
 
     this.visualizerApi = new SurfBukkitVisualizerApiImpl();
     this.nmsBridge = new SurfBukkitNmsBridgeImpl();
@@ -168,6 +174,10 @@ public class SurfBukkitApiImpl extends SurfCoreApiImpl<SurfBukkitPacketApi> impl
     }
 
     return results;
+  }
+
+  public static SurfBukkitApiImpl get() {
+    return (SurfBukkitApiImpl) SurfBukkitApi.get();
   }
 
 }

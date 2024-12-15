@@ -32,7 +32,7 @@ public interface SurfBukkitApi extends SurfCoreApi {
    */
   @Contract(pure = true)
   static SurfBukkitApi get() {
-    return SurfBukkitApiAccess.getInstance();
+    return (SurfBukkitApi) SurfCoreApi.getCore();
   }
 
   /**
