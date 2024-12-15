@@ -20,7 +20,6 @@ import dev.slne.surf.surfapi.bukkit.server.scoreboard.SurfScoreboardBuilderImpl;
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler;
 import dev.slne.surf.surfapi.bukkit.server.visualizer.SurfBukkitVisualizerApiImpl;
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
-import dev.slne.surf.surfapi.core.api.util.Result;
 import dev.slne.surf.surfapi.core.api.util.UtilKt;
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
 import java.nio.file.Path;

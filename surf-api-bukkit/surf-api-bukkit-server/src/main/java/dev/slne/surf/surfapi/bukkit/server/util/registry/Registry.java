@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.server.util.registry;
 
-import dev.slne.surf.surfapi.core.api.reflection.annontation.Field;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

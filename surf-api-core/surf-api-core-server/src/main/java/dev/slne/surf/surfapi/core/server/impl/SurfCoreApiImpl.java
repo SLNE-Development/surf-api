@@ -3,10 +3,10 @@ package dev.slne.surf.surfapi.core.server.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManager;
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern;
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernJsonConfigFileNamePattern;
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernYamlConfigFileNamePattern;
+import dev.slne.surf.surfapi.core.api.config.DazzlConfConfigManager;
+import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager;
+import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager.JsonConfigFileNamePattern;
+import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager.YamlConfigFileNamePattern;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
 import dev.slne.surf.surfapi.core.api.reflection.SurfReflection;
 import dev.slne.surf.surfapi.core.server.config.SurfConfigTracker;
@@ -61,7 +61,7 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
 
   @Override
   public <C> C createConfig(@NotNull Class<C> configClass, @NotNull Path configFolder,
-      @NotNull @SurfConfigManager.ConfigFileNamePattern String configFileName) {
+      @NotNull @DazzlConfConfigManager.ConfigFileNamePattern String configFileName) {
     checkNotNull(configClass, "configClass");
     checkNotNull(configFolder, "configFolder");
     checkNotNull(configFileName, "configFileName");
@@ -87,32 +87,32 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
 
   @Override
   public <C> C createModernJsonConfig(@NotNull Class<C> configClass, @NotNull Path configFolder,
-      @NotNull @ModernJsonConfigFileNamePattern String configFileName) {
+      @NotNull @JsonConfigFileNamePattern String configFileName) {
     checkNotNull(configClass, "configClass");
     checkNotNull(configFolder, "configFolder");
     checkNotNull(configFileName, "configFileName");
 
-    final SurfConfigManagerModern<C> manager = SurfConfigManagerModern.json(configClass,
+    final SpongeConfigManager<C> manager = SpongeConfigManager.json(configClass,
         configFolder, configFileName);
 
     modernConfigTracker.registerConfig(configClass, manager);
 
-    return manager.getConfig();
+    return manager.config;
   }
 
   @Override
   public <C> C createModernYamlConfig(@NotNull Class<C> configClass, @NotNull Path configFolder,
-      @NotNull @ModernYamlConfigFileNamePattern String configFileName) {
+      @NotNull @YamlConfigFileNamePattern String configFileName) {
     checkNotNull(configClass, "configClass");
     checkNotNull(configFolder, "configFolder");
     checkNotNull(configFileName, "configFileName");
 
-    final SurfConfigManagerModern<C> manager = SurfConfigManagerModern.yaml(configClass,
+    final SpongeConfigManager<C> manager = SpongeConfigManager.yaml(configClass,
         configFolder, configFileName);
 
     modernConfigTracker.registerConfig(configClass, manager);
 
-    return manager.getConfig();
+    return manager.config;
   }
 
   @Override
@@ -130,7 +130,7 @@ public abstract class SurfCoreApiImpl<PacketImpl extends SurfCorePacketApi> impl
   }
 
   @Override
-  public <C> SurfConfigManagerModern<C> getModernConfigManager(@NotNull Class<C> configClass) {
+  public <C> SpongeConfigManager<C> getModernConfigManager(@NotNull Class<C> configClass) {
     checkNotNull(configClass, "configClass");
 
     return modernConfigTracker.getConfigManager(configClass);

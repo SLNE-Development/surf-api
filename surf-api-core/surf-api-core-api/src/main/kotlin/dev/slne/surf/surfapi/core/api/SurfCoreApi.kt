@@ -1,9 +1,9 @@
 package dev.slne.surf.surfapi.core.api
 
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManager.ConfigFileNamePattern
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernJsonConfigFileNamePattern
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern.ModernYamlConfigFileNamePattern
+import dev.slne.surf.surfapi.core.api.config.DazzlConfConfigManager.ConfigFileNamePattern
+import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager
+import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager.JsonConfigFileNamePattern
+import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager.YamlConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi
 import dev.slne.surf.surfapi.core.api.reflection.SurfReflection
 import dev.slne.surf.surfapi.core.api.util.requiredService
@@ -50,19 +50,19 @@ interface SurfCoreApi {
 
     fun <C> createModernYamlConfig(
         configClass: Class<C?>, configFolder: Path,
-        configFileName: @ModernYamlConfigFileNamePattern String
+        configFileName: @YamlConfigFileNamePattern String
     ): C?
 
     fun <C> createModernJsonConfig(
         configClass: Class<C?>, configFolder: Path,
-        configFileName: @ModernJsonConfigFileNamePattern String
+        configFileName: @JsonConfigFileNamePattern String
     ): C?
 
     fun <C> getModernConfig(configClass: Class<C?>): C?
 
     fun <C> reloadModernConfig(configClass: Class<C?>): C?
 
-    fun <C> getModernConfigManager(configClass: Class<C?>): SurfConfigManagerModern<C?>?
+    fun <C> getModernConfigManager(configClass: Class<C?>): SpongeConfigManager<C?>?
 
     val dataFolder: Path
 

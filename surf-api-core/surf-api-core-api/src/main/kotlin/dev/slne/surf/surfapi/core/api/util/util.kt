@@ -4,7 +4,19 @@ package dev.slne.surf.surfapi.core.api.util
 
 import com.google.common.flogger.FluentLogger
 import com.google.common.flogger.LoggingApi
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectMaps
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import sun.misc.Unsafe
+import java.lang.reflect.Field
 import java.security.SecureRandom
+import java.util.function.ToIntFunction
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -151,4 +163,199 @@ fun checkCallerClass(expected: Class<*>) {
  */
 fun checkInstantiationByServiceLoader() {
     check(getCallerClass(1)?.name?.startsWith("java.util.ServiceLoader") == true) { "Cannot instantiate instance directly" }
+}
+
+val unsafe = try {
+    val unsafeField = Unsafe::class.java.getDeclaredField("theUnsafe")
+    unsafeField.isAccessible = true
+    unsafeField.get(null) as Unsafe
+} catch (e: Exception) {
+    throw RuntimeException(e)
+}
+
+fun setStaticFinalField(field: Field, value: Any?) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putObject(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Any?) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putObject(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Int) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putInt(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Int) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putInt(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Long) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putLong(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Long) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putLong(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Boolean) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putBoolean(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Boolean) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putBoolean(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Byte) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putByte(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Byte) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putByte(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Short) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putShort(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Short) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putShort(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Float) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putFloat(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Float) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putFloat(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Double) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putDouble(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Double) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putDouble(instance, fieldOffset, value)
+    }
+}
+
+fun setStaticFinalField(field: Field, value: Char) {
+    processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
+        unsafe.putChar(fieldBase, fieldOffset, value)
+    }
+}
+
+fun setFinalField(field: Field, instance: Any, value: Char) {
+    processFinalField(field) { unsafe, fieldOffset ->
+        unsafe.putChar(instance, fieldOffset, value)
+    }
+}
+
+private fun processStaticFinalField(field: Field, putOperation: (Unsafe, Any, Long) -> Unit) {
+    val fieldBase = unsafe.staticFieldBase(field)
+    val fieldOffset = unsafe.staticFieldOffset(field)
+    putOperation(unsafe, fieldBase, fieldOffset)
+}
+
+private fun processFinalField(field: Field, putOperation: (Unsafe, Long) -> Unit) {
+    val fieldOffset = unsafe.objectFieldOffset(field)
+    putOperation(unsafe, fieldOffset)
+}
+
+fun <T : Enum<T>> byStringIdMap(
+    enumClass: Class<T>,
+    idMapper: (T) -> String
+): Object2ObjectMap<String, T> = Object2ObjectMaps.unmodifiable(
+    Object2ObjectOpenHashMap(
+        enumClass.enumConstants.associateBy(idMapper)
+    )
+)
+
+
+fun <T : Enum<T>> byIdMap(
+    enumClass: Class<T>,
+    idMapper: ToIntFunction<T>
+): Int2ObjectMap<T> {
+    return byIdMap(idMapper, enumClass.enumConstants)
+}
+
+fun <T> byIdMap(
+    idMapper: ToIntFunction<T>,
+    values: Array<T>
+): Int2ObjectMap<T> {
+    return Int2ObjectMaps.unmodifiable(
+        Int2ObjectOpenHashMap(
+            values.associateBy({ idMapper.applyAsInt(it) }, { it })
+        )
+    )
+}
+
+fun <T> byIdMap(
+    idMapper: (T) -> Int,
+    values: Array<T>
+): Int2ObjectMap<T> {
+    return Int2ObjectMaps.unmodifiable(
+        Int2ObjectOpenHashMap(
+            values.associateBy(idMapper)
+        )
+    )
+}
+
+fun <T> byByteIdMap(
+    values: Array<T>,
+    idMapper: (T) -> Byte
+): Byte2ObjectMap<T> {
+    return Byte2ObjectMaps.unmodifiable(
+        Byte2ObjectOpenHashMap(
+            values.associateBy(idMapper)
+        )
+    )
+}
+
+inline fun <reified T : Enum<T>> byEnumMap(
+    valueMapper: (T) -> Any
+): Object2ObjectMap<T, Any> {
+    return Object2ObjectMaps.unmodifiable(
+        Object2ObjectOpenHashMap(
+            T::class.java.enumConstants.associateWith(valueMapper)
+        )
+    )
+}
+
+fun interface ToByteFunction<T> {
+    fun applyAsByte(value: T): Byte
+}
+
+fun interface ByEnum<T> {
+    fun value(): T
 }

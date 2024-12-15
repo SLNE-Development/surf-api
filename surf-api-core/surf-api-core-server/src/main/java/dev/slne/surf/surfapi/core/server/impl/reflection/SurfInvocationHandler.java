@@ -6,7 +6,6 @@ import dev.slne.surf.surfapi.core.api.reflection.annontation.Constructor;
 import dev.slne.surf.surfapi.core.api.reflection.annontation.Field;
 import dev.slne.surf.surfapi.core.api.reflection.annontation.Name;
 import dev.slne.surf.surfapi.core.api.reflection.annontation.Static;
-import dev.slne.surf.surfapi.core.api.util.Util;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

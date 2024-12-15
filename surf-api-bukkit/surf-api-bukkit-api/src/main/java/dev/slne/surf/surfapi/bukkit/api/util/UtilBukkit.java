@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.api.util;
 
-import dev.slne.surf.surfapi.core.api.util.Util;
 import java.lang.StackWalker.Option;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;

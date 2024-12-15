@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.core.server.config;
 
-import dev.slne.surf.surfapi.core.api.config.SurfConfigManagerModern;
+import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -14,15 +14,15 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 @ParametersAreNonnullByDefault
 public class SurfModernConfigTracker {
 
-  private final Object2ObjectMap<Class<?>, SurfConfigManagerModern<?>> configManagers;
+  private final Object2ObjectMap<Class<?>, SpongeConfigManager<?>> configManagers;
 
   public SurfModernConfigTracker() {
     configManagers = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
   }
 
   public <C> Optional<C> getConfig(Class<C> configClass) {
-    return Optional.ofNullable((SurfConfigManagerModern<C>) configManagers.get(configClass))
-        .map(SurfConfigManagerModern::getConfig);
+    return Optional.ofNullable((SpongeConfigManager<C>) configManagers.get(configClass))
+        .map(SpongeConfigManager::getConfig);
   }
 
   public <C> C reloadConfig(Class<C> configClass) {
@@ -30,11 +30,11 @@ public class SurfModernConfigTracker {
   }
 
 
-  public <C> void registerConfig(Class<C> configClass, SurfConfigManagerModern<C> configManager) {
+  public <C> void registerConfig(Class<C> configClass, SpongeConfigManager<C> configManager) {
     configManagers.put(configClass, configManager);
   }
 
-  public <C> SurfConfigManagerModern<C> getConfigManager(Class<C> configClass) {
-    return (SurfConfigManagerModern<C>) configManagers.get(configClass);
+  public <C> SpongeConfigManager<C> getConfigManager(Class<C> configClass) {
+    return (SpongeConfigManager<C>) configManagers.get(configClass);
   }
 }

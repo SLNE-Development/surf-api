@@ -8,7 +8,6 @@ import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations;
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi;
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
-import dev.slne.surf.surfapi.core.api.util.Result;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;

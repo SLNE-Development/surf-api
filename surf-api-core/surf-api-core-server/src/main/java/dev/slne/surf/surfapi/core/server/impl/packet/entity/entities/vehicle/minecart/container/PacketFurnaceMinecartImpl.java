@@ -5,7 +5,7 @@ import com.github.retrooper.packetevents.protocol.world.BlockFace;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.vehicle.minecart.container.PacketFurnaceMinecart;
-import dev.slne.surf.surfapi.core.api.util.BlockStateFactory;
+import dev.slne.surf.surfapi.core.api.util.blockstate.BlockStateFactory;
 import java.util.UUID;
 
 public final class PacketFurnaceMinecartImpl extends

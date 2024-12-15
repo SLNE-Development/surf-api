@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.server.util;
 
-import dev.slne.surf.surfapi.core.api.util.Util;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 

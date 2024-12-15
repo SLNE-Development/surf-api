@@ -2,7 +2,6 @@ package dev.slne.surf.surfapi.bukkit.server.time;
 
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult;
 import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
-import dev.slne.surf.surfapi.core.api.util.Result;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

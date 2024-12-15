@@ -5,11 +5,11 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfAutoUpdatablePlayerScoreboard;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.core.api.messages.Colors;
-import dev.slne.surf.surfapi.core.api.util.Util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
+import net.minecraft.Util;
 import org.jetbrains.annotations.Contract;
 
 public class CreateScoreboard extends CommandAPICommand {

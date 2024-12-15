@@ -1,12 +1,10 @@
 package dev.slne.surf.surfapi.core.server.impl.packet.entity.entities.vehicle.minecart;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.slne.surf.surfapi.core.api.packet.entity.entities.vehicle.minecart.PacketCommandBlockMinecart;
-import dev.slne.surf.surfapi.core.api.util.BlockStateFactory;
+import dev.slne.surf.surfapi.core.api.util.blockstate.BlockStateFactory;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.intellij.lang.annotations.Subst;
