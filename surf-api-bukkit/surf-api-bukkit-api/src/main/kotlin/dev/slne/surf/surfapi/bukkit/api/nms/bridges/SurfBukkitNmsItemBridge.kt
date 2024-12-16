@@ -1,18 +1,18 @@
 package dev.slne.surf.surfapi.bukkit.api.nms.bridges
 
-import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge
+import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
+import dev.slne.surf.surfapi.core.api.util.requiredService
 import org.bukkit.inventory.ItemType
-import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.Range
 
-@NonExtendable
+@NmsUseWithCaution
 interface SurfBukkitNmsItemBridge {
     fun setDefaultMaxStackSize(item: ItemType, maxStackSize: @Range(from = 1, to = 100) Int)
 
     companion object {
-        @JvmStatic
-        fun get(): SurfBukkitNmsItemBridge = SurfBukkitNmsBridge.get().itemBridge
+        val instance = requiredService<SurfBukkitNmsItemBridge>()
     }
 }
 
-val itemBridge get() = SurfBukkitNmsItemBridge.get()
+@NmsUseWithCaution
+val itemBridge get() = SurfBukkitNmsItemBridge.instance
