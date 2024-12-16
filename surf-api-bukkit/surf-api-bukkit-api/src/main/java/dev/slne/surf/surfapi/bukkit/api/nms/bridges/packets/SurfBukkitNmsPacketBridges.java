@@ -18,6 +18,6 @@ public interface SurfBukkitNmsPacketBridges {
   SurfBukkitNmsPlayerPackets getPlayerPackets();
 
   static SurfBukkitNmsPacketBridges get() {
-    return SurfBukkitNmsBridge.get().getPacketBridges();
+    return SurfBukkitNmsBridge.get().packetBridges;
   }
 }
