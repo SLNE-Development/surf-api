@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.core.server.config;
 
-import dev.slne.surf.surfapi.core.api.config.DazzlConfConfigManager;
-import dev.slne.surf.surfapi.core.api.config.DazzlConfConfigManager.ConfigFileNamePattern;
+import DazzlConfConfigManager;
+import DazzlConfConfigManager.ConfigFileNamePattern;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

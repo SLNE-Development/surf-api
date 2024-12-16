@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.core.api.config.serializer
 
-import dev.slne.surf.surfapi.core.api.config.PreferUsingSpongeConfigOverDazzlConf
+import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.config.serializer.DefaultDazzlConfSerializers.ComponentSerializer.Companion.miniMessage
 import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.text.Component

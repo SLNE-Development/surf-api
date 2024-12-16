@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.core.server.config;
 
-import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager;
+import SpongeConfigManager;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

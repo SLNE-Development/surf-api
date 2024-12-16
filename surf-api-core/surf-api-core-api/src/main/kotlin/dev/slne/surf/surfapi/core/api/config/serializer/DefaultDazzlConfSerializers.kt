@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.core.api.config.serializer
 
-import dev.slne.surf.surfapi.core.api.config.PreferUsingSpongeConfigOverDazzlConf
+import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.messages.Colors
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor

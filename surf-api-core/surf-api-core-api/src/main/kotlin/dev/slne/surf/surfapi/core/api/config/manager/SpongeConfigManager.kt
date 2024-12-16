@@ -1,9 +1,9 @@
-package dev.slne.surf.surfapi.core.api.config
+package dev.slne.surf.surfapi.core.api.config.manager
 
+import dev.slne.surf.surfapi.core.api.config.JsonConfigFileNamePattern
+import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.serializer.SpongeConfigSerializers
 import dev.slne.surf.surfapi.core.api.util.logger
-import org.intellij.lang.annotations.Language
-import org.intellij.lang.annotations.Pattern
 import org.jetbrains.annotations.Contract
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
@@ -59,26 +59,10 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
         }
     }
 
-    @Pattern(YAML_CONFIG_FILE_NAME_PATTERN)
-    @Retention(AnnotationRetention.RUNTIME)
-    @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER)
-    @MustBeDocumented
-    annotation class YamlConfigFileNamePattern
 
-    @Pattern(JSON_CONFIG_FILE_NAME_PATTERN)
-    @Retention(AnnotationRetention.RUNTIME)
-    @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER)
-    @MustBeDocumented
-    annotation class JsonConfigFileNamePattern
 
     companion object {
         private val log = logger()
-
-        @Language("RegExp")
-        private const val YAML_CONFIG_FILE_NAME_PATTERN = "^[a-zA-Z0-9_-]+\\.(yml|yaml)$"
-
-        @Language("RegExp")
-        private const val JSON_CONFIG_FILE_NAME_PATTERN = "^[a-zA-Z0-9_-]+\\.(json)$"
 
         fun <C> yaml(
             configClass: Class<C>,

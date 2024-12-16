@@ -1,9 +1,8 @@
-package dev.slne.surf.surfapi.core.api.config
+package dev.slne.surf.surfapi.core.api.config.manager
 
+import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.serializer.DefaultDazzlConfSerializers
 import dev.slne.surf.surfapi.core.api.util.logger
-import org.intellij.lang.annotations.Language
-import org.intellij.lang.annotations.Pattern
 import space.arim.dazzleconf.ConfigurationOptions
 import space.arim.dazzleconf.error.ConfigFormatSyntaxException
 import space.arim.dazzleconf.error.InvalidConfigException
@@ -21,7 +20,7 @@ import java.util.concurrent.TimeUnit
     message = "Prefer using Sponge's Configurate library over DazzlConf"
 )
 @Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class PreferUsingSpongeConfigOverDazzlConf
 
 @PreferUsingSpongeConfigOverDazzlConf
@@ -71,23 +70,14 @@ class DazzlConfConfigManager<C> private constructor(private val helper: Configur
         return config
     }
 
-    @Pattern(CONFIG_FILE_NAME_PATTERN)
-    @Retention(AnnotationRetention.RUNTIME)
-    @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER)
-    @MustBeDocumented
-    annotation class ConfigFileNamePattern
-
     companion object {
         private val log = logger()
-
-        @Language("RegExp")
-        private const val CONFIG_FILE_NAME_PATTERN = "^[a-zA-Z0-9_-]+\\.(yml|yaml)$"
 
         @JvmStatic
         fun <C> create(
             configClass: Class<C>,
             configFolder: Path,
-            configFileName: @ConfigFileNamePattern String
+            configFileName: @YamlConfigFileNamePattern String
         ): DazzlConfConfigManager<C> {
             val options = SnakeYamlOptions.Builder()
                 .commentMode(CommentMode.fullComments())

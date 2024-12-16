@@ -2,11 +2,11 @@ package dev.slne.surf.surfapi.core.server.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import DazzlConfConfigManager;
+import SpongeConfigManager;
+import SpongeConfigManager.JsonConfigFileNamePattern;
+import SpongeConfigManager.YamlConfigFileNamePattern;
 import dev.slne.surf.surfapi.core.api.SurfCoreApi;
-import dev.slne.surf.surfapi.core.api.config.DazzlConfConfigManager;
-import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager;
-import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager.JsonConfigFileNamePattern;
-import dev.slne.surf.surfapi.core.api.config.SpongeConfigManager.YamlConfigFileNamePattern;
 import dev.slne.surf.surfapi.core.api.packet.SurfCorePacketApi;
 import dev.slne.surf.surfapi.core.api.reflection.SurfReflection;
 import dev.slne.surf.surfapi.core.server.config.SurfConfigTracker;
