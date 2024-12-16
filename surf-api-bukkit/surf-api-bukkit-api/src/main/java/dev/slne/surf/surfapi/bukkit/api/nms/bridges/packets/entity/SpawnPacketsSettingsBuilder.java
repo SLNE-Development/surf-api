@@ -1,12 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity;
 
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.SurfBukkitNmsPacketBridges;
-import io.papermc.paper.math.BlockPosition;
-import io.papermc.paper.math.FinePosition;
-import it.unimi.dsi.fastutil.ints.IntList;
-import java.util.function.UnaryOperator;
-import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.AccessLevel;
 import lombok.Builder.Default;
 import lombok.Getter;
@@ -28,71 +21,17 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.math.imaginary.Quaternionf;
 import org.spongepowered.math.vector.Vector3f;
 
-@SuppressWarnings("UnstableApiUsage")
-@NonExtendable
-@ParametersAreNonnullByDefault
-public interface SurfBukkitNmsSpawnPackets {
+public final class SpawnPacketsSettingsBuilder {
 
-  PacketOperation despawn(IntList entityIds);
-
-  PacketOperation despawn(int... entityIds);
-
-  PacketOperation spawnItemDisplay(
-      int entityId,
-      FinePosition position,
-      ItemDisplaySettings settings
-  );
-
-  default PacketOperation spawnItemDisplay(
-      int entityId,
-      FinePosition position,
-      UnaryOperator<ItemDisplaySettings.ItemDisplaySettingsBuilder<?, ?>> settings
-  ) {
-    return spawnItemDisplay(entityId, position,
-        settings.apply(ItemDisplaySettings.builder()).build());
-  }
-
-  PacketOperation spawnTextDisplay(
-      int entityId,
-      FinePosition position,
-      TextDisplaySettings settings
-  );
-
-  default PacketOperation spawnTextDisplay(
-      int entityId,
-      FinePosition position,
-      UnaryOperator<TextDisplaySettings.TextDisplaySettingsBuilder<?, ?>> settings
-  ) {
-    return spawnTextDisplay(entityId, position,
-        settings.apply(TextDisplaySettings.builder()).build());
-  }
-
-  PacketOperation updateSign(
-      int entityId,
-      BlockPosition position,
-      SignBlockUpdateSettings settings
-  );
-
-  PacketOperation spawnBlockDisplay(
-      int entityId,
-      FinePosition position,
-      BlockDisplaySettings settings
-  );
-
-  default PacketOperation spawnBlockDisplay(
-      int entityId,
-      FinePosition position,
-      UnaryOperator<BlockDisplaySettings.BlockDisplaySettingsBuilder<?, ?>> settings
-  ) {
-    return spawnBlockDisplay(entityId, position,
-        settings.apply(BlockDisplaySettings.builder()).build());
+  private SpawnPacketsSettingsBuilder() {
+    throw new UnsupportedOperationException("This class cannot be instantiated");
   }
 
   @Getter
   @SuperBuilder
   @NoArgsConstructor(access = AccessLevel.PRIVATE)
   @NonExtendable
-  abstract class DisplaySettings {
+  abstract static class DisplaySettings {
 
     private float pitch, yaw;
     private @Nullable Vector3f translation, scale;
@@ -104,7 +43,7 @@ public interface SurfBukkitNmsSpawnPackets {
   @SuperBuilder
   @NoArgsConstructor(access = AccessLevel.PRIVATE)
   @NonExtendable
-  class ItemDisplaySettings extends DisplaySettings {
+  public static class ItemDisplaySettings extends DisplaySettings {
 
     private @Default ItemStack itemStack = ItemStack.empty();
     private @Default ItemDisplayTransform itemDisplayTransform = ItemDisplayTransform.NONE;
@@ -114,7 +53,7 @@ public interface SurfBukkitNmsSpawnPackets {
   @SuperBuilder
   @NoArgsConstructor(access = AccessLevel.PRIVATE)
   @NonExtendable
-  class TextDisplaySettings extends DisplaySettings {
+  public static class TextDisplaySettings extends DisplaySettings {
 
     private @Default Component text = Component.empty();
     private @Default int lineWidth = 200;
@@ -126,7 +65,7 @@ public interface SurfBukkitNmsSpawnPackets {
   @SuperBuilder
   @NoArgsConstructor(access = AccessLevel.PRIVATE)
   @NonExtendable
-  class BlockDisplaySettings extends DisplaySettings {
+  public static class BlockDisplaySettings extends DisplaySettings {
 
     private @Default BlockData blockData = Material.AIR.createBlockData();
   }
@@ -137,7 +76,7 @@ public interface SurfBukkitNmsSpawnPackets {
   @NonExtendable
   @Setter
   @ToString
-  class SignBlockUpdateSettings {
+  public static class SignBlockUpdateSettings {
 
     private @NotNull
     @Default
@@ -169,9 +108,5 @@ public interface SurfBukkitNmsSpawnPackets {
             .build();
       }
     }
-  }
-
-  static SurfBukkitNmsSpawnPackets get() {
-    return SurfBukkitNmsPacketBridges.get().getSpawnPackets();
   }
 }

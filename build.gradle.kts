@@ -5,6 +5,8 @@ plugins {
     id("io.papermc.paperweight.core") version "1.7.1"
     kotlin("jvm") version libs.versions.kotlinVersion apply false
     kotlin("kapt") version libs.versions.kotlinVersion
+    id("com.google.devtools.ksp") version "2.1.0-1.0.29"
+    idea
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
@@ -24,6 +26,8 @@ allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.gradle.java-library")
     apply(plugin = "org.jetbrains.kotlin.kapt")
+    apply(plugin = "com.google.devtools.ksp")
+    apply(plugin = "org.gradle.idea")
 
 
     repositories {
@@ -38,6 +42,17 @@ allprojects {
         api(rootProject.libs.kotlin.reflect)
         implementation("com.google.auto.service:auto-service:1.1.1")
         "kapt"("com.google.auto.service:auto-service:1.1.1")
+
+        implementation("com.nicholasnassar.dslbuilder:dsl-builder-api:0.0.2")
+        "ksp"("com.nicholasnassar.dslbuilder:dsl-builder-ksp:0.0.2")
+    }
+
+    project.idea {
+        module {
+            sourceDirs = sourceDirs + project.file("build/generated/ksp/main/kotlin")
+            testSourceDirs = testSourceDirs + project.file("build/generated/ksp/test/kotlin")
+            generatedSourceDirs = generatedSourceDirs + project.file("build/generated/ksp/main/kotlin") + project.file("build/generated/ksp/test/kotlin")
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.nms;
 
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SurfBukkitNmsSpawnPackets.SignBlockUpdateSettings;
+import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SpawnPacketsSettingsBuilder.SignBlockUpdateSettings;
 import io.papermc.paper.adventure.PaperAdventure;
 import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.math.Position;

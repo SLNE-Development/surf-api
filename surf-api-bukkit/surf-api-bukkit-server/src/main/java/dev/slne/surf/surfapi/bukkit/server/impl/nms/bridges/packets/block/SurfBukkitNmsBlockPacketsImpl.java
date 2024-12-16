@@ -9,8 +9,6 @@ import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import io.papermc.paper.math.BlockPosition;
 import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
-import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
-import org.bukkit.Server;
 import org.bukkit.block.data.BlockData;
 
 @SuppressWarnings("UnstableApiUsage")
