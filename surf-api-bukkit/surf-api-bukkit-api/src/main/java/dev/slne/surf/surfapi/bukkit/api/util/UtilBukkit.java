@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A utility class that extends Util and provides additional helper methods specific to Bukkit.
  */
-public final class UtilBukkit extends Util {
+public final class UtilBukkit {
 
   // @formatter:off
   private static final StackWalker STACK_WALKER = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);

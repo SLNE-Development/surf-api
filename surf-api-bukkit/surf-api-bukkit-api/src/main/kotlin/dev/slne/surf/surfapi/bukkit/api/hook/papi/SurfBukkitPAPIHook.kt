@@ -1,17 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.api.hook.papi
 
-import dev.slne.surf.surfapi.bukkit.api.hook.SurfBukkitHookManager
 import dev.slne.surf.surfapi.bukkit.api.hook.papi.expansion.PapiExpansion
-import org.jetbrains.annotations.ApiStatus.NonExtendable
+import dev.slne.surf.surfapi.core.api.util.requiredService
 
-@NonExtendable
 interface SurfBukkitPAPIHook {
-
-    companion object {
-        @JvmStatic
-        fun get(): SurfBukkitPAPIHook = SurfBukkitHookManager.get().papiHook
-    }
-
     fun register(expansion: PapiExpansion)
     fun unregister(expansion: PapiExpansion)
+
+    companion object {
+        val instance = requiredService<SurfBukkitPAPIHook>()
+    }
 }
+
+val papiHook get() = SurfBukkitPAPIHook.instance
