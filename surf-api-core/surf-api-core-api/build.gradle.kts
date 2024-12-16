@@ -15,6 +15,7 @@ dependencies {
     compileOnlyApi(libs.dazzleconf)
     compileOnlyApi(libs.spongepowered.math)
     compileOnlyApi(libs.okhttp)
+    api(libs.okhttp.kotlin)
     compileOnlyApi(libs.fastutil)
     compileOnlyApi(libs.commandapi.core)
     compileOnlyApi(libs.brigadier)
@@ -23,6 +24,8 @@ dependencies {
     compileOnlyApi(libs.flogger)
     compileOnlyApi(libs.commons.math4.core)
     compileOnlyApi(libs.aide.reflection)
+
+    api(libs.caffeine.courotines)
 }
 
 description = "surf-api-core-api"

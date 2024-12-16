@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Example usage:
  * {@snippet :
- * import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
+ *
  * SurfCoreApiImpl<SurfVelocityPacketApi> surfApi = new SurfVelocityApiImpl();}
  * </p>
  */
