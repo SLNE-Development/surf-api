@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 public interface SurfBukkitVisualizerApi {
 
   static SurfBukkitVisualizerApi get() {
-    return SurfBukkitApi.get().getVisualizerApi();
+    return SurfBukkitApi.get().visualizerApi;
   }
 
   SurfVisualizer createVisualizer();

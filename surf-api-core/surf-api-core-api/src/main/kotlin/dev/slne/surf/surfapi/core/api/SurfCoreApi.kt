@@ -20,8 +20,8 @@ interface SurfCoreApi {
 
     companion object {
         @JvmStatic
-        val core = requiredService<SurfCoreApi>()
+        val instance = requiredService<SurfCoreApi>()
     }
 }
 
-val surfCoreApi get() = SurfCoreApi.core
+val surfCoreApi get() = SurfCoreApi.instance

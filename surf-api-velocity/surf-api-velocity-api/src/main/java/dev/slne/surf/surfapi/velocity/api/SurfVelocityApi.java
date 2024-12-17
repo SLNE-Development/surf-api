@@ -14,7 +14,7 @@ public interface SurfVelocityApi extends SurfCoreApi {
 
   @Contract(pure = true)
   static SurfVelocityApi get() {
-    return (SurfVelocityApi) SurfCoreApi.getCore();
+    return (SurfVelocityApi) SurfCoreApi.getInstance();
   }
 
   /**

@@ -57,7 +57,7 @@ public class SurfScoreboardImpl implements SurfScoreboard {
   public void enable() {
     checkState(!enabled, "Scoreboard is already enabled");
 
-    scoreboard = SurfBukkitApi.get().getScoreboardLibrary().createSidebar(maxLines);
+    scoreboard = SurfBukkitApi.get().scoreboardLibrary.createSidebar(maxLines);
     sidebarLayout = new ComponentSidebarLayout(SidebarComponent.staticLine(title),
         sidebarComponent);
 
