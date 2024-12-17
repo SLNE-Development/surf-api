@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.core.api.messages
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.format.TextColor.color
 
 /**
  * A class that contains all the colors used in the Surf system. This class is used to provide a
@@ -20,14 +21,14 @@ interface Colors {
          * be for titles, subtitles, etc.
          */
         @JvmField
-        val PRIMARY: TextColor = TextColor.color(0x3b92d1)
+        val PRIMARY: TextColor = color(0x3b92d1)
 
         /**
          * SECONDARY color (#5b5b5b). Also seldom used in our system. Could be used for elements like
          * subtitles.
          */
         @JvmField
-        val SECONDARY: TextColor = TextColor.color(0x5b5b5b)
+        val SECONDARY: TextColor = color(0x5b5b5b)
 
         /**
          * INFO color (#40d1db). Used to inform the user about a specific situation. Typically, it's not a
@@ -36,28 +37,28 @@ interface Colors {
          * have [deactivated/activated] the chat").
          */
         @JvmField
-        val INFO: TextColor = TextColor.color(0x40d1db)
+        val INFO: TextColor = color(0x40d1db)
 
         /**
          * SUCCESS color (#65ff64). Indicates a positive outcome of an action performed by the user. Used
          * only in direct response to the user.
          */
         @JvmField
-        val SUCCESS: TextColor = TextColor.color(0x65ff64)
+        val SUCCESS: TextColor = color(0x65ff64)
 
         /**
          * WARNING color (#f9c353). Used as a direct warning to the user. This could be a response to a
          * user action or a system notification, and serves as a precursor to Danger.
          */
         @JvmField
-        val WARNING: TextColor = TextColor.color(0xf9c353)
+        val WARNING: TextColor = color(0xf9c353)
 
         /**
          * ERROR (or DANGER) color (#ee3d51). Represents error messages directed at the user. These can
          * follow a direct action by the user, or serve as a warning about potential issues.
          */
         @JvmField
-        val ERROR: TextColor = TextColor.color(0xee3d51)
+        val ERROR: TextColor = color(0xee3d51)
 
         /**
          * VARIABLE_KEY color (#3b92d1). Mainly used as a key in listings (e.g., "Key 1: Value", "Key 2:

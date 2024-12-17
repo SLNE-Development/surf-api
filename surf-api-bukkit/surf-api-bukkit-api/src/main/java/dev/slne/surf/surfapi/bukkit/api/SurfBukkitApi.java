@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.bukkit.api;
 import dev.slne.surf.surfapi.bukkit.api.hook.SurfBukkitHookManager;
 import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge;
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
+import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations;
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult;
@@ -53,6 +54,7 @@ public interface SurfBukkitApi extends SurfCoreApi {
    *
    * @return the {@link ScoreboardLibrary} instance
    */
+  @ObsoleteScoreboardApi
   ScoreboardLibrary getScoreboardLibrary();
 
   /**
@@ -61,6 +63,7 @@ public interface SurfBukkitApi extends SurfCoreApi {
    * @param title the title of the scoreboard
    * @return a SurfScoreboardBuilder with the given title
    */
+  @ObsoleteScoreboardApi
   SurfScoreboardBuilder createScoreboard(@NotNull Component title);
 
   /**
