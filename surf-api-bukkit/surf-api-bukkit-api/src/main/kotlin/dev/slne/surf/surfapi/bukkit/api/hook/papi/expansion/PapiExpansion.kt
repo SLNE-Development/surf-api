@@ -2,7 +2,6 @@
 
 package dev.slne.surf.surfapi.bukkit.api.hook.papi.expansion
 
-import dev.slne.surf.surfapi.bukkit.api.util.UtilBukkit
 import org.bukkit.OfflinePlayer
 
 open class PapiExpansion @JvmOverloads constructor(
