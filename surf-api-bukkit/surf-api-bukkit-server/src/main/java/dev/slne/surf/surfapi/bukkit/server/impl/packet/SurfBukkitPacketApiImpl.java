@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.server.impl.packet;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi;
-import dev.slne.surf.surfapi.bukkit.api.packet.entity.SurfBukkitPacketEntityApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler;
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.entity.SurfBukkitPacketEntityApiImpl;

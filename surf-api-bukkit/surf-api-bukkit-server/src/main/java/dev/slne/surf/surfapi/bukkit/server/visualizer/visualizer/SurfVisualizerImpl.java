@@ -54,7 +54,7 @@ public class SurfVisualizerImpl implements SurfVisualizer {
   public void addVisualLocation(Location visualLocation, Material material,
       Consumer<PacketBlockDisplay> consumer) {
     visualLocations.put(visualLocation, material);
-    entities.put(visualLocation, SurfBukkitPacketApi.get().getPacketEntityApi()
+    entities.put(visualLocation, SurfBukkitPacketApi.get().packetEntityApi
         .spawnEntity(PacketBlockDisplay.class, UUID.randomUUID(), blockDisplayMeta -> {
           blockDisplayMeta.blockState(
               SpigotConversionUtil.fromBukkitBlockData(material.createBlockData()));
