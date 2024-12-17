@@ -117,7 +117,7 @@ public final class SurfBukkitNmsBridgeImpl implements SurfBukkitNmsBridge {
   }
 
   public<Packet extends NmsServerboundPacket> @Nullable Packet handleServerboundPacket(Packet packet, Player player) {
-    Class<?> clazz = packet.getPacketClass();
+    Class<?> clazz = packet.packetClass;
     final ObjectSet<NmsServerboundPacketListener<?>> listeners = serverboundPacketListeners.get(
         clazz);
 

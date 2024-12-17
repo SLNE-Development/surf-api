@@ -5,7 +5,6 @@ import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge;
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.NmsClientboundPacket;
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.NmsServerboundPacket;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
-import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl;
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.PacketRegistry;

@@ -1,9 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets;
 
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.NmsPacket;
-import java.util.function.Supplier;
 import lombok.Getter;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketListener;
 
 @Getter
