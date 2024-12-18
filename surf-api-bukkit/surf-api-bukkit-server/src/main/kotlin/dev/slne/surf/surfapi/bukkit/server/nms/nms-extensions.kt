@@ -23,12 +23,14 @@ import org.bukkit.craftbukkit.block.CraftBlockState
 import org.bukkit.craftbukkit.block.data.CraftBlockData
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
+import org.bukkit.craftbukkit.inventory.CraftItemType
 import org.bukkit.craftbukkit.util.CraftMagicNumbers
 import org.bukkit.entity.Display.Billboard
 import org.bukkit.entity.ItemDisplay.ItemDisplayTransform
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.ItemType
 import org.spongepowered.math.imaginary.Quaternionf
 import org.spongepowered.math.vector.Vector3f
 import net.kyori.adventure.text.Component as AdventureComponent
@@ -54,6 +56,7 @@ fun Billboard.toNms(): Display.BillboardConstraints =
 fun ItemStack.toNms(): NmsItemStack = CraftItemStack.asNMSCopy(this)
 fun ItemDisplayTransform.toNms(): ItemDisplayContext = ItemDisplayContext.BY_ID.apply(this.ordinal)
 fun NmsItemStack.toBukkit(): ItemStack = CraftItemStack.asBukkitCopy(this)
+val ItemType.nms: Item get() = CraftItemType.bukkitToMinecraftNew(this)
 fun BlockPosition.toNms(): BlockPos = BlockPos(blockX(), blockY(), blockZ())
 fun SignBlockUpdateSettings.SignText.toNms(): SignText {
     val lines = arrayOf(

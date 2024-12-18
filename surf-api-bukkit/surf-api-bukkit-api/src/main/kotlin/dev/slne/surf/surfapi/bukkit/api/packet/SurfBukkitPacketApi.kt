@@ -3,7 +3,7 @@ package dev.slne.surf.surfapi.bukkit.api.packet
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandlerSimple
 import dev.slne.surf.surfapi.core.api.util.requiredService
-import net.kyori.adventure.key.Key
+import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
 
 /**
@@ -26,14 +26,14 @@ interface SurfBukkitPacketApi {
      *
      * Example Usage:
      * ```
-     * val key = Key.key("myplugin", "custom_item")
+     * val key = NamespacedKey("myplugin", "custom_item")
      * surfBukkitPacketApi.registerPacketLoreListener(key, SurfBukkitPacketLoreHandler { lore, _, _ ->
      *     lore.add(Component.text("Special Lore!"))
      * })
      * ```
      */
     fun registerPacketLoreListener(
-        identifier: Key,
+        identifier: NamespacedKey,
         listener: SurfBukkitPacketLoreHandler
     )
 
@@ -46,7 +46,7 @@ interface SurfBukkitPacketApi {
      * This method delegates to the standard [registerPacketLoreListener] implementation.
      */
     fun registerPacketLoreListener(
-        identifier: Key,
+        identifier: NamespacedKey,
         listener: SurfBukkitPacketLoreHandlerSimple
     ) {
         registerPacketLoreListener(identifier, listener as SurfBukkitPacketLoreHandler)
@@ -92,10 +92,10 @@ interface SurfBukkitPacketApi {
      *
      * Example Usage:
      * ```
-     * surfBukkitPacketApi.unregisterPacketLoreListener(Key.key("myplugin", "custom_item"))
+     * surfBukkitPacketApi.unregisterPacketLoreListener(NamespacedKey("myplugin", "custom_item"))
      * ```
      */
-    fun unregisterPacketLoreListener(identifier: Key)
+    fun unregisterPacketLoreListener(identifier: NamespacedKey)
 
     /**
      * Unregisters all packet lore listeners associated with the given plugin.
