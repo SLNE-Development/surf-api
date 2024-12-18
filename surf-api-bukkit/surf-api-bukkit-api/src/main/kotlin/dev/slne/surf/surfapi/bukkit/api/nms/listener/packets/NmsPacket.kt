@@ -4,5 +4,5 @@ import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 
 @NmsUseWithCaution
 interface NmsPacket {
-    val packetClass: Class<*>?
+    val packetClass: Class<*>
 }

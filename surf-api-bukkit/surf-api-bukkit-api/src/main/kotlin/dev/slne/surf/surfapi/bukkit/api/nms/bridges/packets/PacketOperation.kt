@@ -10,6 +10,8 @@ interface PacketOperation {
     fun execute(player: Player)
     fun add(operation: PacketOperation): PacketOperation
 
+    operator fun plus(other: PacketOperation) = add(other)
+
     companion object {
         @OptIn(NmsUseWithCaution::class) // not really nms here
         fun start(): PacketOperation = nmsPacketBridges.createEmptyPacketOperation()

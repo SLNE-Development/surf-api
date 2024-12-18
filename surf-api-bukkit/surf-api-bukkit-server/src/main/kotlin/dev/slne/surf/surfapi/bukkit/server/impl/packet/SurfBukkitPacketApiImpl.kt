@@ -4,11 +4,15 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.surfapi.bukkit.api.packet.SurfBukkitPacketApi
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener
+import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
 
 @AutoService(SurfBukkitPacketApi::class)
 class SurfBukkitPacketApiImpl : SurfBukkitPacketApi {
+    init {
+        checkInstantiationByServiceLoader()
+    }
 
     override fun registerPacketLoreListener(
         identifier: NamespacedKey,

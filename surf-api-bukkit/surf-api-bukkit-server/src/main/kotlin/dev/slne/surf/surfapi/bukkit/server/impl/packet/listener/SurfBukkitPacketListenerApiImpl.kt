@@ -8,10 +8,7 @@ import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListener
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.ClientboundListener
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.ServerboundListener
-import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
-import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
-import dev.slne.surf.surfapi.core.api.util.synchronize
+import dev.slne.surf.surfapi.core.api.util.*
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import it.unimi.dsi.fastutil.objects.ObjectSet
 import net.minecraft.network.protocol.Packet
@@ -30,6 +27,11 @@ class SurfBukkitPacketListenerApiImpl : SurfBukkitPacketListenerApi {
     private val serverboundListenerMethods =
         mutableObject2ObjectMapOf<Class<*>, ObjectSet<ListenerMethod>>().synchronize()
     private val lookup = MethodHandles.lookup()
+
+    init {
+        checkInstantiationByServiceLoader()
+    }
+
 
     override fun registerListeners(listener: PacketListener) {
         for (method in listener.javaClass.getMethods()) {
