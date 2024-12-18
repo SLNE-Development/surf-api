@@ -1,16 +1,21 @@
 package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer
 
+import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import java.util.function.Consumer
 
 interface SurfVisualizer {
-    fun addVisualLocation(visualLocation: Location)
-    fun addVisualLocation(visualLocation: Location, material: Material)
     fun addVisualLocation(
-        visualLocation: Location, material: Material,
-        consumer: Consumer<Any> // TODO
+        visualLocation: Location,
+        material: Material = DEFAULT_MATERIAL,
+        consumer: BlockDisplaySettings.() -> Unit = {}
+    ) = addVisualLocation(visualLocation, material, BlockDisplaySettings.create(consumer))
+
+    fun addVisualLocation(
+        visualLocation: Location,
+        material: Material = DEFAULT_MATERIAL,
+        consumer: BlockDisplaySettings
     )
 
     fun removeVisualLocation(visualLocation: Location)

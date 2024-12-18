@@ -1,7 +1,9 @@
 package dev.slne.surf.surfapi.bukkit.server.libs;
 
 import com.google.common.flogger.FluentLogger;
+import dev.slne.surf.surfapi.bukkit.server.BukkitMain;
 import dev.slne.surf.surfapi.bukkit.server.libs.reflection.LibReflection;
+import dev.slne.surf.surfapi.core.api.util.SurfUtil;
 import io.papermc.paper.plugin.configuration.PluginMeta;
 import io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader;
 import io.papermc.paper.plugin.provider.classloader.ConfiguredPluginClassLoader;
@@ -48,8 +50,9 @@ public final class LibLoader {
 //    loadLib("IF-0.10.15.zip", "1.20");
   }
 
+  @SuppressWarnings("UnstableApiUsage")
   private void loadLib(String jarName) {
-    loadLib(jarName, "1.21");
+    loadLib(jarName, BukkitMain.getInstance().getPluginMeta().getAPIVersion());
   }
 
   private void loadLib(String jarName, String apiVersion) {
@@ -191,7 +194,7 @@ public final class LibLoader {
     final Field field = PaperPluginClassLoader.class.getDeclaredField("libraryLoader");
     field.setAccessible(true);
 
-    final Unsafe unsafe = Util.getUnsafe();
+    final Unsafe unsafe = SurfUtil.getUnsafe();
     final long offset = unsafe.objectFieldOffset(field);
     unsafe.putObject(pluginClassLoader, offset, surfLoader);
 

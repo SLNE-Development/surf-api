@@ -42,6 +42,10 @@ fun <T> Iterable<T>.toObjectSet() = (this as? ObjectSet<T>)?.freeze() ?: objectS
 fun <T> mutableObjectListOf(vararg elements: T) = ObjectArrayList<T>().apply { addAll(elements) }
 fun <T> mutableObjectListOf() = ObjectArrayList<T>()
 fun <T> mutableObjectListOf(capacity: Int) = ObjectArrayList<T>(capacity)
+fun <T> mutableObjectListOf(iterable: Iterable<T>) = when (iterable) {
+    is Collection -> ObjectArrayList(iterable)
+    else -> ObjectArrayList<T>(iterable.iterator())
+}
 fun <T> objectListOf(vararg elements: T) = mutableObjectListOf(*elements).freeze()
 fun <T> objectListOf() = emptyObjectList<T>()
 fun <T> emptyObjectList(): @Unmodifiable ObjectList<T> = ObjectLists.emptyList()

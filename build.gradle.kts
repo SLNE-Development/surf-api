@@ -5,6 +5,7 @@ plugins {
     id("io.papermc.paperweight.core") version "1.7.1"
     kotlin("jvm") version libs.versions.kotlinVersion apply false
     kotlin("kapt") version libs.versions.kotlinVersion
+    kotlin("plugin.lombok") version libs.versions.kotlinVersion
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
     idea
 }
@@ -28,6 +29,7 @@ allprojects {
     apply(plugin = "org.jetbrains.kotlin.kapt")
     apply(plugin = "com.google.devtools.ksp")
     apply(plugin = "org.gradle.idea")
+    apply(plugin = "org.jetbrains.kotlin.plugin.lombok")
 
 
     repositories {
@@ -53,6 +55,10 @@ allprojects {
             testSourceDirs = testSourceDirs + project.file("build/generated/ksp/test/kotlin")
             generatedSourceDirs = generatedSourceDirs + project.file("build/generated/ksp/main/kotlin") + project.file("build/generated/ksp/test/kotlin")
         }
+    }
+
+    project.kapt {
+        keepJavacAnnotationProcessors = true
     }
 }
 

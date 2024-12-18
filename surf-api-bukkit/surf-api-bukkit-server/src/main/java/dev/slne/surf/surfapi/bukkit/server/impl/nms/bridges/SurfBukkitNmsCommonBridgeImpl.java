@@ -6,7 +6,6 @@ import static com.google.common.base.Preconditions.checkState;
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge;
 import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ComposterBlock;
 import org.bukkit.Bukkit;

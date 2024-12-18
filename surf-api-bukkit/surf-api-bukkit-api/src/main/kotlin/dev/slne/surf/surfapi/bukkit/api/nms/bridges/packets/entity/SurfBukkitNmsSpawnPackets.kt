@@ -2,7 +2,6 @@ package dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity
 
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SpawnPacketsSettingsBuilder.*
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
@@ -23,9 +22,9 @@ interface SurfBukkitNmsSpawnPacketsNew {
     fun spawnItemDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: ItemDisplaySettings.ItemDisplaySettingsBuilder<*, *>.() -> Unit
+        settings: ItemDisplaySettings.() -> Unit
     ): PacketOperation =
-        spawnItemDisplay(entityId, position, ItemDisplaySettings.builder().apply(settings).build())
+        spawnItemDisplay(entityId, position, ItemDisplaySettings.create(settings).build())
 
 
     fun spawnTextDisplay(
@@ -37,9 +36,9 @@ interface SurfBukkitNmsSpawnPacketsNew {
     fun spawnTextDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: TextDisplaySettings.TextDisplaySettingsBuilder<*, *>.() -> Unit
+        settings: TextDisplaySettings.() -> Unit
     ): PacketOperation =
-        spawnTextDisplay(entityId, position, TextDisplaySettings.builder().apply(settings).build())
+        spawnTextDisplay(entityId, position, TextDisplaySettings.create(settings).build())
 
     fun updateSign(
         entityId: Int,
@@ -50,9 +49,9 @@ interface SurfBukkitNmsSpawnPacketsNew {
     fun updateSign(
         entityId: Int,
         position: BlockPosition,
-        settings: SignBlockUpdateSettings.SignBlockUpdateSettingsBuilder<*, *>.() -> Unit
+        settings: SignBlockUpdateSettings.() -> Unit
     ): PacketOperation =
-        updateSign(entityId, position, SignBlockUpdateSettings.builder().apply(settings).build())
+        updateSign(entityId, position, SignBlockUpdateSettings.create(settings))
 
     fun spawnBlockDisplay(
         entityId: Int,
@@ -63,12 +62,12 @@ interface SurfBukkitNmsSpawnPacketsNew {
     fun spawnBlockDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: BlockDisplaySettings.BlockDisplaySettingsBuilder<*, *>.() -> Unit
+        settings: BlockDisplaySettings.() -> Unit
     ): PacketOperation =
         spawnBlockDisplay(
             entityId,
             position,
-            BlockDisplaySettings.builder().apply(settings).build()
+            BlockDisplaySettings.create(settings).build()
         )
 
     companion object {

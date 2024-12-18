@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalContracts::class)
+@file:JvmName("SurfUtil")
 
 package dev.slne.surf.surfapi.core.api.util
 
