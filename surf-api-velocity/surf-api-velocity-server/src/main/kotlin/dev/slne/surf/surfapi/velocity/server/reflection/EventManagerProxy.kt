@@ -2,8 +2,8 @@ package dev.slne.surf.surfapi.velocity.server.reflection
 
 import com.google.common.reflect.TypeToken
 import com.velocitypowered.api.event.EventTask
-import dev.slne.surf.surfapi.core.api.reflection.annontation.Name
-import dev.slne.surf.surfapi.core.api.reflection.annontation.SurfProxy
+import dev.slne.surf.surfapi.core.api.reflection.Name
+import dev.slne.surf.surfapi.core.api.reflection.SurfProxy
 import java.lang.reflect.Method
 import java.util.function.BiConsumer
 import java.util.function.BiFunction

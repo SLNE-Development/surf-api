@@ -1,12 +1,8 @@
 package dev.slne.surf.surfapi.velocity.server.reflection
 
-import dev.slne.surf.surfapi.core.api.SurfCoreApi
+import dev.slne.surf.surfapi.core.api.reflection.createProxy
+import dev.slne.surf.surfapi.core.api.reflection.surfReflection as reflection
 
 object VelocityReflection {
-    val EVENT_MANAGER_PROXY: EventManagerProxy
-
-    init {
-        val reflection = SurfCoreApi.getCore().reflection
-        EVENT_MANAGER_PROXY = reflection.createProxy(EventManagerProxy::class.java)
-    }
+    val EVENT_MANAGER_PROXY = reflection.createProxy<EventManagerProxy>()
 }
