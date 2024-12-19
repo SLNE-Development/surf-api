@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server
 
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
-import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl
 import dev.slne.surf.surfapi.bukkit.server.libs.LibLoader
 import dev.slne.surf.surfapi.core.api.util.logger
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
@@ -21,7 +20,6 @@ class BukkitMain : SuspendingJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         BukkitInstance.onEnable()
-        SurfBukkitApiImpl.get().onEnable()
 
         try {
             scoreboardLibrary = ScoreboardLibrary.loadScoreboardLibrary(this)

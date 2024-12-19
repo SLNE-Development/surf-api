@@ -47,7 +47,7 @@ interface SurfBukkitApi : SurfCoreApi {
      * @param timeToAdd the amount of time to add (in ticks)
      * @return the TimeSkipResult
      */
-    suspend fun skipTimeSmoothly(world: World, timeToAdd: Int): TimeSkipResult
+    suspend fun skipTimeSmoothly(world: World, timeToAdd: Long): TimeSkipResult
 
     /**
      * Smoothly skips time in the specified world by adding the given time for the specified
@@ -78,7 +78,7 @@ interface SurfBukkitApi : SurfCoreApi {
      * @return a map containing the result of the time skip operation for each world, with the world
      * as the key and the result as the value
      */
-    suspend fun skipTimeSmoothly(timeToAdd: Int): Map<World, TimeSkipResult>
+    suspend fun skipTimeSmoothly(timeToAdd: Long): Map<World, TimeSkipResult>
 
     /**
      * Skip time smoothly by adding a specified amount of time to each world for a given duration.

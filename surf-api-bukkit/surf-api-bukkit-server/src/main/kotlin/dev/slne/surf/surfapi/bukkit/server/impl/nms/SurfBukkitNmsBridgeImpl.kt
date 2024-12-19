@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.nms
 
+import com.google.auto.service.AutoService
 import com.google.common.flogger.StackSize
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge
@@ -12,6 +13,7 @@ import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketIm
 import dev.slne.surf.surfapi.core.api.util.*
 import org.bukkit.entity.Player
 
+@AutoService(SurfBukkitNmsBridge::class)
 @NmsUseWithCaution
 class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     private val log = logger()
@@ -68,7 +70,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
 
     fun <Packet : NmsServerboundPacket> handleServerboundPacket(
         packet: Packet,
-        player: Player
+        player: Player,
     ): Packet? {
         val cancel = serverboundPacketListeners.asSequence()
             .filter { it.first.match(packet) }
@@ -82,7 +84,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
 
     fun <Packet : NmsClientboundPacket> handleClientboundPacket(
         packet: Packet,
-        player: Player
+        player: Player,
     ): Packet? {
         val listeners = clientboundPacketListeners.asSequence()
             .filter { it.first.match(NmsPacketImpl.getFromApi(packet).nmsClass) }

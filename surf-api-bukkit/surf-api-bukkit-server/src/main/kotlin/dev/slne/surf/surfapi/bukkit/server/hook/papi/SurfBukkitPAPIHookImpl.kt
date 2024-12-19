@@ -1,13 +1,16 @@
 package dev.slne.surf.surfapi.bukkit.server.hook.papi
 
+import com.google.auto.service.AutoService
 import dev.slne.surf.surfapi.bukkit.api.hook.papi.SurfBukkitPAPIHook
 import dev.slne.surf.surfapi.bukkit.api.hook.papi.expansion.PapiExpansion
 import dev.slne.surf.surfapi.bukkit.server.hook.papi.holder.PAPIPlaceholderHolder
 import dev.slne.surf.surfapi.bukkit.server.hook.papi.holder.PAPIPlaceholderHolderImpl
 import dev.slne.surf.surfapi.bukkit.server.hook.papi.holder.PAPIPlaceholderHolderNOOP
+import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 
-class SurfBukkitPAPIHookImpl: SurfBukkitPAPIHook {
-    private val expansionHolders = mutableMapOf<String, PAPIPlaceholderHolder>()
+@AutoService(SurfBukkitPAPIHook::class)
+class SurfBukkitPAPIHookImpl : SurfBukkitPAPIHook {
+    private val expansionHolders = mutableObject2ObjectMapOf<String, PAPIPlaceholderHolder>()
     private var loaded = false
 
     override fun register(expansion: PapiExpansion) {
@@ -41,11 +44,6 @@ class SurfBukkitPAPIHookImpl: SurfBukkitPAPIHook {
     }
 
     private val papiLoaded by lazy {
-        try {
-            Class.forName("me.clip.placeholderapi.PlaceholderAPI")
-            true
-        } catch (e: ClassNotFoundException) {
-            false
-        }
+        runCatching { Class.forName("me.clip.placeholderapi.PlaceholderAPI") }.isSuccess
     }
 }
