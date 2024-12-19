@@ -8,7 +8,7 @@ import io.papermc.paper.math.FinePosition
 import it.unimi.dsi.fastutil.ints.IntList
 
 @NmsUseWithCaution
-interface SurfBukkitNmsSpawnPacketsNew {
+interface SurfBukkitNmsSpawnPackets {
 
     fun despawn(entityIds: IntList): PacketOperation
     fun despawn(vararg entityId: Int): PacketOperation
@@ -71,9 +71,9 @@ interface SurfBukkitNmsSpawnPacketsNew {
         )
 
     companion object {
-        val instance = requiredService<SurfBukkitNmsSpawnPacketsNew>()
+        val instance = requiredService<SurfBukkitNmsSpawnPackets>()
     }
 }
 
 @NmsUseWithCaution
-val nmsSpawnPackets get() = SurfBukkitNmsSpawnPacketsNew.instance
+val nmsSpawnPackets get() = SurfBukkitNmsSpawnPackets.instance

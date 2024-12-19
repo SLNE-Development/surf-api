@@ -1,227 +1,194 @@
-package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.entity;
+package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.entity
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.auto.service.AutoService
+import com.google.common.flogger.StackSize
+import com.mojang.math.Transformation
+import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
+import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.*
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.PacketOperationImpl
+import dev.slne.surf.surfapi.bukkit.server.nms.toNms
+import dev.slne.surf.surfapi.core.api.util.logger
+import io.papermc.paper.math.BlockPosition
+import io.papermc.paper.math.FinePosition
+import it.unimi.dsi.fastutil.ints.IntList
+import net.minecraft.core.HolderLookup
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtOps
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
+import net.minecraft.server.MinecraftServer
+import net.minecraft.world.entity.Display
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.entity.SignText
+import org.bukkit.entity.TextDisplay.TextAlignment
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
 
-import com.google.common.flogger.FluentLogger;
-import com.google.common.flogger.StackSize;
-import com.mojang.math.Transformation;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.DisplaySettings;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.ItemDisplaySettings;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SignBlockUpdateSettings;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SurfBukkitNmsSpawnPackets;
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.TextDisplaySettings;
-import dev.slne.surf.surfapi.bukkit.server.annotation.VerifyOnMinecraftUpdate;
-import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.PacketOperationImpl;
-import dev.slne.surf.surfapi.bukkit.server.nms.NmsUtil;
-import io.papermc.paper.adventure.PaperAdventure;
-import io.papermc.paper.math.BlockPosition;
-import io.papermc.paper.math.FinePosition;
-import it.unimi.dsi.fastutil.ints.IntList;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.ParametersAreNonnullByDefault;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
-import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Display;
-import net.minecraft.world.entity.Display.BlockDisplay;
-import net.minecraft.world.entity.Display.ItemDisplay;
-import net.minecraft.world.entity.Display.TextDisplay;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.SignText;
-import org.jetbrains.annotations.NotNull;
+@Suppress("UnstableApiUsage")
+@AutoService
+@NmsUseWithCaution
+class SurfBukkitNmsSpawnPacketsImpl : SurfBukkitNmsSpawnPackets {
+    private val log = logger()
 
-@ParametersAreNonnullByDefault
-public final class SurfBukkitNmsSpawnPacketsImpl implements SurfBukkitNmsSpawnPackets, NmsUtil {
+    override fun despawn(entityIds: IntList) =
+        PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(entityIds) }
 
-  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    override fun despawn(vararg entityIds: Int) =
+        PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(*entityIds) }
 
-  @Override
-  public PacketOperation despawn(IntList entityIds) {
-    checkNotNull(entityIds, "entityIds");
 
-    return PacketOperationImpl.simple(player -> new ClientboundRemoveEntitiesPacket(entityIds));
-  }
+    override fun spawnItemDisplay(
+        entityId: Int,
+        position: FinePosition,
+        settings: ItemDisplaySettings,
+    ) = PacketOperationImpl.complex { player, packets ->
+        val serverPlayer = player.toNms()
+        val display = Display.ItemDisplay(EntityType.ITEM_DISPLAY, serverPlayer.level()).apply {
+            id = entityId
 
-  @Override
-  public PacketOperationImpl despawn(int... entityIds) {
-    checkNotNull(entityIds, "entityIds");
+            setPosition(position)
+            applySettings(settings)
 
-    return PacketOperationImpl.simple(player -> new ClientboundRemoveEntitiesPacket(entityIds));
-  }
-
-  @Override
-  public PacketOperation spawnItemDisplay(int entityId, FinePosition position,
-      ItemDisplaySettings settings) {
-    checkNotNull(position, "position");
-    checkNotNull(settings, "settings");
-
-    return PacketOperationImpl.complex((player, packets) -> {
-      final ServerPlayer serverPlayer = toNms(player);
-
-      final ItemDisplay display = new ItemDisplay(EntityType.ITEM_DISPLAY, serverPlayer.level());
-      display.setId(entityId);
-
-      setPosition(display, position);
-      applySettings(display, settings);
-
-      display.setItemStack(toNms(settings.getItemStack()));
-      display.setItemTransform(toNms(settings.getItemDisplayTransform()));
-
-      packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
-      packets.add(createSetEntityDataPacket(entityId, display));
-      return packets;
-    });
-  }
-
-  @Override
-  public PacketOperation spawnTextDisplay(int entityId, FinePosition position,
-      TextDisplaySettings settings) {
-    checkNotNull(position, "position");
-    checkNotNull(settings, "settings");
-
-    return PacketOperationImpl.complex((player, packets) -> {
-      final ServerPlayer serverPlayer = toNms(player);
-
-      final TextDisplay display = new TextDisplay(EntityType.TEXT_DISPLAY, serverPlayer.level());
-      display.setId(entityId);
-
-      setPosition(display, position);
-      applySettings(display, settings);
-      display.setText(PaperAdventure.asVanilla(settings.getText()));
-      display.getEntityData().set(TextDisplay.DATA_LINE_WIDTH_ID, settings.getLineWidth());
-      display.getEntityData()
-          .set(TextDisplay.DATA_BACKGROUND_COLOR_ID, settings.getBackgroundColor().value());
-
-      switch (settings.getTextAlignment()) {
-        case CENTER -> {
-          setFlag(display, TextDisplay.FLAG_ALIGN_LEFT, false);
-          setFlag(display, TextDisplay.FLAG_ALIGN_RIGHT, false);
+            itemStack = settings.itemStack.toNms()
+            itemTransform = settings.itemDisplayTransform.toNms()
         }
-        case LEFT -> {
-          setFlag(display, TextDisplay.FLAG_ALIGN_LEFT, true);
-          setFlag(display, TextDisplay.FLAG_ALIGN_RIGHT, false);
-        }
-        case RIGHT -> {
-          setFlag(display, TextDisplay.FLAG_ALIGN_LEFT, false);
-          setFlag(display, TextDisplay.FLAG_ALIGN_RIGHT, true);
-        }
-      }
 
-      packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
-      packets.add(createSetEntityDataPacket(entityId, display));
-      return packets;
-    });
-  }
-
-  @Override
-  public PacketOperation updateSign(int entityId, BlockPosition position,
-      SignBlockUpdateSettings settings) {
-
-    return PacketOperationImpl.complex((player, packets) -> {
-      final CompoundTag nbt = new CompoundTag();
-      final HolderLookup.Provider registryLookup = MinecraftServer.getServer().registryAccess();
-      writeUpdateSignToTag(nbt, registryLookup, settings.getFrontText(), settings.getBackText());
-
-      packets.add(new ClientboundBlockEntityDataPacket(toNms(position), BlockEntityType.SIGN, nbt));
-      return packets;
-    });
-  }
-
-  @Override
-  public PacketOperation spawnBlockDisplay(
-      int entityId,
-      FinePosition position,
-      BlockDisplaySettings settings
-  ) {
-    return PacketOperationImpl.complex((player, packets) -> {
-      final ServerPlayer serverPlayer = toNms(player);
-      final BlockDisplay display = new BlockDisplay(EntityType.BLOCK_DISPLAY, serverPlayer.level());
-
-      display.setId(entityId);
-      setPosition(display, position);
-      applySettings(display, settings);
-
-      display.setBlockState(toNms(settings.getBlockData()));
-
-      packets.add(new ClientboundAddEntityPacket(display, 0, display.blockPosition()));
-      packets.add(createSetEntityDataPacket(entityId, display));
-
-      return packets;
-    });
-  }
-
-  @SuppressWarnings("DataFlowIssue") // false positive
-  private ClientboundSetEntityDataPacket createSetEntityDataPacket(int entityId, Entity entity) {
-    return new ClientboundSetEntityDataPacket(entityId, entity.getEntityData().packAll());
-  }
-
-  @VerifyOnMinecraftUpdate
-  private void writeUpdateSignToTag(CompoundTag nbt, HolderLookup.Provider registryLookup, @NotNull
-  SignBlockUpdateSettings.SignText frontText, @NotNull SignBlockUpdateSettings.SignText backText) {
-
-    writeTextToTag(nbt, registryLookup, frontText, "front_text", true);
-    writeTextToTag(nbt, registryLookup, backText, "back_text", false);
-  }
-
-  @VerifyOnMinecraftUpdate
-  private void writeTextToTag(CompoundTag nbt, HolderLookup.Provider registryLookup,
-      SignBlockUpdateSettings.SignText text, String tagText, boolean isFrontText) {
-    final DynamicOps<Tag> nbtOps = registryLookup.createSerializationContext(NbtOps.INSTANCE);
-    final DataResult<Tag> textTag = SignText.DIRECT_CODEC.encodeStart(nbtOps, toNms(text));
-
-    textTag.resultOrPartial(s -> logFailedEncodeText(s, isFrontText))
-        .ifPresent(textElement -> nbt.put(tagText, textElement));
-  }
-
-  private void logFailedEncodeText(String string, boolean front) {
-    logger.atSevere()
-        .withStackTrace(StackSize.MEDIUM)
-        .atMostEvery(5, TimeUnit.SECONDS)
-        .log("Failed to encode %s text: %s", front ? "front" : "back", string);
-  }
-
-  private Transformation getTransformation(DisplaySettings settings) {
-    return new Transformation(
-        toNms(settings.getTranslation()),
-        toNms(settings.getLeftRotation()),
-        toNms(settings.getScale()),
-        toNms(settings.getRightRotation())
-    );
-  }
-
-  private void applySettings(Display entity, DisplaySettings settings) {
-    entity.setXRot(settings.getPitch());
-    entity.setYRot(settings.getYaw());
-    entity.setTransformation(getTransformation(settings));
-    entity.setBillboardConstraints(toNms(settings.getBillboardConstraints()));
-  }
-
-  private void setPosition(Entity entity, FinePosition position) {
-    entity.setPosRaw(position.x(), position.y(), position.z());
-  }
-
-  private void setFlag(TextDisplay entity, int flag, boolean set) {
-    byte flagBits = entity.getFlags();
-
-    if (set) {
-      flagBits |= (byte) flag;
-    } else {
-      flagBits &= (byte) ~flag;
+        packets.add(ClientboundAddEntityPacket(display, 0, display.blockPosition()))
+        packets.add(createSetEntityDataPacket(entityId, display))
+        packets
     }
 
-    entity.setFlags(flagBits);
-  }
+    override fun spawnTextDisplay(
+        entityId: Int,
+        position: FinePosition,
+        settings: TextDisplaySettings,
+    ) = PacketOperationImpl.complex { player, packets ->
+        val serverPlayer = player.toNms()
+        val display = Display.TextDisplay(EntityType.TEXT_DISPLAY, serverPlayer.level()).apply {
+            id = entityId
+
+            setPosition(position)
+            applySettings(settings)
+
+            text = settings.text.toNms()
+
+            val data = getEntityData()
+            data[Display.TextDisplay.DATA_LINE_WIDTH_ID] = settings.lineWidth
+            data[Display.TextDisplay.DATA_BACKGROUND_COLOR_ID] = settings.backgroundColor.value()
+
+            when (settings.textAlignment) {
+                TextAlignment.CENTER -> {
+                    setFlag(Display.TextDisplay.FLAG_ALIGN_LEFT, false)
+                    setFlag(Display.TextDisplay.FLAG_ALIGN_RIGHT, false)
+                }
+
+                TextAlignment.LEFT -> {
+                    setFlag(Display.TextDisplay.FLAG_ALIGN_LEFT, true)
+                    setFlag(Display.TextDisplay.FLAG_ALIGN_RIGHT, false)
+                }
+
+                TextAlignment.RIGHT -> {
+                    setFlag(Display.TextDisplay.FLAG_ALIGN_LEFT, false)
+                    setFlag(Display.TextDisplay.FLAG_ALIGN_RIGHT, true)
+                }
+            }
+        }
+
+
+        packets.add(ClientboundAddEntityPacket(display, 0, display.blockPosition()))
+        packets.add(createSetEntityDataPacket(entityId, display))
+        packets
+    }
+
+    override fun updateSign(
+        entityId: Int,
+        position: BlockPosition,
+        settings: SignBlockUpdateSettings,
+    ) = PacketOperationImpl.complex { player, packets ->
+        val nbt = CompoundTag()
+        val registryLookup = MinecraftServer.getServer().registryAccess()
+        writeUpdateSignToTag(nbt, registryLookup, settings.frontText, settings.backText)
+
+        packets.add(ClientboundBlockEntityDataPacket(position.toNms(), BlockEntityType.SIGN, nbt))
+        packets
+    }
+
+    override fun spawnBlockDisplay(
+        entityId: Int,
+        position: FinePosition,
+        settings: BlockDisplaySettings,
+    ) = PacketOperationImpl.complex { player, packets ->
+        val serverPlayer = player.toNms()
+        val display = Display.BlockDisplay(EntityType.BLOCK_DISPLAY, serverPlayer.level()).apply {
+            id = entityId
+
+            setPosition(position)
+            applySettings(settings)
+            blockState = settings.blockData.toNms()
+        }
+
+        packets.add(ClientboundAddEntityPacket(display, 0, display.blockPosition()))
+        packets.add(createSetEntityDataPacket(entityId, display))
+        packets
+    }
+
+    private fun createSetEntityDataPacket(entityId: Int, entity: Entity) =
+        ClientboundSetEntityDataPacket(entityId, entity.getEntityData().packAll()!!)
+
+    private fun writeUpdateSignToTag(
+        nbt: CompoundTag,
+        registryLookup: HolderLookup.Provider,
+        frontText: SignBlockUpdateSettings.SignText,
+        backText: SignBlockUpdateSettings.SignText,
+    ) {
+        writeTextToTag(nbt, registryLookup, frontText, "front_text", true)
+        writeTextToTag(nbt, registryLookup, backText, "back_text", false)
+    }
+
+    private fun writeTextToTag(
+        nbt: CompoundTag,
+        registryLookup: HolderLookup.Provider,
+        text: SignBlockUpdateSettings.SignText,
+        tagText: String,
+        isFrontText: Boolean,
+    ) {
+        val nbtOps = registryLookup.createSerializationContext(NbtOps.INSTANCE)
+        val textTag = SignText.DIRECT_CODEC.encodeStart(nbtOps, text.toNms())
+        textTag.resultOrPartial { logFailedEncodeText(it, isFrontText) }
+            .ifPresent { nbt.put(tagText, it) }
+    }
+
+    private fun logFailedEncodeText(string: String, front: Boolean) {
+        log.atSevere()
+            .withStackTrace(StackSize.MEDIUM)
+            .atMostEvery(5, java.util.concurrent.TimeUnit.SECONDS)
+            .log("Failed to encode %s text: %s", if (front) "front" else "back", string)
+    }
+
+    private fun getTransformation(settings: DisplaySettings) = Transformation(
+        settings.translation.toNms(),
+        settings.leftRotation.toNms(),
+        settings.scale.toNms(),
+        settings.rightRotation.toNms()
+    )
+
+    private fun Display.applySettings(settings: DisplaySettings) {
+        xRot = settings.pitch
+        yRot = settings.yaw
+        setTransformation(getTransformation(settings))
+        billboardConstraints = settings.billboardConstraints.toNms()
+    }
+
+    private fun Entity.setPosition(position: FinePosition) {
+        setPosRaw(position.x(), position.y(), position.z())
+    }
+
+    private fun Display.TextDisplay.setFlag(flag: Byte, set: Boolean) {
+        flags = if (set) flags or flag else flags and flag.inv()
+    }
 }
