@@ -8,7 +8,6 @@ import dev.slne.surf.surfapi.core.api.SurfCoreApi;
 import dev.slne.surf.surfapi.core.api.util.UtilKt;
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl;
 import dev.slne.surf.surfapi.velocity.api.SurfVelocityApi;
-import dev.slne.surf.surfapi.velocity.api.packet.SurfVelocityPacketApi;
 import dev.slne.surf.surfapi.velocity.server.VelocityMain;
 import dev.slne.surf.surfapi.velocity.server.impl.packet.SurfVelocityPacketApiImpl;
 import java.nio.file.Path;
