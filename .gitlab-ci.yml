@@ -5,6 +5,7 @@ stages:
 variables:
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
   DYNAMIC_BRANCH: "$CI_DEFAULT_BRANCH"
+  MAVEN_USER_SETTINGS: "$CI_PROJECT_DIR/maven-settings.xml"
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
@@ -14,7 +15,7 @@ cache:
 
 before_script:
   - export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
-  - echo "$MAVEN_SETTINGS" > ~/.m2/settings.xml
+  - echo "$MAVEN_SETTINGS_XML" > ~/.m2/settings.xml
 
 
 build:
