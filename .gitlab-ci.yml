@@ -15,14 +15,15 @@ cache:
 
 before_script:
   - export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
-  - echo "$MAVEN_SETTINGS_XML" > "$MAVEN_USER_SETTINGS"
+  - mkdir -p ~/.m2
+  - echo "$MAVEN_SETTINGS_XML" > ~/.m2/settings.xml
 
 
 build:
   stage: build
   image: gradle:8.11.1-jdk-21-and-23
   script:
-    - gradle clean shadowJar -DuserSettingsFileName="$MAVEN_USER_SETTINGS"
+    - gradle clean shadowJar
   artifacts:
     paths:
       - build/libs/
@@ -31,7 +32,7 @@ publish:
   stage: publish
   image: gradle:8.11.1-jdk-21-and-23
   script:
-    - gradle publish -DuserSettingsFileName="$MAVEN_USER_SETTINGS"
+    - gradle publish
   dependencies:
     - build
   only:
