@@ -1,12 +1,12 @@
 package dev.slne.surf.api.gen;
 
 import com.google.common.util.concurrent.MoreExecutors;
-import com.mojang.logging.LogUtils;
 import dev.slne.surf.api.gen.generator.Generators;
 import dev.slne.surf.api.gen.generator.SourceGenerator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.HolderLookup;
@@ -24,11 +24,10 @@ import net.minecraft.server.packs.repository.ServerPacksSource;
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
 import net.minecraft.tags.TagLoader;
 import net.minecraft.world.flag.FeatureFlags;
-import org.slf4j.Logger;
 
 public class Main {
 
-  private static final Logger LOGGER = LogUtils.getLogger();
+  private static final ComponentLogger LOGGER = ComponentLogger.logger();
   public static final RegistryAccess.Frozen REGISTRY_ACCESS;
 
   static {
