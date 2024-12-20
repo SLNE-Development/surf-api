@@ -10,6 +10,7 @@ interface SurfBukkitNmsItemBridge {
     fun setDefaultMaxStackSize(item: ItemType, maxStackSize: @Range(from = 1, to = 100) Int)
 
     companion object {
+        @JvmStatic
         val instance = requiredService<SurfBukkitNmsItemBridge>()
     }
 }

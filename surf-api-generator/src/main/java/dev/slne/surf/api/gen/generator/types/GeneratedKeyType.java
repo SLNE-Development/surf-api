@@ -15,15 +15,46 @@ import dev.slne.surf.api.gen.generator.SimpleGenerator;
 import dev.slne.surf.api.gen.generator.utils.Annotations;
 import dev.slne.surf.api.gen.generator.utils.Formatting;
 import dev.slne.surf.api.gen.generator.utils.Javadocs;
+import io.papermc.paper.registry.RegistryKey;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 import net.kyori.adventure.key.Key;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistrySetBuilder;
+import net.minecraft.core.RegistrySetBuilder.RegistryBootstrap;
+import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.resources.ResourceKey;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public class GeneratedKeyType<T, A> extends SimpleGenerator {
+
+  private static final Map<ResourceKey<? extends Registry<?>>, RegistryBootstrap<?>> VANILLA_REGISTRY_ENTRIES = VanillaRegistries.BUILDER.entries.stream()
+      .collect(Collectors.toMap(RegistrySetBuilder.RegistryStub::key,
+          RegistrySetBuilder.RegistryStub::bootstrap));
+
+  private static final Map<ResourceKey<? extends Registry<?>>, RegistrySetBuilder.RegistryBootstrap<?>> EXPERIMENTAL_REGISTRY_ENTRIES = Map.of(); // Update for Experimental API
+  private static final Map<RegistryKey<?>, String> REGISTRY_KEY_FIELD_NAMES;
+
+  static {
+    final Map<RegistryKey<?>, String> map = new HashMap<>();
+    try {
+      for (final Field field : RegistryKey.class.getFields()) {
+        if (!Modifier.isStatic(field.getModifiers()) || !Modifier.isFinal(field.getModifiers()) || field.getType() != RegistryKey.class) {
+          continue;
+        }
+        map.put((RegistryKey<?>) field.get(null), field.getName());
+      }
+      REGISTRY_KEY_FIELD_NAMES = Map.copyOf(map);
+    } catch (final ReflectiveOperationException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
 
   private final ResourceKey<? extends Registry<T>> registryKey;
 
@@ -47,9 +78,9 @@ public class GeneratedKeyType<T, A> extends SimpleGenerator {
   protected TypeSpec getTypeSpec() {
     final TypeSpec.Builder typeBuilder = this.keyHolderType();
 
-    final Registry<T> registry = Main.REGISTRY_ACCESS.registryOrThrow(this.registryKey);
+    final Registry<T> registry = Main.REGISTRY_ACCESS.lookupOrThrow(this.registryKey);
 
-    for (final Holder.Reference<T> reference : registry.holders()
+    for (final Holder.Reference<T> reference : registry.listElements()
         .sorted(Formatting.alphabeticKeyOrder(reference -> reference.key().location().getPath()))
         .toList()) {
       final ResourceKey<T> key = reference.key();

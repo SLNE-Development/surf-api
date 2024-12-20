@@ -17,7 +17,7 @@ public class BukkitPluginMain extends JavaPlugin {
 
   @Override
   public void onLoad() {
-    SurfBukkitPacketListenerApi.get().registerListeners(new ChatListener());
+    SurfBukkitPacketListenerApi.Companion.getInstance().registerListeners(new ChatListener());
 
 //    TestConfig config = SurfCore#Api.getCore()
 //        .createModernYamlConfig(TestConfig.class, getDataFolder().toPath(), "test.yml");

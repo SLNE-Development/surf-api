@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi;
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfPatternedVisualizer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import kotlin.Unit;
 import org.bukkit.Material;
 
 public class CreateVisualizer extends CommandAPICommand {
@@ -20,9 +21,9 @@ public class CreateVisualizer extends CommandAPICommand {
     executes((commandSender, commandArguments) -> {
       String visualizerName = commandArguments.getUnchecked("visualizerName");
 
-      SurfPatternedVisualizer patternedVisualizer = SurfBukkitVisualizerApi.get()
+      SurfPatternedVisualizer patternedVisualizer = SurfBukkitVisualizerApi.getInstance()
           .createPatternedVisualizer();
-      patternedVisualizer.setVisualMaterial(Material.GREEN_STAINED_GLASS);
+      patternedVisualizer.setVisualMaterial(Material.GREEN_STAINED_GLASS, blockDisplaySettings -> Unit.INSTANCE);
       patternedVisualizer.setRenderAtHighestPoint(true);
       patternedVisualizer.setVisualHeight(5);
 

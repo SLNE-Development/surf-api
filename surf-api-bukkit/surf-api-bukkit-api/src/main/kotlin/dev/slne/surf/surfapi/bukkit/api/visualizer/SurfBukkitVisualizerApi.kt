@@ -9,6 +9,7 @@ interface SurfBukkitVisualizerApi {
     fun createPatternedVisualizer(): SurfPatternedVisualizer
 
     companion object {
+        @JvmStatic
         val instance = requiredService<SurfBukkitVisualizerApi>()
     }
 }

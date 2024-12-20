@@ -8,7 +8,6 @@ import javax.annotation.ParametersAreNonnullByDefault
 
 class BlockStateFactoryImpl {
     @ParametersAreNonnullByDefault
-    @JvmRecord
     internal data class BuilderImpl(val blockState: WrappedBlockState) : BlockStateFactory.Builder {
         override fun age(): Int {
             return blockState.age

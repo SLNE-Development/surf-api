@@ -1,0 +1,35 @@
+stages:
+  - build
+  - publish
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  DYNAMIC_BRANCH: "$CI_DEFAULT_BRANCH"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+before_script:
+  - export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+
+build:
+  stage: build
+  image: gradle:8.11.1-jdk-21-and-23
+  script:
+    - gradle clean shadowJar
+  artifacts:
+    paths:
+      - build/libs/
+
+publish:
+  stage: publish
+  image: gradle:8.11.1-jdk-21-and-23
+  script:
+    - gradle publish
+  dependencies:
+    - build
+  only:
+    - $DYNAMIC_BRANCH

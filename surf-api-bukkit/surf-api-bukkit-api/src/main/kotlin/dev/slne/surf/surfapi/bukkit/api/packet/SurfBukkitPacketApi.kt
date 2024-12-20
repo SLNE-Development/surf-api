@@ -110,6 +110,7 @@ interface SurfBukkitPacketApi {
     fun unregisterPacketLoreListener(plugin: Plugin)
 
     companion object {
+        @JvmStatic
         val instance = requiredService<SurfBukkitPacketApi>()
     }
 }

@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.packet.listener
 
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
-import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.surfapi.bukkit.api.nms.nmsBridge
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl
@@ -21,7 +20,7 @@ import io.papermc.paper.network.ChannelInitializeListenerHolder
 import net.kyori.adventure.key.Key
 import net.minecraft.network.HandlerNames
 import net.minecraft.network.protocol.Packet
-import net.minecraft.network.protocol.login.ClientboundGameProfilePacket
+import net.minecraft.network.protocol.login.ClientboundLoginFinishedPacket
 import net.minecraft.server.level.ServerPlayer
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -103,10 +102,11 @@ object PlayerChannelInjector : Listener {
             super.channelUnregistered(ctx)
         }
 
+        @OptIn(NmsUseWithCaution::class)
         override fun write(
             ctx: ChannelHandlerContext?,
             msg: Any?,
-            promise: ChannelPromise?
+            promise: ChannelPromise?,
         ) { // server -> client
 
             var msg = msg
@@ -116,7 +116,7 @@ object PlayerChannelInjector : Listener {
             }
 
             // first, we set the player if it isn't set yet
-            if (player == null && msg is ClientboundGameProfilePacket) {
+            if (player == null && msg is ClientboundLoginFinishedPacket) {
                 val uuid = msg.gameProfile().id
                 val player = playerInjectorCache.remove(uuid)
 
@@ -153,6 +153,7 @@ object PlayerChannelInjector : Listener {
             }
         }
 
+        @OptIn(NmsUseWithCaution::class)
         override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) { // client -> server
             var msg = msg
             if (msg !is Packet<*>) { // not our packet
@@ -199,7 +200,7 @@ object PlayerChannelInjector : Listener {
                 )
 
                 if (resultApi != null) { // we may have a modified packet
-                    return NmsPacketImpl.getFromApi(resultApi).getNmsPacket()
+                    return NmsPacketImpl.getFromApi(resultApi).nmsPacket
                 }
             } else {
                 return packet // no api packet wrapper, so we just return the original packet
@@ -213,13 +214,13 @@ object PlayerChannelInjector : Listener {
             val apiPacket = PacketRegistry.createClientboundPacketOrNull(packet)
 
             if (apiPacket != null) {
-                val resultApi = this.bridge.handleClientboundPacket<NmsClientboundPacket?>(
+                val resultApi = this.bridge.handleClientboundPacket(
                     apiPacket,
                     player!!.bukkitEntity
                 )
 
                 if (resultApi != null) {
-                    return NmsPacketImpl.getFromApi(resultApi).getNmsPacket()
+                    return NmsPacketImpl.getFromApi(resultApi).nmsPacket
                 }
             } else {
                 return packet

@@ -1,6 +1,6 @@
 [versions]
 # Paper
-paper-api = "1.21-R0.1-SNAPSHOT"
+paper-api = "1.21.4-R0.1-SNAPSHOT"
 
 # Kolin
 kotlinVersion = "2.1.0"

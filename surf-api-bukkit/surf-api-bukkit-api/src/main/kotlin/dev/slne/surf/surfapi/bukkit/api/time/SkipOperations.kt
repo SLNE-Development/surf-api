@@ -13,6 +13,7 @@ object SkipOperations {
      * Minecraft world. The value of this variable is a lambda expression that takes a World object as
      * input and calculates the time to add to the world.
      */
+    @JvmField
     val NEXT_SUNRISE = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 22600L)) }
 
     /**
@@ -20,6 +21,7 @@ object SkipOperations {
      * Minecraft world. The value of this variable is a lambda expression that takes a World object as
      * input and calculates the time to add to the world.
      */
+    @JvmField
     val NEXT_SUNSET = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 11800L)) }
 
     /**
@@ -27,6 +29,7 @@ object SkipOperations {
      * Minecraft world. The value of this variable is a lambda expression that takes a World object as
      * input and calculates the time to add to the world.
      */
+    @JvmField
     val NEXT_DAY = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 500L)) }
 
     /**
@@ -34,6 +37,7 @@ object SkipOperations {
      * world. The value of this variable is a lambda expression that takes a World object as input and
      * calculates the time to add to the world.
      */
+    @JvmField
     val NEXT_NOON = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 6000L)) }
 
     /**
@@ -41,6 +45,7 @@ object SkipOperations {
      * Minecraft world. The value of this variable is a lambda expression that takes a World object as
      * input and calculates the time to add to the world.
      */
+    @JvmField
     val NEXT_NIGHT = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 13000L)) }
 
     /**
@@ -48,6 +53,7 @@ object SkipOperations {
      * Minecraft world. The value of this variable is a lambda expression that takes a World object as
      * input and calculates the time to add to the world.
      */
+    @JvmField
     val NEXT_MIDNIGHT = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 18000L)) }
 
     /**

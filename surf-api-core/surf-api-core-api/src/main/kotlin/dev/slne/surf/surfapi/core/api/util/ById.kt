@@ -12,7 +12,7 @@ fun interface ById {
 
     companion object {
         fun <T> build(clazz: Class<T>): Int2ObjectMap<T> where T : Enum<T>, T : ById {
-            return Util.byIdMap<T>(
+            return byIdMap<T>(
                 ToIntFunction { it.id() },
                 clazz.getEnumConstants()
             )

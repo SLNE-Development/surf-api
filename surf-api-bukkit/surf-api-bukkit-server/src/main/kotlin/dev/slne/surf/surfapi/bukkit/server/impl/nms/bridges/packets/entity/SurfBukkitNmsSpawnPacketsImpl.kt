@@ -30,7 +30,7 @@ import kotlin.experimental.inv
 import kotlin.experimental.or
 
 @Suppress("UnstableApiUsage")
-@AutoService
+@AutoService(SurfBukkitNmsSpawnPackets::class)
 @NmsUseWithCaution
 class SurfBukkitNmsSpawnPacketsImpl : SurfBukkitNmsSpawnPackets {
     private val log = logger()

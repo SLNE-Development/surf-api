@@ -16,7 +16,7 @@ paperweight {
     paramMappingsRepo = paperMavenPublicUrl
     remapRepo = paperMavenPublicUrl
     decompileRepo = paperMavenPublicUrl
-    minecraftVersion = "1.21"
+    minecraftVersion = "1.21.4"
 }
 
 repositories {
@@ -44,9 +44,6 @@ allprojects {
         api(rootProject.libs.kotlin.reflect)
         implementation("com.google.auto.service:auto-service:1.1.1")
         "kapt"("com.google.auto.service:auto-service:1.1.1")
-
-        implementation("com.nicholasnassar.dslbuilder:dsl-builder-api:0.0.2")
-        "ksp"("com.nicholasnassar.dslbuilder:dsl-builder-ksp:0.0.2")
     }
 
     project.idea {
@@ -63,7 +60,7 @@ allprojects {
 }
 
 dependencies {
-    paramMappings("net.fabricmc:yarn:1.21+build.1:mergedv2")
+    paramMappings("net.fabricmc:yarn:1.21.4+build.1:mergedv2")
     remapper("net.fabricmc:tiny-remapper:0.10.3:fat")
     decompiler("org.vineflower:vineflower:1.10.1")
 //    spigotDecompiler("io.papermc:patched-spigot-fernflower:0.1+build.13")

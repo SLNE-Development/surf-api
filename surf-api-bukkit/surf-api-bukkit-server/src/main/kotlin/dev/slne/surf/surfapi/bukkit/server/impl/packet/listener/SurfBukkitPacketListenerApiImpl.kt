@@ -159,7 +159,6 @@ class SurfBukkitPacketListenerApiImpl : SurfBukkitPacketListenerApi {
         if (PacketListenerResult.CANCEL in results) PacketListenerResult.CANCEL else PacketListenerResult.CONTINUE
 
 
-    @JvmRecord
     private data class ListenerMethod(
         val listener: PacketListener,
         val methodHandle: MethodHandle,

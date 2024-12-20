@@ -30,7 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.util.ApiVersion;
-import org.bukkit.craftbukkit.util.Commodore;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -130,8 +130,9 @@ public final class LibLoader {
   }
 
   private byte[] remapClass(String jarName, byte[] clazz, String apiVersion) {
-    return Commodore.convert(clazz, jarName, ApiVersion.getOrCreateVersion(apiVersion),
-        ((CraftServer) Bukkit.getServer()).activeCompatibilities);
+    return CraftMagicNumbers.INSTANCE.getCommodore()
+        .convert(clazz, jarName, ApiVersion.getOrCreateVersion(apiVersion),
+            ((CraftServer) Bukkit.getServer()).activeCompatibilities);
   }
 
   private @Nullable File loadTempFileFromResource(String fileName) throws IOException {

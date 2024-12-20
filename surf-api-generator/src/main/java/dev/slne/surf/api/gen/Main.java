@@ -1,22 +1,29 @@
 package dev.slne.surf.api.gen;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.mojang.logging.LogUtils;
 import dev.slne.surf.api.gen.generator.Generators;
 import dev.slne.surf.api.gen.generator.SourceGenerator;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import net.minecraft.SharedConstants;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.LayeredRegistryAccess;
+import net.minecraft.core.Registry.PendingTags;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.RegistryDataLoader;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.server.RegistryLayer;
-import net.minecraft.server.WorldLoader;
+import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.ServerPacksSource;
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
+import net.minecraft.tags.TagLoader;
+import net.minecraft.world.flag.FeatureFlags;
 import org.slf4j.Logger;
 
 public class Main {
@@ -35,9 +42,25 @@ public class Main {
         PackType.SERVER_DATA,
         resourcePackRepository.getAvailablePacks().stream().map(Pack::open).toList());
     LayeredRegistryAccess<RegistryLayer> layers = RegistryLayer.createRegistryAccess();
-    layers = WorldLoader.loadAndReplaceLayer(resourceManager, layers, RegistryLayer.WORLDGEN,
-        RegistryDataLoader.WORLDGEN_REGISTRIES);
+    final List<PendingTags<?>> pendingTags = TagLoader.loadTagsForExistingRegistries(
+        resourceManager, layers.getLayer(RegistryLayer.STATIC));
+    final List<HolderLookup.RegistryLookup<?>> worldGenLayer = TagLoader.buildUpdatedLookups(
+        layers.getAccessForLoading(RegistryLayer.WORLDGEN), pendingTags);
+    final RegistryAccess.Frozen frozenWorldgenRegistries = RegistryDataLoader.load(resourceManager,
+        worldGenLayer, RegistryDataLoader.WORLDGEN_REGISTRIES);
+    layers = layers.replaceFrom(RegistryLayer.WORLDGEN, frozenWorldgenRegistries);
     REGISTRY_ACCESS = layers.compositeAccess().freeze();
+    final ReloadableServerResources reloadableServerResources = ReloadableServerResources.loadResources(
+        resourceManager,
+        layers,
+        pendingTags,
+        FeatureFlags.VANILLA_SET,
+        Commands.CommandSelection.DEDICATED,
+        0,
+        MoreExecutors.directExecutor(),
+        MoreExecutors.directExecutor()
+    ).join();
+    reloadableServerResources.updateStaticRegistryTags();
   }
 
   public static void main(String[] args) {

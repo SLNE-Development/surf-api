@@ -1,3 +1,4 @@
+@file:JvmName("UtilBukkit")
 package dev.slne.surf.surfapi.bukkit.api.util
 
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
@@ -11,8 +12,8 @@ fun key(name: String): NamespacedKey { // TODO: Verify if this works
     return NamespacedKey(getCallingPlugin(), name)
 }
 
-fun getCallingPlugin(): JavaPlugin {
-    val caller = getCallerClass(1) ?: error("Cannot determine caller class")
+fun getCallingPlugin(depth: Int = 1): JavaPlugin {
+    val caller = getCallerClass(depth) ?: error("Cannot determine caller class")
     return JavaPlugin.getProvidingPlugin(caller)
 }
 

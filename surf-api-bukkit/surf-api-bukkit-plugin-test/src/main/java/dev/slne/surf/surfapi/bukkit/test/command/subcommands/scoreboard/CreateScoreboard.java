@@ -5,6 +5,7 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfAutoUpdatablePlayerScoreboard;
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder;
 import dev.slne.surf.surfapi.core.api.messages.Colors;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +32,7 @@ public class CreateScoreboard extends CommandAPICommand {
           .addLineSeparator()
           .addGradientLine(Component.text("Ein cooler Gradient!"), Colors.PRIMARY, Colors.SECONDARY)
           .addLine(Component.text("Static Line"))
-          .addAnimatedLine(Util.make(components -> {
+          .addAnimatedLine(Util.make(new ArrayList<>(60), components -> {
             for (int i = 0; i < 60; i++) {
               components.add(Component.text("Frame " + (i)));
             }

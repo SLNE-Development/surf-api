@@ -25,12 +25,13 @@ public class PacketLoreCreate extends CommandAPICommand {
 
       KEYS.add(key);
 
-      SurfBukkitPacketApi.get().registerPacketLoreListener(key, loreToDisplay -> {
-        loreToDisplay.add(Component.text("Hello, world!", Colors.AQUA));
-        loreToDisplay.add(Component.text("This is a test!", Colors.AQUA));
-        loreToDisplay.add(Component.text("This is a test!", Colors.PRIMARY));
-        loreToDisplay.add(Component.text("This is a test!", Colors.SECONDARY));
-      });
+      SurfBukkitPacketApi.getInstance()
+          .registerPacketLoreListener(key, (loreToDisplay, pdc, stack) -> {
+            loreToDisplay.add(Component.text("Hello, world!", Colors.AQUA));
+            loreToDisplay.add(Component.text("This is a test!", Colors.AQUA));
+            loreToDisplay.add(Component.text("This is a test!", Colors.PRIMARY));
+            loreToDisplay.add(Component.text("This is a test!", Colors.SECONDARY));
+          });
     });
   }
 

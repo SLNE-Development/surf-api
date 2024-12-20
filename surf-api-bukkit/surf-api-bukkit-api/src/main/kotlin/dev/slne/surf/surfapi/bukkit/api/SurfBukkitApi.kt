@@ -105,6 +105,7 @@ interface SurfBukkitApi : SurfCoreApi {
     suspend fun skipTimeSmoothly(skipOperation: SkipOperation): Map<World, TimeSkipResult>
 
     companion object {
+        @JvmStatic
         val instance get() = SurfCoreApi.instance as SurfBukkitApi
     }
 }

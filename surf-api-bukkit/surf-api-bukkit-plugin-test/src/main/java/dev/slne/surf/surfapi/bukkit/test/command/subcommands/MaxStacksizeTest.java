@@ -17,7 +17,7 @@ public class MaxStacksizeTest extends CommandAPICommand {
       final ItemStack item = args.getUnchecked("item");
       final int maxStackSize = args.getUnchecked("maxStackSize");
 
-      SurfBukkitNmsItemBridge.get()
+      SurfBukkitNmsItemBridge.getInstance()
           .setDefaultMaxStackSize(item.getType().asItemType(), maxStackSize);
 
       sender.sendMessage("Set max stack size of " + item.getType().name() + " to " + maxStackSize);
