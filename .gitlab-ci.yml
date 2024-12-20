@@ -14,6 +14,8 @@ cache:
 
 before_script:
   - export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+  - echo "$MAVEN_SETTINGS" > ~/.m2/settings.xml
+
 
 build:
   stage: build
