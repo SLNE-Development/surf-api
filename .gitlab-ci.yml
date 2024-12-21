@@ -23,13 +23,14 @@ build:
   script:
     - gradle clean shadowJar
     - echo "Gefundene Artefakte:"
-    - find . -type f -path "**/build/libs/*.jar" ! -path "**/.gradle/**"
+    - find . -type f path "**/build/libs/*.jar" ! -path "**/.gradle/**" -exec du -sh {} +
   artifacts:
     paths:
       - "**/build/libs/*.jar"
     exclude:
       - .gradle/**
       - "**/.gradle/**"
+      - "./build-logic/**"
 
 publish:
   stage: publish
