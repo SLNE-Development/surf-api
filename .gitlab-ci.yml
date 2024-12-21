@@ -23,7 +23,8 @@ build:
   script:
     - gradle clean shadowJar
     - echo "Gefundene Artefakte:"
-    - find . -type f path "**/build/libs/*.jar" ! -path "**/.gradle/**" -exec du -sh {} +
+    - find . -type f -path "**/build/libs/*.jar" ! -path "**/.gradle/**" -exec ls -lh {} \;
+
   artifacts:
     paths:
       - "**/build/libs/*.jar"
