@@ -7,21 +7,19 @@ variables:
   MAVEN_USER_SETTINGS: "$CI_PROJECT_DIR/maven-settings.xml"
 
 cache:
-  key: "$CI_COMMIT_REF_SLUG"
   paths:
     - .gradle/wrapper
     - .gradle/caches
 
 before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
   - export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
   - mkdir -p ~/.m2
   - echo "$MAVEN_SETTINGS_XML" > ~/.m2/settings.xml
-  - echo "Default branch is $CI_DEFAULT_BRANCH"
-
 
 build:
   stage: build
-  image: gradle:8.11.1-jdk-21-and-23
+  image: gradle:latest
   script:
     - gradle clean shadowJar
   artifacts:
@@ -30,7 +28,7 @@ build:
 
 publish:
   stage: publish
-  image: gradle:8.11.1-jdk-21-and-23
+  image: gradle:latest
   script:
     - gradle publish
   dependencies:
