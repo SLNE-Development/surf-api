@@ -4,7 +4,6 @@ stages:
 
 variables:
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
-  DYNAMIC_BRANCH: "$CI_DEFAULT_BRANCH"
   MAVEN_USER_SETTINGS: "$CI_PROJECT_DIR/maven-settings.xml"
 
 cache:
@@ -17,7 +16,7 @@ before_script:
   - export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
   - mkdir -p ~/.m2
   - echo "$MAVEN_SETTINGS_XML" > ~/.m2/settings.xml
-  - echo "Default branch is $DYNAMIC_BRANCH"
+  - echo "Default branch is $CI_DEFAULT_BRANCH"
 
 
 build:
@@ -36,5 +35,5 @@ publish:
     - gradle publish
   dependencies:
     - build
- # only:
-  #  - $DYNAMIC_BRANCH
+  only:
+    - $CI_DEFAULT_BRANCH
