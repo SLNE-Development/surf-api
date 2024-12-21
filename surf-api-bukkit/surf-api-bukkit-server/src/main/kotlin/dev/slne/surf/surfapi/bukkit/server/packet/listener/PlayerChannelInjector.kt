@@ -125,11 +125,17 @@ object PlayerChannelInjector : Listener {
                 }
             }
 
+            val player = player
+            if (player == null) {
+                super.write(ctx, msg, promise)
+                return
+            }
+
             var cancelled = false
 
             try {
                 // first, we try to handle the packet with the nms packet listener
-                msg = this.packetListenerApi.handleClientboundPacket(msg, player!!)
+                msg = this.packetListenerApi.handleClientboundPacket(msg, player)
 
                 if (msg == null) {
                     // no need to handle the packet further
@@ -161,11 +167,17 @@ object PlayerChannelInjector : Listener {
                 return
             }
 
+            val player = player
+            if (player == null) {
+                super.channelRead(ctx, msg)
+                return
+            }
+
             var cancelled = false
 
             try {
                 // first, we try to handle the packet with the nms packet listener
-                msg = this.packetListenerApi.handleServerboundPacket(msg, player!!)
+                msg = this.packetListenerApi.handleServerboundPacket(msg, player)
 
                 if (msg == null) {
                     // no need to handle the packet further
