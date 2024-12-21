@@ -8,8 +8,8 @@ variables:
 
 cache:
   paths:
-    - .gradle/wrapper
     - .gradle/caches
+    - .gradle/caches/**
 
 before_script:
   - export GRADLE_USER_HOME=`pwd`/.gradle
@@ -22,9 +22,10 @@ build:
   image: gradle:latest
   script:
     - gradle clean shadowJar
+    - ls -R build/libs/
   artifacts:
     paths:
-      - build/libs/
+      - build/libs/*.jar
 
 publish:
   stage: publish
