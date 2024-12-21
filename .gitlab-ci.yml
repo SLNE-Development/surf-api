@@ -26,6 +26,9 @@ build:
   artifacts:
     paths:
       - "**/build/libs/*.jar"
+    exclude:
+      - .gradle/**
+      - "**/.gradle/**"
 
 publish:
   stage: publish
