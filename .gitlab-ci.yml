@@ -22,8 +22,7 @@ build:
   image: gradle:latest
   script:
     - gradle clean shadowJar
-    - pwd
-    - ls -R
+    - find . -type f -name "*.jar" -exec du -sh {} +
   artifacts:
     paths:
       - "**/build/libs/*.jar"
