@@ -22,7 +22,8 @@ build:
   image: gradle:latest
   script:
     - gradle clean shadowJar
-    - ls -R build/libs/
+    - pwd
+    - ls -R
   artifacts:
     paths:
       - build/libs/*.jar
