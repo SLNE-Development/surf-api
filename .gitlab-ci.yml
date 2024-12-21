@@ -36,5 +36,5 @@ publish:
     - gradle publish
   dependencies:
     - build
-  only:
-    - $DYNAMIC_BRANCH
+ # only:
+  #  - $DYNAMIC_BRANCH
