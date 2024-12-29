@@ -1,24 +1,26 @@
-import io.papermc.paperweight.PaperweightSourceGeneratorHelper
-import io.papermc.paperweight.extension.PaperweightSourceGeneratorExt
+import jdk.tools.jlink.resources.plugins
 
 plugins {
     java
     id("dev.slne.java-library-conventions")
     id("dev.slne.java-shadow-conventions")
-//    id("io.papermc.paperweight.core") apply true
-//    id("io.papermc.paperweight.userdev") apply false
+    id("io.papermc.paperweight.userdev")
 }
 
-plugins.apply(PaperweightSourceGeneratorHelper::class)
+//plugins.apply(PaperweightSourceGeneratorHelper::class)
 
-extensions.configure(PaperweightSourceGeneratorExt::class) {
-    atFile.set(projectDir.toPath().resolve("wideners.at").toFile())
-}
+//extensions.configure(PaperweightSourceGeneratorExt::class) {
+//    atFile.set(projectDir.toPath().resolve("wideners.at").toFile())
+//}
 
 dependencies {
     implementation("com.squareup:javapoet:1.13.0")
     implementation("org.jetbrains:annotations:24.1.0")
     implementation(libs.paper.api)
+
+    paperweight.paperDevBundle(libs.paper.api.get().version)
+    implementation(paperweight.paperDevBundleDependency(libs.paper.api.get().version))
+
     implementation(project(":surf-api-core:surf-api-core-api"))
 }
 

@@ -2,6 +2,9 @@ pluginManagement {
     // Include 'plugins build' to define convention plugins.
     includeBuild("build-logic")
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
 
 val ci = System.getenv("CI")?.toBoolean() == true
 
@@ -18,5 +21,6 @@ include("surf-api-standalone")
 
 if (!ci) {
     include(":surf-api-bukkit:surf-api-bukkit-plugin-test")
-    include("surf-api-generator")
+//    include("surf-api-generator")
+    include("surf-api-modern-generator")
 }
