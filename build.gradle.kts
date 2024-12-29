@@ -1,15 +1,11 @@
 plugins {
     java
     `java-library`
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.8" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-LOCAL-SNAPSHOT" apply false
     kotlin("jvm") version libs.versions.kotlinVersion apply false
     kotlin("kapt") version libs.versions.kotlinVersion
     kotlin("plugin.lombok") version libs.versions.kotlinVersion
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
-}
-
-repositories {
-    gradlePluginPortal()
 }
 
 allprojects {
