@@ -4,7 +4,10 @@ import com.google.common.reflect.TypeToken
 import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.EventTask
 import dev.slne.surf.surfapi.velocity.server.reflection.VelocityReflection
+import java.util.function.BiConsumer
 import java.util.function.BiFunction
+import java.util.function.Function
+import java.util.function.Predicate
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
@@ -17,8 +20,8 @@ class SuspendingEventHandler(private val eventManager: EventManager) {
         VelocityReflection.EVENT_MANAGER_PROXY.registerHandlerAdapter(
             eventManager,
             "surf_api_suspending_event_handler",
-            { method -> method.kotlinFunction?.isSuspend == true },
-            { method, errors ->
+            Predicate { method -> method.kotlinFunction?.isSuspend == true },
+            BiConsumer { method, errors ->
                 val function = method.kotlinFunction!!
                 // parameters includes receiver, but excludes continuation
                 if (function.parameters.size != 2) {
@@ -29,7 +32,7 @@ class SuspendingEventHandler(private val eventManager: EventManager) {
                 }
             },
             object : TypeToken<suspend (Any, Any) -> Unit>() {},
-            { function ->
+            Function { function ->
                 BiFunction { instance, event ->
                     suspendingEventTask {
                         function(instance, event)
