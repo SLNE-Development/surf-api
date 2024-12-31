@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-generator/Deniz.IdeaProjects.surf-api.surf-api-generator.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-generator/Deniz.IdeaProjects.surf-api.surf-api-generator.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-generator/IdeaProjects.surf-api.surf-api-generator.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-generator/IdeaProjects.surf-api.surf-api-generator.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-standalone/IdeaProjects.surf-api.surf-api-standalone.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-standalone/IdeaProjects.surf-api.surf-api-standalone.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-generator/Workspace.surf-api.surf-api-generator.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-generator/Workspace.surf-api.surf-api-generator.main.iml" />
@@ -49,8 +48,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-core/surf-api-core-api/surf-api.surf-api-core.surf-api-core-api.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-core/surf-api-core-api/surf-api.surf-api-core.surf-api-core-api.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-core/surf-api-core-server/surf-api.surf-api-core.surf-api-core-server.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-core/surf-api-core-server/surf-api.surf-api-core.surf-api-core-server.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-core/surf-api-core-server/surf-api.surf-api-core.surf-api-core-server.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-core/surf-api-core-server/surf-api.surf-api-core.surf-api-core-server.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-generator/surf-api.surf-api-generator.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-generator/surf-api.surf-api-generator.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-generator/surf-api.surf-api-generator.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-generator/surf-api.surf-api-generator.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-modern-generator/surf-api.surf-api-modern-generator.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-modern-generator/surf-api.surf-api-modern-generator.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-modern-generator/surf-api.surf-api-modern-generator.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-modern-generator/surf-api.surf-api-modern-generator.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-standalone/surf-api.surf-api-standalone.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-standalone/surf-api.surf-api-standalone.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-standalone/surf-api.surf-api-standalone.test.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-standalone/surf-api.surf-api-standalone.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surf-api-velocity/surf-api-velocity-api/surf-api.surf-api-velocity.surf-api-velocity-api.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surf-api-velocity/surf-api-velocity-api/surf-api.surf-api-velocity.surf-api-velocity-api.main.iml" />

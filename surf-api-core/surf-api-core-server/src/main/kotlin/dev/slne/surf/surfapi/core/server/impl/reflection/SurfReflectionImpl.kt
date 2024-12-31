@@ -22,7 +22,8 @@ class SurfReflectionImpl : SurfReflection {
 
         val surfProxy = clazz.getAnnotation(SurfProxy::class.java)
         val useQualifiedClassName = surfProxy.value == Void.TYPE || surfProxy.value == Unit::class
-        require(!useQualifiedClassName || surfProxy.qualifiedName.isEmpty()) { "clazz must have a value or qualifiedName in @SurfProxy" }
+
+        require(useQualifiedClassName != surfProxy.qualifiedName.isEmpty()) { "Either clazz must have a value or qualifiedName must be specified in @SurfProxy, but not both." }
 
         val proxyClass: Class<*>
 

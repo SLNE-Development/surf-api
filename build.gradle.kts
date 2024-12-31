@@ -1,26 +1,11 @@
 plugins {
     java
     `java-library`
-    id("io.papermc.paperweight.userdev") version "1.7.1" apply false
-    id("io.papermc.paperweight.core") version "1.7.1"
+    id("io.papermc.paperweight.userdev") version "2.0.0-LOCAL-SNAPSHOT" apply false
     kotlin("jvm") version libs.versions.kotlinVersion apply false
     kotlin("kapt") version libs.versions.kotlinVersion
     kotlin("plugin.lombok") version libs.versions.kotlinVersion
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
-    idea
-}
-
-val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
-
-paperweight {
-    paramMappingsRepo = paperMavenPublicUrl
-    remapRepo = paperMavenPublicUrl
-    decompileRepo = paperMavenPublicUrl
-    minecraftVersion = "1.21.4"
-}
-
-repositories {
-    gradlePluginPortal()
 }
 
 allprojects {
@@ -46,25 +31,9 @@ allprojects {
         "kapt"("com.google.auto.service:auto-service:1.1.1")
     }
 
-    project.idea {
-        module {
-            sourceDirs = sourceDirs + project.file("build/generated/ksp/main/kotlin")
-            testSourceDirs = testSourceDirs + project.file("build/generated/ksp/test/kotlin")
-            generatedSourceDirs = generatedSourceDirs + project.file("build/generated/ksp/main/kotlin") + project.file("build/generated/ksp/test/kotlin")
-        }
-    }
-
     project.kapt {
         keepJavacAnnotationProcessors = true
     }
-}
-
-dependencies {
-    paramMappings("net.fabricmc:yarn:1.21.4+build.1:mergedv2")
-    remapper("net.fabricmc:tiny-remapper:0.10.3:fat")
-    decompiler("org.vineflower:vineflower:1.10.1")
-//    spigotDecompiler("io.papermc:patched-spigot-fernflower:0.1+build.13")
-    paperclip("io.papermc:paperclip:3.0.3")
 }
 
 

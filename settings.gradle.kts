@@ -1,6 +1,13 @@
 pluginManagement {
     // Include 'plugins build' to define convention plugins.
     includeBuild("build-logic")
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
@@ -23,5 +30,6 @@ include("surf-api-gradle-plugin")
 
 if (!ci) {
     include(":surf-api-bukkit:surf-api-bukkit-plugin-test")
-    include("surf-api-generator")
+//    include("surf-api-generator")
+    include("surf-api-modern-generator")
 }
