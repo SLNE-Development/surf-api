@@ -1,6 +1,5 @@
 plugins {
-    id("dev.slne.java-library-conventions")
-    id("dev.slne.java-shadow-conventions")
+    `core-convention`
 }
 
 dependencies {

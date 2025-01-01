@@ -2,11 +2,10 @@ import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 import org.gradle.kotlin.dsl.NamedDomainObjectContainerScope
 
-description = "surf-api-bukkit-server"
 
 plugins {
-    id("dev.slne.java-library-conventions")
-    id("dev.slne.java-shadow-conventions")
+    `core-convention`
+
     alias(libs.plugins.plugin.yml.paper)
     id("io.papermc.paperweight.userdev") apply true
 }

@@ -1,36 +1,52 @@
 package dev.slne.surf.surfapi.gradle
 
+import dev.slne.surf.surfapi.gradle.DependencyRelocationRegistry.applyRelocations
+import dev.slne.surf.surfapi.gradle.PluginRegistry.applyCommonPlugins
+import dev.slne.surf.surfapi.gradle.PluginRegistry.applyPlatformDependentPlugins
+import dev.slne.surf.surfapi.gradle.ProjectConfigurer.configureKotlin
+import dev.slne.surf.surfapi.gradle.RepositoryRegistry.applyRepositories
+import dev.slne.surf.surfapi.gradle.extensions.SurfApiExtension
+import dev.slne.surf.surfapi.gradle.platform.config.core.Core
+import dev.slne.surf.surfapi.gradle.platform.config.paper.Paper
+import dev.slne.surf.surfapi.gradle.platform.config.paper.applyPaperConfiguration
+import dev.slne.surf.surfapi.gradle.platform.config.standalone.Standalone
+import dev.slne.surf.surfapi.gradle.platform.config.velocity.Velocity
+import dev.slne.surf.surfapi.gradle.platform.config.velocity.applyVelocityConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.create
 
-const val VERSION = "1.21.4+-SNAPSHOT"
-
+@Suppress("unused")
 class SurfApiPlugin : Plugin<Project> {
-    override fun apply(target: Project) {
-        val extension = target.extensions.create("surfApi", SurfApiExtension::class.java)
+    override fun apply(target: Project) = target.run {
+        val extension = extensions.create<SurfApiExtension>("surfApi")
 
-        target.afterEvaluate {
-            configureDependencies(target, extension.mode)
-        }
-    }
+        applyRepositories()
+        applyCommonPlugins()
 
-    private fun configureDependencies(project: Project, mode: SurfApiExtension.SurfApiMode?) {
-        if (mode == null) {
-            project.logger.error("No mode specified for Surf API")
-            return
+        beforeEvaluate {
+            configureKotlin()
         }
 
-        project.dependencies.add(mode.scope, mode.dependency)
-    }
-}
+        afterEvaluate {
+            val platform = extension.platform
+            require(platform != null) { "No platform specified for Surf API" }
+            val configuration = extension.configuration!!
 
-open class SurfApiExtension {
-    var mode: SurfApiMode? = null
+            applyPlatformDependentPlugins(platform)
+            dependencies.add(platform.scope, platform.dependency)
+            applyRelocations(platform)
 
-    enum class SurfApiMode(val dependency: String, val scope: String = "compileOnly") {
-        CORE("dev.slne.surf:surf-api-core-api:$VERSION"),
-        BUKKIT("dev.slne.surf:surf-api-bukkit-api:$VERSION"),
-        VELOCITY("dev.slne.surf:surf-api-velocity-api:$VERSION"),
-        STANDALONE("dev.slne.surf:surf-api-standalone:$VERSION", "api"),
+            configuration.validate()
+            ProjectConfigurer.configureCore(this, configuration as Core)
+
+            when (configuration) {
+                is Paper -> applyPaperConfiguration(configuration)
+                is Velocity -> applyVelocityConfiguration(configuration)
+                is Standalone -> {
+                    // Do nothing
+                }
+            }
+        }
     }
 }

@@ -1,10 +1,9 @@
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 
 plugins {
-    id("dev.slne.java-library-conventions")
-    id("dev.slne.java-shadow-conventions")
+    `core-convention`
 
-    id("xyz.jpenilla.run-paper") version "2.2.3"
+    alias(libs.plugins.run.paper)
     alias(libs.plugins.plugin.yml.paper)
 
     id("io.papermc.paperweight.userdev") apply true

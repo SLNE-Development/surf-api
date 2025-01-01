@@ -1,0 +1,65 @@
+import org.gradle.accessors.dm.LibrariesForLibs
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+
+val libs = the<LibrariesForLibs>()
+
+plugins {
+    java
+    `java-library`
+    `maven-publish`
+
+    kotlin("jvm")
+    kotlin("kapt")
+
+    id("com.google.devtools.ksp")
+    id("com.gradleup.shadow")
+}
+
+group = findProperty("group") as String
+version = findProperty("version") as String
+
+repositories {
+    mavenCentral()
+    maven("https://repo.slne.dev/repository/maven-proxy") { name = "maven-proxy" }
+    maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
+}
+
+dependencies {
+    implementation("com.google.auto.service:auto-service:1.1.1")
+    "kapt"("com.google.auto.service:auto-service:1.1.1")
+
+    compileOnlyApi("org.jetbrains:annotations:24.1.0")
+}
+
+extensions.configure<KotlinJvmProjectExtension> {
+    jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+    }
+}
+
+kapt {
+    keepJavacAnnotationProcessors = true
+}
+
+publishing {
+    repositories {
+        maven("https://repo.slne.dev/repository/maven-snapshots/") { name = "maven-snapshots" }
+    }
+
+    publications.create<MavenPublication>("maven") {
+        from(components["java"])
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom(configurations.annotationProcessor.get())
+    }
+}
+
+tasks {
+    shadowJar {
+        mergeServiceFiles()
+    }
+}
