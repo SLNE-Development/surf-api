@@ -4,10 +4,12 @@ import dev.slne.surf.surfapi.gradle.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.platform.config.core.Core
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
+import javax.inject.Inject
 
-class Velocity : Core(SurfApiPlatform.VELOCITY)
+open class Velocity @Inject constructor(objects: ObjectFactory) : Core(objects, SurfApiPlatform.VELOCITY)
 
 internal fun Project.applyVelocityConfiguration(configuration: Velocity) {
     dependencies {

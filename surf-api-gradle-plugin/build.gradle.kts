@@ -7,28 +7,30 @@ plugins {
 }
 
 group = findProperty("group") as String
-version = (findProperty("mcVersion") as String) + "-1.0.20-SNAPSHOT"
+version = (findProperty("mcVersion") as String) + "-1.0.31-SNAPSHOT"
 
 repositories {
     mavenCentral()
     gradlePluginPortal()
 }
 
+val pluginDependencies = listOf(
+    libs.kotlin.gradle.plugin,
+    libs.kotlin.all.open,
+    libs.kotlin.no.arg,
+    libs.maven.repo.auth,
+    libs.shadow.gradle.plugin,
+    libs.run.paper.gradle.plugin,
+    libs.plugin.yml.paper.gradle.plugin,
+)
+
 dependencies {
     compileOnly(gradleApi())
-
-    val pluginDependencies = listOf(
-        libs.kotlin.gradle.plugin,
-        libs.kotlin.all.open,
-        libs.kotlin.no.arg,
-        libs.maven.repo.auth,
-        libs.shadow.gradle.plugin,
-        libs.run.paper.gradle.plugin,
-        libs.plugin.yml.paper.gradle.plugin,
-    )
-
     pluginDependencies.forEach { dep -> implementation(dep) }
+// https://mvnrepository.com/artifact/com.squareup/javapoet
+    implementation("com.squareup:javapoet:1.13.0")
 }
+
 
 gradlePlugin {
     plugins {
