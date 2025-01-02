@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.gradle.platform.config.paper
 
-import dev.slne.surf.surfapi.gradle.Constants
-import dev.slne.surf.surfapi.gradle.Versions
+import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.generators.LibrariesLoaderGenerator.generateLibrariesLoaderTask
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.platform.config.core.Core
@@ -75,7 +74,7 @@ internal fun Project.applyPaperConfiguration(configuration: Paper) {
         bootstrapper = configuration.bootstrapper.orNull
 //            loader // TODO: 01.01.2025 20:51 - auto generate loader
         generateLibrariesJson = true
-        apiVersion = Versions.MINECRAFT_VERSION
+        apiVersion = Constants.MINECRAFT_VERSION
 
         bootstrapDependencies {
             registerRequired("surf-bukkit-api")
@@ -101,7 +100,7 @@ internal fun Project.applyPaperConfiguration(configuration: Paper) {
 
     tasks {
         withType<RunServer> {
-            minecraftVersion(Versions.MINECRAFT_VERSION)
+            minecraftVersion(Constants.MINECRAFT_VERSION)
 
             downloadPlugins {
                 hangar("CommandAPI", "9.7.0")

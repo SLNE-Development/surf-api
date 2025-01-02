@@ -1,3 +1,10 @@
+// region properties
+val relocationPrefix: String by project
+val mcVersion: String by project
+val groupId = findProperty("group") as String
+val javaVersion: String by project
+// endregion
+
 plugins {
     `java-library`
     `kotlin-dsl`
@@ -6,8 +13,8 @@ plugins {
     alias(libs.plugins.maven.repo.auth)
 }
 
-group = findProperty("group") as String
-version = (findProperty("mcVersion") as String) + "-1.0.31-SNAPSHOT"
+group = groupId
+version = "$mcVersion-1.0.32-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -44,5 +51,50 @@ gradlePlugin {
         repositories {
             maven("https://repo.slne.dev/repository/maven-unsafe/") { name = "maven-unsafe" }
         }
+    }
+}
+
+val generatedConstantsDir = layout.buildDirectory.dir("generated/source/constants")
+val generateConstantsTask by tasks.register("generateConstants") {
+    val outputFile = generatedConstantsDir.map { it.file("Constants.kt") }
+
+    outputs.file(outputFile)
+
+    doLast {
+        //language=kotlin
+        val content = """
+            package dev.slne.surf.surfapi.gradle.generated
+            
+            internal object Constants {
+                const val RELOCATION_PREFIX = "${findProperty("relocationPrefix")}"
+                const val SNAPSHOT_REPO_ID = "maven-snapshots"
+                const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-snapshots"
+                const val PAPER_API = "${libs.paper.api.get()}"
+                const val VELOCITY_API = "${libs.velocity.api.get()}"
+                
+                const val JAVA_VERSION = $javaVersion
+                const val MINECRAFT_VERSION = "$mcVersion"
+                const val SURF_API_VERSION = "$mcVersion+"
+            }
+        """.trimIndent()
+
+        outputFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(content)
+        }
+    }
+
+    outputs.upToDateWhen { false }
+}
+
+afterEvaluate {
+    generateConstantsTask.actions.forEach {
+        it.execute(generateConstantsTask)
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDir(generatedConstantsDir)
     }
 }

@@ -32,7 +32,9 @@ dependencies {
 }
 
 extensions.configure<KotlinJvmProjectExtension> {
-    jvmToolchain(21)
+    val javaVersion: String by project
+
+    jvmToolchain(javaVersion.toInt())
     compilerOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
     }

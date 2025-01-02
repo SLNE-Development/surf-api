@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.gradle
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.withType
@@ -8,8 +9,8 @@ import org.gradle.kotlin.dsl.withType
 internal object DependencyRelocationRegistry {
 
     private val coreRelocations = mapOf<String, String>(
-        "com.github.retrooper.packetevents" to "packetevents.api",
-        "io.github.retrooper.packetevents" to "packetevents.impl"
+//        "com.github.retrooper.packetevents" to "packetevents.api",
+//        "io.github.retrooper.packetevents" to "packetevents.impl"
     )
 
     private val velocityRelocations = coreRelocations + mapOf<String, String>(

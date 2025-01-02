@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.gradle.platform.config.velocity
 
-import dev.slne.surf.surfapi.gradle.Constants
+import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.platform.config.core.Core
 import org.gradle.api.Project

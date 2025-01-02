@@ -1,3 +1,5 @@
+val relocationPrefix: String by project
+
 plugins {
     `core-convention`
 }
@@ -19,6 +21,10 @@ dependencies {
 }
 
 tasks {
+    shadowJar {
+        relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
+    }
+
 //    shadowJar {
         // Thank you velocity for using fastutil but excluding the types we need - https://github.com/PaperMC/Velocity/blob/dev/3.0.0/proxy/build.gradle.kts#L30
 //        exclude("it/unimi/dsi/fastutil/ints/*Int2Object*")
