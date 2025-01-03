@@ -12,6 +12,8 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.register
 import javax.lang.model.element.Modifier.*
 
+const val PaperLibraryLoaderClassName = "PaperLibraryLoader"
+
 abstract class GenerateLibrariesLoaderTask : DefaultTask() {
     @get:Input
     abstract val packageName: Property<String>
@@ -24,6 +26,8 @@ abstract class GenerateLibrariesLoaderTask : DefaultTask() {
         val loader = LibrariesLoaderGenerator.generate(packageName.get())
         loader.writeTo(outputDirectory.get().asFile)
     }
+
+    fun loaderLocation(): String = "${packageName.get()}.$PaperLibraryLoaderClassName"
 }
 
 
@@ -59,7 +63,7 @@ object LibrariesLoaderGenerator {
     }
 
     fun generate(pkg: String): JavaFile {
-        val spec = TypeSpec.classBuilder("PaperLibraryLoader")
+        val spec = TypeSpec.classBuilder(PaperLibraryLoaderClassName)
             .addJavadoc(
                 """
                 Auto-generated libraries loader.

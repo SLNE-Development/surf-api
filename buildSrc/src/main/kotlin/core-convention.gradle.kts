@@ -25,8 +25,8 @@ repositories {
 }
 
 dependencies {
-    implementation("com.google.auto.service:auto-service:1.1.1")
-    "kapt"("com.google.auto.service:auto-service:1.1.1")
+    compileOnly(libs.auto.service.annotations)
+    "kapt"(libs.auto.service)
 
     compileOnlyApi("org.jetbrains:annotations:24.1.0")
 }

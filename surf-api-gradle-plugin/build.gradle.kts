@@ -14,7 +14,7 @@ plugins {
 }
 
 group = groupId
-version = "$mcVersion-1.0.33-SNAPSHOT"
+version = "$mcVersion-1.0.42-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -33,7 +33,7 @@ val pluginDependencies = listOf(
 
 dependencies {
     compileOnly(gradleApi())
-    pluginDependencies.forEach { dep -> implementation(dep) }
+    pluginDependencies.forEach { dep -> api(dep) }
 // https://mvnrepository.com/artifact/com.squareup/javapoet
     implementation("com.squareup:javapoet:1.13.0")
 }
@@ -41,9 +41,28 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        create("gradle") {
-            id = "dev.slne.surf.surfapi.gradle"
-            implementationClass = "dev.slne.surf.surfapi.gradle.SurfApiPlugin"
+        create("core") {
+            id = "dev.slne.surf.surfapi.gradle.core"
+            implementationClass = "dev.slne.surf.surfapi.gradle.platform.core.CoreSurfPlugin"
+        }
+
+        create("paper-plugin") {
+            id = "dev.slne.surf.surfapi.gradle.paper-plugin"
+            implementationClass = "dev.slne.surf.surfapi.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
+        }
+        create("paper-raw") {
+            id = "dev.slne.surf.surfapi.gradle.paper-raw"
+            implementationClass = "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
+        }
+
+        create("standalone") {
+            id = "dev.slne.surf.surfapi.gradle.standalone"
+            implementationClass = "dev.slne.surf.surfapi.gradle.platform.standalone.StandaloneSurfPlugin"
+        }
+
+        create("velocity") {
+            id = "dev.slne.surf.surfapi.gradle.velocity"
+            implementationClass = "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
         }
     }
 
@@ -66,11 +85,13 @@ val generateConstantsTask by tasks.register("generateConstants") {
             package dev.slne.surf.surfapi.gradle.generated
             
             internal object Constants {
-                const val RELOCATION_PREFIX = "${findProperty("relocationPrefix")}"
+                const val RELOCATION_PREFIX = "$relocationPrefix"
                 const val SNAPSHOT_REPO_ID = "maven-snapshots"
                 const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-snapshots"
                 const val PAPER_API = "${libs.paper.api.get()}"
                 const val VELOCITY_API = "${libs.velocity.api.get()}"
+                const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
+                const val AUTO_SERVICE = "${libs.auto.service.asProvider().get()}"
                 
                 const val JAVA_VERSION = $javaVersion
                 const val MINECRAFT_VERSION = "$mcVersion"
