@@ -1,6 +1,5 @@
 plugins {
-    id("dev.slne.java-library-conventions")
-    id("dev.slne.java-shadow-conventions")
+    `core-convention`
 }
 
 dependencies {
@@ -26,6 +25,17 @@ dependencies {
     compileOnlyApi(libs.aide.reflection)
 
     api(libs.caffeine.courotines)
+    api(libs.kotlinxCoroutines.core)
+    api(libs.kotlinxCoroutines.reactive)
+    api(libs.kotlinxCoroutines.reactor)
+    api(libs.kotlin.reflect)
+
+    compileOnlyApi(libs.guava)
+    compileOnlyApi(libs.caffeine)
+    compileOnlyApi(libs.gson)
+    compileOnlyApi(libs.commons.lang3)
+    compileOnlyApi(libs.commons.text)
+    compileOnlyApi(libs.fastutil)
 }
 
 description = "surf-api-core-api"

@@ -1,6 +1,4 @@
 pluginManagement {
-    // Include 'plugins build' to define convention plugins.
-    includeBuild("build-logic")
     repositories {
         mavenLocal()
         gradlePluginPortal()
@@ -21,7 +19,9 @@ include(":surf-api-bukkit:surf-api-bukkit-server")
 
 include(":surf-api-velocity:surf-api-velocity-api")
 include(":surf-api-velocity:surf-api-velocity-server")
+
 include("surf-api-standalone")
+include("surf-api-gradle-plugin")
 
 if (!ci) {
     include(":surf-api-bukkit:surf-api-bukkit-plugin-test")

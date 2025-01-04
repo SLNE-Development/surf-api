@@ -10,9 +10,8 @@ import java.nio.file.StandardCopyOption
 import kotlin.io.path.*
 
 plugins {
-    java
-    id("dev.slne.java-library-conventions")
-    id("dev.slne.java-shadow-conventions")
+    `core-convention`
+
     kotlin("plugin.serialization") version libs.versions.kotlinVersion
 }
 
