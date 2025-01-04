@@ -13,6 +13,7 @@ plugins {
 
     id("com.google.devtools.ksp")
     id("com.gradleup.shadow")
+    id("org.hibernate.build.maven-repo-auth")
 }
 
 group = findProperty("group") as String

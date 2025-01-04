@@ -17,6 +17,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import sun.misc.Unsafe
 import java.lang.reflect.Field
 import java.security.SecureRandom
+import java.util.*
 import java.util.function.ToIntFunction
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -359,4 +360,12 @@ fun interface ToByteFunction<T> {
 
 fun interface ByEnum<T> {
     fun value(): T
+}
+
+fun <T> Sequence<T>.toEnumeration(): Enumeration<T> {
+    val iterator = iterator()
+    return object : Enumeration<T> {
+        override fun hasMoreElements(): Boolean = iterator.hasNext()
+        override fun nextElement(): T = iterator.next()
+    }
 }

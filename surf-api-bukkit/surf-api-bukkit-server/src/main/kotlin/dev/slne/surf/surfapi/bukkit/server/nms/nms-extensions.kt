@@ -2,6 +2,7 @@
 
 package dev.slne.surf.surfapi.bukkit.server.nms
 
+import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SignBlockUpdateSettings
 import io.papermc.paper.adventure.PaperAdventure
 import io.papermc.paper.math.BlockPosition
@@ -17,13 +18,16 @@ import net.minecraft.world.item.ItemDisplayContext
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.SignText
 import org.bukkit.Material
+import org.bukkit.Server
 import org.bukkit.block.BlockState
 import org.bukkit.block.data.BlockData
+import org.bukkit.craftbukkit.CraftServer
 import org.bukkit.craftbukkit.block.CraftBlockState
 import org.bukkit.craftbukkit.block.data.CraftBlockData
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.craftbukkit.inventory.CraftItemType
+import org.bukkit.craftbukkit.util.Commodore
 import org.bukkit.craftbukkit.util.CraftMagicNumbers
 import org.bukkit.entity.Display.Billboard
 import org.bukkit.entity.ItemDisplay.ItemDisplayTransform
@@ -101,3 +105,7 @@ fun BlockPos.toBukkit(): BlockPosition = Position.block(x, y, z)
 fun Array<Component>.toBukkit() = this.map { it.toBukkit() }
 fun AdventureComponent.toNms(): Component = PaperAdventure.asVanilla(this)
 fun Component.toBukkit(): AdventureComponent = PaperAdventure.asAdventure(this)
+
+fun Server.toCraft() = this as CraftServer
+val craftServer: CraftServer get() = server.toCraft()
+val commodore: Commodore get() = CraftMagicNumbers.INSTANCE.commodore
