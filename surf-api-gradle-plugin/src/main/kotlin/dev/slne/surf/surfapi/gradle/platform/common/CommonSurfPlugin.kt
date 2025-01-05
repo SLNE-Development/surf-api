@@ -94,12 +94,6 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     private fun Project.configure(extension: E) {
-        if (extension.addSurfApiToClasspath.get()) {
-            dependencies {
-                add(platform.scope, platform.dependency)
-            }
-        }
-
         tasks.withType<ShadowJar> {
             relocations.forEach { (from, to) ->
                 relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
@@ -112,9 +106,6 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     private fun Project.configureKotlin(extension: E) = configure<KotlinJvmProjectExtension> {
-        setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
-
-
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
             freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
@@ -130,6 +121,13 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     private fun Project.afterEvaluated(extension: E) {
+        if (extension.addSurfApiToClasspath.get()) {
+            dependencies {
+                add(platform.scope, platform.dependency)
+            }
+        }
+        setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
+
         afterEvaluated0(extension)
     }
 

@@ -15,7 +15,7 @@ plugins {
 }
 
 group = groupId
-version = "$mcVersion-1.0.44-SNAPSHOT"
+version = "$mcVersion-1.0.45-SNAPSHOT"
 
 repositories {
     mavenCentral()
