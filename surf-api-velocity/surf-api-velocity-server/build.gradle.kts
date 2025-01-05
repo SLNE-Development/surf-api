@@ -1,5 +1,3 @@
-val relocationPrefix: String by project
-
 plugins {
     `core-convention`
 }
@@ -22,6 +20,7 @@ dependencies {
 
 tasks {
     shadowJar {
+        val relocationPrefix: String by project
         relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
     }
 
