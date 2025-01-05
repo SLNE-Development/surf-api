@@ -123,7 +123,8 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private fun Project.afterEvaluated(extension: E) {
         if (extension.addSurfApiToClasspath.get()) {
             dependencies {
-                add(platform.scope, platform.dependency)
+                val scope = extension.surfApiScope.orNull ?: platform.scope
+                add(scope, platform.dependency)
             }
         }
         setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
