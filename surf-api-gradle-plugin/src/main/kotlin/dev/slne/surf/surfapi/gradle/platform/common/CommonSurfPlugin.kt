@@ -50,7 +50,12 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         configure(extension)
 
         afterEvaluate {
-            extension.validate()
+            try {
+                extension.validate()
+            } catch (e: Exception) {
+                logger.error("Failed to validate extension. Please check your configuration and try again.", e)
+                return@afterEvaluate
+            }
             afterEvaluated(extension)
         }
     }
