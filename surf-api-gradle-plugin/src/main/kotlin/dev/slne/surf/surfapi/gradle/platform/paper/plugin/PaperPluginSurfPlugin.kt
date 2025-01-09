@@ -10,6 +10,7 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.invoke
@@ -52,6 +53,9 @@ internal class PaperPluginSurfPlugin :
             extensions.getByType<SourceSetContainer>().named(SourceSet.MAIN_SOURCE_SET_NAME) {
                 resources.srcDir(generateLoaderTask)
             }
+        }
+        tasks.withType<JavaCompile>().configureEach {
+            dependsOn(generateLoaderTask)
         }
 
         tasks {

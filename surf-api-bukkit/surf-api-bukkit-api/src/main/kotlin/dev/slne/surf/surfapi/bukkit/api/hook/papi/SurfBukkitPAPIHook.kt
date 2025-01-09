@@ -8,6 +8,7 @@ interface SurfBukkitPAPIHook {
     fun unregister(expansion: PapiExpansion)
 
     companion object {
+        @JvmStatic
         val instance = requiredService<SurfBukkitPAPIHook>()
     }
 }
