@@ -19,7 +19,7 @@ scoreboard-library-implementation = "2.2.2"
 scoreboard-library-modern = "2.2.2"
 
 # Adventure
-adventure-api = "4.17.0"
+adventure-api = "4.18.0"
 
 # Velocity
 velocity-api = "3.4.0-SNAPSHOT"
@@ -33,7 +33,7 @@ mccoroutine = "2.20.0"
 # Miscellaneous Libraries
 guava = "33.4.0-jre"
 caffeine = "3.1.8"
-caffeine-courotines = "2.0.1"
+caffeine-courotines = "2.0.2"
 gson = "2.11.0"
 commons-lang3 = "3.17.0"
 commons-text = "1.13.0"
