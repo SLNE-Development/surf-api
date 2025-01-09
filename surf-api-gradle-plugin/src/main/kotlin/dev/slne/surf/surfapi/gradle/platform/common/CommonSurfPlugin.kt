@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.gradle.platform.common
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
+import groovy.lang.MissingPropertyException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
@@ -127,7 +128,11 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 add(scope, platform.dependency)
             }
         }
-        setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
+        try {
+            setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
+        } catch (e: MissingPropertyException) {
+            logger.error("Failed to set shadeKotlin property", e)
+        }
 
         afterEvaluated0(extension)
     }
