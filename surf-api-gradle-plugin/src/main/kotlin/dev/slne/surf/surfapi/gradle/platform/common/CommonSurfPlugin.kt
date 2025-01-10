@@ -7,6 +7,8 @@ import groovy.lang.MissingPropertyException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
@@ -47,13 +49,16 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         applyRepositories()
         applyPlugins()
-        configure(extension)
+        configure()
 
         afterEvaluate {
             try {
                 extension.validate()
             } catch (e: Exception) {
-                logger.error("Failed to validate extension. Please check your configuration and try again.", e)
+                logger.error(
+                    "Failed to validate extension. Please check your configuration and try again.",
+                    e
+                )
                 return@afterEvaluate
             }
             afterEvaluated(extension)
@@ -99,7 +104,7 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     protected open fun Project.applyRepositories0() {
     }
 
-    private fun Project.configure(extension: E) {
+    private fun Project.configure() {
         tasks.withType<ShadowJar> {
             relocations.forEach { (from, to) ->
                 relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
@@ -107,11 +112,11 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         }
 
         configureAutoService()
-        configureKotlin(extension)
+        configureKotlin()
         configure0()
     }
 
-    private fun Project.configureKotlin(extension: E) = configure<KotlinJvmProjectExtension> {
+    private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
             freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
@@ -139,8 +144,22 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             logger.error("Failed to set shadeKotlin property! Maybe the Kotlin plugin is not applied?")
         }
 
+        setupPublication(extension)
         afterEvaluated0(extension)
     }
+
+    private fun Project.setupPublication(extension: E) = configure<PublishingExtension> {
+        publications {
+            repositories {
+                maven(extension.publishingUrl.get()) { name = extension.publishingRepoName.get() }
+            }
+
+            publications.create<MavenPublication>("maven") {
+                from(components["java"])
+            }
+        }
+    }
+
 
     protected open fun Project.afterEvaluated0(extension: E) {
     }
