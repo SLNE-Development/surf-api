@@ -15,7 +15,7 @@ plugins {
 }
 
 group = groupId
-version = "$mcVersion-1.0.49-SNAPSHOT"
+version = "$mcVersion-1.0.58-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -35,8 +35,8 @@ val pluginDependencies = listOf(
 dependencies {
     compileOnly(gradleApi())
     pluginDependencies.forEach { dep -> api(dep) }
-// https://mvnrepository.com/artifact/com.squareup/javapoet
-    implementation("com.squareup:javapoet:1.13.0")
+
+    implementation("com.palantir.javapoet:javapoet:0.6.0")
 }
 
 

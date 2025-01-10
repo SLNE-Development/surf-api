@@ -136,7 +136,7 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         try {
             setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
         } catch (e: MissingPropertyException) {
-            logger.error("Failed to set shadeKotlin property", e)
+            logger.error("Failed to set shadeKotlin property! Maybe the Kotlin plugin is not applied?")
         }
 
         afterEvaluated0(extension)
