@@ -3,38 +3,32 @@ package dev.slne.surf.surfapi.gradle.platform.common
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
+import dev.slne.surf.surfapi.gradle.util.*
 import groovy.lang.MissingPropertyException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.repositories
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
-internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
+abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private val platformName: String,
     private val platform: SurfApiPlatform,
 ) : Plugin<Project> {
-
-    private val repos = mapOf<String, String>(
-        "maven-unsafe" to "https://repo.slne.dev/repository/maven-unsafe/",
-        "maven-public" to "https://repo.slne.dev/repository/maven-public/",
-        "maven-snapshots" to "https://repo.slne.dev/repository/maven-snapshots",
-        "maven-proxy" to "https://repo.slne.dev/repository/maven-proxy",
-        "maven-external-developers" to "https://repo.slne.dev/repository/maven-external-developers",
-    )
-
     private val commonPlugins = listOf(
         "org.gradle.java-gradle-plugin",
         "org.gradle.java-library",
+        "org.hibernate.build.maven-repo-auth",
         "org.gradle.maven-publish",
         "org.jetbrains.kotlin.jvm",
         "org.jetbrains.kotlin.kapt",
         "org.jetbrains.kotlin.plugin.spring",
         "org.jetbrains.kotlin.plugin.jpa",
-        "org.hibernate.build.maven-repo-auth",
         "com.gradleup.shadow"
     )
 
@@ -42,14 +36,14 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     protected abstract fun createExtension(objects: ObjectFactory): E
 
-    override fun apply(target: Project) = target.run {
-        // Add extension
+    override fun apply(target: Project) = with(target) {
         val extension = createExtension(objects)
         extensions.add("surf${platformName.replaceFirstChar { it.uppercase() }}Api", extension)
 
         applyRepositories()
         applyPlugins()
         configure()
+        setupPublication()
 
         afterEvaluate {
             try {
@@ -93,9 +87,11 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             mavenCentral()
             gradlePluginPortal()
 
-            for ((name, url) in repos) {
-                maven(url) { this.name = name }
-            }
+            slneUnsafe()
+            slnePublic()
+            slneSnapshots()
+            slneProxy()
+            slneExternalDevelopers()
         }
 
         applyRepositories0()
@@ -140,23 +136,18 @@ internal abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         }
         try {
             setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
-        } catch (e: MissingPropertyException) {
-            logger.error("Failed to set shadeKotlin property! Maybe the Kotlin plugin is not applied?")
+        } catch (_: MissingPropertyException) {
+            logger.warn("Failed to set shadeKotlin property! Maybe the Kotlin plugin is not applied?")
         }
 
-        setupPublication(extension)
         afterEvaluated0(extension)
     }
 
-    private fun Project.setupPublication(extension: E) = configure<PublishingExtension> {
+    private fun Project.setupPublication() = configure<PublishingExtension> {
         publications {
-            repositories {
-                maven(extension.publishingUrl.get()) { name = extension.publishingRepoName.get() }
-            }
-
-            publications.create<MavenPublication>("maven") {
-                from(components["java"])
-            }
+//            publications.create<MavenPublication>("maven") {
+//                from(components["java"])
+//            }
         }
     }
 
