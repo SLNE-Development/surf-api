@@ -20,6 +20,7 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
         objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
             .convention(null)
     internal val runServer = objects.property<Action<RunServer>>().convention(null)
+    internal val foliaSupported = objects.property<Boolean>().convention(false)
 
     fun mainClass(mainClass: String) {
         this.mainClass.set(mainClass)
@@ -44,6 +45,11 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
     fun runServer(action: Action<RunServer>) {
         runServer.set(action)
         runServer.finalizeValue()
+    }
+
+    fun foliaSupported(foliaSupported: Boolean) {
+        this.foliaSupported.set(foliaSupported)
+        this.foliaSupported.finalizeValue()
     }
 
     override fun validate() {

@@ -36,6 +36,7 @@ internal class PaperPluginSurfPlugin :
             loader = generateLoaderTask.get().loaderLocation()
             generateLibrariesJson = true
             apiVersion = Constants.MINECRAFT_VERSION
+            foliaSupported = extension.foliaSupported.get()
 
             bootstrapDependencies {
                 registerRequired("surf-bukkit-api")
@@ -53,9 +54,6 @@ internal class PaperPluginSurfPlugin :
                 java.srcDir(generateLoaderTask.map { it.outputDirectory.get() })
             }
         }
-//        tasks.withType<JavaCompile> {
-//            dependsOn(generateLoaderTask)
-//        }
 
         tasks {
             withType<RunServer> {
