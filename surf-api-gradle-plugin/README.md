@@ -43,3 +43,39 @@ surfPaperPluginApi { // name changes depending on the plugin type
 - `dev.slne.surf.surfapi.gradle.paper-raw` for paper plugin modules (all core features, adds paper-api dependency, **NO** generation of paper-plugin.yml nor runServer configuration)
 - `dev.slne.surf.surfapi.gradle.standalone` for standalone modules (all core features, adds surf-core-api dependency, shades surf-api-standalone)
 - `dev.slne.surf.surfapi.gradle.velocity` for velocity modules (all core features, adds velocity-api dependency)
+
+### Easy copy
+#### Core
+```kotlin
+plugins {
+    id("dev.slne.surf.surfapi.gradle.core")
+}
+```
+
+#### Paper Plugin
+```kotlin
+plugins {
+    id("dev.slne.surf.surfapi.gradle.paper-plugin")
+}
+```
+
+#### Paper Raw
+```kotlin
+plugins {
+    id("dev.slne.surf.surfapi.gradle.paper-raw")
+}
+```
+
+#### Standalone
+```kotlin
+plugins {
+    id("dev.slne.surf.surfapi.gradle.standalone")
+}
+```
+
+#### Velocity
+```kotlin
+plugins {
+    id("dev.slne.surf.surfapi.gradle.velocity")
+}
+```
