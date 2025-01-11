@@ -4,7 +4,6 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.util.*
-import groovy.lang.MissingPropertyException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
@@ -133,11 +132,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 val scope = extension.surfApiScope.orNull ?: platform.scope
                 add(scope, platform.dependency)
             }
-        }
-        try {
-            setProperty("kotlin.stdlib.default.dependency", extension.shadeKotlin.get())
-        } catch (_: MissingPropertyException) {
-            logger.warn("Failed to set shadeKotlin property! Maybe the Kotlin plugin is not applied?")
         }
 
         afterEvaluated0(extension)
