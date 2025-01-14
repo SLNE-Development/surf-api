@@ -124,6 +124,7 @@ reflection-remapper = { module = "xyz.jpenilla:reflection-remapper", version.ref
 brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier" }
 configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate" }
 configurate-jackson = { module = "org.spongepowered:configurate-jackson", version.ref = "configurate" }
+configurate-kotlin = { module = "org.spongepowered:configurate-extra-kotlin", version.ref = "configurate" }
 more-persistent-data-types = { module = "com.jeff_media:MorePersistentDataTypes", version.ref = "more-persistent-data-types" }
 inventoryframework = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "inventoryframework" }
 flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }

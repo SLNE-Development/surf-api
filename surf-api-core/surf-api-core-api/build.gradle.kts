@@ -20,6 +20,7 @@ dependencies {
     compileOnlyApi(libs.brigadier)
     compileOnlyApi(libs.configurate.yaml)
     compileOnlyApi(libs.configurate.jackson)
+    api(libs.configurate.kotlin)
     compileOnlyApi(libs.flogger)
     compileOnlyApi(libs.commons.math4.core)
     compileOnlyApi(libs.aide.reflection)
