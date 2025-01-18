@@ -8,6 +8,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.repositories
@@ -104,6 +105,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             relocations.forEach { (from, to) ->
                 relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
             }
+        }
+        tasks.withType<JavaCompile> {
+            options.encoding = Charsets.UTF_8.name()
+            options.compilerArgs.addAll(listOf("-parameters"))
         }
 
         configureAutoService()
