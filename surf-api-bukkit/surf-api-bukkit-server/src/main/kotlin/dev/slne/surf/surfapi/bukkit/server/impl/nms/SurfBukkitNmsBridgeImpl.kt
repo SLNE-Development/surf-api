@@ -11,6 +11,7 @@ import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.NmsServ
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl
 import dev.slne.surf.surfapi.core.api.util.*
+import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.bukkit.entity.Player
 
 @AutoService(SurfBukkitNmsBridge::class)
@@ -19,17 +20,20 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     private val log = logger()
 
     private val serverboundPacketListeners =
-        mutableObjectSetOf<Pair<SurfTypeParameterMatcher, NmsServerboundPacketListener<*>>>().synchronize()
+        mutableObject2ObjectMapOf<Class<*>, ObjectSet<NmsServerboundPacketListener<*>>>().synchronize()
     private val clientboundPacketListeners =
-        mutableObjectSetOf<Pair<SurfTypeParameterMatcher, NmsClientboundPacketListener<*>>>().synchronize()
+        mutableObject2ObjectMapOf<Class<*>, ObjectSet<NmsClientboundPacketListener<*>>>().synchronize()
 
     init {
         checkInstantiationByServiceLoader()
     }
 
     override fun registerServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
-        val matcher = listener.packetMatcher
-        val added = serverboundPacketListeners.add(matcher to listener)
+        val clazz = listener.packetMatcher
+        val added =
+            serverboundPacketListeners.computeIfAbsent(clazz) { mutableObjectSetOf() }.add(listener)
+
+
         if (!added) {
             log.atWarning()
                 .withStackTrace(StackSize.MEDIUM)
@@ -38,7 +42,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     }
 
     override fun unregisterServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
-        val removed = serverboundPacketListeners.removeIf { it.second == listener }
+        val removed = serverboundPacketListeners[listener.packetMatcher]?.remove(listener) == true
 
         if (!removed) {
             log.atWarning()
@@ -48,9 +52,10 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     }
 
     override fun registerClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
+        val clazz = listener.packetMatcher
+        val added =
+            clientboundPacketListeners.computeIfAbsent(clazz) { mutableObjectSetOf() }.add(listener)
 
-        val matcher = listener.packetMatcher
-        val added = clientboundPacketListeners.add(matcher to listener)
         if (!added) {
             log.atWarning()
                 .withStackTrace(StackSize.MEDIUM)
@@ -59,7 +64,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     }
 
     override fun unregisterClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
-        val removed = clientboundPacketListeners.removeIf { it.second == listener }
+        val removed = clientboundPacketListeners[listener.packetMatcher]?.remove(listener) == true
 
         if (!removed) {
             log.atWarning()
@@ -72,9 +77,10 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         packet: Packet,
         player: Player,
     ): Packet? {
-        val cancel = serverboundPacketListeners.asSequence()
-            .filter { it.first.match(packet) }
-            .map { it.second }
+        val clazz = packet.packetClass
+        val listener = serverboundPacketListeners[clazz] ?: return packet
+
+        val cancel = listener.asSequence()
             .filterIsInstance<NmsServerboundPacketListener<Packet>>()
             .map { it.handleServerboundPacket(packet, player) }
             .any { it == PacketListenerResult.CANCEL }
@@ -86,16 +92,11 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         packet: Packet,
         player: Player,
     ): Packet? {
-        val listeners = clientboundPacketListeners.asSequence()
-            .filter { it.first.match(NmsPacketImpl.getFromApi(packet).nmsClass) }
-            .map { it.second }
-            .toObjectSet()
+        val listeners = clientboundPacketListeners[NmsPacketImpl.getFromApi(packet).nmsClass] ?: return packet
 
         if (listeners.isEmpty()) return packet
 
-        val cancel = clientboundPacketListeners.asSequence()
-            .filter { it.first.match(NmsPacketImpl.getFromApi(packet).nmsClass) }
-            .map { it.second }
+        val cancel = listeners.asSequence()
             .filterIsInstance<NmsClientboundPacketListener<Packet>>()
             .map { it.handleClientboundPacket(packet, player) }
             .any { it == PacketListenerResult.CANCEL }

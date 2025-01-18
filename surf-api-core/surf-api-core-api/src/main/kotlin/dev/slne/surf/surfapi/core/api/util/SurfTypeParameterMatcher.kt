@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import java.lang.reflect.Array
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
-import java.lang.reflect.TypeVariable
 import java.util.*
 
 /**
@@ -26,6 +25,7 @@ abstract class SurfTypeParameterMatcher {
          * Cache for storing matchers based on their parameter types.
          */
         private val getCache = IdentityHashMap<Class<*>, SurfTypeParameterMatcher>()
+
         /**
          * Cache for storing matchers based on their parameterized superclass and type parameter names.
          */
@@ -52,92 +52,103 @@ abstract class SurfTypeParameterMatcher {
 
         /**
          * Finds and retrieves a [SurfTypeParameterMatcher] for a specified type parameter name of
-         * a parameterized superclass.
+         * a parameterized superclass or interface.
          *
          * @param any The object whose type parameters are being analyzed.
-         * @param parametrizedSuperclass The class representing the parameterized superclass.
+         * @param parametrizedType The class representing the parameterized superclass or interface.
          * @param typeParamName The name of the type parameter to resolve.
          * @return A [SurfTypeParameterMatcher] for the resolved type parameter.
          */
         fun find(
             any: Any,
-            parametrizedSuperclass: Class<*>,
+            parametrizedType: Class<*>,
             typeParamName: String
         ): SurfTypeParameterMatcher {
             val thisClass = any.javaClass
             val map = findCache.computeIfAbsent(thisClass) { Object2ObjectOpenHashMap() }
             return map.computeIfAbsent(typeParamName) {
-                get(find0(any, parametrizedSuperclass, typeParamName))
+                get(find0(any, parametrizedType, typeParamName))
             }
         }
 
         /**
-         * Resolves the runtime type of a specified type parameter from the parameterized superclass.
+         * Resolves the runtime type of a specified type parameter from the parameterized superclass or interface.
          *
          * @param any The object whose type parameter is being resolved.
-         * @param parametrizedSuperclass The class representing the parameterized superclass.
+         * @param parametrizedType The class representing the parameterized superclass or interface.
          * @param typeParamName The name of the type parameter to resolve.
          * @return The resolved [Class] representing the runtime type of the parameter.
          * @throws IllegalStateException If the type parameter cannot be resolved.
          */
         private fun find0(
             any: Any,
-            parametrizedSuperclass: Class<*>,
+            parametrizedType: Class<*>,
             typeParamName: String
         ): Class<*> {
-            var parametrizedSuperclass = parametrizedSuperclass
-            var typeParamName = typeParamName
-
             val thisClass: Class<*> = any.javaClass
-            var currentClass: Class<*> = thisClass
 
-            while (true) {
-                if (currentClass.superclass == parametrizedSuperclass) {
-                    val typeParamIndex =
-                        currentClass.typeParameters.indexOfFirst { it.name == typeParamName }
-                    check(typeParamIndex != -1) { "unknown type parameter '$typeParamName': $parametrizedSuperclass" }
+            val result = resolveTypeFromSuperclass(thisClass, parametrizedType, typeParamName)
+                ?: resolveTypeFromInterfaces(thisClass, parametrizedType, typeParamName)
 
-                    val genericSuperType = currentClass.genericSuperclass as? ParameterizedType
-                        ?: return Object::class.java
-                    val actualTypeArguments = genericSuperType.actualTypeArguments
-                    var actualTypeParam = actualTypeArguments[typeParamIndex]
+            return result ?: fail(thisClass, typeParamName)
+        }
 
-                    if (actualTypeParam is ParameterizedType) {
-                        actualTypeParam = actualTypeParam.rawType
-                    }
-
-                    if (actualTypeParam is Class<*>) {
-                        return actualTypeParam
-                    }
-
-                    if (actualTypeParam is GenericArrayType) {
-                        var componentType = actualTypeParam.genericComponentType
-                        if (componentType is ParameterizedType) {
-                            componentType = componentType.rawType
-                        }
-                        if (componentType is Class<*>) {
-                            return Array.newInstance(componentType, 0).javaClass
-                        }
-                    }
-
-                    if (actualTypeParam is TypeVariable<*>) {
-                        if (actualTypeParam.genericDeclaration !is Class<*>) {
-                            return Object::class.java
-                        }
-
-                        currentClass = thisClass
-                        parametrizedSuperclass = actualTypeParam.genericDeclaration as Class<*>
-                        typeParamName = actualTypeParam.name
-                        if (parametrizedSuperclass.isAssignableFrom(thisClass)) {
-                            continue
-                        }
-                        return Object::class.java
-                    }
-
-                    return fail(thisClass, typeParamName)
+        private fun resolveTypeFromSuperclass(
+            currentClass: Class<*>,
+            parametrizedType: Class<*>,
+            typeParamName: String
+        ): Class<*>? {
+            var currentClass = currentClass
+            while (currentClass.superclass != null) {
+                if (currentClass.superclass == parametrizedType) {
+                    return resolveTypeFromGenericInfo(
+                        currentClass.genericSuperclass as? ParameterizedType,
+                        parametrizedType,
+                        typeParamName
+                    )
                 }
-                currentClass = currentClass.superclass ?: return fail(thisClass, typeParamName)
+                currentClass = currentClass.superclass ?: return null
             }
+            return null
+        }
+
+        private fun resolveTypeFromInterfaces(
+            currentClass: Class<*>,
+            parametrizedType: Class<*>,
+            typeParamName: String
+        ): Class<*>? {
+            for (interfaceType in currentClass.genericInterfaces) {
+                if (interfaceType is ParameterizedType && interfaceType.rawType == parametrizedType) {
+                    return resolveTypeFromGenericInfo(interfaceType, parametrizedType, typeParamName)
+                }
+                if (interfaceType is Class<*>) {
+                    val resolved = resolveTypeFromInterfaces(interfaceType, parametrizedType, typeParamName)
+                    if (resolved != null) return resolved
+                }
+            }
+            return null
+        }
+
+        private fun resolveTypeFromGenericInfo(
+            parameterizedType: ParameterizedType?,
+            parametrizedType: Class<*>,
+            typeParamName: String
+        ): Class<*>? {
+            parameterizedType ?: return null
+            val typeParamIndex = parametrizedType.typeParameters.indexOfFirst { it.name == typeParamName }
+            if (typeParamIndex == -1) return null
+
+            val actualTypeArgument = parameterizedType.actualTypeArguments[typeParamIndex]
+            if (actualTypeArgument is Class<*>) {
+                return actualTypeArgument
+            }
+
+            if (actualTypeArgument is GenericArrayType) {
+                val componentType = actualTypeArgument.genericComponentType as? Class<*>
+                return componentType?.let { Array.newInstance(it, 0).javaClass }
+            }
+
+            return null
         }
 
         /**
