@@ -29,9 +29,9 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     }
 
     override fun registerServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
-        val clazz = listener.packetMatcher
+        val packetClass = listener.packetClass
         val added =
-            serverboundPacketListeners.computeIfAbsent(clazz) { mutableObjectSetOf() }.add(listener)
+            serverboundPacketListeners.computeIfAbsent(packetClass) { mutableObjectSetOf() }.add(listener)
 
 
         if (!added) {
@@ -42,7 +42,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     }
 
     override fun unregisterServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
-        val removed = serverboundPacketListeners[listener.packetMatcher]?.remove(listener) == true
+        val removed = serverboundPacketListeners[listener.packetClass]?.remove(listener) == true
 
         if (!removed) {
             log.atWarning()
@@ -52,9 +52,9 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     }
 
     override fun registerClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
-        val clazz = listener.packetMatcher
+        val packetClass = listener.packetClass
         val added =
-            clientboundPacketListeners.computeIfAbsent(clazz) { mutableObjectSetOf() }.add(listener)
+            clientboundPacketListeners.computeIfAbsent(packetClass) { mutableObjectSetOf() }.add(listener)
 
         if (!added) {
             log.atWarning()
@@ -64,7 +64,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     }
 
     override fun unregisterClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
-        val removed = clientboundPacketListeners[listener.packetMatcher]?.remove(listener) == true
+        val removed = clientboundPacketListeners[listener.packetClass]?.remove(listener) == true
 
         if (!removed) {
             log.atWarning()
@@ -73,6 +73,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <Packet : NmsServerboundPacket> handleServerboundPacket(
         packet: Packet,
         player: Player,
@@ -81,13 +82,14 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         val listener = serverboundPacketListeners[clazz] ?: return packet
 
         val cancel = listener.asSequence()
-            .filterIsInstance<NmsServerboundPacketListener<Packet>>()
+            .map { it as NmsServerboundPacketListener<Packet> }
             .map { it.handleServerboundPacket(packet, player) }
             .any { it == PacketListenerResult.CANCEL }
 
         return if (cancel) null else packet
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <Packet : NmsClientboundPacket> handleClientboundPacket(
         packet: Packet,
         player: Player,
@@ -97,7 +99,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         if (listeners.isEmpty()) return packet
 
         val cancel = listeners.asSequence()
-            .filterIsInstance<NmsClientboundPacketListener<Packet>>()
+            .map { it as NmsClientboundPacketListener<Packet> }
             .map { it.handleClientboundPacket(packet, player) }
             .any { it == PacketListenerResult.CANCEL }
 

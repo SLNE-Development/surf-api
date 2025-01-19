@@ -5,9 +5,8 @@ import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.NmsPacket
 
 @NmsUseWithCaution
-@Suppress("unused")
 sealed interface NmsPacketListener<Packet : NmsPacket> {
-    val packetMatcher: Class<in Packet>
+    val packetClass: Class<in Packet>
         get() {
             val typeToken = object : TypeToken<Packet>(javaClass) {}
             return typeToken.rawType
