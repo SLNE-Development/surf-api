@@ -33,7 +33,6 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         val added =
             serverboundPacketListeners.computeIfAbsent(packetClass) { mutableObjectSetOf() }.add(listener)
 
-
         if (!added) {
             log.atWarning()
                 .withStackTrace(StackSize.MEDIUM)
@@ -79,7 +78,10 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         player: Player,
     ): Packet? {
         val clazz = packet.packetClass
+
+        println("Packet class: $clazz")
         val listener = serverboundPacketListeners[clazz] ?: return packet
+        println("Listener: $listener")
 
         val cancel = listener.asSequence()
             .map { it as NmsServerboundPacketListener<Packet> }
