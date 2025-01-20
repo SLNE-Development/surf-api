@@ -10,6 +10,13 @@ import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(platformName: String) :
     AbstractCoreSurfPlugin<E>(platformName, SurfApiPlatform.PAPER) {
 
+    init {
+        addRelocationsForDependency(
+            "surf-cloud-api-common",
+            "io.netty" to "dev.slne.surf.cloud.netty"
+        )
+    }
+
     override fun Project.configure0() {
         dependencies {
             add(COMPILE_ONLY, Constants.PAPER_API)

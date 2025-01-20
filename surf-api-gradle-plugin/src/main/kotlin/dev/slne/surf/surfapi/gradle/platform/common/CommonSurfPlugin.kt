@@ -33,6 +33,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     )
 
     private val relocations = mutableMapOf<String, String>()
+    private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
 
     protected abstract fun createExtension(objects: ObjectFactory): E
 
@@ -61,6 +62,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     protected infix fun String.relocatesTo(to: String) {
         relocations[this] = to
+    }
+
+    protected fun addRelocationsForDependency(
+        dependency: String,
+        vararg relocations: Pair<String, String>,
+    ) {
+        dependencyDependentRelocations.getOrPut(dependency) { mutableMapOf() }.putAll(relocations)
     }
 
     private fun Project.applyPlugins() {
@@ -105,7 +113,34 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             relocations.forEach { (from, to) ->
                 relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
             }
+
         }
+
+        gradle.projectsEvaluated {
+            tasks.withType<ShadowJar> {
+                val deps = project.configurations
+                    .filter { it.isCanBeResolved }
+                    .map { it.incoming.resolutionResult.allDependencies }
+                    .flatten()
+                    .map { it.requested.displayName }
+                    .distinct()
+
+                println("contains surf-cloud-api-common: ${deps.any { it.contains("surf-cloud-api-common") }}")
+
+
+                dependencyDependentRelocations.forEach { (dependency, relocations) ->
+                    if (deps.any { it.contains(dependency) }) {
+                        logger.warn("Dependency $dependency found. Applying relocations.")
+                        relocations.forEach { (from, to) ->
+                            logger.warn("Relocating $from to $to")
+                            relocate(from, to)
+                        }
+                    }
+                }
+            }
+        }
+
+
         tasks.withType<JavaCompile> {
             options.encoding = Charsets.UTF_8.name()
             options.compilerArgs.addAll(listOf("-parameters"))
@@ -115,6 +150,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         configureKotlin()
         configure0()
     }
+
 
     private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
         jvmToolchain(Constants.JAVA_VERSION)
