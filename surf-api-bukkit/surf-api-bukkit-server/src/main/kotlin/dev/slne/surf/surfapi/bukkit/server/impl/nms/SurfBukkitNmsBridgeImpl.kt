@@ -79,9 +79,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     ): Packet? {
         val clazz = packet.packetClass
 
-        println("Packet class: $clazz")
         val listener = serverboundPacketListeners[clazz] ?: return packet
-        println("Listener: $listener")
 
         val cancel = listener.asSequence()
             .map { it as NmsServerboundPacketListener<Packet> }

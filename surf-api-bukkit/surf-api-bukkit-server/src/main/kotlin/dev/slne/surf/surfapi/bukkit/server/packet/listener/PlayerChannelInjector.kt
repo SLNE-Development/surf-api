@@ -20,7 +20,7 @@ import io.papermc.paper.network.ChannelInitializeListenerHolder
 import net.kyori.adventure.key.Key
 import net.minecraft.network.HandlerNames
 import net.minecraft.network.protocol.Packet
-import net.minecraft.network.protocol.login.ClientboundLoginFinishedPacket
+import net.minecraft.network.protocol.login.ClientboundGameProfilePacket
 import net.minecraft.server.level.ServerPlayer
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -116,7 +116,7 @@ object PlayerChannelInjector : Listener {
             }
 
             // first, we set the player if it isn't set yet
-            if (player == null && msg is ClientboundLoginFinishedPacket) {
+            if (player == null && msg is ClientboundGameProfilePacket) {
                 val uuid = msg.gameProfile().id
                 val player = playerInjectorCache.remove(uuid)
 
