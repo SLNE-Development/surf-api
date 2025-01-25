@@ -19,6 +19,10 @@ import xyz.jpenilla.runpaper.task.RunServer
 internal class PaperPluginSurfPlugin :
     AbstractPaperSurfPlugin<PaperPluginSurfExtension>("paperPlugin") {
 
+        init {
+            addRelocationsForDependency("surf-data-api", "com.fasterxml.jackson" to "dev.slne.data.libs.jackson")
+        }
+
     private val paperPlugins = listOf(
         "xyz.jpenilla.run-paper",
         "net.minecrell.plugin-yml.paper"

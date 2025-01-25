@@ -124,6 +124,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                     .flatten()
                     .map { it.requested.displayName }
                     .distinct()
+                    .toList()
 
                 println("contains surf-cloud-api-common: ${deps.any { it.contains("surf-cloud-api-common") }}")
 
