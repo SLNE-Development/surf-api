@@ -14,6 +14,8 @@ dependencies {
     api(libs.flogger)
     api(libs.commons.math4.core)
     api(libs.aide.reflection)
+    api(libs.configurate.yaml)
+    api(libs.configurate.jackson)
     runtimeOnly(libs.flogger.slf4j.backend)
     annotationProcessor(libs.velocity.api)
 }
