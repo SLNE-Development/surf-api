@@ -106,6 +106,8 @@ placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholde
 # McCoroutine
 mccoroutine-folia-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-folia-api", version.ref = "mccoroutine" }
 mccoroutine-folia-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-folia-core", version.ref = "mccoroutine" }
+mccoroutine-velocity-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
+mccoroutine-velocity-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
 
 # Miscellaneous Libraries
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
