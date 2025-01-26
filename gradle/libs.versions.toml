@@ -82,6 +82,7 @@ commandapi-bukkit = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref
 commandapi-bukkit-kotlin = { module = "dev.jorel:commandapi-bukkit-kotlin", version.ref = "commandapi" }
 commandapi-core = { module = "dev.jorel:commandapi-core", version.ref = "commandapi" }
 commandapi-velocity = { module = "dev.jorel:commandapi-velocity-core", version.ref = "commandapi-snapshot" }
+commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-velocity-kotlin", version.ref = "commandapi-snapshot" }
 
 # Scoreboard Library
 scoreboard-library-api = { module = "net.megavex:scoreboard-library-api", version.ref = "scoreboard-library" }

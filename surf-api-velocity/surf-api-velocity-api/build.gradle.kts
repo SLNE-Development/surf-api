@@ -9,6 +9,7 @@ dependencies {
     compileOnlyApi(libs.velocity.api)
     compileOnlyApi(libs.packetevents.velocity)
     compileOnlyApi(libs.commandapi.velocity)
+    api(libs.commandapi.velocity.kotlin)
 }
 
 description = "surf-api-velocity-api"
