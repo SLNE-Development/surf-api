@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SignBlockUpdateSettings
 import io.papermc.paper.adventure.PaperAdventure
 import io.papermc.paper.math.BlockPosition
+import io.papermc.paper.math.FinePosition
 import io.papermc.paper.math.Position
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
@@ -17,6 +18,7 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemDisplayContext
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.SignText
+import net.minecraft.world.phys.Vec3
 import org.bukkit.Material
 import org.bukkit.Server
 import org.bukkit.block.BlockState
@@ -49,7 +51,7 @@ fun Material.toNmsItem(): Item = CraftMagicNumbers.getItem(this)
 fun BlockData.toNms(): NmsBlockState = (this as CraftBlockData).state
 fun Vector3f?.toNms(): NmsVector3f? =
     if (this == null) null else NmsVector3f(this.x(), this.y(), this.z())
-
+fun FinePosition.toNms() = Vec3(x(), y(), z())
 fun BlockState.toNms(): NmsBlockState = (this as CraftBlockState).handle
 fun Quaternionf?.toNms(): NmsQuaternionf? =
     if (this == null) null else NmsQuaternionf(x(), y(), z(), w())

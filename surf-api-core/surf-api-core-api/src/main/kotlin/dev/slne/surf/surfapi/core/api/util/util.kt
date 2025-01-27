@@ -67,7 +67,7 @@ inline fun logger(): FluentLogger = FluentLogger.forEnclosingClass()
  */
 inline fun <API : LoggingApi<API>> LoggingApi<API>.logIf(
     condition: () -> Boolean,
-    logOperation: LoggingApi<API>.() -> Unit
+    logOperation: LoggingApi<API>.() -> Unit,
 ) {
     contract {
         callsInPlace(logOperation, InvocationKind.AT_MOST_ONCE)
@@ -296,7 +296,7 @@ private fun processFinalField(field: Field, putOperation: (Unsafe, Long) -> Unit
 
 fun <T : Enum<T>> byStringIdMap(
     enumClass: Class<T>,
-    idMapper: (T) -> String
+    idMapper: (T) -> String,
 ): Object2ObjectMap<String, T> = Object2ObjectMaps.unmodifiable(
     Object2ObjectOpenHashMap(
         enumClass.enumConstants.associateBy(idMapper)
@@ -306,14 +306,14 @@ fun <T : Enum<T>> byStringIdMap(
 
 fun <T : Enum<T>> byIdMap(
     enumClass: Class<T>,
-    idMapper: ToIntFunction<T>
+    idMapper: ToIntFunction<T>,
 ): Int2ObjectMap<T> {
     return byIdMap(idMapper, enumClass.enumConstants)
 }
 
 fun <T> byIdMap(
     idMapper: ToIntFunction<T>,
-    values: Array<T>
+    values: Array<T>,
 ): Int2ObjectMap<T> {
     return Int2ObjectMaps.unmodifiable(
         Int2ObjectOpenHashMap(
@@ -324,7 +324,7 @@ fun <T> byIdMap(
 
 fun <T> byIdMap(
     idMapper: (T) -> Int,
-    values: Array<T>
+    values: Array<T>,
 ): Int2ObjectMap<T> {
     return Int2ObjectMaps.unmodifiable(
         Int2ObjectOpenHashMap(
@@ -335,7 +335,7 @@ fun <T> byIdMap(
 
 fun <T> byByteIdMap(
     values: Array<T>,
-    idMapper: (T) -> Byte
+    idMapper: (T) -> Byte,
 ): Byte2ObjectMap<T> {
     return Byte2ObjectMaps.unmodifiable(
         Byte2ObjectOpenHashMap(
@@ -345,7 +345,7 @@ fun <T> byByteIdMap(
 }
 
 inline fun <reified T : Enum<T>> byEnumMap(
-    valueMapper: (T) -> Any
+    valueMapper: (T) -> Any,
 ): Object2ObjectMap<T, Any> {
     return Object2ObjectMaps.unmodifiable(
         Object2ObjectOpenHashMap(
@@ -369,3 +369,6 @@ fun <T> Sequence<T>.toEnumeration(): Enumeration<T> {
         override fun nextElement(): T = iterator.next()
     }
 }
+
+fun <E> Iterable<E>.collectionSizeOrDefault(default: Int) =
+    if (this is Collection<*>) this.size else default

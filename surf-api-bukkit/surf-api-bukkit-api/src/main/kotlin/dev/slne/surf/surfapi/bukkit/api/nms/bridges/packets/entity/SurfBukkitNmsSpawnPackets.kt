@@ -16,13 +16,13 @@ interface SurfBukkitNmsSpawnPackets {
     fun spawnItemDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: ItemDisplaySettings
+        settings: ItemDisplaySettings,
     ): PacketOperation
 
     fun spawnItemDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: ItemDisplaySettings.() -> Unit
+        settings: ItemDisplaySettings.() -> Unit,
     ): PacketOperation =
         spawnItemDisplay(entityId, position, ItemDisplaySettings.create(settings).build())
 
@@ -30,45 +30,54 @@ interface SurfBukkitNmsSpawnPackets {
     fun spawnTextDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: TextDisplaySettings
+        settings: TextDisplaySettings,
     ): PacketOperation
 
     fun spawnTextDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: TextDisplaySettings.() -> Unit
+        settings: TextDisplaySettings.() -> Unit,
     ): PacketOperation =
         spawnTextDisplay(entityId, position, TextDisplaySettings.create(settings).build())
 
     fun updateSign(
         entityId: Int,
         position: BlockPosition,
-        settings: SignBlockUpdateSettings
+        settings: SignBlockUpdateSettings,
     ): PacketOperation
 
     fun updateSign(
         entityId: Int,
         position: BlockPosition,
-        settings: SignBlockUpdateSettings.() -> Unit
+        settings: SignBlockUpdateSettings.() -> Unit,
     ): PacketOperation =
         updateSign(entityId, position, SignBlockUpdateSettings.create(settings))
 
     fun spawnBlockDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: BlockDisplaySettings
+        settings: BlockDisplaySettings,
     ): PacketOperation
 
     fun spawnBlockDisplay(
         entityId: Int,
         position: FinePosition,
-        settings: BlockDisplaySettings.() -> Unit
+        settings: BlockDisplaySettings.() -> Unit,
     ): PacketOperation =
         spawnBlockDisplay(
             entityId,
             position,
             BlockDisplaySettings.create(settings).build()
         )
+
+    fun teleport(
+        entityId: Int,
+        position: FinePosition,
+        yaw: Float = 0f,
+        pitch: Float = 0f,
+        deltaMovement: FinePosition? = null,
+        onGround: Boolean = false
+    ): PacketOperation
 
     companion object {
         val instance = requiredService<SurfBukkitNmsSpawnPackets>()

@@ -1,12 +1,20 @@
 package dev.slne.surf.surfapi.bukkit.api.visualizer
 
-import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfPatternedVisualizer
+import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
+import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerMultipleLocations
+import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
 import dev.slne.surf.surfapi.core.api.util.requiredService
+import org.bukkit.Location
+import java.util.*
 
+@ExperimentalVisualizerApi
 interface SurfBukkitVisualizerApi {
-    fun createVisualizer(): SurfVisualizer
-    fun createPatternedVisualizer(): SurfPatternedVisualizer
+
+    fun createSingleLocationVisualizer(location: Location): SurfVisualizerSingleLocation
+    fun createMultiLocationVisualizer(): SurfVisualizerMultipleLocations
+
+    fun getByUid(uid: UUID): SurfVisualizer?
 
     companion object {
         @JvmStatic
@@ -14,4 +22,9 @@ interface SurfBukkitVisualizerApi {
     }
 }
 
-val surfBukkitVisualizerApi get() = SurfBukkitVisualizerApi.instance
+@ExperimentalVisualizerApi
+inline fun <reified T: SurfVisualizer> SurfBukkitVisualizerApi.getByUid(uid: UUID) = getByUid(uid) as? T
+
+
+@ExperimentalVisualizerApi
+val surfVisualizerApi get() = SurfBukkitVisualizerApi.instance

@@ -55,6 +55,11 @@ class PacketOperationImpl : PacketOperation {
         return this
     }
 
+    override fun isEmpty(): Boolean {
+        val operation = operation
+        return operation is EmptyOperation && operation.empty
+    }
+
     fun interface Operation {
         fun apply(
             player: Player,
@@ -68,9 +73,24 @@ class PacketOperationImpl : PacketOperation {
         }
 
         companion object {
-            fun empty(): Operation {
-                return Operation { player, packets -> packets }
-            }
+            fun empty() = EmptyOperation()
+        }
+    }
+
+    class EmptyOperation: Operation {
+        var empty: Boolean = true
+            private set
+
+        override fun apply(
+            player: Player,
+            packets: LinkedList<Packet<in ClientGamePacketListener>>
+        ): LinkedList<Packet<in ClientGamePacketListener>> {
+            return packets
+        }
+
+        override fun andThen(after: Operation): Operation {
+            empty = false
+            return super.andThen(after)
         }
     }
 

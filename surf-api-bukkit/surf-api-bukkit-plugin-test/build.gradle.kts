@@ -49,10 +49,10 @@ tasks {
         dependsOn(":surf-api-bukkit:surf-api-bukkit-server:reobfJar")
         pluginJars.from(project(":surf-api-bukkit:surf-api-bukkit-server").tasks.reobfJar)
 
-        minecraftVersion("1.21.4")
+        minecraftVersion(findProperty("mcVersion") as String)
 
         downloadPlugins {
-            modrinth("commandapi", "9.7.0")
+            hangar("CommandAPI", "9.7.0")
         }
     }
 }

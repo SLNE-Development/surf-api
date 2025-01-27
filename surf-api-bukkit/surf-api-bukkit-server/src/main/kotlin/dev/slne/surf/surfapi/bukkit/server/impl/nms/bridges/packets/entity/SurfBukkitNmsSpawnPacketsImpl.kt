@@ -14,16 +14,15 @@ import it.unimi.dsi.fastutil.ints.IntList
 import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
-import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket
-import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
-import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
+import net.minecraft.network.protocol.game.*
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.entity.Display
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.PositionMoveRotation
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.entity.SignText
+import net.minecraft.world.phys.Vec3
 import org.bukkit.entity.TextDisplay.TextAlignment
 import kotlin.experimental.and
 import kotlin.experimental.inv
@@ -137,8 +136,24 @@ class SurfBukkitNmsSpawnPacketsImpl : SurfBukkitNmsSpawnPackets {
         packets
     }
 
+    override fun teleport(
+        entityId: Int,
+        position: FinePosition,
+        yaw: Float,
+        pitch: Float,
+        deltaMovement: FinePosition?,
+        onGround: Boolean
+    ) = PacketOperationImpl.simple {
+        ClientboundTeleportEntityPacket.teleport(
+            entityId,
+            PositionMoveRotation(position.toNms(), deltaMovement?.toNms() ?: Vec3.ZERO, yaw, pitch),
+            emptySet(),
+            onGround
+        )
+    }
+
     private fun createSetEntityDataPacket(entityId: Int, entity: Entity) =
-        ClientboundSetEntityDataPacket(entityId, entity.getEntityData().packAll()!!)
+        ClientboundSetEntityDataPacket(entityId, entity.getEntityData().packAll())
 
     private fun writeUpdateSignToTag(
         nbt: CompoundTag,

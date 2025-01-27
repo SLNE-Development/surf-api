@@ -1,6 +1,5 @@
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
-import org.gradle.kotlin.dsl.NamedDomainObjectContainerScope
 
 
 plugins {
@@ -12,6 +11,12 @@ plugins {
 
 tasks.assemble {
     dependsOn("reobfJar")
+}
+
+kotlin {
+    compilerOptions {
+        optIn.add("dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.ExperimentalVisualizerApi")
+    }
 }
 
 dependencies {

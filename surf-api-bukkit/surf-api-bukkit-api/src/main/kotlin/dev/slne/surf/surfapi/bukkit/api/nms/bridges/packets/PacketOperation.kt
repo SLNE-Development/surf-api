@@ -9,6 +9,7 @@ import kotlin.contracts.contract
 interface PacketOperation {
     fun execute(player: Player)
     fun add(operation: PacketOperation): PacketOperation
+    fun isEmpty(): Boolean
 
     operator fun plus(other: PacketOperation) = add(other)
 

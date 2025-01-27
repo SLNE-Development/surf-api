@@ -9,6 +9,7 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PrefixConfigTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ReflectionTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ScoreboardTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SmoothTimeSkip;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.VisualizerTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.gui.InventoryFrameworkTest;
 
 public class SurfApiTestCommand extends CommandAPICommand {
@@ -27,7 +28,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
         new PrefixConfigTest("prefixconfig"),
         new CommandExceptionTest("commandexception"),
         new InventoryFrameworkTest("inventoryframework"),
-        new MaxStacksizeTest("maxstacksize")
+        new MaxStacksizeTest("maxstacksize"),
+        new VisualizerTest("visualizer")
     );
   }
 }

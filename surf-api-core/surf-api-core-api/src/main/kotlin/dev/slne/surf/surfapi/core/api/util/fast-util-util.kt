@@ -1,8 +1,9 @@
 package dev.slne.surf.surfapi.core.api.util
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList
+import it.unimi.dsi.fastutil.doubles.DoubleList
+import it.unimi.dsi.fastutil.doubles.DoubleLists
+import it.unimi.dsi.fastutil.ints.*
 import it.unimi.dsi.fastutil.longs.*
 import it.unimi.dsi.fastutil.objects.*
 import org.jetbrains.annotations.Unmodifiable
@@ -146,8 +147,8 @@ fun <V> mutableInt2ObjectMapOf() = Int2ObjectOpenHashMap<V>()
 fun <V> int2ObjectMapOf(vararg pairs: Pair<Int, V>) = mutableInt2ObjectMapOf(*pairs).freeze()
 fun <V> int2ObjectMapOf() = emptyInt2ObjectMap<V>()
 fun <V> emptyInt2ObjectMap(): @Unmodifiable Int2ObjectMap<V> = Int2ObjectMaps.emptyMap()
-fun <V> Int2ObjectOpenHashMap<V>.synchronize(): Int2ObjectMap<V> = Int2ObjectMaps.synchronize(this)
-fun <V> Int2ObjectOpenHashMap<V>.freeze(): @UnmodifiableView Int2ObjectMap<V> =
+fun <V> Int2ObjectMap<V>.synchronize(): Int2ObjectMap<V> = Int2ObjectMaps.synchronize(this)
+fun <V> Int2ObjectMap<V>.freeze(): @UnmodifiableView Int2ObjectMap<V> =
     Int2ObjectMaps.unmodifiable(this)
 
 // endregion
@@ -163,4 +164,27 @@ fun <K> Object2IntOpenHashMap<K>.synchronize(): Object2IntMap<K> = Object2IntMap
 fun <K> Object2IntOpenHashMap<K>.freeze(): @UnmodifiableView Object2IntMap<K> =
     Object2IntMaps.unmodifiable(this)
 // endregion
+// endregion
+// region DoubleList
+fun mutableDoubleListOf(vararg elements: Double) = DoubleArrayList(elements)
+fun mutableDoubleListOf() = DoubleArrayList()
+fun mutableDoubleListOf(capacity: Int) = DoubleArrayList(capacity)
+fun doubleListOf(vararg elements: Double) = mutableDoubleListOf(*elements).freeze()
+fun doubleListOf() = emptyDoubleList()
+fun emptyDoubleList(): @Unmodifiable DoubleList = DoubleLists.EMPTY_LIST
+fun DoubleArrayList.synchronize(): DoubleList = DoubleLists.synchronize(this)
+fun DoubleArrayList.freeze(): @UnmodifiableView DoubleList = DoubleLists.unmodifiable(this)
+fun Sequence<Double>.toMutableDoubleList() = DoubleArrayList(toList())
+fun Sequence<Double>.toDoubleList() = toMutableDoubleList().freeze()
+// endregion
+// region IntSet
+fun mutableIntSetOf(vararg elements: Int) = IntOpenHashSet(elements)
+fun mutableIntSetOf() = IntOpenHashSet()
+fun intSetOf(vararg elements: Int) = mutableIntSetOf(*elements).freeze()
+fun intSetOf() = emptyIntSet()
+fun emptyIntSet(): @Unmodifiable IntSet = IntSets.EMPTY_SET
+fun IntSet.synchronize(): IntSet = IntSets.synchronize(this)
+fun IntSet.freeze(): @UnmodifiableView IntSet = IntSets.unmodifiable(this)
+fun Sequence<Int>.toMutableIntSet() = IntOpenHashSet(toList())
+fun Sequence<Int>.toIntSet() = toMutableIntSet().freeze()
 // endregion
