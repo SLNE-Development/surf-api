@@ -5,6 +5,7 @@ import dev.slne.surf.surfapi.core.api.config.serializer.DefaultDazzlConfSerializ
 import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.text.Component
 import org.spongepowered.configurate.ConfigurationNode
+import org.spongepowered.configurate.kotlin.objectMapperFactory
 import org.spongepowered.configurate.serialize.AbstractListChildSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import org.spongepowered.configurate.serialize.TypeSerializer
@@ -19,6 +20,7 @@ object SpongeConfigSerializers {
     var SERIALIZERS: Consumer<TypeSerializerCollection.Builder> = Consumer { builder ->
         builder.register(Component::class.java, ComponentSerializer())
         builder.register(LinkedListSerializer.TYPE, LinkedListSerializer())
+        builder.registerAnnotatedObjects(objectMapperFactory())
     }
 
     class ComponentSerializer : TypeSerializer<Component> {
@@ -62,7 +64,7 @@ object SpongeConfigSerializers {
         @Throws(SerializationException::class)
         override fun forEachElement(
             collection: LinkedList<Any>,
-            action: CheckedConsumer<Any?, SerializationException?>
+            action: CheckedConsumer<Any?, SerializationException?>,
         ) {
             for (el in collection) {
                 action.accept(el)
@@ -71,7 +73,7 @@ object SpongeConfigSerializers {
 
         override fun deserializeSingle(
             index: Int, collection: LinkedList<Any>,
-            deserialized: Any?
+            deserialized: Any?,
         ) {
             if (deserialized == null) return
             collection.add(deserialized)
