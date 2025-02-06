@@ -25,14 +25,6 @@ build:
     - echo "Gefundene Artefakte:"
     - find . -type f -path "**/build/libs/*.jar" ! -path "**/.gradle/**" -exec ls -lh {} \;
 
-  artifacts:
-    paths:
-      - "**/build/libs/*.jar"
-    exclude:
-      - .gradle/**
-      - "**/.gradle/**"
-      - "./build-logic/**"
-
 publish:
   stage: publish
   image: gradle:latest
