@@ -21,10 +21,10 @@ include(":surf-api-velocity:surf-api-velocity-api")
 include(":surf-api-velocity:surf-api-velocity-server")
 
 include("surf-api-standalone")
-include("surf-api-gradle-plugin")
 
 if (!ci) {
     include(":surf-api-bukkit:surf-api-bukkit-plugin-test")
 //    include("surf-api-generator")
     include("surf-api-modern-generator")
+    include("surf-api-gradle-plugin")
 }
