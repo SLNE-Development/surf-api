@@ -30,6 +30,7 @@ dependencies {
     api(libs.kotlinxCoroutines.reactive)
     api(libs.kotlinxCoroutines.reactor)
     api(libs.kotlin.reflect)
+    api(libs.kotlin.serialization.json)
 
     compileOnlyApi(libs.guava)
     compileOnlyApi(libs.caffeine)

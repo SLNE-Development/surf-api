@@ -3,8 +3,9 @@
 paper-api = "1.21.4-R0.1-SNAPSHOT"
 
 # Kolin
-kotlinVersion = "2.1.0"
-kotlinxCoroutines = "1.10.0"
+kotlinVersion = "2.1.10"
+kotlinxCoroutines = "1.10.1"
+kotlinx-serialization = "1.8.0"
 
 # Packet Events
 packetevents = "2.7.0"
@@ -54,8 +55,8 @@ auto-service = "1.1.1"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
-shadow-gradle-plugin = "9.0.0-beta4"
-ksp-gradle-plugin = "2.1.0-1.0.29"
+shadow-gradle-plugin = "9.0.0-beta7"
+ksp-gradle-plugin = "2.1.10-1.0.29"
 run-paper-gradle-plugin = "2.3.1"
 
 
@@ -68,6 +69,7 @@ kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-co
 kotlinxCoroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinxCoroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
+kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 # Packet Events
 packetevents-spigot = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
@@ -140,6 +142,7 @@ auto-service = { module = "com.google.auto.service:auto-service", version.ref = 
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinVersion" }
 kotlin-all-open = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlinVersion" }
 kotlin-no-arg = { module = "org.jetbrains.kotlin:kotlin-noarg", version.ref = "kotlinVersion" }
+kotlin-serialization = { module = "org.jetbrains.kotlin.plugin.serialization:org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "kotlinVersion" }
 maven-repo-auth = { module = "org.hibernate.build.maven-repo-auth:org.hibernate.build.maven-repo-auth.gradle.plugin", version.ref = "maven-repo-auth" }
 shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-gradle-plugin" }
 ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-gradle-plugin" }

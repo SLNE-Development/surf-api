@@ -13,6 +13,7 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
@@ -29,6 +30,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         "org.jetbrains.kotlin.kapt",
         "org.jetbrains.kotlin.plugin.spring",
         "org.jetbrains.kotlin.plugin.jpa",
+        "org.jetbrains.kotlin.plugin.serialization",
         "com.gradleup.shadow"
     )
 
@@ -149,6 +151,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         configureAutoService()
         configureKotlin()
+        configureAllOpen()
         configure0()
     }
 
@@ -158,6 +161,12 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         compilerOptions {
             freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
         }
+    }
+
+    private fun Project.configureAllOpen() = configure<AllOpenExtension> {
+        annotation("jakarta.persistence.Entity")
+        annotation("jakarta.persistence.MappedSuperclass")
+        annotation("jakarta.persistence.Embeddable")
     }
 
     private fun Project.configureAutoService() = dependencies {
