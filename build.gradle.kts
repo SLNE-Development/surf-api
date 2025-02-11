@@ -29,5 +29,11 @@ tasks {
             )
         }
     }
+
+    register<Copy>("publishDokkaToDocs") {
+        dependsOn(dokkaHtmlMultimodule)
+        from(buildDir.resolve("dokka/htmlMultiModule"))
+        into(rootDir.resolve("docs"))
+    }
 }
 
