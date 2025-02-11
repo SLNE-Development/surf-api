@@ -15,7 +15,7 @@ plugins {
 }
 
 group = groupId
-version = "$mcVersion-1.0.91-SNAPSHOT"
+version = "$mcVersion-1.0.92-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -26,10 +26,11 @@ val pluginDependencies = listOf(
     libs.kotlin.gradle.plugin,
     libs.kotlin.all.open,
     libs.kotlin.no.arg,
+    libs.kotlin.serialization,
     libs.maven.repo.auth,
     libs.shadow.gradle.plugin,
     libs.run.paper.gradle.plugin,
-    libs.plugin.yml.paper.gradle.plugin,
+    libs.plugin.yml.paper.gradle.plugin
 )
 
 dependencies {
