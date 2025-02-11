@@ -58,6 +58,7 @@ maven-repo-auth = "3.0.4"
 shadow-gradle-plugin = "9.0.0-beta7"
 ksp-gradle-plugin = "2.1.10-1.0.29"
 run-paper-gradle-plugin = "2.3.1"
+dokka = "2.0.0"
 
 
 [libraries]
@@ -148,8 +149,10 @@ shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", ve
 ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-gradle-plugin" }
 plugin-yml-paper-gradle-plugin = { module = "net.minecrell.plugin-yml.bukkit:net.minecrell.plugin-yml.bukkit.gradle.plugin", version.ref = "plugin-yml-paper" }
 run-paper-gradle-plugin = { module = "xyz.jpenilla.run-paper:xyz.jpenilla.run-paper.gradle.plugin", version.ref = "run-paper-gradle-plugin" }
+dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
 [plugins]
 plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-paper" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper-gradle-plugin" }
 maven-repo-auth = { id = "org.hibernate.build.maven-repo-auth", version.ref = "maven-repo-auth" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
