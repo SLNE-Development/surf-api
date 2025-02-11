@@ -1,5 +1,9 @@
 name: Publish Dokka Docs
 
+permissions:
+  actions: write
+  pages: write
+
 on:
   push:
     branches:
