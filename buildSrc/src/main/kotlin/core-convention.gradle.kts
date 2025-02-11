@@ -13,7 +13,6 @@ plugins {
 
     id("com.google.devtools.ksp")
     id("com.gradleup.shadow")
-    id("org.hibernate.build.maven-repo-auth")
 }
 
 group = findProperty("group") as String
@@ -21,7 +20,6 @@ version = findProperty("version") as String
 
 repositories {
     mavenCentral()
-    maven("https://repo.slne.dev/repository/maven-proxy") { name = "maven-proxy" }
     maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
 }
 
@@ -47,7 +45,13 @@ kapt {
 
 publishing {
     repositories {
-        maven("https://repo.slne.dev/repository/maven-snapshots/") { name = "maven-snapshots" }
+        maven("https://repo.slne.dev/repository/maven-snapshots/") { 
+            name = "maven-snapshots"      
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_PASSWORD")
+            }
+        }
     }
 
     publications.create<MavenPublication>("maven") {
