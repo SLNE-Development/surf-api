@@ -13,7 +13,6 @@ allprojects {
 
     if (subprojects.isEmpty()) {
         apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
-        println("Applying to $this")
     }
 }
 
