@@ -1,6 +1,3 @@
-import jdk.tools.jlink.resources.plugins
-import sun.tools.jconsole.LabeledComponent.layout
-
 // region properties
 val relocationPrefix: String by project
 val mcVersion: String by project
