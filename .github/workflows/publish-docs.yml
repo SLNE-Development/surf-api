@@ -78,7 +78,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy cf-pages --project-name=${{ env.PROJECT_NAME }} --branch=main
+          command: pages deploy dir --project-name=${{ env.PROJECT_NAME }} --branch=main
           wranglerVersion: 3.101.0
 
 #      - name: Setup Pages
