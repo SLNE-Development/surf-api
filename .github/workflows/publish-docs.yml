@@ -1,49 +1,71 @@
 name: Publish Dokka Docs
 
-permissions:
-  actions: write
-  pages: write
-
-
-
 on:
   push:
     branches:
       - version/1.21
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pages: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    outputs:
+      artifact: ${{ steps.define-ids.outputs.artifact }}
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
         with:
-          distribution: 'graalvm'
-          java-version: '21'
+          fetch-depth: 0
 
-      - name: Grant execute permission for Gradle
-        run: chmod +x ./gradlew
-
-      - name: Install dependencies
-        run: ./gradlew dependencies
-
-      - name: Generate and move Dokka Docs
-        run: ./gradlew publishDokkaToDocs
-
-      - name: Publish
-        run: ./gradlew publish
-        env: 
-          MAVEN_USERNAME: ${{ secrets.REPO_PUBLISH_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.REPO_PUBLISH_TOKEN }}
+      - name: Define instance id and artifacts
+        id: define-ids
+        run: |
+          ARTIFACT="dokka-docs.zip"
           
-      #- name: Commit and Push changes
-       # run: |
-        #  git config --global user.name "GitHub Actions"
-         # git config --global user.email "actions@github.com"
-          #git add docs
-          #git commit -m "Update Dokka Docs"
-          #git push
+          # Print the values
+          echo "artifact=$ARTIFACT"
+          
+          # Set the environment variables and outputs
+          echo "ARTIFACT=$ARTIFACT" >> $GITHUB_ENV
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build docs using Dokka
+        run: ./gradlew dokkaHtmlMultiModule
+
+      - name: Upload docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: |
+            build/dokka/htmlMultiModule
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download docs
+        uses: actions/download-artifact@v4
+        with:
+          name: docs
+          path: build/dokka/htmlMultiModule
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Package and upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dir
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
