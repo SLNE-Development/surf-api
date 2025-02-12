@@ -30,8 +30,8 @@ jobs:
           # Print the values
           echo "artifact=$ARTIFACT"
           
-          # Set the environment variables and outputs
-          echo "ARTIFACT=$ARTIFACT" >> $GITHUB_ENV
+          # Set the output
+          echo "::set-output name=artifact::$ARTIFACT"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -42,14 +42,13 @@ jobs:
       - name: Zip docs
         run: |
           mkdir -p artifacts
-          zip -r artifacts/${{ steps.define-ids.outputs.artifact }} build/dokka/html
+          zip -r artifacts/${{ needs.build.outputs.artifact }} build/dokka/html
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: docs
-          path: artifacts/${{ steps.define-ids.outputs.artifact }}
-
+          path: artifacts/${{ needs.build.outputs.artifact }}
 
   deploy:
     environment:
