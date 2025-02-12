@@ -16,13 +16,23 @@ import java.lang.reflect.Type
 import java.util.*
 import java.util.function.Consumer
 
+/**
+ * Serializers for Sponge configurations, including support for Adventure [Component] and other types.
+ */
 object SpongeConfigSerializers {
+
+    /**
+     * Registers custom serializers with the provided builder.
+     */
     var SERIALIZERS: Consumer<TypeSerializerCollection.Builder> = Consumer { builder ->
         builder.register(Component::class.java, ComponentSerializer())
         builder.register(LinkedListSerializer.TYPE, LinkedListSerializer())
         builder.registerAnnotatedObjects(objectMapperFactory())
     }
 
+    /**
+     * Serializer for [Component] objects in Sponge configurations.
+     */
     class ComponentSerializer : TypeSerializer<Component> {
 
         @OptIn(PreferUsingSpongeConfigOverDazzlConf::class)
@@ -46,6 +56,9 @@ object SpongeConfigSerializers {
         }
     }
 
+    /**
+     * Serializer for [LinkedList] objects in Sponge configurations.
+     */
     class LinkedListSerializer : AbstractListChildSerializer<LinkedList<Any>>() {
         override fun elementType(containerType: Type?): Type {
             if (containerType !is ParameterizedType) {
