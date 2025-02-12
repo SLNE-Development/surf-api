@@ -10,9 +10,9 @@ allprojects {
         mavenCentral()
     }
 
-    if (subprojects.isEmpty()) {
-        apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
-    }
+//    if (subprojects.isEmpty()) {
+//        apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
+//    }
 }
 
 dependencies {
