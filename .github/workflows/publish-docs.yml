@@ -40,7 +40,9 @@ jobs:
         run: ./gradlew dokkaGenerate
 
       - name: Zip docs
-        run: zip -r "artifacts/${{ steps.define-ids.outputs.artifact }}" build/dokka/html
+        run: |
+          mkdir -p artifacts
+          zip -r artifacts/${{ steps.define-ids.outputs.artifact }} build/dokka/html
 
       - name: Upload docs
         uses: actions/upload-artifact@v4
