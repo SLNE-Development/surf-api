@@ -42,7 +42,8 @@ jobs:
       - name: Zip docs
         run: |
           mkdir -p artifacts
-          zip -r artifacts/${{ steps.define-ids.outputs.artifact }} build/dokka/html
+          cd build/dokka/html
+          zip -r ../../artifacts/${{ steps.define-ids.outputs.artifact }} .
 
       - name: Verify zip file
         run: ls -la artifacts/
