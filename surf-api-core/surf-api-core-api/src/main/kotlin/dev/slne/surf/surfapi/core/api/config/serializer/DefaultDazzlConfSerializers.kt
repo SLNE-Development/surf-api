@@ -12,13 +12,19 @@ import space.arim.dazzleconf.serialiser.FlexibleType
 import space.arim.dazzleconf.serialiser.ValueSerialiser
 
 /**
- * These are the default serializers that are always enabled when creating a configuration via
- * [DazzlConfConfigManager.create]
+ * Default serializers for DazzlConf configuration files. Provides support for custom types such as Adventure [Component].
  */
 @PreferUsingSpongeConfigOverDazzlConf
 object DefaultDazzlConfSerializers {
+
+    /**
+     * The default list of serializers used in DazzlConf configurations.
+     */
     val DEFAULTS = mutableListOf<ValueSerialiser<*>>(ComponentSerializer())
 
+    /**
+     * Serializer for [Component] objects in DazzlConf configurations.
+     */
     class ComponentSerializer : ValueSerialiser<Component> {
         override fun getTargetClass() = Component::class.java
         override fun deserialise(flexibleType: FlexibleType): Component {
