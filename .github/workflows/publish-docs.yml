@@ -3,7 +3,7 @@ name: Publish Dokka Docs
 on:
   push:
     branches:
-      - ${{ github.event.repository.default_branch }}
+      - version/1.21
   workflow_dispatch:
 
 permissions:
