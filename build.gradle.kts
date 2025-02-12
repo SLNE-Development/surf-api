@@ -1,5 +1,4 @@
-import org.jetbrains.dokka.DokkaConfiguration
-import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 
 plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.14" apply false
@@ -16,24 +15,14 @@ allprojects {
     }
 }
 
-tasks {
-    dokkaHtml {
-        outputDirectory.set(layout.buildDirectory.dir("documentation/html"))
-    }
-
-    withType<DokkaTask>().configureEach {
-        dokkaSourceSets.configureEach {
-            documentedVisibilities = setOf(
-                DokkaConfiguration.Visibility.PUBLIC,
-                DokkaConfiguration.Visibility.PROTECTED
-            )
-        }
-    }
-
-    register<Copy>("publishDokkaToDocs") {
-        dependsOn(dokkaHtmlMultimodule)
-        from(buildDir.resolve("dokka/htmlMultiModule"))
-        into(rootDir.resolve("docs"))
-    }
+dependencies {
+    dokka(project(":surf-api-core:surf-api-core-api"))
+    dokka(project(":surf-api-bukkit:surf-api-bukkit-api"))
+    dokka(project(":surf-api-velocity:surf-api-velocity-api"))
 }
 
+dokka {
+    dokkaSourceSets.configureEach {
+        documentedVisibilities = setOf(VisibilityModifier.Public, VisibilityModifier.Protected)
+    }
+}
