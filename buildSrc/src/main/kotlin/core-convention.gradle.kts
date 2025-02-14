@@ -45,11 +45,11 @@ kapt {
 
 publishing {
     repositories {
-        maven("https://repo.slne.dev/repository/maven-snapshots/") { 
-            name = "maven-snapshots"      
+        maven("https://repo.slne.dev/repository/maven-snapshots/") {
+            name = "maven-snapshots"
             credentials {
-                username = System.getenv("MAVEN_USERNAME")
-                password = System.getenv("MAVEN_PASSWORD")
+                username = System.getenv("MAVEN_SNAPSHOTS_USERNAME")
+                password = System.getenv("MAVEN_SNAPSHOTS_PASSWORD")
             }
         }
     }
