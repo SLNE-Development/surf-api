@@ -11,11 +11,10 @@ plugins {
 
     id("com.gradle.plugin-publish") version "1.3.0"
 //    alias(libs.plugins.maven.repo.auth)
-    id(libs.plugins.maven.repo.auth.get().pluginId)
 }
 
 group = groupId
-version = "$mcVersion-1.0.92-SNAPSHOT"
+version = "$mcVersion-1.0.93"
 
 repositories {
     mavenCentral()
@@ -27,7 +26,6 @@ val pluginDependencies = listOf(
     libs.kotlin.all.open,
     libs.kotlin.no.arg,
     libs.kotlin.serialization,
-    libs.maven.repo.auth,
     libs.shadow.gradle.plugin,
     libs.run.paper.gradle.plugin,
     libs.plugin.yml.paper.gradle.plugin
@@ -70,7 +68,13 @@ gradlePlugin {
 
     publishing {
         repositories {
-            maven("https://repo.slne.dev/repository/maven-unsafe/") { name = "maven-unsafe" }
+            maven("https://repo.slne.dev/repository/maven-releases/") {
+                name = "maven-releases"
+                credentials {
+                    username = System.getenv("MAVEN_RELEASES_USERNAME")
+                    password = System.getenv("MAVEN_RELEASES_PASSWORD")
+                }
+            }
         }
     }
 }

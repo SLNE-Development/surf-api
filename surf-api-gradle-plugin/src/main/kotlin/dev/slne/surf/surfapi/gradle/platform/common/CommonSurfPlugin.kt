@@ -24,7 +24,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private val commonPlugins = listOf(
         "org.gradle.java-gradle-plugin",
         "org.gradle.java-library",
-        "org.hibernate.build.maven-repo-auth",
         "org.gradle.maven-publish",
         "org.jetbrains.kotlin.jvm",
         "org.jetbrains.kotlin.kapt",
