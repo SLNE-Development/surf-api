@@ -1,0 +1,29 @@
+name: Publish to Maven
+
+on:
+  push:
+    branches:
+      - version/1.21
+
+env:
+  MAVEN_URL: ${{ secrets.REPO_PUBLISH_URL }}
+  MAVEN_USERNAME: ${{ secrets.REPO_PUBLISH_USERNAME }}
+  MAVEN_PASSWORD: ${{ secrets.REPO_PUBLISH_TOKEN }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'graalvm'
+          java-version: '21'
+      - name: Build with Gradle
+        run: ./gradlew shadowJar
+      - name: Publish to Maven
+        run: ./gradlew publish
