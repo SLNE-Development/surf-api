@@ -1,9 +1,9 @@
 name: Publish Dokka Docs
 
 on:
-  push:
-    branches:
-      - version/1.21
+#  push:
+#    branches:
+#      - version/1.21
   workflow_dispatch:
 
 permissions:

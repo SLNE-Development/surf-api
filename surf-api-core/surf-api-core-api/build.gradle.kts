@@ -1,6 +1,6 @@
 plugins {
     `core-convention`
-    alias(libs.plugins.dokka)
+//    alias(libs.plugins.dokka)
 }
 
 dependencies {
