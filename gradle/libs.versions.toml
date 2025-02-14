@@ -39,7 +39,7 @@ gson = "2.11.0"
 commons-lang3 = "3.17.0"
 commons-text = "1.13.0"
 commons-math4-core = "4.0-beta1"
-plugin-yml-paper = "0.6.0"
+plugin-yml-paper = "0.7.0"
 spongepowered-math = "2.0.1"
 fastutil = "8.5.15"
 okhttp = "5.0.0-alpha.14"
@@ -147,12 +147,12 @@ kotlin-serialization = { module = "org.jetbrains.kotlin.plugin.serialization:org
 maven-repo-auth = { module = "org.hibernate.build.maven-repo-auth:org.hibernate.build.maven-repo-auth.gradle.plugin", version.ref = "maven-repo-auth" }
 shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-gradle-plugin" }
 ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-gradle-plugin" }
-plugin-yml-paper-gradle-plugin = { module = "net.minecrell.plugin-yml.bukkit:net.minecrell.plugin-yml.bukkit.gradle.plugin", version.ref = "plugin-yml-paper" }
+plugin-yml-paper-gradle-plugin = { module = "de.eldoria.plugin-yml.paper:de.eldoria.plugin-yml.paper.gradle.plugin", version.ref = "plugin-yml-paper" }
 run-paper-gradle-plugin = { module = "xyz.jpenilla.run-paper:xyz.jpenilla.run-paper.gradle.plugin", version.ref = "run-paper-gradle-plugin" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
 [plugins]
-plugin-yml-paper = { id = "net.minecrell.plugin-yml.paper", version.ref = "plugin-yml-paper" }
+plugin-yml-paper = { id = "de.eldoria.plugin-yml.paper", version.ref = "plugin-yml-paper" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper-gradle-plugin" }
 maven-repo-auth = { id = "org.hibernate.build.maven-repo-auth", version.ref = "maven-repo-auth" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
