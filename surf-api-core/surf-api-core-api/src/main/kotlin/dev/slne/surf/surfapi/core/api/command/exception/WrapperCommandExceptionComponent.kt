@@ -7,6 +7,12 @@ import dev.slne.surf.surfapi.core.api.messages.ComponentMessage
 import net.kyori.adventure.text.Component
 import java.io.Serial
 
+/**
+ * A wrapper for [CommandSyntaxException] to integrate custom error messages
+ * as [Component] objects within the Surf API.
+ *
+ * @param errorMessage The error message to associate with the exception.
+ */
 class WrapperCommandExceptionComponent(errorMessage: Component) : WrapperCommandSyntaxException(
     CommandSyntaxException(
         SimpleCommandExceptionType(

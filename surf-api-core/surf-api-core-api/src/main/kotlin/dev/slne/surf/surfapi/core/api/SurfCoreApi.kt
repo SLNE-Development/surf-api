@@ -16,12 +16,22 @@ interface SurfCoreApi {
      */
     fun sendPlayerToServer(playerUuid: UUID, server: String)
 
+    /**
+     * Returns the platform-specific player object for the specified player.
+     */
     fun getPlayer(playerUuid: UUID): Any?
 
     companion object {
+
+        /**
+         * The instance of the SurfCoreApi.
+         */
         @JvmStatic
         val instance = requiredService<SurfCoreApi>()
     }
 }
 
+/**
+ * The instance of the SurfCoreApi.
+ */
 val surfCoreApi get() = SurfCoreApi.instance

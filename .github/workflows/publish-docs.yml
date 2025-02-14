@@ -11,6 +11,9 @@ permissions:
   id-token: write
   pages: write
 
+env:
+  PROJECT_NAME: surf-api
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -70,14 +73,22 @@ jobs:
       - name: Unzip artifact
         run: unzip -O UTF-8 -qq "artifacts/${{ needs.build.outputs.artifact }}" -d dir
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Package and upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
         with:
-          path: dir
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dir --project-name=${{ env.PROJECT_NAME }} --branch=main
+          wranglerVersion: 3.101.0
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+#      - name: Setup Pages
+#        uses: actions/configure-pages@v4
+#
+#      - name: Package and upload Pages artifact
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#          path: dir
+#
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4

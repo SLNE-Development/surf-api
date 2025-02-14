@@ -23,12 +23,26 @@ import java.util.concurrent.TimeUnit
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class PreferUsingSpongeConfigOverDazzlConf
 
+/**
+ * Manages configurations using the DazzlConf library, including loading, saving, and reloading configurations.
+ * Provides resilience against syntax or invalid data errors and defaults to a valid configuration when such errors occur.
+ *
+ * @param C The type of the configuration class.
+ * @property config The current configuration instance, or `null` if not yet loaded.
+ */
 @PreferUsingSpongeConfigOverDazzlConf
 class DazzlConfConfigManager<C> private constructor(private val helper: ConfigurationHelper<C>) {
     @Volatile
     var config: C? = null
         private set
 
+    /**
+     * Reloads the configuration from the file.
+     * If a syntax or validation error occurs, a default configuration is used.
+     *
+     * @return The reloaded configuration instance.
+     * @throws RuntimeException if an I/O error or other critical issue occurs.
+     */
     fun reloadConfig(): C {
         try {
             config = helper.reloadConfigData()
@@ -65,6 +79,11 @@ class DazzlConfConfigManager<C> private constructor(private val helper: Configur
         return config ?: error("Config is null after reload")
     }
 
+    /**
+     * Retrieves the current configuration, reloading it if not already loaded.
+     *
+     * @return The configuration instance.
+     */
     fun getOrCreateConfig(): C {
         val config = config ?: reloadConfig()
         return config
@@ -73,6 +92,15 @@ class DazzlConfConfigManager<C> private constructor(private val helper: Configur
     companion object {
         private val log = logger()
 
+        /**
+         * Creates a new instance of [DazzlConfConfigManager] for managing a YAML configuration.
+         *
+         * @param C The type of the configuration class.
+         * @param configClass The class of the configuration.
+         * @param configFolder The folder where the configuration file is stored.
+         * @param configFileName The name of the configuration file. Must match the YAML file name pattern.
+         * @return A new instance of [DazzlConfConfigManager].
+         */
         @JvmStatic
         fun <C> create(
             configClass: Class<C>,

@@ -17,12 +17,25 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.Serial
 import java.nio.file.Path
 
+/**
+ * Manages configurations using Sponge's Configurate library, including loading, saving, and reloading configurations.
+ * Supports multiple formats, including YAML and JSON.
+ *
+ * @param C The type of the configuration class.
+ * @property config The current configuration instance.
+ */
 class SpongeConfigManager<C> @Contract(pure = true) private constructor(
     private val configClass: Class<C>,
     @JvmField @field:Volatile var config: C,
     private val loader: ConfigurationLoader<out ConfigurationNode>,
     private val node: ConfigurationNode
 ) {
+
+    /**
+     * Saves the current configuration to the file.
+     *
+     * @throws RuntimeException if an I/O error or serialization error occurs.
+     */
     fun save() {
         try {
             node.set(configClass, config)
@@ -35,6 +48,12 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
         }
     }
 
+    /**
+     * Reloads the configuration from the file. If loading fails, the current configuration remains unchanged.
+     *
+     * @return The reloaded configuration instance.
+     * @throws RuntimeException if a critical error occurs during reload.
+     */
     fun reloadFromFile(): C {
         try {
             val reloadedNode: ConfigurationNode = loader.load()
@@ -64,6 +83,15 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
     companion object {
         private val log = logger()
 
+        /**
+         * Creates a [SpongeConfigManager] for managing a YAML configuration.
+         *
+         * @param C The type of the configuration class.
+         * @param configClass The class of the configuration.
+         * @param configFolder The folder where the configuration file is stored.
+         * @param configFileName The name of the configuration file. Must match the YAML file name pattern.
+         * @return A new instance of [SpongeConfigManager].
+         */
         fun <C> yaml(
             configClass: Class<C>,
             configFolder: Path,
@@ -76,6 +104,15 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
             configFileName
         )
 
+        /**
+         * Creates a [SpongeConfigManager] for managing a JSON configuration.
+         *
+         * @param C The type of the configuration class.
+         * @param configClass The class of the configuration.
+         * @param configFolder The folder where the configuration file is stored.
+         * @param configFileName The name of the configuration file. Must match the JSON file name pattern.
+         * @return A new instance of [SpongeConfigManager].
+         */
         fun <C> json(
             configClass: Class<C>,
             configFolder: Path,
@@ -125,8 +162,23 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
     }
 }
 
+/**
+ * Exception thrown when a configuration fails to load due to a critical error.
+ */
 class LoadConfigException : RuntimeException {
+
+    /**
+     * Constructs a new exception wrapping a [ConfigurateException].
+     *
+     * @param e The underlying exception.
+     */
     constructor(e: ConfigurateException) : super(e)
+
+    /**
+     * Constructs a new exception with a custom error message.
+     *
+     * @param message The error message.
+     */
     constructor(message: String) : super(message)
 
     companion object {
@@ -135,6 +187,9 @@ class LoadConfigException : RuntimeException {
     }
 }
 
+/**
+ * Exception thrown when a configuration fails to load due to serialization issues.
+ */
 class SerializationConfigException(e: SerializationException?) : RuntimeException(e) {
     companion object {
         @Serial
