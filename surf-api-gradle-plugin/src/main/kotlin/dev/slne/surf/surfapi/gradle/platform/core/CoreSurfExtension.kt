@@ -7,5 +7,5 @@ import javax.inject.Inject
 
 open class CoreSurfExtension @Inject constructor(objects: ObjectFactory) :
     CommonSurfExtension(objects) {
-    val authors = objects.listProperty<String>().convention(mutableListOf("SLNE Development Team"))
+    val authors = objects.listProperty<String>().convention(mutableListOf("SLNE Development"))
 }

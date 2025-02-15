@@ -3,7 +3,7 @@ package dev.slne.surf.surfapi.gradle.platform.common
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
-import dev.slne.surf.surfapi.gradle.util.*
+import dev.slne.surf.surfapi.gradle.util.slnePublic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
@@ -96,11 +96,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             mavenCentral()
             gradlePluginPortal()
 
-            slneUnsafe()
             slnePublic()
-            slneSnapshots()
-            slneProxy()
-            slneExternalDevelopers()
         }
 
         applyRepositories0()
@@ -114,7 +110,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             relocations.forEach { (from, to) ->
                 relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
             }
-
         }
 
         gradle.projectsEvaluated {
@@ -129,7 +124,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
                 println("contains surf-cloud-api-common: ${deps.any { it.contains("surf-cloud-api-common") }}")
 
-
                 dependencyDependentRelocations.forEach { (dependency, relocations) ->
                     if (deps.any { it.contains(dependency) }) {
                         logger.warn("Dependency $dependency found. Applying relocations.")
@@ -141,7 +135,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 }
             }
         }
-
 
         tasks.withType<JavaCompile> {
             options.encoding = Charsets.UTF_8.name()
@@ -194,7 +187,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 //            }
         }
     }
-
 
     protected open fun Project.afterEvaluated0(extension: E) {
     }
