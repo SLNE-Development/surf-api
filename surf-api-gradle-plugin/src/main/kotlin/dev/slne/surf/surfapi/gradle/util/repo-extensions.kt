@@ -19,12 +19,6 @@ inline fun RepositoryHandler.slnePublic(crossinline block: MavenArtifactReposito
         block()
     }
 
-inline fun RepositoryHandler.slneProxy(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://repo.slne.dev/repository/maven-proxy/") {
-        name = "maven-proxy"
-        block()
-    }
-
 inline fun RepositoryHandler.slneSnapshots(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
     maven("https://repo.slne.dev/repository/maven-snapshots/") {
         name = "maven-snapshots"

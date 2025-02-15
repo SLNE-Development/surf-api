@@ -98,7 +98,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             mavenCentral()
             gradlePluginPortal()
 
-            slneProxy()
             slnePublic()
             slneSnapshots()
         }
