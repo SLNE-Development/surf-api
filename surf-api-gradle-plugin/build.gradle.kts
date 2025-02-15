@@ -14,7 +14,7 @@ plugins {
 }
 
 group = groupId
-version = "$mcVersion-1.0.95"
+version = "$mcVersion-1.0.96"
 
 repositories {
     mavenCentral()
@@ -71,8 +71,12 @@ gradlePlugin {
             maven("https://repo.slne.dev/repository/maven-releases/") {
                 name = "maven-releases"
                 credentials {
-                    username = System.getenv("MAVEN_RELEASES_USERNAME")
-                    password = System.getenv("MAVEN_RELEASES_PASSWORD")
+                    val getenv = System.getenv("SLNE_RELEASES_REPO_USERNAME")
+
+                    System.err.println("Username: $getenv")
+
+                    username = getenv
+                    password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
                 }
             }
         }
