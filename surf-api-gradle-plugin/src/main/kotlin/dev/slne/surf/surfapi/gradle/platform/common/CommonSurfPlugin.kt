@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.gradle.platform.common
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
-import dev.slne.surf.surfapi.gradle.util.slneProxy
 import dev.slne.surf.surfapi.gradle.util.slnePublic
 import dev.slne.surf.surfapi.gradle.util.slneSnapshots
 import org.gradle.api.Plugin
