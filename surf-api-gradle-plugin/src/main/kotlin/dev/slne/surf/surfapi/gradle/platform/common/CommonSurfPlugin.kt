@@ -4,6 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.util.slnePublic
+import dev.slne.surf.surfapi.gradle.util.slneSnapshots
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
@@ -97,6 +98,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             gradlePluginPortal()
 
             slnePublic()
+            slneSnapshots()
         }
 
         applyRepositories0()
