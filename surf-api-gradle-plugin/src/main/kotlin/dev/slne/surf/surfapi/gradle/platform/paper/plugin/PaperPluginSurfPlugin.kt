@@ -25,7 +25,7 @@ internal class PaperPluginSurfPlugin :
 
     private val paperPlugins = listOf(
         "xyz.jpenilla.run-paper",
-        "net.minecrell.plugin-yml.paper"
+        "de.eldoria.plugin-yml.paper"
     )
 
     override fun Project.afterEvaluated0(extension: PaperPluginSurfExtension) {
