@@ -48,8 +48,8 @@ publishing {
         maven("https://repo.slne.dev/repository/maven-snapshots/") {
             name = "maven-snapshots"
             credentials {
-                username = System.getenv("MAVEN_SNAPSHOTS_USERNAME")
-                password = System.getenv("MAVEN_SNAPSHOTS_PASSWORD")
+                username = System.getenv("SLNE_SNAPSHOTS_REPO_USERNAME")
+                password = System.getenv("SLNE_SNAPSHOTS_REPO_PASSWORD")
             }
         }
     }
