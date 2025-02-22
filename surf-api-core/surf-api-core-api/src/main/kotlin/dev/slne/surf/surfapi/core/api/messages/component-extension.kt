@@ -9,9 +9,7 @@ import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.TextColor
 
 inline fun buildText(block: SurfComponentBuilder.() -> Unit): TextComponent {
-    val builder = SurfComponentBuilder.builder()
-    with(builder) { block() }
-    return builder.build()
+    return SurfComponentBuilder().apply(block).build()
 }
 
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendText(

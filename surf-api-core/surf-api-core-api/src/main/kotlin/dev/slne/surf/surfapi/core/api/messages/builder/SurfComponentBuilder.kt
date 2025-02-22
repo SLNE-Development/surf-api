@@ -28,6 +28,8 @@ interface SurfComponentBuilder : TextComponent.Builder {
     companion object {
         @JvmStatic
         fun builder(): SurfComponentBuilder = SurfComponentBuilderImpl(Component.text())
+
+        operator fun invoke(): SurfComponentBuilder = builder()
     }
 
     fun appendPrefix() = append(PREFIX)
