@@ -1,3 +1,5 @@
+import java.nio.file.Files
+
 // region properties
 val relocationPrefix: String by project
 val mcVersion: String by project
@@ -83,49 +85,43 @@ gradlePlugin {
     }
 }
 
-val generatedConstantsDir = layout.buildDirectory.dir("generated/source/constants")
-val generateConstantsTask by tasks.register("generateConstants") {
-    val outputFile = generatedConstantsDir.map { it.file("Constants.kt") }
+val generateConstants by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
+    val outputFile = outputDir.map { it.file("Constants.kt") }
 
-    outputs.file(outputFile)
+    inputs.property("relocationPrefix", relocationPrefix)
+    inputs.property("javaVersion", javaVersion)
+    inputs.property("mcVersion", mcVersion)
+    inputs.property("libs.paper.api", libs.paper.api.get().toString())
+    inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
+    inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
+    inputs.property("libs.auto.service", libs.auto.service.asProvider().get().toString())
+    outputs.dir(outputDir)
 
     doLast {
-        //language=kotlin
         val content = """
-            package dev.slne.surf.surfapi.gradle.generated
-            
-            internal object Constants {
-                const val RELOCATION_PREFIX = "$relocationPrefix"
-                const val SNAPSHOT_REPO_ID = "maven-snapshots"
-                const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-snapshots"
-                const val PAPER_API = "${libs.paper.api.get()}"
-                const val VELOCITY_API = "${libs.velocity.api.get()}"
-                const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
-                const val AUTO_SERVICE = "${libs.auto.service.asProvider().get()}"
-                
-                const val JAVA_VERSION = $javaVersion
-                const val MINECRAFT_VERSION = "$mcVersion"
-                const val SURF_API_VERSION = "$mcVersion+"
-            }
-        """.trimIndent()
+            |package dev.slne.surf.surfapi.gradle.generated
+            |
+            |internal object Constants {
+            |    const val RELOCATION_PREFIX = "$relocationPrefix"
+            |    const val SNAPSHOT_REPO_ID = "maven-snapshots"
+            |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-snapshots"
+            |    const val PAPER_API = "${libs.paper.api.get()}"
+            |    const val VELOCITY_API = "${libs.velocity.api.get()}"
+            |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
+            |    const val AUTO_SERVICE = "${libs.auto.service.asProvider().get()}"
+            |
+            |    const val JAVA_VERSION = $javaVersion
+            |    const val MINECRAFT_VERSION = "$mcVersion"
+            |    const val SURF_API_VERSION = "$mcVersion+"
+            |}
+        """.trimMargin()
 
-        outputFile.get().asFile.apply {
-            parentFile.mkdirs()
-            writeText(content)
-        }
-    }
-
-    outputs.upToDateWhen { false }
-}
-
-afterEvaluate {
-    generateConstantsTask.actions.forEach {
-        it.execute(generateConstantsTask)
+        Files.createDirectories(outputDir.get().asFile.toPath())
+        outputFile.get().asFile.writeText(content)
     }
 }
 
-sourceSets {
-    main {
-        java.srcDir(generatedConstantsDir)
-    }
+sourceSets.main {
+    kotlin.srcDir(generateConstants.map { it.outputs.files.singleFile })
 }
