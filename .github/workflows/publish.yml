@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - version/1.21
+  workflow_dispatch:
 
 env:
   SLNE_SNAPSHOTS_REPO_USERNAME: ${{ secrets.SLNE_SNAPSHOTS_REPO_USERNAME }}
