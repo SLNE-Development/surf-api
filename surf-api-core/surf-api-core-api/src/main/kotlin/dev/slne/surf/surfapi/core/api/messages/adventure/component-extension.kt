@@ -31,3 +31,11 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendNewline(
     amount: Int,
 ) = repeat(amount) { appendNewline() }
+
+fun text(content: String, color: TextColor? = null): TextComponent = Component.text(content, color)
+fun text(number: Number, color: TextColor? = null): TextComponent =
+    Component.text(number.toString(), color)
+fun text(boolean: Boolean, color: TextColor? = null): TextComponent =
+    Component.text(boolean, color)
+fun text(char: Char, color: TextColor? = null): TextComponent = Component.text(char, color)
+fun text(any: Any, color: TextColor? = null): TextComponent = Component.text(any.toString(), color)
