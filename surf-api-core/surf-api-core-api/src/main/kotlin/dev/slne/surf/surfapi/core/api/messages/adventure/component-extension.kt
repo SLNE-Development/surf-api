@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.messages
+package dev.slne.surf.surfapi.core.api.messages.adventure
 
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.BuildableComponent

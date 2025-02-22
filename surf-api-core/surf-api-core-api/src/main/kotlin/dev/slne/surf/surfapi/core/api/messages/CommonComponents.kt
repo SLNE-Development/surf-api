@@ -7,6 +7,9 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_KEY_VALUE_SEPARATOR
+import dev.slne.surf.surfapi.core.api.messages.adventure.appendNewline
+import dev.slne.surf.surfapi.core.api.messages.adventure.appendText
+import dev.slne.surf.surfapi.core.api.messages.adventure.clickOpensUrl
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration

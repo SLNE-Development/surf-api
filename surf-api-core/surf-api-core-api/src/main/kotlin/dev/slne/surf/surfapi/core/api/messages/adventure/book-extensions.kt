@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.core.api.messages.adventure
 
-import dev.slne.surf.surfapi.core.api.messages.buildText
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.inventory.Book
 

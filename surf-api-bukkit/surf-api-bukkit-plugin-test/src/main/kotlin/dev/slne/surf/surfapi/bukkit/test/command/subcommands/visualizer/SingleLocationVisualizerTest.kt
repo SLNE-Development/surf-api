@@ -11,7 +11,7 @@ import dev.slne.surf.surfapi.bukkit.api.visualizer.surfVisualizerApi
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
 import dev.slne.surf.surfapi.core.api.messages.Colors
-import dev.slne.surf.surfapi.core.api.messages.buildText
+import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import dev.slne.surf.surfapi.core.api.random.RandomSelector
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import net.kyori.adventure.text.Component

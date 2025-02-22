@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.core.api.messages.adventure
 
-import dev.slne.surf.surfapi.core.api.messages.buildText
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
