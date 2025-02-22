@@ -6,10 +6,8 @@ on:
       - version/1.21
 
 env:
-  MAVEN_SNAPSHOTS_USERNAME: ${{ secrets.MAVEN_SNAPSHOTS_PASSWORD }}
-  MAVEN_SNAPSHOTS_PASSWORD: ${{ secrets.MAVEN_SNAPSHOTS_PASSWORD }}
-  MAVEN_RELEASES_USERNAME: ${{ secrets.MAVEN_RELEASES_USERNAME }}
-  MAVEN_RELEASES_PASSWORD: ${{ secrets.MAVEN_RELEASES_PASSWORD }}
+  SLNE_SNAPSHOTS_REPO_USERNAME: ${{ secrets.SLNE_SNAPSHOTS_REPO_USERNAME }}
+  SLNE_SNAPSHOTS_REPO_PASSWORD: ${{ secrets.SLNE_SNAPSHOTS_REPO_PASSWORD }}
 
 jobs:
   publish:
@@ -25,7 +23,7 @@ jobs:
         with:
           distribution: 'graalvm'
           java-version: '21'
-#      - name: Build with Gradle
-#        run: ./gradlew shadowJar
-#      - name: Publish to Maven
-#        run: ./gradlew publish
+      - name: Build with Gradle
+        run: ./gradlew shadowJar
+      - name: Publish to Maven
+        run: ./gradlew publish
