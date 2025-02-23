@@ -32,24 +32,17 @@ jobs:
           distribution: 'graalvm'
           java-version: '21'
       
-      - name: Enable Gradle Cache
+      - name: Build all modules with Gradle
         uses: burrunan/gradle-cache-action@v1
         with:
-          job-id: build
-          save-local-build-cache: true
-          gradle-home-cache-includes: |
-            caches
-            notifications
-          gradle-home-cache-excludes: |
-            caches/*/fileHashes
-            caches/*/javaCompile
           arguments: build shadowJar --parallel
+          concurrent: true
       
-      - name: Build all modules with Gradle
-        run: ./gradlew build shadowJar --parallel
-
       - name: Publish all modules to Maven
-        run: ./gradlew publish
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          arguments: ./gradlew publish --parallel
+          concurrent: true
 
       - name: Extract Project Version
         id: get_version
@@ -61,7 +54,6 @@ jobs:
          echo "JAR_FILES<<EOF" >> $GITHUB_ENV
          find . -path "**/build/libs/*.jar" | grep -E "${{ env.MODULE_REGEX }}" >> $GITHUB_ENV
          echo "EOF" >> $GITHUB_ENV
-
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
