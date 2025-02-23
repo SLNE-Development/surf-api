@@ -11,6 +11,7 @@ env:
   SLNE_SNAPSHOTS_REPO_PASSWORD: ${{ secrets.SLNE_SNAPSHOTS_REPO_PASSWORD }}
   SLNE_RELEASES_REPO_USERNAME: ${{ secrets.SLNE_RELEASES_REPO_USERNAME }}
   SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
+  MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
 
 jobs:
   build:
@@ -41,12 +42,12 @@ jobs:
         id: get_version
         run: echo "VERSION=$(./gradlew properties | grep "^version:" | awk '{print $2}')" >> $GITHUB_ENV
 
-      - name: Find all JAR files
+      - name: Find and filter JAR files
         id: find_jars
         run: |
-          echo "JAR_FILES<<EOF" >> $GITHUB_ENV
-          find . -path "**/build/libs/*.jar" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+         echo "JAR_FILES<<EOF" >> $GITHUB_ENV
+         find . -path "**/build/libs/*.jar" | grep -E "${{ env.MODULE_REGEX }}" >> $GITHUB_ENV
+         echo "EOF" >> $GITHUB_ENV
 
 
       - name: Create GitHub Release
