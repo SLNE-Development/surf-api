@@ -13,6 +13,11 @@ env:
   SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
 
 jobs:
+  workflow-telemetry-action:
+    runs-on: namespace-profile-arm64-large
+    steps:
+      - name: Collect Workflow Telemetry
+        uses: catchpoint/workflow-telemetry-action@v2
   build:
     runs-on: namespace-profile-arm64-large
     environment: production
