@@ -41,7 +41,7 @@ jobs:
       - name: Publish all modules to Maven
         uses: burrunan/gradle-cache-action@v1
         with:
-          arguments: ./gradlew publish --parallel
+          arguments: publish --parallel
           concurrent: true
 
       - name: Extract Project Version
