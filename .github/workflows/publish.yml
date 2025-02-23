@@ -44,7 +44,7 @@ jobs:
       - name: Find all JAR files
         id: find_jars
         run: |
-          echo "JAR_FILES=$(find . -path "*/build/libs/*.jar" | tr '\n' ' ')" >> $GITHUB_ENV
+          echo "JAR_FILES=$(find . -path "**/build/libs/*.jar" | tr '\n' ' ')" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
