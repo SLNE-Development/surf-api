@@ -11,6 +11,7 @@ env:
   SLNE_SNAPSHOTS_REPO_PASSWORD: ${{ secrets.SLNE_SNAPSHOTS_REPO_PASSWORD }}
   SLNE_RELEASES_REPO_USERNAME: ${{ secrets.SLNE_RELEASES_REPO_USERNAME }}
   SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
+  MODULE_FILTERS: "surf-api-bukkit-server;surf-api-velocity-server;surf-api-standalone-server"
 
 jobs:
   build:
@@ -44,8 +45,9 @@ jobs:
       - name: Find all JAR files
         id: find_jars
         run: |
+          FILTERS=$(echo "${{ env.MODULE_FILTERS }}" | tr ';' '|')
           echo "JAR_FILES<<EOF" >> $GITHUB_ENV
-          find . -path "**/build/libs/*.jar" >> $GITHUB_ENV
+          find . -path "**/build/libs/*.jar" | grep -E "$FILTERS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
 
