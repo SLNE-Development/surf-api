@@ -44,15 +44,20 @@ jobs:
       - name: Find all JAR files
         id: find_jars
         run: |
-          echo "JAR_FILES=$(find . -path "**/build/libs/*.jar" | tr '\n' ' ')" >> $GITHUB_ENV
+          echo "JAR_FILES<<EOF" >> $GITHUB_ENV
+          find . -path "**/build/libs/*.jar" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION }}
-          name: Release ${{ env.VERSION }}
-          draft: false
-          prerelease: false
-          files: ${{ env.JAR_FILES }}
+         tag_name: v${{ env.VERSION }}
+         name: Release ${{ env.VERSION }}
+         draft: false
+         prerelease: false
+         files: |
+           ${{ env.JAR_FILES }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
