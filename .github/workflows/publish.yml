@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-arm64-large
     environment: production
     steps:
       - name: Checkout Repository
@@ -28,55 +28,20 @@ jobs:
           distribution: 'graalvm'
           java-version: '21'
       
-      - name: Restore Gradle Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
-      
       - name: Build all modules with Gradle
-        run: ./gradlew build shadowJar --parallel --build-cache
+        run: ./gradlew build shadowJar --parallel
+
+      - name: Publish all modules to Maven
+        run: ./gradlew publish
+
+      - name: Extract Project Version
+        id: get_version
+        run: echo "VERSION=$(./gradlew properties | grep "^version:" | awk '{print $2}')" >> $GITHUB_ENV
 
       - name: Find all JAR files
         id: find_jars
         run: |
           echo "JAR_FILES=$(find . -path "*/build/libs/*.jar" | tr '\n' ' ')" >> $GITHUB_ENV
-      
-      - name: Upload built JARs
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-jars
-          path: "**/build/libs/*.jar"
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download built JARs
-        uses: actions/download-artifact@v4
-        with:
-          name: built-jars
-          path: jars
-      
-      - name: Publish all modules to Maven
-        run: ./gradlew publish
-        
-  release:
-    needs: publish
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download built JARs
-        uses: actions/download-artifact@v4
-        with:
-          name: built-jars
-          path: jars
-
-      - name: Extract Project Version
-        id: get_version
-        run: echo "VERSION=$(./gradlew properties | grep "^version:" | awk '{print $2}')" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -85,7 +50,6 @@ jobs:
           name: Release ${{ env.VERSION }}
           draft: false
           prerelease: false
-          files: jars/*.jar
+          files: ${{ env.JAR_FILES }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
