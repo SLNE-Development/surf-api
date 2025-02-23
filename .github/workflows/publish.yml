@@ -32,6 +32,19 @@ jobs:
           distribution: 'graalvm'
           java-version: '21'
       
+      - name: Enable Gradle Cache
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          job-id: build
+          save-local-build-cache: true
+          gradle-home-cache-includes: |
+            caches
+            notifications
+          gradle-home-cache-excludes: |
+            caches/*/fileHashes
+            caches/*/javaCompile
+          arguments: build shadowJar --parallel
+      
       - name: Build all modules with Gradle
         run: ./gradlew build shadowJar --parallel
 
