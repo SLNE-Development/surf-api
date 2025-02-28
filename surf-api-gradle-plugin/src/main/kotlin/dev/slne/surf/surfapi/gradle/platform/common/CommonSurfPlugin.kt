@@ -16,6 +16,7 @@ import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.plugin.KaptExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
 abstract class CommonSurfPlugin<E : CommonSurfExtension>(
@@ -112,6 +113,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             relocations.forEach { (from, to) ->
                 relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
             }
+        }
+
+        configure<KaptExtension> {
+            keepJavacAnnotationProcessors = true
         }
 
         gradle.projectsEvaluated {

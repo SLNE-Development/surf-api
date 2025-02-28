@@ -19,7 +19,7 @@ internal class VelocitySurfPlugin :
     override fun Project.configure0() {
         dependencies {
             add(COMPILE_ONLY, Constants.VELOCITY_API)
-            add("kapt", Constants.VELOCITY_API)
+            add("annotationProcessor", Constants.VELOCITY_API)
         }
     }
 }
