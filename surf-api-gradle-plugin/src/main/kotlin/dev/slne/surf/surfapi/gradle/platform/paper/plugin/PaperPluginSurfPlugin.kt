@@ -79,7 +79,7 @@ internal class PaperPluginSurfPlugin :
         }
     }
 
-    override fun createExtension(objects: ObjectFactory) = PaperPluginSurfExtension(objects)
+    override fun createExtension(objects: ObjectFactory, project: Project) = PaperPluginSurfExtension(objects)
 
     override fun Project.applyPlugins0() {
         paperPlugins.forEach { plugin ->
