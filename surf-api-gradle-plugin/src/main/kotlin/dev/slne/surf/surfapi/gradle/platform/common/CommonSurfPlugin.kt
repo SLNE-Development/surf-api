@@ -8,7 +8,9 @@ import dev.slne.surf.surfapi.gradle.util.slneSnapshots
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
@@ -16,10 +18,11 @@ import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.plugin.KaptExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
 abstract class CommonSurfPlugin<E : CommonSurfExtension>(
-    private val platformName: String,
+    protected val platformName: String,
     private val platform: SurfApiPlatform,
 ) : Plugin<Project> {
     private val commonPlugins = listOf(
@@ -27,20 +30,20 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         "org.gradle.java-library",
         "org.gradle.maven-publish",
         "org.jetbrains.kotlin.jvm",
-        "org.jetbrains.kotlin.kapt",
         "org.jetbrains.kotlin.plugin.spring",
         "org.jetbrains.kotlin.plugin.jpa",
         "org.jetbrains.kotlin.plugin.serialization",
-        "com.gradleup.shadow"
+        "com.gradleup.shadow",
+        "com.google.devtools.ksp"
     )
 
     private val relocations = mutableMapOf<String, String>()
     private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
 
-    protected abstract fun createExtension(objects: ObjectFactory): E
+    protected abstract fun createExtension(objects: ObjectFactory, project: Project): E
 
     override fun apply(target: Project) = with(target) {
-        val extension = createExtension(objects)
+        val extension = createExtension(objects, this)
         extensions.add("surf${platformName.replaceFirstChar { it.uppercase() }}Api", extension)
 
         applyRepositories()
@@ -138,6 +141,11 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             }
         }
 
+        configure<JavaPluginExtension> {
+            withSourcesJar()
+            withJavadocJar()
+        }
+
         tasks.withType<JavaCompile> {
             options.encoding = Charsets.UTF_8.name()
             options.compilerArgs.addAll(listOf("-parameters"))
@@ -165,7 +173,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     private fun Project.configureAutoService() = dependencies {
         add(COMPILE_ONLY, Constants.AUTO_SERVICE_ANNOTATIONS)
-        add("kapt", Constants.AUTO_SERVICE)
+        add("ksp", Constants.AUTO_SERVICE)
     }
 
     protected open fun Project.configure0() {

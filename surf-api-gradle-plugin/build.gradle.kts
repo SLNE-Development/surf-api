@@ -12,11 +12,12 @@ plugins {
     `kotlin-dsl`
 
     id("com.gradle.plugin-publish") version "1.3.0"
+    alias(libs.plugins.kotlin.serialization)
 //    alias(libs.plugins.maven.repo.auth)
 }
 
 group = groupId
-version = "$mcVersion-1.0.98"
+version = "$mcVersion-1.0.121"
 
 repositories {
     mavenCentral()
@@ -30,7 +31,8 @@ val pluginDependencies = listOf(
     libs.kotlin.serialization,
     libs.shadow.gradle.plugin,
     libs.run.paper.gradle.plugin,
-    libs.plugin.yml.paper.gradle.plugin
+    libs.plugin.yml.paper.gradle.plugin,
+    libs.ksp.gradle.plugin
 )
 
 dependencies {
@@ -38,6 +40,7 @@ dependencies {
     pluginDependencies.forEach { dep -> api(dep) }
 
     implementation("com.palantir.javapoet:javapoet:0.6.0")
+    implementation(libs.kotlin.serialization.json)
 }
 
 

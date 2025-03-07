@@ -1,0 +1,55 @@
+package dev.slne.surf.surfapi.gradle.platform.common
+
+import dev.slne.surf.surfapi.gradle.generators.GeneratePluginFile
+import dev.slne.surf.surfapi.gradle.generators.pluginfiles.CommonPluginFile
+import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
+import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.support.uppercaseFirstChar
+import org.gradle.kotlin.dsl.withType
+
+abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : CommonPluginFile>(
+    platformName: String,
+    platform: SurfApiPlatform,
+    private val pluginFileName: String,
+) : CommonSurfPlugin<E>(platformName, platform) {
+
+    protected abstract fun createPluginFile(project: Project): F
+
+    override fun apply(target: Project) {
+        super.apply(target)
+
+        with(target) {
+            val generatedResourcesDirectory =
+                layout.buildDirectory.dir("generated/surf-api/$platformName")
+
+            val createdPluginFile = createPluginFile(this)
+            extensions.add("${platformName}PluginFile", createdPluginFile)
+
+            val generateTask = tasks.register<GeneratePluginFile>("generate${platformName.uppercaseFirstChar()}PluginFile") {
+                group = "surf-api"
+
+                fileName.set(pluginFileName)
+                outputDirectory.set(generatedResourcesDirectory)
+                pluginFile.set(provider {
+                    createdPluginFile.setDefaults(target)
+                    createdPluginFile
+                })
+
+                doFirst {
+                    createdPluginFile.validate()
+                }
+            }
+
+            plugins.withType<JavaPlugin> {
+                extensions.getByType<SourceSetContainer>().named(SourceSet.MAIN_SOURCE_SET_NAME) {
+                    resources.srcDir(generateTask)
+                }
+            }
+        }
+    }
+}

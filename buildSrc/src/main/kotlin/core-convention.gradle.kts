@@ -9,7 +9,6 @@ plugins {
     `maven-publish`
 
     kotlin("jvm")
-    kotlin("kapt")
 
     id("com.google.devtools.ksp")
     id("com.gradleup.shadow")
@@ -25,7 +24,7 @@ repositories {
 
 dependencies {
     compileOnly(libs.auto.service.annotations)
-    "kapt"(libs.auto.service)
+    ksp(libs.auto.service)
 
     compileOnlyApi("org.jetbrains:annotations:24.1.0")
 }
@@ -39,8 +38,9 @@ extensions.configure<KotlinJvmProjectExtension> {
     }
 }
 
-kapt {
-    keepJavacAnnotationProcessors = true
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 publishing {
