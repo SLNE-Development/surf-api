@@ -1,5 +1,9 @@
+import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin.Companion.shadowJar
+import kotlinx.validation.KotlinApiBuildTask
+
 plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.14" apply false
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
 //    alias(libs.plugins.dokka)
 }
 
@@ -8,9 +12,32 @@ allprojects {
         mavenCentral()
     }
 
+    afterEvaluate {
+        tasks {
+            withType<KotlinApiBuildTask> {
+                inputJar.value(shadowJar.flatMap { it.archiveFile })
+            }
+        }
+    }
+
 //    if (subprojects.isEmpty()) {
 //        apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
 //    }
+}
+
+apiValidation {
+    nonPublicMarkers.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+    ignoredProjects.addAll(
+        listOf(
+            "surf-api-core-server",
+            "surf-api-bukkit-server",
+            "surf-api-velocity-server",
+            "surf-api-standalone",
+            "surf-api-gradle-plugin",
+            "surf-api-bukkit-plugin-test",
+            "surf-api-modern-generator"
+        )
+    )
 }
 
 //dependencies {
