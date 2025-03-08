@@ -69,4 +69,10 @@ tasks {
     shadowJar {
         mergeServiceFiles()
     }
+
+    javadoc {
+        val options = options as StandardJavadocDocletOptions
+        options.use()
+        options.tags("apiNote:a:API Note:")
+    }
 }
