@@ -26,6 +26,15 @@ jobs:
         with:
           fetch-depth: 0
       
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
@@ -33,22 +42,13 @@ jobs:
           java-version: '21'
       
       - name: Build all modules with Gradle
-        uses: burrunan/gradle-cache-action@v1
-        with:
-          arguments: build shadowJar --parallel
-          concurrent: true
+        run: ./gradlew build shadowJar --parallel --no-scan
 
       - name: Check all modules with Gradle
-        uses: burrunan/gradle-cache-action@v1
-        with:
-          arguments: check --parallel
-          concurrent: true
+        run: ./gradlew check --parallel --no-scan
       
       - name: Publish all modules to Maven
-        uses: burrunan/gradle-cache-action@v1
-        with:
-          arguments: publish --parallel
-          concurrent: true
+        run: ./gradlew publish --parallel --no-scan
 
       - name: Extract Project Version
         id: get_version
@@ -57,19 +57,17 @@ jobs:
       - name: Find and filter JAR files
         id: find_jars
         run: |
-         echo "JAR_FILES<<EOF" >> $GITHUB_ENV
-         find . -path "**/build/libs/*.jar" | grep -E "${{ env.MODULE_REGEX }}" >> $GITHUB_ENV
-         echo "EOF" >> $GITHUB_ENV
+          echo "JAR_FILES<<EOF" >> $GITHUB_ENV
+          find . -path "**/build/libs/*.jar" | grep -E "${{ env.MODULE_REGEX }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-         tag_name: v${{ env.VERSION }}
-         name: Release ${{ env.VERSION }}
-         draft: false
-         prerelease: false
-         files: |
-           ${{ env.JAR_FILES }}
+          tag_name: v${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+          files: ${{ env.JAR_FILES }}
         env:
-         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
