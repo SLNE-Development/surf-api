@@ -2603,6 +2603,7 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/
 	public abstract fun color (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun colorIfAbsent (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun content (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public abstract fun darkSpacer (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun decorate (Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun decorate ([Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun decoration (Lnet/kyori/adventure/text/format/TextDecoration;Lnet/kyori/adventure/text/format/TextDecoration$State;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -2625,6 +2626,7 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/
 	public abstract fun secondary (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun shadowColor (Lnet/kyori/adventure/util/ARGBLike;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun shadowColorIfAbsent (Lnet/kyori/adventure/util/ARGBLike;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public abstract fun spacer (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun style (Ljava/util/function/Consumer;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun style (Lnet/kyori/adventure/text/format/Style;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun success (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -2657,10 +2659,12 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 	public static fun appendPrefix (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendTime-gRj5Bb8 (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendTime-gRj5Bb8$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun darkSpacer (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun error (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun info (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun primary (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun secondary (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun spacer (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun success (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun text (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;

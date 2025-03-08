@@ -1,12 +1,24 @@
 package dev.slne.surf.surfapi.core.api.messages.builder
 
-import dev.slne.surf.surfapi.core.api.messages.*
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.DARK_SPACER
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.ERROR
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.INFO
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PREFIX
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PRIMARY
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SECONDARY
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SPACER
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SUCCESS
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.WARNING
+import dev.slne.surf.surfapi.core.api.messages.CommonComponents
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCONNECT_HEADER
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCORD_LINK
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_KEY_VALUE_SEPARATOR
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.TIME_SEPARATOR
+import dev.slne.surf.surfapi.core.api.messages.NoLowercase
+import dev.slne.surf.surfapi.core.api.messages.joinToComponent
+import dev.slne.surf.surfapi.core.api.messages.joinToComponentNewLine
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.*
 import net.kyori.adventure.text.event.ClickEvent
@@ -35,14 +47,16 @@ interface SurfComponentBuilder : TextComponent.Builder {
     fun appendNewPrefixedLine() = appendNewline().appendPrefix()
 
     fun text(text: String, color: TextColor? = null) = append(Component.text(text, color))
-    fun primary(text: String) = text(text, Colors.PRIMARY)
-    fun secondary(text: String) = text(text, Colors.SECONDARY)
-    fun info(text: String) = text(text, Colors.INFO)
-    fun success(text: String) = text(text, Colors.SUCCESS)
-    fun warning(text: String) = text(text, Colors.WARNING)
-    fun error(text: String) = text(text, Colors.ERROR)
-    fun variableKey(text: String) = text(text, Colors.VARIABLE_KEY)
+    fun primary(text: String) = text(text, PRIMARY)
+    fun secondary(text: String) = text(text, SECONDARY)
+    fun info(text: String) = text(text, INFO)
+    fun success(text: String) = text(text, SUCCESS)
+    fun warning(text: String) = text(text, WARNING)
+    fun error(text: String) = text(text, ERROR)
+    fun variableKey(text: String) = text(text, VARIABLE_KEY)
     fun variableValue(text: String) = text(text, VARIABLE_VALUE)
+    fun spacer(text: String) = text(text, SPACER)
+    fun darkSpacer(text: String) = text(text, DARK_SPACER)
 
     fun appendDiscordLink() = append(DISCORD_LINK)
     fun appendDisconnectHeader() = append(DISCONNECT_HEADER)
