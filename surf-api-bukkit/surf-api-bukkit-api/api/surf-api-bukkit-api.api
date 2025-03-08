@@ -1006,14 +1006,6 @@ public final class dev/slne/surf/surfapi/bukkit/api/builder/Item_stackKt {
 	public static final fun meta0 (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class dev/slne/surf/surfapi/bukkit/api/builder/Item_stackKt$sam$i$java_util_function_Consumer$0 : java/util/function/Consumer {
-	public fun <init> (Lkotlin/jvm/functions/Function1;)V
-	public final synthetic fun accept (Ljava/lang/Object;)V
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/bukkit/api/builder/MetaMarker : java/lang/annotation/Annotation {
-}
-
 public final class dev/slne/surf/surfapi/bukkit/api/collections/LazyIntList {
 	public fun <init> (Lkotlin/jvm/functions/Function0;)V
 	public final fun clear ()V
