@@ -143,6 +143,7 @@ auto-service-annotations = { module = "com.google.auto.service:auto-service-anno
 auto-service = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-service-ksp" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 
 # Plugin dependencies
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinVersion" }
@@ -165,4 +166,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-gradle-plugin" }
 
 [bundles]
-ktor-client = ["ktor-client-core", "ktor-client-okhttp"]
+ktor-client = ["ktor-client-core", "ktor-client-okhttp", "ktor-client-content-negotiation"]
