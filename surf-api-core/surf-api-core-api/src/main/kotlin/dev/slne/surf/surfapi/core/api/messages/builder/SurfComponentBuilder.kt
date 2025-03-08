@@ -46,6 +46,8 @@ interface SurfComponentBuilder : TextComponent.Builder {
     fun appendPrefix() = append(PREFIX)
     fun appendNewPrefixedLine() = appendNewline().appendPrefix()
 
+    fun append(block: SurfComponentBuilder.() -> Unit) = append(SurfComponentBuilder(block))
+
     fun text(text: String, color: TextColor? = null) = append(Component.text(text, color))
     fun primary(text: String) = text(text, PRIMARY)
     fun secondary(text: String) = text(text, SECONDARY)

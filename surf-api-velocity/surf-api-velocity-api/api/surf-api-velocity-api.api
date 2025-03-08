@@ -2800,6 +2800,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/adventure/Title_exten
 public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder : net/kyori/adventure/text/TextComponent$Builder {
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder$Companion;
 	public abstract fun append (Ljava/lang/Iterable;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public abstract fun append (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun append (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun append (Lnet/kyori/adventure/text/ComponentBuilder;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun append (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -2866,6 +2867,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 }
 
 public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder$DefaultImpls {
+	public static fun append (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendCollection (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Iterable;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendCollectionNewLine (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Iterable;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendCollectionNewLine$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Iterable;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
