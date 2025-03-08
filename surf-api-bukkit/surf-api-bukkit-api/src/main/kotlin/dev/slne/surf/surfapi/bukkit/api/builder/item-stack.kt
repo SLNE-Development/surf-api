@@ -10,27 +10,26 @@ import org.bukkit.inventory.meta.ItemMeta
 @DslMarker
 annotation class ItemMarker
 
-@Target(AnnotationTarget.TYPE)
-@DslMarker
-annotation class MetaMarker
-
-fun buildItem(
+inline fun buildItem(
     material: Material,
     amount: Int = 1,
-    init: (@ItemMarker ItemStack).() -> Unit
+    init: (@ItemMarker ItemStack).() -> Unit,
 ): ItemStack {
     val item = ItemStack(material, amount)
     item.init()
     return item
 }
 
-inline fun <reified M : ItemMeta> ItemStack.meta(crossinline init: (@MetaMarker M).() -> Unit) {
-    editMeta(M::class.java) { it.init() }
+inline fun <reified M : ItemMeta> ItemStack.meta(block: (@ItemMarker M).() -> Unit): Boolean {
+    val meta = itemMeta as? M ?: return false
+    meta.block()
+    itemMeta = meta
+    return true
 }
 
 @JvmName("meta0")
-fun ItemStack.meta(init: (@MetaMarker ItemMeta).() -> Unit) {
-    editMeta { it.init() }
+inline fun ItemStack.meta(init: (@ItemMarker ItemMeta).() -> Unit) {
+    meta<ItemMeta>(init)
 }
 
 fun ItemStack.displayName(name: Component) {
