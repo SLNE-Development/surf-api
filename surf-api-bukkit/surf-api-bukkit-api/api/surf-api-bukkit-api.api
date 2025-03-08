@@ -1013,6 +1013,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/builder/Item_stackKt {
 public final class dev/slne/surf/surfapi/bukkit/api/builder/LoreBuilder {
 	public fun <init> ()V
 	public final fun line (Lkotlin/jvm/functions/Function1;)V
+	public final fun unaryPlus (Lnet/kyori/adventure/text/Component;)V
 }
 
 public final class dev/slne/surf/surfapi/bukkit/api/collections/LazyIntList {

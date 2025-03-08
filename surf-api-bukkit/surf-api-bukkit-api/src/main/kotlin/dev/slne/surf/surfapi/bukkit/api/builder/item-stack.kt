@@ -71,6 +71,10 @@ class LoreBuilder {
         lore.add(SurfComponentBuilder().apply(block).build())
     }
 
+    operator fun Component.unaryPlus() {
+        lore.add(this)
+    }
+
     internal fun build() =
         lore.map { it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE) }
 }
