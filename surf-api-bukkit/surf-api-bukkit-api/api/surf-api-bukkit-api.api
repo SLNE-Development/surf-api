@@ -3666,6 +3666,14 @@ public final class dev/slne/surf/surfapi/core/api/messages/ComponentMessage$Comp
 public abstract interface annotation class dev/slne/surf/surfapi/core/api/messages/NoLowercase : java/lang/annotation/Annotation {
 }
 
+public final class dev/slne/surf/surfapi/core/api/messages/adventure/Audience_extensionKt {
+	public static final fun openBook (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
+	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
+	public static final fun sendText (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
+	public static final fun showBossBar (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
+	public static final fun showTitle (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
+}
+
 public abstract interface annotation class dev/slne/surf/surfapi/core/api/messages/adventure/BookDsl : java/lang/annotation/Annotation {
 }
 
