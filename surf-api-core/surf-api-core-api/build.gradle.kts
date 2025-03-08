@@ -39,6 +39,8 @@ dependencies {
     compileOnlyApi(libs.commons.lang3)
     compileOnlyApi(libs.commons.text)
     compileOnlyApi(libs.fastutil)
+
+    api(libs.bundles.ktor.client)
 }
 
 description = "surf-api-core-api"
