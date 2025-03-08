@@ -2694,7 +2694,10 @@ public final class dev/slne/surf/surfapi/core/api/messages/adventure/Component_e
 	public static synthetic fun appendText$default (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public static synthetic fun appendText$default (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public static final fun buildText (Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
+	public static final fun clickCopiesToClipboard (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public static final fun clickOpensUrl (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;)Lnet/kyori/adventure/text/ComponentBuilder;
+	public static final fun clickRunsCommand (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;)Lnet/kyori/adventure/text/ComponentBuilder;
+	public static final fun clickSuggestsCommand (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public static final fun text (CLnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/TextComponent;
 	public static final fun text (Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/TextComponent;
 	public static final fun text (Ljava/lang/Object;Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/TextComponent;

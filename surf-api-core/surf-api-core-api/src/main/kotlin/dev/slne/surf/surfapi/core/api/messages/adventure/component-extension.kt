@@ -56,6 +56,36 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
 ) = clickEvent(ClickEvent.openUrl(url))
 
 /**
+ * Sets a click event on the component that runs the specified [command] when clicked.
+ *
+ * @param command The command to run on click.
+ * @return The modified builder instance.
+ */
+fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickRunsCommand(
+    command: String,
+) = clickEvent(ClickEvent.runCommand(command))
+
+/**
+ * Sets a click event on the component that suggests the specified [command] when clicked.
+ *
+ * @param command The command to suggest on click.
+ * @return The modified builder instance.
+ */
+fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickSuggestsCommand(
+    command: String,
+) = clickEvent(ClickEvent.suggestCommand(command))
+
+/**
+ * Sets a click event on the component that copies the specified [value] to the clipboard when clicked.
+ *
+ * @param value The value to copy to the clipboard on click.
+ * @return The modified builder instance.
+ */
+fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCopiesToClipboard(
+    value: String,
+) = clickEvent(ClickEvent.copyToClipboard(value))
+
+/**
  * Appends a newline character to the builder the specified number of times.
  *
  * @param amount The number of newline characters to append.
