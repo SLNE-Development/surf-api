@@ -25,6 +25,7 @@ allprojects {
 //    }
 }
 
+val ci = System.getenv("CI")?.toBoolean() == true
 apiValidation {
     nonPublicMarkers.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
     ignoredProjects.addAll(
@@ -33,11 +34,18 @@ apiValidation {
             "surf-api-bukkit-server",
             "surf-api-velocity-server",
             "surf-api-standalone",
-            "surf-api-gradle-plugin",
-            "surf-api-bukkit-plugin-test",
-            "surf-api-modern-generator"
+            "surf-api-gradle-plugin"
         )
     )
+
+    if (!ci) {
+        ignoredProjects.addAll(
+            listOf(
+                "surf-api-bukkit-plugin-test",
+                "surf-api-modern-generator"
+            )
+        )
+    }
 }
 
 //dependencies {
