@@ -1004,6 +1004,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/builder/Item_stackKt {
 	public static final fun buildItem (Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
 	public static synthetic fun buildItem$default (Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/bukkit/inventory/ItemStack;
 	public static final fun buildLore (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
+	public static final fun displayName (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
 	public static final fun displayName (Lorg/bukkit/inventory/ItemStack;Lnet/kyori/adventure/text/Component;)V
 	public static final fun lore (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
 	public static final fun lore (Lorg/bukkit/inventory/ItemStack;[Lnet/kyori/adventure/text/Component;)V

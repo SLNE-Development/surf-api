@@ -48,6 +48,10 @@ fun ItemStack.displayName(name: Component) {
     }
 }
 
+inline fun ItemStack.displayName(block: @ItemDsl SurfComponentBuilder.() -> Unit) {
+    displayName(SurfComponentBuilder().apply(block).build())
+}
+
 fun ItemStack.lore(vararg lore: Component) {
     meta {
         lore(lore.map { it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE) })
