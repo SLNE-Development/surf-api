@@ -16,7 +16,7 @@ dependencies {
     api(libs.commons.math4.core)
     api(libs.aide.reflection)
     runtimeOnly(libs.flogger.slf4j.backend)
-    annotationProcessor(libs.velocity.api)
+    kapt(libs.velocity.api)
 }
 
 tasks {
