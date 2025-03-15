@@ -14,7 +14,7 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.WARNING
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCONNECT_HEADER
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCORD_LINK
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_KEY_VALUE_SEPARATOR
+import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPERATOR
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.TIME_SEPARATOR
 import dev.slne.surf.surfapi.core.api.messages.NoLowercase
 import dev.slne.surf.surfapi.core.api.messages.joinToComponent
@@ -46,25 +46,102 @@ interface SurfComponentBuilder : TextComponent.Builder {
     fun appendPrefix() = append(PREFIX)
     fun appendNewPrefixedLine() = appendNewline().appendPrefix()
 
-    fun append(block: SurfComponentBuilder.() -> Unit) = append(SurfComponentBuilder(block))
-
     fun text(text: String, color: TextColor? = null) = append(Component.text(text, color))
+    fun text(boolean: Boolean, color: TextColor? = null) = append(Component.text(boolean, color))
+    fun text(char: Char, color: TextColor? = null) = append(Component.text(char, color))
+    fun text(double: Double, color: TextColor? = null) = append(Component.text(double, color))
+    fun text(float: Float, color: TextColor? = null) = append(Component.text(float, color))
+    fun text(int: Int, color: TextColor? = null) = append(Component.text(int, color))
+    fun text(long: Long, color: TextColor? = null) = append(Component.text(long, color))
+
     fun primary(text: String) = text(text, PRIMARY)
+    fun primary(boolean: Boolean) = text(boolean, PRIMARY)
+    fun primary(char: Char) = text(char, PRIMARY)
+    fun primary(double: Double) = text(double, PRIMARY)
+    fun primary(float: Float) = text(float, PRIMARY)
+    fun primary(int: Int) = text(int, PRIMARY)
+    fun primary(long: Long) = text(long, PRIMARY)
+
     fun secondary(text: String) = text(text, SECONDARY)
+    fun secondary(boolean: Boolean) = text(boolean, SECONDARY)
+    fun secondary(char: Char) = text(char, SECONDARY)
+    fun secondary(double: Double) = text(double, SECONDARY)
+    fun secondary(float: Float) = text(float, SECONDARY)
+    fun secondary(int: Int) = text(int, SECONDARY)
+    fun secondary(long: Long) = text(long, SECONDARY)
+
     fun info(text: String) = text(text, INFO)
+    fun info(boolean: Boolean) = text(boolean, INFO)
+    fun info(char: Char) = text(char, INFO)
+    fun info(double: Double) = text(double, INFO)
+    fun info(float: Float) = text(float, INFO)
+    fun info(int: Int) = text(int, INFO)
+    fun info(long: Long) = text(long, INFO)
+
     fun success(text: String) = text(text, SUCCESS)
+    fun success(boolean: Boolean) = text(boolean, SUCCESS)
+    fun success(char: Char) = text(char, SUCCESS)
+    fun success(double: Double) = text(double, SUCCESS)
+    fun success(float: Float) = text(float, SUCCESS)
+    fun success(int: Int) = text(int, SUCCESS)
+    fun success(long: Long) = text(long, SUCCESS)
+
     fun warning(text: String) = text(text, WARNING)
+    fun warning(boolean: Boolean) = text(boolean, WARNING)
+    fun warning(char: Char) = text(char, WARNING)
+    fun warning(double: Double) = text(double, WARNING)
+    fun warning(float: Float) = text(float, WARNING)
+    fun warning(int: Int) = text(int, WARNING)
+    fun warning(long: Long) = text(long, WARNING)
+
+
     fun error(text: String) = text(text, ERROR)
+    fun error(boolean: Boolean) = text(boolean, ERROR)
+    fun error(char: Char) = text(char, ERROR)
+    fun error(double: Double) = text(double, ERROR)
+    fun error(float: Float) = text(float, ERROR)
+    fun error(int: Int) = text(int, ERROR)
+    fun error(long: Long) = text(long, ERROR)
+
     fun variableKey(text: String) = text(text, VARIABLE_KEY)
+    fun variableKey(boolean: Boolean) = text(boolean, VARIABLE_KEY)
+    fun variableKey(char: Char) = text(char, VARIABLE_KEY)
+    fun variableKey(double: Double) = text(double, VARIABLE_KEY)
+    fun variableKey(float: Float) = text(float, VARIABLE_KEY)
+    fun variableKey(int: Int) = text(int, VARIABLE_KEY)
+    fun variableKey(long: Long) = text(long, VARIABLE_KEY)
+
     fun variableValue(text: String) = text(text, VARIABLE_VALUE)
+    fun variableValue(boolean: Boolean) = text(boolean, VARIABLE_VALUE)
+    fun variableValue(char: Char) = text(char, VARIABLE_VALUE)
+    fun variableValue(double: Double) = text(double, VARIABLE_VALUE)
+    fun variableValue(float: Float) = text(float, VARIABLE_VALUE)
+    fun variableValue(int: Int) = text(int, VARIABLE_VALUE)
+    fun variableValue(long: Long) = text(long, VARIABLE_VALUE)
+
     fun spacer(text: String) = text(text, SPACER)
+    fun spacer(boolean: Boolean) = text(boolean, SPACER)
+    fun spacer(char: Char) = text(char, SPACER)
+    fun spacer(double: Double) = text(double, SPACER)
+    fun spacer(float: Float) = text(float, SPACER)
+    fun spacer(int: Int) = text(int, SPACER)
+    fun spacer(long: Long) = text(long, SPACER)
+
     fun darkSpacer(text: String) = text(text, DARK_SPACER)
+    fun darkSpacer(boolean: Boolean) = text(boolean, DARK_SPACER)
+    fun darkSpacer(char: Char) = text(char, DARK_SPACER)
+    fun darkSpacer(double: Double) = text(double, DARK_SPACER)
+    fun darkSpacer(float: Float) = text(float, DARK_SPACER)
+    fun darkSpacer(int: Int) = text(int, DARK_SPACER)
+    fun darkSpacer(long: Long) = text(long, DARK_SPACER)
+
+    fun ellipsis(color: TextColor? = SPACER) = append(CommonComponents.ELLIPSIS.color(color))
 
     fun appendDiscordLink() = append(DISCORD_LINK)
     fun appendDisconnectHeader() = append(DISCONNECT_HEADER)
     fun appendDisconnectFooterTryAgainLater(issue: Boolean) = append(
-        if (issue) CommonComponents.DISCONNECT_FOOTER_TRY_AGAIN_LATER_ISSUE
-        else CommonComponents.DISCONNECT_FOOTER_TRY_AGAIN_LATER
+        if (issue) CommonComponents.ISSUE_FOOTER
+        else CommonComponents.RETRY_LATER_FOOTER
     )
 
     fun appendKickDisconnectMessage(
@@ -105,7 +182,7 @@ interface SurfComponentBuilder : TextComponent.Builder {
         keyFormatter: (K) -> Component,
         valueFormatter: (V) -> Component,
         linePrefix: Component = PREFIX,
-        keyValueSeparator: Component = MAP_KEY_VALUE_SEPARATOR,
+        keyValueSeparator: Component = MAP_SEPERATOR,
     ) = append(map.joinToComponent(keyFormatter, valueFormatter, linePrefix, keyValueSeparator))
 
     fun appendTime(
@@ -164,3 +241,12 @@ interface SurfComponentBuilder : TextComponent.Builder {
     override fun shadowColor(argb: ARGBLike?): SurfComponentBuilder
     override fun shadowColorIfAbsent(argb: ARGBLike?): SurfComponentBuilder
 }
+
+inline fun SurfComponentBuilder.append(block: SurfComponentBuilder.() -> Unit) =
+    append(SurfComponentBuilder(block))
+
+inline fun SurfComponentBuilder.appendNewline(block: SurfComponentBuilder.() -> Unit) =
+    appendNewline().append(block)
+
+inline fun SurfComponentBuilder.appendNewPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
+    appendNewPrefixedLine().append(block)
