@@ -45,14 +45,14 @@ object PlayerLookupService {
      */
     private val nameToUuid = Caffeine.newBuilder()
         .expireAfterWrite(15.minutes)
-        .asLoadingCache<String, UUID> {
+        .asLoadingCache<String, UUID?> {
             try {
                 MinecraftApi.getUuid(it)
             } catch (_: Exception) {
                 try {
                     MinetoolsApi.getUuid(it)
                 } catch (_: Exception) {
-                    error("Failed to get UUID for $it")
+                    null
                 }
             }
         }
@@ -63,14 +63,14 @@ object PlayerLookupService {
      */
     private val uuidToName = Caffeine.newBuilder()
         .expireAfterWrite(15.minutes)
-        .asLoadingCache<UUID, String> {
+        .asLoadingCache<UUID, String?> {
             try {
                 MinecraftApi.getUsername(it)
             } catch (_: Exception) {
                 try {
                     MinetoolsApi.getUsername(it)
                 } catch (_: Exception) {
-                    error("Failed to get username for $it")
+                    null
                 }
             }
         }
@@ -78,16 +78,16 @@ object PlayerLookupService {
     /**
      * Retrieves the username corresponding to the provided UUID.
      * @param uuid UUID of the player.
-     * @return Username associated with the UUID.
+     * @return Username associated with the UUID or null if not found.
      */
-    suspend fun getUsername(uuid: UUID): String = uuidToName.get(uuid)
+    suspend fun getUsername(uuid: UUID): String? = uuidToName.get(uuid)
 
     /**
      * Retrieves the UUID corresponding to the provided username.
      * @param username Minecraft username.
-     * @return UUID associated with the username.
+     * @return UUID associated with the username or null if not found.
      */
-    suspend fun getUuid(username: String): UUID = nameToUuid.get(username)
+    suspend fun getUuid(username: String): UUID? = nameToUuid.get(username)
 
     /**
      * API interaction with Mojang's official endpoints.
