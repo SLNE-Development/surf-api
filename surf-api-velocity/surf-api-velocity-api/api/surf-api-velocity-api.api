@@ -4600,6 +4600,19 @@ public final class dev/slne/surf/surfapi/velocity/api/SurfVelocityApiKt {
 	public static final fun getSurfVelocityApi ()Ldev/slne/surf/surfapi/velocity/api/SurfVelocityApi;
 }
 
+public class dev/slne/surf/surfapi/velocity/api/command/args/MiniMessageArgument : dev/jorel/commandapi/arguments/Argument {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getArgumentType ()Ldev/jorel/commandapi/arguments/CommandAPIArgumentType;
+	public fun getPrimitiveType ()Ljava/lang/Class;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lnet/kyori/adventure/text/Component;
+}
+
+public final class dev/slne/surf/surfapi/velocity/api/command/args/MiniMessageArgumentKt {
+	public static final fun miniMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static synthetic fun miniMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
+}
+
 public final class io/ktor/client/HttpClient : java/io/Closeable, kotlinx/coroutines/CoroutineScope {
 	public fun <init> (Lio/ktor/client/engine/HttpClientEngine;Lio/ktor/client/HttpClientConfig;)V
 	public synthetic fun <init> (Lio/ktor/client/engine/HttpClientEngine;Lio/ktor/client/HttpClientConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
