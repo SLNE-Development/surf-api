@@ -11,8 +11,6 @@ import kotlin.io.path.*
 
 plugins {
     `core-convention`
-
-    kotlin("plugin.serialization") version libs.versions.kotlinVersion
 }
 
 dependencies {
