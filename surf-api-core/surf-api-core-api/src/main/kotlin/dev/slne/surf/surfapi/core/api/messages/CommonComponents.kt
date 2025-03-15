@@ -6,7 +6,7 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PRIMARY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_KEY_VALUE_SEPARATOR
+import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPERATOR
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendNewline
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.clickOpensUrl
@@ -41,7 +41,7 @@ object CommonComponents {
      * A separator (`->`) used to visually separate key-value pairs in text components.
      */
     @JvmField
-    val MAP_KEY_VALUE_SEPARATOR = text(" -> ", SPACER)
+    val MAP_SEPERATOR = text(" -> ", SPACER)
 
     /**
      * A separator (`:`) used to visually format time-related messages.
@@ -92,7 +92,7 @@ object CommonComponents {
      * ```
      */
     @JvmField
-    val DISCONNECT_FOOTER_TRY_AGAIN_LATER = buildText0 {
+    val RETRY_LATER_FOOTER = buildText0 {
         appendNewline(2)
         appendText("Bitte versuche es später erneut.", ERROR)
     }
@@ -113,8 +113,8 @@ object CommonComponents {
      * ```
      */
     @JvmField
-    val DISCONNECT_FOOTER_TRY_AGAIN_LATER_ISSUE = buildText0 {
-        append(DISCONNECT_FOOTER_TRY_AGAIN_LATER)
+    val ISSUE_FOOTER = buildText0 {
+        append(RETRY_LATER_FOOTER)
         appendNewline()
         appendText("Sollte das Problem weiterhin bestehen,", ERROR)
         appendNewline()
@@ -217,8 +217,8 @@ object CommonComponents {
         messageRenderer: B.() -> Unit,
         issue: Boolean,
     ) = renderKickDisconnectMessage(builder, messageRenderer) {
-        if (issue) append(DISCONNECT_FOOTER_TRY_AGAIN_LATER_ISSUE)
-        else append(DISCONNECT_FOOTER_TRY_AGAIN_LATER)
+        if (issue) append(ISSUE_FOOTER)
+        else append(RETRY_LATER_FOOTER)
     }
 
     /**
@@ -323,8 +323,8 @@ object CommonComponents {
         suggestHelp: B.() -> Unit,
         issue: Boolean,
     ) = renderDisconnectMessage(builder, disconnectReason, suggestHelp) {
-        if (issue) append(DISCONNECT_FOOTER_TRY_AGAIN_LATER_ISSUE)
-        else append(DISCONNECT_FOOTER_TRY_AGAIN_LATER)
+        if (issue) append(ISSUE_FOOTER)
+        else append(RETRY_LATER_FOOTER)
     }
 
     /**
@@ -420,7 +420,7 @@ object CommonComponents {
         keyFormatter: (K) -> Component,
         valueFormatter: (V) -> Component,
         linePrefix: Component = PREFIX,
-        keyValueSeparator: Component = MAP_KEY_VALUE_SEPARATOR,
+        keyValueSeparator: Component = MAP_SEPERATOR,
     ): Component {
         val joinConfig = JoinConfiguration.builder()
             .separator(buildText0 {
@@ -533,5 +533,5 @@ inline fun <K, V> Map<K, V>.joinToComponent(
     keyFormatter: (K) -> Component,
     valueFormatter: (V) -> Component,
     linePrefix: Component = PREFIX,
-    keyValueSeparator: Component = MAP_KEY_VALUE_SEPARATOR,
+    keyValueSeparator: Component = MAP_SEPERATOR,
 ) = CommonComponents.formatMap(this, keyFormatter, valueFormatter, linePrefix, keyValueSeparator)
