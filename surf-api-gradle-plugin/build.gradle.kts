@@ -12,7 +12,7 @@ plugins {
     `kotlin-dsl`
 
     id("com.gradle.plugin-publish") version "1.3.0"
-    alias(libs.plugins.kotlin.serialization)
+    kotlin("plugin.serialization")
 //    alias(libs.plugins.maven.repo.auth)
 }
 

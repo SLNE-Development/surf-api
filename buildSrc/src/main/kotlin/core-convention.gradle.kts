@@ -9,6 +9,7 @@ plugins {
     `maven-publish`
 
     kotlin("jvm")
+    kotlin("plugin.serialization")
 
     id("com.google.devtools.ksp")
     id("com.gradleup.shadow")
