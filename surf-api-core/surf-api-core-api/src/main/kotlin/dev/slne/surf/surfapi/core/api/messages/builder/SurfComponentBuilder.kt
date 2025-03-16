@@ -46,6 +46,24 @@ interface SurfComponentBuilder : TextComponent.Builder {
     fun appendPrefix() = append(PREFIX)
     fun appendNewPrefixedLine() = appendNewline().appendPrefix()
 
+    fun append(block: SurfComponentBuilder.() -> Unit): SurfComponentBuilder =
+        append(SurfComponentBuilder(block))
+
+    suspend fun appendAsync(block: suspend SurfComponentBuilder.() -> Unit): SurfComponentBuilder =
+        append(SurfComponentBuilder { block() })
+
+    fun appendNewline(block: SurfComponentBuilder.() -> Unit) =
+        appendNewline().append(block)
+
+    suspend fun appendNewlineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
+        appendNewline().appendAsync(block)
+
+    fun appendNewPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
+        appendNewPrefixedLine().append(block)
+
+    suspend fun appendNewPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
+        appendNewPrefixedLine().appendAsync(block)
+
     fun text(text: String, color: TextColor? = null) = append(Component.text(text, color))
     fun text(boolean: Boolean, color: TextColor? = null) = append(Component.text(boolean, color))
     fun text(char: Char, color: TextColor? = null) = append(Component.text(char, color))
@@ -241,12 +259,3 @@ interface SurfComponentBuilder : TextComponent.Builder {
     override fun shadowColor(argb: ARGBLike?): SurfComponentBuilder
     override fun shadowColorIfAbsent(argb: ARGBLike?): SurfComponentBuilder
 }
-
-inline fun SurfComponentBuilder.append(block: SurfComponentBuilder.() -> Unit) =
-    append(SurfComponentBuilder(block))
-
-inline fun SurfComponentBuilder.appendNewline(block: SurfComponentBuilder.() -> Unit) =
-    appendNewline().append(block)
-
-inline fun SurfComponentBuilder.appendNewPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
-    appendNewPrefixedLine().append(block)
