@@ -13,4 +13,10 @@ dependencies {
     api(libs.commandapi.velocity.kotlin)
 }
 
+kotlin {
+    compilerOptions {
+        optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+    }
+}
+
 description = "surf-api-velocity-api"
