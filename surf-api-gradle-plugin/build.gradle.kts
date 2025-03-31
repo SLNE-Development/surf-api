@@ -147,3 +147,8 @@ idea {
         generatedSourceDirs.add(constantsOutputDir.get().asFile)
     }
 }
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
