@@ -142,10 +142,6 @@ sourceSets.main {
     kotlin.srcDir(constantsOutputDir)
 }
 
-tasks.compileKotlin {
-    dependsOn(generateConstants)
-}
-
 idea {
     module {
         generatedSourceDirs.add(constantsOutputDir.get().asFile)
