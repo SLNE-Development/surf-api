@@ -13,11 +13,12 @@ plugins {
 
     id("com.gradle.plugin-publish") version "1.3.0"
     kotlin("plugin.serialization")
+    idea
 //    alias(libs.plugins.maven.repo.auth)
 }
 
 group = groupId
-version = "$mcVersion-1.0.121"
+version = "$mcVersion-1.1.0"
 
 repositories {
     mavenCentral()
@@ -88,9 +89,9 @@ gradlePlugin {
     }
 }
 
+val constantsOutputDir = layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
 val generateConstants by tasks.registering {
-    val outputDir = layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
-    val outputFile = outputDir.map { it.file("Constants.kt") }
+    val outputFile = constantsOutputDir.map { it.file("Constants.kt") }
 
     inputs.property("relocationPrefix", relocationPrefix)
     inputs.property("javaVersion", javaVersion)
@@ -99,7 +100,10 @@ val generateConstants by tasks.registering {
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
     inputs.property("libs.auto.service", libs.auto.service.asProvider().get().toString())
-    outputs.dir(outputDir)
+    inputs.property("libs.versions.commandapi", libs.versions.commandapi.asProvider().get().toString())
+    inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
+    inputs.property("version", rootProject.findProperty("version") as String)
+    outputs.dir(constantsOutputDir)
 
     doLast {
         val content = """
@@ -117,14 +121,33 @@ val generateConstants by tasks.registering {
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"
             |    const val SURF_API_VERSION = "$mcVersion+"
+            |    
+            |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.asProvider().get()}"
+            |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
+            |    
+            |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String}"
             |}
         """.trimMargin()
 
-        Files.createDirectories(outputDir.get().asFile.toPath())
+        Files.createDirectories(constantsOutputDir.get().asFile.toPath())
         outputFile.get().asFile.writeText(content)
     }
 }
 
+//sourceSets.main {
+//    kotlin.srcDir(generateConstants.map { it.outputs.files.singleFile })
+//}
+
 sourceSets.main {
-    kotlin.srcDir(generateConstants.map { it.outputs.files.singleFile })
+    kotlin.srcDir(constantsOutputDir)
+}
+
+tasks.compileKotlin {
+    dependsOn(generateConstants)
+}
+
+idea {
+    module {
+        generatedSourceDirs.add(constantsOutputDir.get().asFile)
+    }
 }
