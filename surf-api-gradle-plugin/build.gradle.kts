@@ -139,7 +139,7 @@ val generateConstants by tasks.registering {
 //}
 
 sourceSets.main {
-    kotlin.srcDir(constantsOutputDir)
+    kotlin.srcDir(generateConstants.map { it.outputs })
 }
 
 idea {
