@@ -41,7 +41,9 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
                 })
 
                 doFirst {
-                    createdPluginFile.validate()
+                    if (createdPluginFile.isApplied()) {
+                        createdPluginFile.validate()
+                    }
                 }
             }
 

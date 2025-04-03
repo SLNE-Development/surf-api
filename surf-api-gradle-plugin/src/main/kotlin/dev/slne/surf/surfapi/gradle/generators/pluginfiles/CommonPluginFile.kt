@@ -6,6 +6,8 @@ import org.gradle.api.Project
 @Serializable
 sealed class CommonPluginFile {
 
+    internal open fun isApplied() = true
+
     internal open fun setDefaults(project: Project) {
 
     }

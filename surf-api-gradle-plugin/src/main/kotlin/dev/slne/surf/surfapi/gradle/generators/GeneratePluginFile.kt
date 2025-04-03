@@ -31,9 +31,10 @@ abstract class GeneratePluginFile : DefaultTask() {
     @TaskAction
     fun generate() {
         val pluginFile = pluginFile.get()
-        val encoded = json.encodeToString(pluginFile)
-
-        outputDirectory.file(fileName).get().asFile.writeText(encoded)
+        if (pluginFile.isApplied()) {
+            val encoded = json.encodeToString(pluginFile)
+            outputDirectory.file(fileName).get().asFile.writeText(encoded)
+        }
     }
 
     @OptIn(ExperimentalSerializationApi::class)

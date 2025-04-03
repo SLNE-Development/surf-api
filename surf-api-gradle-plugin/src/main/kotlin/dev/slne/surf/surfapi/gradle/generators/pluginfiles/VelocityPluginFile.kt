@@ -71,6 +71,10 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
         var optional: Boolean = false
     }
 
+    override fun isApplied(): Boolean {
+        return id != null && main != null
+    }
+
     override fun setDefaults(project: Project) {
         id = project.name
         version = project.version.toString()
