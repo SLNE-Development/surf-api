@@ -2,11 +2,13 @@ package dev.slne.surf.surfapi.gradle.generators.pluginfiles
 
 import kotlinx.serialization.Serializable
 import org.gradle.api.Project
+import org.gradle.api.tasks.Internal
 
 @Serializable
 sealed class CommonPluginFile {
 
-    internal open fun isApplied() = true
+    @Internal
+    internal abstract fun isApplied(): Boolean
 
     internal open fun setDefaults(project: Project) {
 
