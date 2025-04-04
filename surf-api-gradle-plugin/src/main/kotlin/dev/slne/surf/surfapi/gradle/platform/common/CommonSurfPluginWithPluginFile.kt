@@ -43,6 +43,11 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
                 doFirst {
                     if (createdPluginFile.isApplied()) {
                         createdPluginFile.validate()
+                    } else {
+                        logger.warn(
+                            "Plugin file generation is skipped because the plugin file is not applied. " +
+                                    "Please check if the plugin file is applied in the build.gradle.kts file."
+                        )
                     }
                 }
             }

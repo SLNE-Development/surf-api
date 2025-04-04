@@ -31,9 +31,11 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
 
     @Pattern(ID_REGEX)
     @Input
+    @Optional
     var id: String? = null
 
     @Input
+    @Optional
     var main: String? = null
 
     @Input
