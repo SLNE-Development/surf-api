@@ -100,7 +100,7 @@ val generateConstants by tasks.registering {
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
     inputs.property("libs.auto.service", libs.auto.service.asProvider().get().toString())
-    inputs.property("libs.versions.commandapi", libs.versions.commandapi.asProvider().get().toString())
+    inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
     inputs.property("version", rootProject.findProperty("version") as String)
     outputs.dir(constantsOutputDir)
@@ -122,7 +122,7 @@ val generateConstants by tasks.registering {
             |    const val MINECRAFT_VERSION = "$mcVersion"
             |    const val SURF_API_VERSION = "$mcVersion+"
             |    
-            |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.asProvider().get()}"
+            |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String}"

@@ -620,10 +620,8 @@ public final class dev/jorel/commandapi/kotlindsl/CommandAPICommandDSLKt {
 	public static final fun booleanArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static synthetic fun booleanArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun commandAPICommand (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static final fun commandAPICommand (Ljava/lang/String;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;)V
 	public static final fun commandAPICommand (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun commandAPICommand$default (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static synthetic fun commandAPICommand$default (Ljava/lang/String;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun commandAPICommand$default (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static final fun doubleArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;DDZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static synthetic fun doubleArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;DDZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
@@ -639,17 +637,11 @@ public final class dev/jorel/commandapi/kotlindsl/CommandAPICommandDSLKt {
 	public static synthetic fun literalArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun longArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;JJZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static synthetic fun longArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;JJZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
-	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
-	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/CommandAPICommand;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
-	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
-	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/CommandAPICommand;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun optionalArgument (Ldev/jorel/commandapi/CommandAPICommand;Ldev/jorel/commandapi/arguments/Argument;Lkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static synthetic fun optionalArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ldev/jorel/commandapi/arguments/Argument;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun optionalArguments (Ldev/jorel/commandapi/CommandAPICommand;[Ldev/jorel/commandapi/arguments/Argument;)Ldev/jorel/commandapi/CommandAPICommand;
-	public static final fun requirement (Ldev/jorel/commandapi/CommandAPICommand;Ldev/jorel/commandapi/arguments/Argument;Ljava/util/function/Predicate;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
-	public static synthetic fun requirement$default (Ldev/jorel/commandapi/CommandAPICommand;Ldev/jorel/commandapi/arguments/Argument;Ljava/util/function/Predicate;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun stringArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static synthetic fun stringArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun subcommand (Ldev/jorel/commandapi/CommandAPICommand;Ldev/jorel/commandapi/CommandAPICommand;)Ldev/jorel/commandapi/CommandAPICommand;
@@ -671,10 +663,8 @@ public final class dev/jorel/commandapi/kotlindsl/CommandTreeDSLKt {
 	public static synthetic fun booleanArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
 	public static synthetic fun booleanArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
 	public static final fun commandTree (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static final fun commandTree (Ljava/lang/String;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;)V
 	public static final fun commandTree (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun commandTree$default (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static synthetic fun commandTree$default (Ljava/lang/String;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun commandTree$default (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static final fun doubleArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;DDZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
 	public static final fun doubleArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;DDZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
@@ -704,26 +694,14 @@ public final class dev/jorel/commandapi/kotlindsl/CommandTreeDSLKt {
 	public static final fun longArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;JJZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
 	public static synthetic fun longArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;JJZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
 	public static synthetic fun longArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;JJZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
-	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
 	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
-	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/CommandTree;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
-	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
 	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
-	public static final fun multiLiteralArgument (Ldev/jorel/commandapi/arguments/Argument;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
-	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
 	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
-	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/CommandTree;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
-	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;Ljava/util/List;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
 	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
-	public static synthetic fun multiLiteralArgument$default (Ldev/jorel/commandapi/arguments/Argument;[Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
 	public static final fun optionalArgument (Ldev/jorel/commandapi/CommandTree;Ldev/jorel/commandapi/arguments/Argument;Lkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
 	public static final fun optionalArgument (Ldev/jorel/commandapi/arguments/Argument;Ldev/jorel/commandapi/arguments/Argument;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
 	public static synthetic fun optionalArgument$default (Ldev/jorel/commandapi/CommandTree;Ldev/jorel/commandapi/arguments/Argument;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
 	public static synthetic fun optionalArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ldev/jorel/commandapi/arguments/Argument;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
-	public static final fun requirement (Ldev/jorel/commandapi/CommandTree;Ldev/jorel/commandapi/arguments/Argument;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
-	public static final fun requirement (Ldev/jorel/commandapi/arguments/Argument;Ldev/jorel/commandapi/arguments/Argument;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
-	public static synthetic fun requirement$default (Ldev/jorel/commandapi/CommandTree;Ldev/jorel/commandapi/arguments/Argument;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
-	public static synthetic fun requirement$default (Ldev/jorel/commandapi/arguments/Argument;Ldev/jorel/commandapi/arguments/Argument;Ljava/util/function/Predicate;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
 	public static final fun stringArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
 	public static final fun stringArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
 	public static synthetic fun stringArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;

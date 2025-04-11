@@ -11,8 +11,7 @@ kotlinx-serialization = "1.8.0"
 packetevents = "2.7.0"
 
 # Command API
-commandapi = "9.7.0"
-commandapi-snapshot = "9.6.2-SNAPSHOT"
+commandapi = "10.0.0"
 
 # Scoreboard Library
 scoreboard-library = "2.2.2"
@@ -86,8 +85,8 @@ packetevents-netty-common = { module = "com.github.retrooper:packetevents-netty-
 commandapi-bukkit = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi" }
 commandapi-bukkit-kotlin = { module = "dev.jorel:commandapi-bukkit-kotlin", version.ref = "commandapi" }
 commandapi-core = { module = "dev.jorel:commandapi-core", version.ref = "commandapi" }
-commandapi-velocity = { module = "dev.jorel:commandapi-velocity-core", version.ref = "commandapi-snapshot" }
-commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-velocity-kotlin", version.ref = "commandapi-snapshot" }
+commandapi-velocity = { module = "dev.jorel:commandapi-velocity-core", version.ref = "commandapi" }
+commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-velocity-kotlin", version.ref = "commandapi" }
 
 # Scoreboard Library
 scoreboard-library-api = { module = "net.megavex:scoreboard-library-api", version.ref = "scoreboard-library" }
