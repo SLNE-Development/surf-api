@@ -1500,6 +1500,10 @@ public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/listener/pa
 	public abstract fun getPacketClass ()Ljava/lang/Class;
 }
 
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/listener/packets/clientbound/DisconnectPacket : dev/slne/surf/surfapi/bukkit/api/nms/listener/packets/clientbound/NmsClientboundPacket {
+	public abstract fun getReason ()Lnet/kyori/adventure/text/Component;
+}
+
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/listener/packets/clientbound/NmsClientboundPacket : dev/slne/surf/surfapi/bukkit/api/nms/listener/packets/NmsPacket {
 }
 
