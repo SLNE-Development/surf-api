@@ -9,7 +9,6 @@ import dev.slne.surf.surfapi.bukkit.api.nms.listener.NmsServerboundPacketListene
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.NmsServerboundPacket
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult
-import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl
 import dev.slne.surf.surfapi.core.api.util.*
 import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.bukkit.entity.Player
@@ -94,7 +93,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         packet: Packet,
         player: Player,
     ): Packet? {
-        val listeners = clientboundPacketListeners[NmsPacketImpl.getFromApi(packet).nmsClass] ?: return packet
+        val listeners = clientboundPacketListeners[packet.packetClass] ?: return packet
 
         if (listeners.isEmpty()) return packet
 
