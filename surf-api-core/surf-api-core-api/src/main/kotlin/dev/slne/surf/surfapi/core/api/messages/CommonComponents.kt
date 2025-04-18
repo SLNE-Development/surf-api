@@ -349,9 +349,7 @@ object CommonComponents {
         collection: Iterable<E>,
         formatter: (E) -> Component,
     ): Component {
-        val joinConfig = JoinConfiguration.builder()
-            .separator(Component.text(", ", SPACER))
-            .build()
+        val joinConfig = JoinConfiguration.builder().separator(Component.text(", ", SPACER)).build()
 
         return Component.join(joinConfig, collection.mapTo(mutableObjectListOf(), formatter))
     }
@@ -382,15 +380,20 @@ object CommonComponents {
         linePrefix: Component = PREFIX,
         formatter: (E) -> Component,
     ): Component {
-        val joinConfig = JoinConfiguration.builder()
-            .separator(buildText0 {
-                appendNewline()
-                append(linePrefix)
-                appendText("-  ", SPACER)
-            })
-            .build()
+        val separator = buildText0 {
+            appendNewline()
+            append(linePrefix)
+            appendText("-  ", SPACER)
+        }
+        val joinConfig = JoinConfiguration.builder().separator(separator).build()
 
-        return Component.join(joinConfig, collection.mapTo(mutableObjectListOf(), formatter))
+        val firstPrefix = if (collection.iterator().hasNext()) separator else Component.empty()
+
+        return firstPrefix.append(
+            Component.join(
+                joinConfig, collection.mapTo(mutableObjectListOf(), formatter)
+            )
+        )
     }
 
     /**
@@ -422,20 +425,27 @@ object CommonComponents {
         linePrefix: Component = PREFIX,
         keyValueSeparator: Component = MAP_SEPERATOR,
     ): Component {
-        val joinConfig = JoinConfiguration.builder()
-            .separator(buildText0 {
-                appendNewline()
-                append(linePrefix)
-                appendText("-  ", SPACER)
-            })
+        val separator = buildText0 {
+            appendNewline()
+            append(linePrefix)
+            appendText("-  ", SPACER)
+        }
+        val joinConfig = JoinConfiguration.builder().separator(separator)
 
-        return Component.join(joinConfig, map.mapTo(mutableObjectListOf()) { (key, value) ->
-            buildText0 {
-                append(keyFormatter(key).colorIfAbsent(VARIABLE_KEY))
-                append(keyValueSeparator)
-                append(valueFormatter(value).colorIfAbsent(VARIABLE_VALUE))
-            }
-        })
+        val firstPrefix = if (map.isNotEmpty()) separator else Component.empty()
+
+        return firstPrefix.append(
+            Component.join(
+                joinConfig,
+                map.mapTo(mutableObjectListOf()) { (key, value) ->
+                    buildText0 {
+                        append(keyFormatter(key).colorIfAbsent(VARIABLE_KEY))
+                        append(keyValueSeparator)
+                        append(valueFormatter(value).colorIfAbsent(VARIABLE_VALUE))
+                    }
+                }
+            )
+        )
     }
 
     /**
