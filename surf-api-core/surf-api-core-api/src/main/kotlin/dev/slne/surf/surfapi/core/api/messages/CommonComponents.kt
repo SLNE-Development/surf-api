@@ -431,7 +431,6 @@ object CommonComponents {
             appendText("-  ", SPACER)
         }
         val joinConfig = JoinConfiguration.builder().separator(separator)
-
         val firstPrefix = if (map.isNotEmpty()) separator else Component.empty()
 
         return firstPrefix.append(

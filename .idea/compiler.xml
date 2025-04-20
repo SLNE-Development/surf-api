@@ -61,9 +61,4 @@
       <module name="surf-api.test" target="21" />
     </bytecodeTargetLevel>
   </component>
-  <component name="JavacSettings">
-    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="dev.slne.surf.surf-api.surf-api-bukkit.surf-api-bukkit-server.main" options="--add-exports java.base/jdk.internal.loader=ALL-UNNAMED" />
-    </option>
-  </component>
 </project>

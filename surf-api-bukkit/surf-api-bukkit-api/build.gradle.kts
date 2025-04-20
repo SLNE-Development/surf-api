@@ -7,7 +7,7 @@ dependencies {
     api(project(":surf-api-core:surf-api-core-api"))
     compileOnly(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
-    compileOnlyApi(libs.scoreboard.library.api)
+    compileOnlyApi(libs.scoreboard.library.api) { isTransitive = false }
     compileOnlyApi(libs.commandapi.bukkit)
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)

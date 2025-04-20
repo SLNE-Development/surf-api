@@ -28,8 +28,8 @@ dependencies {
     compileOnly(libs.placeholder.api)
 
     // -------------------- Paper Libraries -------------------- //
-    paperLibrary(libs.scoreboard.library.implementation)
-    paperLibrary(libs.scoreboard.library.modern)
+    paperLibrary(libs.scoreboard.library.implementation) { isTransitive = false }
+    paperLibrary(libs.scoreboard.library.modern) { isTransitive = false }
     paperLibrary(libs.scoreboard.library.api)
     api(libs.inventoryframework)
     api(libs.packetevents.spigot)
