@@ -41,7 +41,10 @@ extensions.configure<KotlinJvmProjectExtension> {
 
 java {
     withSourcesJar()
-    withJavadocJar()
+
+    if (project.name != "surf-api-bukkit-plugin-test") {
+        withJavadocJar()
+    }
 }
 
 publishing {

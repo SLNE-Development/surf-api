@@ -91,6 +91,10 @@ paper {
     }
 }
 
+configurations.compileClasspath {
+    exclude(group = "org.spigotmc", module = "spigot-api")
+}
+
 /**
  * Registers a soft dependency.
  *
