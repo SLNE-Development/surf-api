@@ -19,7 +19,7 @@ scoreboard-library-implementation = "2.3.0"
 scoreboard-library-modern = "2.3.0"
 
 # Adventure
-adventure-api = "4.18.0"
+adventure-api = "4.20.0"
 
 # Velocity
 velocity-api = "3.4.0-SNAPSHOT"
