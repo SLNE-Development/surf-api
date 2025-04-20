@@ -91,7 +91,7 @@ commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-velocity-kotlin", 
 # Scoreboard Library
 scoreboard-library-api = { module = "net.megavex:scoreboard-library-api", version.ref = "scoreboard-library" }
 scoreboard-library-implementation = { module = "net.megavex:scoreboard-library-implementation", version.ref = "scoreboard-library-implementation" }
-scoreboard-library-modern = { module = "net.megavex:scoreboard-library-modern", version.ref = "scoreboard-library-modern" }
+scoreboard-library-modern = { module = "net.megavex:scoreboard-library-packetevents", version.ref = "scoreboard-library-modern" }
 
 # Adventure
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure-api" }

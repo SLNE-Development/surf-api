@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin.Companion.sha
 import kotlinx.validation.KotlinApiBuildTask
 
 plugins {
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.14" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.16" apply false
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
 //    alias(libs.plugins.dokka)
 }
