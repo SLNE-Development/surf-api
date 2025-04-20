@@ -14,9 +14,9 @@ packetevents = "2.7.0"
 commandapi = "10.0.0"
 
 # Scoreboard Library
-scoreboard-library = "2.2.2"
-scoreboard-library-implementation = "2.2.2"
-scoreboard-library-modern = "2.2.2"
+scoreboard-library = "2.3.0"
+scoreboard-library-implementation = "2.3.0"
+scoreboard-library-modern = "2.3.0"
 
 # Adventure
 adventure-api = "4.18.0"
