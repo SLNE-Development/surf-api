@@ -28,8 +28,8 @@ dependencies {
     compileOnly(libs.placeholder.api)
 
     // -------------------- Paper Libraries -------------------- //
-    paperLibrary(libs.scoreboard.library.implementation) { isTransitive = false }
-    paperLibrary(libs.scoreboard.library.modern) { isTransitive = false }
+    runtimeOnly(libs.scoreboard.library.implementation)
+    runtimeOnly(libs.scoreboard.library.modern)
     paperLibrary(libs.scoreboard.library.api)
     api(libs.inventoryframework)
     api(libs.packetevents.spigot)
@@ -91,7 +91,7 @@ paper {
     }
 }
 
-configurations.compileClasspath {
+configurations.all {
     exclude(group = "org.spigotmc", module = "spigot-api")
 }
 
