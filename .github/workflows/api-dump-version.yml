@@ -25,7 +25,7 @@ jobs:
           java-version: 21
 
       - name: Run Kotlin apiDump
-        run: ./gradlew apiDump
+        run: ./gradlew shadowJar apiDump
 
       - name: Detect API changes
         id: changes
