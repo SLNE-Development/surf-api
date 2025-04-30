@@ -21,8 +21,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
+          distribution: graalvm
+          java-version: 21
 
       - name: Run Kotlin apiDump
         run: ./gradlew apiDump
