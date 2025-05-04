@@ -1,0 +1,58 @@
+name: Build PR JAR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+env:
+  MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
+
+jobs:
+  build:
+    # Only proceed when the PR contains the label `build-pr-jar`
+    if: contains(github.event.pull_request.labels.*.name, 'build-pr-jar')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Collect workflow telemetry
+        uses: catchpoint/workflow-telemetry-action@v2
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "graalvm"
+          java-version: "21"
+
+      - name: Build modules with Gradle
+        run: ./gradlew build shadowJar --parallel --no-scan
+
+      - name: Run checks with Gradle
+        run: ./gradlew check --parallel --no-scan
+
+      - name: Collect JAR file list
+        id: find_jars
+        run: |
+          echo "JAR_FILES<<EOF" >> $GITHUB_ENV
+          find . -path "**/build/libs/*.jar" | grep -E "${{ env.MODULE_REGEX }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Upload JAR artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-built-jars
+          path: ${{ env.JAR_FILES }}
+          if-no-files-found: error

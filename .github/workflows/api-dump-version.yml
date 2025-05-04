@@ -1,0 +1,71 @@
+name: API Compatibility & Version Bump
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  api-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # required to compare API changes
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: graalvm
+          java-version: 21
+
+      - name: Run Kotlin apiDump
+        run: ./gradlew shadowJar apiDump
+
+      - name: Detect API changes
+        id: changes
+        run: |
+          if git diff --quiet --exit-code '**/*.api'; then
+            echo "api_changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "api_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump version in gradle.properties
+        run: |
+          version_file=gradle.properties
+          version_line=$(grep '^version=' $version_file)
+          current_version="${version_line#version=}"
+
+          # Split version like 1.21.4-2.13.3
+          IFS='.-' read -r major minor patch lib_major lib_minor lib_patch <<<"$current_version"
+
+          if [[ "${{ steps.changes.outputs.api_changed }}" == "true" ]]; then
+            lib_minor=$((lib_minor + 1))
+            lib_patch=0
+          else
+            lib_patch=$((lib_patch + 1))
+          fi
+
+          new_version="$major.$minor.$patch-$lib_major.$lib_minor.$lib_patch"
+          echo "New version: $new_version"
+          sed -i "s/^version=.*/version=$new_version/" $version_file
+
+      - name: Commit and push changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add gradle.properties '**/*.api'
+          git commit -m "chore: update apiDump and bump version [skip ci]"
+          git push
