@@ -28,9 +28,9 @@ dependencies {
     compileOnly(libs.placeholder.api)
 
     // -------------------- Paper Libraries -------------------- //
-    runtimeOnly(libs.scoreboard.library.implementation)
-    runtimeOnly(libs.scoreboard.library.modern)
-    paperLibrary(libs.scoreboard.library.api)
+    api(libs.scoreboard.library.implementation)
+    api(libs.scoreboard.library.modern)
+    api(libs.scoreboard.library.api)
     api(libs.inventoryframework)
     api(libs.packetevents.spigot)
     paperLibrary(libs.guava)
