@@ -1,14 +1,15 @@
-name: Build PR JAR + Comment
+name: Build PR JAR
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, labeled]
+    types: [opened, synchronize, reopened, labeled]
 
 env:
   MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
 
 jobs:
   build_pr:
+    # Only proceed when the PR contains the label `build-pr-jar`
     if: >
       github.event_name == 'pull_request' &&
       (
@@ -16,23 +17,23 @@ jobs:
         ((github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
          contains(github.event.pull_request.labels.*.name, 'build-pr-jar'))
       )
+      
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.pr.outputs.number }}
-      jar_json: ${{ steps.jars.outputs.json }}
 
     steps:
-      - name: Get PR number
+      - name: Remember PR number
         id: pr
         run: echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout repository
+        
+      - name: Check out repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Cache Gradle
+      - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
           path: |
@@ -41,81 +42,71 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      - name: Set up JDK 21 (GraalVM)
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: graalvm
-          java-version: 21
+          distribution: "graalvm"
+          java-version: "21"
 
-      - name: Build project
+      - name: Build modules with Gradle
         run: ./gradlew build shadowJar --parallel --no-scan
 
-      - name: Run tests
+      - name: Run checks with Gradle
         run: ./gradlew check --parallel --no-scan
 
-      - name: Find JARs and prepare matrix
-        id: jars
+      - name: Collect JAR file list
+        id: find_jars
         run: |
-          mapfile -t files < <(find . -path "**/build/libs/*.jar" | grep -E "${MODULE_REGEX}")
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No matching JARs found" >&2
-            exit 1
-          fi
-          printf 'JAR_FILES<<EOF\n%s\nEOF\n' "${files[@]}" >>"$GITHUB_ENV"
-          jq -Rn --argjson a "$(printf '%s\n' "${files[@]}" | jq -R . | jq -s .)" '$a' > jars.json
-          echo "json=$(cat jars.json)" >>"$GITHUB_OUTPUT"
+          echo "JAR_FILES<<EOF" >> $GITHUB_ENV
+          find . -path "**/build/libs/*.jar" | grep -E "${{ env.MODULE_REGEX }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
-  upload_each:
-    needs: build_pr
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        jar: ${{ fromJson(needs.build_pr.outputs.jar_json) }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-
-      - name: Upload ${{ matrix.jar }}
+      - name: Upload JAR artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ basename(matrix.jar) }}
-          path: ${{ matrix.jar }}
+          name: pr-built-jars
+          path: ${{ env.JAR_FILES }}
           if-no-files-found: error
-
   comment_pr:
-    needs: [build_pr, upload_each]
-    if: always() && needs.upload_each.result == 'success'
+    needs: build_pr                     
+    if: needs.build_pr.result == 'success'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Comment PR with download links
+      - name: Add download‑link to PR‑Body
         uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ needs.build_pr.outputs.pr_number }}
+          RUN_ID: ${{ github.run_id }}
         with:
           script: |
-            const {owner, repo} = context.repo;
-            const prNum = process.env.PR_NUMBER;
-
+            const { owner, repo } = context.repo;
+            const prNumber = process.env.PR_NUMBER;
+            const runId    = process.env.RUN_ID;
             const artifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts,
-              {owner, repo, run_id: context.runId}
+              { owner, repo, run_id: runId }
             );
 
-            if (!artifacts.length) return;
+            const artifact = artifacts.find(a => a.name === 'pr-built-jars');
+            if (!artifact) {
+              core.notice('No suitable artifact found - comment not applicable.');
+              return;
+            }
 
-            const lines = artifacts.map(a =>
-              `* [${a.name}](https://nightly.link/${owner}/${repo}/actions/artifacts/${a.id}.zip)`);
+            const link = `https://nightly.link/${owner}/${repo}/actions/artifacts/${artifact.id}.zip`;
+            const comment = `Download **Build‑JARs** for this PR: [` +
+                            `${artifact.name}.zip](${link})`;
 
-            const bodyBlock = '**Build Artifacts**\n' + lines.join('\n');
             const marker = '<!-- bot: pr-jar-build -->';
+            const { data: pr } = await github.rest.issues.get({
+              owner, repo, issue_number: prNumber
+            });
 
-            const {data: pr} = await github.rest.issues.get({owner, repo, issue_number: prNum});
-            let newBody = (pr.body ?? '').split(marker)[0].trim();
-            newBody += `\n${marker}\n---\n${bodyBlock}`;
+            let body = pr.body ? pr.body.split(marker)[0].trim() : '';
+            body += `\n${marker}\n---\n${comment}`;
 
-            await github.rest.issues.update({owner, repo, issue_number: prNum, body: newBody});
+            await github.rest.issues.update({
+              owner, repo, issue_number: prNumber, body
+            });
+
+            core.notice(`PR‑Body for #${prNumber} updated.`);
