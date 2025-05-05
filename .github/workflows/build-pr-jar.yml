@@ -1,4 +1,4 @@
-name: Build PR JAR + Comment
+name: Build PR JAR and Comment
 
 on:
   pull_request:
@@ -12,18 +12,14 @@ jobs:
     if: >
       github.event_name == 'pull_request' &&
       (
-        (github.event.action == 'labeled' &&
-         github.event.label.name == 'build-pr-jar') ||
-        ((github.event.action == 'opened' ||
-          github.event.action == 'reopened' ||
-          github.event.action == 'synchronize') &&
+        (github.event.action == 'labeled' && github.event.label.name == 'build-pr-jar') ||
+        ((github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
          contains(github.event.pull_request.labels.*.name, 'build-pr-jar'))
       )
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.pr.outputs.number }}
-      jar_json:  ${{ steps.jars.outputs.json }}
-
+      jar_json: ${{ steps.jars.outputs.json }}
     steps:
       - name: Capture PR number
         id: pr
@@ -44,7 +40,7 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      - name: Set up JDK 21 (GraalVM)
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: graalvm
@@ -61,13 +57,16 @@ jobs:
         run: |
           mapfile -t files < <(find . -path "**/build/libs/*.jar" | grep -E "${MODULE_REGEX}")
           [ ${#files[@]} -gt 0 ] || { echo "No matching JARs found" >&2; exit 1; }
-
           printf 'JAR_FILES<<EOF\n%s\nEOF\n' "${files[@]}" >>"$GITHUB_ENV"
-
-          # compact JSON array for the matrix
           json=$(printf '%s\n' "${files[@]}" | jq -R . | jq -s -c .)
           echo "json=${json}" >>"$GITHUB_OUTPUT"
 
+      - name: Upload all JARs
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-jars
+          path: ${{ env.JAR_FILES }}
+          if-no-files-found: error
 
   upload_each:
     needs: build_pr
@@ -75,7 +74,6 @@ jobs:
     strategy:
       matrix:
         jar: ${{ fromJson(needs.build_pr.outputs.jar_json) }}
-
     steps:
       - name: Checkout PR head
         uses: actions/checkout@v4
@@ -83,7 +81,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Compute artifact name
+      - name: Download built JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: all-jars
+          path: .
+
+      - name: Determine artifact name
         id: fname
         run: echo "file=$(basename '${{ matrix.jar }}')" >>"$GITHUB_OUTPUT"
 
@@ -99,30 +103,32 @@ jobs:
     if: needs.upload_each.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Comment PR
+      - name: Update PR body
         uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ needs.build_pr.outputs.pr_number }}
-          RUN_ID:   ${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
         with:
           script: |
             const { owner, repo } = context.repo;
-            const prNum = process.env.PR_NUMBER;
+            const pr = process.env.PR_NUMBER;
             const runId = process.env.RUN_ID;
 
             const artifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts,
               { owner, repo, run_id: runId }
             );
-            if (!artifacts.length) return;
 
-            const list = artifacts.map(a =>
-              `* [${a.name}](https://nightly.link/${owner}/${repo}/actions/artifacts/${a.id}.zip)`
-            ).join('\n');
+            const files = artifacts
+              .filter(a => a.name !== 'all-jars')
+              .map(a => `* [${a.name}](https://nightly.link/${owner}/${repo}/actions/artifacts/${a.id}.zip)`)
+              .join('\n');
+
+            if (!files) return;
 
             const marker = '<!-- bot: pr-jar-build -->';
-            const { data: pr } = await github.rest.issues.get({ owner, repo, issue_number: prNum });
-            let body = (pr.body ?? '').split(marker)[0].trim();
-            body += `\n${marker}\n---\n${list}`;
+            const { data: prData } = await github.rest.issues.get({ owner, repo, issue_number: pr });
+            let body = (prData.body ?? '').split(marker)[0].trim();
+            body += `\n${marker}\n---\n${files}`;
 
-            await github.rest.issues.update({ owner, repo, issue_number: prNum, body });
+            await github.rest.issues.update({ owner, repo, issue_number: pr, body });
