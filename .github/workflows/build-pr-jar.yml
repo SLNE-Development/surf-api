@@ -12,21 +12,24 @@ jobs:
     if: >
       github.event_name == 'pull_request' &&
       (
-        (github.event.action == 'labeled' && github.event.label.name == 'build-pr-jar') ||
-        ((github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
+        (github.event.action == 'labeled' &&
+         github.event.label.name == 'build-pr-jar') ||
+        ((github.event.action == 'opened' ||
+          github.event.action == 'reopened' ||
+          github.event.action == 'synchronize') &&
          contains(github.event.pull_request.labels.*.name, 'build-pr-jar'))
       )
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.pr.outputs.number }}
-      jar_json: ${{ steps.jars.outputs.json }}
+      jar_json:  ${{ steps.jars.outputs.json }}
 
     steps:
-      - name: Get PR number
+      - name: Capture PR number
         id: pr
-        run: echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+        run: echo "number=${{ github.event.pull_request.number }}" >>"$GITHUB_OUTPUT"
 
-      - name: Checkout repository
+      - name: Checkout PR head
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -53,16 +56,13 @@ jobs:
       - name: Run tests
         run: ./gradlew check --parallel --no-scan
 
-      - name: Find JARs and prepare matrix
+      - name: Detect JARs
         id: jars
         run: |
           mapfile -t files < <(find . -path "**/build/libs/*.jar" | grep -E "${MODULE_REGEX}")
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No matching JARs found" >&2
-            exit 1
-          fi
+          [ ${#files[@]} -gt 0 ] || { echo "No matching JARs found" >&2; exit 1; }
           printf 'JAR_FILES<<EOF\n%s\nEOF\n' "${files[@]}" >>"$GITHUB_ENV"
-          jq -Rn --argjson a "$(printf '%s\n' "${files[@]}" | jq -R . | jq -s .)" '$a' > jars.json
+          jq -Rn --argjson arr "$(printf '%s\n' "${files[@]}" | jq -R . | jq -s .)" '$arr' > jars.json
           echo "json=$(cat jars.json)" >>"$GITHUB_OUTPUT"
 
   upload_each:
@@ -73,49 +73,52 @@ jobs:
         jar: ${{ fromJson(needs.build_pr.outputs.jar_json) }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout PR head
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Upload ${{ matrix.jar }}
+      - name: Compute artifact name
+        id: fname
+        run: echo "file=$(basename '${{ matrix.jar }}')" >>"$GITHUB_OUTPUT"
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ basename(matrix.jar) }}
+          name: ${{ steps.fname.outputs.file }}
           path: ${{ matrix.jar }}
           if-no-files-found: error
 
   comment_pr:
     needs: [build_pr, upload_each]
-    if: always() && needs.upload_each.result == 'success'
+    if: needs.upload_each.result == 'success'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Comment PR with download links
+      - name: Comment PR
         uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ needs.build_pr.outputs.pr_number }}
+          RUN_ID:   ${{ github.run_id }}
         with:
           script: |
-            const {owner, repo} = context.repo;
+            const { owner, repo } = context.repo;
             const prNum = process.env.PR_NUMBER;
+            const runId = process.env.RUN_ID;
 
             const artifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts,
-              {owner, repo, run_id: context.runId}
+              { owner, repo, run_id: runId }
             );
-
             if (!artifacts.length) return;
 
-            const lines = artifacts.map(a =>
-              `* [${a.name}](https://nightly.link/${owner}/${repo}/actions/artifacts/${a.id}.zip)`);
+            const list = artifacts.map(a =>
+              `* [${a.name}](https://nightly.link/${owner}/${repo}/actions/artifacts/${a.id}.zip)`
+            ).join('\n');
 
-            const bodyBlock = '**Build Artifacts**\n' + lines.join('\n');
             const marker = '<!-- bot: pr-jar-build -->';
+            const { data: pr } = await github.rest.issues.get({ owner, repo, issue_number: prNum });
+            let body = (pr.body ?? '').split(marker)[0].trim();
+            body += `\n${marker}\n---\n${list}`;
 
-            const {data: pr} = await github.rest.issues.get({owner, repo, issue_number: prNum});
-            let newBody = (pr.body ?? '').split(marker)[0].trim();
-            newBody += `\n${marker}\n---\n${bodyBlock}`;
-
-            await github.rest.issues.update({owner, repo, issue_number: prNum, body: newBody});
+            await github.rest.issues.update({ owner, repo, issue_number: prNum, body });
