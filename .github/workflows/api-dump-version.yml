@@ -16,8 +16,9 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0  # required to compare API changes
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -37,36 +38,43 @@ jobs:
             echo "api_changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Bump version in gradle.properties
+      - name: Detect manual version change
+        id: ver
         run: |
-          version_file=gradle.properties
-          version_line=$(grep '^version=' $version_file)
-          current_version="${version_line#version=}"
-
-          # Split version like 1.21.4-2.13.3
-          IFS='.-' read -r major minor patch lib_major lib_minor lib_patch <<<"$current_version"
-
-          if [[ "${{ steps.changes.outputs.api_changed }}" == "true" ]]; then
-            lib_minor=$((lib_minor + 1))
-            lib_patch=0
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          if git diff origin/${{ github.event.pull_request.base.ref }} -- gradle.properties | grep -q '^+version='; then
+            echo "manual=true"  >>"$GITHUB_OUTPUT"
           else
-            lib_patch=$((lib_patch + 1))
+            echo "manual=false" >>"$GITHUB_OUTPUT"
           fi
 
+      - name: Bump version in gradle.properties
+        if: steps.api.outputs.changed == 'true' && steps.ver.outputs.manual == 'false'
+        run: |
+          version_file=gradle.properties
+          current_version=$(grep -E '^version=' "$version_file" | cut -d= -f2)
+
+          IFS='.-' read -r major minor patch lib_major lib_minor lib_patch <<<"$current_version"
+
+          lib_minor=$((lib_minor + 1))
+          lib_patch=0
+
           new_version="$major.$minor.$patch-$lib_major.$lib_minor.$lib_patch"
-          echo "New version: $new_version"
-          sed -i "s/^version=.*/version=$new_version/" $version_file
+          echo "Bumping version: $current_version → $new_version"
+          sed -i "s/^version=.*/version=$new_version/" "$version_file"
 
       - name: Commit and push changes
+        if: steps.api.outputs.changed == 'true'           
         run: |
           if git diff --quiet; then
             echo "No changes to commit."
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add gradle.properties '**/*.api'
           git commit -m "chore: update apiDump and bump version [skip ci]"
+          # Wir sind auf einem echten Branch, daher reicht 'git push'
           git push
