@@ -8,15 +8,12 @@ env:
   MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
 
 jobs:
-  build:
+  build_pr:
     # Only proceed when the PR contains the label `build-pr-jar`
     if: contains(github.event.pull_request.labels.*.name, 'build-pr-jar')
     runs-on: ubuntu-latest
 
     steps:
-      - name: Collect workflow telemetry
-        uses: catchpoint/workflow-telemetry-action@v2
-
       - name: Check out repository
         uses: actions/checkout@v4
         with:
