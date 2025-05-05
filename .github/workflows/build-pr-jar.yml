@@ -61,9 +61,13 @@ jobs:
         run: |
           mapfile -t files < <(find . -path "**/build/libs/*.jar" | grep -E "${MODULE_REGEX}")
           [ ${#files[@]} -gt 0 ] || { echo "No matching JARs found" >&2; exit 1; }
+
           printf 'JAR_FILES<<EOF\n%s\nEOF\n' "${files[@]}" >>"$GITHUB_ENV"
-          jq -Rn --argjson arr "$(printf '%s\n' "${files[@]}" | jq -R . | jq -s .)" '$arr' > jars.json
-          echo "json=$(cat jars.json)" >>"$GITHUB_OUTPUT"
+
+          # compact JSON array for the matrix
+          json=$(printf '%s\n' "${files[@]}" | jq -R . | jq -s -c .)
+          echo "json=${json}" >>"$GITHUB_OUTPUT"
+
 
   upload_each:
     needs: build_pr
