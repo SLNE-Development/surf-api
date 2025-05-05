@@ -10,13 +10,27 @@ env:
 jobs:
   build_pr:
     # Only proceed when the PR contains the label `build-pr-jar`
-    if: contains(github.event.pull_request.labels.*.name, 'build-pr-jar')
+    if: >
+      github.event_name == 'pull_request' &&
+      (
+        (github.event.action == 'labeled' && github.event.label.name == 'build-pr-jar') ||
+        ((github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
+         contains(github.event.pull_request.labels.*.name, 'build-pr-jar'))
+      )
+      
     runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.pr.outputs.number }}
 
     steps:
+      - name: Remember PR number
+        id: pr
+        run: echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+        
       - name: Check out repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Cache Gradle packages
@@ -53,3 +67,46 @@ jobs:
           name: pr-built-jars
           path: ${{ env.JAR_FILES }}
           if-no-files-found: error
+  comment_pr:
+    needs: build_pr                     
+    if: needs.build_pr.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add download‑link to PR‑Body
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.build_pr.outputs.pr_number }}
+          RUN_ID: ${{ github.run_id }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = process.env.PR_NUMBER;
+            const runId    = process.env.RUN_ID;
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              { owner, repo, run_id: runId }
+            );
+
+            const artifact = artifacts.find(a => a.name === 'pr-built-jars');
+            if (!artifact) {
+              core.notice('No suitable artifact found - comment not applicable.');
+              return;
+            }
+
+            const link = `https://nightly.link/${owner}/${repo}/actions/artifacts/${artifact.id}.zip`;
+            const comment = `Download **Build‑JARs** for this PR: [` +
+                            `${artifact.name}.zip](${link})`;
+
+            const marker = '<!-- bot: pr-jar-build -->';
+            const { data: pr } = await github.rest.issues.get({
+              owner, repo, issue_number: prNumber
+            });
+
+            let body = pr.body ? pr.body.split(marker)[0].trim() : '';
+            body += `\n${marker}\n---\n${comment}`;
+
+            await github.rest.issues.update({
+              owner, repo, issue_number: prNumber, body
+            });
+
+            core.notice(`PR‑Body for #${prNumber} updated.`);
