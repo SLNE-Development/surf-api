@@ -33041,6 +33041,289 @@ public final class kotlinx/serialization/modules/SerializersModuleKt {
 	public static final fun plus (Lkotlinx/serialization/modules/SerializersModule;Lkotlinx/serialization/modules/SerializersModule;)Lkotlinx/serialization/modules/SerializersModule;
 }
 
+public abstract interface class net/megavex/scoreboardlibrary/api/ScoreboardLibrary {
+	public abstract fun close ()V
+	public abstract fun closed ()Z
+	public abstract fun createObjectiveManager ()Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveManager;
+	public fun createSidebar ()Lnet/megavex/scoreboardlibrary/api/sidebar/Sidebar;
+	public fun createSidebar (I)Lnet/megavex/scoreboardlibrary/api/sidebar/Sidebar;
+	public fun createSidebar (ILjava/util/Locale;)Lnet/megavex/scoreboardlibrary/api/sidebar/Sidebar;
+	public abstract fun createSidebar (ILjava/util/Locale;Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/sidebar/Sidebar;
+	public abstract fun createTeamManager ()Lnet/megavex/scoreboardlibrary/api/team/TeamManager;
+	public static fun loadScoreboardLibrary (Lorg/bukkit/plugin/Plugin;)Lnet/megavex/scoreboardlibrary/api/ScoreboardLibrary;
+}
+
+public final class net/megavex/scoreboardlibrary/api/exception/NoPacketAdapterAvailableException : java/lang/Exception {
+	public fun <init> ()V
+}
+
+public final class net/megavex/scoreboardlibrary/api/noop/NoopScoreboardLibrary : net/megavex/scoreboardlibrary/api/ScoreboardLibrary {
+	public fun <init> ()V
+	public fun close ()V
+	public fun closed ()Z
+	public fun createObjectiveManager ()Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveManager;
+	public fun createSidebar (ILjava/util/Locale;Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/sidebar/Sidebar;
+	public fun createTeamManager ()Lnet/megavex/scoreboardlibrary/api/team/TeamManager;
+}
+
+public class net/megavex/scoreboardlibrary/api/noop/NoopScoreboardObjective : net/megavex/scoreboardlibrary/api/objective/ScoreboardObjective {
+	public fun <init> ()V
+	public fun defaultScoreFormat ()Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;
+	public fun defaultScoreFormat (Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)V
+	public fun removeScore (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public fun renderType ()Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;
+	public fun renderType (Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public fun score (Ljava/lang/String;Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveScore;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public fun scoreInfo (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveScore;
+	public fun value ()Lnet/kyori/adventure/text/Component;
+	public fun value (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot {
+	public static fun belowName ()Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$BelowName;
+	public static fun playerList ()Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$PlayerList;
+	public static fun sidebar ()Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$Sidebar;
+	public static fun teamSidebar (Lnet/kyori/adventure/text/format/NamedTextColor;)Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$TeamSidebar;
+}
+
+public class net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$BelowName : net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot {
+	public fun toString ()Ljava/lang/String;
+}
+
+public class net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$PlayerList : net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot {
+	public fun toString ()Ljava/lang/String;
+}
+
+public class net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$Sidebar : net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot {
+	public fun toString ()Ljava/lang/String;
+}
+
+public class net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot$TeamSidebar : net/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot {
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun teamColor ()Lnet/kyori/adventure/text/format/NamedTextColor;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/objective/ObjectiveManager {
+	public abstract fun addPlayer (Lorg/bukkit/entity/Player;)Z
+	public fun addPlayers (Ljava/util/Collection;)V
+	public abstract fun close ()V
+	public abstract fun closed ()Z
+	public abstract fun create (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public abstract fun display (Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveDisplaySlot;Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;)V
+	public abstract fun players ()Ljava/util/Collection;
+	public abstract fun remove (Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;)V
+	public abstract fun removePlayer (Lorg/bukkit/entity/Player;)Z
+	public fun removePlayers (Ljava/util/Collection;)V
+}
+
+public final class net/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType : java/lang/Enum {
+	public static final field HEARTS Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;
+	public static final field INTEGER Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;
+	public static fun valueOf (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;
+	public static fun values ()[Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;
+}
+
+public final class net/megavex/scoreboardlibrary/api/objective/ObjectiveScore {
+	public fun <init> (ILnet/kyori/adventure/text/ComponentLike;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)V
+	public fun displayName ()Lnet/kyori/adventure/text/Component;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun format ()Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun value ()I
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/objective/ScoreFormat {
+	public static fun blank ()Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat$Blank;
+	public static fun fixed (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat$Fixed;
+	public static fun styled (Lnet/kyori/adventure/text/format/Style;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat$Styled;
+	public static fun styled ([Lnet/kyori/adventure/text/format/StyleBuilderApplicable;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat$Styled;
+}
+
+public class net/megavex/scoreboardlibrary/api/objective/ScoreFormat$Blank : net/megavex/scoreboardlibrary/api/objective/ScoreFormat {
+	public fun toString ()Ljava/lang/String;
+}
+
+public class net/megavex/scoreboardlibrary/api/objective/ScoreFormat$Fixed : net/megavex/scoreboardlibrary/api/objective/ScoreFormat {
+	public fun <init> (Lnet/kyori/adventure/text/Component;)V
+	public fun content ()Lnet/kyori/adventure/text/Component;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public class net/megavex/scoreboardlibrary/api/objective/ScoreFormat$Styled : net/megavex/scoreboardlibrary/api/objective/ScoreFormat {
+	public fun <init> (Lnet/kyori/adventure/text/format/Style;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun style ()Lnet/kyori/adventure/text/format/Style;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/objective/ScoreboardObjective {
+	public abstract fun defaultScoreFormat ()Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;
+	public abstract fun defaultScoreFormat (Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)V
+	public abstract fun removeScore (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public abstract fun renderType ()Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;
+	public abstract fun renderType (Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveRenderType;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public fun score (Ljava/lang/String;)Ljava/lang/Integer;
+	public fun score (Ljava/lang/String;I)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public fun score (Ljava/lang/String;ILnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public fun score (Ljava/lang/String;ILnet/kyori/adventure/text/ComponentLike;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public fun score (Ljava/lang/String;ILnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public abstract fun score (Ljava/lang/String;Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveScore;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+	public abstract fun scoreInfo (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/objective/ObjectiveScore;
+	public abstract fun value ()Lnet/kyori/adventure/text/Component;
+	public abstract fun value (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/objective/ScoreboardObjective;
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/sidebar/Sidebar {
+	public static final field MAX_LINES I
+	public abstract fun addPlayer (Lorg/bukkit/entity/Player;)Z
+	public fun addPlayers (Ljava/util/Collection;)V
+	public fun clearLines ()V
+	public abstract fun close ()V
+	public abstract fun closed ()Z
+	public abstract fun line (I)Lnet/kyori/adventure/text/Component;
+	public fun line (ILnet/kyori/adventure/text/ComponentLike;)V
+	public abstract fun line (ILnet/kyori/adventure/text/ComponentLike;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)V
+	public abstract fun locale ()Ljava/util/Locale;
+	public abstract fun maxLines ()I
+	public abstract fun objectiveName ()Ljava/lang/String;
+	public abstract fun players ()Ljava/util/Collection;
+	public abstract fun removePlayer (Lorg/bukkit/entity/Player;)Z
+	public fun removePlayers (Ljava/util/Collection;)V
+	public abstract fun title ()Lnet/kyori/adventure/text/Component;
+	public abstract fun title (Lnet/kyori/adventure/text/ComponentLike;)V
+}
+
+public final class net/megavex/scoreboardlibrary/api/sidebar/component/ComponentSidebarLayout {
+	public fun <init> (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;)V
+	public fun apply (Lnet/megavex/scoreboardlibrary/api/sidebar/Sidebar;)V
+	public fun linesComponent ()Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public fun titleComponent ()Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/sidebar/component/LineDrawable {
+	public fun drawLine (Lnet/kyori/adventure/text/ComponentLike;)V
+	public abstract fun drawLine (Lnet/kyori/adventure/text/ComponentLike;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)V
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent {
+	public static fun animatedComponent (Lnet/megavex/scoreboardlibrary/api/sidebar/component/animation/SidebarAnimation;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public static fun animatedLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/animation/SidebarAnimation;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public static fun blankLine ()Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public static fun builder ()Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public abstract fun draw (Lnet/megavex/scoreboardlibrary/api/sidebar/component/LineDrawable;)V
+	public static fun dynamicLine (Ljava/util/function/Supplier;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public static fun staticLine (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public static fun staticLine (Lnet/kyori/adventure/text/ComponentLike;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+}
+
+public final class net/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder {
+	public fun addAnimatedComponent (Lnet/megavex/scoreboardlibrary/api/sidebar/component/animation/SidebarAnimation;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public fun addAnimatedLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/animation/SidebarAnimation;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public fun addBlankLine ()Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public fun addComponent (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public fun addDynamicLine (Ljava/util/function/Supplier;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public fun addStaticLine (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public fun addStaticLine (Lnet/kyori/adventure/text/ComponentLike;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public fun build ()Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+}
+
+public final class net/megavex/scoreboardlibrary/api/sidebar/component/animation/CollectionSidebarAnimation : net/megavex/scoreboardlibrary/api/sidebar/component/animation/FramedSidebarAnimation {
+	public fun <init> (Ljava/util/Collection;)V
+	public fun currentFrame ()Ljava/lang/Object;
+	public fun currentFrameIndex ()I
+	public fun frames ()Ljava/util/List;
+	public fun nextFrame ()V
+	public fun switchFrame (I)V
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/sidebar/component/animation/FramedSidebarAnimation : net/megavex/scoreboardlibrary/api/sidebar/component/animation/SidebarAnimation {
+	public abstract fun currentFrameIndex ()I
+	public abstract fun frames ()Ljava/util/List;
+	public abstract fun switchFrame (I)V
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/sidebar/component/animation/SidebarAnimation {
+	public abstract fun currentFrame ()Ljava/lang/Object;
+	public abstract fun nextFrame ()V
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/team/ScoreboardTeam {
+	public abstract fun createDisplay ()Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun defaultDisplay ()Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun display (Lorg/bukkit/entity/Player;)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun display (Lorg/bukkit/entity/Player;Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;)V
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun teamManager ()Lnet/megavex/scoreboardlibrary/api/team/TeamManager;
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/team/TeamDisplay {
+	public abstract fun addEntry (Ljava/lang/String;)Z
+	public abstract fun canSeeFriendlyInvisibles ()Z
+	public abstract fun canSeeFriendlyInvisibles (Z)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun collisionRule ()Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;
+	public abstract fun collisionRule (Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun displayName ()Lnet/kyori/adventure/text/Component;
+	public abstract fun displayName (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun entries ()Ljava/util/Collection;
+	public abstract fun friendlyFire ()Z
+	public abstract fun friendlyFire (Z)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun nameTagVisibility ()Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;
+	public abstract fun nameTagVisibility (Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun playerColor ()Lnet/kyori/adventure/text/format/NamedTextColor;
+	public abstract fun playerColor (Lnet/kyori/adventure/text/format/NamedTextColor;)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun prefix ()Lnet/kyori/adventure/text/Component;
+	public abstract fun prefix (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun removeEntry (Ljava/lang/String;)Z
+	public abstract fun suffix ()Lnet/kyori/adventure/text/Component;
+	public abstract fun suffix (Lnet/kyori/adventure/text/ComponentLike;)Lnet/megavex/scoreboardlibrary/api/team/TeamDisplay;
+	public abstract fun team ()Lnet/megavex/scoreboardlibrary/api/team/ScoreboardTeam;
+}
+
+public abstract interface class net/megavex/scoreboardlibrary/api/team/TeamManager {
+	public fun addPlayer (Lorg/bukkit/entity/Player;)Z
+	public abstract fun addPlayer (Lorg/bukkit/entity/Player;Ljava/util/function/Function;)Z
+	public fun addPlayers (Ljava/util/Collection;)V
+	public fun addPlayers (Ljava/util/Collection;Ljava/util/function/Function;)V
+	public abstract fun close ()V
+	public abstract fun closed ()Z
+	public fun createIfAbsent (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/team/ScoreboardTeam;
+	public abstract fun createIfAbsent (Ljava/lang/String;Ljava/util/function/BiFunction;)Lnet/megavex/scoreboardlibrary/api/team/ScoreboardTeam;
+	public abstract fun players ()Ljava/util/Collection;
+	public abstract fun removePlayer (Lorg/bukkit/entity/Player;)Z
+	public fun removePlayers (Ljava/util/Collection;)V
+	public abstract fun removeTeam (Ljava/lang/String;)Z
+	public abstract fun removeTeam (Lnet/megavex/scoreboardlibrary/api/team/ScoreboardTeam;)V
+	public abstract fun team (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/team/ScoreboardTeam;
+	public abstract fun teamExists (Ljava/lang/String;)Z
+	public abstract fun teams ()Ljava/util/Collection;
+}
+
+public final class net/megavex/scoreboardlibrary/api/team/enums/CollisionRule : java/lang/Enum {
+	public static final field ALWAYS Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;
+	public static final field NEVER Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;
+	public static final field PUSH_OTHER_TEAMS Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;
+	public static final field PUSH_OWN_TEAM Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;
+	public fun key ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;
+	public static fun values ()[Lnet/megavex/scoreboardlibrary/api/team/enums/CollisionRule;
+}
+
+public final class net/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility : java/lang/Enum {
+	public static final field ALWAYS Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;
+	public static final field HIDE_FOR_OTHER_TEAMS Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;
+	public static final field HIDE_FOR_OWN_TEAM Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;
+	public static final field NEVER Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;
+	public fun key ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;
+	public static fun values ()[Lnet/megavex/scoreboardlibrary/api/team/enums/NameTagVisibility;
+}
+
 public final class okhttp3/Address {
 	public final fun -deprecated_certificatePinner ()Lokhttp3/CertificatePinner;
 	public final fun -deprecated_connectionSpecs ()Ljava/util/List;
