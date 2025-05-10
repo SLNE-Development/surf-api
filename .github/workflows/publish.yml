@@ -11,6 +11,8 @@ env:
   SLNE_SNAPSHOTS_REPO_PASSWORD: ${{ secrets.SLNE_SNAPSHOTS_REPO_PASSWORD }}
   SLNE_RELEASES_REPO_USERNAME: ${{ secrets.SLNE_RELEASES_REPO_USERNAME }}
   SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
+  GITHUB_ACTOR: github-actions
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
 
 jobs:
@@ -48,7 +50,7 @@ jobs:
         run: ./gradlew check --parallel --no-scan
       
       - name: Publish all modules to Maven
-        run: ./gradlew publish --parallel --no-scan
+        run: ./gradlew publishAllPublicationsToGitHubPackagesRepository --parallel --no-scan
 
       - name: Extract Project Version
         id: get_version

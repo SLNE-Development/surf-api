@@ -56,6 +56,14 @@ publishing {
                 password = System.getenv("SLNE_SNAPSHOTS_REPO_PASSWORD")
             }
         }
+
+        maven("https://maven.pkg.github.com/SLNE-DEVELOPMENT/surf-api") {
+            name = "GitHubPackages"
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 
     publications.create<MavenPublication>("maven") {
