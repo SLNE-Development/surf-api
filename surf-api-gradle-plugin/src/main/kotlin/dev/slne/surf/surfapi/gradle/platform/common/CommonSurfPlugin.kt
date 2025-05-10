@@ -4,13 +4,11 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.util.slnePublic
-import dev.slne.surf.surfapi.gradle.util.slneSnapshots
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
@@ -18,7 +16,6 @@ import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.plugin.KaptExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
 abstract class CommonSurfPlugin<E : CommonSurfExtension>(
@@ -101,7 +98,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             gradlePluginPortal()
 
             slnePublic()
-            slneSnapshots()
         }
 
         applyRepositories0()

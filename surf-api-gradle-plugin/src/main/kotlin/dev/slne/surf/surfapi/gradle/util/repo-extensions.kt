@@ -7,9 +7,6 @@ import org.gradle.kotlin.dsl.maven
 const val DEFAULT_USERNAME_ENV_PRIVATE = "SLNE_PRIVATE_REPO_USERNAME"
 const val DEFAULT_PASSWORD_ENV_PRIVATE = "SLNE_PRIVATE_REPO_PASSWORD"
 
-const val DEFAULT_USERNAME_SNAPSHOTS = "SLNE_SNAPSHOTS_REPO_USERNAME"
-const val DEFAULT_PASSWORD_SNAPSHOTS = "SLNE_SNAPSHOTS_REPO_PASSWORD"
-
 const val DEFAULT_USERNAME_RELEASES = "SLNE_RELEASES_REPO_USERNAME"
 const val DEFAULT_PASSWORD_RELEASES = "SLNE_RELEASES_REPO_PASSWORD"
 
@@ -18,18 +15,6 @@ inline fun RepositoryHandler.slnePublic(crossinline block: MavenArtifactReposito
         name = "maven-public"
         block()
     }
-
-inline fun RepositoryHandler.slneSnapshots(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://repo.slne.dev/repository/maven-snapshots/") {
-        name = "maven-snapshots"
-        credentials {
-            username = System.getenv(DEFAULT_USERNAME_SNAPSHOTS)
-            password = System.getenv(DEFAULT_PASSWORD_SNAPSHOTS)
-        }
-
-        block()
-    }
-
 
 inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
     maven("https://repo.slne.dev/repository/maven-releases/") {
@@ -41,7 +26,6 @@ inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactReposi
 
         block()
     }
-
 
 inline fun RepositoryHandler.slnePrivate(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
     maven("https://repo.slne.dev/repository/maven-private/") {
