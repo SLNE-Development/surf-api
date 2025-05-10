@@ -111,8 +111,8 @@ val generateConstants by tasks.registering {
             |
             |internal object Constants {
             |    const val RELOCATION_PREFIX = "$relocationPrefix"
-            |    const val SNAPSHOT_REPO_ID = "maven-snapshots"
-            |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-snapshots"
+            |    const val SNAPSHOT_REPO_ID = "maven-releases"
+            |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-releases"
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
             |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"

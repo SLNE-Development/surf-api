@@ -49,11 +49,11 @@ java {
 
 publishing {
     repositories {
-        maven("https://repo.slne.dev/repository/maven-snapshots/") {
-            name = "maven-snapshots"
+        maven("https://repo.slne.dev/repository/maven-releases/") {
+            name = "maven-releases"
             credentials {
-                username = System.getenv("SLNE_SNAPSHOTS_REPO_USERNAME")
-                password = System.getenv("SLNE_SNAPSHOTS_REPO_PASSWORD")
+                username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
+                password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
             }
         }
     }
