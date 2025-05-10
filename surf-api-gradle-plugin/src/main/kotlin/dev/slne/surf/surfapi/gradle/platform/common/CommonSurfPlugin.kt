@@ -39,6 +39,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     protected abstract fun createExtension(objects: ObjectFactory, project: Project): E
 
+    init {
+        addRelocationsForDependency(
+            "surf-data-api",
+            "org.mariadb.jdbc" to "dev.slne.data.libs.mariadb"
+        )
+    }
+
     override fun apply(target: Project) = with(target) {
         val extension = createExtension(objects, this)
         extensions.add("surf${platformName.replaceFirstChar { it.uppercase() }}Api", extension)
