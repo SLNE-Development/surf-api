@@ -42,7 +42,7 @@ interface Colors {
          * except in cases such as delayed status updates or toggle messages.
          */
         @JvmField
-        val INFO: TextColor = color(0x40d1db)
+        val INFO: TextColor = color(0x97B3F7)
 
         /**
          * The success color (#65ff64).
