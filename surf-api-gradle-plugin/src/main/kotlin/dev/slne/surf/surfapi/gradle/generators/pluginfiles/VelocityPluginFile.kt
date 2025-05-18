@@ -63,7 +63,11 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
     @Nested
     @Optional
     var pluginDependencies: NamedDomainObjectContainer<Dependency> =
-        project.container(Dependency::class.java)
+        project.container(Dependency::class.java).apply {
+            register("surf-velocity-api") {
+                optional = false
+            }
+        }
 
     @Serializable
     data class Dependency(@SerialName("id") @Input val name: String) {
