@@ -64,7 +64,7 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
     @Optional
     var pluginDependencies: NamedDomainObjectContainer<Dependency> =
         project.container(Dependency::class.java).apply {
-            register("surf-velocity-api") {
+            register("surf-api-velocity") {
                 optional = false
             }
         }
