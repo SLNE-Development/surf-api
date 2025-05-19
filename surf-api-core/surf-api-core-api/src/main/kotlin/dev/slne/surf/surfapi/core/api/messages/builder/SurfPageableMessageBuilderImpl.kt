@@ -7,6 +7,8 @@ import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.event.ClickCallback
+import net.kyori.adventure.text.event.ClickEvent
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -66,6 +68,9 @@ class PageableMessageBuilder(
         return buildText {
             if (enabled) {
                 success(label)
+                clickEvent(ClickEvent.callback {
+                    send(it, targetPage)
+                })
                 clickRunsCommand(pageCommand.replace("%page%", targetPage.toString()))
             } else {
                 error(label)
