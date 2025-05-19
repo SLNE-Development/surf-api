@@ -23,7 +23,7 @@ inline fun Audience.playSound(block: @SoundDsl Sound.Builder.() -> Unit) {
 }
 
 inline fun Audience.playSound(self: Boolean, block: @SoundDsl Sound.Builder.() -> Unit) {
-    if(self) {
+    if (self) {
         playSound(Sound(block), Emitter.self())
         return
     }
