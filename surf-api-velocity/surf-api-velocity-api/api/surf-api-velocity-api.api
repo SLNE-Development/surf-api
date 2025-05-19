@@ -2786,6 +2786,25 @@ public final class dev/slne/surf/surfapi/core/api/messages/adventure/Title_exten
 	public static final fun titleTimes (Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/title/Title$Times;
 }
 
+public final class dev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder : dev/slne/surf/surfapi/core/api/messages/builder/SurfPageableMessageBuilder {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder$Companion;
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getLinesPerPage ()I
+	public fun getPageCommand ()Ljava/lang/String;
+	public static final fun invoke (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder;
+	public fun line (Lkotlin/jvm/functions/Function1;)V
+	public fun send (Lnet/kyori/adventure/audience/Audience;I)V
+	public fun setLinesPerPage (I)V
+	public fun setPageCommand (Ljava/lang/String;)V
+	public fun title (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder$Companion {
+	public final fun invoke (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder;
+}
+
 public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder : net/kyori/adventure/text/TextComponent$Builder {
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder$Companion;
 	public abstract fun append (Ljava/lang/Iterable;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -3036,6 +3055,26 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 	public static fun warning (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;J)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun warning (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun warning (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/SurfPageableMessageBuilder {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/builder/SurfPageableMessageBuilder$Companion;
+	public abstract fun getLinesPerPage ()I
+	public abstract fun getPageCommand ()Ljava/lang/String;
+	public static fun invoke (ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder;
+	public abstract fun line (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun send (Lnet/kyori/adventure/audience/Audience;I)V
+	public abstract fun setLinesPerPage (I)V
+	public abstract fun setPageCommand (Ljava/lang/String;)V
+	public abstract fun title (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfPageableMessageBuilder$Companion {
+	public final fun invoke (ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder;
+	public static synthetic fun invoke$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfPageableMessageBuilder$Companion;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/PageableMessageBuilder;
+}
+
+public abstract interface annotation class dev/slne/surf/surfapi/core/api/messages/builder/SurfPageableMessageBuilderDsl : java/lang/annotation/Annotation {
 }
 
 public final class dev/slne/surf/surfapi/core/api/messages/bundle/SurfMessageBundle {
