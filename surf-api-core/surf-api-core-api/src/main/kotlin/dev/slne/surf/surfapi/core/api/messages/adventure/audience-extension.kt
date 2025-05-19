@@ -22,8 +22,8 @@ inline fun Audience.playSound(block: @SoundDsl Sound.Builder.() -> Unit) {
     playSound(Sound(block))
 }
 
-inline fun Audience.playSound(self: Boolean, block: @SoundDsl Sound.Builder.() -> Unit) {
-    if (self) {
+inline fun Audience.playSound(useSelfEmitter: Boolean, block: @SoundDsl Sound.Builder.() -> Unit) {
+    if (useSelfEmitter) {
         playSound(Sound(block), Emitter.self())
         return
     }
