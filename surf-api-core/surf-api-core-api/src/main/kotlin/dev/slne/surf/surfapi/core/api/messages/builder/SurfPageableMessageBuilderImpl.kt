@@ -23,8 +23,6 @@ class PageableMessageBuilder(
     private val lines = mutableObjectListOf<Component>()
     private var title: Component = Component.empty()
 
-    override var pageCommand: String = "An error occurred while trying to display the page."
-
     override fun line(block: SurfComponentBuilder.() -> Unit) {
         lines.add(SurfComponentBuilder(block))
     }
@@ -71,7 +69,6 @@ class PageableMessageBuilder(
                 clickEvent(ClickEvent.callback {
                     send(it, targetPage)
                 })
-                clickRunsCommand(pageCommand.replace("%page%", targetPage.toString()))
             } else {
                 error(label)
             }
