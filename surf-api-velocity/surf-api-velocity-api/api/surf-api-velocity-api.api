@@ -2624,6 +2624,7 @@ public abstract interface annotation class dev/slne/surf/surfapi/core/api/messag
 public final class dev/slne/surf/surfapi/core/api/messages/adventure/Audience_extensionKt {
 	public static final fun openBook (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
+	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;ZLkotlin/jvm/functions/Function1;)V
 	public static final fun sendText (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showBossBar (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showTitle (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
