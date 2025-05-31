@@ -22,7 +22,7 @@ fun MergedGui.staticPane(
     slot: Slot,
     height: @Range(from = 1, to = 6) Int,
     length: @Range(from = 1, to = 9) Int = 9,
-    init: (@PaneMarker StaticPane).() -> Unit
+    init: (@PaneMarker StaticPane).() -> Unit,
 ) {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
@@ -36,7 +36,7 @@ fun MergedGui.staticPane(
 fun menu(
     title: Component,
     rows: @Range(from = 2, to = 6) Int = 6,
-    init: @MenuMarker SurfChestGui.() -> Unit
+    init: @MenuMarker SurfChestGui.() -> Unit,
 ): SurfChestGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
@@ -51,7 +51,7 @@ fun playerMenu(
     title: Component,
     player: Player,
     rows: @Range(from = 2, to = 6) Int = 6,
-    init: @MenuMarker SurfChestSinglePlayerGui.() -> Unit
+    init: @MenuMarker SurfChestSinglePlayerGui.() -> Unit,
 ): SurfChestSinglePlayerGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
@@ -66,7 +66,7 @@ fun playerMenu(
 fun SurfChestGui.childMenu(
     title: Component,
     rows: @Range(from = 2, to = 6) Int,
-    init: @MenuMarker SurfChestGui.() -> Unit
+    init: @MenuMarker SurfChestGui.() -> Unit,
 ): SurfChestGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
@@ -77,10 +77,10 @@ fun SurfChestGui.childMenu(
     return menu
 }
 
-fun SurfChestSinglePlayerGui.childMenu(
+fun SurfChestSinglePlayerGui.childPlayerMenu(
     title: Component,
     rows: @Range(from = 2, to = 6) Int,
-    init: @MenuMarker SurfChestSinglePlayerGui.() -> Unit
+    init: @MenuMarker SurfChestSinglePlayerGui.() -> Unit,
 ): SurfChestSinglePlayerGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)

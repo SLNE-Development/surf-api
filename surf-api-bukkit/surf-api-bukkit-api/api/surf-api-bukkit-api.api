@@ -1112,7 +1112,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/inventory/SurfGui$DefaultImp
 
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/GuiKt {
 	public static final fun childMenu (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;
-	public static final fun childMenu (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;
+	public static final fun childPlayerMenu (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;
 	public static final fun menu (Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;
 	public static synthetic fun menu$default (Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;
 	public static final fun playerMenu (Lnet/kyori/adventure/text/Component;Lorg/bukkit/entity/Player;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;

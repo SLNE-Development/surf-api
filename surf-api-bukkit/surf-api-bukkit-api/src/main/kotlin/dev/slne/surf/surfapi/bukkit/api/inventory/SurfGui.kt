@@ -15,7 +15,7 @@ interface SurfGui {
     val gui: NamedGui
 
     fun HumanEntity.backToParent() {
-        server.scheduler.runTask(JavaPlugin.getProvidingPlugin(SurfGui::class.java), Runnable {
+        server.scheduler.runTaskLater(JavaPlugin.getProvidingPlugin(SurfGui::class.java), Runnable {
             if (parent != null) {
                 val gui = parent!!.gui
                 gui.show(this)
@@ -23,7 +23,7 @@ interface SurfGui {
             } else {
                 closeInventory(InventoryCloseEvent.Reason.PLUGIN)
             }
-        })
+        }, 1L)
     }
 
     fun walkParents(): List<SurfGui> = generateSequence(this) { it.parent }.toList()
@@ -31,7 +31,7 @@ interface SurfGui {
     fun StaticPane.item(
         slot: Slot,
         item: ItemStack? = null,
-        init: (@PaneMarker SurfGuiItem).() -> Unit
+        init: (@PaneMarker SurfGuiItem).() -> Unit,
     ) {
         val guiItem = SurfGuiItem(item)
         guiItem.init()
