@@ -61,6 +61,14 @@ class SurfVisualizerAreaImpl(
         }
     }
 
+    override fun setCornerLocations(locations: Collection<Location>) {
+        if (corners != locations) {
+            corners.clear()
+            corners.addAll(locations)
+            recompute()
+        }
+    }
+
     private fun recompute() {
         delegate.clearVisualLocations()
         if (corners.size < 2) return

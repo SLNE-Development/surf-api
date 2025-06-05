@@ -54,6 +54,8 @@ interface SurfVisualizerArea : SurfVisualizer {
      */
     fun clearCornerLocations()
 
+    fun setCornerLocations(locations: Collection<Location>)
+
     var settings: BlockDisplaySettings
     fun settings(consumer: BlockDisplaySettings.() -> Unit)
 }

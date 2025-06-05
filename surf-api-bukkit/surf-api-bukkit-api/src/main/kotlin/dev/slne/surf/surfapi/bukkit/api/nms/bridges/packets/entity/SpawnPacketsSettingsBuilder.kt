@@ -71,6 +71,10 @@ class BlockDisplaySettings : DisplaySettings() {
     companion object {
         fun create(block: BlockDisplaySettings.() -> Unit) =
             buildSettings(BlockDisplaySettings(), block)
+
+        operator fun invoke(block: BlockDisplaySettings.() -> Unit): BlockDisplaySettings {
+            return create(block)
+        }
     }
 }
 
