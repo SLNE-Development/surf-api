@@ -20,7 +20,7 @@ interface PacketOperation {
 }
 
 @OptIn(ExperimentalContracts::class)
-fun PacketOperation(block: PacketOperation.() -> Unit): PacketOperation {
+inline fun PacketOperation(block: PacketOperation.() -> Unit): PacketOperation {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
