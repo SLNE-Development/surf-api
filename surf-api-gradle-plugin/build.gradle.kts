@@ -18,7 +18,7 @@ plugins {
 }
 
 group = groupId
-version = "$mcVersion-1.1.6"
+version = "$mcVersion-1.1.7"
 
 repositories {
     mavenCentral()
@@ -54,21 +54,25 @@ gradlePlugin {
 
         create("paper-plugin") {
             id = "dev.slne.surf.surfapi.gradle.paper-plugin"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
         }
         create("paper-raw") {
             id = "dev.slne.surf.surfapi.gradle.paper-raw"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
         }
 
         create("standalone") {
             id = "dev.slne.surf.surfapi.gradle.standalone"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.standalone.StandaloneSurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.standalone.StandaloneSurfPlugin"
         }
 
         create("velocity") {
             id = "dev.slne.surf.surfapi.gradle.velocity"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
         }
     }
 
@@ -89,7 +93,8 @@ gradlePlugin {
     }
 }
 
-val constantsOutputDir = layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
+val constantsOutputDir =
+    layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
 val generateConstants by tasks.registering {
     val outputFile = constantsOutputDir.map { it.file("Constants.kt") }
 
@@ -102,6 +107,7 @@ val generateConstants by tasks.registering {
     inputs.property("libs.auto.service", libs.auto.service.asProvider().get().toString())
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
+    inputs.property("libs.versions.luckperms", libs.versions.luckperms.get().toString())
     inputs.property("version", rootProject.findProperty("version") as String)
     outputs.dir(constantsOutputDir)
 
@@ -124,6 +130,7 @@ val generateConstants by tasks.registering {
             |    
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
+            |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
             |    
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String}"
             |}

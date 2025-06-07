@@ -13,6 +13,9 @@ packetevents = "2.7.0"
 # Command API
 commandapi = "10.0.0"
 
+# LuckPerms
+luckperms = "v5.5.0-bukkit"
+
 # Scoreboard Library
 scoreboard-library = "2.3.0"
 scoreboard-library-implementation = "2.3.0"

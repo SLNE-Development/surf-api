@@ -12,6 +12,7 @@ fun RunServer.withSurfApiBukkit() {
     minecraftVersion(Constants.MINECRAFT_VERSION)
     downloadPlugins {
         modrinth("commandapi", Constants.COMMAND_API_VERSION)
+        modrinth("luckperms", Constants.LUCKPERMS_VERSION)
         hangar("PlaceholderAPI", Constants.PLACEHOLDER_API_VERSION)
         github(
             "SLNE-Development",
