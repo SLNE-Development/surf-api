@@ -52,7 +52,7 @@ tasks {
         minecraftVersion(findProperty("mcVersion") as String)
 
         downloadPlugins {
-            hangar("CommandAPI", "9.7.0")
+            hangar("CommandAPI", "10.0.0")
         }
     }
 }
