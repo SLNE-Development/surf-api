@@ -2,11 +2,13 @@
 
 package dev.slne.surf.surfapi.bukkit.api.inventory.dsl
 
-import com.github.stefvanschie.inventoryframework.gui.type.util.MergedGui
-import com.github.stefvanschie.inventoryframework.pane.StaticPane
-import com.github.stefvanschie.inventoryframework.pane.util.Slot
-import dev.slne.surf.surfapi.bukkit.api.inventory.types.SurfChestGui
-import dev.slne.surf.surfapi.bukkit.api.inventory.types.SurfChestSinglePlayerGui
+import dev.slne.surf.surfapi.bukkit.api.inventory.gui.types.ChestGui
+import dev.slne.surf.surfapi.bukkit.api.inventory.gui.types.ChestSinglePlayerGui
+import dev.slne.surf.surfapi.bukkit.api.inventory.gui.utils.MergedGui
+import dev.slne.surf.surfapi.bukkit.api.inventory.pane.components.PagingButtons
+import dev.slne.surf.surfapi.bukkit.api.inventory.pane.panes.PaginatedPane
+import dev.slne.surf.surfapi.bukkit.api.inventory.pane.panes.StaticPane
+import dev.slne.surf.surfapi.bukkit.api.inventory.utils.Slot
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.Range
@@ -18,75 +20,100 @@ import kotlin.contracts.contract
 @DslMarker
 annotation class MenuMarker
 
+fun MergedGui.pagingButtons(
+    slot: Slot,
+    paginatedPane: PaginatedPane,
+    length: @Range(from = 1, to = 9) Int = 9,
+    init: (@PaneMarker PagingButtons).() -> Unit,
+): PagingButtons {
+    contract {
+        callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+    }
+
+    return PagingButtons(slot, paginatedPane, length).apply {
+        init()
+        addPane(this)
+    }
+}
+
+fun MergedGui.paginatedPane(
+    slot: Slot,
+    height: @Range(from = 1, to = 6) Int,
+    length: @Range(from = 1, to = 9) Int = 9,
+    init: (@PaneMarker PaginatedPane).() -> Unit,
+): PaginatedPane {
+    contract {
+        callsInPlace(init, InvocationKind.EXACTLY_ONCE)
+    }
+
+    return PaginatedPane(slot, length, height).apply {
+        init()
+        addPane(this)
+    }
+}
+
 fun MergedGui.staticPane(
     slot: Slot,
     height: @Range(from = 1, to = 6) Int,
     length: @Range(from = 1, to = 9) Int = 9,
     init: (@PaneMarker StaticPane).() -> Unit,
-) {
+): StaticPane {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    val pane = StaticPane(slot, length, height)
-    pane.init()
-    addPane(pane)
+    return StaticPane(slot, length, height).apply {
+        init()
+        addPane(this)
+    }
 }
 
 fun menu(
     title: Component,
-    rows: @Range(from = 2, to = 6) Int = 6,
-    init: @MenuMarker SurfChestGui.() -> Unit,
-): SurfChestGui {
+    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
+    init: @MenuMarker ChestGui.() -> Unit,
+): ChestGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    val menu = SurfChestGui(title, rows)
-    menu.init()
-    return menu
+    return ChestGui(title, size).apply { init() }
 }
 
 fun playerMenu(
     title: Component,
     player: Player,
-    rows: @Range(from = 2, to = 6) Int = 6,
-    init: @MenuMarker SurfChestSinglePlayerGui.() -> Unit,
-): SurfChestSinglePlayerGui {
+    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
+    init: @MenuMarker ChestSinglePlayerGui.() -> Unit,
+): ChestSinglePlayerGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    val menu = SurfChestSinglePlayerGui(title, player, rows)
-    menu.init()
-    return menu
+    return ChestSinglePlayerGui(player, title, size).apply { init() }
 }
 
 
-fun SurfChestGui.childMenu(
+fun ChestGui.childMenu(
     title: Component,
-    rows: @Range(from = 2, to = 6) Int,
-    init: @MenuMarker SurfChestGui.() -> Unit,
-): SurfChestGui {
+    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
+    init: @MenuMarker ChestGui.() -> Unit,
+): ChestGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    val menu = SurfChestGui(title, rows, this)
-    menu.init()
-    return menu
+    return ChestGui(title, size, this).apply { init() }
 }
 
-fun SurfChestSinglePlayerGui.childPlayerMenu(
+fun ChestSinglePlayerGui.childPlayerMenu(
     title: Component,
-    rows: @Range(from = 2, to = 6) Int,
-    init: @MenuMarker SurfChestSinglePlayerGui.() -> Unit,
-): SurfChestSinglePlayerGui {
+    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
+    init: @MenuMarker ChestSinglePlayerGui.() -> Unit,
+): ChestSinglePlayerGui {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    val menu = SurfChestSinglePlayerGui(title, player, rows, this)
-    menu.init()
-    return menu
+    return ChestSinglePlayerGui(player, title, size, this).apply { init() }
 }

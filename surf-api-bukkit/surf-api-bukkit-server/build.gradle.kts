@@ -31,7 +31,6 @@ dependencies {
     runtimeOnly(libs.scoreboard.library.implementation)
     runtimeOnly(libs.scoreboard.library.modern)
     paperLibrary(libs.scoreboard.library.api)
-    api(libs.inventoryframework)
     api(libs.packetevents.spigot)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
@@ -107,7 +106,7 @@ fun NamedDomainObjectContainerScope<DependencyDefinition>.registerSoft(
     name: String,
     required: Boolean = false,
     joinClassPath: Boolean = true,
-    loadOrder: RelativeLoadOrder = RelativeLoadOrder.BEFORE
+    loadOrder: RelativeLoadOrder = RelativeLoadOrder.BEFORE,
 ) = register(name) {
     this.required = required
     this.joinClasspath = joinClassPath

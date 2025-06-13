@@ -3,7 +3,9 @@
 package dev.slne.surf.surfapi.bukkit.server.nms
 
 import dev.slne.surf.surfapi.bukkit.api.extensions.server
+import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SignBlockUpdateSettings
+import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.ContainerClickPacket.WindowClickType
 import io.papermc.paper.adventure.PaperAdventure
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
@@ -12,6 +14,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Display
+import net.minecraft.world.inventory.ClickType
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.DyeColor
 import net.minecraft.world.item.Item
@@ -51,6 +54,7 @@ fun Material.toNmsItem(): Item = CraftMagicNumbers.getItem(this)
 fun BlockData.toNms(): NmsBlockState = (this as CraftBlockData).state
 fun Vector3f?.toNms(): NmsVector3f? =
     if (this == null) null else NmsVector3f(this.x(), this.y(), this.z())
+
 fun FinePosition.toNms() = Vec3(x(), y(), z())
 fun BlockState.toNms(): NmsBlockState = (this as CraftBlockState).handle
 fun Quaternionf?.toNms(): NmsQuaternionf? =
@@ -73,6 +77,18 @@ fun SignBlockUpdateSettings.SignText.toNms(): SignText {
     )
 
     return SignText(lines, lines, DyeColor.BLACK, false)
+}
+
+@OptIn(NmsUseWithCaution::class)
+fun ClickType.toWindowClickType() = when (this) {
+    ClickType.PICKUP -> WindowClickType.PICKUP
+    ClickType.QUICK_MOVE -> WindowClickType.QUICK_MOVE
+    ClickType.SWAP -> WindowClickType.SWAP
+    ClickType.CLONE -> WindowClickType.CLONE
+    ClickType.THROW -> WindowClickType.THROW
+    ClickType.PICKUP_ALL -> WindowClickType.PICKUP_ALL
+    ClickType.QUICK_CRAFT -> WindowClickType.QUICK_CRAFT
+    else -> WindowClickType.UNKNOWN
 }
 
 fun InventoryType.toNms(): MenuType<*> = when (this) {
