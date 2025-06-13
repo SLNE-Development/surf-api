@@ -45,14 +45,18 @@ object PlayerLookupService {
      */
     private val nameToUuid = Caffeine.newBuilder()
         .expireAfterWrite(15.minutes)
-        .asLoadingCache<String, UUID?> {
+        .asLoadingCache<String, UUID?> { name ->
             try {
-                MinecraftApi.getUuid(it)
+                MojangApi.getUuid(name)
             } catch (_: Exception) {
                 try {
-                    MinetoolsApi.getUuid(it)
+                    MinecraftServicesApi.getUuid(name)
                 } catch (_: Exception) {
-                    null
+                    try {
+                        MinetoolsApi.getUuid(name)
+                    } catch (_: Exception) {
+                        null
+                    }
                 }
             }
         }
@@ -63,15 +67,19 @@ object PlayerLookupService {
      */
     private val uuidToName = Caffeine.newBuilder()
         .expireAfterWrite(15.minutes)
-        .asLoadingCache<UUID, String?> {
+        .asLoadingCache<UUID, String?> { uuid ->
             try {
-                MinecraftApi.getUsername(it)
+                MojangApi.getUsername(uuid)
             } catch (_: Exception) {
                 try {
-                    MinetoolsApi.getUsername(it)
+                    MinecraftServicesApi.getUsername(uuid)
+                } catch (_: Exception) {
+                try {
+                    MinetoolsApi.getUsername(uuid)
                 } catch (_: Exception) {
                     null
                 }
+                    }
             }
         }
 
@@ -92,7 +100,7 @@ object PlayerLookupService {
     /**
      * API interaction with Mojang's official endpoints.
      */
-    private object MinecraftApi {
+    private object MojangApi {
         private const val BASE_URL = "https://api.mojang.com"
 
         /**
@@ -113,6 +121,32 @@ object PlayerLookupService {
          */
         suspend fun getUuid(username: String): UUID {
             return client.get("$BASE_URL/users/profiles/minecraft/$username")
+                .body<MojangResponse>()
+                .id
+        }
+    }
+
+    private object MinecraftServicesApi {
+        private const val BASE_URL = "https://api.minecraftservices.com"
+
+        /**
+         * Fetches username from Minecraft Services using UUID.
+         * @param uuid Player UUID.
+         * @return Username retrieved from Minecraft Services.
+         */
+        suspend fun getUsername(uuid: UUID): String {
+            return client.get("$BASE_URL/minecraft/profile/lookup/${UUIDSerializer.fromUUID(uuid)}")
+                .body<MojangResponse>()
+                .name
+        }
+
+        /**
+         * Fetches UUID from Minecraft Services using username.
+         * @param username Player username.
+         * @return UUID retrieved from Minecraft Services.
+         */
+        suspend fun getUuid(username: String): UUID {
+            return client.get("$BASE_URL/minecraft/profile/lookup/name/$username")
                 .body<MojangResponse>()
                 .id
         }
