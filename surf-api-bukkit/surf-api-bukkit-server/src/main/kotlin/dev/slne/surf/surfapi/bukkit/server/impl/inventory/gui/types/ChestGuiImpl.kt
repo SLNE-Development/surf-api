@@ -1,32 +1,31 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.inventory.gui.types
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.gui.MergedGui
 import dev.slne.surf.surfapi.bukkit.api.inventory.gui.types.ChestGui
+import dev.slne.surf.surfapi.bukkit.api.inventory.pane.Pane
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.gui.AbstractGui
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.gui.AbstractNamedGui
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.gui.utils.InventoryBased
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.item.GuiItemImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.item.UpdatableGuiItemImpl
-import dev.slne.surf.surfapi.bukkit.server.impl.inventory.pane.AbstractPane
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.utils.InventoryComponentImpl
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObject2IntMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import it.unimi.dsi.fastutil.objects.Object2IntMap
-import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 
 open class ChestGuiImpl(
-    title: Component,
     initialSize: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.FIVE_ROWS,
     parent: AbstractGui? = null,
-) : AbstractNamedGui(title, parent), MergedGui, InventoryBased {
+) : AbstractNamedGui(parent), ChestGui, InventoryBased {
 
     private var rows: Int = initialSize.rows
         set(value) {
+            if (value == field) return
+
             inventoryComponent = InventoryComponentImpl(9, value + 4)
 
             for (pane in inventoryComponent.panes) {
@@ -35,6 +34,9 @@ open class ChestGuiImpl(
 
             sizeDirty = true
         }
+
+    override val size: ChestGui.ChestGuiSize
+        get() = ChestGui.ChestGuiSize.fromRows(rows) ?: error("Invalid rows count: $rows")
 
     override var inventoryComponent = InventoryComponentImpl(9, rows + 4)
         set(value) {
@@ -51,6 +53,11 @@ open class ChestGuiImpl(
     override val viewers
         get() = backingInventory.viewers.filterIsInstanceTo(mutableObjectSetOf<Player>()).freeze()
 
+    override fun size(size: ChestGui.ChestGuiSize) {
+        if (this.size == size) return
+        rows = size.rows
+    }
+
     override fun updateAllItems(): Object2IntMap<GuiItemImpl> =
         panes.fold(mutableObject2IntMapOf()) { acc, pane ->
             acc.apply { putAll(pane.updateItems()) }
@@ -60,7 +67,7 @@ open class ChestGuiImpl(
         panes.find { it.items.contains(item) }?.updateItem(item)
 
 
-    override fun addPane(pane: AbstractPane) {
+    override fun addPane(pane: Pane) {
         inventoryComponent.addPane(pane)
     }
 
@@ -96,8 +103,6 @@ open class ChestGuiImpl(
         player.openInventory(backingInventory)
     }
 
-    override fun clone() = super.clone() as ChestGuiImpl
-
     override fun click(event: InventoryClickEvent) {
         inventoryComponent.click(this, event, event.rawSlot)
     }
@@ -105,11 +110,3 @@ open class ChestGuiImpl(
     override fun isPlayerInventoryUsed() =
         inventoryComponent.excludeRows(0, inventoryComponent.height - 5).hasItem()
 }
-
-//@MenuMarker
-//class ChestSinglePlayerGui internal constructor(
-//    val player: Player,
-//    title: Component,
-//    size: ChestGuiSize = ChestGuiSize.SIX_ROWS,
-//    parent: AbstractGui? = null,
-//) : ChestGuiImpl(title, size, parent)

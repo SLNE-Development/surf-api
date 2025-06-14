@@ -201,6 +201,10 @@ class StaticPaneImpl(
         paneItems.put(slot, item)
     }
 
+    override fun setItem(slot: Slot, init: GuiItem.() -> Unit) {
+        setItem(slot, GuiItemImpl().apply(init))
+    }
+
     override fun removeItem(item: GuiItem) {
         paneItems.values.removeIf { guiItem -> guiItem == item }
     }

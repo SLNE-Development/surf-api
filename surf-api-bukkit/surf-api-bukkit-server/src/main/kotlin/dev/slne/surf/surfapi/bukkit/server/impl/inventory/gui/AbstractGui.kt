@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.server.impl.inventory.gui
 
 import dev.slne.surf.surfapi.bukkit.api.inventory.gui.Gui
 import dev.slne.surf.surfapi.bukkit.api.inventory.gui.handlers.*
+import dev.slne.surf.surfapi.bukkit.api.inventory.item.UpdatableGuiItem
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.dsl.ClickHandlerScopeImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.dsl.CloseHandlerScopeImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.inventory.dsl.DragHandlerScopeImpl
@@ -125,7 +126,8 @@ abstract class AbstractGui(override val parent: AbstractGui? = null) : Gui {
         updating = false
     }
 
-    override fun updateItem(item: UpdatableGuiItemImpl) {
+    override fun updateItem(item: UpdatableGuiItem) {
+        require(item is UpdatableGuiItemImpl) { "Item must be an instance of UpdatableGuiItemImpl" }
         if (updating) return
 
         val slot = updateItem0(item) ?: return

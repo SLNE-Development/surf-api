@@ -11,6 +11,8 @@ import org.bukkit.inventory.ItemStack
 interface StaticPane: Pane, Flippable, Rotatable {
 
     fun setItem(slot: Slot, item: GuiItem)
+    fun setItem(slot: Slot, init: GuiItem.() -> Unit)
+
     fun fillWith(item: ItemStack, handler: ClickHandlerDsl = {})
     fun removeItem(item: GuiItem)
     fun removeItem(slot: Slot)

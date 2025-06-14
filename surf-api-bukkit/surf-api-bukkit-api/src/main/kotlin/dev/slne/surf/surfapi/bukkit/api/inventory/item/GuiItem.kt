@@ -29,6 +29,10 @@ interface GuiItem : Cloneable {
             key: NamespacedKey? = null,
             uuid: UUID? = null,
             init: GuiItem.() -> Unit,
-        ): GuiItem = InventoryBridge.instance.createGuiItem(key, uuid, init)
+        ): GuiItem {
+            val item = InventoryBridge.instance.createGuiItem(key, uuid)
+            item.init()
+            return item
+        }
     }
 }

@@ -18,6 +18,10 @@ interface UpdatableGuiItem : GuiItem {
             key: NamespacedKey? = null,
             uuid: UUID? = null,
             init: UpdatableGuiItem.() -> Unit,
-        ): UpdatableGuiItem = InventoryBridge.instance.createUpdatableGuiItem(key, uuid, init)
+        ): UpdatableGuiItem {
+            val item = InventoryBridge.instance.createUpdatableGuiItem(key, uuid)
+            item.init()
+            return item
+        }
     }
 }

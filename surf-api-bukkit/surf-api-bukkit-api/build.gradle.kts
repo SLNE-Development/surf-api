@@ -25,5 +25,6 @@ configurations.all {
 kotlin {
     compilerOptions {
         optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+        optIn.add("kotlin.contracts.ExperimentalContracts")
     }
 }
