@@ -11,7 +11,3 @@ annotation class GuiDsl
 @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
 @DslMarker
 annotation class GuiItemDsl
-
-@Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
-@DslMarker
-annotation class GuiClickDsl

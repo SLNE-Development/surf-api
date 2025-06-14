@@ -9,7 +9,7 @@ import java.util.function.BooleanSupplier
 @GuiItemDsl
 interface UpdatableGuiItem : GuiItem {
 
-    fun onUpdate(update: @GuiItemDsl BooleanSupplier)
+    fun onUpdate(update: BooleanSupplier)
 
     override fun clone(): UpdatableGuiItem = super.clone() as UpdatableGuiItem
 

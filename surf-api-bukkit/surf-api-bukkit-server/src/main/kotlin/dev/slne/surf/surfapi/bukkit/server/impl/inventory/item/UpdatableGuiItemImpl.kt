@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.inventory.item
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.dsl.GuiItemDsl
 import dev.slne.surf.surfapi.bukkit.api.inventory.item.UpdatableGuiItem
 import org.bukkit.NamespacedKey
 import java.util.*
@@ -12,7 +11,7 @@ class UpdatableGuiItemImpl(
 ) : GuiItemImpl(key, uuid), UpdatableGuiItem {
     private var update: BooleanSupplier? = null
 
-    override fun onUpdate(update: @GuiItemDsl BooleanSupplier) {
+    override fun onUpdate(update: BooleanSupplier) {
         this.update = update
     }
 

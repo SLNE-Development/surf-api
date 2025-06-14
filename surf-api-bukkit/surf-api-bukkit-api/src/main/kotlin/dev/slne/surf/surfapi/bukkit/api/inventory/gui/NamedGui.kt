@@ -9,7 +9,7 @@ interface NamedGui : Gui {
     val title: Component
 
     fun title(title: Component)
-    fun title(builder: (@GuiDsl SurfComponentBuilder).() -> Unit)
+    fun title(builder: SurfComponentBuilder.() -> Unit)
 
     override fun clone(): NamedGui
 }

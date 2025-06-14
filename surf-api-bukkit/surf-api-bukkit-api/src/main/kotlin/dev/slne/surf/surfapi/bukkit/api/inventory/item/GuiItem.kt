@@ -17,10 +17,10 @@ interface GuiItem : Cloneable {
     var visible: Boolean
 
     fun item(itemStack: ItemStack)
-    fun item(type: ItemType, block: (@GuiItemDsl ItemStack).() -> Unit = {})
+    fun item(type: ItemType, block: ItemStack.() -> Unit = {})
 
-    fun onClick(handler: @GuiItemDsl ClickHandler)
-    fun onClick(handler: @GuiItemDsl ClickHandlerDsl)
+    fun onClick(handler: ClickHandler)
+    fun onClick(handler: ClickHandlerDsl)
 
     public override fun clone(): GuiItem = super.clone() as GuiItem
 

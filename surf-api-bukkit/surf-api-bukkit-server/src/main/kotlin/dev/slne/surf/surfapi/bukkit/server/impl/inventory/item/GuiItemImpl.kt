@@ -2,7 +2,6 @@ package dev.slne.surf.surfapi.bukkit.server.impl.inventory.item
 
 import com.jeff_media.morepersistentdatatypes.DataType
 import dev.slne.surf.surfapi.bukkit.api.builder.meta
-import dev.slne.surf.surfapi.bukkit.api.inventory.dsl.GuiItemDsl
 import dev.slne.surf.surfapi.bukkit.api.inventory.gui.handlers.ClickHandler
 import dev.slne.surf.surfapi.bukkit.api.inventory.gui.handlers.ClickHandlerDsl
 import dev.slne.surf.surfapi.bukkit.api.inventory.item.GuiItem
@@ -32,11 +31,11 @@ open class GuiItemImpl(
     var action: ClickHandler? = null
         private set
 
-    override fun onClick(handler: @GuiItemDsl ClickHandler) {
+    override fun onClick(handler: ClickHandler) {
         action = handler
     }
 
-    override fun onClick(handler: @GuiItemDsl ClickHandlerDsl) {
+    override fun onClick(handler: ClickHandlerDsl) {
         onClick(ClickHandlerScopeImpl(handler))
     }
 
@@ -46,7 +45,7 @@ open class GuiItemImpl(
 
     override fun item(
         type: ItemType,
-        block: @GuiItemDsl ItemStack.() -> Unit,
+        block: ItemStack.() -> Unit,
     ) {
         item(type.createItemStack().apply { block() })
     }
