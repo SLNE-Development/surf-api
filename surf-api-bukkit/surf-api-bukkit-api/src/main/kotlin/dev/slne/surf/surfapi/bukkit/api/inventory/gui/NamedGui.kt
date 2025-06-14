@@ -1,21 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.gui
 
+import dev.slne.surf.surfapi.bukkit.api.inventory.dsl.GuiDsl
+import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.Component
 
-abstract class NamedGui internal constructor(
-    title: Component,
-    parent: Gui? = null,
-) : Gui(parent) {
+@GuiDsl
+interface NamedGui : Gui {
+    val title: Component
 
-    var title: Component = Component.empty()
-        set(value) {
-            field = value
-            titleDirty = true
-        }
+    fun title(title: Component)
+    fun title(builder: (@GuiDsl SurfComponentBuilder).() -> Unit)
 
-    protected var titleDirty = false
-
-    init {
-        this.title = title
-    }
+    override fun clone(): NamedGui
 }

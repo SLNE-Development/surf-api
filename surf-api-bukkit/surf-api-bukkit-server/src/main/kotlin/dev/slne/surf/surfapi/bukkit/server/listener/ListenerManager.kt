@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.listener
 
 import dev.slne.surf.surfapi.bukkit.api.event.register
-import dev.slne.surf.surfapi.bukkit.api.inventory.listener.GuiListener
+import dev.slne.surf.surfapi.bukkit.server.impl.inventory.listener.GuiListener
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import org.bukkit.Bukkit
 

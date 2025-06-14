@@ -1,10 +1,9 @@
-package dev.slne.surf.surfapi.bukkit.api.inventory.listener
+package dev.slne.surf.surfapi.bukkit.server.impl.inventory.listener
 
-import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import com.github.shynixn.mccoroutine.folia.launch
 import com.github.shynixn.mccoroutine.folia.ticks
-import dev.slne.surf.surfapi.bukkit.api.inventory.gui.Gui
-import dev.slne.surf.surfapi.bukkit.api.inventory.view.InventoryViewUtil
+import dev.slne.surf.surfapi.bukkit.server.impl.inventory.gui.AbstractGui
+import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
@@ -19,23 +18,22 @@ import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.inventory.Inventory
 import java.util.*
 
-class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
-
+object GuiListener : Listener {
     private val log = logger()
-    private val activeGuiInstances = mutableObjectSetOf<Gui>()
+    private val activeGuiInstances = mutableObjectSetOf<AbstractGui>()
 
     @EventHandler(ignoreCancelled = true)
     fun InventoryClickEvent.onInventoryClick() {
         val gui = getGui(inventory) ?: return
 
-        val inventory = InventoryViewUtil.getInventory(view, rawSlot) ?: run {
+        val inventory = view.getInventory(rawSlot) ?: run {
             gui.callOnOutsideClick(this)
             return
         }
 
         gui.callOnGlobalClick(this)
 
-        if (inventory == InventoryViewUtil.getTopInventory(view)) {
+        if (inventory == view.topInventory) {
             gui.callOnTopClick(this)
         } else {
             gui.callOnBottomClick(this)
@@ -56,7 +54,7 @@ class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
     fun EntityPickupItemEvent.onEntityPickupItem() {
         val player = entity as? Player ?: return
 
-        val gui = getGui(InventoryViewUtil.getTopInventory(player.openInventory))
+        val gui = getGui(player.openInventory.topInventory)
         if (gui == null || !gui.isPlayerInventoryUsed()) {
             return
         }
@@ -83,11 +81,11 @@ class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
             var bottom = false
 
             for (slot in rawSlots) {
-                val inventory = InventoryViewUtil.getInventory(view, slot) ?: continue
+                val inventory = view.getInventory(slot) ?: continue
 
-                if (inventory == InventoryViewUtil.getTopInventory(view)) {
+                if (inventory == view.topInventory) {
                     top = true
-                } else if (inventory == InventoryViewUtil.getBottomInventory(view)) {
+                } else if (inventory == view.bottomInventory) {
                     bottom = true
                 }
 
@@ -103,13 +101,13 @@ class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
             }
         } else {
             val index = rawSlots.toTypedArray().first()
-            val slotType = InventoryViewUtil.getSlotType(view, index)
+            val slotType = view.getSlotType(index)
             val even = type == DragType.EVEN
             val clickType = if (even) ClickType.LEFT else ClickType.RIGHT
             val action = if (even) InventoryAction.PLACE_SOME else InventoryAction.PLACE_ONE
 
-            val previousCursor = InventoryViewUtil.getCursor(view)
-            InventoryViewUtil.setCursor(view, oldCursor)
+            val previousCursor = view.cursor
+            view.setCursor(oldCursor)
 
             val clickEvent = InventoryClickEvent(
                 view,
@@ -121,8 +119,8 @@ class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
 
             clickEvent.onInventoryClick()
 
-            if (Objects.equals(InventoryViewUtil.getCursor(view), oldCursor)) {
-                InventoryViewUtil.setCursor(view, previousCursor)
+            if (Objects.equals(view.cursor, oldCursor)) {
+                view.setCursor(previousCursor)
             }
 
             isCancelled = clickEvent.isCancelled
@@ -145,7 +143,7 @@ class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
                 activeGuiInstances.remove(gui)
             }
 
-            if (gui.shouldNavigateParentOnClose) {
+            if (gui.shouldNavigateToParentOnClose) {
                 plugin.launch {
                     delay(1.ticks)
 
@@ -163,8 +161,8 @@ class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    fun PluginDisableEvent.onPluginDisable() {
-        if (this@GuiListener.plugin != this.plugin) return
+    fun onPluginDisable(event: PluginDisableEvent) {
+        if (plugin != event.plugin) return
 
         var counter = 0
         val maxCount = 10
@@ -192,14 +190,14 @@ class GuiListener(private val plugin: SuspendingJavaPlugin) : Listener {
         TODO("Implement TradeSelectEvent handling in GUI")
     }
 
-    private fun getGui(inventory: Inventory): Gui? {
-        val gui = Gui.getGui(inventory)
+    private fun getGui(inventory: Inventory): AbstractGui? {
+        val gui = AbstractGui.getGui(inventory)
 
         if (gui != null) return gui
 
         val holder = inventory.holder
 
-        if (holder is Gui) {
+        if (holder is AbstractGui) {
             return holder
         }
 

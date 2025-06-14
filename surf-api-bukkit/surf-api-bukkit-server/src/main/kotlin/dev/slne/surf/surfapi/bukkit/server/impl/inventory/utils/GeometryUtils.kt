@@ -1,9 +1,9 @@
-package dev.slne.surf.surfapi.bukkit.api.inventory.utils
+package dev.slne.surf.surfapi.bukkit.server.impl.inventory.utils
 
 import it.unimi.dsi.fastutil.ints.AbstractInt2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 
-internal object GeometryUtils {
+object GeometryUtils {
 
     fun processClockwiseRotation(
         x: Int,

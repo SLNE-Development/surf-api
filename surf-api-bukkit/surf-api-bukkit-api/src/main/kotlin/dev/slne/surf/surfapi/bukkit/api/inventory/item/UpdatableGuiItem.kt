@@ -1,18 +1,23 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.item
 
+import dev.slne.surf.surfapi.bukkit.api.inventory.InventoryBridge
+import dev.slne.surf.surfapi.bukkit.api.inventory.dsl.GuiItemDsl
 import org.bukkit.NamespacedKey
-import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.inventory.ItemStack
 import java.util.*
+import java.util.function.BooleanSupplier
 
-class UpdatableGuiItem(
-    itemStack: ItemStack,
-    action: (InventoryClickEvent) -> Unit = {},
-    internal var update: (UpdatableGuiItem) -> Boolean = { false },
-    key: NamespacedKey = GUI_ITEM_UUID_KEY,
-    uuid: UUID = UUID.randomUUID(),
-) : GuiItem(itemStack, action, key, uuid) {
-    fun onUpdate(update: () -> Boolean) {
-        this.update = { update() }
+@GuiItemDsl
+interface UpdatableGuiItem : GuiItem {
+
+    fun onUpdate(update: @GuiItemDsl BooleanSupplier)
+
+    override fun clone(): UpdatableGuiItem = super.clone() as UpdatableGuiItem
+
+    companion object {
+        operator fun invoke(
+            key: NamespacedKey? = null,
+            uuid: UUID? = null,
+            init: UpdatableGuiItem.() -> Unit,
+        ): UpdatableGuiItem = InventoryBridge.instance.createUpdatableGuiItem(key, uuid, init)
     }
 }

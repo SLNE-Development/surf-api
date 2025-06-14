@@ -1,10 +1,8 @@
-package dev.slne.surf.surfapi.bukkit.api.inventory.gui.utils
+package dev.slne.surf.surfapi.bukkit.server.impl.inventory.gui.utils
 
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 
-internal interface InventoryBased : InventoryHolder {
-
+interface InventoryBased : InventoryHolder {
     fun createInventory(): Inventory
-
 }

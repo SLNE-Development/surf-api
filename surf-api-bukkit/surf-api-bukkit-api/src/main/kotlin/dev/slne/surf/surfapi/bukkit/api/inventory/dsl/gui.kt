@@ -2,12 +2,12 @@
 
 package dev.slne.surf.surfapi.bukkit.api.inventory.dsl
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.gui.types.ChestGui
+import dev.slne.surf.surfapi.bukkit.api.inventory.gui.MergedGui
+import dev.slne.surf.surfapi.bukkit.api.inventory.gui.types.ChestGuiImpl
 import dev.slne.surf.surfapi.bukkit.api.inventory.gui.types.ChestSinglePlayerGui
-import dev.slne.surf.surfapi.bukkit.api.inventory.gui.utils.MergedGui
-import dev.slne.surf.surfapi.bukkit.api.inventory.pane.components.PagingButtons
-import dev.slne.surf.surfapi.bukkit.api.inventory.pane.panes.PaginatedPane
-import dev.slne.surf.surfapi.bukkit.api.inventory.pane.panes.StaticPane
+import dev.slne.surf.surfapi.bukkit.api.inventory.pane.components.PagingButtonsImpl
+import dev.slne.surf.surfapi.bukkit.api.inventory.pane.panes.PaginatedPaneImpl
+import dev.slne.surf.surfapi.bukkit.api.inventory.pane.panes.StaticPaneImpl
 import dev.slne.surf.surfapi.bukkit.api.inventory.utils.Slot
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
@@ -22,15 +22,15 @@ annotation class MenuMarker
 
 fun MergedGui.pagingButtons(
     slot: Slot,
-    paginatedPane: PaginatedPane,
+    paginatedPane: PaginatedPaneImpl,
     length: @Range(from = 1, to = 9) Int = 9,
-    init: (@PaneMarker PagingButtons).() -> Unit,
-): PagingButtons {
+    init: (@PaneMarker PagingButtonsImpl).() -> Unit,
+): PagingButtonsImpl {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    return PagingButtons(slot, paginatedPane, length).apply {
+    return PagingButtonsImpl(slot, paginatedPane, length).apply {
         init()
         addPane(this)
     }
@@ -40,13 +40,13 @@ fun MergedGui.paginatedPane(
     slot: Slot,
     height: @Range(from = 1, to = 6) Int,
     length: @Range(from = 1, to = 9) Int = 9,
-    init: (@PaneMarker PaginatedPane).() -> Unit,
-): PaginatedPane {
+    init: (@PaneMarker PaginatedPaneImpl).() -> Unit,
+): PaginatedPaneImpl {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    return PaginatedPane(slot, length, height).apply {
+    return PaginatedPaneImpl(slot, length, height).apply {
         init()
         addPane(this)
     }
@@ -56,13 +56,13 @@ fun MergedGui.staticPane(
     slot: Slot,
     height: @Range(from = 1, to = 6) Int,
     length: @Range(from = 1, to = 9) Int = 9,
-    init: (@PaneMarker StaticPane).() -> Unit,
-): StaticPane {
+    init: (@PaneMarker StaticPaneImpl).() -> Unit,
+): StaticPaneImpl {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    return StaticPane(slot, length, height).apply {
+    return StaticPaneImpl(slot, length, height).apply {
         init()
         addPane(this)
     }
@@ -70,20 +70,20 @@ fun MergedGui.staticPane(
 
 fun menu(
     title: Component,
-    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
-    init: @MenuMarker ChestGui.() -> Unit,
-): ChestGui {
+    size: ChestGuiImpl.ChestGuiSize = ChestGuiImpl.ChestGuiSize.SIX_ROWS,
+    init: @MenuMarker ChestGuiImpl.() -> Unit,
+): ChestGuiImpl {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    return ChestGui(title, size).apply { init() }
+    return ChestGuiImpl(title, size).apply { init() }
 }
 
 fun playerMenu(
     title: Component,
     player: Player,
-    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
+    size: ChestGuiImpl.ChestGuiSize = ChestGuiImpl.ChestGuiSize.SIX_ROWS,
     init: @MenuMarker ChestSinglePlayerGui.() -> Unit,
 ): ChestSinglePlayerGui {
     contract {
@@ -94,21 +94,21 @@ fun playerMenu(
 }
 
 
-fun ChestGui.childMenu(
+fun ChestGuiImpl.childMenu(
     title: Component,
-    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
-    init: @MenuMarker ChestGui.() -> Unit,
-): ChestGui {
+    size: ChestGuiImpl.ChestGuiSize = ChestGuiImpl.ChestGuiSize.SIX_ROWS,
+    init: @MenuMarker ChestGuiImpl.() -> Unit,
+): ChestGuiImpl {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
 
-    return ChestGui(title, size, this).apply { init() }
+    return ChestGuiImpl(title, size, this).apply { init() }
 }
 
 fun ChestSinglePlayerGui.childPlayerMenu(
     title: Component,
-    size: ChestGui.ChestGuiSize = ChestGui.ChestGuiSize.SIX_ROWS,
+    size: ChestGuiImpl.ChestGuiSize = ChestGuiImpl.ChestGuiSize.SIX_ROWS,
     init: @MenuMarker ChestSinglePlayerGui.() -> Unit,
 ): ChestSinglePlayerGui {
     contract {

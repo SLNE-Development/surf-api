@@ -1,10 +1,10 @@
-package dev.slne.surf.surfapi.bukkit.api.inventory.utils
+package dev.slne.surf.surfapi.bukkit.server.impl.inventory.utils
 
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 
-internal class PlayerInventoryCache {
+class PlayerInventoryCache {
 
     private val inventories = mutableObject2ObjectMapOf<Player, Array<ItemStack?>>()
 

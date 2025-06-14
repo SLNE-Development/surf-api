@@ -16,6 +16,7 @@ tasks.assemble {
 kotlin {
     compilerOptions {
         optIn.add("dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.ExperimentalVisualizerApi")
+        optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
     }
 }
 

@@ -21,3 +21,9 @@ description = "surf-api-bukkit-api"
 configurations.all {
     exclude(group = "org.spigotmc", module = "spigot-api")
 }
+
+kotlin {
+    compilerOptions {
+        optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+    }
+}
