@@ -7,14 +7,7 @@ import org.gradle.api.model.ObjectFactory
 
 internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
     platformName: String, platform: SurfApiPlatform,
-) : CommonSurfPlugin<E>(platformName, platform) {
-    init {
-        addRelocationsForDependency(
-            "surf-cloud-api-common",
-            "io.netty" to "dev.slne.surf.cloud.netty"
-        )
-    }
-}
+) : CommonSurfPlugin<E>(platformName, platform)
 
 internal class CoreSurfPlugin :
     AbstractCoreSurfPlugin<CoreSurfExtension>("core", SurfApiPlatform.CORE) {
