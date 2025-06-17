@@ -16,6 +16,7 @@ import com.velocitypowered.api.event.Continuation as EventContinuation
 
 class SuspendingEventHandler(private val eventManager: EventManager) {
 
+    @Suppress("RedundantSamConstructor")
     fun register() {
         VelocityReflection.EVENT_MANAGER_PROXY.registerHandlerAdapter(
             eventManager,

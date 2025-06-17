@@ -4,13 +4,11 @@ import com.github.retrooper.packetevents.protocol.world.BlockFace
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
 import com.github.retrooper.packetevents.protocol.world.states.enums.*
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType
-import javax.annotation.ParametersAreNonnullByDefault
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 interface BlockStateFactory {
-    @ParametersAreNonnullByDefault
     @Suppress("unused")
     interface Builder {
         fun age(): Int

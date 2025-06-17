@@ -6,7 +6,7 @@ plugins {
 dependencies {
     api(project(":surf-api-core:surf-api-core-api"))
     compileOnly(libs.paper.api)
-    compileOnlyApi(libs.packetevents.spigot)
+    compileOnly(libs.packetevents.spigot)
     api(libs.scoreboard.library.api)
     compileOnlyApi(libs.commandapi.bukkit)
     compileOnlyApi(libs.reflection.remapper)
