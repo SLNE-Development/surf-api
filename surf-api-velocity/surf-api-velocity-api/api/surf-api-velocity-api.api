@@ -3053,6 +3053,23 @@ public final class dev/slne/surf/surfapi/core/api/messages/bundle/SurfMessageBun
 	public final fun load ()V
 }
 
+public abstract interface class dev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag : net/kyori/adventure/nbt/CompoundBinaryTag {
+	public abstract fun clear ()V
+	public abstract fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+	public abstract fun keySet ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+}
+
+public final class dev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTagKt {
+	public static final fun buildFast (Lnet/kyori/adventure/nbt/CompoundBinaryTag$Builder;Z)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+	public static synthetic fun buildFast$default (Lnet/kyori/adventure/nbt/CompoundBinaryTag$Builder;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+	public static final fun fast (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Z)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+	public static synthetic fun fast$default (Lnet/kyori/adventure/nbt/CompoundBinaryTag;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+}
+
+public final class dev/slne/surf/surfapi/core/api/nbt/InternalNbtBridge$Companion {
+	public final fun getInstance ()Ldev/slne/surf/surfapi/core/api/nbt/InternalNbtBridge;
+}
+
 public final class dev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum : java/lang/Enum, dev/slne/surf/surfapi/core/api/random/Weighted {
 	public static final field COMMON Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum$Companion;

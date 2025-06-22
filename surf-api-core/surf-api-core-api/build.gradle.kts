@@ -44,4 +44,10 @@ dependencies {
     api(libs.bundles.ktor.client)
 }
 
+kotlin {
+    compilerOptions {
+        optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+    }
+}
+
 description = "surf-api-core-api"
