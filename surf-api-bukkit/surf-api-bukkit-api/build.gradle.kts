@@ -15,6 +15,7 @@ dependencies {
 
     api(libs.commandapi.bukkit.kotlin)
     compileOnlyApi(libs.mccoroutine.folia.api)
+    api(libs.querz.nbt)
 }
 
 description = "surf-api-bukkit-api"
