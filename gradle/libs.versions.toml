@@ -59,7 +59,7 @@ ktor = "3.1.1"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
-shadow-gradle-plugin = "9.0.0-beta7"
+shadow-gradle-plugin = "9.0.0-beta17"
 ksp-gradle-plugin = "2.1.10-1.0.29"
 run-paper-gradle-plugin = "2.3.1"
 dokka = "2.0.0"
