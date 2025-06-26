@@ -8,7 +8,9 @@ import dev.jorel.commandapi.executors.CommandArguments
 import dev.slne.surf.surfapi.bukkit.api.gamerules.GameRules
 import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicReference
+import javax.annotation.concurrent.ThreadSafe
 
+@ThreadSafe
 class StringValue<CTX : Any>(type: GameRules.Type<StringValue<CTX>, CTX, String>) :
     GameRules.Value<StringValue<CTX>, CTX, String>(type) {
     private val value = AtomicReference("")

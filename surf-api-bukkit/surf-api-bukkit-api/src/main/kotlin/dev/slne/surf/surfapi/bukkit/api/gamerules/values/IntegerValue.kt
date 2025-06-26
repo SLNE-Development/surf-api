@@ -6,7 +6,9 @@ import dev.slne.surf.surfapi.bukkit.api.gamerules.GameRules
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicInteger
+import javax.annotation.concurrent.ThreadSafe
 
+@ThreadSafe
 class IntegerValue<CTX : Any>(type: GameRules.Type<IntegerValue<CTX>, CTX, Int>) :
     GameRules.Value<IntegerValue<CTX>, CTX, Int>(type) {
     private val value = AtomicInteger()

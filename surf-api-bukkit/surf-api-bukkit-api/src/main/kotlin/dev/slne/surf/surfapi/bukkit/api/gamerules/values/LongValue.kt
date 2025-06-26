@@ -6,7 +6,9 @@ import dev.slne.surf.surfapi.bukkit.api.gamerules.GameRules
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicLong
+import javax.annotation.concurrent.ThreadSafe
 
+@ThreadSafe
 class LongValue<CTX: Any>(type: GameRules.Type<LongValue<CTX>, CTX, Long>) : GameRules.Value<LongValue<CTX>, CTX, Long>(
     type
 ) {

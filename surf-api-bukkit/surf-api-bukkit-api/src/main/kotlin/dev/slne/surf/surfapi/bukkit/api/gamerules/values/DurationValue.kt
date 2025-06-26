@@ -7,9 +7,11 @@ import dev.slne.surf.surfapi.core.api.util.logger
 import net.kyori.adventure.util.Ticks
 import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicReference
+import javax.annotation.concurrent.ThreadSafe
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+@ThreadSafe
 class DurationValue<CTX : Any>(type: GameRules.Type<DurationValue<CTX>, CTX, Duration>) :
     GameRules.Value<DurationValue<CTX>, CTX, Duration>(type) {
     private val value = AtomicReference(Duration.ZERO)

@@ -5,7 +5,9 @@ import dev.jorel.commandapi.executors.CommandArguments
 import dev.slne.surf.surfapi.bukkit.api.gamerules.GameRules
 import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.annotation.concurrent.ThreadSafe
 
+@ThreadSafe
 class BooleanValue<CTX : Any>(type: GameRules.Type<BooleanValue<CTX>, CTX, Boolean>) :
     GameRules.Value<BooleanValue<CTX>, CTX, Boolean>(type) {
     private val value = AtomicBoolean()

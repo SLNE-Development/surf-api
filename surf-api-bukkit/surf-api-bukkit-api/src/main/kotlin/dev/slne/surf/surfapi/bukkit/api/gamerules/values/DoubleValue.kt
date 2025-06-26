@@ -6,7 +6,9 @@ import dev.jorel.commandapi.executors.CommandArguments
 import dev.slne.surf.surfapi.bukkit.api.gamerules.GameRules
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.command.CommandSender
+import javax.annotation.concurrent.ThreadSafe
 
+@ThreadSafe
 class DoubleValue<CTX : Any>(type: GameRules.Type<DoubleValue<CTX>, CTX, Double>) :
     GameRules.Value<DoubleValue<CTX>, CTX, Double>(type) {
 
