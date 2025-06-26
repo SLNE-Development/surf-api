@@ -23,6 +23,43 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KProperty
 import kotlin.time.Duration
 
+/**
+ * Base class for all Surf **game-rule registries**.
+ *
+ * A concrete implementation supplies a set of supported rule *types*
+ * (boolean, integer, string, …), then calls [register] for each rule it wishes
+ * to expose.  Once the registry is **frozen**—that is, after the first
+ * [createRuleSet] / [loadRuleSet] call—no further rules can be added.
+ *
+ * @param CTX  A *context* object passed to every change-callback.  Typical use
+ *             cases include a plugin’s main class, a world reference, or
+ *             per-match state container.
+ *
+ * ## Thread safety
+ * *  **Registration phase:** Not thread-safe.  Register rules only during
+ *    plugin initialisation, *before* players can interact with commands.
+ * *  **Runtime phase:** All reads/writes to rule *values* are thread-safe
+ *    thanks to the atomic primitives used by individual [Value] subclasses.
+ *
+ * ## Command integration
+ * Use [addToCommandTree] to attach the entire rule hierarchy to an existing
+ * CommandAPI tree or argument chain:
+ *
+ * ```kotlin
+ * val ruleSets = mutableObject2ObjectMapOf<UUID, GameRules<Any>.RuleSet>()
+ *
+ * commandTree("tree") {
+ *     gameRules.addToCommandTree(
+ *         this,
+ *         getRuleSet = { sender ->
+ *             if (sender !is Player) throw CommandAPI.failWithString("This command can only be used by players.")
+ *             ruleSets.computeIfAbsent(sender.uniqueId) { gameRules.createRuleSet() }
+ *         },
+ *         getContext = { Any() }
+ *     )
+ * }
+ * ```
+ */
 abstract class GameRules<CTX : Any> {
 
     private val lastGameRuleIndex = AtomicInteger(0)
@@ -32,6 +69,23 @@ abstract class GameRules<CTX : Any> {
     @Volatile
     private var frozen = false
 
+    /**
+     * Registers a new game rule *type* and returns its strongly-typed key.
+     *
+     * The returned [Key] is later used to query or mutate values in a
+     * [RuleSet].
+     * Registration **must** happen before the registry is frozen
+     * (see [frozen]); otherwise an [IllegalStateException] is thrown.
+     *
+     * @param name         Machine-readable identifier (shown in commands).
+     * @param description  Human-readable tooltip used in hover text.
+     * @param type         Value factory + CommandAPI argument + change-callback.
+     * @receiver           Only visible to subclasses; encourages a
+     *                     “`registerAll()` in init‐block” style.
+     *
+     * @throws IllegalStateException If called after any rule-set was created.
+     * @throws IllegalArgumentException If another rule with identical id exists.
+     */
     protected fun <T : Value<T, CTX, V>, V> register(
         name: String,
         description: String,
@@ -60,10 +114,28 @@ abstract class GameRules<CTX : Any> {
     fun createRuleSet(values: CompoundBinaryTag): RuleSet = RuleSet(values).also { frozen = true }
     fun loadRuleSet(file: Path): RuleSet = RuleSet(file).also { frozen = true }
 
+    /**
+     * Adds *every* registered rule to the supplied [CommandTree].
+     *
+     * For each rule this produces:
+     *
+     * ```
+     * /<root> <ruleId>            → prints current value
+     * /<root> <ruleId> <value>    → sets value & fires callback
+     * ```
+     *
+     * @param tree         The CommandTree to attach to.
+     * @param getRuleSet   Lambda that maps a `CommandSender` to the
+     *                     corresponding [RuleSet] (e.g. per-world).
+     * @param getContext   Lambda that maps a `CommandSender` to the
+     *                    context object of type `CTX` (e.g. per-plugin).
+     * @param setValueArgumentName Name of the argument used to set the value (default: `"value"`).
+     */
     fun addToCommandTree(
         tree: CommandTree,
         getRuleSet: (CommandSender) -> RuleSet,
         getContext: (CommandSender) -> CTX,
+        setValueArgumentName: String = "value",
     ): Unit = with(tree) {
         val ruleSet = createRuleSet()
         ruleSet.visitGameRuleTypes(object : GameRuleTypeVisitor<CTX> {
@@ -77,19 +149,37 @@ abstract class GameRules<CTX : Any> {
                             queryRule(sender, key, getRuleSet(sender))
                         })
                         .then(
-                            type.createArgument("value").executes(CommandExecutor { sender, args ->
-                                setRule(sender, key, getRuleSet(sender), getContext(sender), args)
-                            })
+                            type.createArgument(setValueArgumentName)
+                                .executes(CommandExecutor { sender, args ->
+                                    setRule(
+                                        sender,
+                                        key,
+                                        getRuleSet(sender),
+                                        getContext(sender),
+                                        args
+                                    )
+                                })
                         )
                 )
             }
         })
     }
 
+    /**
+     * Same as the [CommandTree] overload, but continues an existing argument
+     * chain.  Example:
+     *
+     * ```
+     * CommandTree("config")
+     *   .then(StringArgument("category"))
+     *   .let { gameRules.addToCommandTree(it, ::ruleSet, ::context) }
+     * ```
+     */
     fun addToCommandTree(
         argument: Argument<*>,
         getRuleSet: (CommandSender) -> RuleSet,
         getContext: (CommandSender) -> CTX,
+        setValueArgumentName: String = "value",
     ): Unit = with(argument) {
         val ruleSet = createRuleSet()
         ruleSet.visitGameRuleTypes(object : GameRuleTypeVisitor<CTX> {
@@ -103,9 +193,16 @@ abstract class GameRules<CTX : Any> {
                             queryRule(sender, key, getRuleSet(sender))
                         })
                         .then(
-                            type.createArgument("value").executes(CommandExecutor { sender, args ->
-                                setRule(sender, key, getRuleSet(sender), getContext(sender), args)
-                            })
+                            type.createArgument(setValueArgumentName)
+                                .executes(CommandExecutor { sender, args ->
+                                    setRule(
+                                        sender,
+                                        key,
+                                        getRuleSet(sender),
+                                        getContext(sender),
+                                        args
+                                    )
+                                })
                         )
                 )
             }
@@ -148,6 +245,17 @@ abstract class GameRules<CTX : Any> {
         }
     }
 
+    /**
+     * Collects one concrete value for **every** [Key] known to its parent
+     * [GameRules] and offers fast O(1) access via the generated index.
+     *
+     * A `RuleSet` is *mutable* and **thread-safe**; updates propagate change
+     * callbacks immediately.
+     *
+     * ### Serialization
+     * * [createTag] → NBT compound with `keyId → serializedValue` pairs.
+     * * Constructor with [CompoundBinaryTag] or [Path] performs the inverse.
+     */
     inner class RuleSet internal constructor(rules: Object2ObjectMap<Key<*, CTX, *>, Value<*, CTX, *>>) {
         private val rules: Object2ObjectMap<Key<*, CTX, *>, Value<*, CTX, *>> = rules.synchronize()
 
@@ -236,12 +344,40 @@ abstract class GameRules<CTX : Any> {
         }
     }
 
+    /**
+     * Immutable **descriptor** for a single rule.
+     *
+     * @property id            Unique, case-sensitive identifier.
+     * @property description   Localisable description shown in command hovers.
+     * @property gameRuleIndex Dense, zero-based index used for fast array
+     *                         look-ups inside [RuleSet]; assigned automatically
+     *                         on registration order.
+     */
     data class Key<T : Value<T, CTX, V>, CTX : Any, V>(
         val id: String,
         val description: String,
         val gameRuleIndex: Int,
     )
 
+    /**
+     * Meta-information and factories common to all values of the same
+     * **datatype**.
+     *
+     * A *type* knows how to:
+     *
+     * * Build the associated CommandAPI [Argument] (via [createArgument]).
+     * * Instantiate the concrete [Value] implementation (via [createRule]).
+     * * Call the registered visitor hook for reflection-like traversal.
+     *
+     * @param argumentCreator  DSL lambda used to construct the command
+     *                         argument *on-demand* (name → Argument).
+     * @param ruleFactory      Creates a fresh [Value] with its default value.
+     * @param changeCallback   Fired immediately after a value is changed via
+     *                         commands or programmatic calls.
+     * @param visitorCaller    Bridges the generic visitor to the
+     *                         type-specific overload (see
+     *                         [GameRuleTypeVisitor]).
+     */
     data class Type<T : Value<T, CTX, V>, CTX : Any, V>(
         private val argumentCreator: (name: String) -> Argument<*>,
         private val ruleFactory: (Type<T, CTX, V>) -> T,
@@ -262,6 +398,21 @@ abstract class GameRules<CTX : Any> {
         }
     }
 
+    /**
+     * Runtime instance holding the **current value** of a single rule.
+     *
+     * Implementations must be *thread-safe*; most subclasses achieve this via
+     * `java.util.concurrent.atomic.*` fields.
+     *
+     * @param SELF  Self-type trick enabling covariant generics while allowing
+     *              fluent APIs (`return this`).
+     * @see BooleanValue
+     * @see DoubleValue
+     * @see DurationValue
+     * @see IntegerValue
+     * @see LongValue
+     * @see StringValue
+     */
     abstract class Value<SELF : Value<SELF, CTX, V>, CTX : Any, V>(protected val type: Type<SELF, CTX, V>) {
         protected abstract fun updateFromArgument(
             sender: CommandSender,
@@ -302,6 +453,12 @@ abstract class GameRules<CTX : Any> {
         abstract fun setFrom(other: SELF, context: CTX)
     }
 
+    /**
+     * Visitor interface that lets callers perform **type-safe bulk operations**
+     * across all registered rule types without resorting to `is` checks or
+     * unchecked casts.  Every rule is first passed to [visit] (generic), then
+     * to its type-specific overload (e.g. [visitDuration]).
+     */
     interface GameRuleTypeVisitor<CTX : Any> {
         fun <T : Value<T, CTX, V>, V> visit(key: Key<T, CTX, V>, type: Type<T, CTX, V>) = Unit
 
