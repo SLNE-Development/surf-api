@@ -1,3 +1,5 @@
+import jdk.tools.jlink.resources.plugins
+
 plugins {
     `core-convention`
 //    alias(libs.plugins.dokka)
@@ -15,7 +17,6 @@ dependencies {
 
     api(libs.commandapi.bukkit.kotlin)
     compileOnlyApi(libs.mccoroutine.folia.api)
-    api(libs.querz.nbt)
 }
 
 description = "surf-api-bukkit-api"
