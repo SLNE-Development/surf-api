@@ -38,16 +38,23 @@ class BooleanValue<CTX : Any>(type: GameRules.Type<BooleanValue<CTX>, CTX, Boole
         this.value.set(value)
     }
 
+    /** @inheritDoc */
+    /** @inheritDoc */
     override fun get() = value.get()
     override fun self() = this
 
+    /** @inheritDoc */
     override fun deserialize(value: String) {
         this.value.set(value.toBoolean())
     }
 
+    /** @inheritDoc */
     override fun serialize() = value.get().toString()
+
+    /** @inheritDoc */
     override fun copy() = BooleanValue(type).also { it.value.set(this.value.get()) }
 
+    /** @inheritDoc */
     override fun setFrom(
         other: BooleanValue<CTX>,
         context: CTX,

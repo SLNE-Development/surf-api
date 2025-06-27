@@ -11,11 +11,18 @@ import javax.annotation.concurrent.ThreadSafe
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Thread-safe game-rule value storing a Kotlin [Duration].
+ *
+ * Values are represented as ticks in commands and serialized using ISO-8601
+ * duration strings.
+ */
 @ThreadSafe
 class DurationValue<CTX : Any>(type: GameRules.Type<DurationValue<CTX>, CTX, Duration>) :
     GameRules.Value<DurationValue<CTX>, CTX, Duration>(type) {
     private val value = AtomicReference(Duration.ZERO)
 
+    /** @inheritDoc */
     override fun updateFromArgument(
         sender: CommandSender,
         args: CommandArguments,
@@ -26,9 +33,12 @@ class DurationValue<CTX : Any>(type: GameRules.Type<DurationValue<CTX>, CTX, Dur
         value.set((ticks * Ticks.SINGLE_TICK_DURATION_MS).milliseconds)
     }
 
+    /** @inheritDoc */
+    /** @inheritDoc */
     override fun get(): Duration = value.get()
     override fun self() = this
 
+    /** @inheritDoc */
     override fun deserialize(value: String) {
         try {
             this.value.set(Duration.parseIsoString(value))
@@ -39,11 +49,15 @@ class DurationValue<CTX : Any>(type: GameRules.Type<DurationValue<CTX>, CTX, Dur
         }
     }
 
+    /** @inheritDoc */
     override fun serialize() = value.get().toIsoString()
+    /** @inheritDoc */
     override fun copy() = DurationValue(type).also { it.value.set(this.value.get()) }
 
+    /** @inheritDoc */
     override fun displayValue() = value.get().toString()
 
+    /** @inheritDoc */
     override fun setFrom(
         other: DurationValue<CTX>,
         context: CTX,
@@ -55,6 +69,12 @@ class DurationValue<CTX : Any>(type: GameRules.Type<DurationValue<CTX>, CTX, Dur
     companion object {
         private val log = logger()
 
+        /**
+         * Factory for a [DurationValue] rule.
+         *
+         * @param defaultValue default starting duration
+         * @param onChange     callback invoked whenever the value changes
+         */
         fun <CTX : Any> create(
             defaultValue: Duration = Duration.ZERO,
             onChange: (CTX, DurationValue<CTX>) -> Unit = { _, _ -> },
