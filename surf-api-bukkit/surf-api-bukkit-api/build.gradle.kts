@@ -1,5 +1,3 @@
-import jdk.tools.jlink.resources.plugins
-
 plugins {
     `core-convention`
 //    alias(libs.plugins.dokka)
