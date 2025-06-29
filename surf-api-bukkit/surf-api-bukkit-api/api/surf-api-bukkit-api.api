@@ -1257,6 +1257,19 @@ public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsIte
 	public static final fun getItemBridge ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsItemBridge;
 }
 
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsLootTableBridge {
+	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsLootTableBridge$Companion;
+	public abstract fun getDifferentLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Lorg/bukkit/entity/EntityType;Z)Ljava/util/Collection;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsLootTableBridge$Companion {
+	public final fun getInstance ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsLootTableBridge;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsLootTableBridgeKt {
+	public static final fun getNmsLootTableBridge ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsLootTableBridge;
+}
+
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsNbtBridge {
 	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsNbtBridge$Companion;
 	public abstract fun getNbtString (Lorg/bukkit/inventory/ItemStack;Ljava/lang/String;)Ljava/lang/String;
