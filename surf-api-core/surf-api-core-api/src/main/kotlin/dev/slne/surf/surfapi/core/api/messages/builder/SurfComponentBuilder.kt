@@ -64,94 +64,168 @@ interface SurfComponentBuilder : TextComponent.Builder {
     suspend fun appendNewPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
         appendNewPrefixedLine().appendAsync(block)
 
-    fun text(text: String, color: TextColor? = null) = append(Component.text(text, color))
-    fun text(boolean: Boolean, color: TextColor? = null) = append(Component.text(boolean, color))
-    fun text(char: Char, color: TextColor? = null) = append(Component.text(char, color))
-    fun text(double: Double, color: TextColor? = null) = append(Component.text(double, color))
-    fun text(float: Float, color: TextColor? = null) = append(Component.text(float, color))
-    fun text(int: Int, color: TextColor? = null) = append(Component.text(int, color))
-    fun text(long: Long, color: TextColor? = null) = append(Component.text(long, color))
+    fun text(text: String, color: TextColor? = null, vararg decoration: TextDecoration) =
+        append(Component.text(text, color))
 
-    fun primary(text: String) = text(text, PRIMARY)
-    fun primary(boolean: Boolean) = text(boolean, PRIMARY)
-    fun primary(char: Char) = text(char, PRIMARY)
-    fun primary(double: Double) = text(double, PRIMARY)
-    fun primary(float: Float) = text(float, PRIMARY)
-    fun primary(int: Int) = text(int, PRIMARY)
-    fun primary(long: Long) = text(long, PRIMARY)
+    fun text(boolean: Boolean, color: TextColor? = null, vararg decoration: TextDecoration) =
+        append(Component.text(boolean, color))
 
-    fun secondary(text: String) = text(text, SECONDARY)
-    fun secondary(boolean: Boolean) = text(boolean, SECONDARY)
-    fun secondary(char: Char) = text(char, SECONDARY)
-    fun secondary(double: Double) = text(double, SECONDARY)
-    fun secondary(float: Float) = text(float, SECONDARY)
-    fun secondary(int: Int) = text(int, SECONDARY)
-    fun secondary(long: Long) = text(long, SECONDARY)
+    fun text(char: Char, color: TextColor? = null, vararg decoration: TextDecoration) =
+        append(Component.text(char, color))
 
-    fun info(text: String) = text(text, INFO)
-    fun info(boolean: Boolean) = text(boolean, INFO)
-    fun info(char: Char) = text(char, INFO)
-    fun info(double: Double) = text(double, INFO)
-    fun info(float: Float) = text(float, INFO)
-    fun info(int: Int) = text(int, INFO)
-    fun info(long: Long) = text(long, INFO)
+    fun text(double: Double, color: TextColor? = null, vararg decoration: TextDecoration) =
+        append(Component.text(double, color))
 
-    fun success(text: String) = text(text, SUCCESS)
-    fun success(boolean: Boolean) = text(boolean, SUCCESS)
-    fun success(char: Char) = text(char, SUCCESS)
-    fun success(double: Double) = text(double, SUCCESS)
-    fun success(float: Float) = text(float, SUCCESS)
-    fun success(int: Int) = text(int, SUCCESS)
-    fun success(long: Long) = text(long, SUCCESS)
+    fun text(float: Float, color: TextColor? = null, vararg decoration: TextDecoration) =
+        append(Component.text(float, color))
 
-    fun warning(text: String) = text(text, WARNING)
-    fun warning(boolean: Boolean) = text(boolean, WARNING)
-    fun warning(char: Char) = text(char, WARNING)
-    fun warning(double: Double) = text(double, WARNING)
-    fun warning(float: Float) = text(float, WARNING)
-    fun warning(int: Int) = text(int, WARNING)
-    fun warning(long: Long) = text(long, WARNING)
+    fun text(int: Int, color: TextColor? = null, vararg decoration: TextDecoration) =
+        append(Component.text(int, color))
+
+    fun text(long: Long, color: TextColor? = null, vararg decoration: TextDecoration) =
+        append(Component.text(long, color))
+
+    fun primary(text: String, vararg decoration: TextDecoration) = text(text, PRIMARY, decoration)
+    fun primary(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, PRIMARY, decoration)
+
+    fun primary(char: Char, vararg decoration: TextDecoration) = text(char, PRIMARY, decoration)
+    fun primary(double: Double, vararg decoration: TextDecoration) =
+        text(double, PRIMARY, decoration)
+
+    fun primary(float: Float, vararg decoration: TextDecoration) = text(float, PRIMARY, decoration)
+    fun primary(int: Int, vararg decoration: TextDecoration) = text(int, PRIMARY, decoration)
+    fun primary(long: Long, vararg decoration: TextDecoration) = text(long, PRIMARY, decoration)
+
+    fun secondary(text: String, vararg decoration: TextDecoration) =
+        text(text, SECONDARY, decoration)
+
+    fun secondary(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, SECONDARY, decoration)
+
+    fun secondary(char: Char, vararg decoration: TextDecoration) = text(char, SECONDARY, decoration)
+    fun secondary(double: Double, vararg decoration: TextDecoration) =
+        text(double, SECONDARY, decoration)
+
+    fun secondary(float: Float, vararg decoration: TextDecoration) =
+        text(float, SECONDARY, decoration)
+
+    fun secondary(int: Int, vararg decoration: TextDecoration) = text(int, SECONDARY, decoration)
+    fun secondary(long: Long, vararg decoration: TextDecoration) = text(long, SECONDARY, decoration)
+
+    fun info(text: String, vararg decoration: TextDecoration) = text(text, INFO, decoration)
+    fun info(boolean: Boolean, vararg decoration: TextDecoration) = text(boolean, INFO, decoration)
+    fun info(char: Char, vararg decoration: TextDecoration) = text(char, INFO, decoration)
+    fun info(double: Double, vararg decoration: TextDecoration) = text(double, INFO, decoration)
+    fun info(float: Float, vararg decoration: TextDecoration) = text(float, INFO, decoration)
+    fun info(int: Int, vararg decoration: TextDecoration) = text(int, INFO, decoration)
+    fun info(long: Long, vararg decoration: TextDecoration) = text(long, INFO, decoration)
+
+    fun success(text: String, vararg decoration: TextDecoration) = text(text, SUCCESS, decoration)
+    fun success(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, SUCCESS, decoration)
+
+    fun success(char: Char, vararg decoration: TextDecoration) = text(char, SUCCESS, decoration)
+    fun success(double: Double, vararg decoration: TextDecoration) =
+        text(double, SUCCESS, decoration)
+
+    fun success(float: Float, vararg decoration: TextDecoration) = text(float, SUCCESS, decoration)
+    fun success(int: Int, vararg decoration: TextDecoration) = text(int, SUCCESS, decoration)
+    fun success(long: Long, vararg decoration: TextDecoration) = text(long, SUCCESS, decoration)
+
+    fun warning(text: String, vararg decoration: TextDecoration) = text(text, WARNING, decoration)
+    fun warning(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, WARNING, decoration)
+
+    fun warning(char: Char, vararg decoration: TextDecoration) = text(char, WARNING, decoration)
+    fun warning(double: Double, vararg decoration: TextDecoration) =
+        text(double, WARNING, decoration)
+
+    fun warning(float: Float, vararg decoration: TextDecoration) = text(float, WARNING, decoration)
+    fun warning(int: Int, vararg decoration: TextDecoration) = text(int, WARNING, decoration)
+    fun warning(long: Long, vararg decoration: TextDecoration) = text(long, WARNING, decoration)
 
 
-    fun error(text: String) = text(text, ERROR)
-    fun error(boolean: Boolean) = text(boolean, ERROR)
-    fun error(char: Char) = text(char, ERROR)
-    fun error(double: Double) = text(double, ERROR)
-    fun error(float: Float) = text(float, ERROR)
-    fun error(int: Int) = text(int, ERROR)
-    fun error(long: Long) = text(long, ERROR)
+    fun error(text: String, vararg decoration: TextDecoration) = text(text, ERROR, decoration)
+    fun error(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, ERROR, decoration)
 
-    fun variableKey(text: String) = text(text, VARIABLE_KEY)
-    fun variableKey(boolean: Boolean) = text(boolean, VARIABLE_KEY)
-    fun variableKey(char: Char) = text(char, VARIABLE_KEY)
-    fun variableKey(double: Double) = text(double, VARIABLE_KEY)
-    fun variableKey(float: Float) = text(float, VARIABLE_KEY)
-    fun variableKey(int: Int) = text(int, VARIABLE_KEY)
-    fun variableKey(long: Long) = text(long, VARIABLE_KEY)
+    fun error(char: Char, vararg decoration: TextDecoration) = text(char, ERROR, decoration)
+    fun error(double: Double, vararg decoration: TextDecoration) = text(double, ERROR, decoration)
+    fun error(float: Float, vararg decoration: TextDecoration) = text(float, ERROR, decoration)
+    fun error(int: Int, vararg decoration: TextDecoration) = text(int, ERROR, decoration)
+    fun error(long: Long, vararg decoration: TextDecoration) = text(long, ERROR, decoration)
 
-    fun variableValue(text: String) = text(text, VARIABLE_VALUE)
-    fun variableValue(boolean: Boolean) = text(boolean, VARIABLE_VALUE)
-    fun variableValue(char: Char) = text(char, VARIABLE_VALUE)
-    fun variableValue(double: Double) = text(double, VARIABLE_VALUE)
-    fun variableValue(float: Float) = text(float, VARIABLE_VALUE)
-    fun variableValue(int: Int) = text(int, VARIABLE_VALUE)
-    fun variableValue(long: Long) = text(long, VARIABLE_VALUE)
+    fun variableKey(text: String, vararg decoration: TextDecoration) =
+        text(text, VARIABLE_KEY, decoration)
 
-    fun spacer(text: String) = text(text, SPACER)
-    fun spacer(boolean: Boolean) = text(boolean, SPACER)
-    fun spacer(char: Char) = text(char, SPACER)
-    fun spacer(double: Double) = text(double, SPACER)
-    fun spacer(float: Float) = text(float, SPACER)
-    fun spacer(int: Int) = text(int, SPACER)
-    fun spacer(long: Long) = text(long, SPACER)
+    fun variableKey(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, VARIABLE_KEY, decoration)
 
-    fun darkSpacer(text: String) = text(text, DARK_SPACER)
-    fun darkSpacer(boolean: Boolean) = text(boolean, DARK_SPACER)
-    fun darkSpacer(char: Char) = text(char, DARK_SPACER)
-    fun darkSpacer(double: Double) = text(double, DARK_SPACER)
-    fun darkSpacer(float: Float) = text(float, DARK_SPACER)
-    fun darkSpacer(int: Int) = text(int, DARK_SPACER)
-    fun darkSpacer(long: Long) = text(long, DARK_SPACER)
+    fun variableKey(char: Char, vararg decoration: TextDecoration) =
+        text(char, VARIABLE_KEY, decoration)
+
+    fun variableKey(double: Double, vararg decoration: TextDecoration) =
+        text(double, VARIABLE_KEY, decoration)
+
+    fun variableKey(float: Float, vararg decoration: TextDecoration) =
+        text(float, VARIABLE_KEY, decoration)
+
+    fun variableKey(int: Int, vararg decoration: TextDecoration) =
+        text(int, VARIABLE_KEY, decoration)
+
+    fun variableKey(long: Long, vararg decoration: TextDecoration) =
+        text(long, VARIABLE_KEY, decoration)
+
+    fun variableValue(text: String, vararg decoration: TextDecoration) =
+        text(text, VARIABLE_VALUE, decoration)
+
+    fun variableValue(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, VARIABLE_VALUE, decoration)
+
+    fun variableValue(char: Char, vararg decoration: TextDecoration) =
+        text(char, VARIABLE_VALUE, decoration)
+
+    fun variableValue(double: Double, vararg decoration: TextDecoration) =
+        text(double, VARIABLE_VALUE, decoration)
+
+    fun variableValue(float: Float, vararg decoration: TextDecoration) =
+        text(float, VARIABLE_VALUE, decoration)
+
+    fun variableValue(int: Int, vararg decoration: TextDecoration) =
+        text(int, VARIABLE_VALUE, decoration)
+
+    fun variableValue(long: Long, vararg decoration: TextDecoration) =
+        text(long, VARIABLE_VALUE, decoration)
+
+    fun spacer(text: String, vararg decoration: TextDecoration) = text(text, SPACER, decoration)
+    fun spacer(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, SPACER, decoration)
+
+    fun spacer(char: Char, vararg decoration: TextDecoration) = text(char, SPACER, decoration)
+    fun spacer(double: Double, vararg decoration: TextDecoration) = text(double, SPACER, decoration)
+    fun spacer(float: Float, vararg decoration: TextDecoration) = text(float, SPACER, decoration)
+    fun spacer(int: Int, vararg decoration: TextDecoration) = text(int, SPACER, decoration)
+    fun spacer(long: Long, vararg decoration: TextDecoration) = text(long, SPACER, decoration)
+
+    fun darkSpacer(text: String, vararg decoration: TextDecoration) =
+        text(text, DARK_SPACER, decoration)
+
+    fun darkSpacer(boolean: Boolean, vararg decoration: TextDecoration) =
+        text(boolean, DARK_SPACER, decoration)
+
+    fun darkSpacer(char: Char, vararg decoration: TextDecoration) =
+        text(char, DARK_SPACER, decoration)
+
+    fun darkSpacer(double: Double, vararg decoration: TextDecoration) =
+        text(double, DARK_SPACER, decoration)
+
+    fun darkSpacer(float: Float, vararg decoration: TextDecoration) =
+        text(float, DARK_SPACER, decoration)
+
+    fun darkSpacer(int: Int, vararg decoration: TextDecoration) = text(int, DARK_SPACER, decoration)
+    fun darkSpacer(long: Long, vararg decoration: TextDecoration) =
+        text(long, DARK_SPACER, decoration)
 
     fun ellipsis(color: TextColor? = SPACER) = append(CommonComponents.ELLIPSIS.color(color))
 
