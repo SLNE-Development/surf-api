@@ -18,6 +18,9 @@ interface SurfBukkitNmsCommonBridge {
     fun addCompostable(material: Material, levelIncreaseChance: Float)
     fun removeCompostable(material: Material)
 
+    fun setVelocityEnabled(enabled: Boolean)
+    fun setVelocitySecret(secret: String)
+
     companion object {
         val instance = requiredService<SurfBukkitNmsCommonBridge>()
         val nextEntityId get() = instance.nextEntityId()

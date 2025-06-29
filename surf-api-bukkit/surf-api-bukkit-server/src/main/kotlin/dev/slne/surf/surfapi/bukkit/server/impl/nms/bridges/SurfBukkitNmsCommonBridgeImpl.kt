@@ -7,6 +7,7 @@ import dev.slne.surf.surfapi.bukkit.server.nms.toNms
 import dev.slne.surf.surfapi.bukkit.server.nms.toNmsBlock
 import dev.slne.surf.surfapi.bukkit.server.nms.toNmsItem
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
+import io.papermc.paper.configuration.GlobalConfiguration
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.ComposterBlock
 import org.bukkit.Bukkit
@@ -47,5 +48,13 @@ class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
     override fun removeCompostable(material: Material) {
         require(material.isItem) { "material must be an item" }
         ComposterBlock.COMPOSTABLES.removeFloat(material.toNmsItem())
+    }
+
+    override fun setVelocityEnabled(enabled: Boolean) {
+        GlobalConfiguration.get().proxies.velocity.enabled = enabled
+    }
+
+    override fun setVelocitySecret(secret: String) {
+        GlobalConfiguration.get().proxies.velocity.secret = secret
     }
 }

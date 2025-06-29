@@ -3053,6 +3053,23 @@ public final class dev/slne/surf/surfapi/core/api/messages/bundle/SurfMessageBun
 	public final fun load ()V
 }
 
+public abstract interface class dev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag : net/kyori/adventure/nbt/CompoundBinaryTag {
+	public abstract fun clear ()V
+	public abstract fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+	public abstract fun keySet ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+}
+
+public final class dev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTagKt {
+	public static final fun buildFast (Lnet/kyori/adventure/nbt/CompoundBinaryTag$Builder;Z)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+	public static synthetic fun buildFast$default (Lnet/kyori/adventure/nbt/CompoundBinaryTag$Builder;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+	public static final fun fast (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Z)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+	public static synthetic fun fast$default (Lnet/kyori/adventure/nbt/CompoundBinaryTag;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/nbt/FastCompoundBinaryTag;
+}
+
+public final class dev/slne/surf/surfapi/core/api/nbt/InternalNbtBridge$Companion {
+	public final fun getInstance ()Ldev/slne/surf/surfapi/core/api/nbt/InternalNbtBridge;
+}
+
 public final class dev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum : java/lang/Enum, dev/slne/surf/surfapi/core/api/random/Weighted {
 	public static final field COMMON Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum$Companion;
@@ -10449,14 +10466,6 @@ public final class io/ktor/websocket/serialization/WebsocketChannelSerialization
 	public static final fun sendSerializedBase (Lio/ktor/websocket/WebSocketSession;Ljava/lang/Object;Lio/ktor/util/reflect/TypeInfo;Lio/ktor/serialization/WebsocketContentConverter;Ljava/nio/charset/Charset;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public abstract interface class io/leangen/geantyref/AnnotatedCaptureType : java/lang/reflect/AnnotatedType {
-	public abstract fun getAnnotatedLowerBounds ()[Ljava/lang/reflect/AnnotatedType;
-	public abstract fun getAnnotatedTypeVariable ()Ljava/lang/reflect/AnnotatedTypeVariable;
-	public abstract fun getAnnotatedUpperBounds ()[Ljava/lang/reflect/AnnotatedType;
-	public abstract fun getAnnotatedWildcardType ()Ljava/lang/reflect/AnnotatedWildcardType;
-	public abstract fun setAnnotatedUpperBounds ([Ljava/lang/reflect/AnnotatedType;)V
-}
-
 public class io/leangen/geantyref/AnnotatedTypeMap : java/util/Map {
 	public fun <init> ()V
 	public fun <init> (Ljava/util/Map;)V
@@ -10558,13 +10567,11 @@ public class io/leangen/geantyref/GenericTypeReflector {
 	public static fun getTypeParameter (Ljava/lang/reflect/Type;Ljava/lang/reflect/TypeVariable;)Ljava/lang/reflect/Type;
 	public static fun getUpperBoundClassAndInterfaces (Ljava/lang/reflect/Type;)Ljava/util/List;
 	public static fun hashCode ([Ljava/lang/reflect/AnnotatedType;)I
-	public static fun isBoxType (Ljava/lang/reflect/Type;)Z
 	public static fun isFullyBound (Ljava/lang/reflect/Type;)Z
 	public static fun isMissingTypeParameters (Ljava/lang/reflect/Type;)Z
 	public static fun isSuperType (Ljava/lang/reflect/Type;Ljava/lang/reflect/Type;)Z
 	public static fun merge ([[Ljava/lang/annotation/Annotation;)[Ljava/lang/annotation/Annotation;
 	public static fun mergeAnnotations (Ljava/lang/reflect/AnnotatedType;Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
-	public static fun reduceBounded (Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
 	public static fun replaceAnnotations (Ljava/lang/reflect/AnnotatedType;[Ljava/lang/annotation/Annotation;)Ljava/lang/reflect/AnnotatedType;
 	public static fun replaceParameters (Ljava/lang/reflect/AnnotatedParameterizedType;[Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedParameterizedType;
 	public static fun resolveExactType (Ljava/lang/reflect/AnnotatedType;Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
@@ -32035,77 +32042,527 @@ public final class kotlinx/serialization/modules/SerializersModuleKt {
 	public static final fun plus (Lkotlinx/serialization/modules/SerializersModule;Lkotlinx/serialization/modules/SerializersModule;)Lkotlinx/serialization/modules/SerializersModule;
 }
 
-public abstract interface class net/kyori/option/Option {
-	public static fun booleanOption (Ljava/lang/String;Z)Lnet/kyori/option/Option;
-	public abstract fun defaultValue ()Ljava/lang/Object;
-	public static fun enumOption (Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Enum;)Lnet/kyori/option/Option;
-	public abstract fun id ()Ljava/lang/String;
-	public fun type ()Ljava/lang/Class;
-	public abstract fun valueType ()Lnet/kyori/option/value/ValueType;
+public abstract interface class net/kyori/adventure/nbt/ArrayBinaryTag : net/kyori/adventure/nbt/BinaryTag {
+	public abstract fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
 }
 
-public abstract interface class net/kyori/option/OptionSchema {
-	public static fun childSchema (Lnet/kyori/option/OptionSchema;)Lnet/kyori/option/OptionSchema$Mutable;
-	public static fun emptySchema ()Lnet/kyori/option/OptionSchema$Mutable;
-	public abstract fun emptyState ()Lnet/kyori/option/OptionState;
-	public static fun globalSchema ()Lnet/kyori/option/OptionSchema$Mutable;
-	public abstract fun has (Lnet/kyori/option/Option;)Z
-	public abstract fun knownOptions ()Ljava/util/Set;
-	public abstract fun stateBuilder ()Lnet/kyori/option/OptionState$Builder;
-	public abstract fun versionedStateBuilder ()Lnet/kyori/option/OptionState$VersionedBuilder;
+public abstract interface class net/kyori/adventure/nbt/BinaryTag : net/kyori/adventure/nbt/BinaryTagLike, net/kyori/examination/Examinable {
+	public fun asBinaryTag ()Lnet/kyori/adventure/nbt/BinaryTag;
+	public abstract fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
 }
 
-public abstract interface class net/kyori/option/OptionSchema$Mutable : net/kyori/option/OptionSchema {
-	public abstract fun booleanOption (Ljava/lang/String;Z)Lnet/kyori/option/Option;
-	public abstract fun doubleOption (Ljava/lang/String;D)Lnet/kyori/option/Option;
-	public abstract fun enumOption (Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Enum;)Lnet/kyori/option/Option;
-	public abstract fun frozenView ()Lnet/kyori/option/OptionSchema;
-	public abstract fun intOption (Ljava/lang/String;I)Lnet/kyori/option/Option;
-	public abstract fun stringOption (Ljava/lang/String;Ljava/lang/String;)Lnet/kyori/option/Option;
+public final class net/kyori/adventure/nbt/BinaryTagIO {
+	public static fun readCompressedInputStream (Ljava/io/InputStream;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static fun readCompressedPath (Ljava/nio/file/Path;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static fun readDataInput (Ljava/io/DataInput;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static fun readInputStream (Ljava/io/InputStream;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static fun readPath (Ljava/nio/file/Path;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static fun reader ()Lnet/kyori/adventure/nbt/BinaryTagIO$Reader;
+	public static fun reader (J)Lnet/kyori/adventure/nbt/BinaryTagIO$Reader;
+	public static fun unlimitedReader ()Lnet/kyori/adventure/nbt/BinaryTagIO$Reader;
+	public static fun writeCompressedOutputStream (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/OutputStream;)V
+	public static fun writeCompressedPath (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/nio/file/Path;)V
+	public static fun writeDataOutput (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/DataOutput;)V
+	public static fun writeOutputStream (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/OutputStream;)V
+	public static fun writePath (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/nio/file/Path;)V
+	public static fun writer ()Lnet/kyori/adventure/nbt/BinaryTagIO$Writer;
 }
 
-public abstract interface class net/kyori/option/OptionState {
-	public static fun emptyOptionState ()Lnet/kyori/option/OptionState;
-	public abstract fun has (Lnet/kyori/option/Option;)Z
-	public static fun optionState ()Lnet/kyori/option/OptionState$Builder;
-	public abstract fun schema ()Lnet/kyori/option/OptionSchema;
-	public abstract fun value (Lnet/kyori/option/Option;)Ljava/lang/Object;
-	public static fun versionedOptionState ()Lnet/kyori/option/OptionState$VersionedBuilder;
+public abstract class net/kyori/adventure/nbt/BinaryTagIO$Compression {
+	public static final field GZIP Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;
+	public static final field NONE Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;
+	public static final field ZLIB Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;
+	public fun <init> ()V
 }
 
-public abstract interface class net/kyori/option/OptionState$Builder {
-	public abstract fun build ()Lnet/kyori/option/OptionState;
-	public abstract fun value (Lnet/kyori/option/Option;Ljava/lang/Object;)Lnet/kyori/option/OptionState$Builder;
-	public abstract fun values (Lnet/kyori/option/OptionState;)Lnet/kyori/option/OptionState$Builder;
-	public abstract fun values (Lnet/kyori/option/value/ValueSource;)Lnet/kyori/option/OptionState$Builder;
+public abstract interface class net/kyori/adventure/nbt/BinaryTagIO$Reader {
+	public abstract fun read (Ljava/io/DataInput;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun read (Ljava/io/InputStream;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun read (Ljava/io/InputStream;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun read (Ljava/nio/file/Path;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun read (Ljava/nio/file/Path;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun readNamed (Ljava/io/DataInput;)Ljava/util/Map$Entry;
+	public fun readNamed (Ljava/io/InputStream;)Ljava/util/Map$Entry;
+	public abstract fun readNamed (Ljava/io/InputStream;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)Ljava/util/Map$Entry;
+	public fun readNamed (Ljava/nio/file/Path;)Ljava/util/Map$Entry;
+	public abstract fun readNamed (Ljava/nio/file/Path;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)Ljava/util/Map$Entry;
+	public abstract fun readNameless (Ljava/io/DataInput;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun readNameless (Ljava/io/InputStream;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun readNameless (Ljava/io/InputStream;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun readNameless (Ljava/nio/file/Path;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun readNameless (Ljava/nio/file/Path;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
 }
 
-public abstract interface class net/kyori/option/OptionState$Versioned : net/kyori/option/OptionState {
-	public abstract fun at (I)Lnet/kyori/option/OptionState$Versioned;
-	public abstract fun childStates ()Ljava/util/Map;
+public abstract interface class net/kyori/adventure/nbt/BinaryTagIO$Writer {
+	public abstract fun write (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/DataOutput;)V
+	public fun write (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/OutputStream;)V
+	public abstract fun write (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/OutputStream;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)V
+	public fun write (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/nio/file/Path;)V
+	public abstract fun write (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/nio/file/Path;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)V
+	public abstract fun writeNamed (Ljava/util/Map$Entry;Ljava/io/DataOutput;)V
+	public fun writeNamed (Ljava/util/Map$Entry;Ljava/io/OutputStream;)V
+	public abstract fun writeNamed (Ljava/util/Map$Entry;Ljava/io/OutputStream;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)V
+	public fun writeNamed (Ljava/util/Map$Entry;Ljava/nio/file/Path;)V
+	public abstract fun writeNamed (Ljava/util/Map$Entry;Ljava/nio/file/Path;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)V
+	public abstract fun writeNameless (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/DataOutput;)V
+	public fun writeNameless (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/OutputStream;)V
+	public abstract fun writeNameless (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/OutputStream;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)V
+	public fun writeNameless (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/nio/file/Path;)V
+	public abstract fun writeNameless (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/nio/file/Path;Lnet/kyori/adventure/nbt/BinaryTagIO$Compression;)V
 }
 
-public abstract interface class net/kyori/option/OptionState$VersionedBuilder {
-	public abstract fun build ()Lnet/kyori/option/OptionState$Versioned;
-	public abstract fun version (ILjava/util/function/Consumer;)Lnet/kyori/option/OptionState$VersionedBuilder;
+public abstract interface class net/kyori/adventure/nbt/BinaryTagLike {
+	public abstract fun asBinaryTag ()Lnet/kyori/adventure/nbt/BinaryTag;
 }
 
-public abstract interface class net/kyori/option/value/ValueSource {
-	public static fun environmentVariable ()Lnet/kyori/option/value/ValueSource;
-	public static fun environmentVariable (Ljava/lang/String;)Lnet/kyori/option/value/ValueSource;
-	public static fun systemProperty ()Lnet/kyori/option/value/ValueSource;
-	public static fun systemProperty (Ljava/lang/String;)Lnet/kyori/option/value/ValueSource;
-	public abstract fun value (Lnet/kyori/option/Option;)Ljava/lang/Object;
+public abstract class net/kyori/adventure/nbt/BinaryTagType : java/util/function/Predicate {
+	public fun <init> ()V
+	public abstract fun id ()B
+	public abstract fun read (Ljava/io/DataInput;)Lnet/kyori/adventure/nbt/BinaryTag;
+	public synthetic fun test (Ljava/lang/Object;)Z
+	public fun test (Lnet/kyori/adventure/nbt/BinaryTagType;)Z
+	public abstract fun write (Lnet/kyori/adventure/nbt/BinaryTag;Ljava/io/DataOutput;)V
 }
 
-public abstract interface class net/kyori/option/value/ValueType {
-	public static fun booleanType ()Lnet/kyori/option/value/ValueType;
-	public static fun doubleType ()Lnet/kyori/option/value/ValueType;
-	public static fun enumType (Ljava/lang/Class;)Lnet/kyori/option/value/ValueType;
-	public static fun integerType ()Lnet/kyori/option/value/ValueType;
-	public abstract fun parse (Ljava/lang/String;)Ljava/lang/Object;
-	public static fun stringType ()Lnet/kyori/option/value/ValueType;
-	public abstract fun type ()Ljava/lang/Class;
+public final class net/kyori/adventure/nbt/BinaryTagTypes {
+	public static final field BYTE Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field BYTE_ARRAY Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field COMPOUND Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field DOUBLE Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field END Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field FLOAT Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field INT Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field INT_ARRAY Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field LIST Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field LIST_WILDCARD Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field LONG Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field LONG_ARRAY Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field SHORT Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static final field STRING Lnet/kyori/adventure/nbt/BinaryTagType;
+}
+
+public abstract interface class net/kyori/adventure/nbt/ByteArrayBinaryTag : java/lang/Iterable, net/kyori/adventure/nbt/ArrayBinaryTag {
+	public static fun byteArrayBinaryTag ([B)Lnet/kyori/adventure/nbt/ByteArrayBinaryTag;
+	public abstract fun get (I)B
+	public static fun of ([B)Lnet/kyori/adventure/nbt/ByteArrayBinaryTag;
+	public abstract fun size ()I
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()[B
+}
+
+public abstract interface class net/kyori/adventure/nbt/ByteBinaryTag : net/kyori/adventure/nbt/NumberBinaryTag {
+	public static final field ONE Lnet/kyori/adventure/nbt/ByteBinaryTag;
+	public static final field ZERO Lnet/kyori/adventure/nbt/ByteBinaryTag;
+	public static fun byteBinaryTag (B)Lnet/kyori/adventure/nbt/ByteBinaryTag;
+	public static fun of (B)Lnet/kyori/adventure/nbt/ByteBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()B
+}
+
+public abstract interface class net/kyori/adventure/nbt/CompoundBinaryTag : java/lang/Iterable, net/kyori/adventure/nbt/BinaryTag, net/kyori/adventure/nbt/CompoundTagSetter {
+	public static fun builder ()Lnet/kyori/adventure/nbt/CompoundBinaryTag$Builder;
+	public static fun empty ()Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static fun from (Ljava/util/Map;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun get (Ljava/lang/String;)Lnet/kyori/adventure/nbt/BinaryTag;
+	public fun getBoolean (Ljava/lang/String;)Z
+	public fun getBoolean (Ljava/lang/String;Z)Z
+	public fun getByte (Ljava/lang/String;)B
+	public abstract fun getByte (Ljava/lang/String;B)B
+	public abstract fun getByteArray (Ljava/lang/String;)[B
+	public abstract fun getByteArray (Ljava/lang/String;[B)[B
+	public fun getCompound (Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun getCompound (Ljava/lang/String;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun getDouble (Ljava/lang/String;)D
+	public abstract fun getDouble (Ljava/lang/String;D)D
+	public fun getFloat (Ljava/lang/String;)F
+	public abstract fun getFloat (Ljava/lang/String;F)F
+	public fun getInt (Ljava/lang/String;)I
+	public abstract fun getInt (Ljava/lang/String;I)I
+	public abstract fun getIntArray (Ljava/lang/String;)[I
+	public abstract fun getIntArray (Ljava/lang/String;[I)[I
+	public fun getList (Ljava/lang/String;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public fun getList (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun getList (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun getList (Ljava/lang/String;Lnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public fun getLong (Ljava/lang/String;)J
+	public abstract fun getLong (Ljava/lang/String;J)J
+	public abstract fun getLongArray (Ljava/lang/String;)[J
+	public abstract fun getLongArray (Ljava/lang/String;[J)[J
+	public fun getShort (Ljava/lang/String;)S
+	public abstract fun getShort (Ljava/lang/String;S)S
+	public fun getString (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun getString (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun isEmpty ()Z
+	public abstract fun keySet ()Ljava/util/Set;
+	public abstract fun size ()I
+	public abstract fun stream ()Ljava/util/stream/Stream;
+	public static fun toCompoundTag ()Ljava/util/stream/Collector;
+	public static fun toCompoundTag (Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/util/stream/Collector;
+	public static fun toCompoundTag (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ljava/util/stream/Collector;
+	public static fun toCompoundTag (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/util/stream/Collector;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+}
+
+public abstract interface class net/kyori/adventure/nbt/CompoundBinaryTag$Builder : net/kyori/adventure/nbt/CompoundTagSetter {
+	public abstract fun build ()Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+}
+
+public abstract interface class net/kyori/adventure/nbt/CompoundTagSetter {
+	public abstract fun put (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTag;)Ljava/lang/Object;
+	public abstract fun put (Ljava/util/Map;)Ljava/lang/Object;
+	public abstract fun put (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ljava/lang/Object;
+	public fun putBoolean (Ljava/lang/String;Z)Ljava/lang/Object;
+	public fun putByte (Ljava/lang/String;B)Ljava/lang/Object;
+	public fun putByteArray (Ljava/lang/String;[B)Ljava/lang/Object;
+	public fun putDouble (Ljava/lang/String;D)Ljava/lang/Object;
+	public fun putFloat (Ljava/lang/String;F)Ljava/lang/Object;
+	public fun putInt (Ljava/lang/String;I)Ljava/lang/Object;
+	public fun putIntArray (Ljava/lang/String;[I)Ljava/lang/Object;
+	public fun putLong (Ljava/lang/String;J)Ljava/lang/Object;
+	public fun putLongArray (Ljava/lang/String;[J)Ljava/lang/Object;
+	public fun putShort (Ljava/lang/String;S)Ljava/lang/Object;
+	public fun putString (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+	public fun remove (Ljava/lang/String;)Ljava/lang/Object;
+	public abstract fun remove (Ljava/lang/String;Ljava/util/function/Consumer;)Ljava/lang/Object;
+}
+
+public abstract interface class net/kyori/adventure/nbt/DoubleBinaryTag : net/kyori/adventure/nbt/NumberBinaryTag {
+	public static fun doubleBinaryTag (D)Lnet/kyori/adventure/nbt/DoubleBinaryTag;
+	public static fun of (D)Lnet/kyori/adventure/nbt/DoubleBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()D
+}
+
+public abstract interface class net/kyori/adventure/nbt/EndBinaryTag : net/kyori/adventure/nbt/BinaryTag {
+	public static fun endBinaryTag ()Lnet/kyori/adventure/nbt/EndBinaryTag;
+	public static fun get ()Lnet/kyori/adventure/nbt/EndBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+}
+
+public abstract interface class net/kyori/adventure/nbt/FloatBinaryTag : net/kyori/adventure/nbt/NumberBinaryTag {
+	public static fun floatBinaryTag (F)Lnet/kyori/adventure/nbt/FloatBinaryTag;
+	public static fun of (F)Lnet/kyori/adventure/nbt/FloatBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()F
+}
+
+public abstract interface class net/kyori/adventure/nbt/IntArrayBinaryTag : java/lang/Iterable, net/kyori/adventure/nbt/ArrayBinaryTag {
+	public abstract fun forEachInt (Ljava/util/function/IntConsumer;)V
+	public abstract fun get (I)I
+	public static fun intArrayBinaryTag ([I)Lnet/kyori/adventure/nbt/IntArrayBinaryTag;
+	public synthetic fun iterator ()Ljava/util/Iterator;
+	public abstract fun iterator ()Ljava/util/PrimitiveIterator$OfInt;
+	public static fun of ([I)Lnet/kyori/adventure/nbt/IntArrayBinaryTag;
+	public abstract fun size ()I
+	public abstract fun spliterator ()Ljava/util/Spliterator$OfInt;
+	public synthetic fun spliterator ()Ljava/util/Spliterator;
+	public abstract fun stream ()Ljava/util/stream/IntStream;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()[I
+}
+
+public abstract interface class net/kyori/adventure/nbt/IntBinaryTag : net/kyori/adventure/nbt/NumberBinaryTag {
+	public static fun intBinaryTag (I)Lnet/kyori/adventure/nbt/IntBinaryTag;
+	public static fun of (I)Lnet/kyori/adventure/nbt/IntBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()I
+}
+
+public abstract interface class net/kyori/adventure/nbt/ListBinaryTag : java/lang/Iterable, net/kyori/adventure/nbt/BinaryTag, net/kyori/adventure/nbt/ListTagSetter {
+	public static fun builder ()Lnet/kyori/adventure/nbt/ListBinaryTag$Builder;
+	public static fun builder (Lnet/kyori/adventure/nbt/BinaryTagType;)Lnet/kyori/adventure/nbt/ListBinaryTag$Builder;
+	public abstract fun elementType ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static fun empty ()Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static fun from (Ljava/lang/Iterable;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun get (I)Lnet/kyori/adventure/nbt/BinaryTag;
+	public fun getByte (I)B
+	public fun getByte (IB)B
+	public fun getByteArray (I)[B
+	public fun getByteArray (I[B)[B
+	public fun getCompound (I)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun getCompound (ILnet/kyori/adventure/nbt/CompoundBinaryTag;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun getDouble (I)D
+	public fun getDouble (ID)D
+	public fun getFloat (I)F
+	public fun getFloat (IF)F
+	public fun getInt (I)I
+	public fun getInt (II)I
+	public fun getIntArray (I)[I
+	public fun getIntArray (I[I)[I
+	public fun getList (I)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public fun getList (ILnet/kyori/adventure/nbt/BinaryTagType;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public fun getList (ILnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public fun getList (ILnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public fun getLong (I)J
+	public fun getLong (IJ)J
+	public fun getLongArray (I)[J
+	public fun getLongArray (I[J)[J
+	public fun getShort (I)S
+	public fun getShort (IS)S
+	public fun getString (I)Ljava/lang/String;
+	public fun getString (ILjava/lang/String;)Ljava/lang/String;
+	public static fun heterogeneousListBinaryTag ()Lnet/kyori/adventure/nbt/ListBinaryTag$Builder;
+	public abstract fun isEmpty ()Z
+	public static fun listBinaryTag (Lnet/kyori/adventure/nbt/BinaryTagType;Ljava/util/List;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public fun listType ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public static fun of (Lnet/kyori/adventure/nbt/BinaryTagType;Ljava/util/List;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun remove (ILjava/util/function/Consumer;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun set (ILnet/kyori/adventure/nbt/BinaryTag;Ljava/util/function/Consumer;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun size ()I
+	public abstract fun stream ()Ljava/util/stream/Stream;
+	public static fun toListTag ()Ljava/util/stream/Collector;
+	public static fun toListTag (Lnet/kyori/adventure/nbt/ListBinaryTag;)Ljava/util/stream/Collector;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun unwrapHeterogeneity ()Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun wrapHeterogeneity ()Lnet/kyori/adventure/nbt/ListBinaryTag;
+}
+
+public abstract interface class net/kyori/adventure/nbt/ListBinaryTag$Builder : net/kyori/adventure/nbt/ListTagSetter {
+	public abstract fun build ()Lnet/kyori/adventure/nbt/ListBinaryTag;
+}
+
+public abstract interface class net/kyori/adventure/nbt/ListTagSetter {
+	public abstract fun add (Ljava/lang/Iterable;)Ljava/lang/Object;
+	public abstract fun add (Lnet/kyori/adventure/nbt/BinaryTag;)Ljava/lang/Object;
+}
+
+public abstract interface class net/kyori/adventure/nbt/LongArrayBinaryTag : java/lang/Iterable, net/kyori/adventure/nbt/ArrayBinaryTag {
+	public abstract fun forEachLong (Ljava/util/function/LongConsumer;)V
+	public abstract fun get (I)J
+	public synthetic fun iterator ()Ljava/util/Iterator;
+	public abstract fun iterator ()Ljava/util/PrimitiveIterator$OfLong;
+	public static fun longArrayBinaryTag ([J)Lnet/kyori/adventure/nbt/LongArrayBinaryTag;
+	public static fun of ([J)Lnet/kyori/adventure/nbt/LongArrayBinaryTag;
+	public abstract fun size ()I
+	public abstract fun spliterator ()Ljava/util/Spliterator$OfLong;
+	public synthetic fun spliterator ()Ljava/util/Spliterator;
+	public abstract fun stream ()Ljava/util/stream/LongStream;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()[J
+}
+
+public abstract interface class net/kyori/adventure/nbt/LongBinaryTag : net/kyori/adventure/nbt/NumberBinaryTag {
+	public static fun longBinaryTag (J)Lnet/kyori/adventure/nbt/LongBinaryTag;
+	public static fun of (J)Lnet/kyori/adventure/nbt/LongBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()J
+}
+
+public abstract interface class net/kyori/adventure/nbt/NumberBinaryTag : net/kyori/adventure/nbt/BinaryTag {
+	public abstract fun byteValue ()B
+	public abstract fun doubleValue ()D
+	public abstract fun floatValue ()F
+	public abstract fun intValue ()I
+	public abstract fun longValue ()J
+	public abstract fun numberValue ()Ljava/lang/Number;
+	public abstract fun shortValue ()S
+	public abstract fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+}
+
+public abstract interface class net/kyori/adventure/nbt/ShortBinaryTag : net/kyori/adventure/nbt/NumberBinaryTag {
+	public static fun of (S)Lnet/kyori/adventure/nbt/ShortBinaryTag;
+	public static fun shortBinaryTag (S)Lnet/kyori/adventure/nbt/ShortBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()S
+}
+
+public abstract interface class net/kyori/adventure/nbt/StringBinaryTag : net/kyori/adventure/nbt/BinaryTag {
+	public static fun of (Ljava/lang/String;)Lnet/kyori/adventure/nbt/StringBinaryTag;
+	public static fun stringBinaryTag (Ljava/lang/String;)Lnet/kyori/adventure/nbt/StringBinaryTag;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public final class net/kyori/adventure/nbt/TagStringIO {
+	public fun asCompound (Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun asCompound (Ljava/lang/String;Ljava/lang/Appendable;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun asString (Lnet/kyori/adventure/nbt/BinaryTag;)Ljava/lang/String;
+	public fun asString (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ljava/lang/String;
+	public fun asTag (Ljava/lang/String;)Lnet/kyori/adventure/nbt/BinaryTag;
+	public fun asTag (Ljava/lang/String;Ljava/lang/Appendable;)Lnet/kyori/adventure/nbt/BinaryTag;
+	public static fun builder ()Lnet/kyori/adventure/nbt/TagStringIO$Builder;
+	public static fun get ()Lnet/kyori/adventure/nbt/TagStringIO;
+	public static fun tagStringIO ()Lnet/kyori/adventure/nbt/TagStringIO;
+	public fun toWriter (Lnet/kyori/adventure/nbt/BinaryTag;Ljava/io/Writer;)V
+	public fun toWriter (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/io/Writer;)V
+}
+
+public class net/kyori/adventure/nbt/TagStringIO$Builder {
+	public fun acceptHeterogeneousLists (Z)Lnet/kyori/adventure/nbt/TagStringIO$Builder;
+	public fun acceptLegacy (Z)Lnet/kyori/adventure/nbt/TagStringIO$Builder;
+	public fun build ()Lnet/kyori/adventure/nbt/TagStringIO;
+	public fun emitHeterogeneousLists (Z)Lnet/kyori/adventure/nbt/TagStringIO$Builder;
+	public fun emitLegacy (Z)Lnet/kyori/adventure/nbt/TagStringIO$Builder;
+	public fun indent (I)Lnet/kyori/adventure/nbt/TagStringIO$Builder;
+	public fun indentTab (I)Lnet/kyori/adventure/nbt/TagStringIO$Builder;
+}
+
+public abstract class net/kyori/examination/AbstractExaminer : net/kyori/examination/Examiner {
+	public fun <init> ()V
+	protected abstract fun array (ILjava/util/function/IntFunction;)Ljava/lang/Object;
+	protected abstract fun array ([Ljava/lang/Object;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected abstract fun collection (Ljava/util/Collection;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected abstract fun examinable (Ljava/lang/String;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	public fun examine (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun examine (Ljava/lang/String;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	public fun examine ([B)Ljava/lang/Object;
+	public fun examine ([C)Ljava/lang/Object;
+	public fun examine ([D)Ljava/lang/Object;
+	public fun examine ([F)Ljava/lang/Object;
+	public fun examine ([I)Ljava/lang/Object;
+	public fun examine ([J)Ljava/lang/Object;
+	public fun examine ([S)Ljava/lang/Object;
+	public fun examine ([Z)Ljava/lang/Object;
+	protected abstract fun map (Ljava/util/Map;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected abstract fun nil ()Ljava/lang/Object;
+	protected abstract fun scalar (Ljava/lang/Object;)Ljava/lang/Object;
+	protected abstract fun stream (Ljava/util/stream/DoubleStream;)Ljava/lang/Object;
+	protected abstract fun stream (Ljava/util/stream/IntStream;)Ljava/lang/Object;
+	protected abstract fun stream (Ljava/util/stream/LongStream;)Ljava/lang/Object;
+	protected abstract fun stream (Ljava/util/stream/Stream;)Ljava/lang/Object;
+}
+
+public abstract interface class net/kyori/examination/Examinable {
+	public fun examinableName ()Ljava/lang/String;
+	public fun examinableProperties ()Ljava/util/stream/Stream;
+	public fun examine (Lnet/kyori/examination/Examiner;)Ljava/lang/Object;
+}
+
+public abstract class net/kyori/examination/ExaminableProperty {
+	public abstract fun examine (Lnet/kyori/examination/Examiner;)Ljava/lang/Object;
+	public abstract fun name ()Ljava/lang/String;
+	public static fun of (Ljava/lang/String;B)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;C)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;D)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;F)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;I)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;J)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;Ljava/lang/Object;)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;Ljava/lang/String;)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;S)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;Z)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[B)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[C)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[D)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[F)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[I)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[J)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[S)Lnet/kyori/examination/ExaminableProperty;
+	public static fun of (Ljava/lang/String;[Z)Lnet/kyori/examination/ExaminableProperty;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class net/kyori/examination/Examiner {
+	public abstract fun examine (B)Ljava/lang/Object;
+	public abstract fun examine (C)Ljava/lang/Object;
+	public abstract fun examine (D)Ljava/lang/Object;
+	public abstract fun examine (F)Ljava/lang/Object;
+	public abstract fun examine (I)Ljava/lang/Object;
+	public abstract fun examine (J)Ljava/lang/Object;
+	public abstract fun examine (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun examine (Ljava/lang/String;)Ljava/lang/Object;
+	public abstract fun examine (Ljava/lang/String;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	public fun examine (Lnet/kyori/examination/Examinable;)Ljava/lang/Object;
+	public abstract fun examine (S)Ljava/lang/Object;
+	public abstract fun examine (Z)Ljava/lang/Object;
+	public abstract fun examine ([B)Ljava/lang/Object;
+	public abstract fun examine ([C)Ljava/lang/Object;
+	public abstract fun examine ([D)Ljava/lang/Object;
+	public abstract fun examine ([F)Ljava/lang/Object;
+	public abstract fun examine ([I)Ljava/lang/Object;
+	public abstract fun examine ([J)Ljava/lang/Object;
+	public abstract fun examine ([S)Ljava/lang/Object;
+	public abstract fun examine ([Z)Ljava/lang/Object;
+}
+
+public class net/kyori/examination/string/MultiLineStringExaminer : net/kyori/examination/AbstractExaminer {
+	public fun <init> (Lnet/kyori/examination/string/StringExaminer;)V
+	protected synthetic fun array (ILjava/util/function/IntFunction;)Ljava/lang/Object;
+	protected fun array (ILjava/util/function/IntFunction;)Ljava/util/stream/Stream;
+	protected synthetic fun array ([Ljava/lang/Object;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun array ([Ljava/lang/Object;Ljava/util/stream/Stream;)Ljava/util/stream/Stream;
+	protected synthetic fun collection (Ljava/util/Collection;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun collection (Ljava/util/Collection;Ljava/util/stream/Stream;)Ljava/util/stream/Stream;
+	protected synthetic fun examinable (Ljava/lang/String;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun examinable (Ljava/lang/String;Ljava/util/stream/Stream;)Ljava/util/stream/Stream;
+	public synthetic fun examine (B)Ljava/lang/Object;
+	public fun examine (B)Ljava/util/stream/Stream;
+	public synthetic fun examine (C)Ljava/lang/Object;
+	public fun examine (C)Ljava/util/stream/Stream;
+	public synthetic fun examine (D)Ljava/lang/Object;
+	public fun examine (D)Ljava/util/stream/Stream;
+	public synthetic fun examine (F)Ljava/lang/Object;
+	public fun examine (F)Ljava/util/stream/Stream;
+	public synthetic fun examine (I)Ljava/lang/Object;
+	public fun examine (I)Ljava/util/stream/Stream;
+	public synthetic fun examine (J)Ljava/lang/Object;
+	public fun examine (J)Ljava/util/stream/Stream;
+	public synthetic fun examine (Ljava/lang/String;)Ljava/lang/Object;
+	public fun examine (Ljava/lang/String;)Ljava/util/stream/Stream;
+	public synthetic fun examine (S)Ljava/lang/Object;
+	public fun examine (S)Ljava/util/stream/Stream;
+	public synthetic fun examine (Z)Ljava/lang/Object;
+	public fun examine (Z)Ljava/util/stream/Stream;
+	protected synthetic fun map (Ljava/util/Map;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun map (Ljava/util/Map;Ljava/util/stream/Stream;)Ljava/util/stream/Stream;
+	protected synthetic fun nil ()Ljava/lang/Object;
+	protected fun nil ()Ljava/util/stream/Stream;
+	protected synthetic fun scalar (Ljava/lang/Object;)Ljava/lang/Object;
+	protected fun scalar (Ljava/lang/Object;)Ljava/util/stream/Stream;
+	public static fun simpleEscaping ()Lnet/kyori/examination/string/MultiLineStringExaminer;
+	protected synthetic fun stream (Ljava/util/stream/DoubleStream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/DoubleStream;)Ljava/util/stream/Stream;
+	protected synthetic fun stream (Ljava/util/stream/IntStream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/IntStream;)Ljava/util/stream/Stream;
+	protected synthetic fun stream (Ljava/util/stream/LongStream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/LongStream;)Ljava/util/stream/Stream;
+	protected synthetic fun stream (Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/Stream;)Ljava/util/stream/Stream;
+}
+
+public class net/kyori/examination/string/StringExaminer : net/kyori/examination/AbstractExaminer {
+	public fun <init> (Ljava/util/function/Function;)V
+	protected synthetic fun array (ILjava/util/function/IntFunction;)Ljava/lang/Object;
+	protected fun array (ILjava/util/function/IntFunction;)Ljava/lang/String;
+	protected synthetic fun array ([Ljava/lang/Object;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun array ([Ljava/lang/Object;Ljava/util/stream/Stream;)Ljava/lang/String;
+	protected synthetic fun collection (Ljava/util/Collection;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun collection (Ljava/util/Collection;Ljava/util/stream/Stream;)Ljava/lang/String;
+	protected synthetic fun examinable (Ljava/lang/String;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun examinable (Ljava/lang/String;Ljava/util/stream/Stream;)Ljava/lang/String;
+	public synthetic fun examine (B)Ljava/lang/Object;
+	public fun examine (B)Ljava/lang/String;
+	public synthetic fun examine (C)Ljava/lang/Object;
+	public fun examine (C)Ljava/lang/String;
+	public synthetic fun examine (D)Ljava/lang/Object;
+	public fun examine (D)Ljava/lang/String;
+	public synthetic fun examine (F)Ljava/lang/Object;
+	public fun examine (F)Ljava/lang/String;
+	public synthetic fun examine (I)Ljava/lang/Object;
+	public fun examine (I)Ljava/lang/String;
+	public synthetic fun examine (J)Ljava/lang/Object;
+	public fun examine (J)Ljava/lang/String;
+	public synthetic fun examine (Ljava/lang/String;)Ljava/lang/Object;
+	public fun examine (Ljava/lang/String;)Ljava/lang/String;
+	public synthetic fun examine (S)Ljava/lang/Object;
+	public fun examine (S)Ljava/lang/String;
+	public synthetic fun examine (Z)Ljava/lang/Object;
+	public fun examine (Z)Ljava/lang/String;
+	protected synthetic fun map (Ljava/util/Map;Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun map (Ljava/util/Map;Ljava/util/stream/Stream;)Ljava/lang/String;
+	protected synthetic fun nil ()Ljava/lang/Object;
+	protected fun nil ()Ljava/lang/String;
+	protected synthetic fun scalar (Ljava/lang/Object;)Ljava/lang/Object;
+	protected fun scalar (Ljava/lang/Object;)Ljava/lang/String;
+	public static fun simpleEscaping ()Lnet/kyori/examination/string/StringExaminer;
+	protected synthetic fun stream (Ljava/util/stream/DoubleStream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/DoubleStream;)Ljava/lang/String;
+	protected synthetic fun stream (Ljava/util/stream/IntStream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/IntStream;)Ljava/lang/String;
+	protected synthetic fun stream (Ljava/util/stream/LongStream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/LongStream;)Ljava/lang/String;
+	protected synthetic fun stream (Ljava/util/stream/Stream;)Ljava/lang/Object;
+	protected fun stream (Ljava/util/stream/Stream;)Ljava/lang/String;
 }
 
 public final class okhttp3/Address {
@@ -38258,12 +38715,9 @@ public abstract interface class org/spongepowered/configurate/ConfigurationNode 
 	public fun get (Ljava/lang/Class;)Ljava/lang/Object;
 	public fun get (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun get (Ljava/lang/Class;Ljava/util/function/Supplier;)Ljava/lang/Object;
-	public abstract fun get (Ljava/lang/reflect/AnnotatedType;)Ljava/lang/Object;
-	public abstract fun get (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
-	public abstract fun get (Ljava/lang/reflect/AnnotatedType;Ljava/util/function/Supplier;)Ljava/lang/Object;
 	public abstract fun get (Ljava/lang/reflect/Type;)Ljava/lang/Object;
-	public abstract fun get (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
-	public abstract fun get (Ljava/lang/reflect/Type;Ljava/util/function/Supplier;)Ljava/lang/Object;
+	public fun get (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun get (Ljava/lang/reflect/Type;Ljava/util/function/Supplier;)Ljava/lang/Object;
 	public fun getBoolean ()Z
 	public fun getBoolean (Z)Z
 	public fun getDouble ()D
@@ -38308,7 +38762,6 @@ public abstract interface class org/spongepowered/configurate/ConfigurationNode 
 	public abstract fun set (Lio/leangen/geantyref/TypeToken;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/Class;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
-	public abstract fun set (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/reflect/Type;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public fun setList (Lio/leangen/geantyref/TypeToken;Ljava/util/List;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public fun setList (Ljava/lang/Class;Ljava/util/List;)Lorg/spongepowered/configurate/ConfigurationNode;
@@ -38468,8 +38921,6 @@ public abstract interface class org/spongepowered/configurate/ScopedConfiguratio
 	public fun set (Ljava/lang/Class;Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
 	public synthetic fun set (Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
-	public synthetic fun set (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
-	public fun set (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
 	public synthetic fun set (Ljava/lang/reflect/Type;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public fun set (Ljava/lang/reflect/Type;Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
 	public synthetic fun setList (Lio/leangen/geantyref/TypeToken;Ljava/util/List;)Lorg/spongepowered/configurate/ConfigurationNode;
@@ -38494,10 +38945,6 @@ public final class org/spongepowered/configurate/kotlin/BuildersKt {
 public final class org/spongepowered/configurate/kotlin/ObjectMappingKt {
 	public static final fun dataClassFieldDiscoverer ()Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static final fun objectMapperFactory ()Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;
-}
-
-public final class org/spongepowered/configurate/kotlin/ProcessorsKt {
-	public static final fun kotlinCommentsProcessor ()Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;
 }
 
 public final class org/spongepowered/configurate/kotlin/extensions/ConfigurationNodeExtensionsKt {
@@ -38535,26 +38982,12 @@ public final class org/spongepowered/configurate/kotlin/extensions/NodePathExten
 }
 
 public final class org/spongepowered/configurate/kotlin/extensions/ObjectMapperExtensionsKt {
-	public static final fun addConstraint (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Constraint$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
-	public static final fun addConstraint (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Constraint$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
-	public static final fun addProcessor (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
-	public static final fun addProcessor (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public static final fun get (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;Lkotlin/reflect/KClass;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper;
 	public static final fun get (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection;Lkotlin/reflect/KClass;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 }
 
 public final class org/spongepowered/configurate/kotlin/extensions/PublisherExtensionsKt {
 	public static final fun asFlow (Lorg/spongepowered/configurate/reactive/Publisher;)Lkotlinx/coroutines/flow/Flow;
-}
-
-public abstract class org/spongepowered/configurate/loader/AbstractConfigurationFormat : org/spongepowered/configurate/loader/ConfigurationFormat {
-	protected fun <init> (Ljava/lang/String;Ljava/util/function/Supplier;Ljava/util/Set;)V
-	public fun create (Ljava/net/URL;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public fun create (Ljava/net/URL;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public fun create (Ljava/nio/file/Path;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public fun create (Ljava/nio/file/Path;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public fun id ()Ljava/lang/String;
-	public fun supportedExtensions ()Ljava/util/Set;
 }
 
 public abstract class org/spongepowered/configurate/loader/AbstractConfigurationLoader : org/spongepowered/configurate/loader/ConfigurationLoader {
@@ -38579,8 +39012,6 @@ public abstract class org/spongepowered/configurate/loader/AbstractConfiguration
 }
 
 public abstract class org/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder {
-	public static final field HEADER_MODE Lnet/kyori/option/Option;
-	protected static final field SCHEMA Lnet/kyori/option/OptionSchema;
 	protected field defaultOptions Lorg/spongepowered/configurate/ConfigurationOptions;
 	protected field headerMode Lorg/spongepowered/configurate/loader/HeaderMode;
 	protected field sink Ljava/util/concurrent/Callable;
@@ -38592,14 +39023,9 @@ public abstract class org/spongepowered/configurate/loader/AbstractConfiguration
 	public fun defaultOptions ()Lorg/spongepowered/configurate/ConfigurationOptions;
 	public fun defaultOptions (Ljava/util/function/UnaryOperator;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun defaultOptions (Lorg/spongepowered/configurate/ConfigurationOptions;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
-	public fun editOptions (Ljava/util/function/Consumer;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun file (Ljava/io/File;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun headerMode ()Lorg/spongepowered/configurate/loader/HeaderMode;
 	public fun headerMode (Lorg/spongepowered/configurate/loader/HeaderMode;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
-	protected fun optionSchema ()Lnet/kyori/option/OptionSchema;
-	public fun optionState ()Lnet/kyori/option/OptionState;
-	public fun optionState (Lnet/kyori/option/OptionState;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
-	protected fun optionStateBuilder ()Lnet/kyori/option/OptionState$Builder;
 	public fun path (Ljava/nio/file/Path;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun sink ()Ljava/util/concurrent/Callable;
 	public fun sink (Ljava/util/concurrent/Callable;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
@@ -38628,17 +39054,6 @@ public final class org/spongepowered/configurate/loader/CommentHandlers : java/l
 	public fun toComment (Ljava/util/stream/Stream;)Ljava/util/stream/Stream;
 	public static fun valueOf (Ljava/lang/String;)Lorg/spongepowered/configurate/loader/CommentHandlers;
 	public static fun values ()[Lorg/spongepowered/configurate/loader/CommentHandlers;
-}
-
-public abstract interface class org/spongepowered/configurate/loader/ConfigurationFormat {
-	public fun create (Ljava/net/URL;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public abstract fun create (Ljava/net/URL;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public fun create (Ljava/nio/file/Path;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public abstract fun create (Ljava/nio/file/Path;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
-	public static fun forExtension (Ljava/lang/String;)Lorg/spongepowered/configurate/loader/ConfigurationFormat;
-	public abstract fun id ()Ljava/lang/String;
-	public abstract fun supportedExtensions ()Ljava/util/Set;
-	public static fun supportedFormats ()Ljava/util/Set;
 }
 
 public abstract interface class org/spongepowered/configurate/loader/ConfigurationLoader : org/spongepowered/configurate/ConfigurationNodeFactory {
@@ -38688,7 +39103,6 @@ public abstract interface class org/spongepowered/configurate/objectmapping/Fiel
 public abstract interface class org/spongepowered/configurate/objectmapping/FieldDiscoverer {
 	public abstract fun discover (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer$FieldCollector;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer$InstanceFactory;
 	public static fun emptyConstructorObject ()Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
-	public static fun instantiableObject (Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static fun object (Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static fun object (Lorg/spongepowered/configurate/util/CheckedFunction;Ljava/lang/String;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static fun record ()Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
@@ -38731,7 +39145,6 @@ public abstract interface class org/spongepowered/configurate/objectmapping/Obje
 	public fun addConstraint (Ljava/lang/Class;Lorg/spongepowered/configurate/objectmapping/meta/Constraint$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun addDiscoverer (Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun addNodeResolver (Lorg/spongepowered/configurate/objectmapping/meta/NodeResolver$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
-	public abstract fun addPostProcessor (Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun addProcessor (Ljava/lang/Class;Ljava/lang/Class;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public fun addProcessor (Ljava/lang/Class;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun build ()Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;
@@ -38779,19 +39192,6 @@ public abstract interface class org/spongepowered/configurate/objectmapping/meta
 
 public abstract interface class org/spongepowered/configurate/objectmapping/meta/NodeResolver$Factory {
 	public abstract fun make (Ljava/lang/String;Ljava/lang/reflect/AnnotatedElement;)Lorg/spongepowered/configurate/objectmapping/meta/NodeResolver;
-}
-
-public abstract interface annotation class org/spongepowered/configurate/objectmapping/meta/PostProcess : java/lang/annotation/Annotation {
-}
-
-public abstract interface class org/spongepowered/configurate/objectmapping/meta/PostProcessor {
-	public static fun methodsAnnotated (Ljava/lang/Class;)Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory;
-	public static fun methodsAnnotatedPostProcess ()Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory;
-	public abstract fun postProcess (Ljava/lang/Object;)V
-}
-
-public abstract interface class org/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory {
-	public abstract fun createProcessor (Ljava/lang/reflect/Type;)Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor;
 }
 
 public abstract interface class org/spongepowered/configurate/objectmapping/meta/Processor {
@@ -38936,53 +39336,33 @@ public final class org/spongepowered/configurate/reference/WatchServiceListener$
 	public fun threadFactory (Ljava/util/concurrent/ThreadFactory;)Lorg/spongepowered/configurate/reference/WatchServiceListener$Builder;
 }
 
-public abstract class org/spongepowered/configurate/serialize/AbstractListChildSerializer : org/spongepowered/configurate/serialize/TypeSerializer$Annotated {
+public abstract class org/spongepowered/configurate/serialize/AbstractListChildSerializer : org/spongepowered/configurate/serialize/TypeSerializer {
 	protected fun <init> ()V
-	protected fun createNew (ILjava/lang/reflect/AnnotatedType;)Ljava/lang/Object;
-	protected fun createNew (ILjava/lang/reflect/Type;)Ljava/lang/Object;
-	public final fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
+	protected abstract fun createNew (ILjava/lang/reflect/Type;)Ljava/lang/Object;
+	public final fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	protected abstract fun deserializeSingle (ILjava/lang/Object;Ljava/lang/Object;)V
-	protected fun elementType (Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
-	protected fun elementType (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
-	public fun emptyValue (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
+	protected abstract fun elementType (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
+	public fun emptyValue (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
 	protected abstract fun forEachElement (Ljava/lang/Object;Lorg/spongepowered/configurate/util/CheckedConsumer;)V
-	public final fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
+	public final fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 }
 
 public class org/spongepowered/configurate/serialize/CoercionFailedException : org/spongepowered/configurate/serialize/SerializationException {
 	public fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
-	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/Object;Ljava/lang/String;)V
 }
 
-public abstract interface annotation class org/spongepowered/configurate/serialize/PatternFlags : java/lang/annotation/Annotation {
-	public abstract fun value ()I
-}
-
-public abstract class org/spongepowered/configurate/serialize/ScalarSerializer : org/spongepowered/configurate/serialize/TypeSerializer$Annotated {
+public abstract class org/spongepowered/configurate/serialize/ScalarSerializer : org/spongepowered/configurate/serialize/TypeSerializer {
 	protected fun <init> (Lio/leangen/geantyref/TypeToken;)V
 	protected fun <init> (Ljava/lang/Class;)V
 	public final fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
-	public final fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	public abstract fun deserialize (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	protected abstract fun serialize (Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
-	protected fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
-	public final fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 	public final fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 	public final fun serializeToString (Ljava/lang/Object;)Ljava/lang/String;
 	public final fun tryDeserialize (Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun type ()Lio/leangen/geantyref/TypeToken;
-}
-
-public abstract class org/spongepowered/configurate/serialize/ScalarSerializer$Annotated : org/spongepowered/configurate/serialize/ScalarSerializer {
-	protected fun <init> (Lio/leangen/geantyref/TypeToken;)V
-	protected fun <init> (Ljava/lang/Class;)V
-	public abstract fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun deserialize (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
-	protected fun serialize (Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
-	protected abstract fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
 }
 
 public final class org/spongepowered/configurate/serialize/Scalars {
@@ -39007,44 +39387,24 @@ public class org/spongepowered/configurate/serialize/SerializationException : or
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/Throwable;)V
-	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;)V
-	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;Ljava/lang/Throwable;)V
-	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Throwable;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/String;Ljava/lang/Throwable;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/Throwable;)V
-	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;)V
-	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;Ljava/lang/Throwable;)V
-	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/AnnotatedType;Ljava/lang/Throwable;)V
 	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/Type;Ljava/lang/String;)V
 	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/Type;Ljava/lang/String;Ljava/lang/Throwable;)V
 	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/Type;Ljava/lang/Throwable;)V
-	public fun <init> (Lorg/spongepowered/configurate/NodePath;Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;)V
 	public fun <init> (Lorg/spongepowered/configurate/NodePath;Ljava/lang/reflect/Type;Ljava/lang/String;)V
 	public fun expectedType ()Ljava/lang/reflect/Type;
 	public fun getMessage ()Ljava/lang/String;
-	public final fun initType (Ljava/lang/reflect/AnnotatedType;)V
 	public fun initType (Ljava/lang/reflect/Type;)V
 }
 
 public abstract interface class org/spongepowered/configurate/serialize/TypeSerializer {
-	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	public abstract fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
-	public fun emptyValue (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
 	public fun emptyValue (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
 	public static fun of (Ljava/lang/Class;Ljava/util/function/BiFunction;Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/serialize/ScalarSerializer;
 	public static fun of (Ljava/lang/reflect/Type;Ljava/util/function/BiFunction;Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/serialize/ScalarSerializer;
-	public fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 	public abstract fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
-}
-
-public abstract interface class org/spongepowered/configurate/serialize/TypeSerializer$Annotated : org/spongepowered/configurate/serialize/TypeSerializer {
-	public abstract fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
-	public fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
-	public fun emptyValue (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
-	public fun emptyValue (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
-	public abstract fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
-	public fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 }
 
 public final class org/spongepowered/configurate/serialize/TypeSerializerCollection {
@@ -39054,7 +39414,6 @@ public final class org/spongepowered/configurate/serialize/TypeSerializerCollect
 	public fun equals (Ljava/lang/Object;)Z
 	public fun get (Lio/leangen/geantyref/TypeToken;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 	public fun get (Ljava/lang/Class;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
-	public fun get (Ljava/lang/reflect/AnnotatedType;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 	public fun get (Ljava/lang/reflect/Type;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -39067,7 +39426,6 @@ public class org/spongepowered/configurate/serialize/TypeSerializerCollection$Bu
 	public fun register (Ljava/util/function/Predicate;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun register (Lorg/spongepowered/configurate/serialize/ScalarSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerAll (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
-	public fun registerAnnotated (Ljava/util/function/Predicate;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerAnnotatedObjects (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerExact (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerExact (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
@@ -39171,7 +39529,6 @@ public final class org/spongepowered/configurate/util/Strings {
 }
 
 public final class org/spongepowered/configurate/util/Types {
-	public static fun allDeclaredMethods (Ljava/lang/Class;)Ljava/util/List;
 	public static fun allSuperTypes (Ljava/lang/reflect/Type;)Ljava/util/stream/Stream;
 	public static fun allSuperTypesAndInterfaces (Ljava/lang/reflect/Type;)Ljava/util/stream/Stream;
 	public static fun box (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
@@ -39179,12 +39536,7 @@ public final class org/spongepowered/configurate/util/Types {
 	public static fun defaultValue (Ljava/lang/Class;)Ljava/lang/Object;
 	public static fun isArray (Ljava/lang/reflect/Type;)Z
 	public static fun isBoxedPrimitive (Ljava/lang/reflect/Type;)Z
-	public static fun makeList (Ljava/lang/Class;)Lio/leangen/geantyref/TypeToken;
 	public static fun makeListType (Lio/leangen/geantyref/TypeToken;)Lio/leangen/geantyref/TypeToken;
-	public static fun makeMap (Lio/leangen/geantyref/TypeToken;Lio/leangen/geantyref/TypeToken;)Lio/leangen/geantyref/TypeToken;
-	public static fun makeMap (Lio/leangen/geantyref/TypeToken;Ljava/lang/Class;)Lio/leangen/geantyref/TypeToken;
-	public static fun makeMap (Ljava/lang/Class;Lio/leangen/geantyref/TypeToken;)Lio/leangen/geantyref/TypeToken;
-	public static fun makeMap (Ljava/lang/Class;Ljava/lang/Class;)Lio/leangen/geantyref/TypeToken;
 	public static fun requireCompleteParameters (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
 	public static fun unbox (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
 }

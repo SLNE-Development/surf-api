@@ -11,6 +11,7 @@ dependencies {
     compileOnlyApi(libs.adventure.serializer.legacy)
     compileOnlyApi(libs.adventure.serializer.plain)
     compileOnlyApi(libs.adventure.serializer.ansi)
+    api(libs.adventure.nbt)
     compileOnlyApi(libs.packetevents.api)
     compileOnlyApi(libs.dazzleconf)
     compileOnlyApi(libs.spongepowered.math)
@@ -41,6 +42,12 @@ dependencies {
     compileOnlyApi(libs.fastutil)
 
     api(libs.bundles.ktor.client)
+}
+
+kotlin {
+    compilerOptions {
+        optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+    }
 }
 
 description = "surf-api-core-api"
