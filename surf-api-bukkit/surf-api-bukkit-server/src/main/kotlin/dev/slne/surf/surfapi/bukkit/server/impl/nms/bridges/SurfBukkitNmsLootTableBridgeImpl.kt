@@ -45,7 +45,7 @@ class SurfBukkitNmsLootTableBridgeImpl : SurfBukkitNmsLootTableBridge {
                 nmsDamageSource.directEntity
             )
 
-        val lastHurtByPlayer = nmsEntity.lastHurtByPlayer
+        val lastHurtByPlayer = nmsEntity.getLastHurtByPlayer()
         if (causedByPlayer && lastHurtByPlayer != null) {
             lootParamsBuilder.withParameter(LootContextParams.LAST_DAMAGE_PLAYER, lastHurtByPlayer)
                 .withLuck(lastHurtByPlayer.luck)

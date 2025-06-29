@@ -10239,6 +10239,14 @@ public final class io/ktor/websocket/serialization/WebsocketChannelSerialization
 	public static final fun sendSerializedBase (Lio/ktor/websocket/WebSocketSession;Ljava/lang/Object;Lio/ktor/util/reflect/TypeInfo;Lio/ktor/serialization/WebsocketContentConverter;Ljava/nio/charset/Charset;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface class io/leangen/geantyref/AnnotatedCaptureType : java/lang/reflect/AnnotatedType {
+	public abstract fun getAnnotatedLowerBounds ()[Ljava/lang/reflect/AnnotatedType;
+	public abstract fun getAnnotatedTypeVariable ()Ljava/lang/reflect/AnnotatedTypeVariable;
+	public abstract fun getAnnotatedUpperBounds ()[Ljava/lang/reflect/AnnotatedType;
+	public abstract fun getAnnotatedWildcardType ()Ljava/lang/reflect/AnnotatedWildcardType;
+	public abstract fun setAnnotatedUpperBounds ([Ljava/lang/reflect/AnnotatedType;)V
+}
+
 public class io/leangen/geantyref/AnnotatedTypeMap : java/util/Map {
 	public fun <init> ()V
 	public fun <init> (Ljava/util/Map;)V
@@ -10340,11 +10348,13 @@ public class io/leangen/geantyref/GenericTypeReflector {
 	public static fun getTypeParameter (Ljava/lang/reflect/Type;Ljava/lang/reflect/TypeVariable;)Ljava/lang/reflect/Type;
 	public static fun getUpperBoundClassAndInterfaces (Ljava/lang/reflect/Type;)Ljava/util/List;
 	public static fun hashCode ([Ljava/lang/reflect/AnnotatedType;)I
+	public static fun isBoxType (Ljava/lang/reflect/Type;)Z
 	public static fun isFullyBound (Ljava/lang/reflect/Type;)Z
 	public static fun isMissingTypeParameters (Ljava/lang/reflect/Type;)Z
 	public static fun isSuperType (Ljava/lang/reflect/Type;Ljava/lang/reflect/Type;)Z
 	public static fun merge ([[Ljava/lang/annotation/Annotation;)[Ljava/lang/annotation/Annotation;
 	public static fun mergeAnnotations (Ljava/lang/reflect/AnnotatedType;Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
+	public static fun reduceBounded (Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
 	public static fun replaceAnnotations (Ljava/lang/reflect/AnnotatedType;[Ljava/lang/annotation/Annotation;)Ljava/lang/reflect/AnnotatedType;
 	public static fun replaceParameters (Ljava/lang/reflect/AnnotatedParameterizedType;[Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedParameterizedType;
 	public static fun resolveExactType (Ljava/lang/reflect/AnnotatedType;Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
@@ -32338,6 +32348,79 @@ public class net/kyori/examination/string/StringExaminer : net/kyori/examination
 	protected fun stream (Ljava/util/stream/Stream;)Ljava/lang/String;
 }
 
+public abstract interface class net/kyori/option/Option {
+	public static fun booleanOption (Ljava/lang/String;Z)Lnet/kyori/option/Option;
+	public abstract fun defaultValue ()Ljava/lang/Object;
+	public static fun enumOption (Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Enum;)Lnet/kyori/option/Option;
+	public abstract fun id ()Ljava/lang/String;
+	public fun type ()Ljava/lang/Class;
+	public abstract fun valueType ()Lnet/kyori/option/value/ValueType;
+}
+
+public abstract interface class net/kyori/option/OptionSchema {
+	public static fun childSchema (Lnet/kyori/option/OptionSchema;)Lnet/kyori/option/OptionSchema$Mutable;
+	public static fun emptySchema ()Lnet/kyori/option/OptionSchema$Mutable;
+	public abstract fun emptyState ()Lnet/kyori/option/OptionState;
+	public static fun globalSchema ()Lnet/kyori/option/OptionSchema$Mutable;
+	public abstract fun has (Lnet/kyori/option/Option;)Z
+	public abstract fun knownOptions ()Ljava/util/Set;
+	public abstract fun stateBuilder ()Lnet/kyori/option/OptionState$Builder;
+	public abstract fun versionedStateBuilder ()Lnet/kyori/option/OptionState$VersionedBuilder;
+}
+
+public abstract interface class net/kyori/option/OptionSchema$Mutable : net/kyori/option/OptionSchema {
+	public abstract fun booleanOption (Ljava/lang/String;Z)Lnet/kyori/option/Option;
+	public abstract fun doubleOption (Ljava/lang/String;D)Lnet/kyori/option/Option;
+	public abstract fun enumOption (Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Enum;)Lnet/kyori/option/Option;
+	public abstract fun frozenView ()Lnet/kyori/option/OptionSchema;
+	public abstract fun intOption (Ljava/lang/String;I)Lnet/kyori/option/Option;
+	public abstract fun stringOption (Ljava/lang/String;Ljava/lang/String;)Lnet/kyori/option/Option;
+}
+
+public abstract interface class net/kyori/option/OptionState {
+	public static fun emptyOptionState ()Lnet/kyori/option/OptionState;
+	public abstract fun has (Lnet/kyori/option/Option;)Z
+	public static fun optionState ()Lnet/kyori/option/OptionState$Builder;
+	public abstract fun schema ()Lnet/kyori/option/OptionSchema;
+	public abstract fun value (Lnet/kyori/option/Option;)Ljava/lang/Object;
+	public static fun versionedOptionState ()Lnet/kyori/option/OptionState$VersionedBuilder;
+}
+
+public abstract interface class net/kyori/option/OptionState$Builder {
+	public abstract fun build ()Lnet/kyori/option/OptionState;
+	public abstract fun value (Lnet/kyori/option/Option;Ljava/lang/Object;)Lnet/kyori/option/OptionState$Builder;
+	public abstract fun values (Lnet/kyori/option/OptionState;)Lnet/kyori/option/OptionState$Builder;
+	public abstract fun values (Lnet/kyori/option/value/ValueSource;)Lnet/kyori/option/OptionState$Builder;
+}
+
+public abstract interface class net/kyori/option/OptionState$Versioned : net/kyori/option/OptionState {
+	public abstract fun at (I)Lnet/kyori/option/OptionState$Versioned;
+	public abstract fun childStates ()Ljava/util/Map;
+}
+
+public abstract interface class net/kyori/option/OptionState$VersionedBuilder {
+	public abstract fun build ()Lnet/kyori/option/OptionState$Versioned;
+	public abstract fun version (ILjava/util/function/Consumer;)Lnet/kyori/option/OptionState$VersionedBuilder;
+}
+
+public abstract interface class net/kyori/option/value/ValueSource {
+	public static fun environmentVariable ()Lnet/kyori/option/value/ValueSource;
+	public static fun environmentVariable (Ljava/lang/String;)Lnet/kyori/option/value/ValueSource;
+	public static fun systemProperty ()Lnet/kyori/option/value/ValueSource;
+	public static fun systemProperty (Ljava/lang/String;)Lnet/kyori/option/value/ValueSource;
+	public abstract fun value (Lnet/kyori/option/Option;)Ljava/lang/Object;
+}
+
+public abstract interface class net/kyori/option/value/ValueType {
+	public static fun booleanType ()Lnet/kyori/option/value/ValueType;
+	public static fun doubleType ()Lnet/kyori/option/value/ValueType;
+	public static fun enumType (Ljava/lang/Class;)Lnet/kyori/option/value/ValueType;
+	public static fun integerType ()Lnet/kyori/option/value/ValueType;
+	public abstract fun parse (Ljava/lang/String;)Ljava/lang/Object;
+	public static fun stringType ()Lnet/kyori/option/value/ValueType;
+	public abstract fun type ()Ljava/lang/Class;
+}
+
 public final class okhttp3/Address {
 	public final fun -deprecated_certificatePinner ()Lokhttp3/CertificatePinner;
 	public final fun -deprecated_connectionSpecs ()Ljava/util/List;
@@ -38488,9 +38571,12 @@ public abstract interface class org/spongepowered/configurate/ConfigurationNode 
 	public fun get (Ljava/lang/Class;)Ljava/lang/Object;
 	public fun get (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun get (Ljava/lang/Class;Ljava/util/function/Supplier;)Ljava/lang/Object;
+	public abstract fun get (Ljava/lang/reflect/AnnotatedType;)Ljava/lang/Object;
+	public abstract fun get (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun get (Ljava/lang/reflect/AnnotatedType;Ljava/util/function/Supplier;)Ljava/lang/Object;
 	public abstract fun get (Ljava/lang/reflect/Type;)Ljava/lang/Object;
-	public fun get (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun get (Ljava/lang/reflect/Type;Ljava/util/function/Supplier;)Ljava/lang/Object;
+	public abstract fun get (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun get (Ljava/lang/reflect/Type;Ljava/util/function/Supplier;)Ljava/lang/Object;
 	public fun getBoolean ()Z
 	public fun getBoolean (Z)Z
 	public fun getDouble ()D
@@ -38535,6 +38621,7 @@ public abstract interface class org/spongepowered/configurate/ConfigurationNode 
 	public abstract fun set (Lio/leangen/geantyref/TypeToken;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/Class;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
+	public abstract fun set (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/reflect/Type;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public fun setList (Lio/leangen/geantyref/TypeToken;Ljava/util/List;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public fun setList (Ljava/lang/Class;Ljava/util/List;)Lorg/spongepowered/configurate/ConfigurationNode;
@@ -38694,6 +38781,8 @@ public abstract interface class org/spongepowered/configurate/ScopedConfiguratio
 	public fun set (Ljava/lang/Class;Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
 	public synthetic fun set (Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public abstract fun set (Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
+	public synthetic fun set (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
+	public fun set (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
 	public synthetic fun set (Ljava/lang/reflect/Type;Ljava/lang/Object;)Lorg/spongepowered/configurate/ConfigurationNode;
 	public fun set (Ljava/lang/reflect/Type;Ljava/lang/Object;)Lorg/spongepowered/configurate/ScopedConfigurationNode;
 	public synthetic fun setList (Lio/leangen/geantyref/TypeToken;Ljava/util/List;)Lorg/spongepowered/configurate/ConfigurationNode;
@@ -38718,6 +38807,10 @@ public final class org/spongepowered/configurate/kotlin/BuildersKt {
 public final class org/spongepowered/configurate/kotlin/ObjectMappingKt {
 	public static final fun dataClassFieldDiscoverer ()Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static final fun objectMapperFactory ()Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;
+}
+
+public final class org/spongepowered/configurate/kotlin/ProcessorsKt {
+	public static final fun kotlinCommentsProcessor ()Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;
 }
 
 public final class org/spongepowered/configurate/kotlin/extensions/ConfigurationNodeExtensionsKt {
@@ -38755,12 +38848,26 @@ public final class org/spongepowered/configurate/kotlin/extensions/NodePathExten
 }
 
 public final class org/spongepowered/configurate/kotlin/extensions/ObjectMapperExtensionsKt {
+	public static final fun addConstraint (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Constraint$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
+	public static final fun addConstraint (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Constraint$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
+	public static final fun addProcessor (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
+	public static final fun addProcessor (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;Lkotlin/reflect/KClass;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public static final fun get (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;Lkotlin/reflect/KClass;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper;
 	public static final fun get (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection;Lkotlin/reflect/KClass;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 }
 
 public final class org/spongepowered/configurate/kotlin/extensions/PublisherExtensionsKt {
 	public static final fun asFlow (Lorg/spongepowered/configurate/reactive/Publisher;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public abstract class org/spongepowered/configurate/loader/AbstractConfigurationFormat : org/spongepowered/configurate/loader/ConfigurationFormat {
+	protected fun <init> (Ljava/lang/String;Ljava/util/function/Supplier;Ljava/util/Set;)V
+	public fun create (Ljava/net/URL;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public fun create (Ljava/net/URL;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public fun create (Ljava/nio/file/Path;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public fun create (Ljava/nio/file/Path;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public fun id ()Ljava/lang/String;
+	public fun supportedExtensions ()Ljava/util/Set;
 }
 
 public abstract class org/spongepowered/configurate/loader/AbstractConfigurationLoader : org/spongepowered/configurate/loader/ConfigurationLoader {
@@ -38785,6 +38892,8 @@ public abstract class org/spongepowered/configurate/loader/AbstractConfiguration
 }
 
 public abstract class org/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder {
+	public static final field HEADER_MODE Lnet/kyori/option/Option;
+	protected static final field SCHEMA Lnet/kyori/option/OptionSchema;
 	protected field defaultOptions Lorg/spongepowered/configurate/ConfigurationOptions;
 	protected field headerMode Lorg/spongepowered/configurate/loader/HeaderMode;
 	protected field sink Ljava/util/concurrent/Callable;
@@ -38796,9 +38905,14 @@ public abstract class org/spongepowered/configurate/loader/AbstractConfiguration
 	public fun defaultOptions ()Lorg/spongepowered/configurate/ConfigurationOptions;
 	public fun defaultOptions (Ljava/util/function/UnaryOperator;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun defaultOptions (Lorg/spongepowered/configurate/ConfigurationOptions;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
+	public fun editOptions (Ljava/util/function/Consumer;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun file (Ljava/io/File;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun headerMode ()Lorg/spongepowered/configurate/loader/HeaderMode;
 	public fun headerMode (Lorg/spongepowered/configurate/loader/HeaderMode;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
+	protected fun optionSchema ()Lnet/kyori/option/OptionSchema;
+	public fun optionState ()Lnet/kyori/option/OptionState;
+	public fun optionState (Lnet/kyori/option/OptionState;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
+	protected fun optionStateBuilder ()Lnet/kyori/option/OptionState$Builder;
 	public fun path (Ljava/nio/file/Path;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
 	public fun sink ()Ljava/util/concurrent/Callable;
 	public fun sink (Ljava/util/concurrent/Callable;)Lorg/spongepowered/configurate/loader/AbstractConfigurationLoader$Builder;
@@ -38827,6 +38941,17 @@ public final class org/spongepowered/configurate/loader/CommentHandlers : java/l
 	public fun toComment (Ljava/util/stream/Stream;)Ljava/util/stream/Stream;
 	public static fun valueOf (Ljava/lang/String;)Lorg/spongepowered/configurate/loader/CommentHandlers;
 	public static fun values ()[Lorg/spongepowered/configurate/loader/CommentHandlers;
+}
+
+public abstract interface class org/spongepowered/configurate/loader/ConfigurationFormat {
+	public fun create (Ljava/net/URL;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public abstract fun create (Ljava/net/URL;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public fun create (Ljava/nio/file/Path;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public abstract fun create (Ljava/nio/file/Path;Lorg/spongepowered/configurate/ConfigurationNode;)Lorg/spongepowered/configurate/loader/ConfigurationLoader;
+	public static fun forExtension (Ljava/lang/String;)Lorg/spongepowered/configurate/loader/ConfigurationFormat;
+	public abstract fun id ()Ljava/lang/String;
+	public abstract fun supportedExtensions ()Ljava/util/Set;
+	public static fun supportedFormats ()Ljava/util/Set;
 }
 
 public abstract interface class org/spongepowered/configurate/loader/ConfigurationLoader : org/spongepowered/configurate/ConfigurationNodeFactory {
@@ -38876,6 +39001,7 @@ public abstract interface class org/spongepowered/configurate/objectmapping/Fiel
 public abstract interface class org/spongepowered/configurate/objectmapping/FieldDiscoverer {
 	public abstract fun discover (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer$FieldCollector;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer$InstanceFactory;
 	public static fun emptyConstructorObject ()Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
+	public static fun instantiableObject (Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static fun object (Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static fun object (Lorg/spongepowered/configurate/util/CheckedFunction;Ljava/lang/String;)Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
 	public static fun record ()Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;
@@ -38918,6 +39044,7 @@ public abstract interface class org/spongepowered/configurate/objectmapping/Obje
 	public fun addConstraint (Ljava/lang/Class;Lorg/spongepowered/configurate/objectmapping/meta/Constraint$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun addDiscoverer (Lorg/spongepowered/configurate/objectmapping/FieldDiscoverer;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun addNodeResolver (Lorg/spongepowered/configurate/objectmapping/meta/NodeResolver$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
+	public abstract fun addPostProcessor (Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun addProcessor (Ljava/lang/Class;Ljava/lang/Class;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public fun addProcessor (Ljava/lang/Class;Lorg/spongepowered/configurate/objectmapping/meta/Processor$Factory;)Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory$Builder;
 	public abstract fun build ()Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;
@@ -38965,6 +39092,19 @@ public abstract interface class org/spongepowered/configurate/objectmapping/meta
 
 public abstract interface class org/spongepowered/configurate/objectmapping/meta/NodeResolver$Factory {
 	public abstract fun make (Ljava/lang/String;Ljava/lang/reflect/AnnotatedElement;)Lorg/spongepowered/configurate/objectmapping/meta/NodeResolver;
+}
+
+public abstract interface annotation class org/spongepowered/configurate/objectmapping/meta/PostProcess : java/lang/annotation/Annotation {
+}
+
+public abstract interface class org/spongepowered/configurate/objectmapping/meta/PostProcessor {
+	public static fun methodsAnnotated (Ljava/lang/Class;)Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory;
+	public static fun methodsAnnotatedPostProcess ()Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory;
+	public abstract fun postProcess (Ljava/lang/Object;)V
+}
+
+public abstract interface class org/spongepowered/configurate/objectmapping/meta/PostProcessor$Factory {
+	public abstract fun createProcessor (Ljava/lang/reflect/Type;)Lorg/spongepowered/configurate/objectmapping/meta/PostProcessor;
 }
 
 public abstract interface class org/spongepowered/configurate/objectmapping/meta/Processor {
@@ -39109,33 +39249,53 @@ public final class org/spongepowered/configurate/reference/WatchServiceListener$
 	public fun threadFactory (Ljava/util/concurrent/ThreadFactory;)Lorg/spongepowered/configurate/reference/WatchServiceListener$Builder;
 }
 
-public abstract class org/spongepowered/configurate/serialize/AbstractListChildSerializer : org/spongepowered/configurate/serialize/TypeSerializer {
+public abstract class org/spongepowered/configurate/serialize/AbstractListChildSerializer : org/spongepowered/configurate/serialize/TypeSerializer$Annotated {
 	protected fun <init> ()V
-	protected abstract fun createNew (ILjava/lang/reflect/Type;)Ljava/lang/Object;
-	public final fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
+	protected fun createNew (ILjava/lang/reflect/AnnotatedType;)Ljava/lang/Object;
+	protected fun createNew (ILjava/lang/reflect/Type;)Ljava/lang/Object;
+	public final fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	protected abstract fun deserializeSingle (ILjava/lang/Object;Ljava/lang/Object;)V
-	protected abstract fun elementType (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
-	public fun emptyValue (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
+	protected fun elementType (Ljava/lang/reflect/AnnotatedType;)Ljava/lang/reflect/AnnotatedType;
+	protected fun elementType (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
+	public fun emptyValue (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
 	protected abstract fun forEachElement (Ljava/lang/Object;Lorg/spongepowered/configurate/util/CheckedConsumer;)V
-	public final fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
+	public final fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 }
 
 public class org/spongepowered/configurate/serialize/CoercionFailedException : org/spongepowered/configurate/serialize/SerializationException {
 	public fun <init> (Ljava/lang/Object;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/Object;Ljava/lang/String;)V
 }
 
-public abstract class org/spongepowered/configurate/serialize/ScalarSerializer : org/spongepowered/configurate/serialize/TypeSerializer {
+public abstract interface annotation class org/spongepowered/configurate/serialize/PatternFlags : java/lang/annotation/Annotation {
+	public abstract fun value ()I
+}
+
+public abstract class org/spongepowered/configurate/serialize/ScalarSerializer : org/spongepowered/configurate/serialize/TypeSerializer$Annotated {
 	protected fun <init> (Lio/leangen/geantyref/TypeToken;)V
 	protected fun <init> (Ljava/lang/Class;)V
 	public final fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	public abstract fun deserialize (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	protected abstract fun serialize (Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
+	protected fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
+	public final fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 	public final fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 	public final fun serializeToString (Ljava/lang/Object;)Ljava/lang/String;
 	public final fun tryDeserialize (Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun type ()Lio/leangen/geantyref/TypeToken;
+}
+
+public abstract class org/spongepowered/configurate/serialize/ScalarSerializer$Annotated : org/spongepowered/configurate/serialize/ScalarSerializer {
+	protected fun <init> (Lio/leangen/geantyref/TypeToken;)V
+	protected fun <init> (Ljava/lang/Class;)V
+	public abstract fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize (Ljava/lang/reflect/Type;Ljava/lang/Object;)Ljava/lang/Object;
+	protected fun serialize (Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
+	protected abstract fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
 }
 
 public final class org/spongepowered/configurate/serialize/Scalars {
@@ -39160,24 +39320,44 @@ public class org/spongepowered/configurate/serialize/SerializationException : or
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/Throwable;)V
+	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public fun <init> (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Throwable;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/String;Ljava/lang/Throwable;)V
 	public fun <init> (Ljava/lang/reflect/Type;Ljava/lang/Throwable;)V
+	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;)V
+	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/AnnotatedType;Ljava/lang/Throwable;)V
 	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/Type;Ljava/lang/String;)V
 	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/Type;Ljava/lang/String;Ljava/lang/Throwable;)V
 	public fun <init> (Lorg/spongepowered/configurate/ConfigurationNode;Ljava/lang/reflect/Type;Ljava/lang/Throwable;)V
+	public fun <init> (Lorg/spongepowered/configurate/NodePath;Ljava/lang/reflect/AnnotatedType;Ljava/lang/String;)V
 	public fun <init> (Lorg/spongepowered/configurate/NodePath;Ljava/lang/reflect/Type;Ljava/lang/String;)V
 	public fun expectedType ()Ljava/lang/reflect/Type;
 	public fun getMessage ()Ljava/lang/String;
+	public final fun initType (Ljava/lang/reflect/AnnotatedType;)V
 	public fun initType (Ljava/lang/reflect/Type;)V
 }
 
 public abstract interface class org/spongepowered/configurate/serialize/TypeSerializer {
+	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	public abstract fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
+	public fun emptyValue (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
 	public fun emptyValue (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
 	public static fun of (Ljava/lang/Class;Ljava/util/function/BiFunction;Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/serialize/ScalarSerializer;
 	public static fun of (Ljava/lang/reflect/Type;Ljava/util/function/BiFunction;Lorg/spongepowered/configurate/util/CheckedFunction;)Lorg/spongepowered/configurate/serialize/ScalarSerializer;
+	public fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 	public abstract fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
+}
+
+public abstract interface class org/spongepowered/configurate/serialize/TypeSerializer$Annotated : org/spongepowered/configurate/serialize/TypeSerializer {
+	public abstract fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
+	public fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
+	public fun emptyValue (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
+	public fun emptyValue (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationOptions;)Ljava/lang/Object;
+	public abstract fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
+	public fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 }
 
 public final class org/spongepowered/configurate/serialize/TypeSerializerCollection {
@@ -39187,6 +39367,7 @@ public final class org/spongepowered/configurate/serialize/TypeSerializerCollect
 	public fun equals (Ljava/lang/Object;)Z
 	public fun get (Lio/leangen/geantyref/TypeToken;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 	public fun get (Ljava/lang/Class;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
+	public fun get (Ljava/lang/reflect/AnnotatedType;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 	public fun get (Ljava/lang/reflect/Type;)Lorg/spongepowered/configurate/serialize/TypeSerializer;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -39199,6 +39380,7 @@ public class org/spongepowered/configurate/serialize/TypeSerializerCollection$Bu
 	public fun register (Ljava/util/function/Predicate;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun register (Lorg/spongepowered/configurate/serialize/ScalarSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerAll (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
+	public fun registerAnnotated (Ljava/util/function/Predicate;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerAnnotatedObjects (Lorg/spongepowered/configurate/objectmapping/ObjectMapper$Factory;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerExact (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
 	public fun registerExact (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;
@@ -39302,6 +39484,7 @@ public final class org/spongepowered/configurate/util/Strings {
 }
 
 public final class org/spongepowered/configurate/util/Types {
+	public static fun allDeclaredMethods (Ljava/lang/Class;)Ljava/util/List;
 	public static fun allSuperTypes (Ljava/lang/reflect/Type;)Ljava/util/stream/Stream;
 	public static fun allSuperTypesAndInterfaces (Ljava/lang/reflect/Type;)Ljava/util/stream/Stream;
 	public static fun box (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
@@ -39309,7 +39492,12 @@ public final class org/spongepowered/configurate/util/Types {
 	public static fun defaultValue (Ljava/lang/Class;)Ljava/lang/Object;
 	public static fun isArray (Ljava/lang/reflect/Type;)Z
 	public static fun isBoxedPrimitive (Ljava/lang/reflect/Type;)Z
+	public static fun makeList (Ljava/lang/Class;)Lio/leangen/geantyref/TypeToken;
 	public static fun makeListType (Lio/leangen/geantyref/TypeToken;)Lio/leangen/geantyref/TypeToken;
+	public static fun makeMap (Lio/leangen/geantyref/TypeToken;Lio/leangen/geantyref/TypeToken;)Lio/leangen/geantyref/TypeToken;
+	public static fun makeMap (Lio/leangen/geantyref/TypeToken;Ljava/lang/Class;)Lio/leangen/geantyref/TypeToken;
+	public static fun makeMap (Ljava/lang/Class;Lio/leangen/geantyref/TypeToken;)Lio/leangen/geantyref/TypeToken;
+	public static fun makeMap (Ljava/lang/Class;Ljava/lang/Class;)Lio/leangen/geantyref/TypeToken;
 	public static fun requireCompleteParameters (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
 	public static fun unbox (Ljava/lang/reflect/Type;)Ljava/lang/reflect/Type;
 }
