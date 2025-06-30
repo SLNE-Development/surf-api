@@ -10,14 +10,15 @@ import kotlin.experimental.ExperimentalTypeInference
 
 interface Pagination<T> {
 
-    fun render(content: Collection<T>, page: Int): List<Component>
+    fun render(content: Collection<T>, page: Int = 1): List<Component>
 
-    fun renderComponent(content: Collection<T>, page: Int): Component {
+    fun renderComponent(content: Collection<T>, page: Int = 1): Component {
         return Component.join(JoinConfiguration.newlines(), render(content, page))
     }
 
     companion object {
-        const val DEFAULT_WIDTH = 55
+        const val DEFAULT_WIDTH = 33
+        const val DEFAULT_INDENT = 2
         const val DEFAULT_RESULTS_PER_PAGE = 6
 
         val DEFAULT_FIRST_PAGE_BUTTON = PageButton(

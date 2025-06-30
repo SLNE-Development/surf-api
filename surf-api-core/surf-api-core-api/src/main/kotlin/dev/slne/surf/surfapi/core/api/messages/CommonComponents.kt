@@ -49,6 +49,8 @@ object CommonComponents {
     @JvmField
     val TIME_SEPARATOR = text(" : ", SPACER)
 
+    val EM_DASH = text("—", SPACER)
+
     /**
      * A clickable Discord link component (`discord.gg/castcrafter`).
      *

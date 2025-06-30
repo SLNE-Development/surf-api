@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.core.api.messages.pagination
 import dev.slne.surf.surfapi.core.api.messages.Colors
 import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import dev.slne.surf.surfapi.core.api.messages.adventure.plain
+import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.TextDecoration
@@ -27,18 +28,31 @@ interface PaginationRenderer {
         }
     }
 
-    fun renderHeader(width: Int, title: Component, page: Int, pages: Int): Component = buildText {
-        darkSpacer("*" + "-".repeat(width - 2) + "*", TextDecoration.STRIKETHROUGH)
-        appendNewline {
-            appendSpace()
-            append(title.colorIfAbsent(Colors.PRIMARY))
-            decorate(TextDecoration.BOLD)
+    fun renderHeader(width: Int, indent: Int, title: Component, page: Int, pages: Int): Component =
+        buildText {
+            darkSpacer("*" + "-".repeat(width - 2) + "*", TextDecoration.STRIKETHROUGH)
+            appendNewline {
+                text(" ".repeat(indent))
+                append(title.colorIfAbsent(Colors.PRIMARY))
+                decorate(TextDecoration.BOLD)
+            }
+            appendNewline()
         }
-        appendNewline()
-    }
+
+    fun <T> renderRow(
+        width: Int,
+        indent: Int,
+        page: Int,
+        pages: Int,
+        value: T,
+        contentIndex: Int,
+        renderer: PaginationRowRenderer<T>,
+    ): Collection<Component> = renderer.renderRow(value, contentIndex)
+        .map { text(" ".repeat(indent)).append(it) }
 
     fun renderFooter(
         width: Int,
+        indent: Int,
         page: Int,
         pages: Int,
         firstPage: PageButton,

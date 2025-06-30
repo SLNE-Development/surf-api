@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component
 data class PaginationImpl<T>(
     private val width: Int,
     private val resultsPerPage: Int,
+    private val indent: Int,
     private val renderer: PaginationRenderer,
     private val title: Component,
     private val rowRenderer: PaginationRowRenderer<T>,
@@ -33,15 +34,26 @@ data class PaginationImpl<T>(
         }
 
         val results = mutableObjectListOf<Component>()
-        results.add(renderer.renderHeader(width, title, page, pages))
+        results.add(renderer.renderHeader(width, indent, title, page, pages))
 
         forEachPageEntry(content, resultsPerPage, page) { value, index ->
-            results.addAll(rowRenderer.renderRow(value, index))
+            results.addAll(
+                renderer.renderRow(
+                    width,
+                    indent,
+                    page,
+                    pages,
+                    value,
+                    index,
+                    rowRenderer
+                )
+            )
         }
 
         results.add(
             renderer.renderFooter(
                 width,
+                indent,
                 page,
                 pages,
                 firstPageButton,

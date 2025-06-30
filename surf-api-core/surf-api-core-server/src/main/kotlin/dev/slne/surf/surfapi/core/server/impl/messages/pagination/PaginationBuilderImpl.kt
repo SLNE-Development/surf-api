@@ -10,6 +10,12 @@ class PaginationBuilderImpl<T> : PaginationBuilder<T> {
             field = value
         }
 
+    override var indent: Int = Pagination.DEFAULT_INDENT
+        set(value) {
+            require(value >= 0) { "Indent must be at least 0" }
+            field = value
+        }
+
     override var resultsPerPage: Int = Pagination.DEFAULT_RESULTS_PER_PAGE
         set(value) {
             require(value > 0) { "Results per page must be greater than 0" }
@@ -43,6 +49,7 @@ class PaginationBuilderImpl<T> : PaginationBuilder<T> {
 
     override fun build(): Pagination<T> = PaginationImpl(
         width = width,
+        indent = indent,
         resultsPerPage = resultsPerPage,
         renderer = renderer,
         title = title,
@@ -55,6 +62,6 @@ class PaginationBuilderImpl<T> : PaginationBuilder<T> {
     )
 
     override fun toString(): String {
-        return "PaginationBuilderImpl(width=$width, resultsPerPage=$resultsPerPage, renderer=$renderer, _title=$_title, _rowRenderer=$_rowRenderer, clickEventProvider=$clickEventProvider, firstPageButton=$firstPageButton, previousPageButton=$previousPageButton, nextPageButton=$nextPageButton, lastPageButton=$lastPageButton)"
+        return "PaginationBuilderImpl(width=$width, indent=$indent, resultsPerPage=$resultsPerPage, renderer=$renderer, _title=$_title, _rowRenderer=$_rowRenderer, clickEventProvider=$clickEventProvider, firstPageButton=$firstPageButton, previousPageButton=$previousPageButton, nextPageButton=$nextPageButton, lastPageButton=$lastPageButton)"
     }
 }

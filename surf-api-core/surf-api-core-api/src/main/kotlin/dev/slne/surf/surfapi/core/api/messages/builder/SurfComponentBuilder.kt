@@ -65,167 +65,167 @@ interface SurfComponentBuilder : TextComponent.Builder {
         appendNewPrefixedLine().appendAsync(block)
 
     fun text(text: String, color: TextColor? = null, vararg decoration: TextDecoration) =
-        append(Component.text(text, color))
+        append(Component.text(text, color, *decoration))
 
     fun text(boolean: Boolean, color: TextColor? = null, vararg decoration: TextDecoration) =
-        append(Component.text(boolean, color))
+        append(Component.text(boolean, color, *decoration))
 
     fun text(char: Char, color: TextColor? = null, vararg decoration: TextDecoration) =
-        append(Component.text(char, color))
+        append(Component.text(char, color, *decoration))
 
     fun text(double: Double, color: TextColor? = null, vararg decoration: TextDecoration) =
-        append(Component.text(double, color))
+        append(Component.text(double, color, *decoration))
 
     fun text(float: Float, color: TextColor? = null, vararg decoration: TextDecoration) =
-        append(Component.text(float, color))
+        append(Component.text(float, color, *decoration))
 
     fun text(int: Int, color: TextColor? = null, vararg decoration: TextDecoration) =
-        append(Component.text(int, color))
+        append(Component.text(int, color, *decoration))
 
     fun text(long: Long, color: TextColor? = null, vararg decoration: TextDecoration) =
-        append(Component.text(long, color))
+        append(Component.text(long, color, *decoration))
 
-    fun primary(text: String, vararg decoration: TextDecoration) = text(text, PRIMARY, decoration)
+    fun primary(text: String, vararg decoration: TextDecoration) = text(text, PRIMARY, *decoration)
     fun primary(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, PRIMARY, decoration)
+        text(boolean, PRIMARY, *decoration)
 
-    fun primary(char: Char, vararg decoration: TextDecoration) = text(char, PRIMARY, decoration)
+    fun primary(char: Char, vararg decoration: TextDecoration) = text(char, PRIMARY, *decoration)
     fun primary(double: Double, vararg decoration: TextDecoration) =
-        text(double, PRIMARY, decoration)
+        text(double, PRIMARY, *decoration)
 
-    fun primary(float: Float, vararg decoration: TextDecoration) = text(float, PRIMARY, decoration)
-    fun primary(int: Int, vararg decoration: TextDecoration) = text(int, PRIMARY, decoration)
-    fun primary(long: Long, vararg decoration: TextDecoration) = text(long, PRIMARY, decoration)
+    fun primary(float: Float, vararg decoration: TextDecoration) = text(float, PRIMARY, *decoration)
+    fun primary(int: Int, vararg decoration: TextDecoration) = text(int, PRIMARY, *decoration)
+    fun primary(long: Long, vararg decoration: TextDecoration) = text(long, PRIMARY, *decoration)
 
     fun secondary(text: String, vararg decoration: TextDecoration) =
-        text(text, SECONDARY, decoration)
+        text(text, SECONDARY, *decoration)
 
     fun secondary(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, SECONDARY, decoration)
+        text(boolean, SECONDARY, *decoration)
 
-    fun secondary(char: Char, vararg decoration: TextDecoration) = text(char, SECONDARY, decoration)
+    fun secondary(char: Char, vararg decoration: TextDecoration) = text(char, SECONDARY, *decoration)
     fun secondary(double: Double, vararg decoration: TextDecoration) =
-        text(double, SECONDARY, decoration)
+        text(double, SECONDARY, *decoration)
 
     fun secondary(float: Float, vararg decoration: TextDecoration) =
-        text(float, SECONDARY, decoration)
+        text(float, SECONDARY, *decoration)
 
-    fun secondary(int: Int, vararg decoration: TextDecoration) = text(int, SECONDARY, decoration)
-    fun secondary(long: Long, vararg decoration: TextDecoration) = text(long, SECONDARY, decoration)
+    fun secondary(int: Int, vararg decoration: TextDecoration) = text(int, SECONDARY, *decoration)
+    fun secondary(long: Long, vararg decoration: TextDecoration) = text(long, SECONDARY, *decoration)
 
-    fun info(text: String, vararg decoration: TextDecoration) = text(text, INFO, decoration)
-    fun info(boolean: Boolean, vararg decoration: TextDecoration) = text(boolean, INFO, decoration)
-    fun info(char: Char, vararg decoration: TextDecoration) = text(char, INFO, decoration)
-    fun info(double: Double, vararg decoration: TextDecoration) = text(double, INFO, decoration)
-    fun info(float: Float, vararg decoration: TextDecoration) = text(float, INFO, decoration)
-    fun info(int: Int, vararg decoration: TextDecoration) = text(int, INFO, decoration)
-    fun info(long: Long, vararg decoration: TextDecoration) = text(long, INFO, decoration)
+    fun info(text: String, vararg decoration: TextDecoration) = text(text, INFO, *decoration)
+    fun info(boolean: Boolean, vararg decoration: TextDecoration) = text(boolean, INFO, *decoration)
+    fun info(char: Char, vararg decoration: TextDecoration) = text(char, INFO, *decoration)
+    fun info(double: Double, vararg decoration: TextDecoration) = text(double, INFO, *decoration)
+    fun info(float: Float, vararg decoration: TextDecoration) = text(float, INFO, *decoration)
+    fun info(int: Int, vararg decoration: TextDecoration) = text(int, INFO, *decoration)
+    fun info(long: Long, vararg decoration: TextDecoration) = text(long, INFO, *decoration)
 
-    fun success(text: String, vararg decoration: TextDecoration) = text(text, SUCCESS, decoration)
+    fun success(text: String, vararg decoration: TextDecoration) = text(text, SUCCESS, *decoration)
     fun success(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, SUCCESS, decoration)
+        text(boolean, SUCCESS, *decoration)
 
-    fun success(char: Char, vararg decoration: TextDecoration) = text(char, SUCCESS, decoration)
+    fun success(char: Char, vararg decoration: TextDecoration) = text(char, SUCCESS, *decoration)
     fun success(double: Double, vararg decoration: TextDecoration) =
-        text(double, SUCCESS, decoration)
+        text(double, SUCCESS, *decoration)
 
-    fun success(float: Float, vararg decoration: TextDecoration) = text(float, SUCCESS, decoration)
-    fun success(int: Int, vararg decoration: TextDecoration) = text(int, SUCCESS, decoration)
-    fun success(long: Long, vararg decoration: TextDecoration) = text(long, SUCCESS, decoration)
+    fun success(float: Float, vararg decoration: TextDecoration) = text(float, SUCCESS, *decoration)
+    fun success(int: Int, vararg decoration: TextDecoration) = text(int, SUCCESS, *decoration)
+    fun success(long: Long, vararg decoration: TextDecoration) = text(long, SUCCESS, *decoration)
 
-    fun warning(text: String, vararg decoration: TextDecoration) = text(text, WARNING, decoration)
+    fun warning(text: String, vararg decoration: TextDecoration) = text(text, WARNING, *decoration)
     fun warning(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, WARNING, decoration)
+        text(boolean, WARNING, *decoration)
 
-    fun warning(char: Char, vararg decoration: TextDecoration) = text(char, WARNING, decoration)
+    fun warning(char: Char, vararg decoration: TextDecoration) = text(char, WARNING, *decoration)
     fun warning(double: Double, vararg decoration: TextDecoration) =
-        text(double, WARNING, decoration)
+        text(double, WARNING, *decoration)
 
-    fun warning(float: Float, vararg decoration: TextDecoration) = text(float, WARNING, decoration)
-    fun warning(int: Int, vararg decoration: TextDecoration) = text(int, WARNING, decoration)
-    fun warning(long: Long, vararg decoration: TextDecoration) = text(long, WARNING, decoration)
+    fun warning(float: Float, vararg decoration: TextDecoration) = text(float, WARNING, *decoration)
+    fun warning(int: Int, vararg decoration: TextDecoration) = text(int, WARNING, *decoration)
+    fun warning(long: Long, vararg decoration: TextDecoration) = text(long, WARNING, *decoration)
 
 
-    fun error(text: String, vararg decoration: TextDecoration) = text(text, ERROR, decoration)
+    fun error(text: String, vararg decoration: TextDecoration) = text(text, ERROR, *decoration)
     fun error(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, ERROR, decoration)
+        text(boolean, ERROR, *decoration)
 
-    fun error(char: Char, vararg decoration: TextDecoration) = text(char, ERROR, decoration)
-    fun error(double: Double, vararg decoration: TextDecoration) = text(double, ERROR, decoration)
-    fun error(float: Float, vararg decoration: TextDecoration) = text(float, ERROR, decoration)
-    fun error(int: Int, vararg decoration: TextDecoration) = text(int, ERROR, decoration)
-    fun error(long: Long, vararg decoration: TextDecoration) = text(long, ERROR, decoration)
+    fun error(char: Char, vararg decoration: TextDecoration) = text(char, ERROR, *decoration)
+    fun error(double: Double, vararg decoration: TextDecoration) = text(double, ERROR, *decoration)
+    fun error(float: Float, vararg decoration: TextDecoration) = text(float, ERROR, *decoration)
+    fun error(int: Int, vararg decoration: TextDecoration) = text(int, ERROR, *decoration)
+    fun error(long: Long, vararg decoration: TextDecoration) = text(long, ERROR, *decoration)
 
     fun variableKey(text: String, vararg decoration: TextDecoration) =
-        text(text, VARIABLE_KEY, decoration)
+        text(text, VARIABLE_KEY, *decoration)
 
     fun variableKey(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, VARIABLE_KEY, decoration)
+        text(boolean, VARIABLE_KEY, *decoration)
 
     fun variableKey(char: Char, vararg decoration: TextDecoration) =
-        text(char, VARIABLE_KEY, decoration)
+        text(char, VARIABLE_KEY, *decoration)
 
     fun variableKey(double: Double, vararg decoration: TextDecoration) =
-        text(double, VARIABLE_KEY, decoration)
+        text(double, VARIABLE_KEY, *decoration)
 
     fun variableKey(float: Float, vararg decoration: TextDecoration) =
-        text(float, VARIABLE_KEY, decoration)
+        text(float, VARIABLE_KEY, *decoration)
 
     fun variableKey(int: Int, vararg decoration: TextDecoration) =
-        text(int, VARIABLE_KEY, decoration)
+        text(int, VARIABLE_KEY, *decoration)
 
     fun variableKey(long: Long, vararg decoration: TextDecoration) =
-        text(long, VARIABLE_KEY, decoration)
+        text(long, VARIABLE_KEY, *decoration)
 
     fun variableValue(text: String, vararg decoration: TextDecoration) =
-        text(text, VARIABLE_VALUE, decoration)
+        text(text, VARIABLE_VALUE, *decoration)
 
     fun variableValue(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, VARIABLE_VALUE, decoration)
+        text(boolean, VARIABLE_VALUE, *decoration)
 
     fun variableValue(char: Char, vararg decoration: TextDecoration) =
-        text(char, VARIABLE_VALUE, decoration)
+        text(char, VARIABLE_VALUE, *decoration)
 
     fun variableValue(double: Double, vararg decoration: TextDecoration) =
-        text(double, VARIABLE_VALUE, decoration)
+        text(double, VARIABLE_VALUE, *decoration)
 
     fun variableValue(float: Float, vararg decoration: TextDecoration) =
-        text(float, VARIABLE_VALUE, decoration)
+        text(float, VARIABLE_VALUE, *decoration)
 
     fun variableValue(int: Int, vararg decoration: TextDecoration) =
-        text(int, VARIABLE_VALUE, decoration)
+        text(int, VARIABLE_VALUE, *decoration)
 
     fun variableValue(long: Long, vararg decoration: TextDecoration) =
-        text(long, VARIABLE_VALUE, decoration)
+        text(long, VARIABLE_VALUE, *decoration)
 
-    fun spacer(text: String, vararg decoration: TextDecoration) = text(text, SPACER, decoration)
+    fun spacer(text: String, vararg decoration: TextDecoration) = text(text, SPACER, *decoration)
     fun spacer(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, SPACER, decoration)
+        text(boolean, SPACER, *decoration)
 
-    fun spacer(char: Char, vararg decoration: TextDecoration) = text(char, SPACER, decoration)
-    fun spacer(double: Double, vararg decoration: TextDecoration) = text(double, SPACER, decoration)
-    fun spacer(float: Float, vararg decoration: TextDecoration) = text(float, SPACER, decoration)
-    fun spacer(int: Int, vararg decoration: TextDecoration) = text(int, SPACER, decoration)
-    fun spacer(long: Long, vararg decoration: TextDecoration) = text(long, SPACER, decoration)
+    fun spacer(char: Char, vararg decoration: TextDecoration) = text(char, SPACER, *decoration)
+    fun spacer(double: Double, vararg decoration: TextDecoration) = text(double, SPACER, *decoration)
+    fun spacer(float: Float, vararg decoration: TextDecoration) = text(float, SPACER, *decoration)
+    fun spacer(int: Int, vararg decoration: TextDecoration) = text(int, SPACER, *decoration)
+    fun spacer(long: Long, vararg decoration: TextDecoration) = text(long, SPACER, *decoration)
 
     fun darkSpacer(text: String, vararg decoration: TextDecoration) =
-        text(text, DARK_SPACER, decoration)
+        text(text, DARK_SPACER, *decoration)
 
     fun darkSpacer(boolean: Boolean, vararg decoration: TextDecoration) =
-        text(boolean, DARK_SPACER, decoration)
+        text(boolean, DARK_SPACER, *decoration)
 
     fun darkSpacer(char: Char, vararg decoration: TextDecoration) =
-        text(char, DARK_SPACER, decoration)
+        text(char, DARK_SPACER, *decoration)
 
     fun darkSpacer(double: Double, vararg decoration: TextDecoration) =
-        text(double, DARK_SPACER, decoration)
+        text(double, DARK_SPACER, *decoration)
 
     fun darkSpacer(float: Float, vararg decoration: TextDecoration) =
-        text(float, DARK_SPACER, decoration)
+        text(float, DARK_SPACER, *decoration)
 
-    fun darkSpacer(int: Int, vararg decoration: TextDecoration) = text(int, DARK_SPACER, decoration)
+    fun darkSpacer(int: Int, vararg decoration: TextDecoration) = text(int, DARK_SPACER, *decoration)
     fun darkSpacer(long: Long, vararg decoration: TextDecoration) =
-        text(long, DARK_SPACER, decoration)
+        text(long, DARK_SPACER, *decoration)
 
     fun ellipsis(color: TextColor? = SPACER) = append(CommonComponents.ELLIPSIS.color(color))
 

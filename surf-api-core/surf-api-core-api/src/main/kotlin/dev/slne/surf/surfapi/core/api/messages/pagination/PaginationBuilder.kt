@@ -13,6 +13,7 @@ interface PaginationBuilder<T> {
 
     // optional properties
     var width: @Range(from = 3, to = Int.MAX_VALUE.toLong()) Int
+    var indent: @Range(from = 0, to = Int.MAX_VALUE.toLong()) Int
     var resultsPerPage: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int
     var renderer: PaginationRenderer
     var clickEventProvider: PaginationClickEventProvider<T>
