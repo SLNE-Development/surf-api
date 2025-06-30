@@ -1,15 +1,68 @@
 package dev.slne.surf.surfapi.core.api.messages.pagination
 
+import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.Style
+import org.jetbrains.annotations.Range
+import kotlin.experimental.ExperimentalTypeInference
 
-class PaginationBuilder {
-    private var width: Int = Pagination.DEFAULT_WIDTH
-    private var resultsPerPage: Int = Pagination.DEFAULT_RESULTS_PER_PAGE
+interface PaginationBuilder<T> {
+    // required properties
+    var title: Component
+    var rowRenderer: PaginationRowRenderer<T>
 
-    private var renderer: PaginationRenderer = PaginationRenderer.DEFAULT
+    // optional properties
+    var width: @Range(from = 3, to = Int.MAX_VALUE.toLong()) Int
+    var resultsPerPage: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int
+    var renderer: PaginationRenderer
+    var clickEventProvider: PaginationClickEventProvider<T>
+    var firstPageButton: PageButton
+    var previousPageButton: PageButton
+    var nextPageButton: PageButton
+    var lastPageButton: PageButton
 
-    private var title: Component = Component.text("CHANGE ME")
+
+    fun title(block: SurfComponentBuilder.() -> Unit) {
+        title = SurfComponentBuilder(block)
+    }
+
+    fun rowRenderer(renderer: PaginationRowRenderer<T>) {
+        rowRenderer = renderer
+    }
 
 
+    fun clickEventProvider(provider: PaginationClickEventProvider<T>) {
+        clickEventProvider = provider
+    }
 
+    fun firstPageButton(text: String, enabledStyle: Style, disabledStyle: Style) {
+        firstPageButton = PageButton(text, enabledStyle, disabledStyle)
+    }
+
+    fun previousPageButton(text: String, enabledStyle: Style, disabledStyle: Style) {
+        previousPageButton = PageButton(text, enabledStyle, disabledStyle)
+    }
+
+    fun nextPageButton(text: String, enabledStyle: Style, disabledStyle: Style) {
+        nextPageButton = PageButton(text, enabledStyle, disabledStyle)
+    }
+
+    fun lastPageButton(text: String, enabledStyle: Style, disabledStyle: Style) {
+        lastPageButton = PageButton(text, enabledStyle, disabledStyle)
+    }
+
+    fun build(): Pagination<T>
+
+    companion object {
+        @OptIn(ExperimentalTypeInference::class)
+        operator fun <T> invoke(@BuilderInference block: PaginationBuilder<T>.() -> Unit): Pagination<T> {
+            val builder = InternalPaginationBridge.instance.createPaginationBuilder<T>()
+            builder.block()
+            return builder.build()
+        }
+
+        fun <T> builder(): PaginationBuilder<T> {
+            return InternalPaginationBridge.instance.createPaginationBuilder()
+        }
+    }
 }

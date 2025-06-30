@@ -1,9 +1,10 @@
-package dev.slne.surf.surfapi.core.api.messages.pagination
+package dev.slne.surf.surfapi.core.server.impl.messages.pagination
 
+import dev.slne.surf.surfapi.core.api.messages.pagination.*
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import dev.slne.surf.surfapi.core.api.util.objectListOf
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.event.ClickEvent
 
 data class PaginationImpl<T>(
     private val width: Int,
@@ -11,23 +12,24 @@ data class PaginationImpl<T>(
     private val renderer: PaginationRenderer,
     private val title: Component,
     private val rowRenderer: PaginationRowRenderer<T>,
-    private val firstPageButton: PageButton = Pagination.DEFAULT_FIRST_PAGE_BUTTON,
-    private val previousPageButton: PageButton = Pagination.DEFAULT_PREVIOUS_PAGE_BUTTON,
-    private val nextPageButton: PageButton = Pagination.DEFAULT_NEXT_PAGE_BUTTON,
-    private val lastPageButton: PageButton = Pagination.DEFAULT_LAST_PAGE_BUTTON,
+    private val firstPageButton: PageButton,
+    private val previousPageButton: PageButton,
+    private val nextPageButton: PageButton,
+    private val lastPageButton: PageButton,
+    private val clickEventProvider: PaginationClickEventProvider<T>,
 ) : Pagination<T> {
     override fun render(
         content: Collection<T>,
         page: Int,
     ): List<Component> {
         if (content.isEmpty()) {
-            return listOf(renderer.renderEmpty())
+            return objectListOf(renderer.renderEmpty())
         }
 
         val pages = pages(resultsPerPage, content.size)
 
         if (page !in 1..pages) {
-            return listOf(renderer.renderUnknownPage(page, pages))
+            return objectListOf(renderer.renderUnknownPage(page, pages))
         }
 
         val results = mutableObjectListOf<Component>()
@@ -36,6 +38,7 @@ data class PaginationImpl<T>(
         forEachPageEntry(content, resultsPerPage, page) { value, index ->
             results.addAll(rowRenderer.renderRow(value, index))
         }
+
         results.add(
             renderer.renderFooter(
                 width,
@@ -45,16 +48,7 @@ data class PaginationImpl<T>(
                 previousPageButton,
                 nextPageButton,
                 lastPageButton
-            ) { page ->
-                ClickEvent.callback { clicker ->
-                    clicker.sendMessage(
-                        renderComponent(
-                            content,
-                            page
-                        )
-                    )
-                }
-            }
+            ) { page -> clickEventProvider.getCallback(page, this, content) }
         )
 
         return results.freeze()
