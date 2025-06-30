@@ -8,6 +8,10 @@ import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.PacketRegis
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.listener.SurfBukkitPacketListenerApiImpl
 import dev.slne.surf.surfapi.bukkit.server.nms.toNms
 import dev.slne.surf.surfapi.bukkit.server.plugin
+import dev.slne.surf.surfapi.core.api.reflection.Field
+import dev.slne.surf.surfapi.core.api.reflection.SurfProxy
+import dev.slne.surf.surfapi.core.api.reflection.createProxy
+import dev.slne.surf.surfapi.core.api.reflection.surfReflection
 import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
@@ -16,17 +20,18 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
+import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl
+import io.papermc.paper.event.connection.PlayerConnectionValidateLoginEvent
 import io.papermc.paper.network.ChannelInitializeListenerHolder
 import net.kyori.adventure.key.Key
+import net.minecraft.network.Connection
 import net.minecraft.network.HandlerNames
 import net.minecraft.network.protocol.Packet
-import net.minecraft.network.protocol.login.ClientboundLoginFinishedPacket
 import net.minecraft.server.level.ServerPlayer
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerLoginEvent
 import java.util.*
 import dev.slne.surf.surfapi.bukkit.api.event.register as registerListener
 import dev.slne.surf.surfapi.bukkit.api.event.unregister as unregisterListener
@@ -68,34 +73,33 @@ object PlayerChannelInjector : Listener {
         return channelHandler
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    fun onPlayerLogin(event: PlayerLoginEvent) {
-        val player = event.player.toNms()
-        playerInjectorCache.put(player.getUUID(), player)
+    @EventHandler
+    fun onPlayerLogin(event: PlayerConnectionValidateLoginEvent) {
+        val paperConnection = event.connection
+        if (paperConnection is ReadablePlayerCookieConnectionImpl) {
+            val connection =
+                ReadablePlayerCookieConnectionImplProxy.instance.getConnection(paperConnection)
+            injectChannel(connection.channel).connection = connection
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player.toNms()
 
-        val channel = player.connection.connection.channel
-        val channelHandler = channel.pipeline().get(CHANNEL_NAME)
+        val connection = player.connection.connection
+        val channelHandler = connection.channel.pipeline().get(CHANNEL_NAME)
 
         if (channelHandler != null) {
-            if (channelHandler is PacketHandler) {
-                channelHandler.player = player // Just in case the player is not set yet
-                playerInjectorCache.remove(player.getUUID())
-            }
-
             return
         }
 
-        injectChannel(channel).player = player
+        injectChannel(connection.channel).connection = connection
     }
 
     private class PacketHandler : ChannelDuplexHandler() {
         @Volatile
-        var player: ServerPlayer? = null
+        var connection: Connection? = null
 
         override fun channelUnregistered(ctx: ChannelHandlerContext) {
             injectedChannels.remove(ctx.channel())
@@ -115,18 +119,8 @@ object PlayerChannelInjector : Listener {
                 return
             }
 
-            // first, we set the player if it isn't set yet
-            if (player == null && msg is ClientboundLoginFinishedPacket) {
-                val uuid = msg.gameProfile().id
-                val player = playerInjectorCache.remove(uuid)
-
-                if (player != null) {
-                    this.player = player
-                }
-            }
-
-            val player = player
-            if (player == null) {
+            val connection = this@PacketHandler.connection
+            if (connection == null) {
                 super.write(ctx, msg, promise)
                 return
             }
@@ -135,14 +129,14 @@ object PlayerChannelInjector : Listener {
 
             try {
                 // first, we try to handle the packet with the nms packet listener
-                msg = this.packetListenerApi.handleClientboundPacket(msg, player)
+                msg = this.packetListenerApi.handleClientboundPacket(msg, connection.player)
 
                 if (msg == null) {
                     // no need to handle the packet further
                     cancelled = true
                 } else {
                     // then we try to handle the packet with the api packet listener
-                    msg = handleClientboundPacketFromBridge(msg)
+                    msg = handleClientboundPacketFromBridge(connection, msg)
                     cancelled = (msg == null)
                 }
             } catch (error: OutOfMemoryError) {
@@ -167,8 +161,8 @@ object PlayerChannelInjector : Listener {
                 return
             }
 
-            val player = player
-            if (player == null) {
+            val connection = this@PacketHandler.connection
+            if (connection == null) {
                 super.channelRead(ctx, msg)
                 return
             }
@@ -177,14 +171,14 @@ object PlayerChannelInjector : Listener {
 
             try {
                 // first, we try to handle the packet with the nms packet listener
-                msg = this.packetListenerApi.handleServerboundPacket(msg, player)
+                msg = this.packetListenerApi.handleServerboundPacket(msg, connection.player)
 
                 if (msg == null) {
                     // no need to handle the packet further
                     cancelled = true
                 } else {
                     // then we try to handle the packet with the api packet listener
-                    msg = handleServerboundPacketFromBridge(msg)
+                    msg = handleServerboundPacketFromBridge(connection, msg)
                     cancelled = (msg == null)
                 }
             } catch (error: OutOfMemoryError) {
@@ -202,13 +196,16 @@ object PlayerChannelInjector : Listener {
         }
 
         @OptIn(NmsUseWithCaution::class)
-        fun handleServerboundPacketFromBridge(packet: Packet<*>): Packet<*>? {
+        fun handleServerboundPacketFromBridge(
+            connection: Connection,
+            packet: Packet<*>,
+        ): Packet<*>? {
             val apiPacket = PacketRegistry.createServerboundPacketOrNull(packet)
 
             if (apiPacket != null) { // we have an api packet wrapper for this packet
                 val resultApi = this.bridge.handleServerboundPacket(
                     apiPacket,
-                    player!!.bukkitEntity
+                    connection.player.bukkitEntity
                 )
 
                 if (resultApi != null) { // we may have a modified packet
@@ -222,13 +219,16 @@ object PlayerChannelInjector : Listener {
         }
 
         @OptIn(NmsUseWithCaution::class)
-        fun handleClientboundPacketFromBridge(packet: Packet<*>): Packet<*>? {
+        fun handleClientboundPacketFromBridge(
+            connection: Connection,
+            packet: Packet<*>,
+        ): Packet<*>? {
             val apiPacket = PacketRegistry.createClientboundPacketOrNull(packet)
 
             if (apiPacket != null) {
                 val resultApi = this.bridge.handleClientboundPacket(
                     apiPacket,
-                    player!!.bukkitEntity
+                    connection.player.bukkitEntity
                 )
 
                 if (resultApi != null) {
@@ -246,5 +246,16 @@ object PlayerChannelInjector : Listener {
 
         @OptIn(NmsUseWithCaution::class)
         val packetListenerApi get() = dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi as SurfBukkitPacketListenerApiImpl
+    }
+
+    @SurfProxy(ReadablePlayerCookieConnectionImpl::class)
+    interface ReadablePlayerCookieConnectionImplProxy {
+
+        @Field("connection", Field.Type.GETTER)
+        fun getConnection(instance: ReadablePlayerCookieConnectionImpl): Connection
+
+        companion object {
+            val instance = surfReflection.createProxy<ReadablePlayerCookieConnectionImplProxy>()
+        }
     }
 }
