@@ -3,9 +3,9 @@
 paper-api = "1.21.7-R0.1-SNAPSHOT"
 
 # Kolin
-kotlinVersion = "2.1.10"
-kotlinxCoroutines = "1.10.1"
-kotlinx-serialization = "1.8.0"
+kotlinVersion = "2.2.0"
+kotlinxCoroutines = "1.10.2"
+kotlinx-serialization = "1.9.0"
 
 # Packet Events
 packetevents = "2.9.0-SNAPSHOT"
@@ -14,12 +14,12 @@ packetevents = "2.9.0-SNAPSHOT"
 commandapi = "10.1.0"
 
 # LuckPerms
-luckperms = "v5.5.0-bukkit"
+luckperms = "v5.5.9-bukkit"
 
 # Scoreboard Library
-scoreboard-library = "2.3.0"
-scoreboard-library-implementation = "2.3.0"
-scoreboard-library-modern = "2.3.0"
+scoreboard-library = "2.3.2"
+scoreboard-library-implementation = "2.3.2"
+scoreboard-library-modern = "2.3.2"
 
 # Adventure
 adventure-api = "4.23.0"
@@ -31,7 +31,7 @@ velocity-api = "3.4.0-SNAPSHOT"
 placeholder-api = "2.11.6"
 
 # McCoroutine
-mccoroutine = "2.20.0"
+mccoroutine = "2.22.0"
 
 # Miscellaneous Libraries
 guava = "33.4.8-jre"
@@ -41,12 +41,12 @@ gson = "2.11.0"
 commons-lang3 = "3.17.0"
 commons-text = "1.13.0"
 commons-math4-core = "4.0-beta1"
-plugin-yml-paper = "0.7.0"
+plugin-yml-paper = "0.7.1"
 spongepowered-math = "2.0.1"
-fastutil = "8.5.15"
+fastutil = "8.5.16"
 okhttp = "5.0.0-alpha.14"
 dazzleconf = "1.3.0-M2"
-reflection-remapper = "0.1.1"
+reflection-remapper = "0.1.3"
 brigadier = "1.0.18"
 configurate = "4.2.0"
 more-persistent-data-types = "2.4.0"
@@ -59,8 +59,8 @@ ktor = "3.1.1"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
-shadow-gradle-plugin = "9.0.0-beta7"
-ksp-gradle-plugin = "2.1.10-1.0.29"
+shadow-gradle-plugin = "9.0.0-beta17"
+ksp-gradle-plugin = "2.2.0-2.0.2"
 run-paper-gradle-plugin = "2.3.1"
 dokka = "2.0.0"
 
