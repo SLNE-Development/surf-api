@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.packet.listener
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.sksamuel.aedile.core.expireAfterAccess
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.nmsBridge
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl
@@ -13,13 +15,13 @@ import dev.slne.surf.surfapi.core.api.reflection.SurfProxy
 import dev.slne.surf.surfapi.core.api.reflection.createProxy
 import dev.slne.surf.surfapi.core.api.reflection.surfReflection
 import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import dev.slne.surf.surfapi.core.api.util.synchronize
 import io.netty.channel.Channel
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
+import io.papermc.paper.connection.PaperPlayerLoginConnection
 import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl
 import io.papermc.paper.event.connection.PlayerConnectionValidateLoginEvent
 import io.papermc.paper.network.ChannelInitializeListenerHolder
@@ -27,12 +29,13 @@ import net.kyori.adventure.key.Key
 import net.minecraft.network.Connection
 import net.minecraft.network.HandlerNames
 import net.minecraft.network.protocol.Packet
-import net.minecraft.server.level.ServerPlayer
+import net.minecraft.network.protocol.login.ClientboundLoginFinishedPacket
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import java.util.*
+import kotlin.time.Duration.Companion.minutes
 import dev.slne.surf.surfapi.bukkit.api.event.register as registerListener
 import dev.slne.surf.surfapi.bukkit.api.event.unregister as unregisterListener
 
@@ -42,7 +45,11 @@ object PlayerChannelInjector : Listener {
     private val CHANNEL_KEY = Key.key("surf-api", "packet-listener")
     private const val CHANNEL_NAME = "surf_api_packet_listener"
 
-    private val playerInjectorCache = mutableObject2ObjectMapOf<UUID, ServerPlayer>().synchronize()
+    private val playerInjectorCache = Caffeine.newBuilder()
+        .weakValues()
+        .expireAfterAccess(1.minutes)
+        .build<UUID, Connection>()
+
     private val injectedChannels = mutableObjectSetOf<Channel>().synchronize()
 
     fun register() {
@@ -76,21 +83,29 @@ object PlayerChannelInjector : Listener {
     @EventHandler
     fun onPlayerLogin(event: PlayerConnectionValidateLoginEvent) {
         val paperConnection = event.connection
-        if (paperConnection is ReadablePlayerCookieConnectionImpl) {
+        if (paperConnection is PaperPlayerLoginConnection) {
+            val profile =
+                paperConnection.authenticatedProfile ?: error("Authenticated profile is null")
             val connection =
                 ReadablePlayerCookieConnectionImplProxy.instance.getConnection(paperConnection)
-            injectChannel(connection.channel).connection = connection
+            playerInjectorCache.put(
+                profile.id ?: error("PlayerProfile does not provide a uuid"),
+                connection
+            )
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player.toNms()
-
         val connection = player.connection.connection
         val channelHandler = connection.channel.pipeline().get(CHANNEL_NAME)
 
         if (channelHandler != null) {
+            if (channelHandler is PacketHandler) {
+                channelHandler.connection = connection
+                playerInjectorCache.invalidate(player.uuid)
+            }
             return
         }
 
@@ -119,8 +134,17 @@ object PlayerChannelInjector : Listener {
                 return
             }
 
-            val connection = this@PacketHandler.connection
-            if (connection == null) {
+            if (connection == null && msg is ClientboundLoginFinishedPacket) {
+                val uuid = msg.gameProfile().id
+                val cachedConnection = playerInjectorCache.getIfPresent(uuid)
+                if (cachedConnection != null) {
+                    connection = cachedConnection
+                }
+            }
+
+            val connection = connection
+            val player = connection?.player
+            if (connection == null || player == null) {
                 super.write(ctx, msg, promise)
                 return
             }
@@ -161,8 +185,9 @@ object PlayerChannelInjector : Listener {
                 return
             }
 
-            val connection = this@PacketHandler.connection
-            if (connection == null) {
+            val connection = connection
+            val player = connection?.player
+            if (connection == null || player == null) {
                 super.channelRead(ctx, msg)
                 return
             }
