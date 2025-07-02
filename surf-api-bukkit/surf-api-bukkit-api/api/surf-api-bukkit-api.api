@@ -1228,6 +1228,8 @@ public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/Sur
 	public abstract fun generateNextInventoryId (Lorg/bukkit/entity/Player;)I
 	public abstract fun getStateId (Lorg/bukkit/Material;)I
 	public abstract fun getStateId (Lorg/bukkit/block/data/BlockData;)I
+	public abstract fun getVelocitySecret ()Ljava/lang/String;
+	public abstract fun isVelocityEnabled ()Z
 	public abstract fun nextEntityId ()I
 	public abstract fun removeCompostable (Lorg/bukkit/Material;)V
 	public abstract fun setOnlineMode (Z)V

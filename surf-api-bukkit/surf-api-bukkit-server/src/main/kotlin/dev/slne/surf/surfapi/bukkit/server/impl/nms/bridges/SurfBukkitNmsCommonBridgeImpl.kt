@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge
 import dev.slne.surf.surfapi.bukkit.server.nms.toNms
@@ -54,12 +53,19 @@ class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
     }
 
     override fun setVelocityEnabled(enabled: Boolean) {
-        server.onlineMode
         GlobalConfiguration.get().proxies.velocity.enabled = enabled
+    }
+
+    override fun isVelocityEnabled(): Boolean {
+        return GlobalConfiguration.get().proxies.velocity.enabled
     }
 
     override fun setVelocitySecret(secret: String) {
         GlobalConfiguration.get().proxies.velocity.secret = secret
+    }
+
+    override fun getVelocitySecret(): String {
+        return GlobalConfiguration.get().proxies.velocity.secret
     }
 
     override fun setOnlineMode(enabled: Boolean) {

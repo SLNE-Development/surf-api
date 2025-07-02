@@ -19,7 +19,11 @@ interface SurfBukkitNmsCommonBridge {
     fun removeCompostable(material: Material)
 
     fun setVelocityEnabled(enabled: Boolean)
+    fun isVelocityEnabled(): Boolean
+
     fun setVelocitySecret(secret: String)
+    fun getVelocitySecret(): String
+
     fun setOnlineMode(enabled: Boolean)
 
     companion object {
