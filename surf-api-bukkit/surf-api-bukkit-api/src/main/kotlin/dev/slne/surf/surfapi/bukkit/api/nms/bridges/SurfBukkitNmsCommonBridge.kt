@@ -20,6 +20,7 @@ interface SurfBukkitNmsCommonBridge {
 
     fun setVelocityEnabled(enabled: Boolean)
     fun setVelocitySecret(secret: String)
+    fun setOnlineMode(enabled: Boolean)
 
     companion object {
         val instance = requiredService<SurfBukkitNmsCommonBridge>()

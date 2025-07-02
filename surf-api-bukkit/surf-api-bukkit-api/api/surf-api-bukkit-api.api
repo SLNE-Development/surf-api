@@ -1230,6 +1230,7 @@ public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/Sur
 	public abstract fun getStateId (Lorg/bukkit/block/data/BlockData;)I
 	public abstract fun nextEntityId ()I
 	public abstract fun removeCompostable (Lorg/bukkit/Material;)V
+	public abstract fun setOnlineMode (Z)V
 	public abstract fun setVelocityEnabled (Z)V
 	public abstract fun setVelocitySecret (Ljava/lang/String;)V
 }
