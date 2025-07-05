@@ -15,8 +15,10 @@ plugins {
     id("com.gradleup.shadow")
 }
 
+val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
+
 group = findProperty("group") as String
-version = findProperty("version") as String
+version = findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
 
 repositories {
     mavenCentral()
