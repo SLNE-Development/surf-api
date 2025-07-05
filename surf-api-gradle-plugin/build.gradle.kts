@@ -5,6 +5,7 @@ val relocationPrefix: String by project
 val mcVersion: String by project
 val groupId = findProperty("group") as String
 val javaVersion: String by project
+val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 // endregion
 
 plugins {
@@ -18,7 +19,11 @@ plugins {
 }
 
 group = groupId
-version = "$mcVersion-1.1.9"
+version = buildString {
+    append(mcVersion)
+    append("-1.1.9")
+    if (snapshot) append("-SNAPSHOT")
+}
 
 repositories {
     mavenCentral()
@@ -108,7 +113,7 @@ val generateConstants by tasks.registering {
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
     inputs.property("libs.versions.luckperms", libs.versions.luckperms.get().toString())
-    inputs.property("version", rootProject.findProperty("version") as String)
+    inputs.property("version", rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else "")
     outputs.dir(constantsOutputDir)
 
     doLast {
@@ -132,7 +137,7 @@ val generateConstants by tasks.registering {
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
             |    
-            |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String}"
+            |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}
         """.trimMargin()
 
