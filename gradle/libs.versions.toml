@@ -17,9 +17,9 @@ commandapi = "10.1.0"
 luckperms = "v5.5.9-bukkit"
 
 # Scoreboard Library
-scoreboard-library = "2.3.2"
-scoreboard-library-implementation = "2.3.2"
-scoreboard-library-modern = "2.3.2"
+scoreboard-library = "2.3.3"
+scoreboard-library-implementation = "2.3.3"
+scoreboard-library-modern = "2.3.3"
 
 # Adventure
 adventure-api = "4.23.0"
