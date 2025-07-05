@@ -56,6 +56,12 @@ jobs:
           VERSION=$(./gradlew properties --no-daemon \
             | grep '^version:' \
             | awk '{print $2}')
+          SNAPSHOT_FLAG=$(./gradlew properties --no-daemon \
+            | grep '^snapshot:' \
+            | awk '{print $2}')
+          if [ "$SNAPSHOT_FLAG" = "true" ]; then
+            VERSION="${VERSION}-SNAPSHOT"
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Find and filter JAR files
