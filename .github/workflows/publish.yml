@@ -12,6 +12,7 @@ env:
   SLNE_RELEASES_REPO_USERNAME: ${{ secrets.SLNE_RELEASES_REPO_USERNAME }}
   SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
   MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
+  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
 jobs:
   build:
@@ -50,7 +51,7 @@ jobs:
       - name: Publish all modules to Maven
         run: ./gradlew publish --parallel --no-scan
 
-      - name: Extract Project Version from Gradle
+      - name: Extract Project Version and Snapshot Flag from Gradle
         id: get_version
         run: |
           VERSION=$(./gradlew properties --no-daemon \
@@ -63,6 +64,23 @@ jobs:
             VERSION="${VERSION}-SNAPSHOT"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SNAPSHOT_FLAG=$SNAPSHOT_FLAG" >> $GITHUB_ENV
+
+      - name: Determine release flags
+        run: |
+          CURRENT_BRANCH=${GITHUB_REF#refs/heads/}
+          # prerelease only for snapshots
+          if [ "${SNAPSHOT_FLAG}" = "true" ]; then
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+          else
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+          fi
+          # draft for snapshots or non-default branches
+          if [ "${SNAPSHOT_FLAG}" = "true" ] || [ "${CURRENT_BRANCH}" != "${DEFAULT_BRANCH}" ]; then
+            echo "DRAFT=true" >> $GITHUB_ENV
+          else
+            echo "DRAFT=false" >> $GITHUB_ENV
+          fi
 
       - name: Find and filter JAR files
         id: find_jars
@@ -78,8 +96,8 @@ jobs:
         with:
           tag_name: v${{ env.VERSION }}
           name: Release ${{ env.VERSION }}
-          draft: false
-          prerelease: false
+          draft: ${{ env.DRAFT }}
+          prerelease: ${{ env.PRERELEASE }}
           files: ${{ env.JAR_FILES }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
