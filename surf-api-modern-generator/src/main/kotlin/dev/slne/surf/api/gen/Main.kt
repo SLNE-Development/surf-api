@@ -5,6 +5,7 @@ import dev.slne.surf.api.gen.generator.Generators
 import dev.slne.surf.api.gen.generator.SourceGenerator
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
 class Main
@@ -18,7 +19,7 @@ fun main() {
     val registries = json.decodeFromString<Registries>(registryFile.readAllBytes().decodeToString())
     val generators = Generators(registries)
 
-    generate(Path.of("surf-api-core/surf-api-core-api/src/main/java"), generators.coreApiGenerators)
+    generate(Path("../surf-api-core/surf-api-core-api/src/main/java"), generators.coreApiGenerators)
 }
 
 private fun generate(output: Path, generators: Array<SourceGenerator>) {

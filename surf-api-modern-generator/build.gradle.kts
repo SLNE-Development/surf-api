@@ -14,7 +14,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation(libs.kotlin.serialization.json)
 
     implementation("com.squareup:javapoet:1.13.0")
     implementation("org.jetbrains:annotations:24.1.0")
