@@ -100,5 +100,6 @@ jobs:
           prerelease: ${{ env.PRERELEASE }}
           make_latest: ${{ env.MAKE_LATEST }}
           files: ${{ env.JAR_FILES }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
