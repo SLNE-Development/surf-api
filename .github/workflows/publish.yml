@@ -75,11 +75,11 @@ jobs:
           else
             echo "PRERELEASE=false" >> $GITHUB_ENV
           fi
-          # draft for snapshots or non-default branches
+          # make_latest false for snapshots or non-default branches
           if [ "${SNAPSHOT_FLAG}" = "true" ] || [ "${CURRENT_BRANCH}" != "${DEFAULT_BRANCH}" ]; then
-            echo "DRAFT=true" >> $GITHUB_ENV
+            echo "MAKE_LATEST=false" >> $GITHUB_ENV
           else
-            echo "DRAFT=false" >> $GITHUB_ENV
+            echo "MAKE_LATEST=true" >> $GITHUB_ENV
           fi
 
       - name: Find and filter JAR files
@@ -96,8 +96,9 @@ jobs:
         with:
           tag_name: v${{ env.VERSION }}
           name: Release ${{ env.VERSION }}
-          draft: ${{ env.DRAFT }}
+          draft: false
           prerelease: ${{ env.PRERELEASE }}
+          make_latest: ${{ env.MAKE_LATEST }}
           files: ${{ env.JAR_FILES }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
