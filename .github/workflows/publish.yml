@@ -3,7 +3,7 @@ name: Publish to Maven & Create GitHub Release
 on:
   push:
     branches:
-      - version/1.21.7
+      - 'version/*'
   workflow_dispatch:
 
 env:
@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
@@ -40,25 +40,31 @@ jobs:
         with:
           distribution: 'graalvm'
           java-version: '21'
-      
+
       - name: Build all modules with Gradle
         run: ./gradlew build shadowJar --parallel --no-scan
 
       - name: Check all modules with Gradle
         run: ./gradlew check --parallel --no-scan
-      
+
       - name: Publish all modules to Maven
         run: ./gradlew publish --parallel --no-scan
 
-      - name: Extract Project Version
+      - name: Extract Project Version from Gradle
         id: get_version
-        run: echo "VERSION=$(./gradlew properties | grep "^version:" | awk '{print $2}')" >> $GITHUB_ENV
+        run: |
+          VERSION=$(./gradlew properties --no-daemon \
+            | grep '^version:' \
+            | awk '{print $2}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Find and filter JAR files
         id: find_jars
         run: |
           echo "JAR_FILES<<EOF" >> $GITHUB_ENV
-          find . -path "**/build/libs/*.jar" | grep -E "${{ env.MODULE_REGEX }}" >> $GITHUB_ENV
+          find . -path "**/build/libs/*.jar" \
+            | grep -E "${{ env.MODULE_REGEX }}" \
+            >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Create GitHub Release
