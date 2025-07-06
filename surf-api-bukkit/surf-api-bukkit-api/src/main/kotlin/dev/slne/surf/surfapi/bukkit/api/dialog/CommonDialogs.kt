@@ -12,8 +12,9 @@ fun noticeDialog(builder: DialogRegistryEntry.Builder.() -> Unit) = dialog {
     type { notice() }
 }
 
-fun noticeDialog(notice: Component, width: @Range(from = 1, to = 1024) Int? = null) = noticeDialog {
+fun noticeDialog(title: Component, notice: Component, width: @Range(from = 1, to = 1024) Int? = null) = noticeDialog {
     base {
+        title(title)
         body {
             plainMessage(notice, width)
         }
@@ -22,5 +23,6 @@ fun noticeDialog(notice: Component, width: @Range(from = 1, to = 1024) Int? = nu
 
 fun noticeDialogWithBuilder(
     width: @Range(from = 1, to = 1024) Int? = null,
+    title: Component,
     notice: SurfComponentBuilder.() -> Unit,
-) = noticeDialog(SurfComponentBuilder(notice), width)
+) = noticeDialog(title, SurfComponentBuilder(notice), width)
