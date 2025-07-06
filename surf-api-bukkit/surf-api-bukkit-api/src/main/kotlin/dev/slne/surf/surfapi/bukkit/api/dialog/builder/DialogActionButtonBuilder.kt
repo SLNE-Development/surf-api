@@ -8,7 +8,7 @@ import io.papermc.paper.registry.data.dialog.action.DialogAction
 import net.kyori.adventure.text.Component
 import org.jetbrains.annotations.Range
 
-class DialogActionButtonBuilder { // permission
+class DialogActionButtonBuilder {
     var label: Component? = null
     var tooltip: Component? = null
     var width: @Range(from = 1, to = 1024) Int? = null
