@@ -22,7 +22,7 @@ fun noticeDialog(title: Component, notice: Component, width: @Range(from = 1, to
 }
 
 fun noticeDialogWithBuilder(
-    width: @Range(from = 1, to = 1024) Int? = null,
     title: Component,
+    width: @Range(from = 1, to = 1024) Int? = null,
     notice: SurfComponentBuilder.() -> Unit,
 ) = noticeDialog(title, SurfComponentBuilder(notice), width)
