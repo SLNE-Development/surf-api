@@ -5,7 +5,7 @@ package dev.slne.surf.surfapi.bukkit.api.dialog.builder
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import io.papermc.paper.registry.data.dialog.input.DialogInput
-import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput
+import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput.OptionEntry
 import io.papermc.paper.registry.data.dialog.input.TextDialogInput.MultilineOptions
 import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
@@ -78,9 +78,9 @@ class DialogInputBuilder {
 
     fun singleOption(
         key: String,
-        block: SimgleOptionDialogInput.() -> Unit,
+        block: DialogInputBuilder.SingleOptionDialogInput.() -> Unit,
     ): DialogInput {
-        val input = SimgleOptionDialogInput(key).apply(block).build()
+        val input = SingleOptionDialogInput(key).apply(block).build()
         inputs.add(input)
         return input
     }
@@ -238,9 +238,9 @@ class DialogInputBuilder {
         }
     }
 
-    class SimgleOptionDialogInput(private val key: String) {
+    class SingleOptionDialogInput(private val key: String) {
         var label: Component? = null
-        val entries = mutableObjectListOf<SingleOptionDialogInput.OptionEntry>()
+        val entries = mutableObjectListOf<OptionEntry>()
         var width: @Range(from = 1, to = 1024) Int? = null
         var labelVisible: Boolean? = null
 
@@ -252,7 +252,7 @@ class DialogInputBuilder {
             label(SurfComponentBuilder(block))
         }
 
-        fun option(entry: SingleOptionDialogInput.OptionEntry) {
+        fun option(entry: OptionEntry) {
             entries.add(entry)
         }
 
@@ -261,7 +261,7 @@ class DialogInputBuilder {
             label: Component,
             selected: Boolean = false,
         ) {
-            entries.add(SingleOptionDialogInput.OptionEntry.create(key, label, selected))
+            entries.add(OptionEntry.create(key, label, selected))
         }
 
         fun option(
