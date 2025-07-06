@@ -69,15 +69,12 @@ object CommonComponents {
      *
      * **Output Example:**
      * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
+     * CASTCRAFTER.DE
      * ```
      */
     @JvmField
     val DISCONNECT_HEADER = buildText0 {
-        appendText("CASTCRAFTER", PRIMARY)
-        appendNewline()
-        appendText("COMMUNITY SERVER", PRIMARY)
+        appendText("CASTCRAFTER.DE", PRIMARY)
         appendNewline(2)
     }
 
@@ -132,8 +129,7 @@ object CommonComponents {
      *
      * **Output Example:**
      * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
+     * CASTCRAFTER.DE
      *
      * DU WURDEST VOM SERVER GEWORFEN
      * \
@@ -161,8 +157,7 @@ object CommonComponents {
      *
      * **Output Example:**
      * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
+     * CASTCRAFTER.DE
      *
      * DU WURDEST VOM SERVER GEWORFEN
      * \
@@ -231,8 +226,7 @@ object CommonComponents {
      *
      * **Output Example:**
      * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
+     * CASTCRAFTER.DE
      *
      * DU WURDEST VOM SERVER GEWORFEN
      * \
@@ -262,8 +256,7 @@ object CommonComponents {
      *
      * **Output Example:**
      * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
+     * CASTCRAFTER.DE
      *
      * DU WURDEST VOM SERVER GEWORFEN
      * \
