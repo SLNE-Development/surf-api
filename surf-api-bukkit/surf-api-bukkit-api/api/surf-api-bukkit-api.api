@@ -1030,6 +1030,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/CommonDialogsKt {
 public final class dev/slne/surf/surfapi/bukkit/api/dialog/DialogBuilderKt {
 	public static final fun Dialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
 	public static final fun base (Lio/papermc/paper/registry/data/dialog/DialogRegistryEntry$Builder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun clearDialogs (Lorg/bukkit/entity/Player;)V
 	public static final fun dialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
 	public static final fun type (Lio/papermc/paper/registry/data/dialog/DialogRegistryEntry$Builder;Lkotlin/jvm/functions/Function1;)V
 }
@@ -1217,7 +1218,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBu
 	public final fun width (I)V
 }
 
-public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SimgleOptionDialogInput {
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SingleOptionDialogInput {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun getEntries ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
 	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
@@ -1228,8 +1229,8 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBu
 	public final fun option (Lio/papermc/paper/registry/data/dialog/input/SingleOptionDialogInput$OptionEntry;)V
 	public final fun option (Ljava/lang/String;Lnet/kyori/adventure/text/Component;Z)V
 	public final fun option (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun option$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SimgleOptionDialogInput;Ljava/lang/String;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)V
-	public static synthetic fun option$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SimgleOptionDialogInput;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun option$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SingleOptionDialogInput;Ljava/lang/String;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)V
+	public static synthetic fun option$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SingleOptionDialogInput;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
 	public final fun setLabelVisible (Ljava/lang/Boolean;)V
 	public final fun setWidth (Ljava/lang/Integer;)V
@@ -1552,6 +1553,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/nms/SurfBukkitNmsBridgeKt {
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridge {
 	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridge$Companion;
 	public abstract fun addCompostable (Lorg/bukkit/Material;F)V
+	public abstract fun clearDialogs (Lorg/bukkit/entity/Player;)V
 	public abstract fun generateNextInventoryId (Lorg/bukkit/entity/Player;)I
 	public abstract fun getStateId (Lorg/bukkit/Material;)I
 	public abstract fun getStateId (Lorg/bukkit/block/data/BlockData;)I
