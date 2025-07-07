@@ -3,6 +3,8 @@
 package dev.slne.surf.surfapi.bukkit.api.dialog.builder
 
 import dev.slne.surf.surfapi.bukkit.api.dialog.dialog
+import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
+import io.papermc.paper.dialog.DialogResponseView
 import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
 import io.papermc.paper.registry.data.dialog.action.DialogAction
 import io.papermc.paper.registry.data.dialog.action.DialogActionCallback
@@ -14,6 +16,7 @@ import net.kyori.adventure.nbt.TagStringIO
 import net.kyori.adventure.nbt.api.BinaryTagHolder
 import net.kyori.adventure.text.event.ClickCallback
 import net.kyori.adventure.text.event.ClickEvent
+import org.bukkit.entity.Player
 import java.net.URL
 
 class DialogActionBuilder {
@@ -52,6 +55,15 @@ class DialogActionBuilder {
         staticAction(ClickEvent.callback(callback))
     }
 
+    fun playerCallback(callback: ClickCallback<Player>) {
+        callback(ClickCallback.widen(callback, Player::class.java) { other ->
+            other.sendText {
+                appendPrefix()
+                error("Only players can use this action!")
+            }
+        })
+    }
+
     fun commandTemplate(template: String) {
         action = DialogAction.commandTemplate(template)
     }
@@ -74,6 +86,24 @@ class DialogActionBuilder {
     fun customClick(options: ClickCallback.Options? = null, callback: DialogActionCallback) {
         val options = options ?: ClickCallback.Options.builder().build()
         action = DialogAction.customClick(callback, options)
+    }
+
+    fun customPlayerClick(
+        options: ClickCallback.Options? = null,
+        callback: (response: DialogResponseView, player: Player) -> Unit,
+    ) {
+        customClick(
+            options
+        ) { response, audience ->
+            if (audience !is Player) {
+                audience.sendText {
+                    appendPrefix()
+                    error("Only players can use this action!")
+                }
+            } else {
+                callback(response, audience)
+            }
+        }
     }
 
     internal fun build(): DialogAction {

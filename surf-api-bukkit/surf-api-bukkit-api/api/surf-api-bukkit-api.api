@@ -1045,8 +1045,11 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionB
 	public final fun customClick (Lnet/kyori/adventure/text/event/ClickCallback$Options;Lio/papermc/paper/registry/data/dialog/action/DialogActionCallback;)V
 	public static synthetic fun customClick$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/api/BinaryTagHolder;ILjava/lang/Object;)V
 	public static synthetic fun customClick$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/text/event/ClickCallback$Options;Lio/papermc/paper/registry/data/dialog/action/DialogActionCallback;ILjava/lang/Object;)V
+	public final fun customPlayerClick (Lnet/kyori/adventure/text/event/ClickCallback$Options;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun customPlayerClick$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/text/event/ClickCallback$Options;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public final fun openUrl (Ljava/lang/String;)V
 	public final fun openUrl (Ljava/net/URL;)V
+	public final fun playerCallback (Lnet/kyori/adventure/text/event/ClickCallback;)V
 	public final fun showDialog (Lkotlin/jvm/functions/Function1;)V
 	public final fun showDialog (Lnet/kyori/adventure/dialog/DialogLike;)V
 	public final fun staticAction (Lnet/kyori/adventure/text/event/ClickEvent;)V
