@@ -67,6 +67,7 @@ class DialogBaseBuilder {
         val title = title
         require(title != null) { "Dialog base title must not be null" }
         val builder = DialogBase.builder(title)
+            .pause(false)
         with(builder) {
             body?.let { body(it) }
             inputs?.let { inputs(it) }
