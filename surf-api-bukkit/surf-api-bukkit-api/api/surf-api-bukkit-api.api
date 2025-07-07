@@ -1274,10 +1274,9 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBui
 	public final fun confirmation (Lio/papermc/paper/registry/data/dialog/ActionButton;Lio/papermc/paper/registry/data/dialog/ActionButton;)V
 	public final fun confirmation (Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun confirmation$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun dialogList (Lio/papermc/paper/registry/set/RegistrySet;Lkotlin/jvm/functions/Function1;)V
+	public final fun dialogList (Lkotlin/jvm/functions/Function1;)V
 	public final fun dialogList ([Lio/papermc/paper/dialog/Dialog;Lkotlin/jvm/functions/Function1;)V
 	public final fun dialogList ([Lio/papermc/paper/registry/TypedKey;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun dialogList$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;Lio/papermc/paper/registry/set/RegistrySet;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun dialogList$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/dialog/Dialog;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun dialogList$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/registry/TypedKey;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun multiAction (Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
@@ -1304,9 +1303,14 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBui
 }
 
 public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder$DialogListTypeBuilder {
-	public fun <init> (Lio/papermc/paper/registry/set/RegistrySet;)V
+	public fun <init> ()V
+	public final fun addAll (Ljava/lang/Iterable;)V
+	public final fun addAll ([Lio/papermc/paper/dialog/Dialog;)V
 	public final fun buttonWidth (I)V
 	public final fun columns (I)V
+	public final fun dialog (Lio/papermc/paper/dialog/Dialog;)V
+	public final fun dialog (Lio/papermc/paper/registry/TypedKey;)V
+	public final fun dialog ([Lio/papermc/paper/registry/TypedKey;)V
 	public final fun exitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
 	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
 	public final fun getButtonWidth ()Ljava/lang/Integer;
