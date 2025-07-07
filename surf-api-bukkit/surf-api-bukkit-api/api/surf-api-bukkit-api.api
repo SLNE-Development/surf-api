@@ -1023,8 +1023,8 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/CommonDialogsKt {
 	public static final fun noticeDialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
 	public static final fun noticeDialog (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)Lio/papermc/paper/dialog/Dialog;
 	public static synthetic fun noticeDialog$default (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
-	public static final fun noticeDialogWithBuilder (Ljava/lang/Integer;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
-	public static synthetic fun noticeDialogWithBuilder$default (Ljava/lang/Integer;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun noticeDialogWithBuilder (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static synthetic fun noticeDialogWithBuilder$default (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
 }
 
 public final class dev/slne/surf/surfapi/bukkit/api/dialog/DialogBuilderKt {
