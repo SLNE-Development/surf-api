@@ -9,13 +9,6 @@ plugins {
 
 allprojects {
     repositories {
-        maven("https://maven-prs.papermc.io/Paper/pr12671") {
-            name = "Maven for PR #12671" // https://github.com/PaperMC/Paper/pull/12671
-            mavenContent {
-                includeModule("io.papermc.paper", "dev-bundle")
-                includeModule("io.papermc.paper", "paper-api")
-            }
-        }
         mavenCentral()
     }
 
