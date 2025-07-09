@@ -26,6 +26,8 @@ interface SurfBukkitNmsCommonBridge {
 
     fun setOnlineMode(enabled: Boolean)
 
+    fun clearDialogs(player: Player)
+
     companion object {
         val instance = requiredService<SurfBukkitNmsCommonBridge>()
         val nextEntityId get() = instance.nextEntityId()

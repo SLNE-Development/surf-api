@@ -8,6 +8,7 @@ import dev.slne.surf.surfapi.bukkit.server.nms.toNmsBlock
 import dev.slne.surf.surfapi.bukkit.server.nms.toNmsItem
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import io.papermc.paper.configuration.GlobalConfiguration
+import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.players.GameProfileCache
 import net.minecraft.world.level.block.Block
@@ -71,5 +72,9 @@ class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
     override fun setOnlineMode(enabled: Boolean) {
         MinecraftServer.getServer().setUsesAuthentication(enabled)
         GameProfileCache.setUsesAuthentication(enabled)
+    }
+
+    override fun clearDialogs(player: Player) {
+        player.toNms().connection.send(ClientboundClearDialogPacket.INSTANCE)
     }
 }

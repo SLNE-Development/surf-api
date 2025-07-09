@@ -1019,6 +1019,340 @@ public final class dev/slne/surf/surfapi/bukkit/api/command/args/MiniMessageArgu
 	public static synthetic fun miniMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 }
 
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/CommonDialogsKt {
+	public static final fun noticeDialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun noticeDialog (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)Lio/papermc/paper/dialog/Dialog;
+	public static synthetic fun noticeDialog$default (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun noticeDialogWithBuilder (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static synthetic fun noticeDialogWithBuilder$default (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/DialogBuilderKt {
+	public static final fun Dialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun base (Lio/papermc/paper/registry/data/dialog/DialogRegistryEntry$Builder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun clearDialogs (Lorg/bukkit/entity/Player;)V
+	public static final fun dialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun type (Lio/papermc/paper/registry/data/dialog/DialogRegistryEntry$Builder;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilder {
+	public fun <init> ()V
+	public final fun callback (Lnet/kyori/adventure/text/event/ClickCallback;)V
+	public final fun commandTemplate (Ljava/lang/String;)V
+	public final fun copyToClipboard (Ljava/lang/String;)V
+	public final fun customClick (Lnet/kyori/adventure/key/Key;Lkotlin/jvm/functions/Function1;)V
+	public final fun customClick (Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/api/BinaryTagHolder;)V
+	public final fun customClick (Lnet/kyori/adventure/text/event/ClickCallback$Options;Lio/papermc/paper/registry/data/dialog/action/DialogActionCallback;)V
+	public static synthetic fun customClick$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/api/BinaryTagHolder;ILjava/lang/Object;)V
+	public static synthetic fun customClick$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/text/event/ClickCallback$Options;Lio/papermc/paper/registry/data/dialog/action/DialogActionCallback;ILjava/lang/Object;)V
+	public final fun customPlayerClick (Lnet/kyori/adventure/text/event/ClickCallback$Options;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun customPlayerClick$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/text/event/ClickCallback$Options;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun openUrl (Ljava/lang/String;)V
+	public final fun openUrl (Ljava/net/URL;)V
+	public final fun playerCallback (Lnet/kyori/adventure/text/event/ClickCallback;)V
+	public final fun showDialog (Lkotlin/jvm/functions/Function1;)V
+	public final fun showDialog (Lnet/kyori/adventure/dialog/DialogLike;)V
+	public final fun staticAction (Lnet/kyori/adventure/text/event/ClickEvent;)V
+	public final fun suggestCommand (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionBuilderKt {
+	public static final fun DialogAction (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/action/DialogAction;
+	public static final fun dialogAction (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/action/DialogAction;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionButtonBuilder {
+	public fun <init> ()V
+	public final fun action (Lio/papermc/paper/registry/data/dialog/action/DialogAction;)V
+	public final fun action (Lkotlin/jvm/functions/Function1;)V
+	public final fun getAction ()Lio/papermc/paper/registry/data/dialog/action/DialogAction;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getTooltip ()Lnet/kyori/adventure/text/Component;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun setAction (Lio/papermc/paper/registry/data/dialog/action/DialogAction;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setTooltip (Lnet/kyori/adventure/text/Component;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun tooltip (Lkotlin/jvm/functions/Function1;)V
+	public final fun tooltip (Lnet/kyori/adventure/text/Component;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogActionButtonBuilderKt {
+	public static final fun ActionButton (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public static final fun actionButton (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/ActionButton;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBaseBuilder {
+	public fun <init> ()V
+	public final fun afterAction (Lio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;)V
+	public final fun body (Lkotlin/jvm/functions/Function1;)V
+	public final fun externalTitle (Lkotlin/jvm/functions/Function1;)V
+	public final fun externalTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun getAfterAction ()Lio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;
+	public final fun getCanCloseWithEscape ()Ljava/lang/Boolean;
+	public final fun getExternalTitle ()Lnet/kyori/adventure/text/Component;
+	public final fun getTitle ()Lnet/kyori/adventure/text/Component;
+	public final fun input (Lkotlin/jvm/functions/Function1;)V
+	public final fun preventClosingWithEscape (Z)V
+	public static synthetic fun preventClosingWithEscape$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBaseBuilder;ZILjava/lang/Object;)V
+	public final fun setAfterAction (Lio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;)V
+	public final fun setCanCloseWithEscape (Ljava/lang/Boolean;)V
+	public final fun setExternalTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun setTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun title (Lkotlin/jvm/functions/Function1;)V
+	public final fun title (Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBaseBuilderKt {
+	public static final fun DialogBase (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/DialogBase;
+	public static final fun dialogBase (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/DialogBase;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder {
+	public fun <init> ()V
+	public final fun item (Lkotlin/jvm/functions/Function1;)V
+	public final fun plain (Lkotlin/jvm/functions/Function1;)V
+	public final fun plainMessage (Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;)V
+	public final fun plainMessage (Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public final fun plainMessage (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)V
+	public static synthetic fun plainMessage$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun plainMessage$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder {
+	public fun <init> ()V
+	public final fun description (Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;)V
+	public final fun description (Lkotlin/jvm/functions/Function1;)V
+	public final fun getDescription ()Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;
+	public final fun getHeight ()Ljava/lang/Integer;
+	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
+	public final fun getShowDecorations ()Ljava/lang/Boolean;
+	public final fun getShowTooltip ()Ljava/lang/Boolean;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun height (I)V
+	public final fun item (Lorg/bukkit/inventory/ItemStack;)V
+	public final fun item (Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;)V
+	public static synthetic fun item$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun setDescription (Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;)V
+	public final fun setHeight (Ljava/lang/Integer;)V
+	public final fun setItem (Lorg/bukkit/inventory/ItemStack;)V
+	public final fun setShowDecorations (Ljava/lang/Boolean;)V
+	public final fun setShowTooltip (Ljava/lang/Boolean;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun showDecorations (Z)V
+	public final fun showTooltip (Z)V
+	public final fun simpleDescription (Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleDescription (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)V
+	public static synthetic fun simpleDescription$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun simpleDescription$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilder$PlainDialogMessageBuilder {
+	public fun <init> ()V
+	public final fun getMessage ()Lnet/kyori/adventure/text/Component;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun message (Lkotlin/jvm/functions/Function1;)V
+	public final fun message (Lnet/kyori/adventure/text/Component;)V
+	public final fun setMessage (Lnet/kyori/adventure/text/Component;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogBodyBuilderKt {
+	public static final fun DialogBody (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+	public static final fun dialogBody (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder {
+	public fun <init> ()V
+	public final fun addInput (Lio/papermc/paper/registry/data/dialog/input/DialogInput;)V
+	public final fun boolean (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+	public final fun numberRange (Ljava/lang/String;Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+	public final fun simpleBoolean (Ljava/lang/String;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleBoolean (Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/lang/Boolean;)V
+	public static synthetic fun simpleBoolean$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder;Ljava/lang/String;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun simpleBoolean$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/lang/Boolean;ILjava/lang/Object;)V
+	public final fun simpleNumberRange (Ljava/lang/String;Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleNumberRange (Ljava/lang/String;Lkotlin/ranges/ClosedFloatingPointRange;Lnet/kyori/adventure/text/Component;)V
+	public final fun simpleText (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleText (Ljava/lang/String;Lnet/kyori/adventure/text/Component;)V
+	public final fun singleOption (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+	public final fun text (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$BooleanDialogInput {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getInitial ()Ljava/lang/Boolean;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getOnFalse ()Ljava/lang/String;
+	public final fun getOnTrue ()Ljava/lang/String;
+	public final fun initial (Z)V
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun onFalse (Ljava/lang/String;)V
+	public final fun onTrue (Ljava/lang/String;)V
+	public final fun setInitial (Ljava/lang/Boolean;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setOnFalse (Ljava/lang/String;)V
+	public final fun setOnTrue (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$NumberRangeDialogInput {
+	public fun <init> (Ljava/lang/String;Lkotlin/ranges/ClosedFloatingPointRange;)V
+	public final fun getInitial ()Ljava/lang/Float;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getLabelFormat ()Ljava/lang/String;
+	public final fun getStep ()Ljava/lang/Float;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun initial (F)V
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun labelFormat (Ljava/lang/String;)V
+	public final fun setInitial (Ljava/lang/Float;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLabelFormat (Ljava/lang/String;)V
+	public final fun setStep (Ljava/lang/Float;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun step (F)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SingleOptionDialogInput {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getEntries ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getLabelVisible ()Ljava/lang/Boolean;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun option (Lio/papermc/paper/registry/data/dialog/input/SingleOptionDialogInput$OptionEntry;)V
+	public final fun option (Ljava/lang/String;Lnet/kyori/adventure/text/Component;Z)V
+	public final fun option (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun option$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SingleOptionDialogInput;Ljava/lang/String;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)V
+	public static synthetic fun option$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$SingleOptionDialogInput;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLabelVisible (Ljava/lang/Boolean;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$TextDialogInput {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getInitial ()Ljava/lang/String;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getLabelVisible ()Ljava/lang/Boolean;
+	public final fun getMaxLength ()Ljava/lang/Integer;
+	public final fun getMultilineOptions ()Lio/papermc/paper/registry/data/dialog/input/TextDialogInput$MultilineOptions;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun initial (Ljava/lang/String;)V
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun labelVisible (Z)V
+	public final fun maxLength (I)V
+	public final fun multiline (Lio/papermc/paper/registry/data/dialog/input/TextDialogInput$MultilineOptions;)V
+	public final fun multiline (Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public static synthetic fun multiline$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilder$TextDialogInput;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public final fun setInitial (Ljava/lang/String;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLabelVisible (Ljava/lang/Boolean;)V
+	public final fun setMaxLength (Ljava/lang/Integer;)V
+	public final fun setMultilineOptions (Lio/papermc/paper/registry/data/dialog/input/TextDialogInput$MultilineOptions;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogInputBuilderKt {
+	public static final fun DialogInput (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+	public static final fun dialogInput (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder {
+	public fun <init> ()V
+	public final fun confirmation (Lio/papermc/paper/registry/data/dialog/ActionButton;Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun confirmation (Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun confirmation$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun dialogList (Lkotlin/jvm/functions/Function1;)V
+	public final fun dialogList ([Lio/papermc/paper/dialog/Dialog;Lkotlin/jvm/functions/Function1;)V
+	public final fun dialogList ([Lio/papermc/paper/registry/TypedKey;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun dialogList$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/dialog/Dialog;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun dialogList$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/registry/TypedKey;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun multiAction (Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public final fun multiAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun multiAction ([Lio/papermc/paper/registry/data/dialog/ActionButton;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun multiAction$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun multiAction$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/registry/data/dialog/ActionButton;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun notice ()V
+	public final fun notice (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun notice (Lkotlin/jvm/functions/Function1;)V
+	public final fun serverLinks (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder$DialogConfirmationTypeBuilder {
+	public fun <init> ()V
+	public final fun getNo ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun getYes ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun no (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun no (Lkotlin/jvm/functions/Function1;)V
+	public final fun setNo (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun setYes (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun yes (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun yes (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder$DialogListTypeBuilder {
+	public fun <init> ()V
+	public final fun addAll (Ljava/lang/Iterable;)V
+	public final fun addAll ([Lio/papermc/paper/dialog/Dialog;)V
+	public final fun buttonWidth (I)V
+	public final fun columns (I)V
+	public final fun dialog (Lio/papermc/paper/dialog/Dialog;)V
+	public final fun dialog (Lio/papermc/paper/registry/TypedKey;)V
+	public final fun dialog ([Lio/papermc/paper/registry/TypedKey;)V
+	public final fun exitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun getButtonWidth ()Ljava/lang/Integer;
+	public final fun getColumns ()Ljava/lang/Integer;
+	public final fun getExitAction ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun setButtonWidth (Ljava/lang/Integer;)V
+	public final fun setColumns (Ljava/lang/Integer;)V
+	public final fun setExitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder$DialogMultiActionTypeBuilder {
+	public fun <init> ()V
+	public final fun action (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun action (Lkotlin/jvm/functions/Function1;)V
+	public final fun columns (I)V
+	public final fun exitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun getColumns ()Ljava/lang/Integer;
+	public final fun getExitAction ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun setColumns (Ljava/lang/Integer;)V
+	public final fun setExitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilder$ServerLinksTypeBuilder {
+	public fun <init> ()V
+	public final fun buttonWidth (I)V
+	public final fun columns (I)V
+	public final fun exitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun getButtonWidth ()I
+	public final fun getColumns ()I
+	public final fun getExitAction ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun setButtonWidth (I)V
+	public final fun setColumns (I)V
+	public final fun setExitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBuilderKt {
+	public static final fun DialogType (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/type/DialogType;
+	public static final fun dialogType (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/type/DialogType;
+}
+
 public final class dev/slne/surf/surfapi/bukkit/api/event/Listener_extensionKt {
 	public static final fun listen (Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/event/SingleListener;
 	public static synthetic fun listen$default (Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/event/SingleListener;
@@ -1226,6 +1560,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/nms/SurfBukkitNmsBridgeKt {
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridge {
 	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridge$Companion;
 	public abstract fun addCompostable (Lorg/bukkit/Material;F)V
+	public abstract fun clearDialogs (Lorg/bukkit/entity/Player;)V
 	public abstract fun generateNextInventoryId (Lorg/bukkit/entity/Player;)I
 	public abstract fun getStateId (Lorg/bukkit/Material;)I
 	public abstract fun getStateId (Lorg/bukkit/block/data/BlockData;)I
