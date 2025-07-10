@@ -111,7 +111,10 @@ val generateConstants by tasks.registering {
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
     inputs.property("libs.versions.luckperms", libs.versions.luckperms.get().toString())
-    inputs.property("libs.versions.packetevents", libs.versions.packetevents.get().toString())
+    inputs.property(
+        "libs.versions.packetevents",
+        libs.versions.packetevents.plugin.get().toString()
+    )
     inputs.property(
         "version",
         rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
@@ -138,7 +141,7 @@ val generateConstants by tasks.registering {
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
-            |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.get()}"
+            |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"
             |    
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}
