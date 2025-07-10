@@ -19,9 +19,12 @@ import xyz.jpenilla.runpaper.task.RunServer
 internal class PaperPluginSurfPlugin :
     AbstractPaperSurfPlugin<PaperPluginSurfExtension>("paperPlugin") {
 
-        init {
-            addRelocationsForDependency("surf-data-api", "com.fasterxml.jackson" to "dev.slne.data.libs.jackson")
-        }
+    init {
+        addRelocationsForDependency(
+            "surf-data-api",
+            "com.fasterxml.jackson" to "dev.slne.data.libs.jackson"
+        )
+    }
 
     private val paperPlugins = listOf(
         "xyz.jpenilla.run-paper",
@@ -69,17 +72,13 @@ internal class PaperPluginSurfPlugin :
             withType<RunServer> {
                 minecraftVersion(Constants.MINECRAFT_VERSION)
 
-                downloadPlugins {
-                    hangar("CommandAPI", "9.7.0")
-                    modrinth("luckperms", "v5.4.145-bukkit")
-                }
-
                 extension.runServer.orNull?.execute(this)
             }
         }
     }
 
-    override fun createExtension(objects: ObjectFactory, project: Project) = PaperPluginSurfExtension(objects)
+    override fun createExtension(objects: ObjectFactory, project: Project) =
+        PaperPluginSurfExtension(objects)
 
     override fun Project.applyPlugins0() {
         paperPlugins.forEach { plugin ->

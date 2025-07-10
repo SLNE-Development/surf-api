@@ -15,6 +15,7 @@ buildscript {
 
 And the following to your `gradle.properties` file:
 ````properties
+kotlin.code.style=official
 kotlin.stdlib.default.dependency=false
 org.gradle.parallel=true
 ````

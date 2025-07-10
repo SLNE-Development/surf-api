@@ -12,6 +12,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.component.CustomData
 import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
+import kotlin.jvm.optionals.getOrNull
 
 @AutoService(SurfBukkitNmsNbtBridge::class)
 @NmsUseWithCaution
@@ -21,13 +22,13 @@ class SurfBukkitNmsNbtBridgeImpl : SurfBukkitNmsNbtBridge {
 
     override fun makeItemStackEntityInvisible(
         itemStack: ItemStack,
-        entityType: EntityType
+        invisibleEntityType: EntityType
     ): ItemStack {
         val nmsStack = itemStack.toNms()
 
         val nbt = CompoundTag()
         nbt.putBoolean("Invisible", true)
-        nbt.putString("id", entityType.getKey().asString())
+        nbt.putString("id", invisibleEntityType.key.asString())
 
         val patch = DataComponentPatch.builder()
             .set(DataComponents.ENTITY_DATA, CustomData.of(nbt))
@@ -53,6 +54,9 @@ class SurfBukkitNmsNbtBridgeImpl : SurfBukkitNmsNbtBridge {
 
         return itemStack.toNms().components
             .getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
-            .unsafe.getString(key)
+            .unsafe
+            .getString(key)
+            .getOrNull()
+            ?: "{}"
     }
 }

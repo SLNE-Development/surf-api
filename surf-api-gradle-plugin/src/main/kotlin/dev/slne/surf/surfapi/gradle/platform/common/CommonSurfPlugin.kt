@@ -37,6 +37,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private val relocations = mutableMapOf<String, String>()
     private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
 
+    init {
+        addRelocationsForDependency(
+            "surf-cloud-api-common",
+            "io.netty" to "dev.slne.surf.cloud.netty"
+        )
+    }
+
     protected abstract fun createExtension(objects: ObjectFactory, project: Project): E
 
     override fun apply(target: Project) = with(target) {

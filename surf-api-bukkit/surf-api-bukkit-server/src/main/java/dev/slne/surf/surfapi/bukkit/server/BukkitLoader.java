@@ -7,6 +7,7 @@ import io.papermc.paper.plugin.loader.library.impl.MavenLibraryResolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,7 @@ public class BukkitLoader implements PluginLoader {
 //        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-packetevents", SCOREBOARD_LIBRARY_VERSION);
 //        addDependency("com.github.megavexnetwork.scoreboard-library", "scoreboard-library-modern", SCOREBOARD_LIBRARY_VERSION);
 
+    addRepo("central", MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR);
     final PluginLibraries libraries = loadFromFile();
     libraries.asRepositories().forEach(resolver::addRepository);
     libraries.asDependencies().forEach(resolver::addDependency);
@@ -132,8 +134,28 @@ public class BukkitLoader implements PluginLoader {
      */
     private Stream<RemoteRepository> asRepositories() {
       return repositories.entrySet().stream()
+          .filter(entry -> !MavenLibraryResolverReflection.isMavenCentralUrl(entry.getValue()))
           .map(entry -> new RemoteRepository.Builder(entry.getKey(), "default",
               entry.getValue()).build());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static class MavenLibraryResolverReflection {
+    private static final List<String> mavenCentralUrls;
+
+    static {
+      try {
+        Field urlsField = MavenLibraryResolver.class.getDeclaredField("MAVEN_CENTRAL_URLS");
+        urlsField.setAccessible(true);
+        mavenCentralUrls = (List<String>) urlsField.get(null);
+      } catch (NoSuchFieldException | IllegalAccessException e) {
+        throw new RuntimeException("Failed to access MavenLibraryResolver's mavenCentralUrls", e);
+      }
+    }
+
+    static boolean isMavenCentralUrl(String url) {
+      return mavenCentralUrls.stream().anyMatch(url::startsWith);
     }
   }
 }

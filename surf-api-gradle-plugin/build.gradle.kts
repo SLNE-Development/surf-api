@@ -5,6 +5,7 @@ val relocationPrefix: String by project
 val mcVersion: String by project
 val groupId = findProperty("group") as String
 val javaVersion: String by project
+val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 // endregion
 
 plugins {
@@ -14,11 +15,14 @@ plugins {
     id("com.gradle.plugin-publish") version "1.3.0"
     kotlin("plugin.serialization")
     idea
-//    alias(libs.plugins.maven.repo.auth)
 }
 
 group = groupId
-version = "$mcVersion-1.1.6"
+version = buildString {
+    append(mcVersion)
+    append("-1.1.9")
+    if (snapshot) append("-SNAPSHOT")
+}
 
 repositories {
     mavenCentral()
@@ -44,7 +48,6 @@ dependencies {
     implementation(libs.kotlin.serialization.json)
 }
 
-
 gradlePlugin {
     plugins {
         create("core") {
@@ -54,21 +57,25 @@ gradlePlugin {
 
         create("paper-plugin") {
             id = "dev.slne.surf.surfapi.gradle.paper-plugin"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
         }
         create("paper-raw") {
             id = "dev.slne.surf.surfapi.gradle.paper-raw"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
         }
 
         create("standalone") {
             id = "dev.slne.surf.surfapi.gradle.standalone"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.standalone.StandaloneSurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.standalone.StandaloneSurfPlugin"
         }
 
         create("velocity") {
             id = "dev.slne.surf.surfapi.gradle.velocity"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
         }
     }
 
@@ -89,7 +96,8 @@ gradlePlugin {
     }
 }
 
-val constantsOutputDir = layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
+val constantsOutputDir =
+    layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
 val generateConstants by tasks.registering {
     val outputFile = constantsOutputDir.map { it.file("Constants.kt") }
 
@@ -102,7 +110,15 @@ val generateConstants by tasks.registering {
     inputs.property("libs.auto.service", libs.auto.service.asProvider().get().toString())
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
-    inputs.property("version", rootProject.findProperty("version") as String)
+    inputs.property("libs.versions.luckperms", libs.versions.luckperms.get().toString())
+    inputs.property(
+        "libs.versions.packetevents",
+        libs.versions.packetevents.plugin.get().toString()
+    )
+    inputs.property(
+        "version",
+        rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
+    )
     outputs.dir(constantsOutputDir)
 
     doLast {
@@ -124,8 +140,10 @@ val generateConstants by tasks.registering {
             |    
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
+            |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
+            |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"
             |    
-            |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String}"
+            |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}
         """.trimMargin()
 
@@ -133,10 +151,6 @@ val generateConstants by tasks.registering {
         outputFile.get().asFile.writeText(content)
     }
 }
-
-//sourceSets.main {
-//    kotlin.srcDir(generateConstants.map { it.outputs.files.singleFile })
-//}
 
 sourceSets.main {
     kotlin.srcDir(generateConstants.map { it.outputs })

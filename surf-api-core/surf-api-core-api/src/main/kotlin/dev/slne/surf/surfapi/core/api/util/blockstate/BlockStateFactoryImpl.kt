@@ -3,11 +3,8 @@ package dev.slne.surf.surfapi.core.api.util.blockstate
 import com.github.retrooper.packetevents.protocol.world.BlockFace
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
 import com.github.retrooper.packetevents.protocol.world.states.enums.*
-import com.google.common.base.Preconditions
-import javax.annotation.ParametersAreNonnullByDefault
 
 class BlockStateFactoryImpl {
-    @ParametersAreNonnullByDefault
     internal data class BuilderImpl(val blockState: WrappedBlockState) : BlockStateFactory.Builder {
         override fun age(): Int {
             return blockState.age
@@ -34,13 +31,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun attachment(attachment: Attachment): BlockStateFactory.Builder {
-            blockState.setAttachment(
-                Preconditions.checkNotNull<Attachment?>(
-                    attachment,
-                    "attachment"
-                )
-            )
-
+            blockState.setAttachment(attachment)
             return this
         }
 
@@ -49,8 +40,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun axis(axis: Axis): BlockStateFactory.Builder {
-            blockState.setAxis(Preconditions.checkNotNull<Axis?>(axis, "axis"))
-
+            blockState.setAxis(axis)
             return this
         }
 
@@ -209,8 +199,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun face(face: Face): BlockStateFactory.Builder {
-            blockState.setFace(Preconditions.checkNotNull<Face?>(face, "face"))
-
+            blockState.setFace(face)
             return this
         }
 
@@ -219,8 +208,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun facing(facing: BlockFace): BlockStateFactory.Builder {
-            blockState.setFacing(Preconditions.checkNotNull<BlockFace?>(facing, "facing"))
-
+            blockState.setFacing(facing)
             return this
         }
 
@@ -229,8 +217,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun half(half: Half): BlockStateFactory.Builder {
-            blockState.setHalf(Preconditions.checkNotNull<Half?>(half, "half"))
-
+            blockState.setHalf(half)
             return this
         }
 
@@ -309,8 +296,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun hinge(hinge: Hinge): BlockStateFactory.Builder {
-            blockState.setHinge(Preconditions.checkNotNull<Hinge?>(hinge, "hinge"))
-
+            blockState.setHinge(hinge)
             return this
         }
 
@@ -339,13 +325,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun instrument(instrument: Instrument): BlockStateFactory.Builder {
-            blockState.setInstrument(
-                Preconditions.checkNotNull<Instrument?>(
-                    instrument,
-                    "instrument"
-                )
-            )
-
+            blockState.setInstrument(instrument)
             return this
         }
 
@@ -414,8 +394,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun mode(mode: Mode): BlockStateFactory.Builder {
-            blockState.setMode(Preconditions.checkNotNull<Mode?>(mode, "mode"))
-
+            blockState.setMode(mode)
             return this
         }
 
@@ -434,8 +413,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun north(north: North): BlockStateFactory.Builder {
-            blockState.setNorth(Preconditions.checkNotNull<North?>(north, "north"))
-
+            blockState.setNorth(north)
             return this
         }
 
@@ -494,13 +472,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun orientation(orientation: Orientation): BlockStateFactory.Builder {
-            blockState.setOrientation(
-                Preconditions.checkNotNull<Orientation?>(
-                    orientation,
-                    "orientation"
-                )
-            )
-
+            blockState.setOrientation(orientation)
             return this
         }
 
@@ -509,7 +481,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun part(part: Part): BlockStateFactory.Builder {
-            blockState.setPart(Preconditions.checkNotNull<Part?>(part, "part"))
+            blockState.setPart(part)
 
             return this
         }
@@ -579,7 +551,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun shape(shape: Shape?): BlockStateFactory.Builder {
-            blockState.setShape(Preconditions.checkNotNull<Shape?>(shape, "shape"))
+            blockState.setShape(shape)
 
             return this
         }
@@ -689,8 +661,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun south(south: South): BlockStateFactory.Builder {
-            blockState.setSouth(Preconditions.checkNotNull<South?>(south, "south"))
-
+            blockState.setSouth(south)
             return this
         }
 
@@ -699,13 +670,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun thickness(thickness: Thickness): BlockStateFactory.Builder {
-            blockState.setThickness(
-                Preconditions.checkNotNull<Thickness?>(
-                    thickness,
-                    "thickness"
-                )
-            )
-
+            blockState.setThickness(thickness)
             return this
         }
 
@@ -714,8 +679,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun tilt(tilt: Tilt): BlockStateFactory.Builder {
-            blockState.setTilt(Preconditions.checkNotNull<Tilt?>(tilt, "tilt"))
-
+            blockState.setTilt(tilt)
             return this
         }
 
@@ -734,8 +698,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun typeData(type: Type): BlockStateFactory.Builder {
-            blockState.setTypeData(Preconditions.checkNotNull<Type?>(type, "type"))
-
+            blockState.setTypeData(type)
             return this
         }
 
@@ -795,8 +758,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun west(west: West): BlockStateFactory.Builder {
-            blockState.setWest(Preconditions.checkNotNull<West?>(west, "west"))
-
+            blockState.setWest(west)
             return this
         }
 
@@ -805,8 +767,7 @@ class BlockStateFactoryImpl {
         }
 
         override fun bloom(bloom: Bloom): BlockStateFactory.Builder {
-            blockState.setBloom(Preconditions.checkNotNull<Bloom?>(bloom, "bloom"))
-
+            blockState.setBloom(bloom)
             return this
         }
 
