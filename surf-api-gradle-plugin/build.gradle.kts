@@ -15,7 +15,6 @@ plugins {
     id("com.gradle.plugin-publish") version "1.3.0"
     kotlin("plugin.serialization")
     idea
-//    alias(libs.plugins.maven.repo.auth)
 }
 
 group = groupId
@@ -48,7 +47,6 @@ dependencies {
     implementation("com.palantir.javapoet:javapoet:0.6.0")
     implementation(libs.kotlin.serialization.json)
 }
-
 
 gradlePlugin {
     plugins {
@@ -113,7 +111,11 @@ val generateConstants by tasks.registering {
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
     inputs.property("libs.versions.luckperms", libs.versions.luckperms.get().toString())
-    inputs.property("version", rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else "")
+    inputs.property("libs.versions.packetevents", libs.versions.packetevents.get().toString())
+    inputs.property(
+        "version",
+        rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
+    )
     outputs.dir(constantsOutputDir)
 
     doLast {
@@ -136,6 +138,7 @@ val generateConstants by tasks.registering {
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
+            |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.get()}"
             |    
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}
@@ -145,10 +148,6 @@ val generateConstants by tasks.registering {
         outputFile.get().asFile.writeText(content)
     }
 }
-
-//sourceSets.main {
-//    kotlin.srcDir(generateConstants.map { it.outputs.files.singleFile })
-//}
 
 sourceSets.main {
     kotlin.srcDir(generateConstants.map { it.outputs })

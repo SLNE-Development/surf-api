@@ -10,10 +10,14 @@ import xyz.jpenilla.runpaper.task.RunServer
  */
 fun RunServer.withSurfApiBukkit() {
     minecraftVersion(Constants.MINECRAFT_VERSION)
+    
     downloadPlugins {
         modrinth("commandapi", Constants.COMMAND_API_VERSION)
         modrinth("luckperms", Constants.LUCKPERMS_VERSION)
+        modrinth("packetevents", "${Constants.PACKETEVENTS_VERSION}+spigot")
+
         hangar("PlaceholderAPI", Constants.PLACEHOLDER_API_VERSION)
+
         github(
             "SLNE-Development",
             "surf-api",
