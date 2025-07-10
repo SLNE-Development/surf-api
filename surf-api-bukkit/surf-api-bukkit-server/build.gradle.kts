@@ -87,6 +87,12 @@ paper {
             joinClasspath = true
             load = RelativeLoadOrder.BEFORE
         }
+
+        register("packetevents") {
+            required = true
+            joinClasspath = true
+            load = RelativeLoadOrder.BEFORE
+        }
     }
 }
 
