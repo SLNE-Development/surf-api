@@ -25,7 +25,7 @@ import java.util.*
 class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizerImpl(),
     SurfVisualizerMultipleLocations {
     private val worldReference = WeakReference(world)
-    private val world: World
+    val world: World
         get() = worldReference.get() ?: error("World reference is no longer valid")
 
     private val id2point = mutableInt2ObjectMapOf<VisualPoint>()
@@ -42,7 +42,9 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
 
     override fun stopVisualizingInternal() {
         for (viewer in viewers) {
-            nmsSpawnPackets.despawn(getSentToPlayer(viewer)).execute(viewer)
+            val sentToPlayer = getSentToPlayer(viewer)
+            nmsSpawnPackets.despawn(sentToPlayer).execute(viewer)
+            sentToPlayer.clear()
         }
     }
 
@@ -230,7 +232,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
     }
 
 
-    private fun checkNotNullWorld(): Boolean {
+    fun checkNotNullWorld(): Boolean {
         if (worldReference.get() == null) {
             visualizing = false
             viewerUuids.clear()

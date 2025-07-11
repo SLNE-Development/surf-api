@@ -18,7 +18,7 @@ import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d
 
 class SurfVisualizerAreaImpl(
-    private val world: World,
+    world: World,
     private val useHighestYBlock: Boolean,
     initialSettings: BlockDisplaySettings?,
     initialEdges: Collection<Vector3d>,
@@ -86,6 +86,8 @@ class SurfVisualizerAreaImpl(
     private suspend fun recompute() = recomputationMutex.withLock {
         delegate.clearVisualLocations()
         if (corners.size < 2) return
+        if (!delegate.checkNotNullWorld()) return
+
         val hull = corners.convexHull2D()
         val cornerBlocks = hull
 
@@ -98,7 +100,7 @@ class SurfVisualizerAreaImpl(
         }
         val finalEdgePoints: ObjectSet<Vector3d> = if (useHighestYBlock) {
             edgePoints.map { it.toInt() }
-                .computeHighestYBlock(world)
+                .computeHighestYBlock(delegate.world)
                 .map { it.add(0, 1, 0).toDouble() }
                 .toObjectSet()
         } else {
