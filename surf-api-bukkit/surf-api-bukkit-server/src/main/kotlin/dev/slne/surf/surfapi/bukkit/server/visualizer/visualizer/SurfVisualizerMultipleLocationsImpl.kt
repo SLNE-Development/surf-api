@@ -48,6 +48,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
 
     override fun update(strategy: UpdateStrategy) {
         if (!visualizing) return
+        if (!checkNotNullWorld()) return
 
         when (strategy) {
             UpdateStrategy.ALL -> {
@@ -116,6 +117,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         put(id, point)
 
         if (!visualizing) return
+        if (!checkNotNullWorld()) return
 
         for (viewer in viewers) {
             spawn(viewer, id, point)
@@ -127,6 +129,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         val (id, point) = result
 
         if (!visualizing) return
+        if (!checkNotNullWorld()) return
 
         for (viewer in viewers) {
             despawn(viewer, id, point, true)
@@ -134,7 +137,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
     }
 
     override fun clearVisualLocations() {
-        if (visualizing) {
+        if (visualizing && checkNotNullWorld()) {
             for (viewer in viewers) {
                 nmsSpawnPackets.despawn(getSentToPlayer(viewer)).execute(viewer)
             }
@@ -224,6 +227,18 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         }
 
         despawnOperation.execute(player)
+    }
+
+
+    private fun checkNotNullWorld(): Boolean {
+        if (worldReference.get() == null) {
+            visualizing = false
+            viewerUuids.clear()
+            log.atWarning()
+                .log("World reference is no longer valid, stopping visualizer")
+            return false
+        }
+        return true
     }
 
     override fun toString(): String {
