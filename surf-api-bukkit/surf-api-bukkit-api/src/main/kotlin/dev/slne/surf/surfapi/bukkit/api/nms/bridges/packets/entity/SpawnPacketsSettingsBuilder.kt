@@ -15,7 +15,7 @@ import org.spongepowered.math.vector.Vector3f
 annotation class SettingsDsl
 
 @SettingsDsl
-sealed class DisplaySettings {
+sealed class DisplaySettings: Cloneable {
     var pitch: Float = 0f
     var yaw: Float = 0f
     var translation: Vector3f? = null
@@ -25,6 +25,7 @@ sealed class DisplaySettings {
     var billboardConstraints: Billboard = Billboard.FIXED
 
     abstract fun build(): DisplaySettings
+    public override fun clone() = super.clone() as DisplaySettings
 
     companion object {
         inline fun <T : DisplaySettings> buildSettings(builder: T, block: T.() -> Unit): T {
@@ -67,6 +68,7 @@ class BlockDisplaySettings : DisplaySettings() {
     var blockData: BlockData = Material.AIR.createBlockData()
 
     override fun build(): BlockDisplaySettings = this
+    override fun clone() = super.clone() as BlockDisplaySettings
 
     companion object {
         fun create(block: BlockDisplaySettings.() -> Unit) =
@@ -87,7 +89,8 @@ class SignBlockUpdateSettings {
         if (front) frontText = text else backText = text
     }
 
-    override fun toString(): String = "SignBlockUpdateSettings(frontText=$frontText, backText=$backText)"
+    override fun toString(): String =
+        "SignBlockUpdateSettings(frontText=$frontText, backText=$backText)"
 
     @SettingsDsl
     class SignText {
@@ -96,7 +99,8 @@ class SignBlockUpdateSettings {
         var line3: Component = Component.empty()
         var line4: Component = Component.empty()
 
-        override fun toString(): String = "SignText(line1=$line1, line2=$line2, line3=$line3, line4=$line4)"
+        override fun toString(): String =
+            "SignText(line1=$line1, line2=$line2, line3=$line3, line4=$line4)"
 
         companion object {
             fun empty(): SignText = SignText()

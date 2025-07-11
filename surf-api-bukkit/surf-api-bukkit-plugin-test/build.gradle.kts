@@ -53,6 +53,7 @@ tasks {
 
         downloadPlugins {
             hangar("CommandAPI", libs.versions.commandapi.get())
+            modrinth("packetevents", "2.9.1+spigot")
         }
     }
 }

@@ -8,7 +8,7 @@ class VisualizerTest(name: String) : CommandAPICommand(name) {
     init {
         withSubcommands(
             SingleLocationVisualizerTest("singleLocation"),
-            AreaLocationVisualizerTest("areaLocation")
+            AreaLocationVisualizerTest("areaLocation"),
         )
     }
 }

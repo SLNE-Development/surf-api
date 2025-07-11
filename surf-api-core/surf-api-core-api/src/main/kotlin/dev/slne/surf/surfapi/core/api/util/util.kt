@@ -15,6 +15,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import sun.misc.Unsafe
+import java.lang.ref.SoftReference
+import java.lang.ref.WeakReference
 import java.lang.reflect.Field
 import java.security.SecureRandom
 import java.util.*
@@ -22,6 +24,7 @@ import java.util.function.ToIntFunction
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.reflect.KProperty
 import kotlin.streams.asSequence
 
 /**
@@ -372,3 +375,11 @@ fun <T> Sequence<T>.toEnumeration(): Enumeration<T> {
 
 fun <E> Iterable<E>.collectionSizeOrDefault(default: Int) =
     if (this is Collection<*>) this.size else default
+
+operator fun <T> WeakReference<T>.getValue(thisRef: Any?, property: KProperty<*>): T? {
+    return get()
+}
+
+operator fun <T> SoftReference<T>.getValue(thisRef: Any?, property: KProperty<*>): T? {
+    return get()
+}

@@ -8,6 +8,8 @@ import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerMult
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import org.bukkit.Location
+import org.bukkit.World
+import org.spongepowered.math.vector.Vector3d
 import java.util.*
 
 /**
@@ -43,11 +45,13 @@ interface SurfBukkitVisualizerApi {
      * @return A new `SurfVisualizerMultipleLocations` instance that provides functionality to handle
      *         multiple visualization locations.
      */
-    fun createMultiLocationVisualizer(): SurfVisualizerMultipleLocations
+    fun createMultiLocationVisualizer(world: World): SurfVisualizerMultipleLocations
 
     fun createAreaVisualizer(
+        world: World,
         initialSettings: BlockDisplaySettings? = null,
-        initialEdges: Collection<Location> = emptyList(),
+        initialEdges: Collection<Vector3d> = emptyList(),
+        useHighestYBlock: Boolean = false,
     ): SurfVisualizerArea
 
     /**

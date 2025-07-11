@@ -1,103 +1,112 @@
 package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer
 
+import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
+import dev.slne.surf.surfapi.bukkit.api.util.computeHighestYBlock
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerArea
+import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizerApiImpl
-import dev.slne.surf.surfapi.core.api.math.BlockVec
+import dev.slne.surf.surfapi.core.api.algorithms.convexHull2D
 import dev.slne.surf.surfapi.core.api.math.VoxelLineTracer
-import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.toObjectSet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import org.bukkit.Location
+import it.unimi.dsi.fastutil.objects.ObjectSet
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import org.bukkit.World
+import org.spongepowered.math.vector.Vector3d
 
 class SurfVisualizerAreaImpl(
+    private val world: World,
+    private val useHighestYBlock: Boolean,
     initialSettings: BlockDisplaySettings?,
-    initialEdges: Collection<Location>,
-    private val delegate: SurfVisualizerMultipleLocationsImpl = visualizerApiImpl.createMultiLocationVisualizer(),
+    initialEdges: Collection<Vector3d>,
+    private val delegate: SurfVisualizerMultipleLocationsImpl = visualizerApiImpl.createMultiLocationVisualizer(
+        world
+    ),
 ) : SurfVisualizer by delegate, SurfVisualizerArea {
 
-    private val corners = ObjectLinkedOpenHashSet<Location>(initialEdges.size).apply {
-        addAll(initialEdges)
-    }
-
+    private val corners = ObjectLinkedOpenHashSet(initialEdges)
     override val cornerLocations by lazy { corners.toObjectSet() }
+    private val recomputationMutex = Mutex()
 
     override var settings: BlockDisplaySettings = initialSettings ?: BlockDisplaySettings.create {
-        blockData = SurfVisualizer.DEFAULT_MATERIAL.createBlockData()
+        blockData = SurfVisualizer.DEFAULT_BLOCK_TYPE.createBlockData()
     }
         set(value) {
             field = value
-            recompute()
+            launchRecompute()
         }
 
     init {
         if (initialEdges.isNotEmpty()) {
-            recompute()
+            launchRecompute()
         }
     }
 
     override fun settings(consumer: BlockDisplaySettings.() -> Unit) {
         settings.consumer()
-        recompute()
+        launchRecompute()
     }
 
-    override fun addCornerLocation(location: Location) {
+    override fun addCornerLocation(location: Vector3d) {
         if (corners.add(location)) {
-            recompute()
+            launchRecompute()
         }
     }
 
-    override fun removeCornerLocation(location: Location) {
+    override fun removeCornerLocation(location: Vector3d) {
         if (corners.remove(location)) {
-            recompute()
+            launchRecompute()
         }
     }
 
     override fun clearCornerLocations() {
         if (corners.isNotEmpty()) {
             corners.clear()
-            recompute()
+            launchRecompute()
         }
     }
 
-    override fun setCornerLocations(locations: Collection<Location>) {
+    override fun setCornerLocations(locations: Collection<Vector3d>) {
         if (corners != locations) {
             corners.clear()
             corners.addAll(locations)
+            launchRecompute()
+        }
+    }
+
+    private fun launchRecompute() {
+        plugin.launch {
             recompute()
         }
     }
 
-    private fun recompute() {
+    private suspend fun recompute() = recomputationMutex.withLock {
         delegate.clearVisualLocations()
         if (corners.size < 2) return
-        val world = corners.first().world ?: error("Location does not have a world")
-        val cornerBlocks = corners.mapTo(mutableObjectListOf(corners.size)) {
-            BlockVec(
-                it.blockX,
-                it.blockY,
-                it.blockZ
-            )
-        }
+        val hull = corners.convexHull2D()
+        val cornerBlocks = hull
 
-        val edgePoints = ObjectLinkedOpenHashSet<BlockVec>()
+        val edgePoints = ObjectLinkedOpenHashSet<Vector3d>()
         for (i in cornerBlocks.indices) {
             edgePoints += VoxelLineTracer.trace(
                 cornerBlocks[i],
                 cornerBlocks[(i + 1) % cornerBlocks.size]
             )
         }
+        val finalEdgePoints: ObjectSet<Vector3d> = if (useHighestYBlock) {
+            edgePoints.map { it.toInt() }
+                .computeHighestYBlock(world)
+                .map { it.add(0, 1, 0).toDouble() }
+                .toObjectSet()
+        } else {
+            edgePoints
+        }
 
-        edgePoints.forEach {
-            delegate.addVisualLocation(
-                Location(
-                    world,
-                    it.x.toDouble(),
-                    it.y.toDouble(),
-                    it.z.toDouble()
-                ), settings
-            )
+        finalEdgePoints.forEach {
+            delegate.addVisualLocation(it, settings)
         }
     }
 }

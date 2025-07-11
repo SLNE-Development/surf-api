@@ -1,53 +1,61 @@
 package dev.slne.surf.surfapi.core.api.math
 
-import glm_.vec3.Vec3i
+import org.spongepowered.math.vector.Vector3d
 import kotlin.math.abs
 import kotlin.math.sign
 
-typealias BlockVec = Vec3i
-
 object VoxelLineTracer {
+    fun trace(p0: Vector3d, p1: Vector3d): Sequence<Vector3d> = sequence {
+        var x = p0.x();
+        var y = p0.y();
+        var z = p0.z()
+        val dx = abs(p1.x() - x);
+        val sx = sign(p1.x() - x)
+        val dy = abs(p1.y() - y);
+        val sy = sign(p1.y() - y)
+        val dz = abs(p1.z() - z);
+        val sz = sign(p1.z() - z)
 
-    fun trace(from: BlockVec, to: BlockVec): Sequence<BlockVec> = sequence {
-        var (x, y, z) = from
-        val (dx, dy, dz) = to - from
-        val stepX = dx.sign
-        val stepY = dy.sign
-        val stepZ = dz.sign
-        val absDX = abs(dx)
-        val absDY = abs(dy)
-        val absDZ = abs(dz)
-        val max = maxOf(absDX, absDY, absDZ).coerceAtLeast(1)
-
-        var tMaxX = halfCell(absDX, from.x, stepX, max)
-        var tMaxY = halfCell(absDY, from.y, stepY, max)
-        var tMaxZ = halfCell(absDZ, from.z, stepZ, max)
-
-        repeat(max + 1) {
-            yield(BlockVec(x, y, z))
-            when {
-                tMaxX <= tMaxY && tMaxX <= tMaxZ -> {
-                    x += stepX
-                    tMaxX += absDX
+        if (dx >= dy && dx >= dz) {
+            var errY = 2 * dy - dx
+            var errZ = 2 * dz - dx
+            while (x != p1.x()) {
+                yield(Vector3d(x, y, z))
+                if (errY >= 0) {
+                    y += sy; errY -= 2 * dx
                 }
-
-                tMaxY <= tMaxZ -> {
-                    y += stepY
-                    tMaxY += absDY
+                if (errZ >= 0) {
+                    z += sz; errZ -= 2 * dx
                 }
-
-                else -> {
-                    z += stepZ
-                    tMaxZ += absDZ
+                errY += 2 * dy; errZ += 2 * dz; x += sx
+            }
+        } else if (dy >= dx && dy >= dz) {
+            var errX = 2 * dx - dy
+            var errZ = 2 * dz - dy
+            while (y != p1.y()) {
+                yield(Vector3d(x, y, z))
+                if (errX >= 0) {
+                    x += sx; errX -= 2 * dy
                 }
+                if (errZ >= 0) {
+                    z += sz; errZ -= 2 * dy
+                }
+                errX += 2 * dx; errZ += 2 * dz; y += sy
+            }
+        } else {
+            var errX = 2 * dx - dz
+            var errY = 2 * dy - dz
+            while (z != p1.z()) {
+                yield(Vector3d(x, y, z))
+                if (errX >= 0) {
+                    x += sx; errX -= 2 * dz
+                }
+                if (errY >= 0) {
+                    y += sy; errY -= 2 * dz
+                }
+                errX += 2 * dx; errY += 2 * dy; z += sz
             }
         }
-    }
-
-    @JvmStatic
-    private fun halfCell(delta: Int, coord: Int, step: Int, max: Int): Int {
-        if (delta == 0) return Int.MAX_VALUE
-        val next = if (step > 0) coord + 1 else coord
-        return (next - coord) * max
+        yield(p1)
     }
 }

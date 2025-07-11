@@ -567,6 +567,8 @@ inline fun <T> Sequence<T>.toMutableObjectList() = ObjectArrayList<T>(iterator()
 inline fun <T> Sequence<T>.toObjectList() = toMutableObjectList().freeze()
 inline fun <T> Iterable<T>.toObjectList() =
     this as? ObjectList<T> ?: ObjectArrayList<T>(iterator()).freeze()
+inline fun <T> Iterable<T>.toMutableObjectList() =
+    this as? ObjectArrayList<T> ?: ObjectArrayList<T>(iterator())
 
 inline fun <T> Array<out T>.toObjectList(): @Unmodifiable ObjectList<T> = ObjectList.of(*this)
 inline fun <T> Array<out T>.toMutableObjectList() = ObjectArrayList(this)

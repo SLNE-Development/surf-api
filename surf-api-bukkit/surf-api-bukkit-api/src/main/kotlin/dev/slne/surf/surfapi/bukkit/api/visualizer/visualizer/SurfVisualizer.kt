@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer
 
 import it.unimi.dsi.fastutil.objects.ObjectSet
-import org.bukkit.Material
+import org.bukkit.block.BlockType
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.UnmodifiableView
 import java.util.*
@@ -118,6 +118,6 @@ interface SurfVisualizer {
          * interface, allowing consistent use across all implementations.
          */
         @JvmField
-        val DEFAULT_MATERIAL: Material = Material.GLASS
+        val DEFAULT_BLOCK_TYPE: BlockType = BlockType.GLASS
     }
 }

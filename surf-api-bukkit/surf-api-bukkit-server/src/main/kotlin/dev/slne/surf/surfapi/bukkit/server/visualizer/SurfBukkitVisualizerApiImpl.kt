@@ -11,24 +11,39 @@ import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer.SurfVisualizerA
 import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer.SurfVisualizerMultipleLocationsImpl
 import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer.SurfVisualizerSingleLocationImpl
 import org.bukkit.Location
+import org.bukkit.World
+import org.spongepowered.math.vector.Vector3d
 import java.util.*
 
 @AutoService(SurfBukkitVisualizerApi::class)
 class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
-    private val visualizers = Caffeine.newBuilder().softValues().build<UUID, SurfVisualizer>()
-    private val areaVisualizers =
-        Caffeine.newBuilder().softValues().build<UUID, SurfVisualizerArea>()
+    private val visualizers = Caffeine.newBuilder()
+        .softValues()
+        .build<UUID, SurfVisualizer>()
+    private val areaVisualizers = Caffeine.newBuilder()
+        .softValues()
+        .build<UUID, SurfVisualizerArea>()
 
     override fun createSingleLocationVisualizer(location: Location): SurfVisualizerSingleLocation {
         return SurfVisualizerSingleLocationImpl(location).also { visualizers.put(it.uid, it) }
     }
 
-    override fun createMultiLocationVisualizer(): SurfVisualizerMultipleLocationsImpl {
-        return SurfVisualizerMultipleLocationsImpl().also { visualizers.put(it.uid, it) }
+    override fun createMultiLocationVisualizer(world: World): SurfVisualizerMultipleLocationsImpl {
+        return SurfVisualizerMultipleLocationsImpl(world).also { visualizers.put(it.uid, it) }
     }
 
-    override fun createAreaVisualizer(initialSettings: BlockDisplaySettings?, initialEdges: Collection<Location>): SurfVisualizerArea {
-        return SurfVisualizerAreaImpl(initialSettings, initialEdges).also { areaVisualizers.put(it.uid, it) }
+    override fun createAreaVisualizer(
+        world: World,
+        initialSettings: BlockDisplaySettings?,
+        initialEdges: Collection<Vector3d>,
+        useHighestYBlock: Boolean,
+    ): SurfVisualizerArea {
+        return SurfVisualizerAreaImpl(
+            world,
+            useHighestYBlock,
+            initialSettings,
+            initialEdges
+        ).also { areaVisualizers.put(it.uid, it) }
     }
 
     override fun getByUid(uid: UUID): SurfVisualizer? {

@@ -8,7 +8,7 @@ import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplayS
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.nmsSpawnPackets
 import dev.slne.surf.surfapi.bukkit.api.util.chunkX
 import dev.slne.surf.surfapi.bukkit.api.util.chunkZ
-import dev.slne.surf.surfapi.bukkit.api.util.seesLocation
+import dev.slne.surf.surfapi.bukkit.api.util.isChunkVisible
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.UpdateStrategy
@@ -27,7 +27,7 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
         }
 
     override var settings: BlockDisplaySettings = BlockDisplaySettings.create {
-        blockData = SurfVisualizer.DEFAULT_MATERIAL.createBlockData()
+        blockData = SurfVisualizer.DEFAULT_BLOCK_TYPE.createBlockData()
     }
         set(value) {
             field = value
@@ -64,8 +64,7 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
 
                 for (viewer in viewers) {
                     despawn.execute(viewer)
-                    val seesLocation = viewer.seesLocation(location)
-                    println("seesLocation: $seesLocation")
+                    val seesLocation = viewer.isChunkVisible(location)
 
                     if (seesLocation) {
                         spawn.execute(viewer)
@@ -76,7 +75,7 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
             UpdateStrategy.POSITION -> {
                 val updatePosition = updatePositionPacket()
                 for (viewer in viewers) {
-                    if (viewer.seesLocation(location)) {
+                    if (viewer.isChunkVisible(location)) {
                         updatePosition.execute(viewer)
                     } else {
                         despawnPacket().execute(viewer)

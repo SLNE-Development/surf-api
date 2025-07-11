@@ -2,8 +2,8 @@ package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer
 
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
 import it.unimi.dsi.fastutil.objects.ObjectSet
-import org.bukkit.Location
 import org.jetbrains.annotations.UnmodifiableView
+import org.spongepowered.math.vector.Vector3d
 
 /**
  * Represents a specialized visualizer interface that supports managing and displaying
@@ -25,7 +25,7 @@ interface SurfVisualizerMultipleLocations : SurfVisualizer {
      *
      * Part of the experimental `SurfVisualizerMultipleLocations` API, which is subject to change.
      */
-    val visualLocations: @UnmodifiableView ObjectSet<Location>
+    val visualLocations: @UnmodifiableView ObjectSet<Vector3d>
 
     /**
      * Adds a visual location to the visualizer with optional display settings configuration.
@@ -36,7 +36,7 @@ interface SurfVisualizerMultipleLocations : SurfVisualizer {
      * @param consumer A lambda for configuring display settings using `BlockDisplaySettings`. Defaults to an empty lambda.
      */
     fun addVisualLocation(
-        visualLocation: Location,
+        visualLocation: Vector3d,
         consumer: BlockDisplaySettings.() -> Unit = {},
     ) = addVisualLocation(visualLocation, BlockDisplaySettings.create(consumer))
 
@@ -47,7 +47,7 @@ interface SurfVisualizerMultipleLocations : SurfVisualizer {
      * @param settings The display settings to be used for the visual representation at the specified location.
      */
     fun addVisualLocation(
-        visualLocation: Location,
+        visualLocation: Vector3d,
         settings: BlockDisplaySettings,
     )
 
@@ -56,7 +56,7 @@ interface SurfVisualizerMultipleLocations : SurfVisualizer {
      *
      * @param visualLocation The `Location` instance representing the visual location to be removed.
      */
-    fun removeVisualLocation(visualLocation: Location)
+    fun removeVisualLocation(visualLocation: Vector3d)
     /**
      * Clears all visual locations currently associated with this visualizer.
      *

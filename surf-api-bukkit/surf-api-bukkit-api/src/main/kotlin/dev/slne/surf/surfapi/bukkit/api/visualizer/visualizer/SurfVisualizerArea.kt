@@ -2,8 +2,8 @@ package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer
 
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
 import it.unimi.dsi.fastutil.objects.ObjectSet
-import org.bukkit.Location
 import org.jetbrains.annotations.UnmodifiableView
+import org.spongepowered.math.vector.Vector3d
 
 /**
  * Represents a specific visualizer area that extends the core functionality
@@ -27,21 +27,21 @@ interface SurfVisualizerArea : SurfVisualizer {
      *
      * This property is part of the experimental API and may be subject to changes in the future.
      */
-    val cornerLocations: @UnmodifiableView ObjectSet<Location>
+    val cornerLocations: @UnmodifiableView ObjectSet<Vector3d>
 
     /**
      * Adds a location to the set of corner locations in the visualizer area.
      *
      * @param location The location to be added as a corner point for defining the visualizer area.
      */
-    fun addCornerLocation(location: Location)
+    fun addCornerLocation(location: Vector3d)
 
     /**
      * Removes a specific location from the set of corner locations in the visualizer area.
      *
      * @param location The location to be removed from the corner locations.
      */
-    fun removeCornerLocation(location: Location)
+    fun removeCornerLocation(location: Vector3d)
 
     /**
      * Clears all currently registered corner locations associated with the visualizer area.
@@ -54,7 +54,7 @@ interface SurfVisualizerArea : SurfVisualizer {
      */
     fun clearCornerLocations()
 
-    fun setCornerLocations(locations: Collection<Location>)
+    fun setCornerLocations(locations: Collection<Vector3d>)
 
     var settings: BlockDisplaySettings
     fun settings(consumer: BlockDisplaySettings.() -> Unit)

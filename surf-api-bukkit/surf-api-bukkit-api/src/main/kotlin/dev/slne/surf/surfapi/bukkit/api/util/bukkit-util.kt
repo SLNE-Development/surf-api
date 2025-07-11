@@ -6,17 +6,20 @@ import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
+import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import org.bukkit.Bukkit
-import org.bukkit.Chunk
-import org.bukkit.Location
-import org.bukkit.NamespacedKey
+import org.bukkit.*
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
+import org.spongepowered.math.vector.Vector3d
+import org.spongepowered.math.vector.Vector3i
 import java.util.*
 
 /**
@@ -105,6 +108,14 @@ val Location.chunkZ get() = blockZ shr 4
  */
 val Location.chunkKey get() = Chunk.getChunkKey(this)
 
+fun Location.toVector3d(): Vector3d {
+    return Vector3d(
+        this.x,
+        this.y,
+        this.z
+    )
+}
+
 /**
  * Converts an iterable of UUIDs to a list of online [Player] instances.
  *
@@ -128,27 +139,14 @@ fun Sequence<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
  * @param location The location to check.
  * @return `true` if the player can see the location, `false` otherwise.
  */
-fun Player.seesLocation(location: Location): Boolean {
-    val sameWorld = world == location.world
-    val chunkSent = isChunkSent(Chunk.getChunkKey(location))
-
-    println("sameWorld: $sameWorld, chunkSent: $chunkSent")
-
+fun Player.isChunkVisible(location: Location): Boolean {
     return this.world == location.world && this.isChunkSent(Chunk.getChunkKey(location))
 }
 
-/**
- * Checks if the player can see the specified location based on chunk visibility.
- *
- * @receiver The player.
- * @param location The location to check.
- * @return `true` if the player can see the chunk containing the location, `false` otherwise.
- */
-fun Player.seesLocation2(location: Location): Boolean =
-    this.world == location.world && location.world.getPlayersSeeingChunk(
-        location.chunkX,
-        location.chunkZ
-    ).contains(this)
+fun Player.isChunkVisible(world: World, chunkX: Int, chunkZ: Int): Boolean {
+    if (this.world != world) return false
+    return this.isChunkSent(Chunk.getChunkKey(chunkX, chunkZ))
+}
 
 /**
  * Retrieves the coroutine dispatcher for this entity.
@@ -157,6 +155,7 @@ fun Player.seesLocation2(location: Location): Boolean =
  * @param plugin The suspending plugin instance. Defaults to the calling suspending plugin.
  * @return The entity's coroutine dispatcher.
  */
+@Deprecated("Stacktrace depth is inefficient")
 fun Entity.dispatcher(
     plugin: SuspendingPlugin = getCallingSuspendingPlugin(),
 ) = plugin.entityDispatcher(this)
@@ -180,3 +179,57 @@ fun Location.dispatcher(
  */
 private fun getCallingSuspendingPlugin() = getCallingPlugin(2) as? SuspendingPlugin
     ?: error("Cannot determine plugin")
+
+
+fun getXFromChunkKey(key: Long): Int {
+    return (key and 0xFFFF_FFFFL).toInt()
+}
+
+fun getZFromChunkKey(key: Long): Int {
+    return (key ushr 32).toInt()
+}
+
+fun ChunkSnapshot.getHighestBlockYAtBlockCoordinates(
+    blockX: Int,
+    blockZ: Int
+): Int {
+    return getHighestBlockYAt(blockX and 15, blockZ and 15)
+}
+
+suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<Vector3i> {
+    val byChunk = mutableLong2ObjectMapOf<ObjectList<Vector3i>>(size / 4 + 1)
+    for (point in this) {
+        val key = Chunk.getChunkKey(point.x() shr 4, point.z() shr 4)
+        val list = byChunk.computeIfAbsent(key) { mutableObjectListOf() }
+        list.add(point)
+    }
+
+    val snapshots = mutableLong2ObjectMapOf<ChunkSnapshot>(byChunk.size)
+    coroutineScope {
+        byChunk.keys.map { key ->
+            async {
+                val snapshot =
+                    world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
+                        .await()
+                        .getChunkSnapshot(true, false, false, false)
+                snapshots.put(key, snapshot)
+            }
+        }.awaitAll()
+    }
+
+
+    val result = mutableObjectListOf<Vector3i>(size)
+    val it = byChunk.long2ObjectEntrySet().fastIterator()
+    while (it.hasNext()) {
+        val entry = it.next()
+        val key = entry.longKey
+        val pointsInChunk = entry.value
+        val snapshot = snapshots[key] ?: error("ChunkSnapshot for key $key not found")
+        for (point in pointsInChunk) {
+            val y = snapshot.getHighestBlockYAtBlockCoordinates(point.x(), point.z())
+            result.add(Vector3i(point.x(), y, point.z()))
+        }
+    }
+
+    return result
+}
