@@ -54,6 +54,19 @@ fun forEachPlayer(action: (player: Player) -> Unit) {
     Bukkit.getOnlinePlayers().forEach(action)
 }
 
+@Deprecated(
+    message = "Use the overload with an explicit plugin parameter; this version relies on inefficient stacktrace inspection.",
+    replaceWith = ReplaceWith("forEachPlayerInRegion(plugin, action, concurrent)")
+)
+suspend fun forEachPlayerInRegion(
+    action: suspend (player: Player) -> Unit,
+    concurrent: Boolean = false,
+) = forEachPlayerInRegion(
+    plugin = getCallingSuspendingPlugin(),
+    action = action,
+    concurrent = concurrent,
+)
+
 /**
  * Executes a suspendable action on each online player, optionally concurrently.
  *
@@ -61,6 +74,7 @@ fun forEachPlayer(action: (player: Player) -> Unit) {
  * @param concurrent If `true`, actions will run concurrently; otherwise, sequentially. Default is `false`.
  */
 suspend fun forEachPlayerInRegion(
+    plugin: SuspendingPlugin,
     action: suspend (player: Player) -> Unit,
     concurrent: Boolean = false,
 ) {
@@ -69,7 +83,7 @@ suspend fun forEachPlayerInRegion(
             Bukkit.getOnlinePlayers()
                 .map {
                     async {
-                        withContext(it.dispatcher(getCallingSuspendingPlugin())) {
+                        withContext(plugin.entityDispatcher(it)) {
                             action(it)
                         }
                     }
@@ -77,7 +91,7 @@ suspend fun forEachPlayerInRegion(
         }
     } else {
         for (player in Bukkit.getOnlinePlayers()) {
-            withContext(player.dispatcher(getCallingSuspendingPlugin())) {
+            withContext(plugin.entityDispatcher(player)) {
                 action(player)
             }
         }
@@ -124,6 +138,8 @@ fun Location.toVector3d(): Vector3d {
  */
 fun Iterable<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
 
+fun Iterable<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it) }
+
 /**
  * Converts a sequence of UUIDs to a sequence of online [Player] instances.
  *
@@ -131,6 +147,8 @@ fun Iterable<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
  * @return A list of [Player] instances corresponding to the UUIDs, excluding offline players.
  */
 fun Sequence<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
+
+fun Sequence<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it) }
 
 /**
  * Checks if the player can see the specified location.
@@ -155,7 +173,7 @@ fun Player.isChunkVisible(world: World, chunkX: Int, chunkZ: Int): Boolean {
  * @param plugin The suspending plugin instance. Defaults to the calling suspending plugin.
  * @return The entity's coroutine dispatcher.
  */
-@Deprecated("Stacktrace depth is inefficient")
+@Deprecated("Use 'plugin.entityDispatcher(this)' directly instead of relying on this helper, as it uses inefficient stacktrace inspection.")
 fun Entity.dispatcher(
     plugin: SuspendingPlugin = getCallingSuspendingPlugin(),
 ) = plugin.entityDispatcher(this)
@@ -167,6 +185,7 @@ fun Entity.dispatcher(
  * @param plugin The suspending plugin instance. Defaults to the calling suspending plugin.
  * @return The region's coroutine dispatcher.
  */
+@Deprecated("Use 'plugin.regionDispatcher(this)' directly instead of relying on this helper, as it uses inefficient stacktrace inspection.")
 fun Location.dispatcher(
     plugin: SuspendingPlugin = getCallingSuspendingPlugin(),
 ) = plugin.regionDispatcher(this)
@@ -191,7 +210,7 @@ fun getZFromChunkKey(key: Long): Int {
 
 fun ChunkSnapshot.getHighestBlockYAtBlockCoordinates(
     blockX: Int,
-    blockZ: Int
+    blockZ: Int,
 ): Int {
     return getHighestBlockYAt(blockX and 15, blockZ and 15)
 }

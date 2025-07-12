@@ -14,6 +14,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import sun.misc.Unsafe
 import java.lang.ref.SoftReference
 import java.lang.ref.WeakReference
@@ -382,4 +385,14 @@ operator fun <T> WeakReference<T>.getValue(thisRef: Any?, property: KProperty<*>
 
 operator fun <T> SoftReference<T>.getValue(thisRef: Any?, property: KProperty<*>): T? {
     return get()
+}
+
+suspend inline fun <E, R> Iterable<E>.mapAsync(crossinline transform: suspend (E) -> R): List<R> {
+    return coroutineScope {
+        map { element ->
+            async {
+                transform(element)
+            }
+        }.awaitAll()
+    }
 }
