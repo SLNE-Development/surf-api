@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets
 
 import com.google.common.flogger.FluentLogger
-import com.google.common.flogger.StackSize
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation
 import dev.slne.surf.surfapi.bukkit.server.nms.toNms
 import net.minecraft.network.protocol.Packet
@@ -9,7 +8,6 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import org.bukkit.entity.Player
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 class PacketOperationImpl : PacketOperation {
     private var operation: Operation
@@ -30,13 +28,6 @@ class PacketOperationImpl : PacketOperation {
         )
 
         if (packets.isEmpty()) {
-            logger.atInfo()
-                .atMostEvery(60, TimeUnit.SECONDS)
-                .withStackTrace(StackSize.SMALL)
-                .log(
-                    "No packets to send for player '%s'. Is this intended behaviour?",
-                    player.name
-                )
             return
         }
 
