@@ -220,12 +220,14 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
     override fun onPlayerUnloadChunk(player: Player, chunk: Chunk) {
         val despawnOperation = PacketOperation.start()
         val sent = getSentToPlayer(player)
+        val it = sent.intIterator()
 
-        sent.intIterator().forEachRemaining { id ->
-            val point = id2point[id] ?: return@forEachRemaining
-            if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) return@forEachRemaining
+        while (it.hasNext()) {
+            val id = it.nextInt()
+            val point = id2point[id] ?: continue
+            if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) continue
             despawnOperation + nmsSpawnPackets.despawn(id)
-            sent.remove(id)
+            it.remove()
         }
 
         despawnOperation.execute(player)
