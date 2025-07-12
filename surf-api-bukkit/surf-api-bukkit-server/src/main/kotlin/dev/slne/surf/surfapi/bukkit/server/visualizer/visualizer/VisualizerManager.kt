@@ -36,6 +36,11 @@ object VisualizerManager {
         }
     }
 
+    fun removeVisualizer(visualizerImpl: AbstractSurfVisualizerImpl) {
+        activeVisualizers.values.forEach { it.remove(visualizerImpl) }
+        activeVisualizers.entries.removeIf { it.value.isEmpty() }
+    }
+
     fun processPlayerQuit(player: Player) {
         val visualizers = activeVisualizers.remove(player.uniqueId)
         visualizers?.forEach { it.removeViewer(player) }

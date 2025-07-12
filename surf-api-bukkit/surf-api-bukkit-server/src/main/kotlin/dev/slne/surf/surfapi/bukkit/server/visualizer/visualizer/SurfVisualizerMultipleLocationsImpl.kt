@@ -238,6 +238,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
             viewerUuids.clear()
             log.atWarning()
                 .log("World reference is no longer valid, stopping visualizer")
+            VisualizerManager.removeVisualizer(this)
             return false
         }
         return true

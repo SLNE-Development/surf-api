@@ -111,4 +111,22 @@ class SurfVisualizerAreaImpl(
             delegate.addVisualLocation(it, settings)
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SurfVisualizerAreaImpl) return false
+
+        if (delegate != other.delegate) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return delegate.hashCode()
+    }
+
+    override fun toString(): String {
+        return "SurfVisualizerAreaImpl(useHighestYBlock=$useHighestYBlock, corners=$corners, settings=$settings)"
+    }
+
 }
