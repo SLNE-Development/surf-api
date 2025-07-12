@@ -5,12 +5,15 @@ import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntSet
 
 @NmsUseWithCaution
 interface SurfBukkitNmsSpawnPackets {
 
     fun despawn(entityIds: IntList): PacketOperation
+    fun despawn(entityIds: IntSet): PacketOperation = despawn(IntArrayList(entityIds))
     fun despawn(vararg entityId: Int): PacketOperation
 
     fun spawnItemDisplay(

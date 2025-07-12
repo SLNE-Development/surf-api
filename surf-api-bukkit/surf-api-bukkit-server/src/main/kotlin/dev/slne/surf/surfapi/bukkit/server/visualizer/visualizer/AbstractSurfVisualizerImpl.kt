@@ -7,6 +7,7 @@ import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import dev.slne.surf.surfapi.core.api.util.synchronize
 import org.bukkit.Bukkit
+import org.bukkit.Chunk
 import org.bukkit.entity.Player
 import java.lang.ref.Cleaner
 import java.util.*
@@ -21,7 +22,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     protected val viewerUuids = mutableObjectSetOf<UUID>().synchronize()
     private val _viewers =
         TransformingObjectSet(viewerUuids, { Bukkit.getPlayer(it) }, { it.uniqueId })
-    override val viewers get() = _viewers.freeze()
+    override val viewers  = _viewers.freeze()
     override val uid: UUID = UUID.randomUUID()
 
     @Volatile
@@ -68,36 +69,62 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
 
     override fun addViewer(player: Player) {
         if (player.isOnline && viewerUuids.add(player.uniqueId)) {
+            VisualizerManager.addVisualizer(player.uniqueId, this)
             onViewerAdded(player)
         }
     }
 
     override fun removeViewer(player: Player) {
-        if (viewerUuids.remove(player.uniqueId) && player.isOnline) {
-            onViewerRemoved(player)
+        if (viewerUuids.remove(player.uniqueId)) {
+            VisualizerManager.removeVisualizer(player.uniqueId, this)
+            if (player.isOnline) {
+                onViewerRemoved(player)
+            }
         }
     }
 
     override fun clearViewers() {
-        viewerUuids.removeIf {
-            val player = Bukkit.getPlayer(it)
-            if (player?.isOnline == true) {
-                onViewerRemoved(player)
-            }
-            true
+        for (uuid in viewerUuids) {
+            VisualizerManager.removeVisualizer(uuid, this)
+            Bukkit.getPlayer(uuid)
+                ?.takeIf { it.isOnline }
+                ?.let { onViewerRemoved(it) }
         }
+
+        viewerUuids.clear()
     }
 
     override fun hasViewers() = viewerUuids.isNotEmpty()
     override fun visibleTo(player: Player) = player.uniqueId in viewerUuids
 
     open fun onViewerAdded(player: Player) {
+        player.sentChunks.forEach { chunk ->
+            onPlayerReceiveChunk(player, chunk)
+        }
     }
 
     open fun onViewerRemoved(player: Player) {
+        player.sentChunks.forEach { chunk ->
+            onPlayerUnloadChunk(player, chunk)
+        }
     }
 
     protected abstract fun startVisualizingInternal()
     protected abstract fun stopVisualizingInternal()
 
+    abstract fun onPlayerReceiveChunk(player: Player, chunk: Chunk)
+    abstract fun onPlayerUnloadChunk(player: Player, chunk: Chunk)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is AbstractSurfVisualizerImpl) return false
+
+        if (uid != other.uid) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return uid.hashCode()
+    }
 }
