@@ -5,9 +5,11 @@ package dev.slne.surf.surfapi.bukkit.api.util
 import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
+import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import io.papermc.paper.math.BlockPosition
 import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -15,6 +17,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.bukkit.*
+import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -251,4 +254,19 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
     }
 
     return result
+}
+
+suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
+    val chunkX = pos.blockX() shr 4
+    val chunkZ = pos.blockZ() shr 4
+    val plugin = JavaPlugin.getProvidingPlugin(SurfBukkitApi::class.java)
+    val chunk = getChunkAtAsync(chunkX, chunkZ).await()
+
+    return withContext(plugin.regionDispatcher(this, chunkX, chunkZ)) {
+        chunk.getBlock(
+            pos.blockX() and 15,
+            pos.blockY(),
+            pos.blockZ() and 15
+        )
+    }
 }
