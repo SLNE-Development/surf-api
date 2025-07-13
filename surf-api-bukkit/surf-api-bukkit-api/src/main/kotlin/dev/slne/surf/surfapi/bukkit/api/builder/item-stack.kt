@@ -79,6 +79,10 @@ class LoreBuilder {
         lore.add(this)
     }
 
+    fun emptyLine() {
+        lore.add(Component.empty())
+    }
+
     fun build() =
         lore.map { it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE) }
 }
