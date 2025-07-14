@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.server.pdc.block
+package dev.slne.surf.surfapi.bukkit.server.impl.pdc.block
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.surfapi.bukkit.api.pdc.block.BlockPdcProvider

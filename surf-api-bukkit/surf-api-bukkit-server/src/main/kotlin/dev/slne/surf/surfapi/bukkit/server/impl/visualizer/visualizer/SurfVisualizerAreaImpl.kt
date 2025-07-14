@@ -1,12 +1,12 @@
-package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer
+package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
 import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.surfapi.bukkit.api.util.computeHighestYBlock
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerArea
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizerApiImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
-import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizerApiImpl
 import dev.slne.surf.surfapi.core.api.algorithms.convexHull2D
 import dev.slne.surf.surfapi.core.api.math.VoxelLineTracer
 import dev.slne.surf.surfapi.core.api.util.toObjectSet

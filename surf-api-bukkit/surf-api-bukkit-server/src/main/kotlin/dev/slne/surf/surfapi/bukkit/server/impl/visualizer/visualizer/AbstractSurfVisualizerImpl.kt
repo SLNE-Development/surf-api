@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer
+package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.core.api.collection.TransformingObjectSet

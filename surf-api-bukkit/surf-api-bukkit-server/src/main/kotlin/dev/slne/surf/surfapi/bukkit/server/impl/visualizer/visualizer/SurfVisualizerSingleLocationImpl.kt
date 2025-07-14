@@ -1,6 +1,6 @@
 @file:OptIn(NmsUseWithCaution::class)
 
-package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer
+package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.nmsCommonBridge

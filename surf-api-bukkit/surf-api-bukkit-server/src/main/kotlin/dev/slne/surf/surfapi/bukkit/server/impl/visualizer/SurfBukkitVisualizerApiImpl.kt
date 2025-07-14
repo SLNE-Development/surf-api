@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.server.visualizer
+package dev.slne.surf.surfapi.bukkit.server.impl.visualizer
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.auto.service.AutoService
@@ -7,9 +7,9 @@ import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerArea
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
-import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer.SurfVisualizerAreaImpl
-import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer.SurfVisualizerMultipleLocationsImpl
-import dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer.SurfVisualizerSingleLocationImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerAreaImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerMultipleLocationsImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerSingleLocationImpl
 import org.bukkit.Location
 import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d

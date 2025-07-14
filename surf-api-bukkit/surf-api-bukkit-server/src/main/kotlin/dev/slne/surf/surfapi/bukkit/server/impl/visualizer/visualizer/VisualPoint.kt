@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer
+package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
 import io.papermc.paper.math.Position

@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.server.scoreboard
+package dev.slne.surf.surfapi.bukkit.server.impl.scoreboard
 
 import com.github.shynixn.mccoroutine.folia.launch
 import com.github.shynixn.mccoroutine.folia.ticks

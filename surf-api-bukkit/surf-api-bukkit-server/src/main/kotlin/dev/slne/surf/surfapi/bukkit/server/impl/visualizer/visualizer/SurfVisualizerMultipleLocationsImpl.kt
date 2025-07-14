@@ -1,6 +1,6 @@
 @file:OptIn(NmsUseWithCaution::class)
 
-package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer
+package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch

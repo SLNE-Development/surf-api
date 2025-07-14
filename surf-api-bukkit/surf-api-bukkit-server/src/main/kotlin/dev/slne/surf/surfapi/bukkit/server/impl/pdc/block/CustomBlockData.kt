@@ -20,7 +20,7 @@
  *
  * Copyright (c) 2025 twisti-dev and contributors
  */
-package dev.slne.surf.surfapi.bukkit.server.pdc.block
+package dev.slne.surf.surfapi.bukkit.server.impl.pdc.block
 
 import dev.slne.surf.surfapi.bukkit.api.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.surfapi.bukkit.api.pdc.block.pdc

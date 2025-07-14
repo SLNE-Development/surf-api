@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.server.scoreboard
+package dev.slne.surf.surfapi.bukkit.server.impl.scoreboard
 
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder

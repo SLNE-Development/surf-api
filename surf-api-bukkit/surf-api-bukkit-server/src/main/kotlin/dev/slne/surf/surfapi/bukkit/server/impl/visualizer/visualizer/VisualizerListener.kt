@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.server.visualizer.visualizer
+package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
 import io.papermc.paper.event.packet.PlayerChunkLoadEvent
 import io.papermc.paper.event.packet.PlayerChunkUnloadEvent
