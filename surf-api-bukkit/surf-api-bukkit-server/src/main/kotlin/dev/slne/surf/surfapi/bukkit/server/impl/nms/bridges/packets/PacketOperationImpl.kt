@@ -104,5 +104,12 @@ class PacketOperationImpl : PacketOperation {
                 packets
             }
         }
+
+        fun task(task: (Player) -> Unit): PacketOperationImpl {
+            return PacketOperationImpl { player, packets ->
+                task(player)
+                packets
+            }
+        }
     }
 }

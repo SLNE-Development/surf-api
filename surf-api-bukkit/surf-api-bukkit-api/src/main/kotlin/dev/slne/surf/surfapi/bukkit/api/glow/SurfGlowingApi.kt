@@ -2,6 +2,8 @@ package dev.slne.surf.surfapi.bukkit.api.glow
 
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import net.kyori.adventure.text.format.NamedTextColor
+import org.bukkit.Location
+import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 
@@ -17,8 +19,14 @@ interface SurfGlowingApi {
         otherFlags: Byte = 0,
     )
 
+    fun makeGlowing(block: Block, viewer: Player, color: NamedTextColor)
+    fun makeGlowing(location: Location, viewer: Player, color: NamedTextColor)
+
     fun removeGlowing(target: Entity, viewer: Player)
     fun removeGlowing(targetId: Int, viewer: Player)
+
+    fun removeGlowing(block: Block, viewer: Player)
+    fun removeGlowing(location: Location, viewer: Player)
 
     companion object {
         val instance = requiredService<SurfGlowingApi>()

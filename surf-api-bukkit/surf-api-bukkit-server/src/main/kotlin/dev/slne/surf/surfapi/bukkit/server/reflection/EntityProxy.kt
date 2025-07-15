@@ -13,6 +13,10 @@ interface EntityProxy {
     @Static
     fun getFlagGlowing(): Int
 
+    @FieldGetter("FLAG_INVISIBLE")
+    @Static
+    fun getFlagInvisible(): Int
+
     @FieldGetter("DATA_SHARED_FLAGS_ID")
     @Static
     fun getDataFlagsSharedId(): EntityDataAccessor<Byte>
