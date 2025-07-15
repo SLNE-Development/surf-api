@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class TeamData(color: ChatFormatting) {
     private val scoreboard = Scoreboard()
-    val teamId = "glow-${uid()}${color.char}";
+    val teamId = "glow-${uid()}${color.char}"
     val team = PlayerTeam(scoreboard, teamId).apply {
         collisionRule = Team.CollisionRule.NEVER
         this.color = color
