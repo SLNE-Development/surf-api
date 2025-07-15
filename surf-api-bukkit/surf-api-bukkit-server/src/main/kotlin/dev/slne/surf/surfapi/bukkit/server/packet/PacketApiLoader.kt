@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.bukkit.server.packet
 import com.github.retrooper.packetevents.PacketEvents
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
+import dev.slne.surf.surfapi.bukkit.server.impl.glow.GlowingPacketListener
 import dev.slne.surf.surfapi.bukkit.server.packet.listener.PlayerChannelInjector
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener
 import dev.slne.surf.surfapi.bukkit.server.plugin
@@ -19,6 +20,7 @@ object PacketApiLoader {
     fun onEnable() {
         packetEvents.init()
         packetListenerApi.registerListeners(PacketLoreListener)
+        packetListenerApi.registerListeners(GlowingPacketListener)
 
         PlayerChannelInjector.register()
     }

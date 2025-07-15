@@ -7,8 +7,8 @@ import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
 import dev.slne.surf.surfapi.bukkit.server.hook.SurfBukkitHookManager
+import dev.slne.surf.surfapi.bukkit.server.impl.scoreboard.SurfScoreboardBuilderImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
-import dev.slne.surf.surfapi.bukkit.server.scoreboard.SurfScoreboardBuilderImpl
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
