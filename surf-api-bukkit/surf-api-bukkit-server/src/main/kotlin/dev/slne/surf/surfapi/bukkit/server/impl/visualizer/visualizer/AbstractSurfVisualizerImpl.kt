@@ -98,12 +98,14 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     override fun visibleTo(player: Player) = player.uniqueId in viewerUuids
 
     open fun onViewerAdded(player: Player) {
+        if (!visualizing) return
         player.sentChunks.forEach { chunk ->
             onPlayerReceiveChunk(player, chunk)
         }
     }
 
     open fun onViewerRemoved(player: Player) {
+        if (!visualizing) return
         player.sentChunks.forEach { chunk ->
             onPlayerUnloadChunk(player, chunk)
         }

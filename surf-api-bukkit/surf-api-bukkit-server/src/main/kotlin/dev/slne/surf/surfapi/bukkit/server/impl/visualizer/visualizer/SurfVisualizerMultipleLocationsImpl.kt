@@ -56,28 +56,22 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
             UpdateStrategy.ALL -> {
                 for (viewer in viewers) {
                     plugin.launch(plugin.entityDispatcher(viewer)) {
-                        val despawn = PacketOperation.start()
                         val sent = getSentToPlayer(viewer)
-
-                        val sentIterator = sent.intIterator()
-                        while (sentIterator.hasNext()) {
-                            val id = sentIterator.nextInt()
-                            val point = id2point[id] ?: continue
-                            if (!viewer.isChunkVisible(world, point.chunkX, point.chunkZ)) {
-                                despawn + nmsSpawnPackets.despawn(id)
-                                sentIterator.remove()
-                            }
-                        }
-                        despawn.execute(viewer)
+                        nmsSpawnPackets.despawn(sent).execute(viewer)
+                        sent.clear()
 
                         val spawn = PacketOperation.start()
                         point2Id.object2IntEntrySet().fastForEach { entry ->
                             val point = entry.key
                             val id = entry.intValue
 
-                            if (viewer.isChunkVisible(world, point.chunkX, point.chunkZ)) {
+                            if (viewer.isChunkVisible(
+                                    world,
+                                    point.chunkX,
+                                    point.chunkZ
+                                ) && sent.add(id)
+                            ) {
                                 spawn + spawnPacket(id, point)
-                                sent.add(id)
                             }
                         }
                         spawn.execute(viewer)
@@ -140,8 +134,9 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
 
     override fun clearVisualLocations() {
         if (visualizing && checkNotNullWorld()) {
+            val idsToRemove = id2point.keys
             for (viewer in viewers) {
-                nmsSpawnPackets.despawn(getSentToPlayer(viewer)).execute(viewer)
+                nmsSpawnPackets.despawn(idsToRemove).execute(viewer)
             }
         }
 
@@ -218,19 +213,19 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
     }
 
     override fun onPlayerUnloadChunk(player: Player, chunk: Chunk) {
-        val despawnOperation = PacketOperation.start()
         val sent = getSentToPlayer(player)
+        val despawn = mutableIntSetOf()
         val it = sent.intIterator()
 
         while (it.hasNext()) {
             val id = it.nextInt()
             val point = id2point[id] ?: continue
             if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) continue
-            despawnOperation + nmsSpawnPackets.despawn(id)
+            despawn.add(id)
             it.remove()
         }
 
-        despawnOperation.execute(player)
+        nmsSpawnPackets.despawn(despawn).execute(player)
     }
 
 
