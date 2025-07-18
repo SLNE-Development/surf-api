@@ -51,6 +51,24 @@ interface SurfVisualizerMultipleLocations : SurfVisualizer {
         settings: BlockDisplaySettings,
     )
 
+    fun addVisualLocations(
+        visualLocations: Collection<Vector3d>,
+        settings: BlockDisplaySettings,
+    ) {
+        addVisualLocations(visualLocations.map { it to settings })
+    }
+
+    fun addVisualLocations(
+        visualLocations: Collection<Vector3d>,
+        consumer: BlockDisplaySettings.() -> Unit = {},
+    ) {
+        addVisualLocations(visualLocations, BlockDisplaySettings.create(consumer))
+    }
+
+    fun addVisualLocations(
+        locations: Collection<Pair<Vector3d, BlockDisplaySettings>>,
+    )
+
     /**
      * Removes the specified visual location from the current visualizer.
      *

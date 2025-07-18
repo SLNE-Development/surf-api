@@ -120,6 +120,47 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         }
     }
 
+    override fun addVisualLocations(locations: Collection<Pair<Vector3d, BlockDisplaySettings>>) {
+        if (locations.isEmpty()) return
+        if (locations.size == 1) {
+            addVisualLocation(locations.first().first, locations.first().second)
+            return
+        }
+
+        if (!visualizing) {
+            for ((loc, setting) in locations) {
+                addVisualLocation(loc, setting)
+            }
+        } else {
+            val toSpawn = mutableInt2ObjectMapOf<VisualPoint>()
+
+            for ((loc, setting) in locations) {
+                val id = nmsCommonBridge.nextEntityId()
+                val point = VisualPoint(loc, setting)
+                put(id, point)
+                toSpawn[id] = point
+            }
+
+            for (player in viewers) {
+                plugin.launch(plugin.entityDispatcher(player)) {
+                    val sent = getSentToPlayer(player)
+                    val spawnOperation = PacketOperation.start()
+
+                    toSpawn.int2ObjectEntrySet().fastForEach { entry ->
+                        val id = entry.intKey
+                        val point = entry.value
+
+                        if (player.isChunkVisible(world, point.chunkX, point.chunkZ) && sent.add(id)) {
+                            spawnOperation + spawnPacket(id, point)
+                        }
+                    }
+
+                    spawnOperation.execute(player)
+                }
+            }
+        }
+    }
+
     override fun removeVisualLocation(visualLocation: Vector3d) {
         val result = remove(visualLocation) ?: return
         val (id, point) = result

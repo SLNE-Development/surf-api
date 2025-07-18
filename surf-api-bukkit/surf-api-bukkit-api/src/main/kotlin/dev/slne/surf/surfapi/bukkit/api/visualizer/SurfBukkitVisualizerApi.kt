@@ -11,6 +11,7 @@ import org.bukkit.Location
 import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d
 import java.util.*
+import kotlin.time.Duration
 
 /**
  * Defines the main API for working with visualizers in the SurfBukkit visualizer system.
@@ -52,6 +53,7 @@ interface SurfBukkitVisualizerApi {
         initialSettings: BlockDisplaySettings? = null,
         initialEdges: Collection<Vector3d> = emptyList(),
         useHighestYBlock: Boolean = false,
+        placeDelay: Duration = Duration.ZERO,
     ): SurfVisualizerArea
 
     /**

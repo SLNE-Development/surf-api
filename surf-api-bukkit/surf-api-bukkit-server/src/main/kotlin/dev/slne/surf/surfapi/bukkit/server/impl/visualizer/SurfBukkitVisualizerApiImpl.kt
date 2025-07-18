@@ -14,6 +14,7 @@ import org.bukkit.Location
 import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d
 import java.util.*
+import kotlin.time.Duration
 
 @AutoService(SurfBukkitVisualizerApi::class)
 class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
@@ -37,12 +38,14 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         initialSettings: BlockDisplaySettings?,
         initialEdges: Collection<Vector3d>,
         useHighestYBlock: Boolean,
+        placeDelay: Duration
     ): SurfVisualizerArea {
         return SurfVisualizerAreaImpl(
             world,
             useHighestYBlock,
             initialSettings,
-            initialEdges
+            initialEdges,
+            placeDelay,
         ).also { areaVisualizers.put(it.uid, it) }
     }
 

@@ -12,16 +12,19 @@ import dev.slne.surf.surfapi.core.api.math.VoxelLineTracer
 import dev.slne.surf.surfapi.core.api.util.toObjectSet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectSet
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d
+import kotlin.time.Duration
 
 class SurfVisualizerAreaImpl(
     world: World,
     private val useHighestYBlock: Boolean,
     initialSettings: BlockDisplaySettings?,
     initialEdges: Collection<Vector3d>,
+    private val placeDelay: Duration = Duration.ZERO,
     private val delegate: SurfVisualizerMultipleLocationsImpl = visualizerApiImpl.createMultiLocationVisualizer(
         world
     ),
@@ -102,14 +105,25 @@ class SurfVisualizerAreaImpl(
             edgePoints.map { it.toInt() }
                 .computeHighestYBlock(delegate.world)
                 .map { it.add(0, 1, 0).toDouble() }
-                .toObjectSet()
+                .toCollection(ObjectLinkedOpenHashSet())
         } else {
             edgePoints
         }
 
-        finalEdgePoints.forEach {
-            delegate.addVisualLocation(it, settings)
+        if (placeDelay.isPositive()) {
+            for ((i, point) in finalEdgePoints.withIndex()) {
+                delegate.addVisualLocation(point, settings)
+                if (i < finalEdgePoints.size - 1) {
+                    delay(placeDelay)
+                }
+            }
+        } else {
+            delegate.addVisualLocations(finalEdgePoints, settings)
+            finalEdgePoints.forEach {
+                delegate.addVisualLocation(it, settings)
+            }
         }
+
     }
 
     override fun equals(other: Any?): Boolean {
