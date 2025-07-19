@@ -154,6 +154,10 @@ object SurfApiStandaloneBootstrap {
         override fun setPlayer(channel: Any?, player: Any?) {
         }
 
+        override fun isPlayerSet(p0: Any?): Boolean {
+            return TODO("Provide the return value")
+        }
+
         override fun isProxy(): Boolean {
             return false
         }

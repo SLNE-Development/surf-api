@@ -10,6 +10,7 @@ import io.papermc.paper.math.FinePosition
 import io.papermc.paper.math.Position
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Display
 import net.minecraft.world.inventory.MenuType
@@ -21,18 +22,28 @@ import net.minecraft.world.level.block.entity.SignText
 import net.minecraft.world.phys.Vec3
 import org.bukkit.Material
 import org.bukkit.Server
+import org.bukkit.World
 import org.bukkit.block.BlockState
 import org.bukkit.block.data.BlockData
 import org.bukkit.craftbukkit.CraftServer
+import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
 import org.bukkit.craftbukkit.block.data.CraftBlockData
+import org.bukkit.craftbukkit.damage.CraftDamageSource
+import org.bukkit.craftbukkit.entity.CraftEntity
+import org.bukkit.craftbukkit.entity.CraftEntityType
+import org.bukkit.craftbukkit.entity.CraftLivingEntity
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.craftbukkit.inventory.CraftItemType
 import org.bukkit.craftbukkit.util.Commodore
 import org.bukkit.craftbukkit.util.CraftMagicNumbers
+import org.bukkit.damage.DamageSource
 import org.bukkit.entity.Display.Billboard
+import org.bukkit.entity.Entity
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.ItemDisplay.ItemDisplayTransform
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
@@ -111,3 +122,9 @@ fun Component.toBukkit(): AdventureComponent = PaperAdventure.asAdventure(this)
 fun Server.toCraft() = this as CraftServer
 val craftServer: CraftServer get() = server.toCraft()
 val commodore: Commodore get() = CraftMagicNumbers.INSTANCE.commodore
+
+fun EntityType.toNms(): net.minecraft.world.entity.EntityType<*> = CraftEntityType.bukkitToMinecraft(this)
+fun World.toNms(): ServerLevel = (this as CraftWorld).handle
+fun Entity.toNms(): net.minecraft.world.entity.Entity = (this as CraftEntity).handle
+fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity = (this as CraftLivingEntity).handle
+fun DamageSource.toNms(): net.minecraft.world.damagesource.DamageSource = (this as CraftDamageSource).handle

@@ -19,7 +19,14 @@ interface SurfBukkitNmsCommonBridge {
     fun removeCompostable(material: Material)
 
     fun setVelocityEnabled(enabled: Boolean)
+    fun isVelocityEnabled(): Boolean
+
     fun setVelocitySecret(secret: String)
+    fun getVelocitySecret(): String
+
+    fun setOnlineMode(enabled: Boolean)
+
+    fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean = false)
 
     companion object {
         val instance = requiredService<SurfBukkitNmsCommonBridge>()

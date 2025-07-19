@@ -30,9 +30,7 @@ class LibLoader(pluginClassLoader: ClassLoader) {
     private val logger = logger()
     private val pluginClassLoader = pluginClassLoader as PaperPluginClassLoader
 
-    fun loadLibs() {
-//    loadLib("IF-0.10.15.zip", "1.20");
-    }
+    fun loadLibs() {}
 
     private fun loadLib(jarName: String, apiVersion: String = plugin.pluginMeta.apiVersion!!) {
         logger.atInfo().log("Loading library %s", jarName)

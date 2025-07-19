@@ -12,9 +12,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet
 import net.kyori.adventure.text.format.TextDecoration
 import net.minecraft.core.component.DataComponents
 import net.minecraft.network.chat.Component
-import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket
-import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket
+import net.minecraft.network.protocol.game.*
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.ItemLore
 import org.bukkit.NamespacedKey
@@ -52,8 +50,18 @@ object PacketLoreListener : PacketListener {
         makeUpdatedItemStack(event.item)
     }
 
+    @ClientboundListener
+    fun onSetPlayerInventoryPacket(event: ClientboundSetPlayerInventoryPacket) {
+        makeUpdatedItemStack(event.contents)
+    }
+
+    @ClientboundListener
+    fun onSetCursorItemPacket(event: ClientboundSetCursorItemPacket) {
+        makeUpdatedItemStack(event.contents)
+    }
+
     private fun makeUpdatedItemStack(
-        item: ItemStack
+        item: ItemStack,
     ): ItemStack {
         if (item.isEmpty) return item
         if (loreHandlers.isEmpty() && loreHandlersGlobal.isEmpty()) return item
@@ -90,7 +98,7 @@ object PacketLoreListener : PacketListener {
     }
 
     private fun makeCleanItemStack(
-        stack: ItemStack?
+        stack: ItemStack?,
     ): ItemStack? {
         if (stack == null) return null
 

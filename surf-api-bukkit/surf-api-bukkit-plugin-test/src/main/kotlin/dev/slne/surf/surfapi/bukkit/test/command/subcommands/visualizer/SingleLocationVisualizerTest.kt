@@ -20,7 +20,6 @@ import org.bukkit.Registry
 import org.bukkit.entity.Player
 import java.util.*
 
-@Suppress("UnstableApiUsage")
 class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
     private val visualizers = mutableObject2ObjectMapOf<UUID, SurfVisualizerSingleLocation>()
 

@@ -26,6 +26,7 @@ dependencies {
     compileOnlyApi(libs.flogger)
     compileOnlyApi(libs.commons.math4.core)
     compileOnlyApi(libs.aide.reflection)
+    api(libs.glm)
 
     api(libs.caffeine.courotines)
     api(libs.kotlinxCoroutines.core)

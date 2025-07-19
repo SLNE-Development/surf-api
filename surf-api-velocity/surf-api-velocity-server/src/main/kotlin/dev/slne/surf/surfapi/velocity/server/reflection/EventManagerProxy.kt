@@ -14,7 +14,7 @@ import java.util.function.Predicate
 interface EventManagerProxy {
 
     @Name("registerHandlerAdapter")
-    fun <F> registerHandlerAdapter(
+    fun <F: Any> registerHandlerAdapter(
         instance: Any,
         name: String,
         filter: Predicate<Method>,
