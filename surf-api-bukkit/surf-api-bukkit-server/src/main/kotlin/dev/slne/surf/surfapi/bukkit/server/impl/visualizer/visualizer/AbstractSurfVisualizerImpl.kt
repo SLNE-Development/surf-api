@@ -1,6 +1,9 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
+import com.github.shynixn.mccoroutine.folia.entityDispatcher
+import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
+import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.core.api.collection.TransformingObjectSet
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.logger
@@ -96,15 +99,20 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
 
     open fun onViewerAdded(player: Player) {
         if (!visualizing) return
-        player.sentChunks.forEach { chunk ->
-            onPlayerReceiveChunk(player, chunk)
+
+        plugin.launch(plugin.entityDispatcher(player)) {
+            player.sentChunks.forEach { chunk ->
+                onPlayerReceiveChunk(player, chunk)
+            }
         }
     }
 
     open fun onViewerRemoved(player: Player) {
         if (!visualizing) return
-        player.sentChunks.forEach { chunk ->
-            onPlayerUnloadChunk(player, chunk)
+        plugin.launch(plugin.entityDispatcher(player)) {
+            player.sentChunks.forEach { chunk ->
+                onPlayerUnloadChunk(player, chunk)
+            }
         }
     }
 
