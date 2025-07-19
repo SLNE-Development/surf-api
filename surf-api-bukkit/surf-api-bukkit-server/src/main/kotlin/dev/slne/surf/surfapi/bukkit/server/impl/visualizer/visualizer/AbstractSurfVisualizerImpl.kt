@@ -69,14 +69,12 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
 
     override fun addViewer(player: Player) {
         if (player.isOnline && viewerUuids.add(player.uniqueId)) {
-            VisualizerManager.addVisualizer(player.uniqueId, this)
             onViewerAdded(player)
         }
     }
 
     override fun removeViewer(player: Player) {
         if (viewerUuids.remove(player.uniqueId)) {
-            VisualizerManager.removeVisualizer(player.uniqueId, this)
             if (player.isOnline) {
                 onViewerRemoved(player)
             }
@@ -85,7 +83,6 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
 
     override fun clearViewers() {
         for (uuid in viewerUuids) {
-            VisualizerManager.removeVisualizer(uuid, this)
             Bukkit.getPlayer(uuid)
                 ?.takeIf { it.isOnline }
                 ?.let { onViewerRemoved(it) }

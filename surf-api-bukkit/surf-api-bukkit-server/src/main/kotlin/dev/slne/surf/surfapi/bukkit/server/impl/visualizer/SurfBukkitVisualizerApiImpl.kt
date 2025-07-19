@@ -7,11 +7,14 @@ import dev.slne.surf.surfapi.bukkit.api.visualizer.SurfBukkitVisualizerApi
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerArea
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.AbstractSurfVisualizerImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerAreaImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerMultipleLocationsImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerSingleLocationImpl
+import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.World
+import org.bukkit.entity.Player
 import org.spongepowered.math.vector.Vector3d
 import java.util.*
 import kotlin.time.Duration
@@ -20,7 +23,7 @@ import kotlin.time.Duration
 class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
     private val visualizers = Caffeine.newBuilder()
         .softValues()
-        .build<UUID, SurfVisualizer>()
+        .build<UUID, AbstractSurfVisualizerImpl>()
     private val areaVisualizers = Caffeine.newBuilder()
         .softValues()
         .build<UUID, SurfVisualizerArea>()
@@ -38,7 +41,7 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         initialSettings: BlockDisplaySettings?,
         initialEdges: Collection<Vector3d>,
         useHighestYBlock: Boolean,
-        placeDelay: Duration
+        placeDelay: Duration,
     ): SurfVisualizerArea {
         return SurfVisualizerAreaImpl(
             world,
@@ -51,6 +54,22 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
 
     override fun getByUid(uid: UUID): SurfVisualizer? {
         return areaVisualizers.getIfPresent(uid) ?: visualizers.getIfPresent(uid)
+    }
+
+    private fun getActiveVisualizers(player: Player) =
+        visualizers.asMap().values.filter { it.isVisualizing() && it.visibleTo(player) }
+
+
+    fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
+        getActiveVisualizers(player).forEach { it.onPlayerReceiveChunk(player, chunk) }
+    }
+
+    fun processChunkUnloadForPlayer(player: Player, chunk: Chunk) {
+        getActiveVisualizers(player).forEach { it.onPlayerUnloadChunk(player, chunk) }
+    }
+
+    fun processPlayerQuit(player: Player) {
+        visualizers.asMap().values.forEach { it.removeViewer(player) }
     }
 }
 
