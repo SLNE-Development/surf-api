@@ -36,13 +36,13 @@ class PaginationTest(name: String) : CommandAPICommand(name) {
     init {
         subcommand("short") {
             anyExecutor { sender, _ ->
-                sender.sendMessage(pagination.renderComponent(exampleDataList, 1))
+                sender.sendMessage(pagination.renderComponent(exampleDataList))
             }
         }
 
         subcommand("long") {
             anyExecutor { sender, _ ->
-                sender.sendMessage(pagination.renderComponent(longExampleDataList, 1))
+                sender.sendMessage(pagination.renderComponent(longExampleDataList))
             }
         }
     }

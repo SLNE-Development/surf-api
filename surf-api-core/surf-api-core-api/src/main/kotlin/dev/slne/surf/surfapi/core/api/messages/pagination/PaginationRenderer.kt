@@ -1,12 +1,14 @@
 package dev.slne.surf.surfapi.core.api.messages.pagination
 
 import dev.slne.surf.surfapi.core.api.messages.Colors
+import dev.slne.surf.surfapi.core.api.messages.DefaultFontInfo
 import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import dev.slne.surf.surfapi.core.api.messages.adventure.plain
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.TextDecoration
+import kotlin.math.roundToInt
 
 interface PaginationRenderer {
 
@@ -79,11 +81,12 @@ interface PaginationRenderer {
                 append(renderNextPageButton(lastPage, changePageEvent(pages), page < pages))
             }
 
-            val navLength = nav.plain().length
-            val totalLen = width - 2 // minus the starting/ending *
-            val sideLen = totalLen - navLength
-            val left = sideLen / 2
-            val right = sideLen - left
+            val dashPx = DefaultFontInfo.MINUS.length + 1
+            val navPx = DefaultFontInfo.pixelWidth(nav.plain())
+            val linePx = (width - 2) * dashPx
+            val sidePx = linePx - navPx
+            val left = (sidePx / 2.0 / dashPx).roundToInt()
+            val right = ((sidePx - left * dashPx.toDouble()) / dashPx).roundToInt()
 
             darkSpacer("*" + "-".repeat(left), TextDecoration.STRIKETHROUGH)
             append(nav)
