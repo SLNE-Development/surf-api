@@ -42,9 +42,8 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
 
     override fun stopVisualizingInternal() {
         for (viewer in viewers) {
-            val sentToPlayer = getSentToPlayer(viewer)
-            nmsSpawnPackets.despawn(sentToPlayer).execute(viewer)
-            sentToPlayer.clear()
+            nmsSpawnPackets.despawn(id2point.keys).execute(viewer)
+            getSentToPlayer(viewer).clear()
         }
     }
 

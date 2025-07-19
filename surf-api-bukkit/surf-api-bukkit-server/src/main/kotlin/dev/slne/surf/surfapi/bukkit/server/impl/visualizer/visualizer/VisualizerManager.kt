@@ -17,7 +17,7 @@ object VisualizerManager {
     }
 
     fun processChunkUnloadForPlayer(player: Player, chunk: Chunk) {
-        val activeVisualizerSet = activeVisualizers.get(player.uniqueId) ?: return
+        val activeVisualizerSet = activeVisualizers[player.uniqueId] ?: return
         activeVisualizerSet.forEach { it.onPlayerUnloadChunk(player, chunk) }
     }
 
