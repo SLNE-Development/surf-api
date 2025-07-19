@@ -103,7 +103,9 @@ interface SurfComponentBuilder : TextComponent.Builder {
     fun secondary(boolean: Boolean, vararg decoration: TextDecoration) =
         text(boolean, SECONDARY, *decoration)
 
-    fun secondary(char: Char, vararg decoration: TextDecoration) = text(char, SECONDARY, *decoration)
+    fun secondary(char: Char, vararg decoration: TextDecoration) =
+        text(char, SECONDARY, *decoration)
+
     fun secondary(double: Double, vararg decoration: TextDecoration) =
         text(double, SECONDARY, *decoration)
 
@@ -111,7 +113,8 @@ interface SurfComponentBuilder : TextComponent.Builder {
         text(float, SECONDARY, *decoration)
 
     fun secondary(int: Int, vararg decoration: TextDecoration) = text(int, SECONDARY, *decoration)
-    fun secondary(long: Long, vararg decoration: TextDecoration) = text(long, SECONDARY, *decoration)
+    fun secondary(long: Long, vararg decoration: TextDecoration) =
+        text(long, SECONDARY, *decoration)
 
     fun info(text: String, vararg decoration: TextDecoration) = text(text, INFO, *decoration)
     fun info(boolean: Boolean, vararg decoration: TextDecoration) = text(boolean, INFO, *decoration)
@@ -203,7 +206,9 @@ interface SurfComponentBuilder : TextComponent.Builder {
         text(boolean, SPACER, *decoration)
 
     fun spacer(char: Char, vararg decoration: TextDecoration) = text(char, SPACER, *decoration)
-    fun spacer(double: Double, vararg decoration: TextDecoration) = text(double, SPACER, *decoration)
+    fun spacer(double: Double, vararg decoration: TextDecoration) =
+        text(double, SPACER, *decoration)
+
     fun spacer(float: Float, vararg decoration: TextDecoration) = text(float, SPACER, *decoration)
     fun spacer(int: Int, vararg decoration: TextDecoration) = text(int, SPACER, *decoration)
     fun spacer(long: Long, vararg decoration: TextDecoration) = text(long, SPACER, *decoration)
@@ -223,7 +228,9 @@ interface SurfComponentBuilder : TextComponent.Builder {
     fun darkSpacer(float: Float, vararg decoration: TextDecoration) =
         text(float, DARK_SPACER, *decoration)
 
-    fun darkSpacer(int: Int, vararg decoration: TextDecoration) = text(int, DARK_SPACER, *decoration)
+    fun darkSpacer(int: Int, vararg decoration: TextDecoration) =
+        text(int, DARK_SPACER, *decoration)
+
     fun darkSpacer(long: Long, vararg decoration: TextDecoration) =
         text(long, DARK_SPACER, *decoration)
 
