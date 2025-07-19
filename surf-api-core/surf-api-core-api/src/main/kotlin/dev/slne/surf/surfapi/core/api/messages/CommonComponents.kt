@@ -49,6 +49,8 @@ object CommonComponents {
     @JvmField
     val TIME_SEPARATOR = text(" : ", SPACER)
 
+    val EM_DASH = text("—", SPACER)
+
     /**
      * A clickable Discord link component (`discord.gg/castcrafter`).
      *
@@ -370,9 +372,9 @@ object CommonComponents {
      *
      * **Output Example:**
      * ```
-     * >> Surf | - Apple
-     * >> Surf | - Banana
-     * >> Surf | - Cherry
+     * >> Surf | — Apple
+     * >> Surf | — Banana
+     * >> Surf | — Cherry
      * ```
      */
     inline fun <E> formatCollectionNewLine(
@@ -383,7 +385,7 @@ object CommonComponents {
         val separator = buildText0 {
             appendNewline()
             append(linePrefix)
-            appendText("-  ", SPACER)
+            appendText("—  ", SPACER)
         }
         val joinConfig = JoinConfiguration.builder().separator(separator).build()
 
@@ -414,8 +416,8 @@ object CommonComponents {
      *
      * **Output Example:**
      * ```
-     * >> Surf | - Name -> Alice
-     * >> Surf | - Age -> 25
+     * >> Surf | — Name -> Alice
+     * >> Surf | — Age -> 25
      * ```
      */
     inline fun <K, V> formatMap(
@@ -428,7 +430,7 @@ object CommonComponents {
         val separator = buildText0 {
             appendNewline()
             append(linePrefix)
-            appendText("-  ", SPACER)
+            appendText("—  ", SPACER)
         }
         val joinConfig = JoinConfiguration.builder().separator(separator).build()
         val firstPrefix = if (map.isNotEmpty()) separator else Component.empty()

@@ -7,6 +7,7 @@ import net.kyori.adventure.text.ComponentBuilder
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 
 /**
  * Builds a [TextComponent] using the provided [block] to configure the component.
@@ -141,3 +142,5 @@ fun text(char: Char, color: TextColor? = null): TextComponent = Component.text(c
  * @return A [TextComponent] containing the object's string representation.
  */
 fun text(any: Any, color: TextColor? = null): TextComponent = Component.text(any.toString(), color)
+
+fun Component.plain() = PlainTextComponentSerializer.plainText().serialize(this)
