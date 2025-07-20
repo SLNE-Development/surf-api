@@ -27,6 +27,6 @@ fun DialogRegistryEntry.Builder.type(block: DialogTypeBuilder.() -> Unit) {
 }
 
 @NmsUseWithCaution
-fun Player.clearDialogs() {
-    nmsCommonBridge.clearDialogs(this)
+fun Player.clearDialogs(showEmptyDialogBefore: Boolean = false) {
+    nmsCommonBridge.clearDialogs(this, showEmptyDialogBefore)
 }

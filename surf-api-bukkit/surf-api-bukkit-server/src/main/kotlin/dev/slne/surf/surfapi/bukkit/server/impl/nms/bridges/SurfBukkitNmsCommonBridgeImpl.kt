@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges
 
 import com.google.auto.service.AutoService
+import dev.slne.surf.surfapi.bukkit.api.dialog.noticeDialogWithBuilder
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge
 import dev.slne.surf.surfapi.bukkit.server.nms.toNms
@@ -8,6 +9,7 @@ import dev.slne.surf.surfapi.bukkit.server.nms.toNmsBlock
 import dev.slne.surf.surfapi.bukkit.server.nms.toNmsItem
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import io.papermc.paper.configuration.GlobalConfiguration
+import net.kyori.adventure.text.Component
 import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.players.GameProfileCache
@@ -74,7 +76,11 @@ class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
         GameProfileCache.setUsesAuthentication(enabled)
     }
 
-    override fun clearDialogs(player: Player) {
+    override fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean) {
+        if (showEmptyDialogBefore) {
+            player.showDialog(noticeDialogWithBuilder(Component.empty()) {})
+        }
+
         player.toNms().connection.send(ClientboundClearDialogPacket.INSTANCE)
     }
 }

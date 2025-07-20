@@ -9,6 +9,7 @@ import xyz.jpenilla.reflectionremapper.proxy.ReflectionProxyFactory
 object Reflection {
     val SERVER_STATS_COUNTER_PROXY: ServerStatsCounterProxy
     val ITEM_PROXY: ItemProxy
+    val ENTITY_PROXY: EntityProxy
 
     init {
         val remapper = ReflectionRemapper.forReobfMappingsInPaperJar()
@@ -17,6 +18,7 @@ object Reflection {
 
         SERVER_STATS_COUNTER_PROXY = proxyFactory.reflectionProxy<ServerStatsCounterProxy>()
         ITEM_PROXY = surfReflection.createProxy<ItemProxy>()
+        ENTITY_PROXY = proxyFactory.reflectionProxy<EntityProxy>()
 
         // gc the remapper
         System.gc()

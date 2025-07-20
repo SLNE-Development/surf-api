@@ -26,7 +26,7 @@ interface SurfBukkitNmsCommonBridge {
 
     fun setOnlineMode(enabled: Boolean)
 
-    fun clearDialogs(player: Player)
+    fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean = false)
 
     companion object {
         val instance = requiredService<SurfBukkitNmsCommonBridge>()
