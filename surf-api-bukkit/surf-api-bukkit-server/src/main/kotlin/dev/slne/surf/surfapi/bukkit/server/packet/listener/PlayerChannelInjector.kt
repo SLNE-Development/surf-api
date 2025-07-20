@@ -26,7 +26,6 @@ import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl
 import io.papermc.paper.event.connection.PlayerConnectionValidateLoginEvent
 import io.papermc.paper.network.ChannelInitializeListenerHolder
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import it.unimi.dsi.fastutil.objects.ObjectSet
 import net.kyori.adventure.key.Key
 import net.minecraft.network.Connection
 import net.minecraft.network.HandlerNames
@@ -55,7 +54,7 @@ object PlayerChannelInjector : Listener {
 
     private val injectedChannels = TempObjectSet<Channel>().synchronize()
 
-    private class TempObjectSet<T>(set: ObjectSet<T>? = null) : ObjectOpenHashSet<T>(set) {
+    private class TempObjectSet<T>() : ObjectOpenHashSet<T>() {
         private var added: Long = 0
         private var removed: Long = 0
 
