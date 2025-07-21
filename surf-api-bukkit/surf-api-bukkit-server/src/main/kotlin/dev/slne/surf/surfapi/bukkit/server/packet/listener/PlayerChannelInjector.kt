@@ -49,10 +49,6 @@ object PlayerChannelInjector : Listener {
 
     private val playerInjectorCache = Caffeine.newBuilder()
         .weakValues()
-        .removalListener<UUID, Connection> { key, value, cause ->
-            log.atWarning()
-                .log("Player connection cache for $key was removed due to $cause")
-        }
         .expireAfterAccess(1.minutes)
         .build<UUID, Connection>()
 
