@@ -16,7 +16,6 @@ import dev.slne.surf.surfapi.core.api.reflection.SurfProxy
 import dev.slne.surf.surfapi.core.api.reflection.createProxy
 import dev.slne.surf.surfapi.core.api.reflection.surfReflection
 import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.synchronize
 import io.netty.channel.Channel
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
@@ -56,7 +55,13 @@ object PlayerChannelInjector : Listener {
         .expireAfterAccess(1.minutes)
         .build<UUID, Connection>()
 
-    private val injectedChannels = TempObjectSet<Channel>().synchronize()
+    private val injectedChannels = Caffeine.newBuilder()
+        .weakKeys()
+        .removalListener<Channel, Boolean> { channel, _, cause ->
+            log.atWarning()
+                .log("Channel $channel was removed from injected channels due to $cause")
+        }
+        .build<Channel, Boolean>()
 
     private class TempObjectSet<T>() : ObjectOpenHashSet<T>() {
         private var added: Long = 0
@@ -127,7 +132,7 @@ object PlayerChannelInjector : Listener {
         val channelHandler = PacketHandler()
 
         channel.eventLoop().submit {
-            if (injectedChannels.add(channel)) {
+            if (injectedChannels.asMap().putIfAbsent(channel, true) == null) {
                 val pipeline = channel.pipeline()
 
                 if (pipeline.get(CHANNEL_NAME) != null) {
@@ -178,7 +183,7 @@ object PlayerChannelInjector : Listener {
         var connection: Connection? = null
 
         override fun channelUnregistered(ctx: ChannelHandlerContext) {
-            injectedChannels.remove(ctx.channel())
+            injectedChannels.invalidate(ctx.channel())
             super.channelUnregistered(ctx)
         }
 
