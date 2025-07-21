@@ -19,7 +19,7 @@ interface SurfReflection {
      * @return A dynamic proxy instance of the specified class type `T`.
      * @throws IllegalArgumentException If the provided class or class loader is invalid, or if a proxy cannot be created.
      */
-    fun <T> createProxy(clazz: Class<T>, classLoader: ClassLoader): T
+    fun <T: Any> createProxy(clazz: Class<T>, classLoader: ClassLoader): T
 
     /**
      * Creates a dynamic proxy instance for the specified class using its class loader.
@@ -30,7 +30,7 @@ interface SurfReflection {
      * @return A dynamic proxy instance of the specified class type `T`.
      * @throws IllegalArgumentException If the provided class or class loader is invalid, or if a proxy cannot be created.
      */
-    fun <T> createProxy(clazz: Class<T>): T = createProxy<T>(clazz, clazz.getClassLoader())
+    fun <T: Any> createProxy(clazz: Class<T>): T = createProxy<T>(clazz, clazz.getClassLoader())
 
     companion object {
         /**
@@ -53,4 +53,4 @@ val surfReflection get() = SurfReflection.instance
  * @return A dynamic proxy instance of the specified class type `T`.
  * @throws IllegalArgumentException If the proxy cannot be created for the provided class type `T`.
  */
-inline fun <reified T> SurfReflection.createProxy(): T = createProxy<T>(T::class.java)
+inline fun <reified T: Any> SurfReflection.createProxy(): T = createProxy<T>(T::class.java)

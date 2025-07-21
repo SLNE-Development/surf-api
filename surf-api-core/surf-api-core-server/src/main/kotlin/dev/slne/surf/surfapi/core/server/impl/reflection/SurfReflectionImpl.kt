@@ -13,7 +13,7 @@ class SurfReflectionImpl : SurfReflection {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> createProxy(
+    override fun <T: Any> createProxy(
         clazz: Class<T>,
         classLoader: ClassLoader
     ): T {
@@ -40,7 +40,7 @@ class SurfReflectionImpl : SurfReflection {
         return newProxyInstance(
             classLoader,
             arrayOf(clazz),
-            SurfInvocationHandler(clazz, proxyClass)
+            SurfInvocationHandlerJava(clazz, proxyClass)
         ) as T
     }
 }
