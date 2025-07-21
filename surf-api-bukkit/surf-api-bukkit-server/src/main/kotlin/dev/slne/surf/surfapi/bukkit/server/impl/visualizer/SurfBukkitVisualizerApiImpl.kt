@@ -11,6 +11,7 @@ import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.AbstractSu
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerAreaImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerMultipleLocationsImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerSingleLocationImpl
+import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.World
@@ -60,16 +61,38 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         visualizers.asMap().values.filter { it.isVisualizing() && it.visibleTo(player) }
 
 
+    private val log = logger()
     fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
-        getActiveVisualizers(player).forEach { it.onPlayerReceiveChunk(player, chunk) }
+        val active = getActiveVisualizers(player)
+
+        if (active.isNotEmpty()) {
+            log.atInfo()
+                .log("Received update for player ${player.name} for ${active.size} visualizers")
+        }
+
+        active.forEach { it.onPlayerReceiveChunk(player, chunk) }
     }
 
     fun processChunkUnloadForPlayer(player: Player, chunk: Chunk) {
-        getActiveVisualizers(player).forEach { it.onPlayerUnloadChunk(player, chunk) }
+        val active = getActiveVisualizers(player)
+
+        if (active.isNotEmpty()) {
+            log.atInfo()
+                .log("Received unload for player ${player.name} for ${active.size} visualizers")
+        }
+
+        active.forEach { it.onPlayerUnloadChunk(player, chunk) }
     }
 
     fun processPlayerQuit(player: Player) {
-        visualizers.asMap().values.forEach { it.removeViewer(player) }
+        val active = visualizers.asMap().values
+
+        if (active.isNotEmpty()) {
+            log.atInfo()
+                .log("Player ${player.name} quit, removing from ${active.size} visualizers")
+        }
+        
+        active.forEach { it.removeViewer(player) }
     }
 }
 
