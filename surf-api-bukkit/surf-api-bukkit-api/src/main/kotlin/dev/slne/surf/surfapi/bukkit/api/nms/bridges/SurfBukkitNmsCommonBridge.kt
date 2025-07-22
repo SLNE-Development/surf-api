@@ -5,6 +5,7 @@ import dev.slne.surf.surfapi.core.api.util.requiredService
 import org.bukkit.Material
 import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
+import java.net.InetSocketAddress
 
 @NmsUseWithCaution
 interface SurfBukkitNmsCommonBridge {
@@ -27,6 +28,8 @@ interface SurfBukkitNmsCommonBridge {
     fun setOnlineMode(enabled: Boolean)
 
     fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean = false)
+
+    fun getServerIp(): InetSocketAddress
 
     companion object {
         val instance = requiredService<SurfBukkitNmsCommonBridge>()

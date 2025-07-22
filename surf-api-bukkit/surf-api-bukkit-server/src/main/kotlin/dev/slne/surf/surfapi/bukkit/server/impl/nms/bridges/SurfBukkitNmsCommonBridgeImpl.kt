@@ -7,6 +7,7 @@ import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge
 import dev.slne.surf.surfapi.bukkit.server.nms.toNms
 import dev.slne.surf.surfapi.bukkit.server.nms.toNmsBlock
 import dev.slne.surf.surfapi.bukkit.server.nms.toNmsItem
+import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import io.papermc.paper.configuration.GlobalConfiguration
 import net.kyori.adventure.text.Component
@@ -19,6 +20,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
+import java.net.InetSocketAddress
 
 @AutoService(SurfBukkitNmsCommonBridge::class)
 @NmsUseWithCaution
@@ -82,5 +84,15 @@ class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
         }
 
         player.toNms().connection.send(ClientboundClearDialogPacket.INSTANCE)
+    }
+
+    override fun getServerIp(): InetSocketAddress {
+        val channels =
+            Reflection.SERVER_CONNECTION_LISTENER_PROXY.getChannels(MinecraftServer.getServer().connection)
+        val channel =
+            channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
+
+        return channel.channel().remoteAddress() as? InetSocketAddress
+            ?: error("Remote address is not an instance of InetSocketAddress")
     }
 }
