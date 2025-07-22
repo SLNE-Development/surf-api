@@ -92,7 +92,7 @@ class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
         val channel =
             channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
 
-        return channel.channel().remoteAddress() as? InetSocketAddress
-            ?: error("Remote address is not an instance of InetSocketAddress")
+        return channel.channel().localAddress() as? InetSocketAddress
+            ?: error("Local address is not an instance of InetSocketAddress")
     }
 }
