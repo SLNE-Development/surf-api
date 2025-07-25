@@ -385,7 +385,7 @@ object CommonComponents {
         val separator = buildText0 {
             appendNewline()
             append(linePrefix)
-            appendText("—  ", SPACER)
+            appendText("— ", SPACER)
         }
         val joinConfig = JoinConfiguration.builder().separator(separator).build()
 
@@ -430,7 +430,7 @@ object CommonComponents {
         val separator = buildText0 {
             appendNewline()
             append(linePrefix)
-            appendText("—  ", SPACER)
+            appendText("— ", SPACER)
         }
         val joinConfig = JoinConfiguration.builder().separator(separator).build()
         val firstPrefix = if (map.isNotEmpty()) separator else Component.empty()
