@@ -2,7 +2,6 @@ package dev.slne.surf.surfapi.bukkit.server.packet.listener
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.expireAfterAccess
-import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.nmsBridge
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl
@@ -24,7 +23,6 @@ import io.papermc.paper.connection.PaperPlayerLoginConnection
 import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl
 import io.papermc.paper.event.connection.PlayerConnectionValidateLoginEvent
 import io.papermc.paper.network.ChannelInitializeListenerHolder
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import net.kyori.adventure.key.Key
 import net.minecraft.network.Connection
 import net.minecraft.network.HandlerNames
@@ -35,7 +33,6 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import java.util.*
-import java.util.function.Predicate
 import kotlin.time.Duration.Companion.minutes
 import dev.slne.surf.surfapi.bukkit.api.event.register as registerListener
 import dev.slne.surf.surfapi.bukkit.api.event.unregister as unregisterListener
@@ -48,75 +45,12 @@ object PlayerChannelInjector : Listener {
 
     private val playerInjectorCache = Caffeine.newBuilder()
         .weakValues()
-        .removalListener<UUID, Connection> { key, value, cause ->
-            log.atWarning()
-                .log("Player connection cache for $key was removed due to $cause")
-        }
         .expireAfterAccess(1.minutes)
         .build<UUID, Connection>()
 
     private val injectedChannels = Caffeine.newBuilder()
         .weakKeys()
-        .removalListener<Channel, Boolean> { channel, _, cause ->
-            log.atWarning()
-                .log("Channel $channel was removed from injected channels due to $cause")
-        }
         .build<Channel, Boolean>()
-
-    private class TempObjectSet<T>() : ObjectOpenHashSet<T>() {
-        private var added: Long = 0
-        private var removed: Long = 0
-
-        private enum class Operation {
-            ADD, REMOVE, REMOVE_ALL, REMOVE_IF, ADD_ALL
-        }
-
-        fun printStats(operation: Operation) {
-            log.atInfo()
-                .log("O:$operation,A:$added,R:$removed,D:${added - removed},S:$size,P:${server.onlinePlayers.size}")
-        }
-
-        override fun addAll(c: Collection<T?>): Boolean {
-            added += c.size
-            printStats(Operation.ADD_ALL)
-
-            return super.addAll(c)
-        }
-
-        override fun removeAll(c: Collection<T?>): Boolean {
-            removed += c.size
-            printStats(Operation.REMOVE_ALL)
-
-            return super.removeAll(c)
-        }
-
-        override fun add(element: T?): Boolean {
-            added += 1
-            printStats(Operation.ADD)
-
-            return super.add(element)
-        }
-
-        override fun remove(element: T?): Boolean {
-            removed += 1
-            printStats(Operation.REMOVE)
-
-            return super.remove(element)
-        }
-
-        override fun removeIf(filter: Predicate<in T>): Boolean {
-            val removedElements = this.filter(filter::test)
-
-            removed += removedElements.size
-            printStats(Operation.REMOVE_IF)
-
-            return super.removeIf(filter)
-        }
-
-        companion object {
-            private const val serialVersionUID: Long = -2618969176232686100L
-        }
-    }
 
     fun register() {
         ChannelInitializeListenerHolder.addListener(CHANNEL_KEY) { this.injectChannel(it) }
