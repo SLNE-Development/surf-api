@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.gradle.platform.common
 
+import dev.slne.surf.surfapi.gradle.SurfCloudModules
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.property
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -9,6 +10,7 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
     internal val surfApiScope = objects.property<String>()
     internal val publishingUrl = objects.property<String>().convention("https://repo.slne.dev/repository/maven-releases")
     internal val publishingRepoName = objects.property<String>().convention("maven-releases")
+    internal val cloudModule = objects.property<SurfCloudModules>()
 
     fun addSurfApiToClasspath(value: Boolean) {
         addSurfApiToClasspath.set(value)

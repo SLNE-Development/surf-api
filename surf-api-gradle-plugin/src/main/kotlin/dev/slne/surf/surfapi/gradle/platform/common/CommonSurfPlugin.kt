@@ -17,6 +17,7 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
+import org.jetbrains.kotlin.gradle.utils.IMPLEMENTATION
 
 abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     protected val platformName: String,
@@ -130,8 +131,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                     .distinct()
                     .toList()
 
-                println("contains surf-cloud-api-common: ${deps.any { it.contains("surf-cloud-api-common") }}")
-
                 dependencyDependentRelocations.forEach { (dependency, relocations) ->
                     if (deps.any { it.contains(dependency) }) {
                         logger.warn("Dependency $dependency found. Applying relocations.")
@@ -187,6 +186,20 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 val scope = extension.surfApiScope.orNull ?: platform.scope
                 add(scope, platform.dependency)
+            }
+        }
+
+        val cloudModule = extension.cloudModule.orNull
+        if (cloudModule != null) {
+            dependencies {
+                add(
+                    IMPLEMENTATION,
+                    platform("dev.slne.surf.cloud:surf-cloud-bom:${Constants.SURF_API_VERSION}")
+                )
+                add(
+                    COMPILE_ONLY,
+                    "dev.slne.surf.cloud:${cloudModule.module}:${Constants.SURF_API_VERSION}"
+                )
             }
         }
 
