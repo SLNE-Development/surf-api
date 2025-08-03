@@ -1,8 +1,10 @@
 package dev.slne.surf.surfapi.gradle.platform.common
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import dev.slne.surf.surfapi.gradle.SurfCloudModules
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
+import dev.slne.surf.surfapi.gradle.platform.core.tasks.generateExposedMigrationScript
 import dev.slne.surf.surfapi.gradle.util.slnePublic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -199,6 +201,14 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 add(
                     COMPILE_ONLY,
                     "dev.slne.surf.cloud:${cloudModule.module}:${Constants.SURF_API_VERSION}"
+                )
+            }
+
+            val mainClass = extension.migrationMainClass.orNull
+            if (cloudModule == SurfCloudModules.SERVER && mainClass != null) {
+                generateExposedMigrationScript(
+                    mainClass = mainClass,
+                    cloudRuntimeDependency = "dev.slne.surf.cloud:${SurfCloudModules.STANDALONE.module}:${Constants.SURF_API_VERSION}"
                 )
             }
         }

@@ -21,4 +21,9 @@ open class CoreSurfExtension @Inject constructor(objects: ObjectFactory) :
     fun withCloudServer() {
         cloudModule.set(SurfCloudModules.SERVER)
     }
+
+    fun migrationMainClass(value: String) {
+        migrationMainClass.set(value)
+        migrationMainClass.finalizeValue()
+    }
 }
