@@ -52,9 +52,26 @@ class DialogInputBuilder {
     fun <N> numberRange(
         key: String,
         range: ClosedRange<N>,
-        block: NumberRangeDialogInput<N>.() -> Unit,
+        block: NumberRangeDialogInput.() -> Unit,
     ): DialogInput where N : Number, N : Comparable<N> {
-        val input = NumberRangeDialogInput(key, range).apply(block).build()
+        val input =
+            NumberRangeDialogInput(key, range.start.toFloat(), range.endInclusive.toFloat()).apply(
+                block
+            ).build()
+        inputs.add(input)
+        return input
+    }
+
+    fun <N> numberRange(
+        key: String,
+        range: OpenEndRange<N>,
+        block: NumberRangeDialogInput.() -> Unit,
+    ): DialogInput where N : Number, N : Comparable<N> {
+        val input = NumberRangeDialogInput(
+            key,
+            range.start.toFloat(),
+            (range.endExclusive.toLong() - 1).toFloat()
+        ).apply(block).build()
         inputs.add(input)
         return input
     }
@@ -72,6 +89,29 @@ class DialogInputBuilder {
     fun <N> simpleNumberRange(
         key: String,
         range: ClosedRange<N>,
+        block: SurfComponentBuilder.() -> Unit,
+    ) where N : Number, N : Comparable<N> {
+        simpleNumberRange(key, range, SurfComponentBuilder(block))
+    }
+
+    fun <N> simpleNumberRange(
+        key: String,
+        range: OpenEndRange<N>,
+        label: Component,
+    ) where N : Number, N : Comparable<N> {
+        val input =
+            DialogInput.numberRange(
+                key,
+                label,
+                range.start.toFloat(),
+                (range.endExclusive.toLong() - 1).toFloat()
+            )
+        inputs.add(input.build())
+    }
+
+    fun <N> simpleNumberRange(
+        key: String,
+        range: OpenEndRange<N>,
         block: SurfComponentBuilder.() -> Unit,
     ) where N : Number, N : Comparable<N> {
         simpleNumberRange(key, range, SurfComponentBuilder(block))
@@ -191,10 +231,11 @@ class DialogInputBuilder {
         }
     }
 
-    class NumberRangeDialogInput<N>(
+    class NumberRangeDialogInput(
         private val key: String,
-        private val range: ClosedRange<N>,
-    ) where N : Number, N : Comparable<N> {
+        private val start: Float,
+        private val end: Float,
+    ) {
         var label: Component? = null
         var initial: Float? = null
         var width: @Range(from = 1, to = 1024) Int? = null
@@ -231,8 +272,8 @@ class DialogInputBuilder {
             val builder = DialogInput.numberRange(
                 key,
                 label,
-                range.start.toFloat(),
-                range.endInclusive.toFloat()
+                start,
+                end
             )
             with(builder) {
                 initial?.let { initial(it) }
