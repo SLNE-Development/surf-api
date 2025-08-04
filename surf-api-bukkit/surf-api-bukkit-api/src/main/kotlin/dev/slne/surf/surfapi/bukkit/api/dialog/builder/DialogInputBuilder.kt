@@ -49,30 +49,31 @@ class DialogInputBuilder {
         simpleBoolean(key, SurfComponentBuilder(block), defaultValue)
     }
 
-    fun numberRange(
+    fun <N> numberRange(
         key: String,
-        range: ClosedFloatingPointRange<Float>,
-        block: NumberRangeDialogInput.() -> Unit,
-    ): DialogInput {
+        range: ClosedRange<N>,
+        block: NumberRangeDialogInput<N>.() -> Unit,
+    ): DialogInput where N : Number, N : Comparable<N> {
         val input = NumberRangeDialogInput(key, range).apply(block).build()
         inputs.add(input)
         return input
     }
 
-    fun simpleNumberRange(
+    fun <N> simpleNumberRange(
         key: String,
-        range: ClosedFloatingPointRange<Float>,
+        range: ClosedRange<N>,
         label: Component,
-    ) {
-        val input = DialogInput.numberRange(key, label, range.start, range.endInclusive)
+    ) where N : Number, N : Comparable<N> {
+        val input =
+            DialogInput.numberRange(key, label, range.start.toFloat(), range.endInclusive.toFloat())
         inputs.add(input.build())
     }
 
-    fun simpleNumberRange(
+    fun <N> simpleNumberRange(
         key: String,
-        range: ClosedFloatingPointRange<Float>,
+        range: ClosedRange<N>,
         block: SurfComponentBuilder.() -> Unit,
-    ) {
+    ) where N : Number, N : Comparable<N> {
         simpleNumberRange(key, range, SurfComponentBuilder(block))
     }
 
@@ -190,10 +191,10 @@ class DialogInputBuilder {
         }
     }
 
-    class NumberRangeDialogInput(
+    class NumberRangeDialogInput<N>(
         private val key: String,
-        private val range: ClosedFloatingPointRange<Float>,
-    ) {
+        private val range: ClosedRange<N>,
+    ) where N : Number, N : Comparable<N> {
         var label: Component? = null
         var initial: Float? = null
         var width: @Range(from = 1, to = 1024) Int? = null
@@ -227,7 +228,12 @@ class DialogInputBuilder {
         internal fun build(): DialogInput {
             val label = label
             require(label != null) { "Dialog input label must not be null" }
-            val builder = DialogInput.numberRange(key, label, range.start, range.endInclusive)
+            val builder = DialogInput.numberRange(
+                key,
+                label,
+                range.start.toFloat(),
+                range.endInclusive.toFloat()
+            )
             with(builder) {
                 initial?.let { initial(it) }
                 width?.let { width(it) }
