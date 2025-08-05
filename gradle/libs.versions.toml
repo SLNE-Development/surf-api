@@ -1,6 +1,6 @@
 [versions]
 # Paper
-paper-api = "1.21.7-R0.1-SNAPSHOT"
+paper-api = "1.21.8-R0.1-SNAPSHOT"
 
 # Kolin
 kotlinVersion = "2.2.0"
@@ -12,18 +12,18 @@ packetevents = "2.9.1"
 packetevents-plugin = "2.9.1"
 
 # Command API
-commandapi = "10.1.1"
+commandapi = "10.1.2"
 
 # LuckPerms
 luckperms = "v5.5.0-bukkit"
 
 # Scoreboard Library
-scoreboard-library = "2.3.3"
-scoreboard-library-implementation = "2.3.3"
-scoreboard-library-modern = "2.3.3"
+scoreboard-library = "2.4.1"
+scoreboard-library-implementation = "2.4.1"
+scoreboard-library-modern = "2.4.1"
 
 # Adventure
-adventure-api = "4.23.0"
+adventure-api = "4.24.0"
 
 # Velocity
 velocity-api = "3.4.0-SNAPSHOT"
