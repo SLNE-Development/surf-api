@@ -31,7 +31,7 @@ dependencies {
     runtimeOnly(libs.scoreboard.library.implementation)
     runtimeOnly(libs.scoreboard.library.modern)
     paperLibrary(libs.scoreboard.library.api)
-    api(libs.inventoryframework)
+//    api(libs.inventoryframework)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
     paperLibrary(libs.gson)
