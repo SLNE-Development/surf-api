@@ -123,27 +123,50 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             }
         }
 
-        gradle.projectsEvaluated {
-            tasks.withType<ShadowJar> {
-                val deps = project.configurations
-                    .filter { it.isCanBeResolved }
-                    .map { it.incoming.resolutionResult.allDependencies }
-                    .flatten()
-                    .map { it.requested.displayName }
-                    .distinct()
-                    .toList()
+        project.configurations.configureEach {
+            if (isCanBeResolved) {
+                incoming.afterResolve {
+                    val deps = resolutionResult.allDependencies
+                        .map { it.requested.displayName }
+                        .toSet()
 
-                dependencyDependentRelocations.forEach { (dependency, relocations) ->
-                    if (deps.any { it.contains(dependency) }) {
-                        logger.warn("Dependency $dependency found. Applying relocations.")
-                        relocations.forEach { (from, to) ->
-                            logger.warn("Relocating $from to $to")
-                            relocate(from, to)
+                    dependencyDependentRelocations.forEach { (needle, relocations) ->
+                        if (deps.any { it.contains(needle) }) {
+                            logger.lifecycle("Dependency $needle found. Applying relocations.")
+                            project.tasks.withType<ShadowJar>().configureEach {
+                                relocations.forEach { (from, to) ->
+                                    logger.lifecycle("Relocating $from to $to")
+                                    relocate(from, to)
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+
+
+//        gradle.projectsEvaluated {
+//            tasks.withType<ShadowJar> {
+//                val deps = project.configurations
+//                    .filter { it.isCanBeResolved }
+//                    .map { it.incoming.resolutionResult.allDependencies }
+//                    .flatten()
+//                    .map { it.requested.displayName }
+//                    .distinct()
+//                    .toList()
+//
+//                dependencyDependentRelocations.forEach { (dependency, relocations) ->
+//                    if (deps.any { it.contains(dependency) }) {
+//                        logger.warn("Dependency $dependency found. Applying relocations.")
+//                        relocations.forEach { (from, to) ->
+//                            logger.warn("Relocating $from to $to")
+//                            relocate(from, to)
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         configure<JavaPluginExtension> {
             withSourcesJar()
