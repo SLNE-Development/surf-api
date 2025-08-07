@@ -31,7 +31,6 @@ class LibLoader(pluginClassLoader: ClassLoader) {
     private val pluginClassLoader = pluginClassLoader as PaperPluginClassLoader
 
     fun loadLibs() {
-        loadLib("IF-0.11.3.zip")
     }
 
     private fun loadLib(jarName: String, apiVersion: String = plugin.pluginMeta.apiVersion!!) {
