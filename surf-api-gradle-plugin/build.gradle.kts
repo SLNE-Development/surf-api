@@ -20,7 +20,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.4.0")
+    append("-1.4.1")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -107,7 +107,6 @@ val generateConstants by tasks.registering {
     inputs.property("libs.paper.api", libs.paper.api.get().toString())
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
-    inputs.property("libs.auto.service", libs.auto.service.asProvider().get().toString())
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
     inputs.property("libs.versions.luckperms", libs.versions.luckperms.get().toString())
@@ -122,6 +121,7 @@ val generateConstants by tasks.registering {
     outputs.dir(constantsOutputDir)
 
     doLast {
+        val generator = project(":surf-api-gradle-plugin:surf-api-processor")
         val content = """
             |package dev.slne.surf.surfapi.gradle.generated
             |
@@ -132,7 +132,7 @@ val generateConstants by tasks.registering {
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
             |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
-            |    const val AUTO_SERVICE = "${libs.auto.service.asProvider().get()}"
+            |    const val AUTO_SERVICE = "${generator.group}:${generator.name}:${generator.version}"
             |
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"

@@ -34,7 +34,8 @@ apiValidation {
             "surf-api-bukkit-server",
             "surf-api-velocity-server",
             "surf-api-standalone",
-            "surf-api-gradle-plugin"
+            "surf-api-gradle-plugin",
+            "surf-api-processor"
         )
     )
 

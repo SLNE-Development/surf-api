@@ -22,6 +22,7 @@ include(":surf-api-velocity:surf-api-velocity-server")
 
 include("surf-api-standalone")
 include("surf-api-gradle-plugin")
+include("surf-api-gradle-plugin:surf-api-processor")
 
 if (!ci) {
     include(":surf-api-bukkit:surf-api-bukkit-plugin-test")

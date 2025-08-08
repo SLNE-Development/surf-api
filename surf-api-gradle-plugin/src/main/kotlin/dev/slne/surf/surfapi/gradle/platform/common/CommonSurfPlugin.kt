@@ -123,50 +123,31 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             }
         }
 
-        project.configurations.configureEach {
-            if (isCanBeResolved) {
-                incoming.afterResolve {
-                    val deps = resolutionResult.allDependencies
-                        .map { it.requested.displayName }
-                        .toSet()
+        tasks.withType<ShadowJar>().configureEach {
+            val depsProvider = project.provider {
+                project.configurations
+                    .asSequence()
+                    .filter { it.isCanBeResolved }
+                    .flatMap { cfg ->
+                        cfg.incoming.resolutionResult.allDependencies.asSequence()
+                    }
+                    .map { it.requested.displayName }
+                    .toSet()
+            }
 
-                    dependencyDependentRelocations.forEach { (needle, relocations) ->
-                        if (deps.any { it.contains(needle) }) {
-                            logger.lifecycle("Dependency $needle found. Applying relocations.")
-                            project.tasks.withType<ShadowJar>().configureEach {
-                                relocations.forEach { (from, to) ->
-                                    logger.lifecycle("Relocating $from to $to")
-                                    relocate(from, to)
-                                }
-                            }
+            doFirst {
+                val deps = depsProvider.get()
+                dependencyDependentRelocations.forEach { (needle, relos) ->
+                    if (deps.any { it.contains(needle) }) {
+                        logger.lifecycle("Dependency $needle found — applying relocations.")
+                        relos.forEach { (from, to) ->
+                            logger.lifecycle("Relocating $from to $to")
+                            relocate(from, to)
                         }
                     }
                 }
             }
         }
-
-
-//        gradle.projectsEvaluated {
-//            tasks.withType<ShadowJar> {
-//                val deps = project.configurations
-//                    .filter { it.isCanBeResolved }
-//                    .map { it.incoming.resolutionResult.allDependencies }
-//                    .flatten()
-//                    .map { it.requested.displayName }
-//                    .distinct()
-//                    .toList()
-//
-//                dependencyDependentRelocations.forEach { (dependency, relocations) ->
-//                    if (deps.any { it.contains(dependency) }) {
-//                        logger.warn("Dependency $dependency found. Applying relocations.")
-//                        relocations.forEach { (from, to) ->
-//                            logger.warn("Relocating $from to $to")
-//                            relocate(from, to)
-//                        }
-//                    }
-//                }
-//            }
-//        }
 
         configure<JavaPluginExtension> {
             withSourcesJar()

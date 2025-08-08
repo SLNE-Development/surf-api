@@ -27,9 +27,14 @@ repositories {
 
 dependencies {
     compileOnly(libs.auto.service.annotations)
-    ksp(libs.auto.service)
+    ksp(project(":surf-api-gradle-plugin:surf-api-processor"))
 
     compileOnlyApi("org.jetbrains:annotations:24.1.0")
+}
+
+ksp {
+    arg("autoserviceKsp.verbose", "true")
+    arg("autoserviceKsp.verify", "true")
 }
 
 extensions.configure<KotlinJvmProjectExtension> {
