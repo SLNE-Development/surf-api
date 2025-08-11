@@ -6,6 +6,7 @@ val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 
 plugins {
     kotlin("jvm")
+    `publish-convention`
 }
 
 group = groupId

@@ -6,7 +6,7 @@ val libs = the<LibrariesForLibs>()
 plugins {
     java
     `java-library`
-    `maven-publish`
+    id("publish-convention")
 
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -54,21 +54,6 @@ java {
     }
 }
 
-publishing {
-    repositories {
-        maven("https://repo.slne.dev/repository/maven-releases/") {
-            name = "maven-releases"
-            credentials {
-                username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
-                password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
-            }
-        }
-    }
-
-    publications.create<MavenPublication>("maven") {
-        from(components["java"])
-    }
-}
 
 configurations {
     compileOnly {
