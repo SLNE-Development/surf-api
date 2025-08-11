@@ -7,7 +7,9 @@ import dev.slne.surf.api.gen.generator.types.GeneratedKeyType
 class Generators(registries: Registries) {
 
     val coreApiGenerators = arrayOf<SourceGenerator>(
-        simpleKey("SoundKeys", registries.soundRegistry)
+        simpleKey("SoundKeys", registries.soundRegistry),
+        simpleKey("BlockTypeKeys", registries.blockTypeRegistry),
+        simpleKey("ItemTypeKeys", registries.itemTypeRegistry),
     )
 
     private fun simpleKey(className: String, registry: GenericRegistry) =
