@@ -62,7 +62,7 @@ ksp-version = "2.2.0-2.0.2"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
-shadow-gradle-plugin = "9.0.0"
+shadow-gradle-plugin = "9.0.2"
 run-paper-gradle-plugin = "2.3.1"
 dokka = "2.0.0"
 
