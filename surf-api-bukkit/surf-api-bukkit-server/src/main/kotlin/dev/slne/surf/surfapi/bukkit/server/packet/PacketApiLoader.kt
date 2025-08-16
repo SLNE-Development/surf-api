@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
 import dev.slne.surf.surfapi.bukkit.server.impl.glow.GlowingPacketListener
+import dev.slne.surf.surfapi.bukkit.server.packet.listener.PlayerChannelInjector
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.core.api.extensions.packetEvents
@@ -21,7 +22,7 @@ object PacketApiLoader {
         packetListenerApi.registerListeners(PacketLoreListener)
         packetListenerApi.registerListeners(GlowingPacketListener)
 
-//        PlayerChannelInjector.register()
+        PlayerChannelInjector.register()
     }
 
     @OptIn(NmsUseWithCaution::class)
