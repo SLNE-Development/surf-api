@@ -6,5 +6,5 @@ import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.common.ClientCommonPacketListener
 
 @NmsUseWithCaution
-abstract class NmsClientboundPacketImpl<Nms : Packet<ClientCommonPacketListener>>(nmsPacket: Nms) :
+abstract class NmsClientboundPacketImpl<Nms : Packet<out ClientCommonPacketListener>>(nmsPacket: Nms) :
     NmsPacketImpl<Nms, ClientCommonPacketListener>(nmsPacket)

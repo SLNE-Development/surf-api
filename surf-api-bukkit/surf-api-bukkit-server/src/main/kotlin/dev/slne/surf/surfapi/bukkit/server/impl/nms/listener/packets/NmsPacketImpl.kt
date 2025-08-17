@@ -6,7 +6,7 @@ import net.minecraft.network.PacketListener
 import net.minecraft.network.protocol.Packet
 
 @NmsUseWithCaution
-abstract class NmsPacketImpl<Nms : Packet<Listener>, Listener : PacketListener>(val nmsPacket: Nms) :
+abstract class NmsPacketImpl<Nms : Packet<out Listener>, Listener : PacketListener>(var nmsPacket: Nms) :
     NmsPacket {
     val nmsClass = nmsPacket.javaClass as Class<Nms>
     override val packetClass =
