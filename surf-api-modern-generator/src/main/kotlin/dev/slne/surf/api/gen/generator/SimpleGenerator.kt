@@ -12,13 +12,13 @@ abstract class SimpleGenerator(
 
     abstract fun buildFile(builder: JavaFile.Builder): JavaFile.Builder
 
-    override fun writeToFile(parent: Path) {
+    override fun writeToFile(parentJava: Path, parentKotlin: Path) {
         val builder = JavaFile.builder(packageName, typeSpec)
         val file = buildFile(builder)
             .indent("  ")
             .skipJavaLangImports(true)
             .build()
 
-        file.writeTo(parent)
+        file.writeTo(parentJava)
     }
 }
