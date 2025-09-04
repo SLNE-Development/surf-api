@@ -14,10 +14,12 @@ import dev.slne.surf.surfapi.bukkit.server.impl.glow.entity.EntityPlayerData
 import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection
 import io.papermc.paper.adventure.PaperAdventure
 import net.kyori.adventure.text.format.NamedTextColor
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
+import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -66,7 +68,7 @@ class SurfGlowingApiImpl : SurfGlowingApi {
             if (color != null) {
                 operation.add(newData.sendTeamColor())
             }
-            operation.execute(viewer)
+            safeExecutePacketOperation(operation, viewer)
 
             return
         }
@@ -80,7 +82,7 @@ class SurfGlowingApiImpl : SurfGlowingApi {
             operation.add(glowingData.sendTeamColor())
         }
 
-        operation.execute(viewer)
+        safeExecutePacketOperation(operation, viewer)
     }
 
     override fun makeGlowing(block: Block, viewer: Player, color: NamedTextColor) {
@@ -99,7 +101,7 @@ class SurfGlowingApiImpl : SurfGlowingApi {
             playerData.blocks[location] = newData
 
             if (viewer.isChunkVisible(location)) {
-                newData.spawn().execute(viewer)
+                safeExecutePacketOperation(newData.spawn(), viewer)
             }
         } else {
             blockData.color = color
@@ -125,7 +127,7 @@ class SurfGlowingApiImpl : SurfGlowingApi {
         val playerData = entityPlayerData[viewer.uniqueId] ?: return
         val glowingData = playerData.entities.remove(targetId) ?: return
         val operation = glowingData.sendGlowingFlag(enabled = false) + glowingData.removeFromTeam()
-        operation.execute(viewer)
+        safeExecutePacketOperation(operation, viewer)
     }
 
     override fun removeGlowing(block: Block, viewer: Player) {
@@ -145,6 +147,22 @@ class SurfGlowingApiImpl : SurfGlowingApi {
     }
 
     private fun teamIdFor(entity: Entity) = (entity as? Player)?.name ?: entity.uniqueId.toString()
+
+    /**
+     * Executes a packet operation safely on the main thread.
+     * If already on the main thread, executes immediately.
+     * Otherwise, schedules execution on the main thread.
+     */
+    private fun safeExecutePacketOperation(operation: PacketOperation, player: Player) {
+        if (Bukkit.isPrimaryThread()) {
+            operation.execute(player)
+        } else {
+            val plugin = JavaPlugin.getProvidingPlugin(SurfGlowingApi::class.java)
+            Bukkit.getScheduler().runTask(plugin, Runnable {
+                operation.execute(player)
+            })
+        }
+    }
 
     companion object {
         private val entityPlayerData = ConcurrentHashMap<UUID, EntityPlayerData>()
