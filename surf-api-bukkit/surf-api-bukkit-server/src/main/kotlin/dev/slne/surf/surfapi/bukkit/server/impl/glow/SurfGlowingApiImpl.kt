@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.glow
 
+import com.github.shynixn.mccoroutine.folia.entityDispatcher
+import com.github.shynixn.mccoroutine.folia.launch
 import com.google.auto.service.AutoService
 import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.glow.SurfGlowingApi
@@ -11,6 +13,7 @@ import dev.slne.surf.surfapi.bukkit.server.impl.glow.block.BlockGlowingData
 import dev.slne.surf.surfapi.bukkit.server.impl.glow.block.BlockPlayerData
 import dev.slne.surf.surfapi.bukkit.server.impl.glow.entity.EntityGlowingData
 import dev.slne.surf.surfapi.bukkit.server.impl.glow.entity.EntityPlayerData
+import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection
 import io.papermc.paper.adventure.PaperAdventure
 import net.kyori.adventure.text.format.NamedTextColor
@@ -98,8 +101,10 @@ class SurfGlowingApiImpl : SurfGlowingApi {
             val newData = BlockGlowingData(playerData, location, color)
             playerData.blocks[location] = newData
 
-            if (viewer.isChunkVisible(location)) {
-                newData.spawn().execute(viewer)
+            plugin.launch(plugin.entityDispatcher(viewer)) {
+                if (viewer.isChunkVisible(location)) {
+                    newData.spawn().execute(viewer)
+                }
             }
         } else {
             blockData.color = color
