@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.gradle.generators.pluginfiles
 import dev.slne.surf.surfapi.gradle.generators.GeneratePluginFile.Companion.NamedDomainObjectContainerSerializer
 import dev.slne.surf.surfapi.gradle.generators.pluginfiles.VelocityPluginFile.Dependency
 import dev.slne.surf.surfapi.gradle.platform.invalidPluginFile
+import dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfExtension
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ArraySerializer
 import kotlinx.serialization.builtins.ListSerializer
@@ -18,6 +19,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
+import org.gradle.kotlin.dsl.findByType
 import org.intellij.lang.annotations.Pattern
 import org.intellij.lang.annotations.RegExp
 
@@ -66,6 +68,14 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
         project.container(Dependency::class.java).apply {
             register("surf-api-velocity") {
                 optional = false
+            }
+
+            project.extensions.findByType<VelocitySurfExtension>()?.let { extension ->
+                if (extension.cloudModule.isPresent) {
+                    register("surf-cloud-velocity") {
+                        optional = false
+                    }
+                }
             }
         }
 
