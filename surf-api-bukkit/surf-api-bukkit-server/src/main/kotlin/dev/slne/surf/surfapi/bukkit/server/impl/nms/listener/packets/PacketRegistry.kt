@@ -38,7 +38,7 @@ object PacketRegistry {
 
     private fun <Nms : Packet<ServerGamePacketListener>, Api : NmsServerboundPacket> registerServerboundPacket(
         nms: KClass<Nms>,
-        factory: ServerboundPacketFactory<Nms, Api>
+        factory: ServerboundPacketFactory<Nms, Api>,
     ) {
         SERVERBOUND_PACKETS.put(nms.java, factory)
     }
@@ -48,7 +48,7 @@ object PacketRegistry {
         return factory?.create(packet)
     }
 
-    private fun <Nms : Packet<ClientCommonPacketListener>, Api : NmsClientboundPacket> registerClientboundPacket(
+    private fun <Nms : Packet<Listener>, Api : NmsClientboundPacket, Listener : ClientCommonPacketListener> registerClientboundPacket(
         nms: KClass<Nms>,
         factory: ClientboundPacketFactory<Nms, Api>,
     ) {
