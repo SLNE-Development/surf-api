@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.api.messages.adventure
 
+import dev.slne.surf.surfapi.core.api.messages.Colors
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.BuildableComponent
 import net.kyori.adventure.text.Component
@@ -95,6 +96,15 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendNewline(
     amount: Int,
 ) = repeat(amount) { appendNewline() }
+
+/**
+ * Appends a new line followed by a prefix to the current `ComponentBuilder` a specified number of times.
+ *
+ * @param amount The number of times to append a newline followed by the prefix.
+ */
+fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendNewPrefixedLine(
+    amount: Int,
+) = repeat(amount) { appendNewline().append(Colors.PREFIX) }
 
 /**
  * Creates a [TextComponent] with the given string [content] and optional [color].

@@ -1,10 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.event
 
 import dev.slne.surf.surfapi.bukkit.api.extensions.pluginManager
-import org.bukkit.event.Event
-import org.bukkit.event.EventPriority
-import org.bukkit.event.HandlerList
-import org.bukkit.event.Listener
+import org.bukkit.event.*
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
 import kotlin.reflect.KClass
@@ -120,3 +117,7 @@ inline fun <reified T : Event> Any.listen(
     register,
     onEvent
 )
+
+fun Cancellable.cancel() {
+    isCancelled = true
+}

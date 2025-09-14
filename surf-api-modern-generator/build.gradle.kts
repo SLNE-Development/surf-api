@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.kotlin.serialization.json)
 
     implementation("com.squareup:javapoet:1.13.0")
+    implementation("com.squareup:kotlinpoet:2.2.0")
     implementation("org.jetbrains:annotations:24.1.0")
     implementation(libs.paper.api)
 
@@ -26,6 +27,7 @@ dependencies {
 val mcManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 
 val downloadRegistriesTask by tasks.register("downloadRegistries") {
+    group = "generation"
     val mcVersion = project.findProperty("mcVersion") as String
     val tmp = temporaryDir.toPath()
 
@@ -54,7 +56,7 @@ val downloadRegistriesTask by tasks.register("downloadRegistries") {
             val libPath = librariesDir.resolve(artifact.path)
             libPath.parent.createDirectories()
 
-            println("-   Downloading ${artifact.url}...")
+            println("—  Downloading ${artifact.url}...")
             artifact.url.downloadTo(libPath)
         }
 
@@ -73,7 +75,8 @@ val downloadRegistriesTask by tasks.register("downloadRegistries") {
                 "net.minecraft.data.Main",
                 "--reports",
                 "--output",
-                outputDir.absolutePath
+                outputDir.absolutePath,
+                "--all"
             )
         }.result.get().rethrowFailure()
 
@@ -82,6 +85,8 @@ val downloadRegistriesTask by tasks.register("downloadRegistries") {
         resourcesDir.deleteRecursively()
         outputDir.resolve("reports").toPath()
             .moveTo(resourcesDir.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        outputDir.resolve("data").resolve("minecraft").resolve("advancement").toPath()
+            .moveTo(resourcesDir.resolve("advancement").toPath(), StandardCopyOption.REPLACE_EXISTING)
         outputDir.deleteRecursively()
 
         println("Done!")
@@ -89,6 +94,7 @@ val downloadRegistriesTask by tasks.register("downloadRegistries") {
 }
 
 tasks.register<JavaExec>("generate") {
+    group = "generation"
     dependsOn(tasks.check)
     dependsOn(downloadRegistriesTask)
 
