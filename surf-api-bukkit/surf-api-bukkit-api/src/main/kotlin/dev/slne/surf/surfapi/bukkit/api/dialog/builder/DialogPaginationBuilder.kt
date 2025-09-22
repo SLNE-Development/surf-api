@@ -148,8 +148,8 @@ class DialogPaginationBuilder<T> {
     }
 
     fun firstPageButton(
-        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
         pageAction: DialogPageAction = DialogPaginationBaseAction.FIRST.pageAction,
+        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
     ) {
         firstPageButton = actionButton {
             block(currentPage, maxPages)
@@ -159,9 +159,9 @@ class DialogPaginationBuilder<T> {
         }
     }
 
-    fun backButton(
-        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
+    fun previousPageButton(
         pageAction: DialogPageAction = DialogPaginationBaseAction.BACK.pageAction,
+        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
     ) {
         backButton = actionButton {
             block(currentPage, maxPages)
@@ -172,8 +172,8 @@ class DialogPaginationBuilder<T> {
     }
 
     fun currentPageButton(
-        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
         pageAction: DialogPageAction = DialogPaginationBaseAction.CURRENT.pageAction,
+        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
     ) {
         currentPageButton = actionButton {
             block(currentPage, maxPages)
@@ -183,9 +183,9 @@ class DialogPaginationBuilder<T> {
         }
     }
 
-    fun nextButton(
-        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
+    fun nextPageButton(
         pageAction: DialogPageAction = DialogPaginationBaseAction.NEXT.pageAction,
+        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
     ) {
         nextButton = actionButton {
             block(currentPage, maxPages)
@@ -196,8 +196,8 @@ class DialogPaginationBuilder<T> {
     }
 
     fun lastPageButton(
-        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
         pageAction: DialogPageAction = DialogPaginationBaseAction.LAST.pageAction,
+        block: DialogActionButtonBuilder.(Int, Int) -> Unit,
     ) {
         lastPageButton = actionButton {
             block(currentPage, maxPages)
@@ -276,7 +276,7 @@ class DialogPaginationBuilder<T> {
         type {
             multiAction {
                 columns(1)
-                
+
                 elementButtons.forEach { action(it) }
 
                 if (hasPreviousPage) {
