@@ -143,6 +143,8 @@ class DialogPaginationBuilder<T> {
 
             if (newPage == currentPage) return@playerCallback
 
+            currentPage = newPage
+
             player.showDialog(this@DialogPaginationBuilder.build())
         }
     }
