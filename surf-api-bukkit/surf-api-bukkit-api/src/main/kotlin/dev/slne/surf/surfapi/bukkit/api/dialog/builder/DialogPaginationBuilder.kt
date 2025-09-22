@@ -227,7 +227,7 @@ class DialogPaginationBuilder<T> {
 
     fun paginationButtonWidth(width: Int) {
         require(width in 1..1024) {
-            "Pagination button width must be between 1 and 100"
+            "Pagination button width must be between 1 and 1024"
         }
 
         paginationButtonWidth = width
