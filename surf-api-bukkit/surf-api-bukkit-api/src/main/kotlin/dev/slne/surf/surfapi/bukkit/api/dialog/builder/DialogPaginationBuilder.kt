@@ -71,7 +71,7 @@ class DialogPaginationBuilder<T> {
 
     private var base: (DialogBaseBuilder.() -> Unit)? = null
     private var exitAction: ActionButton? = null
-    private var buttonBuilder: ((T) -> ActionButton)? = null
+    private var buttonBuilder: (DialogActionButtonBuilder.(T) -> Unit)? = null
 
     private val elements = ObjectLinkedOpenHashSet<T>()
     private var elementsPerPage = 10
@@ -80,11 +80,36 @@ class DialogPaginationBuilder<T> {
 
     private var paginationButtonWidth = PAGINATION_BUTTON_DEFAULT_WIDTH
 
+    @Suppress("SuspiciousVarProperty")
+    private var minElementButtonWidth = 200
+
+    private fun calculateElementButtonWidth(): Int {
+        var width = 0
+
+        if (hasPreviousPage) {
+            width += paginationButtonWidth * 2 // first + back
+        }
+
+        if (hasNextPage) {
+            width += paginationButtonWidth * 2 // next + last
+        }
+
+        width += paginationButtonWidth // current page button
+
+        return width.coerceAtLeast(minElementButtonWidth)
+    }
+
     var currentPage = 0
         private set
 
     val maxPages: Int
         get() = (elements.size + elementsPerPage - 1) / elementsPerPage
+
+    val hasNextPage: Boolean
+        get() = currentPage < maxPages - 1
+
+    val hasPreviousPage: Boolean
+        get() = currentPage > 0
 
     private var firstPageButton = DialogPaginationBaseAction.FIRST.actionButton(
         currentPage, maxPages, paginationButtonWidth
@@ -129,6 +154,7 @@ class DialogPaginationBuilder<T> {
         firstPageButton = actionButton {
             block(currentPage, maxPages)
 
+            width(paginationButtonWidth)
             action(buildPageButtonAction(pageAction))
         }
     }
@@ -140,6 +166,7 @@ class DialogPaginationBuilder<T> {
         backButton = actionButton {
             block(currentPage, maxPages)
 
+            width(paginationButtonWidth)
             action(buildPageButtonAction(pageAction))
         }
     }
@@ -151,6 +178,7 @@ class DialogPaginationBuilder<T> {
         currentPageButton = actionButton {
             block(currentPage, maxPages)
 
+            width(paginationButtonWidth)
             action(buildPageButtonAction(pageAction))
         }
     }
@@ -162,6 +190,7 @@ class DialogPaginationBuilder<T> {
         nextButton = actionButton {
             block(currentPage, maxPages)
 
+            width(paginationButtonWidth)
             action(buildPageButtonAction(pageAction))
         }
     }
@@ -173,6 +202,7 @@ class DialogPaginationBuilder<T> {
         lastPageButton = actionButton {
             block(currentPage, maxPages)
 
+            width(paginationButtonWidth)
             action(buildPageButtonAction(pageAction))
         }
     }
@@ -203,11 +233,19 @@ class DialogPaginationBuilder<T> {
         paginationButtonWidth = width
     }
 
+    fun minElementButtonWidth(width: Int) {
+        require(width in 1..1024) {
+            "Element button minimum width must be between 1 and 1024"
+        }
+
+        minElementButtonWidth = width
+    }
+
     fun exitAction(block: DialogActionButtonBuilder.() -> Unit) {
         exitAction = actionButton(block)
     }
 
-    fun buttonBuilder(builder: (T) -> ActionButton) {
+    fun buttonBuilder(builder: DialogActionButtonBuilder.(T) -> Unit) {
         buttonBuilder = builder
     }
 
@@ -226,17 +264,32 @@ class DialogPaginationBuilder<T> {
 
         base(baseBuilder)
 
-        val elementButtons = currentPageElements.map { buttonBuilder(it) }
+        val elementButtonWidth = calculateElementButtonWidth()
+        val elementButtons = currentPageElements.map {
+            actionButton {
+                buttonBuilder(it)
+
+                width(elementButtonWidth)
+            }
+        }
 
         type {
             multiAction {
+                columns(1)
+                
                 elementButtons.forEach { action(it) }
 
-                action(firstPageButton)
-                action(backButton)
+                if (hasPreviousPage) {
+                    action(firstPageButton)
+                    action(backButton)
+                }
+
                 action(currentPageButton)
-                action(nextButton)
-                action(lastPageButton)
+
+                if (hasNextPage) {
+                    action(nextButton)
+                    action(lastPageButton)
+                }
 
                 if (exitAction != null) {
                     exitAction(exitAction)
