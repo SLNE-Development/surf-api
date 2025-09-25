@@ -4,11 +4,13 @@ import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.SystemChatPacket
 import dev.slne.surf.surfapi.bukkit.server.nms.toBukkit
 import net.kyori.adventure.text.Component
+import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket
 
 @NmsUseWithCaution
 class ClientboundSystemChatPacketImpl(nmsPacket: ClientboundSystemChatPacket) :
-    NmsClientboundPacketImpl<ClientboundSystemChatPacket>(nmsPacket), SystemChatPacket {
+    NmsClientboundPacketImpl<ClientboundSystemChatPacket, ClientGamePacketListener>(nmsPacket),
+    SystemChatPacket {
     override var content: Component
         get() = nmsPacket.content().toBukkit()
         set(value) {
