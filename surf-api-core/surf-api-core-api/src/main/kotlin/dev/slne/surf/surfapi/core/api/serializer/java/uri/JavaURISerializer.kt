@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.kotlinx.serializer.java
+package dev.slne.surf.surfapi.core.api.serializer.java.uri
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

@@ -1,7 +1,8 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package dev.slne.surf.surfapi.core.api.kotlinx.serializer.adventure
+package dev.slne.surf.surfapi.core.api.serializer.adventure.book
 
+import dev.slne.surf.surfapi.core.api.serializer.adventure.component.AdventureComponentSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

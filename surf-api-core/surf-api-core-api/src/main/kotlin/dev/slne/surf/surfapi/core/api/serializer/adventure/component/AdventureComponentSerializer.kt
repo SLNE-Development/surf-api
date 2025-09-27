@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.kotlinx.serializer.adventure
+package dev.slne.surf.surfapi.core.api.serializer.adventure.component
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
