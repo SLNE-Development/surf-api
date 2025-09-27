@@ -14,6 +14,16 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleS
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleSerializer.AdventureTitleTimes
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.JavaURISerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m2d.SpongeMatrix2dSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m2f.SpongeMatrix2fSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m3d.SpongeMatrix3dSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m3f.SpongeMatrix3fSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m4d.SpongeMatrix4dSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m4f.SpongeMatrix4fSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.mnd.SpongeMatrixNdSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.mnf.SpongeMatrixNfSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.quaternion.qnd.SpongeQuaterniondSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.quaternion.qnf.SpongeQuaternionfSerializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 
@@ -31,6 +41,19 @@ object SurfSerializerModule {
         contextual(AdventureSoundStopSerializer)
         contextual(AdventureTitleSerializer)
         contextual(AdventureTitleTimes)
+    }
+
+    val spongepowered = SerializersModule {
+        contextual(SpongeMatrix2dSerializer)
+        contextual(SpongeMatrix2fSerializer)
+        contextual(SpongeMatrix3dSerializer)
+        contextual(SpongeMatrix3fSerializer)
+        contextual(SpongeMatrix4dSerializer)
+        contextual(SpongeMatrix4fSerializer)
+        contextual(SpongeMatrixNdSerializer)
+        contextual(SpongeMatrixNfSerializer)
+        contextual(SpongeQuaterniondSerializer)
+        contextual(SpongeQuaternionfSerializer)
     }
 
     val java = SerializersModule {
