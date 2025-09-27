@@ -12,7 +12,7 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.AdventureSoundS
 import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.stop.AdventureSoundStopSerializer
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleSerializer
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleSerializer.AdventureTitleTimes
-import dev.slne.surf.surfapi.core.api.serializer.java.uri.JavaURISerializer
+import dev.slne.surf.surfapi.core.api.serializer.java.uri.URISerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDSerializer
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2d.SpongeVector2dSerializer
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2f.SpongeVector2fSerializer
@@ -90,7 +90,7 @@ object SurfSerializerModule {
     }
 
     val java = SerializersModule {
-        contextual(JavaURISerializer)
+        contextual(URISerializer)
         contextual(JavaUUIDSerializer)
     }
 

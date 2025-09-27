@@ -11,7 +11,7 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.resourcepack.info.Adv
 import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.AdventureSoundCodec
 import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.stop.AdventureSoundStopCodec
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleCodec
-import dev.slne.surf.surfapi.core.api.serializer.java.uri.JavaURICodec
+import dev.slne.surf.surfapi.core.api.serializer.java.uri.URICodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2d.SpongeVector2dCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2f.SpongeVector2fCodec
@@ -65,7 +65,7 @@ object SurfCodecs {
     // endregion
 
     // region Java
-    val URI = JavaURICodec.CODEC
+    val URI = URICodec.CODEC
     val UUID = JavaUUIDCodec.CODEC
     // endregion
 }

@@ -2,7 +2,7 @@
 
 package dev.slne.surf.surfapi.core.api.serializer.adventure.resourcepack.info
 
-import dev.slne.surf.surfapi.core.api.serializer.java.uri.JavaURISerializer
+import dev.slne.surf.surfapi.core.api.serializer.java.uri.URISerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -19,7 +19,7 @@ typealias SerializableAdventureResourcePackInfo = @Serializable(with = Adventure
 object AdventureResourcePackInfoSerializer : KSerializer<ResourcePackInfo> {
     override val descriptor = buildClassSerialDescriptor("surfapi.AdventureResourcePackInfo") {
         element("id", JavaUUIDSerializer.descriptor)
-        element("uri", JavaURISerializer.descriptor)
+        element("uri", URISerializer.descriptor)
         element<String>("hash")
     }
 
@@ -28,7 +28,7 @@ object AdventureResourcePackInfoSerializer : KSerializer<ResourcePackInfo> {
         value: ResourcePackInfo,
     ) = encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, JavaUUIDSerializer, value.id())
-        encodeSerializableElement(descriptor, 1, JavaURISerializer, value.uri())
+        encodeSerializableElement(descriptor, 1, URISerializer, value.uri())
         encodeStringElement(descriptor, 2, value.hash())
     }
 
@@ -40,13 +40,13 @@ object AdventureResourcePackInfoSerializer : KSerializer<ResourcePackInfo> {
 
             if (decodeSequentially()) {
                 id = decodeSerializableElement(descriptor, 0, JavaUUIDSerializer)
-                uri = decodeSerializableElement(descriptor, 1, JavaURISerializer)
+                uri = decodeSerializableElement(descriptor, 1, URISerializer)
                 hash = decodeStringElement(descriptor, 2)
             } else {
                 while (true) {
                     when (val index = decodeElementIndex(descriptor)) {
                         0 -> id = decodeSerializableElement(descriptor, 0, JavaUUIDSerializer)
-                        1 -> uri = decodeSerializableElement(descriptor, 1, JavaURISerializer)
+                        1 -> uri = decodeSerializableElement(descriptor, 1, URISerializer)
                         2 -> hash = decodeStringElement(descriptor, 2)
                         CompositeDecoder.DECODE_DONE -> break
                         else -> error("Unexpected index: $index")
