@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.mnf
+package dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.mnf
 
 import com.mojang.serialization.Codec
 import org.spongepowered.math.matrix.MatrixNf

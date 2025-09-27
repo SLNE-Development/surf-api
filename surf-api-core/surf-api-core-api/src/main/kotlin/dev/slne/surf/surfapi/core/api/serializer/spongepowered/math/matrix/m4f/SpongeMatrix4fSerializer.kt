@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m4f
+package dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m4f
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

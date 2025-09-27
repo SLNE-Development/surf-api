@@ -13,6 +13,16 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.stop.AdventureS
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.JavaURICodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2d.SpongeMatrix2dCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2f.SpongeMatrix2fCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m3d.SpongeMatrix3dCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m3f.SpongeMatrix3fCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m4d.SpongeMatrix4dCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m4f.SpongeMatrix4fCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.mnd.SpongeMatrixNdCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.mnf.SpongeMatrixNfCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.quaternion.qnd.SpongeQuaterniondCodec
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.quaternion.qnf.SpongeQuaternionfCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2d.SpongeVector2dCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2f.SpongeVector2fCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2i.SpongeVector2iCodec
@@ -62,6 +72,16 @@ object SurfCodecs {
     val SPONGE_VECTOR_NF = SpongeVectorNfCodec.CODEC
     val SPONGE_VECTOR_NI = SpongeVectorNiCodec.CODEC
     val SPONGE_VECTOR_NL = SpongeVectorNlCodec.CODEC
+    val SPONGE_MATRIX_2D = SpongeMatrix2dCodec.CODEC
+    val SPONGE_MATRIX_2F = SpongeMatrix2fCodec.CODEC
+    val SPONGE_MATRIX_3D = SpongeMatrix3dCodec.CODEC
+    val SPONGE_MATRIX_3F = SpongeMatrix3fCodec.CODEC
+    val SPONGE_MATRIX_4D = SpongeMatrix4dCodec.CODEC
+    val SPONGE_MATRIX_4F = SpongeMatrix4fCodec.CODEC
+    val SPONGE_MATRIX_ND = SpongeMatrixNdCodec.CODEC
+    val SPONGE_MATRIX_NF = SpongeMatrixNfCodec.CODEC
+    val SPONGE_QUATERNION_F = SpongeQuaternionfCodec.CODEC
+    val SPONGE_QUATERNION_D = SpongeQuaterniondCodec.CODEC
     // endregion
 
     // region Java

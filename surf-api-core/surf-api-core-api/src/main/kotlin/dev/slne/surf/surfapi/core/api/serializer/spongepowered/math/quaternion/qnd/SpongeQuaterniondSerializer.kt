@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.serializer.spongepowered.quaternion.qnd
+package dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.quaternion.qnd
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
