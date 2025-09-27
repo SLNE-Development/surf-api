@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m2d
+package dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2d
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
