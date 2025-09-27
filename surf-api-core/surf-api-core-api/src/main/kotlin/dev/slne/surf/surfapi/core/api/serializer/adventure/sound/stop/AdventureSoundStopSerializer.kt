@@ -3,12 +3,12 @@
 package dev.slne.surf.surfapi.core.api.serializer.adventure.sound.stop
 
 import dev.slne.surf.surfapi.core.api.serializer.adventure.key.AdventureKeySerializer
-import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.AdventureSoundSerializer.SoundSourceSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.*
+import kotlinx.serialization.serializer
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.sound.SoundStop
@@ -17,7 +17,7 @@ typealias SerializableSoundStop = @Serializable(with = AdventureSoundStopSeriali
 
 object AdventureSoundStopSerializer : KSerializer<SoundStop> {
     override val descriptor = buildClassSerialDescriptor("surfapi.SoundStop") {
-        element("source", SoundSourceSerializer.descriptor, isOptional = true)
+        element("source", serializer<Sound.Source>().descriptor, isOptional = true)
         element("sound", AdventureKeySerializer.descriptor, isOptional = true)
     }
 
@@ -28,7 +28,7 @@ object AdventureSoundStopSerializer : KSerializer<SoundStop> {
         encodeNullableSerializableElement(
             descriptor,
             0,
-            SoundSourceSerializer,
+            serializer<Sound.Source>(),
             value.source()
         )
 
@@ -45,12 +45,12 @@ object AdventureSoundStopSerializer : KSerializer<SoundStop> {
         var sound: Key? = null
 
         if (decodeSequentially()) {
-            source = decodeNullableSerializableElement(descriptor, 0, SoundSourceSerializer)
+            source = decodeNullableSerializableElement(descriptor, 0, serializer<Sound.Source>())
             sound = decodeNullableSerializableElement(descriptor, 1, AdventureKeySerializer)
         } else while (true) {
             when (val index = decodeElementIndex(descriptor)) {
                 0 -> source =
-                    decodeNullableSerializableElement(descriptor, 0, SoundSourceSerializer)
+                    decodeNullableSerializableElement(descriptor, 0, serializer<Sound.Source>())
 
                 1 -> sound =
                     decodeNullableSerializableElement(descriptor, 1, AdventureKeySerializer)

@@ -6,24 +6,24 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.component.AdventureCo
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
+import kotlinx.serialization.serializer
 import net.kyori.adventure.bossbar.BossBar
 import net.kyori.adventure.text.Component
 
 typealias SerializableBossBar = @Serializable(with = AdventureBossBarSerializer::class) BossBar
 
 object AdventureBossBarSerializer : KSerializer<BossBar> {
-    private val flagsSerializer = SetSerializer(BossBarFlagSerializer)
+    private val flagsSerializer = SetSerializer(serializer<BossBar.Flag>())
 
     override val descriptor = buildClassSerialDescriptor("surfapi.AdventureBossBar") {
         element("name", AdventureComponentSerializer.descriptor)
         element<Float>("progress")
-        element("color", BossBarColorSerializer.descriptor)
-        element("overlay", BossBarOverlaySerializer.descriptor)
+        element<BossBar.Color>("color")
+        element<BossBar.Overlay>("overlay")
         element("flags", flagsSerializer.descriptor)
     }
 
@@ -33,8 +33,8 @@ object AdventureBossBarSerializer : KSerializer<BossBar> {
     ) = encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, AdventureComponentSerializer, value.name())
         encodeFloatElement(descriptor, 1, value.progress())
-        encodeSerializableElement(descriptor, 2, BossBarColorSerializer, value.color())
-        encodeSerializableElement(descriptor, 3, BossBarOverlaySerializer, value.overlay())
+        encodeSerializableElement(descriptor, 2, serializer<BossBar.Color>(), value.color())
+        encodeSerializableElement(descriptor, 3, serializer<BossBar.Overlay>(), value.overlay())
         encodeSerializableElement(descriptor, 4, flagsSerializer, value.flags())
     }
 
@@ -49,8 +49,8 @@ object AdventureBossBarSerializer : KSerializer<BossBar> {
         if (decodeSequentially()) {
             name = decodeSerializableElement(descriptor, 0, AdventureComponentSerializer)
             progress = decodeFloatElement(descriptor, 1)
-            color = decodeSerializableElement(descriptor, 2, BossBarColorSerializer)
-            overlay = decodeSerializableElement(descriptor, 3, BossBarOverlaySerializer)
+            color = decodeSerializableElement(descriptor, 2, serializer<BossBar.Color>())
+            overlay = decodeSerializableElement(descriptor, 3, serializer<BossBar.Overlay>())
             flags = decodeSerializableElement(descriptor, 4, flagsSerializer)
         } else {
             while (true) {
@@ -59,9 +59,11 @@ object AdventureBossBarSerializer : KSerializer<BossBar> {
                         decodeSerializableElement(descriptor, 0, AdventureComponentSerializer)
 
                     1 -> progress = decodeFloatElement(descriptor, 1)
-                    2 -> color = decodeSerializableElement(descriptor, 2, BossBarColorSerializer)
+                    2 -> color =
+                        decodeSerializableElement(descriptor, 2, serializer<BossBar.Color>())
+
                     3 -> overlay =
-                        decodeSerializableElement(descriptor, 3, BossBarOverlaySerializer)
+                        decodeSerializableElement(descriptor, 3, serializer<BossBar.Overlay>())
 
                     4 -> flags = decodeSerializableElement(descriptor, 4, flagsSerializer)
                     CompositeDecoder.DECODE_DONE -> break
@@ -79,12 +81,3 @@ object AdventureBossBarSerializer : KSerializer<BossBar> {
         )
     }
 }
-
-@Serializer(forClass = BossBar.Color::class)
-private object BossBarColorSerializer
-
-@Serializer(forClass = BossBar.Overlay::class)
-private object BossBarOverlaySerializer
-
-@Serializer(forClass = BossBar.Flag::class)
-private object BossBarFlagSerializer

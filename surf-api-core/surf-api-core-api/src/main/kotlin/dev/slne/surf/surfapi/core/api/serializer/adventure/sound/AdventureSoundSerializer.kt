@@ -6,11 +6,11 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.key.AdventureKeySeria
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
+import kotlinx.serialization.serializer
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 
@@ -19,7 +19,7 @@ typealias SerializableSound = @Serializable(with = AdventureSoundSerializer::cla
 object AdventureSoundSerializer : KSerializer<Sound> {
     override val descriptor = buildClassSerialDescriptor("surfapi.Sound") {
         element("name", AdventureKeySerializer.descriptor)
-        element("source", SoundSourceSerializer.descriptor)
+        element("source", serializer<Sound.Source>().descriptor)
         element<Float>("volume")
         element<Float>("pitch")
         element<Long>("seed", isOptional = true)
@@ -30,7 +30,7 @@ object AdventureSoundSerializer : KSerializer<Sound> {
         value: Sound,
     ) = encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, AdventureKeySerializer, value.name())
-        encodeSerializableElement(descriptor, 1, SoundSourceSerializer, value.source())
+        encodeSerializableElement(descriptor, 1, serializer<Sound.Source>(), value.source())
         encodeFloatElement(descriptor, 2, value.volume())
         encodeFloatElement(descriptor, 3, value.pitch())
         value.seed().ifPresent { seed ->
@@ -47,14 +47,14 @@ object AdventureSoundSerializer : KSerializer<Sound> {
 
         if (decodeSequentially()) {
             name = decodeSerializableElement(descriptor, 0, AdventureKeySerializer)
-            source = decodeSerializableElement(descriptor, 1, SoundSourceSerializer)
+            source = decodeSerializableElement(descriptor, 1, serializer<Sound.Source>())
             volume = decodeFloatElement(descriptor, 2)
             pitch = decodeFloatElement(descriptor, 3)
             seed = decodeNullableSerializableElement(descriptor, 4, Long.serializer())
         } else while (true) {
             when (val index = decodeElementIndex(descriptor)) {
                 0 -> name = decodeSerializableElement(descriptor, 0, AdventureKeySerializer)
-                1 -> source = decodeSerializableElement(descriptor, 1, SoundSourceSerializer)
+                1 -> source = decodeSerializableElement(descriptor, 1, serializer<Sound.Source>())
                 2 -> volume = decodeFloatElement(descriptor, 2)
                 3 -> pitch = decodeFloatElement(descriptor, 3)
                 4 -> seed = decodeNullableSerializableElement(descriptor, 4, Long.serializer())
@@ -71,7 +71,4 @@ object AdventureSoundSerializer : KSerializer<Sound> {
             .apply { seed?.let { seed(it) } }
             .build()
     }
-
-    @Serializer(forClass = Sound.Source::class)
-    object SoundSourceSerializer
 }

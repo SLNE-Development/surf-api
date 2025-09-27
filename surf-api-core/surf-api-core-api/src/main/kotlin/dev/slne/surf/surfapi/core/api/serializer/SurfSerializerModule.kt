@@ -14,6 +14,22 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleS
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleSerializer.AdventureTitleTimes
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.JavaURISerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2d.SpongeVector2dSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2f.SpongeVector2fSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2i.SpongeVector2iSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v2l.SpongeVector2lSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v3d.SpongeVector3dSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v3f.SpongeVector3fSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v3i.SpongeVector3iSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v3l.SpongeVector3lSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v4d.SpongeVector4dSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v4f.SpongeVector4fSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v4i.SpongeVector4iSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.v4l.SpongeVector4lSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.vnd.SpongeVectorNdSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.vnf.SpongeVectorNfSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.vni.SpongeVectorNiSerializer
+import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.vector.vnl.SpongeVectorNlSerializer
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m2d.SpongeMatrix2dSerializer
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m2f.SpongeMatrix2fSerializer
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.matrix.m3d.SpongeMatrix3dSerializer
@@ -43,7 +59,24 @@ object SurfSerializerModule {
         contextual(AdventureTitleTimes)
     }
 
-    val spongepowered = SerializersModule {
+    val spongePoweredMath = SerializersModule {
+        contextual(SpongeVector2dSerializer)
+        contextual(SpongeVector2fSerializer)
+        contextual(SpongeVector2iSerializer)
+        contextual(SpongeVector2lSerializer)
+        contextual(SpongeVector3dSerializer)
+        contextual(SpongeVector3fSerializer)
+        contextual(SpongeVector3iSerializer)
+        contextual(SpongeVector3lSerializer)
+        contextual(SpongeVector4dSerializer)
+        contextual(SpongeVector4fSerializer)
+        contextual(SpongeVector4iSerializer)
+        contextual(SpongeVector4lSerializer)
+        contextual(SpongeVectorNdSerializer)
+        contextual(SpongeVectorNfSerializer)
+        contextual(SpongeVectorNiSerializer)
+        contextual(SpongeVectorNlSerializer)
+
         contextual(SpongeMatrix2dSerializer)
         contextual(SpongeMatrix2fSerializer)
         contextual(SpongeMatrix3dSerializer)
@@ -64,5 +97,6 @@ object SurfSerializerModule {
     val all = SerializersModule {
         include(adventure)
         include(java)
+        include(spongePoweredMath)
     }
 }
