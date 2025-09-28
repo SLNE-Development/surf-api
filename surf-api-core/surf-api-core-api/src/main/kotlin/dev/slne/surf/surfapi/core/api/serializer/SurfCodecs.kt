@@ -20,6 +20,10 @@ import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.zdt.Zone
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.time.local.LocalTimeCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.zone.id.ZoneIdCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.zone.offset.ZoneOffsetCodec
+import dev.slne.surf.surfapi.core.api.serializer.java.ip.inet.InetAddressCodec
+import dev.slne.surf.surfapi.core.api.serializer.java.ip.inetsocket.InetSocketAddressCodec
+import dev.slne.surf.surfapi.core.api.serializer.java.ip.ipv4.Inet4AddressCodec
+import dev.slne.surf.surfapi.core.api.serializer.java.ip.ipv6.Inet6AddressCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.URICodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2d.SpongeMatrix2dCodec
@@ -105,5 +109,9 @@ object SurfCodecs {
     val LOCAL_TIME = LocalTimeCodec.CODEC
     val ZONE_ID = ZoneIdCodec.CODEC
     val ZONE_OFFSET = ZoneOffsetCodec.CODEC
+    val INET_ADDRESS = InetAddressCodec.CODEC
+    val INET_SOCKET_ADDRESS = InetSocketAddressCodec.CODEC
+    val INET4_ADDRESS = Inet4AddressCodec.CODEC
+    val INET6_ADDRESS = Inet6AddressCodec.CODEC
     // endregion
 }

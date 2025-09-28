@@ -53,15 +53,24 @@ fun <A> Codec<A>.positive(
     }
 }
 
+@JvmName("positiveLong")
 fun Codec<Long>.positive(zeroAllowed: Boolean = true) = positive(zeroAllowed, 0L, Long::compareTo)
+
+@JvmName("positiveInt")
 fun Codec<Int>.positive(zeroAllowed: Boolean = true) = positive(zeroAllowed, 0, Int::compareTo)
+
+@JvmName("positiveDouble")
 fun Codec<Double>.positive(zeroAllowed: Boolean = true) =
     positive(zeroAllowed, 0.0, Double::compareTo)
 
+@JvmName("positiveFloat")
 fun Codec<Float>.positive(zeroAllowed: Boolean = true) = positive(zeroAllowed, 0f, Float::compareTo)
+
+@JvmName("positiveShort")
 fun Codec<Short>.positive(zeroAllowed: Boolean = true) =
     positive(zeroAllowed, 0.toShort(), Short::compareTo)
 
+@JvmName("positiveByte")
 fun Codec<Byte>.positive(zeroAllowed: Boolean = true) =
     positive(zeroAllowed, 0.toByte(), Byte::compareTo)
 

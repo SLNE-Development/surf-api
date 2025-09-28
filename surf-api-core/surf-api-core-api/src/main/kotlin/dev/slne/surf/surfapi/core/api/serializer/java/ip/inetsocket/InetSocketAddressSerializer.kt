@@ -7,10 +7,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.encoding.encodeStructure
+import kotlinx.serialization.encoding.*
 import java.net.InetSocketAddress
 
 typealias SerializableInetSocketAddress = @Serializable(with = InetSocketAddressSerializer::class) InetSocketAddress
@@ -37,10 +34,11 @@ object InetSocketAddressSerializer : KSerializer<InetSocketAddress> {
             hostname = decodeStringElement(descriptor, 0)
             port = decodeIntElement(descriptor, 1)
         } else while (true) {
-            when (decodeElementIndex(descriptor)) {
+            when (val index = decodeElementIndex(descriptor)) {
                 0 -> hostname = decodeStringElement(descriptor, 0)
                 1 -> port = decodeIntElement(descriptor, 1)
-                else -> break
+                CompositeDecoder.DECODE_DONE -> break
+                else -> error("Unexpected index: $index")
             }
         }
 
