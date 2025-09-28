@@ -12,6 +12,6 @@ object ItemStackCodec {
                 buffer.get(bytes)
                 ItemStack.deserializeBytes(bytes)
             },
-            { itemStack -> itemStack.serializeAsBytes().let { ByteBuffer.wrap(it) } }
+            { itemStack -> ByteBuffer.wrap(itemStack.serializeAsBytes()) }
         )
 }
