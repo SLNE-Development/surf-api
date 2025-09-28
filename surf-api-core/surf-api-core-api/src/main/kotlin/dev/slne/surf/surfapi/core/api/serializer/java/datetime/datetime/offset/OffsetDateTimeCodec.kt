@@ -9,11 +9,9 @@ import java.time.OffsetDateTime
 object OffsetDateTimeCodec {
     val CODEC: Codec<OffsetDateTime> = RecordCodecBuilder.create { instance ->
         instance.group(
-            ZoneOffsetCodec.CODEC.fieldOf("zoneOffset").forGetter(OffsetDateTime::getOffset),
             LocalDateTimeCodec.CODEC.fieldOf("localDateTime")
-                .forGetter(OffsetDateTime::toLocalDateTime)
-        ).apply(instance) { offset, localDateTime ->
-            OffsetDateTime.of(localDateTime, offset)
-        }
+                .forGetter(OffsetDateTime::toLocalDateTime),
+            ZoneOffsetCodec.CODEC.fieldOf("zoneOffset").forGetter(OffsetDateTime::getOffset)
+        ).apply(instance, OffsetDateTime::of)
     }
 }
