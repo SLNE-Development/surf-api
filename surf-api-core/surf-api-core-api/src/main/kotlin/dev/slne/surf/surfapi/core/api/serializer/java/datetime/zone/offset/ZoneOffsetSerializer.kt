@@ -23,6 +23,6 @@ object ZoneOffsetSerializer : KSerializer<ZoneOffset> {
         encoder.encodeString(value.id)
     }
 
-    override fun deserialize(decoder: Decoder) =
+    override fun deserialize(decoder: Decoder): ZoneOffset =
         ZoneOffset.of(decoder.decodeString())
 }
