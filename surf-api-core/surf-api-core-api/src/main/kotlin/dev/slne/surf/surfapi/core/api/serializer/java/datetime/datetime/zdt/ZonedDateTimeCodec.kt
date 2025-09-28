@@ -9,10 +9,8 @@ import java.time.ZonedDateTime
 object ZonedDateTimeCodec {
     val CODEC: Codec<ZonedDateTime> = RecordCodecBuilder.create { instance ->
         instance.group(
-            ZoneIdCodec.CODEC.fieldOf("zoneId").forGetter(ZonedDateTime::getZone),
-            InstantCodec.CODEC.fieldOf("instant").forGetter(ZonedDateTime::toInstant)
-        ).apply(instance) { zoneId, instant ->
-            ZonedDateTime.ofInstant(instant, zoneId)
-        }
+            InstantCodec.CODEC.fieldOf("instant").forGetter(ZonedDateTime::toInstant),
+            ZoneIdCodec.CODEC.fieldOf("zoneId").forGetter(ZonedDateTime::getZone)
+        ).apply(instance, ZonedDateTime::ofInstant)
     }
 }

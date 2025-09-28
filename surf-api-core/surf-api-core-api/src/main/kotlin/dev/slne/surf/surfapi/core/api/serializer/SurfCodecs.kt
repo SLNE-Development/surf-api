@@ -16,6 +16,7 @@ import dev.slne.surf.surfapi.core.api.serializer.java.datetime.date.local.LocalD
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.instant.InstantCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.ldt.LocalDateTimeCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.offset.OffsetDateTimeCodec
+import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.zdt.ZonedDateTimeCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.URICodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2d.SpongeMatrix2dCodec
@@ -97,5 +98,6 @@ object SurfCodecs {
     val INSTANT = InstantCodec.CODEC
     val LOCAL_DATE_TIME = LocalDateTimeCodec.CODEC
     val OFFSET_DATE_TIME = OffsetDateTimeCodec.CODEC
+    val ZONED_DATE_TIME = ZonedDateTimeCodec.CODEC
     // endregion
 }
