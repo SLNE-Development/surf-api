@@ -27,3 +27,39 @@ fun PrimitiveCodec<LongStream>.fixedSize(size: Int): Codec<LongArray> {
         LongStream.of(*longs)
     })
 }
+
+fun <A> Codec<A>.ranged(
+    minInclusive: A,
+    maxInclusive: A,
+): Codec<A> where A : Number, A : Comparable<A> = validate { number ->
+    when {
+        number < minInclusive -> DataResult.error { "Number is too small: $number, expected range [$minInclusive-$maxInclusive]" }
+        number > maxInclusive -> DataResult.error { "Number is too big: $number, expected range [$minInclusive-$maxInclusive]" }
+        else -> DataResult.success(number)
+    }
+}
+
+fun <A> Codec<A>.positive(
+    zeroAllowed: Boolean = true,
+    zero: A,
+    compare: (A, A) -> Int,
+): Codec<A> = validate { number ->
+    val cmp = compare(number, zero)
+    when {
+        cmp < 0 -> DataResult.error { "Number is negative: $number, expected positive" }
+        !zeroAllowed && cmp == 0 -> DataResult.error { "Number is zero: $number, expected positive" }
+        else -> DataResult.success(number)
+    }
+}
+
+fun Codec<Long>.positive(zeroAllowed: Boolean = true) = positive(zeroAllowed, 0L, Long::compareTo)
+fun Codec<Int>.positive(zeroAllowed: Boolean = true) = positive(zeroAllowed, 0, Int::compareTo)
+fun Codec<Double>.positive(zeroAllowed: Boolean = true) =
+    positive(zeroAllowed, 0.0, Double::compareTo)
+
+fun Codec<Float>.positive(zeroAllowed: Boolean = true) = positive(zeroAllowed, 0f, Float::compareTo)
+fun Codec<Short>.positive(zeroAllowed: Boolean = true) =
+    positive(zeroAllowed, 0.toShort(), Short::compareTo)
+
+fun Codec<Byte>.positive(zeroAllowed: Boolean = true) =
+    positive(zeroAllowed, 0.toByte(), Byte::compareTo)
