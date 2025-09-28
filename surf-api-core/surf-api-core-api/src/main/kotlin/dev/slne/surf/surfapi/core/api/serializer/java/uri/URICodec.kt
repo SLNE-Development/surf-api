@@ -12,7 +12,5 @@ object URICodec {
         } catch (e: URISyntaxException) {
             DataResult.error { "Uri syntax error: ${e.message}" }
         }
-    }, { uri ->
-        uri.toString()
-    }).stable()
+    }, URI::toString).stable()
 }

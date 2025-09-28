@@ -11,6 +11,7 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.resourcepack.info.Adv
 import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.AdventureSoundCodec
 import dev.slne.surf.surfapi.core.api.serializer.adventure.sound.stop.AdventureSoundStopCodec
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleCodec
+import dev.slne.surf.surfapi.core.api.serializer.java.JavaDurationCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.date.date.DateCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.date.local.LocalDateCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.instant.InstantCodec
@@ -25,7 +26,9 @@ import dev.slne.surf.surfapi.core.api.serializer.java.ip.inetsocket.InetSocketAd
 import dev.slne.surf.surfapi.core.api.serializer.java.ip.ipv4.Inet4AddressCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.ip.ipv6.Inet6AddressCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.URICodec
+import dev.slne.surf.surfapi.core.api.serializer.java.url.URLCodec
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDCodec
+import dev.slne.surf.surfapi.core.api.serializer.kotlin.KotlinDurationCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2d.SpongeMatrix2dCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2f.SpongeMatrix2fCodec
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m3d.SpongeMatrix3dCodec
@@ -99,6 +102,7 @@ object SurfCodecs {
 
     // region Java
     val URI = URICodec.CODEC
+    val URL = URLCodec.CODEC
     val UUID = JavaUUIDCodec.CODEC
     val DATE = DateCodec.CODEC
     val LOCAL_DATE = LocalDateCodec.CODEC
@@ -113,5 +117,10 @@ object SurfCodecs {
     val INET_SOCKET_ADDRESS = InetSocketAddressCodec.CODEC
     val INET4_ADDRESS = Inet4AddressCodec.CODEC
     val INET6_ADDRESS = Inet6AddressCodec.CODEC
+    val JAVA_DURATION = JavaDurationCodec.CODEC
+    // endregion
+
+    // region Kotlin
+    val KOTLIN_DURATION = KotlinDurationCodec.CODEC
     // endregion
 }

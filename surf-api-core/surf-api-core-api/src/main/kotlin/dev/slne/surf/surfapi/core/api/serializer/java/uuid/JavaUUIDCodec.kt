@@ -5,11 +5,15 @@ import dev.slne.surf.surfapi.core.api.serializer.fixedSize
 import java.util.*
 
 object JavaUUIDCodec {
-    val CODEC: Codec<UUID> = Codec.LONG_STREAM
+    val CODEC_BYTES: Codec<UUID> = Codec.LONG_STREAM
         .fixedSize(2)
         .xmap({ bytes ->
             UUID(bytes[0], bytes[1])
         }, { uuid ->
             longArrayOf(uuid.mostSignificantBits, uuid.leastSignificantBits)
         })
+
+    val CODEC_STRING: Codec<UUID> = Codec.STRING.xmap(UUID::fromString, UUID::toString)
+
+    val CODEC: Codec<UUID> = Codec.withAlternative(CODEC_BYTES, CODEC_STRING)
 }
