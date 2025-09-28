@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec
 import com.mojang.serialization.DataResult
 import com.mojang.serialization.codecs.PrimitiveCodec
 import java.util.stream.LongStream
+import com.mojang.datafixers.util.Pair as DataFixerPair
 
 infix fun <F, S> Codec<F>.xor(second: Codec<S>): Codec<Either<F, S>> = Codec.xor(this, second)
 
@@ -63,3 +64,7 @@ fun Codec<Short>.positive(zeroAllowed: Boolean = true) =
 
 fun Codec<Byte>.positive(zeroAllowed: Boolean = true) =
     positive(zeroAllowed, 0.toByte(), Byte::compareTo)
+
+operator fun <F, S> DataFixerPair<F, S>.component1(): F = first
+operator fun <F, S> DataFixerPair<F, S>.component2(): S = second
+infix fun <F, S> F.toDataFixerPair(other: S): DataFixerPair<F, S> = DataFixerPair(this, other)

@@ -8,10 +8,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.encoding.encodeStructure
+import kotlinx.serialization.encoding.*
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -25,60 +22,35 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
             element("time", LocalTimeSerializer.descriptor)
         }
 
-    override fun serialize(encoder: Encoder, value: LocalDateTime) {
-        encoder.encodeStructure(descriptor) {
-            encodeSerializableElement(
-                descriptor,
-                0,
-                LocalDateSerializer,
-                value.toLocalDate()
-            )
-            encodeSerializableElement(
-                descriptor,
-                1,
-                LocalTimeSerializer,
-                value.toLocalTime()
-            )
-        }
+    override fun serialize(
+        encoder: Encoder,
+        value: LocalDateTime,
+    ) = encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, LocalDateSerializer, value.toLocalDate())
+        encodeSerializableElement(descriptor, 1, LocalTimeSerializer, value.toLocalTime())
     }
 
-    override fun deserialize(decoder: Decoder): LocalDateTime =
-        decoder.decodeStructure(descriptor) {
-            var date: LocalDate? = null
-            var time: LocalTime? = null
+    override fun deserialize(
+        decoder: Decoder,
+    ): LocalDateTime = decoder.decodeStructure(descriptor) {
+        var date: LocalDate? = null
+        var time: LocalTime? = null
 
-            if (decodeSequentially()) {
-                date = decodeSerializableElement(
-                    descriptor,
-                    0,
-                    LocalDateSerializer
-                )
-                time = decodeSerializableElement(
-                    descriptor,
-                    1,
-                    LocalTimeSerializer
-                )
-            } else while (true) {
-                when (decodeElementIndex(descriptor)) {
-                    0 -> date = decodeSerializableElement(
-                        descriptor,
-                        0,
-                        LocalDateSerializer
-                    )
-
-                    1 -> time = decodeSerializableElement(
-                        descriptor,
-                        1,
-                        LocalTimeSerializer
-                    )
-
-                    else -> break
-                }
+        if (decodeSequentially()) {
+            date = decodeSerializableElement(descriptor, 0, LocalDateSerializer)
+            time = decodeSerializableElement(descriptor, 1, LocalTimeSerializer)
+        } else while (true) {
+            when (val index = decodeElementIndex(descriptor)) {
+                0 -> date = decodeSerializableElement(descriptor, 0, LocalDateSerializer)
+                1 -> time = decodeSerializableElement(descriptor, 1, LocalTimeSerializer)
+                CompositeDecoder.DECODE_DONE -> break
+                else -> error("Unexpected index: $index")
             }
-
-            require(date != null) { "Missing value for date" }
-            require(time != null) { "Missing value for time" }
-
-            LocalDateTime.of(date, time)
         }
+
+        require(date != null) { "Missing value for date" }
+        require(time != null) { "Missing value for time" }
+
+        LocalDateTime.of(date, time)
+    }
 }

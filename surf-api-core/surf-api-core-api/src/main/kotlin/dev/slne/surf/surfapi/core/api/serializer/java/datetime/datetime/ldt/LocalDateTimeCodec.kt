@@ -11,8 +11,6 @@ object LocalDateTimeCodec {
         instance.group(
             LocalDateCodec.CODEC.fieldOf("localDate").forGetter(LocalDateTime::toLocalDate),
             LocalTimeCodec.CODEC.fieldOf("localTime").forGetter(LocalDateTime::toLocalTime)
-        ).apply(instance) { localDate, localTime ->
-            LocalDateTime.of(localDate, localTime)
-        }
+        ).apply(instance, LocalDateTime::of)
     }
 }

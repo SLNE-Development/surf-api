@@ -14,6 +14,8 @@ import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleS
 import dev.slne.surf.surfapi.core.api.serializer.adventure.title.AdventureTitleSerializer.AdventureTitleTimes
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.date.date.DateSerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.datetime.date.local.LocalDateSerializer
+import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.instant.InstantSerializer
+import dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime.ldt.LocalDateTimeSerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.URISerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDSerializer
 import dev.slne.surf.surfapi.core.api.serializer.spongepowered.math.matrix.m2d.SpongeMatrix2dSerializer
@@ -96,6 +98,8 @@ object SurfSerializerModule {
         contextual(JavaUUIDSerializer)
         contextual(DateSerializer)
         contextual(LocalDateSerializer)
+        contextual(InstantSerializer)
+        contextual(LocalDateTimeSerializer)
     }
 
     val all = SerializersModule {
