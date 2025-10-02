@@ -20,7 +20,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.4.4")
+    append("-1.4.5")
     if (snapshot) append("-SNAPSHOT")
 }
 

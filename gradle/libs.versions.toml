@@ -3,13 +3,13 @@
 paper-api = "1.21.8-R0.1-SNAPSHOT"
 
 # Kolin
-kotlinVersion = "2.2.0"
+kotlinVersion = "2.2.20"
 kotlinxCoroutines = "1.10.2"
 kotlinx-serialization = "1.9.0"
 
 # Packet Events
-packetevents = "2.9.1"
-packetevents-plugin = "2.9.1"
+packetevents = "2.9.5"
+packetevents-plugin = "2.9.5"
 
 # Command API
 commandapi = "10.1.2"
@@ -18,9 +18,9 @@ commandapi = "10.1.2"
 luckperms = "v5.5.0-bukkit"
 
 # Scoreboard Library
-scoreboard-library = "2.4.1"
-scoreboard-library-implementation = "2.4.1"
-scoreboard-library-modern = "2.4.1"
+scoreboard-library = "2.4.2"
+scoreboard-library-implementation = "2.4.2"
+scoreboard-library-modern = "2.4.2"
 
 # Adventure
 adventure-api = "4.24.0"
@@ -58,7 +58,7 @@ auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
 ktor = "3.1.1"
 glm = "0.9.9.1-12"
-ksp-version = "2.2.0-2.0.2"
+ksp-version = "2.2.20-2.0.3"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
