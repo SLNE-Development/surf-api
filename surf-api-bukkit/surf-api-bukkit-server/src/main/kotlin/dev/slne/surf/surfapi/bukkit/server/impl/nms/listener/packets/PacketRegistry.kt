@@ -37,11 +37,12 @@ object PacketRegistry {
 
     private fun <Nms : Packet<ServerGamePacketListener>, Api : NmsServerboundPacket> registerServerboundPacket(
         nms: KClass<Nms>,
-        factory: ServerboundPacketFactory<Nms, Api>
+        factory: ServerboundPacketFactory<Nms, Api>,
     ) {
         SERVERBOUND_PACKETS.put(nms.java, factory)
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <Nms : Packet<*>> createServerboundPacketOrNull(packet: Nms): NmsServerboundPacket? {
         val factory = SERVERBOUND_PACKETS[packet.javaClass] as? ServerboundPacketFactory<Nms, *>
         return factory?.create(packet)
@@ -54,6 +55,7 @@ object PacketRegistry {
         CLIENTBOUND_PACKETS.put(nms.java, factory)
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <Nms : Packet<*>> createClientboundPacketOrNull(packet: Nms): NmsClientboundPacket? {
         val factory = CLIENTBOUND_PACKETS[packet.javaClass] as? ClientboundPacketFactory<Nms, *>
         return factory?.create(packet)

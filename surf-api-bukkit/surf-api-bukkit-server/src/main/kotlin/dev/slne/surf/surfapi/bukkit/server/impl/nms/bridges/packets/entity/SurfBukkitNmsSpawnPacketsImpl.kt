@@ -37,8 +37,8 @@ class SurfBukkitNmsSpawnPacketsImpl : SurfBukkitNmsSpawnPackets {
     override fun despawn(entityIds: IntList) =
         PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(entityIds) }
 
-    override fun despawn(vararg entityIds: Int) =
-        PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(*entityIds) }
+    override fun despawn(vararg entityId: Int) =
+        PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(*entityId) }
 
 
     override fun spawnItemDisplay(
@@ -142,7 +142,7 @@ class SurfBukkitNmsSpawnPacketsImpl : SurfBukkitNmsSpawnPackets {
         yaw: Float,
         pitch: Float,
         deltaMovement: FinePosition?,
-        onGround: Boolean
+        onGround: Boolean,
     ) = PacketOperationImpl.simple {
         ClientboundTeleportEntityPacket.teleport(
             entityId,

@@ -39,10 +39,10 @@ class PacketOperationImpl : PacketOperation {
         connection.send(ClientboundBundlePacket(packets))
     }
 
-    override fun add(other: PacketOperation): PacketOperationImpl {
-        require(other is PacketOperationImpl) { "operation must be an instance of PacketOperationImpl" }
+    override fun add(operation: PacketOperation): PacketOperationImpl {
+        require(operation is PacketOperationImpl) { "operation must be an instance of PacketOperationImpl" }
 
-        this.operation = this.operation.andThen(other.operation)
+        this.operation = this.operation.andThen(operation.operation)
         return this
     }
 
@@ -54,7 +54,7 @@ class PacketOperationImpl : PacketOperation {
     fun interface Operation {
         fun apply(
             player: Player,
-            packets: LinkedList<Packet<in ClientGamePacketListener>>
+            packets: LinkedList<Packet<in ClientGamePacketListener>>,
         ): LinkedList<Packet<in ClientGamePacketListener>>
 
         fun andThen(after: Operation): Operation {
@@ -68,13 +68,13 @@ class PacketOperationImpl : PacketOperation {
         }
     }
 
-    class EmptyOperation: Operation {
+    class EmptyOperation : Operation {
         var empty: Boolean = true
             private set
 
         override fun apply(
             player: Player,
-            packets: LinkedList<Packet<in ClientGamePacketListener>>
+            packets: LinkedList<Packet<in ClientGamePacketListener>>,
         ): LinkedList<Packet<in ClientGamePacketListener>> {
             return packets
         }
