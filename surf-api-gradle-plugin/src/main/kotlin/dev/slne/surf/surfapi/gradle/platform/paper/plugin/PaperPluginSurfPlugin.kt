@@ -4,6 +4,7 @@ import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.generators.LibrariesLoaderGenerator.generateLibrariesLoaderTask
 import dev.slne.surf.surfapi.gradle.platform.paper.AbstractPaperSurfPlugin
 import dev.slne.surf.surfapi.gradle.util.registerRequired
+import net.minecrell.pluginyml.GeneratePluginDescription
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
@@ -35,6 +36,10 @@ internal class PaperPluginSurfPlugin :
         val generateLoaderTask = generateLibrariesLoaderTask(
             extension.mainClass.get().substringBeforeLast('.')
         )
+
+        configure<GeneratePluginDescription> {
+            useDefaultCentralProxy()
+        }
 
         configure<PaperPluginDescription> {
             authors = extension.authors.get()
