@@ -37,10 +37,6 @@ internal class PaperPluginSurfPlugin :
             extension.mainClass.get().substringBeforeLast('.')
         )
 
-        configure<GeneratePluginDescription> {
-            useDefaultCentralProxy()
-        }
-
         configure<PaperPluginDescription> {
             authors = extension.authors.get()
             main = extension.mainClass.get()
@@ -81,6 +77,10 @@ internal class PaperPluginSurfPlugin :
 
 
         tasks {
+            withType<GeneratePluginDescription> {
+                useDefaultCentralProxy()
+            }
+
             withType<RunServer> {
                 minecraftVersion(Constants.MINECRAFT_VERSION)
 
