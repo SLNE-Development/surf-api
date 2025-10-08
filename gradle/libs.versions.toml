@@ -58,7 +58,7 @@ auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
 ktor = "3.1.1"
 glm = "0.9.9.1-12"
-ksp-version = "2.2.20-2.0.3"
+ksp-version = "2.2.20-2.0.4"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
