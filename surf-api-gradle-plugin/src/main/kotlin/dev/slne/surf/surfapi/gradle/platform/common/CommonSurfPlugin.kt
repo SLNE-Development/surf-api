@@ -14,6 +14,7 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.maven
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
@@ -101,6 +102,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             gradlePluginPortal()
 
             slnePublic()
+            maven("https://repo.papermc.io/repository/maven-public/")
         }
 
         applyRepositories0()

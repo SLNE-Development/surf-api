@@ -86,8 +86,6 @@ gradlePlugin {
                 credentials {
                     val getenv = System.getenv("SLNE_RELEASES_REPO_USERNAME")
 
-                    System.err.println("Username: $getenv")
-
                     username = getenv
                     password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
                 }
