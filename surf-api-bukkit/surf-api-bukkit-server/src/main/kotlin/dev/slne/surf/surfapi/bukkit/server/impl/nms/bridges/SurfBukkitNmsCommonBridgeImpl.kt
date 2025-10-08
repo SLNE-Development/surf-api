@@ -13,7 +13,6 @@ import io.papermc.paper.configuration.GlobalConfiguration
 import net.kyori.adventure.text.Component
 import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
 import net.minecraft.server.MinecraftServer
-import net.minecraft.server.players.GameProfileCache
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.ComposterBlock
 import org.bukkit.Bukkit
@@ -75,7 +74,6 @@ class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
 
     override fun setOnlineMode(enabled: Boolean) {
         MinecraftServer.getServer().setUsesAuthentication(enabled)
-        GameProfileCache.setUsesAuthentication(enabled)
     }
 
     override fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean) {
