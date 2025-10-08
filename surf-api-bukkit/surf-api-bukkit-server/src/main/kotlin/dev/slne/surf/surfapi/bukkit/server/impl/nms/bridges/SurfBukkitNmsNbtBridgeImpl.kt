@@ -10,6 +10,7 @@ import net.minecraft.core.component.DataComponentPatch
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.component.CustomData
+import net.minecraft.world.item.component.TypedEntityData
 import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
 import kotlin.jvm.optionals.getOrNull
@@ -22,7 +23,7 @@ class SurfBukkitNmsNbtBridgeImpl : SurfBukkitNmsNbtBridge {
 
     override fun makeItemStackEntityInvisible(
         itemStack: ItemStack,
-        invisibleEntityType: EntityType
+        invisibleEntityType: EntityType,
     ): ItemStack {
         val nmsStack = itemStack.toNms()
 
@@ -30,8 +31,10 @@ class SurfBukkitNmsNbtBridgeImpl : SurfBukkitNmsNbtBridge {
         nbt.putBoolean("Invisible", true)
         nbt.putString("id", invisibleEntityType.key.asString())
 
+        val entityData = TypedEntityData.decodeEntity(nbt)
+
         val patch = DataComponentPatch.builder()
-            .set(DataComponents.ENTITY_DATA, CustomData.of(nbt))
+            .set(DataComponents.ENTITY_DATA, entityData)
             .build()
 
         nmsStack.applyComponents(patch)
@@ -42,7 +45,7 @@ class SurfBukkitNmsNbtBridgeImpl : SurfBukkitNmsNbtBridge {
     @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun getNbtString(
         itemStack: ItemStack,
-        key: String
+        key: String,
     ): String {
         log.atWarning()
             .atMostEvery(30, java.util.concurrent.TimeUnit.SECONDS)
