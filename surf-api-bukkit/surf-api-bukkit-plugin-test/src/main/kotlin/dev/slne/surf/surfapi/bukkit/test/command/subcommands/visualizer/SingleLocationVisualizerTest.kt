@@ -2,8 +2,8 @@
 
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.visualizer
 
-import dev.jorel.commandapi.CommandAPIBukkit
 import dev.jorel.commandapi.CommandAPICommand
+import dev.jorel.commandapi.CommandAPIPaper
 import dev.jorel.commandapi.arguments.ArgumentSuggestions
 import dev.jorel.commandapi.arguments.LocationType
 import dev.jorel.commandapi.kotlindsl.*
@@ -61,7 +61,7 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                 val visualizer = visualizers[uid]
 
                 if (visualizer == null) {
-                    throw CommandAPIBukkit.failWithAdventureComponent(buildText {
+                    throw CommandAPIPaper.failWithAdventureComponent(buildText {
                         append(Component.text("Visualizer with UID "))
                         append(Component.text(uid.toString(), Colors.VARIABLE_VALUE))
                         append(Component.text(" not found!"))
@@ -89,7 +89,7 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                 val visualizer = visualizers.remove(uid)
 
                 if (visualizer == null) {
-                    throw CommandAPIBukkit.failWithAdventureComponent(buildText {
+                    throw CommandAPIPaper.failWithAdventureComponent(buildText {
                         append(Component.text("Visualizer with UID "))
                         append(Component.text(uid.toString(), Colors.VARIABLE_VALUE))
                         append(Component.text(" not found!"))

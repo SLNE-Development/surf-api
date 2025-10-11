@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.entity;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.BooleanArgument;
-import dev.jorel.commandapi.arguments.PlayerArgument;
+import dev.jorel.commandapi.arguments.PlayerProfileArgument;
 import dev.jorel.commandapi.arguments.UUIDArgument;
 import java.util.UUID;
 import org.bukkit.entity.Player;
@@ -14,7 +14,7 @@ public class ShowHidePacketEntity extends CommandAPICommand {
 
     withArguments(new UUIDArgument("entityUuid"),
 //                .replaceSuggestions(ArgumentSuggestions.stringCollection(info -> CreatePacketEntity.getEntityMap().keySet().stream().map(UUID::toString).toList())),
-        new PlayerArgument("player"),
+        new PlayerProfileArgument("player"),
         new BooleanArgument("show"));
 
     executes((commandSender, commandArguments) -> {
