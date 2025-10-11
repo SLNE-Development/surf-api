@@ -8,7 +8,7 @@ dependencies {
     compileOnly(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
     api(libs.scoreboard.library.api)
-    compileOnlyApi(libs.commandapi.bukkit)
+    compileOnlyApi(libs.commandapi.paper)
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
     compileOnlyApi(libs.inventoryframework)

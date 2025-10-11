@@ -12,7 +12,7 @@ packetevents = "2.10.0-SNAPSHOT"
 packetevents-plugin = "2.10.0-SNAPSHOT"
 
 # Command API
-commandapi = "10.1.2"
+commandapi = "11.0.0"
 
 # LuckPerms
 luckperms = "v5.5.0-bukkit"
@@ -87,11 +87,11 @@ packetevents-netty-common = { module = "com.github.retrooper:packetevents-netty-
 # Entity Library
 
 # Command API
-commandapi-bukkit = { module = "dev.jorel:commandapi-bukkit-plugin", version.ref = "commandapi" }
-commandapi-bukkit-kotlin = { module = "dev.jorel:commandapi-bukkit-kotlin", version.ref = "commandapi" }
+commandapi-paper = { module = "dev.jorel:commandapi-paper-plugin", version.ref = "commandapi" }
+commandapi-bukkit-kotlin = { module = "dev.jorel:commandapi-kotlin-bukkit", version.ref = "commandapi" }
 commandapi-core = { module = "dev.jorel:commandapi-core", version.ref = "commandapi" }
 commandapi-velocity = { module = "dev.jorel:commandapi-velocity-core", version.ref = "commandapi" }
-commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-velocity-kotlin", version.ref = "commandapi" }
+commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-kotlin-velocity", version.ref = "commandapi" }
 
 # Scoreboard Library
 scoreboard-library-api = { module = "net.megavex:scoreboard-library-api", version.ref = "scoreboard-library" }
