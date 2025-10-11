@@ -53,7 +53,8 @@ tasks {
 
         downloadPlugins {
             hangar("CommandAPI", libs.versions.commandapi.get())
-            modrinth("packetevents", "2.9.1+spigot")
+//            modrinth("packetevents", libs.versions.packetevents.plugin.get() + "spigot")
+            url("https://ci.codemc.io/job/retrooper/job/packetevents/770/artifact/build/libs/packetevents-spigot-2.10.0-SNAPSHOT.jar")
         }
     }
 }

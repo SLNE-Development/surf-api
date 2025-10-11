@@ -1,8 +1,10 @@
 package dev.slne.surf.surfapi.bukkit.test;
 
 import dev.jorel.commandapi.CommandAPI;
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.InventoryFrameworkExtensions;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi;
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection;
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,7 +20,7 @@ public class BukkitPluginMain extends JavaPlugin {
   @Override
   public void onLoad() {
     SurfBukkitPacketListenerApi.Companion.getInstance().registerListeners(new ChatListener());
-
+    InventoryFrameworkExtensions.register(TestInventoryView.INSTANCE);
 //    TestConfig config = SurfCore#Api.getCore()
 //        .createModernYamlConfig(TestConfig.class, getDataFolder().toPath(), "test.yml");
 //    TestConfig2 config2 = SurfCoreApi.getCore()

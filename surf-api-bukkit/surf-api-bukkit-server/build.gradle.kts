@@ -31,7 +31,7 @@ dependencies {
     runtimeOnly(libs.scoreboard.library.implementation)
     runtimeOnly(libs.scoreboard.library.modern)
     paperLibrary(libs.scoreboard.library.api)
-    api(libs.inventoryframework)
+    api(libs.stefvanschie.`if`)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
     paperLibrary(libs.gson)
@@ -93,6 +93,17 @@ paper {
             joinClasspath = true
             load = RelativeLoadOrder.BEFORE
         }
+    }
+}
+
+tasks.generatePaperPluginDescription {
+    useDefaultCentralProxy()
+}
+
+tasks {
+    shadowJar {
+        val relocationPrefix: String by project
+        relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
     }
 }
 

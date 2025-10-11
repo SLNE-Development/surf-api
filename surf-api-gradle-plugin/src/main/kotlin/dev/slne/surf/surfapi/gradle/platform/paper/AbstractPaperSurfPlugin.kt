@@ -13,6 +13,7 @@ internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(
 
     init {
         relocateCloudNetty()
+        "me.devnatan.inventoryframework" relocatesTo "devnatan.inventoryframework"
     }
 
     override fun Project.configure0() {

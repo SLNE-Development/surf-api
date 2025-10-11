@@ -51,7 +51,8 @@ reflection-remapper = "0.1.3"
 brigadier = "1.0.18"
 configurate = "4.2.0"
 more-persistent-data-types = "2.4.0"
-inventoryframework = "0.11.3"
+stefvanschie-if = "0.11.3"
+inventory-framework = "3.5.4"
 flogger = "0.9"
 aide-reflection = "1.3"
 auto-service = "1.1.1"
@@ -139,7 +140,9 @@ configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref 
 configurate-jackson = { module = "org.spongepowered:configurate-jackson", version.ref = "configurate" }
 configurate-kotlin = { module = "org.spongepowered:configurate-extra-kotlin", version.ref = "configurate" }
 more-persistent-data-types = { module = "com.jeff_media:MorePersistentDataTypes", version.ref = "more-persistent-data-types" }
-inventoryframework = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "inventoryframework" }
+stefvanschie-if = { module = "com.github.stefvanschie.inventoryframework:IF", version.ref = "stefvanschie-if" }
+inventory-framework-platform-paper = { module = "me.devnatan:inventory-framework-platform-paper", version.ref = "inventory-framework" }
+inventory-framework-platform-bukkit = { module = "me.devnatan:inventory-framework-platform-bukkit", version.ref = "inventory-framework" }
 flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
 flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
 aide-reflection = { module = "tech.hiddenproject:aide-reflection", version.ref = "aide-reflection" }
@@ -175,3 +178,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-version" }
 
 [bundles]
 ktor-client = ["ktor-client-core", "ktor-client-okhttp", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json"]
+inventory-framework = ["inventory-framework-platform-paper", "inventory-framework-platform-bukkit"]

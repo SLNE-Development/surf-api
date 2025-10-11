@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.ItemType
 import org.bukkit.inventory.meta.ItemMeta
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.CLASS)
@@ -17,7 +18,17 @@ inline fun buildItem(
     amount: Int = 1,
     init: (@ItemDsl ItemStack).() -> Unit,
 ): ItemStack {
-    val item = ItemStack(material, amount)
+    val item = ItemStack.of(material, amount)
+    item.init()
+    return item
+}
+
+inline fun buildItem(
+    type: ItemType,
+    amount: Int = 1,
+    init: (@ItemDsl ItemStack).() -> Unit,
+): ItemStack {
+    val item = type.createItemStack(amount)
     item.init()
     return item
 }
