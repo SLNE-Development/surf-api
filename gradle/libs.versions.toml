@@ -37,7 +37,7 @@ mccoroutine = "2.22.0"
 # Miscellaneous Libraries
 guava = "33.5.0-jre"
 caffeine = "3.2.1"
-caffeine-courotines = "2.0.2"
+caffeine-courotines = "3.0.1"
 gson = "2.13.2"
 commons-lang3 = "3.19.0"
 commons-text = "1.14.0"
