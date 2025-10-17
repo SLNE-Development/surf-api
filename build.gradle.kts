@@ -20,6 +20,15 @@ allprojects {
             }
         }
     }
+    
+    configurations.all {
+        if (name == "compileOnly") {
+            return@all
+        }
+
+        dependencies.remove(project.dependencies.gradleApi())
+        dependencies.remove(project.dependencies.gradleTestKit())
+    }
 
 //    if (subprojects.isEmpty()) {
 //        apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)

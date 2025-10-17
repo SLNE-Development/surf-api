@@ -12,11 +12,7 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.maven
-import org.gradle.kotlin.dsl.repositories
-import org.gradle.kotlin.dsl.withType
+import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
@@ -152,6 +148,15 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         tasks.withType<JavaCompile> {
             options.encoding = Charsets.UTF_8.name()
             options.compilerArgs.addAll(listOf("-parameters"))
+        }
+
+        configurations.all {
+            if (name == "compileOnly") {
+                return@all
+            }
+
+            dependencies.remove(project.dependencies.gradleApi())
+            dependencies.remove(project.dependencies.gradleTestKit())
         }
 
         configureAutoService()
