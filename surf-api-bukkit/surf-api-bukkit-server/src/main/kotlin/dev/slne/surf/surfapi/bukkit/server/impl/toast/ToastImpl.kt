@@ -7,6 +7,7 @@ import com.github.retrooper.packetevents.resources.ResourceLocation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateAdvancements
 import dev.slne.surf.surfapi.bukkit.api.toast.Toast
 import dev.slne.surf.surfapi.bukkit.api.toast.ToastStyle
+import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import net.kyori.adventure.text.Component
@@ -30,7 +31,9 @@ class ToastImpl(
             null,
             AdvancementDisplay(
                 text,
-                Component.empty(),
+                buildText {
+                    error("test")
+                },
                 stack,
                 style.toType(),
                 null,
