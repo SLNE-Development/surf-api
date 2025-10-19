@@ -7,6 +7,7 @@ import com.github.retrooper.packetevents.protocol.item.type.ItemType
 import com.github.retrooper.packetevents.resources.ResourceLocation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateAdvancements
 import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
+import dev.slne.surf.surfapi.core.api.surfCoreApi
 import dev.slne.surf.surfapi.core.api.toast.Toast
 import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
@@ -19,7 +20,9 @@ class ToastImpl(
     override val style: ToastStyle
 ) : Toast {
     override fun send(player: UUID) {
-        val user = PacketEvents.getAPI().playerManager.getUser(player) ?: return
+        val user =
+            PacketEvents.getAPI().playerManager.getUser(surfCoreApi.getPlayer(player) ?: return)
+                ?: return
         val stack =
             ItemStack.builder().type(icon).build()
         val criterionName = "surfapi_toast"
