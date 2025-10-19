@@ -6,7 +6,6 @@ import com.github.retrooper.packetevents.protocol.item.ItemStack
 import com.github.retrooper.packetevents.protocol.item.type.ItemType
 import com.github.retrooper.packetevents.resources.ResourceLocation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerUpdateAdvancements
-import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import dev.slne.surf.surfapi.core.api.surfCoreApi
 import dev.slne.surf.surfapi.core.api.toast.Toast
 import dev.slne.surf.surfapi.core.api.toast.ToastStyle
@@ -44,9 +43,7 @@ private fun createFakeAdvancement(toast: Toast): Advancement {
         null,
         AdvancementDisplay(
             toast.text,
-            buildText {
-                error("test")
-            },
+            Component.empty(),
             ItemStack.builder().type(toast.icon).build(),
             toast.style.toType(),
             null,
