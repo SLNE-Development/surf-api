@@ -6,13 +6,13 @@ import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
-import dev.slne.surf.surfapi.bukkit.api.toast.ToastBukkitBuilder
 import dev.slne.surf.surfapi.bukkit.server.hook.SurfBukkitHookManager
 import dev.slne.surf.surfapi.bukkit.server.impl.scoreboard.SurfScoreboardBuilderImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
 import dev.slne.surf.surfapi.core.api.toast.Toast
+import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
 import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
@@ -111,8 +111,8 @@ class SurfBukkitApiImpl : SurfCoreApiImpl(), SurfBukkitApi {
         }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
     }
 
-    override fun createToast(builder: ToastBukkitBuilder.() -> Unit): Toast =
-        ToastBukkitBuilder().apply(builder).build()
+    override fun createToast(builder: ToastBuilder.() -> Unit): Toast =
+        ToastBuilder().apply(builder).build()
 
     override fun createToast(icon: Material, text: Component, style: ToastStyle): Toast = ToastImpl(
         SpigotConversionUtil.fromBukkitItemMaterial(icon),

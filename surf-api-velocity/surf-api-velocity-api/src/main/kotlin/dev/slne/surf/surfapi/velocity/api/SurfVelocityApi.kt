@@ -4,9 +4,9 @@ import com.github.retrooper.packetevents.protocol.item.type.ItemType
 import com.velocitypowered.api.proxy.Player
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
 import dev.slne.surf.surfapi.core.api.toast.Toast
+import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
 import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import dev.slne.surf.surfapi.core.api.util.requiredService
-import dev.slne.surf.surfapi.velocity.api.toast.ToastVelocityBuilder
 import net.kyori.adventure.text.Component
 import java.util.concurrent.ExecutorService
 
@@ -19,9 +19,9 @@ interface SurfVelocityApi : SurfCoreApi {
      * @param builder A lambda function that configures the ToastBuilder.
      * @return The created Toast instance.
      *
-     * @see ToastVelocityBuilder
+     * @see ToastBuilder
      */
-    fun createToast(builder: ToastVelocityBuilder.() -> Unit): Toast
+    fun createToast(builder: ToastBuilder.() -> Unit): Toast
 
     /**
      * Creates a Toast with the specified icon, display text, and style.

@@ -4,9 +4,9 @@ import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
-import dev.slne.surf.surfapi.bukkit.api.toast.ToastBukkitBuilder
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
 import dev.slne.surf.surfapi.core.api.toast.Toast
+import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
 import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import net.kyori.adventure.text.Component
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
@@ -114,9 +114,9 @@ interface SurfBukkitApi : SurfCoreApi {
      * @param builder A lambda function that configures the ToastBuilder.
      * @return The created Toast instance.
      *
-     * @see ToastBukkitBuilder
+     * @see ToastBuilder
      */
-    fun createToast(builder: ToastBukkitBuilder.() -> Unit): Toast
+    fun createToast(builder: ToastBuilder.() -> Unit): Toast
 
     /**
      * Creates a Toast with the specified icon, display text, and style.
