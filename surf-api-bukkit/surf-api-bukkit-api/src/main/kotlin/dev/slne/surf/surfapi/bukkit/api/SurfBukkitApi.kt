@@ -4,10 +4,10 @@ import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
-import dev.slne.surf.surfapi.bukkit.api.toast.Toast
-import dev.slne.surf.surfapi.bukkit.api.toast.ToastBuilder
-import dev.slne.surf.surfapi.bukkit.api.toast.ToastStyle
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
+import dev.slne.surf.surfapi.core.api.toast.Toast
+import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
+import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import net.kyori.adventure.text.Component
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
 import org.bukkit.Material
@@ -133,6 +133,8 @@ interface SurfBukkitApi : SurfCoreApi {
         text: Component,
         style: ToastStyle
     ): Toast
+
+    fun sendToast(player: Player, toast: Toast)
 
     companion object {
         @JvmStatic

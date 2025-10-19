@@ -6,24 +6,26 @@ import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
-import dev.slne.surf.surfapi.bukkit.api.toast.Toast
-import dev.slne.surf.surfapi.bukkit.api.toast.ToastBuilder
-import dev.slne.surf.surfapi.bukkit.api.toast.ToastStyle
 import dev.slne.surf.surfapi.bukkit.server.hook.SurfBukkitHookManager
 import dev.slne.surf.surfapi.bukkit.server.impl.scoreboard.SurfScoreboardBuilderImpl
-import dev.slne.surf.surfapi.bukkit.server.impl.toast.ToastImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
+import dev.slne.surf.surfapi.core.api.toast.Toast
+import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
+import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl
+import dev.slne.surf.surfapi.core.server.impl.toast.ToastImpl
+import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.World
+import org.bukkit.entity.Player
 import java.util.*
 
 @AutoService(SurfCoreApi::class)
@@ -113,8 +115,13 @@ class SurfBukkitApiImpl : SurfCoreApiImpl(), SurfBukkitApi {
         ToastBuilder().apply(builder).build()
 
     override fun createToast(icon: Material, text: Component, style: ToastStyle): Toast = ToastImpl(
-        icon,
+        SpigotConversionUtil.fromBukkitItemMaterial(icon),
         text,
         style
     )
+
+    override fun sendToast(
+        player: Player,
+        toast: Toast
+    ) = toast.send(player.uniqueId)
 }
