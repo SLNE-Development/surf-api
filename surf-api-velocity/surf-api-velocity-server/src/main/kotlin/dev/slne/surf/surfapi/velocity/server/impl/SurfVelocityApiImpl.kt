@@ -5,12 +5,12 @@ import com.google.auto.service.AutoService
 import com.velocitypowered.api.proxy.Player
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
 import dev.slne.surf.surfapi.core.api.toast.Toast
-import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
 import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl
 import dev.slne.surf.surfapi.core.server.impl.toast.ToastImpl
 import dev.slne.surf.surfapi.velocity.api.SurfVelocityApi
+import dev.slne.surf.surfapi.velocity.api.toast.ToastVelocityBuilder
 import dev.slne.surf.surfapi.velocity.server.velocityMain
 import net.kyori.adventure.text.Component
 import java.util.*
@@ -23,8 +23,8 @@ class SurfVelocityApiImpl : SurfCoreApiImpl(), SurfVelocityApi {
     }
 
     override val executorService get() = velocityMain.executorService
-    override fun createToast(builder: ToastBuilder.() -> Unit): Toast =
-        ToastBuilder().apply(builder).build()
+    override fun createToast(builder: ToastVelocityBuilder.() -> Unit): Toast =
+        ToastVelocityBuilder().apply(builder).build()
 
     override fun createToast(
         icon: ItemType,
