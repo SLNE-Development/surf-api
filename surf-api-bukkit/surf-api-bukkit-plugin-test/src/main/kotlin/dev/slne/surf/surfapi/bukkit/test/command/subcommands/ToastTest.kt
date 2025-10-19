@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
+import com.github.retrooper.packetevents.protocol.item.type.ItemTypes
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
@@ -14,7 +15,7 @@ class ToastTest(name: String) : CommandAPICommand(name) {
     init {
         playerExecutor { player, _ ->
             player.sendToast {
-                icon(Material.DIAMOND)
+                icon(ItemTypes.DIAMOND)
 
                 text {
                     info("Dsl-Extension Test")
@@ -24,7 +25,7 @@ class ToastTest(name: String) : CommandAPICommand(name) {
             }
 
             player.sendToast(toast {
-                icon(Material.GOLD_INGOT)
+                icon(ItemTypes.GOLD_INGOT)
 
                 text {
                     info("Toast-Builder-Dsl Test")
