@@ -28,6 +28,8 @@ class ToastTest(name: String) : CommandAPICommand(name) {
 
                 text {
                     info("Toast-Builder-Dsl Test")
+                    appendNewline()
+                    info("With multiple lines!")
                 }
 
                 style(ToastStyle.CHALLENGE)
