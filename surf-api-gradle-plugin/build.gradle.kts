@@ -12,7 +12,7 @@ plugins {
     `java-library`
     `kotlin-dsl`
 
-    id("com.gradle.plugin-publish") version "1.3.1"
+    id("com.gradle.plugin-publish") version "2.0.0"
     kotlin("plugin.serialization")
     idea
 }
