@@ -74,12 +74,12 @@ object PlayerLookupService {
                 try {
                     MinecraftServicesApi.getUsername(uuid)
                 } catch (_: Exception) {
-                try {
-                    MinetoolsApi.getUsername(uuid)
-                } catch (_: Exception) {
-                    null
-                }
+                    try {
+                        MinetoolsApi.getUsername(uuid)
+                    } catch (_: Exception) {
+                        null
                     }
+                }
             }
         }
 
@@ -205,12 +205,12 @@ object PlayerLookupService {
 }
 
 /** Type alias for UUID represented as a serializable string. */
-typealias UUIDAsString = @Serializable(with = UUIDSerializer::class) UUID
+private typealias UUIDAsString = @Serializable(with = UUIDSerializer::class) UUID
 
 /**
  * Custom serializer for UUID, converting to and from simplified string format without dashes.
  */
-object UUIDSerializer : KSerializer<UUID> {
+private object UUIDSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
 
