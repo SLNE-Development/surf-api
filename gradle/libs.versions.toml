@@ -147,6 +147,7 @@ flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
 flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
 aide-reflection = { module = "tech.hiddenproject:aide-reflection", version.ref = "aide-reflection" }
 glm = { module = "io.github.kotlin-graphics:glm", version.ref = "glm" }
+datafixerupper = { module = "com.mojang:datafixerupper", version.ref = "datafixerupper" }
 
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
 auto-service = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-service-ksp" }
