@@ -6,9 +6,6 @@ import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
-import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
-import dev.slne.surf.surfapi.core.api.toast.Toast
-import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
@@ -273,9 +270,3 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
         )
     }
 }
-
-fun Player.sendToast(toast: Toast) = toast.send(this.uniqueId)
-fun Player.sendToast(block: ToastBuilder.() -> Unit) =
-    surfBukkitApi.createToast(block).send(this.uniqueId)
-
-fun Toast.send(player: Player) = send(player.uniqueId)

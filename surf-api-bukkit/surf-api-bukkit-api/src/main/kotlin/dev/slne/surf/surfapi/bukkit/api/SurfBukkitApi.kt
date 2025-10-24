@@ -5,12 +5,8 @@ import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
-import dev.slne.surf.surfapi.core.api.toast.Toast
-import dev.slne.surf.surfapi.core.api.toast.ToastBuilder
-import dev.slne.surf.surfapi.core.api.toast.ToastStyle
 import net.kyori.adventure.text.Component
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
-import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.ApiStatus
@@ -107,42 +103,6 @@ interface SurfBukkitApi : SurfCoreApi {
      * @see SkipOperations
      */
     suspend fun skipTimeSmoothly(skipOperation: SkipOperation): Map<World, TimeSkipResult>
-
-    /**
-     * Creates a Toast using the provided builder function.
-     *
-     * @param builder A lambda function that configures the ToastBuilder.
-     * @return The created Toast instance.
-     *
-     * @see ToastBuilder
-     */
-    fun createToast(builder: ToastBuilder.() -> Unit): Toast
-
-    /**
-     * Creates a Toast with the specified icon, display text, and style.
-     *
-     * @param icon The icon material for the toast.
-     * @param text The display text of the toast.
-     * @param style The style of the toast.
-     *
-     * @return The created Toast instance.
-     * @see Toast
-     */
-    fun createToast(
-        icon: Material,
-        text: Component,
-        style: ToastStyle
-    ): Toast
-
-    /**
-     * Sends a toast to the specified player.
-     *
-     * @param player The player to whom the toast will be sent.
-     * @param toast The toast to be sent.
-     *
-     * @see Toast
-     */
-    fun sendToast(player: Player, toast: Toast)
 
     companion object {
         @JvmStatic

@@ -1,44 +1,54 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
-import com.github.retrooper.packetevents.protocol.item.type.ItemTypes
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
-import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
-import dev.slne.surf.surfapi.bukkit.api.util.send
-import dev.slne.surf.surfapi.bukkit.api.util.sendToast
-import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
-import dev.slne.surf.surfapi.core.api.toast.ToastStyle
-import dev.slne.surf.surfapi.core.api.toast.toast
-import org.bukkit.Material
+import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.player.toast.toast
+import io.papermc.paper.advancement.AdvancementDisplay
+import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.datacomponent.item.ResolvableProfile
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.`object`.ObjectContents
+import org.bukkit.inventory.ItemType
 
 class ToastTest(name: String) : CommandAPICommand(name) {
+    val toast = toast {
+        icon(ItemType.DIAMOND)
+
+        title {
+            primary("Dsl-Extension Test")
+            appendNewline()
+            info("With multiple lines!")
+        }
+
+        frame(AdvancementDisplay.Frame.TASK)
+    }
+
     init {
         playerExecutor { player, _ ->
-            player.sendToast {
-                icon(ItemTypes.DIAMOND)
-
-                text {
-                    info("Dsl-Extension Test")
+            val playerHeadToast = toast {
+                icon(ItemType.PLAYER_HEAD) {
+                    setData(DataComponentTypes.PROFILE, ResolvableProfile.resolvableProfile(player.playerProfile))
                 }
 
-                style(ToastStyle.TASK)
+                title {
+                    primary("Player Head Test")
+                }
             }
 
-            player.sendToast(toast {
-                icon(ItemTypes.GOLD_INGOT)
+            val playerObjectToast = toast {
+                icon(ItemType.BARRIER)
 
-                text {
-                    info("Toast-Builder-Dsl Test")
-                    appendNewline()
-                    info("With multiple lines!")
+                title {
+                    append(Component.`object`(ObjectContents.playerHead(player.uniqueId)))
+                    appendSpace()
+                    append(Component.text("Player Head Test"))
                 }
+            }
 
-                style(ToastStyle.CHALLENGE)
-            })
-
-            surfBukkitApi.createToast(Material.NETHERITE_AXE, buildText {
-                info("Direct API Call Test")
-            }, ToastStyle.GOAL).send(player)
+            toast.createOperation()
+                .add(playerHeadToast.createOperation())
+                .add(playerObjectToast.createOperation())
+                .execute(player)
         }
     }
 }
