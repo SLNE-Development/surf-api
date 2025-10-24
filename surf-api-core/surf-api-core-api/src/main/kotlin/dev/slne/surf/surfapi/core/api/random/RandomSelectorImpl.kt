@@ -19,12 +19,20 @@ internal class RandomSelectorImpl<E>(
 
     override fun pick(randomGenerator: RandomGenerator): E {
         val totalWeight = cumulativeWeights.getDouble(cumulativeWeights.size - 1)
-        val randomValue = randomGenerator.nextDouble(totalWeight)
+        val r = randomGenerator.nextDouble(totalWeight)
 
-        val index = cumulativeWeights.binarySearch { if (it < randomValue) -1 else 0 }
-            .let { if (it < 0) -(it + 1) else it }
-
-        return elements[index]
+        // lower_bound search for first cumulative >= r
+        var lo = 0
+        var hi = cumulativeWeights.size - 1
+        while (lo < hi) {
+            val mid = (lo + hi) ushr 1
+            if (r <= cumulativeWeights.getDouble(mid)) {
+                hi = mid
+            } else {
+                lo = mid + 1
+            }
+        }
+        return elements[lo]
     }
 
     override fun flow(randomGenerator: RandomGenerator): Flow<E> = kotlinx.coroutines.flow.flow {
