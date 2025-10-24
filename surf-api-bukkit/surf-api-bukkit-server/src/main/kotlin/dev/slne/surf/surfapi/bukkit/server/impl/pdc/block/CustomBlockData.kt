@@ -129,6 +129,10 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
         return pdc.serializeToBytes()
     }
 
+    override fun getSize(): Int {
+        return pdc.size
+    }
+
     companion object {
         fun getKey(block: Block): NamespacedKey {
             return key("x${block.x and 15}y${block.y}z${block.z and 15}")
