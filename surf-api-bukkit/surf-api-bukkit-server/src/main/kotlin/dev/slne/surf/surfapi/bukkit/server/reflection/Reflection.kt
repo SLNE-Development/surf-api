@@ -11,6 +11,8 @@ object Reflection {
     val ITEM_PROXY: ItemProxy
     val ENTITY_PROXY: EntityProxy
     val SERVER_CONNECTION_LISTENER_PROXY: ServerConnectionListenerProxy
+    val MAPPED_REGISTRY_PROXY: MappedRegistryProxy
+    val HOLDER_SET_PROXY_NAMED: HolderSetProxy.NamedProxy
 
     init {
         val remapper = ReflectionRemapper.forReobfMappingsInPaperJar()
@@ -21,6 +23,8 @@ object Reflection {
         ITEM_PROXY = surfReflection.createProxy<ItemProxy>()
         ENTITY_PROXY = proxyFactory.reflectionProxy<EntityProxy>()
         SERVER_CONNECTION_LISTENER_PROXY = proxyFactory.reflectionProxy<ServerConnectionListenerProxy>()
+        MAPPED_REGISTRY_PROXY = proxyFactory.reflectionProxy<MappedRegistryProxy>()
+        HOLDER_SET_PROXY_NAMED = proxyFactory.reflectionProxy<HolderSetProxy.NamedProxy>()
 
         // gc the remapper
         System.gc()

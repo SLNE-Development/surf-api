@@ -15,8 +15,12 @@ class Generators(registries: Registries, advancementRegistry: AdvancementRegistr
         AdvancementGenerator("VanillaAdvancementKeys", CORE_GENERATED_PACKAGE, advancementRegistry),
     )
 
+    val bukkitApiGenerators = arrayOf<SourceGenerator>(
+    )
+
     companion object {
         private const val CORE_GENERATED_PACKAGE = "dev.slne.surf.surfapi.core.api.generated"
+        private const val BUKKIT_GENERATED_PACKAGE = "dev.slne.surf.surfapi.bukkit.api.generated"
 
         private fun simpleKey(className: String, registry: GenericRegistry) =
             GeneratedKeyType(className, CORE_GENERATED_PACKAGE, registry)

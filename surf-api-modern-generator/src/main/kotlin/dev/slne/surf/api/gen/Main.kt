@@ -26,11 +26,16 @@ fun main() {
 
     val generators = Generators(registries, advancementRegistry)
 
-    val root = Path("../surf-api-core/surf-api-core-api/src/main")
-    val java = root / "java"
-    val kotlin = root / "kotlin"
+    val rootCore = Path("../surf-api-core/surf-api-core-api/src/main")
+    val javaCore = rootCore / "java"
+    val kotlinCore = rootCore / "kotlin"
 
-    generate(java, kotlin, generators.coreApiGenerators)
+    val bukkitCore = Path("../surf-api-bukkit/surf-api-bukkit-api/src/main")
+    val javaBukkit = bukkitCore / "java"
+    val kotlinBukkit = bukkitCore / "kotlin"
+
+    generate(javaCore, kotlinCore, generators.coreApiGenerators)
+    generate(javaBukkit, kotlinBukkit, generators.bukkitApiGenerators)
 }
 
 private fun loadAdvancements(root: Path): AdvancementRegistry {
@@ -53,6 +58,8 @@ private fun buildCategory(dir: Path): AdvancementCategory {
         .filter { it.isDirectory() && !it.name.startsWith(".") && !it.name.startsWith("_") }
         .sortedBy { it.name }
         .map { buildCategory(it) }
+
+    net.minecraft.data.Main
 
     return AdvancementCategory(
         name = dir.name,

@@ -11,6 +11,7 @@ import kotlin.io.path.*
 
 plugins {
     `core-convention`
+    id("io.papermc.paperweight.userdev") apply true
 }
 
 dependencies {

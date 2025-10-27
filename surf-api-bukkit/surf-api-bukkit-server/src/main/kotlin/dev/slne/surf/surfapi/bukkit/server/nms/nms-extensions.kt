@@ -13,6 +13,8 @@ import io.papermc.paper.math.Position
 import net.minecraft.advancements.AdvancementType
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
+import net.minecraft.server.MinecraftServer
+import net.minecraft.server.dedicated.DedicatedServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Display
@@ -126,6 +128,7 @@ fun Component.toBukkit(): AdventureComponent = PaperAdventure.asAdventure(this)
 fun Server.toCraft() = this as CraftServer
 val craftServer: CraftServer get() = server.toCraft()
 val commodore: Commodore get() = CraftMagicNumbers.INSTANCE.commodore
+val dedicatedServer: DedicatedServer get() = MinecraftServer.getServer() as DedicatedServer
 
 fun EntityType.toNms(): net.minecraft.world.entity.EntityType<*> = CraftEntityType.bukkitToMinecraft(this)
 fun World.toNms(): ServerLevel = (this as CraftWorld).handle
