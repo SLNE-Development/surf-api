@@ -18,7 +18,12 @@ object JavaUUIDStringSerializer : KSerializer<UUID> {
     }
 
     override fun deserialize(decoder: Decoder): UUID {
-        return fromString(decoder.decodeString())
+        val input = decoder.decodeString()
+        if (input.length == 36) {
+            return UUID.fromString(input)
+        }
+
+        return fromString(input)
     }
 
     fun fromUUID(value: UUID): String {
