@@ -4,6 +4,7 @@ import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.generators.LibrariesLoaderGenerator.generateLibrariesLoaderTask
 import dev.slne.surf.surfapi.gradle.platform.paper.AbstractPaperSurfPlugin
 import dev.slne.surf.surfapi.gradle.util.registerRequired
+import dev.slne.surf.surfapi.gradle.util.registerSoft
 import net.minecrell.pluginyml.GeneratePluginDescription
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 import org.gradle.api.Project
@@ -52,7 +53,7 @@ internal class PaperPluginSurfPlugin :
             bootstrapDependencies {
                 registerRequired("surf-bukkit-api")
                 if (extension.cloudModule.isPresent) {
-                    registerRequired("surf-cloud-bukkit")
+                    registerSoft("surf-cloud-bukkit")
                 }
 
                 extension.bootstrapDependencies.orNull?.execute(this)
@@ -61,7 +62,7 @@ internal class PaperPluginSurfPlugin :
             serverDependencies {
                 registerRequired("surf-bukkit-api")
                 if (extension.cloudModule.isPresent) {
-                    registerRequired("surf-cloud-bukkit")
+                    registerSoft("surf-cloud-bukkit")
                 }
                 extension.serverDependencies.orNull?.execute(this)
             }
