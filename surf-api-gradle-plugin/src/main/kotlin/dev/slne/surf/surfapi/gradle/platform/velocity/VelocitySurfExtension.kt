@@ -14,4 +14,9 @@ open class VelocitySurfExtension @Inject constructor(
     fun withCloudClientVelocity() {
         cloudModule.set(SurfCloudModules.CLIENT_VELOCITY)
     }
+
+    fun dependOnCloudPlugin(value: Boolean) {
+        dependOnCloud.set(value)
+        dependOnCloud.finalizeValue()
+    }
 }

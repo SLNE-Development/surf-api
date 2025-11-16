@@ -11,6 +11,7 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
     internal val publishingUrl = objects.property<String>().convention("https://repo.slne.dev/repository/maven-releases")
     internal val publishingRepoName = objects.property<String>().convention("maven-releases")
     internal val cloudModule = objects.property<SurfCloudModules>()
+    internal val dependOnCloud = objects.property<Boolean>().convention(true)
     internal val migrationMainClass = objects.property<String>()
 
     fun addSurfApiToClasspath(value: Boolean) {
