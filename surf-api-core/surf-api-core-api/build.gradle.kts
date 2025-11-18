@@ -29,9 +29,8 @@ dependencies {
     api(libs.glm)
 
     api(libs.caffeine.courotines)
-    api(libs.kotlinxCoroutines.core)
-    api(libs.kotlinxCoroutines.reactive)
-    api(libs.kotlinxCoroutines.reactor)
+    api(libs.bundles.kotlin.coroutines)
+    api(libs.bundles.reactor.netty)
     api(libs.kotlin.reflect)
     api(libs.kotlin.serialization.json)
 
