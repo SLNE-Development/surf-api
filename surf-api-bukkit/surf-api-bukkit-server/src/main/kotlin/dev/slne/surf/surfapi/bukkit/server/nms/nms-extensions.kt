@@ -4,10 +4,13 @@ package dev.slne.surf.surfapi.bukkit.server.nms
 
 import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.SignBlockUpdateSettings
+import io.papermc.paper.advancement.AdvancementDisplay
+import io.papermc.paper.advancement.AdvancementDisplay.Frame.*
 import io.papermc.paper.adventure.PaperAdventure
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
 import io.papermc.paper.math.Position
+import net.minecraft.advancements.AdvancementType
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
@@ -62,6 +65,7 @@ fun Material.toNmsItem(): Item = CraftMagicNumbers.getItem(this)
 fun BlockData.toNms(): NmsBlockState = (this as CraftBlockData).state
 fun Vector3f?.toNms(): NmsVector3f? =
     if (this == null) null else NmsVector3f(this.x(), this.y(), this.z())
+
 fun FinePosition.toNms() = Vec3(x(), y(), z())
 fun BlockState.toNms(): NmsBlockState = (this as CraftBlockState).handle
 fun Quaternionf?.toNms(): NmsQuaternionf? =
@@ -128,3 +132,9 @@ fun World.toNms(): ServerLevel = (this as CraftWorld).handle
 fun Entity.toNms(): net.minecraft.world.entity.Entity = (this as CraftEntity).handle
 fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity = (this as CraftLivingEntity).handle
 fun DamageSource.toNms(): net.minecraft.world.damagesource.DamageSource = (this as CraftDamageSource).handle
+
+fun AdvancementDisplay.Frame.toNms() = when (this) {
+    CHALLENGE -> AdvancementType.CHALLENGE
+    GOAL -> AdvancementType.GOAL
+    TASK -> AdvancementType.TASK
+}

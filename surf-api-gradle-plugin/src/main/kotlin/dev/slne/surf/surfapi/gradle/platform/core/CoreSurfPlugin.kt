@@ -7,7 +7,12 @@ import org.gradle.api.model.ObjectFactory
 
 internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
     platformName: String, platform: SurfApiPlatform,
-) : CommonSurfPlugin<E>(platformName, platform)
+) : CommonSurfPlugin<E>(platformName, platform) {
+    init {
+        "com.mojang.serialization" relocatesTo "mojang.serialization"
+        "com.mojang.datafixers" relocatesTo "mojang.datafixers"
+    }
+}
 
 internal class CoreSurfPlugin :
     AbstractCoreSurfPlugin<CoreSurfExtension>("core", SurfApiPlatform.CORE) {

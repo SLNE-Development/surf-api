@@ -51,7 +51,7 @@ internal class PaperPluginSurfPlugin :
 
             bootstrapDependencies {
                 registerRequired("surf-bukkit-api")
-                if (extension.cloudModule.isPresent) {
+                if (extension.cloudModule.isPresent && extension.dependOnCloud.get()) {
                     registerRequired("surf-cloud-bukkit")
                 }
 
@@ -60,7 +60,7 @@ internal class PaperPluginSurfPlugin :
 
             serverDependencies {
                 registerRequired("surf-bukkit-api")
-                if (extension.cloudModule.isPresent) {
+                if (extension.cloudModule.isPresent && extension.dependOnCloud.get()) {
                     registerRequired("surf-cloud-bukkit")
                 }
                 extension.serverDependencies.orNull?.execute(this)

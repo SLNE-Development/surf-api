@@ -42,11 +42,21 @@ dependencies {
     compileOnlyApi(libs.fastutil)
 
     api(libs.bundles.ktor.client)
+
+    api(libs.datafixerupper) { isTransitive = false }
 }
 
 kotlin {
     compilerOptions {
         optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+    }
+}
+
+tasks {
+    shadowJar {
+        val relocationPrefix: String by project
+        relocate("com.mojang.serialization", "$relocationPrefix.mojang.serialization")
+        relocate("com.mojang.datafixers", "$relocationPrefix.mojang.datafixers")
     }
 }
 
