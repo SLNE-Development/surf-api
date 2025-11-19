@@ -135,7 +135,7 @@ interface Colors {
         }
 
         /**
-         * The surf used across all Surf plugins, ensuring a recognizable and uniform
+         * The Surf prefix used across all Surf plugins, ensuring a recognizable and uniform
          * identifier in messages.
          */
         @JvmField
