@@ -1,9 +1,11 @@
 package dev.slne.surf.surfapi.core.api.messages
 
+import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextColor.color
+import net.kyori.adventure.text.format.TextDecoration
 
 /**
  * A class that defines all the colors used in the Surf system, ensuring a consistent visual style
@@ -108,11 +110,36 @@ interface Colors {
         // -------------------- Default Colors -------------------- //
 
         /**
-         * The default prefix used across all Surf plugins, ensuring a recognizable and uniform
+         * The default prefix used across all Surf plugins
+         */
+        @JvmField
+        val PREFIX: Component = buildText {
+            spacer("»")
+            appendSpace()
+        }
+
+        @JvmField
+        val WARNING_PREFIX: Component = buildText {
+            spacer("[")
+            error("!", TextDecoration.BOLD)
+            spacer("]")
+            appendSpace()
+        }
+
+        @JvmField
+        val ERROR_PREFIX: Component = buildText {
+            spacer("[")
+            error("✘", TextDecoration.BOLD)
+            spacer("]")
+            appendSpace()
+        }
+
+        /**
+         * The surf used across all Surf plugins, ensuring a recognizable and uniform
          * identifier in messages.
          */
         @JvmField
-        val PREFIX: Component = Component.text(">> ", DARK_SPACER)
+        val SURF_PREFIX: Component = Component.text(">> ", DARK_SPACER)
             .append(Component.text("Surf", PREFIX_COLOR))
             .append(Component.text(" | ", DARK_SPACER))
 

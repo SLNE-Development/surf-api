@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.api.messages.builder
 
+import dev.slne.surf.surfapi.core.api.messages.*
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.DARK_SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.ERROR
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.INFO
@@ -11,14 +12,10 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SUCCESS
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.WARNING
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCONNECT_HEADER
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCORD_LINK
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPERATOR
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.TIME_SEPARATOR
-import dev.slne.surf.surfapi.core.api.messages.NoLowercase
-import dev.slne.surf.surfapi.core.api.messages.joinToComponent
-import dev.slne.surf.surfapi.core.api.messages.joinToComponentNewLine
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.*
 import net.kyori.adventure.text.event.ClickEvent
@@ -44,6 +41,9 @@ interface SurfComponentBuilder : TextComponent.Builder {
     }
 
     fun appendPrefix() = append(PREFIX)
+    fun appendSurfPrefix() = append(Colors.SURF_PREFIX)
+    fun appendErrorPrefix() = append(Colors.ERROR_PREFIX)
+    fun appendWarningPrefix() = append(Colors.WARNING_PREFIX)
     fun appendNewPrefixedLine() = appendNewline().appendPrefix()
 
     fun append(block: SurfComponentBuilder.() -> Unit): SurfComponentBuilder =
@@ -233,6 +233,9 @@ interface SurfComponentBuilder : TextComponent.Builder {
 
     fun darkSpacer(long: Long, vararg decoration: TextDecoration) =
         text(long, DARK_SPACER, *decoration)
+
+    fun white(any: Any, vararg decoration: TextDecoration) =
+        text(any.toString(), Colors.WHITE, *decoration)
 
     fun ellipsis(color: TextColor? = SPACER) = append(CommonComponents.ELLIPSIS.color(color))
 
