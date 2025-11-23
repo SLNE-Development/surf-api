@@ -31,5 +31,12 @@ dependencies {
     runtimeOnly(libs.flogger.slf4j.backend)
 }
 
+tasks {
+    shadowJar {
+        val relocationPrefix: String by project
+        relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt")
+    }
+}
+
 private fun <T : ModuleDependency> T.exclude(provider: Provider<MinimalExternalModuleDependency>) =
     provider.get().module.apply { exclude(group, name) }

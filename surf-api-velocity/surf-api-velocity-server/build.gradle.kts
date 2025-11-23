@@ -23,6 +23,7 @@ tasks {
     shadowJar {
         val relocationPrefix: String by project
         relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
+        relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt")
     }
 }
 
