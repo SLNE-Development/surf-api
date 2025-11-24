@@ -32,7 +32,7 @@ dependencies {
     api(libs.bundles.kotlin.coroutines)
     api(libs.bundles.reactor.netty)
     api(libs.kotlin.reflect)
-    api(libs.kotlin.serialization.json)
+    api(libs.bundles.kotlin.serialization)
 
     compileOnlyApi(libs.guava)
     compileOnlyApi(libs.caffeine)

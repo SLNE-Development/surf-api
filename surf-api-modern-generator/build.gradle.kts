@@ -14,7 +14,7 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.kotlin.serialization.json)
+    implementation(libs.bundles.kotlin.serialization)
 
     implementation("com.squareup:javapoet:1.13.0")
     implementation("com.squareup:kotlinpoet:2.2.0")
@@ -86,7 +86,10 @@ val downloadRegistriesTask by tasks.register("downloadRegistries") {
         outputDir.resolve("reports").toPath()
             .moveTo(resourcesDir.toPath(), StandardCopyOption.REPLACE_EXISTING)
         outputDir.resolve("data").resolve("minecraft").resolve("advancement").toPath()
-            .moveTo(resourcesDir.resolve("advancement").toPath(), StandardCopyOption.REPLACE_EXISTING)
+            .moveTo(
+                resourcesDir.resolve("advancement").toPath(),
+                StandardCopyOption.REPLACE_EXISTING
+            )
         outputDir.deleteRecursively()
 
         println("Done!")

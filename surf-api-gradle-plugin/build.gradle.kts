@@ -20,7 +20,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.6.2")
+    append("-1.6.3")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -33,7 +33,8 @@ val pluginDependencies = listOf(
     libs.kotlin.gradle.plugin,
     libs.kotlin.all.open,
     libs.kotlin.no.arg,
-    libs.kotlin.serialization,
+    libs.kotlin.serialization.json,
+    libs.kotlin.serialization.protobuf,
     libs.shadow.gradle.plugin,
     libs.run.paper.gradle.plugin,
     libs.plugin.yml.paper.gradle.plugin,
@@ -45,7 +46,7 @@ dependencies {
     pluginDependencies.forEach { dep -> api(dep) }
 
     implementation("com.palantir.javapoet:javapoet:0.6.0")
-    implementation(libs.kotlin.serialization.json)
+    implementation(libs.bundles.kotlin.serialization)
 }
 
 gradlePlugin {

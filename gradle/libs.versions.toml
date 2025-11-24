@@ -80,6 +80,7 @@ kotlinxCoroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines
 kotlinxCoroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinxCoroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlin-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
 
 # Packet Events
 packetevents-spigot = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
@@ -186,3 +187,4 @@ ktor-client = ["ktor-client-core", "ktor-client-okhttp", "ktor-client-content-ne
 inventory-framework = ["inventory-framework-platform-paper", "inventory-framework-platform-bukkit"]
 reactor-netty = ["reactor-netty-core", "reactor-netty-http"]
 kotlin-coroutines = ["kotlinxCoroutines-core", "kotlinxCoroutines-reactor", "kotlinxCoroutines-reactive"]
+kotlin-serialization = ["kotlin-serialization-json", "kotlin-serialization-protobuf"]
