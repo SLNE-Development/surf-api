@@ -19,7 +19,7 @@ luckperms = "v5.5.0-bukkit"
 
 # Scoreboard Library
 scoreboard-library = "2.4.3"
-scoreboard-library-implementation = "2.4.2"
+scoreboard-library-implementation = "2.4.3"
 scoreboard-library-modern = "2.4.2"
 
 # Adventure
