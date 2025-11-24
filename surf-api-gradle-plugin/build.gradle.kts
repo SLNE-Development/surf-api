@@ -44,7 +44,7 @@ dependencies {
     compileOnly(gradleApi())
     pluginDependencies.forEach { dep -> api(dep) }
 
-    implementation("com.palantir.javapoet:javapoet:0.6.0")
+    implementation("com.palantir.javapoet:javapoet:0.8.0")
     implementation(libs.bundles.kotlin.serialization)
 }
 
