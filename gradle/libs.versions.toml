@@ -67,7 +67,7 @@ reactor-netty = "1.3.0"
 maven-repo-auth = "3.0.4"
 shadow-gradle-plugin = "9.2.2"
 run-paper-gradle-plugin = "3.0.1"
-dokka = "2.0.0"
+dokka = "2.1.0"
 
 
 [libraries]
