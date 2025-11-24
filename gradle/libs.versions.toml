@@ -3,7 +3,7 @@
 paper-api = "1.21.10-R0.1-SNAPSHOT"
 
 # Kolin
-kotlinVersion = "2.2.20"
+kotlinVersion = "2.2.21"
 kotlinxCoroutines = "1.10.2"
 kotlinx-serialization = "1.9.0"
 
