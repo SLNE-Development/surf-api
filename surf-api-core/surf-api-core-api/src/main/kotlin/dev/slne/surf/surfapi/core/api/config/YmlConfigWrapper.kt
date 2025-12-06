@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
 class YmlConfigWrapper<T : Any>(
     private val clazz: KClass<T>,
     private val configFolder: Path,
-    private val fileName: String
+    private val fileName: @YamlConfigFileNamePattern String
 ) {
     /**
      * Manages the configuration of type [T] through a Sponge-based configuration manager.
@@ -87,7 +87,7 @@ class YmlConfigWrapper<T : Any>(
  */
 inline fun <reified C : Any> SurfConfigApi.createYmlConfig(
     configFolder: Path,
-    fileName: String = "config.yml"
+    fileName: @YamlConfigFileNamePattern String = "config.yml"
 ): YmlConfigWrapper<C> {
     return YmlConfigWrapper(C::class, configFolder, fileName)
 }
