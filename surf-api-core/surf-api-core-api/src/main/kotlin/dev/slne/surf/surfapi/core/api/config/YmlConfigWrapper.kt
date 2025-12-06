@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
  * @param fileName The name of the configuration file in YAML format.
  *
  * Example usage:
- * ```
+ * ```kotlin
  * import dev.slne.surf.surfapi.core.api.config.surfConfigApi
  *
  * val myConfig = surfConfigApi.createYmlConfig<MyConfigClass>(configFolderPath)
