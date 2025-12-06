@@ -60,7 +60,6 @@ class YmlConfigWrapper<T : Any>(
      * @param block A lambda function defining the modifications to be applied to the configuration object.
      */
     fun edit(save: Boolean = true, block: T.() -> Unit) {
-        val config = config
         config.block()
 
         if (save) {
