@@ -13,7 +13,12 @@ import kotlin.reflect.KClass
  * @param configFolder The folder where the configuration file is located.
  * @param fileName The name of the configuration file in YAML format.
  *
- * Use in your main: val myConfig = surfConfigApi.createYmlConfig<MyConfigClass>(configFolderPath)
+ * Example usage:
+ * ```
+ * import dev.slne.surf.surfapi.core.api.config.surfConfigApi
+ *
+ * val myConfig = surfConfigApi.createYmlConfig<MyConfigClass>(configFolderPath)
+ * ```
  */
 class YmlConfigWrapper<T : Any>(
     private val clazz: KClass<T>,
@@ -60,7 +65,6 @@ class YmlConfigWrapper<T : Any>(
      * @param block A lambda function defining the modifications to be applied to the configuration object.
      */
     fun edit(save: Boolean = true, block: T.() -> Unit) {
-        val config = config
         config.block()
 
         if (save) {
