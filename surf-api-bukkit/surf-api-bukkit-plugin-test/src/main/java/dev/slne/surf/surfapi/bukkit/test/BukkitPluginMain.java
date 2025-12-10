@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListener
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection;
+import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig;
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,9 @@ public class BukkitPluginMain extends JavaPlugin {
 
   @Override
   public void onLoad() {
+    ModernTestConfig.Companion.init();
+    ModernTestConfig.Companion.randomise();
+
     SurfBukkitPacketListenerApi.Companion.getInstance().registerListeners(new ChatListener());
     InventoryFrameworkExtensions.register(TestInventoryView.INSTANCE);
 //    TestConfig config = SurfCore#Api.getCore()

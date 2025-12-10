@@ -20,19 +20,20 @@ import java.nio.file.Path
  * @param configClass the Java class of [C], used by underlying config frameworks
  * to create and map configuration instances.
  */
-sealed class SpongeConfigClass<C>(configClass: Class<C>) {
+sealed class SpongeConfigClass<C>(
+    configClass: Class<C>,
     /**
      * Folder where the configuration file is stored.
      *
      * Implementations should point this to a plugin- or module-specific config directory.
      */
-    protected abstract val configFolder: Path
-
+    protected val configFolder: Path,
     /**
      * The name of the configuration file, including its extension
      * (for example `settings.yml` or `settings.json`).
      */
-    protected abstract val fileName: String
+    protected val fileName: String
+) {
 
     /**
      * The underlying configuration manager responsible for loading, saving,

@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.core.api.config
 
+import java.nio.file.Path
+
 /**
  * Convenience base class for YAML-backed Sponge configuration classes.
  *
@@ -12,9 +14,11 @@ package dev.slne.surf.surfapi.core.api.config
  * data class MyConfig(
  *     var someField: String = "value"
  * ) {
- *     companion object : SpongeYmlConfigClass<MyConfig>(MyConfig::class.java) {
- *         override val configFolder = Path("config/my-plugin")
- *         override val fileName = "my-config.yml"
+ *     companion object : SpongeYmlConfigClass<MyConfig>(
+ *         MyConfig::class.java,
+ *         Path("config/my-plugin"),
+ *         "my-config.yml"
+ *     ) {
  *     }
  * }
  * ```
@@ -22,7 +26,9 @@ package dev.slne.surf.surfapi.core.api.config
  * @param C the type of the configuration data object.
  * @param configClass the Java class of [C], used by the underlying config framework.
  */
-abstract class SpongeYmlConfigClass<C>(configClass: Class<C>) : SpongeConfigClass<C>(configClass) {
+abstract class SpongeYmlConfigClass<C>(
+    configClass: Class<C>, configFolder: Path, fileName: String
+) : SpongeConfigClass<C>(configClass, configFolder, fileName) {
 
     /**
      * YAML-backed configuration manager for this config type.
