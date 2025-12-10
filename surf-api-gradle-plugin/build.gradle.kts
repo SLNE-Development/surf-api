@@ -1,3 +1,6 @@
+import gradle.kotlin.dsl.accessors._243eb5039d4da502111cc46640837e78.compileOnly
+import gradle.kotlin.dsl.accessors._243eb5039d4da502111cc46640837e78.implementation
+import gradle.kotlin.dsl.accessors._243eb5039d4da502111cc46640837e78.sourceSets
 import java.nio.file.Files
 
 // region properties
@@ -20,7 +23,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.6.5")
+    append("-1.6.4")
     if (snapshot) append("-SNAPSHOT")
 }
 
