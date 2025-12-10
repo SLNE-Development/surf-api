@@ -63,6 +63,21 @@ interface SurfConfigApi {
     ): C
 
     /**
+     * Creates a Sponge YAML configuration manager.
+     *
+     * @param C The type of the configuration class.
+     * @param configClass The class of the configuration.
+     * @param configFolder The folder where the configuration file is stored.
+     * @param configFileName The name of the configuration file. Must follow the YAML file name pattern.
+     * @return An instance of [SpongeConfigManager] for the configuration class [C].
+     */
+    fun <C> createSpongeYmlConfigManager(
+        configClass: Class<C>,
+        configFolder: Path,
+        configFileName: @YamlConfigFileNamePattern String,
+    ): SpongeConfigManager<C>
+
+    /**
      * Creates a Sponge JSON configuration file.
      *
      * @param C The type of the configuration class.
@@ -76,6 +91,21 @@ interface SurfConfigApi {
         configFolder: Path,
         configFileName: @JsonConfigFileNamePattern String,
     ): C
+
+    /**
+     * Creates a Sponge JSON configuration manager.
+     *
+     * @param C The type of the configuration class.
+     * @param configClass The class of the configuration.
+     * @param configFolder The folder where the configuration file is stored.
+     * @param configFileName The name of the configuration file. Must follow the JSON file name pattern.
+     * @return An instance of [SpongeConfigManager] for the configuration class [C].
+     */
+    fun <C> createSpongeJsonConfigManager(
+        configClass: Class<C>,
+        configFolder: Path,
+        configFileName: @JsonConfigFileNamePattern String,
+    ): SpongeConfigManager<C>
 
     /**
      * Retrieves a Sponge configuration.
@@ -163,6 +193,19 @@ inline fun <reified C> SurfConfigApi.createSpongeYmlConfig(
 ) = createSpongeYmlConfig(C::class.java, configFolder, configFileName)
 
 /**
+ * Creates a Sponge YAML configuration manager using a reified type.
+ *
+ * @param C The type of the configuration class.
+ * @param configFolder The folder where the configuration file is stored.
+ * @param configFileName The name of the configuration file. Must follow the YAML file name pattern.
+ * @return An instance of [SpongeConfigManager] for the configuration class [C].
+ */
+inline fun <reified C> SurfConfigApi.createSpongeYmlConfigManager(
+    configFolder: Path,
+    configFileName: @YamlConfigFileNamePattern String,
+) = createSpongeYmlConfigManager(C::class.java, configFolder, configFileName)
+
+/**
  * Creates a Sponge JSON configuration using a reified type.
  *
  * @param C The type of the configuration class.
@@ -174,6 +217,19 @@ inline fun <reified C> SurfConfigApi.createSpongeJsonConfig(
     configFolder: Path,
     configFileName: @JsonConfigFileNamePattern String,
 ) = createSpongeJsonConfig(C::class.java, configFolder, configFileName)
+
+/**
+ * Creates a Sponge JSON configuration manager using a reified type.
+ *
+ * @param C The type of the configuration class.
+ * @param configFolder The folder where the configuration file is stored.
+ * @param configFileName The name of the configuration file. Must follow the JSON file name pattern.
+ * @return An instance of [SpongeConfigManager] for the configuration class [C].
+ */
+inline fun <reified C> SurfConfigApi.createSpongeJsonConfigManager(
+    configFolder: Path,
+    configFileName: @JsonConfigFileNamePattern String,
+) = createSpongeJsonConfigManager(C::class.java, configFolder, configFileName)
 
 /**
  * Retrieves a Sponge configuration using a reified type.

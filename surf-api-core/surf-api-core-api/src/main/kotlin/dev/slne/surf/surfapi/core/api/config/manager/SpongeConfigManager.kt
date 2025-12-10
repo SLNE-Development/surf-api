@@ -78,6 +78,19 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
         }
     }
 
+    /**
+     * Allows editing the configuration by applying changes within the provided block.
+     * Optionally saves the changes to the configuration file after applying the modifications.
+     *
+     * @param save Indicates whether the configuration should be saved after applying changes. Defaults to `true`.
+     * @param block A lambda with receiver scope of the configuration type to apply modifications.
+     */
+    inline fun edit(save: Boolean = true, block: C.() -> Unit) {
+        config.block()
+        if (save) {
+            save()
+        }
+    }
 
 
     companion object {
@@ -141,7 +154,8 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
 
             try {
                 val node: ScopedConfigurationNode<*> = loader.load()
-                val config = node.get(configClass) ?: throw LoadConfigException("Config is null after load")
+                val config =
+                    node.get(configClass) ?: throw LoadConfigException("Config is null after load")
 
                 loader.save(node)
                 node.set(configClass, config)

@@ -34,15 +34,34 @@ class SurfConfigApiImpl : SurfConfigApi {
     override fun <C> reloadDazzlConfig(configClass: Class<C>): C =
         DazzlConfConfigTracker.reloadConfig(configClass)
 
+    override fun <C> createSpongeYmlConfigManager(
+        configClass: Class<C>,
+        configFolder: Path,
+        configFileName: @YamlConfigFileNamePattern String
+    ): SpongeConfigManager<C> {
+        val manager = SpongeConfigManager.yaml(configClass, configFolder, configFileName)
+        SpongeConfigTracker.registerConfig(configClass, manager)
+
+        return manager
+    }
+
+    override fun <C> createSpongeJsonConfigManager(
+        configClass: Class<C>,
+        configFolder: Path,
+        configFileName: @JsonConfigFileNamePattern String
+    ): SpongeConfigManager<C> {
+        val manager = SpongeConfigManager.json(configClass, configFolder, configFileName)
+        SpongeConfigTracker.registerConfig(configClass, manager)
+
+        return manager
+    }
+
     override fun <C> createSpongeYmlConfig(
         configClass: Class<C>,
         configFolder: Path,
         configFileName: @YamlConfigFileNamePattern String
     ): C {
-        val manager = SpongeConfigManager.yaml(configClass, configFolder, configFileName)
-        SpongeConfigTracker.registerConfig(configClass, manager)
-
-        return manager.config
+        return createSpongeYmlConfigManager(configClass, configFolder, configFileName).config
     }
 
     override fun <C> createSpongeJsonConfig(
@@ -50,10 +69,7 @@ class SurfConfigApiImpl : SurfConfigApi {
         configFolder: Path,
         configFileName: @JsonConfigFileNamePattern String
     ): C {
-        val manager = SpongeConfigManager.json(configClass, configFolder, configFileName)
-        SpongeConfigTracker.registerConfig(configClass, manager)
-
-        return manager.config
+        return createSpongeJsonConfigManager(configClass, configFolder, configFileName).config
     }
 
     override fun <C> getSpongeConfig(configClass: Class<C>): C =
