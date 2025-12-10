@@ -11,6 +11,7 @@ import org.spongepowered.configurate.serialize.SerializationException
 import org.spongepowered.configurate.serialize.TypeSerializer
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import org.spongepowered.configurate.util.CheckedConsumer
+import java.lang.reflect.AnnotatedType
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.*
@@ -60,6 +61,7 @@ object SpongeConfigSerializers {
      * Serializer for [LinkedList] objects in Sponge configurations.
      */
     class LinkedListSerializer : AbstractListChildSerializer<LinkedList<Any>>() {
+
         override fun elementType(containerType: Type?): Type {
             if (containerType !is ParameterizedType) {
                 throw SerializationException(
@@ -70,7 +72,7 @@ object SpongeConfigSerializers {
             return containerType.actualTypeArguments[0]
         }
 
-        override fun createNew(length: Int, elementType: Type?): LinkedList<Any> {
+        override fun createNew(length: Int, elementType: AnnotatedType?): LinkedList<Any>? {
             return LinkedList()
         }
 

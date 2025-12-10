@@ -29,7 +29,7 @@ dependencies {
     compileOnly(libs.auto.service.annotations)
     ksp(project(":surf-api-gradle-plugin:surf-api-processor"))
 
-    compileOnlyApi("org.jetbrains:annotations:24.1.0")
+    compileOnlyApi("org.jetbrains:annotations:26.0.2-1")
 }
 
 ksp {
