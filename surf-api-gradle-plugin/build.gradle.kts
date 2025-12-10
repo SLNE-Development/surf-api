@@ -1,6 +1,3 @@
-import gradle.kotlin.dsl.accessors._243eb5039d4da502111cc46640837e78.compileOnly
-import gradle.kotlin.dsl.accessors._243eb5039d4da502111cc46640837e78.implementation
-import gradle.kotlin.dsl.accessors._243eb5039d4da502111cc46640837e78.sourceSets
 import java.nio.file.Files
 
 // region properties
