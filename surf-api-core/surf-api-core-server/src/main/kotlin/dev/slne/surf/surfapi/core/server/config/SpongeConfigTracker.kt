@@ -1,12 +1,10 @@
 package dev.slne.surf.surfapi.core.server.config
 
 import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
-import dev.slne.surf.surfapi.core.api.util.synchronize
+import java.util.concurrent.ConcurrentHashMap
 
 object SpongeConfigTracker {
-    private val configManagers =
-        mutableObject2ObjectMapOf<Class<*>, SpongeConfigManager<*>>().synchronize()
+    private val configManagers = ConcurrentHashMap<Class<*>, SpongeConfigManager<*>>()
 
     fun <C> getConfig(configClass: Class<C>): C? {
         return configManagers[configClass]?.config as? C
@@ -24,5 +22,6 @@ object SpongeConfigTracker {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <C> getConfigManager(configClass: Class<C>) = configManagers[configClass] as? SpongeConfigManager<C>
+    fun <C> getConfigManager(configClass: Class<C>) =
+        configManagers[configClass] as? SpongeConfigManager<C>
 }
