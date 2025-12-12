@@ -14,6 +14,15 @@ import kotlin.io.path.*
 class Main
 
 fun main() {
+    try {
+        generate()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        throw e
+    }
+}
+
+private fun generate() {
     val json = Json {
         ignoreUnknownKeys = true
     }

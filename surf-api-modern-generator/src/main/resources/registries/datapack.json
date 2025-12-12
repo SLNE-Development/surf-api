@@ -29,6 +29,11 @@
       "stable": true,
       "tags": true
     },
+    "minecraft:attribute_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
     "minecraft:banner_pattern": {
       "elements": true,
       "stable": false,
@@ -110,6 +115,11 @@
       "tags": true
     },
     "minecraft:data_component_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:debug_subscription": {
       "elements": false,
       "stable": true,
       "tags": true
@@ -199,6 +209,11 @@
       "stable": true,
       "tags": true
     },
+    "minecraft:environment_attribute": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
     "minecraft:float_provider_type": {
       "elements": false,
       "stable": true,
@@ -219,7 +234,17 @@
       "stable": true,
       "tags": true
     },
+    "minecraft:game_rule": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
     "minecraft:height_provider_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:incoming_rpc_methods": {
       "elements": false,
       "stable": true,
       "tags": true
@@ -314,12 +339,27 @@
       "stable": true,
       "tags": true
     },
+    "minecraft:outgoing_rpc_methods": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
     "minecraft:painting_variant": {
       "elements": true,
       "stable": false,
       "tags": true
     },
     "minecraft:particle_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:permission_check_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:permission_type": {
       "elements": false,
       "stable": true,
       "tags": true
@@ -389,17 +429,17 @@
       "stable": true,
       "tags": true
     },
-    "minecraft:schedule": {
-      "elements": false,
-      "stable": true,
-      "tags": true
-    },
     "minecraft:sensor_type": {
       "elements": false,
       "stable": true,
       "tags": true
     },
     "minecraft:slot_display": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:slot_source_type": {
       "elements": false,
       "stable": true,
       "tags": true
@@ -447,6 +487,11 @@
     "minecraft:ticket_type": {
       "elements": false,
       "stable": true,
+      "tags": true
+    },
+    "minecraft:timeline": {
+      "elements": true,
+      "stable": false,
       "tags": true
     },
     "minecraft:trial_spawner": {
@@ -655,6 +700,11 @@
       "tags": true
     },
     "minecraft:worldgen/world_preset": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    },
+    "minecraft:zombie_nautilus_variant": {
       "elements": true,
       "stable": false,
       "tags": true

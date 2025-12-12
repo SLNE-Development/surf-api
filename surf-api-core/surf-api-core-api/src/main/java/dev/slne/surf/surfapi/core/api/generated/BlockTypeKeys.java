@@ -80,6 +80,13 @@ public final class BlockTypeKeys {
   public static final Key ACACIA_SAPLING = key("minecraft:acacia_sapling");
 
   /**
+   * {@code minecraft:acacia_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key ACACIA_SHELF = key("minecraft:acacia_shelf");
+
+  /**
    * {@code minecraft:acacia_sign}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -332,6 +339,13 @@ public final class BlockTypeKeys {
   public static final Key BAMBOO_SAPLING = key("minecraft:bamboo_sapling");
 
   /**
+   * {@code minecraft:bamboo_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key BAMBOO_SHELF = key("minecraft:bamboo_shelf");
+
+  /**
    * {@code minecraft:bamboo_sign}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -519,6 +533,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key BIRCH_SAPLING = key("minecraft:birch_sapling");
+
+  /**
+   * {@code minecraft:birch_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key BIRCH_SHELF = key("minecraft:birch_shelf");
 
   /**
    * {@code minecraft:birch_sign}
@@ -1158,13 +1179,6 @@ public final class BlockTypeKeys {
   public static final Key CAVE_VINES_PLANT = key("minecraft:cave_vines_plant");
 
   /**
-   * {@code minecraft:chain}
-   *
-   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
-   */
-  public static final Key CHAIN = key("minecraft:chain");
-
-  /**
    * {@code minecraft:chain_command_block}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -1240,6 +1254,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key CHERRY_SAPLING = key("minecraft:cherry_sapling");
+
+  /**
+   * {@code minecraft:cherry_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key CHERRY_SHELF = key("minecraft:cherry_shelf");
 
   /**
    * {@code minecraft:cherry_sign}
@@ -1536,6 +1557,13 @@ public final class BlockTypeKeys {
   public static final Key CONDUIT = key("minecraft:conduit");
 
   /**
+   * {@code minecraft:copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key COPPER_BARS = key("minecraft:copper_bars");
+
+  /**
    * {@code minecraft:copper_block}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -1550,11 +1578,32 @@ public final class BlockTypeKeys {
   public static final Key COPPER_BULB = key("minecraft:copper_bulb");
 
   /**
+   * {@code minecraft:copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key COPPER_CHAIN = key("minecraft:copper_chain");
+
+  /**
+   * {@code minecraft:copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key COPPER_CHEST = key("minecraft:copper_chest");
+
+  /**
    * {@code minecraft:copper_door}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key COPPER_DOOR = key("minecraft:copper_door");
+
+  /**
+   * {@code minecraft:copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key COPPER_GOLEM_STATUE = key("minecraft:copper_golem_statue");
 
   /**
    * {@code minecraft:copper_grate}
@@ -1564,6 +1613,13 @@ public final class BlockTypeKeys {
   public static final Key COPPER_GRATE = key("minecraft:copper_grate");
 
   /**
+   * {@code minecraft:copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key COPPER_LANTERN = key("minecraft:copper_lantern");
+
+  /**
    * {@code minecraft:copper_ore}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -1571,11 +1627,25 @@ public final class BlockTypeKeys {
   public static final Key COPPER_ORE = key("minecraft:copper_ore");
 
   /**
+   * {@code minecraft:copper_torch}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key COPPER_TORCH = key("minecraft:copper_torch");
+
+  /**
    * {@code minecraft:copper_trapdoor}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key COPPER_TRAPDOOR = key("minecraft:copper_trapdoor");
+
+  /**
+   * {@code minecraft:copper_wall_torch}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key COPPER_WALL_TORCH = key("minecraft:copper_wall_torch");
 
   /**
    * {@code minecraft:cornflower}
@@ -1730,6 +1800,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key CRIMSON_ROOTS = key("minecraft:crimson_roots");
+
+  /**
+   * {@code minecraft:crimson_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key CRIMSON_SHELF = key("minecraft:crimson_shelf");
 
   /**
    * {@code minecraft:crimson_sign}
@@ -2017,6 +2094,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key DARK_OAK_SAPLING = key("minecraft:dark_oak_sapling");
+
+  /**
+   * {@code minecraft:dark_oak_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key DARK_OAK_SHELF = key("minecraft:dark_oak_shelf");
 
   /**
    * {@code minecraft:dark_oak_sign}
@@ -2593,11 +2677,32 @@ public final class BlockTypeKeys {
   public static final Key EXPOSED_COPPER = key("minecraft:exposed_copper");
 
   /**
+   * {@code minecraft:exposed_copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key EXPOSED_COPPER_BARS = key("minecraft:exposed_copper_bars");
+
+  /**
    * {@code minecraft:exposed_copper_bulb}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key EXPOSED_COPPER_BULB = key("minecraft:exposed_copper_bulb");
+
+  /**
+   * {@code minecraft:exposed_copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key EXPOSED_COPPER_CHAIN = key("minecraft:exposed_copper_chain");
+
+  /**
+   * {@code minecraft:exposed_copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key EXPOSED_COPPER_CHEST = key("minecraft:exposed_copper_chest");
 
   /**
    * {@code minecraft:exposed_copper_door}
@@ -2607,11 +2712,25 @@ public final class BlockTypeKeys {
   public static final Key EXPOSED_COPPER_DOOR = key("minecraft:exposed_copper_door");
 
   /**
+   * {@code minecraft:exposed_copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key EXPOSED_COPPER_GOLEM_STATUE = key("minecraft:exposed_copper_golem_statue");
+
+  /**
    * {@code minecraft:exposed_copper_grate}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key EXPOSED_COPPER_GRATE = key("minecraft:exposed_copper_grate");
+
+  /**
+   * {@code minecraft:exposed_copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key EXPOSED_COPPER_LANTERN = key("minecraft:exposed_copper_lantern");
 
   /**
    * {@code minecraft:exposed_copper_trapdoor}
@@ -2640,6 +2759,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key EXPOSED_CUT_COPPER_STAIRS = key("minecraft:exposed_cut_copper_stairs");
+
+  /**
+   * {@code minecraft:exposed_lightning_rod}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key EXPOSED_LIGHTNING_ROD = key("minecraft:exposed_lightning_rod");
 
   /**
    * {@code minecraft:farmland}
@@ -3188,6 +3314,13 @@ public final class BlockTypeKeys {
   public static final Key IRON_BLOCK = key("minecraft:iron_block");
 
   /**
+   * {@code minecraft:iron_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key IRON_CHAIN = key("minecraft:iron_chain");
+
+  /**
    * {@code minecraft:iron_door}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -3298,6 +3431,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key JUNGLE_SAPLING = key("minecraft:jungle_sapling");
+
+  /**
+   * {@code minecraft:jungle_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key JUNGLE_SHELF = key("minecraft:jungle_shelf");
 
   /**
    * {@code minecraft:jungle_sign}
@@ -3972,6 +4112,13 @@ public final class BlockTypeKeys {
   public static final Key MANGROVE_ROOTS = key("minecraft:mangrove_roots");
 
   /**
+   * {@code minecraft:mangrove_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key MANGROVE_SHELF = key("minecraft:mangrove_shelf");
+
+  /**
    * {@code minecraft:mangrove_sign}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -4343,6 +4490,13 @@ public final class BlockTypeKeys {
   public static final Key OAK_SAPLING = key("minecraft:oak_sapling");
 
   /**
+   * {@code minecraft:oak_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key OAK_SHELF = key("minecraft:oak_shelf");
+
+  /**
    * {@code minecraft:oak_sign}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -4546,11 +4700,32 @@ public final class BlockTypeKeys {
   public static final Key OXIDIZED_COPPER = key("minecraft:oxidized_copper");
 
   /**
+   * {@code minecraft:oxidized_copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key OXIDIZED_COPPER_BARS = key("minecraft:oxidized_copper_bars");
+
+  /**
    * {@code minecraft:oxidized_copper_bulb}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key OXIDIZED_COPPER_BULB = key("minecraft:oxidized_copper_bulb");
+
+  /**
+   * {@code minecraft:oxidized_copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key OXIDIZED_COPPER_CHAIN = key("minecraft:oxidized_copper_chain");
+
+  /**
+   * {@code minecraft:oxidized_copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key OXIDIZED_COPPER_CHEST = key("minecraft:oxidized_copper_chest");
 
   /**
    * {@code minecraft:oxidized_copper_door}
@@ -4560,11 +4735,25 @@ public final class BlockTypeKeys {
   public static final Key OXIDIZED_COPPER_DOOR = key("minecraft:oxidized_copper_door");
 
   /**
+   * {@code minecraft:oxidized_copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key OXIDIZED_COPPER_GOLEM_STATUE = key("minecraft:oxidized_copper_golem_statue");
+
+  /**
    * {@code minecraft:oxidized_copper_grate}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key OXIDIZED_COPPER_GRATE = key("minecraft:oxidized_copper_grate");
+
+  /**
+   * {@code minecraft:oxidized_copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key OXIDIZED_COPPER_LANTERN = key("minecraft:oxidized_copper_lantern");
 
   /**
    * {@code minecraft:oxidized_copper_trapdoor}
@@ -4593,6 +4782,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key OXIDIZED_CUT_COPPER_STAIRS = key("minecraft:oxidized_cut_copper_stairs");
+
+  /**
+   * {@code minecraft:oxidized_lightning_rod}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key OXIDIZED_LIGHTNING_ROD = key("minecraft:oxidized_lightning_rod");
 
   /**
    * {@code minecraft:packed_ice}
@@ -4698,6 +4894,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key PALE_OAK_SAPLING = key("minecraft:pale_oak_sapling");
+
+  /**
+   * {@code minecraft:pale_oak_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key PALE_OAK_SHELF = key("minecraft:pale_oak_shelf");
 
   /**
    * {@code minecraft:pale_oak_sign}
@@ -6422,6 +6625,13 @@ public final class BlockTypeKeys {
   public static final Key SPRUCE_SAPLING = key("minecraft:spruce_sapling");
 
   /**
+   * {@code minecraft:spruce_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key SPRUCE_SHELF = key("minecraft:spruce_shelf");
+
+  /**
    * {@code minecraft:spruce_sign}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -7087,6 +7297,13 @@ public final class BlockTypeKeys {
   public static final Key WARPED_ROOTS = key("minecraft:warped_roots");
 
   /**
+   * {@code minecraft:warped_shelf}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WARPED_SHELF = key("minecraft:warped_shelf");
+
+  /**
    * {@code minecraft:warped_sign}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -7164,6 +7381,13 @@ public final class BlockTypeKeys {
   public static final Key WAXED_CHISELED_COPPER = key("minecraft:waxed_chiseled_copper");
 
   /**
+   * {@code minecraft:waxed_copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_COPPER_BARS = key("minecraft:waxed_copper_bars");
+
+  /**
    * {@code minecraft:waxed_copper_block}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -7178,6 +7402,20 @@ public final class BlockTypeKeys {
   public static final Key WAXED_COPPER_BULB = key("minecraft:waxed_copper_bulb");
 
   /**
+   * {@code minecraft:waxed_copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_COPPER_CHAIN = key("minecraft:waxed_copper_chain");
+
+  /**
+   * {@code minecraft:waxed_copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_COPPER_CHEST = key("minecraft:waxed_copper_chest");
+
+  /**
    * {@code minecraft:waxed_copper_door}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -7185,11 +7423,25 @@ public final class BlockTypeKeys {
   public static final Key WAXED_COPPER_DOOR = key("minecraft:waxed_copper_door");
 
   /**
+   * {@code minecraft:waxed_copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_COPPER_GOLEM_STATUE = key("minecraft:waxed_copper_golem_statue");
+
+  /**
    * {@code minecraft:waxed_copper_grate}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WAXED_COPPER_GRATE = key("minecraft:waxed_copper_grate");
+
+  /**
+   * {@code minecraft:waxed_copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_COPPER_LANTERN = key("minecraft:waxed_copper_lantern");
 
   /**
    * {@code minecraft:waxed_copper_trapdoor}
@@ -7234,11 +7486,32 @@ public final class BlockTypeKeys {
   public static final Key WAXED_EXPOSED_COPPER = key("minecraft:waxed_exposed_copper");
 
   /**
+   * {@code minecraft:waxed_exposed_copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_EXPOSED_COPPER_BARS = key("minecraft:waxed_exposed_copper_bars");
+
+  /**
    * {@code minecraft:waxed_exposed_copper_bulb}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WAXED_EXPOSED_COPPER_BULB = key("minecraft:waxed_exposed_copper_bulb");
+
+  /**
+   * {@code minecraft:waxed_exposed_copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_EXPOSED_COPPER_CHAIN = key("minecraft:waxed_exposed_copper_chain");
+
+  /**
+   * {@code minecraft:waxed_exposed_copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_EXPOSED_COPPER_CHEST = key("minecraft:waxed_exposed_copper_chest");
 
   /**
    * {@code minecraft:waxed_exposed_copper_door}
@@ -7248,11 +7521,25 @@ public final class BlockTypeKeys {
   public static final Key WAXED_EXPOSED_COPPER_DOOR = key("minecraft:waxed_exposed_copper_door");
 
   /**
+   * {@code minecraft:waxed_exposed_copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_EXPOSED_COPPER_GOLEM_STATUE = key("minecraft:waxed_exposed_copper_golem_statue");
+
+  /**
    * {@code minecraft:waxed_exposed_copper_grate}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WAXED_EXPOSED_COPPER_GRATE = key("minecraft:waxed_exposed_copper_grate");
+
+  /**
+   * {@code minecraft:waxed_exposed_copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_EXPOSED_COPPER_LANTERN = key("minecraft:waxed_exposed_copper_lantern");
 
   /**
    * {@code minecraft:waxed_exposed_copper_trapdoor}
@@ -7283,6 +7570,20 @@ public final class BlockTypeKeys {
   public static final Key WAXED_EXPOSED_CUT_COPPER_STAIRS = key("minecraft:waxed_exposed_cut_copper_stairs");
 
   /**
+   * {@code minecraft:waxed_exposed_lightning_rod}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_EXPOSED_LIGHTNING_ROD = key("minecraft:waxed_exposed_lightning_rod");
+
+  /**
+   * {@code minecraft:waxed_lightning_rod}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_LIGHTNING_ROD = key("minecraft:waxed_lightning_rod");
+
+  /**
    * {@code minecraft:waxed_oxidized_chiseled_copper}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -7297,11 +7598,32 @@ public final class BlockTypeKeys {
   public static final Key WAXED_OXIDIZED_COPPER = key("minecraft:waxed_oxidized_copper");
 
   /**
+   * {@code minecraft:waxed_oxidized_copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_OXIDIZED_COPPER_BARS = key("minecraft:waxed_oxidized_copper_bars");
+
+  /**
    * {@code minecraft:waxed_oxidized_copper_bulb}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WAXED_OXIDIZED_COPPER_BULB = key("minecraft:waxed_oxidized_copper_bulb");
+
+  /**
+   * {@code minecraft:waxed_oxidized_copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_OXIDIZED_COPPER_CHAIN = key("minecraft:waxed_oxidized_copper_chain");
+
+  /**
+   * {@code minecraft:waxed_oxidized_copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_OXIDIZED_COPPER_CHEST = key("minecraft:waxed_oxidized_copper_chest");
 
   /**
    * {@code minecraft:waxed_oxidized_copper_door}
@@ -7311,11 +7633,25 @@ public final class BlockTypeKeys {
   public static final Key WAXED_OXIDIZED_COPPER_DOOR = key("minecraft:waxed_oxidized_copper_door");
 
   /**
+   * {@code minecraft:waxed_oxidized_copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_OXIDIZED_COPPER_GOLEM_STATUE = key("minecraft:waxed_oxidized_copper_golem_statue");
+
+  /**
    * {@code minecraft:waxed_oxidized_copper_grate}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WAXED_OXIDIZED_COPPER_GRATE = key("minecraft:waxed_oxidized_copper_grate");
+
+  /**
+   * {@code minecraft:waxed_oxidized_copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_OXIDIZED_COPPER_LANTERN = key("minecraft:waxed_oxidized_copper_lantern");
 
   /**
    * {@code minecraft:waxed_oxidized_copper_trapdoor}
@@ -7346,6 +7682,13 @@ public final class BlockTypeKeys {
   public static final Key WAXED_OXIDIZED_CUT_COPPER_STAIRS = key("minecraft:waxed_oxidized_cut_copper_stairs");
 
   /**
+   * {@code minecraft:waxed_oxidized_lightning_rod}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_OXIDIZED_LIGHTNING_ROD = key("minecraft:waxed_oxidized_lightning_rod");
+
+  /**
    * {@code minecraft:waxed_weathered_chiseled_copper}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -7360,11 +7703,32 @@ public final class BlockTypeKeys {
   public static final Key WAXED_WEATHERED_COPPER = key("minecraft:waxed_weathered_copper");
 
   /**
+   * {@code minecraft:waxed_weathered_copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_WEATHERED_COPPER_BARS = key("minecraft:waxed_weathered_copper_bars");
+
+  /**
    * {@code minecraft:waxed_weathered_copper_bulb}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WAXED_WEATHERED_COPPER_BULB = key("minecraft:waxed_weathered_copper_bulb");
+
+  /**
+   * {@code minecraft:waxed_weathered_copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_WEATHERED_COPPER_CHAIN = key("minecraft:waxed_weathered_copper_chain");
+
+  /**
+   * {@code minecraft:waxed_weathered_copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_WEATHERED_COPPER_CHEST = key("minecraft:waxed_weathered_copper_chest");
 
   /**
    * {@code minecraft:waxed_weathered_copper_door}
@@ -7374,11 +7738,25 @@ public final class BlockTypeKeys {
   public static final Key WAXED_WEATHERED_COPPER_DOOR = key("minecraft:waxed_weathered_copper_door");
 
   /**
+   * {@code minecraft:waxed_weathered_copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_WEATHERED_COPPER_GOLEM_STATUE = key("minecraft:waxed_weathered_copper_golem_statue");
+
+  /**
    * {@code minecraft:waxed_weathered_copper_grate}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WAXED_WEATHERED_COPPER_GRATE = key("minecraft:waxed_weathered_copper_grate");
+
+  /**
+   * {@code minecraft:waxed_weathered_copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_WEATHERED_COPPER_LANTERN = key("minecraft:waxed_weathered_copper_lantern");
 
   /**
    * {@code minecraft:waxed_weathered_copper_trapdoor}
@@ -7409,6 +7787,13 @@ public final class BlockTypeKeys {
   public static final Key WAXED_WEATHERED_CUT_COPPER_STAIRS = key("minecraft:waxed_weathered_cut_copper_stairs");
 
   /**
+   * {@code minecraft:waxed_weathered_lightning_rod}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WAXED_WEATHERED_LIGHTNING_ROD = key("minecraft:waxed_weathered_lightning_rod");
+
+  /**
    * {@code minecraft:weathered_chiseled_copper}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
@@ -7423,11 +7808,32 @@ public final class BlockTypeKeys {
   public static final Key WEATHERED_COPPER = key("minecraft:weathered_copper");
 
   /**
+   * {@code minecraft:weathered_copper_bars}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WEATHERED_COPPER_BARS = key("minecraft:weathered_copper_bars");
+
+  /**
    * {@code minecraft:weathered_copper_bulb}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WEATHERED_COPPER_BULB = key("minecraft:weathered_copper_bulb");
+
+  /**
+   * {@code minecraft:weathered_copper_chain}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WEATHERED_COPPER_CHAIN = key("minecraft:weathered_copper_chain");
+
+  /**
+   * {@code minecraft:weathered_copper_chest}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WEATHERED_COPPER_CHEST = key("minecraft:weathered_copper_chest");
 
   /**
    * {@code minecraft:weathered_copper_door}
@@ -7437,11 +7843,25 @@ public final class BlockTypeKeys {
   public static final Key WEATHERED_COPPER_DOOR = key("minecraft:weathered_copper_door");
 
   /**
+   * {@code minecraft:weathered_copper_golem_statue}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WEATHERED_COPPER_GOLEM_STATUE = key("minecraft:weathered_copper_golem_statue");
+
+  /**
    * {@code minecraft:weathered_copper_grate}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WEATHERED_COPPER_GRATE = key("minecraft:weathered_copper_grate");
+
+  /**
+   * {@code minecraft:weathered_copper_lantern}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WEATHERED_COPPER_LANTERN = key("minecraft:weathered_copper_lantern");
 
   /**
    * {@code minecraft:weathered_copper_trapdoor}
@@ -7470,6 +7890,13 @@ public final class BlockTypeKeys {
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions
    */
   public static final Key WEATHERED_CUT_COPPER_STAIRS = key("minecraft:weathered_cut_copper_stairs");
+
+  /**
+   * {@code minecraft:weathered_lightning_rod}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key WEATHERED_LIGHTNING_ROD = key("minecraft:weathered_lightning_rod");
 
   /**
    * {@code minecraft:weeping_vines}
