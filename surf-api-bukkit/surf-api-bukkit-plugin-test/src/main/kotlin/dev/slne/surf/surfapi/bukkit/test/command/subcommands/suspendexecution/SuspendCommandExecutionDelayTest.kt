@@ -6,11 +6,9 @@ import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
-class SuspendCommandExecutionDelayTest(name: String): CommandAPICommand(name) {
+class SuspendCommandExecutionDelayTest(name: String) : CommandAPICommand(name) {
     init {
         anyExecutorSuspend { sender, arguments ->
-            // TODO: deferred extension for command arguments
-
             sender.sendText {
                 appendPrefix()
                 info("Delay 3 seconds...")
