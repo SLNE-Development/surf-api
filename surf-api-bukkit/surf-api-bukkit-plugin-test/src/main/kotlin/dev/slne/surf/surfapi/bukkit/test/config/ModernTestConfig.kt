@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.test.config
 
-import dev.slne.surf.surfapi.bukkit.test.BukkitPluginMain
+import dev.slne.surf.surfapi.bukkit.test.plugin
 import dev.slne.surf.surfapi.core.api.config.SpongeYmlConfigClass
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 
@@ -12,7 +12,7 @@ data class ModernTestConfig(
 ) {
     companion object : SpongeYmlConfigClass<ModernTestConfig>(
         ModernTestConfig::class.java,
-        BukkitPluginMain.getInstance().dataPath,
+        plugin.dataPath,
         "modern-test-config.yml"
     ) {
         fun randomise() = edit {

@@ -41,6 +41,8 @@ paper {
 }
 
 tasks {
+
+
     runServer {
         dependsOn(":surf-api-bukkit:surf-api-bukkit-server:shadowJar")
         pluginJars.from(project(":surf-api-bukkit:surf-api-bukkit-server").tasks.shadowJar)
@@ -48,9 +50,8 @@ tasks {
         minecraftVersion(findProperty("mcVersion") as String)
 
         downloadPlugins {
-            hangar("CommandAPI", libs.versions.commandapi.get())
-//            modrinth("packetevents", libs.versions.packetevents.plugin.get() + "spigot")
-            url("https://ci.codemc.io/job/retrooper/job/packetevents/770/artifact/build/libs/packetevents-spigot-2.10.0-SNAPSHOT.jar")
+//            hangar("CommandAPI", libs.versions.commandapi.get()) TODO: update to 1.21.11 when released
+            modrinth("packetevents", libs.versions.packetevents.plugin.get() + "+spigot")
         }
     }
 }
