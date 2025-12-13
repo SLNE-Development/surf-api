@@ -18,10 +18,6 @@ dependencies {
     paperweight.paperDevBundle(libs.paper.api.get().version)
 }
 
-tasks.assemble {
-    dependsOn("reobfJar")
-}
-
 paper {
     main = "dev.slne.surf.surfapi.bukkit.test.BukkitPluginMain"
     name = "SurfBukkitPluginTest"
@@ -46,8 +42,8 @@ paper {
 
 tasks {
     runServer {
-        dependsOn(":surf-api-bukkit:surf-api-bukkit-server:reobfJar")
-        pluginJars.from(project(":surf-api-bukkit:surf-api-bukkit-server").tasks.reobfJar)
+        dependsOn(":surf-api-bukkit:surf-api-bukkit-server:shadowJar")
+        pluginJars.from(project(":surf-api-bukkit:surf-api-bukkit-server").tasks.shadowJar)
 
         minecraftVersion(findProperty("mcVersion") as String)
 

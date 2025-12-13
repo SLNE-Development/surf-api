@@ -9,10 +9,6 @@ plugins {
     id("io.papermc.paperweight.userdev") apply true
 }
 
-tasks.assemble {
-    dependsOn("reobfJar")
-}
-
 kotlin {
     compilerOptions {
         optIn.add("dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.ExperimentalVisualizerApi")
