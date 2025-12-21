@@ -70,12 +70,11 @@ class RedisStreamEventBus(
     private fun initializeStream() {
         try {
             // Try to create consumer group (will fail if it already exists)
-            commands.xgroupCreate(
-                XReadArgs.StreamOffset.from(streamName, "0"),
-                consumerGroup
-            )
+            val streamOffset = XReadArgs.StreamOffset.from(streamName, "0")
+            commands.xgroupCreate(streamOffset, consumerGroup)
         } catch (e: Exception) {
             // Group already exists, this is fine
+            logger.debug("Consumer group already exists or error creating: ${e.message}")
         }
     }
     
