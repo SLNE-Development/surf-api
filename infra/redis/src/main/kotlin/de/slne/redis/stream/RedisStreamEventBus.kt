@@ -70,7 +70,19 @@ class RedisStreamEventBus(
     
     init {
         initializeStream()
-        startConsuming()
+    }
+
+    /**
+     * Starts consuming events from the Redis stream.
+     *
+     * This should be called after all event listeners have been registered to
+     * avoid missing messages that arrive before listener registration.
+     * The method is idempotent and will not start multiple consumers.
+     */
+    fun start() {
+        if (!isRunning) {
+            startConsuming()
+        }
     }
     
     /**
