@@ -52,9 +52,18 @@ class RedisStreamEventBus(
         
         private fun generateConsumerName(): String {
             return try {
-                java.net.InetAddress.getLocalHost().hostName
+                val hostname = java.net.InetAddress.getLocalHost().hostName
+                logger.info("Using hostname '{}' as Redis consumer name", hostname)
+                hostname
             } catch (e: Exception) {
-                java.util.UUID.randomUUID().toString()
+                val fallbackId = java.util.UUID.randomUUID().toString()
+                logger.info(
+                    "Failed to obtain hostname for Redis consumer name ({}: {}). Using UUID fallback '{}'.",
+                    e::class.java.simpleName,
+                    e.message,
+                    fallbackId
+                )
+                fallbackId
             }
         }
     }
