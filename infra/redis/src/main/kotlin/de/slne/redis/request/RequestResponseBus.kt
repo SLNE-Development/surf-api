@@ -24,8 +24,11 @@ class RequestResponseBus(
     private val pubConnection: StatefulRedisPubSubConnection<String, String> = client.connectPubSub()
     private val subConnection: StatefulRedisPubSubConnection<String, String> = client.connectPubSub()
     
-    // Maps request types to their handlers
+    // Maps request types to their handlers (using synchronized list for thread-safety)
     private val requestHandlers = ConcurrentHashMap<KClass<out RedisRequest>, MutableList<RequestHandlerInfo>>()
+    
+    // Lock for modifying handler lists
+    private val handlersLock = Any()
     
     // Pending requests waiting for responses
     private val pendingRequests = ConcurrentHashMap<String, CompletableDeferred<RedisResponse>>()
@@ -40,7 +43,13 @@ class RequestResponseBus(
     companion object {
         private const val REQUEST_CHANNEL = "surf-redis:requests"
         private const val RESPONSE_CHANNEL = "surf-redis:responses"
-        private const val DEFAULT_TIMEOUT_MS = 3000L
+        
+        /**
+         * Default timeout for requests in milliseconds
+         */
+        const val DEFAULT_TIMEOUT_MS = 3000L
+        
+        private const val SHUTDOWN_GRACE_PERIOD_MS = 100L
     }
     
     init {
@@ -146,7 +155,7 @@ class RequestResponseBus(
      */
     suspend inline fun <reified T : RedisResponse> sendRequest(
         request: RedisRequest,
-        timeoutMs: Long = 3000L
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS
     ): T {
         return sendRequestInternal(request, T::class.java, timeoutMs)
     }
@@ -209,7 +218,7 @@ class RequestResponseBus(
      */
     inline fun <reified T : RedisResponse> sendRequestBlocking(
         request: RedisRequest,
-        timeoutMs: Long = 3000L
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS
     ): T {
         return runBlocking {
             sendRequest<T>(request, timeoutMs)
@@ -269,8 +278,10 @@ class RequestResponseBus(
      * @param handler The handler object to unregister
      */
     fun unregisterRequestHandler(handler: Any) {
-        requestHandlers.values.forEach { handlers ->
-            handlers.removeIf { it.instance == handler }
+        synchronized(handlersLock) {
+            requestHandlers.values.forEach { handlers ->
+                handlers.removeIf { it.instance == handler }
+            }
         }
     }
     
@@ -279,8 +290,12 @@ class RequestResponseBus(
         instance: Any,
         method: java.lang.reflect.Method
     ) {
-        val handlerInfo = RequestHandlerInfo(instance, method)
-        requestHandlers.getOrPut(requestClass) { mutableListOf() }.add(handlerInfo)
+        synchronized(handlersLock) {
+            val handlerInfo = RequestHandlerInfo(instance, method)
+            requestHandlers.getOrPut(requestClass) { 
+                Collections.synchronizedList(mutableListOf())
+            }.add(handlerInfo)
+        }
     }
     
     /**
@@ -344,7 +359,7 @@ class RequestResponseBus(
         coroutineScope.cancel()
         
         // Give a brief moment for ongoing operations to complete
-        Thread.sleep(100)
+        Thread.sleep(SHUTDOWN_GRACE_PERIOD_MS)
         
         // Close connections
         pubConnection.close()
