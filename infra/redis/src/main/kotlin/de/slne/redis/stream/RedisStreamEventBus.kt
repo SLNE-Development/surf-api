@@ -264,12 +264,9 @@ class RedisStreamEventBus(
     /**
      * Close the stream consumer and clean up resources.
      */
-    fun close() {
+    suspend fun close() {
         isRunning = false
-        consumerJob?.cancel()
-        runBlocking {
-            consumerJob?.join()
-        }
+        consumerJob?.cancelAndJoin()
         coroutineScope.cancel()
         connection.close()
     }
