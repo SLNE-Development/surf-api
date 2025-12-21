@@ -101,10 +101,22 @@ class RedisAutoConfiguration {
         @Value("\${surf.redis.stream-bus.consumer-group:default}") consumerGroup: String,
         @Value("\${surf.redis.stream-bus.consumer-name:}") consumerName: String?
     ): RedisStreamEventBus {
+        // Use explicit constructor call with proper parameter order
         return if (consumerName.isNullOrBlank()) {
-            RedisStreamEventBus(streamName, consumerGroup, coroutineScope = coroutineScope)
+            // Generate consumer name automatically
+            RedisStreamEventBus(
+                streamName = streamName,
+                consumerGroup = consumerGroup,
+                coroutineScope = coroutineScope
+            )
         } else {
-            RedisStreamEventBus(streamName, consumerGroup, consumerName, coroutineScope)
+            // Use provided consumer name
+            RedisStreamEventBus(
+                streamName = streamName,
+                consumerGroup = consumerGroup,
+                consumerName = consumerName,
+                coroutineScope = coroutineScope
+            )
         }
     }
 }

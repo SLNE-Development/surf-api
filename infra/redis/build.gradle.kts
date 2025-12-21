@@ -30,6 +30,9 @@ dependencies {
     implementation("org.springframework:spring-context")
     compileOnly("org.springframework.boot:spring-boot-autoconfigure")
     
+    // Logging
+    implementation("org.slf4j:slf4j-api:2.0.9")
+    
     // Kotlin
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))

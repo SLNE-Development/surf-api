@@ -23,6 +23,30 @@
       "type": "java.lang.Boolean",
       "description": "Enable RequestResponseBus auto-configuration",
       "defaultValue": true
+    },
+    {
+      "name": "surf.redis.stream-bus.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable RedisStreamEventBus auto-configuration for reliable event delivery",
+      "defaultValue": false
+    },
+    {
+      "name": "surf.redis.stream-bus.stream-name",
+      "type": "java.lang.String",
+      "description": "Name of the Redis stream for event distribution",
+      "defaultValue": "surf-redis:events"
+    },
+    {
+      "name": "surf.redis.stream-bus.consumer-group",
+      "type": "java.lang.String",
+      "description": "Consumer group name for Redis Streams",
+      "defaultValue": "default"
+    },
+    {
+      "name": "surf.redis.stream-bus.consumer-name",
+      "type": "java.lang.String",
+      "description": "Consumer name for Redis Streams (auto-generated if not specified)",
+      "defaultValue": ""
     }
   ]
 }

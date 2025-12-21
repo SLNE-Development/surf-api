@@ -5,6 +5,7 @@ import de.slne.redis.event.RedisEventListener
 import de.slne.redis.request.RequestResponseBus
 import de.slne.redis.request.RedisRequestHandler
 import de.slne.redis.stream.RedisStreamEventBus
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Configuration
@@ -18,6 +19,8 @@ import jakarta.annotation.PostConstruct
 class RedisAutoRegistrar(
     private val applicationContext: ApplicationContext
 ) {
+    
+    private val logger = LoggerFactory.getLogger(RedisAutoRegistrar::class.java)
     
     @Autowired(required = false)
     private var eventBus: RedisEventBus? = null
@@ -35,7 +38,7 @@ class RedisAutoRegistrar(
             val listeners = applicationContext.getBeansWithAnnotation(RedisEventListener::class.java)
             listeners.values.forEach { listener ->
                 bus.registerListener(listener)
-                println("Auto-registered Redis event listener: ${listener::class.simpleName}")
+                logger.info("Auto-registered Redis event listener: {}", listener::class.simpleName)
             }
         }
         
@@ -44,7 +47,7 @@ class RedisAutoRegistrar(
             val listeners = applicationContext.getBeansWithAnnotation(RedisEventListener::class.java)
             listeners.values.forEach { listener ->
                 bus.registerListener(listener)
-                println("Auto-registered Redis stream event listener: ${listener::class.simpleName}")
+                logger.info("Auto-registered Redis stream event listener: {}", listener::class.simpleName)
             }
         }
         
@@ -53,7 +56,7 @@ class RedisAutoRegistrar(
             val handlers = applicationContext.getBeansWithAnnotation(RedisRequestHandler::class.java)
             handlers.values.forEach { handler ->
                 bus.registerRequestHandler(handler)
-                println("Auto-registered Redis request handler: ${handler::class.simpleName}")
+                logger.info("Auto-registered Redis request handler: {}", handler::class.simpleName)
             }
         }
     }

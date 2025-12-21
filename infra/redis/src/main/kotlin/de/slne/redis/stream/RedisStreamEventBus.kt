@@ -10,6 +10,7 @@ import io.lettuce.core.api.StatefulRedisConnection
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import kotlin.reflect.KClass
@@ -47,6 +48,8 @@ class RedisStreamEventBus(
     private var isRunning = false
     
     companion object {
+        private val logger = LoggerFactory.getLogger(RedisStreamEventBus::class.java)
+        
         private fun generateConsumerName(): String {
             return try {
                 java.net.InetAddress.getLocalHost().hostName
@@ -88,8 +91,7 @@ class RedisStreamEventBus(
                 } catch (e: CancellationException) {
                     break
                 } catch (e: Exception) {
-                    System.err.println("Error consuming messages: ${e.message}")
-                    e.printStackTrace()
+                    logger.error("Error consuming messages: ${e.message}", e)
                     delay(1000) // Wait before retrying
                 }
             }
@@ -102,6 +104,7 @@ class RedisStreamEventBus(
     private suspend fun consumeMessages() = withContext(Dispatchers.IO) {
         val messages = commands.xreadgroup(
             Consumer.from(consumerGroup, consumerName),
+            XReadArgs.Builder.block(1000), // Block for 1 second max
             XReadArgs.StreamOffset.lastConsumed(streamName)
         )
         
@@ -122,7 +125,7 @@ class RedisStreamEventBus(
             
             val eventKClass = eventTypeRegistry[eventClass]
             if (eventKClass == null) {
-                System.err.println("Unknown event type: $eventClass")
+                logger.warn("Unknown event type: {}", eventClass)
                 return
             }
             
@@ -135,14 +138,12 @@ class RedisStreamEventBus(
                     try {
                         handler.invoke(event)
                     } catch (e: Exception) {
-                        System.err.println("Error handling event ${event::class.simpleName}: ${e.message}")
-                        e.printStackTrace()
+                        logger.error("Error handling event ${event::class.simpleName}: ${e.message}", e)
                     }
                 }
             }
         } catch (e: Exception) {
-            System.err.println("Error processing message: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error processing message: ${e.message}", e)
         }
     }
     
