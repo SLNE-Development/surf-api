@@ -29,6 +29,9 @@ class RedisEventBus(
     // Lookup for registered event types to support polymorphic deserialization
     private val eventTypeRegistry = mutableMapOf<String, KClass<out RedisEvent>>()
     
+    // Cache serializers for better performance
+    private val serializerCache = mutableMapOf<Class<*>, kotlinx.serialization.KSerializer<RedisEvent>>()
+    
     companion object {
         private const val REDIS_CHANNEL = "surf-redis:events"
     }
@@ -165,19 +168,26 @@ class RedisEventBus(
     
     /**
      * Helper function to serialize an event using Kotlin Serialization.
+     * Caches serializers for better performance.
      */
     private fun serializeEvent(event: RedisEvent): String {
+        val eventClass = event::class.java
         @Suppress("UNCHECKED_CAST")
-        val serializer = serializer(event::class.java) as kotlinx.serialization.KSerializer<RedisEvent>
+        val serializer = serializerCache.getOrPut(eventClass) {
+            serializer(eventClass) as kotlinx.serialization.KSerializer<RedisEvent>
+        }
         return Json.encodeToString(serializer, event)
     }
     
     /**
      * Helper function to deserialize an event using Kotlin Serialization.
+     * Caches serializers for better performance.
      */
     private fun deserializeEvent(eventClass: KClass<out RedisEvent>, eventData: String): RedisEvent {
         @Suppress("UNCHECKED_CAST")
-        val serializer = serializer(eventClass.java) as kotlinx.serialization.KSerializer<RedisEvent>
+        val serializer = serializerCache.getOrPut(eventClass.java) {
+            serializer(eventClass.java) as kotlinx.serialization.KSerializer<RedisEvent>
+        }
         return Json.decodeFromString(serializer, eventData)
     }
     
