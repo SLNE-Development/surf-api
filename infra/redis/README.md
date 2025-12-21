@@ -191,14 +191,7 @@ data class PlayerListResponse(val players: List<String>) : RedisResponse()
 class PlayerRequestHandler {
     @RequestHandler
     fun handlePlayerRequest(context: RequestContext<GetPlayerRequest>) {
-        // You control when and how to respond
-        // Option 1: Respond synchronously
-        runBlocking {
-            val players = listOf("Steve", "Alex", "Notch")
-            context.respond(PlayerListResponse(players))
-        }
-        
-        // Option 2: Launch coroutine to respond asynchronously (if you need it)
+        // Launch coroutine to respond asynchronously
         context.coroutineScope.launch {
             val players = fetchPlayersAsync(context.request.minLevel)
             context.respond(PlayerListResponse(players))
@@ -261,15 +254,7 @@ import kotlinx.coroutines.launch
 class MyRequestHandler {
     @RequestHandler
     fun handlePlayerRequest(context: RequestContext<GetPlayerRequest>) {
-        // Option 1: Respond synchronously (no coroutine needed)
-        if (context.request.minLevel < 5) {
-            runBlocking {
-                context.respond(PlayerListResponse(listOf("All", "Players")))
-            }
-            return
-        }
-        
-        // Option 2: Launch coroutine for async operations
+        // Launch coroutine for async operations
         context.coroutineScope.launch {
             val players = fetchPlayersFromDatabaseAsync(context.request.minLevel)
             context.respond(PlayerListResponse(players))
@@ -328,8 +313,8 @@ fun main() = runBlocking {
 class LobbyHandler {
     @RequestHandler
     fun getServerStatus(context: RequestContext<ServerStatusRequest>) {
-        // Respond immediately without launching a coroutine
-        runBlocking {
+        // Respond using coroutine scope
+        context.coroutineScope.launch {
             context.respond(ServerStatusResponse("Lobby-1", online = true, playerCount = 42))
         }
     }

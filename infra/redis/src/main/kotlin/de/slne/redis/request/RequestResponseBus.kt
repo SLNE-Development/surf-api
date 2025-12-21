@@ -25,17 +25,17 @@ class RequestResponseBus(
     private val subConnection: StatefulRedisPubSubConnection<String, String> = client.connectPubSub()
     
     // Maps request types to their handlers
-    private val requestHandlers = mutableMapOf<KClass<out RedisRequest>, MutableList<RequestHandlerInfo>>()
+    private val requestHandlers = ConcurrentHashMap<KClass<out RedisRequest>, MutableList<RequestHandlerInfo>>()
     
     // Pending requests waiting for responses
     private val pendingRequests = ConcurrentHashMap<String, CompletableDeferred<RedisResponse>>()
     
     // Lookup for registered types to support polymorphic deserialization
-    private val requestTypeRegistry = mutableMapOf<String, KClass<out RedisRequest>>()
-    private val responseTypeRegistry = mutableMapOf<String, KClass<out RedisResponse>>()
+    private val requestTypeRegistry = ConcurrentHashMap<String, KClass<out RedisRequest>>()
+    private val responseTypeRegistry = ConcurrentHashMap<String, KClass<out RedisResponse>>()
     
     // Cache serializers for better performance
-    private val serializerCache = mutableMapOf<Class<*>, kotlinx.serialization.KSerializer<Any>>()
+    private val serializerCache = ConcurrentHashMap<Class<*>, kotlinx.serialization.KSerializer<Any>>()
     
     companion object {
         private const val REQUEST_CHANNEL = "surf-redis:requests"
@@ -82,22 +82,31 @@ class RequestResponseBus(
             val request = deserializeRequest(requestClass, envelope.requestData)
             
             // Find and invoke handlers
-            requestHandlers[requestClass]?.forEach { handler ->
-                // Create context for responding
-                val context = RequestContext(
-                    request = request,
-                    coroutineScope = coroutineScope,
-                    respondCallback = { response ->
-                        sendResponse(envelope.requestId, response)
+            val handlers = requestHandlers[requestClass]
+            if (handlers.isNullOrEmpty()) {
+                System.err.println("No handler registered for request type: ${requestClass.simpleName}")
+                return
+            }
+            
+            // Invoke handlers in parallel for better performance and isolation
+            handlers.forEach { handler ->
+                coroutineScope.launch {
+                    // Create context for responding
+                    val context = RequestContext(
+                        request = request,
+                        coroutineScope = coroutineScope,
+                        respondCallback = { response ->
+                            sendResponse(envelope.requestId, response)
+                        }
+                    )
+                    
+                    // Invoke handler in its own coroutine for better isolation
+                    try {
+                        handler.invoke(context)
+                    } catch (e: Exception) {
+                        System.err.println("Error handling request ${request::class.simpleName}: ${e.message}")
+                        e.printStackTrace()
                     }
-                )
-                
-                // Invoke handler (not in a new coroutine - handler controls launching)
-                try {
-                    handler.invoke(context)
-                } catch (e: Exception) {
-                    System.err.println("Error handling request ${request::class.simpleName}: ${e.message}")
-                    e.printStackTrace()
                 }
             }
         } catch (e: Exception) {
@@ -129,18 +138,35 @@ class RequestResponseBus(
     
     /**
      * Send a request and wait for a response asynchronously.
+     * Uses reified type parameter to automatically register response type.
      * @param request The request to send
      * @param timeoutMs Timeout in milliseconds (default 3000ms)
      * @return The response
      * @throws RequestTimeoutException if no response is received within the timeout
      */
-    suspend fun <T : RedisResponse> sendRequest(
+    suspend inline fun <reified T : RedisResponse> sendRequest(
         request: RedisRequest,
-        timeoutMs: Long = DEFAULT_TIMEOUT_MS
+        timeoutMs: Long = 3000L
+    ): T {
+        return sendRequestInternal(request, T::class.java, timeoutMs)
+    }
+    
+    /**
+     * Internal method to send a request with explicit type.
+     */
+    @PublishedApi
+    internal suspend fun <T : RedisResponse> sendRequestInternal(
+        request: RedisRequest,
+        responseType: Class<T>,
+        timeoutMs: Long
     ): T {
         val requestId = UUID.randomUUID().toString()
         val deferred = CompletableDeferred<RedisResponse>()
         pendingRequests[requestId] = deferred
+        
+        // Register response type for deserialization
+        @Suppress("UNCHECKED_CAST")
+        responseTypeRegistry[responseType.name] = responseType.kotlin as KClass<out RedisResponse>
         
         try {
             // Publish the request
@@ -154,9 +180,16 @@ class RequestResponseBus(
             }
             
             // Wait for response with timeout
-            @Suppress("UNCHECKED_CAST")
             return withTimeout(timeoutMs) {
-                deferred.await() as T
+                val response = deferred.await()
+                // Validate response type at runtime
+                if (!responseType.isInstance(response)) {
+                    throw ClassCastException(
+                        "Expected response type ${responseType.name} but got ${response::class.java.name}"
+                    )
+                }
+                @Suppress("UNCHECKED_CAST")
+                response as T
             }
         } catch (e: TimeoutCancellationException) {
             pendingRequests.remove(requestId)
@@ -174,12 +207,12 @@ class RequestResponseBus(
      * @return The response
      * @throws RequestTimeoutException if no response is received within the timeout
      */
-    fun <T : RedisResponse> sendRequestBlocking(
+    inline fun <reified T : RedisResponse> sendRequestBlocking(
         request: RedisRequest,
-        timeoutMs: Long = DEFAULT_TIMEOUT_MS
+        timeoutMs: Long = 3000L
     ): T {
         return runBlocking {
-            sendRequest(request, timeoutMs)
+            sendRequest<T>(request, timeoutMs)
         }
     }
     
@@ -298,6 +331,7 @@ class RequestResponseBus(
     
     /**
      * Close the Redis connections and clean up resources.
+     * Waits for ongoing operations to complete before closing connections.
      */
     fun close() {
         // Cancel all pending requests
@@ -306,7 +340,13 @@ class RequestResponseBus(
         }
         pendingRequests.clear()
         
+        // Cancel coroutine scope and wait briefly for cleanup
         coroutineScope.cancel()
+        
+        // Give a brief moment for ongoing operations to complete
+        Thread.sleep(100)
+        
+        // Close connections
         pubConnection.close()
         subConnection.close()
         client.shutdown()
