@@ -1,8 +1,10 @@
 package de.slne.redis.example.request
 
+import de.slne.redis.request.RequestContext
 import de.slne.redis.request.RequestHandler
 import de.slne.redis.request.RequestResponseBus
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -11,31 +13,37 @@ import kotlinx.coroutines.runBlocking
 class ExampleRequestHandler {
     
     @RequestHandler
-    suspend fun handlePlayerRequest(request: GetPlayerRequest): PlayerListResponse {
-        // Simulate some async work (e.g., database query)
-        delay(100)
-        
-        // Filter players based on minimum level
-        val allPlayers = listOf("Steve", "Alex", "Notch", "Herobrine", "Jeb")
-        val filteredPlayers = if (request.minLevel > 5) {
-            allPlayers.take(2)  // Only high-level players
-        } else {
-            allPlayers
+    fun handlePlayerRequest(context: RequestContext<GetPlayerRequest>) {
+        // Launch coroutine to respond asynchronously (if needed)
+        context.coroutineScope.launch {
+            // Simulate some async work (e.g., database query)
+            delay(100)
+            
+            // Filter players based on minimum level
+            val allPlayers = listOf("Steve", "Alex", "Notch", "Herobrine", "Jeb")
+            val filteredPlayers = if (context.request.minLevel > 5) {
+                allPlayers.take(2)  // Only high-level players
+            } else {
+                allPlayers
+            }
+            
+            context.respond(PlayerListResponse(filteredPlayers))
         }
-        
-        return PlayerListResponse(filteredPlayers)
     }
     
     @RequestHandler
-    suspend fun handleServerStatus(request: ServerStatusRequest): ServerStatusResponse {
-        // Simulate checking server status
-        delay(50)
-        
-        return ServerStatusResponse(
-            serverName = request.serverName,
-            online = true,
-            playerCount = 42
-        )
+    fun handleServerStatus(context: RequestContext<ServerStatusRequest>) {
+        // Respond synchronously by launching in runBlocking or use coroutineScope.launch for async
+        context.coroutineScope.launch {
+            // Simulate checking server status
+            delay(50)
+            
+            context.respond(ServerStatusResponse(
+                serverName = context.request.serverName,
+                online = true,
+                playerCount = 42
+            ))
+        }
     }
 }
 

@@ -177,6 +177,7 @@ In addition to the event bus, surf-redis supports request-response patterns wher
 
 ```kotlin
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import de.slne.redis.request.*
 
 // 1. Create your request and response (must be @Serializable)
@@ -189,10 +190,19 @@ data class PlayerListResponse(val players: List<String>) : RedisResponse()
 // 2. Create a request handler
 class PlayerRequestHandler {
     @RequestHandler
-    suspend fun handlePlayerRequest(request: GetPlayerRequest): PlayerListResponse {
-        // Handle the request and return a response
-        val players = listOf("Steve", "Alex", "Notch")
-        return PlayerListResponse(players)
+    fun handlePlayerRequest(context: RequestContext<GetPlayerRequest>) {
+        // You control when and how to respond
+        // Option 1: Respond synchronously
+        runBlocking {
+            val players = listOf("Steve", "Alex", "Notch")
+            context.respond(PlayerListResponse(players))
+        }
+        
+        // Option 2: Launch coroutine to respond asynchronously (if you need it)
+        context.coroutineScope.launch {
+            val players = fetchPlayersAsync(context.request.minLevel)
+            context.respond(PlayerListResponse(players))
+        }
     }
 }
 
@@ -217,7 +227,7 @@ runBlocking {
 - 🔄 **Request-Response Pattern**: Send requests and receive typed responses
 - ⏱️ **Timeout Support**: Configurable timeout (default 3 seconds)
 - 🔀 **Bidirectional**: Any server can both send requests and respond to requests
-- 🚀 **Async/Suspend**: Fully integrated with Kotlin Coroutines
+- 🚀 **Flexible Async**: Handlers control when to launch coroutines (not forced to be suspend)
 - 🎯 **Type-safe**: Request and response types are validated at compile time
 
 ### Usage
@@ -238,15 +248,32 @@ data class PlayerListResponse(val players: List<String>) : RedisResponse()
 
 #### 2. Create Request Handlers
 
+Handlers receive a `RequestContext` that provides:
+- `request`: The incoming request
+- `coroutineScope`: Scope for launching coroutines if needed
+- `respond(response)`: Method to send the response
+
 ```kotlin
 import de.slne.redis.request.RequestHandler
+import de.slne.redis.request.RequestContext
+import kotlinx.coroutines.launch
 
 class MyRequestHandler {
     @RequestHandler
-    suspend fun handlePlayerRequest(request: GetPlayerRequest): PlayerListResponse {
-        // Perform async operations (e.g., database queries)
-        val players = fetchPlayersFromDatabase(request.minLevel)
-        return PlayerListResponse(players)
+    fun handlePlayerRequest(context: RequestContext<GetPlayerRequest>) {
+        // Option 1: Respond synchronously (no coroutine needed)
+        if (context.request.minLevel < 5) {
+            runBlocking {
+                context.respond(PlayerListResponse(listOf("All", "Players")))
+            }
+            return
+        }
+        
+        // Option 2: Launch coroutine for async operations
+        context.coroutineScope.launch {
+            val players = fetchPlayersFromDatabaseAsync(context.request.minLevel)
+            context.respond(PlayerListResponse(players))
+        }
     }
 }
 ```
@@ -300,8 +327,11 @@ fun main() = runBlocking {
 // ServerA can handle requests
 class LobbyHandler {
     @RequestHandler
-    suspend fun getServerStatus(request: ServerStatusRequest): ServerStatusResponse {
-        return ServerStatusResponse("Lobby-1", online = true, playerCount = 42)
+    fun getServerStatus(context: RequestContext<ServerStatusRequest>) {
+        // Respond immediately without launching a coroutine
+        runBlocking {
+            context.respond(ServerStatusResponse("Lobby-1", online = true, playerCount = 42))
+        }
     }
 }
 
@@ -362,9 +392,16 @@ Base class for all responses. Extend this to create custom responses. Must be an
 ### @RequestHandler
 
 Annotation for marking request handler methods. Methods must:
-- Have exactly one parameter of type `RedisRequest`
-- Return a `RedisResponse`
-- Can be suspend functions for async operations
+- Have exactly one parameter of type `RequestContext<TRequest>`
+- Return void (Unit)
+- Handler controls when/how to respond using `context.respond()`
+
+### RequestContext<TRequest>
+
+Context object provided to request handlers containing:
+- `request: TRequest` - The incoming request
+- `coroutineScope: CoroutineScope` - Scope for launching coroutines if needed
+- `suspend fun respond(response: RedisResponse)` - Send the response
 
 ### RequestResponseBus
 

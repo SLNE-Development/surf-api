@@ -11,10 +11,6 @@ import kotlinx.serialization.serializer
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.full.callSuspend
-import kotlin.reflect.full.memberFunctions
-import kotlin.reflect.jvm.javaMethod
 
 /**
  * Request-Response bus for Redis-based request/response pattern using Lettuce.
@@ -87,15 +83,21 @@ class RequestResponseBus(
             
             // Find and invoke handlers
             requestHandlers[requestClass]?.forEach { handler ->
-                coroutineScope.launch {
-                    try {
-                        val response = handler.invoke(request)
-                        // Send response back
+                // Create context for responding
+                val context = RequestContext(
+                    request = request,
+                    coroutineScope = coroutineScope,
+                    respondCallback = { response ->
                         sendResponse(envelope.requestId, response)
-                    } catch (e: Exception) {
-                        System.err.println("Error handling request ${request::class.simpleName}: ${e.message}")
-                        e.printStackTrace()
                     }
+                )
+                
+                // Invoke handler (not in a new coroutine - handler controls launching)
+                try {
+                    handler.invoke(context)
+                } catch (e: Exception) {
+                    System.err.println("Error handling request ${request::class.simpleName}: ${e.message}")
+                    e.printStackTrace()
                 }
             }
         } catch (e: Exception) {
@@ -204,29 +206,25 @@ class RequestResponseBus(
             if (method.isAnnotationPresent(RequestHandler::class.java)) {
                 if (method.parameterCount == 1) {
                     val paramType = method.parameters[0].type
-                    val returnType = method.returnType
                     
-                    if (RedisRequest::class.java.isAssignableFrom(paramType) &&
-                        RedisResponse::class.java.isAssignableFrom(returnType)) {
-                        
-                        @Suppress("UNCHECKED_CAST")
-                        val requestClass = paramType.kotlin as KClass<out RedisRequest>
-                        @Suppress("UNCHECKED_CAST")
-                        val responseClass = returnType.kotlin as KClass<out RedisResponse>
-                        
-                        // Register types for deserialization
-                        requestTypeRegistry[paramType.name] = requestClass
-                        responseTypeRegistry[returnType.name] = responseClass
-                        
-                        // Check if method is suspend
-                        val kFunction = handlerClass.memberFunctions.find { 
-                            it.javaMethod == method 
+                    // Check if parameter is RequestContext
+                    if (RequestContext::class.java.isAssignableFrom(paramType)) {
+                        // Extract the request type from RequestContext<TRequest>
+                        val genericType = method.genericParameterTypes[0]
+                        if (genericType is java.lang.reflect.ParameterizedType) {
+                            val requestType = genericType.actualTypeArguments[0] as? Class<*>
+                            if (requestType != null && RedisRequest::class.java.isAssignableFrom(requestType)) {
+                                @Suppress("UNCHECKED_CAST")
+                                val requestClass = requestType.kotlin as KClass<out RedisRequest>
+                                
+                                // Register type for deserialization
+                                requestTypeRegistry[requestType.name] = requestClass
+                                
+                                method.isAccessible = true
+                                
+                                registerHandler(requestClass, handler, method)
+                            }
                         }
-                        val isSuspend = kFunction?.isSuspend ?: false
-                        
-                        method.isAccessible = true
-                        
-                        registerHandler(requestClass, handler, method, isSuspend, kFunction)
                     }
                 }
             }
@@ -246,11 +244,9 @@ class RequestResponseBus(
     private fun registerHandler(
         requestClass: KClass<out RedisRequest>,
         instance: Any,
-        method: java.lang.reflect.Method,
-        isSuspend: Boolean,
-        kFunction: kotlin.reflect.KCallable<*>?
+        method: java.lang.reflect.Method
     ) {
-        val handlerInfo = RequestHandlerInfo(instance, method, isSuspend, kFunction)
+        val handlerInfo = RequestHandlerInfo(instance, method)
         requestHandlers.getOrPut(requestClass) { mutableListOf() }.add(handlerInfo)
     }
     
@@ -332,18 +328,10 @@ class RequestResponseBus(
     
     private class RequestHandlerInfo(
         val instance: Any,
-        val method: java.lang.reflect.Method,
-        val isSuspend: Boolean,
-        val kFunction: kotlin.reflect.KCallable<*>?
+        val method: java.lang.reflect.Method
     ) {
-        suspend fun invoke(request: RedisRequest): RedisResponse {
-            return if (isSuspend && kFunction != null) {
-                // Call suspend function
-                kFunction.callSuspend(instance, request) as RedisResponse
-            } else {
-                // Call regular function
-                method.invoke(instance, request) as RedisResponse
-            }
+        fun invoke(context: RequestContext<*>) {
+            method.invoke(instance, context)
         }
     }
 }

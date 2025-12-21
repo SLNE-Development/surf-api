@@ -1,5 +1,6 @@
 package de.slne.redis.request
 
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Test
@@ -49,7 +50,6 @@ class RequestHandlerAnnotationTest {
     
     @Test
     fun `test RequestHandler annotation can be applied to methods`() {
-        // For suspend functions, we need to find the method differently
         val methods = TestHandler::class.java.declaredMethods
         val method = methods.find { 
             it.name == "handleRequest" && it.isAnnotationPresent(RequestHandler::class.java)
@@ -66,8 +66,10 @@ class RequestHandlerAnnotationTest {
     
     class TestHandler {
         @RequestHandler
-        suspend fun handleRequest(request: TestRequest): TestResponse {
-            return TestResponse("processed: ${request.data}")
+        fun handleRequest(context: RequestContext<TestRequest>) {
+            context.coroutineScope.launch {
+                context.respond(TestResponse("processed: ${context.request.data}"))
+            }
         }
     }
 }
@@ -103,8 +105,10 @@ class RequestResponseBusTest {
     
     class TestHandler {
         @RequestHandler
-        suspend fun handleTestRequest(request: TestRequest): TestResponse {
-            return TestResponse("handled: ${request.message}")
+        fun handleTestRequest(context: RequestContext<TestRequest>) {
+            context.coroutineScope.launch {
+                context.respond(TestResponse("handled: ${context.request.message}"))
+            }
         }
     }
 }
