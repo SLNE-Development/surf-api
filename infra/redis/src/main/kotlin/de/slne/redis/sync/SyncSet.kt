@@ -237,6 +237,7 @@ class SyncSet<T>(
                     synchronized(internalSet) {
                         internalSet.clear()
                     }
+                    // Note: We don't notify listeners for CLEAR as there's no single element to report
                 }
             }
         } catch (e: Exception) {

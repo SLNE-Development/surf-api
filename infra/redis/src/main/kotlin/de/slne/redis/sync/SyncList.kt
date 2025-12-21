@@ -65,8 +65,9 @@ class SyncList<T>(
      * @return true (as per the general contract of Collection.add)
      */
     suspend fun add(element: T): Boolean {
-        synchronized(internalList) {
+        val index = synchronized(internalList) {
             internalList.add(element)
+            internalList.size - 1
         }
         
         // Update Redis
@@ -74,7 +75,6 @@ class SyncList<T>(
         
         // Publish change
         val serializedElement = Json.encodeToString(serializer, element)
-        val index = synchronized(internalList) { internalList.size - 1 }
         val message = SyncMessage(
             operation = "ADD",
             data = serializedElement,
@@ -398,6 +398,7 @@ class SyncList<T>(
                     synchronized(internalList) {
                         internalList.clear()
                     }
+                    // Note: We don't notify listeners for CLEAR as there's no single element to report
                 }
             }
         } catch (e: Exception) {

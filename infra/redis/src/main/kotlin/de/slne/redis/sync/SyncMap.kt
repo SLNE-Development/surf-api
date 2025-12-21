@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 /**
@@ -38,6 +39,9 @@ class SyncMap<K, V>(
     
     override val channelPrefix: String = "surf-redis:sync:map"
     
+    @Serializable
+    private data class SerializableMapEntry(val key: String, val value: String)
+    
     init {
         // Try to fetch the current map from Redis on initialization
         runBlocking {
@@ -45,21 +49,19 @@ class SyncMap<K, V>(
         }
     }
     
-    @Serializable
-    private data class MapEntry<K, V>(val key: K, val value: V)
-    
     private suspend fun fetchCurrentMap() {
         try {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 val redisValue = pubConnection.sync().get("$channelPrefix:data:$id")
                 if (redisValue != null) {
-                    val entrySerializer = kotlinx.serialization.serializer<MapEntry<K, V>>()
-                    val listSerializer = ListSerializer(entrySerializer)
+                    val listSerializer = ListSerializer(SerializableMapEntry.serializer())
                     val entries = Json.decodeFromString(listSerializer, redisValue)
                     synchronized(internalMap) {
                         internalMap.clear()
                         entries.forEach { entry ->
-                            internalMap[entry.key] = entry.value
+                            val key = Json.decodeFromString(keySerializer, entry.key)
+                            val value = Json.decodeFromString(valueSerializer, entry.value)
+                            internalMap[key] = value
                         }
                     }
                 }
@@ -257,10 +259,14 @@ class SyncMap<K, V>(
     private suspend fun persistMap() {
         try {
             val entries = synchronized(internalMap) {
-                internalMap.map { (k, v) -> MapEntry(k, v) }
+                internalMap.map { (k, v) ->
+                    SerializableMapEntry(
+                        key = Json.encodeToString(keySerializer, k),
+                        value = Json.encodeToString(valueSerializer, v)
+                    )
+                }
             }
-            val entrySerializer = kotlinx.serialization.serializer<MapEntry<K, V>>()
-            val listSerializer = ListSerializer(entrySerializer)
+            val listSerializer = ListSerializer(SerializableMapEntry.serializer())
             val serializedList = Json.encodeToString(listSerializer, entries)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 pubConnection.sync().set("$channelPrefix:data:$id", serializedList)
@@ -296,6 +302,7 @@ class SyncMap<K, V>(
                     synchronized(internalMap) {
                         internalMap.clear()
                     }
+                    // Note: We don't notify listeners for CLEAR as there's no single value to report
                 }
             }
         } catch (e: Exception) {

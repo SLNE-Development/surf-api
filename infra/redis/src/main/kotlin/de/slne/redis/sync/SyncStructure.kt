@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Base class for all synchronized structures.
@@ -21,7 +22,8 @@ abstract class SyncStructure<T>(
     protected val pubConnection: StatefulRedisPubSubConnection<String, String> = client.connectPubSub()
     protected val subConnection: StatefulRedisPubSubConnection<String, String> = client.connectPubSub()
     
-    protected val listeners = mutableListOf<SyncChangeListener<T>>()
+    // Thread-safe list for listeners
+    protected val listeners = CopyOnWriteArrayList<SyncChangeListener<T>>()
     
     protected abstract val channelPrefix: String
     
