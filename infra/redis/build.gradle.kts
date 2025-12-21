@@ -15,6 +15,9 @@ dependencies {
     // Lettuce Redis client
     implementation("io.lettuce:lettuce-core:6.3.0.RELEASE")
     
+    // Logging
+    implementation("org.slf4j:slf4j-api:2.0.9")
+    
     // Kotlin
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))

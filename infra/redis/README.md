@@ -36,6 +36,8 @@ runBlocking {
 - 🎯 Annotation-based event subscription
 - 🔧 Type-safe event handling with Kotlin Serialization
 - ⚡ High-performance event invocation using MethodHandles
+- 🔄 **Redis Streams support** for reliable event delivery with persistence
+- 🎛️ **Global Redis connection** management via RedisApi
 
 ## Requirements
 
@@ -128,6 +130,65 @@ Examples:
 - `redis://localhost:6379` - Local Redis without password
 - `redis://password@localhost:6379` - Local Redis with password
 - `redis://mypassword@redis.example.com:6379/0` - Remote Redis with password and database
+
+## Global Redis Connection (RedisApi)
+
+surf-redis provides a centralized way to manage Redis connections via the `RedisApi` singleton:
+
+```kotlin
+import de.slne.redis.RedisApi
+
+// Initialize global connection
+RedisApi.init(url = "redis://localhost:6379")
+
+// Alternative syntax
+RedisApi(url = "redis://localhost:6379").connect()
+
+// Check connection status
+if (RedisApi.isConnected()) {
+    println("Connected to: ${RedisApi.getUrl()}")
+}
+
+// Create connections
+val connection = RedisApi.createConnection()
+val pubSubConnection = RedisApi.createPubSubConnection()
+
+// Close connection when done
+RedisApi.disconnect()
+```
+
+The `RedisApi` automatically initializes with a default URL (`redis://localhost:6379`) if not explicitly configured.
+
+## Redis Streams
+
+For more reliable event delivery with message persistence, use `RedisStreamEventBus`:
+
+### Benefits of Redis Streams
+
+- 📦 **Message Persistence**: Events are stored and not lost if no consumer is online
+- 👥 **Consumer Groups**: Multiple instances can share the load
+- ✅ **Message Acknowledgment**: Ensures events are processed
+- 🔄 **Reprocessing**: Failed events can be reprocessed
+
+### Usage
+
+```kotlin
+import de.slne.redis.stream.RedisStreamEventBus
+
+// Create stream-based event bus
+val streamBus = RedisStreamEventBus(
+    streamName = "my-events",
+    consumerGroup = "my-app",
+    consumerName = "instance-1"
+)
+
+// Use exactly like RedisEventBus
+streamBus.registerListener(MyListener())
+streamBus.publish(MyEvent())
+streamBus.close()
+```
+
+Redis Streams provide stronger guarantees than pub/sub, making them ideal for critical events that must not be lost.
 
 ## How It Works
 
