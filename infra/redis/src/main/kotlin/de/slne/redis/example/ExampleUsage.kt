@@ -43,8 +43,13 @@ fun main() {
     
     // Keep the application running to receive events
     println("Listening for events... Press Ctrl+C to exit")
-    Thread.sleep(Long.MAX_VALUE)
     
-    // Clean up (this won't be reached in this example due to infinite sleep)
-    // eventBus.close()
+    // Use a more graceful approach to keep the app running
+    Runtime.getRuntime().addShutdownHook(Thread {
+        println("Shutting down...")
+        eventBus.close()
+    })
+    
+    // Wait indefinitely (until Ctrl+C)
+    Thread.currentThread().join()
 }
