@@ -366,7 +366,11 @@ class SyncList<T>(
                 }
                 "ADD_AT" -> {
                     val element = Json.decodeFromString(serializer, syncMessage.data)
-                    val index = syncMessage.key?.toInt() ?: return
+                    val index = syncMessage.key?.toIntOrNull()
+                    if (index == null) {
+                        System.err.println("Received ADD_AT message with invalid index for SyncList $id")
+                        return
+                    }
                     synchronized(internalList) {
                         internalList.add(index, element)
                     }
@@ -374,7 +378,11 @@ class SyncList<T>(
                 }
                 "SET" -> {
                     val element = Json.decodeFromString(serializer, syncMessage.data)
-                    val index = syncMessage.key?.toInt() ?: return
+                    val index = syncMessage.key?.toIntOrNull()
+                    if (index == null) {
+                        System.err.println("Received SET message with invalid index for SyncList $id")
+                        return
+                    }
                     synchronized(internalList) {
                         internalList.set(index, element)
                     }
@@ -388,7 +396,11 @@ class SyncList<T>(
                     notifyListeners(SyncChangeType.REMOVE, element)
                 }
                 "REMOVE_AT" -> {
-                    val index = syncMessage.key?.toInt() ?: return
+                    val index = syncMessage.key?.toIntOrNull()
+                    if (index == null) {
+                        System.err.println("Received REMOVE_AT message with invalid index for SyncList $id")
+                        return
+                    }
                     val removedElement = synchronized(internalList) {
                         internalList.removeAt(index)
                     }

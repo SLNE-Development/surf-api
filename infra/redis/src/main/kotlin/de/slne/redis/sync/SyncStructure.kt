@@ -93,10 +93,10 @@ abstract class SyncStructure<T>(
      * Close the Redis connections and clean up resources.
      */
     open fun close() {
-        coroutineScope.cancel()
         pubConnection.close()
         subConnection.close()
         client.shutdown()
+        coroutineScope.cancel()
     }
     
     @Serializable

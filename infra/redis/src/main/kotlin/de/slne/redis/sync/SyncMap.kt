@@ -282,7 +282,11 @@ class SyncMap<K, V>(
             
             when (syncMessage.operation) {
                 "PUT" -> {
-                    val key = Json.decodeFromString(keySerializer, syncMessage.key!!)
+                    val key = syncMessage.key?.let { Json.decodeFromString(keySerializer, it) }
+                    if (key == null) {
+                        System.err.println("Received PUT message without key for SyncMap $id")
+                        return
+                    }
                     val value = Json.decodeFromString(valueSerializer, syncMessage.data)
                     synchronized(internalMap) {
                         internalMap[key] = value
@@ -290,7 +294,11 @@ class SyncMap<K, V>(
                     notifyListeners(SyncChangeType.SET, value, key)
                 }
                 "REMOVE" -> {
-                    val key = Json.decodeFromString(keySerializer, syncMessage.key!!)
+                    val key = syncMessage.key?.let { Json.decodeFromString(keySerializer, it) }
+                    if (key == null) {
+                        System.err.println("Received REMOVE message without key for SyncMap $id")
+                        return
+                    }
                     val removedValue = synchronized(internalMap) {
                         internalMap.remove(key)
                     }
