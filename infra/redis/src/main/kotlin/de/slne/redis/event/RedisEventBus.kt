@@ -4,6 +4,7 @@ import io.lettuce.core.RedisClient
 import io.lettuce.core.pubsub.RedisPubSubListener
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -68,9 +69,7 @@ class RedisEventBus(
             }
             
             // Deserialize using the registered serializer
-            @Suppress("UNCHECKED_CAST")
-            val serializer = serializer(eventClass.java) as kotlinx.serialization.KSerializer<RedisEvent>
-            val event = Json.decodeFromString(serializer, envelope.eventData)
+            val event = deserializeEvent(eventClass, envelope.eventData)
             
             // Invoke handlers asynchronously
             eventHandlers[eventClass]?.forEach { handler ->
@@ -95,15 +94,13 @@ class RedisEventBus(
      */
     suspend fun publish(event: RedisEvent) {
         val eventClass = event::class.java.name
-        @Suppress("UNCHECKED_CAST")
-        val serializer = serializer(event::class.java) as kotlinx.serialization.KSerializer<RedisEvent>
-        val eventData = Json.encodeToString(serializer, event)
+        val eventData = serializeEvent(event)
         val envelope = EventEnvelope(eventClass, eventData)
         val message = Json.encodeToString(EventEnvelope.serializer(), envelope)
         
         // Publish asynchronously using coroutines with Lettuce async API
         withContext(Dispatchers.IO) {
-            pubConnection.async().publish(REDIS_CHANNEL, message)
+            pubConnection.async().publish(REDIS_CHANNEL, message).await()
         }
     }
     
@@ -125,9 +122,10 @@ class RedisEventBus(
     fun registerListener(listener: Any) {
         val lookup = MethodHandles.lookup()
         val listenerClass = listener::class
+        val methods = listenerClass.java.declaredMethods
         
         // Register event types from listener methods
-        listenerClass.java.declaredMethods.forEach { method ->
+        for (method in methods) {
             if (method.isAnnotationPresent(Subscribe::class.java)) {
                 if (method.parameterCount == 1) {
                     val paramType = method.parameters[0].type
@@ -137,6 +135,9 @@ class RedisEventBus(
                         
                         // Register event type for deserialization
                         eventTypeRegistry[paramType.name] = eventClass
+                        
+                        // Set accessible before creating MethodHandle for private methods
+                        method.isAccessible = true
                         
                         // Create MethodHandle for better performance
                         val methodHandle = lookup.unreflect(method)
@@ -160,6 +161,24 @@ class RedisEventBus(
     private fun registerHandler(eventClass: KClass<out RedisEvent>, instance: Any, methodHandle: MethodHandle) {
         val handler = EventHandler(instance, methodHandle)
         eventHandlers.getOrPut(eventClass) { mutableListOf() }.add(handler)
+    }
+    
+    /**
+     * Helper function to serialize an event using Kotlin Serialization.
+     */
+    private fun serializeEvent(event: RedisEvent): String {
+        @Suppress("UNCHECKED_CAST")
+        val serializer = serializer(event::class.java) as kotlinx.serialization.KSerializer<RedisEvent>
+        return Json.encodeToString(serializer, event)
+    }
+    
+    /**
+     * Helper function to deserialize an event using Kotlin Serialization.
+     */
+    private fun deserializeEvent(eventClass: KClass<out RedisEvent>, eventData: String): RedisEvent {
+        @Suppress("UNCHECKED_CAST")
+        val serializer = serializer(eventClass.java) as kotlinx.serialization.KSerializer<RedisEvent>
+        return Json.decodeFromString(serializer, eventData)
     }
     
     /**
