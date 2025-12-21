@@ -169,11 +169,160 @@ class MyPluginListener {
 }
 ```
 
+## Request-Response Pattern
+
+In addition to the event bus, surf-redis supports request-response patterns where a server can send a request and wait for a response with timeout support.
+
+### Quick Start
+
+```kotlin
+import kotlinx.coroutines.runBlocking
+import de.slne.redis.request.*
+
+// 1. Create your request and response (must be @Serializable)
+@Serializable
+data class GetPlayerRequest(val minLevel: Int) : RedisRequest()
+
+@Serializable
+data class PlayerListResponse(val players: List<String>) : RedisResponse()
+
+// 2. Create a request handler
+class PlayerRequestHandler {
+    @RequestHandler
+    suspend fun handlePlayerRequest(request: GetPlayerRequest): PlayerListResponse {
+        // Handle the request and return a response
+        val players = listOf("Steve", "Alex", "Notch")
+        return PlayerListResponse(players)
+    }
+}
+
+// 3. Set up and use
+runBlocking {
+    val bus = RequestResponseBus("redis://localhost:6379")
+    
+    // Register handler (ServerA)
+    bus.registerRequestHandler(PlayerRequestHandler())
+    
+    // Send request and wait for response (ServerB or same server)
+    val response = bus.sendRequest<PlayerListResponse>(
+        GetPlayerRequest(minLevel = 5),
+        timeoutMs = 3000 // Default timeout is 3 seconds
+    )
+    println("Players: ${response.players}")
+}
+```
+
+### Features
+
+- 🔄 **Request-Response Pattern**: Send requests and receive typed responses
+- ⏱️ **Timeout Support**: Configurable timeout (default 3 seconds)
+- 🔀 **Bidirectional**: Any server can both send requests and respond to requests
+- 🚀 **Async/Suspend**: Fully integrated with Kotlin Coroutines
+- 🎯 **Type-safe**: Request and response types are validated at compile time
+
+### Usage
+
+#### 1. Create Request and Response Classes
+
+```kotlin
+import de.slne.redis.request.RedisRequest
+import de.slne.redis.request.RedisResponse
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class GetPlayerRequest(val minLevel: Int) : RedisRequest()
+
+@Serializable
+data class PlayerListResponse(val players: List<String>) : RedisResponse()
+```
+
+#### 2. Create Request Handlers
+
+```kotlin
+import de.slne.redis.request.RequestHandler
+
+class MyRequestHandler {
+    @RequestHandler
+    suspend fun handlePlayerRequest(request: GetPlayerRequest): PlayerListResponse {
+        // Perform async operations (e.g., database queries)
+        val players = fetchPlayersFromDatabase(request.minLevel)
+        return PlayerListResponse(players)
+    }
+}
+```
+
+#### 3. Register Handlers and Send Requests
+
+```kotlin
+import de.slne.redis.request.RequestResponseBus
+import kotlinx.coroutines.runBlocking
+
+fun main() = runBlocking {
+    val bus = RequestResponseBus("redis://localhost:6379")
+    
+    // Register handler (this server will respond to requests)
+    bus.registerRequestHandler(MyRequestHandler())
+    
+    // Send request and wait for response (with timeout)
+    try {
+        val response = bus.sendRequest<PlayerListResponse>(
+            GetPlayerRequest(minLevel = 10),
+            timeoutMs = 3000
+        )
+        println("Received ${response.players.size} players")
+    } catch (e: RequestTimeoutException) {
+        println("Request timed out: ${e.message}")
+    }
+    
+    bus.close()
+}
+```
+
+### Request-Response vs Events
+
+**Use Request-Response when:**
+- You need a reply/acknowledgment
+- You need data back from another server
+- You need to know if the operation succeeded
+- You want timeout handling
+
+**Use Events when:**
+- You want to broadcast information
+- You don't need a reply
+- Multiple servers should react to the same event
+- Fire-and-forget pattern is acceptable
+
+### Example Scenario
+
+**ServerA** (Lobby Server) and **ServerB** (Game Server):
+
+```kotlin
+// ServerA can handle requests
+class LobbyHandler {
+    @RequestHandler
+    suspend fun getServerStatus(request: ServerStatusRequest): ServerStatusResponse {
+        return ServerStatusResponse("Lobby-1", online = true, playerCount = 42)
+    }
+}
+
+// ServerB can also send requests to ServerA
+val response = bus.sendRequest<ServerStatusResponse>(
+    ServerStatusRequest("Lobby-1"),
+    timeoutMs = 3000
+)
+```
+
+Both servers can simultaneously:
+- Send requests to other servers
+- Respond to requests from other servers
+
 ## Example
 
 See the `de.slne.redis.example` package for complete examples:
 - `ExampleEvents.kt` - Example event definitions
 - `ExampleUsage.kt` - Example usage demonstrating async publishing and subscribing
+- `ExampleRequests.kt` - Example request/response definitions
+- `ExampleRequestResponseUsage.kt` - Example usage demonstrating request-response pattern
 
 ## API Reference
 
@@ -201,6 +350,39 @@ Main class for managing events with async support.
 - `fun registerListener(listener: Any)` - Register an object with @Subscribe methods (uses MethodHandles)
 - `fun unregisterListener(listener: Any)` - Unregister a listener and all its handlers
 - `fun close()` - Close connections and clean up resources
+
+### RedisRequest
+
+Base class for all requests. Extend this to create custom requests. Must be annotated with `@Serializable`.
+
+### RedisResponse
+
+Base class for all responses. Extend this to create custom responses. Must be annotated with `@Serializable`.
+
+### @RequestHandler
+
+Annotation for marking request handler methods. Methods must:
+- Have exactly one parameter of type `RedisRequest`
+- Return a `RedisResponse`
+- Can be suspend functions for async operations
+
+### RequestResponseBus
+
+Main class for managing request-response patterns with async support and timeout handling.
+
+**Constructor:**
+- `RequestResponseBus(redisUri: String, coroutineScope: CoroutineScope = ...)` - Create a new request-response bus connected to Redis
+
+**Methods:**
+- `suspend fun <T : RedisResponse> sendRequest(request: RedisRequest, timeoutMs: Long = 3000): T` - Send a request and wait for response asynchronously
+- `fun <T : RedisResponse> sendRequestBlocking(request: RedisRequest, timeoutMs: Long = 3000): T` - Send a request and wait for response synchronously (blocking)
+- `fun registerRequestHandler(handler: Any)` - Register an object with @RequestHandler methods
+- `fun unregisterRequestHandler(handler: Any)` - Unregister a handler and all its request handlers
+- `fun close()` - Close connections and clean up resources
+
+### RequestTimeoutException
+
+Exception thrown when a request times out without receiving a response.
 
 ## License
 
