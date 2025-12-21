@@ -1,11 +1,14 @@
 # surf-redis
 
-A Kotlin library for Redis-based event distribution using Lettuce. This library provides a simple and powerful way to publish and subscribe to events across multiple servers or instances.
+A Kotlin library for Redis-based event distribution using Lettuce. This library provides a simple, powerful, and **asynchronous** way to publish and subscribe to events across multiple servers or instances.
 
 ## Quick Start
 
 ```kotlin
-// 1. Create your custom event
+import kotlinx.coroutines.runBlocking
+
+// 1. Create your custom event (must be @Serializable)
+@Serializable
 data class PlayerJoinEvent(val playerName: String) : RedisEvent()
 
 // 2. Create a listener
@@ -16,19 +19,23 @@ class MyListener {
     }
 }
 
-// 3. Set up and use
-val eventBus = RedisEventBus("redis://localhost:6379")
-eventBus.registerListener(MyListener())
-eventBus.publish(PlayerJoinEvent("Steve"))
+// 3. Set up and use asynchronously
+runBlocking {
+    val eventBus = RedisEventBus("redis://localhost:6379")
+    eventBus.registerListener(MyListener())
+    eventBus.publish(PlayerJoinEvent("Steve")) // async
+    // or eventBus.publishBlocking(PlayerJoinEvent("Steve")) // blocking
+}
 ```
 
 ## Features
 
-- 🚀 Simple event system based on Redis pub/sub using Lettuce
+- 🚀 **Async-first** event system based on Redis pub/sub using Lettuce and Kotlin Coroutines
 - 📡 Distribute events across multiple servers/listeners
 - 🔌 Easy plugin integration with automatic method scanning
 - 🎯 Annotation-based event subscription
-- 🔧 Type-safe event handling
+- 🔧 Type-safe event handling with Kotlin Serialization
+- ⚡ High-performance event invocation using MethodHandles
 
 ## Requirements
 
@@ -41,6 +48,10 @@ eventBus.publish(PlayerJoinEvent("Steve"))
 Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
+plugins {
+    kotlin("plugin.serialization") version "1.9.22"
+}
+
 dependencies {
     implementation("de.slne:surf-redis:1.0.0")
 }
@@ -50,11 +61,13 @@ dependencies {
 
 ### 1. Create Custom Events
 
-Create your custom events by extending the `RedisEvent` class:
+Create your custom events by extending the `RedisEvent` class and annotating with `@Serializable`:
 
 ```kotlin
 import de.slne.redis.event.RedisEvent
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class PlayerJoinEvent(
     val playerName: String,
     val playerId: String,
@@ -83,8 +96,9 @@ Initialize the event bus and register your listeners:
 
 ```kotlin
 import de.slne.redis.event.RedisEventBus
+import kotlinx.coroutines.runBlocking
 
-fun main() {
+fun main() = runBlocking {
     // Connect to Redis
     val eventBus = RedisEventBus("redis://localhost:6379")
     
@@ -92,8 +106,11 @@ fun main() {
     val listener = MyListener()
     eventBus.registerListener(listener)
     
-    // Publish events
+    // Publish events asynchronously
     eventBus.publish(PlayerJoinEvent("Steve", "uuid-123", "Lobby-1"))
+    
+    // Or use blocking variant for synchronous code
+    eventBus.publishBlocking(PlayerJoinEvent("Alex", "uuid-456", "Lobby-2"))
     
     // Clean up when done
     eventBus.close()
@@ -114,13 +131,19 @@ Examples:
 
 ## How It Works
 
-1. **Event Publishing**: When you call `eventBus.publish(event)`, the event is serialized to JSON and published to a Redis channel.
+1. **Event Publishing**: When you call `eventBus.publish(event)`, the event is serialized using Kotlin Serialization and published asynchronously to a Redis channel using coroutines.
 
-2. **Event Distribution**: All connected servers/instances subscribed to the same Redis channel receive the event.
+2. **Event Distribution**: All connected servers/instances subscribed to the same Redis channel receive the event asynchronously.
 
-3. **Event Handling**: The event bus automatically deserializes the event and invokes all registered methods that have the `@Subscribe` annotation and accept that event type as a parameter.
+3. **Event Handling**: The event bus automatically deserializes the event using Kotlin Serialization and invokes all registered methods asynchronously in separate coroutines.
 
-4. **Automatic Scanning**: When you call `registerListener()`, the event bus automatically scans the object for methods with the `@Subscribe` annotation and registers them.
+4. **Automatic Scanning**: When you call `registerListener()`, the event bus automatically scans the object for methods with the `@Subscribe` annotation and registers them using MethodHandles for optimal performance.
+
+## Performance Optimizations
+
+- **Async by default**: All event publishing and handling is asynchronous using Kotlin Coroutines
+- **MethodHandles**: Uses Java MethodHandles instead of reflection for faster method invocation
+- **Kotlin Serialization**: Uses Kotlin's native serialization instead of Gson for better performance and type safety
 
 ## Plugin Integration
 
@@ -135,10 +158,13 @@ class MyPlugin {
     }
 }
 
+@Serializable
+data class CustomEvent(val data: String) : RedisEvent()
+
 class MyPluginListener {
     @Subscribe
     fun onCustomEvent(event: CustomEvent) {
-        // Handle event
+        // Handle event asynchronously
     }
 }
 ```
@@ -147,32 +173,34 @@ class MyPluginListener {
 
 See the `de.slne.redis.example` package for complete examples:
 - `ExampleEvents.kt` - Example event definitions
-- `ExampleUsage.kt` - Example usage demonstrating publishing and subscribing
+- `ExampleUsage.kt` - Example usage demonstrating async publishing and subscribing
 
 ## API Reference
 
 ### RedisEvent
 
-Base class for all events. Extend this to create custom events.
+Base class for all events. Extend this to create custom events. Must be annotated with `@Serializable`.
 
 ### @Subscribe
 
 Annotation for marking event handler methods. Methods must:
 - Have exactly one parameter
 - The parameter must be a subclass of `RedisEvent`
+- Handler will be invoked asynchronously in a coroutine
 
 ### RedisEventBus
 
-Main class for managing events.
+Main class for managing events with async support.
 
 **Constructor:**
-- `RedisEventBus(redisUri: String)` - Create a new event bus connected to Redis
+- `RedisEventBus(redisUri: String, coroutineScope: CoroutineScope = ...)` - Create a new event bus connected to Redis
 
 **Methods:**
-- `publish(event: RedisEvent)` - Publish an event to all listeners
-- `registerListener(listener: Any)` - Register an object with @Subscribe methods
-- `unregisterListener(listener: Any)` - Unregister a listener and all its handlers
-- `close()` - Close connections and clean up resources
+- `suspend fun publish(event: RedisEvent)` - Publish an event asynchronously to all listeners
+- `fun publishBlocking(event: RedisEvent)` - Publish an event synchronously (blocking)
+- `fun registerListener(listener: Any)` - Register an object with @Subscribe methods (uses MethodHandles)
+- `fun unregisterListener(listener: Any)` - Unregister a listener and all its handlers
+- `fun close()` - Close connections and clean up resources
 
 ## License
 

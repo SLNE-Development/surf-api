@@ -1,11 +1,14 @@
 package de.slne.redis.event
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class RedisEventTest {
     
+    @Serializable
     data class TestEvent(val message: String, val value: Int) : RedisEvent()
     
     @Test
@@ -31,6 +34,7 @@ class SubscribeAnnotationTest {
         assertTrue(method.isAnnotationPresent(Subscribe::class.java))
     }
     
+    @Serializable
     data class TestEvent(val data: String) : RedisEvent()
     
     class TestListener {
@@ -43,10 +47,11 @@ class SubscribeAnnotationTest {
 
 class RedisEventBusTest {
     
+    @Serializable
     data class TestEvent(val message: String) : RedisEvent()
     
     @Test
-    fun `test listener registration scans Subscribe methods`() {
+    fun `test listener registration scans Subscribe methods`() = runBlocking {
         // This test verifies that listener registration doesn't throw exceptions
         // Full integration testing requires a running Redis instance
         val listener = TestListener()
