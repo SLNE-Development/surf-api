@@ -36,6 +36,10 @@ runBlocking {
 - 🎯 Annotation-based event subscription
 - 🔧 Type-safe event handling with Kotlin Serialization
 - ⚡ High-performance event invocation using MethodHandles
+- 🌱 **Spring Boot integration** with auto-configuration
+- 🔄 **Redis Streams support** for reliable event delivery with persistence
+- 🎛️ **Global Redis connection** management via RedisApi
+- 🤖 **Auto-registration** of listeners and handlers with Spring
 
 ## Requirements
 
@@ -128,6 +132,151 @@ Examples:
 - `redis://localhost:6379` - Local Redis without password
 - `redis://password@localhost:6379` - Local Redis with password
 - `redis://mypassword@redis.example.com:6379/0` - Remote Redis with password and database
+
+## Spring Boot Integration
+
+surf-redis provides first-class Spring Boot integration with auto-configuration and auto-registration of listeners and handlers.
+
+### Setup with Spring Boot
+
+Add the Spring plugin to your `build.gradle.kts`:
+
+```kotlin
+plugins {
+    kotlin("plugin.spring") version "1.9.22"
+    id("org.springframework.boot") version "3.2.1"
+}
+
+dependencies {
+    implementation("de.slne:surf-redis:1.0.0")
+    implementation("org.springframework.boot:spring-boot-starter")
+}
+```
+
+### Configuration
+
+Configure Redis in your `application.properties`:
+
+```properties
+# Redis connection
+surf.redis.url=redis://localhost:6379
+surf.redis.enabled=true
+
+# Enable event bus (pub/sub)
+surf.redis.event-bus.enabled=true
+
+# Enable request-response bus
+surf.redis.request-bus.enabled=true
+
+# Optional: Enable Redis Streams for reliable event delivery
+surf.redis.stream-bus.enabled=false
+surf.redis.stream-bus.stream-name=surf-redis:events
+surf.redis.stream-bus.consumer-group=default
+```
+
+### Global Redis Connection (RedisApi)
+
+Initialize Redis connection at startup:
+
+```kotlin
+import de.slne.redis.RedisApi
+
+// Option 1: Explicit initialization
+RedisApi.init(url = "redis://localhost:6379")
+
+// Option 2: Alternative syntax
+RedisApi(url = "redis://localhost:6379").connect()
+
+// Option 3: Let Spring auto-configuration handle it (recommended)
+// Just configure surf.redis.url in application.properties
+```
+
+### Auto-Registration with Spring
+
+Use `@RedisEventListener` and `@RedisRequestHandler` for automatic registration:
+
+```kotlin
+import de.slne.redis.event.RedisEventListener
+import de.slne.redis.event.Subscribe
+import de.slne.redis.request.RedisRequestHandler
+import de.slne.redis.request.RequestHandler
+import de.slne.redis.request.RequestContext
+
+// Event listener - automatically discovered and registered
+@RedisEventListener
+class MyListener {
+    @Subscribe
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        println("Player joined: ${event.playerName}")
+    }
+}
+
+// Request handler - automatically discovered and registered
+@RedisRequestHandler
+class MyRequestHandler {
+    @RequestHandler
+    fun handleRequest(context: RequestContext<MyRequest>) {
+        context.coroutineScope.launch {
+            // Handle request
+            context.respond(MyResponse(data = "result"))
+        }
+    }
+}
+```
+
+### Spring Boot Application
+
+```kotlin
+import org.springframework.boot.SpringApplication
+import org.springframework.boot.autoconfigure.SpringBootApplication
+
+@SpringBootApplication
+@ComponentScan("de.slne.redis", "com.yourapp")
+class MyApplication
+
+fun main(args: Array<String>) {
+    SpringApplication.run(MyApplication::class.java, *args)
+}
+```
+
+All `@RedisEventListener` and `@RedisRequestHandler` beans will be automatically discovered and registered with their respective buses!
+
+## Redis Streams
+
+For more reliable event delivery with message persistence, use `RedisStreamEventBus`:
+
+### Benefits of Redis Streams
+
+- 📦 **Message Persistence**: Events are stored and not lost if no consumer is online
+- 👥 **Consumer Groups**: Multiple instances can share the load
+- ✅ **Message Acknowledgment**: Ensures events are processed
+- 🔄 **Reprocessing**: Failed events can be reprocessed
+
+### Usage
+
+```kotlin
+import de.slne.redis.stream.RedisStreamEventBus
+
+// Create stream-based event bus
+val streamBus = RedisStreamEventBus(
+    streamName = "my-events",
+    consumerGroup = "my-app",
+    consumerName = "instance-1"
+)
+
+// Use exactly like RedisEventBus
+streamBus.registerListener(MyListener())
+streamBus.publish(MyEvent())
+streamBus.close()
+```
+
+Or enable via Spring configuration:
+
+```properties
+surf.redis.stream-bus.enabled=true
+surf.redis.stream-bus.stream-name=surf-redis:events
+surf.redis.stream-bus.consumer-group=my-app
+```
 
 ## How It Works
 

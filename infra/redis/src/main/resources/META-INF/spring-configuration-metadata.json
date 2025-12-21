@@ -1,0 +1,28 @@
+{
+  "properties": [
+    {
+      "name": "surf.redis.url",
+      "type": "java.lang.String",
+      "description": "Redis connection URL",
+      "defaultValue": "redis://localhost:6379"
+    },
+    {
+      "name": "surf.redis.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable surf-redis auto-configuration",
+      "defaultValue": true
+    },
+    {
+      "name": "surf.redis.event-bus.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable RedisEventBus auto-configuration",
+      "defaultValue": true
+    },
+    {
+      "name": "surf.redis.request-bus.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable RequestResponseBus auto-configuration",
+      "defaultValue": true
+    }
+  ]
+}

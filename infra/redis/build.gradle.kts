@@ -1,6 +1,9 @@
 plugins {
     kotlin("jvm") version "1.9.22"
     kotlin("plugin.serialization") version "1.9.22"
+    kotlin("plugin.spring") version "1.9.22"
+    id("org.springframework.boot") version "3.2.1" apply false
+    id("io.spring.dependency-management") version "1.1.4"
     `maven-publish`
 }
 
@@ -11,9 +14,21 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+    }
+}
+
 dependencies {
     // Lettuce Redis client
     implementation("io.lettuce:lettuce-core:6.3.0.RELEASE")
+    
+    // Spring Framework
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework:spring-context")
+    compileOnly("org.springframework.boot:spring-boot-autoconfigure")
     
     // Kotlin
     implementation(kotlin("stdlib"))
@@ -33,6 +48,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 tasks.test {
