@@ -2,6 +2,26 @@
 
 A Kotlin library for Redis-based event distribution using Lettuce. This library provides a simple and powerful way to publish and subscribe to events across multiple servers or instances.
 
+## Quick Start
+
+```kotlin
+// 1. Create your custom event
+data class PlayerJoinEvent(val playerName: String) : RedisEvent()
+
+// 2. Create a listener
+class MyListener {
+    @Subscribe
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        println("${event.playerName} joined!")
+    }
+}
+
+// 3. Set up and use
+val eventBus = RedisEventBus("redis://localhost:6379")
+eventBus.registerListener(MyListener())
+eventBus.publish(PlayerJoinEvent("Steve"))
+```
+
 ## Features
 
 - 🚀 Simple event system based on Redis pub/sub using Lettuce
