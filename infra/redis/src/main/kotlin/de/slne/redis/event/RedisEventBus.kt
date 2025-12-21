@@ -58,10 +58,14 @@ class RedisEventBus(redisUri: String) {
                 try {
                     handler.invoke(event)
                 } catch (e: Exception) {
+                    // TODO: Replace with proper logging framework in production
+                    System.err.println("Error handling event ${event::class.simpleName}: ${e.message}")
                     e.printStackTrace()
                 }
             }
         } catch (e: Exception) {
+            // TODO: Replace with proper logging framework in production
+            System.err.println("Error deserializing event: ${e.message}")
             e.printStackTrace()
         }
     }
