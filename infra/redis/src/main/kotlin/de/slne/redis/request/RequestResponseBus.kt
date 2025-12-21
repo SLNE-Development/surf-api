@@ -8,8 +8,6 @@ import kotlinx.coroutines.future.await
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -141,9 +139,6 @@ class RequestResponseBus(
         val requestId = UUID.randomUUID().toString()
         val deferred = CompletableDeferred<RedisResponse>()
         pendingRequests[requestId] = deferred
-        
-        // Register response type if not already registered
-        // We'll need the response type to be registered by the handler registration
         
         try {
             // Publish the request
