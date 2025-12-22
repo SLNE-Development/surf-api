@@ -1,7 +1,7 @@
 package de.slne.redis.example
 
 import de.slne.redis.event.RedisEventBus
-import de.slne.redis.event.Subscribe
+import de.slne.redis.event.OnRedisEvent
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -9,17 +9,17 @@ import kotlinx.coroutines.runBlocking
  */
 class ExampleListener {
     
-    @Subscribe
+    @OnRedisEvent
     fun onPlayerJoin(event: PlayerJoinEvent) {
         println("Player ${event.playerName} joined server ${event.serverName}")
     }
     
-    @Subscribe
+    @OnRedisEvent
     fun onPlayerLeave(event: PlayerLeaveEvent) {
         println("Player ${event.playerName} left server ${event.serverName}")
     }
     
-    @Subscribe
+    @OnRedisEvent
     fun onChatMessage(event: ChatMessageEvent) {
         println("[${event.serverName}] ${event.playerName}: ${event.message}")
     }

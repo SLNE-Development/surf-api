@@ -2,7 +2,7 @@ package de.slne.redis.stream
 
 import de.slne.redis.RedisApi
 import de.slne.redis.event.RedisEvent
-import de.slne.redis.event.Subscribe
+import de.slne.redis.event.OnRedisEvent
 import io.lettuce.core.Consumer
 import io.lettuce.core.StreamMessage
 import io.lettuce.core.XReadArgs
@@ -209,7 +209,7 @@ class RedisStreamEventBus(
         val methods = listenerClass.java.declaredMethods
         
         for (method in methods) {
-            if (method.isAnnotationPresent(Subscribe::class.java)) {
+            if (method.isAnnotationPresent(OnRedisEvent::class.java)) {
                 if (method.parameterCount == 1) {
                     val paramType = method.parameters[0].type
                     if (RedisEvent::class.java.isAssignableFrom(paramType)) {

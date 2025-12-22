@@ -31,14 +31,14 @@ class SubscribeAnnotationTest {
     @Test
     fun `test Subscribe annotation can be applied to methods`() {
         val method = TestListener::class.java.getDeclaredMethod("onTestEvent", TestEvent::class.java)
-        assertTrue(method.isAnnotationPresent(Subscribe::class.java))
+        assertTrue(method.isAnnotationPresent(OnRedisEvent::class.java))
     }
     
     @Serializable
     data class TestEvent(val data: String) : RedisEvent()
     
     class TestListener {
-        @Subscribe
+        @OnRedisEvent
         fun onTestEvent(event: TestEvent) {
             // Test method
         }
@@ -75,7 +75,7 @@ class RedisEventBusTest {
     class TestListener {
         var receivedEvents = mutableListOf<TestEvent>()
         
-        @Subscribe
+        @OnRedisEvent
         fun onTestEvent(event: TestEvent) {
             receivedEvents.add(event)
         }

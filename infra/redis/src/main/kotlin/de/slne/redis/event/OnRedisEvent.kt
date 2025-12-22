@@ -6,7 +6,7 @@ package de.slne.redis.event
  * 
  * Example:
  * ```
- * @Subscribe
+ * @OnRedisEvent
  * fun onPlayerJoin(event: PlayerJoinEvent) {
  *     // Handle the event
  * }
@@ -14,4 +14,4 @@ package de.slne.redis.event
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Subscribe
+annotation class OnRedisEvent

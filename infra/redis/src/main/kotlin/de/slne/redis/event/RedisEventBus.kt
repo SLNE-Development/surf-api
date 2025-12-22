@@ -129,7 +129,7 @@ class RedisEventBus(
         
         // Register event types from listener methods
         for (method in methods) {
-            if (method.isAnnotationPresent(Subscribe::class.java)) {
+            if (method.isAnnotationPresent(OnRedisEvent::class.java)) {
                 if (method.parameterCount == 1) {
                     val paramType = method.parameters[0].type
                     if (RedisEvent::class.java.isAssignableFrom(paramType)) {
