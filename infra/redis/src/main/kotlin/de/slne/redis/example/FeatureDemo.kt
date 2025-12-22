@@ -3,7 +3,6 @@ package de.slne.redis.example
 import de.slne.redis.RedisApi
 import de.slne.redis.event.RedisEventBus
 import de.slne.redis.event.OnRedisEvent
-import de.slne.redis.stream.RedisStreamEventBus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
