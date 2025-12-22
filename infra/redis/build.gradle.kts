@@ -10,8 +10,9 @@ version = findProperty("version") as String
 
 
 dependencies {
-    // Lettuce Redis client
-    implementation("io.lettuce:lettuce-core:7.2.1.RELEASE")
+    implementation("io.lettuce:lettuce-core:7.2.1.RELEASE") {
+        exclude("org.slf4j")
+    }
 
     testImplementation(kotlin("test"))
     testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
@@ -20,7 +21,22 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 }
 
+tasks.shadowJar {
+    relocationPrefix = "dev.slne.redis.libs"
+    enableAutoRelocation = true
+}
+
+shadow {
+    addShadowVariantIntoJavaComponent = false
+}
+
 publishing {
+    publications {
+        create<MavenPublication>("shadow") {
+            from(components["shadow"])
+        }
+    }
+
     repositories {
         slneReleases()
     }
@@ -30,6 +46,16 @@ tasks.test {
     useJUnitPlatform()
 }
 
-kotlin {
-    jvmToolchain(21)
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+afterEvaluate {
+    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
+        enabled = false
+    }
+    tasks.named("publishPluginMavenPublicationToMavenLocal") {
+        enabled = false
+    }
 }
