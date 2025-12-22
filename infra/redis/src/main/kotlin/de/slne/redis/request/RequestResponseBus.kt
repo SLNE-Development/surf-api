@@ -356,24 +356,25 @@ class RequestResponseBus internal constructor(
      * near-direct invocation performance.
      */
     private fun createRequestConsumer(instance: Any, method: Method): RequestConsumer {
-        val consumerMethodType = MethodType.methodType(Void.TYPE, RequestContext::class.java)
+        val handlerClass = instance.javaClass
+        val handlerLookup = MethodHandles.privateLookupIn(handlerClass, lookup)
 
-        val impl = lookup.unreflect(method)
-            .bindTo(instance)
-            .asType(consumerMethodType)
+        val samMethodType = MethodType.methodType(Void.TYPE, RequestContext::class.java)
+        val implMethod = handlerLookup.unreflect(method)
+        val invokedType = MethodType.methodType(RequestConsumer::class.java, handlerClass)
 
         val callSite = LambdaMetafactory.metafactory(
             lookup,
             "accept",
-            MethodType.methodType(RequestConsumer::class.java),
-            consumerMethodType,
-            impl,
-            consumerMethodType
+            invokedType,
+            samMethodType,
+            implMethod,
+            samMethodType
         )
 
         val target = callSite.target
 
-        return target.invokeExact() as RequestConsumer
+        return target.invoke(instance) as RequestConsumer
     }
 
     /**

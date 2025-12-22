@@ -1,80 +1,40 @@
 package de.slne.redis.event
 
-import kotlinx.coroutines.runBlocking
+import de.slne.redis.RedisApi
+import de.slne.redis.RedisTestBase
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.AfterEach
+import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
-class RedisEventTest {
-    
-    @Serializable
-    data class TestEvent(val message: String, val value: Int) : RedisEvent()
-    
-    @Test
-    fun `test event creation includes timestamp`() {
-        val event = TestEvent("test", 42)
-        assertTrue(event.timestamp > 0)
-        assertTrue(event.timestamp <= System.currentTimeMillis())
-    }
-    
-    @Test
-    fun `test event properties are accessible`() {
-        val event = TestEvent("hello", 123)
-        assertEquals("hello", event.message)
-        assertEquals(123, event.value)
-    }
-}
+class RedisEventBusTest: RedisTestBase() {
 
-class SubscribeAnnotationTest {
-    
-    @Test
-    fun `test Subscribe annotation can be applied to methods`() {
-        val method = TestListener::class.java.getDeclaredMethod("onTestEvent", TestEvent::class.java)
-        assertTrue(method.isAnnotationPresent(OnRedisEvent::class.java))
-    }
-    
-    @Serializable
-    data class TestEvent(val data: String) : RedisEvent()
-    
-    class TestListener {
-        @OnRedisEvent
-        fun onTestEvent(event: TestEvent) {
-            // Test method
-        }
-    }
-}
-
-class RedisEventBusTest {
-    
     @Serializable
     data class TestEvent(val message: String) : RedisEvent()
-    
-    @Test
-    fun `test listener registration scans Subscribe methods`() = runBlocking {
-        // This test verifies that listener registration doesn't throw exceptions
-        // Full integration testing requires a running Redis instance
-        val listener = TestListener()
-        
-        // Note: We can't fully test without a Redis connection
-        // but we can verify the API works
-        try {
-            // This will fail to connect but validates the API
-            val eventBus = RedisEventBus("redis://localhost:6379")
-            eventBus.registerListener(listener)
-            eventBus.unregisterListener(listener)
-            eventBus.close()
-        } catch (e: Exception) {
-            // Expected when Redis is not running
-            assertTrue(e.message?.contains("Unable to connect") == true || 
-                       e.message?.contains("Connection refused") == true ||
-                       e.cause?.message?.contains("Connection refused") == true)
-        }
+
+    override fun beforeApiFreeze(api: RedisApi) {
+        api.subscribeToEvents(TestListener)
     }
-    
-    class TestListener {
-        var receivedEvents = mutableListOf<TestEvent>()
-        
+
+    @AfterEach
+    fun cleanup() {
+        TestListener.receivedEvents.clear()
+    }
+
+    @Test
+    fun testEventBusListenerReceivesEvent() = runTest {
+        val event = TestEvent("Hello, Event Bus!")
+        val received = redisApi.publishEvent(event).await()
+
+        assertEquals(1, received, "Event should be received by one listener")
+        assertEquals(1, TestListener.receivedEvents.size, "Listener should have received one event")
+        assertEquals(event, TestListener.receivedEvents[0], "Received event should match the published event")
+    }
+
+    object TestListener {
+        val receivedEvents = mutableListOf<TestEvent>()
+
         @OnRedisEvent
         fun onTestEvent(event: TestEvent) {
             receivedEvents.add(event)

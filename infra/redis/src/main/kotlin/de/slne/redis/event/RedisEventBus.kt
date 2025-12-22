@@ -198,7 +198,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
                     continue
                 }
 
-                val eventConsumer = createRedisEventConsumer(listener, method)
+                val eventConsumer = createRedisEventConsumer(listener, method, firstParamType)
                 eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
                     .add(eventConsumer)
             }
@@ -214,21 +214,28 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
     private fun createRedisEventConsumer(
         listener: Any,
         method: Method,
+        eventType: Class<out RedisEvent>
     ): RedisEventConsumer {
-        val eventConsumerMethodType = MethodType.methodType(Void.TYPE, RedisEvent::class.java)
-        val handle = lookup.unreflect(method).bindTo(listener).asType(eventConsumerMethodType)
+        val listenerClass = listener.javaClass
+        val listenerLookup = MethodHandles.privateLookupIn(listenerClass, lookup)
+
+        val samMethodType = MethodType.methodType(Void.TYPE, Any::class.java)
+        val implMethod = listenerLookup.unreflect(method)
+        val instantiatedMethodType = MethodType.methodType(Void.TYPE, eventType)
+        val invokedType = MethodType.methodType(RedisEventConsumer::class.java, listenerClass)
+
 
         val callSite = LambdaMetafactory.metafactory(
-            lookup,
+            listenerLookup,
             "accept",
-            MethodType.methodType(RedisEventConsumer::class.java),
-            eventConsumerMethodType,
-            handle,
-            eventConsumerMethodType
+            invokedType,
+            samMethodType,
+            implMethod,
+            instantiatedMethodType
         )
 
         val factory = callSite.target
-        return factory.invokeExact() as RedisEventConsumer
+        return factory.invoke(listener) as RedisEventConsumer
     }
 
     /**
@@ -308,6 +315,6 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
     @Suppress("unused")
     @FunctionalInterface
     private fun interface RedisEventConsumer {
-        fun accept(event: RedisEvent)
+        fun accept(event: Any)
     }
 }
