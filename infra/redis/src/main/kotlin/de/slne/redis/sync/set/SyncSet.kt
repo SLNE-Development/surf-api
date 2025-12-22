@@ -17,8 +17,41 @@ import kotlin.concurrent.write
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-
-class SyncSet<T : Any>(
+/**
+ * Replicated in-memory set that is kept in sync across all Redis-connected nodes.
+ *
+ * ## How it works
+ * - **In-memory state:** each node holds a local `Set<T>` instance.
+ * - **Delta-based replication:** mutations publish deltas via Redis Pub/Sub.
+ * - **Snapshot for late joiners:** the full set is stored in Redis with a TTL.
+ * - **Versioning:** every mutation increments a global version counter.
+ * - **Resync:** if a node detects a version gap, it reloads the snapshot.
+ * - **Ephemeral storage:** snapshot and version keys expire automatically and
+ *   are refreshed via heartbeat while nodes are alive.
+ *
+ * ## Consistency model
+ * - Eventual consistency.
+ * - Deltas are applied only if `version == localVersion + 1`.
+ * - Duplicate or out-of-order deltas are ignored.
+ * - Missing deltas trigger a snapshot reload.
+ *
+ * ## Threading / API behavior
+ * - Mutating methods are **non-suspending** and do not block.
+ * - Redis I/O is executed asynchronously on the provided [scope].
+ * - Change listeners are invoked on the thread applying the change
+ *   (caller thread for local changes, Pub/Sub thread for remote changes).
+ *
+ * ## Failure semantics
+ * - If all nodes go offline, Redis state expires automatically after [ttl].
+ * - The next node recreates the set from the provided operations.
+ *
+ * @param api owning [RedisApi] instance
+ * @param id unique identifier for this set (defines Redis keys and channel)
+ * @param scope coroutine scope used for asynchronous Redis operations
+ * @param elementSerializer serializer for set elements
+ * @param ttl TTL for snapshot and version keys (default: [DEFAULT_TTL])
+ */
+class SyncSet<T : Any> internal constructor(
     api: RedisApi,
     id: String,
     scope: CoroutineScope,
@@ -39,6 +72,11 @@ class SyncSet<T : Any>(
     private var localVersion: Long = 0L
 
     companion object {
+        /**
+         * Default TTL for snapshot and version keys.
+         *
+         * Refreshed periodically by the heartbeat while at least one node is alive.
+         */
         val DEFAULT_TTL = 5.minutes
     }
 
@@ -47,10 +85,24 @@ class SyncSet<T : Any>(
         startHeartbeat()
     }
 
+    /**
+     * Returns a copy of the current set state.
+     *
+     * The returned set is a snapshot and will not reflect future updates.
+     */
     fun snapshot() = lock.read { ObjectOpenHashSet(set) }
+
+    /** @return number of elements in the set */
     fun size() = lock.read { set.size }
+
+    /** @return `true` if [element] is present */
     fun contains(element: T) = lock.read { set.contains(element) }
 
+    /**
+     * Adds [element] to the set and replicates the change.
+     *
+     * @return `true` if the element was added, `false` if it was already present
+     */
     fun add(element: T): Boolean {
         val added = lock.write { set.add(element) }
         if (!added) return false
@@ -64,6 +116,11 @@ class SyncSet<T : Any>(
         return true
     }
 
+    /**
+     * Removes [element] from the set and replicates the change.
+     *
+     * @return `true` if the element was removed, `false` if it was not present
+     */
     fun remove(element: T): Boolean {
         val removed = lock.write { set.remove(element) }
         if (!removed) return false
@@ -77,6 +134,11 @@ class SyncSet<T : Any>(
         return true
     }
 
+    /**
+     * Clears the set and replicates the change.
+     *
+     * If the set is already empty, this method is a no-op and does not publish a delta.
+     */
     fun clear() {
         val hadElements = lock.write {
             val had = set.isNotEmpty()
@@ -92,10 +154,16 @@ class SyncSet<T : Any>(
         notifyListeners(listeners, SyncSetChange.Cleared)
     }
 
+    /**
+     * Registers a change listener.
+     *
+     * The listener is invoked for all local and remote changes.
+     */
     fun addListener(listener: (SyncSetChange) -> Unit) {
         listeners += listener
     }
 
+    /** Removes a previously registered listener. */
     fun removeListener(listener: (SyncSetChange) -> Unit) {
         listeners -= listener
     }
@@ -138,6 +206,12 @@ class SyncSet<T : Any>(
         }
     }
 
+    /**
+     * Publishes a local delta:
+     * - increments the global version,
+     * - persists the snapshot with TTL,
+     * - broadcasts the delta via Pub/Sub.
+     */
     private suspend fun publishLocalDelta(delta: Delta) {
         val async = api.connection.async()
 
@@ -150,6 +224,11 @@ class SyncSet<T : Any>(
         api.pubSubConnection.async().publish(redisChannel, msg).await()
     }
 
+    /**
+     * Persists the full set snapshot and version with TTL.
+     *
+     * Used for late joiners and recovery after missed deltas.
+     */
     private suspend fun persistSnapshot(version: Long) {
         val snapshotJson = lock.read {
             api.json.encodeToString(snapshotSerializer, set)
@@ -160,6 +239,12 @@ class SyncSet<T : Any>(
         async.setex(verKey, ttl.inWholeSeconds, version.toString()).await()
     }
 
+    /**
+     * Periodically refreshes TTLs for snapshot and version keys.
+     *
+     * Ensures the set remains ephemeral and is automatically
+     * removed from Redis if all nodes go offline.
+     */
     private fun startHeartbeat() {
         if (ttl == Duration.ZERO || ttl.isNegative()) return
 
@@ -174,6 +259,9 @@ class SyncSet<T : Any>(
         }
     }
 
+    /**
+     * Applies a single delta to the local set and notifies listeners.
+     */
     private fun applyDelta(delta: Delta) {
         when (delta) {
             is Delta.Add -> {
@@ -199,12 +287,18 @@ class SyncSet<T : Any>(
         }
     }
 
+    /**
+     * Wire format for Pub/Sub messages.
+     */
     @Serializable
     private data class Envelope(
         val version: Long,
         val delta: Delta
     )
 
+    /**
+     * Delta operations for set replication.
+     */
     @Serializable
     private sealed interface Delta {
         @Serializable

@@ -290,11 +290,19 @@ class RedisApi private constructor(
      */
     fun registerRequestHandler(handler: Any) = requestResponseBus.registerRequestHandler(handler)
 
+    /**
+     * Creates a new [SyncList] instance.
+     * @see SyncList
+     */
     inline fun <reified E : Any> createSyncList(
         id: String,
         ttl: Duration = SyncList.DEFAULT_TTL
     ): SyncList<E> = createSyncList(id, serializer(), ttl)
 
+    /**
+     * Creates a new [SyncList] instance.
+     * @see SyncList
+     */
     fun <E : Any> createSyncList(
         id: String,
         elementSerializer: KSerializer<E>,
@@ -303,11 +311,19 @@ class RedisApi private constructor(
         SyncList(this, id, syncStructureScope, elementSerializer, ttl)
     }
 
+    /**
+     * Creates a new [SyncSet] instance.
+     * @see SyncSet
+     */
     inline fun <reified E : Any> createSyncSet(
         id: String,
         ttl: Duration = SyncSet.DEFAULT_TTL
     ): SyncSet<E> = createSyncSet(id, serializer(), ttl)
 
+    /**
+     * Creates a new [SyncSet] instance.
+     * @see SyncSet
+     */
     fun <E : Any> createSyncSet(
         id: String,
         elementSerializer: KSerializer<E>,
@@ -316,12 +332,20 @@ class RedisApi private constructor(
         SyncSet(this, id, syncStructureScope, elementSerializer, ttl)
     }
 
+    /**
+     * Creates a new [SyncValue] instance.
+     * @see SyncValue
+     */
     inline fun <reified T : Any> createSyncValue(
         id: String,
         defaultValue: T,
         ttl: Duration = SyncValue.DEFAULT_TTL
     ): SyncValue<T> = createSyncValue(id, serializer(), defaultValue, ttl)
 
+    /**
+     * Creates a new [SyncValue] instance.
+     * @see SyncValue
+     */
     fun <T : Any> createSyncValue(
         id: String,
         serializer: KSerializer<T>,
@@ -331,6 +355,10 @@ class RedisApi private constructor(
         SyncValue(this, id, syncStructureScope, serializer, defaultValue, ttl)
     }
 
+    /**
+     * Creates a new [SyncMap] instance.
+     * @see SyncMap
+     */
     inline fun <reified K : Any, reified V : Any> createSyncMap(
         id: String,
         ttl: Duration = SyncMap.DEFAULT_TTL
@@ -345,6 +373,15 @@ class RedisApi private constructor(
         SyncMap(this, id, syncStructureScope, keySerializer, valueSerializer, ttl)
     }
 
+    /**
+     * Creates a new instance of a synchronization structure using the provided creator function.
+     * Ensures that the Redis client is not frozen before creating the synchronization structure.
+     * The created structure is added to the internal list of sync structures managed by the Redis API.
+     *
+     * @param creator A factory function responsible for creating a specific type of synchronization structure.
+     * @return The newly created synchronization structure of type [S].
+     * @throws IllegalStateException if the Redis client is frozen when attempting to create the structure.
+     */
     private inline fun <S : SyncStructure<*>> createSyncStructure(creator: () -> S): S {
         require(!isFrozen()) { "Redis client must not be frozen to create sync structures" }
         val structure = creator()

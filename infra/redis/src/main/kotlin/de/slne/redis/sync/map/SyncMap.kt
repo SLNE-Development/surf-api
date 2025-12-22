@@ -17,8 +17,42 @@ import kotlin.concurrent.write
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-
-class SyncMap<K : Any, V : Any>(
+/**
+ * Replicated in-memory map that is kept in sync across all Redis-connected nodes.
+ *
+ * ## How it works
+ * - **In-memory state:** each node holds a local `Map<K, V>` instance.
+ * - **Delta-based replication:** mutations publish deltas via Redis Pub/Sub.
+ * - **Snapshot for late joiners:** the full map is stored in Redis with a TTL.
+ * - **Versioning:** every mutation increments a global version counter.
+ * - **Resync:** if a node detects a version gap, it reloads the snapshot.
+ * - **Ephemeral storage:** snapshot and version keys expire automatically and
+ *   are refreshed via heartbeat while nodes are alive.
+ *
+ * ## Consistency model
+ * - Eventual consistency.
+ * - Deltas are applied only if `version == localVersion + 1`.
+ * - Duplicate or out-of-order deltas are ignored.
+ * - Missing deltas trigger a snapshot reload.
+ *
+ * ## Threading / API behavior
+ * - Public mutating methods are **non-suspending** and never block.
+ * - Redis I/O is executed asynchronously on the provided [scope].
+ * - Change listeners are invoked on the thread applying the change
+ *   (caller thread for local changes, Pub/Sub thread for remote changes).
+ *
+ * ## Failure semantics
+ * - If all nodes go offline, Redis state expires automatically after [ttl].
+ * - The next node recreates the map from the provided operations.
+ *
+ * @param api owning [RedisApi] instance
+ * @param id unique identifier for this map (defines Redis keys and channel)
+ * @param scope coroutine scope used for asynchronous Redis operations
+ * @param keySerializer serializer for map keys
+ * @param valueSerializer serializer for map values
+ * @param ttl TTL for snapshot and version keys (default: [DEFAULT_TTL])
+ */
+class SyncMap<K : Any, V : Any> internal constructor(
     api: RedisApi,
     id: String,
     scope: CoroutineScope,
@@ -40,6 +74,11 @@ class SyncMap<K : Any, V : Any>(
     private var localVersion: Long = 0L
 
     companion object {
+        /**
+         * Default TTL for snapshot and version keys.
+         *
+         * Refreshed periodically by the heartbeat while at least one node is alive.
+         */
         val DEFAULT_TTL = 5.minutes
     }
 
@@ -48,17 +87,36 @@ class SyncMap<K : Any, V : Any>(
         startHeartbeat()
     }
 
+    /**
+     * Returns a copy of the current map state.
+     *
+     * The returned map is a snapshot and will not reflect future updates.
+     */
     fun snapshot(): Object2ObjectOpenHashMap<K, V> = lock.read { Object2ObjectOpenHashMap(map) }
+
+    /** @return number of entries in the map */
     fun size(): Int = lock.read { map.size }
+
+    /** @return `true` if the map is empty */
     fun isEmpty(): Boolean = lock.read { map.isEmpty() }
+
+    /** @return value associated with [key], or `null` if absent */
     fun get(key: K): V? = lock.read { map[key] }
+
+    /** @return `true` if the map contains [key] */
     fun containsKey(key: K): Boolean = lock.read { map.containsKey(key) }
 
 
+    /**
+     * Registers a change listener.
+     *
+     * The listener is invoked for all local and remote changes.
+     */
     fun addListener(listener: (SyncMapChange) -> Unit) {
         listeners += listener
     }
 
+    /** Removes a previously registered listener. */
     fun removeListener(listener: (SyncMapChange) -> Unit) {
         listeners -= listener
     }
@@ -102,6 +160,12 @@ class SyncMap<K : Any, V : Any>(
         }
     }
 
+    /**
+     * Publishes a local delta:
+     * - increments the global version,
+     * - persists the snapshot with TTL,
+     * - broadcasts the delta via Pub/Sub.
+     */
     private suspend fun publishLocalDelta(delta: Delta) {
         val async = api.connection.async()
 
@@ -114,6 +178,11 @@ class SyncMap<K : Any, V : Any>(
         api.pubSubConnection.async().publish(redisChannel, msg).await()
     }
 
+    /**
+     * Persists the full map snapshot and version with TTL.
+     *
+     * Used for late joiners and recovery after missed deltas.
+     */
     private suspend fun persistSnapshot(version: Long) {
         val snapshotJson = lock.read { api.json.encodeToString(snapshotSerializer, map) }
 
@@ -122,6 +191,12 @@ class SyncMap<K : Any, V : Any>(
         async.setex(verKey, ttl.inWholeSeconds, version.toString()).await()
     }
 
+    /**
+     * Periodically refreshes TTLs for snapshot and version keys.
+     *
+     * Ensures the map remains ephemeral and is automatically
+     * removed from Redis if all nodes go offline.
+     */
     private fun startHeartbeat() {
         if (ttl == Duration.ZERO || ttl.isNegative()) return
 
@@ -136,6 +211,9 @@ class SyncMap<K : Any, V : Any>(
         }
     }
 
+    /**
+     * Applies a single delta to the local map and notifies listeners.
+     */
     private fun applyDelta(delta: Delta) {
         when (delta) {
             is Delta.Put -> {
@@ -176,12 +254,18 @@ class SyncMap<K : Any, V : Any>(
         }
     }
 
+    /**
+     * Wire format for Pub/Sub messages.
+     */
     @Serializable
     private data class Envelope(
         val version: Long,
         val delta: Delta
     )
 
+    /**
+     * Delta operations for map replication.
+     */
     @Serializable
     private sealed interface Delta {
         @Serializable

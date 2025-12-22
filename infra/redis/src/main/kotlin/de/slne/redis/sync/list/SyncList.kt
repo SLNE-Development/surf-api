@@ -47,7 +47,7 @@ import kotlin.time.Duration.Companion.minutes
  * @param elementSerializer serializer for list elements
  * @param ttl TTL for snapshot/version keys; refreshed periodically while the list is active
  */
-class SyncList<T : Any>(
+class SyncList<T : Any> internal constructor(
     api: RedisApi,
     id: String,
     scope: CoroutineScope,
