@@ -1,6 +1,10 @@
 package de.slne.redis.example.sync
 
 import de.slne.redis.sync.*
+import de.slne.redis.sync.list.SyncList
+import de.slne.redis.sync.map.SyncMap
+import de.slne.redis.sync.set.SyncSet
+import de.slne.redis.sync.value.SyncValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable

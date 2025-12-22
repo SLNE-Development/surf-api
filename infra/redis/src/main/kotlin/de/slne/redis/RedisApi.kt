@@ -7,18 +7,29 @@ import de.slne.redis.event.RedisEventBus
 import de.slne.redis.request.RedisRequest
 import de.slne.redis.request.RedisResponse
 import de.slne.redis.request.RequestResponseBus
+import de.slne.redis.sync.SyncStructure
+import de.slne.redis.sync.list.SyncList
+import de.slne.redis.sync.map.SyncMap
+import de.slne.redis.sync.set.SyncSet
+import de.slne.redis.sync.value.SyncValue
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
+import dev.slne.surf.surfapi.core.api.util.logger
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.serializer
 import org.jetbrains.annotations.Blocking
 import java.nio.file.Path
+import kotlin.time.Duration
 
 /**
  * Central API for managing Redis connections.
@@ -69,9 +80,23 @@ class RedisApi private constructor(
     val eventBus = RedisEventBus(this)
     val requestResponseBus = RequestResponseBus(this)
 
+    private val syncStructures = ObjectArrayList<SyncStructure<*>>()
+    private val syncStructureScope = CoroutineScope(
+        Dispatchers.Default
+                + SupervisorJob()
+                + CoroutineName("surf-redis-sync-structures")
+                + CoroutineExceptionHandler { context, throwable ->
+            log.atSevere()
+                .withCause(throwable)
+                .log("Uncaught exception in Redis sync structure coroutine (context: $context)")
+        }
+    )
+
     private var frozen = false
 
     companion object {
+        private val log = logger()
+
         /**
          * Creates a [RedisApi] instance from an explicit [RedisURI].
          *
@@ -145,6 +170,12 @@ class RedisApi private constructor(
 
         eventBus.init()
         requestResponseBus.init()
+
+        for (structure in syncStructures) {
+            syncStructureScope.launch {
+                structure.init()
+            }
+        }
     }
 
     /**
@@ -258,4 +289,66 @@ class RedisApi private constructor(
      * @see RequestResponseBus.registerRequestHandler
      */
     fun registerRequestHandler(handler: Any) = requestResponseBus.registerRequestHandler(handler)
+
+    inline fun <reified E : Any> createSyncList(
+        id: String,
+        ttl: Duration = SyncList.DEFAULT_TTL
+    ): SyncList<E> = createSyncList(id, serializer(), ttl)
+
+    fun <E : Any> createSyncList(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration = SyncList.DEFAULT_TTL
+    ) = createSyncStructure {
+        SyncList(this, id, syncStructureScope, elementSerializer, ttl)
+    }
+
+    inline fun <reified E : Any> createSyncSet(
+        id: String,
+        ttl: Duration = SyncSet.DEFAULT_TTL
+    ): SyncSet<E> = createSyncSet(id, serializer(), ttl)
+
+    fun <E : Any> createSyncSet(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration = SyncSet.DEFAULT_TTL
+    ) = createSyncStructure {
+        SyncSet(this, id, syncStructureScope, elementSerializer, ttl)
+    }
+
+    inline fun <reified T : Any> createSyncValue(
+        id: String,
+        defaultValue: T,
+        ttl: Duration = SyncValue.DEFAULT_TTL
+    ): SyncValue<T> = createSyncValue(id, serializer(), defaultValue, ttl)
+
+    fun <T : Any> createSyncValue(
+        id: String,
+        serializer: KSerializer<T>,
+        defaultValue: T,
+        ttl: Duration = SyncValue.DEFAULT_TTL
+    ) = createSyncStructure {
+        SyncValue(this, id, syncStructureScope, serializer, defaultValue, ttl)
+    }
+
+    inline fun <reified K : Any, reified V : Any> createSyncMap(
+        id: String,
+        ttl: Duration = SyncMap.DEFAULT_TTL
+    ): SyncMap<K, V> = createSyncMap(id, serializer(), serializer(), ttl)
+
+    fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keySerializer: KSerializer<K>,
+        valueSerializer: KSerializer<V>,
+        ttl: Duration = SyncMap.DEFAULT_TTL
+    ) = createSyncStructure {
+        SyncMap(this, id, syncStructureScope, keySerializer, valueSerializer, ttl)
+    }
+
+    private inline fun <S : SyncStructure<*>> createSyncStructure(creator: () -> S): S {
+        require(!isFrozen()) { "Redis client must not be frozen to create sync structures" }
+        val structure = creator()
+        syncStructures.add(structure)
+        return structure
+    }
 }
