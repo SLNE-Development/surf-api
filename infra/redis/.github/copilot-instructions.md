@@ -14,7 +14,7 @@ Kotlin library for Redis-based event distribution, request-response patterns, an
 
 ## Project Structure
 ```
-src/main/kotlin/de/slne/redis/
+src/main/kotlin/dev/slne/redis/
 ├── RedisApi.kt                    # Central connection management, two-phase init (freeze→connect)
 ├── event/                         # Pub/sub event bus
 │   ├── RedisEventBus.kt          # Main implementation, MethodHandles dispatch
@@ -31,7 +31,7 @@ src/main/kotlin/de/slne/redis/
 ├── config/                        # Local/Global config via Sponge YAML
 └── util/KotlinSerializerCache.kt
 
-src/test/kotlin/de/slne/redis/
+src/test/kotlin/dev/slne/redis/
 ├── event/RedisEventBusTest.kt
 ├── request/RequestResponseBusTest.kt
 └── sync/SyncManagerTest.kt

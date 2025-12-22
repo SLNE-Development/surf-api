@@ -55,7 +55,7 @@ plugins {
 }
 
 dependencies {
-    implementation("de.slne:surf-redis:1.0.0")
+    implementation("dev.slne:surf-redis:1.0.0")
 }
 ```
 
@@ -66,7 +66,7 @@ dependencies {
 Create your custom events by extending the `RedisEvent` class and annotating with `@Serializable`:
 
 ```kotlin
-import de.slne.redis.event.RedisEvent
+import dev.slne.redis.event.RedisEvent
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -82,7 +82,7 @@ data class PlayerJoinEvent(
 Create listeners with methods annotated with `@Subscribe`:
 
 ```kotlin
-import de.slne.redis.event.Subscribe
+import dev.slne.redis.event.Subscribe
 
 class MyListener {
     @Subscribe
@@ -97,7 +97,7 @@ class MyListener {
 Initialize the event bus and register your listeners:
 
 ```kotlin
-import de.slne.redis.event.RedisEventBus
+import dev.slne.redis.event.RedisEventBus
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
@@ -136,7 +136,7 @@ Examples:
 surf-redis provides a centralized way to manage Redis connections via the `RedisApi` singleton:
 
 ```kotlin
-import de.slne.redis.RedisApi
+import dev.slne.redis.RedisApi
 
 // Initialize global connection
 RedisApi.init(url = "redis://localhost:6379")
@@ -173,7 +173,7 @@ For more reliable event delivery with message persistence, use `RedisStreamEvent
 ### Usage
 
 ```kotlin
-import de.slne.redis.stream.RedisStreamEventBus
+import dev.slne.redis.stream.RedisStreamEventBus
 
 // Create stream-based event bus
 val streamBus = RedisStreamEventBus(
@@ -239,7 +239,7 @@ In addition to the event bus, surf-redis supports request-response patterns wher
 ```kotlin
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
-import de.slne.redis.request.*
+import dev.slne.redis.request.*
 
 // 1. Create your request and response (must be @Serializable)
 @Serializable
@@ -289,8 +289,8 @@ runBlocking {
 #### 1. Create Request and Response Classes
 
 ```kotlin
-import de.slne.redis.request.RedisRequest
-import de.slne.redis.request.RedisResponse
+import dev.slne.redis.request.RedisRequest
+import dev.slne.redis.request.RedisResponse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -308,8 +308,8 @@ Handlers receive a `RequestContext` that provides:
 - `respond(response)`: Method to send the response
 
 ```kotlin
-import de.slne.redis.request.RequestHandler
-import de.slne.redis.request.RequestContext
+import dev.slne.redis.request.RequestHandler
+import dev.slne.redis.request.RequestContext
 import kotlinx.coroutines.launch
 
 class MyRequestHandler {
@@ -327,7 +327,7 @@ class MyRequestHandler {
 #### 3. Register Handlers and Send Requests
 
 ```kotlin
-import de.slne.redis.request.RequestResponseBus
+import dev.slne.redis.request.RequestResponseBus
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
@@ -394,7 +394,7 @@ Both servers can simultaneously:
 
 ## Example
 
-See the `de.slne.redis.example` package for complete examples:
+See the `dev.slne.redis.example` package for complete examples:
 - `ExampleEvents.kt` - Example event definitions
 - `ExampleUsage.kt` - Example usage demonstrating async publishing and subscribing
 - `ExampleRequests.kt` - Example request/response definitions
