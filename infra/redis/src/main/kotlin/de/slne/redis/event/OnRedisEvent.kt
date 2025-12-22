@@ -1,14 +1,29 @@
 package de.slne.redis.event
 
 /**
- * Annotation to mark methods as Redis event handlers.
- * Methods annotated with this will automatically receive events matching their parameter type.
- * 
+ * Marks a method as a Redis event handler.
+ *
+ * Methods annotated with this annotation must:
+ * - Have **exactly one parameter**
+ * - The parameter type must be a subtype of [RedisEvent]
+ * - **Not** be a `suspend` function
+ *
+ * Event handler methods are invoked synchronously on the Redis
+ * Pub/Sub thread. If asynchronous or suspending work is required,
+ * the handler must explicitly launch its own coroutine.
+ *
  * Example:
  * ```
  * @OnRedisEvent
  * fun onPlayerJoin(event: PlayerJoinEvent) {
- *     // Handle the event
+ *     // Handle event synchronously
+ * }
+ *
+ * @OnRedisEvent
+ * fun onPlayerJoinAsync(event: PlayerJoinEvent) {
+ *     coroutineScope.launch {
+ *         // Handle event asynchronously
+ *     }
  * }
  * ```
  */
