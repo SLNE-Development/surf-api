@@ -3,13 +3,19 @@ package de.slne.redis.request
 import kotlinx.serialization.Serializable
 
 /**
- * Base class for all Redis requests.
- * Extend this class to create custom requests that expect a response.
+ * Base class for all Redis request messages.
+ *
+ * Subclasses represent requests that are sent via the request/response
+ * mechanism and expect exactly one corresponding [RedisResponse].
+ *
+ * Requests must be serializable using Kotlin Serialization.
  */
 @Serializable
 abstract class RedisRequest {
     /**
-     * Timestamp when the request was created
+     * Timestamp (milliseconds since epoch) when this request instance was created.
+     *
+     * This value is intended for debugging and tracing purposes.
      */
     val timestamp: Long = System.currentTimeMillis()
 }

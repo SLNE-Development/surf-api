@@ -3,6 +3,7 @@ package de.slne.redis.event
 import com.google.common.flogger.LogPerBucketingStrategy
 import com.google.common.flogger.StackSize
 import de.slne.redis.RedisApi
+import de.slne.redis.util.KotlinSerializerCache
 import dev.slne.surf.surfapi.core.api.util.logger
 import io.lettuce.core.pubsub.RedisPubSubListener
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
@@ -10,10 +11,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.serializerOrNull
 import org.jetbrains.annotations.Blocking
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
@@ -53,13 +52,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
     /**
      * Cache for event serializers, resolved once per event class.
      */
-    private val serializerCache = object : ClassValue<KSerializer<RedisEvent>?>() {
-        @Suppress("UNCHECKED_CAST")
-        override fun computeValue(type: Class<*>): KSerializer<RedisEvent>? {
-            if (!RedisEvent::class.java.isAssignableFrom(type)) return null
-            return api.json.serializersModule.serializerOrNull(type) as? KSerializer<RedisEvent>
-        }
-    }
+    private val serializerCache = KotlinSerializerCache<RedisEvent>(api.json.serializersModule)
 
     companion object {
         private val log = logger()

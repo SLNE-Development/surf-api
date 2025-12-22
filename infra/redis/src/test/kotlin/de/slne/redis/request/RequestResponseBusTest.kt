@@ -52,10 +52,10 @@ class RequestHandlerAnnotationTest {
     fun `test RequestHandler annotation can be applied to methods`() {
         val methods = TestHandler::class.java.declaredMethods
         val method = methods.find { 
-            it.name == "handleRequest" && it.isAnnotationPresent(RequestHandler::class.java)
+            it.name == "handleRequest" && it.isAnnotationPresent(HandleRedisRequest::class.java)
         }
         assertTrue(method != null, "RequestHandler method should be found")
-        assertTrue(method.isAnnotationPresent(RequestHandler::class.java))
+        assertTrue(method.isAnnotationPresent(HandleRedisRequest::class.java))
     }
     
     @Serializable
@@ -65,7 +65,7 @@ class RequestHandlerAnnotationTest {
     data class TestResponse(val result: String) : RedisResponse()
     
     class TestHandler {
-        @RequestHandler
+        @HandleRedisRequest
         fun handleRequest(context: RequestContext<TestRequest>) {
             context.coroutineScope.launch {
                 context.respond(TestResponse("processed: ${context.request.data}"))
@@ -104,7 +104,7 @@ class RequestResponseBusTest {
     }
     
     class TestHandler {
-        @RequestHandler
+        @HandleRedisRequest
         fun handleTestRequest(context: RequestContext<TestRequest>) {
             context.coroutineScope.launch {
                 context.respond(TestResponse("handled: ${context.request.message}"))

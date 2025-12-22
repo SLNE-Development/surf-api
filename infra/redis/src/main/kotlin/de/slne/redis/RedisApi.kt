@@ -4,6 +4,9 @@ import de.slne.redis.RedisApi.Companion.create
 import de.slne.redis.config.InternalConfig
 import de.slne.redis.event.RedisEvent
 import de.slne.redis.event.RedisEventBus
+import de.slne.redis.request.RedisRequest
+import de.slne.redis.request.RedisResponse
+import de.slne.redis.request.RequestResponseBus
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.RedisClient
@@ -64,6 +67,7 @@ class RedisApi private constructor(
         private set
 
     val eventBus = RedisEventBus(this)
+    val requestResponseBus = RequestResponseBus(this)
 
     private var frozen = false
 
@@ -140,6 +144,7 @@ class RedisApi private constructor(
         pubSubConnection = redisClient.connectPubSub()
 
         eventBus.init()
+        requestResponseBus.init()
     }
 
     /**
@@ -180,6 +185,8 @@ class RedisApi private constructor(
     fun disconnect() {
         if (!isConnected()) return
         redisClient.shutdown()
+
+        requestResponseBus.close()
     }
 
     /**
@@ -229,4 +236,26 @@ class RedisApi private constructor(
      * @see RedisEventBus.registerListener
      */
     fun subscribeToEvents(listener: Any) = eventBus.registerListener(listener)
+
+    /**
+     * @see RequestResponseBus.sendRequest
+     */
+    suspend inline fun <reified T : RedisResponse> sendRequest(
+        request: RedisRequest,
+        timeoutMs: Long = RequestResponseBus.DEFAULT_TIMEOUT_MS
+    ) = requestResponseBus.sendRequest<T>(request, timeoutMs)
+
+    /**
+     * @see RequestResponseBus.sendRequest
+     */
+    suspend fun <T : RedisResponse> sendRequest(
+        request: RedisRequest,
+        responseType: Class<T>,
+        timeoutMs: Long = RequestResponseBus.DEFAULT_TIMEOUT_MS
+    ) = requestResponseBus.sendRequest(request, responseType, timeoutMs)
+
+    /**
+     * @see RequestResponseBus.registerRequestHandler
+     */
+    fun registerRequestHandler(handler: Any) = requestResponseBus.registerRequestHandler(handler)
 }
