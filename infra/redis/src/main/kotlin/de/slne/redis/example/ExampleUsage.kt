@@ -1,7 +1,9 @@
 package de.slne.redis.example
 
+import de.slne.redis.RedisApi
 import de.slne.redis.event.RedisEventBus
 import de.slne.redis.event.OnRedisEvent
+import io.lettuce.core.RedisURI
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -31,19 +33,19 @@ class ExampleListener {
 fun main() = runBlocking {
     // Create event bus with Redis connection URI
     // Format: redis://password@host:port/database
-    val eventBus = RedisEventBus("redis://localhost:6379")
-    
+    val redisApi = RedisApi.create(RedisURI.create("redis://localhost:6379"))
+
     // Register a listener
     val listener = ExampleListener()
-    eventBus.registerListener(listener)
+    redisApi.subscribeToEvents(listener)
+
+    // Freeze and connect to redis
+    redisApi.freezeAndConnect()
     
     // Publish events asynchronously
-    eventBus.publish(PlayerJoinEvent("Steve", "uuid-123", "Lobby-1"))
-    eventBus.publish(ChatMessageEvent("Steve", "Hello World!", "Lobby-1"))
-    eventBus.publish(PlayerLeaveEvent("Steve", "uuid-123", "Lobby-1"))
-    
-    // Or use blocking variant for synchronous code
-    // eventBus.publishBlocking(PlayerJoinEvent("Alex", "uuid-456", "Lobby-2"))
+    redisApi.publishEvent(PlayerJoinEvent("Steve", "uuid-123", "Lobby-1"))
+    redisApi.publishEvent(ChatMessageEvent("Steve", "Hello World!", "Lobby-1"))
+    redisApi.publishEvent(PlayerLeaveEvent("Steve", "uuid-123", "Lobby-1"))
     
     // Keep the application running to receive events
     println("Listening for events... Press Ctrl+C to exit")
@@ -51,7 +53,7 @@ fun main() = runBlocking {
     // Use a more graceful approach to keep the app running
     Runtime.getRuntime().addShutdownHook(Thread {
         println("Shutting down...")
-        eventBus.close()
+        redisApi.disconnect()
     })
     
     // Wait indefinitely (until Ctrl+C)
