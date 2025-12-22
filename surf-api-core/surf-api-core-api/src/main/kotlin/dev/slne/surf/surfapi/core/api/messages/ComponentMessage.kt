@@ -10,7 +10,7 @@ import java.util.*
 class ComponentMessage(private val message: ComponentLike) : Message, ComponentLike {
     override fun getString(): String {
         return (COMPONENT_MESSAGE_PREFIX + GsonComponentSerializer.gson()
-            .serialize(message.asComponent()))
+            .serialize(message.asComponent().compact()))
     }
 
     override fun asComponent(): Component {
