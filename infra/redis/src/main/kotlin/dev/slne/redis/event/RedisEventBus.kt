@@ -226,7 +226,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
 
 
         val callSite = LambdaMetafactory.metafactory(
-            listenerLookup,
+            lookup,
             "accept",
             invokedType,
             samMethodType,
