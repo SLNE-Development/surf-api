@@ -9,12 +9,14 @@ import kotlin.io.path.div
 @ConfigSerializable
 internal data class GlobalConfig(
     val host: String = "localhost",
-    val port: Int = 6379
+    val port: Int = 6379,
+    val password: String? = null
 ) {
 
     fun toInternal() = InternalConfig(
         host = host,
-        port = port
+        port = port,
+        password = password
     )
 
     companion object {

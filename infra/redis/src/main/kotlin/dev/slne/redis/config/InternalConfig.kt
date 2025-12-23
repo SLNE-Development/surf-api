@@ -4,7 +4,8 @@ import java.nio.file.Path
 
 internal data class InternalConfig(
     val host: String = "localhost",
-    val port: Int = 6379
+    val port: Int = 6379,
+    val password: String? = null
 ) {
 
     companion object {

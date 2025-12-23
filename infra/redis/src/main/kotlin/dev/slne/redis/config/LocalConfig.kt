@@ -14,12 +14,14 @@ internal data class LocalConfig(
     @ConfigSerializable
     data class Local(
         val host: String = "localhost",
-        val port: Int = 6379
+        val port: Int = 6379,
+        val password: String? = null
     )
 
     fun toInternal() = InternalConfig(
         host = local.host,
-        port = local.port
+        port = local.port,
+        password = local.password
     )
 
     companion object {

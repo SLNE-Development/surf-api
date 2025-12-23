@@ -162,7 +162,11 @@ class RedisApi private constructor(
         require(isFrozen()) { "Redis client must be frozen before connecting" }
         require(!isConnected()) { "Redis client already initialized" }
 
-        val redisURI = RedisURI.create(config.host, config.port)
+        val redisURI = RedisURI.builder().apply {
+            withHost(config.host)
+            withPort(config.port)
+            config.password?.let { withPassword(it) }
+        }.build()
         redisClient = RedisClient.create(redisURI)
 
         connection = redisClient.connect()
