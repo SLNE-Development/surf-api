@@ -95,6 +95,10 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
         api.pubSubConnection.sync().subscribe(REDIS_CHANNEL)
     }
 
+    fun close() {
+        api.pubSubConnection.sync().unsubscribe(REDIS_CHANNEL)
+    }
+
     /**
      * Handles an incoming Redis Pub/Sub message.
      *

@@ -499,6 +499,7 @@ class RequestResponseBus internal constructor(
      * This does not unsubscribe from Redis channels; connection lifecycle is owned by [RedisApi].
      */
     fun close() {
+        api.pubSubConnection.sync().unsubscribe(REQUEST_CHANNEL, RESPONSE_CHANNEL)
         pendingRequests.values.forEach { deferred ->
             deferred.cancel("RequestResponseBus closed")
         }

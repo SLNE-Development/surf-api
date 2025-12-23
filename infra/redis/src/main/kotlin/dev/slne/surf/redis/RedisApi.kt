@@ -19,6 +19,7 @@ import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection
+import io.lettuce.core.resource.ClientResources
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.awaitSingle
@@ -62,6 +63,8 @@ class RedisApi private constructor(
      */
     lateinit var redisClient: RedisClient
         private set
+
+    private lateinit var clientResources: ClientResources
 
     /**
      * Stateful connection for regular Redis commands.
@@ -167,7 +170,9 @@ class RedisApi private constructor(
             withPort(config.port)
             config.password?.let { withPassword(it) }
         }.build()
-        redisClient = RedisClient.create(redisURI)
+
+        clientResources = ClientResources.create()
+        redisClient = RedisClient.create(clientResources, redisURI)
 
         connection = redisClient.connect()
         pubSubConnection = redisClient.connectPubSub()
@@ -219,9 +224,11 @@ class RedisApi private constructor(
     @Blocking
     fun disconnect() {
         if (!isConnected()) return
-        redisClient.shutdown()
-
         requestResponseBus.close()
+        eventBus.close()
+
+        redisClient.shutdown()
+        clientResources.shutdown().sync()
     }
 
     /**
