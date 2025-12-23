@@ -9,7 +9,14 @@ group = "dev.slne"
 version = findProperty("version") as String
 
 dependencies {
-
+    implementation(libs.bundles.exposed) {
+        exclude("org.jetbrains.kotlin")
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
+        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-reactive")
+        exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json")
+    }
+    implementation(libs.r2dbc.pool)
+    implementation(libs.bundles.databaseDriver)
 }
 
 shadow {
