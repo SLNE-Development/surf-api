@@ -21,12 +21,12 @@ internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
     final override fun Project.afterEvaluated0(extension: E) {
         if (extension.withSurfRedis.get()) {
             dependencies {
-                add(API, "dev.slne:surf-redis:${extension.surfRedisVersion.get()}")
+                add(API, "dev.slne.surf:surf-redis:${extension.surfRedisVersion.get()}")
             }
 
             tasks.withType<ShadowJar>().configureEach {
                 doFirst {
-                    relocate("dev.slne.redis", extension.surfRedisRelocation.get())
+                    relocate("dev.slne.surf.redis", extension.surfRedisRelocation.get())
                 }
             }
         }
