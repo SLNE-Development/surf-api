@@ -31,6 +31,18 @@ internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
             }
         }
 
+        if (extension.withSurfDatabaseR2dbc.get()) {
+            dependencies {
+                add(API, "dev.slne.surf:surf-database-r2dbc:${extension.surfDatabaseR2dbcVersion.get()}")
+            }
+
+            tasks.withType<ShadowJar>().configureEach {
+                doFirst {
+                    relocate("dev.slne.surf.database.r2dbc", extension.surfDatabaseR2dbcRelocation.get())
+                }
+            }
+        }
+
         afterEvaluated1(extension)
     }
 

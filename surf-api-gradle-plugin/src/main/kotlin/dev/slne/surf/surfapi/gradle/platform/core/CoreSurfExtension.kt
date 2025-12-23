@@ -15,6 +15,10 @@ open class CoreSurfExtension @Inject constructor(objects: ObjectFactory) :
     internal val surfRedisVersion = objects.property<String>()
     internal val surfRedisRelocation = objects.property<String>()
 
+    internal val withSurfDatabaseR2dbc = objects.property<Boolean>().convention(false)
+    internal val surfDatabaseR2dbcVersion = objects.property<String>()
+    internal val surfDatabaseR2dbcRelocation = objects.property<String>()
+
     fun withSurfRedis(version: String, relocation: String) {
         withSurfRedis.set(true)
         withSurfRedis.finalizeValue()
@@ -22,6 +26,15 @@ open class CoreSurfExtension @Inject constructor(objects: ObjectFactory) :
         surfRedisVersion.finalizeValue()
         surfRedisRelocation.set(relocation)
         surfRedisRelocation.finalizeValue()
+    }
+
+    fun withSurfDatabaseR2dbc(version: String, relocation: String) {
+        withSurfDatabaseR2dbc.set(true)
+        withSurfDatabaseR2dbc.finalizeValue()
+        surfDatabaseR2dbcVersion.set(version)
+        surfDatabaseR2dbcVersion.finalizeValue()
+        surfDatabaseR2dbcRelocation.set(relocation)
+        surfDatabaseR2dbcRelocation.finalizeValue()
     }
 
     fun withCloudCommon() {
