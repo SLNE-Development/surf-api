@@ -6,7 +6,6 @@ r2dbc-pool = "1.0.2.RELEASE"
 [libraries]
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-r2dbc = { module = "org.jetbrains.exposed:exposed-r2dbc", version.ref = "exposed" }
-exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
 exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed" }
 exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "exposed" }
 r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "r2dbc-mariadb" }
@@ -14,5 +13,5 @@ r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool" }
 
 
 [bundles]
-exposed = ["exposed-core", "exposed-r2dbc", "exposed-dao", "exposed-java-time", "exposed-json"]
+exposed = ["exposed-core", "exposed-r2dbc", "exposed-java-time", "exposed-json"]
 databaseDriver = ["r2dbc-mariadb"]
