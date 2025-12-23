@@ -12,6 +12,7 @@ exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "e
 r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "r2dbc-mariadb" }
 r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool" }
 
+
 [bundles]
 exposed = ["exposed-core", "exposed-r2dbc", "exposed-dao", "exposed-java-time", "exposed-json"]
 databaseDriver = ["r2dbc-mariadb"]

@@ -1,9 +1,8 @@
-package dev.slne.database.columns
+package dev.slne.surf.database.columns
 
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.ColumnType
 import org.jetbrains.exposed.v1.core.Table
-import org.jetbrains.exposed.v1.core.Table.Dual.registerColumn
 import org.jetbrains.exposed.v1.core.statements.api.PreparedStatementApi
 import org.jetbrains.exposed.v1.core.vendors.currentDialect
 import java.net.InetAddress

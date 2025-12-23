@@ -1,4 +1,4 @@
-package dev.slne.database.config
+package dev.slne.surf.database.config
 
 import dev.slne.surf.surfapi.core.api.config.createSpongeYmlConfig
 import dev.slne.surf.surfapi.core.api.config.surfConfigApi

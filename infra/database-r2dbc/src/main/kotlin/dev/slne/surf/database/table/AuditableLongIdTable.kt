@@ -1,4 +1,4 @@
-package dev.slne.database.table
+package dev.slne.surf.database.table
 
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.exposed.v1.core.dao.id.EntityID

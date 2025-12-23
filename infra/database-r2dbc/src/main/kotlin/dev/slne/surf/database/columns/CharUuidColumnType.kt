@@ -1,4 +1,4 @@
-package dev.slne.database.columns
+package dev.slne.surf.database.columns
 
 import org.intellij.lang.annotations.Language
 import org.jetbrains.exposed.v1.core.Column

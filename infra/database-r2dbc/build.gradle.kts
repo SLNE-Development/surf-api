@@ -5,7 +5,7 @@ plugins {
 //    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+" /* Uncomment to use tests */
 }
 
-group = "dev.slne"
+group = "dev.slne.surf"
 version = findProperty("version") as String
 
 dependencies {
@@ -19,6 +19,11 @@ dependencies {
     implementation(libs.bundles.databaseDriver)
 }
 
+configurations.all {
+    exclude("io.projectreactor", "reactor-core")
+    exclude("org.reactivestreams")
+}
+
 shadow {
     addShadowVariantIntoJavaComponent = false
 }
@@ -30,7 +35,7 @@ java {
 
 tasks {
     shadowJar {
-        relocationPrefix = "dev.slne.database.libs"
+        relocationPrefix = "dev.slne.surf.database.libs"
         enableAutoRelocation = true
     }
 

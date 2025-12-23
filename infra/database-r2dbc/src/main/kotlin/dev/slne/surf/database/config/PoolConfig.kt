@@ -1,4 +1,4 @@
-package dev.slne.database.config
+package dev.slne.surf.database.config
 
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import kotlin.time.Duration.Companion.minutes

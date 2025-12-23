@@ -1,4 +1,4 @@
-package dev.slne.database.columns
+package dev.slne.surf.database.columns
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer

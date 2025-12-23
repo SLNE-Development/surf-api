@@ -1,6 +1,6 @@
-package dev.slne.database
+package dev.slne.surf.database
 
-import dev.slne.database.config.DatabaseConfig
+import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
