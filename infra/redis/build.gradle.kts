@@ -12,6 +12,8 @@ version = findProperty("version") as String
 dependencies {
     implementation("io.lettuce:lettuce-core:7.2.1.RELEASE") {
         exclude("org.slf4j")
+        exclude("org.reactivestreams")
+        exclude("io.projectreactor", "reactor-core")
     }
 
     testImplementation(kotlin("test"))
