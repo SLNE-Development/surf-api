@@ -351,6 +351,7 @@ class MyRequestHandler {
 import dev.slne.redis.RedisApi
 import kotlinx.coroutines.runBlocking
 
+// Example only - in production, use a proper coroutine scope
 runBlocking {
     val api = RedisApi.create(...)
     api.registerRequestHandler(MyRequestHandler())
@@ -632,7 +633,8 @@ fun main() {
     playerList.add("Steve")
     playerList.add("Alex")
     
-    // Send request (in coroutine)
+    // Send request (requires suspend context)
+    // Note: In production, use a proper coroutine scope instead of runBlocking
     kotlinx.coroutines.runBlocking {
         val response = api.sendRequest<PlayersResponse>(
             GetPlayersRequest(minLevel = 5),
