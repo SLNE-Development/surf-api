@@ -49,7 +49,7 @@ api.publishEvent(PlayerJoinEvent("Steve"))
 - 🔌 Easy plugin integration with automatic method scanning
 - 🎯 Annotation-based event and request handlers
 - 🔧 Type-safe handling with Kotlin Serialization
-- ⚡ High-performance invocation using MethodHandles
+- ⚡ High-performance invocation using Java's LambdaMetafactory
 - 🛡️ Thread-safe with proper locking and coroutine support
 
 ## Requirements
@@ -786,7 +786,7 @@ Exception thrown when a request times out without receiving a response.
 ## Performance Considerations
 
 - **Async by default**: All operations use Kotlin Coroutines
-- **MethodHandles**: Faster than reflection for handler invocation
+- **LambdaMetafactory**: Uses Java's LambdaMetafactory to generate optimized handler invocations (faster than reflection)
 - **Kotlin Serialization**: Native, type-safe serialization
 - **Thread safety**: Proper locking in sync structures
 - **Pub/Sub thread**: Handlers invoked synchronously; launch coroutines for heavy work
