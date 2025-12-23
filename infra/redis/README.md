@@ -209,11 +209,15 @@ class MyListener {
 **Important**: Event handlers are invoked on the Redis Pub/Sub thread. Keep them fast and launch coroutines for heavy work:
 
 ```kotlin
-class MyListener {
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+class MyListener(private val scope: CoroutineScope) {
     @OnRedisEvent
     fun onPlayerJoinAsync(event: PlayerJoinEvent) {
         // Launch coroutine for async/heavy work
-        someCoroutineScope.launch {
+        scope.launch(Dispatchers.IO) {
             val data = fetchPlayerDataFromDatabase(event.playerId)
             processPlayerJoin(data)
         }
