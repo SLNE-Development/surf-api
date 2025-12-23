@@ -5,7 +5,7 @@ plugins {
 //    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+" /* Uncomment to use tests */
 }
 
-group = "dev.slne"
+group = "dev.slne.surf"
 version = findProperty("version") as String
 
 
@@ -22,7 +22,7 @@ dependencies {
 }
 
 tasks.shadowJar {
-    relocationPrefix = "dev.slne.redis.libs"
+    relocationPrefix = "dev.slne.surf.redis.libs"
     enableAutoRelocation = true
 }
 

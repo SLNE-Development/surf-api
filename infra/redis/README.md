@@ -5,9 +5,9 @@ A Kotlin library for Redis-based distributed systems using Lettuce and Kotlin Co
 ## Quick Start
 
 ```kotlin
-import dev.slne.redis.RedisApi
-import dev.slne.redis.event.RedisEvent
-import dev.slne.redis.event.OnRedisEvent
+import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.event.RedisEvent
+import dev.slne.surf.redis.event.OnRedisEvent
 import kotlinx.serialization.Serializable
 import java.nio.file.Paths
 
@@ -114,7 +114,7 @@ api.publishEvent(MyEvent())
 **This is the preferred method** because it enables centralized configuration management:
 
 ```kotlin
-import dev.slne.redis.RedisApi
+import dev.slne.surf.redis.RedisApi
 import java.nio.file.Paths
 
 val api = RedisApi.create(
@@ -180,7 +180,7 @@ The event bus allows you to publish events to all listening servers/instances.
 Create your custom events by extending the `RedisEvent` class and annotating with `@Serializable`:
 
 ```kotlin
-import dev.slne.redis.event.RedisEvent
+import dev.slne.surf.redis.event.RedisEvent
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -196,7 +196,7 @@ data class PlayerJoinEvent(
 Create listeners with methods annotated with `@OnRedisEvent`:
 
 ```kotlin
-import dev.slne.redis.event.OnRedisEvent
+import dev.slne.surf.redis.event.OnRedisEvent
 
 class MyListener {
     @OnRedisEvent
@@ -228,7 +228,7 @@ class MyListener(private val scope: CoroutineScope) {
 #### 3. Register and Use
 
 ```kotlin
-import dev.slne.redis.RedisApi
+import dev.slne.surf.redis.RedisApi
 import java.nio.file.Paths
 
 // Create and configure API
@@ -256,8 +256,8 @@ In addition to events, surf-redis supports request-response patterns where a ser
 #### Quick Example
 
 ```kotlin
-import dev.slne.redis.RedisApi
-import dev.slne.redis.request.*
+import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.request.*
 import kotlinx.serialization.Serializable
 import kotlinx.coroutines.launch
 import java.nio.file.Paths
@@ -308,8 +308,8 @@ println("Players: ${response.players}")
 #### Creating Requests and Responses
 
 ```kotlin
-import dev.slne.redis.request.RedisRequest
-import dev.slne.redis.request.RedisResponse
+import dev.slne.surf.redis.request.RedisRequest
+import dev.slne.surf.redis.request.RedisResponse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -327,8 +327,8 @@ Handlers receive a `RequestContext` that provides:
 - `respond(response)`: Method to send the response
 
 ```kotlin
-import dev.slne.redis.request.HandleRedisRequest
-import dev.slne.redis.request.RequestContext
+import dev.slne.surf.redis.request.HandleRedisRequest
+import dev.slne.surf.redis.request.RequestContext
 import kotlinx.coroutines.launch
 
 class MyRequestHandler {
@@ -348,7 +348,7 @@ class MyRequestHandler {
 #### Sending Requests
 
 ```kotlin
-import dev.slne.redis.RedisApi
+import dev.slne.surf.redis.RedisApi
 import kotlinx.coroutines.runBlocking
 
 // Example only - in production, use a proper coroutine scope
@@ -439,7 +439,7 @@ surf-redis provides replicated, in-memory data structures that stay synchronized
 #### Quick Example
 
 ```kotlin
-import dev.slne.redis.RedisApi
+import dev.slne.surf.redis.RedisApi
 import java.nio.file.Paths
 
 val api = RedisApi.create(pluginDataPath = Paths.get("plugins/my-plugin"))
@@ -574,10 +574,10 @@ value.onChange { change ->
 Here's a complete example demonstrating all features:
 
 ```kotlin
-import dev.slne.redis.RedisApi
-import dev.slne.redis.event.RedisEvent
-import dev.slne.redis.event.OnRedisEvent
-import dev.slne.redis.request.*
+import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.event.RedisEvent
+import dev.slne.surf.redis.event.OnRedisEvent
+import dev.slne.surf.redis.request.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.nio.file.Paths
