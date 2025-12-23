@@ -1,11 +1,15 @@
 # surf-redis
 
-A Kotlin library for Redis-based event distribution using Lettuce. This library provides a simple, powerful, and **asynchronous** way to publish and subscribe to events across multiple servers or instances.
+A Kotlin library for Redis-based distributed systems using Lettuce and Kotlin Coroutines. This library provides a comprehensive, type-safe, and **asynchronous** solution for event distribution, request-response patterns, and synchronized data structures across multiple servers or instances.
 
 ## Quick Start
 
 ```kotlin
-import kotlinx.coroutines.runBlocking
+import dev.slne.redis.RedisApi
+import dev.slne.redis.event.RedisEvent
+import dev.slne.redis.event.OnRedisEvent
+import kotlinx.serialization.Serializable
+import java.nio.file.Paths
 
 // 1. Create your custom event (must be @Serializable)
 @Serializable
@@ -13,37 +17,46 @@ data class PlayerJoinEvent(val playerName: String) : RedisEvent()
 
 // 2. Create a listener
 class MyListener {
-    @Subscribe
+    @OnRedisEvent
     fun onPlayerJoin(event: PlayerJoinEvent) {
         println("${event.playerName} joined!")
     }
 }
 
-// 3. Set up and use asynchronously
-runBlocking {
-    val eventBus = RedisEventBus("redis://localhost:6379")
-    eventBus.registerListener(MyListener())
-    eventBus.publish(PlayerJoinEvent("Steve")) // async
-    // or eventBus.publishBlocking(PlayerJoinEvent("Steve")) // blocking
-}
+// 3. Set up using path-based configuration (RECOMMENDED)
+val api = RedisApi.create(
+    pluginDataPath = Paths.get("plugins/my-plugin"),
+    pluginsPath = Paths.get("plugins")
+)
+
+// 4. Register listeners before freezing
+api.subscribeToEvents(MyListener())
+
+// 5. Freeze and connect
+api.freezeAndConnect()
+
+// 6. Publish events
+api.publishEvent(PlayerJoinEvent("Steve"))
 ```
 
 ## Features
 
-- 🚀 **Async-first** event system based on Redis pub/sub using Lettuce and Kotlin Coroutines
-- 📡 Distribute events across multiple servers/listeners
+- 🚀 **Async-first** architecture based on Redis Pub/Sub using Lettuce and Kotlin Coroutines
+- 📡 **Event Bus**: Distribute events across multiple servers/instances
+- 🔄 **Request-Response**: Send requests and receive typed responses with timeout support
+- 🔗 **Synchronized Data Structures**: Replicated in-memory collections (List, Map, Set, Value)
+- 🎛️ **Centralized Configuration**: Global Redis config shared across all plugins
 - 🔌 Easy plugin integration with automatic method scanning
-- 🎯 Annotation-based event subscription
-- 🔧 Type-safe event handling with Kotlin Serialization
-- ⚡ High-performance event invocation using MethodHandles
-- 🔄 **Redis Streams support** for reliable event delivery with persistence
-- 🎛️ **Global Redis connection** management via RedisApi
+- 🎯 Annotation-based event and request handlers
+- 🔧 Type-safe handling with Kotlin Serialization
+- ⚡ High-performance invocation using MethodHandles
+- 🛡️ Thread-safe with proper locking and coroutine support
 
 ## Requirements
 
 - Kotlin 1.9.22 or higher
-- Java 17 or higher
-- Redis server
+- Java 21 or higher
+- Redis server (tested with Redis 7.x)
 
 ## Installation
 
@@ -55,13 +68,114 @@ plugins {
 }
 
 dependencies {
-    implementation("dev.slne:surf-redis:1.0.0")
+    implementation("dev.slne:surf-redis:1.0.0-SNAPSHOT")
 }
 ```
 
+## Core Concepts
+
+### RedisApi - Central Connection Manager
+
+`RedisApi` is the main entry point for all Redis functionality. It manages:
+- Redis connections (command and Pub/Sub)
+- Event bus for publishing and subscribing to events
+- Request-response bus for bi-directional communication
+- Synchronized data structures (replicated collections)
+
+### Two-Phase Initialization
+
+surf-redis uses a two-phase initialization pattern to ensure all features are registered before connecting:
+
+1. **Registration Phase**: Create the API and register features (events, requests, sync structures)
+2. **Freeze**: Call `freeze()` to lock registrations
+3. **Connect**: Call `connect()` to establish Redis connections
+
+Or use the convenience method `freezeAndConnect()` to do steps 2 and 3 together.
+
+```kotlin
+val api = RedisApi.create(...)
+
+// Registration phase
+api.subscribeToEvents(myListener)
+api.registerRequestHandler(myHandler)
+val syncList = api.createSyncList<String>("my-list")
+
+// Freeze and connect
+api.freezeAndConnect()
+
+// Now ready to use
+api.publishEvent(MyEvent())
+```
+
+## Creating a RedisApi Instance
+
+### Path-Based Configuration (RECOMMENDED)
+
+**This is the preferred method** because it enables centralized configuration management:
+
+```kotlin
+import dev.slne.redis.RedisApi
+import java.nio.file.Paths
+
+val api = RedisApi.create(
+    pluginDataPath = Paths.get("plugins/my-plugin"),
+    pluginsPath = Paths.get("plugins")  // optional, defaults to parent of pluginDataPath
+)
+```
+
+#### How It Works
+
+When you create a `RedisApi` using paths:
+
+1. **Local Configuration**: A `redis.yml` file is created in your plugin's data directory (e.g., `plugins/my-plugin/redis.yml`):
+   ```yaml
+   useGlobalConfig: true  # defaults to true
+   local:
+     host: localhost
+     port: 6379
+   ```
+
+2. **Global Configuration**: If `useGlobalConfig` is `true` (default), a shared `global.yml` is created in `plugins/surf-redis/`:
+   ```yaml
+   host: localhost
+   port: 6379
+   ```
+
+3. **Benefits**:
+   - **Server owners** can configure Redis once in `global.yml` instead of per plugin
+   - Easier to manage when multiple plugins use surf-redis
+   - Future Redis options can be added globally
+   - Individual plugins can still override by setting `useGlobalConfig: false`
+
+### RedisURI-Based Configuration (Alternative)
+
+For more control or when paths aren't available:
+
+```kotlin
+import io.lettuce.core.RedisURI
+
+val api = RedisApi.create(
+    redisURI = RedisURI.create("redis://localhost:6379")
+)
+```
+
+Redis URI format:
+```
+redis://[password@]host[:port][/database]
+```
+
+Examples:
+- `redis://localhost:6379` - Local Redis without password
+- `redis://password@localhost:6379` - With password
+- `redis://mypassword@redis.example.com:6379/0` - Remote with password and database
+
 ## Usage
 
-### 1. Create Custom Events
+### Event Bus
+
+The event bus allows you to publish events to all listening servers/instances.
+
+#### 1. Create Custom Events
 
 Create your custom events by extending the `RedisEvent` class and annotating with `@Serializable`:
 
@@ -77,171 +191,74 @@ data class PlayerJoinEvent(
 ) : RedisEvent()
 ```
 
-### 2. Create Event Listeners
+#### 2. Create Event Listeners
 
-Create listeners with methods annotated with `@Subscribe`:
+Create listeners with methods annotated with `@OnRedisEvent`:
 
 ```kotlin
-import dev.slne.redis.event.Subscribe
+import dev.slne.redis.event.OnRedisEvent
 
 class MyListener {
-    @Subscribe
+    @OnRedisEvent
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        println("Player ${event.playerName} joined!")
+        println("Player ${event.playerName} joined on ${event.serverName}!")
     }
 }
 ```
 
-### 3. Set Up the Event Bus
-
-Initialize the event bus and register your listeners:
+**Important**: Event handlers are invoked on the Redis Pub/Sub thread. Keep them fast and launch coroutines for heavy work:
 
 ```kotlin
-import dev.slne.redis.event.RedisEventBus
-import kotlinx.coroutines.runBlocking
-
-fun main() = runBlocking {
-    // Connect to Redis
-    val eventBus = RedisEventBus("redis://localhost:6379")
-    
-    // Register listeners
-    val listener = MyListener()
-    eventBus.registerListener(listener)
-    
-    // Publish events asynchronously
-    eventBus.publish(PlayerJoinEvent("Steve", "uuid-123", "Lobby-1"))
-    
-    // Or use blocking variant for synchronous code
-    eventBus.publishBlocking(PlayerJoinEvent("Alex", "uuid-456", "Lobby-2"))
-    
-    // Clean up when done
-    eventBus.close()
+class MyListener {
+    @OnRedisEvent
+    fun onPlayerJoinAsync(event: PlayerJoinEvent) {
+        // Launch coroutine for async/heavy work
+        someCoroutineScope.launch {
+            val data = fetchPlayerDataFromDatabase(event.playerId)
+            processPlayerJoin(data)
+        }
+    }
 }
 ```
 
-### Redis Connection URI Format
-
-The Redis URI follows this format:
-```
-redis://[password@]host[:port][/database]
-```
-
-Examples:
-- `redis://localhost:6379` - Local Redis without password
-- `redis://password@localhost:6379` - Local Redis with password
-- `redis://mypassword@redis.example.com:6379/0` - Remote Redis with password and database
-
-## Global Redis Connection (RedisApi)
-
-surf-redis provides a centralized way to manage Redis connections via the `RedisApi` singleton:
+#### 3. Register and Use
 
 ```kotlin
 import dev.slne.redis.RedisApi
+import java.nio.file.Paths
 
-// Initialize global connection
-RedisApi.init(url = "redis://localhost:6379")
-
-// Alternative syntax
-RedisApi(url = "redis://localhost:6379").connect()
-
-// Check connection status
-if (RedisApi.isConnected()) {
-    println("Connected to: ${RedisApi.getUrl()}")
-}
-
-// Create connections
-val connection = RedisApi.createConnection()
-val pubSubConnection = RedisApi.createPubSubConnection()
-
-// Close connection when done
-RedisApi.disconnect()
-```
-
-The `RedisApi` automatically initializes with a default URL (`redis://localhost:6379`) if not explicitly configured.
-
-## Redis Streams
-
-For more reliable event delivery with message persistence, use `RedisStreamEventBus`:
-
-### Benefits of Redis Streams
-
-- 📦 **Message Persistence**: Events are stored and not lost if no consumer is online
-- 👥 **Consumer Groups**: Multiple instances can share the load
-- ✅ **Message Acknowledgment**: Ensures events are processed
-- 🔄 **Reprocessing**: Failed events can be reprocessed
-
-### Usage
-
-```kotlin
-import dev.slne.redis.stream.RedisStreamEventBus
-
-// Create stream-based event bus
-val streamBus = RedisStreamEventBus(
-    streamName = "my-events",
-    consumerGroup = "my-app",
-    consumerName = "instance-1"
+// Create and configure API
+val api = RedisApi.create(
+    pluginDataPath = Paths.get("plugins/my-plugin")
 )
 
-// Use exactly like RedisEventBus
-streamBus.registerListener(MyListener())
-streamBus.publish(MyEvent())
-streamBus.close()
+// Register listeners BEFORE freezing
+api.subscribeToEvents(MyListener())
+
+// Freeze and connect
+api.freezeAndConnect()
+
+// Publish events
+api.publishEvent(PlayerJoinEvent("Steve", "uuid-123", "Lobby-1"))
+
+// Clean up when done
+api.disconnect()
 ```
 
-Redis Streams provide stronger guarantees than pub/sub, making them ideal for critical events that must not be lost.
+### Request-Response Pattern
 
-## How It Works
+In addition to events, surf-redis supports request-response patterns where a server can send a request and wait for a response with timeout support.
 
-1. **Event Publishing**: When you call `eventBus.publish(event)`, the event is serialized using Kotlin Serialization and published asynchronously to a Redis channel using coroutines.
-
-2. **Event Distribution**: All connected servers/instances subscribed to the same Redis channel receive the event asynchronously.
-
-3. **Event Handling**: The event bus automatically deserializes the event using Kotlin Serialization and invokes all registered methods asynchronously in separate coroutines.
-
-4. **Automatic Scanning**: When you call `registerListener()`, the event bus automatically scans the object for methods with the `@Subscribe` annotation and registers them using MethodHandles for optimal performance.
-
-## Performance Optimizations
-
-- **Async by default**: All event publishing and handling is asynchronous using Kotlin Coroutines
-- **MethodHandles**: Uses Java MethodHandles instead of reflection for faster method invocation
-- **Kotlin Serialization**: Uses Kotlin's native serialization instead of Gson for better performance and type safety
-
-## Plugin Integration
-
-For external plugins, simply call `registerListener()` with your plugin's listener object:
+#### Quick Example
 
 ```kotlin
-// In your plugin
-class MyPlugin {
-    fun enable(eventBus: RedisEventBus) {
-        val listener = MyPluginListener()
-        eventBus.registerListener(listener)
-    }
-}
-
-@Serializable
-data class CustomEvent(val data: String) : RedisEvent()
-
-class MyPluginListener {
-    @Subscribe
-    fun onCustomEvent(event: CustomEvent) {
-        // Handle event asynchronously
-    }
-}
-```
-
-## Request-Response Pattern
-
-In addition to the event bus, surf-redis supports request-response patterns where a server can send a request and wait for a response with timeout support.
-
-### Quick Start
-
-```kotlin
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.launch
+import dev.slne.redis.RedisApi
 import dev.slne.redis.request.*
+import kotlinx.serialization.Serializable
+import kotlinx.coroutines.launch
+import java.nio.file.Paths
 
-// 1. Create your request and response (must be @Serializable)
+// 1. Create request and response (must be @Serializable)
 @Serializable
 data class GetPlayerRequest(val minLevel: Int) : RedisRequest()
 
@@ -250,7 +267,7 @@ data class PlayerListResponse(val players: List<String>) : RedisResponse()
 
 // 2. Create a request handler
 class PlayerRequestHandler {
-    @RequestHandler
+    @HandleRedisRequest
     fun handlePlayerRequest(context: RequestContext<GetPlayerRequest>) {
         // Launch coroutine to respond asynchronously
         context.coroutineScope.launch {
@@ -261,32 +278,30 @@ class PlayerRequestHandler {
 }
 
 // 3. Set up and use
-runBlocking {
-    val bus = RequestResponseBus("redis://localhost:6379")
-    
-    // Register handler (ServerA)
-    bus.registerRequestHandler(PlayerRequestHandler())
-    
-    // Send request and wait for response (ServerB or same server)
-    val response = bus.sendRequest<PlayerListResponse>(
-        GetPlayerRequest(minLevel = 5),
-        timeoutMs = 3000 // Default timeout is 3 seconds
-    )
-    println("Players: ${response.players}")
-}
+val api = RedisApi.create(pluginDataPath = Paths.get("plugins/my-plugin"))
+
+// Register handler (ServerA)
+api.registerRequestHandler(PlayerRequestHandler())
+
+api.freezeAndConnect()
+
+// Send request and wait for response (ServerB or same server)
+val response = api.sendRequest<PlayerListResponse>(
+    GetPlayerRequest(minLevel = 5),
+    timeoutMs = 5000  // Default timeout is 5 seconds
+)
+println("Players: ${response.players}")
 ```
 
-### Features
+#### Features
 
 - 🔄 **Request-Response Pattern**: Send requests and receive typed responses
-- ⏱️ **Timeout Support**: Configurable timeout (default 3 seconds)
+- ⏱️ **Timeout Support**: Configurable timeout (default 5 seconds)
 - 🔀 **Bidirectional**: Any server can both send requests and respond to requests
-- 🚀 **Flexible Async**: Handlers control when to launch coroutines (not forced to be suspend)
-- 🎯 **Type-safe**: Request and response types are validated at compile time
+- 🚀 **Flexible Async**: Handlers control when to launch coroutines
+- 🎯 **Type-safe**: Request and response types validated at compile time
 
-### Usage
-
-#### 1. Create Request and Response Classes
+#### Creating Requests and Responses
 
 ```kotlin
 import dev.slne.redis.request.RedisRequest
@@ -300,7 +315,7 @@ data class GetPlayerRequest(val minLevel: Int) : RedisRequest()
 data class PlayerListResponse(val players: List<String>) : RedisResponse()
 ```
 
-#### 2. Create Request Handlers
+#### Creating Request Handlers
 
 Handlers receive a `RequestContext` that provides:
 - `request`: The incoming request
@@ -308,12 +323,12 @@ Handlers receive a `RequestContext` that provides:
 - `respond(response)`: Method to send the response
 
 ```kotlin
-import dev.slne.redis.request.RequestHandler
+import dev.slne.redis.request.HandleRedisRequest
 import dev.slne.redis.request.RequestContext
 import kotlinx.coroutines.launch
 
 class MyRequestHandler {
-    @RequestHandler
+    @HandleRedisRequest
     fun handlePlayerRequest(context: RequestContext<GetPlayerRequest>) {
         // Launch coroutine for async operations
         context.coroutineScope.launch {
@@ -324,34 +339,33 @@ class MyRequestHandler {
 }
 ```
 
-#### 3. Register Handlers and Send Requests
+**Important**: Request handlers are invoked on the Redis Pub/Sub thread, just like event handlers. Launch coroutines for async work.
+
+#### Sending Requests
 
 ```kotlin
-import dev.slne.redis.request.RequestResponseBus
+import dev.slne.redis.RedisApi
 import kotlinx.coroutines.runBlocking
 
-fun main() = runBlocking {
-    val bus = RequestResponseBus("redis://localhost:6379")
-    
-    // Register handler (this server will respond to requests)
-    bus.registerRequestHandler(MyRequestHandler())
+runBlocking {
+    val api = RedisApi.create(...)
+    api.registerRequestHandler(MyRequestHandler())
+    api.freezeAndConnect()
     
     // Send request and wait for response (with timeout)
     try {
-        val response = bus.sendRequest<PlayerListResponse>(
+        val response = api.sendRequest<PlayerListResponse>(
             GetPlayerRequest(minLevel = 10),
-            timeoutMs = 3000
+            timeoutMs = 5000
         )
         println("Received ${response.players.size} players")
     } catch (e: RequestTimeoutException) {
         println("Request timed out: ${e.message}")
     }
-    
-    bus.close()
 }
 ```
 
-### Request-Response vs Events
+#### When to Use Request-Response vs Events
 
 **Use Request-Response when:**
 - You need a reply/acknowledgment
@@ -365,107 +379,425 @@ fun main() = runBlocking {
 - Multiple servers should react to the same event
 - Fire-and-forget pattern is acceptable
 
-### Example Scenario
+#### Example: Cross-Server Communication
 
 **ServerA** (Lobby Server) and **ServerB** (Game Server):
 
 ```kotlin
-// ServerA can handle requests
+// ServerA: Handle status requests
 class LobbyHandler {
-    @RequestHandler
+    @HandleRedisRequest
     fun getServerStatus(context: RequestContext<ServerStatusRequest>) {
-        // Respond using coroutine scope
         context.coroutineScope.launch {
-            context.respond(ServerStatusResponse("Lobby-1", online = true, playerCount = 42))
+            context.respond(
+                ServerStatusResponse(
+                    serverName = "Lobby-1",
+                    online = true,
+                    playerCount = 42
+                )
+            )
         }
     }
 }
 
-// ServerB can also send requests to ServerA
-val response = bus.sendRequest<ServerStatusResponse>(
+// ServerB: Query ServerA
+val response = api.sendRequest<ServerStatusResponse>(
     ServerStatusRequest("Lobby-1"),
-    timeoutMs = 3000
+    timeoutMs = 5000
 )
+println("Lobby-1 has ${response.playerCount} players")
 ```
 
-Both servers can simultaneously:
-- Send requests to other servers
-- Respond to requests from other servers
+Both servers can simultaneously send requests to and respond to requests from other servers.
 
-## Example
+### Synchronized Data Structures
 
-See the `dev.slne.redis.example` package for complete examples:
-- `ExampleEvents.kt` - Example event definitions
-- `ExampleUsage.kt` - Example usage demonstrating async publishing and subscribing
-- `ExampleRequests.kt` - Example request/response definitions
-- `ExampleRequestResponseUsage.kt` - Example usage demonstrating request-response pattern
+surf-redis provides replicated, in-memory data structures that stay synchronized across all Redis-connected nodes.
+
+#### Overview
+
+- **SyncList<T>**: Replicated list
+- **SyncMap<K, V>**: Replicated map
+- **SyncSet<T>**: Replicated set
+- **SyncValue<T>**: Replicated single value
+
+#### How They Work
+
+- **In-memory state**: Each node maintains its own local copy
+- **Delta replication**: Mutations are broadcast via Redis Pub/Sub
+- **Snapshot for late joiners**: Full state is stored in Redis with TTL
+- **Versioning**: Each mutation increments a version; gaps trigger resync
+- **Eventual consistency**: Changes propagate asynchronously
+- **Thread-safe**: Protected with read-write locks
+- **Change listeners**: React to local and remote changes
+
+#### Quick Example
+
+```kotlin
+import dev.slne.redis.RedisApi
+import java.nio.file.Paths
+
+val api = RedisApi.create(pluginDataPath = Paths.get("plugins/my-plugin"))
+
+// Create synchronized list (BEFORE freezing)
+val playerList = api.createSyncList<String>("online-players")
+
+// Optional: Listen for changes
+playerList.onChange { change ->
+    when (change) {
+        is SyncList.Change.Add -> println("Player added: ${change.element}")
+        is SyncList.Change.Remove -> println("Player removed: ${change.element}")
+        is SyncList.Change.Set -> println("Player changed")
+        is SyncList.Change.Clear -> println("List cleared")
+    }
+}
+
+api.freezeAndConnect()
+
+// Use like a regular list - changes replicate automatically
+playerList.add("Steve")        // All nodes see this
+playerList.remove("Steve")     // All nodes see this
+playerList.clear()             // All nodes see this
+
+val players = playerList.toList()  // Get local snapshot
+```
+
+#### SyncList Example
+
+```kotlin
+// Create
+val list = api.createSyncList<String>(
+    id = "my-list",
+    ttl = Duration.minutes(10)  // Optional, default is 5 minutes
+)
+
+api.freezeAndConnect()
+
+// Operations (thread-safe, replicated)
+list.add("item1")
+list.add(1, "item2")
+list[0] = "updated"
+list.removeAt(1)
+list.clear()
+
+// Read operations
+val size = list.size
+val item = list[0]
+val items = list.toList()
+```
+
+#### SyncMap Example
+
+```kotlin
+// Create
+val map = api.createSyncMap<String, Int>(
+    id = "player-scores",
+    ttl = Duration.minutes(10)
+)
+
+api.freezeAndConnect()
+
+// Operations (thread-safe, replicated)
+map["player1"] = 100
+map["player2"] = 200
+map.remove("player1")
+map.clear()
+
+// Read operations
+val score = map["player1"]
+val keys = map.keys()
+val values = map.values()
+val entries = map.entries()
+```
+
+#### SyncSet Example
+
+```kotlin
+// Create
+val set = api.createSyncSet<String>(
+    id = "active-lobbies",
+    ttl = Duration.minutes(10)
+)
+
+api.freezeAndConnect()
+
+// Operations (thread-safe, replicated)
+set.add("lobby1")
+set.add("lobby2")
+set.remove("lobby1")
+set.clear()
+
+// Read operations
+val contains = set.contains("lobby1")
+val size = set.size
+val elements = set.toSet()
+```
+
+#### SyncValue Example
+
+```kotlin
+// Create
+val value = api.createSyncValue(
+    id = "maintenance-mode",
+    defaultValue = false,
+    ttl = Duration.minutes(10)
+)
+
+api.freezeAndConnect()
+
+// Operations (thread-safe, replicated)
+value.set(true)
+val current = value.get()
+
+// Listen for changes
+value.onChange { change ->
+    println("Maintenance mode: ${change.old} -> ${change.new}")
+}
+```
+
+#### Important Notes
+
+- **Create before freezing**: All sync structures must be created before calling `freeze()`
+- **Thread-safe**: Safe to use from multiple threads
+- **Async replication**: Changes propagate asynchronously via Pub/Sub
+- **Eventual consistency**: Not strongly consistent - expect small delays
+- **TTL management**: Structures auto-expire without active nodes; heartbeat keeps them alive
+- **Late joiners**: New nodes load full snapshot, then receive deltas
+
+## Complete Example
+
+Here's a complete example demonstrating all features:
+
+```kotlin
+import dev.slne.redis.RedisApi
+import dev.slne.redis.event.RedisEvent
+import dev.slne.redis.event.OnRedisEvent
+import dev.slne.redis.request.*
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import java.nio.file.Paths
+
+// Events
+@Serializable
+data class PlayerJoinEvent(val name: String) : RedisEvent()
+
+// Requests & Responses
+@Serializable
+data class GetPlayersRequest(val minLevel: Int) : RedisRequest()
+
+@Serializable
+data class PlayersResponse(val players: List<String>) : RedisResponse()
+
+// Handlers
+class GameHandlers {
+    @OnRedisEvent
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        println("${event.name} joined!")
+    }
+    
+    @HandleRedisRequest
+    fun handleGetPlayers(ctx: RequestContext<GetPlayersRequest>) {
+        ctx.coroutineScope.launch {
+            val players = listOf("Steve", "Alex")
+            ctx.respond(PlayersResponse(players))
+        }
+    }
+}
+
+fun main() {
+    // Create API (path-based, RECOMMENDED)
+    val api = RedisApi.create(
+        pluginDataPath = Paths.get("plugins/my-plugin")
+    )
+    
+    // Register features BEFORE freezing
+    api.subscribeToEvents(GameHandlers())
+    api.registerRequestHandler(GameHandlers())
+    
+    val playerList = api.createSyncList<String>("online-players")
+    playerList.onChange { change ->
+        println("Player list changed: $change")
+    }
+    
+    // Freeze and connect
+    api.freezeAndConnect()
+    
+    // Now ready to use
+    api.publishEvent(PlayerJoinEvent("Steve"))
+    
+    playerList.add("Steve")
+    playerList.add("Alex")
+    
+    // Send request (in coroutine)
+    kotlinx.coroutines.runBlocking {
+        val response = api.sendRequest<PlayersResponse>(
+            GetPlayersRequest(minLevel = 5),
+            timeoutMs = 5000
+        )
+        println("Players: ${response.players}")
+    }
+    
+    // Clean up
+    api.disconnect()
+}
+```
 
 ## API Reference
+
+### RedisApi
+
+Central API for managing Redis connections and features.
+
+**Creation Methods:**
+```kotlin
+// Path-based (RECOMMENDED)
+RedisApi.create(
+    pluginDataPath: Path,
+    pluginsPath: Path = pluginDataPath.parent,
+    serializerModule: SerializersModule = EmptySerializersModule()
+): RedisApi
+
+// RedisURI-based
+RedisApi.create(
+    redisURI: RedisURI,
+    serializerModule: SerializersModule = EmptySerializersModule()
+): RedisApi
+```
+
+**Lifecycle Methods:**
+- `freeze()` - Lock registrations, prepare for connection
+- `connect()` - Connect to Redis (must be frozen first)
+- `freezeAndConnect()` - Convenience method for freeze + connect
+- `disconnect()` - Close connections and clean up
+- `isFrozen(): Boolean` - Check if frozen
+- `isConnected(): Boolean` - Check if connected
+- `suspend fun isAlive(): Boolean` - Ping Redis
+
+**Connection Info:**
+- `getHost(): String` - Get Redis host
+- `getPort(): Int` - Get Redis port
+
+**Event Bus Methods:**
+- `publishEvent(event: RedisEvent)` - Publish event to all listeners
+- `subscribeToEvents(listener: Any)` - Register event listener (before freeze)
+
+**Request-Response Methods:**
+- `suspend fun <T : RedisResponse> sendRequest(request: RedisRequest, timeoutMs: Long = 5000): T`
+- `registerRequestHandler(handler: Any)` - Register request handler (before freeze)
+
+**Sync Structure Methods:**
+- `createSyncList<E>(id: String, ttl: Duration = 5.minutes): SyncList<E>`
+- `createSyncMap<K, V>(id: String, ttl: Duration = 5.minutes): SyncMap<K, V>`
+- `createSyncSet<E>(id: String, ttl: Duration = 5.minutes): SyncSet<E>`
+- `createSyncValue<T>(id: String, defaultValue: T, ttl: Duration = 5.minutes): SyncValue<T>`
 
 ### RedisEvent
 
 Base class for all events. Extend this to create custom events. Must be annotated with `@Serializable`.
 
-### @Subscribe
+```kotlin
+@Serializable
+data class MyEvent(val data: String) : RedisEvent()
+```
 
-Annotation for marking event handler methods. Methods must:
+### @OnRedisEvent
+
+Annotation for event handler methods. Methods must:
 - Have exactly one parameter
 - The parameter must be a subclass of `RedisEvent`
-- Handler will be invoked asynchronously in a coroutine
+- **Not** be a `suspend` function
+- Handler invoked on Pub/Sub thread (launch coroutines for async work)
 
-### RedisEventBus
-
-Main class for managing events with async support.
-
-**Constructor:**
-- `RedisEventBus(redisUri: String, coroutineScope: CoroutineScope = ...)` - Create a new event bus connected to Redis
-
-**Methods:**
-- `suspend fun publish(event: RedisEvent)` - Publish an event asynchronously to all listeners
-- `fun publishBlocking(event: RedisEvent)` - Publish an event synchronously (blocking)
-- `fun registerListener(listener: Any)` - Register an object with @Subscribe methods (uses MethodHandles)
-- `fun unregisterListener(listener: Any)` - Unregister a listener and all its handlers
-- `fun close()` - Close connections and clean up resources
+```kotlin
+@OnRedisEvent
+fun onEvent(event: MyEvent) {
+    // Handle event
+}
+```
 
 ### RedisRequest
 
 Base class for all requests. Extend this to create custom requests. Must be annotated with `@Serializable`.
 
+```kotlin
+@Serializable
+data class MyRequest(val query: String) : RedisRequest()
+```
+
 ### RedisResponse
 
 Base class for all responses. Extend this to create custom responses. Must be annotated with `@Serializable`.
 
-### @RequestHandler
+```kotlin
+@Serializable
+data class MyResponse(val result: String) : RedisResponse()
+```
 
-Annotation for marking request handler methods. Methods must:
-- Have exactly one parameter of type `RequestContext<TRequest>`
-- Return void (Unit)
-- Handler controls when/how to respond using `context.respond()`
+### @HandleRedisRequest
+
+Annotation for request handler methods. Methods must:
+- Have exactly one parameter of type `RequestContext<T>`
+- `T` must be a subclass of `RedisRequest`
+- **Not** be a `suspend` function
+- Return `Unit`
+- Handler invoked on Pub/Sub thread (launch coroutines for async work)
+
+```kotlin
+@HandleRedisRequest
+fun handleRequest(ctx: RequestContext<MyRequest>) {
+    ctx.coroutineScope.launch {
+        ctx.respond(MyResponse("result"))
+    }
+}
+```
 
 ### RequestContext<TRequest>
 
-Context object provided to request handlers containing:
+Context object provided to request handlers.
+
+**Properties:**
 - `request: TRequest` - The incoming request
-- `coroutineScope: CoroutineScope` - Scope for launching coroutines if needed
-- `suspend fun respond(response: RedisResponse)` - Send the response
-
-### RequestResponseBus
-
-Main class for managing request-response patterns with async support and timeout handling.
-
-**Constructor:**
-- `RequestResponseBus(redisUri: String, coroutineScope: CoroutineScope = ...)` - Create a new request-response bus connected to Redis
+- `coroutineScope: CoroutineScope` - Scope for launching coroutines
 
 **Methods:**
-- `suspend fun <T : RedisResponse> sendRequest(request: RedisRequest, timeoutMs: Long = 3000): T` - Send a request and wait for response asynchronously
-- `fun <T : RedisResponse> sendRequestBlocking(request: RedisRequest, timeoutMs: Long = 3000): T` - Send a request and wait for response synchronously (blocking)
-- `fun registerRequestHandler(handler: Any)` - Register an object with @RequestHandler methods
-- `fun unregisterRequestHandler(handler: Any)` - Unregister a handler and all its request handlers
-- `fun close()` - Close connections and clean up resources
+- `suspend fun respond(response: RedisResponse)` - Send the response (call exactly once)
+
+### SyncList<T>, SyncMap<K, V>, SyncSet<T>, SyncValue<T>
+
+Replicated in-memory data structures. See "Synchronized Data Structures" section for details.
+
+**Common Features:**
+- Thread-safe operations
+- Automatic replication via Pub/Sub
+- Change listeners
+- Snapshot loading for late joiners
+- TTL management
 
 ### RequestTimeoutException
 
 Exception thrown when a request times out without receiving a response.
+
+## Performance Considerations
+
+- **Async by default**: All operations use Kotlin Coroutines
+- **MethodHandles**: Faster than reflection for handler invocation
+- **Kotlin Serialization**: Native, type-safe serialization
+- **Thread safety**: Proper locking in sync structures
+- **Pub/Sub thread**: Handlers invoked synchronously; launch coroutines for heavy work
+- **Eventual consistency**: Sync structures are eventually consistent, not strongly consistent
+
+## Best Practices
+
+1. **Use path-based configuration**: Enables global config for server owners
+2. **Create structures before freezing**: All registrations must happen before `freeze()`
+3. **Launch coroutines in handlers**: Don't block the Pub/Sub thread
+4. **Handle timeouts**: Request-response calls can time out
+5. **Use change listeners**: React to remote changes in sync structures
+6. **Clean up**: Call `disconnect()` on shutdown
+7. **Choose the right pattern**:
+   - Events for broadcasts
+   - Request-response for data queries
+   - Sync structures for shared state
 
 ## License
 
