@@ -38,7 +38,7 @@ internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
 
             tasks.withType<ShadowJar>().configureEach {
                 doFirst {
-                    relocate("dev.slne.surf.database.r2dbc", extension.surfDatabaseR2dbcRelocation.get())
+                    relocate("dev.slne.surf.database", extension.surfDatabaseR2dbcRelocation.get())
                 }
             }
         }
