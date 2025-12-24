@@ -4,10 +4,13 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.surfapi.gradle.SurfCloudModules
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
+import dev.slne.surf.surfapi.gradle.platform.core.CoreSurfExtension
 import dev.slne.surf.surfapi.gradle.platform.core.tasks.generateExposedMigrationScript
 import dev.slne.surf.surfapi.gradle.util.slnePublic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
@@ -116,24 +119,49 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         tasks.withType<ShadowJar>().configureEach {
             val depsProvider = project.provider {
-                project.configurations
+                val deps = project.configurations
                     .asSequence()
                     .filter { it.isCanBeResolved }
-                    .flatMap { cfg ->
-                        cfg.incoming.resolutionResult.allDependencies.asSequence()
-                    }
-                    .map { it.requested.displayName }
-                    .toSet()
+                    .flatMap { cfg -> cfg.incoming.resolutionResult.allDependencies.asSequence() }
+                    .toList()
+
+                val artifactNames = deps.map { it.requested.displayName }.toSet()
+
+                val projectPaths = deps.mapNotNull { dep ->
+                    (dep as? ResolvedDependencyResult)?.selected?.id
+                        ?.let { id -> if (id is ProjectComponentIdentifier) id.projectPath else null }
+                }.toSet()
+
+                Pair(artifactNames, projectPaths)
             }
 
             doFirst {
-                val deps = depsProvider.get()
+                val (artifactNames, projectPaths) = depsProvider.get()
                 dependencyDependentRelocations.forEach { (needle, relos) ->
-                    if (deps.any { it.contains(needle) }) {
+                    if (artifactNames.any { it.contains(needle) }) {
                         logger.lifecycle("Dependency $needle found — applying relocations.")
                         relos.forEach { (from, to) ->
                             logger.lifecycle("Relocating $from to $to")
                             relocate(from, to)
+                        }
+                    }
+                }
+
+                projectPaths.forEach { projPath ->
+                    val depProject = rootProject.findProject(projPath) ?: return@forEach
+                    val coreExt = depProject.extensions.findByType(CoreSurfExtension::class.java)
+                    if (coreExt != null) {
+                        if (coreExt.withSurfDatabaseR2dbc.orNull == true) {
+                            coreExt.surfDatabaseR2dbcRelocation.orNull?.let { relocation ->
+                                logger.lifecycle("Project dependency $projPath requests DB R2DBC relocation -> $relocation")
+                                relocate("dev.slne.surf.database", relocation)
+                            }
+                        }
+                        if (coreExt.withSurfRedis.orNull == true) {
+                            coreExt.surfRedisRelocation.orNull?.let { relocation ->
+                                logger.lifecycle("Project dependency $projPath requests Redis relocation -> $relocation")
+                                relocate("dev.slne.surf.redis", relocation)
+                            }
                         }
                     }
                 }
