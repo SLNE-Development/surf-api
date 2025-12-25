@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
+import org.mariadb.r2dbc.MariadbConnectionFactoryProvider
 import java.nio.file.Path
 import java.time.Duration.ofMillis
 
@@ -44,7 +45,7 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
 
             val connectionFactoryOptions = ConnectionFactoryOptions.builder().apply {
                 option(DRIVER, "pool")
-                option(PROTOCOL, "mariadb")
+                option(PROTOCOL, MariadbConnectionFactoryProvider.MARIADB_DRIVER)
                 option(HOST, config.credentials.host)
                 option(PORT, config.credentials.port)
                 option(USER, config.credentials.username)
@@ -52,8 +53,11 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
                 option(DATABASE, config.credentials.database)
             }.build()
 
+            val connectionFactory = MariadbConnectionFactoryProvider()
+                .create(connectionFactoryOptions)
+
             val poolConfig = ConnectionPoolConfiguration.builder()
-                .connectionFactory(ConnectionFactories.get(connectionFactoryOptions))
+                .connectionFactory(connectionFactory)
                 .acquireRetry(1)
                 .initialSize(config.pool.sizing.initialSize)
                 .minIdle(config.pool.sizing.minIdle)
@@ -65,6 +69,8 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
                 .maxValidationTime(ofMillis(config.pool.timeouts.maxValidationTimeMillis))
                 .name(poolName)
                 .build()
+
+
 
             val pool = ConnectionPool(poolConfig)
             return create(pool, configCustomizer)

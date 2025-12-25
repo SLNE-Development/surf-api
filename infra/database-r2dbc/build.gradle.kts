@@ -19,7 +19,7 @@ dependencies {
     implementation(libs.bundles.databaseDriver)
 }
 
-configurations.all {
+configurations.runtimeClasspath {
     exclude("io.projectreactor", "reactor-core")
     exclude("org.reactivestreams")
 }
