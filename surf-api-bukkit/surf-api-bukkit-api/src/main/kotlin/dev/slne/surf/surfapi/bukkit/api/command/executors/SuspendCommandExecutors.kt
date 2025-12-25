@@ -6,6 +6,7 @@ import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.scope
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.jorel.commandapi.BukkitExecutable
+import dev.jorel.commandapi.CommandAPI
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
 import dev.jorel.commandapi.executors.CommandArguments
 import dev.jorel.commandapi.kotlindsl.*
@@ -222,7 +223,21 @@ internal fun CommandSender.sendSyntaxMessageOrRethrow(message: String?, t: Throw
 @PublishedApi
 @InternalSurfApi
 internal inline fun Any.extractCallingPluginScopeOrThrow(): CoroutineScope {
-    val plugin = JavaPlugin.getProvidingPlugin(javaClass)
+    val commandApiPlugin = JavaPlugin.getProvidingPlugin(CommandAPI::class.java)
+    val callerClass = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
+        .walk { frames ->
+            frames
+                .map { it.declaringClass }
+                .filter { declaringClass ->
+                    val plugin =
+                        runCatching { JavaPlugin.getProvidingPlugin(declaringClass) }.getOrNull()
+                    plugin != null && plugin != commandApiPlugin
+                }
+                .findFirst()
+                .orElseThrow { IllegalStateException("No calling plugin frame found (non-CommandAPI).") }
+        }
+
+    val plugin = JavaPlugin.getProvidingPlugin(callerClass)
     require(plugin is SuspendingPlugin) {
         "Failed to extract CoroutineScope: plugin '${plugin.name}' does not implement SuspendingPlugin. " +
                 "Provide a CoroutineScope explicitly or use a SuspendingPlugin."
