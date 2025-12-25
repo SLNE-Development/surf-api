@@ -4,7 +4,6 @@ import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
-import io.r2dbc.spi.ConnectionFactories
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryOptions
 import io.r2dbc.spi.ConnectionFactoryOptions.*
@@ -44,8 +43,7 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
             val config = DatabaseConfig.create(pluginPath)
 
             val connectionFactoryOptions = ConnectionFactoryOptions.builder().apply {
-                option(DRIVER, "pool")
-                option(PROTOCOL, MariadbConnectionFactoryProvider.MARIADB_DRIVER)
+                option(DRIVER, MariadbConnectionFactoryProvider.MARIADB_DRIVER)
                 option(HOST, config.credentials.host)
                 option(PORT, config.credentials.port)
                 option(USER, config.credentials.username)
@@ -69,7 +67,6 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
                 .maxValidationTime(ofMillis(config.pool.timeouts.maxValidationTimeMillis))
                 .name(poolName)
                 .build()
-
 
 
             val pool = ConnectionPool(poolConfig)
