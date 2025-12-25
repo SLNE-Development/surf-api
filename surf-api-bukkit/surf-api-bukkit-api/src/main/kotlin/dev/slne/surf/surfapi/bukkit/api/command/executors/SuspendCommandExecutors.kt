@@ -23,6 +23,8 @@ import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 
+typealias CoroutineScopeProvider = () -> CoroutineScope
+
 /**
  * Registers an executor that can be run by any [CommandSender] and executes it inside a coroutine.
  *
@@ -33,10 +35,10 @@ import org.bukkit.plugin.java.JavaPlugin
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.anyExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(CommandSender, CommandArguments) -> Unit
 ) = anyExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -48,10 +50,10 @@ inline fun BukkitExecutable<*>.anyExecutorSuspend(
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.playerExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(Player, CommandArguments) -> Unit
 ) = playerExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -63,10 +65,10 @@ inline fun BukkitExecutable<*>.playerExecutorSuspend(
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.entityExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(Entity, CommandArguments) -> Unit
 ) = entityExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -78,10 +80,10 @@ inline fun BukkitExecutable<*>.entityExecutorSuspend(
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.consoleExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(ConsoleCommandSender, CommandArguments) -> Unit
 ) = consoleExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -93,10 +95,10 @@ inline fun BukkitExecutable<*>.consoleExecutorSuspend(
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.commandBlockExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(BlockCommandSender, CommandArguments) -> Unit
 ) = commandBlockExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -108,10 +110,10 @@ inline fun BukkitExecutable<*>.commandBlockExecutorSuspend(
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.proxyExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(ProxiedCommandSender, CommandArguments) -> Unit
 ) = proxyExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -123,10 +125,10 @@ inline fun BukkitExecutable<*>.proxyExecutorSuspend(
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.nativeExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(NativeProxyCommandSender, CommandArguments) -> Unit
 ) = nativeExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -138,10 +140,10 @@ inline fun BukkitExecutable<*>.nativeExecutorSuspend(
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.remoteConsoleExecutorSuspend(
-    scope: CoroutineScope = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
     crossinline executor: suspend CoroutineScope.(RemoteConsoleCommandSender, CommandArguments) -> Unit
 ) = remoteConsoleExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
+    scope().launchCommandExecutor(sender) {
         executor(sender, arguments)
     }
 }
@@ -222,7 +224,7 @@ internal fun CommandSender.sendSyntaxMessageOrRethrow(message: String?, t: Throw
 @Suppress("NOTHING_TO_INLINE")
 @PublishedApi
 @InternalSurfApi
-internal inline fun Any.extractCallingPluginScopeOrThrow(): CoroutineScope {
+internal inline fun Any.extractCallingPluginScopeOrThrow(): CoroutineScopeProvider {
     val commandApiPlugin = JavaPlugin.getProvidingPlugin(CommandAPI::class.java)
     val callerClass = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
         .walk { frames ->
@@ -243,5 +245,5 @@ internal inline fun Any.extractCallingPluginScopeOrThrow(): CoroutineScope {
                 "Provide a CoroutineScope explicitly or use a SuspendingPlugin."
     }
 
-    return plugin.scope
+    return { plugin.scope }
 }
