@@ -1,17 +1,20 @@
 package dev.slne.surf.database
 
 import dev.slne.surf.database.config.DatabaseConfig
+import dev.slne.surf.database.logger.ComponentSqlLogger
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryOptions
 import io.r2dbc.spi.ConnectionFactoryOptions.*
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
 import org.mariadb.r2dbc.MariadbConnectionFactoryProvider
+import org.slf4j.event.Level
 import java.nio.file.Path
 import java.time.Duration.ofMillis
 
@@ -70,7 +73,11 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
 
 
             val pool = ConnectionPool(poolConfig)
-            return create(pool, configCustomizer)
+
+            val caller = getCallerClass() ?: DatabaseApi::class.java
+            val logger = ComponentLogger.logger(caller)
+
+            return create(pool, logger, configCustomizer)
         }
 
         /**
@@ -86,10 +93,12 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
         @TestOnlyDatabaseApi
         fun create(
             connectionFactory: ConnectionFactory,
+            logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
             val database = R2dbcDatabase.connect(connectionFactory, R2dbcDatabaseConfig {
                 explicitDialect = MariaDBDialect()
+                sqlLogger = ComponentSqlLogger(logger, Level.DEBUG)
                 configCustomizer()
             })
 
