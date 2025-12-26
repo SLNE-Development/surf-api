@@ -8,13 +8,20 @@ import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryOptions
 import io.r2dbc.spi.ConnectionFactoryOptions.*
+import io.r2dbc.spi.IsolationLevel
+import io.r2dbc.spi.Result
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
+import org.jetbrains.exposed.v1.r2dbc.mappers.R2dbcRegistryTypeMapping
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
+import org.mariadb.r2dbc.MariadbConnectionConfiguration
+import org.mariadb.r2dbc.MariadbConnectionFactory
 import org.mariadb.r2dbc.MariadbConnectionFactoryProvider
 import org.slf4j.event.Level
+import reactor.core.publisher.Flux
 import java.nio.file.Path
 import java.time.Duration.ofMillis
 
@@ -44,19 +51,15 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
             val config = DatabaseConfig.create(pluginPath)
+            val configuration = MariadbConnectionConfiguration.builder()
+                .host(config.credentials.host)
+                .port(config.credentials.port)
+                .username(config.credentials.username)
+                .password(config.credentials.password)
+                .database(config.credentials.database)
+                .build()
 
-            val connectionFactoryOptions = ConnectionFactoryOptions.builder().apply {
-                option(DRIVER, MariadbConnectionFactoryProvider.MARIADB_DRIVER)
-                option(HOST, config.credentials.host)
-                option(PORT, config.credentials.port)
-                option(USER, config.credentials.username)
-                option(PASSWORD, config.credentials.password)
-                option(DATABASE, config.credentials.database)
-            }.build()
-
-            val connectionFactory = MariadbConnectionFactoryProvider()
-                .create(connectionFactoryOptions)
-
+            val connectionFactory = MariadbConnectionFactory.from(configuration)
             val poolConfig = ConnectionPoolConfiguration.builder()
                 .connectionFactory(connectionFactory)
                 .acquireRetry(1)
@@ -76,8 +79,9 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
 
             val caller = getCallerClass() ?: DatabaseApi::class.java
             val logger = ComponentLogger.logger(caller)
+            val logLevel = config.logLevel
 
-            return create(pool, logger, configCustomizer)
+            return create(pool, logger, logLevel, configCustomizer)
         }
 
         /**
@@ -94,11 +98,13 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
         fun create(
             connectionFactory: ConnectionFactory,
             logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
+            logLevel: Level = Level.DEBUG,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
             val database = R2dbcDatabase.connect(connectionFactory, R2dbcDatabaseConfig {
                 explicitDialect = MariaDBDialect()
-                sqlLogger = ComponentSqlLogger(logger, Level.DEBUG)
+                sqlLogger = ComponentSqlLogger(logger, logLevel)
+                defaultR2dbcIsolationLevel = IsolationLevel.READ_UNCOMMITTED
                 configCustomizer()
             })
 

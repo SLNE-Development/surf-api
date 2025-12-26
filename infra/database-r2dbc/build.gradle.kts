@@ -22,6 +22,7 @@ dependencies {
 configurations.runtimeClasspath {
     exclude("io.projectreactor", "reactor-core")
     exclude("org.reactivestreams")
+    exclude("org.slf4j")
 }
 
 shadow {
