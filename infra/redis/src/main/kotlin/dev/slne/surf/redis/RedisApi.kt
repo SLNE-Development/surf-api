@@ -1,6 +1,7 @@
 package dev.slne.surf.redis
 
 import dev.slne.surf.redis.RedisApi.Companion.create
+import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.config.InternalConfig
 import dev.slne.surf.redis.event.RedisEvent
 import dev.slne.surf.redis.event.RedisEventBus
@@ -398,5 +399,47 @@ class RedisApi private constructor(
         val structure = creator()
         syncStructures.add(structure)
         return structure
+    }
+
+    /**
+     * Create a [SimpleRedisCache] for the given `namespace` using an automatically derived
+     * serializer for value type `V`.
+     *
+     * This inline variant uses a reified type parameter `V`, allowing the appropriate
+     * `KSerializer<V>` to be obtained via `serializer()`.
+     *
+     * @param namespace Prefix placed before each Redis key.
+     * @param ttl Time-to-live for cache entries as a [kotlin.time.Duration].
+     * @param keyToString Function that converts a key of type `K` to its string representation.
+     *                    Defaults to `toString()`.
+     * @return A new [SimpleRedisCache] instance backed by this [RedisApi].
+     * @see SimpleRedisCache
+     */
+    inline fun <K : Any, reified V : Any> createSimpleCache(
+        namespace: String,
+        ttl: Duration,
+        noinline keyToString: (K) -> String = { it.toString() }
+    ): SimpleRedisCache<K, V> = createSimpleCache(namespace, serializer(), ttl, keyToString)
+
+    /**
+     * Create a [SimpleRedisCache] for the given `namespace` using the provided [KSerializer].
+     *
+     * This variant allows an explicit serializer for the value type `V` to be supplied.
+     *
+     * @param namespace Prefix placed before each Redis key.
+     * @param serializer A [KSerializer] for the value type `V` used for JSON (de-)serialization.
+     * @param ttl Time-to-live for cache entries as a [kotlin.time.Duration].
+     * @param keyToString Function that converts a key of type `K` to its string representation.
+     *                    Defaults to `toString()`.
+     * @return A new [SimpleRedisCache] instance backed by this [RedisApi].
+     * @see SimpleRedisCache
+     */
+    fun <K : Any, V : Any> createSimpleCache(
+        namespace: String,
+        serializer: KSerializer<V>,
+        ttl: Duration,
+        keyToString: (K) -> String = { it.toString() }
+    ): SimpleRedisCache<K, V> {
+        return SimpleRedisCache(namespace, serializer, keyToString, ttl, this)
     }
 }
