@@ -109,7 +109,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
         val envelope = try {
             api.json.decodeFromString<EventEnvelope>(message)
         } catch (e: SerializationException) {
-            log.atWarning()
+            log.atFine()
                 .withCause(e)
                 .log("Unable to deserialize event envelope: ${e.message}")
             return
@@ -118,9 +118,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
         val eventClass = eventTypeRegistry[envelope.eventClass]
 
         if (eventClass == null) {
-            log.atSevere()
-                .per(envelope.eventClass, LogPerBucketingStrategy.byHashCode(128))
-                .atMostEvery(1, TimeUnit.MINUTES)
+            log.atFine()
                 .log("No registered event class for name: ${envelope.eventClass} - ignoring event.")
             return
         }

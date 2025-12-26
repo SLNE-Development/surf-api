@@ -108,7 +108,7 @@ class RequestResponseBus internal constructor(
         val envelope = try {
             api.json.decodeFromString<RequestEnvelope>(message)
         } catch (e: SerializationException) {
-            log.atWarning()
+            log.atFine()
                 .withCause(e)
                 .log("Unable to deserialize request envelope: ${e.message}")
             return
@@ -117,9 +117,7 @@ class RequestResponseBus internal constructor(
         val requestClass = requestTypeRegistry[envelope.requestClass]
 
         if (requestClass == null) {
-            log.atSevere()
-                .per(envelope.requestClass, LogPerBucketingStrategy.byHashCode(128))
-                .atMostEvery(1, TimeUnit.MINUTES)
+            log.atFine()
                 .log("No registered request class for name: ${envelope.requestClass} - ignoring request.")
             return
         }
@@ -153,7 +151,7 @@ class RequestResponseBus internal constructor(
         val envelope = try {
             api.json.decodeFromString<ResponseEnvelope>(message)
         } catch (e: SerializationException) {
-            log.atWarning()
+            log.atFine()
                 .withCause(e)
                 .log("Unable to deserialize response envelope: ${e.message}")
             return
@@ -162,9 +160,7 @@ class RequestResponseBus internal constructor(
         val responseClass = responseTypeRegistry[envelope.responseClass]
 
         if (responseClass == null) {
-            log.atWarning()
-                .per(envelope.responseClass, LogPerBucketingStrategy.byHashCode(128))
-                .atMostEvery(1, TimeUnit.MINUTES)
+            log.atFine()
                 .log("No registered response class for name: ${envelope.responseClass} - ignoring response.")
             return
         }
