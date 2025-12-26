@@ -15,6 +15,7 @@ import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
 import org.jetbrains.exposed.v1.r2dbc.mappers.R2dbcRegistryTypeMapping
+import org.jetbrains.exposed.v1.r2dbc.statements.api.R2dbcExposedConnection
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.mariadb.r2dbc.MariadbConnectionConfiguration

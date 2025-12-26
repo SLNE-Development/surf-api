@@ -9,12 +9,13 @@ group = "dev.slne.surf"
 version = findProperty("version") as String
 
 dependencies {
-    implementation(libs.bundles.exposed) {
-        exclude("org.jetbrains.kotlin")
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
-        exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-reactive")
-        exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json")
-    }
+//    implementation(libs.bundles.exposed)
+    /* Use JitPack until https://github.com/JetBrains/Exposed/commit/f425884a4e0799a55b87f54b19bf7f84b291d0b9 is included in the next release */
+    implementation("com.github.JetBrains.Exposed:exposed-core:f425884")
+    implementation("com.github.JetBrains.Exposed:exposed-r2dbc:f425884")
+    implementation("com.github.JetBrains.Exposed:exposed-java-time:f425884")
+    implementation("com.github.JetBrains.Exposed:exposed-json:f425884")
+
     implementation(libs.r2dbc.pool)
     implementation(libs.bundles.databaseDriver)
 }
@@ -23,6 +24,10 @@ configurations.runtimeClasspath {
     exclude("io.projectreactor", "reactor-core")
     exclude("org.reactivestreams")
     exclude("org.slf4j")
+    exclude("org.jetbrains.kotlin")
+    exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
+    exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-reactive")
+    exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json")
 }
 
 shadow {
