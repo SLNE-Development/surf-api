@@ -46,8 +46,11 @@ interface Colors {
 
         /**
          * The note color (#6EA6D9).
-         * Used to display a note or other which is not 
-         * an info or primary text
+         * Used for supplemental or side-note information that adds context,
+         * tips, or clarifications to a primary message.
+         * Prefer this for ancillary guidance rather than main content:
+         * use [INFO] for neutral system messages or status updates, and [PRIMARY]
+         * for branded elements such as titles or key headings.
          */
         @JvmField
         val NOTE: TextColor = color(0x6EA6D9)
