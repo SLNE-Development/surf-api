@@ -24,8 +24,10 @@ import io.lettuce.core.resource.ClientResources
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
@@ -144,7 +146,9 @@ class RedisApi private constructor(
             return api
         }
 
+        @OptIn(ExperimentalSerializationApi::class)
         private fun createJson(serializerModule: SerializersModule) = Json {
+            namingStrategy = JsonNamingStrategy.SnakeCase
             serializersModule = SerializersModule {
                 include(SurfSerializerModule.all)
                 include(serializerModule)
