@@ -8,10 +8,10 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.*
-import java.time.LocalDateTime
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 typealias SerializableOffsetDateTime = @Serializable(with = OffsetDateTimeSerializer::class) OffsetDateTime
 
@@ -25,34 +25,13 @@ object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
     override fun serialize(
         encoder: Encoder,
         value: OffsetDateTime,
-    ) = encoder.encodeStructure(descriptor) {
-        encodeSerializableElement(descriptor, 0, ZoneOffsetSerializer, value.offset)
-        encodeSerializableElement(descriptor, 1, LocalDateTimeSerializer, value.toLocalDateTime())
+    ) {
+        encoder.encodeString(DateTimeFormatter.ISO_DATE_TIME.format(value))
     }
 
     override fun deserialize(
         decoder: Decoder,
-    ): OffsetDateTime = decoder.decodeStructure(descriptor) {
-        var offset: ZoneOffset? = null
-        var localDateTime: LocalDateTime? = null
-
-        if (decodeSequentially()) {
-            offset = decodeSerializableElement(descriptor, 0, ZoneOffsetSerializer)
-            localDateTime = decodeSerializableElement(descriptor, 1, LocalDateTimeSerializer)
-        } else while (true) {
-            when (val index = decodeElementIndex(descriptor)) {
-                0 -> offset = decodeSerializableElement(descriptor, 0, ZoneOffsetSerializer)
-                1 -> localDateTime =
-                    decodeSerializableElement(descriptor, 1, LocalDateTimeSerializer)
-
-                CompositeDecoder.DECODE_DONE -> break
-                else -> error("Unexpected index: $index")
-            }
-        }
-
-        require(offset != null) { "Missing value for offset" }
-        require(localDateTime != null) { "Missing value for localDateTime" }
-
-        OffsetDateTime.of(localDateTime, offset)
+    ): OffsetDateTime {
+        return OffsetDateTime.parse(decoder.decodeString(), DateTimeFormatter.ISO_DATE_TIME)
     }
 }
