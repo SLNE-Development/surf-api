@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.core.api.messages.builder
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.DARK_SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.ERROR
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.INFO
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.NOTE
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PREFIX
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PRIMARY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SECONDARY
@@ -123,6 +124,8 @@ interface SurfComponentBuilder : TextComponent.Builder {
     fun info(float: Float, vararg decoration: TextDecoration) = text(float, INFO, *decoration)
     fun info(int: Int, vararg decoration: TextDecoration) = text(int, INFO, *decoration)
     fun info(long: Long, vararg decoration: TextDecoration) = text(long, INFO, *decoration)
+
+    fun note(any: Any, vararg decoration: TextDecoration) = text(any.toString(), NOTE, *decoration)
 
     fun success(text: String, vararg decoration: TextDecoration) = text(text, SUCCESS, *decoration)
     fun success(boolean: Boolean, vararg decoration: TextDecoration) =
