@@ -45,6 +45,14 @@ interface Colors {
         val INFO: TextColor = color(0x97B3F7)
 
         /**
+         * The note color (#6EA6D9).
+         * Used to display a note or other which is not 
+         * an info or primary text
+         */
+        @JvmField
+        val NOTE: TextColor = color(0x6EA6D9)
+
+        /**
          * The success color (#65ff64).
          * Indicates a positive outcome of a user action and is always
          * used in direct response to the user.
