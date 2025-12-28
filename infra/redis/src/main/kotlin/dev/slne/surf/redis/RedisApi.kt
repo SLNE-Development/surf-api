@@ -149,6 +149,7 @@ class RedisApi private constructor(
         @OptIn(ExperimentalSerializationApi::class)
         private fun createJson(serializerModule: SerializersModule) = Json {
             namingStrategy = JsonNamingStrategy.SnakeCase
+            encodeDefaults = true
             serializersModule = SerializersModule {
                 include(SurfSerializerModule.all)
                 include(serializerModule)
