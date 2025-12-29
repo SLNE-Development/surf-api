@@ -2,10 +2,10 @@ package dev.slne.surf.redis.sync.map
 
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.SyncStructure
+import dev.slne.surf.redis.sync.map.SyncMap.Companion.DEFAULT_TTL
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.awaitSingle

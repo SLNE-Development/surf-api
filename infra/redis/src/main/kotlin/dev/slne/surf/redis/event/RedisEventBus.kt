@@ -9,8 +9,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.Blocking
