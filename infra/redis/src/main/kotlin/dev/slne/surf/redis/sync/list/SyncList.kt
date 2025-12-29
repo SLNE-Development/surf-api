@@ -173,6 +173,40 @@ class SyncList<T : Any> internal constructor(
     }
 
     /**
+     * Removes all elements from the list that match the given [predicate] and replicates the changes.
+     *
+     * This operation uses atomic replication: the entire list is replaced in a single delta.
+     * This ensures consistency across distributed nodes since the operation cannot interleave
+     * with other deltas in the middle of a Clear/Add sequence, avoiding ordering divergence.
+     *
+     * @param predicate the predicate to test each element against
+     * @return `true` if any elements were removed, `false` if no elements matched the predicate
+     */
+    fun removeIf(predicate: (T) -> Boolean): Boolean {
+        // Perform filtering and capture the results under write lock
+        val (remaining, hadRemovals) = lock.write {
+            val filtered = list.filterNot(predicate)
+            val removals = list.size != filtered.size
+            list.clear()
+            list.addAll(filtered)
+            filtered to removals
+        }
+
+        if (!hadRemovals) return false
+
+        // Replicate using a single replace-all delta for atomic consistency
+        scope.launch {
+            val snapshotJson = api.json.encodeToString(snapshotSerializer, remaining)
+            publishLocalDelta(Delta.ReplaceAll(snapshotJson))
+        }
+
+        // Notify listeners - single Cleared event for simplicity
+        notifyListeners(listeners, SyncListChange.Cleared)
+
+        return true
+    }
+
+    /**
      * Clears the list.
      *
      * The local list is cleared immediately and listeners are notified.
@@ -186,6 +220,20 @@ class SyncList<T : Any> internal constructor(
         }
 
         notifyListeners(listeners, SyncListChange.Cleared)
+    }
+
+    /**
+     * Registers a change listener.
+     *
+     * The listener is invoked for all local and remote changes.
+     */
+    fun addListener(listener: (SyncListChange) -> Unit) {
+        listeners += listener
+    }
+
+    /** Removes a previously registered listener. */
+    fun removeListener(listener: (SyncListChange) -> Unit) {
+        listeners -= listener
     }
 
     override suspend fun loadSnapshot() {
@@ -323,6 +371,15 @@ class SyncList<T : Any> internal constructor(
                 lock.write { list.clear() }
                 notifyListeners(listeners, SyncListChange.Cleared)
             }
+
+            is Delta.ReplaceAll -> {
+                val snapshot = api.json.decodeFromString(snapshotSerializer, delta.snapshotJson)
+                lock.write {
+                    list.clear()
+                    list.addAll(snapshot)
+                }
+                notifyListeners(listeners, SyncListChange.Cleared)
+            }
         }
     }
 
@@ -348,5 +405,8 @@ class SyncList<T : Any> internal constructor(
 
         @Serializable
         data object Clear : Delta
+
+        @Serializable
+        data class ReplaceAll(val snapshotJson: String) : Delta
     }
 }
