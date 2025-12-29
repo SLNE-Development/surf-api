@@ -1,10 +1,13 @@
 package dev.slne.surf.redis.cache
 
 import dev.slne.surf.redis.RedisApi
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.serialization.KSerializer
+import org.redisson.api.options.LocalCachedMapOptions
+import org.redisson.client.codec.StringCodec
 import kotlin.time.Duration
+import kotlin.time.toJavaDuration
 
 /**
  * A simple Redis-backed cache for values of type [V] parameterized by key type [K].
@@ -16,7 +19,7 @@ import kotlin.time.Duration
  * This class uses the reactive Redis commands exposed by [RedisApi] and is intended
  * for coroutine-based usage (suspending methods).
  *
- * @param namespace String prefix that is prepended to each Redis key.
+ * @param name String prefix that is prepended to each Redis key.
  * @param serializer [KSerializer] used to (de-)serialize values of type [V] to/from JSON.
  * @param keyToString Function that converts a key of type `K` to its String representation.
  *                    Default is `toString()`.
@@ -24,7 +27,7 @@ import kotlin.time.Duration
  * @param api Instance of [RedisApi] used to access Redis.
  */
 class SimpleRedisCache<K : Any, V : Any> internal constructor(
-    private val namespace: String,
+    private val name: String,
     private val serializer: KSerializer<V>,
     private val keyToString: (K) -> String = { it.toString() },
     private val ttl: Duration,
@@ -34,8 +37,16 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         private const val NULL_MARKER = "__NULL__"
     }
 
-    private val commands get() = api.connection.reactive()
-    private fun redisKey(key: K): String = "$namespace:${keyToString(key)}"
+    private val cache = api.redissonReactive.getLocalCachedMap(
+        LocalCachedMapOptions.name<String, String>(name)
+            .codec(StringCodec.INSTANCE)
+            .cacheSize(10_000)
+            .timeToLive(ttl.toJavaDuration())
+            .reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR)
+            .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
+            .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)
+            .cacheProvider(LocalCachedMapOptions.CacheProvider.CAFFEINE)
+    )
 
     /**
      * Retrieve a value from the cache.
@@ -46,7 +57,7 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
      * @return The cached value of type [V], or `null` if absent or explicitly cached as `null`.
      */
     suspend fun getCached(key: K): V? {
-        val raw = commands.get(redisKey(key)).awaitFirstOrNull() ?: return null
+        val raw = cache.get(keyToString(key)).awaitSingleOrNull() ?: return null
 
         if (raw == NULL_MARKER) {
             return null
@@ -75,13 +86,7 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
      * @param raw The raw string to store (JSON or sentinel marker).
      */
     private suspend fun putRaw(key: K, raw: String) {
-        val redisKey = redisKey(key)
-
-        commands.psetex(
-            redisKey,
-            ttl.inWholeMilliseconds,
-            raw
-        ).awaitSingle()
+        cache.fastPut(keyToString(key), raw).awaitSingle()
     }
 
     /**
@@ -135,6 +140,6 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
      * @return The number of keys removed (typically 0 or 1).
      */
     suspend fun invalidate(key: K): Long {
-        return commands.del(redisKey(key)).awaitSingle()
+        return cache.fastRemove(keyToString(key)).awaitSingle()
     }
 }

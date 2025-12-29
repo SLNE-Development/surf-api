@@ -8,14 +8,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
+import org.redisson.client.codec.StringCodec
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 /**
  * Replicated in-memory map that is kept in sync across all Redis-connected nodes.
@@ -69,6 +73,9 @@ class SyncMap<K : Any, V : Any> internal constructor(
     private val dataKey = "surf-redis:sync:map:$id:snapshot"
     private val verKey = "surf-redis:sync:map:$id:ver"
     override val redisChannel: String = "surf-redis:sync:map:$id"
+
+    private val dataBucket = api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE)
+    private val remoteVersion = api.redissonReactive.getAtomicLong(verKey)
 
     @Volatile
     private var localVersion: Long = 0L
@@ -187,11 +194,8 @@ class SyncMap<K : Any, V : Any> internal constructor(
     }
 
     override suspend fun loadSnapshot() {
-        val async = api.connection.async()
-
-        val snapshotJson = async.get(dataKey).await()
-        val version = async.get(verKey).await()?.toLongOrNull() ?: 0L
-
+        val snapshotJson = dataBucket.get().awaitSingleOrNull()
+        val version = remoteVersion.get().awaitSingle()
 
         val loaded =
             if (snapshotJson.isNullOrBlank()) emptyMap()
@@ -232,15 +236,13 @@ class SyncMap<K : Any, V : Any> internal constructor(
      * - broadcasts the delta via Pub/Sub.
      */
     private suspend fun publishLocalDelta(delta: Delta) {
-        val async = api.connection.async()
-
-        val newVersion = async.incr(verKey).await()
+        val newVersion = remoteVersion.incrementAndGet().awaitSingle()
         localVersion = newVersion
 
         persistSnapshot(newVersion)
 
         val msg = api.json.encodeToString(Envelope(newVersion, delta))
-        api.pubSubConnection.async().publish(redisChannel, msg).await()
+        topic.publish(msg).awaitSingle()
     }
 
     /**
@@ -251,9 +253,10 @@ class SyncMap<K : Any, V : Any> internal constructor(
     private suspend fun persistSnapshot(version: Long) {
         val snapshotJson = lock.read { api.json.encodeToString(snapshotSerializer, map) }
 
-        val async = api.connection.async()
-        async.setex(dataKey, ttl.inWholeSeconds, snapshotJson).await()
-        async.setex(verKey, ttl.inWholeSeconds, version.toString()).await()
+
+        dataBucket.set(snapshotJson, ttl.toJavaDuration()).awaitSingle()
+        remoteVersion.set(version).awaitSingle()
+        remoteVersion.expire(ttl.toJavaDuration()).awaitSingle()
     }
 
     /**

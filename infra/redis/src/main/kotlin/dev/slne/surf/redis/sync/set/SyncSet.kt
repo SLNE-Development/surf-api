@@ -2,20 +2,25 @@ package dev.slne.surf.redis.sync.set
 
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.SyncStructure
+import dev.slne.surf.redis.sync.set.SyncSet.Companion.DEFAULT_TTL
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.SetSerializer
+import org.redisson.client.codec.StringCodec
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 /**
  * Replicated in-memory set that is kept in sync across all Redis-connected nodes.
@@ -67,6 +72,9 @@ class SyncSet<T : Any> internal constructor(
     private val dataKey = "surf-redis:sync:set:$id:snapshot"
     private val verKey = "surf-redis:sync:set:$id:ver"
     override val redisChannel: String = "surf-redis:sync:set:$id"
+
+    private val dataBucket = api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE)
+    private val remoteVersion = api.redissonReactive.getAtomicLong(verKey)
 
     @Volatile
     private var localVersion: Long = 0L
@@ -209,10 +217,8 @@ class SyncSet<T : Any> internal constructor(
     }
 
     override suspend fun loadSnapshot() {
-        val async = api.connection.async()
-
-        val snapshotJson = async.get(dataKey).await()
-        val version = async.get(verKey).await()?.toLongOrNull() ?: 0L
+        val snapshotJson = dataBucket.get().awaitSingleOrNull()
+        val version = remoteVersion.get().awaitSingle()
 
         val loaded: Set<T> =
             if (snapshotJson.isNullOrBlank()) emptySet()
@@ -253,15 +259,13 @@ class SyncSet<T : Any> internal constructor(
      * - broadcasts the delta via Pub/Sub.
      */
     private suspend fun publishLocalDelta(delta: Delta) {
-        val async = api.connection.async()
-
-        val newVersion = async.incr(verKey).await()
+        val newVersion = remoteVersion.incrementAndGet().awaitSingle()
         localVersion = newVersion
 
         persistSnapshot(newVersion)
 
         val msg = api.json.encodeToString(Envelope(newVersion, delta))
-        api.pubSubConnection.async().publish(redisChannel, msg).await()
+        topic.publish(msg).awaitSingle()
     }
 
     /**
@@ -274,9 +278,9 @@ class SyncSet<T : Any> internal constructor(
             api.json.encodeToString(snapshotSerializer, set)
         }
 
-        val async = api.connection.async()
-        async.setex(dataKey, ttl.inWholeSeconds, snapshotJson).await()
-        async.setex(verKey, ttl.inWholeSeconds, version.toString()).await()
+        dataBucket.set(snapshotJson, ttl.toJavaDuration()).awaitSingle()
+        remoteVersion.set(version).awaitSingle()
+        remoteVersion.expire(ttl.toJavaDuration()).awaitSingle()
     }
 
     /**

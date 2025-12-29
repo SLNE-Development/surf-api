@@ -1,25 +1,27 @@
 package dev.slne.surf.redis.event
 
-import com.google.common.flogger.LogPerBucketingStrategy
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.KotlinSerializerCache
+import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.util.logger
-import io.lettuce.core.pubsub.RedisPubSubListener
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.Blocking
+import org.redisson.api.RTopicReactive
+import org.redisson.client.codec.StringCodec
+import reactor.core.Disposable
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.InaccessibleObjectException
 import java.lang.reflect.Method
-import java.util.concurrent.TimeUnit
 
 /**
  * Redis-backed event bus based on Redis Pub/Sub.
@@ -55,6 +57,9 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
     private val serializerCache =
         KotlinSerializerCache.Companion<RedisEvent>(api.json.serializersModule)
 
+    private lateinit var topic: RTopicReactive
+    private lateinit var subscription: Disposable
+
     companion object {
         private val log = logger()
         private const val REDIS_CHANNEL = "surf-redis:events"
@@ -78,25 +83,18 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
      */
     @Blocking
     private fun setupSubscription() {
-        api.pubSubConnection.addListener(object : RedisPubSubListener<String, String> {
-            override fun message(channel: String, message: String) {
-                if (channel == REDIS_CHANNEL) {
-                    handleIncomingMessage(message)
-                }
+        topic = api.redissonReactive.getTopic(REDIS_CHANNEL, StringCodec.INSTANCE)
+        subscription = topic.getMessages(String::class.java)
+            .onErrorContinue { t, message ->
+                log.atSevere()
+                    .withCause(t)
+                    .log("Error receiving Redis Pub/Sub message: $message")
             }
-
-            override fun message(pattern: String?, channel: String?, message: String?) = Unit
-            override fun subscribed(channel: String?, count: Long) = Unit
-            override fun psubscribed(pattern: String?, count: Long) = Unit
-            override fun unsubscribed(channel: String?, count: Long) = Unit
-            override fun punsubscribed(pattern: String?, count: Long) = Unit
-        })
-
-        api.pubSubConnection.sync().subscribe(REDIS_CHANNEL)
+            .subscribe(this::handleIncomingMessage)
     }
 
     fun close() {
-        api.pubSubConnection.sync().unsubscribe(REDIS_CHANNEL)
+        subscription.dispose()
     }
 
     /**
@@ -150,9 +148,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
 
         val message = api.json.encodeToString(envelope)
 
-        return api.pubSubConnection.async()
-            .publish(REDIS_CHANNEL, message)
-            .asDeferred()
+        return topic.publish(message).asDeferred()
     }
 
     /**

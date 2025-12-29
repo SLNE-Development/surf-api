@@ -2,10 +2,11 @@ package dev.slne.surf.redis.sync
 
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
-import io.lettuce.core.pubsub.RedisPubSubListener
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.MustBeInvokedByOverriders
+import org.redisson.api.RTopicReactive
+import org.redisson.client.codec.StringCodec
+import reactor.core.Disposable
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
@@ -55,6 +56,8 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
      * Redis Pub/Sub channel used to broadcast and receive deltas for this structure instance.
      */
     protected abstract val redisChannel: String
+    protected lateinit var topic: RTopicReactive
+    private lateinit var topicDisposable: Disposable
 
     companion object {
         private val log = logger()
@@ -75,27 +78,26 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
         setupSubscription()
     }
 
+    @MustBeInvokedByOverriders
+    internal open fun close() {
+        topicDisposable.dispose()
+    }
+
     /**
      * Subscribes to [redisChannel] and installs the Pub/Sub listener.
      *
      * Incoming messages for this channel are forwarded to [handleIncoming].
      */
-    private suspend fun setupSubscription() {
-        api.pubSubConnection.addListener(object : RedisPubSubListener<String, String> {
-            override fun message(channel: String, message: String) {
-                if (channel == redisChannel) {
-                    handleIncoming(message)
-                }
+    private fun setupSubscription() {
+        topic = api.redissonReactive.getTopic(redisChannel, StringCodec.INSTANCE)
+
+        topic.getMessages(String::class.java)
+            .onErrorContinue { t, message ->
+                log.atSevere()
+                    .withCause(t)
+                    .log("Error receiving Redis Pub/Sub message: $message")
             }
-
-            override fun message(pattern: String, channel: String, message: String) {}
-            override fun subscribed(channel: String, count: Long) {}
-            override fun psubscribed(pattern: String, count: Long) {}
-            override fun unsubscribed(channel: String, count: Long) {}
-            override fun punsubscribed(pattern: String, count: Long) {}
-        })
-
-        api.pubSubConnection.async().subscribe(redisChannel).await()
+            .subscribe(this::handleIncoming)
     }
 
     /**

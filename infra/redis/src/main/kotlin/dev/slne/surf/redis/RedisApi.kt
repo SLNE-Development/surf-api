@@ -15,15 +15,8 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
 import dev.slne.surf.surfapi.core.api.util.logger
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.RedisClient
-import io.lettuce.core.RedisURI
-import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection
-import io.lettuce.core.resource.ClientResources
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -32,6 +25,11 @@ import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import org.jetbrains.annotations.Blocking
+import org.redisson.Redisson
+import org.redisson.api.RedissonClient
+import org.redisson.api.RedissonReactiveClient
+import org.redisson.api.redisnode.RedisNodes
+import org.redisson.config.Config
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -53,10 +51,9 @@ import kotlin.time.Duration
  *
  * Use [freezeAndConnect] as a convenience to perform steps 2 and 3.
  */
-@OptIn(ExperimentalLettuceCoroutinesApi::class)
 class RedisApi private constructor(
-    private val config: InternalConfig,
-    internal val json: Json
+    private val config: Config,
+    val json: Json
 ) {
 
     /**
@@ -64,24 +61,12 @@ class RedisApi private constructor(
      *
      * Initialized when [connect] is called.
      */
-    lateinit var redisClient: RedisClient
+    lateinit var redisson: RedissonClient
         private set
 
-    private lateinit var clientResources: ClientResources
-
-    /**
-     * Stateful connection for regular Redis commands.
-     */
-    lateinit var connection: StatefulRedisConnection<String, String>
+    lateinit var redissonReactive: RedissonReactiveClient
         private set
 
-    /**
-     * Dedicated connection for Redis Pub/Sub.
-     *
-     * Must not be used for regular commands.
-     */
-    lateinit var pubSubConnection: StatefulRedisPubSubConnection<String, String>
-        private set
 
     val eventBus = RedisEventBus(this)
     val requestResponseBus = RequestResponseBus(this)
@@ -113,15 +98,19 @@ class RedisApi private constructor(
          * @param serializerModule additional serializers to be included in the internal [Json] instance
          */
         fun create(
-            redisURI: RedisURI,
+            redisHost: String,
+            redisPort: Int,
+            password: String? = null,
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
-            val config = InternalConfig(
-                host = redisURI.host,
-                port = redisURI.port
-            )
-            val api = RedisApi(config, createJson(serializerModule))
+            val config = Config()
+                .setPassword(password)
+                .apply {
+                    useSingleServer()
+                        .setAddress("redis://$redisHost:$redisPort")
+                }
 
+            val api = RedisApi(config, createJson(serializerModule))
             return api
         }
 
@@ -141,9 +130,7 @@ class RedisApi private constructor(
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
             val config = InternalConfig.load(pluginDataPath, pluginsPath)
-            val api = RedisApi(config, createJson(serializerModule))
-
-            return api
+            return create(config.host, config.port, config.password, serializerModule)
         }
 
         @OptIn(ExperimentalSerializationApi::class)
@@ -171,17 +158,8 @@ class RedisApi private constructor(
         require(isFrozen()) { "Redis client must be frozen before connecting" }
         require(!isConnected()) { "Redis client already initialized" }
 
-        val redisURI = RedisURI.builder().apply {
-            withHost(config.host)
-            withPort(config.port)
-            config.password?.let { withPassword(it) }
-        }.build()
-
-        clientResources = ClientResources.create()
-        redisClient = RedisClient.create(clientResources, redisURI)
-
-        connection = redisClient.connect()
-        pubSubConnection = redisClient.connectPubSub()
+        redisson = Redisson.create(config)
+        redissonReactive = redisson.reactive()
 
         eventBus.init()
         requestResponseBus.init()
@@ -233,19 +211,12 @@ class RedisApi private constructor(
         requestResponseBus.close()
         eventBus.close()
 
-        redisClient.shutdown()
-        clientResources.shutdown().sync()
+        for (structure in syncStructures) {
+            structure.close()
+        }
+
+        redisson.shutdown()
     }
-
-    /**
-     * @return configured Redis host
-     */
-    fun getHost(): String = config.host
-
-    /**
-     * @return configured Redis port
-     */
-    fun getPort(): Int = config.port
 
     /**
      * Indicates whether at least one Redis connection is currently open.
@@ -256,8 +227,7 @@ class RedisApi private constructor(
      * Note that this does not guarantee Redis availability; it only
      * reflects the local connection state.
      */
-    fun isConnected(): Boolean =
-        (::connection.isInitialized && connection.isOpen) || (::pubSubConnection.isInitialized && pubSubConnection.isOpen)
+    fun isConnected(): Boolean = ::redisson.isInitialized && !redisson.isShuttingDown
 
 
     /**
@@ -268,7 +238,9 @@ class RedisApi private constructor(
      * @return true if Redis responds successfully, false otherwise
      */
     suspend fun isAlive() = try {
-        connection.reactive().ping().awaitSingle() == "PONG"
+        withContext(Dispatchers.IO) {
+            redisson.getRedisNodes(RedisNodes.SINGLE).pingAll()
+        }
     } catch (_: Exception) {
         false
     }
@@ -290,7 +262,7 @@ class RedisApi private constructor(
      */
     suspend inline fun <reified T : RedisResponse> sendRequest(
         request: RedisRequest,
-        timeoutMs: Long = RequestResponseBus.Companion.DEFAULT_TIMEOUT_MS
+        timeoutMs: Long = RequestResponseBus.DEFAULT_TIMEOUT_MS
     ) = requestResponseBus.sendRequest<T>(request, timeoutMs)
 
     /**
@@ -299,7 +271,7 @@ class RedisApi private constructor(
     suspend fun <T : RedisResponse> sendRequest(
         request: RedisRequest,
         responseType: Class<T>,
-        timeoutMs: Long = RequestResponseBus.Companion.DEFAULT_TIMEOUT_MS
+        timeoutMs: Long = RequestResponseBus.DEFAULT_TIMEOUT_MS
     ) = requestResponseBus.sendRequest(request, responseType, timeoutMs)
 
     /**
@@ -313,7 +285,7 @@ class RedisApi private constructor(
      */
     inline fun <reified E : Any> createSyncList(
         id: String,
-        ttl: Duration = SyncList.Companion.DEFAULT_TTL
+        ttl: Duration = SyncList.DEFAULT_TTL
     ): SyncList<E> = createSyncList(id, serializer(), ttl)
 
     /**
@@ -323,7 +295,7 @@ class RedisApi private constructor(
     fun <E : Any> createSyncList(
         id: String,
         elementSerializer: KSerializer<E>,
-        ttl: Duration = SyncList.Companion.DEFAULT_TTL
+        ttl: Duration = SyncList.DEFAULT_TTL
     ) = createSyncStructure {
         SyncList(this, id, syncStructureScope, elementSerializer, ttl)
     }
@@ -334,7 +306,7 @@ class RedisApi private constructor(
      */
     inline fun <reified E : Any> createSyncSet(
         id: String,
-        ttl: Duration = SyncSet.Companion.DEFAULT_TTL
+        ttl: Duration = SyncSet.DEFAULT_TTL
     ): SyncSet<E> = createSyncSet(id, serializer(), ttl)
 
     /**
@@ -344,7 +316,7 @@ class RedisApi private constructor(
     fun <E : Any> createSyncSet(
         id: String,
         elementSerializer: KSerializer<E>,
-        ttl: Duration = SyncSet.Companion.DEFAULT_TTL
+        ttl: Duration = SyncSet.DEFAULT_TTL
     ) = createSyncStructure {
         SyncSet(this, id, syncStructureScope, elementSerializer, ttl)
     }
@@ -356,7 +328,7 @@ class RedisApi private constructor(
     inline fun <reified T : Any> createSyncValue(
         id: String,
         defaultValue: T,
-        ttl: Duration = SyncValue.Companion.DEFAULT_TTL
+        ttl: Duration = SyncValue.DEFAULT_TTL
     ): SyncValue<T> = createSyncValue(id, serializer(), defaultValue, ttl)
 
     /**
@@ -367,7 +339,7 @@ class RedisApi private constructor(
         id: String,
         serializer: KSerializer<T>,
         defaultValue: T,
-        ttl: Duration = SyncValue.Companion.DEFAULT_TTL
+        ttl: Duration = SyncValue.DEFAULT_TTL
     ) = createSyncStructure {
         SyncValue(this, id, syncStructureScope, serializer, defaultValue, ttl)
     }
@@ -378,14 +350,14 @@ class RedisApi private constructor(
      */
     inline fun <reified K : Any, reified V : Any> createSyncMap(
         id: String,
-        ttl: Duration = SyncMap.Companion.DEFAULT_TTL
+        ttl: Duration = SyncMap.DEFAULT_TTL
     ): SyncMap<K, V> = createSyncMap(id, serializer(), serializer(), ttl)
 
     fun <K : Any, V : Any> createSyncMap(
         id: String,
         keySerializer: KSerializer<K>,
         valueSerializer: KSerializer<V>,
-        ttl: Duration = SyncMap.Companion.DEFAULT_TTL
+        ttl: Duration = SyncMap.DEFAULT_TTL
     ) = createSyncStructure {
         SyncMap(this, id, syncStructureScope, keySerializer, valueSerializer, ttl)
     }

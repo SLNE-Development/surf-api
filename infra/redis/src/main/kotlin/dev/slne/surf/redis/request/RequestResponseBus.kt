@@ -5,16 +5,18 @@ import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.request.RequestResponseBus.Companion.REQUEST_CHANNEL
 import dev.slne.surf.redis.request.RequestResponseBus.Companion.RESPONSE_CHANNEL
 import dev.slne.surf.redis.util.KotlinSerializerCache
+import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.SerializableUUID
 import dev.slne.surf.surfapi.core.api.util.logger
-import io.lettuce.core.pubsub.RedisPubSubListener
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.Blocking
+import org.redisson.api.RTopicReactive
+import org.redisson.client.codec.StringCodec
+import reactor.core.Disposable
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -49,6 +51,12 @@ class RequestResponseBus internal constructor(
 
     private val serializerCache = KotlinSerializerCache<Any>(api.json.serializersModule)
 
+    private lateinit var requestTopic: RTopicReactive
+    private lateinit var responseTopic: RTopicReactive
+
+    private lateinit var requestDisposable: Disposable
+    private lateinit var responseDisposable: Disposable
+
     companion object {
         private val log = logger()
         private const val REQUEST_CHANNEL = "surf-redis:requests"
@@ -79,20 +87,22 @@ class RequestResponseBus internal constructor(
      */
     @Blocking
     private fun setupSubscription() {
-        api.pubSubConnection.addListener(object : RedisPubSubListener<String, String> {
-            override fun message(channel: String, message: String) {
-                if (channel == REQUEST_CHANNEL) handleIncomingRequest(message)
-                else if (channel == RESPONSE_CHANNEL) handleIncomingResponse(message)
-            }
+        requestTopic = api.redissonReactive.getTopic(REQUEST_CHANNEL, StringCodec.INSTANCE)
+        responseTopic = api.redissonReactive.getTopic(RESPONSE_CHANNEL, StringCodec.INSTANCE)
 
-            override fun message(pattern: String, channel: String, message: String) = Unit
-            override fun subscribed(channel: String, count: Long) = Unit
-            override fun psubscribed(pattern: String, count: Long) = Unit
-            override fun unsubscribed(channel: String, count: Long) = Unit
-            override fun punsubscribed(pattern: String, count: Long) = Unit
-        })
+        requestDisposable = requestTopic.getMessages(String::class.java)
+            .onErrorContinue(this::handleGenericError)
+            .subscribe(this::handleIncomingRequest)
 
-        api.pubSubConnection.sync().subscribe(REQUEST_CHANNEL, RESPONSE_CHANNEL)
+        responseDisposable = responseTopic.getMessages(String::class.java)
+            .onErrorContinue(this::handleGenericError)
+            .subscribe(this::handleIncomingResponse)
+    }
+
+    private fun handleGenericError(e: Throwable, message: Any) {
+        log.atSevere()
+            .withCause(e)
+            .log("Error handling message: ${message.toString().take(1000)}")
     }
 
     /**
@@ -217,9 +227,7 @@ class RequestResponseBus internal constructor(
         val envelope = RequestEnvelope.forRequest(request, requestId, requestData)
         val message = api.json.encodeToString(envelope)
 
-        api.pubSubConnection.async()
-            .publish(REQUEST_CHANNEL, message)
-            .await()
+        requestTopic.publish(message).awaitSingle()
 
         try {
             return withTimeout(timeoutMs) {
@@ -252,9 +260,7 @@ class RequestResponseBus internal constructor(
         val envelope = ResponseEnvelope.forResponse(response, requestId, responseData)
         val message = api.json.encodeToString(envelope)
 
-        return api.pubSubConnection.async()
-            .publish(RESPONSE_CHANNEL, message)
-            .asDeferred()
+        return responseTopic.publish(message).asDeferred()
     }
 
     /**
@@ -493,7 +499,9 @@ class RequestResponseBus internal constructor(
      * This does not unsubscribe from Redis channels; connection lifecycle is owned by [RedisApi].
      */
     fun close() {
-        api.pubSubConnection.sync().unsubscribe(REQUEST_CHANNEL, RESPONSE_CHANNEL)
+        requestDisposable.dispose()
+        responseDisposable.dispose()
+
         pendingRequests.values.forEach { deferred ->
             deferred.cancel("RequestResponseBus closed")
         }
