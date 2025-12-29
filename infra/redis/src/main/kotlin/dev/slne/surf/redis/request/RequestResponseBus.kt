@@ -1,6 +1,5 @@
 package dev.slne.surf.redis.request
 
-import com.google.common.flogger.LogPerBucketingStrategy
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.request.RequestResponseBus.Companion.REQUEST_CHANNEL
@@ -24,7 +23,6 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 /**
  * Redis-backed request/response bus based on Redis Pub/Sub.
@@ -49,7 +47,7 @@ class RequestResponseBus internal constructor(
     private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
     private val responseTypeRegistry = ConcurrentHashMap<String, Class<out RedisResponse>>()
 
-    private val serializerCache = KotlinSerializerCache.Companion<Any>(api.json.serializersModule)
+    private val serializerCache = KotlinSerializerCache<Any>(api.json.serializersModule)
 
     companion object {
         private val log = logger()
