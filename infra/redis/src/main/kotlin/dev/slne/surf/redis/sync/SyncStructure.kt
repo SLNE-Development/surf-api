@@ -91,7 +91,7 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
     private fun setupSubscription() {
         topic = api.redissonReactive.getTopic(redisChannel, StringCodec.INSTANCE)
 
-        topic.getMessages(String::class.java)
+        topicDisposable = topic.getMessages(String::class.java)
             .onErrorContinue { t, message ->
                 log.atSevere()
                     .withCause(t)
