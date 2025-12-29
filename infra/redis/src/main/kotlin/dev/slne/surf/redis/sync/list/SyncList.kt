@@ -184,21 +184,20 @@ class SyncList<T : Any> internal constructor(
     fun removeIf(predicate: (T) -> Boolean): Boolean {
         // Collect elements and their indices in a single atomic read
         val toRemove = lock.read {
-            list.indices
-                .mapNotNull { index -> 
-                    val element = list[index]
-                    if (predicate(element)) index to element else null
-                }
-                .sortedByDescending { it.first } // Sort by index descending
+            list.indices.mapNotNull { index -> 
+                val element = list[index]
+                if (predicate(element)) index to element else null
+            }.sortedByDescending { it.first } // Sort by index descending
         }
 
         if (toRemove.isEmpty()) return false
 
         // Remove each element from highest index to lowest
+        // This order ensures indices remain valid: removing from high indices
+        // doesn't affect lower indices, so each originalIndex stays correct
         toRemove.forEach { (originalIndex, _) ->
-            // We need to recalculate the correct index since earlier removals shift indices
-            // But since we're removing from high to low, indices don't shift for our purposes
             val removed = lock.write {
+                // Bounds check is defensive; should always pass when removing high-to-low
                 if (originalIndex >= 0 && originalIndex < list.size) {
                     list.removeAt(originalIndex)
                 } else {
