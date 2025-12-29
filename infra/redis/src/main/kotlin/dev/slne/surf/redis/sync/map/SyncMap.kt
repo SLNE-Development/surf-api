@@ -106,6 +106,71 @@ class SyncMap<K : Any, V : Any> internal constructor(
     /** @return `true` if the map contains [key] */
     fun containsKey(key: K): Boolean = lock.read { map.containsKey(key) }
 
+    /**
+     * Associates [value] with [key] in the map and replicates the change.
+     *
+     * The local map is updated immediately and listeners are notified.
+     * Replication to other nodes happens asynchronously.
+     *
+     * @return the previous value associated with [key], or `null` if there was no mapping
+     */
+    fun put(key: K, value: V): V? {
+        val old = lock.write { map.put(key, value) }
+
+        scope.launch {
+            val keyJson = api.json.encodeToString(keySerializer, key)
+            val valueJson = api.json.encodeToString(valueSerializer, value)
+            publishLocalDelta(Delta.Put(keyJson, valueJson))
+        }
+
+        notifyListeners(listeners, SyncMapChange.Put(key, value, old))
+
+        return old
+    }
+
+    /**
+     * Removes the mapping for [key] from the map and replicates the change.
+     *
+     * The local map is updated immediately and listeners are notified.
+     * Replication to other nodes happens asynchronously.
+     *
+     * @return the value that was associated with [key], or `null` if there was no mapping
+     */
+    fun remove(key: K): V? {
+        val removed = lock.write { map.remove(key) } ?: return null
+
+        scope.launch {
+            val keyJson = api.json.encodeToString(keySerializer, key)
+            publishLocalDelta(Delta.Remove(keyJson))
+        }
+
+        notifyListeners(listeners, SyncMapChange.Removed(key, removed))
+
+        return removed
+    }
+
+    /**
+     * Removes all mappings from the map and replicates the change.
+     *
+     * The local map is cleared immediately and listeners are notified.
+     * Replication to other nodes happens asynchronously.
+     *
+     * If the map is already empty, this method is a no-op and does not publish a delta.
+     */
+    fun clear() {
+        val hadElements = lock.write {
+            val had = map.isNotEmpty()
+            map.clear()
+            had
+        }
+        if (!hadElements) return
+
+        scope.launch {
+            publishLocalDelta(Delta.Clear)
+        }
+
+        notifyListeners(listeners, SyncMapChange.Cleared)
+    }
 
     /**
      * Registers a change listener.
