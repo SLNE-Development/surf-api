@@ -3,6 +3,7 @@ package dev.slne.surf.redis.sync
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisTestBase
 import dev.slne.surf.redis.sync.list.SyncListChange
+import io.lettuce.core.RedisURI
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.serializer
@@ -140,10 +141,10 @@ class SyncListTest : RedisTestBase() {
     @Test
     fun `removeIf replicates correctly across multiple nodes`() = runTest {
         // Create two nodes connected to the same Redis instance
-        val node1Api = RedisApi.create(io.lettuce.core.RedisURI.create(redisContainer.redisURI))
+        val node1Api = RedisApi.create(RedisURI.create(redisContainer.redisURI))
         node1Api.freezeAndConnect()
         
-        val node2Api = RedisApi.create(io.lettuce.core.RedisURI.create(redisContainer.redisURI))
+        val node2Api = RedisApi.create(RedisURI.create(redisContainer.redisURI))
         node2Api.freezeAndConnect()
 
         try {
