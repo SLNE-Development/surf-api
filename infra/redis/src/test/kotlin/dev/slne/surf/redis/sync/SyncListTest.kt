@@ -1,5 +1,6 @@
 package dev.slne.surf.redis.sync
 
+import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisTestBase
 import dev.slne.surf.redis.sync.list.SyncListChange
 import kotlinx.coroutines.delay
@@ -134,5 +135,54 @@ class SyncListTest : RedisTestBase() {
 
         assertEquals(1, syncList.size(), "Should have 1 element left")
         assertEquals("b", syncList.get(0))
+    }
+
+    @Test
+    fun `removeIf replicates correctly across multiple nodes`() = runTest {
+        // Create two nodes connected to the same Redis instance
+        val node1Api = RedisApi.create(io.lettuce.core.RedisURI.create(redisContainer.redisURI))
+        node1Api.freezeAndConnect()
+        
+        val node2Api = RedisApi.create(io.lettuce.core.RedisURI.create(redisContainer.redisURI))
+        node2Api.freezeAndConnect()
+
+        try {
+            val list1 = node1Api.createSyncList("test-list-multinode-1", String.serializer())
+            val list2 = node2Api.createSyncList("test-list-multinode-1", String.serializer())
+            delay(200) // Allow both to initialize and sync
+
+            // Add elements from node1
+            list1.add("apple")
+            list1.add("banana")
+            list1.add("cherry")
+            list1.add("apricot")
+            list1.add("date")
+            delay(200) // Allow replication
+
+            // Verify both nodes see the same data
+            assertEquals(5, list1.size(), "Node 1 should have 5 elements")
+            assertEquals(5, list2.size(), "Node 2 should have 5 elements")
+
+            // Remove elements from node1
+            val removed = list1.removeIf { it.startsWith("a") }
+            assertTrue(removed, "Should have removed elements")
+            delay(300) // Allow replication of Clear + Add deltas
+
+            // Verify both nodes have the same final state
+            assertEquals(3, list1.size(), "Node 1 should have 3 elements left")
+            assertEquals(3, list2.size(), "Node 2 should have 3 elements left")
+            
+            // Check order is preserved on both nodes
+            assertEquals("banana", list1.get(0))
+            assertEquals("cherry", list1.get(1))
+            assertEquals("date", list1.get(2))
+            
+            assertEquals("banana", list2.get(0))
+            assertEquals("cherry", list2.get(1))
+            assertEquals("date", list2.get(2))
+        } finally {
+            node1Api.disconnect()
+            node2Api.disconnect()
+        }
     }
 }

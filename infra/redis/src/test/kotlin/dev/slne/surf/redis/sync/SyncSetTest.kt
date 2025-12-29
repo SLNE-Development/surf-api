@@ -1,5 +1,6 @@
 package dev.slne.surf.redis.sync
 
+import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisTestBase
 import dev.slne.surf.redis.sync.set.SyncSetChange
 import kotlinx.coroutines.delay
@@ -87,5 +88,58 @@ class SyncSetTest : RedisTestBase() {
 
         val removed = syncSet.removeIf { true }
         assertFalse(removed, "Should not have removed any elements from empty set")
+    }
+
+    @Test
+    fun `removeIf replicates correctly across multiple nodes`() = runTest {
+        // Create two nodes connected to the same Redis instance
+        val node1Api = RedisApi.create(io.lettuce.core.RedisURI.create(redisContainer.redisURI))
+        node1Api.freezeAndConnect()
+        
+        val node2Api = RedisApi.create(io.lettuce.core.RedisURI.create(redisContainer.redisURI))
+        node2Api.freezeAndConnect()
+
+        try {
+            val set1 = node1Api.createSyncSet("test-set-multinode-1", String.serializer())
+            val set2 = node2Api.createSyncSet("test-set-multinode-1", String.serializer())
+            delay(200) // Allow both to initialize and sync
+
+            // Add elements from node1
+            set1.add("apple")
+            set1.add("banana")
+            set1.add("cherry")
+            set1.add("apricot")
+            set1.add("date")
+            delay(200) // Allow replication
+
+            // Verify both nodes see the same data
+            assertEquals(5, set1.size(), "Node 1 should have 5 elements")
+            assertEquals(5, set2.size(), "Node 2 should have 5 elements")
+
+            // Remove elements from node1
+            val removed = set1.removeIf { it.startsWith("a") }
+            assertTrue(removed, "Should have removed elements")
+            delay(300) // Allow replication of Remove deltas
+
+            // Verify both nodes have the same final state
+            assertEquals(3, set1.size(), "Node 1 should have 3 elements left")
+            assertEquals(3, set2.size(), "Node 2 should have 3 elements left")
+            
+            // Check the same elements are present on both nodes
+            assertTrue(set1.contains("banana"))
+            assertTrue(set1.contains("cherry"))
+            assertTrue(set1.contains("date"))
+            assertFalse(set1.contains("apple"))
+            assertFalse(set1.contains("apricot"))
+            
+            assertTrue(set2.contains("banana"))
+            assertTrue(set2.contains("cherry"))
+            assertTrue(set2.contains("date"))
+            assertFalse(set2.contains("apple"))
+            assertFalse(set2.contains("apricot"))
+        } finally {
+            node1Api.disconnect()
+            node2Api.disconnect()
+        }
     }
 }
