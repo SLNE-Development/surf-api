@@ -30,6 +30,8 @@ import org.redisson.api.RedissonClient
 import org.redisson.api.RedissonReactiveClient
 import org.redisson.api.redisnode.RedisNodes
 import org.redisson.config.Config
+import org.redisson.misc.RedisURI
+import java.net.URLEncoder
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -98,16 +100,14 @@ class RedisApi private constructor(
          * @param serializerModule additional serializers to be included in the internal [Json] instance
          */
         fun create(
-            redisHost: String,
-            redisPort: Int,
-            password: String? = null,
+            redisURI: RedisURI,
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
             val config = Config()
-                .setPassword(password)
+                .setPassword(redisURI.password)
                 .apply {
                     useSingleServer()
-                        .setAddress("redis://$redisHost:$redisPort")
+                        .setAddress(redisURI.toString())
                 }
 
             val api = RedisApi(config, createJson(serializerModule))
@@ -130,7 +130,20 @@ class RedisApi private constructor(
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
             val config = InternalConfig.load(pluginDataPath, pluginsPath)
-            return create(config.host, config.port, config.password, serializerModule)
+            val redisURIString = buildString {
+                append(RedisURI.REDIS_PROTOCOL)
+                val password = config.password
+                if (!password.isNullOrEmpty()) {
+                    append(URLEncoder.encode(password, Charsets.UTF_8))
+                    append('@')
+                }
+
+                append(config.host)
+                append(':')
+                append(config.port)
+            }
+
+            return create(RedisURI(redisURIString), serializerModule)
         }
 
         @OptIn(ExperimentalSerializationApi::class)
