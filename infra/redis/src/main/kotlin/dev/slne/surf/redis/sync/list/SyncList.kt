@@ -182,20 +182,25 @@ class SyncList<T : Any> internal constructor(
      * @return `true` if any elements were removed, `false` if no elements matched the predicate
      */
     fun removeIf(predicate: (T) -> Boolean): Boolean {
-        // Collect indices of elements to remove (highest to lowest to avoid shifting issues)
-        val indicesToRemove = lock.read {
+        // Collect elements and their indices in a single atomic read
+        val toRemove = lock.read {
             list.indices
-                .filter { index -> predicate(list[index]) }
-                .sortedDescending()
+                .mapNotNull { index -> 
+                    val element = list[index]
+                    if (predicate(element)) index to element else null
+                }
+                .sortedByDescending { it.first } // Sort by index descending
         }
 
-        if (indicesToRemove.isEmpty()) return false
+        if (toRemove.isEmpty()) return false
 
         // Remove each element from highest index to lowest
-        indicesToRemove.forEach { index ->
+        toRemove.forEach { (originalIndex, _) ->
+            // We need to recalculate the correct index since earlier removals shift indices
+            // But since we're removing from high to low, indices don't shift for our purposes
             val removed = lock.write {
-                if (index >= 0 && index < list.size) {
-                    list.removeAt(index)
+                if (originalIndex >= 0 && originalIndex < list.size) {
+                    list.removeAt(originalIndex)
                 } else {
                     null
                 }
@@ -203,9 +208,9 @@ class SyncList<T : Any> internal constructor(
 
             if (removed != null) {
                 scope.launch {
-                    publishLocalDelta(Delta.RemoveAt(index))
+                    publishLocalDelta(Delta.RemoveAt(originalIndex))
                 }
-                notifyListeners(listeners, SyncListChange.Removed(index, removed))
+                notifyListeners(listeners, SyncListChange.Removed(originalIndex, removed))
             }
         }
 
