@@ -165,10 +165,12 @@ class SyncSet<T : Any> internal constructor(
             removedElements.forEach { element ->
                 val elementJson = api.json.encodeToString(elementSerializer, element)
                 publishLocalDelta(Delta.Remove(elementJson))
-                notifyListeners(listeners, SyncSetChange.Removed(element))
             }
         }
 
+        removedElements.forEach { element ->
+            notifyListeners(listeners, SyncSetChange.Removed(element))
+        }
         return true
     }
 
