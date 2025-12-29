@@ -175,10 +175,9 @@ class SyncList<T : Any> internal constructor(
     /**
      * Removes all elements from the list that match the given [predicate] and replicates the changes.
      *
-     * This operation uses atomic replication: the entire list is cleared and remaining elements
-     * are re-added. This ensures consistency across distributed nodes since the operation is
-     * replicated as a Clear delta followed by individual Add deltas, avoiding index-based
-     * replication issues.
+     * This operation uses atomic replication: the entire list is replaced in a single delta.
+     * This ensures consistency across distributed nodes since the operation cannot interleave
+     * with other deltas in the middle of a Clear/Add sequence, avoiding ordering divergence.
      *
      * @param predicate the predicate to test each element against
      * @return `true` if any elements were removed, `false` if no elements matched the predicate
@@ -195,16 +194,10 @@ class SyncList<T : Any> internal constructor(
 
         if (!hadRemovals) return false
 
-        // Replicate using Clear + multiple Add operations for atomic consistency
+        // Replicate using a single replace-all delta for atomic consistency
         scope.launch {
-            // First, clear the list on all nodes
-            publishLocalDelta(Delta.Clear)
-            
-            // Then re-add remaining elements in order
-            remaining.forEach { element ->
-                val elementJson = api.json.encodeToString(elementSerializer, element)
-                publishLocalDelta(Delta.Add(elementJson))
-            }
+            val snapshotJson = api.json.encodeToString(snapshotSerializer, remaining)
+            publishLocalDelta(Delta.ReplaceAll(snapshotJson))
         }
 
         // Notify listeners - single Cleared event for simplicity
@@ -378,6 +371,15 @@ class SyncList<T : Any> internal constructor(
                 lock.write { list.clear() }
                 notifyListeners(listeners, SyncListChange.Cleared)
             }
+
+            is Delta.ReplaceAll -> {
+                val snapshot = api.json.decodeFromString(snapshotSerializer, delta.snapshotJson)
+                lock.write {
+                    list.clear()
+                    list.addAll(snapshot)
+                }
+                notifyListeners(listeners, SyncListChange.Cleared)
+            }
         }
     }
 
@@ -403,5 +405,8 @@ class SyncList<T : Any> internal constructor(
 
         @Serializable
         data object Clear : Delta
+
+        @Serializable
+        data class ReplaceAll(val snapshotJson: String) : Delta
     }
 }
