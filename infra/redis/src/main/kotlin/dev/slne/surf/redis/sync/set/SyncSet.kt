@@ -135,6 +135,36 @@ class SyncSet<T : Any> internal constructor(
     }
 
     /**
+     * Removes all elements from the set that match the given [predicate] and replicates the changes.
+     *
+     * The predicate is evaluated under a read lock, and each matching element is removed individually.
+     * Each removal is replicated as a separate delta to ensure consistency across nodes.
+     *
+     * @param predicate the predicate to test each element against
+     * @return `true` if any elements were removed, `false` if no elements matched the predicate
+     */
+    fun removeIf(predicate: (T) -> Boolean): Boolean {
+        val toRemove = lock.read {
+            set.filter(predicate)
+        }
+
+        if (toRemove.isEmpty()) return false
+
+        toRemove.forEach { element ->
+            val removed = lock.write { set.remove(element) }
+            if (removed) {
+                scope.launch {
+                    val elementJson = api.json.encodeToString(elementSerializer, element)
+                    publishLocalDelta(Delta.Remove(elementJson))
+                }
+                notifyListeners(listeners, SyncSetChange.Removed(element))
+            }
+        }
+
+        return true
+    }
+
+    /**
      * Clears the set and replicates the change.
      *
      * If the set is already empty, this method is a no-op and does not publish a delta.

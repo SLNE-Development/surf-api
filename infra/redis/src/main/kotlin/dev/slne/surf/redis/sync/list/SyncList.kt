@@ -173,6 +173,46 @@ class SyncList<T : Any> internal constructor(
     }
 
     /**
+     * Removes all elements from the list that match the given [predicate] and replicates the changes.
+     *
+     * Elements are removed from highest index to lowest to avoid index shifting issues during replication.
+     * Each removal is replicated as a separate delta to ensure consistency across nodes.
+     *
+     * @param predicate the predicate to test each element against
+     * @return `true` if any elements were removed, `false` if no elements matched the predicate
+     */
+    fun removeIf(predicate: (T) -> Boolean): Boolean {
+        // Collect indices of elements to remove (highest to lowest to avoid shifting issues)
+        val indicesToRemove = lock.read {
+            list.indices
+                .filter { index -> predicate(list[index]) }
+                .sortedDescending()
+        }
+
+        if (indicesToRemove.isEmpty()) return false
+
+        // Remove each element from highest index to lowest
+        indicesToRemove.forEach { index ->
+            val removed = lock.write {
+                if (index >= 0 && index < list.size) {
+                    list.removeAt(index)
+                } else {
+                    null
+                }
+            }
+
+            if (removed != null) {
+                scope.launch {
+                    publishLocalDelta(Delta.RemoveAt(index))
+                }
+                notifyListeners(listeners, SyncListChange.Removed(index, removed))
+            }
+        }
+
+        return true
+    }
+
+    /**
      * Clears the list.
      *
      * The local list is cleared immediately and listeners are notified.
@@ -186,6 +226,20 @@ class SyncList<T : Any> internal constructor(
         }
 
         notifyListeners(listeners, SyncListChange.Cleared)
+    }
+
+    /**
+     * Registers a change listener.
+     *
+     * The listener is invoked for all local and remote changes.
+     */
+    fun addListener(listener: (SyncListChange) -> Unit) {
+        listeners += listener
+    }
+
+    /** Removes a previously registered listener. */
+    fun removeListener(listener: (SyncListChange) -> Unit) {
+        listeners -= listener
     }
 
     override suspend fun loadSnapshot() {
