@@ -54,14 +54,14 @@ class SyncListTest : RedisTestBase() {
     }
 
     @Test
-    fun `removeIf triggers listener for each removal`() = runTest {
+    fun `removeIf triggers listener notification`() = runTest {
         val syncList = redisApi.createSyncList("test-list-removeif-3", String.serializer())
         delay(100)
 
-        val removedElements = mutableListOf<String>()
+        var clearedCalled = false
         syncList.addListener { change ->
-            if (change is SyncListChange.Removed<*>) {
-                removedElements.add(change.removed as String)
+            if (change is SyncListChange.Cleared) {
+                clearedCalled = true
             }
         }
 
@@ -73,9 +73,9 @@ class SyncListTest : RedisTestBase() {
         syncList.removeIf { it.startsWith("a") || it == "cherry" }
         delay(100)
 
-        assertEquals(2, removedElements.size, "Should have notified for 2 removals")
-        assertTrue(removedElements.contains("apple"))
-        assertTrue(removedElements.contains("cherry"))
+        assertTrue(clearedCalled, "Should have notified with Cleared event")
+        assertEquals(1, syncList.size(), "Should have 1 element left")
+        assertEquals("banana", syncList.get(0))
     }
 
     @Test

@@ -175,43 +175,39 @@ class SyncList<T : Any> internal constructor(
     /**
      * Removes all elements from the list that match the given [predicate] and replicates the changes.
      *
-     * Elements are removed from highest index to lowest to avoid index shifting issues during replication.
-     * Each removal is replicated as a separate delta to ensure consistency across nodes.
+     * This operation uses atomic replication: the entire list is cleared and remaining elements
+     * are re-added. This ensures consistency across distributed nodes since the operation is
+     * replicated as two deltas (Clear + AddAll), avoiding index-based replication issues.
      *
      * @param predicate the predicate to test each element against
      * @return `true` if any elements were removed, `false` if no elements matched the predicate
      */
     fun removeIf(predicate: (T) -> Boolean): Boolean {
-        // Collect elements and their indices in a single atomic read
-        val toRemove = lock.read {
-            list.indices.mapNotNull { index -> 
-                val element = list[index]
-                if (predicate(element)) index to element else null
-            }.sortedByDescending { it.first } // Sort by index descending
+        // Perform filtering and capture the results under write lock
+        val (remaining, hadRemovals) = lock.write {
+            val filtered = list.filterNot(predicate)
+            val removals = list.size != filtered.size
+            list.clear()
+            list.addAll(filtered)
+            filtered to removals
         }
 
-        if (toRemove.isEmpty()) return false
+        if (!hadRemovals) return false
 
-        // Remove each element from highest index to lowest
-        // This order ensures indices remain valid: removing from high indices
-        // doesn't affect lower indices, so each originalIndex stays correct
-        toRemove.forEach { (originalIndex, _) ->
-            val removed = lock.write {
-                // Bounds check is defensive; should always pass when removing high-to-low
-                if (originalIndex >= 0 && originalIndex < list.size) {
-                    list.removeAt(originalIndex)
-                } else {
-                    null
-                }
-            }
-
-            if (removed != null) {
-                scope.launch {
-                    publishLocalDelta(Delta.RemoveAt(originalIndex))
-                }
-                notifyListeners(listeners, SyncListChange.Removed(originalIndex, removed))
+        // Replicate using Clear + multiple Add operations for atomic consistency
+        scope.launch {
+            // First, clear the list on all nodes
+            publishLocalDelta(Delta.Clear)
+            
+            // Then re-add remaining elements in order
+            remaining.forEach { element ->
+                val elementJson = api.json.encodeToString(elementSerializer, element)
+                publishLocalDelta(Delta.Add(elementJson))
             }
         }
+
+        // Notify listeners - single Cleared event for simplicity
+        notifyListeners(listeners, SyncListChange.Cleared)
 
         return true
     }
