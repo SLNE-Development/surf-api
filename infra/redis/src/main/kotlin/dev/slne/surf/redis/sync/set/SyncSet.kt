@@ -138,7 +138,8 @@ class SyncSet<T : Any> internal constructor(
      * Removes all elements from the set that match the given [predicate] and replicates the changes.
      *
      * Each matching element is removed under a write lock, and each removal is replicated as a
-     * separate delta to ensure consistency across nodes.
+     * separate delta to ensure consistency across nodes. Deltas are published sequentially
+     * to maintain order.
      *
      * @param predicate the predicate to test each element against
      * @return `true` if any elements were removed, `false` if no elements matched the predicate
@@ -159,12 +160,13 @@ class SyncSet<T : Any> internal constructor(
 
         if (removedElements.isEmpty()) return false
 
-        removedElements.forEach { element ->
-            scope.launch {
+        // Publish deltas sequentially to maintain order
+        scope.launch {
+            removedElements.forEach { element ->
                 val elementJson = api.json.encodeToString(elementSerializer, element)
                 publishLocalDelta(Delta.Remove(elementJson))
+                notifyListeners(listeners, SyncSetChange.Removed(element))
             }
-            notifyListeners(listeners, SyncSetChange.Removed(element))
         }
 
         return true

@@ -177,7 +177,8 @@ class SyncList<T : Any> internal constructor(
      *
      * This operation uses atomic replication: the entire list is cleared and remaining elements
      * are re-added. This ensures consistency across distributed nodes since the operation is
-     * replicated as two deltas (Clear + AddAll), avoiding index-based replication issues.
+     * replicated as a Clear delta followed by individual Add deltas, avoiding index-based
+     * replication issues.
      *
      * @param predicate the predicate to test each element against
      * @return `true` if any elements were removed, `false` if no elements matched the predicate
