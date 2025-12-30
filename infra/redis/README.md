@@ -1,6 +1,6 @@
 # surf-redis
 
-A Kotlin library for Redis-based distributed systems using Lettuce and Kotlin Coroutines. This library provides a comprehensive, type-safe, and **asynchronous** solution for event distribution, request-response patterns, and synchronized data structures across multiple servers or instances.
+A Kotlin library for Redis-based distributed systems using Redisson and Kotlin Coroutines. This library provides a comprehensive, type-safe, and **asynchronous** solution for event distribution, request-response patterns, and synchronized data structures across multiple servers or instances.
 
 ## Quick Start
 
@@ -41,7 +41,7 @@ api.publishEvent(PlayerJoinEvent("Steve"))
 
 ## Features
 
-- 🚀 **Async-first** architecture based on Redis Pub/Sub using Lettuce and Kotlin Coroutines
+- 🚀 **Async-first** architecture based on Redis Pub/Sub using Redisson and Kotlin Coroutines
 - 📡 **Event Bus**: Distribute events across multiple servers/instances
 - 🔄 **Request-Response**: Send requests and receive typed responses with timeout support
 - 🔗 **Synchronized Data Structures**: Replicated in-memory collections (List, Map, Set, Value)
@@ -152,7 +152,7 @@ When you create a `RedisApi` using paths:
 For more control or when paths aren't available:
 
 ```kotlin
-import io.lettuce.core.RedisURI
+import org.redisson.misc.RedisURI
 
 val api = RedisApi.create(
     redisURI = RedisURI.create("redis://localhost:6379")
@@ -206,7 +206,7 @@ class MyListener {
 }
 ```
 
-**Important**: Event handlers are invoked on the Redis Pub/Sub thread. Keep them fast and launch coroutines for heavy work:
+**Important**: Event handlers are invoked on a Redisson/Reactor thread. Keep them fast and launch coroutines for heavy work:
 
 ```kotlin
 import kotlinx.coroutines.CoroutineScope
@@ -343,7 +343,7 @@ class MyRequestHandler {
 }
 ```
 
-**Important**: Request handlers are invoked on the Redis Pub/Sub thread, just like event handlers. Launch coroutines for async work.
+**Important**: Request handlers are invoked on a Redisson/Reactor thread, just like event handlers. Launch coroutines for async work.
 
 #### Sending Requests
 
@@ -712,7 +712,7 @@ Annotation for event handler methods. Methods must:
 - Have exactly one parameter
 - The parameter must be a subclass of `RedisEvent`
 - **Not** be a `suspend` function
-- Handler invoked on Pub/Sub thread (launch coroutines for async work)
+- Handler invoked on a Redisson/Reactor thread (launch coroutines for async work)
 
 ```kotlin
 @OnRedisEvent
@@ -746,7 +746,7 @@ Annotation for request handler methods. Methods must:
 - `T` must be a subclass of `RedisRequest`
 - **Not** be a `suspend` function
 - Return `Unit`
-- Handler invoked on Pub/Sub thread (launch coroutines for async work)
+- Handler invoked on a Redisson/Reactor thread (launch coroutines for async work)
 
 ```kotlin
 @HandleRedisRequest
@@ -789,14 +789,14 @@ Exception thrown when a request times out without receiving a response.
 - **LambdaMetafactory**: Uses Java's LambdaMetafactory to generate optimized handler invocations (faster than reflection)
 - **Kotlin Serialization**: Native, type-safe serialization
 - **Thread safety**: Proper locking in sync structures
-- **Pub/Sub thread**: Handlers invoked synchronously; launch coroutines for heavy work
+- **Redisson/Reactor thread**: Handlers invoked synchronously; launch coroutines for heavy work
 - **Eventual consistency**: Sync structures are eventually consistent, not strongly consistent
 
 ## Best Practices
 
 1. **Use path-based configuration**: Enables global config for server owners
 2. **Create structures before freezing**: All registrations must happen before `freeze()`
-3. **Launch coroutines in handlers**: Don't block the Pub/Sub thread
+3. **Launch coroutines in handlers**: Don't block the Redisson/Reactor thread
 4. **Handle timeouts**: Request-response calls can time out
 5. **Use change listeners**: React to remote changes in sync structures
 6. **Clean up**: Call `disconnect()` on shutdown

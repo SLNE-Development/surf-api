@@ -8,8 +8,8 @@ package dev.slne.surf.redis.event
  * - The parameter type must be a subtype of [RedisEvent]
  * - **Not** be a `suspend` function
  *
- * Event handler methods are invoked synchronously on the Redis
- * Pub/Sub thread. If asynchronous or suspending work is required,
+ * Event handler methods are invoked synchronously on a Redisson/Reactor
+ * thread. If asynchronous or suspending work is required,
  * the handler must explicitly launch its own coroutine.
  *
  * Example:

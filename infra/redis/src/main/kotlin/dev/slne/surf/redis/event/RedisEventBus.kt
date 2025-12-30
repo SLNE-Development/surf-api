@@ -75,7 +75,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
     /**
      * Sets up the Redis Pub/Sub subscription and installs the message listener.
      *
-     * Incoming messages are dispatched synchronously on the Redis Pub/Sub thread.
+     * Incoming messages are dispatched synchronously on a Redisson/Reactor thread.
      */
     @Blocking
     private fun setupSubscription() {

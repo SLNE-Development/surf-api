@@ -44,7 +44,7 @@ import kotlin.time.toJavaDuration
  * - Mutating methods are **non-suspending** and do not block.
  * - Redis I/O is executed asynchronously on the provided [scope].
  * - Change listeners are invoked on the thread applying the change
- *   (caller thread for local changes, Pub/Sub thread for remote changes).
+ *   (caller thread for local changes, Redisson/Reactor thread for remote changes).
  *
  * ## Failure semantics
  * - If all nodes go offline, Redis state expires automatically after [ttl].
