@@ -99,13 +99,20 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
 
         val localKey = localKey(key)
         when (val entry = nearCache.getIfPresent(localKey)) {
-            is CacheEntry.Value -> return entry.value
-            CacheEntry.Null -> return null
+            is CacheEntry.Value -> {
+                refreshTtl(key)
+                return entry.value
+            }
+            CacheEntry.Null -> {
+                refreshTtl(key)
+                return null
+            }
             null -> Unit // miss
         }
 
         val bucket = api.redissonReactive.getBucket<String>(redisKey(key), StringCodec)
         val raw = bucket.get().awaitSingleOrNull() ?: return null
+        bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
 
         val entry = if (raw == NULL_MARKER) {
             CacheEntry.Null
@@ -199,6 +206,13 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
 
         nearCache.put(localKey, CacheEntry.Null)
         invalidationTopic.publish(localKey).awaitSingle()
+    }
+
+    private fun refreshTtl(key: K) {
+        api.redissonReactive
+            .getBucket<String>(redisKey(key), StringCodec)
+            .expire(ttl.toJavaDuration())
+            .subscribe()
     }
 
     /**
