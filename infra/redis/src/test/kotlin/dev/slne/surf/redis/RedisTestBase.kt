@@ -1,9 +1,9 @@
 package dev.slne.surf.redis
 
 import com.redis.testcontainers.RedisContainer
-import io.lettuce.core.RedisURI
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.redisson.misc.RedisURI
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
@@ -20,7 +20,7 @@ abstract class RedisTestBase {
 
     @BeforeEach
     fun setUpRedisApi() {
-        val api = RedisApi.create(RedisURI.create(redisContainer.redisURI))
+        val api = RedisApi.create(RedisURI(redisContainer.redisURI))
         beforeApiFreeze(api)
         api.freezeAndConnect()
         redisApi = api

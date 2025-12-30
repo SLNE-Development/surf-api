@@ -1,6 +1,5 @@
 package dev.slne.surf.redis.request
 
-import dev.slne.surf.redis.request.RedisRequest
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

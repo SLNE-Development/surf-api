@@ -3,11 +3,11 @@ package dev.slne.surf.redis.sync
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisTestBase
 import dev.slne.surf.redis.sync.set.SyncSetChange
-import io.lettuce.core.RedisURI
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.serializer
 import org.junit.jupiter.api.Test
+import org.redisson.misc.RedisURI
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -94,10 +94,10 @@ class SyncSetTest : RedisTestBase() {
     @Test
     fun `removeIf replicates correctly across multiple nodes`() = runTest {
         // Create two nodes connected to the same Redis instance
-        val node1Api = RedisApi.create(RedisURI.create(redisContainer.redisURI))
+        val node1Api = RedisApi.create(RedisURI(redisContainer.redisURI))
         node1Api.freezeAndConnect()
-        
-        val node2Api = RedisApi.create(RedisURI.create(redisContainer.redisURI))
+
+        val node2Api = RedisApi.create(RedisURI(redisContainer.redisURI))
         node2Api.freezeAndConnect()
 
         try {
@@ -125,14 +125,14 @@ class SyncSetTest : RedisTestBase() {
             // Verify both nodes have the same final state
             assertEquals(3, set1.size(), "Node 1 should have 3 elements left")
             assertEquals(3, set2.size(), "Node 2 should have 3 elements left")
-            
+
             // Check the same elements are present on both nodes
             assertTrue(set1.contains("banana"))
             assertTrue(set1.contains("cherry"))
             assertTrue(set1.contains("date"))
             assertFalse(set1.contains("apple"))
             assertFalse(set1.contains("apricot"))
-            
+
             assertTrue(set2.contains("banana"))
             assertTrue(set2.contains("cherry"))
             assertTrue(set2.contains("date"))

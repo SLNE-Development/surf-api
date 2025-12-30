@@ -1,7 +1,5 @@
 package dev.slne.surf.redis.event
 
-import dev.slne.surf.redis.event.OnRedisEvent
-import dev.slne.surf.redis.event.RedisEvent
 import kotlinx.serialization.Serializable
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -10,7 +8,8 @@ class SubscribeAnnotationTest {
 
     @Test
     fun `test Subscribe annotation can be applied to methods`() {
-        val method = TestListener::class.java.getDeclaredMethod("onTestEvent", TestEvent::class.java)
+        val method =
+            TestListener::class.java.getDeclaredMethod("onTestEvent", TestEvent::class.java)
         assertTrue(method.isAnnotationPresent(OnRedisEvent::class.java))
     }
 

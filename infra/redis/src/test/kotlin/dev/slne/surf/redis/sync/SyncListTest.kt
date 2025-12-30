@@ -3,11 +3,11 @@ package dev.slne.surf.redis.sync
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisTestBase
 import dev.slne.surf.redis.sync.list.SyncListChange
-import io.lettuce.core.RedisURI
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.serializer
 import org.junit.jupiter.api.Test
+import org.redisson.misc.RedisURI
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -141,10 +141,10 @@ class SyncListTest : RedisTestBase() {
     @Test
     fun `removeIf replicates correctly across multiple nodes`() = runTest {
         // Create two nodes connected to the same Redis instance
-        val node1Api = RedisApi.create(RedisURI.create(redisContainer.redisURI))
+        val node1Api = RedisApi.create(RedisURI(redisContainer.redisURI))
         node1Api.freezeAndConnect()
-        
-        val node2Api = RedisApi.create(RedisURI.create(redisContainer.redisURI))
+
+        val node2Api = RedisApi.create(RedisURI(redisContainer.redisURI))
         node2Api.freezeAndConnect()
 
         try {
@@ -172,12 +172,12 @@ class SyncListTest : RedisTestBase() {
             // Verify both nodes have the same final state
             assertEquals(3, list1.size(), "Node 1 should have 3 elements left")
             assertEquals(3, list2.size(), "Node 2 should have 3 elements left")
-            
+
             // Check order is preserved on both nodes
             assertEquals("banana", list1.get(0))
             assertEquals("cherry", list1.get(1))
             assertEquals("date", list1.get(2))
-            
+
             assertEquals("banana", list2.get(0))
             assertEquals("cherry", list2.get(1))
             assertEquals("date", list2.get(2))

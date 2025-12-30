@@ -1,8 +1,8 @@
 import dev.slne.surf.surfapi.gradle.util.slneReleases
 
 plugins {
-    id("dev.slne.surf.surfapi.gradle.core") version "1.21.11+"
-//    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+" /* Uncomment to use tests */
+//    id("dev.slne.surf.surfapi.gradle.core") version "1.21.11+"
+    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+" /* Uncomment to use tests */
 }
 
 group = "dev.slne.surf"
@@ -11,9 +11,9 @@ version = findProperty("version") as String
 
 dependencies {
     implementation("org.redisson:redisson:4.0.0") {
-//        exclude("org.slf4j")
-//        exclude("org.reactivestreams")
-//        exclude("io.projectreactor", "reactor-core")
+        exclude("org.slf4j")
+        exclude("org.reactivestreams")
+        exclude("io.projectreactor", "reactor-core")
     }
 
     testImplementation(kotlin("test"))
