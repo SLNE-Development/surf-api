@@ -247,7 +247,7 @@ class RedisApi private constructor(
      *
      * @return true if Redis responds successfully, false otherwise
      */
-    suspend fun isAlive() = try {
+    suspend fun isAlive(): Boolean = try {
         withContext(Dispatchers.IO) {
             redisson.getRedisNodes(RedisNodes.SINGLE).pingAll()
         }
