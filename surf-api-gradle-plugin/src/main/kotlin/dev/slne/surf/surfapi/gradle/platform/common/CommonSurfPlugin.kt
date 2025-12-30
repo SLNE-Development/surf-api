@@ -217,6 +217,15 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             }
         }
 
+        extension.coreModule.orNull?.let {
+            dependencies {
+                add(
+                    COMPILE_ONLY,
+                    "dev.slne.surf.core:${it.module}:${Constants.SURF_API_VERSION}"
+                )
+            }
+        }
+
         afterEvaluated0(extension)
     }
 

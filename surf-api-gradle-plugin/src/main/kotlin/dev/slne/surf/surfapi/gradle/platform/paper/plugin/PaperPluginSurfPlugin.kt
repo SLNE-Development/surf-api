@@ -63,6 +63,10 @@ internal class PaperPluginSurfPlugin :
                 if (extension.cloudModule.isPresent && extension.dependOnCloud.get()) {
                     registerRequired("surf-cloud-bukkit")
                 }
+                if (extension.coreModule.isPresent) {
+                    registerRequired("surf-core-paper")
+                }
+
                 extension.serverDependencies.orNull?.execute(this)
             }
         }
