@@ -34,7 +34,7 @@ import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
  * - Publishing responses to [RESPONSE_CHANNEL]
  * - Awaiting responses for outgoing requests using a per-request correlation ID
  *
- * Handler methods are invoked synchronously on the Redis Pub/Sub thread.
+ * Handler methods are invoked synchronously on a Redisson/Reactor thread.
  * If suspending or long-running work is required, the handler must launch its own coroutine.
  */
 class RequestResponseBus internal constructor(
@@ -86,7 +86,7 @@ class RequestResponseBus internal constructor(
     /**
      * Installs the Redis Pub/Sub listener and subscribes to request/response channels.
      *
-     * Incoming messages are handled synchronously on the Pub/Sub thread.
+     * Incoming messages are handled synchronously on a Redisson/Reactor thread.
      */
     @Blocking
     private fun setupSubscription() {

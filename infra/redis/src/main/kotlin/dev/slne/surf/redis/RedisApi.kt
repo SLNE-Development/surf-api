@@ -38,9 +38,8 @@ import kotlin.time.Duration
 /**
  * Central API for managing Redis connections.
  *
- * This class owns a single [RedisClient] instance and provides
- * one shared [StatefulRedisConnection] for commands and one
- * [StatefulRedisPubSubConnection] for Pub/Sub usage.
+ * This class owns a single [RedissonClient] instance and provides
+ * a shared [RedissonReactiveClient] for reactive command and Pub/Sub usage.
  *
  * Instances are created via [create] and are responsible for
  * their own lifecycle.
@@ -232,10 +231,7 @@ class RedisApi private constructor(
     }
 
     /**
-     * Indicates whether at least one Redis connection is currently open.
-     *
-     * This returns `true` if either the regular command connection
-     * or the Pub/Sub connection is initialized and open.
+     * Indicates whether the Redis client is initialized and not shutting down.
      *
      * Note that this does not guarantee Redis availability; it only
      * reflects the local connection state.

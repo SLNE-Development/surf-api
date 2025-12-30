@@ -43,7 +43,7 @@ import kotlin.time.toJavaDuration
  * - Public mutating methods (e.g. [add], [set]) are **non-suspending** and do not block.
  * - Redis I/O is executed asynchronously on the provided [scope].
  * - Change listeners are invoked on the thread that applies the change
- *   (caller thread for local changes, Pub/Sub thread for remote changes).
+ *   (caller thread for local changes, Redisson/Reactor thread for remote changes).
  *
  * @param api owning [RedisApi] (must already be connected and have Pub/Sub available)
  * @param id unique identifier for this list (defines Redis keys and channel)

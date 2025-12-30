@@ -12,7 +12,7 @@ package dev.slne.surf.redis.request
  * - **Not** be a `suspend` function
  * - Return `Unit`
  *
- * Request handlers are invoked **synchronously on the Redis Pub/Sub thread**.
+ * Request handlers are invoked **synchronously on a Redisson/Reactor thread**.
  * If asynchronous or suspending work is required, the handler must explicitly
  * launch its own coroutine and call [RequestContext.respond] from there.
  *

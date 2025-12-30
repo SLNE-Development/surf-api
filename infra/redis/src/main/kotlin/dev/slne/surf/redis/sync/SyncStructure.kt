@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
  * A [SyncStructure] provides the common plumbing for:
  * - **Snapshot bootstrap** for late joiners via [loadSnapshot]
  * - **Delta replication** via Redis Pub/Sub ([redisChannel] + [handleIncoming])
- * - **Non-blocking Redis I/O** (uses Lettuce async APIs)
+ * - **Non-blocking Redis I/O** (uses Redisson reactive APIs)
  * - **Thread-safe local state** via [lock]
  *
  * ## Lifecycle
@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
  * The class itself does not start heartbeats or TTL refreshes; those belong to the concrete structure.
  *
  * ## Threading model
- * - Incoming Pub/Sub messages are delivered on Lettuce's Pub/Sub thread.
+ * - Incoming Pub/Sub messages are delivered on Redisson/Reactor threads.
  * - [handleIncoming] is called directly from that thread (i.e. it must be fast and non-blocking).
  * - If heavier work is required, implementations should offload to [scope] (e.g. `scope.launch { ... }`).
  *
@@ -115,7 +115,7 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
     /**
      * Handles a delta message received via Pub/Sub.
      *
-     * This method is called on the Redis Pub/Sub thread and must not block.
+     * This method is called on a Redisson/Reactor thread and must not block.
      * Implementations should parse the message quickly and:
      * - apply the delta under [lock], or
      * - schedule heavier recovery work on [scope] (e.g. `scope.launch { loadSnapshot() }`).
