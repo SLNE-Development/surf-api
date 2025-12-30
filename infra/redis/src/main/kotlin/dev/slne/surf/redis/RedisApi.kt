@@ -226,6 +226,7 @@ class RedisApi private constructor(
         for (structure in syncStructures) {
             structure.close()
         }
+        syncStructureScope.cancel("RedisApi disconnected")
 
         redisson.shutdown()
     }
