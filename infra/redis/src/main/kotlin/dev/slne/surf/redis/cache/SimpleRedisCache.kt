@@ -37,16 +37,19 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         private const val NULL_MARKER = "__NULL__"
     }
 
-    private val cache = api.redissonReactive.getLocalCachedMap(
-        LocalCachedMapOptions.name<String, String>(name)
-            .codec(StringCodec.INSTANCE)
-            .cacheSize(10_000)
-            .timeToLive(ttl.toJavaDuration())
-            .reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR)
-            .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
-            .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)
-            .cacheProvider(LocalCachedMapOptions.CacheProvider.CAFFEINE)
-    )
+    private val cache by lazy {
+        api.redissonReactive
+        api.redissonReactive.getLocalCachedMap(
+            LocalCachedMapOptions.name<String, String>(name)
+                .codec(StringCodec.INSTANCE)
+                .cacheSize(10_000)
+                .maxIdle(ttl.toJavaDuration())
+                .reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR)
+                .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
+                .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)
+                .cacheProvider(LocalCachedMapOptions.CacheProvider.CAFFEINE)
+        )
+    }
 
     /**
      * Retrieve a value from the cache.

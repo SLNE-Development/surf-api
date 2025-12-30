@@ -14,8 +14,6 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.Blocking
-import org.redisson.api.RTopicReactive
-import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
@@ -25,6 +23,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 /**
  * Redis-backed request/response bus based on Redis Pub/Sub.
@@ -51,8 +50,12 @@ class RequestResponseBus internal constructor(
 
     private val serializerCache = KotlinSerializerCache<Any>(api.json.serializersModule)
 
-    private lateinit var requestTopic: RTopicReactive
-    private lateinit var responseTopic: RTopicReactive
+    private val requestTopic by lazy {
+        api.redissonReactive.getTopic(REQUEST_CHANNEL, StringCodec)
+    }
+    private val responseTopic by lazy {
+        api.redissonReactive.getTopic(RESPONSE_CHANNEL, StringCodec)
+    }
 
     private lateinit var requestDisposable: Disposable
     private lateinit var responseDisposable: Disposable
@@ -87,9 +90,6 @@ class RequestResponseBus internal constructor(
      */
     @Blocking
     private fun setupSubscription() {
-        requestTopic = api.redissonReactive.getTopic(REQUEST_CHANNEL, StringCodec.INSTANCE)
-        responseTopic = api.redissonReactive.getTopic(RESPONSE_CHANNEL, StringCodec.INSTANCE)
-
         requestDisposable = requestTopic.getMessages(String::class.java)
             .onErrorContinue(this::handleGenericError)
             .subscribe(this::handleIncomingRequest)

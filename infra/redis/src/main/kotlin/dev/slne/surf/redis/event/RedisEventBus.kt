@@ -12,14 +12,13 @@ import kotlinx.coroutines.Deferred
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.Blocking
-import org.redisson.api.RTopicReactive
-import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.InaccessibleObjectException
 import java.lang.reflect.Method
+import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 /**
  * Redis-backed event bus based on Redis Pub/Sub.
@@ -52,10 +51,9 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
     /**
      * Cache for event serializers, resolved once per event class.
      */
-    private val serializerCache =
-        KotlinSerializerCache.Companion<RedisEvent>(api.json.serializersModule)
+    private val serializerCache = KotlinSerializerCache<RedisEvent>(api.json.serializersModule)
 
-    private lateinit var topic: RTopicReactive
+    private val topic by lazy { api.redissonReactive.getTopic(REDIS_CHANNEL, StringCodec) }
     private lateinit var subscription: Disposable
 
     companion object {
@@ -81,7 +79,6 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
      */
     @Blocking
     private fun setupSubscription() {
-        topic = api.redissonReactive.getTopic(REDIS_CHANNEL, StringCodec.INSTANCE)
         subscription = topic.getMessages(String::class.java)
             .onErrorContinue { t, message ->
                 log.atSevere()
