@@ -1,13 +1,17 @@
 package dev.slne.surf.redis.cache
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.sksamuel.aedile.core.expireAfterAccess
 import dev.slne.surf.redis.RedisApi
-import kotlinx.coroutines.reactive.awaitSingle
+import dev.slne.surf.surfapi.core.api.util.logger
+import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.serialization.KSerializer
-import org.redisson.api.options.LocalCachedMapOptions
-import org.redisson.client.codec.StringCodec
+import reactor.core.Disposable
+import java.io.Closeable
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
+import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 /**
  * A simple Redis-backed cache for values of type [V] parameterized by key type [K].
@@ -19,7 +23,7 @@ import kotlin.time.toJavaDuration
  * This class uses the reactive Redis commands exposed by [RedisApi] and is intended
  * for coroutine-based usage (suspending methods).
  *
- * @param name String prefix that is prepended to each Redis key.
+ * @param namespace String prefix that is prepended to each Redis key.
  * @param serializer [KSerializer] used to (de-)serialize values of type [V] to/from JSON.
  * @param keyToString Function that converts a key of type `K` to its String representation.
  *                    Default is `toString()`.
@@ -27,28 +31,60 @@ import kotlin.time.toJavaDuration
  * @param api Instance of [RedisApi] used to access Redis.
  */
 class SimpleRedisCache<K : Any, V : Any> internal constructor(
-    private val name: String,
+    private val namespace: String,
     private val serializer: KSerializer<V>,
     private val keyToString: (K) -> String = { it.toString() },
     private val ttl: Duration,
     private val api: RedisApi
-) {
+) : Closeable {
     private companion object {
+        private val log = logger()
         private const val NULL_MARKER = "__NULL__"
+        private const val INVALIDATION_TOPIC_SUFFIX = ":__cache_invalidate__"
     }
 
-    private val cache by lazy {
-        api.redissonReactive.getLocalCachedMap(
-            LocalCachedMapOptions.name<String, String>(name)
-                .codec(StringCodec.INSTANCE)
-                .cacheSize(10_000)
-                .maxIdle(ttl.toJavaDuration())
-                .reconnectionStrategy(LocalCachedMapOptions.ReconnectionStrategy.CLEAR)
-                .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
-                .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)
-                .cacheProvider(LocalCachedMapOptions.CacheProvider.CAFFEINE)
-        )
+    private val invalidationTopicName = "$namespace$INVALIDATION_TOPIC_SUFFIX"
+    private val invalidationTopic by lazy {
+        api.redissonReactive.getTopic(invalidationTopicName, StringCodec)
     }
+    private var invalidationSubscriptionDisposable: Disposable? = null
+
+    @Volatile
+    private var subscribed: Boolean = false
+
+    private val nearCache = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterAccess(ttl)
+        .build<String, CacheEntry<V>>()
+
+
+    private fun ensureSubscribed() {
+        if (subscribed) return
+        synchronized(this) {
+            if (subscribed) return
+
+            invalidationSubscriptionDisposable = invalidationTopic.getMessages(String::class.java)
+                .subscribe(
+                    { keyStr -> nearCache.invalidate(keyStr) },
+                    { error ->
+                        log.atSevere()
+                            .withCause(error)
+                            .log("Error in cache invalidation subscription for topic $invalidationTopicName")
+                    }
+                )
+
+            subscribed = true
+        }
+    }
+
+    override fun close() {
+        invalidationSubscriptionDisposable?.dispose()
+        invalidationSubscriptionDisposable = null
+        subscribed = false
+    }
+
+    private fun redisKey(key: K): String = "$namespace:${keyToString(key)}"
+    private fun localKey(key: K): String = keyToString(key)
 
     /**
      * Retrieve a value from the cache.
@@ -59,13 +95,26 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
      * @return The cached value of type [V], or `null` if absent or explicitly cached as `null`.
      */
     suspend fun getCached(key: K): V? {
-        val raw = cache.get(keyToString(key)).awaitSingleOrNull() ?: return null
+        ensureSubscribed()
 
-        if (raw == NULL_MARKER) {
-            return null
+        val localKey = localKey(key)
+        when (val entry = nearCache.getIfPresent(localKey)) {
+            is CacheEntry.Value -> return entry.value
+            CacheEntry.Null -> return null
+            null -> Unit // miss
         }
 
-        return api.json.decodeFromString(serializer, raw)
+        val bucket = api.redissonReactive.getBucket<String>(redisKey(key), StringCodec)
+        val raw = bucket.get().awaitSingleOrNull() ?: return null
+
+        val entry = if (raw == NULL_MARKER) {
+            CacheEntry.Null
+        } else {
+            CacheEntry.Value(api.json.decodeFromString(serializer, raw))
+        }
+
+        nearCache.put(localKey, entry)
+        return (entry as? CacheEntry.Value)?.value
     }
 
     /**
@@ -78,17 +127,20 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
      * @param value The value to store.
      */
     suspend fun put(key: K, value: V) {
-        putRaw(key, api.json.encodeToString(serializer, value))
-    }
+        ensureSubscribed()
 
-    /**
-     * Internal helper to store already serialized data or sentinel markers.
-     *
-     * @param key The cache key.
-     * @param raw The raw string to store (JSON or sentinel marker).
-     */
-    private suspend fun putRaw(key: K, raw: String) {
-        cache.fastPut(keyToString(key), raw).awaitSingle()
+        val localKey = localKey(key)
+        val redisKey = redisKey(key)
+
+        val raw = api.json.encodeToString(serializer, value)
+
+        api.redissonReactive
+            .getBucket<String>(redisKey, StringCodec)
+            .set(raw, ttl.toJavaDuration())
+            .awaitSingleOrNull()
+
+        nearCache.put(localKey, CacheEntry.Value(value))
+        invalidationTopic.publish(localKey).awaitSingle()
     }
 
     /**
@@ -124,15 +176,29 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         cacheNull: Boolean = false,
         loader: suspend () -> V?
     ): V? {
-        getCached(key)?.let { return it }
+        val existing = getCached(key)
+        if (existing != null) return existing
+        if (nearCache.getIfPresent(localKey(key)) == CacheEntry.Null) return null
 
         val loaded = loader()
         when {
             loaded != null -> put(key, loaded)
-            cacheNull -> putRaw(key, NULL_MARKER)
+            cacheNull -> putNull(key)
         }
-
         return loaded
+    }
+
+    private suspend fun putNull(key: K) {
+        ensureSubscribed()
+        val localKey = localKey(key)
+        val redisKey = redisKey(key)
+
+        api.redissonReactive.getBucket<String>(redisKey, StringCodec)
+            .set(NULL_MARKER, ttl.toJavaDuration())
+            .awaitSingleOrNull()
+
+        nearCache.put(localKey, CacheEntry.Null)
+        invalidationTopic.publish(localKey).awaitSingle()
     }
 
     /**
@@ -142,6 +208,24 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
      * @return The number of keys removed (typically 0 or 1).
      */
     suspend fun invalidate(key: K): Long {
-        return cache.fastRemove(keyToString(key)).awaitSingle()
+        ensureSubscribed()
+
+        val localKey = localKey(key)
+        val redisKey = redisKey(key)
+
+        val deleted = api.redissonReactive
+            .getBucket<String>(redisKey, StringCodec)
+            .delete()
+            .awaitSingle()
+
+        nearCache.invalidate(localKey)
+        invalidationTopic.publish(localKey).awaitSingle()
+
+        return if (deleted) 1L else 0L
+    }
+
+    private sealed class CacheEntry<out V> {
+        data class Value<V>(val value: V) : CacheEntry<V>()
+        object Null : CacheEntry<Nothing>()
     }
 }
