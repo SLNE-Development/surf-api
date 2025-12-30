@@ -38,7 +38,6 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
     }
 
     private val cache by lazy {
-        api.redissonReactive
         api.redissonReactive.getLocalCachedMap(
             LocalCachedMapOptions.name<String, String>(name)
                 .codec(StringCodec.INSTANCE)
