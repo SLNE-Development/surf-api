@@ -1,21 +1,11 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_iron_ingot": {
+    "has_stripped_acacia_log": {
       "conditions": {
         "items": [
           {
-            "items": "minecraft:iron_ingot"
-          }
-        ]
-      },
-      "trigger": "minecraft:inventory_changed"
-    },
-    "has_iron_nugget": {
-      "conditions": {
-        "items": [
-          {
-            "items": "minecraft:iron_nugget"
+            "items": "minecraft:stripped_acacia_log"
           }
         ]
       },
@@ -23,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "minecraft:chain"
+        "recipe": "minecraft:acacia_shelf"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
@@ -31,13 +21,12 @@
   "requirements": [
     [
       "has_the_recipe",
-      "has_iron_nugget",
-      "has_iron_ingot"
+      "has_stripped_acacia_log"
     ]
   ],
   "rewards": {
     "recipes": [
-      "minecraft:chain"
+      "minecraft:acacia_shelf"
     ]
   }
 }

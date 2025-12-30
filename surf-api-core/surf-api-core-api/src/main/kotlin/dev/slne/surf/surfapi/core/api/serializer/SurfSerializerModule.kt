@@ -25,6 +25,8 @@ import dev.slne.surf.surfapi.core.api.serializer.java.ip.inet.InetAddressSeriali
 import dev.slne.surf.surfapi.core.api.serializer.java.ip.inetsocket.InetSocketAddressSerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.ip.ipv4.Inet4AddressSerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.ip.ipv6.Inet6AddressSerializer
+import dev.slne.surf.surfapi.core.api.serializer.java.number.bigdecimal.BigDecimalSerializer
+import dev.slne.surf.surfapi.core.api.serializer.java.number.bigint.BigIntegerSerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uri.URISerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.url.URLSerializer
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDSerializer
@@ -120,6 +122,8 @@ object SurfSerializerModule {
         contextual(Inet4AddressSerializer)
         contextual(Inet6AddressSerializer)
         contextual(URLSerializer)
+        contextual(BigIntegerSerializer)
+        contextual(BigDecimalSerializer)
     }
 
     val all = SerializersModule {

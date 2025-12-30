@@ -12,14 +12,12 @@ import javax.inject.Inject
 open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) :
     AbstractPaperSurfExtension(objects) {
     internal val mainClass = objects.property<String>()
-    internal val bootstrapper = objects.property<String>().convention(null)
+    internal val bootstrapper = objects.property<String>()
     internal val bootstrapDependencies =
         objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
-            .convention(null)
     internal val serverDependencies =
         objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
-            .convention(null)
-    internal val runServer = objects.property<Action<RunServer>>().convention(null)
+    internal val runServer = objects.property<Action<RunServer>>()
     internal val foliaSupported = objects.property<Boolean>().convention(false)
     internal val generateLibraryLoader = objects.property<Boolean>().convention(false)
 

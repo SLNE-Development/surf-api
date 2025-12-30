@@ -12,6 +12,7 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PrefixConfigTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ReflectionTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ScoreboardTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SmoothTimeSkip;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SuspendCommandExecutionTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ToastTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.VisualizerTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.gui.InventoryFrameworkTest;
@@ -37,7 +38,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
         new GlowingTest("glowing"),
         new PaginationTest("pagination"),
         new InventoryTest("inventory"),
-        new ToastTest(("toast"))
+        new ToastTest(("toast")),
+        new SuspendCommandExecutionTest("suspendCommandExecution")
     );
   }
 }

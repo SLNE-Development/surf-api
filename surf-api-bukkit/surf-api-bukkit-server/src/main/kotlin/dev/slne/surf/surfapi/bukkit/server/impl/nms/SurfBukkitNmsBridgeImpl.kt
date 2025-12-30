@@ -9,9 +9,11 @@ import dev.slne.surf.surfapi.bukkit.api.nms.listener.NmsServerboundPacketListene
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.serverbound.NmsServerboundPacket
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult
-import dev.slne.surf.surfapi.core.api.util.*
-import it.unimi.dsi.fastutil.objects.ObjectSet
+import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
+import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.entity.Player
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 
 @AutoService(SurfBukkitNmsBridge::class)
 @NmsUseWithCaution
@@ -19,9 +21,9 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     private val log = logger()
 
     private val serverboundPacketListeners =
-        mutableObject2ObjectMapOf<Class<*>, ObjectSet<NmsServerboundPacketListener<*>>>().synchronize()
+        ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<NmsServerboundPacketListener<*>>>()
     private val clientboundPacketListeners =
-        mutableObject2ObjectMapOf<Class<*>, ObjectSet<NmsClientboundPacketListener<*>>>().synchronize()
+        ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<NmsClientboundPacketListener<*>>>()
 
     init {
         checkInstantiationByServiceLoader()
@@ -30,7 +32,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     override fun registerServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
         val packetClass = listener.packetClass
         val added =
-            serverboundPacketListeners.computeIfAbsent(packetClass) { mutableObjectSetOf() }.add(listener)
+            serverboundPacketListeners.computeIfAbsent(packetClass) { CopyOnWriteArraySet() }.add(listener)
 
         if (!added) {
             log.atWarning()
@@ -52,7 +54,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     override fun registerClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
         val packetClass = listener.packetClass
         val added =
-            clientboundPacketListeners.computeIfAbsent(packetClass) { mutableObjectSetOf() }.add(listener)
+            clientboundPacketListeners.computeIfAbsent(packetClass) { CopyOnWriteArraySet() }.add(listener)
 
         if (!added) {
             log.atWarning()
@@ -77,13 +79,16 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         player: Player,
     ): Packet? {
         val clazz = packet.packetClass
-
         val listener = serverboundPacketListeners[clazz] ?: return packet
 
-        val cancel = listener.asSequence()
-            .map { it as NmsServerboundPacketListener<Packet> }
-            .map { it.handleServerboundPacket(packet, player) }
-            .any { it == PacketListenerResult.CANCEL }
+        var cancel = false
+        for (listener in listener) {
+            listener as NmsServerboundPacketListener<Packet>
+            val result = listener.handleServerboundPacket(packet, player)
+            if (result == PacketListenerResult.CANCEL) {
+                cancel = true
+            }
+        }
 
         return if (cancel) null else packet
     }
@@ -97,10 +102,14 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
 
         if (listeners.isEmpty()) return packet
 
-        val cancel = listeners.asSequence()
-            .map { it as NmsClientboundPacketListener<Packet> }
-            .map { it.handleClientboundPacket(packet, player) }
-            .any { it == PacketListenerResult.CANCEL }
+        var cancel = false
+        for (listener in listeners) {
+            listener as NmsClientboundPacketListener<Packet>
+            val result = listener.handleClientboundPacket(packet, player)
+            if (result == PacketListenerResult.CANCEL) {
+                cancel = true
+            }
+        }
 
         return if (cancel) null else packet
     }

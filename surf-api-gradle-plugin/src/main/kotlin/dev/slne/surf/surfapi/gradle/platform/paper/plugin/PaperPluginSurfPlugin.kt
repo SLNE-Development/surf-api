@@ -32,7 +32,7 @@ internal class PaperPluginSurfPlugin :
         "de.eldoria.plugin-yml.paper"
     )
 
-    override fun Project.afterEvaluated0(extension: PaperPluginSurfExtension) {
+    override fun Project.afterEvaluated1(extension: PaperPluginSurfExtension) {
         val generateLoaderTask = generateLibrariesLoaderTask(
             extension.mainClass.get().substringBeforeLast('.')
         )

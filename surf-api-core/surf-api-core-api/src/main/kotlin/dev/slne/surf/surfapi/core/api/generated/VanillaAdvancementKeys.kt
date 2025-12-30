@@ -93,6 +93,9 @@ public object VanillaAdvancementKeys {
     public val SNIPER_DUEL: Key = key("adventure/sniper_duel")
 
     @JvmField
+    public val SPEAR_MANY_MOBS: Key = key("adventure/spear_many_mobs")
+
+    @JvmField
     public val SPYGLASS_AT_DRAGON: Key = key("adventure/spyglass_at_dragon")
 
     @JvmField
@@ -2045,16 +2048,24 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_chiseled_copper_from_waxed_cut_copper_stonecutting")
 
       @JvmField
+      public val WAXED_COPPER_BARS_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_copper_bars_from_honeycomb")
+
+      @JvmField
       public val WAXED_COPPER_BLOCK_FROM_HONEYCOMB: Key =
           key("recipes/building_blocks/waxed_copper_block_from_honeycomb")
 
       @JvmField
-      public val WAXED_COPPER_BULB_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_copper_bulb_from_honeycomb")
+      public val WAXED_COPPER_CHAIN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_copper_chain_from_honeycomb")
 
       @JvmField
-      public val WAXED_COPPER_DOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_copper_door_from_honeycomb")
+      public val WAXED_COPPER_CHEST_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_copper_chest_from_honeycomb")
+
+      @JvmField
+      public val WAXED_COPPER_GOLEM_STATUE_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_copper_golem_statue_from_honeycomb")
 
       @JvmField
       public val WAXED_COPPER_GRATE: Key = key("recipes/building_blocks/waxed_copper_grate")
@@ -2068,8 +2079,8 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_copper_grate_from_waxed_copper_block_stonecutting")
 
       @JvmField
-      public val WAXED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_copper_trapdoor_from_honeycomb")
+      public val WAXED_COPPER_LANTERN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_copper_lantern_from_honeycomb")
 
       @JvmField
       public val WAXED_CUT_COPPER: Key = key("recipes/building_blocks/waxed_cut_copper")
@@ -2130,16 +2141,24 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_exposed_chiseled_copper_from_waxed_exposed_cut_copper_stonecutting")
 
       @JvmField
-      public val WAXED_EXPOSED_COPPER_BULB_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_exposed_copper_bulb_from_honeycomb")
+      public val WAXED_EXPOSED_COPPER_BARS_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_exposed_copper_bars_from_honeycomb")
 
       @JvmField
-      public val WAXED_EXPOSED_COPPER_DOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_exposed_copper_door_from_honeycomb")
+      public val WAXED_EXPOSED_COPPER_CHAIN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_exposed_copper_chain_from_honeycomb")
+
+      @JvmField
+      public val WAXED_EXPOSED_COPPER_CHEST_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_exposed_copper_chest_from_honeycomb")
 
       @JvmField
       public val WAXED_EXPOSED_COPPER_FROM_HONEYCOMB: Key =
           key("recipes/building_blocks/waxed_exposed_copper_from_honeycomb")
+
+      @JvmField
+      public val WAXED_EXPOSED_COPPER_GOLEM_STATUE_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_exposed_copper_golem_statue_from_honeycomb")
 
       @JvmField
       public val WAXED_EXPOSED_COPPER_GRATE: Key =
@@ -2154,8 +2173,8 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_exposed_copper_grate_from_waxed_exposed_copper_stonecutting")
 
       @JvmField
-      public val WAXED_EXPOSED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_exposed_copper_trapdoor_from_honeycomb")
+      public val WAXED_EXPOSED_COPPER_LANTERN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_exposed_copper_lantern_from_honeycomb")
 
       @JvmField
       public val WAXED_EXPOSED_CUT_COPPER: Key =
@@ -2202,6 +2221,14 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_exposed_cut_copper_stairs_from_waxed_exposed_cut_copper_stonecutting")
 
       @JvmField
+      public val WAXED_EXPOSED_LIGHTNING_ROD_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_exposed_lightning_rod_from_honeycomb")
+
+      @JvmField
+      public val WAXED_LIGHTNING_ROD_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_lightning_rod_from_honeycomb")
+
+      @JvmField
       public val WAXED_OXIDIZED_CHISELED_COPPER: Key =
           key("recipes/building_blocks/waxed_oxidized_chiseled_copper")
 
@@ -2218,16 +2245,24 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_oxidized_chiseled_copper_from_waxed_oxidized_cut_copper_stonecutting")
 
       @JvmField
-      public val WAXED_OXIDIZED_COPPER_BULB_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_oxidized_copper_bulb_from_honeycomb")
+      public val WAXED_OXIDIZED_COPPER_BARS_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_oxidized_copper_bars_from_honeycomb")
 
       @JvmField
-      public val WAXED_OXIDIZED_COPPER_DOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_oxidized_copper_door_from_honeycomb")
+      public val WAXED_OXIDIZED_COPPER_CHAIN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_oxidized_copper_chain_from_honeycomb")
+
+      @JvmField
+      public val WAXED_OXIDIZED_COPPER_CHEST_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_oxidized_copper_chest_from_honeycomb")
 
       @JvmField
       public val WAXED_OXIDIZED_COPPER_FROM_HONEYCOMB: Key =
           key("recipes/building_blocks/waxed_oxidized_copper_from_honeycomb")
+
+      @JvmField
+      public val WAXED_OXIDIZED_COPPER_GOLEM_STATUE_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_oxidized_copper_golem_statue_from_honeycomb")
 
       @JvmField
       public val WAXED_OXIDIZED_COPPER_GRATE: Key =
@@ -2242,8 +2277,8 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_oxidized_copper_grate_from_waxed_oxidized_copper_stonecutting")
 
       @JvmField
-      public val WAXED_OXIDIZED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_oxidized_copper_trapdoor_from_honeycomb")
+      public val WAXED_OXIDIZED_COPPER_LANTERN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_oxidized_copper_lantern_from_honeycomb")
 
       @JvmField
       public val WAXED_OXIDIZED_CUT_COPPER: Key =
@@ -2290,6 +2325,10 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_oxidized_cut_copper_stairs_from_waxed_oxidized_cut_copper_stonecutting")
 
       @JvmField
+      public val WAXED_OXIDIZED_LIGHTNING_ROD_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_oxidized_lightning_rod_from_honeycomb")
+
+      @JvmField
       public val WAXED_WEATHERED_CHISELED_COPPER: Key =
           key("recipes/building_blocks/waxed_weathered_chiseled_copper")
 
@@ -2306,16 +2345,24 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_weathered_chiseled_copper_from_waxed_weathered_cut_copper_stonecutting")
 
       @JvmField
-      public val WAXED_WEATHERED_COPPER_BULB_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_weathered_copper_bulb_from_honeycomb")
+      public val WAXED_WEATHERED_COPPER_BARS_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_weathered_copper_bars_from_honeycomb")
 
       @JvmField
-      public val WAXED_WEATHERED_COPPER_DOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_weathered_copper_door_from_honeycomb")
+      public val WAXED_WEATHERED_COPPER_CHAIN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_weathered_copper_chain_from_honeycomb")
+
+      @JvmField
+      public val WAXED_WEATHERED_COPPER_CHEST_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_weathered_copper_chest_from_honeycomb")
 
       @JvmField
       public val WAXED_WEATHERED_COPPER_FROM_HONEYCOMB: Key =
           key("recipes/building_blocks/waxed_weathered_copper_from_honeycomb")
+
+      @JvmField
+      public val WAXED_WEATHERED_COPPER_GOLEM_STATUE_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_weathered_copper_golem_statue_from_honeycomb")
 
       @JvmField
       public val WAXED_WEATHERED_COPPER_GRATE: Key =
@@ -2330,8 +2377,8 @@ public object VanillaAdvancementKeys {
           key("recipes/building_blocks/waxed_weathered_copper_grate_from_waxed_weathered_copper_stonecutting")
 
       @JvmField
-      public val WAXED_WEATHERED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
-          key("recipes/building_blocks/waxed_weathered_copper_trapdoor_from_honeycomb")
+      public val WAXED_WEATHERED_COPPER_LANTERN_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_weathered_copper_lantern_from_honeycomb")
 
       @JvmField
       public val WAXED_WEATHERED_CUT_COPPER: Key =
@@ -2377,6 +2424,10 @@ public object VanillaAdvancementKeys {
       public val WAXED_WEATHERED_CUT_COPPER_STAIRS_FROM_WAXED_WEATHERED_CUT_COPPER_STONECUTTING: Key
           =
           key("recipes/building_blocks/waxed_weathered_cut_copper_stairs_from_waxed_weathered_cut_copper_stonecutting")
+
+      @JvmField
+      public val WAXED_WEATHERED_LIGHTNING_ROD_FROM_HONEYCOMB: Key =
+          key("recipes/building_blocks/waxed_weathered_lightning_rod_from_honeycomb")
 
       @JvmField
       public val WEATHERED_CHISELED_COPPER: Key =
@@ -2467,6 +2518,24 @@ public object VanillaAdvancementKeys {
       public val BROWN_HARNESS: Key = key("recipes/combat/brown_harness")
 
       @JvmField
+      public val COPPER_BOOTS: Key = key("recipes/combat/copper_boots")
+
+      @JvmField
+      public val COPPER_CHESTPLATE: Key = key("recipes/combat/copper_chestplate")
+
+      @JvmField
+      public val COPPER_HELMET: Key = key("recipes/combat/copper_helmet")
+
+      @JvmField
+      public val COPPER_LEGGINGS: Key = key("recipes/combat/copper_leggings")
+
+      @JvmField
+      public val COPPER_SPEAR: Key = key("recipes/combat/copper_spear")
+
+      @JvmField
+      public val COPPER_SWORD: Key = key("recipes/combat/copper_sword")
+
+      @JvmField
       public val CROSSBOW: Key = key("recipes/combat/crossbow")
 
       @JvmField
@@ -2483,6 +2552,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val DIAMOND_LEGGINGS: Key = key("recipes/combat/diamond_leggings")
+
+      @JvmField
+      public val DIAMOND_SPEAR: Key = key("recipes/combat/diamond_spear")
 
       @JvmField
       public val DIAMOND_SWORD: Key = key("recipes/combat/diamond_sword")
@@ -2548,6 +2620,9 @@ public object VanillaAdvancementKeys {
       public val GOLDEN_LEGGINGS: Key = key("recipes/combat/golden_leggings")
 
       @JvmField
+      public val GOLDEN_SPEAR: Key = key("recipes/combat/golden_spear")
+
+      @JvmField
       public val GOLDEN_SWORD: Key = key("recipes/combat/golden_sword")
 
       @JvmField
@@ -2567,6 +2642,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val IRON_LEGGINGS: Key = key("recipes/combat/iron_leggings")
+
+      @JvmField
+      public val IRON_SPEAR: Key = key("recipes/combat/iron_spear")
 
       @JvmField
       public val IRON_SWORD: Key = key("recipes/combat/iron_sword")
@@ -2609,8 +2687,19 @@ public object VanillaAdvancementKeys {
       public val NETHERITE_HELMET_SMITHING: Key = key("recipes/combat/netherite_helmet_smithing")
 
       @JvmField
+      public val NETHERITE_HORSE_ARMOR_SMITHING: Key =
+          key("recipes/combat/netherite_horse_armor_smithing")
+
+      @JvmField
       public val NETHERITE_LEGGINGS_SMITHING: Key =
           key("recipes/combat/netherite_leggings_smithing")
+
+      @JvmField
+      public val NETHERITE_NAUTILUS_ARMOR_SMITHING: Key =
+          key("recipes/combat/netherite_nautilus_armor_smithing")
+
+      @JvmField
+      public val NETHERITE_SPEAR_SMITHING: Key = key("recipes/combat/netherite_spear_smithing")
 
       @JvmField
       public val NETHERITE_SWORD_SMITHING: Key = key("recipes/combat/netherite_sword_smithing")
@@ -2637,6 +2726,9 @@ public object VanillaAdvancementKeys {
       public val SPECTRAL_ARROW: Key = key("recipes/combat/spectral_arrow")
 
       @JvmField
+      public val STONE_SPEAR: Key = key("recipes/combat/stone_spear")
+
+      @JvmField
       public val STONE_SWORD: Key = key("recipes/combat/stone_sword")
 
       @JvmField
@@ -2647,6 +2739,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val WOLF_ARMOR: Key = key("recipes/combat/wolf_armor")
+
+      @JvmField
+      public val WOODEN_SPEAR: Key = key("recipes/combat/wooden_spear")
 
       @JvmField
       public val WOODEN_SWORD: Key = key("recipes/combat/wooden_sword")
@@ -2661,6 +2756,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val ACACIA_HANGING_SIGN: Key = key("recipes/decorations/acacia_hanging_sign")
+
+      @JvmField
+      public val ACACIA_SHELF: Key = key("recipes/decorations/acacia_shelf")
 
       @JvmField
       public val ACACIA_SIGN: Key = key("recipes/decorations/acacia_sign")
@@ -2688,6 +2786,9 @@ public object VanillaAdvancementKeys {
       public val BAMBOO_MOSAIC: Key = key("recipes/decorations/bamboo_mosaic")
 
       @JvmField
+      public val BAMBOO_SHELF: Key = key("recipes/decorations/bamboo_shelf")
+
+      @JvmField
       public val BAMBOO_SIGN: Key = key("recipes/decorations/bamboo_sign")
 
       @JvmField
@@ -2701,6 +2802,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val BIRCH_HANGING_SIGN: Key = key("recipes/decorations/birch_hanging_sign")
+
+      @JvmField
+      public val BIRCH_SHELF: Key = key("recipes/decorations/birch_shelf")
 
       @JvmField
       public val BIRCH_SIGN: Key = key("recipes/decorations/birch_sign")
@@ -2807,13 +2911,13 @@ public object VanillaAdvancementKeys {
       public val CARTOGRAPHY_TABLE: Key = key("recipes/decorations/cartography_table")
 
       @JvmField
-      public val CHAIN: Key = key("recipes/decorations/chain")
-
-      @JvmField
       public val CHERRY_FENCE: Key = key("recipes/decorations/cherry_fence")
 
       @JvmField
       public val CHERRY_HANGING_SIGN: Key = key("recipes/decorations/cherry_hanging_sign")
+
+      @JvmField
+      public val CHERRY_SHELF: Key = key("recipes/decorations/cherry_shelf")
 
       @JvmField
       public val CHERRY_SIGN: Key = key("recipes/decorations/cherry_sign")
@@ -2839,6 +2943,21 @@ public object VanillaAdvancementKeys {
       public val COMPOSTER: Key = key("recipes/decorations/composter")
 
       @JvmField
+      public val COPPER_BARS: Key = key("recipes/decorations/copper_bars")
+
+      @JvmField
+      public val COPPER_CHAIN: Key = key("recipes/decorations/copper_chain")
+
+      @JvmField
+      public val COPPER_CHEST: Key = key("recipes/decorations/copper_chest")
+
+      @JvmField
+      public val COPPER_LANTERN: Key = key("recipes/decorations/copper_lantern")
+
+      @JvmField
+      public val COPPER_TORCH: Key = key("recipes/decorations/copper_torch")
+
+      @JvmField
       public val CRAFTING_TABLE: Key = key("recipes/decorations/crafting_table")
 
       @JvmField
@@ -2846,6 +2965,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val CRIMSON_HANGING_SIGN: Key = key("recipes/decorations/crimson_hanging_sign")
+
+      @JvmField
+      public val CRIMSON_SHELF: Key = key("recipes/decorations/crimson_shelf")
 
       @JvmField
       public val CRIMSON_SIGN: Key = key("recipes/decorations/crimson_sign")
@@ -2880,6 +3002,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val DARK_OAK_HANGING_SIGN: Key = key("recipes/decorations/dark_oak_hanging_sign")
+
+      @JvmField
+      public val DARK_OAK_SHELF: Key = key("recipes/decorations/dark_oak_shelf")
 
       @JvmField
       public val DARK_OAK_SIGN: Key = key("recipes/decorations/dark_oak_sign")
@@ -3129,6 +3254,9 @@ public object VanillaAdvancementKeys {
       public val IRON_BARS: Key = key("recipes/decorations/iron_bars")
 
       @JvmField
+      public val IRON_CHAIN: Key = key("recipes/decorations/iron_chain")
+
+      @JvmField
       public val ITEM_FRAME: Key = key("recipes/decorations/item_frame")
 
       @JvmField
@@ -3139,6 +3267,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val JUNGLE_HANGING_SIGN: Key = key("recipes/decorations/jungle_hanging_sign")
+
+      @JvmField
+      public val JUNGLE_SHELF: Key = key("recipes/decorations/jungle_shelf")
 
       @JvmField
       public val JUNGLE_SIGN: Key = key("recipes/decorations/jungle_sign")
@@ -3268,6 +3399,9 @@ public object VanillaAdvancementKeys {
       public val MANGROVE_HANGING_SIGN: Key = key("recipes/decorations/mangrove_hanging_sign")
 
       @JvmField
+      public val MANGROVE_SHELF: Key = key("recipes/decorations/mangrove_shelf")
+
+      @JvmField
       public val MANGROVE_SIGN: Key = key("recipes/decorations/mangrove_sign")
 
       @JvmField
@@ -3311,6 +3445,9 @@ public object VanillaAdvancementKeys {
       public val OAK_HANGING_SIGN: Key = key("recipes/decorations/oak_hanging_sign")
 
       @JvmField
+      public val OAK_SHELF: Key = key("recipes/decorations/oak_shelf")
+
+      @JvmField
       public val OAK_SIGN: Key = key("recipes/decorations/oak_sign")
 
       @JvmField
@@ -3350,6 +3487,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val PALE_OAK_HANGING_SIGN: Key = key("recipes/decorations/pale_oak_hanging_sign")
+
+      @JvmField
+      public val PALE_OAK_SHELF: Key = key("recipes/decorations/pale_oak_shelf")
 
       @JvmField
       public val PALE_OAK_SIGN: Key = key("recipes/decorations/pale_oak_sign")
@@ -3548,6 +3688,9 @@ public object VanillaAdvancementKeys {
       public val SPRUCE_HANGING_SIGN: Key = key("recipes/decorations/spruce_hanging_sign")
 
       @JvmField
+      public val SPRUCE_SHELF: Key = key("recipes/decorations/spruce_shelf")
+
+      @JvmField
       public val SPRUCE_SIGN: Key = key("recipes/decorations/spruce_sign")
 
       @JvmField
@@ -3594,6 +3737,9 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val WARPED_HANGING_SIGN: Key = key("recipes/decorations/warped_hanging_sign")
+
+      @JvmField
+      public val WARPED_SHELF: Key = key("recipes/decorations/warped_shelf")
 
       @JvmField
       public val WARPED_SIGN: Key = key("recipes/decorations/warped_sign")
@@ -3936,6 +4082,9 @@ public object VanillaAdvancementKeys {
           key("recipes/misc/copper_ingot_from_blasting_raw_copper")
 
       @JvmField
+      public val COPPER_INGOT_FROM_NUGGETS: Key = key("recipes/misc/copper_ingot_from_nuggets")
+
+      @JvmField
       public val COPPER_INGOT_FROM_SMELTING_COPPER_ORE: Key =
           key("recipes/misc/copper_ingot_from_smelting_copper_ore")
 
@@ -3950,6 +4099,15 @@ public object VanillaAdvancementKeys {
       @JvmField
       public val COPPER_INGOT_FROM_WAXED_COPPER_BLOCK: Key =
           key("recipes/misc/copper_ingot_from_waxed_copper_block")
+
+      @JvmField
+      public val COPPER_NUGGET: Key = key("recipes/misc/copper_nugget")
+
+      @JvmField
+      public val COPPER_NUGGET_FROM_BLASTING: Key = key("recipes/misc/copper_nugget_from_blasting")
+
+      @JvmField
+      public val COPPER_NUGGET_FROM_SMELTING: Key = key("recipes/misc/copper_nugget_from_smelting")
 
       @JvmField
       public val CREAKING_HEART: Key = key("recipes/misc/creaking_heart")
@@ -4791,15 +4949,63 @@ public object VanillaAdvancementKeys {
       public val WAXED_COPPER_BULB: Key = key("recipes/redstone/waxed_copper_bulb")
 
       @JvmField
+      public val WAXED_COPPER_BULB_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_copper_bulb_from_honeycomb")
+
+      @JvmField
+      public val WAXED_COPPER_DOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_copper_door_from_honeycomb")
+
+      @JvmField
+      public val WAXED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_copper_trapdoor_from_honeycomb")
+
+      @JvmField
       public val WAXED_EXPOSED_COPPER_BULB: Key = key("recipes/redstone/waxed_exposed_copper_bulb")
+
+      @JvmField
+      public val WAXED_EXPOSED_COPPER_BULB_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_exposed_copper_bulb_from_honeycomb")
+
+      @JvmField
+      public val WAXED_EXPOSED_COPPER_DOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_exposed_copper_door_from_honeycomb")
+
+      @JvmField
+      public val WAXED_EXPOSED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_exposed_copper_trapdoor_from_honeycomb")
 
       @JvmField
       public val WAXED_OXIDIZED_COPPER_BULB: Key =
           key("recipes/redstone/waxed_oxidized_copper_bulb")
 
       @JvmField
+      public val WAXED_OXIDIZED_COPPER_BULB_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_oxidized_copper_bulb_from_honeycomb")
+
+      @JvmField
+      public val WAXED_OXIDIZED_COPPER_DOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_oxidized_copper_door_from_honeycomb")
+
+      @JvmField
+      public val WAXED_OXIDIZED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_oxidized_copper_trapdoor_from_honeycomb")
+
+      @JvmField
       public val WAXED_WEATHERED_COPPER_BULB: Key =
           key("recipes/redstone/waxed_weathered_copper_bulb")
+
+      @JvmField
+      public val WAXED_WEATHERED_COPPER_BULB_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_weathered_copper_bulb_from_honeycomb")
+
+      @JvmField
+      public val WAXED_WEATHERED_COPPER_DOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_weathered_copper_door_from_honeycomb")
+
+      @JvmField
+      public val WAXED_WEATHERED_COPPER_TRAPDOOR_FROM_HONEYCOMB: Key =
+          key("recipes/redstone/waxed_weathered_copper_trapdoor_from_honeycomb")
 
       @JvmField
       public val WEATHERED_COPPER_BULB: Key = key("recipes/redstone/weathered_copper_bulb")
@@ -4826,6 +5032,18 @@ public object VanillaAdvancementKeys {
 
       @JvmField
       public val COMPASS: Key = key("recipes/tools/compass")
+
+      @JvmField
+      public val COPPER_AXE: Key = key("recipes/tools/copper_axe")
+
+      @JvmField
+      public val COPPER_HOE: Key = key("recipes/tools/copper_hoe")
+
+      @JvmField
+      public val COPPER_PICKAXE: Key = key("recipes/tools/copper_pickaxe")
+
+      @JvmField
+      public val COPPER_SHOVEL: Key = key("recipes/tools/copper_shovel")
 
       @JvmField
       public val CYAN_BUNDLE: Key = key("recipes/tools/cyan_bundle")

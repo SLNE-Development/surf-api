@@ -4,6 +4,7 @@ import io.papermc.paperweight.util.Hash
 import io.papermc.paperweight.util.HashingAlgorithm
 import io.papermc.paperweight.util.fromJson
 import io.papermc.paperweight.util.gson
+import org.gradle.kotlin.dsl.support.serviceOf
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -67,18 +68,16 @@ val downloadRegistriesTask by tasks.register("downloadRegistries") {
         outputDir.mkdirs()
 
         println("Launching Minecraft data generator...")
-        providers.exec {
-            commandLine = listOf(
-                "java",
-                "-cp",
-                classPath.joinToString(File.pathSeparator) { it.toAbsolutePath().toString() },
-                "net.minecraft.data.Main",
-                "--reports",
-                "--output",
-                outputDir.absolutePath,
-                "--all"
-            )
-        }.result.get().rethrowFailure()
+
+        val execOps = project.serviceOf<ExecOperations>()
+        execOps.javaexec {
+            mainClass.set("net.minecraft.data.Main")
+            classpath =  files(classPath.map { it.toFile() })
+            args("--reports", "--output", outputDir.absolutePath, "--all")
+
+            standardOutput = System.out
+            errorOutput = System.err
+        }
 
         println("Cleaning up...")
         val resourcesDir = file("src/main/resources/registries")
