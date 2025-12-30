@@ -44,7 +44,7 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         private const val INVALIDATION_TOPIC_SUFFIX = ":__cache_invalidate__"
         private const val MESSAGE_DELIMITER = '|'
 
-        private val nodeId = UUID.randomUUID().toString()
+        private val nodeId = UUID.randomUUID().toString().replace("-", "")
     }
 
     private val invalidationTopicName = "$namespace$INVALIDATION_TOPIC_SUFFIX"
@@ -72,11 +72,14 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
                     { message ->
                         val parts = message.split(MESSAGE_DELIMITER, limit = 2)
                         if (parts.size == 2) {
-                            val (publisherNodeId, keyStr) = parts
+                            val (publisherNodeId, keyString) = parts
                             // Only invalidate if the message was published by a different node
                             if (publisherNodeId != nodeId) {
-                                nearCache.invalidate(keyStr)
+                                nearCache.invalidate(keyString)
                             }
+                        } else {
+                            log.atWarning()
+                                .log("Received malformed cache invalidation message on topic $invalidationTopicName: $message")
                         }
                     },
                     { error ->
