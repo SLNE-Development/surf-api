@@ -76,6 +76,12 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
                         optional = false
                     }
                 }
+
+                if (extension.coreModule.isPresent) {
+                    register("surf-core-velocity") {
+                        optional = false
+                    }
+                }
             }
         }
 
