@@ -13,6 +13,8 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import org.redisson.api.RAtomicLongReactive
+import org.redisson.api.RBucketReactive
 import org.redisson.client.codec.StringCodec
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.read
@@ -68,8 +70,8 @@ class SyncList<T : Any> internal constructor(
     private val verKey = "surf-redis:sync:list:$id:ver"
     override val redisChannel: String = "surf-redis:sync:list:$id"
 
-    private val dataBucket = api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE)
-    private val remoteVersion = api.redissonReactive.getAtomicLong(verKey)
+    private lateinit var dataBucket: RBucketReactive<String>
+    private lateinit var remoteVersion: RAtomicLongReactive
 
     @Volatile
     private var localVersion: Long = 0L
@@ -85,6 +87,10 @@ class SyncList<T : Any> internal constructor(
 
     override suspend fun init() {
         super.init()
+
+        dataBucket = api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE)
+        remoteVersion = api.redissonReactive.getAtomicLong(verKey)
+
         startHeartbeat()
     }
 
