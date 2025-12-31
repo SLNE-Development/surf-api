@@ -14,6 +14,7 @@ import dev.slne.surf.redis.sync.map.SyncMap
 import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
+import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDStringSerializer
 import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
@@ -23,6 +24,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
+import kotlinx.serialization.modules.overwriteWith
 import kotlinx.serialization.serializer
 import org.jetbrains.annotations.Blocking
 import org.redisson.Redisson
@@ -32,6 +35,7 @@ import org.redisson.api.redisnode.RedisNodes
 import org.redisson.config.Config
 import org.redisson.misc.RedisURI
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -133,7 +137,7 @@ class RedisApi private constructor(
                 append(RedisURI.REDIS_PROTOCOL)
                 val password = config.password
                 if (!password.isNullOrEmpty()) {
-                    append(URLEncoder.encode(password, Charsets.UTF_8))
+                    append(URLEncoder.encode(password, StandardCharsets.UTF_8))
                     append('@')
                 }
 
@@ -150,7 +154,10 @@ class RedisApi private constructor(
             namingStrategy = JsonNamingStrategy.SnakeCase
             encodeDefaults = true
             serializersModule = SerializersModule {
-                include(SurfSerializerModule.all)
+                include(SurfSerializerModule.all.overwriteWith(SerializersModule {
+                    contextual(JavaUUIDStringSerializer) // UUID as string rather than byte array
+                }))
+
                 include(serializerModule)
             }
         }
