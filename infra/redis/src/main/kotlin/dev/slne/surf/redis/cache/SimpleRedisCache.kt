@@ -61,7 +61,6 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         .expireAfterAccess(ttl)
         .build<String, CacheEntry<V>>()
 
-
     private fun ensureSubscribed() {
         if (subscribed) return
         synchronized(this) {
