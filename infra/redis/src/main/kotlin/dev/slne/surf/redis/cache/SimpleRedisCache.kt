@@ -2,6 +2,7 @@ package dev.slne.surf.redis.cache
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.expireAfterAccess
+import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
 import kotlinx.coroutines.reactor.awaitSingle
@@ -11,6 +12,7 @@ import reactor.core.Disposable
 import java.io.Closeable
 import java.util.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
@@ -42,7 +44,7 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         private val log = logger()
         private const val NULL_MARKER = "__NULL__"
         private const val INVALIDATION_TOPIC_SUFFIX = ":__cache_invalidate__"
-        private const val MESSAGE_DELIMITER = '|'
+        private const val MESSAGE_DELIMITER = '\u0000'
 
         private val nodeId = UUID.randomUUID().toString().replace("-", "")
     }
@@ -61,6 +63,11 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         .expireAfterAccess(ttl)
         .build<String, CacheEntry<V>>()
 
+    private val refreshGate = Caffeine.newBuilder()
+        .expireAfterWrite(5.seconds)
+        .maximumSize(100_000)
+        .build<String, Unit>()
+
     private fun ensureSubscribed() {
         if (subscribed) return
         synchronized(this) {
@@ -75,6 +82,7 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
                             // Only invalidate if the message was published by a different node
                             if (publisherNodeId != nodeId) {
                                 nearCache.invalidate(keyString)
+                                refreshGate.invalidate(keyString)
                             }
                         } else {
                             log.atWarning()
@@ -93,9 +101,11 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
     }
 
     override fun close() {
-        invalidationSubscriptionDisposable?.dispose()
-        invalidationSubscriptionDisposable = null
-        subscribed = false
+        synchronized(this) {
+            invalidationSubscriptionDisposable?.dispose()
+            invalidationSubscriptionDisposable = null
+            subscribed = false
+        }
     }
 
     private fun redisKey(key: K): String = "$namespace:${keyToString(key)}"
@@ -113,21 +123,23 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         ensureSubscribed()
 
         val localKey = localKey(key)
+        val redisKey = redisKey(key)
+
         when (val entry = nearCache.getIfPresent(localKey)) {
             is CacheEntry.Value -> {
-                refreshTtl(key)
+                refreshTtl(localKey, redisKey)
                 return entry.value
             }
 
             CacheEntry.Null -> {
-                refreshTtl(key)
+                refreshTtl(localKey, redisKey)
                 return null
             }
 
             null -> Unit // miss
         }
 
-        val bucket = api.redissonReactive.getBucket<String>(redisKey(key), StringCodec)
+        val bucket = api.redissonReactive.getBucket<String>(redisKey, StringCodec)
         val raw = bucket.get().awaitSingleOrNull() ?: return null
         bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
 
@@ -225,10 +237,18 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
         invalidationTopic.publish("$nodeId$MESSAGE_DELIMITER$localKey").awaitSingle()
     }
 
-    private fun refreshTtl(key: K) {
+    private fun refreshTtl(localKey: String, redisKey: String) {
+        val inserted = refreshGate.asMap().putIfAbsent(localKey, Unit) == null
+        if (!inserted) return
+
         api.redissonReactive
-            .getBucket<String>(redisKey(key), StringCodec)
+            .getBucket<String>(redisKey, StringCodec)
             .expire(ttl.toJavaDuration())
+            .doOnError { e ->
+                log.atWarning()
+                    .withCause(e)
+                    .log("Failed to refresh TTL for $redisKey")
+            }
             .subscribe()
     }
 
@@ -250,6 +270,7 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
             .awaitSingle()
 
         nearCache.invalidate(localKey)
+        refreshGate.invalidate(localKey)
         invalidationTopic.publish("$nodeId$MESSAGE_DELIMITER$localKey").awaitSingle()
 
         return if (deleted) 1L else 0L
