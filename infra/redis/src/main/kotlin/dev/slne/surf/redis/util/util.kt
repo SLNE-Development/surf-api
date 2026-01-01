@@ -48,5 +48,5 @@ internal fun <T : Any> Mono<T>.asDeferred(scope: CoroutineScope): Deferred<T> =
         this@asDeferred.awaitSingle()
     }
 
-internal operator fun <T1, T2> Tuple2<T1, T2>.component1(): T1 = this.t1
-internal operator fun <T1, T2> Tuple2<T1, T2>.component2(): T2 = this.t2
+internal operator fun <T1 : Any, T2 : Any> Tuple2<T1, T2>.component1(): T1 = this.t1
+internal operator fun <T1 : Any, T2 : Any> Tuple2<T1, T2>.component2(): T2 = this.t2
