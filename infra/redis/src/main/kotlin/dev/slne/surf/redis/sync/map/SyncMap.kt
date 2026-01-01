@@ -265,8 +265,7 @@ class SyncMap<K : Any, V : Any> internal constructor(
             lock.read { api.json.encodeToString(snapshotSerializer, map) }
         }.flatMap { snapshotJson ->
             dataBucket.set(snapshotJson, ttl.toJavaDuration())
-                .then(remoteVersion.set(version))
-                .then(remoteVersion.expireIfGreater(ttl.toJavaDuration()))
+                .then(remoteVersion.expire(ttl.toJavaDuration()))
         }.doOnError { t ->
             log.atSevere()
                 .withCause(t)
@@ -285,13 +284,14 @@ class SyncMap<K : Any, V : Any> internal constructor(
 
         return Flux.interval((ttl / 2).toJavaDuration())
             .concatMap {
-                persistSnapshot(localVersion)
+                dataBucket.expire(ttl.toJavaDuration())
+                    .then(remoteVersion.expire(ttl.toJavaDuration()))
                     .onErrorResume { t ->
                         log.atSevere()
                             .withCause(t)
                             .log("Failed to refresh heartbeat for SyncMap '$id'")
                         Mono.empty()
-                    }
+                    }.then()
             }
     }
 
