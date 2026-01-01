@@ -102,7 +102,7 @@ class RequestResponseBus internal constructor(
     private fun handleGenericError(e: Throwable, message: Any) {
         log.atSevere()
             .withCause(e)
-            .log("Error handling message: ${message.toString().take(1000)}")
+            .log("Error handling message: ${message.toString().take(1000).replace("{", "[").replace("}", "]")}")
     }
 
     /**

@@ -83,7 +83,7 @@ class RedisEventBus internal constructor(private val api: RedisApi) {
             .onErrorContinue { t, message ->
                 log.atSevere()
                     .withCause(t)
-                    .log("Error receiving Redis Pub/Sub message: $message")
+                    .log("Error receiving Redis Pub/Sub message: ${message.toString().replace("{", "[").replace("}", "]")}")
             }
             .subscribe(this::handleIncomingMessage)
     }

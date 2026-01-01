@@ -84,7 +84,7 @@ class RedisApi private constructor(
                 + CoroutineExceptionHandler { context, throwable ->
             log.atSevere()
                 .withCause(throwable)
-                .log("Uncaught exception in Redis sync structure coroutine (context: $context)")
+                .log("Uncaught exception in Redis sync structure coroutine (context: ${context.toString().replace("{", "[").replace("}", "]")})")
         }
     )
 

@@ -95,7 +95,7 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
             .onErrorContinue { t, message ->
                 log.atSevere()
                     .withCause(t)
-                    .log("Error receiving Redis Pub/Sub message: $message")
+                    .log("Error receiving Redis Pub/Sub message: ${message.toString().replace("{", "[").replace("}", "]")}")
             }
             .subscribe(this::handleIncoming)
     }
@@ -138,7 +138,7 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
             } catch (e: Throwable) {
                 log.atWarning()
                     .withCause(e)
-                    .log("Error notifying listener of change: $change")
+                    .log("Error notifying listener of change: ${change.toString().replace("{", "[").replace("}", "]")}")
             }
         }
     }
