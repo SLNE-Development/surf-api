@@ -2,13 +2,11 @@ package dev.slne.surf.redis.sync.value
 
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.SyncStructure
-import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue.Companion.DEFAULT_TTL
 import dev.slne.surf.redis.util.component1
 import dev.slne.surf.redis.util.component2
 import dev.slne.surf.surfapi.core.api.util.logger
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import org.redisson.client.codec.StringCodec
@@ -210,8 +208,7 @@ class SyncValue<T : Any> internal constructor(
             api.json.encodeToString(serializer, current)
         }.flatMap { snapshotJson ->
             dataBucket.set(snapshotJson, ttl.toJavaDuration())
-                .then(remoteVersion.set(version))
-                .then(remoteVersion.expireIfGreater(ttl.toJavaDuration()))
+                .then(remoteVersion.expire(ttl.toJavaDuration()))
         }.doOnError { t ->
             log.atSevere()
                 .withCause(t)
@@ -230,13 +227,14 @@ class SyncValue<T : Any> internal constructor(
 
         return Flux.interval((ttl / 2).toJavaDuration())
             .concatMap {
-                persistSnapshot(localVersion)
+                dataBucket.expire(ttl.toJavaDuration())
+                    .then(remoteVersion.expire(ttl.toJavaDuration()))
                     .onErrorResume { t ->
                         log.atSevere()
                             .withCause(t)
                             .log("Heartbeat persistSnapshot failed for SyncValue '$id'")
                         Mono.empty()
-                    }
+                    }.then()
             }
     }
 
