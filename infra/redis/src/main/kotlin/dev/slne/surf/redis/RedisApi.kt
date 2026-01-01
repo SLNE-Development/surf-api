@@ -16,6 +16,7 @@ import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDStringSerializer
 import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.surfapi.core.api.util.objectSetOf
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -34,6 +35,7 @@ import org.redisson.api.RedissonReactiveClient
 import org.redisson.api.redisnode.RedisNodes
 import org.redisson.config.Config
 import org.redisson.misc.RedisURI
+import reactor.core.Disposable
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -84,9 +86,15 @@ class RedisApi private constructor(
                 + CoroutineExceptionHandler { context, throwable ->
             log.atSevere()
                 .withCause(throwable)
-                .log("Uncaught exception in Redis sync structure coroutine (context: ${context.toString().replace("{", "[").replace("}", "]")})")
+                .log(
+                    "Uncaught exception in Redis sync structure coroutine (context: ${
+                        context.toString().replace("{", "[").replace("}", "]")
+                    })"
+                )
         }
     )
+
+    private val disposables = objectSetOf<Disposable>()
 
     private var frozen = false
 
@@ -184,9 +192,7 @@ class RedisApi private constructor(
         requestResponseBus.init()
 
         for (structure in syncStructures) {
-            syncStructureScope.launch {
-                structure.init()
-            }
+            disposables.add(structure.init().subscribe())
         }
     }
 
@@ -234,6 +240,11 @@ class RedisApi private constructor(
             structure.close()
         }
         syncStructureScope.cancel("RedisApi disconnected")
+
+        for (disposable in disposables) {
+            disposable.dispose()
+        }
+        disposables.clear()
 
         redisson.shutdown()
     }

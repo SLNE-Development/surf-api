@@ -6,7 +6,9 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.redisson.api.RTopicReactive
 import org.redisson.client.codec.StringCodec
-import reactor.core.Disposable
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
@@ -56,8 +58,7 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
      * Redis Pub/Sub channel used to broadcast and receive deltas for this structure instance.
      */
     protected abstract val redisChannel: String
-    protected lateinit var topic: RTopicReactive
-    private lateinit var topicDisposable: Disposable
+    protected val topic: RTopicReactive by lazy { api.redissonReactive.getTopic(redisChannel, StringCodec.INSTANCE) }
 
     companion object {
         private val log = logger()
@@ -73,14 +74,24 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
      * but should call `super.init()`.
      */
     @MustBeInvokedByOverriders
-    internal open suspend fun init() {
-        loadSnapshot()
-        setupSubscription()
+    internal fun init(): Mono<Void> {
+        return Mono.defer {
+            loadSnapshot()
+                .subscribeOn(Schedulers.boundedElastic())
+                .then(init0())
+                .thenMany(setupSubscription())
+                .then()
+        }.doOnError { t ->
+            log.atSevere()
+                .withCause(t)
+                .log("Failed to init SyncSet '$id'")
+        }
     }
+
+    protected open fun init0(): Mono<Void> = Mono.empty()
 
     @MustBeInvokedByOverriders
     internal open fun close() {
-        topicDisposable.dispose()
     }
 
     /**
@@ -88,16 +99,23 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
      *
      * Incoming messages for this channel are forwarded to [handleIncoming].
      */
-    private fun setupSubscription() {
-        topic = api.redissonReactive.getTopic(redisChannel, StringCodec.INSTANCE)
-
-        topicDisposable = topic.getMessages(String::class.java)
-            .onErrorContinue { t, message ->
+    @MustBeInvokedByOverriders
+    protected open fun setupSubscription(): Flux<Void> {
+        return topic.getMessages(String::class.java)
+            .subscribeOn(Schedulers.boundedElastic())
+            .concatMap { msg ->
+                handleIncoming(msg)
+                    .onErrorResume { t ->
+                        log.atSevere().withCause(t)
+                            .log("Error handling Pub/Sub message: ${msg.replace("{", "[").replace("}", "]")}")
+                        Mono.empty()
+                    }
+            }.doOnError { t ->
                 log.atSevere()
                     .withCause(t)
-                    .log("Error receiving Redis Pub/Sub message: ${message.toString().replace("{", "[").replace("}", "]")}")
+                    .log("Pub/Sub stream failed for '$id'")
             }
-            .subscribe(this::handleIncoming)
+            .retry()
     }
 
     /**
@@ -110,7 +128,7 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
      * - decode the snapshot,
      * - update local state under [lock].
      */
-    protected abstract suspend fun loadSnapshot()
+    protected abstract fun loadSnapshot(): Mono<Void>
 
     /**
      * Handles a delta message received via Pub/Sub.
@@ -120,7 +138,7 @@ abstract class SyncStructure<TDelta : Any> internal constructor(
      * - apply the delta under [lock], or
      * - schedule heavier recovery work on [scope] (e.g. `scope.launch { loadSnapshot() }`).
      */
-    protected abstract fun handleIncoming(message: String)
+    protected abstract fun handleIncoming(message: String): Mono<Void>
 
     /**
      * Utility to notify listeners safely.

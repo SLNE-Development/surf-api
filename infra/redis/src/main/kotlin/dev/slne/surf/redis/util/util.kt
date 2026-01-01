@@ -8,6 +8,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import reactor.core.publisher.Mono
+import reactor.util.function.Tuple2
 
 internal fun <T : Any> Mono<T>.asDeferred(): Deferred<T> {
     val deferred = CompletableDeferred<T>()
@@ -46,3 +47,6 @@ internal fun <T : Any> Mono<T>.asDeferred(scope: CoroutineScope): Deferred<T> =
     scope.async {
         this@asDeferred.awaitSingle()
     }
+
+internal operator fun <T1, T2> Tuple2<T1, T2>.component1(): T1 = this.t1
+internal operator fun <T1, T2> Tuple2<T1, T2>.component2(): T2 = this.t2

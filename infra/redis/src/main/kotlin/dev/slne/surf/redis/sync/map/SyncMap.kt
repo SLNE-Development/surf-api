@@ -3,19 +3,20 @@ package dev.slne.surf.redis.sync.map
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.SyncStructure
 import dev.slne.surf.redis.sync.map.SyncMap.Companion.DEFAULT_TTL
+import dev.slne.surf.redis.util.component1
+import dev.slne.surf.redis.util.component2
+import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
-import org.redisson.api.RAtomicLongReactive
-import org.redisson.api.RBucketReactive
 import org.redisson.client.codec.StringCodec
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -76,13 +77,15 @@ class SyncMap<K : Any, V : Any> internal constructor(
     private val verKey = "surf-redis:sync:map:$id:ver"
     override val redisChannel: String = "surf-redis:sync:map:$id"
 
-    private lateinit var dataBucket: RBucketReactive<String>
-    private lateinit var remoteVersion: RAtomicLongReactive
+    private val dataBucket by lazy { api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE) }
+    private val remoteVersion by lazy { api.redissonReactive.getAtomicLong(verKey) }
 
     @Volatile
     private var localVersion: Long = 0L
 
     companion object {
+        private val log = logger()
+
         /**
          * Default TTL for snapshot and version keys.
          *
@@ -91,12 +94,9 @@ class SyncMap<K : Any, V : Any> internal constructor(
         val DEFAULT_TTL = 5.minutes
     }
 
-    override suspend fun init() {
-        dataBucket = api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE)
-        remoteVersion = api.redissonReactive.getAtomicLong(verKey)
-
-        super.init()
-        startHeartbeat()
+    override fun setupSubscription(): Flux<Void> {
+        return super.setupSubscription()
+            .mergeWith(startHeartbeat())
     }
 
     /**
@@ -129,11 +129,9 @@ class SyncMap<K : Any, V : Any> internal constructor(
     fun put(key: K, value: V): V? {
         val old = lock.write { map.put(key, value) }
 
-        scope.launch {
-            val keyJson = api.json.encodeToString(keySerializer, key)
-            val valueJson = api.json.encodeToString(valueSerializer, value)
-            publishLocalDelta(Delta.Put(keyJson, valueJson))
-        }
+        val keyJson = api.json.encodeToString(keySerializer, key)
+        val valueJson = api.json.encodeToString(valueSerializer, value)
+        publishLocalDelta(Delta.Put(keyJson, valueJson)).subscribe()
 
         notifyListeners(listeners, SyncMapChange.Put(key, value, old))
 
@@ -151,10 +149,8 @@ class SyncMap<K : Any, V : Any> internal constructor(
     fun remove(key: K): V? {
         val removed = lock.write { map.remove(key) } ?: return null
 
-        scope.launch {
-            val keyJson = api.json.encodeToString(keySerializer, key)
-            publishLocalDelta(Delta.Remove(keyJson))
-        }
+        val keyJson = api.json.encodeToString(keySerializer, key)
+        publishLocalDelta(Delta.Remove(keyJson)).subscribe()
 
         notifyListeners(listeners, SyncMapChange.Removed(key, removed))
 
@@ -177,9 +173,7 @@ class SyncMap<K : Any, V : Any> internal constructor(
         }
         if (!hadElements) return
 
-        scope.launch {
-            publishLocalDelta(Delta.Clear)
-        }
+        publishLocalDelta(Delta.Clear).subscribe()
 
         notifyListeners(listeners, SyncMapChange.Cleared)
     }
@@ -198,41 +192,48 @@ class SyncMap<K : Any, V : Any> internal constructor(
         listeners -= listener
     }
 
-    override suspend fun loadSnapshot() {
-        val snapshotJson = dataBucket.get().awaitSingleOrNull()
-        val version = remoteVersion.get().awaitSingle()
+    override fun loadSnapshot(): Mono<Void> {
+        return dataBucket.get()
+            .zipWith(remoteVersion.get())
+            .flatMap { (snapshotJson, version) ->
+                Mono.fromCallable {
+                    val loaded =
+                        if (snapshotJson.isNullOrBlank()) emptyMap()
+                        else api.json.decodeFromString(snapshotSerializer, snapshotJson)
 
-        val loaded =
-            if (snapshotJson.isNullOrBlank()) emptyMap()
-            else api.json.decodeFromString(snapshotSerializer, snapshotJson)
+                    lock.write {
+                        map.clear()
+                        map.putAll(loaded)
+                    }
 
-        lock.write {
-            map.clear()
-            map.putAll(loaded)
-        }
-
-        localVersion = version
+                    localVersion = version
+                }
+            }.then()
     }
 
-    override fun handleIncoming(message: String) {
-        val envelope = api.json.decodeFromString<Envelope>(message)
+    override fun handleIncoming(message: String): Mono<Void> {
+        return Mono.defer {
+            val envelope = api.json.decodeFromString<Envelope>(message)
+            val current = localVersion
 
-        val current = localVersion
-        when {
-            envelope.version == current + 1 -> {
-                applyDelta(envelope.delta)
-                localVersion = envelope.version
-            }
+            when {
+                envelope.version == current + 1 -> {
+                    Mono.fromRunnable {
+                        applyDelta(envelope.delta)
+                        localVersion = envelope.version
+                    }
+                }
 
-            envelope.version <= current -> {
-                // duplicate / out-of-order -> ignore
-            }
+                envelope.version <= current -> {
+                    // duplicate / out-of-order -> ignore
+                    Mono.empty()
+                }
 
-            else -> {
-                scope.launch { loadSnapshot() }
+                else -> loadSnapshot()
             }
         }
     }
+
 
     /**
      * Publishes a local delta:
@@ -240,14 +241,18 @@ class SyncMap<K : Any, V : Any> internal constructor(
      * - persists the snapshot with TTL,
      * - broadcasts the delta via Pub/Sub.
      */
-    private suspend fun publishLocalDelta(delta: Delta) {
-        val newVersion = remoteVersion.incrementAndGet().awaitSingle()
-        localVersion = newVersion
-
-        persistSnapshot(newVersion)
-
-        val msg = api.json.encodeToString(Envelope(newVersion, delta))
-        topic.publish(msg).awaitSingle()
+    private fun publishLocalDelta(delta: Delta): Mono<Void> {
+        return remoteVersion.incrementAndGet()
+            .doOnNext { localVersion = it }
+            .flatMap { newVersion -> persistSnapshot(newVersion).thenReturn(newVersion) }
+            .flatMap { version ->
+                val msg = api.json.encodeToString(Envelope(version, delta))
+                topic.publish(msg)
+            }.doOnError { t ->
+                log.atSevere()
+                    .withCause(t)
+                    .log("Failed to publish local delta for SyncMap '$id'")
+            }.then()
     }
 
     /**
@@ -255,13 +260,18 @@ class SyncMap<K : Any, V : Any> internal constructor(
      *
      * Used for late joiners and recovery after missed deltas.
      */
-    private suspend fun persistSnapshot(version: Long) {
-        val snapshotJson = lock.read { api.json.encodeToString(snapshotSerializer, map) }
-
-
-        dataBucket.set(snapshotJson, ttl.toJavaDuration()).awaitSingle()
-        remoteVersion.set(version).awaitSingle()
-        remoteVersion.expire(ttl.toJavaDuration()).awaitSingle()
+    private fun persistSnapshot(version: Long): Mono<Void> {
+        return Mono.fromCallable {
+            lock.read { api.json.encodeToString(snapshotSerializer, map) }
+        }.flatMap { snapshotJson ->
+            dataBucket.set(snapshotJson, ttl.toJavaDuration())
+                .then(remoteVersion.set(version))
+                .then(remoteVersion.expireIfGreater(ttl.toJavaDuration()))
+        }.doOnError { t ->
+            log.atSevere()
+                .withCause(t)
+                .log("Failed to persist snapshot for SyncMap '$id'")
+        }.then()
     }
 
     /**
@@ -270,18 +280,19 @@ class SyncMap<K : Any, V : Any> internal constructor(
      * Ensures the map remains ephemeral and is automatically
      * removed from Redis if all nodes go offline.
      */
-    private fun startHeartbeat() {
-        if (ttl == Duration.ZERO || ttl.isNegative()) return
+    private fun startHeartbeat(): Flux<Void> {
+        if (ttl == Duration.ZERO || ttl.isNegative()) return Flux.empty()
 
-        scope.launch {
-            while (isActive) {
-                delay(ttl / 2)
-                try {
-                    persistSnapshot(localVersion)
-                } catch (_: Throwable) {
-                }
+        return Flux.interval((ttl / 2).toJavaDuration())
+            .concatMap {
+                persistSnapshot(localVersion)
+                    .onErrorResume { t ->
+                        log.atSevere()
+                            .withCause(t)
+                            .log("Failed to refresh heartbeat for SyncMap '$id'")
+                        Mono.empty()
+                    }
             }
-        }
     }
 
     /**
