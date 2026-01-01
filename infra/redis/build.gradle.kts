@@ -36,6 +36,8 @@ publishing {
     publications {
         create<MavenPublication>("shadow") {
             from(components["shadow"])
+            artifact(tasks.named("sourcesJar"))
+            artifact(tasks.named("javadocJar"))
         }
     }
 

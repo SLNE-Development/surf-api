@@ -86,11 +86,10 @@ class SyncList<T : Any> internal constructor(
     }
 
     override suspend fun init() {
-        super.init()
-
         dataBucket = api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE)
         remoteVersion = api.redissonReactive.getAtomicLong(verKey)
 
+        super.init()
         startHeartbeat()
     }
 
