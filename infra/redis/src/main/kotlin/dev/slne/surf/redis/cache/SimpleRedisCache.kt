@@ -86,7 +86,7 @@ class SimpleRedisCache<K : Any, V : Any> internal constructor(
                             }
                         } else {
                             log.atWarning()
-                                .log("Received malformed cache invalidation message on topic $invalidationTopicName: $message")
+                                .log("Received malformed cache invalidation message on topic $invalidationTopicName: ${message.toString().replace("{", "[").replace("}", "]")}")
                         }
                     },
                     { error ->
