@@ -117,6 +117,8 @@ class RedisApi private constructor(
         ): RedisApi {
             val config = Config()
                 .setPassword(redisURI.password)
+                .setNettyThreads(2)
+                .setThreads(2)
                 .apply {
                     useSingleServer()
                         .setAddress(redisURI.toString())
