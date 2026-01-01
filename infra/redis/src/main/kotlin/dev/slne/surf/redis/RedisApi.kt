@@ -16,6 +16,7 @@ import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDStringSerializer
 import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.objectSetOf
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
@@ -94,7 +95,7 @@ class RedisApi private constructor(
         }
     )
 
-    private val disposables = objectSetOf<Disposable>()
+    private val disposables = mutableObjectListOf<Disposable>()
 
     private var frozen = false
 
