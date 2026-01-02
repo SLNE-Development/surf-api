@@ -12,7 +12,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import reactor.core.Disposable
-import java.lang.invoke.LambdaMetafactory
+import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.InaccessibleObjectException
@@ -25,7 +25,7 @@ import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
 
-    private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, RequestConsumer>()
+    private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, MethodHandle>()
     private val pendingRequests = ConcurrentHashMap<UUID, CompletableDeferred<RedisResponse>>()
 
     private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
@@ -112,7 +112,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         )
 
         try {
-            handler.accept(context)
+            handler.invoke(context)
         } catch (e: Throwable) {
             log.atWarning()
                 .withCause(e)
@@ -269,8 +269,8 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                 continue
             }
 
-            val consumer = createRequestConsumer(handler, method)
-            val current = requestHandlers.putIfAbsent(requestType, consumer)
+            val invoker = createRequestInvoker(handler, method)
+            val current = requestHandlers.putIfAbsent(requestType, invoker)
 
             if (current != null) {
                 log.atWarning()
@@ -280,32 +280,14 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         }
     }
 
-    /**
-     * Creates a fast [RequestConsumer] for a handler method.
-     *
-     * The method is converted into a JVM-generated lambda via [java.lang.invoke.LambdaMetafactory], resulting in
-     * near-direct invocation performance.
-     */
-    private fun createRequestConsumer(instance: Any, method: Method): RequestConsumer {
+
+    private fun createRequestInvoker(instance: Any, method: Method): MethodHandle {
         val handlerClass = instance.javaClass
         val handlerLookup = MethodHandles.privateLookupIn(handlerClass, lookup)
 
-        val samMethodType = MethodType.methodType(Void.TYPE, RequestContext::class.java)
-        val implMethod = handlerLookup.unreflect(method)
-        val invokedType = MethodType.methodType(RequestConsumer::class.java, handlerClass)
-
-        val callSite = LambdaMetafactory.metafactory(
-            lookup,
-            "accept",
-            invokedType,
-            samMethodType,
-            implMethod,
-            samMethodType
-        )
-
-        val target = callSite.target
-
-        return target.invoke(instance) as RequestConsumer
+        return handlerLookup.unreflect(method)
+            .bindTo(instance)
+            .asType(MethodType.methodType(Void.TYPE, RequestContext::class.java))
     }
 
     /**
@@ -483,14 +465,5 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                 )
             }
         }
-    }
-
-    /**
-     * Internal functional interface used for fast request dispatch.
-     */
-    @Suppress("unused")
-    @FunctionalInterface
-    private fun interface RequestConsumer {
-        fun accept(ctx: RequestContext<out RedisRequest>)
     }
 }

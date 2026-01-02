@@ -60,7 +60,7 @@ import kotlin.time.Duration
  */
 class RedisApi private constructor(
     private val config: Config,
-    val json: Json
+    val json: Json,
 ) {
     /**
      * Underlying Redis client instance.
@@ -104,6 +104,7 @@ class RedisApi private constructor(
         } else {
             TransportMode.NIO
         }
+
         /**
          * Creates a [RedisApi] instance from an explicit [RedisURI].
          *
@@ -153,7 +154,9 @@ class RedisApi private constructor(
             return create(serializerModule)
         }
 
-        fun create(serializerModule: SerializersModule = EmptySerializersModule()): RedisApi {
+        fun create(
+            serializerModule: SerializersModule = EmptySerializersModule()
+        ): RedisApi {
             return create(RedisCredentialsProvider.instance.redisURI(), serializerModule)
         }
 
@@ -184,6 +187,9 @@ class RedisApi private constructor(
     fun connect(): RedisApi = apply {
         require(isFrozen()) { "Redis client must be frozen before connecting" }
         require(!isConnected()) { "Redis client already initialized" }
+
+        log.atInfo()
+            .log("Connecting to Redis...")
 
         redisson = Redisson.create(config)
         redissonReactive = redisson.reactive()

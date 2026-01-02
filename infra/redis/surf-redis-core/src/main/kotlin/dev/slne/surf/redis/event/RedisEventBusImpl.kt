@@ -11,10 +11,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import org.jetbrains.annotations.Blocking
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
-import java.lang.invoke.LambdaMetafactory
+import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.InaccessibleObjectException
@@ -29,7 +28,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
      * Dispatch is exact-type only for maximum performance.
      */
     private val eventHandlers =
-        Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<RedisEventConsumer>>()
+        Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<MethodHandle>>()
 
     /**
      * Registry mapping serialized event type identifiers to event classes.
@@ -102,12 +101,12 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         }
 
         val event = deserializeEvent(eventClass, envelope.eventData) ?: return
-        val handler = eventHandlers[eventClass]
-        if (handler.isNullOrEmpty()) return
+        val handlers = eventHandlers[eventClass]
+        if (handlers.isNullOrEmpty()) return
 
-        for (redisEventConsumer in handler) {
+        for (methodHandle in handlers) {
             try {
-                redisEventConsumer.accept(event)
+                methodHandle.invoke(event)
             } catch (e: Throwable) {
                 log.atSevere()
                     .withCause(e)
@@ -162,44 +161,23 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                     continue
                 }
 
-                val eventConsumer = createRedisEventConsumer(listener, method, firstParamType)
+                val invoker = createRedisEventInvoker(listener, method)
                 eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
-                    .add(eventConsumer)
+                    .add(invoker)
             }
         }
     }
 
-    /**
-     * Creates a highly optimized event consumer for the given handler method.
-     *
-     * The method is converted into a JVM-generated lambda via [java.lang.invoke.LambdaMetafactory],
-     * resulting in near-direct invocation performance.
-     */
-    private fun createRedisEventConsumer(
+    private fun createRedisEventInvoker(
         listener: Any,
-        method: Method,
-        eventType: Class<out RedisEvent>
-    ): RedisEventConsumer {
+        method: Method
+    ): MethodHandle {
         val listenerClass = listener.javaClass
         val listenerLookup = MethodHandles.privateLookupIn(listenerClass, lookup)
 
-        val samMethodType = MethodType.methodType(Void.TYPE, Any::class.java)
-        val implMethod = listenerLookup.unreflect(method)
-        val instantiatedMethodType = MethodType.methodType(Void.TYPE, eventType)
-        val invokedType = MethodType.methodType(RedisEventConsumer::class.java, listenerClass)
-
-
-        val callSite = LambdaMetafactory.metafactory(
-            lookup,
-            "accept",
-            invokedType,
-            samMethodType,
-            implMethod,
-            instantiatedMethodType
-        )
-
-        val factory = callSite.target
-        return factory.invoke(listener) as RedisEventConsumer
+        return listenerLookup.unreflect(method)
+            .bindTo(listener)
+            .asType(MethodType.methodType(Void.TYPE, Any::class.java))
     }
 
     /**
@@ -271,14 +249,5 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
             }
 
         }
-    }
-
-    /**
-     * Internal functional interface used for fast event dispatch.
-     */
-    @Suppress("unused")
-    @FunctionalInterface
-    private fun interface RedisEventConsumer {
-        fun accept(event: Any)
     }
 }
