@@ -83,7 +83,7 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
                     }
                 }
 
-                if (extension.withSurfRedis.isPresent && !extension.surfRedisRelocation.isPresent) {
+                if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
                     register("surf-redis-velocity") {
                         optional = false
                     }
