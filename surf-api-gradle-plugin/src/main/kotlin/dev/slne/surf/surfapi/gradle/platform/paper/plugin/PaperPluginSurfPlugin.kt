@@ -55,6 +55,10 @@ internal class PaperPluginSurfPlugin :
                     registerRequired("surf-cloud-bukkit")
                 }
 
+                if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
+                    registerRequired("surf-redis-paper")
+                }
+
                 extension.bootstrapDependencies.orNull?.execute(this)
             }
 
