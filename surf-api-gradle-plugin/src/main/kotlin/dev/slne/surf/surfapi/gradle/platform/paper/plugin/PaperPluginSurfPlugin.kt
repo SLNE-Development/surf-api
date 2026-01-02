@@ -67,6 +67,10 @@ internal class PaperPluginSurfPlugin :
                     registerRequired("surf-core-paper")
                 }
 
+                if (extension.withSurfRedis.isPresent && !extension.surfRedisRelocation.isPresent) {
+                    registerRequired("surf-redis-paper")
+                }
+
                 extension.serverDependencies.orNull?.execute(this)
             }
         }

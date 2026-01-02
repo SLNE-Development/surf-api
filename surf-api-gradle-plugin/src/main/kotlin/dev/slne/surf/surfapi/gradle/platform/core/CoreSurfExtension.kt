@@ -20,6 +20,15 @@ open class CoreSurfExtension @Inject constructor(objects: ObjectFactory) :
     internal val surfDatabaseR2dbcVersion = objects.property<String>()
     internal val surfDatabaseR2dbcRelocation = objects.property<String>()
 
+    fun withSurfRedis() {
+        withSurfRedis.set(true)
+        withSurfRedis.finalizeValue()
+    }
+
+    @Deprecated(
+        level = DeprecationLevel.WARNING,
+        message = "Plugins no longer shade surf-redis. Use the standard withSurfRedis() method instead.",
+    )
     fun withSurfRedis(version: String, relocation: String) {
         withSurfRedis.set(true)
         withSurfRedis.finalizeValue()
