@@ -6,23 +6,16 @@ import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.spi.ConnectionFactory
-import io.r2dbc.spi.ConnectionFactoryOptions
-import io.r2dbc.spi.ConnectionFactoryOptions.*
 import io.r2dbc.spi.IsolationLevel
-import io.r2dbc.spi.Result
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
-import org.jetbrains.exposed.v1.r2dbc.mappers.R2dbcRegistryTypeMapping
-import org.jetbrains.exposed.v1.r2dbc.statements.api.R2dbcExposedConnection
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
-import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.mariadb.r2dbc.MariadbConnectionConfiguration
 import org.mariadb.r2dbc.MariadbConnectionFactory
-import org.mariadb.r2dbc.MariadbConnectionFactoryProvider
 import org.slf4j.event.Level
-import reactor.core.publisher.Flux
+import reactor.netty.resources.LoopResources
 import java.nio.file.Path
 import java.time.Duration.ofMillis
 
@@ -58,6 +51,7 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
                 .username(config.credentials.username)
                 .password(config.credentials.password)
                 .database(config.credentials.database)
+                .loopResources(LoopResources.create("mariadb-r2dbc-event-loop-$poolName", 1, 4, true))
                 .build()
 
             val connectionFactory = MariadbConnectionFactory.from(configuration)
