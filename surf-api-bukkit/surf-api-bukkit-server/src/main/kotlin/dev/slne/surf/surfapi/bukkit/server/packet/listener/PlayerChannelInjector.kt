@@ -177,6 +177,7 @@ object PlayerChannelInjector : Listener {
             }
         }
 
+        @Suppress("UNNECESSARY_SAFE_CALL")
         @OptIn(NmsUseWithCaution::class)
         override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) { // client -> server
             var msg = msg
@@ -186,17 +187,17 @@ object PlayerChannelInjector : Listener {
             }
 
             val connection = connection
-            val player = connection?.player
-            if (connection == null || player == null) {
+            if (connection == null) {
                 super.channelRead(ctx, msg)
                 return
             }
 
+            val player = connection?.player
             var cancelled = false
 
             try {
                 // first, we try to handle the packet with the nms packet listener
-                msg = this.packetListenerApi.handleServerboundPacket(msg, connection.player)
+                msg = this.packetListenerApi.handleServerboundPacket(msg, player)
 
                 if (msg == null) {
                     // no need to handle the packet further
@@ -221,6 +222,7 @@ object PlayerChannelInjector : Listener {
         }
 
         @OptIn(NmsUseWithCaution::class)
+        @Suppress("UNNECESSARY_SAFE_CALL")
         fun handleServerboundPacketFromBridge(
             connection: Connection,
             packet: Packet<*>,
@@ -230,7 +232,7 @@ object PlayerChannelInjector : Listener {
             if (apiPacket != null) { // we have an api packet wrapper for this packet
                 val resultApi = this.bridge.handleServerboundPacket(
                     apiPacket,
-                    connection.player.bukkitEntity
+                    connection.player?.bukkitEntity
                 )
 
                 if (resultApi != null) { // we may have a modified packet

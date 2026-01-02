@@ -7,20 +7,24 @@ import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.clientbound
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.clientbound.ClientboundSystemChatPacketImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverbound.CommandSuggestionPacketImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverbound.RenameItemPacketImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverbound.ServerboundCustomPayloadPacketImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverbound.SignUpdatePacketImpl
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.common.ClientCommonPacketListener
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket
-import net.minecraft.network.protocol.game.*
+import net.minecraft.network.protocol.common.ServerCommonPacketListener
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket
+import net.minecraft.network.protocol.game.ClientboundSystemChatPacket
+import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket
+import net.minecraft.network.protocol.game.ServerboundRenameItemPacket
+import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket
 import kotlin.reflect.KClass
 
 @OptIn(NmsUseWithCaution::class)
 object PacketRegistry {
-    private val SERVERBOUND_PACKETS =
-        mutableObject2ObjectMapOf<Class<out Packet<*>>, ServerboundPacketFactory<*, *>>()
-    private val CLIENTBOUND_PACKETS =
-        mutableObject2ObjectMapOf<Class<out Packet<*>>, ClientboundPacketFactory<*, *>>()
+    private val SERVERBOUND_PACKETS = mutableObject2ObjectMapOf<Class<out Packet<*>>, ServerboundPacketFactory<*, *>>()
+    private val CLIENTBOUND_PACKETS = mutableObject2ObjectMapOf<Class<out Packet<*>>, ClientboundPacketFactory<*, *>>()
 
     init {
         // @formatter:off
@@ -28,6 +32,7 @@ object PacketRegistry {
         registerServerboundPacket(ServerboundSignUpdatePacket::class) { SignUpdatePacketImpl(it) }
         registerServerboundPacket(ServerboundRenameItemPacket::class) { RenameItemPacketImpl(it) }
         registerServerboundPacket(ServerboundCommandSuggestionPacket::class) { CommandSuggestionPacketImpl(it) }
+        registerServerboundPacket(ServerboundCustomPayloadPacket::class) { ServerboundCustomPayloadPacketImpl(it) }
 
         // Clientbound packets
         registerClientboundPacket(ClientboundDisconnectPacket::class) { ClientboundDisconnectPacketImpl(it) }
@@ -35,11 +40,11 @@ object PacketRegistry {
         // @formatter:on
     }
 
-    private fun <Nms : Packet<ServerGamePacketListener>, Api : NmsServerboundPacket> registerServerboundPacket(
+    private fun <Nms : Packet<out ServerCommonPacketListener>, Api : NmsServerboundPacket> registerServerboundPacket(
         nms: KClass<Nms>,
         factory: ServerboundPacketFactory<Nms, Api>,
     ) {
-        SERVERBOUND_PACKETS.put(nms.java, factory)
+        SERVERBOUND_PACKETS[nms.java] = factory
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -52,7 +57,7 @@ object PacketRegistry {
         nms: KClass<Nms>,
         factory: ClientboundPacketFactory<Nms, Api>,
     ) {
-        CLIENTBOUND_PACKETS.put(nms.java, factory)
+        CLIENTBOUND_PACKETS[nms.java] = factory
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -3,8 +3,8 @@ package dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.serverboun
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl
 import net.minecraft.network.protocol.Packet
-import net.minecraft.network.protocol.game.ServerGamePacketListener
+import net.minecraft.network.protocol.common.ServerCommonPacketListener
 
 @NmsUseWithCaution
-abstract class NmsServerboundPacketImpl<Nms : Packet<ServerGamePacketListener>>(nmsPacket: Nms) :
-    NmsPacketImpl<Nms, ServerGamePacketListener>(nmsPacket)
+abstract class NmsServerboundPacketImpl<Nms : Packet<out ServerCommonPacketListener>>(nmsPacket: Nms) :
+    NmsPacketImpl<Nms, ServerCommonPacketListener>(nmsPacket)

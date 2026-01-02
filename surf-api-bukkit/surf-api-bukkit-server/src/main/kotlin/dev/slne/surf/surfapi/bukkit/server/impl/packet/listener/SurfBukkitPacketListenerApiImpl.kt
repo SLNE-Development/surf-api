@@ -107,7 +107,7 @@ class SurfBukkitPacketListenerApiImpl : SurfBukkitPacketListenerApi {
 
     fun handleServerboundPacket(
         packet: Packet<*>,
-        serverPlayer: ServerPlayer
+        serverPlayer: ServerPlayer?
     ): Packet<*>? {
         val methods = serverboundListenerMethods[packet.javaClass] ?: return packet
         var result: Packet<*>? = packet
@@ -131,12 +131,12 @@ class SurfBukkitPacketListenerApiImpl : SurfBukkitPacketListenerApi {
 
     private fun callListener(
         listenerMethod: ListenerMethod,
-        serverPlayer: ServerPlayer,
+        serverPlayer: ServerPlayer?,
         packet: Packet<*>
     ): Packet<*>? {
         if (listenerMethod.hasPlayerParameter) {
             val player =
-                if (listenerMethod.hasServerPlayerParameter) serverPlayer else serverPlayer.bukkitEntity
+                if (listenerMethod.hasServerPlayerParameter) serverPlayer else serverPlayer?.bukkitEntity
             val result = listenerMethod.methodHandle(listenerMethod.listener, packet, player)
             if (result is PacketListenerResult && result == PacketListenerResult.CANCEL) {
                 return null
@@ -163,6 +163,6 @@ class SurfBukkitPacketListenerApiImpl : SurfBukkitPacketListenerApi {
         val listener: PacketListener,
         val methodHandle: MethodHandle,
         val hasPlayerParameter: Boolean,
-        val hasServerPlayerParameter: Boolean
+        val hasServerPlayerParameter: Boolean,
     )
 }

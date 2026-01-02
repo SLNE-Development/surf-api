@@ -76,7 +76,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     @Suppress("UNCHECKED_CAST")
     fun <Packet : NmsServerboundPacket> handleServerboundPacket(
         packet: Packet,
-        player: Player,
+        player: Player?,
     ): Packet? {
         val clazz = packet.packetClass
         val listener = serverboundPacketListeners[clazz] ?: return packet
@@ -84,7 +84,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         var cancel = false
         for (listener in listener) {
             listener as NmsServerboundPacketListener<Packet>
-            val result = listener.handleServerboundPacket(packet, player)
+            val result = listener.handleEarlyServerboundPacket(packet, player)
             if (result == PacketListenerResult.CANCEL) {
                 cancel = true
             }
