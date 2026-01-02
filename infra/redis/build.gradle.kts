@@ -1,65 +1,37 @@
-import dev.slne.surf.surfapi.gradle.util.slneReleases
+import com.github.jengelman.gradle.plugins.shadow.ShadowExtension
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
-plugins {
-    id("dev.slne.surf.surfapi.gradle.core") version "1.21.11+"
-//    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+" /* Uncomment to use tests */
-}
-
-group = "dev.slne.surf"
-version = findProperty("version") as String
-
-
-dependencies {
-    implementation("org.redisson:redisson:4.0.0") {
-        exclude("org.slf4j")
-        exclude("org.reactivestreams")
-        exclude("io.projectreactor", "reactor-core")
-    }
-
-    testImplementation(kotlin("test"))
-    testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
-    testImplementation("com.redis:testcontainers-redis:2.2.4")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-}
-
-tasks.shadowJar {
-    relocationPrefix = "dev.slne.surf.redis.libs"
-    enableAutoRelocation = true
-}
-
-shadow {
-    addShadowVariantIntoJavaComponent = false
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("shadow") {
-            from(components["shadow"])
-            artifact(tasks.named("sourcesJar"))
-            artifact(tasks.named("javadocJar"))
-        }
-    }
-
+buildscript {
     repositories {
-        slneReleases()
+        gradlePluginPortal()
+        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
+    }
+    dependencies {
+        classpath("dev.slne.surf:surf-api-gradle-plugin:1.21.11+")
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
+allprojects {
+    group = "dev.slne.surf"
+    version = findProperty("version") as String
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
+subprojects {
+    afterEvaluate {
+        tasks.withType<ShadowJar> {
+            relocationPrefix = "dev.slne.surf.redis.libs"
+            enableAutoRelocation = true
+        }
 
-afterEvaluate {
-    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
-        enabled = false
-    }
-    tasks.named("publishPluginMavenPublicationToMavenLocal") {
-        enabled = false
+        configure<ShadowExtension> {
+            addShadowVariantIntoJavaComponent = false
+        }
+
+        configure<KotlinJvmExtension> {
+            compilerOptions {
+                optIn.add("dev.slne.surf.redis.util.InternalRedisAPI")
+            }
+        }
     }
 }

@@ -1,8 +1,6 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
-    }
-}
-
 rootProject.name = "surf-redis"
+
+include("surf-redis-api")
+include("surf-redis-paper")
+include("surf-redis-velocity")
+include("surf-redis-core")
