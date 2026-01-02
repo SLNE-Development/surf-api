@@ -18,12 +18,21 @@ allprojects {
 }
 
 subprojects {
-    afterEvaluate {
-        tasks.withType<ShadowJar> {
-            relocationPrefix = "dev.slne.surf.redis.libs"
-            enableAutoRelocation = true
-        }
+    tasks.withType<ShadowJar>().configureEach {
+        val base = "dev.slne.surf.redis.libs."
 
+        relocate("com.esotericsoftware", base + "kryo")
+        relocate("io.netty", base + "netty")
+        relocate("io.reactivex", base + "reactivex")
+        relocate("javax.cache", base + "javax.cache")
+        relocate("jodd", base + "jodd")
+        relocate("net.bytebuddy", base + "bytebuddy")
+        relocate("org.objenesis", base + "objenesis")
+        relocate("org.redisson", base + "redisson")
+        relocate("org.yaml", base + "yaml")
+    }
+
+    afterEvaluate {
         configure<ShadowExtension> {
             addShadowVariantIntoJavaComponent = false
         }
