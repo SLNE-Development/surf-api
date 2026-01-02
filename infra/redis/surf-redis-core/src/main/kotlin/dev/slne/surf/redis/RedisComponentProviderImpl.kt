@@ -13,6 +13,7 @@ import kotlin.time.Duration
 @AutoService(RedisComponentProvider::class)
 class RedisComponentProviderImpl : RedisComponentProvider {
     override val eventLoopGroup get() = RedisInstance.instance.eventLoopGroup
+    override val redissonExecutorService get() = RedisInstance.instance.redissonExecutorService
 
     override fun <K : Any, V : Any> createSimpleCache(
         namespace: String,

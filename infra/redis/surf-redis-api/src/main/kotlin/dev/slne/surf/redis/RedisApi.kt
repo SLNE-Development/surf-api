@@ -122,6 +122,7 @@ class RedisApi private constructor(
                 .setPassword(redisURI.password)
                 .setTransportMode(transportMode)
                 .setEventLoopGroup(RedisComponentProvider.get().eventLoopGroup)
+                .setExecutor(RedisComponentProvider.get().redissonExecutorService)
                 .apply {
                     useSingleServer()
                         .setAddress(redisURI.toString())

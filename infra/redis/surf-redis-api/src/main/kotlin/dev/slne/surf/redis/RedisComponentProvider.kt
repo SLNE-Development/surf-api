@@ -7,12 +7,14 @@ import dev.slne.surf.redis.util.InternalRedisAPI
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import kotlinx.serialization.KSerializer
+import java.util.concurrent.ExecutorService
 import kotlin.time.Duration
 
 @InternalRedisAPI
 interface RedisComponentProvider {
 
     val eventLoopGroup: MultiThreadIoEventLoopGroup
+    val redissonExecutorService: ExecutorService
 
     fun <K : Any, V : Any> createSimpleCache(
         namespace: String,
