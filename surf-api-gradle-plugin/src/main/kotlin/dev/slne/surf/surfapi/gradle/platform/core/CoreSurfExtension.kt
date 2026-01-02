@@ -28,6 +28,7 @@ open class CoreSurfExtension @Inject constructor(objects: ObjectFactory) :
     @Deprecated(
         level = DeprecationLevel.WARNING,
         message = "Plugins no longer shade surf-redis. Use the standard withSurfRedis() method instead.",
+        replaceWith = ReplaceWith("withSurfRedis")
     )
     fun withSurfRedis(version: String, relocation: String) {
         withSurfRedis.set(true)
