@@ -4,6 +4,7 @@ plugins {
 
 surfPaperPluginApi {
     mainClass("dev.slne.surf.redis.PaperMain")
+    bootstrapper("dev.slne.surf.redis.PaperBootstrap")
     foliaSupported(true)
     authors.addAll("twisti")
 }
