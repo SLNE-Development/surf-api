@@ -18,6 +18,7 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.utils.API
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 import org.jetbrains.kotlin.gradle.utils.IMPLEMENTATION
 
@@ -251,6 +252,35 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                     COMPILE_ONLY,
                     "dev.slne.surf.core:${it.module}:${Constants.SURF_API_VERSION}"
                 )
+            }
+        }
+
+        if (extension.withSurfRedis.get()) {
+            if (extension.surfRedisRelocation.isPresent) {
+                dependencies {
+                    add(API, "dev.slne.surf:surf-redis:${extension.surfRedisVersion.get()}")
+                }
+                tasks.withType<ShadowJar>().configureEach {
+                    doFirst {
+                        relocate("dev.slne.surf.redis", extension.surfRedisRelocation.get())
+                    }
+                }
+            } else {
+                dependencies {
+                    add(COMPILE_ONLY, "dev.slne.surf:surf-redis-api:${Constants.SURF_API_VERSION}")
+                }
+            }
+        }
+
+        if (extension.withSurfDatabaseR2dbc.get()) {
+            dependencies {
+                add(API, "dev.slne.surf:surf-database-r2dbc:${extension.surfDatabaseR2dbcVersion.get()}")
+            }
+
+            tasks.withType<ShadowJar>().configureEach {
+                doFirst {
+                    relocate("dev.slne.surf.database", extension.surfDatabaseR2dbcRelocation.get())
+                }
             }
         }
 
