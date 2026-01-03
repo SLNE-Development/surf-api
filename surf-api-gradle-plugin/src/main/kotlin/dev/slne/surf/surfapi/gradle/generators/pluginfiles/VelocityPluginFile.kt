@@ -70,22 +70,24 @@ class VelocityPluginFile(project: Project) : CommonPluginFile() {
                 optional = false
             }
 
-            project.extensions.findByType<VelocitySurfExtension>()?.let { extension ->
-                if (extension.cloudModule.isPresent) {
-                    register("surf-cloud-velocity") {
-                        optional = false
+            project.afterEvaluate {
+                project.extensions.findByType<VelocitySurfExtension>()?.let { extension ->
+                    if (extension.cloudModule.isPresent) {
+                        register("surf-cloud-velocity") {
+                            optional = false
+                        }
                     }
-                }
 
-                if (extension.coreModule.isPresent) {
-                    register("surf-core-velocity") {
-                        optional = false
+                    if (extension.coreModule.isPresent) {
+                        register("surf-core-velocity") {
+                            optional = false
+                        }
                     }
-                }
 
-                if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
-                    register("surf-redis-velocity") {
-                        optional = false
+                    if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
+                        register("surf-redis-velocity") {
+                            optional = false
+                        }
                     }
                 }
             }
