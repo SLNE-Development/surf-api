@@ -33699,6 +33699,7 @@ public final class dev/slne/surf/redis/libs/netty/channel/epoll/EpollChannelOpti
 	public static final field EPOLL_MODE Ldev/slne/surf/redis/libs/netty/channel/ChannelOption;
 	public static final field IP_BIND_ADDRESS_NO_PORT Ldev/slne/surf/redis/libs/netty/channel/ChannelOption;
 	public static final field IP_FREEBIND Ldev/slne/surf/redis/libs/netty/channel/ChannelOption;
+	public static final field IP_MULTICAST_ALL Ldev/slne/surf/redis/libs/netty/channel/ChannelOption;
 	public static final field IP_RECVORIGDSTADDR Ldev/slne/surf/redis/libs/netty/channel/ChannelOption;
 	public static final field IP_TRANSPARENT Ldev/slne/surf/redis/libs/netty/channel/ChannelOption;
 	public static final field MAX_DATAGRAM_PAYLOAD_SIZE Ldev/slne/surf/redis/libs/netty/channel/ChannelOption;
@@ -33766,6 +33767,7 @@ public final class dev/slne/surf/redis/libs/netty/channel/epoll/EpollDatagramCha
 	public fun getTrafficClass ()I
 	public fun isBroadcast ()Z
 	public fun isFreeBind ()Z
+	public fun isIpMulticastAll ()Z
 	public fun isIpRecvOrigDestAddr ()Z
 	public fun isIpTransparent ()Z
 	public fun isLoopbackModeDisabled ()Z
@@ -33794,6 +33796,7 @@ public final class dev/slne/surf/redis/libs/netty/channel/epoll/EpollDatagramCha
 	public fun setFreeBind (Z)Ldev/slne/surf/redis/libs/netty/channel/epoll/EpollDatagramChannelConfig;
 	public fun setInterface (Ljava/net/InetAddress;)Ldev/slne/surf/redis/libs/netty/channel/epoll/EpollDatagramChannelConfig;
 	public synthetic fun setInterface (Ljava/net/InetAddress;)Ldev/slne/surf/redis/libs/netty/channel/socket/DatagramChannelConfig;
+	public fun setIpMulticastAll (Z)Ldev/slne/surf/redis/libs/netty/channel/epoll/EpollDatagramChannelConfig;
 	public fun setIpRecvOrigDestAddr (Z)Ldev/slne/surf/redis/libs/netty/channel/epoll/EpollDatagramChannelConfig;
 	public fun setIpTransparent (Z)Ldev/slne/surf/redis/libs/netty/channel/epoll/EpollDatagramChannelConfig;
 	public fun setLoopbackModeDisabled (Z)Ldev/slne/surf/redis/libs/netty/channel/socket/DatagramChannelConfig;
@@ -51738,7 +51741,11 @@ public class dev/slne/surf/redis/libs/redisson/RedissonBucket : dev/slne/surf/re
 	public fun addListenerAsync (Ldev/slne/surf/redis/libs/redisson/api/ObjectListener;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public synthetic fun clearExpire ()Z
 	public synthetic fun clearExpireAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun compareAndDelete (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Z
+	public fun compareAndDeleteAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun compareAndSet (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Z
 	public fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Z
+	public fun compareAndSetAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun compareAndSetAsync (Ljava/lang/Object;Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public synthetic fun expire (JLjava/util/concurrent/TimeUnit;)Z
 	public synthetic fun expire (Ljava/time/Duration;)Z
@@ -51786,6 +51793,8 @@ public class dev/slne/surf/redis/libs/redisson/RedissonBucket : dev/slne/surf/re
 	public fun getAndSetAsync (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun getAndSetAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun getAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun getDigest ()Ljava/lang/String;
+	public fun getDigestAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public synthetic fun getExpireTime ()J
 	public synthetic fun getExpireTimeAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public synthetic fun remainTimeToLive ()J
@@ -51827,6 +51836,10 @@ public class dev/slne/surf/redis/libs/redisson/RedissonBuckets : dev/slne/surf/r
 	public fun getAsync ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun set (Ljava/util/Map;)V
 	public fun setAsync (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun setIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Z
+	public fun setIfAllKeysAbsentAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun setIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Z
+	public fun setIfAllKeysExistAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun trySet (Ljava/util/Map;)Z
 	public fun trySetAsync (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 }
@@ -52403,8 +52416,12 @@ public class dev/slne/surf/redis/libs/redisson/RedissonJsonBucket : dev/slne/sur
 	public fun clearAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public synthetic fun clearExpire ()Z
 	public synthetic fun clearExpireAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun compareAndDelete (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Z
+	public fun compareAndDeleteAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun compareAndSet (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Z
 	public fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Z
 	public fun compareAndSet (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)Z
+	public fun compareAndSetAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun compareAndSetAsync (Ljava/lang/Object;Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun compareAndSetAsync (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	protected fun compareAndSetUpdateAsync (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
@@ -52467,6 +52484,8 @@ public class dev/slne/surf/redis/libs/redisson/RedissonJsonBucket : dev/slne/sur
 	public fun getAndSetAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun getAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun getAsync (Ldev/slne/surf/redis/libs/redisson/codec/JsonCodec;[Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun getDigest ()Ljava/lang/String;
+	public fun getDigestAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public synthetic fun getExpireTime ()J
 	public synthetic fun getExpireTimeAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun getKeys ()Ljava/util/List;
@@ -53370,40 +53389,83 @@ public class dev/slne/surf/redis/libs/redisson/RedissonMapCacheNative : dev/slne
 	public fun clearExpireAsync (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun clearExpireAsync (Ljava/util/Set;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun compute (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/BiFunction;)Ljava/lang/Object;
+	public fun compute (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/BiFunction;)Ljava/lang/Object;
 	public fun computeAsync (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/BiFunction;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun computeAsync (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/BiFunction;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/Function;)Ljava/lang/Object;
+	public fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/Function;)Ljava/lang/Object;
 	public fun computeIfAbsentAsync (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/Function;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun computeIfAbsentAsync (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/Function;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun computeIfAbsentAsyncInternal (Ljava/lang/Object;JZLjava/util/function/Function;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntries (Ljava/util/Set;Ljava/time/Duration;)I
+	public fun expireEntries (Ljava/util/Set;Ljava/time/Instant;)I
 	public fun expireEntriesAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntriesAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Duration;)I
+	public fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Instant;)I
 	public fun expireEntriesIfGreaterAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntriesIfGreaterAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Duration;)I
+	public fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Instant;)I
 	public fun expireEntriesIfLessAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntriesIfLessAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Duration;)I
+	public fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Instant;)I
 	public fun expireEntriesIfNotSetAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntriesIfNotSetAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntry (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public fun expireEntry (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public fun expireEntryAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntryAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public fun expireEntryIfGreaterAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntryIfGreaterAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public fun expireEntryIfLessAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntryIfLessAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public fun expireEntryIfNotSetAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun expireEntryIfNotSetAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Z
+	public fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Z
 	public fun fastPutAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun fastPutAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Z
+	public fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Z
 	public fun fastPutIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
-	protected fun fastPutIfAbsentOperationAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
-	protected fun fastPutOperationAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun fastPutIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun fastPutIfAbsentOperationAsync (Ljava/lang/Object;Ljava/lang/Object;JZ)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun fastPutOperationAsync (Ljava/lang/Object;Ljava/lang/Object;JZ)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;
+	public fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ljava/lang/Object;
+	public fun putAll (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)V
 	public fun putAll (Ljava/util/Map;Ljava/time/Duration;)V
+	public fun putAllAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun putAllAsync (Ljava/util/Map;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
-	protected fun putAllOperationAsync (Ljava/util/Map;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun putAllKeysAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutParams;Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun putAllKeysOperationAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutParams;Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun putAllOperationAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutParams;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun putAllOperationAsync (Ljava/util/Map;J)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun putAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun putAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;
+	public fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ljava/lang/Object;
 	public fun putIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
-	protected fun putIfAbsentOperationAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
-	protected fun putOperationAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun putIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun putIfAbsentOperationAsync (Ljava/lang/Object;Ljava/lang/Object;JZ)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun putIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Z
+	public fun putIfAllKeysAbsentAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun putIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Z
+	public fun putIfAllKeysExistAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;
+	public fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ljava/lang/Object;
+	public fun putIfExistAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun putIfExistAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun putIfExistOperationAsync (Ljava/lang/Object;Ljava/lang/Object;JZ)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	protected fun putOperationAsync (Ljava/lang/Object;Ljava/lang/Object;JZ)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun remainTimeToLive (Ljava/lang/Object;)J
 	public fun remainTimeToLive (Ljava/util/Set;)Ljava/util/Map;
 	public fun remainTimeToLiveAsync (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
@@ -54990,6 +55052,8 @@ public class dev/slne/surf/redis/libs/redisson/RedissonSearch : dev/slne/surf/re
 	public fun getConfigAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun getIndexes ()Ljava/util/List;
 	public fun getIndexesAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun hybridSearch (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridSearchResult;
+	public fun hybridSearchAsync (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun info (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/index/IndexInfo;
 	public fun infoAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun readCursor (Ljava/lang/String;J)Ldev/slne/surf/redis/libs/redisson/api/search/aggregate/AggregationResult;
@@ -57651,6 +57715,8 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBoundedBl
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucket : dev/slne/surf/redis/libs/redisson/api/RBucketAsync, dev/slne/surf/redis/libs/redisson/api/RExpirable {
 	public abstract fun addListener (Ldev/slne/surf/redis/libs/redisson/api/ObjectListener;)I
+	public abstract fun compareAndDelete (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Z
+	public abstract fun compareAndSet (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Z
 	public abstract fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Z
 	public abstract fun findCommon (Ljava/lang/String;)Ljava/lang/Object;
 	public abstract fun findCommonLength (Ljava/lang/String;)J
@@ -57662,6 +57728,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucket : 
 	public abstract fun getAndSet (Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun getAndSet (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;
 	public abstract fun getAndSet (Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;
+	public abstract fun getDigest ()Ljava/lang/String;
 	public abstract fun set (Ljava/lang/Object;)V
 	public abstract fun set (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)V
 	public abstract fun set (Ljava/lang/Object;Ljava/time/Duration;)V
@@ -57678,6 +57745,8 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucket : 
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketAsync : dev/slne/surf/redis/libs/redisson/api/RExpirableAsync {
 	public abstract fun addListenerAsync (Ldev/slne/surf/redis/libs/redisson/api/ObjectListener;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun compareAndDeleteAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun compareAndSetAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun compareAndSetAsync (Ljava/lang/Object;Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun findCommonAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun findCommonLengthAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
@@ -57689,6 +57758,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketAsy
 	public abstract fun getAndSetAsync (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun getAndSetAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun getAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun getDigestAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun setAndKeepTTLAsync (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun setAsync (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun setAsync (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
@@ -57705,6 +57775,8 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketAsy
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketReactive : dev/slne/surf/redis/libs/redisson/api/RExpirableReactive {
 	public abstract fun addListener (Ldev/slne/surf/redis/libs/redisson/api/ObjectListener;)Lreactor/core/publisher/Mono;
+	public abstract fun compareAndDelete (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Lreactor/core/publisher/Mono;
+	public abstract fun compareAndSet (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Lreactor/core/publisher/Mono;
 	public abstract fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Lreactor/core/publisher/Mono;
 	public abstract fun findCommon (Ljava/lang/String;)Lreactor/core/publisher/Mono;
 	public abstract fun findCommonLength (Ljava/lang/String;)Lreactor/core/publisher/Mono;
@@ -57716,6 +57788,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketRea
 	public abstract fun getAndSet (Ljava/lang/Object;)Lreactor/core/publisher/Mono;
 	public abstract fun getAndSet (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Lreactor/core/publisher/Mono;
 	public abstract fun getAndSet (Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun getDigest ()Lreactor/core/publisher/Mono;
 	public abstract fun set (Ljava/lang/Object;)Lreactor/core/publisher/Mono;
 	public abstract fun set (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Lreactor/core/publisher/Mono;
 	public abstract fun set (Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
@@ -57732,6 +57805,8 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketRea
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketRx : dev/slne/surf/redis/libs/redisson/api/RExpirableRx {
 	public abstract fun addListener (Ldev/slne/surf/redis/libs/redisson/api/ObjectListener;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun compareAndDelete (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun compareAndSet (Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun findCommon (Ljava/lang/String;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun findCommonLength (Ljava/lang/String;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
@@ -57743,6 +57818,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketRx 
 	public abstract fun getAndSet (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun getAndSet (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun getAndSet (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun getDigest ()Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun set (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Completable;
 	public abstract fun set (Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Completable;
 	public abstract fun set (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Completable;
@@ -57760,24 +57836,32 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketRx 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBuckets : dev/slne/surf/redis/libs/redisson/api/RBucketsAsync {
 	public abstract fun get ([Ljava/lang/String;)Ljava/util/Map;
 	public abstract fun set (Ljava/util/Map;)V
+	public abstract fun setIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Z
+	public abstract fun setIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Z
 	public abstract fun trySet (Ljava/util/Map;)Z
 }
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketsAsync {
 	public abstract fun getAsync ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun setAsync (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun setIfAllKeysAbsentAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun setIfAllKeysExistAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun trySetAsync (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 }
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketsReactive {
 	public abstract fun get ([Ljava/lang/String;)Lreactor/core/publisher/Mono;
 	public abstract fun set (Ljava/util/Map;)Lreactor/core/publisher/Mono;
+	public abstract fun setIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Lreactor/core/publisher/Mono;
+	public abstract fun setIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Lreactor/core/publisher/Mono;
 	public abstract fun trySet (Ljava/util/Map;)Lreactor/core/publisher/Mono;
 }
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/RBucketsRx {
 	public abstract fun get ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun set (Ljava/util/Map;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Completable;
+	public abstract fun setIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun setIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun trySet (Ljava/util/Map;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 }
 
@@ -59592,20 +59676,39 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RMapCacheN
 	public abstract fun clearExpire (Ljava/lang/Object;)Ljava/lang/Boolean;
 	public abstract fun clearExpire (Ljava/util/Set;)Ljava/util/Map;
 	public abstract fun compute (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/BiFunction;)Ljava/lang/Object;
+	public abstract fun compute (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/BiFunction;)Ljava/lang/Object;
 	public abstract fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/Function;)Ljava/lang/Object;
+	public abstract fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/Function;)Ljava/lang/Object;
 	public abstract fun expireEntries (Ljava/util/Set;Ljava/time/Duration;)I
+	public abstract fun expireEntries (Ljava/util/Set;Ljava/time/Instant;)I
 	public abstract fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Duration;)I
+	public abstract fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Instant;)I
 	public abstract fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Duration;)I
+	public abstract fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Instant;)I
 	public abstract fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Duration;)I
+	public abstract fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Instant;)I
 	public abstract fun expireEntry (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public abstract fun expireEntry (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public abstract fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public abstract fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public abstract fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public abstract fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public abstract fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Duration;)Z
+	public abstract fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Instant;)Z
 	public abstract fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Z
+	public abstract fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Z
 	public abstract fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Z
+	public abstract fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Z
 	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;
+	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ljava/lang/Object;
+	public abstract fun putAll (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)V
 	public abstract fun putAll (Ljava/util/Map;Ljava/time/Duration;)V
 	public abstract fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;
+	public abstract fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ljava/lang/Object;
+	public abstract fun putIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Z
+	public abstract fun putIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Z
+	public abstract fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ljava/lang/Object;
+	public abstract fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ljava/lang/Object;
 	public abstract fun remainTimeToLive (Ljava/lang/Object;)J
 	public abstract fun remainTimeToLive (Ljava/util/Set;)Ljava/util/Map;
 }
@@ -59615,20 +59718,39 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RMapCacheN
 	public abstract fun clearExpireAsync (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun clearExpireAsync (Ljava/util/Set;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun computeAsync (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/BiFunction;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun computeAsync (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/BiFunction;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun computeIfAbsentAsync (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/Function;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun computeIfAbsentAsync (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/Function;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntriesAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntriesAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntriesIfGreaterAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntriesIfGreaterAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntriesIfLessAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntriesIfLessAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntriesIfNotSetAsync (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntriesIfNotSetAsync (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntryAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntryAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntryIfGreaterAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntryIfGreaterAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntryIfLessAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntryIfLessAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun expireEntryIfNotSetAsync (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun expireEntryIfNotSetAsync (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun fastPutAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun fastPutAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun fastPutIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun fastPutIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun putAllAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun putAllAsync (Ljava/util/Map;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun putAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun putAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun putIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun putIfAbsentAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun putIfAllKeysAbsentAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun putIfAllKeysExistAsync (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun putIfExistAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun putIfExistAsync (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun remainTimeToLiveAsync (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun remainTimeToLiveAsync (Ljava/util/Set;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 }
@@ -59638,20 +59760,39 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RMapCacheN
 	public abstract fun clearExpire (Ljava/lang/Object;)Lreactor/core/publisher/Mono;
 	public abstract fun clearExpire (Ljava/util/Set;)Lreactor/core/publisher/Mono;
 	public abstract fun compute (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/BiFunction;)Lreactor/core/publisher/Mono;
+	public abstract fun compute (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/BiFunction;)Lreactor/core/publisher/Mono;
 	public abstract fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/Function;)Lreactor/core/publisher/Mono;
+	public abstract fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/Function;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntries (Ljava/util/Set;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntries (Ljava/util/Set;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntry (Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntry (Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
+	public abstract fun putAll (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Lreactor/core/publisher/Mono;
 	public abstract fun putAll (Ljava/util/Map;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
 	public abstract fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
+	public abstract fun putIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Lreactor/core/publisher/Mono;
+	public abstract fun putIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Lreactor/core/publisher/Mono;
+	public abstract fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Lreactor/core/publisher/Mono;
+	public abstract fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Lreactor/core/publisher/Mono;
 	public abstract fun remainTimeToLive (Ljava/lang/Object;)Lreactor/core/publisher/Mono;
 	public abstract fun remainTimeToLive (Ljava/util/Set;)Lreactor/core/publisher/Mono;
 }
@@ -59661,20 +59802,39 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RMapCacheN
 	public abstract fun clearExpire (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun clearExpire (Ljava/util/Set;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun compute (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/BiFunction;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun compute (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/BiFunction;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Duration;Ljava/util/function/Function;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun computeIfAbsent (Ljava/lang/Object;Ljava/time/Instant;Ljava/util/function/Function;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun expireEntries (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntries (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntriesIfGreater (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntriesIfLess (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntriesIfNotSet (Ljava/util/Set;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun expireEntry (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntry (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntryIfGreater (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntryIfLess (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun expireEntryIfNotSet (Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun fastPut (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun fastPutIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun putAll (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Completable;
 	public abstract fun putAll (Ljava/util/Map;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Completable;
 	public abstract fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun putIfAllKeysAbsent (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun putIfAllKeysExist (Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Duration;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
+	public abstract fun putIfExist (Ljava/lang/Object;Ljava/lang/Object;Ljava/time/Instant;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun remainTimeToLive (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun remainTimeToLive (Ljava/util/Set;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 }
@@ -61345,6 +61505,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RSearch : 
 	public abstract fun dumpSynonyms (Ljava/lang/String;)Ljava/util/Map;
 	public abstract fun getConfig (Ljava/lang/String;)Ljava/util/Map;
 	public abstract fun getIndexes ()Ljava/util/List;
+	public abstract fun hybridSearch (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridSearchResult;
 	public abstract fun info (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/index/IndexInfo;
 	public abstract fun readCursor (Ljava/lang/String;J)Ldev/slne/surf/redis/libs/redisson/api/search/aggregate/AggregationResult;
 	public abstract fun readCursor (Ljava/lang/String;JI)Ldev/slne/surf/redis/libs/redisson/api/search/aggregate/AggregationResult;
@@ -61370,6 +61531,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RSearchAsy
 	public abstract fun dumpSynonymsAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun getConfigAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun getIndexesAsync ()Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public abstract fun hybridSearchAsync (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun infoAsync (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun readCursorAsync (Ljava/lang/String;J)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public abstract fun readCursorAsync (Ljava/lang/String;JI)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
@@ -61396,6 +61558,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RSearchRea
 	public abstract fun dumpSynonyms (Ljava/lang/String;)Lreactor/core/publisher/Mono;
 	public abstract fun getConfig (Ljava/lang/String;)Lreactor/core/publisher/Mono;
 	public abstract fun getIndexes ()Lreactor/core/publisher/Mono;
+	public abstract fun hybridSearch (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;)Lreactor/core/publisher/Mono;
 	public abstract fun info (Ljava/lang/String;)Lreactor/core/publisher/Mono;
 	public abstract fun readCursor (Ljava/lang/String;J)Lreactor/core/publisher/Mono;
 	public abstract fun readCursor (Ljava/lang/String;JI)Lreactor/core/publisher/Mono;
@@ -61422,6 +61585,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/RSearchRx 
 	public abstract fun dumpSynonyms (Ljava/lang/String;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun getConfig (Ljava/lang/String;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Maybe;
 	public abstract fun getIndexes ()Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
+	public abstract fun hybridSearch (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun info (Ljava/lang/String;)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun readCursor (Ljava/lang/String;J)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
 	public abstract fun readCursor (Ljava/lang/String;JI)Ldev/slne/surf/redis/libs/reactivex/rxjava3/core/Single;
@@ -63203,6 +63367,73 @@ public abstract interface annotation class dev/slne/surf/redis/libs/redisson/api
 	public abstract fun value ()Ljava/lang/Class;
 }
 
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs {
+	public static fun expected (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;
+	public static fun expectedDigest (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;
+	public static fun unexpected (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;
+	public static fun unexpectedDigest (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteParams : dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndDeleteArgs {
+	public fun getConditionType ()Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+	public fun getDigest ()Ljava/lang/String;
+	public fun getValue ()Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs {
+	public static fun expected (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetStep;
+	public static fun expectedDigest (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetStep;
+	public abstract fun expireAt (Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;
+	public abstract fun timeToLive (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;
+	public static fun unexpected (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetStep;
+	public static fun unexpectedDigest (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetStep;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetParams : dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs, dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetStep {
+	public fun expireAt (Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;
+	public fun getConditionType ()Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+	public fun getExpectedDigest ()Ljava/lang/String;
+	public fun getExpectedValue ()Ljava/lang/Object;
+	public fun getExpireAt ()Ljava/time/Instant;
+	public fun getNewValue ()Ljava/lang/Object;
+	public fun getTimeToLive ()Ljava/time/Duration;
+	public fun getUnexpectedDigest ()Ljava/lang/String;
+	public fun getUnexpectedValue ()Ljava/lang/Object;
+	public fun set (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;
+	public fun timeToLive (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetStep {
+	public abstract fun set (Ljava/lang/Object;)Ldev/slne/surf/redis/libs/redisson/api/bucket/CompareAndSetArgs;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/bucket/ConditionType : java/lang/Enum {
+	public static final field EXPECTED Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+	public static final field EXPECTED_DIGEST Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+	public static final field UNEXPECTED Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+	public static final field UNEXPECTED_DIGEST Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+	public static fun values ()[Ldev/slne/surf/redis/libs/redisson/api/bucket/ConditionType;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/bucket/SetArgs {
+	public static fun entries (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+	public abstract fun expireAt (Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+	public abstract fun keepTTL ()Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+	public abstract fun timeToLive (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/bucket/SetParams : dev/slne/surf/redis/libs/redisson/api/bucket/SetArgs {
+	public fun <init> (Ljava/util/Map;)V
+	public fun expireAt (Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+	public fun getEntries ()Ljava/util/Map;
+	public fun getExpireAt ()Ljava/time/Instant;
+	public fun getTimeToLive ()Ljava/time/Duration;
+	public fun isKeepTTL ()Z
+	public fun keepTTL ()Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+	public fun timeToLive (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+}
+
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/condition/Condition {
 }
 
@@ -63330,7 +63561,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/keys/Migra
 	public static fun keys ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/keys/HostMigrateArgs;
 }
 
-public class dev/slne/surf/redis/libs/redisson/api/keys/MigrateArgsParams : dev/slne/surf/redis/libs/redisson/api/keys/DatabaseMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/HostMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/MigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/OptionalMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/PortMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/TimeoutMigrateArgs {
+public class dev/slne/surf/redis/libs/redisson/api/keys/MigrateParams : dev/slne/surf/redis/libs/redisson/api/keys/DatabaseMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/HostMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/MigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/OptionalMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/PortMigrateArgs, dev/slne/surf/redis/libs/redisson/api/keys/TimeoutMigrateArgs {
 	public fun <init> ([Ljava/lang/String;)V
 	public fun database (I)Ldev/slne/surf/redis/libs/redisson/api/keys/TimeoutMigrateArgs;
 	public fun getDatabase ()I
@@ -63519,6 +63750,24 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/map/MapWri
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/map/MapWriterAsync {
 	public abstract fun delete (Ljava/util/Collection;)Ljava/util/concurrent/CompletionStage;
 	public abstract fun write (Ljava/util/Map;)Ljava/util/concurrent/CompletionStage;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/map/PutArgs {
+	public static fun entries (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;
+	public abstract fun expireAt (Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;
+	public abstract fun keepTTL ()Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;
+	public abstract fun timeToLive (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/map/PutParams : dev/slne/surf/redis/libs/redisson/api/map/PutArgs {
+	public fun <init> (Ljava/util/Map;)V
+	public fun expireAt (Ljava/time/Instant;)Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;
+	public fun getEntries ()Ljava/util/Map;
+	public fun getExpireAt ()Ljava/time/Instant;
+	public fun getTimeToLive ()Ljava/time/Duration;
+	public fun isKeepTTL ()Z
+	public fun keepTTL ()Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;
+	public fun timeToLive (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/map/PutArgs;
 }
 
 public class dev/slne/surf/redis/libs/redisson/api/map/RetryableMapWriter : dev/slne/surf/redis/libs/redisson/api/map/MapWriter {
@@ -64760,6 +65009,48 @@ public final class dev/slne/surf/redis/libs/redisson/api/redisnode/SetSlotComman
 	public static fun values ()[Ldev/slne/surf/redis/libs/redisson/api/redisnode/SetSlotCommand;
 }
 
+public final class dev/slne/surf/redis/libs/redisson/api/search/Expression {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun getAs ()Ljava/lang/String;
+	public fun getValue ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/GroupBy {
+	public static fun fieldNames ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/GroupBy;
+	public abstract fun reducers ([Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;)Ldev/slne/surf/redis/libs/redisson/api/search/GroupBy;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/GroupParams : dev/slne/surf/redis/libs/redisson/api/search/GroupBy {
+	public fun getFieldNames ()Ljava/util/List;
+	public fun getReducers ()Ljava/util/List;
+	public fun reducers ([Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;)Ldev/slne/surf/redis/libs/redisson/api/search/GroupBy;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/Reducer {
+	public abstract fun as (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun avg (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun count ()Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun countDistinct (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun countDistinctish (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun custom (Ljava/lang/String;[Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun firstValue (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun firstValue (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/SortOrder;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun max (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun min (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun quantile (Ljava/lang/String;Ljava/lang/Double;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun randomSample (Ljava/lang/String;I)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun stddev (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun sum (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public static fun toList (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/ReducerParams : dev/slne/surf/redis/libs/redisson/api/search/Reducer {
+	public fun as (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/Reducer;
+	public fun getArgs ()Ljava/util/List;
+	public fun getAs ()Ljava/lang/String;
+	public fun getFunctionName ()Ljava/lang/String;
+}
+
 public final class dev/slne/surf/redis/libs/redisson/api/search/SpellcheckOptions {
 	public static fun defaults ()Ldev/slne/surf/redis/libs/redisson/api/search/SpellcheckOptions;
 	public fun dialect (Ljava/lang/Integer;)Ldev/slne/surf/redis/libs/redisson/api/search/SpellcheckOptions;
@@ -65469,6 +65760,151 @@ public final class dev/slne/surf/redis/libs/redisson/api/search/query/SummarizeO
 	public fun separator (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/SummarizeOptions;
 }
 
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/Combine {
+	public static fun linear ()Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep;
+	public static fun reciprocalRankFusion ()Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionStep;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearParams : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep {
+	public fun alpha (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep;
+	public fun beta (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep;
+	public fun getAlpha ()Ljava/lang/Double;
+	public fun getBeta ()Ljava/lang/Double;
+	public fun getScoreAlias ()Ljava/lang/String;
+	public fun getWindow ()Ljava/lang/Integer;
+	public fun window (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/Combine {
+	public abstract fun alpha (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep;
+	public abstract fun beta (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep;
+	public abstract fun window (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineLinearStep;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionFinalStep : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/Combine, dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionStep {
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionStep {
+	public abstract fun constant (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionFinalStep;
+	public abstract fun window (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionFinalStep;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineRrfParams : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionFinalStep, dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionStep {
+	public fun constant (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionFinalStep;
+	public fun getConstant ()Ljava/lang/Double;
+	public fun getScoreAlias ()Ljava/lang/String;
+	public fun getWindow ()Ljava/lang/Integer;
+	public fun window (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/CombineReciprocalRankFusionFinalStep;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs {
+	public abstract fun apply ([Ldev/slne/surf/redis/libs/redisson/api/search/Expression;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public abstract fun combine (Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/Combine;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public abstract fun filter (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public abstract fun groupBy ([Ldev/slne/surf/redis/libs/redisson/api/search/GroupBy;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public abstract fun limit (II)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public abstract fun load ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public static fun query (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/QueryStep;
+	public abstract fun timeout (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryParams : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs, dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/ParamsStep, dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/QueryStep, dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/SortStep {
+	public fun apply ([Ldev/slne/surf/redis/libs/redisson/api/search/Expression;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun combine (Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/Combine;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun filter (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun getCombine ()Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/Combine;
+	public fun getExpressions ()Ljava/util/List;
+	public fun getGroupBy ()Ljava/util/List;
+	public fun getLimitCount ()Ljava/lang/Integer;
+	public fun getLimitOffset ()Ljava/lang/Integer;
+	public fun getLoadFields ()Ljava/util/List;
+	public fun getParams ()Ljava/util/Map;
+	public fun getPostFilter ()Ljava/lang/String;
+	public fun getQuery ()Ljava/lang/String;
+	public fun getQueryScoreAlias ()Ljava/lang/String;
+	public fun getScorer ()Ljava/lang/String;
+	public fun getSortFieldName ()Ljava/lang/String;
+	public fun getSortOrder ()Ldev/slne/surf/redis/libs/redisson/api/SortOrder;
+	public fun getTimeout ()Ljava/time/Duration;
+	public fun getVectorSimilarityParams ()Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams;
+	public fun groupBy ([Ldev/slne/surf/redis/libs/redisson/api/search/GroupBy;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun isNoSort ()Z
+	public fun limit (II)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun load ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun noSort ()Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun params (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/SortStep;
+	public fun scoreAlias (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/QueryStep;
+	public fun scorer (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/QueryStep;
+	public fun sortBy (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/SortOrder;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun timeout (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public fun vectorSimilarity (Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/ParamsStep;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridSearchResult {
+	public fun <init> (JLjava/util/List;)V
+	public fun getResults ()Ljava/util/List;
+	public fun getTotal ()J
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/ParamsStep {
+	public abstract fun params (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/SortStep;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/QueryStep {
+	public abstract fun scoreAlias (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/QueryStep;
+	public abstract fun scorer (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/QueryStep;
+	public abstract fun vectorSimilarity (Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/ParamsStep;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/SortStep : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs {
+	public abstract fun noSort ()Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+	public abstract fun sortBy (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/SortOrder;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/HybridQueryArgs;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity {
+	public static fun of (Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityBasic;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityBasic : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity {
+	public abstract fun filter (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityBasic;
+	public abstract fun nearestNeighbors (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityNearestNeighbors;
+	public abstract fun range (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityRange;
+	public abstract fun scoreAlias (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityBasic;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityNearestNeighbors : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity {
+	public abstract fun efRuntime (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityBasic, dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityNearestNeighbors, dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityRange {
+	public fun efRuntime (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity;
+	public fun epsilon (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity;
+	public fun filter (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityBasic;
+	public fun getEfRuntime ()Ljava/lang/Integer;
+	public fun getField ()Ljava/lang/String;
+	public fun getFilter ()Ljava/lang/String;
+	public fun getKnnK ()Ljava/lang/Integer;
+	public fun getMode ()Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams$VectorSearchMode;
+	public fun getParam ()Ljava/lang/String;
+	public fun getRangeEpsilon ()Ljava/lang/Double;
+	public fun getRangeRadius ()Ljava/lang/Double;
+	public fun getScoreAlias ()Ljava/lang/String;
+	public fun nearestNeighbors (I)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityNearestNeighbors;
+	public fun range (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityRange;
+	public fun scoreAlias (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityBasic;
+}
+
+public final class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams$VectorSearchMode : java/lang/Enum {
+	public static final field KNN Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams$VectorSearchMode;
+	public static final field RANGE Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams$VectorSearchMode;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams$VectorSearchMode;
+	public static fun values ()[Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityParams$VectorSearchMode;
+}
+
+public abstract interface class dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarityRange : dev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity {
+	public abstract fun epsilon (D)Ldev/slne/surf/redis/libs/redisson/api/search/query/hybrid/VectorSimilarity;
+}
+
 public final class dev/slne/surf/redis/libs/redisson/api/stream/AutoClaimResult : java/io/Serializable {
 	public fun <init> ()V
 	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;Ljava/util/Map;Ljava/util/List;)V
@@ -65495,9 +65931,9 @@ public class dev/slne/surf/redis/libs/redisson/api/stream/FastAutoClaimResult : 
 public class dev/slne/surf/redis/libs/redisson/api/stream/PendingEntry {
 	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;Ljava/lang/String;JJ)V
 	public fun getConsumerName ()Ljava/lang/String;
+	public fun getDeliveryCount ()J
 	public fun getId ()Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;
 	public fun getIdleTime ()J
-	public fun getLastTimeDelivered ()J
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -65670,6 +66106,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/stream/Str
 }
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs {
+	public abstract fun claim (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs;
 	public abstract fun count (I)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs;
 	public static fun greaterThan (Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs;
 	public static fun greaterThan (Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs;
@@ -65681,9 +66118,11 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/stream/Str
 }
 
 public final class dev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupParams : dev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs {
+	public fun claim (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs;
 	public fun count (I)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMultiReadGroupArgs;
 	public fun getCount ()I
 	public fun getId1 ()Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;
+	public fun getMinIdleTime ()Ljava/time/Duration;
 	public fun getOffsets ()Ljava/util/Map;
 	public fun getTimeout ()Ljava/time/Duration;
 	public fun isNoAck ()Z
@@ -65752,6 +66191,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/stream/Str
 }
 
 public abstract interface class dev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs {
+	public abstract fun claim (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs;
 	public abstract fun count (I)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs;
 	public static fun greaterThan (Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs;
 	public static fun neverDelivered ()Ldev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs;
@@ -65760,9 +66200,11 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/api/stream/Str
 }
 
 public final class dev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupParams : dev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs {
+	public fun claim (Ljava/time/Duration;)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs;
 	public fun count (I)Ldev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs;
 	public fun getCount ()I
 	public fun getId1 ()Ldev/slne/surf/redis/libs/redisson/api/stream/StreamMessageId;
+	public fun getMinIdleTime ()Ljava/time/Duration;
 	public fun getTimeout ()Ljava/time/Duration;
 	public fun isNoAck ()Z
 	public fun noAck ()Ldev/slne/surf/redis/libs/redisson/api/stream/StreamReadGroupArgs;
@@ -66533,8 +66975,9 @@ public class dev/slne/surf/redis/libs/redisson/client/RedisReconnectedException 
 }
 
 public class dev/slne/surf/redis/libs/redisson/client/RedisRedirectException : dev/slne/surf/redis/libs/redisson/client/RedisException {
-	public fun <init> (ILdev/slne/surf/redis/libs/redisson/misc/RedisURI;)V
-	public fun getSlot ()I
+	public fun <init> (Ldev/slne/surf/redis/libs/redisson/misc/RedisURI;)V
+	public fun <init> (Ljava/lang/Integer;Ldev/slne/surf/redis/libs/redisson/misc/RedisURI;)V
+	public fun getSlot ()Ljava/lang/Integer;
 	public fun getUrl ()Ldev/slne/surf/redis/libs/redisson/misc/RedisURI;
 }
 
@@ -66940,9 +67383,11 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/client/protoco
 	public static final field DEBUG Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field DECR Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field DEL Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
+	public static final field DELEX Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
 	public static final field DEL_BOOL Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field DEL_OBJECTS Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field DEL_VOID Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
+	public static final field DIGEST Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
 	public static final field DISCARD Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field DUMP Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
 	public static final field EVAL_BOOLEAN Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
@@ -67049,10 +67494,13 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/client/protoco
 	public static final field HSCAN Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
 	public static final field HSCAN_ENTRY Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
 	public static final field HSET Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
+	public static final field HSETEX Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
+	public static final field HSETEX_VOID Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field HSETNX Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field HSET_VOID Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field HSTRLEN Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
 	public static final field HVALS Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
+	public static final field HYBRID_SEARCH Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisCommand;
 	public static final field INCR Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field INCRBY Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field INCRBYFLOAT Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
@@ -67127,6 +67575,7 @@ public abstract interface class dev/slne/surf/redis/libs/redisson/client/protoco
 	public static final field MIGRATE Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field MOVE Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field MSET Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
+	public static final field MSETEX Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field MSETNX Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field MULTI Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
 	public static final field NOT_EXISTS Ldev/slne/surf/redis/libs/redisson/client/protocol/RedisStrictCommand;
@@ -67668,6 +68117,11 @@ public class dev/slne/surf/redis/libs/redisson/client/protocol/decoder/GeoPositi
 	public fun <init> (Ljava/util/List;)V
 	public synthetic fun decode (Ljava/util/List;Ldev/slne/surf/redis/libs/redisson/client/handler/State;)Ljava/lang/Object;
 	public fun decode (Ljava/util/List;Ldev/slne/surf/redis/libs/redisson/client/handler/State;)Ljava/util/Map;
+}
+
+public class dev/slne/surf/redis/libs/redisson/client/protocol/decoder/HybridSearchResultDecoder : dev/slne/surf/redis/libs/redisson/client/protocol/decoder/MultiDecoder {
+	public fun <init> ()V
+	public fun decode (Ljava/util/List;Ldev/slne/surf/redis/libs/redisson/client/handler/State;)Ljava/lang/Object;
 }
 
 public class dev/slne/surf/redis/libs/redisson/client/protocol/decoder/IndexInfoDecoder : dev/slne/surf/redis/libs/redisson/client/protocol/decoder/MultiDecoder {
@@ -68322,29 +68776,6 @@ public class dev/slne/surf/redis/libs/redisson/codec/ForyCodec : dev/slne/surf/r
 	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
 }
 
-public class dev/slne/surf/redis/libs/redisson/codec/FstCodec : dev/slne/surf/redis/libs/redisson/client/codec/BaseCodec {
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/ClassLoader;)V
-	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/FstCodec;)V
-	public fun <init> (Lorg/nustaq/serialization/FSTConfiguration;)V
-	public fun <init> (Lorg/nustaq/serialization/FSTConfiguration;Z)V
-	public fun getClassLoader ()Ljava/lang/ClassLoader;
-	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
-	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
-}
-
-public class dev/slne/surf/redis/libs/redisson/codec/FuryCodec : dev/slne/surf/redis/libs/redisson/client/codec/BaseCodec {
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/ClassLoader;)V
-	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/FuryCodec;)V
-	public fun <init> (Ljava/lang/ClassLoader;Ljava/util/Set;Lorg/apache/fury/config/Language;)V
-	public fun <init> (Ljava/util/Set;)V
-	public fun <init> (Ljava/util/Set;Lorg/apache/fury/config/Language;)V
-	public fun <init> (Lorg/apache/fury/config/Language;)V
-	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
-	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
-}
-
 public class dev/slne/surf/redis/libs/redisson/codec/IonJacksonCodec : dev/slne/surf/redis/libs/redisson/codec/JsonJacksonCodec {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/ClassLoader;)V
@@ -68373,6 +68804,23 @@ public class dev/slne/surf/redis/libs/redisson/codec/JsonCodecWrapper : dev/slne
 	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
 	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
 	public fun hashCode ()I
+}
+
+public class dev/slne/surf/redis/libs/redisson/codec/JsonJackson3Codec : dev/slne/surf/redis/libs/redisson/client/codec/BaseCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/libs/redisson/codec/JsonJackson3Codec;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/ClassLoader;)V
+	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/JsonJackson3Codec;)V
+	public fun <init> (Ltools/jackson/databind/ObjectMapper;)V
+	public fun <init> (Ltools/jackson/databind/ObjectMapper;Z)V
+	protected fun createDefaultMapper ()Ltools/jackson/databind/ObjectMapper;
+	protected fun createDefaultMapper (Ljava/lang/ClassLoader;)Ltools/jackson/databind/ObjectMapper;
+	protected static fun createMapper (Ljava/lang/ClassLoader;Ltools/jackson/databind/ObjectMapper;)Ltools/jackson/databind/ObjectMapper;
+	public fun getClassLoader ()Ljava/lang/ClassLoader;
+	public fun getObjectMapper ()Ltools/jackson/databind/ObjectMapper;
+	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
+	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
+	protected fun initTypeInclusion (Ltools/jackson/databind/json/JsonMapper$Builder;)V
 }
 
 public class dev/slne/surf/redis/libs/redisson/codec/JsonJacksonCodec : dev/slne/surf/redis/libs/redisson/client/codec/BaseCodec {
@@ -68449,43 +68897,6 @@ public class dev/slne/surf/redis/libs/redisson/codec/MapCacheEventCodec : dev/sl
 	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
 }
 
-public class dev/slne/surf/redis/libs/redisson/codec/MarshallingCodec : dev/slne/surf/redis/libs/redisson/client/codec/BaseCodec {
-	public fun <init> ()V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$Protocol;Lorg/jboss/marshalling/MarshallingConfiguration;)V
-	public fun <init> (Ljava/lang/ClassLoader;)V
-	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/MarshallingCodec;)V
-	protected fun createConfig ()Lorg/jboss/marshalling/MarshallingConfiguration;
-	public fun getClassLoader ()Ljava/lang/ClassLoader;
-	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
-	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
-}
-
-public class dev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$ByteInputWrapper : org/jboss/marshalling/ByteInput {
-	public fun <init> (Ldev/slne/surf/redis/libs/netty/buffer/ByteBuf;)V
-	public fun available ()I
-	public fun close ()V
-	public fun read ()I
-	public fun read ([B)I
-	public fun read ([BII)I
-	public fun skip (J)J
-}
-
-public class dev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$ByteOutputWrapper : org/jboss/marshalling/ByteOutput {
-	public fun <init> (Ldev/slne/surf/redis/libs/netty/buffer/ByteBuf;)V
-	public fun close ()V
-	public fun flush ()V
-	public fun write (I)V
-	public fun write ([B)V
-	public fun write ([BII)V
-}
-
-public final class dev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$Protocol : java/lang/Enum {
-	public static final field RIVER Ldev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$Protocol;
-	public static final field SERIAL Ldev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$Protocol;
-	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$Protocol;
-	public static fun values ()[Ldev/slne/surf/redis/libs/redisson/codec/MarshallingCodec$Protocol;
-}
-
 public class dev/slne/surf/redis/libs/redisson/codec/MsgPackJacksonCodec : dev/slne/surf/redis/libs/redisson/codec/JsonJacksonCodec {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/ClassLoader;)V
@@ -68544,16 +68955,6 @@ public class dev/slne/surf/redis/libs/redisson/codec/SmileJacksonCodec : dev/sln
 	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/SmileJacksonCodec;)V
 }
 
-public class dev/slne/surf/redis/libs/redisson/codec/SnappyCodec : dev/slne/surf/redis/libs/redisson/client/codec/BaseCodec {
-	public fun <init> ()V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;)V
-	public fun <init> (Ljava/lang/ClassLoader;)V
-	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/SnappyCodec;)V
-	public fun getClassLoader ()Ljava/lang/ClassLoader;
-	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
-	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
-}
-
 public class dev/slne/surf/redis/libs/redisson/codec/SnappyCodecV2 : dev/slne/surf/redis/libs/redisson/client/codec/BaseCodec {
 	public fun <init> ()V
 	public fun <init> (Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;)V
@@ -68561,6 +68962,29 @@ public class dev/slne/surf/redis/libs/redisson/codec/SnappyCodecV2 : dev/slne/su
 	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/SnappyCodecV2;)V
 	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
 	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
+}
+
+public class dev/slne/surf/redis/libs/redisson/codec/TypedJsonJackson3Codec : dev/slne/surf/redis/libs/redisson/codec/JsonJackson3Codec {
+	public fun <init> (Ljava/lang/Class;)V
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;)V
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;)V
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;Ltools/jackson/databind/ObjectMapper;)V
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;Ltools/jackson/databind/ObjectMapper;)V
+	public fun <init> (Ljava/lang/Class;Ltools/jackson/databind/ObjectMapper;)V
+	public fun <init> (Ljava/lang/ClassLoader;Ldev/slne/surf/redis/libs/redisson/codec/TypedJsonJackson3Codec;)V
+	public fun <init> (Ltools/jackson/core/type/TypeReference;)V
+	public fun <init> (Ltools/jackson/core/type/TypeReference;Ltools/jackson/core/type/TypeReference;)V
+	public fun <init> (Ltools/jackson/core/type/TypeReference;Ltools/jackson/core/type/TypeReference;Ltools/jackson/core/type/TypeReference;)V
+	public fun <init> (Ltools/jackson/core/type/TypeReference;Ltools/jackson/core/type/TypeReference;Ltools/jackson/core/type/TypeReference;Ltools/jackson/databind/ObjectMapper;)V
+	public fun <init> (Ltools/jackson/core/type/TypeReference;Ltools/jackson/core/type/TypeReference;Ltools/jackson/databind/ObjectMapper;)V
+	public fun <init> (Ltools/jackson/core/type/TypeReference;Ltools/jackson/databind/ObjectMapper;)V
+	public fun getMapKeyDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
+	public fun getMapKeyEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
+	public fun getMapValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
+	public fun getMapValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
+	public fun getValueDecoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Decoder;
+	public fun getValueEncoder ()Ldev/slne/surf/redis/libs/redisson/client/protocol/Encoder;
+	protected fun initTypeInclusion (Ltools/jackson/databind/json/JsonMapper$Builder;)V
 }
 
 public class dev/slne/surf/redis/libs/redisson/codec/TypedJsonJacksonCodec : dev/slne/surf/redis/libs/redisson/codec/JsonJacksonCodec {
@@ -69626,6 +70050,7 @@ public class dev/slne/surf/redis/libs/redisson/connection/NodeSource {
 public final class dev/slne/surf/redis/libs/redisson/connection/NodeSource$Redirect : java/lang/Enum {
 	public static final field ASK Ldev/slne/surf/redis/libs/redisson/connection/NodeSource$Redirect;
 	public static final field MOVED Ldev/slne/surf/redis/libs/redisson/connection/NodeSource$Redirect;
+	public static final field REDIRECT Ldev/slne/surf/redis/libs/redisson/connection/NodeSource$Redirect;
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/connection/NodeSource$Redirect;
 	public static fun values ()[Ldev/slne/surf/redis/libs/redisson/connection/NodeSource$Redirect;
 }
@@ -71975,194 +72400,6 @@ public abstract class dev/slne/surf/redis/libs/redisson/rx/SetRxIterator {
 	protected fun tryAgain ()Z
 }
 
-public class dev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig {
-	public fun <init> ()V
-	public fun <init> (JJ)V
-	public fun addListener (Ldev/slne/surf/redis/libs/redisson/api/map/event/MapEntryListener;)V
-	public static fun fromJSON (Ljava/io/File;)Ljava/util/Map;
-	public static fun fromJSON (Ljava/io/InputStream;)Ljava/util/Map;
-	public static fun fromJSON (Ljava/io/Reader;)Ljava/util/Map;
-	public static fun fromJSON (Ljava/lang/String;)Ljava/util/Map;
-	public static fun fromJSON (Ljava/net/URL;)Ljava/util/Map;
-	public static fun fromYAML (Ljava/io/File;)Ljava/util/Map;
-	public static fun fromYAML (Ljava/io/InputStream;)Ljava/util/Map;
-	public static fun fromYAML (Ljava/io/Reader;)Ljava/util/Map;
-	public static fun fromYAML (Ljava/lang/String;)Ljava/util/Map;
-	public static fun fromYAML (Ljava/net/URL;)Ljava/util/Map;
-	public fun getEvictionMode ()Ldev/slne/surf/redis/libs/redisson/api/EvictionMode;
-	public fun getListeners ()Ljava/util/List;
-	public fun getMaxIdleTime ()J
-	public fun getMaxSize ()I
-	public fun getTTL ()J
-	public fun setEvictionMode (Ldev/slne/surf/redis/libs/redisson/api/EvictionMode;)Ldev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig;
-	public fun setListeners (Ljava/util/List;)V
-	public fun setMaxIdleTime (J)V
-	public fun setMaxSize (I)V
-	public fun setTTL (J)V
-	public static fun toJSON (Ljava/util/Map;)Ljava/lang/String;
-	public fun toString ()Ljava/lang/String;
-	public static fun toYAML (Ljava/util/Map;)Ljava/lang/String;
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/CacheConfigSupport {
-	public fun <init> ()V
-	public static fun createListener (Ljava/lang/String;)Ljava/lang/Object;
-	public fun fromJSON (Ljava/io/File;)Ljava/util/Map;
-	public fun fromJSON (Ljava/io/InputStream;)Ljava/util/Map;
-	public fun fromJSON (Ljava/io/Reader;)Ljava/util/Map;
-	public fun fromJSON (Ljava/lang/String;)Ljava/util/Map;
-	public fun fromJSON (Ljava/net/URL;)Ljava/util/Map;
-	public static fun fromMap (Ljava/util/Map;Ljava/lang/Class;)Ljava/util/Map;
-	public fun fromYAML (Ljava/io/File;)Ljava/util/Map;
-	public fun fromYAML (Ljava/io/InputStream;)Ljava/util/Map;
-	public fun fromYAML (Ljava/io/Reader;)Ljava/util/Map;
-	public fun fromYAML (Ljava/lang/String;)Ljava/util/Map;
-	public fun fromYAML (Ljava/net/URL;)Ljava/util/Map;
-	public fun toJSON (Ljava/util/Map;)Ljava/lang/String;
-	public fun toYAML (Ljava/util/Map;)Ljava/lang/String;
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/NullValue : java/io/Serializable, org/springframework/cache/Cache$ValueWrapper {
-	public static final field INSTANCE Ldev/slne/surf/redis/libs/redisson/spring/cache/NullValue;
-	public fun <init> ()V
-	public fun get ()Ljava/lang/Object;
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/RedissonCache : org/springframework/cache/Cache {
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RMap;Z)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RMapCache;Ldev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig;Z)V
-	public fun clear ()V
-	public fun evict (Ljava/lang/Object;)V
-	public fun evictIfPresent (Ljava/lang/Object;)Z
-	protected fun fromStoreValue (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun get (Ljava/lang/Object;)Lorg/springframework/cache/Cache$ValueWrapper;
-	public fun get (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
-	public fun get (Ljava/lang/Object;Ljava/util/concurrent/Callable;)Ljava/lang/Object;
-	public fun getName ()Ljava/lang/String;
-	public fun getNativeCache ()Ldev/slne/surf/redis/libs/redisson/api/RMap;
-	public synthetic fun getNativeCache ()Ljava/lang/Object;
-	public fun invalidate ()Z
-	public fun put (Ljava/lang/Object;Ljava/lang/Object;)V
-	public fun putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;)Lorg/springframework/cache/Cache$ValueWrapper;
-	public fun retrieve (Ljava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
-	public fun retrieve (Ljava/lang/Object;Ljava/util/function/Supplier;)Ljava/util/concurrent/CompletableFuture;
-	protected fun toStoreValue (Ljava/lang/Object;)Ljava/lang/Object;
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/RedissonCacheMeterBinderProvider : org/springframework/boot/actuate/metrics/cache/CacheMeterBinderProvider {
-	public fun <init> ()V
-	public fun getMeterBinder (Ldev/slne/surf/redis/libs/redisson/spring/cache/RedissonCache;Ljava/lang/Iterable;)Lio/micrometer/core/instrument/binder/MeterBinder;
-	public synthetic fun getMeterBinder (Lorg/springframework/cache/Cache;Ljava/lang/Iterable;)Lio/micrometer/core/instrument/binder/MeterBinder;
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/RedissonCacheMetrics : io/micrometer/core/instrument/binder/cache/CacheMeterBinder {
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/spring/cache/RedissonCache;Ljava/lang/Iterable;)V
-	protected fun bindImplementationSpecificMetrics (Lio/micrometer/core/instrument/MeterRegistry;)V
-	protected fun evictionCount ()Ljava/lang/Long;
-	protected fun hitCount ()J
-	protected fun missCount ()Ljava/lang/Long;
-	public static fun monitor (Lio/micrometer/core/instrument/MeterRegistry;Ldev/slne/surf/redis/libs/redisson/spring/cache/RedissonCache;Ljava/lang/Iterable;)Ldev/slne/surf/redis/libs/redisson/spring/cache/RedissonCache;
-	protected fun putCount ()J
-	protected fun size ()Ljava/lang/Long;
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/RedissonCacheStatisticsAutoConfiguration {
-	public fun <init> ()V
-	public fun redissonCacheMeterBinderProvider ()Ldev/slne/surf/redis/libs/redisson/spring/cache/RedissonCacheMeterBinderProvider;
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/RedissonSpringCacheManager : org/springframework/beans/factory/InitializingBean, org/springframework/cache/CacheManager, org/springframework/context/ResourceLoaderAware {
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/lang/String;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/util/Map;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/util/Map;Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;)V
-	public fun afterPropertiesSet ()V
-	protected fun createDefaultConfig ()Ldev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig;
-	public fun getCache (Ljava/lang/String;)Lorg/springframework/cache/Cache;
-	public fun getCacheNames ()Ljava/util/Collection;
-	protected fun getMap (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig;)Ldev/slne/surf/redis/libs/redisson/api/RMap;
-	protected fun getMapCache (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig;)Ldev/slne/surf/redis/libs/redisson/api/RMapCache;
-	public fun setAllowNullValues (Z)V
-	public fun setCacheNames (Ljava/util/Collection;)V
-	public fun setCodec (Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;)V
-	public fun setConfig (Ljava/util/Map;)V
-	public fun setConfigLocation (Ljava/lang/String;)V
-	public fun setRedisson (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;)V
-	public fun setResourceLoader (Lorg/springframework/core/io/ResourceLoader;)V
-	public fun setTransactionAware (Z)V
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/cache/RedissonSpringCacheNativeManager : dev/slne/surf/redis/libs/redisson/spring/cache/RedissonSpringCacheManager, org/springframework/beans/factory/InitializingBean, org/springframework/cache/CacheManager, org/springframework/context/ResourceLoaderAware {
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/lang/String;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/util/Map;)V
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;Ljava/util/Map;Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;)V
-	public fun afterPropertiesSet ()V
-	protected fun getMap (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig;)Ldev/slne/surf/redis/libs/redisson/api/RMap;
-	protected fun getMapCache (Ljava/lang/String;Ldev/slne/surf/redis/libs/redisson/spring/cache/CacheConfig;)Ldev/slne/surf/redis/libs/redisson/api/RMapCache;
-	public fun setConfig (Ljava/util/Map;)V
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/transaction/ReactiveRedissonResourceHolder : org/springframework/transaction/support/ResourceHolderSupport {
-	public fun <init> ()V
-	public fun getTransaction ()Ldev/slne/surf/redis/libs/redisson/api/RTransactionReactive;
-	public fun setTransaction (Ldev/slne/surf/redis/libs/redisson/api/RTransactionReactive;)V
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/transaction/ReactiveRedissonTransactionManager : org/springframework/transaction/reactive/AbstractReactiveTransactionManager {
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonReactiveClient;)V
-	protected fun doBegin (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;Ljava/lang/Object;Lorg/springframework/transaction/TransactionDefinition;)Lreactor/core/publisher/Mono;
-	protected fun doCleanupAfterCompletion (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;Ljava/lang/Object;)Lreactor/core/publisher/Mono;
-	protected fun doCommit (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;Lorg/springframework/transaction/reactive/GenericReactiveTransaction;)Lreactor/core/publisher/Mono;
-	protected fun doGetTransaction (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;)Ljava/lang/Object;
-	protected fun doResume (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;Ljava/lang/Object;Ljava/lang/Object;)Lreactor/core/publisher/Mono;
-	protected fun doRollback (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;Lorg/springframework/transaction/reactive/GenericReactiveTransaction;)Lreactor/core/publisher/Mono;
-	protected fun doSetRollbackOnly (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;Lorg/springframework/transaction/reactive/GenericReactiveTransaction;)Lreactor/core/publisher/Mono;
-	protected fun doSuspend (Lorg/springframework/transaction/reactive/TransactionSynchronizationManager;Ljava/lang/Object;)Lreactor/core/publisher/Mono;
-	public fun getCurrentTransaction ()Lreactor/core/publisher/Mono;
-	protected fun isExistingTransaction (Ljava/lang/Object;)Z
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/transaction/ReactiveRedissonTransactionObject : org/springframework/transaction/support/SmartTransactionObject {
-	public fun <init> ()V
-	public fun flush ()V
-	public fun getResourceHolder ()Ldev/slne/surf/redis/libs/redisson/spring/transaction/ReactiveRedissonResourceHolder;
-	public fun isRollbackOnly ()Z
-	public fun setResourceHolder (Ldev/slne/surf/redis/libs/redisson/spring/transaction/ReactiveRedissonResourceHolder;)V
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/transaction/RedissonTransactionHolder {
-	public fun <init> ()V
-	public fun getTransaction ()Ldev/slne/surf/redis/libs/redisson/api/RTransaction;
-	public fun setTransaction (Ldev/slne/surf/redis/libs/redisson/api/RTransaction;)V
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/transaction/RedissonTransactionManager : org/springframework/transaction/support/AbstractPlatformTransactionManager, org/springframework/transaction/support/ResourceTransactionManager {
-	public fun <init> (Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;)V
-	protected fun doBegin (Ljava/lang/Object;Lorg/springframework/transaction/TransactionDefinition;)V
-	protected fun doCleanupAfterCompletion (Ljava/lang/Object;)V
-	protected fun doCommit (Lorg/springframework/transaction/support/DefaultTransactionStatus;)V
-	protected fun doGetTransaction ()Ljava/lang/Object;
-	protected fun doResume (Ljava/lang/Object;Ljava/lang/Object;)V
-	protected fun doRollback (Lorg/springframework/transaction/support/DefaultTransactionStatus;)V
-	protected fun doSetRollbackOnly (Lorg/springframework/transaction/support/DefaultTransactionStatus;)V
-	protected fun doSuspend (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun getCurrentTransaction ()Ldev/slne/surf/redis/libs/redisson/api/RTransaction;
-	public fun getResourceFactory ()Ljava/lang/Object;
-	protected fun isExistingTransaction (Ljava/lang/Object;)Z
-}
-
-public class dev/slne/surf/redis/libs/redisson/spring/transaction/RedissonTransactionObject : org/springframework/transaction/support/SmartTransactionObject {
-	public fun <init> ()V
-	public fun flush ()V
-	public fun getTransactionHolder ()Ldev/slne/surf/redis/libs/redisson/spring/transaction/RedissonTransactionHolder;
-	public fun isRollbackOnly ()Z
-	public fun setRollbackOnly (Z)V
-	public fun setTransactionHolder (Ldev/slne/surf/redis/libs/redisson/spring/transaction/RedissonTransactionHolder;)V
-}
-
 public class dev/slne/surf/redis/libs/redisson/transaction/BaseTransactionalMap : dev/slne/surf/redis/libs/redisson/transaction/BaseTransactionalObject {
 	public fun <init> (Ldev/slne/surf/redis/libs/redisson/command/CommandAsyncExecutor;JLjava/util/List;Ldev/slne/surf/redis/libs/redisson/api/RMap;Ljava/lang/String;)V
 	protected fun addAndGetOperationAsync (Ljava/lang/Object;Ljava/lang/Number;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
@@ -72360,6 +72597,8 @@ public class dev/slne/surf/redis/libs/redisson/transaction/RedissonTransactional
 	protected fun executeLocked (Ljava/util/function/Supplier;Ljava/util/Collection;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun getAsync ([Ljava/lang/String;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun setAsync (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun setIfAllKeysAbsentAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
+	public fun setIfAllKeysExistAsync (Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 	public fun trySetAsync (Ljava/util/Map;)Ldev/slne/surf/redis/libs/redisson/api/RFuture;
 }
 
@@ -72717,6 +72956,25 @@ public class dev/slne/surf/redis/libs/redisson/transaction/operation/bucket/Buck
 	public fun getTimeUnit ()Ljava/util/concurrent/TimeUnit;
 	public fun getValue ()Ljava/lang/Object;
 	public fun rollback (Ldev/slne/surf/redis/libs/redisson/command/CommandAsyncExecutor;)V
+}
+
+public class dev/slne/surf/redis/libs/redisson/transaction/operation/bucket/BucketsSetIfAllKeysAbsentOperation : dev/slne/surf/redis/libs/redisson/transaction/operation/bucket/BucketsSetOperation {
+	public fun <init> (Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;Ljava/lang/String;)V
+	protected fun commit (Ldev/slne/surf/redis/libs/redisson/api/RBuckets;Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)V
+}
+
+public class dev/slne/surf/redis/libs/redisson/transaction/operation/bucket/BucketsSetIfAllKeysExistOperation : dev/slne/surf/redis/libs/redisson/transaction/operation/bucket/BucketsSetOperation {
+	public fun <init> (Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;Ljava/lang/String;)V
+	protected fun commit (Ldev/slne/surf/redis/libs/redisson/api/RBuckets;Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)V
+}
+
+public abstract class dev/slne/surf/redis/libs/redisson/transaction/operation/bucket/BucketsSetOperation : dev/slne/surf/redis/libs/redisson/transaction/operation/TransactionalOperation {
+	public fun <init> (Ldev/slne/surf/redis/libs/redisson/client/codec/Codec;Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;Ljava/lang/String;)V
+	protected abstract fun commit (Ldev/slne/surf/redis/libs/redisson/api/RBuckets;Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;)V
+	public fun commit (Ldev/slne/surf/redis/libs/redisson/command/CommandAsyncExecutor;)V
+	public fun getSetArgs ()Ldev/slne/surf/redis/libs/redisson/api/bucket/SetArgs;
+	public fun rollback (Ldev/slne/surf/redis/libs/redisson/command/CommandAsyncExecutor;)V
+	protected fun unlock (Ldev/slne/surf/redis/libs/redisson/command/CommandAsyncExecutor;)V
 }
 
 public class dev/slne/surf/redis/libs/redisson/transaction/operation/bucket/BucketsTrySetOperation : dev/slne/surf/redis/libs/redisson/transaction/operation/TransactionalOperation {
