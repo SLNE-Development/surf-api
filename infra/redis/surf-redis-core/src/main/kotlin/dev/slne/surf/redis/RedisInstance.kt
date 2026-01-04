@@ -1,5 +1,6 @@
 package dev.slne.surf.redis
 
+import dev.slne.surf.redis.config.RedisConfig
 import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
@@ -49,6 +50,7 @@ abstract class RedisInstance {
             log.atInfo()
                 .log("Using NIO for Redis networking")
         }
+        RedisConfig.init()
     }
 
     fun disable() {
