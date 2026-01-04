@@ -38,6 +38,12 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks {
+    apiBuild {
+        inputJar.value(shadowJar.flatMap { it.archiveFile })
+    }
+}
+
 java {
     withSourcesJar()
     withJavadocJar()
