@@ -12,7 +12,7 @@ class VelocityMain @Inject constructor(@param:DataDirectory val dataPath: Path) 
         RedisInstance.instance.load()
     }
 
-    @Subscribe
+    @Subscribe(priority = Short.MIN_VALUE)
     fun onProxyShutdown(event: ProxyShutdownEvent) {
         RedisInstance.instance.disable()
     }
