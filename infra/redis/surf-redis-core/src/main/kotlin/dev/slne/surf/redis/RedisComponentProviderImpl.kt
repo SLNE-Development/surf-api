@@ -7,6 +7,14 @@ import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.event.RedisEventBusImpl
 import dev.slne.surf.redis.request.RequestResponseBus
 import dev.slne.surf.redis.request.RequestResponseBusImpl
+import dev.slne.surf.redis.sync.list.SyncList
+import dev.slne.surf.redis.sync.list.SyncListImpl
+import dev.slne.surf.redis.sync.map.SyncMap
+import dev.slne.surf.redis.sync.map.SyncMapImpl
+import dev.slne.surf.redis.sync.set.SyncSet
+import dev.slne.surf.redis.sync.set.SyncSetImpl
+import dev.slne.surf.redis.sync.value.SyncValue
+import dev.slne.surf.redis.sync.value.SyncValueImpl
 import kotlinx.serialization.KSerializer
 import kotlin.time.Duration
 
@@ -31,5 +39,43 @@ class RedisComponentProviderImpl : RedisComponentProvider {
 
     override fun createRequestResponseBus(redisApi: RedisApi): RequestResponseBus {
         return RequestResponseBusImpl(redisApi)
+    }
+
+    override fun <E : Any> createSyncList(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncList<E> {
+        return SyncListImpl(api, id, ttl, elementSerializer)
+    }
+
+    override fun <E : Any> createSyncSet(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncSet<E> {
+        return SyncSetImpl(api, id, ttl, elementSerializer)
+    }
+
+    override fun <T : Any> createSyncValue(
+        id: String,
+        serializer: KSerializer<T>,
+        defaultValue: T,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncValue<T> {
+        return SyncValueImpl(api, id, serializer, defaultValue, ttl)
+    }
+
+    override fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keySerializer: KSerializer<K>,
+        valueSerializer: KSerializer<V>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncMap<K, V> {
+        return SyncMapImpl(api, id, ttl, keySerializer, valueSerializer)
     }
 }

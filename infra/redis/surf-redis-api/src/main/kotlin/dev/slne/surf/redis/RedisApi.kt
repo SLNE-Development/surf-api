@@ -29,11 +29,14 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.modules.overwriteWith
 import kotlinx.serialization.serializer
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Blocking
 import org.redisson.Redisson
+import org.redisson.api.RScript
 import org.redisson.api.RedissonClient
 import org.redisson.api.RedissonReactiveClient
 import org.redisson.api.redisnode.RedisNodes
+import org.redisson.codec.BaseEventCodec
 import org.redisson.config.Config
 import org.redisson.config.TransportMode
 import org.redisson.misc.RedisURI
@@ -73,6 +76,8 @@ class RedisApi private constructor(
     lateinit var redissonReactive: RedissonReactiveClient
         private set
 
+    var redisOsType: BaseEventCodec.OSType? = null
+        private set
 
     val eventBus = RedisComponentProvider.get().createEventBus(this)
     val requestResponseBus = RedisComponentProvider.get().createRequestResponseBus(this)
@@ -195,11 +200,34 @@ class RedisApi private constructor(
         redisson = Redisson.create(config)
         redissonReactive = redisson.reactive()
 
+        fetchRedisOs()
+
         eventBus.init()
         requestResponseBus.init()
 
         for (structure in syncStructures) {
-            disposables.add(structure.init().subscribe())
+            structure.init().block()
+        }
+    }
+
+    @Blocking
+    private fun fetchRedisOs() {
+        @Language("Redis")
+        val lua = """
+            local info = redis.call('INFO', 'server')
+            return string.match(info, 'os:([^\\r\\n]+)')
+        """.trimIndent()
+
+        val os = redisson.script.eval<String?>(
+            RScript.Mode.READ_ONLY,
+            lua,
+            RScript.ReturnType.VALUE,
+        )
+
+        if (os == null || os.contains("Windows")) {
+            redisOsType = BaseEventCodec.OSType.WINDOWS
+        } else if (os.contains("NONSTOP")) {
+            redisOsType = BaseEventCodec.OSType.HPNONSTOP
         }
     }
 
@@ -244,7 +272,7 @@ class RedisApi private constructor(
         eventBus.close()
 
         for (structure in syncStructures) {
-            structure.close()
+            structure.dispose()
         }
         syncStructureScope.cancel("RedisApi disconnected")
 
@@ -332,7 +360,7 @@ class RedisApi private constructor(
         elementSerializer: KSerializer<E>,
         ttl: Duration = SyncList.DEFAULT_TTL
     ) = createSyncStructure {
-        SyncList(this, id, syncStructureScope, elementSerializer, ttl)
+        RedisComponentProvider.get().createSyncList(id, elementSerializer, ttl, this)
     }
 
     /**
@@ -353,7 +381,7 @@ class RedisApi private constructor(
         elementSerializer: KSerializer<E>,
         ttl: Duration = SyncSet.DEFAULT_TTL
     ) = createSyncStructure {
-        SyncSet(this, id, syncStructureScope, elementSerializer, ttl)
+        RedisComponentProvider.get().createSyncSet(id, elementSerializer, ttl, this)
     }
 
     /**
@@ -376,7 +404,7 @@ class RedisApi private constructor(
         defaultValue: T,
         ttl: Duration = SyncValue.DEFAULT_TTL
     ) = createSyncStructure {
-        SyncValue(this, id, syncStructureScope, serializer, defaultValue, ttl)
+        RedisComponentProvider.get().createSyncValue(id, serializer, defaultValue, ttl, this)
     }
 
     /**
@@ -394,7 +422,7 @@ class RedisApi private constructor(
         valueSerializer: KSerializer<V>,
         ttl: Duration = SyncMap.DEFAULT_TTL
     ) = createSyncStructure {
-        SyncMap(this, id, syncStructureScope, keySerializer, valueSerializer, ttl)
+        RedisComponentProvider.get().createSyncMap(id, keySerializer, valueSerializer, ttl, this)
     }
 
     /**

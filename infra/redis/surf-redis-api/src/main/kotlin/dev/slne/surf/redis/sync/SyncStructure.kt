@@ -1,163 +1,26 @@
 package dev.slne.surf.redis.sync
 
-import dev.slne.surf.redis.RedisApi
-import dev.slne.surf.surfapi.core.api.util.logger
-import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.MustBeInvokedByOverriders
-import org.redisson.api.RTopicReactive
-import org.redisson.client.codec.StringCodec
-import reactor.core.publisher.Flux
+import dev.slne.surf.redis.util.InternalRedisAPI
+import reactor.core.Disposable
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.time.Duration
 
 /**
- * Base class for replicated, in-memory synchronized data structures.
+ * Base contract for replicated, in-memory synchronized structures.
  *
- * A [SyncStructure] provides the common plumbing for:
- * - **Snapshot bootstrap** for late joiners via [loadSnapshot]
- * - **Delta replication** via Redis Pub/Sub ([redisChannel] + [handleIncoming])
- * - **Non-blocking Redis I/O** (uses Redisson reactive APIs)
- * - **Thread-safe local state** via [lock]
- *
- * ## Lifecycle
- * Implementations are expected to call [init] once during startup:
- * 1. [loadSnapshot] is executed to populate local state (or defaults).
- * 2. The instance subscribes to [redisChannel] and starts receiving deltas.
- *
- * The class itself does not start heartbeats or TTL refreshes; those belong to the concrete structure.
- *
- * ## Threading model
- * - Incoming Pub/Sub messages are delivered on Redisson/Reactor threads.
- * - [handleIncoming] is called directly from that thread (i.e. it must be fast and non-blocking).
- * - If heavier work is required, implementations should offload to [scope] (e.g. `scope.launch { ... }`).
- *
- * ## Concurrency
- * - Use [lock] to protect reads/writes of the local in-memory structure.
- * - Prefer small critical sections to avoid blocking other readers/writers.
- *
- * @param TDelta the delta type (wire-level operation) used by the concrete structure
- * @param api owning [RedisApi] instance used for Redis connections
- * @param id logical identifier of the structure (typically part of Redis keys/channel names)
- * @param scope coroutine scope used for asynchronous work (e.g. resync, publishing deltas)
+ * A [SyncStructure] provides:
+ * - A logical [id] used for Redis keys/channels.
+ * - A [ttl] used for any remote state that should expire automatically.
+ * - A lifecycle hook [init] to bootstrap remote state and start background tasks.
+ * - A simple listener mechanism for propagating local/remote changes to consumers.
  */
-abstract class SyncStructure<TDelta : Any> internal constructor(
-    protected val api: RedisApi,
-    protected val id: String,
-    protected val scope: CoroutineScope
-) {
-    /**
-     * Read-write lock guarding the local in-memory state of the structure.
-     *
-     * Implementations should use `lock.readLock()/writeLock()` or Kotlin extensions
-     * such as `kotlin.concurrent.read` / `kotlin.concurrent.write`.
-     */
-    protected val lock = ReentrantReadWriteLock()
+interface SyncStructure<L> : Disposable {
+    val id: String
+    val ttl: Duration
 
-    /**
-     * Redis Pub/Sub channel used to broadcast and receive deltas for this structure instance.
-     */
-    protected abstract val redisChannel: String
-    protected val topic: RTopicReactive by lazy { api.redissonReactive.getTopic(redisChannel, StringCodec.INSTANCE) }
+    @InternalRedisAPI
+    fun init(): Mono<Void>
 
-    companion object {
-        private val log = logger()
-    }
-
-    /**
-     * Initializes the structure by loading the initial snapshot and subscribing to deltas.
-     *
-     * This method is `internal` to enforce that the owning API/module controls initialization order
-     * (e.g. after Redis connections are available and before freeze/registration steps are finalized).
-     *
-     * Implementations may override this method to extend initialization (e.g. start heartbeats),
-     * but should call `super.init()`.
-     */
-    @MustBeInvokedByOverriders
-    internal fun init(): Mono<Void> {
-        return Mono.defer {
-            loadSnapshot()
-                .subscribeOn(Schedulers.boundedElastic())
-                .then(init0())
-                .thenMany(setupSubscription())
-                .then()
-        }.doOnError { t ->
-            log.atSevere()
-                .withCause(t)
-                .log("Failed to init SyncSet '$id'")
-        }
-    }
-
-    protected open fun init0(): Mono<Void> = Mono.empty()
-
-    @MustBeInvokedByOverriders
-    internal open fun close() {
-    }
-
-    /**
-     * Subscribes to [redisChannel] and installs the Pub/Sub listener.
-     *
-     * Incoming messages for this channel are forwarded to [handleIncoming].
-     */
-    @MustBeInvokedByOverriders
-    protected open fun setupSubscription(): Flux<Void> {
-        return topic.getMessages(String::class.java)
-            .subscribeOn(Schedulers.boundedElastic())
-            .concatMap { msg ->
-                handleIncoming(msg)
-                    .onErrorResume { t ->
-                        log.atSevere().withCause(t)
-                            .log("Error handling Pub/Sub message: ${msg.replace("{", "[").replace("}", "]")}")
-                        Mono.empty()
-                    }
-            }.doOnError { t ->
-                log.atSevere()
-                    .withCause(t)
-                    .log("Pub/Sub stream failed for '$id'")
-            }
-            .retry()
-    }
-
-    /**
-     * Loads the current snapshot from Redis and applies it to local state.
-     *
-     * Used for initial bootstrapping and for recovery when deltas were missed.
-     *
-     * Implementations should:
-     * - fetch their snapshot/version keys asynchronously,
-     * - decode the snapshot,
-     * - update local state under [lock].
-     */
-    protected abstract fun loadSnapshot(): Mono<Void>
-
-    /**
-     * Handles a delta message received via Pub/Sub.
-     *
-     * This method is called on a Redisson/Reactor thread and must not block.
-     * Implementations should parse the message quickly and:
-     * - apply the delta under [lock], or
-     * - schedule heavier recovery work on [scope] (e.g. `scope.launch { loadSnapshot() }`).
-     */
-    protected abstract fun handleIncoming(message: String): Mono<Void>
-
-    /**
-     * Utility to notify listeners safely.
-     *
-     * Exceptions thrown by listeners are caught and logged so that one faulty listener
-     * does not break replication/dispatch.
-     *
-     * @param listeners list of listeners to call
-     * @param change change object to pass to listeners
-     */
-    protected fun <T> notifyListeners(listeners: List<(T) -> Unit>, change: T) {
-        for (l in listeners) {
-            try {
-                l(change)
-            } catch (e: Throwable) {
-                log.atWarning()
-                    .withCause(e)
-                    .log("Error notifying listener of change: ${change.toString().replace("{", "[").replace("}", "]")}")
-            }
-        }
-    }
+    fun addListener(listener: (L) -> Unit)
+    fun removeListener(listener: (L) -> Unit)
 }

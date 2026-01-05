@@ -3,6 +3,10 @@ package dev.slne.surf.redis
 import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.request.RequestResponseBus
+import dev.slne.surf.redis.sync.list.SyncList
+import dev.slne.surf.redis.sync.map.SyncMap
+import dev.slne.surf.redis.sync.set.SyncSet
+import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.InternalRedisAPI
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
@@ -26,6 +30,36 @@ interface RedisComponentProvider {
 
     fun createEventBus(redisApi: RedisApi): RedisEventBus
     fun createRequestResponseBus(redisApi: RedisApi): RequestResponseBus
+
+    fun <E : Any> createSyncList(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncList<E>
+
+    fun <E : Any> createSyncSet(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncSet<E>
+
+    fun <T : Any> createSyncValue(
+        id: String,
+        serializer: KSerializer<T>,
+        defaultValue: T,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncValue<T>
+
+    fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keySerializer: KSerializer<K>,
+        valueSerializer: KSerializer<V>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncMap<K, V>
 
     companion object {
         val instance = requiredService<RedisComponentProvider>()
