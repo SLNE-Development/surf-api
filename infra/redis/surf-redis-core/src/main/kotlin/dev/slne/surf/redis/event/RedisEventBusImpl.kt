@@ -11,6 +11,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonElement
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import java.lang.invoke.MethodHandle
@@ -185,7 +186,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
      *
      * @return the serialized event, or `null` if no serializer is available
      */
-    private fun serializeEvent(event: RedisEvent): String? {
+    private fun serializeEvent(event: RedisEvent): JsonElement? {
         val serializer = serializerCache.get(event.javaClass)
 
         if (serializer == null) {
@@ -195,7 +196,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         }
 
         try {
-            return api.json.encodeToString(serializer, event)
+            return api.json.encodeToJsonElement(serializer, event)
         } catch (e: SerializationException) {
             log.atWarning()
                 .withCause(e)
@@ -212,7 +213,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
      */
     private fun deserializeEvent(
         eventClass: Class<out RedisEvent>,
-        eventData: String
+        eventData: JsonElement
     ): RedisEvent? {
         val serializer = serializerCache.get(eventClass)
 
@@ -223,7 +224,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         }
 
         try {
-            return api.json.decodeFromString(serializer, eventData)
+            return api.json.decodeFromJsonElement(serializer, eventData)
         } catch (e: SerializationException) {
             log.atWarning()
                 .withCause(e)
@@ -238,10 +239,10 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     @Serializable
     private data class EventEnvelope(
         val eventClass: String,
-        val eventData: String
+        val eventData: JsonElement
     ) {
         companion object {
-            fun forEvent(event: RedisEvent, data: String): EventEnvelope {
+            fun forEvent(event: RedisEvent, data: JsonElement): EventEnvelope {
                 return EventEnvelope(
                     eventClass = event.javaClass.name,
                     eventData = data

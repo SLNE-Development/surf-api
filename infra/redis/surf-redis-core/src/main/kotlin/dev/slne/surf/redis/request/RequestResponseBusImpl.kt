@@ -11,6 +11,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import reactor.core.Disposable
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -295,7 +298,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      *
      * @return the serialized request, or `null` if no serializer is available or serialization fails
      */
-    private fun serializeRequest(request: RedisRequest): String? {
+    private fun serializeRequest(request: RedisRequest): JsonElement? {
         val serializer = serializerCache.get(request.javaClass)
 
         if (serializer == null) {
@@ -305,7 +308,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         }
 
         try {
-            return api.json.encodeToString(serializer, request)
+            return api.json.encodeToJsonElement(serializer, request)
         } catch (e: SerializationException) {
             log.atWarning()
                 .withCause(e)
@@ -321,7 +324,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      */
     private fun deserializeRequest(
         requestClass: Class<out RedisRequest>,
-        requestData: String
+        requestData: JsonElement
     ): RedisRequest? {
         val serializer = serializerCache.get(requestClass)
 
@@ -332,7 +335,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         }
 
         try {
-            val deserialized = api.json.decodeFromString(serializer, requestData)
+            val deserialized = api.json.decodeFromJsonElement(serializer, requestData)
             if (deserialized !is RedisRequest) {
                 log.atWarning()
                     .log("Deserialized object is not a RedisRequest: ${deserialized::class.simpleName}")
@@ -353,7 +356,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      *
      * @return the serialized response, or `null` if no serializer is available or serialization fails
      */
-    private fun serializeResponse(response: RedisResponse): String? {
+    private fun serializeResponse(response: RedisResponse): JsonElement? {
         val serializer = serializerCache.get(response.javaClass)
 
         if (serializer == null) {
@@ -363,7 +366,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         }
 
         try {
-            return api.json.encodeToString(serializer, response)
+            return api.json.encodeToJsonElement(serializer, response)
         } catch (e: SerializationException) {
             log.atWarning()
                 .withCause(e)
@@ -379,7 +382,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      */
     private fun deserializeResponse(
         responseClass: Class<out RedisResponse>,
-        responseData: String
+        responseData: JsonElement
     ): RedisResponse? {
         val serializer = serializerCache.get(responseClass)
 
@@ -390,7 +393,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         }
 
         try {
-            val deserialized = api.json.decodeFromString(serializer, responseData)
+            val deserialized = api.json.decodeFromJsonElement(serializer, responseData)
             if (deserialized !is RedisResponse) {
                 log.atWarning()
                     .log("Deserialized object is not a RedisResponse: ${deserialized::class.simpleName}")
@@ -430,10 +433,10 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
     private data class RequestEnvelope(
         val requestId: SerializableUUID,
         val requestClass: String,
-        val requestData: String
+        val requestData: JsonElement
     ) {
         companion object {
-            fun forRequest(request: RedisRequest, requestId: UUID, data: String): RequestEnvelope {
+            fun forRequest(request: RedisRequest, requestId: UUID, data: JsonElement): RequestEnvelope {
                 return RequestEnvelope(
                     requestId = requestId,
                     requestClass = request.javaClass.name,
@@ -450,13 +453,13 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
     private data class ResponseEnvelope(
         val requestId: SerializableUUID,
         val responseClass: String,
-        val responseData: String
+        val responseData: JsonElement
     ) {
         companion object {
             fun forResponse(
                 response: RedisResponse,
                 requestId: UUID,
-                data: String
+                data: JsonElement
             ): ResponseEnvelope {
                 return ResponseEnvelope(
                     requestId = requestId,
