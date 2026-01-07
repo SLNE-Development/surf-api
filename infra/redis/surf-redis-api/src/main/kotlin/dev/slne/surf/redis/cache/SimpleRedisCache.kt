@@ -76,4 +76,6 @@ interface SimpleRedisCache<K : Any, V : Any> : Closeable {
      * @return The number of keys removed (typically 0 or 1).
      */
     suspend fun invalidate(key: K): Long
+
+    suspend fun invalidateAll(): Long
 }

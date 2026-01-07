@@ -5,9 +5,12 @@ import com.sksamuel.aedile.core.expireAfterAccess
 import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.KSerializer
+import org.redisson.api.options.KeysScanOptions
 import reactor.core.Disposable
 import java.util.*
 import kotlin.time.Duration
@@ -217,6 +220,43 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         invalidationTopic.publish("$nodeId$MESSAGE_DELIMITER$localKey").awaitSingle()
 
         return if (deleted) 1L else 0L
+    }
+
+    override suspend fun invalidateAll(): Long {
+        ensureSubscribed()
+
+        val pattern = "$namespace:*"
+        val keyOperations = api.redissonReactive.keys
+
+        val keys = keyOperations
+            .getKeys(KeysScanOptions.defaults().pattern(pattern))
+            .collectList()
+            .awaitSingle()
+
+        val deleted = if (keys.isEmpty()) {
+            0L
+        } else {
+            keyOperations
+                .delete(*keys.toTypedArray())
+                .awaitSingle()
+        }
+
+        nearCache.invalidateAll()
+        refreshGate.invalidateAll()
+
+        val prefix = "$namespace:"
+        supervisorScope {
+            for (redisKey in keys) {
+                launch {
+                    val localKey = redisKey.removePrefix(prefix)
+                    invalidationTopic
+                        .publish("$nodeId$MESSAGE_DELIMITER$localKey")
+                        .awaitSingleOrNull()
+                }
+            }
+        }
+
+        return deleted
     }
 
     private sealed class CacheEntry<out V> {
