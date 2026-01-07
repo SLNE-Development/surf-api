@@ -15,8 +15,10 @@ public final class dev/slne/surf/redis/RedisApi {
 	public final fun disconnect ()V
 	public final fun freeze ()V
 	public final fun freezeAndConnect ()Ldev/slne/surf/redis/RedisApi;
+	public final fun getClientId ()Ljava/lang/String;
 	public final fun getEventBus ()Ldev/slne/surf/redis/event/RedisEventBus;
 	public final fun getJson ()Lkotlinx/serialization/json/Json;
+	public final fun getRedisOsType ()Ldev/slne/surf/redis/libs/redisson/codec/BaseEventCodec$OSType;
 	public final fun getRedisson ()Ldev/slne/surf/redis/libs/redisson/api/RedissonClient;
 	public final fun getRedissonReactive ()Ldev/slne/surf/redis/libs/redisson/api/RedissonReactiveClient;
 	public final fun getRequestResponseBus ()Ldev/slne/surf/redis/request/RequestResponseBus;
@@ -67,8 +69,10 @@ public abstract interface annotation class dev/slne/surf/redis/event/OnRedisEven
 public abstract class dev/slne/surf/redis/event/RedisEvent {
 	public static final field Companion Ldev/slne/surf/redis/event/RedisEvent$Companion;
 	public fun <init> ()V
-	public synthetic fun <init> (IJLkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public synthetic fun <init> (IJLjava/lang/String;Lkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public final fun getOriginId ()Ljava/lang/String;
 	public final fun getTimestamp ()J
+	public final fun originatesFromThisClient ()Z
 	public static final synthetic fun write$Self (Ldev/slne/surf/redis/event/RedisEvent;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
 }
 
@@ -74494,8 +74498,10 @@ public abstract interface annotation class dev/slne/surf/redis/request/HandleRed
 public abstract class dev/slne/surf/redis/request/RedisRequest {
 	public static final field Companion Ldev/slne/surf/redis/request/RedisRequest$Companion;
 	public fun <init> ()V
-	public synthetic fun <init> (IJLkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public synthetic fun <init> (IJLjava/lang/String;Lkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public final fun getOriginId ()Ljava/lang/String;
 	public final fun getTimestamp ()J
+	public final fun originatesFromThisClient ()Z
 	public static final synthetic fun write$Self (Ldev/slne/surf/redis/request/RedisRequest;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
 }
 
@@ -74517,6 +74523,7 @@ public final class dev/slne/surf/redis/request/RedisResponse$Companion {
 
 public final class dev/slne/surf/redis/request/RequestContext {
 	public final fun getRequest ()Ldev/slne/surf/redis/request/RedisRequest;
+	public final fun originatesFromThisClient ()Z
 	public final fun respond (Ldev/slne/surf/redis/request/RedisResponse;)Lkotlinx/coroutines/Deferred;
 }
 
@@ -74544,38 +74551,25 @@ public final class dev/slne/surf/redis/request/RequestTimeoutException : java/la
 public final class dev/slne/surf/redis/request/RequestTimeoutException$Companion {
 }
 
-public abstract class dev/slne/surf/redis/sync/SyncStructure {
-	public static final field Companion Ldev/slne/surf/redis/sync/SyncStructure$Companion;
-	protected final fun getApi ()Ldev/slne/surf/redis/RedisApi;
-	protected final fun getId ()Ljava/lang/String;
-	protected final fun getLock ()Ljava/util/concurrent/locks/ReentrantReadWriteLock;
-	protected abstract fun getRedisChannel ()Ljava/lang/String;
-	protected final fun getScope ()Lkotlinx/coroutines/CoroutineScope;
-	protected final fun getTopic ()Ldev/slne/surf/redis/libs/redisson/api/RTopicReactive;
-	protected abstract fun handleIncoming (Ljava/lang/String;)Lreactor/core/publisher/Mono;
-	protected fun init0 ()Lreactor/core/publisher/Mono;
-	protected abstract fun loadSnapshot ()Lreactor/core/publisher/Mono;
-	protected final fun notifyListeners (Ljava/util/List;Ljava/lang/Object;)V
-	protected fun setupSubscription ()Lreactor/core/publisher/Flux;
+public abstract interface class dev/slne/surf/redis/sync/SyncStructure : reactor/core/Disposable {
+	public abstract fun addListener (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun getId ()Ljava/lang/String;
+	public abstract fun getTtl-UwyO8pc ()J
+	public abstract fun removeListener (Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class dev/slne/surf/redis/sync/SyncStructure$Companion {
-}
-
-public final class dev/slne/surf/redis/sync/list/SyncList : dev/slne/surf/redis/sync/SyncStructure {
+public abstract interface class dev/slne/surf/redis/sync/list/SyncList : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/list/SyncList$Companion;
-	public synthetic fun <init> (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;Lkotlinx/serialization/KSerializer;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun add (ILjava/lang/Object;)V
-	public final fun add (Ljava/lang/Object;)V
-	public final fun addListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun clear ()V
-	public final fun get (I)Ljava/lang/Object;
-	public final fun removeAt (I)Ljava/lang/Object;
-	public final fun removeIf (Lkotlin/jvm/functions/Function1;)Z
-	public final fun removeListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun set (ILjava/lang/Object;)Ljava/lang/Object;
-	public final fun size ()I
-	public final fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public abstract fun add (Ljava/lang/Object;)V
+	public abstract fun clear ()V
+	public abstract fun contains (Ljava/lang/Object;)Z
+	public abstract fun get (I)Ljava/lang/Object;
+	public abstract fun remove (Ljava/lang/Object;)Z
+	public abstract fun removeAt (I)Ljava/lang/Object;
+	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
+	public abstract fun set (ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun size ()I
+	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
 }
 
 public final class dev/slne/surf/redis/sync/list/SyncList$Companion {
@@ -74598,19 +74592,38 @@ public final class dev/slne/surf/redis/sync/list/SyncListChange$Added : dev/slne
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class dev/slne/surf/redis/sync/list/SyncListChange$Cleared : dev/slne/surf/redis/sync/list/SyncListChange {
-	public static final field INSTANCE Ldev/slne/surf/redis/sync/list/SyncListChange$Cleared;
+public final class dev/slne/surf/redis/sync/list/SyncListChange$Appended : dev/slne/surf/redis/sync/list/SyncListChange {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$Appended;
+	public static synthetic fun copy$default (Ldev/slne/surf/redis/sync/list/SyncListChange$Appended;Ljava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$Appended;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getElement ()Ljava/lang/Object;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/slne/surf/redis/sync/list/SyncListChange$Cleared : dev/slne/surf/redis/sync/list/SyncListChange {
+	public fun <init> ()V
+}
+
 public final class dev/slne/surf/redis/sync/list/SyncListChange$Removed : dev/slne/surf/redis/sync/list/SyncListChange {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$Removed;
+	public static synthetic fun copy$default (Ldev/slne/surf/redis/sync/list/SyncListChange$Removed;Ljava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$Removed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRemoved ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/redis/sync/list/SyncListChange$RemovedAt : dev/slne/surf/redis/sync/list/SyncListChange {
 	public fun <init> (ILjava/lang/Object;)V
 	public final fun component1 ()I
 	public final fun component2 ()Ljava/lang/Object;
-	public final fun copy (ILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$Removed;
-	public static synthetic fun copy$default (Ldev/slne/surf/redis/sync/list/SyncListChange$Removed;ILjava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$Removed;
+	public final fun copy (ILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$RemovedAt;
+	public static synthetic fun copy$default (Ldev/slne/surf/redis/sync/list/SyncListChange$RemovedAt;ILjava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncListChange$RemovedAt;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIndex ()I
 	public final fun getRemoved ()Ljava/lang/Object;
@@ -74633,19 +74646,17 @@ public final class dev/slne/surf/redis/sync/list/SyncListChange$Updated : dev/sl
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class dev/slne/surf/redis/sync/map/SyncMap : dev/slne/surf/redis/sync/SyncStructure {
+public abstract interface class dev/slne/surf/redis/sync/map/SyncMap : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/map/SyncMap$Companion;
-	public synthetic fun <init> (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun addListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun clear ()V
-	public final fun containsKey (Ljava/lang/Object;)Z
-	public final fun get (Ljava/lang/Object;)Ljava/lang/Object;
-	public final fun isEmpty ()Z
-	public final fun put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-	public final fun remove (Ljava/lang/Object;)Ljava/lang/Object;
-	public final fun removeListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun size ()I
-	public final fun snapshot ()Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
+	public abstract fun clear ()V
+	public abstract fun containsKey (Ljava/lang/Object;)Z
+	public abstract fun get (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun isEmpty ()Z
+	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun remove (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun removeIf (Lkotlin/jvm/functions/Function2;)Z
+	public abstract fun size ()I
+	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
 }
 
 public final class dev/slne/surf/redis/sync/map/SyncMap$Companion {
@@ -74656,10 +74667,7 @@ public abstract interface class dev/slne/surf/redis/sync/map/SyncMapChange {
 }
 
 public final class dev/slne/surf/redis/sync/map/SyncMapChange$Cleared : dev/slne/surf/redis/sync/map/SyncMapChange {
-	public static final field INSTANCE Ldev/slne/surf/redis/sync/map/SyncMapChange$Cleared;
-	public fun equals (Ljava/lang/Object;)Z
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
+	public fun <init> ()V
 }
 
 public final class dev/slne/surf/redis/sync/map/SyncMapChange$Put : dev/slne/surf/redis/sync/map/SyncMapChange {
@@ -74690,18 +74698,15 @@ public final class dev/slne/surf/redis/sync/map/SyncMapChange$Removed : dev/slne
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class dev/slne/surf/redis/sync/set/SyncSet : dev/slne/surf/redis/sync/SyncStructure {
+public abstract interface class dev/slne/surf/redis/sync/set/SyncSet : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/set/SyncSet$Companion;
-	public synthetic fun <init> (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;Lkotlinx/serialization/KSerializer;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun add (Ljava/lang/Object;)Z
-	public final fun addListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun clear ()V
-	public final fun contains (Ljava/lang/Object;)Z
-	public final fun remove (Ljava/lang/Object;)Z
-	public final fun removeIf (Lkotlin/jvm/functions/Function1;)Z
-	public final fun removeListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun size ()I
-	public final fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
+	public abstract fun add (Ljava/lang/Object;)Z
+	public abstract fun clear ()V
+	public abstract fun contains (Ljava/lang/Object;)Z
+	public abstract fun remove (Ljava/lang/Object;)Z
+	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
+	public abstract fun size ()I
+	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
 }
 
 public final class dev/slne/surf/redis/sync/set/SyncSet$Companion {
@@ -74740,13 +74745,10 @@ public final class dev/slne/surf/redis/sync/set/SyncSetChange$Removed : dev/slne
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class dev/slne/surf/redis/sync/value/SyncValue : dev/slne/surf/redis/sync/SyncStructure {
+public abstract interface class dev/slne/surf/redis/sync/value/SyncValue : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/value/SyncValue$Companion;
-	public synthetic fun <init> (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/coroutines/CoroutineScope;Lkotlinx/serialization/KSerializer;Ljava/lang/Object;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun addListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun get ()Ljava/lang/Object;
-	public final fun removeListener (Lkotlin/jvm/functions/Function1;)V
-	public final fun set (Ljava/lang/Object;)V
+	public abstract fun get ()Ljava/lang/Object;
+	public abstract fun set (Ljava/lang/Object;)V
 }
 
 public final class dev/slne/surf/redis/sync/value/SyncValue$Companion {
