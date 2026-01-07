@@ -351,7 +351,7 @@ class RedisApi private constructor(
     inline fun <reified E : Any> createSyncList(
         id: String,
         ttl: Duration = SyncList.DEFAULT_TTL
-    ): SyncList<E> = createSyncList(id, serializer(), ttl)
+    ): SyncList<E> = createSyncList(id, json.serializersModule.serializer(), ttl)
 
     /**
      * Creates a new [SyncList] instance.
@@ -372,7 +372,7 @@ class RedisApi private constructor(
     inline fun <reified E : Any> createSyncSet(
         id: String,
         ttl: Duration = SyncSet.DEFAULT_TTL
-    ): SyncSet<E> = createSyncSet(id, serializer(), ttl)
+    ): SyncSet<E> = createSyncSet(id, json.serializersModule.serializer(), ttl)
 
     /**
      * Creates a new [SyncSet] instance.
@@ -394,7 +394,7 @@ class RedisApi private constructor(
         id: String,
         defaultValue: T,
         ttl: Duration = SyncValue.DEFAULT_TTL
-    ): SyncValue<T> = createSyncValue(id, serializer(), defaultValue, ttl)
+    ): SyncValue<T> = createSyncValue(id, json.serializersModule.serializer(), defaultValue, ttl)
 
     /**
      * Creates a new [SyncValue] instance.
@@ -416,7 +416,7 @@ class RedisApi private constructor(
     inline fun <reified K : Any, reified V : Any> createSyncMap(
         id: String,
         ttl: Duration = SyncMap.DEFAULT_TTL
-    ): SyncMap<K, V> = createSyncMap(id, serializer(), serializer(), ttl)
+    ): SyncMap<K, V> = createSyncMap(id, json.serializersModule.serializer(), json.serializersModule.serializer(), ttl)
 
     fun <K : Any, V : Any> createSyncMap(
         id: String,
@@ -461,7 +461,7 @@ class RedisApi private constructor(
         namespace: String,
         ttl: Duration,
         noinline keyToString: (K) -> String = { it.toString() }
-    ): SimpleRedisCache<K, V> = createSimpleCache(namespace, serializer(), ttl, keyToString)
+    ): SimpleRedisCache<K, V> = createSimpleCache(namespace, json.serializersModule.serializer(), ttl, keyToString)
 
     /**
      * Create a [SimpleRedisCache] for the given `namespace` using the provided [KSerializer].
