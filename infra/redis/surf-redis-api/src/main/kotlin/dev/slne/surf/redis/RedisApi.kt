@@ -487,6 +487,14 @@ class RedisApi private constructor(
         return RedisComponentProvider.get().createSimpleCache(namespace, serializer, ttl, keyToString, this)
     }
 
+    inline fun <reified T : Any> createSimpleSetRedisCache(
+        namespace: String,
+        ttl: Duration,
+        noinline idOf: (T) -> String,
+        indexes: RedisSetIndexes<T> = RedisSetIndexes.empty()
+    ): SimpleSetRedisCache<T> =
+        createSimpleSetRedisCache(namespace, json.serializersModule.serializer(), ttl, idOf, indexes)
+
     fun <T : Any> createSimpleSetRedisCache(
         namespace: String,
         serializer: KSerializer<T>,
