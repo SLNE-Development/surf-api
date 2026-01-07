@@ -223,7 +223,7 @@ class RedisApi private constructor(
         val os = redisson.script.eval<String?>(
             RScript.Mode.READ_ONLY,
             lua,
-            RScript.ReturnType.VALUE,
+            RScript.ReturnType.STRING,
         )
 
         if (os == null || os.contains("Windows")) {
