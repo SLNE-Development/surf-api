@@ -2,6 +2,7 @@ package dev.slne.surf.redis.cache
 
 import dev.slne.surf.redis.RedisApi
 import kotlinx.serialization.KSerializer
+import reactor.core.Disposable
 import java.io.Closeable
 
 /**
@@ -21,7 +22,7 @@ import java.io.Closeable
  * @param ttl Time-to-live for cache entries.
  * @param api Instance of [RedisApi] used to access Redis.
  */
-interface SimpleRedisCache<K : Any, V : Any> : Closeable {
+interface SimpleRedisCache<K : Any, V : Any> : Disposable {
 
     /**
      * Retrieve a value from the cache.

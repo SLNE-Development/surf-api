@@ -10,6 +10,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.KSerializer
+import org.redisson.RedissonSetCache
 import org.redisson.api.options.KeysScanOptions
 import reactor.core.Disposable
 import java.util.*
@@ -89,7 +90,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
     }
 
-    override fun close() {
+    override fun dispose() {
         synchronized(this) {
             invalidationSubscriptionDisposable?.dispose()
             invalidationSubscriptionDisposable = null
@@ -224,6 +225,10 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
 
     override suspend fun invalidateAll(): Long {
         ensureSubscribed()
+
+        val cache = api.redisson.getSetCache<String>("") as RedissonSetCache
+        cache.iterator()
+        cache.filter { true}
 
         val pattern = "$namespace:*"
         val keyOperations = api.redissonReactive.keys

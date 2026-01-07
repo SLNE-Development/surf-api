@@ -1,6 +1,8 @@
 package dev.slne.surf.redis
 
+import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
+import dev.slne.surf.redis.cache.SimpleSetRedisCache
 import dev.slne.surf.redis.event.RedisEvent
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.request.RedisRequest
@@ -31,6 +33,15 @@ interface RedisComponentProvider {
         keyToString: (K) -> String,
         redisApi: RedisApi
     ): SimpleRedisCache<K, V>
+
+    fun <T : Any> createSimpleSetRedisCache(
+        namespace: String,
+        serializer: KSerializer<T>,
+        ttl: Duration,
+        idOf: (T) -> String,
+        indexes: RedisSetIndexes<T>,
+        redisApi: RedisApi
+    ): SimpleSetRedisCache<T>
 
     fun createEventBus(redisApi: RedisApi): RedisEventBus
     fun createRequestResponseBus(redisApi: RedisApi): RequestResponseBus

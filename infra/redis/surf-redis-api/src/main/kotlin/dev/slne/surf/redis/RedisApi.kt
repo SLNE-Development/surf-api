@@ -1,7 +1,9 @@
 package dev.slne.surf.redis
 
 import dev.slne.surf.redis.RedisApi.Companion.create
+import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
+import dev.slne.surf.redis.cache.SimpleSetRedisCache
 import dev.slne.surf.redis.credentials.RedisCredentialsProvider
 import dev.slne.surf.redis.event.RedisEvent
 import dev.slne.surf.redis.request.RedisRequest
@@ -483,5 +485,15 @@ class RedisApi private constructor(
         keyToString: (K) -> String = { it.toString() }
     ): SimpleRedisCache<K, V> {
         return RedisComponentProvider.get().createSimpleCache(namespace, serializer, ttl, keyToString, this)
+    }
+
+    fun <T : Any> createSimpleSetRedisCache(
+        namespace: String,
+        serializer: KSerializer<T>,
+        ttl: Duration,
+        idOf: (T) -> String,
+        indexes: RedisSetIndexes<T> = RedisSetIndexes.empty()
+    ): SimpleSetRedisCache<T> {
+        return RedisComponentProvider.get().createSimpleSetRedisCache(namespace, serializer, ttl, idOf, indexes, this)
     }
 }
