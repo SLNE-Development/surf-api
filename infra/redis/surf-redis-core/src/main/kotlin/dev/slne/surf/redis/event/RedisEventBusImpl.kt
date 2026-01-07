@@ -2,6 +2,7 @@ package dev.slne.surf.redis.event
 
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.RedisComponentProvider
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.util.logger
@@ -117,6 +118,8 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     }
 
     override fun publish(event: RedisEvent): Deferred<Long> {
+        RedisComponentProvider.get().injectOriginId(event)
+
         val eventData = serializeEvent(event) ?: return CompletableDeferred(0L)
         val envelope = EventEnvelope.forEvent(event, eventData)
 

@@ -1,7 +1,9 @@
 package dev.slne.surf.redis
 
 import dev.slne.surf.redis.cache.SimpleRedisCache
+import dev.slne.surf.redis.event.RedisEvent
 import dev.slne.surf.redis.event.RedisEventBus
+import dev.slne.surf.redis.request.RedisRequest
 import dev.slne.surf.redis.request.RequestResponseBus
 import dev.slne.surf.redis.sync.list.SyncList
 import dev.slne.surf.redis.sync.map.SyncMap
@@ -19,6 +21,8 @@ interface RedisComponentProvider {
 
     val eventLoopGroup: MultiThreadIoEventLoopGroup
     val redissonExecutorService: ExecutorService
+
+    val clientId: String
 
     fun <K : Any, V : Any> createSimpleCache(
         namespace: String,
@@ -60,6 +64,14 @@ interface RedisComponentProvider {
         ttl: Duration,
         api: RedisApi
     ): SyncMap<K, V>
+
+    fun injectOriginId(event: RedisEvent) {
+        event.originId = clientId
+    }
+
+    fun injectOriginId(request: RedisRequest) {
+        request.originId = clientId
+    }
 
     companion object {
         val instance = requiredService<RedisComponentProvider>()

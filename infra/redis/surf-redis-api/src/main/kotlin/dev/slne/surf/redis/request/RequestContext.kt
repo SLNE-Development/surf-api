@@ -38,4 +38,9 @@ class RequestContext<TRequest : RedisRequest> @InternalRedisAPI constructor(
         }
         return respondCallback(response)
     }
+
+    /**
+     * @see RedisRequest.originatesFromThisClient
+     */
+    fun originatesFromThisClient() = request.originatesFromThisClient()
 }

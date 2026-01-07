@@ -82,6 +82,8 @@ class RedisApi private constructor(
     val eventBus = RedisComponentProvider.get().createEventBus(this)
     val requestResponseBus = RedisComponentProvider.get().createRequestResponseBus(this)
 
+    val clientId get() = RedisComponentProvider.get().clientId
+
     private val syncStructures = ObjectArrayList<SyncStructure<*>>()
     private val syncStructureScope = CoroutineScope(
         Dispatchers.Default

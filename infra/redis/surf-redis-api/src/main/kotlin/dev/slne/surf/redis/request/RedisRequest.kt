@@ -1,5 +1,6 @@
 package dev.slne.surf.redis.request
 
+import dev.slne.surf.redis.RedisComponentProvider
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,4 +19,27 @@ abstract class RedisRequest {
      * This value is intended for debugging and tracing purposes.
      */
     val timestamp: Long = System.currentTimeMillis()
+
+    /**
+     * Identifier of the client that originally published this request.
+     *
+     * This value is set internally when the request is published by a Redis client.
+     * It may be `null` if the request originates from an external source or if
+     * the origin cannot be determined.
+     */
+    var originId: String? = null
+        internal set
+
+    /**
+     * Returns `true` if this request was published by the current local Redis client.
+     *
+     * If [originId] is `null`, the request is considered to originate from an external
+     * or unknown source and this method returns `false`.
+     *
+     * This is useful to ignore self-originated requests in a multi-client setup.
+     */
+    fun originatesFromThisClient(): Boolean {
+        return originId == RedisComponentProvider.get().clientId
+    }
+
 }

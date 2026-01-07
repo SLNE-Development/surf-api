@@ -16,12 +16,17 @@ import dev.slne.surf.redis.sync.set.SyncSetImpl
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
 import kotlinx.serialization.KSerializer
+import java.util.*
 import kotlin.time.Duration
 
 @AutoService(RedisComponentProvider::class)
 class RedisComponentProviderImpl : RedisComponentProvider {
     override val eventLoopGroup get() = RedisInstance.instance.eventLoopGroup
     override val redissonExecutorService get() = RedisInstance.instance.redissonExecutorService
+    override val clientId = UUID.randomUUID().toString()
+        .split("-")
+        .take(2)
+        .joinToString("")
 
     override fun <K : Any, V : Any> createSimpleCache(
         namespace: String,

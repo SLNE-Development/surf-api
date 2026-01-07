@@ -22,6 +22,7 @@ package dev.slne.surf.redis.request
  * ```
  * @HandleRedisRequest
  * fun handlePlayerRequest(ctx: RequestContext<GetPlayerRequest>) {
+ *     if (ctx.originatesFromThisClient()) return // ignore self-originated requests
  *     val players = loadPlayers(ctx.request)
  *     ctx.respond(PlayerListResponse(players))
  * }

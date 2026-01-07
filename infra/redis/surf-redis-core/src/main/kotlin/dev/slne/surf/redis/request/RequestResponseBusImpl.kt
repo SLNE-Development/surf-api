@@ -2,6 +2,7 @@ package dev.slne.surf.redis.request
 
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.RedisComponentProvider
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.SerializableUUID
@@ -12,8 +13,6 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.encodeToJsonElement
 import reactor.core.Disposable
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -164,6 +163,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         responseType: Class<T>,
         timeoutMs: Long
     ): T {
+        RedisComponentProvider.get().injectOriginId(request)
         val requestId = UUID.randomUUID()
         val requestData = serializeRequest(request) ?: throw IllegalStateException()
         val deferred = CompletableDeferred<RedisResponse>()
