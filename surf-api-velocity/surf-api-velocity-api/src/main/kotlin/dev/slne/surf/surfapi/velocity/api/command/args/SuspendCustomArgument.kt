@@ -2,13 +2,20 @@ package dev.slne.surf.surfapi.velocity.api.command.args
 
 import com.google.common.reflect.TypeToken
 import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.exceptions.CommandSyntaxException
+import com.mojang.brigadier.suggestion.Suggestions
+import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import com.velocitypowered.api.command.CommandSource
 import dev.jorel.commandapi.CommandAPIHandler
+import dev.jorel.commandapi.SuggestionInfo
 import dev.jorel.commandapi.arguments.Argument
+import dev.jorel.commandapi.arguments.ArgumentSuggestions
 import dev.jorel.commandapi.arguments.CommandAPIArgumentType
 import dev.jorel.commandapi.executors.CommandArguments
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.future
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import java.util.concurrent.CompletableFuture
 
 /**
  * Base class for custom CommandAPI arguments whose parsing logic is executed asynchronously
@@ -31,6 +38,21 @@ abstract class SuspendCustomArgument<T, B>(
     override fun instance() = this
     override fun getPrimitiveType(): Class<Deferred<T>> {
         return primitiveType.rawType as Class<Deferred<T>>
+    }
+
+    protected abstract inner class SuspendArgumentSuggestions : ArgumentSuggestions<CommandSource> {
+        @Throws(CommandSyntaxException::class)
+        abstract suspend fun CoroutineScope.suggest(info: SuggestionInfo<CommandSource>, builder: SuggestionsBuilder)
+
+        final override fun suggest(
+            info: SuggestionInfo<CommandSource>,
+            builder: SuggestionsBuilder
+        ): CompletableFuture<Suggestions> {
+            return scope.future {
+                suggest(info, builder)
+                builder.build()
+            }
+        }
     }
 
     /**
@@ -74,6 +96,12 @@ abstract class SuspendCustomArgument<T, B>(
     }
 
     override fun getArgumentType(): CommandAPIArgumentType = base.argumentType
+
+    protected fun stringCollectionSuspend(suggestions: suspend CoroutineScope.(SuggestionInfo<CommandSource>) -> Collection<String>): ArgumentSuggestions<CommandSource> {
+        return ArgumentSuggestions.stringCollectionAsync {
+            scope.future { suggestions(it) }
+        }
+    }
 
     @JvmRecord
     data class CustomArgumentInfo<B>(
