@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.velocity.api.command.args
 
+import com.google.common.reflect.TypeToken
 import com.mojang.brigadier.context.CommandContext
 import com.velocitypowered.api.command.CommandSource
 import dev.jorel.commandapi.CommandAPIHandler
@@ -25,6 +26,12 @@ abstract class SuspendCustomArgument<T, B>(
     private val base: Argument<B>,
     private val scope: CoroutineScope = defaultScope
 ) : Argument<Deferred<T>>(base.nodeName, base.rawType) {
+    private val primitiveType by lazy { object : TypeToken<Deferred<T>>(javaClass) {} }
+
+    override fun instance() = this
+    override fun getPrimitiveType(): Class<Deferred<T>> {
+        return primitiveType.rawType as Class<Deferred<T>>
+    }
 
     /**
      * Parses the argument asynchronously.
