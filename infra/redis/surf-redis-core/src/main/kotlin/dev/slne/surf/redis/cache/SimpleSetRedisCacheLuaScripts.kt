@@ -130,6 +130,7 @@ object SimpleSetRedisCacheLuaScripts {
             redis.call('SADD', metaKey, unpack(newVals))
           end
           redis.call('PEXPIRE', metaKey, ttl)
+        end
         
         local res = { wasNew }
         for _, t in ipairs(touched) do
