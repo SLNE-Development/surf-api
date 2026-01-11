@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.cache
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.sksamuel.aedile.core.expireAfterAccess
+import com.github.benmanes.caffeine.cache.Expiry
 import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
@@ -19,6 +19,7 @@ import reactor.core.Disposable
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
@@ -60,6 +61,20 @@ class SimpleSetRedisCacheImpl<T : Any>(
         private val nodeId = UUID.randomUUID().toString().replace("-", "")
     }
 
+    /**
+     * Represents the default Time-To-Live (TTL) duration for negative cache entries, i.e.,
+     * entries created to temporarily store the absence of a value in the Redis set.
+     *
+     * The value is computed as the smaller of 10% of the primary TTL value (`ttl / 10`)
+     * or a fixed duration of 5 seconds, with a lower bound of 250 milliseconds imposed
+     * to prevent excessively short durations.
+     *
+     * This property helps to manage the caching of missed lookups, ensuring that such
+     * entries are not retained for an unnecessarily long period while minimizing excessive
+     * retries or cache churn in high-traffic scenarios.
+     */
+    private val negativeTtl = minOf(ttl / 10, 5.seconds).coerceAtLeast(250.milliseconds)
+
     private val slotTag = "{$namespace}"
     private val keyPrefix = "$namespace:$slotTag"
 
@@ -78,20 +93,9 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     private val script by lazy { api.redissonReactive.getScript(StringCodec.INSTANCE) }
 
-    private val nearValues = Caffeine.newBuilder()
-        .maximumSize(nearValueCacheSize)
-        .expireAfterAccess(ttl)
-        .build<String, CacheEntry<T>>()
-
-    private val nearIds = Caffeine.newBuilder()
-        .maximumSize(1)
-        .expireAfterAccess(ttl)
-        .build<String, CacheEntry<Set<String>>>()
-
-    private val nearIndexIds = Caffeine.newBuilder()
-        .maximumSize(nearIndexCacheSize)
-        .expireAfterAccess(ttl)
-        .build<String, CacheEntry<Set<String>>>()
+    private val nearValues = buildNearCache<T>(nearValueCacheSize)
+    private val nearIds = buildNearCache<Set<String>>(1)
+    private val nearIndexIds = buildNearCache<Set<String>>(nearIndexCacheSize)
 
     /**
      * Limits TTL refresh traffic (e.g. if a hot key is read very frequently).
@@ -100,6 +104,41 @@ class SimpleSetRedisCacheImpl<T : Any>(
         .expireAfterWrite(ttl.times(0.1).coerceAtLeast(30.seconds))
         .maximumSize(100_000)
         .build<String, Unit>()
+
+
+    private fun <V : Any> buildNearCache(maxSize: Long) = Caffeine.newBuilder()
+        .maximumSize(maxSize)
+        .expireAfter(object : Expiry<String, CacheEntry<V>> {
+            private fun nanos(d: Duration): Long = d.inWholeNanoseconds.coerceAtLeast(1)
+
+            override fun expireAfterCreate(
+                key: String,
+                value: CacheEntry<V>,
+                currentTime: Long
+            ): Long = when (value) {
+                is CacheEntry.Value -> nanos(ttl)
+                CacheEntry.Null -> nanos(negativeTtl)
+            }
+
+            override fun expireAfterUpdate(
+                key: String,
+                value: CacheEntry<V>,
+                currentTime: Long,
+                currentDuration: Long
+            ): Long = expireAfterCreate(key, value, currentTime)
+
+            override fun expireAfterRead(
+                key: String,
+                value: CacheEntry<V>,
+                currentTime: Long,
+                currentDuration: Long
+            ): Long = when (value) {
+                is CacheEntry.Value -> nanos(ttl)
+                CacheEntry.Null -> currentDuration // keep negative entry TTL on read
+            }
+
+        })
+        .build<String, CacheEntry<V>>()
 
 
     private fun ensureSubscribed() {
