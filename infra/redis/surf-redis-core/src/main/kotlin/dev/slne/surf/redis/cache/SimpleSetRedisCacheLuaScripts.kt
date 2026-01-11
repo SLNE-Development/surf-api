@@ -126,8 +126,9 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
           -- Add/refresh current index-sets
           for _, v in ipairs(newVals) do
             local idxKey = prefix .. ":__idx__:" .. idxName .. ":" .. v
-            if not oldMap[v] then
-              redis.call('SADD', idxKey, id)
+            
+            local added = redis.call('SADD', idxKey, id)
+            if added == 1 then
               touched[#touched + 1] = idxName .. sep .. v
             end
             redis.call('PEXPIRE', idxKey, ttl)
