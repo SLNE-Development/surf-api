@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Expiry
 import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -284,30 +283,24 @@ class SimpleSetRedisCacheImpl<T : Any>(
      * Index-set TTL is refreshed when you query an index (see [refreshIndexTtl]).
      */
     private fun refreshValueTtl(id: String) {
-        val valueKey = valueRedisKey(id)
         refreshTtl(refreshKeyVal(id)) {
-            refreshIdsTtl()
+            val argv = ObjectArrayList<Any>(4 + indexes.all.size)
+            argv += keyPrefix
+            argv += id
+            argv += ttl.inWholeMilliseconds.toString()
+            argv += indexes.all.size.toString()
+            for (idx in indexes.all) argv += idx.name
 
-            val keys = mutableObjectSetOf<String>()
-            keys.add(valueRedisKey(id))
-            for (idx in indexes.all) {
-                keys.add(metaRedisKey(id, idx.name))
-            }
-
-            val batch = api.redissonReactive.createBatch()
-            for (key in keys) {
-                batch.getBucket<String>(key, StringCodec.INSTANCE)
-                    .expire(ttl.toJavaDuration())
-                    .doOnError { e -> log.atWarning().withCause(e).log("Failed to refresh TTL for $key") }
-                    .subscribe()
-            }
-            batch.execute()
-                .subscribe(
-                    { /* Success */ },
-                    { e ->
-                        log.atWarning().withCause(e).log("Failed to refresh TTL for $valueKey and meta keys")
-                    }
-                )
+            SimpleSetRedisCacheLuaScripts.executeReactive<Long>(
+                script,
+                RScript.Mode.READ_WRITE,
+                SimpleSetRedisCacheLuaScripts.TOUCH_VALUE,
+                RScript.ReturnType.LONG,
+                listOf(idsRedisKey()), // routing key
+                *argv.toTypedArray()
+            )
+                .doOnError { e -> log.atWarning().withCause(e).log("Failed to refresh TTL via TOUCH_VALUE for id=$id") }
+                .subscribe()
         }
     }
 

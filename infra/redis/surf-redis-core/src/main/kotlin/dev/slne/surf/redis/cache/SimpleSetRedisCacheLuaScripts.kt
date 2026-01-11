@@ -4,11 +4,14 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.asCache
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.reactor.mono
 import org.intellij.lang.annotations.Language
 import org.redisson.api.RScript
 import org.redisson.api.RScriptReactive
 import org.redisson.client.RedisException
 import org.redisson.client.RedisNoScriptException
+import reactor.core.publisher.Mono
+import reactor.util.retry.Retry
 
 /**
  * Provides Lua scripts for managing a Redis-based cache with indexed sets. The scripts facilitate
@@ -356,12 +359,81 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
         return removedCount
         --]]
     """.trimIndent()
+    ),
+
+    @Language("Lua")
+    TOUCH_VALUE(
+        """
+        -- ARGV:
+        -- 1: prefix
+        -- 2: id
+        -- 3: ttlMillis
+        -- 4: indexCount
+        -- 5..: indexName1..indexNameN
+        --
+        -- Returns:
+        --   1 if value exists, else 0
+    
+        local prefix = ARGV[1]
+        local id = ARGV[2]
+        local ttl = tonumber(ARGV[3])
+        local indexCount = tonumber(ARGV[4])
+    
+        local valKey = prefix .. ":__val__:" .. id
+        local idsKey = prefix .. ":__ids__"
+    
+        if redis.call('EXISTS', valKey) == 0 then
+          return 0
+        end
+    
+        -- Keep canonical ids tracking alive (and repair if missing)
+        redis.call('SADD', idsKey, id)
+        redis.call('PEXPIRE', idsKey, ttl)
+    
+        -- Touch value
+        redis.call('PEXPIRE', valKey, ttl)
+    
+        -- Touch meta keys
+        local i = 5
+        for _ = 1, indexCount do
+          local idxName = ARGV[i]; i = i + 1
+          local metaKey = prefix .. ":__meta__:" .. id .. ":" .. idxName
+          redis.call('PEXPIRE', metaKey, ttl)
+        end
+    
+        return 1
+    """.trimIndent()
     );
+
 
     companion object {
         private val scriptShas = Caffeine.newBuilder()
             .asCache<SimpleSetRedisCacheLuaScripts, String>()
 
+
+        fun <R> executeReactive(
+            script: RScriptReactive,
+            mode: RScript.Mode,
+            lua: SimpleSetRedisCacheLuaScripts,
+            returnType: RScript.ReturnType,
+            keys: List<Any>,
+            vararg values: Any,
+            tries: Int = 3
+        ): Mono<R> {
+            val sha = mono {
+                scriptShas.get(lua) {
+                    script.scriptLoad(lua.script).awaitSingleOrNull() ?: error("Failed to load Lua script")
+                }
+            }
+
+            return sha
+                .flatMap { script.evalSha<R>(mode, it, returnType, keys, *values) }
+                .doOnError(RedisNoScriptException::class.java) { scriptShas.invalidate(lua) }
+                .retryWhen(
+                    Retry.max(tries.toLong())
+                        .filter { it is RedisNoScriptException }
+                )
+        }
 
         suspend fun <R> execute(
             script: RScriptReactive,
@@ -372,18 +444,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
             vararg values: Any,
             tries: Int = 3
         ): R {
-            val sha = scriptShas.get(lua) {
-                script.scriptLoad(lua.script).awaitSingleOrNull() ?: error("Failed to load Lua script")
-            }
-
-            return try {
-                script.evalSha<R>(mode, sha, returnType, keys, values).awaitSingle()
-            } catch (e: RedisNoScriptException) {
-                scriptShas.invalidate(lua)
-
-                if (tries <= 0) throw RedisException("Failed to execute Lua script after $tries attempts", e)
-                execute(script, mode, lua, returnType, keys, *values, tries = tries - 1)
-            }
+           return executeReactive<R>(script, mode, lua, returnType, keys, *values, tries = tries).awaitSingle()
         }
     }
 }
