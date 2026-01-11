@@ -112,6 +112,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
             invalidationSubscriptionDisposable = invalidationTopic.getMessages(String::class.java)
                 .doOnSubscribe { subscribed = true }
+                .doFinally { subscribed = false }
                 .subscribe(
                     { message ->
                         val parts = message.split(MESSAGE_DELIMITER)
@@ -651,14 +652,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
     override suspend fun invalidateAll(): Long {
         ensureSubscribed()
 
-        val keys = api.redissonReactive.keys
-            .getKeys(KeysScanOptions.defaults().pattern("$namespace:*"))
-            .collectList()
-            .awaitSingle()
-
-        val deleted = if (keys.isEmpty()) 0L else {
-            api.redissonReactive.keys.delete(*keys.toTypedArray()).awaitSingleOrNull() ?: 0L
-        }
+        val deleted = api.redissonReactive.keys.deleteByPattern("$keyPrefix:*").awaitSingle()
 
         clearNearCacheOnly()
         publishAllInvalidation()
