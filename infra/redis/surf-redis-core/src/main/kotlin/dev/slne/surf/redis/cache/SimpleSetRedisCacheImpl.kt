@@ -5,6 +5,7 @@ import com.sksamuel.aedile.core.expireAfterAccess
 import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -96,7 +97,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
      * Limits TTL refresh traffic (e.g. if a hot key is read very frequently).
      */
     private val refreshGate = Caffeine.newBuilder()
-        .expireAfterWrite(5.seconds)
+        .expireAfterWrite(ttl.times(0.1).coerceAtLeast(30.seconds))
         .maximumSize(100_000)
         .build<String, Unit>()
 
@@ -110,6 +111,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
             if (subscribed) return
 
             invalidationSubscriptionDisposable = invalidationTopic.getMessages(String::class.java)
+                .doOnSubscribe { subscribed = true }
                 .subscribe(
                     { message ->
                         val parts = message.split(MESSAGE_DELIMITER)
@@ -157,8 +159,6 @@ class SimpleSetRedisCacheImpl<T : Any>(
                             .log("Error in cache invalidation subscription for topic $invalidationTopicName")
                     }
                 )
-
-            subscribed = true
         }
     }
 
@@ -223,18 +223,26 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private fun refreshValueTtl(id: String) {
         val valueKey = valueRedisKey(id)
         refreshTtl(refreshKeyVal(id)) {
-            api.redissonReactive.getBucket<String>(valueKey, StringCodec.INSTANCE)
-                .expire(ttl.toJavaDuration())
-                .doOnError { e -> log.atWarning().withCause(e).log("Failed to refresh TTL for $valueKey") }
-                .subscribe()
-
+            val keys = mutableObjectSetOf<String>()
+            keys.add(valueRedisKey(id))
             for (idx in indexes.all) {
-                val metaKey = metaRedisKey(id, idx.name)
-                api.redissonReactive.getSet<String>(metaKey, StringCodec.INSTANCE)
+                keys.add(metaRedisKey(id, idx.name))
+            }
+
+            val batch = api.redissonReactive.createBatch()
+            for (key in keys) {
+                batch.getBucket<String>(key, StringCodec.INSTANCE)
                     .expire(ttl.toJavaDuration())
-                    .doOnError { e -> log.atWarning().withCause(e).log("Failed to refresh TTL for $metaKey") }
+                    .doOnError { e -> log.atWarning().withCause(e).log("Failed to refresh TTL for $key") }
                     .subscribe()
             }
+            batch.execute()
+                .subscribe(
+                    { /* Success */ },
+                    { e ->
+                        log.atWarning().withCause(e).log("Failed to refresh TTL for $valueKey and meta keys")
+                    }
+                )
         }
     }
 
