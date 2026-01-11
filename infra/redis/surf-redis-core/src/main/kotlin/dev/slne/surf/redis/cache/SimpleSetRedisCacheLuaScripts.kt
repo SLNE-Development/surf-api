@@ -277,6 +277,42 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
         local idsKey = prefix .. ":__ids__"
         local targetKey = prefix .. ":__idx__:" .. targetName .. ":" .. targetValue
         
+        local removedCount = 0
+        
+        while true do
+          local id = redis.call('SPOP', targetKey)
+          if not id then break end
+          
+          redis.call('DEL', prefix .. ":__val__:" .. id)
+          redis.call('SREM', idsKey, id)
+          
+          local j = 5
+          for _ = 1, indexCount do
+            local idxName = ARGV[j]; j = j + 1
+            local metaKey = prefix .. ":__meta__:" .. id .. ":" .. idxName
+            local vals = redis.call('SMEMBERS', metaKey)
+            
+            for _, v in ipairs(vals) do
+              local idxKey = prefix .. ":__idx__:" .. idxName .. ":" .. v
+              redis.call('SREM', idxKey, id)
+               if redis.call('SCARD', idxKey) == 0 then
+                 redis.call('DEL', idxKey)
+               end
+            end
+            
+            redis.call('DEL', metaKey)
+          end
+          
+          removedCount = removedCount + 1
+        end
+        
+        if redis.call('SCARD', idsKey) == 0 then
+          redis.call('DEL', idsKey)
+        end
+        
+        return removedCount
+        
+        --[[
         local ids = redis.call('SMEMBERS', targetKey)
         if #ids == 0 then
           return 0
@@ -317,6 +353,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
         end
         
         return removedCount
+        --]]
     """.trimIndent()
     );
 
