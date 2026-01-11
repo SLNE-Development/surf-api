@@ -115,7 +115,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
               local idxKey = prefix .. ":__idx__:" .. idxName .. ":" .. v
               redis.call('SREM', idxKey, id)
               if redis.call('SCARD', idxKey) == 0 then
-                redis.call('DEL', idxKey)
+                redis.call('UNLINK', idxKey)
               else
                 redis.call('PEXPIRE', idxKey, ttl)
               end
@@ -198,7 +198,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
         local idsKey = prefix .. ":__ids__"
         local valKey = prefix .. ":__val__:" .. id
         
-        local removedVal = redis.call('DEL', valKey)
+        local removedVal = redis.call('UNLINK', valKey)
         local removedId = redis.call('SREM', idsKey, id)
         
         local touched = {}
