@@ -19,6 +19,7 @@ import reactor.core.Disposable
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -101,7 +102,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
      * Limits TTL refresh traffic (e.g. if a hot key is read very frequently).
      */
     private val refreshGate = Caffeine.newBuilder()
-        .expireAfterWrite(ttl.times(0.1).coerceAtLeast(30.seconds))
+        .expireAfterWrite((ttl / 4).coerceIn(250.milliseconds, 1.hours))
         .maximumSize(100_000)
         .build<String, Unit>()
 
