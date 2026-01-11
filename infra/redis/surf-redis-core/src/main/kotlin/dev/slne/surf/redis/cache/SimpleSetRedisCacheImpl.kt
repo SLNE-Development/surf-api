@@ -250,11 +250,21 @@ class SimpleSetRedisCacheImpl<T : Any>(
         invalidationTopic.publish(parts.joinToString(MESSAGE_DELIMITER.toString())).awaitSingleOrNull()
     }
 
-    private suspend fun publishAllInvalidation() = publish(nodeId, OP_ALL)
-    private suspend fun publishIdsInvalidation() = publish(nodeId, OP_IDS)
-    private suspend fun publishValueInvalidation(id: String) = publish(nodeId, OP_VAL, id)
+    private suspend fun publishSafe(vararg parts: String) {
+        try {
+            publish(*parts)
+        } catch (t: Throwable) {
+            log.atWarning()
+                .withCause(t)
+                .log("Failed to publish cache invalidation on topic $invalidationTopicName")
+        }
+    }
+
+    private suspend fun publishAllInvalidation() = publishSafe(nodeId, OP_ALL)
+    private suspend fun publishIdsInvalidation() = publishSafe(nodeId, OP_IDS)
+    private suspend fun publishValueInvalidation(id: String) = publishSafe(nodeId, OP_VAL, id)
     private suspend fun publishIndexInvalidation(indexName: String, indexValue: String) =
-        publish(nodeId, OP_IDX, indexName, indexValue)
+        publishSafe(nodeId, OP_IDX, indexName, indexValue)
 
     private fun requireNoNul(s: String, label: String) {
         require(!s.contains(MESSAGE_DELIMITER)) { "$label must not contain NUL char" }
@@ -276,6 +286,8 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private fun refreshValueTtl(id: String) {
         val valueKey = valueRedisKey(id)
         refreshTtl(refreshKeyVal(id)) {
+            refreshIdsTtl()
+
             val keys = mutableObjectSetOf<String>()
             keys.add(valueRedisKey(id))
             for (idx in indexes.all) {
@@ -563,14 +575,14 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
         // Local near-cache updates
         nearValues.put(id, CacheEntry.Value(element))
-        nearIds.invalidate(IDS_LOCAL_KEY)
+        if (wasNew) nearIds.invalidate(IDS_LOCAL_KEY)
         for ((idxName, idxValue) in touched) {
             nearIndexIds.invalidate(indexCacheKey(idxName, idxValue))
         }
 
         // Cross-node invalidation
         publishValueInvalidation(id)
-        publishIdsInvalidation()
+        if (wasNew) publishIdsInvalidation()
         for ((idxName, idxValue) in touched) publishIndexInvalidation(idxName, idxValue)
 
         return wasNew
