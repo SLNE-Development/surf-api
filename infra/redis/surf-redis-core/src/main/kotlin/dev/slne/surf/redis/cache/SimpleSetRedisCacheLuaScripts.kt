@@ -1,6 +1,14 @@
 package dev.slne.surf.redis.cache
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.sksamuel.aedile.core.asCache
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.intellij.lang.annotations.Language
+import org.redisson.api.RScript
+import org.redisson.api.RScriptReactive
+import org.redisson.client.RedisException
+import org.redisson.client.RedisNoScriptException
 
 /**
  * Provides Lua scripts for managing a Redis-based cache with indexed sets. The scripts facilitate
@@ -15,7 +23,7 @@ import org.intellij.lang.annotations.Language
  * 2. `REMOVE_BY_ID`: Removes a value (and its associated indexes) from the cache by its ID.
  * 3. `REMOVE_BY_INDEX`: Removes all values associated with a specific index name and value from the cache.
  */
-object SimpleSetRedisCacheLuaScripts {
+enum class SimpleSetRedisCacheLuaScripts(val script: String) {
 
     /**
      * A Lua script string designed to perform an "upsert" operation in Redis. The script handles the insertion or updating
@@ -44,7 +52,8 @@ object SimpleSetRedisCacheLuaScripts {
      *      - A list of touched index entries represented as "indexName<0>indexValue".
      */
     @Language("Lua")
-    val UPSERT = """
+    UPSERT(
+        """
         -- ARGV:
         -- 1: prefix
         -- 2: id
@@ -138,6 +147,7 @@ object SimpleSetRedisCacheLuaScripts {
         end
         return res
     """.trimIndent()
+    ),
 
 
     /**
@@ -167,7 +177,8 @@ object SimpleSetRedisCacheLuaScripts {
      * - Index entries are maintained under keys formatted as `{prefix}:__idx__:{indexName}:{indexValue}`.
      */
     @Language("Lua")
-    val REMOVE_BY_ID = """
+    REMOVE_BY_ID(
+        """
         -- ARGV:
         -- 1: prefix
         -- 2: id
@@ -224,6 +235,7 @@ object SimpleSetRedisCacheLuaScripts {
         end
         return res
     """.trimIndent()
+    ),
 
 
     /**
@@ -245,7 +257,8 @@ object SimpleSetRedisCacheLuaScripts {
      * - The script returns the count of entries removed (`removedCount`).
      */
     @Language("Lua")
-    val REMOVE_BY_INDEX = """
+    REMOVE_BY_INDEX(
+        """
         -- ARGV:
         -- 1: prefix
         -- 2: targetIndexName
@@ -305,4 +318,34 @@ object SimpleSetRedisCacheLuaScripts {
         
         return removedCount
     """.trimIndent()
+    );
+
+    companion object {
+        private val scriptShas = Caffeine.newBuilder()
+            .asCache<SimpleSetRedisCacheLuaScripts, String>()
+
+
+        suspend fun <R> execute(
+            script: RScriptReactive,
+            mode: RScript.Mode,
+            lua: SimpleSetRedisCacheLuaScripts,
+            returnType: RScript.ReturnType,
+            keys: List<Any>,
+            vararg values: Any,
+            tries: Int = 3
+        ): R {
+            val sha = scriptShas.get(lua) {
+                script.scriptLoad(lua.script).awaitSingleOrNull() ?: error("Failed to load Lua script")
+            }
+
+            return try {
+                script.evalSha<R>(mode, sha, returnType, keys, values).awaitSingle()
+            } catch (e: RedisNoScriptException) {
+                scriptShas.invalidate(lua)
+
+                if (tries <= 0) throw RedisException("Failed to execute Lua script after $tries attempts", e)
+                execute(script, mode, lua, returnType, keys, *values, tries = tries - 1)
+            }
+        }
+    }
 }

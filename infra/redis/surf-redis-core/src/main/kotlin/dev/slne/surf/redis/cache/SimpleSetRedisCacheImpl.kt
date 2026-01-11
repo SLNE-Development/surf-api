@@ -480,13 +480,14 @@ class SimpleSetRedisCacheImpl<T : Any>(
             for (v in values) argv += v
         }
 
-        val result = script.eval<List<Any>>(
+        val result = SimpleSetRedisCacheLuaScripts.execute<List<Any>>(
+            script,
             RScript.Mode.READ_WRITE,
             SimpleSetRedisCacheLuaScripts.UPSERT,
             RScript.ReturnType.LIST,
             listOf(idsRedisKey()), // routing key (cluster-safe)
             *argv.toTypedArray()
-        ).awaitSingle()
+        )
 
         val (wasNew, touched) = parseLuaFlagAndTouched(result)
 
@@ -578,13 +579,14 @@ class SimpleSetRedisCacheImpl<T : Any>(
             argv += idx.name
         }
 
-        val result = script.eval<List<Any>>(
+        val result = SimpleSetRedisCacheLuaScripts.execute<List<Any>>(
+            script,
             RScript.Mode.READ_WRITE,
             SimpleSetRedisCacheLuaScripts.REMOVE_BY_ID,
             RScript.ReturnType.LIST,
             listOf(idsRedisKey()),
             *argv.toTypedArray()
-        ).awaitSingle()
+        )
 
         val (removed, touched) = parseLuaFlagAndTouched(result)
 
@@ -628,13 +630,14 @@ class SimpleSetRedisCacheImpl<T : Any>(
             argv += idx.name
         }
 
-        val removedCount = script.eval<Long>(
+        val removedCount = SimpleSetRedisCacheLuaScripts.execute<Long>(
+            script,
             RScript.Mode.READ_WRITE,
             SimpleSetRedisCacheLuaScripts.REMOVE_BY_INDEX,
             RScript.ReturnType.LONG,
             listOf(idsRedisKey()),
             *argv.toTypedArray()
-        ).awaitSingle()
+        )
 
         if (removedCount <= 0L) return false
 
