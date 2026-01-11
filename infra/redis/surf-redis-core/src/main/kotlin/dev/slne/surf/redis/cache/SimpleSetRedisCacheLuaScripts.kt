@@ -8,7 +8,6 @@ import kotlinx.coroutines.reactor.mono
 import org.intellij.lang.annotations.Language
 import org.redisson.api.RScript
 import org.redisson.api.RScriptReactive
-import org.redisson.client.RedisException
 import org.redisson.client.RedisNoScriptException
 import reactor.core.publisher.Mono
 import reactor.util.retry.Retry
@@ -411,7 +410,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
             .asCache<SimpleSetRedisCacheLuaScripts, String>()
 
 
-        fun <R> executeReactive(
+        fun <R : Any> executeReactive(
             script: RScriptReactive,
             mode: RScript.Mode,
             lua: SimpleSetRedisCacheLuaScripts,
@@ -435,7 +434,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
                 )
         }
 
-        suspend fun <R> execute(
+        suspend fun <R: Any> execute(
             script: RScriptReactive,
             mode: RScript.Mode,
             lua: SimpleSetRedisCacheLuaScripts,
@@ -444,7 +443,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
             vararg values: Any,
             tries: Int = 3
         ): R {
-           return executeReactive<R>(script, mode, lua, returnType, keys, *values, tries = tries).awaitSingle()
+            return executeReactive<R>(script, mode, lua, returnType, keys, *values, tries = tries).awaitSingle()
         }
     }
 }
