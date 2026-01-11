@@ -128,9 +128,8 @@ object SimpleSetRedisCacheLuaScripts {
           redis.call('DEL', metaKey)
           if #newVals > 0 then
             redis.call('SADD', metaKey, unpack(newVals))
-            redis.call('PEXPIRE', metaKey, ttl)
           end
-        end
+          redis.call('PEXPIRE', metaKey, ttl)
         
         local res = { wasNew }
         for _, t in ipairs(touched) do
