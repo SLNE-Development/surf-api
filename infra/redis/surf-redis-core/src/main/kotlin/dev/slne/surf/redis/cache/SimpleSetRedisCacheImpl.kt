@@ -66,6 +66,14 @@ class SimpleSetRedisCacheImpl<T : Any>(
         private val nodeId = UUID.randomUUID().toString().replace("-", "")
     }
 
+    init {
+        require(namespace.isNotBlank()) { "namespace must not be blank" }
+        requireNoNul(namespace, "namespace")
+        require(!namespace.contains('{') && !namespace.contains('}')) {
+            "namespace must not contain '{' or '}' (used for Redis Cluster hash tags)"
+        }
+    }
+
     /**
      * Represents the default Time-To-Live (TTL) duration for negative cache entries, i.e.,
      * entries created to temporarily store the absence of a value in the Redis set.
