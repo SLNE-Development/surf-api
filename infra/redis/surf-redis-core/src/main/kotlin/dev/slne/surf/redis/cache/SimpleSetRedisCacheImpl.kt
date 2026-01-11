@@ -369,34 +369,43 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val redisKey = idsRedisKey()
         val idsSet = api.redissonReactive.getSet<String>(redisKey, StringCodec.INSTANCE)
 
-        val exists = api.redissonReactive.keys.countExists(redisKey).awaitSingle() > 0L
-        val ids = if (exists) {
-            val loaded = idsSet.readAll().awaitSingleOrNull().orEmpty()
+        val loaded = idsSet.readAll().awaitSingleOrNull().orEmpty()
+        if (loaded.isNotEmpty()) {
             idsSet.expire(ttl.toJavaDuration()).awaitSingleOrNull()
-            loaded
-        } else {
-            // Fallback: ids key missing -> rebuild from value keys
-            val prefix = valueRedisPrefix()
-            val keys = api.redissonReactive.keys
-                .getKeys(KeysScanOptions.defaults().pattern("$prefix*"))
-                .collectList()
-                .awaitSingle()
-
-            val rebuilt = keys.asSequence()
-                .filter { it.startsWith(prefix) }
-                .map { it.substring(prefix.length) }
-                .filter { it.isNotEmpty() }
-                .toSet()
-
-            if (rebuilt.isNotEmpty()) {
-                for (id in rebuilt) idsSet.add(id).awaitSingleOrNull()
-                idsSet.expire(ttl.toJavaDuration()).awaitSingleOrNull()
-            }
-            rebuilt
+            nearIds.put(IDS_LOCAL_KEY, CacheEntry.Value(loaded))
+            return loaded
         }
 
-        nearIds.put(IDS_LOCAL_KEY, if (ids.isEmpty()) CacheEntry.Null else CacheEntry.Value(ids))
-        return ids
+        val exists = api.redissonReactive.keys.countExists(redisKey).awaitSingle() > 0L
+        if (exists) {
+            idsSet.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+            nearIds.put(IDS_LOCAL_KEY, CacheEntry.Null)
+            return emptySet()
+        }
+
+        // Fallback: ids key missing -> rebuild from value keys
+        val prefix = valueRedisPrefix()
+        val keys = api.redissonReactive.keys
+            .getKeys(KeysScanOptions.defaults().pattern("$prefix*"))
+            .collectList()
+            .awaitSingle()
+
+        val rebuilt = keys.asSequence()
+            .filter { it.startsWith(prefix) }
+            .map { it.substring(prefix.length) }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+
+        if (rebuilt.isNotEmpty()) {
+            idsSet.addAll(rebuilt).awaitSingleOrNull()
+            idsSet.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+            nearIds.put(IDS_LOCAL_KEY, CacheEntry.Value(rebuilt))
+            return rebuilt
+        }
+
+        nearIds.put(IDS_LOCAL_KEY, CacheEntry.Null)
+        return emptySet()
     }
 
     override suspend fun findCached(condition: (T) -> Boolean): Set<T> {
