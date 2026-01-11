@@ -11,6 +11,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.KSerializer
 import org.redisson.api.RScript
 import org.redisson.api.options.KeysScanOptions
@@ -18,6 +20,7 @@ import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -49,6 +52,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private companion object {
         private val log = logger()
 
+        private const val MAX_CONCURRENT_REDIS_OPS = 64
         private const val INVALIDATION_TOPIC_SUFFIX = ":__cache_invalidate__"
         private const val MESSAGE_DELIMITER = '\u0000'
 
@@ -404,16 +408,20 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val result = ConcurrentHashMap.newKeySet<T>()
         val idsRedis = api.redissonReactive.getSet<String>(idsRedisKey(), StringCodec.INSTANCE)
 
+        val semaphore = Semaphore(MAX_CONCURRENT_REDIS_OPS)
+
         coroutineScope {
             for (id in ids) {
                 launch {
-                    val value = getCachedById(id)
-                    if (value == null) {
-                        idsRedis.remove(id).awaitSingleOrNull() // stale
-                        nearIds.invalidate(IDS_LOCAL_KEY)
+                    semaphore.withPermit {
+                        val value = getCachedById(id)
+                        if (value == null) {
+                            idsRedis.remove(id).awaitSingleOrNull() // stale
+                            nearIds.invalidate(IDS_LOCAL_KEY)
 
-                    } else if (condition(value)) {
-                        result.add(value)
+                        } else if (condition(value)) {
+                            result.add(value)
+                        }
                     }
                 }
             }
@@ -461,30 +469,34 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
         val result = ConcurrentHashMap.newKeySet<T>(loadedIds.size)
         val filteredIds = ConcurrentHashMap.newKeySet<String>(loadedIds.size)
-        var changed = false
+
+        val changed = AtomicBoolean(false)
+        val semaphore = Semaphore(MAX_CONCURRENT_REDIS_OPS)
 
         coroutineScope {
             for (id in loadedIds) {
                 launch {
-                    val element = getCachedById(id)
-                    if (element == null) {
-                        indexSet.remove(id).awaitSingleOrNull()
-                        changed = true
-                    } else {
-                        val actual = index.extractStrings(element)
-                        if (queryValue !in actual) {
+                    semaphore.withPermit {
+                        val element = getCachedById(id)
+                        if (element == null) {
                             indexSet.remove(id).awaitSingleOrNull()
-                            changed = true
+                            changed.set(true)
                         } else {
-                            filteredIds.add(id)
-                            result.add(element)
+                            val actual = index.extractStrings(element)
+                            if (queryValue !in actual) {
+                                indexSet.remove(id).awaitSingleOrNull()
+                                changed.set(true)
+                            } else {
+                                filteredIds.add(id)
+                                result.add(element)
+                            }
                         }
                     }
                 }
             }
         }
 
-        if (changed) {
+        if (changed.get()) {
             nearIndexIds.put(cacheKey, if (filteredIds.isEmpty()) CacheEntry.Null else CacheEntry.Value(filteredIds))
         }
 
