@@ -40,11 +40,15 @@ import org.redisson.api.RedissonReactiveClient
 import org.redisson.api.redisnode.RedisNodes
 import org.redisson.codec.BaseEventCodec
 import org.redisson.config.Config
+import org.redisson.config.EqualJitterDelay
 import org.redisson.config.TransportMode
 import org.redisson.misc.RedisURI
 import reactor.core.Disposable
 import java.nio.file.Path
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 /**
  * Central API for managing Redis connections.
@@ -134,6 +138,10 @@ class RedisApi private constructor(
                 .setExecutor(RedisComponentProvider.get().redissonExecutorService)
                 .apply {
                     useSingleServer()
+                        .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
+                        .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
+                        .setRetryAttempts(10)
+                        .setRetryDelay(EqualJitterDelay(200.milliseconds.toJavaDuration(), 1.seconds.toJavaDuration()))
                         .setAddress(redisURI.toString())
                 }
 
