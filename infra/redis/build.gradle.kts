@@ -1,63 +1,56 @@
-import dev.slne.surf.surfapi.gradle.util.slneReleases
+import com.github.jengelman.gradle.plugins.shadow.ShadowExtension
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
+
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
+    }
+    dependencies {
+        classpath("dev.slne.surf:surf-api-gradle-plugin:1.21.11+")
+    }
+}
 
 plugins {
-    id("dev.slne.surf.surfapi.gradle.core") version "1.21.11+"
-//    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+" /* Uncomment to use tests */
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
 }
 
-group = "dev.slne.surf"
-version = findProperty("version") as String
+allprojects {
+    group = "dev.slne.surf"
+    version = findProperty("version") as String
+}
 
+subprojects {
+    tasks.withType<ShadowJar>().configureEach {
+        val base = "dev.slne.surf.redis.libs."
 
-dependencies {
-    implementation("io.lettuce:lettuce-core:7.2.1.RELEASE") {
-        exclude("org.slf4j")
-        exclude("org.reactivestreams")
-        exclude("io.projectreactor", "reactor-core")
+        relocate("com.esotericsoftware", base + "kryo")
+        relocate("io.netty", base + "netty")
+        relocate("io.reactivex", base + "reactivex")
+        relocate("javax.cache", base + "javax.cache")
+        relocate("jodd", base + "jodd")
+        relocate("net.bytebuddy", base + "bytebuddy")
+        relocate("org.objenesis", base + "objenesis")
+        relocate("org.redisson", base + "redisson")
+        relocate("org.yaml", base + "yaml")
     }
 
-    testImplementation(kotlin("test"))
-    testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
-    testImplementation("com.redis:testcontainers-redis:2.2.4")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-}
+    afterEvaluate {
+        configure<ShadowExtension> {
+            addShadowVariantIntoJavaComponent = false
+        }
 
-tasks.shadowJar {
-    relocationPrefix = "dev.slne.surf.redis.libs"
-    enableAutoRelocation = true
-}
-
-shadow {
-    addShadowVariantIntoJavaComponent = false
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("shadow") {
-            from(components["shadow"])
+        configure<KotlinJvmExtension> {
+            compilerOptions {
+                optIn.add("dev.slne.surf.redis.util.InternalRedisAPI")
+            }
         }
     }
-
-    repositories {
-        slneReleases()
-    }
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
-afterEvaluate {
-    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
-        enabled = false
-    }
-    tasks.named("publishPluginMavenPublicationToMavenLocal") {
-        enabled = false
-    }
+apiValidation {
+    nonPublicMarkers.add("dev.slne.surf.redis.util.InternalRedisAPI")
+    apiDumpDirectory = "api"
+    ignoredProjects.addAll(listOf("surf-redis-core", "surf-redis-paper", "surf-redis-velocity"))
 }
