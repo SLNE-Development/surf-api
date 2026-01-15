@@ -23,7 +23,7 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
     var group: String? = null
 
     @Input
-    @Serializable("Id")
+    @SerialName("Id")
     var id: String? = null
 
     @Input
