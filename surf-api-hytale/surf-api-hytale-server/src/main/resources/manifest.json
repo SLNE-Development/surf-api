@@ -4,8 +4,10 @@
   "Name": "${name}",
   "Version": "${version}",
   "Authors": [
-    "Ammo"
+    {
+      "Name": "Ammo"
+    }
   ],
-  "Main": "dev.slne.surfapi.hytale.server.HytaleMain",
+  "Main": "dev.slne.surf.surfapi.hytale.server.HytaleMain",
   "ServerVersion": "*"
 }
