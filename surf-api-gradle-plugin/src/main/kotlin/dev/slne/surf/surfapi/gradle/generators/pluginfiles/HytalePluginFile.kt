@@ -14,12 +14,11 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.encodeStructure
 import org.gradle.api.Project
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 
 @Serializable(with = HytalePluginFileSerializer::class)
-class HytalePluginFile(project: Project, objects: ObjectFactory) : CommonPluginFile() {
+class HytalePluginFile(project: Project) : CommonPluginFile() {
     @Input
     @SerialName("Group")
     var group: String = "HYS"
