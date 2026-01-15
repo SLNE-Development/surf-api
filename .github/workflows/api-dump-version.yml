@@ -2,7 +2,7 @@ name: API Compatibility & Version Bump
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 permissions:
   contents: write
@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: graalvm
-          java-version: 21
+          java-version: 25
 
       - name: Run Kotlin apiDump
         run: ./gradlew shadowJar apiDump
@@ -64,7 +64,7 @@ jobs:
           sed -i "s/^version=.*/version=$new_version/" "$version_file"
 
       - name: Commit and push changes
-        if: steps.api.outputs.changed == 'true'           
+        if: steps.api.outputs.changed == 'true'
         run: |
           if git diff --quiet; then
             echo "No changes to commit."

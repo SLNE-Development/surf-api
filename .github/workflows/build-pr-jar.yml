@@ -2,7 +2,7 @@ name: Build PR JAR
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [ opened, synchronize, reopened, labeled ]
 
 env:
   MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
@@ -17,7 +17,7 @@ jobs:
         ((github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
          contains(github.event.pull_request.labels.*.name, 'build-pr-jar'))
       )
-      
+
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.pr.outputs.number }}
@@ -26,7 +26,7 @@ jobs:
       - name: Remember PR number
         id: pr
         run: echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
-        
+
       - name: Check out repository
         uses: actions/checkout@v4
         with:
@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: "graalvm"
-          java-version: "21"
+          java-version: "25"
 
       - name: Build modules with Gradle
         run: ./gradlew build shadowJar --parallel --no-scan
@@ -68,7 +68,7 @@ jobs:
           path: ${{ env.JAR_FILES }}
           if-no-files-found: error
   comment_pr:
-    needs: build_pr                     
+    needs: build_pr
     if: needs.build_pr.result == 'success'
     runs-on: ubuntu-latest
     steps:
