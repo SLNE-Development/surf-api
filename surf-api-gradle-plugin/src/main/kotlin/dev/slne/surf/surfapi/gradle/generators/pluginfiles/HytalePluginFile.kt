@@ -15,12 +15,13 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.encodeStructure
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 
 @Serializable(with = HytalePluginFileSerializer::class)
 class HytalePluginFile(project: Project) : CommonPluginFile() {
     @Input
     @SerialName("Group")
-    var group: String? = null
+    var group: String = "HYS"
 
     @Input
     @SerialName("Id")
@@ -36,7 +37,8 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
 
     @Input
     @SerialName("Description")
-    var description: String? = null
+    @Optional
+    var description: String = ""
 
     @Input
     @SerialName("Authors")
@@ -44,11 +46,12 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
 
     @Input
     @SerialName("Website")
-    var website: String? = null
+    @Optional
+    var website: String = ""
 
     @Input
     @SerialName("ServerVersion")
-    var serverVersion: String? = null
+    var serverVersion: String = "*"
 
     @Input
     @SerialName("DisabledByDefault")
@@ -82,8 +85,8 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
         id = project.name
         name = project.name
         version = project.version.toString()
-        description = project.description
-        website = project.findProperty("url") as String?
+        description = project.description ?: ""
+        website = project.findProperty("url") as String? ?: ""
         dependencies += mapOf(
             "surf-api-hytale-server" to "*"
         )
