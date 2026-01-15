@@ -13,7 +13,6 @@ dependencies {
     api(libs.fastutil)
     api(libs.flogger)
     api(libs.commons.math4.core)
-    compileOnlyApi(libs.hytale.server)
 }
 
 tasks.withType<ProcessResources> {
