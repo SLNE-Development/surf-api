@@ -6,7 +6,6 @@ import dev.slne.surf.surfapi.core.api.SurfCoreApi
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl
 import dev.slne.surf.surfapi.hytale.api.SurfHytaleApi
-import dev.slne.surf.surfapi.hytale.server.hytaleMain
 import java.util.*
 
 
@@ -15,8 +14,6 @@ class SurfHytaleApiImpl : SurfCoreApiImpl(), SurfHytaleApi {
     init {
         checkInstantiationByServiceLoader()
     }
-
-    override val executorService get() = hytaleMain.executorService
 
     override fun sendPlayerToServer(playerUuid: UUID, server: String) {
         throw NotImplementedError()

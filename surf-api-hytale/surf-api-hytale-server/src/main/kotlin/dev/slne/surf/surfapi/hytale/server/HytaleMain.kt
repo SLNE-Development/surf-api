@@ -1,21 +1,14 @@
 package dev.slne.surf.surfapi.hytale.server
 
-import com.hypixel.hytale.server.core.HytaleServer
-import com.hypixel.hytale.server.core.plugin.JavaPlugin
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit
+import dev.slne.surf.surfapi.hytale.api.coroutines.SuspendingJavaPlugin
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.ExecutorService
 
-class HytaleMain(init: JavaPluginInit) : JavaPlugin(init) {
-    lateinit var executorService: ExecutorService
-        private set
-
+class HytaleMain(init: JavaPluginInit) : SuspendingJavaPlugin(init) {
     override fun setup() {
         runBlocking {
             HytaleInstance.bootstrap()
             HytaleInstance.onLoad()
-
-            executorService = HytaleServer.SCHEDULED_EXECUTOR
         }
     }
 
