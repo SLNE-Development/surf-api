@@ -68,7 +68,7 @@ class HytalePluginFile(project: Project, objects: ObjectFactory) : CommonPluginF
 
     @Input
     @SerialName("Dependencies")
-    val dependencies: MutableMap<String, String> = mutableMapOf("surf-api-hytale-server" to "*")
+    val dependencies: MutableMap<String, String> = mutableMapOf("HYS:surf-api-hytale-server" to "*")
 
     @Input
     @SerialName("OptionalDependencies")
