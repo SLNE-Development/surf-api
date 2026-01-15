@@ -1,15 +1,17 @@
 package dev.slne.surf.surfapi.hytale.api.coroutines
 
 import com.hypixel.hytale.server.core.plugin.JavaPlugin
+import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlin.coroutines.CoroutineContext
 
+@InternalSurfApi
 interface HysCoroutine {
     companion object {
-        var driver: String = ""
+        var driver: String = "dev.slne.surf.surfapi.hytale.server.coroutines.impl.HysCoroutineImpl"
     }
 
     fun getCoroutineSession(plugin: JavaPlugin): CoroutineSession
@@ -28,14 +30,17 @@ internal val hysCoroutine: HysCoroutine by lazy {
     }
 }
 
-val JavaPlugin.dispatcher: CoroutineContext
-    get() = hysCoroutine.getCoroutineSession(this).dispatcher
+val JavaPlugin.mainDispatcher: CoroutineContext
+    get() = hysCoroutine.getCoroutineSession(this).mainDispatcher
+
+val JavaPlugin.pluginDispatcher: CoroutineContext
+    get() = hysCoroutine.getCoroutineSession(this).pluginDispatcher
 
 val JavaPlugin.scope: CoroutineScope
     get() = hysCoroutine.getCoroutineSession(this).scope
 
 fun JavaPlugin.launch(
-    context: CoroutineContext = dispatcher,
+    context: CoroutineContext = pluginDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit
 ): Job {

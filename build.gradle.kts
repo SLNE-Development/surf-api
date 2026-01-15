@@ -1,10 +1,10 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import kotlinx.validation.KotlinApiBuildTask
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
-//    alias(libs.plugins.dokka)
 }
 
 allprojects {
@@ -29,10 +29,6 @@ allprojects {
         dependencies.remove(project.dependencies.gradleApi())
         dependencies.remove(project.dependencies.gradleTestKit())
     }
-
-//    if (subprojects.isEmpty()) {
-//        apply(plugin = rootProject.libs.plugins.dokka.get().pluginId)
-//    }
 }
 
 val ci = System.getenv("CI")?.toBoolean() == true
@@ -60,14 +56,12 @@ apiValidation {
     }
 }
 
-//dependencies {
-//    dokka(project(":surf-api-core:surf-api-core-api"))
-//    dokka(project(":surf-api-bukkit:surf-api-bukkit-api"))
-//    dokka(project(":surf-api-velocity:surf-api-velocity-api"))
-//}
-//
-//dokka {
-//    dokkaSourceSets.configureEach {
-//        documentedVisibilities = setOf(VisibilityModifier.Public, VisibilityModifier.Protected)
-//    }
-//}
+subprojects {
+    afterEvaluate {
+        extensions.findByType<KotlinJvmExtension>()?.apply {
+            compilerOptions {
+                optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+            }
+        }
+    }
+}
