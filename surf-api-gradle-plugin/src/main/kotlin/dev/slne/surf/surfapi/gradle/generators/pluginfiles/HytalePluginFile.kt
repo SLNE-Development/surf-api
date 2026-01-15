@@ -14,11 +14,12 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.encodeStructure
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 
 @Serializable(with = HytalePluginFileSerializer::class)
-class HytalePluginFile(project: Project) : CommonPluginFile() {
+class HytalePluginFile(project: Project, objects: ObjectFactory) : CommonPluginFile() {
     @Input
     @SerialName("Group")
     var group: String = "HYS"
@@ -67,17 +68,18 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
 
     @Input
     @SerialName("Dependencies")
-    var dependencies: MutableMap<String, String> = mutableMapOf()
+    val dependencies: MutableMap<String, String> = mutableMapOf("surf-api-hytale-server" to "*")
 
     @Input
-    @SerialName("PluginDependencies")
-    var pluginDependencies: MutableMap<String, String> = mutableMapOf()
+    @SerialName("OptionalDependencies")
+    val optionalDependencies: MutableMap<String, String> = mutableMapOf()
 
     @Serializable
     data class Author(@SerialName("Name") @Input val name: String)
 
-
     override fun isApplied(): Boolean {
+
+
         return name != null && main != null
     }
 
@@ -87,9 +89,6 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
         version = project.version.toString()
         description = project.description ?: ""
         website = project.findProperty("url") as String? ?: ""
-        dependencies += mapOf(
-            "surf-api-hytale-server" to "*"
-        )
     }
 
     override fun validate() {
@@ -98,7 +97,7 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
         if (version.isNullOrBlank()) invalidPluginFile("Plugin version not set")
         if (main.isNullOrBlank()) invalidPluginFile("Main class not set")
 
-        for ((dependency, version) in pluginDependencies) {
+        for ((dependency, version) in optionalDependencies) {
             if (dependency.isBlank()) invalidPluginFile("Dependency id not set")
             if (version.isBlank()) invalidPluginFile("Dependency '$dependency' version not set")
         }
@@ -148,7 +147,7 @@ object HytalePluginFileSerializer : KSerializer<HytalePluginFile> {
                 descriptor,
                 11,
                 MapSerializer(String.serializer(), String.serializer()),
-                value.pluginDependencies
+                value.optionalDependencies
             )
         }
     }
