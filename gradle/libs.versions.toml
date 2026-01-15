@@ -2,6 +2,9 @@
 # Paper
 paper-api = "1.21.11-R0.1-SNAPSHOT"
 
+# Hytale
+hytale-server = "1.0.0"
+
 # Kolin
 kotlinVersion = "2.3.0"
 kotlinxCoroutines = "1.10.2"
@@ -73,6 +76,9 @@ dokka = "2.1.0"
 [libraries]
 # Paper
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
+
+# Hytale
+hytale-server = { module = "dev.hypixel:hytale-server", version.ref = "hytale-server" }
 
 # Kotlin
 kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }

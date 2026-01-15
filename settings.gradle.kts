@@ -17,6 +17,9 @@ include(":surf-api-core:surf-api-core-server")
 include(":surf-api-bukkit:surf-api-bukkit-api")
 include(":surf-api-bukkit:surf-api-bukkit-server")
 
+include(":surf-api-hytale:surf-api-hytale-api")
+include(":surf-api-hytale:surf-api-hytale-server")
+
 include(":surf-api-velocity:surf-api-velocity-api")
 include(":surf-api-velocity:surf-api-velocity-server")
 

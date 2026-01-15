@@ -1,0 +1,11 @@
+{
+  "Group": "HYS",
+  "Id": "${id}",
+  "Name": "${name}",
+  "Version": "${version}",
+  "Authors": [
+    "Ammo"
+  ],
+  "Main": "dev.slne.surfapi.hytale.server.HytaleMain",
+  "ServerVersion": "*"
+}

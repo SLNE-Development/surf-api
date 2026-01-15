@@ -61,9 +61,14 @@ configurations {
     }
 }
 
+tasks.withType<org.gradle.jvm.tasks.Jar> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 tasks {
     shadowJar {
         mergeServiceFiles()
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
     javadoc {

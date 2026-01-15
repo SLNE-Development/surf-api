@@ -9,4 +9,5 @@ enum class SurfApiPlatform(val dependency: String, val scope: String = COMPILE_O
     PAPER("dev.slne.surf:surf-api-bukkit-api:${Constants.SURF_API_VERSION}"),
     VELOCITY("dev.slne.surf:surf-api-velocity-api:${Constants.SURF_API_VERSION}"),
     STANDALONE("dev.slne.surf:surf-api-standalone:${Constants.SURF_API_VERSION}", API),
+    HYTALE("dev.slne.surf:surf-api-hytale-api:${Constants.SURF_API_VERSION}"),
 }

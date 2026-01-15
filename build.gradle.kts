@@ -20,7 +20,7 @@ allprojects {
             }
         }
     }
-    
+
     configurations.all {
         if (name == "compileOnly") {
             return@all
@@ -42,6 +42,7 @@ apiValidation {
         listOf(
             "surf-api-core-server",
             "surf-api-bukkit-server",
+            "surf-api-hytale-server",
             "surf-api-velocity-server",
             "surf-api-standalone",
             "surf-api-gradle-plugin",
