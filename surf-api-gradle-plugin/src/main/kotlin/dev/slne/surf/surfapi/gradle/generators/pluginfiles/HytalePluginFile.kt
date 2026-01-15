@@ -77,8 +77,6 @@ class HytalePluginFile(project: Project) : CommonPluginFile() {
     data class Author(@SerialName("Name") @Input val name: String)
 
     override fun isApplied(): Boolean {
-
-
         return name != null && main != null
     }
 
