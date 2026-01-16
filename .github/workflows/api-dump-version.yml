@@ -33,7 +33,7 @@ jobs:
       - name: Detect API changes
         id: changes
         run: |
-          abi_paths=$(find . -type d -name abi | sed 's|$|/*|')
+          abi_paths=$(find . -type d -name api | sed 's|$|/*|')
           if git diff --quiet --exit-code $abi_paths; then
             echo "api_changed=false" >> $GITHUB_OUTPUT
           else
