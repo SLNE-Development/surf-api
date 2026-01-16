@@ -1,5 +1,6 @@
 plugins {
     `core-convention`
+    `api-validation`
 }
 
 dependencies {

@@ -15,6 +15,8 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.utils.API
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
@@ -22,6 +24,8 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     protected val platformName: String,
     private val platform: SurfApiPlatform,
 ) : Plugin<Project> {
+    private var apiValidation: Boolean = false
+
     private val commonPlugins = listOf(
         "org.gradle.java-gradle-plugin",
         "org.gradle.java-library",
@@ -189,13 +193,22 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         configure0()
     }
 
+    fun Project.withApiValidation(value: Boolean = true) {
+        apiValidation = value
+    }
 
     private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
             freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
         }
-        
+
+        @OptIn(ExperimentalAbiValidation::class)
+        if (apiValidation) {
+            configure<AbiValidationExtension> {
+                enabled.set(true)
+            }
+        }
     }
 
     private fun Project.configureAutoService() = dependencies {

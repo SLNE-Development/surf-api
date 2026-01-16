@@ -1,6 +1,6 @@
 plugins {
     `core-convention`
-//    alias(libs.plugins.dokka)
+    `api-validation`
 }
 
 dependencies {
