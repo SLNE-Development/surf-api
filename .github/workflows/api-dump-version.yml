@@ -27,15 +27,20 @@ jobs:
           java-version: '25'
 
       - name: Run Kotlin Binary Compatibility Check
-        run: ./gradlew checkLegacyAbi
-        continue-on-error: true
+        id: check_api
+        run: |
+          set +e
+          ./gradlew checkLegacyAbi
+          CHECK_EXIT=$?
+          echo "check_exit=$CHECK_EXIT" >> $GITHUB_OUTPUT
+          set -e
 
       - name: Detect API changes
         id: changes
         run: |
-          abi_paths=$(find . -type d -name api | sed 's|$|/*|')
-          if git diff --quiet --exit-code $abi_paths; then
+          if [ "${{ steps.check_api.outputs.check_exit }}" -eq 0 ]; then
             echo "api_changed=false" >> $GITHUB_OUTPUT
+            echo "✅ No API changes detected."
           else
             echo "api_changed=true" >> $GITHUB_OUTPUT
             echo "❌ API changes detected! To update the reference, run './gradlew updateLegacyAbi' locally and commit the changes." >&2
