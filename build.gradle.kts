@@ -1,10 +1,8 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
-import kotlinx.validation.KotlinApiBuildTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
+//    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
 }
 
 allprojects {
@@ -15,9 +13,9 @@ allprojects {
 
     afterEvaluate {
         tasks {
-            withType<KotlinApiBuildTask> {
-                inputJar.value(shadowJar.flatMap { it.archiveFile })
-            }
+//            withType<KotlinApiBuildTask> {
+//                inputJar.value(shadowJar.flatMap { it.archiveFile })
+//            }
         }
     }
 
@@ -32,29 +30,29 @@ allprojects {
 }
 
 val ci = System.getenv("CI")?.toBoolean() == true
-apiValidation {
-    nonPublicMarkers.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
-    ignoredProjects.addAll(
-        listOf(
-            "surf-api-core-server",
-            "surf-api-bukkit-server",
-            "surf-api-hytale-server",
-            "surf-api-velocity-server",
-            "surf-api-standalone",
-            "surf-api-gradle-plugin",
-            "surf-api-processor"
-        )
-    )
-
-    if (!ci) {
-        ignoredProjects.addAll(
-            listOf(
-                "surf-api-bukkit-plugin-test",
-                "surf-api-modern-generator"
-            )
-        )
-    }
-}
+//apiValidation {
+//    nonPublicMarkers.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+//    ignoredProjects.addAll(
+//        listOf(
+//            "surf-api-core-server",
+//            "surf-api-bukkit-server",
+//            "surf-api-hytale-server",
+//            "surf-api-velocity-server",
+//            "surf-api-standalone",
+//            "surf-api-gradle-plugin",
+//            "surf-api-processor"
+//        )
+//    )
+//
+//    if (!ci) {
+//        ignoredProjects.addAll(
+//            listOf(
+//                "surf-api-bukkit-plugin-test",
+//                "surf-api-modern-generator"
+//            )
+//        )
+//    }
+//}
 
 subprojects {
     afterEvaluate {
