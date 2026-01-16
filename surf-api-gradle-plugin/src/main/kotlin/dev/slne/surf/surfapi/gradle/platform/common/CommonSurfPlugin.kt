@@ -14,6 +14,7 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
@@ -190,11 +191,18 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         configureAutoService()
         configureKotlin()
+        configureAllOpen()
         configure0()
     }
 
     fun Project.withApiValidation(value: Boolean = true) {
         apiValidation = value
+    }
+
+    private fun Project.configureAllOpen() = configure<AllOpenExtension> {
+        annotation("jakarta.persistence.Entity")
+        annotation("jakarta.persistence.MappedSuperclass")
+        annotation("jakarta.persistence.Embeddable")
     }
 
     private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {

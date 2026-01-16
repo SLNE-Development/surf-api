@@ -20,7 +20,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.11.6")
+    append("-1.11.7")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -31,6 +31,7 @@ repositories {
 
 val pluginDependencies = listOf(
     libs.kotlin.gradle.plugin,
+    libs.kotlin.all.open,
     libs.kotlin.no.arg,
     libs.kotlin.serialization,
     libs.shadow.gradle.plugin,
