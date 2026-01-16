@@ -1,9 +1,9 @@
 name: Publish Dokka Docs
 
 on:
-#  push:
-#    branches:
-#      - version/1.21
+  #  push:
+  #    branches:
+  #      - version/1.21
   workflow_dispatch:
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
       artifact: ${{ steps.define-ids.outputs.artifact }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -61,7 +61,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: [build]
+    needs: [ build ]
     runs-on: ubuntu-latest
     steps:
       - name: Download docs

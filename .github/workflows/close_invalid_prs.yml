@@ -2,7 +2,7 @@ name: Close Invalid Pull Requests
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [ opened, reopened, synchronize ]
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get Default Branch
         id: get-default-branch
