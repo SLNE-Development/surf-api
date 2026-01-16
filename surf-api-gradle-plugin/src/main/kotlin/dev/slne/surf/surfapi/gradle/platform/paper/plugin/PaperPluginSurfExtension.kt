@@ -56,11 +56,6 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
         this.generateLibraryLoader.finalizeValue()
     }
 
-    fun dependOnCloudPlugin(value: Boolean) {
-        dependOnCloud.set(value)
-        dependOnCloud.finalizeValue()
-    }
-
     override fun validate() {
         super.validate()
         require(mainClass.isPresent) { "Main class must be set to your plugin's main class" }

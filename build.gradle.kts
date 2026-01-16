@@ -2,21 +2,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
-//    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
 }
 
 allprojects {
     repositories {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/")
-    }
-
-    afterEvaluate {
-        tasks {
-//            withType<KotlinApiBuildTask> {
-//                inputJar.value(shadowJar.flatMap { it.archiveFile })
-//            }
-        }
     }
 
     configurations.all {

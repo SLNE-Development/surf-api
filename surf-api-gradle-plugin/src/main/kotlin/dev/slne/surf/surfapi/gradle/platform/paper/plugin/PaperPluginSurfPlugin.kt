@@ -51,9 +51,6 @@ internal class PaperPluginSurfPlugin :
 
             bootstrapDependencies {
                 registerRequired("surf-bukkit-api")
-                if (extension.cloudModule.isPresent && extension.dependOnCloud.get()) {
-                    registerRequired("surf-cloud-bukkit")
-                }
 
                 if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
                     registerRequired("surf-redis-paper")
@@ -64,9 +61,6 @@ internal class PaperPluginSurfPlugin :
 
             serverDependencies {
                 registerRequired("surf-bukkit-api")
-                if (extension.cloudModule.isPresent && extension.dependOnCloud.get()) {
-                    registerRequired("surf-cloud-bukkit")
-                }
                 if (extension.coreModule.isPresent) {
                     registerRequired("surf-core-paper")
                 }

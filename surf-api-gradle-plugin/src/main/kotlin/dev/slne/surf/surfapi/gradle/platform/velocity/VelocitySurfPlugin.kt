@@ -4,7 +4,6 @@ import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.generators.pluginfiles.VelocityPluginFile
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.platform.common.CommonSurfPluginWithPluginFile
-import dev.slne.surf.surfapi.gradle.platform.relocateCloudNetty
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.dependencies
@@ -16,10 +15,6 @@ internal class VelocitySurfPlugin :
         SurfApiPlatform.VELOCITY,
         "velocity-plugin.json"
     ) {
-
-    init {
-        relocateCloudNetty()
-    }
 
     override fun createExtension(objects: ObjectFactory, project: Project) =
         VelocitySurfExtension(project, objects)

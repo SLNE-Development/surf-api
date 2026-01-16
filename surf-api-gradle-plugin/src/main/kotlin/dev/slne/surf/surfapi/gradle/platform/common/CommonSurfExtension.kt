@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.gradle.platform.common
 
-import dev.slne.surf.surfapi.gradle.SurfCloudModules
 import dev.slne.surf.surfapi.gradle.SurfCoreModules
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.property
@@ -12,9 +11,7 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
     internal val publishingUrl =
         objects.property<String>().convention("https://repo.slne.dev/repository/maven-releases")
     internal val publishingRepoName = objects.property<String>().convention("maven-releases")
-    internal val cloudModule = objects.property<SurfCloudModules>()
     internal val coreModule = objects.property<SurfCoreModules>()
-    internal val dependOnCloud = objects.property<Boolean>().convention(true)
     internal val migrationMainClass = objects.property<String>()
     internal val withSurfRedis = objects.property<Boolean>().convention(false)
     internal val surfRedisVersion = objects.property<String>()

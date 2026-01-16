@@ -1,11 +1,9 @@
 package dev.slne.surf.surfapi.gradle.platform.common
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import dev.slne.surf.surfapi.gradle.SurfCloudModules
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.platform.core.CoreSurfExtension
-import dev.slne.surf.surfapi.gradle.platform.core.tasks.generateExposedMigrationScript
 import dev.slne.surf.surfapi.gradle.util.slnePublic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -16,11 +14,9 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.allopen.gradle.AllOpenExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.utils.API
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
-import org.jetbrains.kotlin.gradle.utils.IMPLEMENTATION
 
 abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     protected val platformName: String,
@@ -190,7 +186,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         configureAutoService()
         configureKotlin()
-        configureAllOpen()
         configure0()
     }
 
@@ -200,12 +195,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         compilerOptions {
             freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
         }
-    }
-
-    private fun Project.configureAllOpen() = configure<AllOpenExtension> {
-        annotation("jakarta.persistence.Entity")
-        annotation("jakarta.persistence.MappedSuperclass")
-        annotation("jakarta.persistence.Embeddable")
+        
     }
 
     private fun Project.configureAutoService() = dependencies {
@@ -221,28 +211,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 val scope = extension.surfApiScope.orNull ?: platform.scope
                 add(scope, platform.dependency)
-            }
-        }
-
-        val cloudModule = extension.cloudModule.orNull
-        if (cloudModule != null) {
-            dependencies {
-                add(
-                    IMPLEMENTATION,
-                    platform("dev.slne.surf.cloud:surf-cloud-bom:${Constants.SURF_API_VERSION}")
-                )
-                add(
-                    COMPILE_ONLY,
-                    "dev.slne.surf.cloud:${cloudModule.module}:${Constants.SURF_API_VERSION}"
-                )
-            }
-
-            val mainClass = extension.migrationMainClass.orNull
-            if (cloudModule == SurfCloudModules.SERVER && mainClass != null) {
-                generateExposedMigrationScript(
-                    mainClass = mainClass,
-                    cloudRuntimeDependency = "dev.slne.surf.cloud:${SurfCloudModules.STANDALONE.module}:${Constants.SURF_API_VERSION}"
-                )
             }
         }
 
@@ -274,7 +242,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         if (extension.withSurfDatabaseR2dbc.get()) {
             dependencies {
-                add(API, "dev.slne.surf:surf-database-r2dbc:${extension.surfDatabaseR2dbcVersion.get()}")
+                add(
+                    API,
+                    "dev.slne.surf:surf-database-r2dbc:${extension.surfDatabaseR2dbcVersion.get()}"
+                )
             }
 
             tasks.withType<ShadowJar>().configureEach {
