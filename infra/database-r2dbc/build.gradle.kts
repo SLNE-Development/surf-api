@@ -5,6 +5,10 @@ plugins {
 //    id("dev.slne.surf.surfapi.gradle.standalone") version "1.21.11+" /* Uncomment to use tests */
 }
 
+surfCoreApi {
+    withApiValidation()
+}
+
 group = "dev.slne.surf"
 version = findProperty("version") as String
 

@@ -1,0 +1,132 @@
+public final class dev/slne/surf/database/DatabaseApi {
+	public static final field Companion Ldev/slne/surf/database/DatabaseApi$Companion;
+	public final fun getDatabase ()Lorg/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;
+	public final fun shutdown ()V
+}
+
+public final class dev/slne/surf/database/DatabaseApi$Companion {
+	public final fun create (Lio/r2dbc/spi/ConnectionFactory;Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/database/DatabaseApi;
+	public final fun create (Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/database/DatabaseApi;
+	public static synthetic fun create$default (Ldev/slne/surf/database/DatabaseApi$Companion;Lio/r2dbc/spi/ConnectionFactory;Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/database/DatabaseApi;
+	public static synthetic fun create$default (Ldev/slne/surf/database/DatabaseApi$Companion;Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/database/DatabaseApi;
+}
+
+public abstract interface annotation class dev/slne/surf/database/TestOnlyDatabaseApi : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/database/columns/CharUuidColumnType : org/jetbrains/exposed/v1/core/ColumnType {
+	public static final field Companion Ldev/slne/surf/database/columns/CharUuidColumnType$Companion;
+	public fun <init> ()V
+	public synthetic fun nonNullValueToString (Ljava/lang/Object;)Ljava/lang/String;
+	public fun nonNullValueToString (Ljava/util/UUID;)Ljava/lang/String;
+	public synthetic fun notNullValueToDB (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun notNullValueToDB (Ljava/util/UUID;)Ljava/lang/Object;
+	public fun sqlType ()Ljava/lang/String;
+	public synthetic fun valueFromDB (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun valueFromDB (Ljava/lang/Object;)Ljava/util/UUID;
+}
+
+public final class dev/slne/surf/database/columns/CharUuidColumnType$Companion {
+}
+
+public final class dev/slne/surf/database/columns/CharUuidColumnTypeKt {
+	public static final fun charUuid (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public final class dev/slne/surf/database/columns/ComponentColumnTypeKt {
+	public static final fun component (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public final class dev/slne/surf/database/columns/InetAddressColumnType : org/jetbrains/exposed/v1/core/ColumnType {
+	public fun <init> ()V
+	public synthetic fun notNullValueToDB (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun notNullValueToDB (Ljava/net/InetAddress;)Ljava/lang/Object;
+	public fun setParameter (Lorg/jetbrains/exposed/v1/core/statements/api/PreparedStatementApi;ILjava/lang/Object;)V
+	public fun sqlType ()Ljava/lang/String;
+	public synthetic fun valueFromDB (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun valueFromDB (Ljava/lang/Object;)Ljava/net/InetAddress;
+}
+
+public final class dev/slne/surf/database/columns/InetAddressColumnTypeKt {
+	public static final fun inet (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public final class dev/slne/surf/database/columns/NativeUuidColumnType : org/jetbrains/exposed/v1/core/ColumnType {
+	public fun <init> ()V
+	public fun sqlType ()Ljava/lang/String;
+	public synthetic fun valueFromDB (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun valueFromDB (Ljava/lang/Object;)Ljava/util/UUID;
+}
+
+public final class dev/slne/surf/database/columns/NativeUuidColumnTypeKt {
+	public static final fun nativeUuid (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public final class dev/slne/surf/database/columns/time/CurrentOffsetDateTime : dev/slne/surf/database/columns/time/CurrentTimestampBase {
+	public static final field INSTANCE Ldev/slne/surf/database/columns/time/CurrentOffsetDateTime;
+}
+
+public class dev/slne/surf/database/columns/time/CurrentTimestampBase : org/jetbrains/exposed/v1/core/Function {
+	public fun <init> (Lorg/jetbrains/exposed/v1/core/IColumnType;)V
+	public fun toQueryBuilder (Lorg/jetbrains/exposed/v1/core/QueryBuilder;)V
+}
+
+public final class dev/slne/surf/database/columns/time/CurrentZonedDateTime : dev/slne/surf/database/columns/time/CurrentTimestampBase {
+	public static final field INSTANCE Ldev/slne/surf/database/columns/time/CurrentZonedDateTime;
+}
+
+public final class dev/slne/surf/database/columns/time/OffsetDateTimeColumnType : dev/slne/surf/database/columns/time/UtcInstantDateTimeColumnType {
+	public static final field Companion Ldev/slne/surf/database/columns/time/OffsetDateTimeColumnType$Companion;
+	public fun <init> ()V
+	public synthetic fun fromInstant (Ljava/time/Instant;)Ljava/lang/Object;
+	public synthetic fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
+}
+
+public final class dev/slne/surf/database/columns/time/OffsetDateTimeColumnType$Companion {
+}
+
+public final class dev/slne/surf/database/columns/time/OffsetDateTimeColumnTypeKt {
+	public static final fun offsetDateTime (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public abstract class dev/slne/surf/database/columns/time/UtcInstantDateTimeColumnType : org/jetbrains/exposed/v1/core/ColumnType, org/jetbrains/exposed/v1/core/IDateColumnType {
+	public fun <init> ()V
+	protected abstract fun fromInstant (Ljava/time/Instant;)Ljava/lang/Object;
+	public fun getHasTimePart ()Z
+	public fun nonNullValueAsDefaultString (Ljava/lang/Object;)Ljava/lang/String;
+	public fun nonNullValueToString (Ljava/lang/Object;)Ljava/lang/String;
+	public fun notNullValueToDB (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun readObject (Lorg/jetbrains/exposed/v1/core/statements/api/RowApi;I)Ljava/lang/Object;
+	public fun sqlType ()Ljava/lang/String;
+	protected abstract fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
+	public fun valueFromDB (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/database/columns/time/ZonedDateTimeColumnType : dev/slne/surf/database/columns/time/UtcInstantDateTimeColumnType {
+	public static final field Companion Ldev/slne/surf/database/columns/time/ZonedDateTimeColumnType$Companion;
+	public fun <init> ()V
+	public synthetic fun fromInstant (Ljava/time/Instant;)Ljava/lang/Object;
+	public synthetic fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
+}
+
+public final class dev/slne/surf/database/columns/time/ZonedDateTimeColumnType$Companion {
+}
+
+public final class dev/slne/surf/database/columns/time/ZonedDateTimeColumnTypeKt {
+	public static final fun zonedDateTime (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public final class dev/slne/surf/database/logger/ComponentSqlLogger : org/jetbrains/exposed/v1/core/SqlLogger {
+	public fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;)V
+	public synthetic fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun log (Lorg/jetbrains/exposed/v1/core/statements/StatementContext;Lorg/jetbrains/exposed/v1/core/Transaction;)V
+}
+
+public class dev/slne/surf/database/table/AuditableLongIdTable : org/jetbrains/exposed/v1/core/dao/id/ULongIdTable {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCreatedAt ()Lorg/jetbrains/exposed/v1/core/Column;
+	public final fun getUpdatedAt ()Lorg/jetbrains/exposed/v1/core/Column;
+}
+
