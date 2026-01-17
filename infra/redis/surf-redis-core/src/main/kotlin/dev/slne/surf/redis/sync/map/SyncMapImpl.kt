@@ -74,17 +74,12 @@ class SyncMapImpl<K : Any, V : Any>(
     override fun isEmpty() = lock.read { map.isEmpty() }
 
     override fun put(key: K, value: V): V? {
-        val (old, changed) = lock.write {
-            val previous = map.put(key, value)
-            val changed = previous != value
-            previous to changed
-        }
-        if (!changed) return old
+        val previous = lock.write { map.put(key, value) }
 
         putRemote(key, value)
-        notifyListeners(SyncMapChange.Put(key, value, old))
+        notifyListeners(SyncMapChange.Put(key, value, previous))
 
-        return old
+        return previous
     }
 
     override fun remove(key: K): V? {
