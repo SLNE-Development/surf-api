@@ -7,6 +7,7 @@ import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import reactor.util.function.Tuple2
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -21,7 +22,7 @@ import kotlin.time.toJavaDuration
  * - remote bootstrap via [loadFromRemote0]/[overrideFromRemote]
  * - periodic TTL refresh via [refreshTtl]
  */
-abstract class AbstractSyncStructure<L, R : Any>(
+abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnapshot>(
     protected val api: RedisApi,
     override val id: String,
     override val ttl: Duration
@@ -29,7 +30,7 @@ abstract class AbstractSyncStructure<L, R : Any>(
     companion object {
         const val NAMESPACE = "surf-redis:sync:"
         private val log = logger()
-        private val scheduler = Schedulers.newParallel("surf-redis-sync-structure", 2)
+        internal val scheduler = Schedulers.newParallel("surf-redis-sync-structure", 2)
     }
 
     private val listeners = CopyOnWriteArrayList<(L) -> Unit>()
@@ -142,4 +143,17 @@ abstract class AbstractSyncStructure<L, R : Any>(
     }
 
     protected abstract fun refreshTtl(): Mono<*>
+
+    interface VersionedSnapshot {
+        val version: Long
+    }
+
+    data class SimpleVersionedSnapshot<V>(
+        val value: V,
+        override val version: Long
+    ) : VersionedSnapshot {
+        companion object {
+            fun <V> fromTuple(tuple: Tuple2<V, Long>) = SimpleVersionedSnapshot(tuple.t1, tuple.t2 ?: 0L)
+        }
+    }
 }
