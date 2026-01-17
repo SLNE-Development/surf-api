@@ -8,7 +8,10 @@ abstract class LuaScriptRegistry(prefix: String) {
 
     protected fun load(name: String) {
         val path = "$prefix/$name.lua"
-        val stream = this::class.java.getResourceAsStream(path) ?: error("Lua script not found: $path")
+        val stream = this::class.java.getResourceAsStream(path)
+
+        requireNotNull(stream) { "Lua script resource not found on classpath: '$path'. Ensure that '$name.lua' is packaged under '$prefix' and available at initialization." }
+
         val script = stream.use { it.bufferedReader().readText() }
         scripts[name] = script
     }

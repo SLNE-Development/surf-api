@@ -19,9 +19,9 @@ class SyncValueImpl<T : Any>(
     api: RedisApi,
     id: String,
     private val serializer: KSerializer<T>,
-    defaultValue: T,
+    private val defaultValue: T,
     ttl: Duration
-) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String>>(api, id, ttl, Registry),
+) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(api, id, ttl, Registry),
     SyncValue<T> {
 
     companion object {
@@ -79,13 +79,19 @@ class SyncValueImpl<T : Any>(
 
     override fun refreshTtl0(): Mono<*> = bucket.expire(ttl.toJavaDuration())
 
-    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<String>> = Mono.zip(
+    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<String?>> = Mono.zip(
         bucket.get(),
         versionCounter.get().onErrorReturn(0L)
     ).map { SimpleVersionedSnapshot.fromTuple(it) }
 
-    override fun overrideFromRemote(raw: SimpleVersionedSnapshot<String>) {
-        val decoded = decodeValue(raw.value)
+    override fun overrideFromRemote(raw: SimpleVersionedSnapshot<String?>) {
+        val snapshotValue = raw.value
+        if (snapshotValue == null) {
+            value.set(defaultValue)
+            return
+        }
+
+        val decoded = decodeValue(snapshotValue)
         value.set(decoded)
         super.overrideFromRemote(raw)
     }

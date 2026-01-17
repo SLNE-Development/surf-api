@@ -80,9 +80,52 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     private fun processStreamEvent(type: String, msg: String) {
         val splitted = msg.split(msgDelimiter)
-        if (splitted.size < 3) return
-        val version = splitted[0].toLongOrNull() ?: return
+        if (splitted.size < 3) {
+            log.atWarning()
+                .log(
+                    "Malformed stream message for type %s: expected at least 3 parts but got %d: %s",
+                    type,
+                    splitted.size,
+                    msg
+                )
+            return
+        }
+
+        val versionPart = splitted[0]
         val origin = splitted[1]
+
+        if (versionPart.isBlank()) {
+            log.atWarning()
+                .log(
+                    "Malformed stream message for type %s: empty version part in message: %s",
+                    type,
+                    msg
+                )
+            return
+        }
+
+        val version = versionPart.toLongOrNull()
+        if (version == null) {
+            log.atWarning()
+                .log(
+                    "Malformed stream message for type %s: invalid version '%s' in message: %s",
+                    type,
+                    versionPart,
+                    msg
+                )
+            return
+        }
+
+        if (origin.isBlank()) {
+            log.atWarning()
+                .log(
+                    "Malformed stream message for type %s: empty origin part in message: %s",
+                    type,
+                    msg
+                )
+            return
+        }
+
         val payload = splitted.subList(2, splitted.size)
 
         if (!applyVersion(version)) return
@@ -118,7 +161,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                     else -> applyVersion(newVersion)
                 }
             },
-            { e -> log.atWarning().withCause(e).log("Error executing Lua script for '$id' ($streamKey)") }
+            { e -> log.atWarning().withCause(e).log("Error executing Lua script '$script' for '$id' ($streamKey)") }
         )
     }
 
@@ -173,14 +216,12 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         return stream.read(args)
             .filter { it.isNotEmpty() }
             .flatMap { batch ->
-                val lastId = batch.keys.maxWithOrNull(compareBy({ it.id0 }, { it.id1 })) ?: from
-                cursorId.set(lastId)
-
-                for ((_, fields) in batch) {
+                for ((messageId, fields) in batch) {
                     val type = fields[STREAM_FIELD_TYPE] ?: continue
                     val msg = fields[STREAM_FIELD_MSG] ?: continue
                     try {
                         processStreamEvent(type, msg)
+                        cursorId.set(messageId)
                     } catch (t: Throwable) {
                         log.atWarning().withCause(t).log("Error handling stream event for '$id' ($streamKey)")
                         requestResync()

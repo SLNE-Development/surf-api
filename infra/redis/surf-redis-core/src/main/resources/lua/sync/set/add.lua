@@ -27,5 +27,4 @@ if added == 1 then
     return ver
 end
 
--- Element was already present (dirty client), return -1
-return -1
+return 0

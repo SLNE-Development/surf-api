@@ -24,5 +24,4 @@ if existed == 1 then
     return ver
 end
 
--- If list did not exist, return -1 (dirty origin)
-return -1
+return 0

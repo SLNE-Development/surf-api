@@ -3,6 +3,7 @@ package dev.slne.surf.redis.sync
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
+import org.redisson.Redisson
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -28,6 +29,7 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     override val ttl: Duration
 ) : SyncStructure<L> {
     companion object {
+        private val ID_PATTERN = Regex("^[^:]+$")
         const val NAMESPACE = "surf-redis:sync:"
         private val log = logger()
         internal val scheduler = Schedulers.newParallel("surf-redis-sync-structure", 2)
@@ -40,6 +42,12 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     private val disposed = AtomicBoolean(false)
 
     private val listenerIds = ConcurrentHashMap.newKeySet<Int>()
+
+    init {
+        require(ID_PATTERN.matches(id)) {
+            "Invalid id '$id' for SyncStructure - only characters other than ':' are allowed"
+        }
+    }
 
     @MustBeInvokedByOverriders
     override fun init(): Mono<Void> {
@@ -153,7 +161,7 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
         override val version: Long
     ) : VersionedSnapshot {
         companion object {
-            fun <V> fromTuple(tuple: Tuple2<V, Long>) = SimpleVersionedSnapshot(tuple.t1, tuple.t2 ?: 0L)
+            fun <V> fromTuple(tuple: Tuple2<V, Long>) = SimpleVersionedSnapshot(tuple.t1, tuple.t2)
         }
     }
 }

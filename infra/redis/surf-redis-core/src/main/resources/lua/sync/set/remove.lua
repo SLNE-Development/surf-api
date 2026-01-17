@@ -27,5 +27,4 @@ if removed == 1 then
     return ver
 end
 
--- Element was not present (dirty client), return -1
-return -1
+return 0

@@ -31,11 +31,4 @@ for i = 7, #ARGV do
     end
 end
 
--- If at least one element was removed, return latest version
-if removedCount > 0 then
-    local ver = redis.call('GET', versionKey)
-    return ver
-end
-
--- No elements were removed (dirty client), return -1
-return -1
+return 0

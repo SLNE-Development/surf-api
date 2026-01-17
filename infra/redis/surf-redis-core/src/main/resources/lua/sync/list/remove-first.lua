@@ -26,5 +26,4 @@ if removed == 1 then
     return ver
 end
 
--- If not removed, return -1 (dirty origin)
-return -1
+return 0

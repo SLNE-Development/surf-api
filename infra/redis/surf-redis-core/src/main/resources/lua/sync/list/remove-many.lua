@@ -28,10 +28,4 @@ for i = 7, #ARGV do
     end
 end
 
--- If any removed, return version of last removal
-if removedCount > 0 then
-    return redis.call('GET', versionKey)
-end
-
--- If none removed, return -1 (dirty origin)
-return -1
+return 0
