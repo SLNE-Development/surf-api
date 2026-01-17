@@ -162,11 +162,16 @@ abstract class UtcInstantDateTimeColumnType<T : Any> :
     }
 }
 
-open class CurrentTimestampBase<T>(columnType: IColumnType<T & Any>) : Function<T>(columnType) {
+open class CurrentTimestampBase<T>(
+    columnType: IColumnType<T & Any>,
+    private val includeUpdate: Boolean = false
+) : Function<T>(columnType) {
     override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
         +when {
-            (currentDialect as? MysqlDialect)?.isFractionDateTimeSupported() == true -> "CURRENT_TIMESTAMP(6)"
-            else -> "CURRENT_TIMESTAMP"
+            (currentDialect as? MysqlDialect)?.isFractionDateTimeSupported() == true -> "CURRENT_TIMESTAMP(6) ${
+                if (includeUpdate) "ON UPDATE CURRENT_TIMESTAMP(6)" else ""
+            }"
+            else -> "CURRENT_TIMESTAMP ${if (includeUpdate) "ON UPDATE CURRENT_TIMESTAMP" else ""}"
         }
     }
 }

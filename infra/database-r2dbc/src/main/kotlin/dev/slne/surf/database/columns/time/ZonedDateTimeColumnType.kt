@@ -3,6 +3,7 @@ package dev.slne.surf.database.columns.time
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.Table
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -23,5 +24,5 @@ class ZonedDateTimeColumnType :
 fun Table.zonedDateTime(name: String): Column<ZonedDateTime> =
     registerColumn(name, ZonedDateTimeColumnType())
 
-object CurrentZonedDateTime :
-    CurrentTimestampBase<ZonedDateTime>(ZonedDateTimeColumnType.INSTANCE)
+class CurrentZonedDateTime(includeUpdate: Boolean = false):
+    CurrentTimestampBase<ZonedDateTime>(ZonedDateTimeColumnType.INSTANCE, includeUpdate)

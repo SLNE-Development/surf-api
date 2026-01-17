@@ -63,16 +63,21 @@ public final class dev/slne/surf/database/columns/NativeUuidColumnTypeKt {
 }
 
 public final class dev/slne/surf/database/columns/time/CurrentOffsetDateTime : dev/slne/surf/database/columns/time/CurrentTimestampBase {
-	public static final field INSTANCE Ldev/slne/surf/database/columns/time/CurrentOffsetDateTime;
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public class dev/slne/surf/database/columns/time/CurrentTimestampBase : org/jetbrains/exposed/v1/core/Function {
-	public fun <init> (Lorg/jetbrains/exposed/v1/core/IColumnType;)V
+	public fun <init> (Lorg/jetbrains/exposed/v1/core/IColumnType;Z)V
+	public synthetic fun <init> (Lorg/jetbrains/exposed/v1/core/IColumnType;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun toQueryBuilder (Lorg/jetbrains/exposed/v1/core/QueryBuilder;)V
 }
 
 public final class dev/slne/surf/database/columns/time/CurrentZonedDateTime : dev/slne/surf/database/columns/time/CurrentTimestampBase {
-	public static final field INSTANCE Ldev/slne/surf/database/columns/time/CurrentZonedDateTime;
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class dev/slne/surf/database/columns/time/OffsetDateTimeColumnType : dev/slne/surf/database/columns/time/UtcInstantDateTimeColumnType {

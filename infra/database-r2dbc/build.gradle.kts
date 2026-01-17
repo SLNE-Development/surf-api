@@ -65,12 +65,3 @@ publishing {
         slneReleases()
     }
 }
-
-afterEvaluate {
-    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
-        enabled = false
-    }
-    tasks.named("publishPluginMavenPublicationToMavenLocal") {
-        enabled = false
-    }
-}
