@@ -7,7 +7,9 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
 
-abstract class UtcInstantDateTimeSerializer<T : Any> : KSerializer<T> {
+abstract class UtcInstantDateTimeSerializer<T : Any>(
+    serialName: String
+) : KSerializer<T> {
     override val descriptor = PrimitiveSerialDescriptor(serialName, PrimitiveKind.LONG)
 
     override fun serialize(encoder: Encoder, value: T) {
@@ -22,7 +24,6 @@ abstract class UtcInstantDateTimeSerializer<T : Any> : KSerializer<T> {
         return fromInstant(instant)
     }
 
-    protected abstract val serialName: String
     protected abstract fun toInstant(value: T): Instant
     protected abstract fun fromInstant(instant: Instant): T
 }

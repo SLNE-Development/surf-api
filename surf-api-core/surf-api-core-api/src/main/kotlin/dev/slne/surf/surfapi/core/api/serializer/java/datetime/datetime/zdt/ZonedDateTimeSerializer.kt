@@ -11,8 +11,9 @@ import java.time.ZonedDateTime
 
 typealias SerializableZonedDateTime = @Serializable(with = ZonedDateTimeSerializer::class) ZonedDateTime
 
-object ZonedDateTimeSerializer : UtcInstantDateTimeSerializer<ZonedDateTime>() {
-    override val serialName = "surfapi.java.datetime.datetime.ZonedDateTime"
+object ZonedDateTimeSerializer : UtcInstantDateTimeSerializer<ZonedDateTime>(
+    "surfapi.java.datetime.datetime.ZonedDateTime"
+) {
     override fun toInstant(value: ZonedDateTime): Instant = value.toInstant()
     override fun fromInstant(instant: Instant): ZonedDateTime =
         instant.atZone(ZoneId.systemDefault())

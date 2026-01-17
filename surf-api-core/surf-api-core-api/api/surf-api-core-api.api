@@ -7769,11 +7769,10 @@ public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/date/
 }
 
 public abstract class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/UtcInstantDateTimeSerializer : kotlinx/serialization/KSerializer {
-	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
 	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	protected abstract fun fromInstant (Ljava/time/Instant;)Ljava/lang/Object;
 	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	protected abstract fun getSerialName ()Ljava/lang/String;
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	protected abstract fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
 }
