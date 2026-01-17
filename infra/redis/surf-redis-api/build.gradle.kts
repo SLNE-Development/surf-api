@@ -49,11 +49,11 @@ java {
     withJavadocJar()
 }
 
-afterEvaluate {
-    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
-        enabled = false
-    }
-    tasks.named("publishPluginMavenPublicationToMavenLocal") {
-        enabled = false
-    }
-}
+//afterEvaluate {
+//    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
+//        enabled = false
+//    }
+//    tasks.named("publishPluginMavenPublicationToMavenLocal") {
+//        enabled = false
+//    }
+//}
