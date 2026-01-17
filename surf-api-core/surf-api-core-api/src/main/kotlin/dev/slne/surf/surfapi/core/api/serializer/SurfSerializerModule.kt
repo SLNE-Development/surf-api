@@ -108,15 +108,6 @@ object SurfSerializerModule {
     val java = SerializersModule {
         contextual(URISerializer)
         contextual(JavaUUIDSerializer)
-        contextual(DateSerializer)
-        contextual(LocalDateSerializer)
-        contextual(InstantSerializer)
-        contextual(LocalDateTimeSerializer)
-        contextual(OffsetDateTimeSerializer)
-        contextual(ZonedDateTimeSerializer)
-        contextual(LocalTimeSerializer)
-        contextual(ZonedIdSerializer)
-        contextual(ZoneOffsetSerializer)
         contextual(InetAddressSerializer)
         contextual(InetSocketAddressSerializer)
         contextual(Inet4AddressSerializer)
@@ -126,9 +117,22 @@ object SurfSerializerModule {
         contextual(BigDecimalSerializer)
     }
 
+    val javaTime = SerializersModule {
+        contextual(DateSerializer)
+        contextual(LocalDateSerializer)
+        contextual(InstantSerializer)
+        contextual(LocalDateTimeSerializer)
+        contextual(OffsetDateTimeSerializer)
+        contextual(ZonedDateTimeSerializer)
+        contextual(LocalTimeSerializer)
+        contextual(ZonedIdSerializer)
+        contextual(ZoneOffsetSerializer)
+    }
+
     val all = SerializersModule {
         include(adventure)
         include(java)
+        include(javaTime)
         include(spongePoweredMath)
     }
 }

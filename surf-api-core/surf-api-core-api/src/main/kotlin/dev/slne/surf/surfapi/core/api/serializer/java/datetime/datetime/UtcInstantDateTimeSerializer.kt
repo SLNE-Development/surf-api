@@ -1,0 +1,28 @@
+package dev.slne.surf.surfapi.core.api.serializer.java.datetime.datetime
+
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import java.time.Instant
+
+abstract class UtcInstantDateTimeSerializer<T : Any> : KSerializer<T> {
+    override val descriptor = PrimitiveSerialDescriptor(serialName, PrimitiveKind.LONG)
+
+    override fun serialize(encoder: Encoder, value: T) {
+        val instant = toInstant(value)
+
+        encoder.encodeLong(instant.toEpochMilli())
+    }
+
+    override fun deserialize(decoder: Decoder): T {
+        val instant = Instant.ofEpochMilli(decoder.decodeLong())
+
+        return fromInstant(instant)
+    }
+
+    protected abstract val serialName: String
+    protected abstract fun toInstant(value: T): Instant
+    protected abstract fun fromInstant(instant: Instant): T
+}
