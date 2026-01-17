@@ -1,4 +1,5 @@
 import dev.slne.surf.surfapi.gradle.util.slneReleases
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     id("dev.slne.surf.surfapi.gradle.core")
@@ -34,26 +35,18 @@ publishing {
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
+kotlin {
+    @OptIn(ExperimentalAbiValidation::class)
+    abiValidation {
+        enabled.set(true)
+    }
 }
 
-tasks {
-    apiBuild {
-        inputJar.value(shadowJar.flatMap { it.archiveFile })
-    }
+tasks.test {
+    useJUnitPlatform()
 }
 
 java {
     withSourcesJar()
     withJavadocJar()
-}
-
-afterEvaluate {
-    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
-        enabled = false
-    }
-    tasks.named("publishPluginMavenPublicationToMavenLocal") {
-        enabled = false
-    }
 }
