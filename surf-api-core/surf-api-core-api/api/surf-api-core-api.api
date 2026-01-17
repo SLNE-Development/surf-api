@@ -7518,7 +7518,6 @@ public final class dev/slne/surf/surfapi/core/api/serializer/SurfCodecs {
 	public final fun getLOCAL_DATE ()Lcom/mojang/serialization/Codec;
 	public final fun getLOCAL_DATE_TIME ()Lcom/mojang/serialization/Codec;
 	public final fun getLOCAL_TIME ()Lcom/mojang/serialization/Codec;
-	public final fun getOFFSET_DATE_TIME ()Lcom/mojang/serialization/Codec;
 	public final fun getRESOURCE_PACK_INFO ()Lcom/mojang/serialization/Codec;
 	public final fun getSHADOW_COLOR ()Lcom/mojang/serialization/Codec;
 	public final fun getSOUND ()Lcom/mojang/serialization/Codec;
@@ -7555,7 +7554,6 @@ public final class dev/slne/surf/surfapi/core/api/serializer/SurfCodecs {
 	public final fun getURI ()Lcom/mojang/serialization/Codec;
 	public final fun getURL ()Lcom/mojang/serialization/Codec;
 	public final fun getUUID ()Lcom/mojang/serialization/Codec;
-	public final fun getZONED_DATE_TIME ()Lcom/mojang/serialization/Codec;
 	public final fun getZONE_ID ()Lcom/mojang/serialization/Codec;
 	public final fun getZONE_OFFSET ()Lcom/mojang/serialization/Codec;
 }
@@ -7565,6 +7563,7 @@ public final class dev/slne/surf/surfapi/core/api/serializer/SurfSerializerModul
 	public final fun getAdventure ()Lkotlinx/serialization/modules/SerializersModule;
 	public final fun getAll ()Lkotlinx/serialization/modules/SerializersModule;
 	public final fun getJava ()Lkotlinx/serialization/modules/SerializersModule;
+	public final fun getJavaTime ()Lkotlinx/serialization/modules/SerializersModule;
 	public final fun getSpongePoweredMath ()Lkotlinx/serialization/modules/SerializersModule;
 }
 
@@ -7769,6 +7768,16 @@ public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/date/
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/time/LocalDate;)V
 }
 
+public abstract class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/UtcInstantDateTimeSerializer : kotlinx/serialization/KSerializer {
+	public fun <init> ()V
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	protected abstract fun fromInstant (Ljava/time/Instant;)Ljava/lang/Object;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	protected abstract fun getSerialName ()Ljava/lang/String;
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	protected abstract fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
+}
+
 public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/instant/InstantCodec {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/instant/InstantCodec;
 	public final fun getCODEC ()Lcom/mojang/serialization/Codec;
@@ -7797,32 +7806,16 @@ public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datet
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/time/LocalDateTime;)V
 }
 
-public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/offset/OffsetDateTimeCodec {
-	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/offset/OffsetDateTimeCodec;
-	public final fun getCODEC ()Lcom/mojang/serialization/Codec;
-}
-
-public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/offset/OffsetDateTimeSerializer : kotlinx/serialization/KSerializer {
+public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/offset/OffsetDateTimeSerializer : dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/UtcInstantDateTimeSerializer {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/offset/OffsetDateTimeSerializer;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/time/OffsetDateTime;
-	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/time/OffsetDateTime;)V
+	public synthetic fun fromInstant (Ljava/time/Instant;)Ljava/lang/Object;
+	public synthetic fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
 }
 
-public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/zdt/ZonedDateTimeCodec {
-	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/zdt/ZonedDateTimeCodec;
-	public final fun getCODEC ()Lcom/mojang/serialization/Codec;
-}
-
-public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/zdt/ZonedDateTimeSerializer : kotlinx/serialization/KSerializer {
+public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/zdt/ZonedDateTimeSerializer : dev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/UtcInstantDateTimeSerializer {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/serializer/java/datetime/datetime/zdt/ZonedDateTimeSerializer;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/time/ZonedDateTime;
-	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/time/ZonedDateTime;)V
+	public synthetic fun fromInstant (Ljava/time/Instant;)Ljava/lang/Object;
+	public synthetic fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
 }
 
 public final class dev/slne/surf/surfapi/core/api/serializer/java/datetime/time/local/LocalTimeCodec {
