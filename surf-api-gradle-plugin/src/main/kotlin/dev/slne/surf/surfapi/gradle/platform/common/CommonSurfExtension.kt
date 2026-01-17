@@ -19,6 +19,12 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
     internal val withSurfDatabaseR2dbc = objects.property<Boolean>().convention(false)
     internal val surfDatabaseR2dbcVersion = objects.property<String>()
     internal val surfDatabaseR2dbcRelocation = objects.property<String>()
+    internal val withApiValidation = objects.property<Boolean>().convention(false)
+
+    fun withApiValidation() {
+        withApiValidation.set(true)
+        withApiValidation.finalizeValue()
+    }
 
     fun withSurfRedis() {
         withSurfRedis.set(true)

@@ -25,8 +25,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     protected val platformName: String,
     private val platform: SurfApiPlatform,
 ) : Plugin<Project> {
-    private var apiValidation: Boolean = false
-
     private val commonPlugins = listOf(
         "org.gradle.java-gradle-plugin",
         "org.gradle.java-library",
@@ -195,10 +193,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         configure0()
     }
 
-    fun Project.withApiValidation(value: Boolean = true) {
-        apiValidation = value
-    }
-
     private fun Project.configureAllOpen() = configure<AllOpenExtension> {
         annotation("jakarta.persistence.Entity")
         annotation("jakarta.persistence.MappedSuperclass")
@@ -209,13 +203,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
             freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
-        }
-
-        @OptIn(ExperimentalAbiValidation::class)
-        if (apiValidation) {
-            configure<AbiValidationExtension> {
-                enabled.set(true)
-            }
         }
     }
 
@@ -272,6 +259,15 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             tasks.withType<ShadowJar>().configureEach {
                 doFirst {
                     relocate("dev.slne.surf.database", extension.surfDatabaseR2dbcRelocation.get())
+                }
+            }
+        }
+
+        if (extension.withApiValidation.get()) {
+            configure<KotlinJvmProjectExtension> {
+                @OptIn(ExperimentalAbiValidation::class)
+                configure<AbiValidationExtension> {
+                    enabled.set(true)
                 }
             }
         }
