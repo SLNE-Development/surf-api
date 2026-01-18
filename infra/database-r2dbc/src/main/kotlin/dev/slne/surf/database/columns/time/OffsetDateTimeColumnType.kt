@@ -4,7 +4,7 @@ import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.Table
 import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 class OffsetDateTimeColumnType :
     UtcInstantDateTimeColumnType<OffsetDateTime>() {
@@ -13,7 +13,7 @@ class OffsetDateTimeColumnType :
         value.toInstant()
 
     override fun fromInstant(instant: Instant): OffsetDateTime =
-        instant.atOffset(ZoneOffset.UTC)
+        instant.atZone(ZoneId.systemDefault()).toOffsetDateTime()
 
     companion object {
         internal val INSTANCE = OffsetDateTimeColumnType()
