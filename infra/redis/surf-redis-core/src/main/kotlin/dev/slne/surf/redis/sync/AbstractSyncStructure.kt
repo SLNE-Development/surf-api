@@ -25,15 +25,16 @@ import kotlin.time.toJavaDuration
  */
 abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnapshot>(
     protected val api: RedisApi,
-    override val id: String,
+    id: String,
     override val ttl: Duration
 ) : SyncStructure<L> {
     companion object {
-        private val ID_PATTERN = Regex("^[^:]+$")
         const val NAMESPACE = "surf-redis:sync:"
         private val log = logger()
         internal val scheduler = Schedulers.newParallel("surf-redis-sync-structure", 2)
     }
+
+    override val id = id.replace(":", "_")
 
     private val listeners = CopyOnWriteArrayList<(L) -> Unit>()
     protected val lock = ReentrantReadWriteLock()
@@ -42,12 +43,6 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     private val disposed = AtomicBoolean(false)
 
     private val listenerIds = ConcurrentHashMap.newKeySet<Int>()
-
-    init {
-        require(ID_PATTERN.matches(id)) {
-            "Invalid id '$id' for SyncStructure - only characters other than ':' are allowed"
-        }
-    }
 
     @MustBeInvokedByOverriders
     override fun init(): Mono<Void> {
