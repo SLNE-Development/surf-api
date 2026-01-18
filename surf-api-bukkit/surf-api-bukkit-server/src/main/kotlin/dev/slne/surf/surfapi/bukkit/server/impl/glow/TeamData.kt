@@ -1,11 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.glow
 
-import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import net.minecraft.ChatFormatting
 import net.minecraft.world.scores.PlayerTeam
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.scores.Team
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class TeamData(color: ChatFormatting) {
@@ -16,7 +16,7 @@ class TeamData(color: ChatFormatting) {
         this.color = color
     }
 
-    private val seenBy = mutableObjectSetOf<UUID>()
+    private val seenBy = ConcurrentHashMap.newKeySet<UUID>()
 
     fun markSeen(uniqueId: UUID) = seenBy.add(uniqueId)
     fun isSeen(uniqueId: UUID): Boolean = seenBy.contains(uniqueId)
