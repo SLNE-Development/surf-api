@@ -15,11 +15,11 @@ abstract class UtcInstantDateTimeSerializer<T : Any>(
     override fun serialize(encoder: Encoder, value: T) {
         val instant = toInstant(value)
 
-        encoder.encodeLong(instant.toEpochMilli())
+        encoder.encodeLong(instant.epochSecond)
     }
 
     override fun deserialize(decoder: Decoder): T {
-        val instant = Instant.ofEpochMilli(decoder.decodeLong())
+        val instant = Instant.ofEpochSecond(decoder.decodeLong())
 
         return fromInstant(instant)
     }
