@@ -78,20 +78,20 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     }
 
     private fun processStreamEvent(type: String, msg: String) {
-        val splitted = msg.split(msgDelimiter)
-        if (splitted.size < 3) {
+        val parts = msg.split(msgDelimiter, limit = 3)
+        if (parts.size < 2) {
             log.atWarning()
                 .log(
-                    "Malformed stream message for type %s: expected at least 3 parts but got %d: %s",
+                    "Malformed stream message for type %s: expected at least 2 parts but got %d: %s",
                     type,
-                    splitted.size,
+                    parts.size,
                     msg
                 )
             return
         }
 
-        val versionPart = splitted[0]
-        val origin = splitted[1]
+        val versionPart = parts[0]
+        val origin = parts[1]
 
         if (versionPart.isBlank()) {
             log.atWarning()
@@ -125,7 +125,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             return
         }
 
-        val payload = splitted.subList(2, splitted.size)
+        val payloadPart = if (parts.size >= 3) parts[2] else ""
+        val payload = if (payloadPart.isEmpty()) emptyList() else payloadPart.split(msgDelimiter)
 
         if (!applyVersion(version)) return
         if (origin == instanceId) return
