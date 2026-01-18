@@ -1,9 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.ShadowExtension
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
-import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 buildscript {
     repositories {
@@ -13,6 +10,10 @@ buildscript {
     dependencies {
         classpath("dev.slne.surf:surf-api-gradle-plugin:1.21.11+")
     }
+}
+
+plugins {
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
 }
 
 allprojects {
@@ -45,16 +46,11 @@ subprojects {
                 optIn.add("dev.slne.surf.redis.util.InternalRedisAPI")
             }
         }
-
-        @OptIn(ExperimentalAbiValidation::class)
-        configure<KotlinJvmProjectExtension> {
-            configure<AbiValidationExtension> {
-                filters {
-                    excluded {
-                        annotatedWith.add("dev.slne.surf.redis.util.InternalRedisAPI")
-                    }
-                }
-            }
-        }
     }
+}
+
+apiValidation {
+    nonPublicMarkers.add("dev.slne.surf.redis.util.InternalRedisAPI")
+    apiDumpDirectory = "api"
+    ignoredProjects.addAll(listOf("surf-redis-core", "surf-redis-paper", "surf-redis-velocity"))
 }
