@@ -86,6 +86,7 @@ class SyncValueImpl<T : Any>(
         val snapshotValue = raw.value
         if (snapshotValue == null) {
             value.set(defaultValue)
+            super.overrideFromRemote(raw)
             return
         }
 
