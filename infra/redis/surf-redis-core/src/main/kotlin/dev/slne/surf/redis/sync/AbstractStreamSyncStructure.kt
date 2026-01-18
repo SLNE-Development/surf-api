@@ -13,7 +13,6 @@ import org.redisson.api.stream.StreamRangeArgs
 import org.redisson.api.stream.StreamReadArgs
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 import java.util.concurrent.atomic.AtomicBoolean
@@ -197,8 +196,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected open fun refreshTtl0(): Mono<*> = Mono.empty<Void>()
 
     private fun startPolling(): Disposable {
-        return Flux.interval(java.time.Duration.ZERO, streamPollInterval.toJavaDuration(), streamScheduler)
-            .concatMap { pollOnce() }
+        return pollOnce()
+            .delayElement(streamPollInterval.toJavaDuration(), streamScheduler)
             .onErrorResume { e ->
                 log.atWarning().withCause(e).log("Stream poll failed for '$id' ($streamKey)")
                 requestResync()
