@@ -22,7 +22,7 @@ class SyncSetImpl<T : Any>(
     id: String,
     ttl: Duration,
     private val elementSerializer: KSerializer<T>
-) : AbstractStreamSyncStructure<SyncSetChange, SimpleVersionedSnapshot<Set<String>>>(api, id, ttl, Scripts),
+) : AbstractStreamSyncStructure<SyncSetChange, SimpleVersionedSnapshot<Set<String>>>(api, id, ttl, Scripts, NAMESPACE),
     SyncSet<T> {
 
     companion object {
@@ -47,8 +47,6 @@ class SyncSetImpl<T : Any>(
             }
         }
     }
-
-    override val structureNamespace = NAMESPACE
 
     private val set = ObjectOpenHashSet<T>()
 

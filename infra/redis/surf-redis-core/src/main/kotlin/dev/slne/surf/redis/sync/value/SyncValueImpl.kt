@@ -21,7 +21,7 @@ class SyncValueImpl<T : Any>(
     private val serializer: KSerializer<T>,
     private val defaultValue: T,
     ttl: Duration
-) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(api, id, ttl, Registry),
+) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(api, id, ttl, Registry, NAMESPACE),
     SyncValue<T> {
 
     companion object {
@@ -38,8 +38,6 @@ class SyncValueImpl<T : Any>(
             }
         }
     }
-
-    override val structureNamespace = NAMESPACE
 
     private val bucket by lazy { api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE) }
     private val value = AtomicReference(defaultValue)

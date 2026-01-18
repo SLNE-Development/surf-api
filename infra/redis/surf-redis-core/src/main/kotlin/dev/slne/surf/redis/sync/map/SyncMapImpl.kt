@@ -28,7 +28,8 @@ class SyncMapImpl<K : Any, V : Any>(
     api,
     id,
     ttl,
-    Registry
+    Registry,
+    NAMESPACE
 ), SyncMap<K, V> {
 
     companion object {
@@ -53,9 +54,6 @@ class SyncMapImpl<K : Any, V : Any>(
             }
         }
     }
-
-    override val structureNamespace = NAMESPACE
-
 
     private val map = Object2ObjectOpenHashMap<K, V>()
     private val remoteMap by lazy { api.redissonReactive.getMap<String, String>(dataKey, StringCodec.INSTANCE) }

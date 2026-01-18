@@ -27,7 +27,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     api: RedisApi,
     id: String,
     ttl: Duration,
-    scriptRegistry: LuaScriptRegistry
+    scriptRegistry: LuaScriptRegistry,
+    structureNamespace: String
 ) : AbstractSyncStructure<L, R>(api, id, ttl) {
     companion object {
         private val log = logger()
@@ -60,8 +61,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     private val cursorId = AtomicReference<StreamMessageId>(StreamMessageId(0, 0))
     private val resyncInFlight = AtomicBoolean(false)
 
-    protected abstract val structureNamespace: String
-    protected val namespace: String = "$structureNamespace:$id:"
+    protected val namespace: String = "$structureNamespace${this.id}:"
     protected val dataKey = "${namespace}snapshot"
     protected val versionKey = "${namespace}version"
     protected val streamKey: String = "$dataKey:stream"

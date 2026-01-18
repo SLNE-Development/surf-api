@@ -23,8 +23,13 @@ class SyncListImpl<T : Any>(
     id: String,
     ttl: Duration,
     private val elementSerializer: KSerializer<T>
-) : AbstractStreamSyncStructure<SyncListChange<T>, SimpleVersionedSnapshot<List<String>>>(api, id, ttl, Scripts),
-    SyncList<T> {
+) : AbstractStreamSyncStructure<SyncListChange<T>, SimpleVersionedSnapshot<List<String>>>(
+    api,
+    id,
+    ttl,
+    Scripts,
+    NAMESPACE
+), SyncList<T> {
 
     companion object {
         private val log = logger()
@@ -55,8 +60,6 @@ class SyncListImpl<T : Any>(
         }
     }
 
-
-    override val structureNamespace = NAMESPACE
 
     private val list = ObjectArrayList<T>()
     private val remoteList by lazy { api.redissonReactive.getList<String>(dataKey, StringCodec.INSTANCE) }
