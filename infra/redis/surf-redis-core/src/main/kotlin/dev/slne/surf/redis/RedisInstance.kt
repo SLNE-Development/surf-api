@@ -7,6 +7,7 @@ import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.epoll.Epoll
 import io.netty.channel.epoll.EpollIoHandler
 import io.netty.channel.nio.NioIoHandler
+import java.io.InputStream
 import java.nio.file.Path
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -63,6 +64,8 @@ abstract class RedisInstance {
             redissonExecutorService.shutdownNow()
         }
     }
+
+    fun getResourceAsStream(name: String): InputStream? = javaClass.getResourceAsStream(name)
 
     companion object {
         private val log = logger()

@@ -1,5 +1,6 @@
 package dev.slne.surf.redis.util
 
+import dev.slne.surf.redis.RedisInstance
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 
 abstract class LuaScriptRegistry(prefix: String) {
@@ -7,8 +8,8 @@ abstract class LuaScriptRegistry(prefix: String) {
     private val scripts = mutableObject2ObjectMapOf<String, String>()
 
     protected fun load(name: String) {
-        val path = "$prefix/$name.lua"
-        val stream = this::class.java.getResourceAsStream(path)
+        val path = "/$prefix/$name.lua"
+        val stream = RedisInstance.instance.getResourceAsStream(path)
 
         requireNotNull(stream) { "Lua script resource not found on classpath: '$path'. Ensure that '$name.lua' is packaged under '$prefix' and available at initialization." }
 
