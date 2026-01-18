@@ -1,8 +1,26 @@
+@file:OptIn(ExperimentalAbiValidation::class)
+
 import dev.slne.surf.surfapi.gradle.util.slneReleases
+import org.gradle.kotlin.dsl.abiValidation
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     id("dev.slne.surf.surfapi.gradle.core")
 //    id("dev.slne.surf.surfapi.gradle.standalone") /* Uncomment to use tests */
+}
+
+surfCoreApi {
+    withApiValidation()
+}
+
+kotlin {
+    abiValidation {
+        filters {
+            excluded {
+                annotatedWith.add("dev.slne.surf.redis.util.InternalRedisAPI")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -39,10 +57,19 @@ tasks.test {
 }
 
 tasks {
-    apiBuild {
-        inputJar.value(shadowJar.flatMap { it.archiveFile })
+    dumpLegacyAbi {
+    }
+
+    updateLegacyAbi {
+
     }
 }
+
+//tasks {
+//    apiBuild {
+//        inputJar.value(shadowJar.flatMap { it.archiveFile })
+//    }
+//}
 
 java {
     withSourcesJar()

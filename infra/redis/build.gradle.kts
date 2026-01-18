@@ -12,10 +12,6 @@ buildscript {
     }
 }
 
-plugins {
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
-}
-
 allprojects {
     group = "dev.slne.surf"
     version = findProperty("version") as String
@@ -47,10 +43,4 @@ subprojects {
             }
         }
     }
-}
-
-apiValidation {
-    nonPublicMarkers.add("dev.slne.surf.redis.util.InternalRedisAPI")
-    apiDumpDirectory = "api"
-    ignoredProjects.addAll(listOf("surf-redis-core", "surf-redis-paper", "surf-redis-velocity"))
 }
