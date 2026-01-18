@@ -55,7 +55,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected open val streamReadCount: Int = 200
     protected open val streamPollInterval: Duration = 250.milliseconds
     protected val stream: RStreamReactive<String, String> by lazy {
-        api.redissonReactive.getStream(streamKey, StringCodec.INSTANCE)
+        api.redissonReactive.getStream<String, String>(streamKey, StringCodec.INSTANCE)
     }
 
     private val cursorId = AtomicReference<StreamMessageId>(StreamMessageId(0, 0))

@@ -3,7 +3,6 @@ package dev.slne.surf.redis.sync
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
-import org.redisson.Redisson
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -13,8 +12,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.math.min
 import kotlin.time.Duration
-import kotlin.time.toJavaDuration
 
 /**
  * Base implementation for synchronized structures with:
@@ -48,6 +47,7 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     override fun init(): Mono<Void> {
         return registerListeners()
             .then(loadFromRemote())
+            .then(refreshTtl())
             .doOnSuccess { trackDisposable(startHeartbeat().subscribeOn(scheduler).subscribe()) }
             .then()
     }
@@ -131,8 +131,9 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
 
     private fun startHeartbeat(): Flux<Void> {
         if (ttl == Duration.ZERO || ttl.isNegative()) return Flux.empty()
+        val period = java.time.Duration.ofSeconds(min(ttl.inWholeSeconds - 2, 5))
 
-        return Flux.interval((ttl / 2).toJavaDuration(), scheduler)
+        return Flux.interval(period, scheduler)
             .concatMap {
                 refreshTtl()
                     .then()
