@@ -64,7 +64,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected val namespace: String = "$structureNamespace${this.id}:"
     protected val dataKey = "${namespace}snapshot"
     protected val versionKey = "${namespace}version"
-    protected val streamKey: String = "$dataKey:stream"
+    protected val streamKey: String = "${namespace}stream"
 
     protected val versionCounter: RAtomicLongReactive by lazy { api.redissonReactive.getAtomicLong(versionKey) }
     protected val scriptExecutor = LuaScriptExecutor.getInstance(api, scriptRegistry)
