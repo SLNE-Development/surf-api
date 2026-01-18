@@ -1,123 +1,100 @@
 package dev.slne.surf.redis.sync.value
 
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
+import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
+import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.surfapi.core.api.util.logger
 import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
-import org.redisson.api.listener.SetObjectListener
-import org.redisson.api.map.event.MapEntryListener
 import org.redisson.client.codec.StringCodec
 import reactor.core.publisher.Mono
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
-/**
- * SyncValue implementation backed by a single Redis snapshot key.
- *
- * Keeps an in-memory copy and mirrors it to Redis. On remote changes, reloads the snapshot
- * and updates local state, notifying listeners.
- */
 class SyncValueImpl<T : Any>(
     api: RedisApi,
     id: String,
     private val serializer: KSerializer<T>,
     private val defaultValue: T,
     ttl: Duration
-) : AbstractSyncStructure<SyncValueChange, String>(api, id, ttl),
+) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(api, id, ttl, Registry, NAMESPACE),
     SyncValue<T> {
 
     companion object {
         private val log = logger()
+        private const val NAMESPACE = AbstractSyncStructure.NAMESPACE + "value:"
+
+        private const val EVENT_SET = "S"
+
+        private const val SET_SCRIPT = "set"
+
+        private object Registry : LuaScriptRegistry("lua/sync/value") {
+            init {
+                load(SET_SCRIPT)
+            }
+        }
     }
 
-    private val dataKey = "surf-redis:sync:value:$id:snapshot"
     private val bucket by lazy { api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE) }
-    private var value: T = defaultValue
+    private val value = AtomicReference(defaultValue)
 
     override fun registerListeners0(): List<Mono<Int>> = listOf(
-        bucket.addListener(SetListener()),
-        bucket.addListener(ExpiredListener()),
-        bucket.addListener(DeletedListener())
+        bucket.addListener(ExpiredObjectListener { requestResync() }),
+        bucket.addListener(DeletedObjectListener { requestResync() })
     )
 
     override fun unregisterListener(id: Int): Mono<*> = bucket.removeListener(id)
 
-    override fun get(): T = lock.read { value }
+    override fun get(): T = value.get()
 
     override fun set(newValue: T) {
-        lock.write {
-            value = newValue
+        val old = value.getAndSet(newValue)
+
+        setRemote(newValue)
+        notifyListeners(SyncValueChange.Updated(newValue, old))
+    }
+
+    private fun setRemote(value: T) {
+        writeToRemote(SET_SCRIPT, EVENT_SET, encodeValue(value))
+    }
+
+    override fun onStreamEvent(type: String, data: StreamEventData) = when (type) {
+        EVENT_SET -> onSetEvent(data)
+        else -> log.atWarning().log("Unknown message type '$type' received from SyncValue '$id'")
+    }
+
+    private fun onSetEvent(data: StreamEventData) {
+        val encoded = data.payload[0]
+        val decoded = decodeValue(encoded)
+
+        val old = value.getAndSet(decoded)
+        notifyListeners(SyncValueChange.Updated(decoded, old))
+    }
+
+    override fun refreshTtl0(): Mono<*> = bucket.expire(ttl.toJavaDuration())
+
+    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<String?>> = Mono.zip(
+        bucket.get(),
+        versionCounter.get().onErrorReturn(0L)
+    ).map { SimpleVersionedSnapshot.fromTuple(it) }
+
+    override fun overrideFromRemote(raw: SimpleVersionedSnapshot<String?>) {
+        val snapshotValue = raw.value
+        if (snapshotValue == null) {
+            value.set(defaultValue)
+            super.overrideFromRemote(raw)
+            return
         }
 
-        bucket.set(encodeValue(newValue), ttl.toJavaDuration())
-            .subscribe(
-                { /* Success */ },
-                {
-                    log.atWarning()
-                        .withCause(it)
-                        .log("Failed to set SyncValue snapshot key '$dataKey'")
-                }
-            )
-    }
-
-    inner class SetListener : SetObjectListener {
-        override fun onSet(name: String?) {
-            onChange()
-        }
-    }
-
-    inner class ExpiredListener : ExpiredObjectListener {
-        override fun onExpired(name: String?) {
-            onChange()
-        }
-    }
-
-    inner class DeletedListener : DeletedObjectListener {
-        override fun onDeleted(name: String?) {
-            onChange()
-        }
-    }
-
-    private fun onChange() {
-        bucket.get()
-            .subscribe(
-                { raw ->
-                    val next = try {
-                        if (raw.isNullOrBlank()) defaultValue else decodeValue(raw)
-                    } catch (e: Throwable) {
-                        log.atWarning()
-                            .withCause(e)
-                            .log("Failed to decode SyncValue '$dataKey'")
-                        return@subscribe
-                    }
-
-                    val old = lock.write {
-                        val old = value
-                        value = next
-                        old
-                    }
-
-                    notifyListeners(SyncValueChange.Updated(next, old))
-                },
-                { e ->
-                    log.atWarning().withCause(e).log("Failed to reload SyncValue '$dataKey'")
-                }
-            )
-
-    }
-
-    override fun refreshTtl(): Mono<*> = bucket.expire(ttl.toJavaDuration())
-    override fun loadFromRemote0(): Mono<String> = bucket.get()
-
-    override fun overrideFromRemote(raw: String) {
-        lock.write { value = decodeValue(raw) }
+        val decoded = decodeValue(snapshotValue)
+        value.set(decoded)
+        super.overrideFromRemote(raw)
     }
 
     private fun decodeValue(value: String): T = api.json.decodeFromString(serializer, value)
     private fun encodeValue(value: T): String = api.json.encodeToString(serializer, value)
-
 }

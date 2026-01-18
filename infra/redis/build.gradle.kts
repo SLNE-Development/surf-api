@@ -1,9 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.ShadowExtension
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
-import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 buildscript {
     repositories {
@@ -43,17 +40,6 @@ subprojects {
         configure<KotlinJvmExtension> {
             compilerOptions {
                 optIn.add("dev.slne.surf.redis.util.InternalRedisAPI")
-            }
-        }
-
-        @OptIn(ExperimentalAbiValidation::class)
-        configure<KotlinJvmProjectExtension> {
-            configure<AbiValidationExtension> {
-                filters {
-                    excluded {
-                        annotatedWith.add("dev.slne.surf.redis.util.InternalRedisAPI")
-                    }
-                }
             }
         }
     }

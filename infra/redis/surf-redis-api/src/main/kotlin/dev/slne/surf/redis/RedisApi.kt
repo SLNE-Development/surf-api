@@ -134,6 +134,8 @@ class RedisApi private constructor(
             val config = Config()
                 .setPassword(redisURI.password)
                 .setTransportMode(transportMode)
+                .setTcpKeepAlive(true)
+                .setTcpKeepAliveInterval(5.seconds.inWholeMilliseconds.toInt())
                 .setEventLoopGroup(RedisComponentProvider.get().eventLoopGroup)
                 .setExecutor(RedisComponentProvider.get().redissonExecutorService)
                 .apply {

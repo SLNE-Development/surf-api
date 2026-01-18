@@ -7,12 +7,13 @@ import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import reactor.util.function.Tuple2
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.math.min
 import kotlin.time.Duration
-import kotlin.time.toJavaDuration
 
 /**
  * Base implementation for synchronized structures with:
@@ -21,16 +22,18 @@ import kotlin.time.toJavaDuration
  * - remote bootstrap via [loadFromRemote0]/[overrideFromRemote]
  * - periodic TTL refresh via [refreshTtl]
  */
-abstract class AbstractSyncStructure<L, R : Any>(
+abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnapshot>(
     protected val api: RedisApi,
-    override val id: String,
+    id: String,
     override val ttl: Duration
 ) : SyncStructure<L> {
     companion object {
         const val NAMESPACE = "surf-redis:sync:"
         private val log = logger()
-        private val scheduler = Schedulers.newParallel("surf-redis-sync-structure", 2)
+        internal val scheduler = Schedulers.newParallel("surf-redis-sync-structure", 2)
     }
+
+    override val id = id.replace(":", "_")
 
     private val listeners = CopyOnWriteArrayList<(L) -> Unit>()
     protected val lock = ReentrantReadWriteLock()
@@ -44,6 +47,7 @@ abstract class AbstractSyncStructure<L, R : Any>(
     override fun init(): Mono<Void> {
         return registerListeners()
             .then(loadFromRemote())
+            .then(refreshTtl())
             .doOnSuccess { trackDisposable(startHeartbeat().subscribeOn(scheduler).subscribe()) }
             .then()
     }
@@ -127,8 +131,9 @@ abstract class AbstractSyncStructure<L, R : Any>(
 
     private fun startHeartbeat(): Flux<Void> {
         if (ttl == Duration.ZERO || ttl.isNegative()) return Flux.empty()
+        val period = java.time.Duration.ofSeconds(min(ttl.inWholeSeconds - 2, 5))
 
-        return Flux.interval((ttl / 2).toJavaDuration(), scheduler)
+        return Flux.interval(period, scheduler)
             .concatMap {
                 refreshTtl()
                     .then()
@@ -142,4 +147,17 @@ abstract class AbstractSyncStructure<L, R : Any>(
     }
 
     protected abstract fun refreshTtl(): Mono<*>
+
+    interface VersionedSnapshot {
+        val version: Long
+    }
+
+    data class SimpleVersionedSnapshot<V>(
+        val value: V,
+        override val version: Long
+    ) : VersionedSnapshot {
+        companion object {
+            fun <V : Any> fromTuple(tuple: Tuple2<V, Long>) = SimpleVersionedSnapshot(tuple.t1, tuple.t2)
+        }
+    }
 }
