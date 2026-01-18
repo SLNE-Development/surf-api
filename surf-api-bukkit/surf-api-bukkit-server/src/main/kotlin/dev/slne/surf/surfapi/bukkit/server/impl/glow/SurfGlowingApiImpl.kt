@@ -95,7 +95,7 @@ class SurfGlowingApiImpl : SurfGlowingApi {
         val location = location.toBlockLocation()
         val uuid = viewer.uniqueId
         val playerData = blockPlayerData.getOrPut(uuid) { BlockPlayerData(uuid) }
-        val blockData = playerData.blocks.get(location)
+        val blockData = playerData.blocks[location]
 
         if (blockData == null) {
             val newData = BlockGlowingData(playerData, location, color)
