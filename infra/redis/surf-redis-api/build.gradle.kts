@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalAbiValidation::class)
 
 import dev.slne.surf.surfapi.gradle.util.slneReleases
-import org.gradle.kotlin.dsl.abiValidation
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
@@ -54,6 +53,7 @@ publishing {
 
 tasks.test {
     useJUnitPlatform()
+    failOnNoDiscoveredTests = false
 }
 
 tasks {
