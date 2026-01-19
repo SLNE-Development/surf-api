@@ -51,44 +51,133 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 /**
- * Central API for managing Redis connections.
+ * Central entry point for surf-redis.
  *
- * This class owns a single [RedissonClient] instance and provides
- * a shared [RedissonReactiveClient] for reactive command and Pub/Sub usage.
+ * `RedisApi` owns the underlying Redisson clients and wires up the higher-level surf-redis features:
+ * - event distribution via [eventBus]
+ * - request/response messaging via [requestResponseBus]
+ * - replicated in-memory data structures ([SyncList], [SyncSet], [SyncMap], [SyncValue])
+ * - simple cache helpers ([SimpleRedisCache], [SimpleSetRedisCache])
  *
- * Instances are created via [create] and are responsible for
- * their own lifecycle.
+ * Instances are created via [create] and manage their own lifecycle.
  *
  * ## Lifecycle
- * This API uses a two-phase setup:
- * 1. Register features/listeners (e.g. via [subscribeToEvents])
- * 2. Call [freeze] to prevent further registrations
- * 3. Call [connect] to open Redis connections
+ * This API follows a two-phase setup:
+ * 1. Create an instance via [create]
+ * 2. Register listeners/handlers and create sync structures/caches
+ * 3. Call [freeze] to lock configuration
+ * 4. Call [connect] to initialize clients and start all registered features
  *
- * Use [freezeAndConnect] as a convenience to perform steps 2 and 3.
+ * Use [freezeAndConnect] as a convenience for steps 3 and 4.
+ *
+ * Call [disconnect] to shut down all clients and dispose resources.
+ *
+ * ## Usage
+ * A common setup is to provide a single, platform-owned [RedisApi] instance via a service and expose
+ * it to consumers. Registrations (listeners / handlers) are done before connecting; consumers then
+ * create sync structures where they are needed.
+ *
+ * ```
+ * // Service that owns the RedisApi instance
+ * abstract class RedisService {
+ *     val redisApi = RedisApi.create()
+ *
+ *     fun connect() {
+ *         register()
+ *         redisApi.freezeAndConnect()
+ *     }
+ *
+ *     @MustBeInvokedByOverriders
+ *     @ApiStatus.OverrideOnly
+ *     protected open fun register() {
+ *         // Register listeners / request handlers here
+ *         // redisApi.subscribeToEvents(SomeListener())
+ *         // redisApi.registerRequestHandler(SomeHandler())
+ *         //
+ *         // Can be overridden by platform implementations to register platform-specific listeners.
+ *     }
+ *
+ *     fun disconnect() {
+ *         redisApi.disconnect()
+ *     }
+ *
+ *     companion object {
+ *         val instance = requiredService<RedisService>()
+ *         fun get() = instance
+ *
+ *         fun publish(event: RedisEvent) = instance.redisApi.publishEvent(event)
+ *
+ *         fun namespaced(suffix: String) = "example-namespace:$suffix"
+ *     }
+ * }
+ *
+ * // Convenience accessor used by consumers
+ * val redisApi get() = RedisService.get().redisApi
+ *
+ * // Platform implementation discovered/registered via AutoService
+ * @AutoService(RedisService::class)
+ * class PaperRedisService : RedisService() {
+ *     override fun register() {
+ *         super.register()
+ *         // redisApi.subscribeToEvents(SomePaperListener())
+ *     }
+ * }
+ *
+ * // Consumer creates sync structures at the call site where they are needed
+ * object SomeOtherService {
+ *     private val someSyncList =
+ *         redisApi.createSyncList<String>(RedisService.namespaced("some-sync-list"))
+ * }
+ * ```
  */
 class RedisApi private constructor(
     private val config: Config,
+    /** JSON instance used internally for (de-)serialization. */
     val json: Json,
 ) {
     /**
-     * Underlying Redis client instance.
+     * Underlying Redisson client.
      *
-     * Initialized when [connect] is called.
+     * Initialized by [connect]. Accessing this property before [connect] will fail.
      */
     lateinit var redisson: RedissonClient
         private set
 
+    /**
+     * Reactive Redisson client, derived from [redisson] during [connect].
+     *
+     * Intended for reactive command and Pub/Sub usage in internal components.
+     */
     lateinit var redissonReactive: RedissonReactiveClient
         private set
 
+    /**
+     * Redis OS type as reported by `INFO server` (used for Redisson codec behavior).
+     *
+     * This is populated during [connect]. It may remain `null` if no special handling is required.
+     */
     var redisOsType: BaseEventCodec.OSType? = null
         private set
 
+    /**
+     * Event bus instance for publishing and subscribing to [RedisEvent]s.
+     *
+     * The bus is initialized during [connect] and closed during [disconnect].
+     */
     val eventBus = RedisComponentProvider.get().createEventBus(this)
+
+    /**
+     * Request/response bus used for sending [RedisRequest]s and receiving [RedisResponse]s.
+     *
+     * The bus is initialized during [connect] and closed during [disconnect].
+     */
     val requestResponseBus = RedisComponentProvider.get().createRequestResponseBus(this)
 
+    /**
+     * Identifier of the current client/node as provided by the component provider.
+     */
     val clientId get() = RedisComponentProvider.get().clientId
+
 
     private val syncStructures = ObjectArrayList<SyncStructure<*>>()
     private val syncStructureScope = CoroutineScope(
@@ -107,7 +196,6 @@ class RedisApi private constructor(
     )
 
     private val disposables = mutableObjectListOf<Disposable>()
-
     private var frozen = false
 
     companion object {
@@ -124,8 +212,8 @@ class RedisApi private constructor(
          * The returned instance is not connected yet. Call [freeze] and then [connect],
          * or use [freezeAndConnect].
          *
-         * @param redisURI Redis connection URI
-         * @param serializerModule additional serializers to be included in the internal [Json] instance
+         * @param redisURI Redis connection URI.
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
          */
         fun create(
             redisURI: RedisURI,
@@ -154,12 +242,7 @@ class RedisApi private constructor(
         /**
          * Creates a [RedisApi] instance using plugin configuration.
          *
-         * The returned instance is not connected yet. Call [freeze] and then [connect],
-         * or use [freezeAndConnect].
-         *
-         * @param pluginDataPath path to the plugin data directory
-         * @param pluginsPath root plugins directory (used for global config)
-         * @param serializerModule additional serializers to be included in the internal [Json] instance
+         * @deprecated Surf Redis is no longer shaded into plugins. Paths are no longer relevant.
          */
         @Deprecated(
             message = "Surf Redis is no longer shaded into plugins. Therefore, plugin paths are no longer relevant.",
@@ -174,6 +257,14 @@ class RedisApi private constructor(
             return create(serializerModule)
         }
 
+        /**
+         * Creates a [RedisApi] instance using [RedisCredentialsProvider].
+         *
+         * The returned instance is not connected yet. Call [freeze] and then [connect],
+         * or use [freezeAndConnect].
+         *
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
+         */
         fun create(
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
@@ -195,10 +286,16 @@ class RedisApi private constructor(
     }
 
     /**
-     * Initializes the Redis client and opens all required connections.
+     * Initializes the Redis clients and starts all registered features.
      *
      * This method is blocking and must only be called once.
-     * The API must be [freeze]d before connecting to ensure all registrations are complete.
+     * The API must be [freeze]d before connecting to ensure registrations are complete.
+     *
+     * During connection:
+     * - [redisson] / [redissonReactive] are created
+     * - [redisOsType] may be detected
+     * - [eventBus] and [requestResponseBus] are initialized
+     * - all previously created sync structures are initialized
      *
      * @throws IllegalArgumentException if the API is not frozen
      * @throws IllegalArgumentException if already connected
@@ -259,7 +356,9 @@ class RedisApi private constructor(
     /**
      * Freezes this API instance and prevents further registrations.
      *
-     * After freezing, [connect] may be called.
+     * After freezing:
+     * - creating sync structures via `createSync*` is no longer allowed
+     * - [connect] may be called
      *
      * @throws IllegalArgumentException if already frozen
      */
@@ -270,14 +369,21 @@ class RedisApi private constructor(
     }
 
     /**
-     * @return true if this API instance has been frozen and no further registrations are allowed
+     * @return `true` if this API instance has been frozen and no further registrations are allowed.
      */
     fun isFrozen(): Boolean = frozen
 
     /**
-     * Shuts down the Redis client and all underlying connections.
+     * Shuts down the Redis clients and disposes all resources created by this API.
      *
-     * This method is safe to call multiple times but will have no effect if not connected.
+     * This method is safe to call multiple times; if not connected it has no effect.
+     *
+     * On disconnect:
+     * - request/response and event buses are closed
+     * - all sync structures are disposed
+     * - internal coroutine scope is cancelled
+     * - reactive disposables are disposed
+     * - Redisson is shut down
      */
     @Blocking
     fun disconnect() {
@@ -301,18 +407,16 @@ class RedisApi private constructor(
     /**
      * Indicates whether the Redis client is initialized and not shutting down.
      *
-     * Note that this does not guarantee Redis availability; it only
-     * reflects the local connection state.
+     * This does not guarantee Redis availability; it only reflects the local client state.
      */
     fun isConnected(): Boolean = ::redisson.isInitialized && !redisson.isShuttingDown
-
 
     /**
      * Performs an active health check against Redis.
      *
-     * Sends a `PING` command and waits for a `PONG` response.
+     * Sends a `PING` and waits for the response.
      *
-     * @return true if Redis responds successfully, false otherwise
+     * @return `true` if Redis responds successfully, `false` otherwise.
      */
     suspend fun isAlive(): Boolean = try {
         withContext(Dispatchers.IO) {
@@ -323,18 +427,28 @@ class RedisApi private constructor(
     }
 
     /**
-     * Publishes a [RedisEvent] via the internal [dev.slne.surf.redis.event.RedisEventBus].
+     * Publishes a [RedisEvent] via the internal event bus.
+     *
      * @see dev.slne.surf.redis.event.RedisEventBus.publish
      */
     fun publishEvent(event: RedisEvent) = eventBus.publish(event)
 
     /**
      * Registers event handlers on the given listener instance.
+     *
+     * The listener is processed by the event bus; handler method requirements are defined
+     * by the event bus annotations/contract.
+     *
      * @see dev.slne.surf.redis.event.RedisEventBus.registerListener
+     * @see dev.slne.surf.redis.event.OnRedisEvent
      */
     fun subscribeToEvents(listener: Any) = eventBus.registerListener(listener)
 
     /**
+     * Sends a [RedisRequest] and awaits a [RedisResponse] of type [T].
+     *
+     * @param request Request instance to send.
+     * @param timeoutMs Timeout in milliseconds.
      * @see dev.slne.surf.redis.request.RequestResponseBus.sendRequest
      */
     suspend inline fun <reified T : RedisResponse> sendRequest(
@@ -343,6 +457,11 @@ class RedisApi private constructor(
     ) = requestResponseBus.sendRequest<T>(request, timeoutMs)
 
     /**
+     * Sends a [RedisRequest] and awaits a [RedisResponse] of the given [responseType].
+     *
+     * @param request Request instance to send.
+     * @param responseType Expected response type.
+     * @param timeoutMs Timeout in milliseconds.
      * @see dev.slne.surf.redis.request.RequestResponseBus.sendRequest
      */
     suspend fun <T : RedisResponse> sendRequest(
@@ -352,13 +471,20 @@ class RedisApi private constructor(
     ) = requestResponseBus.sendRequest(request, responseType, timeoutMs)
 
     /**
+     * Registers request handlers on the given handler instance.
+     *
      * @see dev.slne.surf.redis.request.RequestResponseBus.registerRequestHandler
      */
     fun registerRequestHandler(handler: Any) = requestResponseBus.registerRequestHandler(handler)
 
+
     /**
-     * Creates a new [SyncList] instance.
-     * @see SyncList
+     * Creates a new [SyncList] instance identified by [id].
+     *
+     * Must be called before [freeze].
+     *
+     * @param id Logical identifier used by the structure (typically part of the Redis key namespace).
+     * @param ttl Time-to-live used by the structure implementation.
      */
     inline fun <reified E : Any> createSyncList(
         id: String,
@@ -366,8 +492,13 @@ class RedisApi private constructor(
     ): SyncList<E> = createSyncList(id, json.serializersModule.serializer(), ttl)
 
     /**
-     * Creates a new [SyncList] instance.
-     * @see SyncList
+     * Creates a new [SyncList] instance identified by [id].
+     *
+     * Must be called before [freeze].
+     *
+     * @param id Logical identifier used by the structure (typically part of the Redis key namespace).
+     * @param elementSerializer Serializer used for elements.
+     * @param ttl Time-to-live used by the structure implementation.
      */
     fun <E : Any> createSyncList(
         id: String,
@@ -378,8 +509,9 @@ class RedisApi private constructor(
     }
 
     /**
-     * Creates a new [SyncSet] instance.
-     * @see SyncSet
+     * Creates a new [SyncSet] instance identified by [id].
+     *
+     * Must be called before [freeze].
      */
     inline fun <reified E : Any> createSyncSet(
         id: String,
@@ -387,8 +519,9 @@ class RedisApi private constructor(
     ): SyncSet<E> = createSyncSet(id, json.serializersModule.serializer(), ttl)
 
     /**
-     * Creates a new [SyncSet] instance.
-     * @see SyncSet
+     * Creates a new [SyncSet] instance identified by [id].
+     *
+     * Must be called before [freeze].
      */
     fun <E : Any> createSyncSet(
         id: String,
@@ -399,8 +532,11 @@ class RedisApi private constructor(
     }
 
     /**
-     * Creates a new [SyncValue] instance.
-     * @see SyncValue
+     * Creates a new [SyncValue] instance identified by [id].
+     *
+     * Must be called before [freeze].
+     *
+     * @param defaultValue Initial/default value used by the implementation.
      */
     inline fun <reified T : Any> createSyncValue(
         id: String,
@@ -409,8 +545,12 @@ class RedisApi private constructor(
     ): SyncValue<T> = createSyncValue(id, json.serializersModule.serializer(), defaultValue, ttl)
 
     /**
-     * Creates a new [SyncValue] instance.
-     * @see SyncValue
+     * Creates a new [SyncValue] instance identified by [id].
+     *
+     * Must be called before [freeze].
+     *
+     * @param serializer Serializer used for the value.
+     * @param defaultValue Initial/default value used by the implementation.
      */
     fun <T : Any> createSyncValue(
         id: String,
@@ -422,14 +562,23 @@ class RedisApi private constructor(
     }
 
     /**
-     * Creates a new [SyncMap] instance.
-     * @see SyncMap
+     * Creates a new [SyncMap] instance identified by [id].
+     *
+     * Must be called before [freeze].
      */
     inline fun <reified K : Any, reified V : Any> createSyncMap(
         id: String,
         ttl: Duration = SyncMap.DEFAULT_TTL
     ): SyncMap<K, V> = createSyncMap(id, json.serializersModule.serializer(), json.serializersModule.serializer(), ttl)
 
+    /**
+     * Creates a new [SyncMap] instance identified by [id].
+     *
+     * Must be called before [freeze].
+     *
+     * @param keySerializer Serializer used for keys.
+     * @param valueSerializer Serializer used for values.
+     */
     fun <K : Any, V : Any> createSyncMap(
         id: String,
         keySerializer: KSerializer<K>,
@@ -456,18 +605,11 @@ class RedisApi private constructor(
     }
 
     /**
-     * Create a [SimpleRedisCache] for the given `namespace` using an automatically derived
-     * serializer for value type `V`.
-     *
-     * This inline variant uses a reified type parameter `V`, allowing the appropriate
-     * `KSerializer<V>` to be obtained via `serializer()`.
+     * Creates a [SimpleRedisCache] for the given [namespace] using a serializer derived from `V`.
      *
      * @param namespace Prefix placed before each Redis key.
-     * @param ttl Time-to-live for cache entries as a [kotlin.time.Duration].
+     * @param ttl Time-to-live for cache entries.
      * @param keyToString Function that converts a key of type `K` to its string representation.
-     *                    Defaults to `toString()`.
-     * @return A new [SimpleRedisCache] instance backed by this [RedisApi].
-     * @see SimpleRedisCache
      */
     inline fun <K : Any, reified V : Any> createSimpleCache(
         namespace: String,
@@ -476,17 +618,12 @@ class RedisApi private constructor(
     ): SimpleRedisCache<K, V> = createSimpleCache(namespace, json.serializersModule.serializer(), ttl, keyToString)
 
     /**
-     * Create a [SimpleRedisCache] for the given `namespace` using the provided [KSerializer].
-     *
-     * This variant allows an explicit serializer for the value type `V` to be supplied.
+     * Creates a [SimpleRedisCache] for the given [namespace] using the provided [serializer].
      *
      * @param namespace Prefix placed before each Redis key.
-     * @param serializer A [KSerializer] for the value type `V` used for JSON (de-)serialization.
-     * @param ttl Time-to-live for cache entries as a [kotlin.time.Duration].
+     * @param serializer Serializer used for cache values.
+     * @param ttl Time-to-live for cache entries.
      * @param keyToString Function that converts a key of type `K` to its string representation.
-     *                    Defaults to `toString()`.
-     * @return A new [SimpleRedisCache] instance backed by this [RedisApi].
-     * @see SimpleRedisCache
      */
     fun <K : Any, V : Any> createSimpleCache(
         namespace: String,
@@ -497,6 +634,16 @@ class RedisApi private constructor(
         return RedisComponentProvider.get().createSimpleCache(namespace, serializer, ttl, keyToString, this)
     }
 
+    /**
+     * Creates a [SimpleSetRedisCache] for the given [namespace] using a serializer derived from `T`.
+     *
+     * Must be called before [freeze].
+     *
+     * @param namespace Prefix placed before each Redis key.
+     * @param ttl Time-to-live for cache entries.
+     * @param idOf Function that extracts a stable identifier for elements.
+     * @param indexes Optional index configuration for the set cache.
+     */
     inline fun <reified T : Any> createSimpleSetRedisCache(
         namespace: String,
         ttl: Duration,
@@ -505,6 +652,18 @@ class RedisApi private constructor(
     ): SimpleSetRedisCache<T> =
         createSimpleSetRedisCache(namespace, json.serializersModule.serializer(), ttl, idOf, indexes)
 
+
+    /**
+     * Creates a [SimpleSetRedisCache] for the given [namespace] using the provided [serializer].
+     *
+     * Must be called before [freeze].
+     *
+     * @param namespace Prefix placed before each Redis key.
+     * @param serializer Serializer used for elements.
+     * @param ttl Time-to-live for cache entries.
+     * @param idOf Function that extracts a stable identifier for elements.
+     * @param indexes Optional index configuration for the set cache.
+     */
     fun <T : Any> createSimpleSetRedisCache(
         namespace: String,
         serializer: KSerializer<T>,
