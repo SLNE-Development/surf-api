@@ -208,6 +208,8 @@ public abstract interface class dev/slne/surf/redis/sync/list/SyncList : dev/sln
 	public abstract fun clear ()V
 	public abstract fun contains (Ljava/lang/Object;)Z
 	public abstract fun get (I)Ljava/lang/Object;
+	public fun minusAssign (Ljava/lang/Object;)V
+	public fun plusAssign (Ljava/lang/Object;)V
 	public abstract fun remove (Ljava/lang/Object;)Z
 	public abstract fun removeAt (I)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
@@ -218,6 +220,11 @@ public abstract interface class dev/slne/surf/redis/sync/list/SyncList : dev/sln
 
 public final class dev/slne/surf/redis/sync/list/SyncList$Companion {
 	public final fun getDEFAULT_TTL-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/redis/sync/list/SyncList$DefaultImpls {
+	public static fun minusAssign (Ldev/slne/surf/redis/sync/list/SyncList;Ljava/lang/Object;)V
+	public static fun plusAssign (Ldev/slne/surf/redis/sync/list/SyncList;Ljava/lang/Object;)V
 }
 
 public abstract interface class dev/slne/surf/redis/sync/list/SyncListChange {
@@ -293,18 +300,25 @@ public final class dev/slne/surf/redis/sync/list/SyncListChange$Updated : dev/sl
 public abstract interface class dev/slne/surf/redis/sync/map/SyncMap : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/map/SyncMap$Companion;
 	public abstract fun clear ()V
+	public fun contains (Ljava/lang/Object;)Z
 	public abstract fun containsKey (Ljava/lang/Object;)Z
 	public abstract fun get (Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun isEmpty ()Z
 	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun remove (Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function2;)Z
+	public fun set (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun size ()I
 	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
 }
 
 public final class dev/slne/surf/redis/sync/map/SyncMap$Companion {
 	public final fun getDEFAULT_TTL-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/redis/sync/map/SyncMap$DefaultImpls {
+	public static fun contains (Ldev/slne/surf/redis/sync/map/SyncMap;Ljava/lang/Object;)Z
+	public static fun set (Ldev/slne/surf/redis/sync/map/SyncMap;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public abstract interface class dev/slne/surf/redis/sync/map/SyncMapChange {
@@ -347,6 +361,8 @@ public abstract interface class dev/slne/surf/redis/sync/set/SyncSet : dev/slne/
 	public abstract fun add (Ljava/lang/Object;)Z
 	public abstract fun clear ()V
 	public abstract fun contains (Ljava/lang/Object;)Z
+	public fun minusAssign (Ljava/lang/Object;)V
+	public fun plusAssign (Ljava/lang/Object;)V
 	public abstract fun remove (Ljava/lang/Object;)Z
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
 	public abstract fun size ()I
@@ -355,6 +371,11 @@ public abstract interface class dev/slne/surf/redis/sync/set/SyncSet : dev/slne/
 
 public final class dev/slne/surf/redis/sync/set/SyncSet$Companion {
 	public final fun getDEFAULT_TTL-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/redis/sync/set/SyncSet$DefaultImpls {
+	public static fun minusAssign (Ldev/slne/surf/redis/sync/set/SyncSet;Ljava/lang/Object;)V
+	public static fun plusAssign (Ldev/slne/surf/redis/sync/set/SyncSet;Ljava/lang/Object;)V
 }
 
 public abstract interface class dev/slne/surf/redis/sync/set/SyncSetChange {
@@ -391,12 +412,17 @@ public final class dev/slne/surf/redis/sync/set/SyncSetChange$Removed : dev/slne
 
 public abstract interface class dev/slne/surf/redis/sync/value/SyncValue : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/value/SyncValue$Companion;
+	public fun asProperty ()Lkotlin/properties/ReadWriteProperty;
 	public abstract fun get ()Ljava/lang/Object;
 	public abstract fun set (Ljava/lang/Object;)V
 }
 
 public final class dev/slne/surf/redis/sync/value/SyncValue$Companion {
 	public final fun getDEFAULT_TTL-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/redis/sync/value/SyncValue$DefaultImpls {
+	public static fun asProperty (Ldev/slne/surf/redis/sync/value/SyncValue;)Lkotlin/properties/ReadWriteProperty;
 }
 
 public abstract interface class dev/slne/surf/redis/sync/value/SyncValueChange {

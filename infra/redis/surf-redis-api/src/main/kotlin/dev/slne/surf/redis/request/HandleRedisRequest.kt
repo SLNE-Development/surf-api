@@ -3,22 +3,28 @@ package dev.slne.surf.redis.request
 /**
  * Marks a method as a Redis request handler.
  *
- * Methods annotated with this annotation are automatically registered
- * to handle incoming Redis requests of a specific type.
+ * Methods annotated with this annotation are discovered and registered by the
+ * Redis request/response bus to handle incoming [RedisRequest]s.
  *
- * Handler methods must:
- * - Have **exactly one parameter** of type [RequestContext]<T>
- * - `T` must be a subtype of [RedisRequest]
- * - **Not** be a `suspend` function
- * - Return `Unit`
+ * ## Requirements
+ * A request handler method must:
+ * - have **exactly one parameter** of type [RequestContext]<T>
+ * - where `T` is a subtype of [RedisRequest]
+ * - **not** be a `suspend` function
+ * - return `Unit`
  *
- * Request handlers are invoked **synchronously on a Redisson/Reactor thread**.
+ * ## Execution model
+ * Request handler methods are invoked synchronously on a Redisson/Reactor thread.
  * If asynchronous or suspending work is required, the handler must explicitly
- * launch its own coroutine and call [RequestContext.respond] from there.
+ * delegate that work (for example by launching a coroutine) and call
+ * [RequestContext.respond] from there.
  *
- * Exactly one response may be sent per request.
+ * ## Responses
+ * Since requests are broadcasted, multiple handlers on different servers may
+ * receive the same request. Each handler instance may send **at most one**
+ * response for a given request.
  *
- * Example:
+ * ## Example
  * ```
  * @HandleRedisRequest
  * fun handlePlayerRequest(ctx: RequestContext<GetPlayerRequest>) {

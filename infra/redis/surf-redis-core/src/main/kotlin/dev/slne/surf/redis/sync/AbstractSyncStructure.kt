@@ -15,13 +15,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.min
 import kotlin.time.Duration
 
-/**
- * Base implementation for synchronized structures with:
- * - thread-safe local state via [lock]
- * - listener dispatch
- * - remote bootstrap via [loadFromRemote0]/[overrideFromRemote]
- * - periodic TTL refresh via [refreshTtl]
- */
+
 abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnapshot>(
     protected val api: RedisApi,
     id: String,
