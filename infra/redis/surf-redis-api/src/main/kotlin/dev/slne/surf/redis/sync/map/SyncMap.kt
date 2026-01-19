@@ -7,101 +7,97 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Replicated in-memory map that is kept in sync across all Redis-connected nodes.
+ * Replicated in-memory map synchronized across Redis-connected nodes.
  *
- * ## How it works
- * - **In-memory state:** each node holds a local `Map<K, V>` instance.
- * - **Delta-based replication:** mutations publish deltas via Redis Pub/Sub.
- * - **Snapshot for late joiners:** the full map is stored in Redis with a TTL.
- * - **Versioning:** every mutation increments a global version counter.
- * - **Resync:** if a node detects a version gap, it reloads the snapshot.
- * - **Ephemeral storage:** snapshot and version keys expire automatically and
- *   are refreshed via heartbeat while nodes are alive.
+ * A [SyncMap] exposes a local map-like view and propagates mutations through Redis so that other
+ * nodes can observe and apply changes.
  *
- * ## Consistency model
- * - Eventual consistency.
- * - Deltas are applied only if `version == localVersion + 1`.
- * - Duplicate or out-of-order deltas are ignored.
- * - Missing deltas trigger a snapshot reload.
+ * Consumers should treat this structure as eventually consistent: updates may arrive later on other
+ * nodes, and remote updates may overwrite the local state.
  *
- * ## Threading / API behavior
- * - Public mutating methods are **non-suspending** and never block.
- * - Redis I/O is executed asynchronously on the provided [scope].
- * - Change listeners are invoked on the thread applying the change
- *   (caller thread for local changes, Redisson/Reactor thread for remote changes).
+ * ## Access
+ * - [snapshot] returns a copy of the current local contents.
+ * - [get], [containsKey], [size], [isEmpty] operate on the local view.
+ * - [put], [remove], [removeIf] and [clear] mutate the local view and propagate changes via Redis.
  *
- * ## Failure semantics
- * - If all nodes go offline, Redis state expires automatically after [ttl].
- * - The next node recreates the map from the provided operations.
- *
- * @param api owning [RedisApi] instance
- * @param id unique identifier for this map (defines Redis keys and channel)
- * @param scope coroutine scope used for asynchronous Redis operations
- * @param keySerializer serializer for map keys
- * @param valueSerializer serializer for map values
- * @param ttl TTL for snapshot and version keys (default: [DEFAULT_TTL])
+ * ## Listeners
+ * Listeners registered via [SyncStructure.addListener] receive [SyncMapChange] events for changes.
+ * The thread used for listener invocation is implementation-defined.
  */
 interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
 
     companion object {
         /**
-         * Default TTL for snapshot and version keys.
-         *
-         * Refreshed periodically by the heartbeat while at least one node is alive.
+         * Default TTL configuration used by implementations when creating a [SyncMap].
          */
         val DEFAULT_TTL = 5.minutes
     }
 
     /**
-     * Returns a copy of the current map state.
+     * Returns a copy of the current local contents.
      *
      * The returned map is a snapshot and will not reflect future updates.
      */
     fun snapshot(): Object2ObjectOpenHashMap<K, V>
 
-    /** @return number of entries in the map */
+    /**
+     * @return the current local entry count
+     */
     fun size(): Int
 
-    /** @return `true` if the map is empty */
+    /**
+     * @return `true` if the local map is empty
+     */
     fun isEmpty(): Boolean
 
-    /** @return value associated with [key], or `null` if absent */
+    /**
+     * Returns the value associated with [key] in the local map, or `null` if absent.
+     */
     operator fun get(key: K): V?
 
-    /** @return `true` if the map contains [key] */
+    /**
+     * Checks whether [key] is present in the local map.
+     */
     fun containsKey(key: K): Boolean
+
+    /**
+     * Convenience operator for [containsKey].
+     */
     operator fun contains(key: K): Boolean = containsKey(key)
 
     /**
-     * Associates [value] with [key] in the map and replicates the change.
-     *
-     * The local map is updated immediately and listeners are notified.
-     * Replication to other nodes happens asynchronously.
+     * Associates [value] with [key] in the local map and propagates the change through Redis.
      *
      * @return the previous value associated with [key], or `null` if there was no mapping
      */
    fun put(key: K, value: V): V?
+
+    /**
+     * Convenience operator for [put].
+     */
    operator fun set(key: K, value: V): V? = put(key, value)
 
     /**
-     * Removes the mapping for [key] from the map and replicates the change.
+     * Removes the mapping for [key] from the local map and propagates the change through Redis.
      *
-     * The local map is updated immediately and listeners are notified.
-     * Replication to other nodes happens asynchronously.
-     *
-     * @return the value that was associated with [key], or `null` if there was no mapping
+     * @return the previously associated value, or `null` if there was no mapping
      */
     fun remove(key: K): V?
 
+    /**
+     * Removes all entries that match [predicate] and propagates the change through Redis.
+     *
+     * The propagation strategy is implementation-defined. Callers should assume that other nodes
+     * will eventually converge to the same resulting map.
+     *
+     * @return `true` if any entries were removed locally, `false` otherwise
+     */
     fun removeIf(predicate: (K, V) -> Boolean): Boolean
 
     /**
-     * Removes all mappings from the map and replicates the change.
+     * Clears the local map and propagates the change through Redis.
      *
-     * The local map is cleared immediately and listeners are notified.
-     * Replication to other nodes happens asynchronously.
-     *
-     * If the map is already empty, this method is a no-op and does not publish a delta.
+     * If the local map is already empty, this method is a no-op.
      */
     fun clear()
 }

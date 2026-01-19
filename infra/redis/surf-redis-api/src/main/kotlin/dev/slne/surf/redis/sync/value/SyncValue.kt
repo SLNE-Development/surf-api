@@ -8,64 +8,56 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * Replicated in-memory value synchronized across Redis-connected nodes.
  *
- * This implementation keeps a local in-memory copy and stores a snapshot in Redis.
- * Remote changes are detected via Redisson tracking and reflected back into the local state.
+ * A [SyncValue] exposes a local value of type [T] and propagates updates through Redis so that other
+ * nodes can observe and apply changes.
  *
- * ## Model
- * - **Local state:** each node holds a local value of type [T].
- * - **Remote snapshot:** the current value is stored as JSON in Redis under a snapshot key.
- * - **Change propagation:** when the snapshot key changes, nodes reload it and update local state.
- * - **TTL / heartbeat:** the snapshot key is written with a TTL and periodically refreshed.
+ * The exact replication strategy is implementation-defined. Consumers should treat this structure as
+ * eventually consistent: updates may arrive later on other nodes, and remote updates may overwrite
+ * the local value.
  *
- * ## Consistency
- * - Eventual consistency ("last write wins" at the Redis snapshot key).
- * - Updates are applied by reloading the snapshot on change notifications.
+ * ## Access
+ * - [get] reads the current local value.
+ * - [set] updates the local value and triggers propagation to Redis.
  *
- * ## Threading
- * - [get] is a fast local read.
- * - [set] updates local state immediately and writes to Redis asynchronously.
- * - Listener callbacks are invoked on the thread that applies the change
- *   (caller thread for local changes, Redisson/Reactor thread for remote changes).
+ * ## Listeners
+ * Listeners registered via [SyncStructure.addListener] receive [SyncValueChange] events for updates.
+ * The thread used for listener invocation is implementation-defined.
  */
 interface SyncValue<T : Any> : SyncStructure<SyncValueChange> {
     companion object {
-
-        /** Default TTL for the snapshot key. Refreshed periodically by the heartbeat. */
+        /**
+         * Default TTL configuration used by implementations when creating a [SyncValue].
+         */
         val DEFAULT_TTL = 5.minutes
     }
 
-    /** Returns the current local value. */
+    /**
+     * Returns the current local value.
+     */
     fun get(): T
 
     /**
-     * Updates the value locally and writes the new snapshot to Redis.
+     * Updates the local value and propagates the change through Redis.
      *
-     * This method returns immediately; Redis I/O happens asynchronously.
-     * Listeners are notified for both local and remote updates.
+     * The propagation mechanism is implementation-defined. This method may return before the update
+     * is observed by other nodes.
+     *
+     * @param newValue the new value to set
      */
     fun set(newValue: T)
 
     /**
      * Exposes this [SyncValue] as a Kotlin property delegate.
      *
-     * The returned [ReadWriteProperty] forwards:
-     * - reads (`getValue`) to [get]
-     * - writes (`setValue`) to [set]
+     * Reads (`getValue`) are forwarded to [get], writes (`setValue`) are forwarded to [set].
      *
-     * This allows the synchronized value to be accessed and modified using
-     * standard Kotlin `by`-delegation syntax while preserving the full
-     * synchronization semantics of [SyncValue].
-     *
-     * ### Example
+     * ## Example
      * ```
      * val counter: SyncValue<Int> = ...
-     *
      * var value by counter.asProperty()
      *
-     * value += 1 // updates local state and writes to Redis
+     * value += 1
      * ```
-     *
-     * @return a read-write property delegate backed by this [SyncValue]
      */
     fun asProperty() = object : ReadWriteProperty<Any?, T> {
         override fun getValue(thisRef: Any?, property: KProperty<*>) = get()

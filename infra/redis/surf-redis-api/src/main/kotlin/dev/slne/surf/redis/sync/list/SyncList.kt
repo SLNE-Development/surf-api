@@ -6,115 +6,107 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Replicated in-memory list that is kept in sync across all Redis-connected nodes.
+ * Replicated in-memory list synchronized across Redis-connected nodes.
  *
- * ## How it works
- * - **In-memory state:** each node holds its own local list instance.
- * - **Deltas via Pub/Sub:** mutations publish a delta to [redisChannel].
- * - **Snapshot for late joiners:** the full list is stored in Redis under [dataKey] with a TTL.
- * - **Versioning:** each mutation increments [verKey]. Deltas carry a monotonically increasing version.
- * - **Resync:** if a node detects a version gap, it reloads the snapshot.
- * - **Ephemeral storage:** snapshot + version keys expire automatically. A heartbeat refreshes the TTL while
- *   at least one node is alive.
+ * A [SyncList] exposes a local list-like view and propagates mutations through Redis so that other
+ * nodes can observe and apply changes.
  *
- * ## Consistency / ordering
- * - Eventual consistency across nodes.
- * - Deltas are applied only if `version == localVersion + 1`.
- * - Duplicate/out-of-order deltas (`version <= localVersion`) are ignored.
- * - Missing deltas trigger a snapshot reload.
+ * Consumers should treat this structure as eventually consistent: updates may arrive later on other
+ * nodes, and remote updates may overwrite the local state.
  *
- * ## Threading / API behavior
- * - Public mutating methods (e.g. [add], [set]) are **non-suspending** and do not block.
- * - Redis I/O is executed asynchronously on the provided [scope].
- * - Change listeners are invoked on the thread that applies the change
- *   (caller thread for local changes, Redisson/Reactor thread for remote changes).
+ * ## Access
+ * - [snapshot] returns a copy of the current local contents.
+ * - [get], [contains], [size] operate on the local view.
+ * - [add], [remove], [removeAt], [set], [removeIf] and [clear] mutate the local view and propagate
+ *   changes via Redis.
  *
- * @param api owning [RedisApi] (must already be connected and have Pub/Sub available)
- * @param id unique identifier for this list (defines Redis keys and channel)
- * @param scope coroutine scope used for asynchronous Redis I/O and background tasks (heartbeat/resync)
- * @param elementSerializer serializer for list elements
- * @param ttl TTL for snapshot/version keys; refreshed periodically while the list is active
+ * ## Listeners
+ * Listeners registered via [SyncStructure.addListener] receive [SyncListChange] events for changes.
+ * The thread used for listener invocation is implementation-defined.
  */
 interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
 
     companion object {
-
         /**
-         * Default TTL for the snapshot and version keys.
-         *
-         * The heartbeat refreshes the TTL periodically to keep the list ephemeral.
+         * Default TTL configuration used by implementations when creating a [SyncList].
          */
         val DEFAULT_TTL = 5.minutes
     }
 
-
     /**
-     * Returns a copy of the current list state.
+     * Returns a copy of the current local contents.
      *
-     * The returned list is a snapshot and will not reflect later updates.
+     * The returned list is a snapshot and will not reflect future updates.
      */
     fun snapshot(): ObjectArrayList<T>
 
-    /** @return current number of elements in the list */
+    /**
+     * @return the current local element count
+     */
     fun size(): Int
 
-    /** @return element at [index] */
+    /**
+     * Returns the element at [index] from the local list view.
+     */
     operator fun get(index: Int): T
 
-
+    /**
+     * Checks whether [element] is present in the local list view.
+     */
     operator fun contains(element: T): Boolean
 
     /**
-     * Appends [element] to the end of the list.
-     *
-     * The local list is updated immediately and listeners are notified.
-     * Replication to other nodes happens asynchronously.
+     * Appends [element] to the local list and propagates the change through Redis.
      */
     fun add(element: T)
+
+    /**
+     * Convenience operator for [add].
+     */
     operator fun plusAssign(element: T) = add(element)
 
+    /**
+     * Removes one occurrence of [element] from the local list and propagates the change through Redis.
+     *
+     * @return `true` if an element was removed locally, `false` otherwise
+     */
     fun remove(element: T): Boolean
+
+    /**
+     * Convenience operator for [remove].
+     */
     operator fun minusAssign(element: T) {
         remove(element)
     }
 
     /**
-     * Replaces the element at [index] with [element].
+     * Replaces the element at [index] with [element] and propagates the change through Redis.
      *
-     * The local list is updated immediately and listeners are notified.
-     * Replication to other nodes happens asynchronously.
-     *
-     * @return the previous value at [index]
+     * @return the previous element at [index]
      */
     operator fun set(index: Int, element: T): T
 
     /**
-     * Removes the element at [index].
-     *
-     * The local list is updated immediately and listeners are notified.
-     * Replication to other nodes happens asynchronously.
+     * Removes the element at [index] and propagates the change through Redis.
      *
      * @return the removed element
      */
     fun removeAt(index: Int): T
 
     /**
-     * Removes all elements from the list that match the given [predicate] and replicates the changes.
+     * Removes all elements that match [predicate] and propagates the change through Redis.
      *
-     * This operation uses atomic replication: the entire list is replaced in a single delta.
-     * This ensures consistency across distributed nodes since the operation cannot interleave
-     * with other deltas in the middle of a Clear/Add sequence, avoiding ordering divergence.
+     * The propagation strategy is implementation-defined. Callers should assume that other nodes
+     * will eventually converge to the same resulting list.
      *
-     * @param predicate the predicate to test each element against
-     * @return `true` if any elements were removed, `false` if no elements matched the predicate
+     * @return `true` if any elements were removed locally, `false` otherwise
      */
     fun removeIf(predicate: (T) -> Boolean): Boolean
 
     /**
-     * Clears the list.
+     * Clears the local list and propagates the change through Redis.
      *
-     * The local list is cleared immediately and listeners are notified.
-     * Replication to other nodes happens asynchronously.
+     * If the local list is already empty, this method is a no-op.
      */
     fun clear()
 }
