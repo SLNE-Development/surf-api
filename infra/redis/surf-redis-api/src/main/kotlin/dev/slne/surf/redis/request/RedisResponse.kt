@@ -3,19 +3,25 @@ package dev.slne.surf.redis.request
 import kotlinx.serialization.Serializable
 
 /**
- * Base class for all Redis response messages.
+ * Base type for Redis response messages.
  *
- * Subclasses represent responses sent for a corresponding [RedisRequest].
- * Each request may produce at most one response.
+ * Responses are published as replies to a corresponding [RedisRequest].
+ * Since requests are broadcasted, **multiple responses may exist** for the same request.
  *
- * Responses must be serializable using Kotlin Serialization.
+ * The sender side typically completes the request with the **first response**
+ * that arrives; additional responses may be ignored.
+ *
+ * Implementations must be [kotlinx.serialization.Serializable] and should primarily
+ * act as data carriers.
  */
 @Serializable
 abstract class RedisResponse {
+
     /**
-     * Timestamp (milliseconds since epoch) when this response instance was created.
+     * Timestamp (epoch milliseconds) indicating when this response instance was created.
      *
-     * This value is intended for debugging and tracing purposes.
+     * This value is set locally at construction time and is intended for
+     * debugging and tracing purposes.
      */
     val timestamp: Long = System.currentTimeMillis()
 }

@@ -179,13 +179,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         try {
             return withTimeout(timeoutMs) {
                 val response = deferred.await()
-                if (!responseType.isInstance(response)) {
-                    throw ClassCastException(
-                        "Expected response type ${responseType.name} but got ${response::class.java.name}"
-                    )
-                }
-                @Suppress("UNCHECKED_CAST")
-                response as T
+                responseType.cast(response)
             }
         } catch (_: TimeoutCancellationException) {
             pendingRequests.remove(requestId)
