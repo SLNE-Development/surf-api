@@ -59,10 +59,10 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     fun size(): Int
 
     /** @return element at [index] */
-    fun get(index: Int): T
+    operator fun get(index: Int): T
 
 
-    fun contains(element: T): Boolean
+    operator fun contains(element: T): Boolean
 
     /**
      * Appends [element] to the end of the list.
@@ -82,7 +82,7 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      *
      * @return the previous value at [index]
      */
-    fun set(index: Int, element: T): T
+    operator fun set(index: Int, element: T): T
 
     /**
      * Removes the element at [index].
@@ -113,4 +113,10 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      * Replication to other nodes happens asynchronously.
      */
     fun clear()
+
+    operator fun plusAssign(element: T) = add(element)
+    operator fun minusAssign(element: T) {
+        remove(element)
+    }
+
 }
