@@ -62,7 +62,7 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
     fun size(): Int
 
     /** @return `true` if [element] is present */
-    fun contains(element: T): Boolean
+    operator fun contains(element: T): Boolean
 
     /**
      * Adds [element] to the set and replicates the change.
@@ -70,6 +70,9 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
      * @return `true` if the element was added, `false` if it was already present
      */
     fun add(element: T): Boolean
+    operator fun plusAssign(element: T) {
+        add(element)
+    }
 
     /**
      * Removes [element] from the set and replicates the change.
@@ -77,6 +80,9 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
      * @return `true` if the element was removed, `false` if it was not present
      */
     fun remove(element: T): Boolean
+    operator fun minusAssign(element: T) {
+        remove(element)
+    }
 
     /**
      * Removes all elements from the set that match the given [predicate] and replicates the changes.
