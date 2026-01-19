@@ -71,8 +71,12 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      * Replication to other nodes happens asynchronously.
      */
     fun add(element: T)
+    operator fun plusAssign(element: T) = add(element)
 
     fun remove(element: T): Boolean
+    operator fun minusAssign(element: T) {
+        remove(element)
+    }
 
     /**
      * Replaces the element at [index] with [element].
@@ -113,10 +117,4 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      * Replication to other nodes happens asynchronously.
      */
     fun clear()
-
-    operator fun plusAssign(element: T) = add(element)
-    operator fun minusAssign(element: T) {
-        remove(element)
-    }
-
 }
