@@ -52,7 +52,6 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
         val DEFAULT_TTL = 5.minutes
     }
 
-
     /**
      * Returns a copy of the current map state.
      *
@@ -67,10 +66,11 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     fun isEmpty(): Boolean
 
     /** @return value associated with [key], or `null` if absent */
-    fun get(key: K): V?
+    operator fun get(key: K): V?
 
     /** @return `true` if the map contains [key] */
     fun containsKey(key: K): Boolean
+    operator fun contains(key: K): Boolean = containsKey(key)
 
     /**
      * Associates [value] with [key] in the map and replicates the change.
@@ -80,7 +80,8 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
      *
      * @return the previous value associated with [key], or `null` if there was no mapping
      */
-    fun put(key: K, value: V): V?
+   fun put(key: K, value: V): V?
+   operator fun set(key: K, value: V): V? = put(key, value)
 
     /**
      * Removes the mapping for [key] from the map and replicates the change.
