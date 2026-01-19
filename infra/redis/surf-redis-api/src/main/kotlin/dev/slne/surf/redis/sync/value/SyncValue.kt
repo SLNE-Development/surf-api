@@ -1,6 +1,8 @@
 package dev.slne.surf.redis.sync.value
 
 import dev.slne.surf.redis.sync.SyncStructure
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -42,4 +44,31 @@ interface SyncValue<T : Any> : SyncStructure<SyncValueChange> {
      * Listeners are notified for both local and remote updates.
      */
     fun set(newValue: T)
+
+    /**
+     * Exposes this [SyncValue] as a Kotlin property delegate.
+     *
+     * The returned [ReadWriteProperty] forwards:
+     * - reads (`getValue`) to [get]
+     * - writes (`setValue`) to [set]
+     *
+     * This allows the synchronized value to be accessed and modified using
+     * standard Kotlin `by`-delegation syntax while preserving the full
+     * synchronization semantics of [SyncValue].
+     *
+     * ### Example
+     * ```
+     * val counter: SyncValue<Int> = ...
+     *
+     * var value by counter.asProperty()
+     *
+     * value += 1 // updates local state and writes to Redis
+     * ```
+     *
+     * @return a read-write property delegate backed by this [SyncValue]
+     */
+    fun asProperty() = object : ReadWriteProperty<Any?, T> {
+        override fun getValue(thisRef: Any?, property: KProperty<*>) = get()
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(value)
+    }
 }
