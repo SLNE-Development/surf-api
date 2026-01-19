@@ -9,6 +9,7 @@ import dev.slne.surf.redis.event.RedisEvent
 import dev.slne.surf.redis.request.RedisRequest
 import dev.slne.surf.redis.request.RedisResponse
 import dev.slne.surf.redis.request.RequestResponseBus
+import dev.slne.surf.redis.request.RequestTimeoutException
 import dev.slne.surf.redis.request.sendRequest
 import dev.slne.surf.redis.sync.SyncStructure
 import dev.slne.surf.redis.sync.list.SyncList
@@ -451,6 +452,7 @@ class RedisApi private constructor(
      * @param timeoutMs Timeout in milliseconds.
      * @see dev.slne.surf.redis.request.RequestResponseBus.sendRequest
      */
+    @Throws(RequestTimeoutException::class)
     suspend inline fun <reified T : RedisResponse> sendRequest(
         request: RedisRequest,
         timeoutMs: Long = RequestResponseBus.DEFAULT_TIMEOUT_MS
@@ -464,6 +466,7 @@ class RedisApi private constructor(
      * @param timeoutMs Timeout in milliseconds.
      * @see dev.slne.surf.redis.request.RequestResponseBus.sendRequest
      */
+    @Throws(RequestTimeoutException::class)
     suspend fun <T : RedisResponse> sendRequest(
         request: RedisRequest,
         responseType: Class<T>,

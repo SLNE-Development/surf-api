@@ -5,43 +5,55 @@ import dev.slne.surf.redis.util.InternalRedisAPI
 import java.io.Closeable
 
 /**
- * Redis-backed request/response bus based on Redis Pub/Sub.
+ * Redis-backed request/response bus implemented on top of Redis Pub/Sub.
  *
- * This bus supports:
- * - Publishing requests to the request channel
- * - Handling incoming requests via methods annotated with [HandleRedisRequest]
- * - Publishing responses to the response channel
- * - Awaiting responses for outgoing requests using a per-request correlation ID
+ * Requests are **broadcasted** to all subscribers. Therefore, multiple servers/handlers may respond
+ * to the same request. On the caller side, the request completes with the **first response**
+ * that arrives; additional responses may be ignored.
  *
+ * Request handlers are discovered via [HandleRedisRequest].
+ *
+ * ## Threading
  * Handler methods are invoked synchronously on a Redisson/Reactor thread.
- * If suspending or long-running work is required, the handler must launch its own coroutine.
+ * If suspending or long-running work is required, the handler must explicitly delegate it
+ * (for example by launching a coroutine) and call [RequestContext.respond] later.
+ *
+ * ## Lifecycle
+ * The owning [dev.slne.surf.redis.RedisApi] initializes the bus during startup via [init]
+ * and closes it during shutdown.
  */
 interface RequestResponseBus : Closeable {
     companion object {
         /**
-         * Default timeout for awaiting responses in milliseconds.
+         * Default timeout (in milliseconds) for awaiting the first response.
          */
         const val DEFAULT_TIMEOUT_MS = 5000L
     }
 
     /**
-     * Initializes the bus by subscribing to request/response channels.
+     * Initializes the bus (e.g. subscribes to request/response channels).
      *
-     * This method should only be called during startup.
+     * This is an internal lifecycle hook and is called by [dev.slne.surf.redis.RedisApi].
      */
     @InternalRedisAPI
     fun init()
 
     /**
-     * Sends a request and awaits a response of the given [responseType].
+     * Sends [request] and awaits the first matching response of type [responseType].
      *
-     * @param request request payload to publish
-     * @param responseType expected response type
-     * @param timeoutMs timeout for awaiting the response
-     * @return the response payload
-     * @throws RequestTimeoutException if no response is received within [timeoutMs]
-     * @throws ClassCastException if the received response does not match [responseType]
+     * Because requests are broadcasted, more than one server may respond. This method returns
+     * the first response that arrives within [timeoutMs].
+     *
+     * @param request Request payload to publish.
+     * @param responseType Expected response type.
+     * @param timeoutMs Timeout (milliseconds) to await the first response.
+     *
+     * @return The first received response.
+     *
+     * @throws RequestTimeoutException if no response is received within [timeoutMs].
+     * @throws ClassCastException if the received response is not an instance of [responseType].
      */
+    @Throws(RequestTimeoutException::class)
     suspend fun <T : RedisResponse> sendRequest(
         request: RedisRequest,
         responseType: Class<T>,
@@ -49,17 +61,14 @@ interface RequestResponseBus : Closeable {
     ): T
 
     /**
-     * Registers all request handler methods on the given object.
+     * Registers request handler methods on the given [handler] instance.
      *
-     * Methods annotated with [HandleRedisRequest] must:
-     * - Have exactly one parameter
-     * - The parameter type must be `RequestContext<T>`
-     * - `T` must be a subtype of [RedisRequest]
-     * - Not be a `suspend` function
+     * The handler object is scanned for methods annotated with [HandleRedisRequest].
+     * Method requirements are defined by [HandleRedisRequest].
      *
-     * Only a single handler may be registered per request type; duplicates are ignored.
+     * Implementations may restrict duplicate handlers for the same request type.
      *
-     * @param handler object containing [HandleRedisRequest]-annotated methods
+     * @param handler Object containing [HandleRedisRequest]-annotated methods.
      */
     fun registerRequestHandler(handler: Any)
 }
@@ -75,6 +84,7 @@ interface RequestResponseBus : Closeable {
  * @throws RequestTimeoutException if no response is received within [timeoutMs]
  * @throws ClassCastException if the received response does not match [T]
  */
+@Throws(RequestTimeoutException::class)
 suspend inline fun <reified T : RedisResponse> RequestResponseBus.sendRequest(
     request: RedisRequest,
     timeoutMs: Long = DEFAULT_TIMEOUT_MS
