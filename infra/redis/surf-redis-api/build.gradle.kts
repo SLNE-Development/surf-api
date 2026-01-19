@@ -56,31 +56,19 @@ tasks.test {
     failOnNoDiscoveredTests = false
 }
 
-tasks {
-    dumpLegacyAbi {
-    }
-
-    updateLegacyAbi {
-
-    }
-}
-
-//tasks {
-//    apiBuild {
-//        inputJar.value(shadowJar.flatMap { it.archiveFile })
-//    }
-//}
-
 java {
     withSourcesJar()
     withJavadocJar()
 }
 
-//afterEvaluate {
-//    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
-//        enabled = false
-//    }
-//    tasks.named("publishPluginMavenPublicationToMavenLocal") {
-//        enabled = false
-//    }
-//}
+/**
+ * Only publish the shadow variant
+ */
+afterEvaluate {
+    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
+        enabled = false
+    }
+    tasks.named("publishPluginMavenPublicationToMavenLocal") {
+        enabled = false
+    }
+}
