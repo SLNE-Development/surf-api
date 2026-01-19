@@ -65,3 +65,16 @@ publishing {
         slneReleases()
     }
 }
+
+
+/**
+ * Only publish shadow variant
+ */
+afterEvaluate {
+    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
+        enabled = false
+    }
+    tasks.named("publishPluginMavenPublicationToMavenLocal") {
+        enabled = false
+    }
+}
