@@ -8,42 +8,55 @@ import java.io.Closeable
 /**
  * Redis-backed event bus based on Redis Pub/Sub.
  *
- * This event bus:
- * - Publishes events to Redis using JSON serialization
- * - Subscribes to a single Redis channel
- * - Dispatches events to locally registered handlers
+ * The event bus is responsible for:
+ * - publishing [RedisEvent] instances to Redis (JSON-serialized)
+ * - subscribing to the configured Redis event channel
+ * - dispatching received events to locally registered handler methods
  *
- * Event handlers are discovered via the [OnRedisEvent] annotation
- * and are invoked using JVM-generated lambdas for minimal dispatch overhead.
+ * Handler methods are discovered via [OnRedisEvent].
  *
- * Registration must happen before the owning [dev.slne.surf.redis.RedisApi] is frozen.
+ * ## Dispatch
+ * Event handlers are invoked synchronously on a Redisson/Reactor thread (see [OnRedisEvent]).
+ *
+ * For invocation, the implementation uses `MethodHandle`s (via `java.lang.invoke`) rather than
+ * JVM-generated lambda factories to avoid classloader-related issues.
+ *
+ * ## Lifecycle
+ * The owning [RedisApi] initializes the bus during [RedisApi.connect] via [init] and closes it during
+ * [RedisApi.disconnect].
+ *
+ * Listener registration is expected to happen before the [RedisApi] instance is frozen.
  */
 interface RedisEventBus : Closeable {
 
     /**
-     * Initializes the event bus by subscribing to the Redis event channel.
+     * Initializes the event bus (e.g. subscribes to the Redis Pub/Sub channel).
      *
-     * This method must be called during startup.
+     * This is an internal lifecycle hook and is called by [RedisApi] during [RedisApi.connect].
      */
     @InternalRedisAPI
     fun init()
 
+
     /**
-     * Publishes an event to Redis asynchronously.
+     * Publishes [event] to Redis asynchronously.
      *
-     * @return a [kotlinx.coroutines.Deferred] containing the number of receiving subscribers,
-     *         or `0` if the event could not be serialized
+     * The returned [Deferred] completes with the number of subscribers that received the message.
+     * If the event could not be serialized, the deferred completes with `0`.
+     *
+     * @return a [Deferred] with the number of receiving subscribers, or `0` if serialization failed.
      */
     fun publish(event: RedisEvent): Deferred<Long>
 
     /**
-     * Registers all event handler methods on the given listener instance.
+     * Registers all event handler methods on the given [listener] instance.
      *
-     * Methods annotated with [OnRedisEvent] must:
-     * - Have exactly one parameter
-     * - Accept a subtype of [RedisEvent]
+     * The listener is scanned for methods annotated with [OnRedisEvent].
+     * Method requirements are defined by [OnRedisEvent].
      *
-     * @throws IllegalStateException if the [RedisApi] has already been frozen
+     * Implementations may reject registrations after the owning [RedisApi] is frozen.
+     *
+     * @throws IllegalStateException if registration is not allowed (e.g. after the owning [RedisApi] was frozen).
      */
     fun registerListener(listener: Any)
 }
