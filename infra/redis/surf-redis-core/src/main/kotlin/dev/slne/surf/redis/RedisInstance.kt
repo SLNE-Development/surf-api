@@ -7,6 +7,8 @@ import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.epoll.Epoll
 import io.netty.channel.epoll.EpollIoHandler
 import io.netty.channel.nio.NioIoHandler
+import reactor.core.scheduler.Scheduler
+import reactor.core.scheduler.Schedulers
 import java.io.InputStream
 import java.nio.file.Path
 import java.util.concurrent.ExecutorService
@@ -41,6 +43,16 @@ abstract class RedisInstance {
         redissonExecutorService = Executors.newThreadPerTaskExecutor(redissonThreadFactory)
     }
 
+    val streamPollScheduler: Scheduler = Schedulers.newBoundedElastic(
+        8,
+        Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZE,
+        "surf-redis-stream-poll",
+        60,
+        true
+    )
+
+    val ttlRefreshScheduler: Scheduler = Schedulers.newParallel("surf-redis-ttl-refresh", 2)
+
     abstract val dataPath: Path
 
     fun load() {
@@ -57,6 +69,8 @@ abstract class RedisInstance {
     fun disable() {
         log.atInfo()
             .log("Disabling Redis networking")
+
+        streamPollScheduler.dispose()
         eventLoopGroup.shutdownGracefully().syncUninterruptibly()
 
         redissonExecutorService.shutdown()
@@ -70,5 +84,6 @@ abstract class RedisInstance {
     companion object {
         private val log = logger()
         val instance = requiredService<RedisInstance>()
+        fun get() = instance
     }
 }

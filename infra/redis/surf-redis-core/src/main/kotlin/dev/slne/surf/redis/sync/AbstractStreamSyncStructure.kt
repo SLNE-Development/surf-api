@@ -1,8 +1,10 @@
 package dev.slne.surf.redis.sync
 
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.RedisInstance
 import dev.slne.surf.redis.util.LuaScriptExecutor
 import dev.slne.surf.redis.util.LuaScriptRegistry
+import dev.slne.surf.redis.util.fetchLatestStreamId
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.redisson.api.RAtomicLongReactive
@@ -34,14 +36,6 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
         const val STREAM_FIELD_TYPE = "T"
         const val STREAM_FIELD_MSG = "M"
-
-        private val streamScheduler = Schedulers.newBoundedElastic(
-            8,
-            Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZE,
-            "surf-redis-sync-stream-poll",
-            60,
-            true
-        )
     }
 
     protected val instanceId: String = api.clientId
@@ -70,7 +64,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     @MustBeInvokedByOverriders
     override fun init(): Mono<Void> {
-        return fetchLastStreamId()
+        return stream.fetchLatestStreamId()
             .doOnNext { cursorId.set(it) }
             .then(super.init())
             .doOnSuccess { trackDisposable(startPolling()) }
@@ -198,7 +192,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     private fun startPolling(): Disposable {
         return pollOnce()
-            .delayElement(streamPollInterval.toJavaDuration(), streamScheduler)
+            .delayElement(streamPollInterval.toJavaDuration(), RedisInstance.get().streamPollScheduler)
             .onErrorResume { e ->
                 log.atWarning().withCause(e).log("Stream poll failed for '$id' ($streamKey)")
                 requestResync()
@@ -230,17 +224,6 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
                 Mono.empty()
             }
-    }
-
-    private fun fetchLastStreamId(): Mono<StreamMessageId> {
-        val args = StreamRangeArgs.startId(StreamMessageId.MAX)
-            .endId(StreamMessageId.MIN)
-            .count(1)
-
-        return stream.rangeReversed(args)
-            .map { map -> map.keys.firstOrNull() ?: StreamMessageId(0, 0) }
-            .defaultIfEmpty(StreamMessageId(0, 0))
-            .onErrorReturn(StreamMessageId(0, 0))
     }
 
     protected fun requestResync() {

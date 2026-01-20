@@ -1,8 +1,10 @@
 package dev.slne.surf.redis.cache
 
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.util.InternalRedisAPI
 import kotlinx.serialization.KSerializer
 import reactor.core.Disposable
+import reactor.core.publisher.Mono
 import java.io.Closeable
 
 /**
@@ -79,4 +81,7 @@ interface SimpleRedisCache<K : Any, V : Any> : Disposable {
     suspend fun invalidate(key: K): Long
 
     suspend fun invalidateAll(): Long
+
+    @InternalRedisAPI
+    fun init(): Mono<Void>
 }
