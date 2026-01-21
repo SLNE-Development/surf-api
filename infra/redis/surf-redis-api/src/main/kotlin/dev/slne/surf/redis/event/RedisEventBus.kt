@@ -1,6 +1,7 @@
 package dev.slne.surf.redis.event
 
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.util.Initializable
 import dev.slne.surf.redis.util.InternalRedisAPI
 import kotlinx.coroutines.Deferred
 import java.io.Closeable
@@ -27,16 +28,7 @@ import java.io.Closeable
  *
  * Listener registration is expected to happen before the [RedisApi] instance is frozen.
  */
-interface RedisEventBus : Closeable {
-
-    /**
-     * Initializes the event bus (e.g. subscribes to the Redis Pub/Sub channel).
-     *
-     * This is an internal lifecycle hook and is called by [RedisApi] during [RedisApi.connect].
-     */
-    @InternalRedisAPI
-    fun init()
-
+interface RedisEventBus : Closeable, Initializable {
 
     /**
      * Publishes [event] to Redis asynchronously.

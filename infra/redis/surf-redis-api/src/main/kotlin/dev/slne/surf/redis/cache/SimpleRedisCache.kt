@@ -1,11 +1,9 @@
 package dev.slne.surf.redis.cache
 
 import dev.slne.surf.redis.RedisApi
-import dev.slne.surf.redis.util.InternalRedisAPI
+import dev.slne.surf.redis.util.Initializable
 import kotlinx.serialization.KSerializer
 import reactor.core.Disposable
-import reactor.core.publisher.Mono
-import java.io.Closeable
 
 /**
  * A simple Redis-backed cache for values of type [V] parameterized by key type [K].
@@ -24,7 +22,7 @@ import java.io.Closeable
  * @param ttl Time-to-live for cache entries.
  * @param api Instance of [RedisApi] used to access Redis.
  */
-interface SimpleRedisCache<K : Any, V : Any> : Disposable {
+interface SimpleRedisCache<K : Any, V : Any> : Disposable, Initializable {
 
     /**
      * Retrieve a value from the cache.
@@ -81,7 +79,4 @@ interface SimpleRedisCache<K : Any, V : Any> : Disposable {
     suspend fun invalidate(key: K): Long
 
     suspend fun invalidateAll(): Long
-
-    @InternalRedisAPI
-    fun init(): Mono<Void>
 }
