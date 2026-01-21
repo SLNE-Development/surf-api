@@ -284,8 +284,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
             scriptExecutor.execute<Long>(
                 TOUCH_SCRIPT, RScript.Mode.READ_WRITE, RScript.ReturnType.LONG,
                 keys = listOf(idsRedisKey),
-                keyPrefix, id, ttl.inWholeMilliseconds.toString(), indices.size.toString(),
-                *indices.map { it.name }.toTypedArray()
+                *argv.toTypedArray()
             ).subscribe(
                 { /* no payload needed */ },
                 { e -> log.atWarning().withCause(e).log("Failed to refresh TTL via TOUCH_VALUE for id=$id") })
