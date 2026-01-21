@@ -83,6 +83,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     init {
         require(namespace.isNotBlank()) { "namespace must not be blank" }
+        requireNoNul(namespace, "namespace")
         require(!namespace.contains('{') && !namespace.contains('}')) {
             "namespace must not contain '{' or '}' (used for Redis Cluster hash tags)"
         }
