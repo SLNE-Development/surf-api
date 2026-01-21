@@ -1,142 +1,118 @@
---[[
-ARGV:
-1) prefix      (cache key prefix)
-2) id          (ID of the element)
-3) json        (serialized value)
-4) ttlMillis   (TTL in milliseconds)
-5) indexCount  (number of indexes configured)
-6..) For each index:
-    - indexName
-    - valueCount
-    - value1 .. valueN  (the values for this index in the new element)
+-- KEYS
+local idsKey     = KEYS[1]
+local streamKey  = KEYS[2]
+local versionKey = KEYS[3]
 
-Operation:
-- Set/update the value with TTL.
-- Add ID to the IDs set (track existence) and update its TTL.
-- For each index:
-    * Compute the new set of values vs. old set (from existing meta).
-    * Remove ID from index sets that are no longer applicable.
-    * Add ID to index sets for new values.
-    * Update the meta set for this ID and index name to the new values.
-- Each time an index entry is added or removed, record that indexName/indexValue as "touched".
-- Return [wasNew, ...touchedEntries].
-- Stream events:
-    * Always: VAL event for this ID.
-    * If wasNew: IDS event.
-    * For each touched index entry: IDX event (with indexName and indexValue).
-]]
-local prefix = ARGV[1]
-local id = ARGV[2]
-local json = ARGV[3]
-local ttl = tonumber(ARGV[4])
-local indexCount = tonumber(ARGV[5])
-local sep = string.char(0)
+-- ARGV
+local originId   = ARGV[1]
+local delim      = ARGV[2]
+local maxLen     = tonumber(ARGV[3])
+local ttl        = tonumber(ARGV[4])
+local fieldType  = ARGV[5]
+local fieldMsg   = ARGV[6]
 
-local idsKey = prefix .. ":__ids__"
+-- ARGV layout after header:
+-- 7: prefix
+-- 8: id
+-- 9: json
+-- 10: indexCount
+-- then per index: name, valueCount, values...
+local prefix     = ARGV[7]
+local id         = ARGV[8]
+local json       = ARGV[9]
+local indexCount = tonumber(ARGV[10])
+
+local sep = delim
+
 local valKey = prefix .. ":__val__:" .. id
-local streamKey = prefix .. ":__stream__"
-local verKey = prefix .. ":__version__"
-
--- Upsert the value with TTL
 redis.call('SET', valKey, json, 'PX', ttl)
--- Add ID to global IDs set
+
 local wasNew = redis.call('SADD', idsKey, id)
 redis.call('PEXPIRE', idsKey, ttl)
 
 local touched = {}
-local argIndex = 6
-for i = 1, indexCount do
-    local idxName = ARGV[argIndex]; argIndex = argIndex + 1
-    local newCount = tonumber(ARGV[argIndex]); argIndex = argIndex + 1
+local i = 11
 
-    local metaKey = prefix .. ":__meta__:" .. id .. ":" .. idxName
-    -- Get old index values from meta set
-    local oldVals = redis.call('SMEMBERS', metaKey)
-    local oldSet = {}
-    for _, v in ipairs(oldVals) do
-        oldSet[v] = true
+for _ = 1, indexCount do
+  local idxName = ARGV[i]; i = i + 1
+  local newCount = tonumber(ARGV[i]); i = i + 1
+
+  local metaKey = prefix .. ":__meta__:" .. id .. ":" .. idxName
+
+  local oldVals = redis.call('SMEMBERS', metaKey)
+  local oldMap = {}
+  for _, v in ipairs(oldVals) do oldMap[v] = true end
+
+  local newMap = {}
+  local newVals = {}
+  for _ = 1, newCount do
+    local v = ARGV[i]; i = i + 1
+    if not newMap[v] then
+      newMap[v] = true
+      newVals[#newVals + 1] = v
     end
+  end
 
-    local newSet = {}
-    local newVals = {}
-    for j = 1, newCount do
-        local v = ARGV[argIndex]; argIndex = argIndex + 1
-        if not newSet[v] then
-            newSet[v] = true
-            table.insert(newVals, v)
-        end
-    end
-
-    -- Remove ID from index entries that are no longer present
-    for _, v in ipairs(oldVals) do
-        if not newSet[v] then
-            local idxKey = prefix .. ":__idx__:" .. idxName .. ":" .. v
-            redis.call('SREM', idxKey, id)
-            if redis.call('SCARD', idxKey) == 0 then
-                redis.call('DEL', idxKey)  -- remove empty index set
-            else
-                redis.call('PEXPIRE', idxKey, ttl)
-            end
-            table.insert(touched, idxName .. sep .. v)
-        end
-    end
-
-    -- Add ID to new index entries
-    for _, v in ipairs(newVals) do
-        local idxKey = prefix .. ":__idx__:" .. idxName .. ":" .. v
-        local added = redis.call('SADD', idxKey, id)
-        if added == 1 then
-            table.insert(touched, idxName .. sep .. v)
-        end
+  -- removals
+  for _, v in ipairs(oldVals) do
+    if not newMap[v] then
+      local idxKey = prefix .. ":__idx__:" .. idxName .. ":" .. v
+      redis.call('SREM', idxKey, id)
+      if redis.call('SCARD', idxKey) == 0 then
+        redis.call('DEL', idxKey)
+      else
         redis.call('PEXPIRE', idxKey, ttl)
+      end
+      touched[#touched + 1] = idxName .. sep .. v
     end
+  end
 
-    -- Update meta set for this id-index
-    redis.call('DEL', metaKey)
-    if #newVals > 0 then
-        redis.call('SADD', metaKey, unpack(newVals))
+  -- additions
+  for _, v in ipairs(newVals) do
+    local idxKey = prefix .. ":__idx__:" .. idxName .. ":" .. v
+    local added = redis.call('SADD', idxKey, id)
+    if added == 1 then
+      touched[#touched + 1] = idxName .. sep .. v
     end
-    redis.call('PEXPIRE', metaKey, ttl)
+    redis.call('PEXPIRE', idxKey, ttl)
+  end
+
+  redis.call('DEL', metaKey)
+  if #newVals > 0 then
+    redis.call('SADD', metaKey, unpack(newVals))
+  end
+  redis.call('PEXPIRE', metaKey, ttl)
 end
 
--- Prepare events: determine how many events to send
-local eventCount = 1 + (wasNew == 1 and 1 or 0) + #touched  -- VAL + optional IDS + one per touched index
-if eventCount > 0 then
-    local newVersion = redis.call('INCRBY', verKey, eventCount)
-    local firstVer = newVersion - eventCount + 1
-    local curVer = firstVer
+-- Events: VAL always, IDS if wasNew, IDX for each touched
+local eventCount = 1 + (wasNew == 1 and 1 or 0) + #touched
+local lastVer = redis.call('INCRBY', versionKey, eventCount)
+local ver = lastVer - eventCount + 1
 
-    -- Always emit VAL event for this id
-    local msgVal = tostring(curVer) .. sep .. prefix  -- use prefix as origin? Actually use origin outside script, but not passed here.
-    -- We actually need origin here; since origin not passed to script, use an empty placeholder or prefix.
-    -- For simplicity, using prefix as origin in this context.
-    msgVal = tostring(curVer) .. sep .. prefix .. sep .. id
-    redis.call('XADD', streamKey, 'MAXLEN', '~', '10000', '*', 'T', 'VAL', 'M', msgVal)
-    curVer = curVer + 1
+-- VAL
+local msgVal = tostring(ver) .. sep .. originId .. sep .. id
+redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*', fieldType, 'V', fieldMsg, msgVal)
+ver = ver + 1
 
-    -- If new ID, emit IDS event
-    if wasNew == 1 then
-        local msgIds = tostring(curVer) .. sep .. prefix
-        redis.call('XADD', streamKey, 'MAXLEN', '~', '10000', '*', 'T', 'IDS', 'M', msgIds)
-        curVer = curVer + 1
-    end
-
-    -- For each touched index entry, emit an IDX event
-    for _, entry in ipairs(touched) do
-        local msgIdx = tostring(curVer) .. sep .. prefix .. sep .. entry
-        redis.call('XADD', streamKey, 'MAXLEN', '~', '10000', '*', 'T', 'IDX', 'M', msgIdx)
-        curVer = curVer + 1
-    end
-
-    -- Set TTL for stream and version keys
-    redis.call('PEXPIRE', verKey, ttl)
-    redis.call('PEXPIRE', streamKey, ttl)
+-- IDS
+if wasNew == 1 then
+  local msgIds = tostring(ver) .. sep .. originId .. sep
+  redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*', fieldType, 'IS', fieldMsg, msgIds)
+  ver = ver + 1
 end
 
--- Prepare return result
-local result = {}
-result[1] = wasNew
-for i, entry in ipairs(touched) do
-    result[i+1] = entry
+-- IDX
+for _, entry in ipairs(touched) do
+  local msgIdx = tostring(ver) .. sep .. originId .. sep .. entry
+  redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*', fieldType, 'IX', fieldMsg, msgIdx)
+  ver = ver + 1
 end
-return result
+
+redis.call('PEXPIRE', streamKey, ttl)
+redis.call('PEXPIRE', versionKey, ttl)
+
+local res = { wasNew }
+for _, t in ipairs(touched) do
+  res[#res + 1] = t
+end
+return res
