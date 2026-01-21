@@ -97,7 +97,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
     private val lastVersion = AtomicLong(0L)
     private val cursorId = AtomicReference<StreamMessageId>(StreamMessageId(0, 0))
 
-    private fun redisKey(key: K): String = "$keyPrefix:${keyToString(key)}"
+    private fun redisKey(key: K): String = "$keyPrefix:__val__:${keyToString(key)}"
     private fun localKey(key: K): String = keyToString(key)
 
     override fun init(): Mono<Void> {
