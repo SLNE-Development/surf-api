@@ -1,6 +1,8 @@
 package dev.slne.surf.redis.cache
 
+import dev.slne.surf.redis.util.InternalRedisAPI
 import reactor.core.Disposable
+import reactor.core.publisher.Mono
 
 /**
  * A Redis-backed cache for a *set of entities* with:
@@ -39,4 +41,7 @@ interface SimpleSetRedisCache<T : Any> : Disposable {
 
     suspend fun invalidateAll(): Long
     fun clearNearCacheOnly()
+
+    @InternalRedisAPI
+    fun init(): Mono<Void>
 }

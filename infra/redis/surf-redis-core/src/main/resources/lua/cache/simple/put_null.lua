@@ -1,25 +1,31 @@
-local prefix = ARGV[1]
-local id = ARGV[2]
-local ttl = tonumber(ARGV[3])
-local origin = ARGV[4]
-local sep = string.char(0)
+-- KEYS
+local idsKey    = KEYS[1]
+local streamKey = KEYS[2]
+local versionKey= KEYS[3]
 
-local idsKey = prefix .. ":__ids__"
+-- ARGV
+local originId  = ARGV[1]
+local delim     = ARGV[2]
+local maxLen    = tonumber(ARGV[3])
+local ttl       = tonumber(ARGV[4])
+local fieldType = ARGV[5]
+local fieldMsg  = ARGV[6]
+local eventType = ARGV[7]  -- "VAL"
+local id        = ARGV[8]
+local prefix    = ARGV[9]
+
 local valKey = prefix .. ":__val__:" .. id
-local streamKey = prefix .. ":__stream__"
-local verKey = prefix .. ":__version__"
 local NULL_MARKER = "__NULL__"
 
--- Set the null marker with TTL
 redis.call('SET', valKey, NULL_MARKER, 'PX', ttl)
-
--- Ensure the ID is tracked in the IDs set and update TTL
 redis.call('SADD', idsKey, id)
 redis.call('PEXPIRE', idsKey, ttl)
 
--- Publish stream event for this key
-local newVersion = redis.call('INCR', verKey)
-local message = tostring(newVersion) .. sep .. origin .. sep .. id
-redis.call('XADD', streamKey, 'MAXLEN', '~', '10000', '*', 'T', 'VAL', 'M', message)
-redis.call('PEXPIRE', verKey, ttl)
+local ver = redis.call('INCR', versionKey)
+local msg = tostring(ver) .. delim .. originId .. delim .. id
+redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*', fieldType, eventType, fieldMsg, msg)
+
 redis.call('PEXPIRE', streamKey, ttl)
+redis.call('PEXPIRE', versionKey, ttl)
+
+return ver

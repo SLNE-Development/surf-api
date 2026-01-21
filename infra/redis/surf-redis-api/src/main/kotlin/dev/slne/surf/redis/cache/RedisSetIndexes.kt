@@ -27,11 +27,11 @@ class RedisSetIndex<T : Any, V : Any> internal constructor(
 abstract class RedisSetIndexes<T : Any> {
     private val _indices = LinkedHashMap<String, RedisSetIndex<T, *>>()
 
-    val all: List<RedisSetIndex<T, *>>
-        get() = _indices.values.toList()
+    var all: List<RedisSetIndex<T, *>> = _indices.values.toList()
+        private set
 
-    val names: Set<String>
-        get() = _indices.keys
+    var names: Set<String> = _indices.keys
+        private set
 
     @InternalRedisAPI
     fun containsSameInstance(index: RedisSetIndex<T, *>): Boolean =
@@ -75,6 +75,9 @@ abstract class RedisSetIndexes<T : Any> {
             )
 
             _indices[resolvedName] = idx
+            all = _indices.values.toList()
+            names = _indices.keys
+
             return ReadOnlyProperty { _, _ -> idx }
         }
     }

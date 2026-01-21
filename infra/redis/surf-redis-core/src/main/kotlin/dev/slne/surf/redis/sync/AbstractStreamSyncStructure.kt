@@ -11,12 +11,10 @@ import org.redisson.api.RAtomicLongReactive
 import org.redisson.api.RScript
 import org.redisson.api.RStreamReactive
 import org.redisson.api.stream.StreamMessageId
-import org.redisson.api.stream.StreamRangeArgs
 import org.redisson.api.stream.StreamReadArgs
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -202,12 +200,12 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             .subscribe()
     }
 
-    private fun pollOnce(): Mono<Void> {
+    private fun pollOnce(): Mono<Void> = Mono.defer {
         val from = cursorId.get()
         val args = StreamReadArgs.greaterThan(from)
             .count(streamReadCount)
 
-        return stream.read(args)
+        stream.read(args)
             .filter { it.isNotEmpty() }
             .flatMap { batch ->
                 for ((messageId, fields) in batch) {
@@ -225,6 +223,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                 Mono.empty()
             }
     }
+
 
     protected fun requestResync() {
         if (!resyncInFlight.compareAndSet(false, true)) return
