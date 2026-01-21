@@ -561,7 +561,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
         ids.chunked(1000).forEach { chunk ->
             coroutineScope {
-                for (id in ids) {
+                for (id in chunk) {
                     launch {
                         semaphore.withPermit {
                             val value = getCachedById(id)
