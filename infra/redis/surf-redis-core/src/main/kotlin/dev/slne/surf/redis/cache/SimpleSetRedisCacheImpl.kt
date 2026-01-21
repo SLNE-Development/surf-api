@@ -685,7 +685,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LONG,
             listOf(idsRedisKey, streamKey, versionKey),
-            keyPrefix, instanceId
+            *argv.toTypedArray()
         ).awaitSingle()
 
         clearNearCacheOnly()
