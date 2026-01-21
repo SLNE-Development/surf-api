@@ -248,7 +248,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
                 // Payload is "<indexName><NUL><indexValue>"
                 val idxParts = payload.split(MESSAGE_DELIMITER, limit = 2)
                 if (idxParts.size == 2) {
-                    val idxName = idxParts[0];
+                    val idxName = idxParts[0]
                     val idxValue = idxParts[1]
                     nearIndexIds.invalidate("$idxName$MESSAGE_DELIMITER$idxValue")
                     refreshGate.invalidate("$OP_IDX$MESSAGE_DELIMITER$idxName$MESSAGE_DELIMITER$idxValue")
