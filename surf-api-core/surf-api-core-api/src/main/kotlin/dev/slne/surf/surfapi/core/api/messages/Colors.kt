@@ -1,5 +1,8 @@
 package dev.slne.surf.surfapi.core.api.messages
 
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.INFO
+import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PRIMARY
+import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
@@ -123,9 +126,54 @@ interface Colors {
          * identifier in messages.
          */
         @JvmField
-        val PREFIX: Component = Component.text(">> ", DARK_SPACER)
-            .append(Component.text("Surf", PREFIX_COLOR))
-            .append(Component.text(" | ", DARK_SPACER))
+        val PREFIX: Component = buildText {
+            spacer("»")
+            appendSpace()
+        }
+
+        /**
+         * The default info prefix used in informational messages.
+         */
+        @JvmField
+        val INFO_PREFIX: Component = buildText {
+            spacer("[")
+            info("ℹ️")
+            spacer("]")
+            appendSpace()
+        }
+
+        /**
+         * The default success prefix used in success messages.
+         */
+        @JvmField
+        val SUCCESS_PREFIX: Component = buildText {
+            spacer("[")
+            success("✔")
+            spacer("]")
+            appendSpace()
+        }
+
+        /**
+         * The default warning prefix used in warning messages.
+         */
+        @JvmField
+        val WARNING_PREFIX: Component = buildText {
+            spacer("[")
+            warning("⚠")
+            spacer("]")
+            appendSpace()
+        }
+
+        /**
+         * The default error prefix used in error messages.
+         */
+        @JvmField
+        val ERROR_PREFIX: Component = buildText {
+            spacer("[")
+            error("✖")
+            spacer("]")
+            appendSpace()
+        }
 
         /**
          * Represents the color black.
