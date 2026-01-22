@@ -8,12 +8,16 @@ import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.concurrent.ThreadSafe
 
+/**
+ * Thread-safe game-rule value storing a `Long`.
+ */
 @ThreadSafe
 class LongValue<CTX: Any>(type: GameRules.Type<LongValue<CTX>, CTX, Long>) : GameRules.Value<LongValue<CTX>, CTX, Long>(
     type
 ) {
     private val value = AtomicLong()
 
+    /** @inheritDoc */
     override fun updateFromArgument(
         sender: CommandSender,
         args: CommandArguments,
@@ -24,9 +28,11 @@ class LongValue<CTX: Any>(type: GameRules.Type<LongValue<CTX>, CTX, Long>) : Gam
         value.set(newValue)
     }
 
+    /** @inheritDoc */
     override fun get() = value.get()
     override fun self() = this
 
+    /** @inheritDoc */
     override fun deserialize(value: String) {
         val deserialized = value.toLongOrNull()
         if (deserialized != null) {
@@ -38,9 +44,13 @@ class LongValue<CTX: Any>(type: GameRules.Type<LongValue<CTX>, CTX, Long>) : Gam
         }
     }
 
+    /** @inheritDoc */
     override fun serialize() = value.get().toString()
 
+    /** @inheritDoc */
     override fun copy() = LongValue(type).also { it.value.set(this.value.get()) }
+
+    /** @inheritDoc */
     override fun setFrom(
         other: LongValue<CTX>,
         context: CTX,
@@ -52,6 +62,14 @@ class LongValue<CTX: Any>(type: GameRules.Type<LongValue<CTX>, CTX, Long>) : Gam
     companion object {
         private val log = logger()
 
+        /**
+         * Factory for a [LongValue] rule.
+         *
+         * @param defaultValue default starting value
+         * @param min minimum allowed value
+         * @param max maximum allowed value
+         * @param onChange callback invoked whenever the value changes
+         */
         fun <CTX: Any> create(
             defaultValue: Long,
             min: Long = Long.MIN_VALUE,

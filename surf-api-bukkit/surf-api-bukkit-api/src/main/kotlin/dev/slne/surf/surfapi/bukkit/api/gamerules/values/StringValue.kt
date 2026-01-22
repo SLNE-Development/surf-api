@@ -10,11 +10,15 @@ import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicReference
 import javax.annotation.concurrent.ThreadSafe
 
+/**
+ * Thread-safe game-rule value storing a `String`.
+ */
 @ThreadSafe
 class StringValue<CTX : Any>(type: GameRules.Type<StringValue<CTX>, CTX, String>) :
     GameRules.Value<StringValue<CTX>, CTX, String>(type) {
     private val value = AtomicReference("")
 
+    /** @inheritDoc */
     override fun updateFromArgument(
         sender: CommandSender,
         args: CommandArguments,
@@ -25,18 +29,23 @@ class StringValue<CTX : Any>(type: GameRules.Type<StringValue<CTX>, CTX, String>
         value.set(newValue)
     }
 
+    /** @inheritDoc */
     override fun get(): String = value.get()
 
     override fun self() = this
 
+    /** @inheritDoc */
     override fun deserialize(value: String) {
         this.value.set(value)
     }
 
+    /** @inheritDoc */
     override fun serialize(): String = value.get()
 
+    /** @inheritDoc */
     override fun copy() = StringValue(type).also { it.value.set(this.value.get()) }
 
+    /** @inheritDoc */
     override fun setFrom(
         other: StringValue<CTX>,
         context: CTX,
@@ -46,6 +55,9 @@ class StringValue<CTX : Any>(type: GameRules.Type<StringValue<CTX>, CTX, String>
     }
 
     companion object {
+        /**
+         * Creates a rule that accepts a single word.
+         */
         fun <CTX: Any> createWord(
             defaultValue: String = "",
             onChange: (CTX, StringValue<CTX>) -> Unit = { _, _ -> },
@@ -55,6 +67,9 @@ class StringValue<CTX : Any>(type: GameRules.Type<StringValue<CTX>, CTX, String>
             onChange,
         )
 
+        /**
+         * Creates a rule that accepts any non-empty string.
+         */
         fun <CTX: Any> createString(
             defaultValue: String = "",
             onChange: (CTX, StringValue<CTX>) -> Unit = { _, _ -> },
@@ -64,6 +79,9 @@ class StringValue<CTX : Any>(type: GameRules.Type<StringValue<CTX>, CTX, String>
             onChange,
         )
 
+        /**
+         * Creates a rule that captures the remainder of the command line.
+         */
         fun <CTX: Any> createGreedy(
             defaultValue: String = "",
             onChange: (CTX, StringValue<CTX>) -> Unit = { _, _ -> },
@@ -73,6 +91,9 @@ class StringValue<CTX : Any>(type: GameRules.Type<StringValue<CTX>, CTX, String>
             onChange,
         )
 
+        /**
+         * Common factory used by the convenience creation methods.
+         */
         private fun <CTX : Any> create(
             argumentCreator: (name: String) -> Argument<*>,
             defaultValue: String,

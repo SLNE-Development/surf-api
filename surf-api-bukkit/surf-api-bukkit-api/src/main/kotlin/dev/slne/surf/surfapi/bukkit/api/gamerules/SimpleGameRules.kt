@@ -42,10 +42,16 @@ abstract class SimpleGameRules<CTX : Any> : GameRules<CTX> {
         return ruleSet.getValue(key)
     }
 
+    /**
+     * Shortcut for [getRule] using Kotlin's index operator.
+     */
     operator fun <T : Value<T, CTX, V>, V> get(key: Key<T, CTX, V>): T {
         return ruleSet[key]
     }
 
+    /**
+     * Registers all commands for this rule-set under the given [tree].
+     */
     fun addToCommandTree(
         tree: CommandTree,
         getContext: (CommandSender) -> CTX,
@@ -53,6 +59,9 @@ abstract class SimpleGameRules<CTX : Any> : GameRules<CTX> {
         addToCommandTree(tree, { ruleSet }, getContext)
     }
 
+    /**
+     * Continues an existing command argument chain with this rule-set.
+     */
     fun addToCommandTree(
         argument: Argument<*>,
         getContext: (CommandSender) -> CTX,

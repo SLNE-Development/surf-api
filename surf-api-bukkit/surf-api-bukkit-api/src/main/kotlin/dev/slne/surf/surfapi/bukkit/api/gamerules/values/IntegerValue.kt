@@ -8,11 +8,15 @@ import org.bukkit.command.CommandSender
 import java.util.concurrent.atomic.AtomicInteger
 import javax.annotation.concurrent.ThreadSafe
 
+/**
+ * Thread-safe game-rule value storing an `Int`.
+ */
 @ThreadSafe
 class IntegerValue<CTX : Any>(type: GameRules.Type<IntegerValue<CTX>, CTX, Int>) :
     GameRules.Value<IntegerValue<CTX>, CTX, Int>(type) {
     private val value = AtomicInteger()
 
+    /** @inheritDoc */
     override fun updateFromArgument(
         sender: CommandSender,
         args: CommandArguments,
@@ -23,9 +27,11 @@ class IntegerValue<CTX : Any>(type: GameRules.Type<IntegerValue<CTX>, CTX, Int>)
         value.set(newValue)
     }
 
+    /** @inheritDoc */
     override fun get() = value.get()
     override fun self() = this
 
+    /** @inheritDoc */
     override fun deserialize(value: String) {
         val deserialized = value.toIntOrNull()
         if (deserialized != null) {
@@ -37,10 +43,14 @@ class IntegerValue<CTX : Any>(type: GameRules.Type<IntegerValue<CTX>, CTX, Int>)
         }
     }
 
+    /** @inheritDoc */
     override fun serialize() = value.get().toString()
+
+    /** @inheritDoc */
     override fun copy() = IntegerValue(type).also { it.value.set(this.value.get()) }
 
 
+    /** @inheritDoc */
     override fun setFrom(
         other: IntegerValue<CTX>,
         context: CTX,
@@ -52,6 +62,14 @@ class IntegerValue<CTX : Any>(type: GameRules.Type<IntegerValue<CTX>, CTX, Int>)
     companion object {
         private val log = logger()
 
+        /**
+         * Factory for an [IntegerValue] rule.
+         *
+         * @param defaultValue default starting value
+         * @param min minimum allowed value
+         * @param max maximum allowed value
+         * @param onChange callback invoked whenever the value changes
+         */
         fun <CTX : Any> create(
             defaultValue: Int,
             min: Int = Int.MIN_VALUE,

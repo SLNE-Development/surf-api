@@ -110,8 +110,24 @@ abstract class GameRules<CTX : Any> {
         return Key(id, description, lastGameRuleIndex.getAndIncrement())
     }
 
+    /**
+     * Creates a new [RuleSet] populated with the default values of every
+     * registered rule type.  After the first invocation the entire registry
+     * becomes frozen and no further rule types may be registered.
+     */
     fun createRuleSet(): RuleSet = RuleSet().also { frozen = true }
+
+    /**
+     * Deserializes a [RuleSet] from the provided [CompoundBinaryTag].  The
+     * resulting instance is fully initialised and the registry is frozen on
+     * first creation.
+     */
     fun createRuleSet(values: CompoundBinaryTag): RuleSet = RuleSet(values).also { frozen = true }
+
+    /**
+     * Loads a [RuleSet] from the given NBT [file].  This behaves the same as
+     * [createRuleSet] but reads the serialized values from disk.
+     */
     fun loadRuleSet(file: Path): RuleSet = RuleSet(file).also { frozen = true }
 
     /**
@@ -279,18 +295,34 @@ abstract class GameRules<CTX : Any> {
                 .freeze()
         )
 
+        /**
+         * Retrieves the [Value] instance backing the specified [key].  The
+         * returned object can be used to read or modify the current setting in
+         * a type-safe manner.
+         */
         fun <T : Value<T, CTX, V>, V> getRule(key: Key<T, CTX, V>): T {
             return gameruleArray[key.gameRuleIndex] as T
         }
 
+        /**
+         * Shortcut for obtaining the primitive value of a rule without accessing
+         * the full [Value] wrapper.
+         */
         fun <T : Value<T, CTX, V>, V> getValue(key: Key<T, CTX, V>): V {
             return getRule(key).get()
         }
 
+        /**
+         * Operator alias for [getRule] allowing array-like access to values.
+         */
         operator fun <T : Value<T, CTX, V>, V> get(key: Key<T, CTX, V>): T {
             return getRule(key)
         }
 
+        /**
+         * Serializes this rule-set into an NBT [CompoundBinaryTag].
+         * Each rule is stored as a simple `key → serializedValue` pair.
+         */
         fun createTag(): CompoundBinaryTag {
             val builder = CompoundBinaryTag.builder()
             for ((key, value) in rules.object2ObjectEntrySet()) {
@@ -299,6 +331,10 @@ abstract class GameRules<CTX : Any> {
             return builder.build()
         }
 
+        /**
+         * Persists this rule-set to the specified [file] in compressed NBT
+         * format.
+         */
         fun saveToFile(file: Path) {
             val tag = createTag()
             BinaryTagIO.writer()
@@ -312,6 +348,10 @@ abstract class GameRules<CTX : Any> {
             }
         }
 
+        /**
+         * Invokes the provided [visitor] for every registered rule type in this
+         * rule-set.
+         */
         fun visitGameRuleTypes(visitor: GameRuleTypeVisitor<CTX>) {
             for ((key, type) in gameRuleTypes.object2ObjectEntrySet()) {
                 callVisitorCap<Nothing, Any?>(visitor, key, type)
@@ -328,6 +368,10 @@ abstract class GameRules<CTX : Any> {
             type.callVisitor(visitor, key)
         }
 
+        /**
+         * Copies all values from [other] into this rule-set and triggers the
+         * appropriate change callbacks for each modified rule.
+         */
         fun assignFrom(other: RuleSet, context: CTX) {
             for (key in other.rules.keys) {
                 assignCap(key, other, context)
@@ -385,14 +429,25 @@ abstract class GameRules<CTX : Any> {
         private val visitorCaller: VisitorCaller<T, CTX, V>,
     ) {
 
+        /**
+         * Builds the CommandAPI [Argument] used to set this rule's value via
+         * commands.
+         */
         fun createArgument(name: String): Argument<*> {
             return argumentCreator(name)
         }
 
+        /**
+         * Creates a new [Value] instance with its default value.
+         */
         fun createRule(): T {
             return ruleFactory(this)
         }
 
+        /**
+         * Dispatches the [visitor] to the type-specific callback supplied at
+         * construction time.
+         */
         fun callVisitor(visitor: GameRuleTypeVisitor<CTX>, key: Key<T, CTX, V>) {
             visitorCaller.call(visitor, key, this)
         }
@@ -414,6 +469,11 @@ abstract class GameRules<CTX : Any> {
      * @see StringValue
      */
     abstract class Value<SELF : Value<SELF, CTX, V>, CTX : Any, V>(protected val type: Type<SELF, CTX, V>) {
+        /**
+         * Parses the command argument identified by [name] and updates this
+         * value accordingly. Implementations should extract the argument from
+         * [args] and perform any necessary validation.
+         */
         protected abstract fun updateFromArgument(
             sender: CommandSender,
             args: CommandArguments,
@@ -421,10 +481,18 @@ abstract class GameRules<CTX : Any> {
             key: Key<SELF, CTX, V>,
         )
 
+        /** Returns the currently stored primitive value. */
         abstract fun get(): V
+
+        /** Self-type helper used by [onChanged]. */
         protected abstract fun self(): SELF
+
         operator fun getValue(thisRef: Any?, property: KProperty<*>) = get()
 
+        /**
+         * Updates this value from the command argument named [name] and fires
+         * the registered change callback.
+         */
         fun setFromArgument(
             sender: CommandSender,
             args: CommandArguments,
@@ -436,20 +504,31 @@ abstract class GameRules<CTX : Any> {
             onChanged(context)
         }
 
+        /** Invokes the change callback with this value. */
         fun onChanged(context: CTX) {
             type.changeCallback(context, self())
         }
 
+        /** Restores the state from its serialized representation. */
         abstract fun deserialize(value: String)
 
+        /** Serializes the current state to a string representation. */
         abstract fun serialize(): String
+
+        /**
+         * Returns a user-friendly representation of the value. Defaults to
+         * [serialize].
+         */
         open fun displayValue(): String = serialize()
 
         override fun toString(): String {
             return serialize()
         }
 
+        /** Creates a deep copy of this value object. */
         protected abstract fun copy(): SELF
+
+        /** Assigns the state from [other] to this value. */
         abstract fun setFrom(other: SELF, context: CTX)
     }
 

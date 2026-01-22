@@ -8,12 +8,21 @@ import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.command.CommandSender
 import javax.annotation.concurrent.ThreadSafe
 
+/**
+ * Thread-safe game-rule value storing a [Double].
+ *
+ * Changes are propagated immediately through the associated change callback
+ * defined when calling [create].
+ *
+ * @param CTX context object type passed to callbacks
+ */
 @ThreadSafe
 class DoubleValue<CTX : Any>(type: GameRules.Type<DoubleValue<CTX>, CTX, Double>) :
     GameRules.Value<DoubleValue<CTX>, CTX, Double>(type) {
 
     private val value = AtomicDouble()
 
+    /** @inheritDoc */
     override fun updateFromArgument(
         sender: CommandSender,
         args: CommandArguments,
@@ -24,9 +33,11 @@ class DoubleValue<CTX : Any>(type: GameRules.Type<DoubleValue<CTX>, CTX, Double>
         value.set(newValue)
     }
 
+    /** @inheritDoc */
     override fun get() = value.get()
     override fun self() = this
 
+    /** @inheritDoc */
     override fun deserialize(value: String) {
         val deserialized = value.toDoubleOrNull()
         if (deserialized != null) {
@@ -38,9 +49,13 @@ class DoubleValue<CTX : Any>(type: GameRules.Type<DoubleValue<CTX>, CTX, Double>
         }
     }
 
+    /** @inheritDoc */
     override fun serialize() = value.get().toString()
+
+    /** @inheritDoc */
     override fun copy() = DoubleValue(type).also { it.value.set(this.value.get()) }
 
+    /** @inheritDoc */
     override fun setFrom(
         other: DoubleValue<CTX>,
         context: CTX,
@@ -52,6 +67,14 @@ class DoubleValue<CTX : Any>(type: GameRules.Type<DoubleValue<CTX>, CTX, Double>
     companion object {
         private val log = logger()
 
+        /**
+         * Factory for a [DoubleValue] rule.
+         *
+         * @param defaultValue default starting value
+         * @param min          minimum allowed value
+         * @param max          maximum allowed value
+         * @param onChange     callback invoked whenever the value changes
+         */
         fun <CTX : Any> create(
             defaultValue: Double,
             min: Double = Double.MIN_VALUE,
