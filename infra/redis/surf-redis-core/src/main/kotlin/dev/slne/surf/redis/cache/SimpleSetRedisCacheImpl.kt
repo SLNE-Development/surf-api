@@ -97,7 +97,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private fun valueRedisKey(id: String) = "$keyPrefix:__val__:$id"
     private fun indexRedisKey(indexName: String, indexValue: String) = "$keyPrefix:__idx__:$indexName:$indexValue"
     private val streamKey = "$keyPrefix$STREAM_SUFFIX"
-    private val versionKey = "$keyPrefix:$VERSION_KEY_SUFFIX"
+    private val versionKey = "$keyPrefix$VERSION_KEY_SUFFIX"
 
     private val scriptExecutor = LuaScriptExecutor.getInstance(api, LuaScripts)
     private val stream: RStreamReactive<String, String> by lazy {
