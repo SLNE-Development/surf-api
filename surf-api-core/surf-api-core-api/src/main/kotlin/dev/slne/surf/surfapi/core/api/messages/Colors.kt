@@ -137,7 +137,7 @@ interface Colors {
         @JvmField
         val INFO_PREFIX: Component = buildText {
             spacer("[")
-            info("ℹ️")
+            info("ℹ")
             spacer("]")
             appendSpace()
         }
