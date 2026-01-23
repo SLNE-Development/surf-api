@@ -15,7 +15,7 @@ packetevents = "2.11.0"
 packetevents-plugin = "2.11.0"
 
 # Command API
-commandapi = "11.0.0"
+commandapi = "11.1.0"
 
 # LuckPerms
 luckperms = "v5.5.0-bukkit"
