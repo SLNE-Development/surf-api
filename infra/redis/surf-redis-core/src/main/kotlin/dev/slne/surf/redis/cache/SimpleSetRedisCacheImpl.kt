@@ -50,6 +50,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
         private const val STREAM_SUFFIX = ":__stream__"
         private const val VERSION_KEY_SUFFIX = ":__version__"
         private const val IDS_KEY_SUFFIX = ":__ids__"
+        private const val VALUE_KEY_INFIX = ":__val__:"
+        private const val INDEX_KEY_INFIX = ":__idx__:"
+        private const val NULL_MARKER = "__NULL__"
+        private const val LOCAL_IDS_CACHE_KEY = "__ids__"
         private const val MAX_CONCURRENT_REDIS_OPS = 64
         private const val MESSAGE_DELIMITER = '\u0000'
         private const val STREAM_MAX_LENGTH = 10_000
@@ -94,8 +98,8 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private val keyPrefix = "$namespace:$slotTag"
 
     private val idsRedisKey = "$keyPrefix$IDS_KEY_SUFFIX"
-    private fun valueRedisKey(id: String) = "$keyPrefix:__val__:$id"
-    private fun indexRedisKey(indexName: String, indexValue: String) = "$keyPrefix:__idx__:$indexName:$indexValue"
+    private fun valueRedisKey(id: String) = "$keyPrefix$VALUE_KEY_INFIX$id"
+    private fun indexRedisKey(indexName: String, indexValue: String) = "$keyPrefix$INDEX_KEY_INFIX$indexName:$indexValue"
     private val streamKey = "$keyPrefix$STREAM_SUFFIX"
     private val versionKey = "$keyPrefix$VERSION_KEY_SUFFIX"
 
@@ -241,7 +245,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
             }
 
             OP_IDS -> {
-                nearIds.invalidate("__ids__")
+                nearIds.invalidate(LOCAL_IDS_CACHE_KEY)
                 refreshGate.invalidate(OP_IDS)
             }
 
@@ -345,7 +349,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
         bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
 
-        val obj = if (raw == "__NULL__") null else api.json.decodeFromString(serializer, raw)
+        val obj = if (raw == NULL_MARKER) null else api.json.decodeFromString(serializer, raw)
 
         if (obj == null) {
             nearValues.put(normId, CacheEntry.Null)
@@ -475,7 +479,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val (wasNew, touchedIndices) = parseLuaFlagAndTouched(result)
         nearValues.put(id, CacheEntry.Value(element))
 
-        if (wasNew) nearIds.invalidate("__ids__")
+        if (wasNew) nearIds.invalidate(LOCAL_IDS_CACHE_KEY)
         for ((idxName, idxValue) in touchedIndices) {
             nearIndexIds.invalidate(indexCacheKey(idxName, idxValue))
         }
@@ -499,7 +503,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
                             val value = getCachedById(id)
                             if (value == null) {
                                 idsRedis.remove(id).awaitSingleOrNull() // stale
-                                nearIds.invalidate("__ids__")
+                                nearIds.invalidate(LOCAL_IDS_CACHE_KEY)
                             } else if (condition(value)) {
                                 result.add(value)
                             }
@@ -614,7 +618,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
         if (!removed) return false
 
         nearValues.invalidate(normId)
-        nearIds.invalidate("__ids__")
+        nearIds.invalidate(LOCAL_IDS_CACHE_KEY)
         refreshGate.invalidate(refreshKeyVal(normId))
         for ((idxName, idxValue) in touched) {
             nearIndexIds.invalidate(indexCacheKey(idxName, idxValue))
@@ -695,7 +699,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
     }
 
     private suspend fun getAllIdsCached(): Set<String> {
-        when (val entry = nearIds.getIfPresent("__ids__")) {
+        when (val entry = nearIds.getIfPresent(LOCAL_IDS_CACHE_KEY)) {
             is CacheEntry.Value -> {
                 refreshIdsTtl()
                 return entry.value
@@ -709,7 +713,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
                 val set = api.redissonReactive.getSet<String>(idsRedisKey, StringCodec.INSTANCE)
                 val ids = set.readAll().awaitSingleOrNull().orEmpty()
                 set.expire(ttl.toJavaDuration()).awaitSingleOrNull()
-                nearIds.put("__ids__", if (ids.isEmpty()) CacheEntry.Null else CacheEntry.Value(ids))
+                nearIds.put(LOCAL_IDS_CACHE_KEY, if (ids.isEmpty()) CacheEntry.Null else CacheEntry.Value(ids))
                 return ids
             }
         }
