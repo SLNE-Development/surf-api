@@ -241,6 +241,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
 
         bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+        refreshTtl(localKey, redisKey)
 
         val entry = if (raw == NULL_MARKER) {
             CacheEntry.Null
