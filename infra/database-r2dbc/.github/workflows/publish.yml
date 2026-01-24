@@ -40,6 +40,9 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew shadowJar
 
+      - name: Check ABI Compatibility
+        run: ./gradlew checkLegacyAbi
+
       - name: Publish to Maven
         run: ./gradlew publish
 
