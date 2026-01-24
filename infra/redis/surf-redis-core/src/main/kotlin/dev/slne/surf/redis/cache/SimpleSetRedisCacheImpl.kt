@@ -99,7 +99,9 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     private val idsRedisKey = "$keyPrefix$IDS_KEY_SUFFIX"
     private fun valueRedisKey(id: String) = "$keyPrefix$VALUE_KEY_INFIX$id"
-    private fun indexRedisKey(indexName: String, indexValue: String) = "$keyPrefix$INDEX_KEY_INFIX$indexName:$indexValue"
+    private fun indexRedisKey(indexName: String, indexValue: String) =
+        "$keyPrefix$INDEX_KEY_INFIX$indexName:$indexValue"
+
     private val streamKey = "$keyPrefix$STREAM_SUFFIX"
     private val versionKey = "$keyPrefix$VERSION_KEY_SUFFIX"
 
