@@ -41,6 +41,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         private const val STREAM_SUFFIX = ":__stream__"
         private const val VERSION_KEY_SUFFIX = ":__version__"
         private const val IDS_KEY_SUFFIX = ":__ids__"
+        private const val VALUE_KEY_INFIX = ":__val__:"
         private const val NULL_MARKER = "__NULL__"
         private const val MESSAGE_DELIMITER = '\u0000'
         private const val MAX_STREAM_LENGTH = 10_000
@@ -105,7 +106,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
     private val lastVersion = AtomicLong(0L)
     private val cursorId = AtomicReference<StreamMessageId>(StreamMessageId(0, 0))
 
-    private fun redisKey(key: K): String = "$keyPrefix:__val__:${keyToString(key)}"
+    private fun redisKey(key: K): String = "$keyPrefix$VALUE_KEY_INFIX${keyToString(key)}"
     private fun localKey(key: K): String = keyToString(key)
 
     override fun init(): Mono<Void> {
