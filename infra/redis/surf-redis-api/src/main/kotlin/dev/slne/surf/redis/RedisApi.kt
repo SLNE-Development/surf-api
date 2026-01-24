@@ -331,7 +331,7 @@ class RedisApi private constructor(
                                 .withCause(throwable)
                                 .log(
                                     "Failed to initialize Redis component: %s",
-                                    initializable::class.qualifiedName ?: initializables.toString()
+                                    initializable::class.qualifiedName ?: initializable.toString()
                                 )
                         }
                 }
