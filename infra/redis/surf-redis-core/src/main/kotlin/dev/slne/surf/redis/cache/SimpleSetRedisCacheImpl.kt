@@ -32,7 +32,7 @@ import kotlin.time.toJavaDuration
 
 
 class SimpleSetRedisCacheImpl<T : Any>(
-    private val namespace: String,
+    private val n: String,
     private val serializer: KSerializer<T>,
     private val idOf: (T) -> String,
     private val indexes: RedisSetIndexes<T> = RedisSetIndexes.empty(),
@@ -82,13 +82,14 @@ class SimpleSetRedisCacheImpl<T : Any>(
     }
 
     init {
-        require(namespace.isNotBlank()) { "namespace must not be blank" }
-        requireNoNul(namespace, "namespace")
-        require(!namespace.contains('{') && !namespace.contains('}')) {
+        require(n.isNotBlank()) { "namespace must not be blank" }
+        requireNoNul(n, "namespace")
+        require(!n.contains('{') && !n.contains('}')) {
             "namespace must not contain '{' or '}' (used for Redis Cluster hash tags)"
         }
     }
 
+    private val namespace = n.replace(":", "_")
     private val slotTag = "{$namespace}"
     private val keyPrefix = "$namespace:$slotTag"
 
@@ -96,7 +97,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private fun valueRedisKey(id: String) = "$keyPrefix:__val__:$id"
     private fun indexRedisKey(indexName: String, indexValue: String) = "$keyPrefix:__idx__:$indexName:$indexValue"
     private val streamKey = "$keyPrefix$STREAM_SUFFIX"
-    private val versionKey = "$keyPrefix:$VERSION_KEY_SUFFIX"
+    private val versionKey = "$keyPrefix$VERSION_KEY_SUFFIX"
 
     private val scriptExecutor = LuaScriptExecutor.getInstance(api, LuaScripts)
     private val stream: RStreamReactive<String, String> by lazy {

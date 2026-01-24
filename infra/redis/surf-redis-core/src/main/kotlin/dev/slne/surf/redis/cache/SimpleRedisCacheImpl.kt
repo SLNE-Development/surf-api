@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.serialization.KSerializer
+import org.redisson.RedissonObject
 import org.redisson.api.RAtomicLongReactive
 import org.redisson.api.RScript
 import org.redisson.api.RStreamReactive
@@ -25,7 +26,7 @@ import kotlin.time.toJavaDuration
 import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 class SimpleRedisCacheImpl<K : Any, V : Any>(
-    private val namespace: String,
+    n: String,
     private val serializer: KSerializer<V>,
     private val keyToString: (K) -> String = { it.toString() },
     private val ttl: Duration,
@@ -67,6 +68,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
     }
 
+    private val namespace = n.replace(":", "_")
     private val slotTag = "{$namespace}"
     private val keyPrefix = "$namespace:$slotTag"
 
