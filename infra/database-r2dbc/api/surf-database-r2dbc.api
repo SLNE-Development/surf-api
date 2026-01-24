@@ -135,3 +135,21 @@ public class dev/slne/surf/database/table/AuditableLongIdTable : org/jetbrains/e
 	public final fun getUpdatedAt ()Lorg/jetbrains/exposed/v1/core/Column;
 }
 
+public final class dev/slne/surf/database/utils/ExposedR2dbcExceptionUtilsKt {
+	public static final fun asBadGrammar (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcBadGrammarException;
+	public static final fun asDataIntegrityViolation (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcDataIntegrityViolationException;
+	public static final fun asNonTransientResourceException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcNonTransientResourceException;
+	public static final fun asPermissionDenied (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcPermissionDeniedException;
+	public static final fun asRollbackException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcRollbackException;
+	public static final fun asTimeoutException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcTimeoutException;
+	public static final fun asTransientResourceException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcTransientResourceException;
+	public static final fun isBadGrammar (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Z
+	public static final fun isDataIntegrityViolation (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Z
+	public static final fun isNonTransientResourceException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Z
+	public static final fun isPermissionDenied (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Z
+	public static final fun isRollbackException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Z
+	public static final fun isTimeoutException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Z
+	public static final fun isTransientResourceException (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Z
+	public static final fun unwrap (Lorg/jetbrains/exposed/v1/r2dbc/ExposedR2dbcException;)Lio/r2dbc/spi/R2dbcException;
+}
+
