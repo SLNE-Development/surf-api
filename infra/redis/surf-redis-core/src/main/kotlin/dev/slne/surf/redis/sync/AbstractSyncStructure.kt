@@ -111,8 +111,7 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
 
     private fun startTtlRefresh(): Flux<Void> {
         if (ttl == Duration.ZERO || ttl.isNegative()) return Flux.empty()
-        Math.clamp(ttl.inWholeSeconds - 2, 1, 8)
-        val period = java.time.Duration.ofSeconds(min(ttl.inWholeSeconds - 2, 5))
+        val period = java.time.Duration.ofSeconds(Math.clamp(ttl.inWholeSeconds - 2, 1L, 8L))
 
         return Flux.interval(period, RedisInstance.get().ttlRefreshScheduler)
             .concatMap {
