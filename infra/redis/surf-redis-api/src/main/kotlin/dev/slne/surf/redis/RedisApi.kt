@@ -1,6 +1,7 @@
 package dev.slne.surf.redis
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi.Companion.create
 import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
@@ -325,15 +326,7 @@ class RedisApi private constructor(
         } else {
             Mono.`when`(
                 initializables.map { initializable ->
-                    initializable.init()
-                        .doOnError { throwable ->
-                            log.atSevere()
-                                .withCause(throwable)
-                                .log(
-                                    "Failed to initialize Redis component: %s",
-                                    initializable::class.qualifiedName ?: initializable.toString()
-                                )
-                        }
+                    initialize(initializable)
                 }
             ).doOnError { throwable ->
                 log.atSevere()
@@ -342,6 +335,16 @@ class RedisApi private constructor(
             }.block()
         }
     }
+
+    private fun initialize(initializable: Initializable) = initializable.init()
+        .doOnError { throwable ->
+            log.atSevere()
+                .withCause(throwable)
+                .log(
+                    "Failed to initialize Redis component: %s",
+                    initializable::class.qualifiedName ?: initializable.toString()
+                )
+        }
 
     @Blocking
     private fun fetchRedisOs() {
@@ -653,7 +656,21 @@ class RedisApi private constructor(
         keyToString: (K) -> String = { it.toString() }
     ): SimpleRedisCache<K, V> {
         val cache = RedisComponentProvider.get().createSimpleCache(namespace, serializer, ttl, keyToString, this)
-        initializables.put(cache, Unit)
+
+        if (isConnected()) {
+            log.atWarning()
+                .withStackTrace(StackSize.MEDIUM)
+                .log(
+                    "Creating SimpleRedisCache '%s' after RedisApi is connected; initializing immediately (blocking). " +
+                            "Consider creating caches before connecting to avoid this blocking call.",
+                    namespace
+                )
+
+            initialize(cache).block()
+        } else {
+            initializables.put(cache, Unit)
+        }
+
         disposables.put(cache, Unit)
         return cache
     }
@@ -697,7 +714,20 @@ class RedisApi private constructor(
     ): SimpleSetRedisCache<T> {
         val cache =
             RedisComponentProvider.get().createSimpleSetRedisCache(namespace, serializer, ttl, idOf, indexes, this)
-        initializables.put(cache, Unit)
+
+        if (isConnected()) {
+            log.atWarning()
+                .withStackTrace(StackSize.MEDIUM)
+                .log(
+                    "Creating SimpleSetRedisCache '%s' after RedisApi is connected; initializing immediately (blocking). " +
+                            "Consider creating caches before connecting to avoid this blocking call.",
+                    namespace
+                )
+            initialize(cache).block()
+        } else {
+            initializables.put(cache, Unit)
+        }
+
         disposables.put(cache, Unit)
         return cache
     }
