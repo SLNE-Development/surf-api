@@ -11,10 +11,8 @@ import kotlin.jvm.optionals.getOrNull
 @AutoService(HookService::class)
 class VelocityHookService : HookService() {
     override fun readHooksFileFromResources(owner: Any, fileName: String): InputStream? {
-        val instance = getInstanceFromOwner(owner)
-
         return try {
-            val url = instance.javaClass.getResource(fileName) ?: return null
+            val url = getClassloader(owner).getResource(fileName) ?: return null
             val connection = url.openConnection()
             connection.useCaches = false
             connection.getInputStream()
