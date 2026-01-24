@@ -32,7 +32,7 @@ import kotlin.time.toJavaDuration
 
 
 class SimpleSetRedisCacheImpl<T : Any>(
-    private val n: String,
+    n: String,
     private val serializer: KSerializer<T>,
     private val idOf: (T) -> String,
     private val indexes: RedisSetIndexes<T> = RedisSetIndexes.empty(),
