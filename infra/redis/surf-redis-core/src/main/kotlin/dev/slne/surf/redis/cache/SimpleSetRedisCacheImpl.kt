@@ -350,6 +350,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
         }
 
         bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+        refreshValueTtl(normId)
 
         val obj = if (raw == NULL_MARKER) null else api.json.decodeFromString(serializer, raw)
 
