@@ -28,21 +28,19 @@ fun <K : Any, V : Any> RStreamReactive<K, V>.pollContinuously(
     pollInterval: Duration = 250.milliseconds,
     count: Int = 200,
     handler: Result<Map<StreamMessageId, Map<K, V>>>.() -> Unit,
-): Disposable = Mono.defer<Void> {
+): Disposable = Mono.defer {
     val args = StreamReadArgs.greaterThan(cursorId.get())
         .count(count)
 
     read(args)
         .filter { it.isNotEmpty() }
-        .flatMap { batch ->
-            handler(Result.success(batch))
-            Mono.empty()
-        }
+        .doOnNext { batch -> handler(Result.success(batch)) }
+        .then()
 }
-    .delayElement(pollInterval.toJavaDuration(), RedisInstance.get().streamPollScheduler)
     .onErrorResume { e ->
         handler(Result.failure(e))
         Mono.empty()
     }
+    .then(Mono.delay(pollInterval.toJavaDuration(), RedisInstance.get().streamPollScheduler))
     .repeat()
     .subscribe()
