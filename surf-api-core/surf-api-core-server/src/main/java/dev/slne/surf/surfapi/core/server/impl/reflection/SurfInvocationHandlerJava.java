@@ -6,6 +6,12 @@ import dev.slne.surf.surfapi.core.api.reflection.Static;
 import dev.slne.surf.surfapi.core.api.util.SurfUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -19,11 +25,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
-import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
@@ -98,6 +99,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
     final var constructorAnnotation = method.getDeclaredAnnotation(
         dev.slne.surf.surfapi.core.api.reflection.Constructor.class);
     final var nameAnnotation = method.getDeclaredAnnotation(Name.class);
+    final var privateLookup = sneaky(() -> MethodHandles.privateLookupIn(proxiedClass, LOOKUP));
 
     if (fieldAnnotation != null) {
       final String fieldName = getMethodName(method, nameAnnotation, fieldAnnotation,
@@ -105,9 +107,9 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
       final Field field = sneaky(() -> findField(proxiedClass, fieldName));
       final boolean isGetter = fieldAnnotation.type() == Type.GETTER;
       final MethodHandle handleGetter =
-          isGetter ? sneaky(() -> LOOKUP.unreflectGetter(field)) : null;
+          isGetter ? sneaky(() -> privateLookup.unreflectGetter(field)) : null;
       final MethodHandle handleSetter = !isGetter && !fieldAnnotation.overrideFinal()
-          ? sneaky(() -> LOOKUP.unreflectSetter(field)) : null;
+          ? sneaky(() -> privateLookup.unreflectSetter(field)) : null;
 
       if (isGetter) {
         checkParamCount(method, staticAnnotation != null ? 0 : 1);
@@ -125,7 +127,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     if (constructorAnnotation != null) {
       final var handle = sneaky(
-          () -> LOOKUP.unreflectConstructor(findConstructor(proxiedClass, method)));
+          () -> privateLookup.unreflectConstructor(findConstructor(proxiedClass, method)));
       return new HandleInvokable(normalizeMethodHandleType(handle));
     }
 
@@ -136,7 +138,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     final Method target = sneaky(
         () -> findMethod(proxiedClass, method, nameAnnotation, staticAnnotation));
-    final MethodHandle handle = sneaky(() -> LOOKUP.unreflect(target));
+    final MethodHandle handle = sneaky(() -> privateLookup.unreflect(target));
     return new HandleInvokable(normalizeMethodHandleType(handle));
   }
 
@@ -176,7 +178,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
     final Class<?>[] paramTypes = Arrays.copyOfRange(original.getParameterTypes(), paramOffset,
         original.getParameterCount());
     final String methodName = getMethodName(original, nameAnnotation, null, staticAnnotation, null);
-    final Method method = MethodUtils.getMatchingAccessibleMethod(clazz, methodName, paramTypes);
+    final Method method = MethodUtils.getMatchingMethod(clazz, methodName, paramTypes);
     if (method == null) {
       throw new NoSuchMethodException(
           "Method " + methodName + " with params " + Arrays.toString(paramTypes));

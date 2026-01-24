@@ -1,1 +1,2 @@
 dev.slne.surf.surfapi.processor.autoservice.AutoServiceSymbolProcessorProvider
+dev.slne.surf.surfapi.processor.hook.HookSymbolProcessorProvider

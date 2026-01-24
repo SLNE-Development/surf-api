@@ -6,6 +6,7 @@ val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     `publish-convention`
 }
 
@@ -19,6 +20,7 @@ version = buildString {
 dependencies {
     implementation(libs.ksp.api)
     implementation(libs.auto.service.annotations)
+    implementation(libs.kotlin.serialization.json)
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
     implementation("com.squareup:kotlinpoet:2.2.0")

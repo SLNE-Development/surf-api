@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.processor.autoservice
 import com.google.auto.service.AutoService
 import com.google.devtools.ksp.closestClassDeclaration
 import com.google.devtools.ksp.getAllSuperTypes
-import com.google.devtools.ksp.isLocal
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -12,7 +11,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSType
-import com.squareup.kotlinpoet.ClassName
+import dev.slne.surf.surfapi.processor.util.toBinaryName
 import java.io.IOException
 
 class AutoServiceSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProcessor {
@@ -142,17 +141,6 @@ class AutoServiceSymbolProcessor(environment: SymbolProcessorEnvironment) : Symb
             logger.info(message)
         }
     }
-
-
-    private fun KSClassDeclaration.toClassName(): ClassName {
-        require(!isLocal()) { "Local/anonymous classes are not supported!" }
-        val pkg = packageName.asString()
-        val typesString = qualifiedName!!.asString().removePrefix("$pkg.")
-        val simpleNames = typesString.split(".")
-        return ClassName(pkg, simpleNames)
-    }
-
-    private fun KSClassDeclaration.toBinaryName(): String = toClassName().reflectionName()
 
     private fun checkImplementer(
         implementer: KSClassDeclaration,
