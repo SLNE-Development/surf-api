@@ -9,6 +9,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
+import dev.slne.surf.surfapi.common.hook.PluginHookMeta
 import dev.slne.surf.surfapi.processor.util.toBinaryName
 import kotlinx.serialization.json.Json
 import java.io.IOException

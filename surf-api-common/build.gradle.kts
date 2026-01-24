@@ -18,11 +18,7 @@ version = buildString {
 }
 
 dependencies {
-    implementation(project(":surf-api-common"))
-    implementation(libs.ksp.api)
-    implementation(libs.auto.service.annotations)
     implementation(libs.kotlin.serialization.json)
-
-    // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    implementation("com.squareup:kotlinpoet:2.2.0")
 }
+
+description = "surf-api-common"

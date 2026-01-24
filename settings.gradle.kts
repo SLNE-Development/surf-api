@@ -24,6 +24,7 @@ include(":surf-api-velocity:surf-api-velocity-api")
 include(":surf-api-velocity:surf-api-velocity-server")
 
 include("surf-api-standalone")
+include("surf-api-common")
 include("surf-api-gradle-plugin")
 include("surf-api-gradle-plugin:surf-api-processor")
 

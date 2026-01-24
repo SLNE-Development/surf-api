@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     api(project(":surf-api-core:surf-api-core-api"))
+    implementation(project(":surf-api-common"))
     compileOnly(libs.packetevents.netty.common)
 }
 

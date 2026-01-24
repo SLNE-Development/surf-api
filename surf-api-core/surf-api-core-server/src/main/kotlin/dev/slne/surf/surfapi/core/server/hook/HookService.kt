@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.core.server.hook
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import dev.slne.surf.surfapi.common.hook.PluginHookMeta
 import dev.slne.surf.surfapi.core.api.hook.AbstractHook
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
