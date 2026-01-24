@@ -38,6 +38,7 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
         val hooksMetas = resolver.getSymbolsWithAnnotation(HOOK_ANNOTATION)
             .filterIsInstance<KSClassDeclaration>()
             .mapNotNull { hookClass ->
+                var hasUnresolvedClassDependency = false
                 val hookMeta = hookClass.annotations.findAnnotation(HOOK_ANNOTATION) ?: run {
                     logger.error("@HookMeta annotation not found on element", hookClass)
                     return@mapNotNull null
@@ -54,16 +55,22 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
 
                         if (clazzValue.isError) {
                             deferred += hookClass
+                            hasUnresolvedClassDependency = true
                             return@mapNotNull null
                         }
 
                         val closestClass = clazzValue.declaration.closestClassDeclaration()
                         if (closestClass == null) {
                             deferred += hookClass
+                            hasUnresolvedClassDependency = true
                             return@mapNotNull null
                         }
                         closestClass.toBinaryName()
                     }
+
+                if (hasUnresolvedClassDependency) {
+                    return@mapNotNull null
+                }
 
                 val dependsOnClassName = hookClass.annotations.findAnnotations(DEPENDS_ON_CLASS_NAME_ANNOTATION)
                     .mapNotNull { annotation ->
