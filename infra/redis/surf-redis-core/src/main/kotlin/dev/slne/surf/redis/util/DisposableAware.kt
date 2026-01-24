@@ -20,6 +20,14 @@ abstract class DisposableAware : Disposable {
     protected abstract fun dispose0()
 
     protected fun trackDisposable(disposable: Disposable) {
+        if (disposed.get()) {
+            disposable.dispose()
+            return
+        }
+
         disposables.add(disposable)
+        if (disposed.get() && disposables.remove(disposable)) {
+            disposable.dispose()
+        }
     }
 }
