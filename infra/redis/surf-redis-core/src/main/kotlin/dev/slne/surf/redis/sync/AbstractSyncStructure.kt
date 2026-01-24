@@ -7,7 +7,6 @@ import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
 import reactor.util.function.Tuple2
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -38,7 +37,11 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
         return registerListeners()
             .then(loadFromRemote())
             .then(refreshTtl())
-            .doOnSuccess { trackDisposable(startTtlRefresh().subscribeOn(RedisInstance.get().ttlRefreshScheduler).subscribe()) }
+            .doOnSuccess {
+                trackDisposable(
+                    startTtlRefresh().subscribeOn(RedisInstance.get().ttlRefreshScheduler).subscribe()
+                )
+            }
             .then()
     }
 
@@ -108,6 +111,7 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
 
     private fun startTtlRefresh(): Flux<Void> {
         if (ttl == Duration.ZERO || ttl.isNegative()) return Flux.empty()
+        Math.clamp(ttl.inWholeSeconds - 2, 1, 8)
         val period = java.time.Duration.ofSeconds(min(ttl.inWholeSeconds - 2, 5))
 
         return Flux.interval(period, RedisInstance.get().ttlRefreshScheduler)
