@@ -68,6 +68,12 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
     }
 
+    init {
+        require(n.isNotBlank()) { "Namespace must not be blank" }
+        requireNoNul(n, "Namespace")
+        require(!n.contains('{') && !n.contains('}')) { "Namespace must not contain '{' or '}'" }
+    }
+
     private val namespace = n.replace(":", "_")
     private val slotTag = "{$namespace}"
     private val keyPrefix = "$namespace:$slotTag"
