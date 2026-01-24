@@ -319,9 +319,28 @@ class RedisApi private constructor(
         fetchRedisOs()
 
         val initializables = this.initializables.asMap().keys
-        Mono.`when`(
-            initializables.map { it.init() }
-        ).block()
+        if (initializables.isEmpty()) {
+            log.atInfo()
+                .log("No initializable Redis components registered; skipping initialization step.")
+        } else {
+            Mono.`when`(
+                initializables.map { initializable ->
+                    initializable.init()
+                        .doOnError { throwable ->
+                            log.atSevere()
+                                .withCause(throwable)
+                                .log(
+                                    "Failed to initialize Redis component: %s",
+                                    initializable::class.qualifiedName ?: initializables.toString()
+                                )
+                        }
+                }
+            ).doOnError { throwable ->
+                log.atSevere()
+                    .withCause(throwable)
+                    .log("RedisApi.connect() failed because one or more components could not be initialized.")
+            }.block()
+        }
     }
 
     @Blocking

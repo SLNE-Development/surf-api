@@ -70,9 +70,9 @@ abstract class RedisInstance {
         log.atInfo()
             .log("Disabling Redis networking")
 
+        eventLoopGroup.shutdownGracefully().syncUninterruptibly()
         streamPollScheduler.dispose()
         ttlRefreshScheduler.dispose()
-        eventLoopGroup.shutdownGracefully().syncUninterruptibly()
 
         redissonExecutorService.shutdown()
         if (!redissonExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
