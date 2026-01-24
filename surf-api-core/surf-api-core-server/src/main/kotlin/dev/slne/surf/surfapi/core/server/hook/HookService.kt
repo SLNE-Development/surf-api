@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import dev.slne.surf.surfapi.core.api.util.requiredService
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.InputStream
@@ -23,8 +24,12 @@ abstract class HookService {
     private fun loadHooksMeta(owner: Any): PluginHookMeta {
         val rawStream = readHooksFileFromResources(owner, HOOKS_FILE_NAME) ?: return PluginHookMeta.empty()
         val raw = rawStream.bufferedReader().use { it.readText() }
-        val decoded = Json.decodeFromString<PluginHookMeta>(raw)
-        return decoded
+        return try {
+            Json.decodeFromString<PluginHookMeta>(raw)
+        } catch (e: SerializationException) {
+            getLogger(owner).error("Failed to parse $HOOKS_FILE_NAME", e)
+            PluginHookMeta.empty()
+        }
     }
 
     private fun loadHooks(owner: Any): List<AbstractHook> {

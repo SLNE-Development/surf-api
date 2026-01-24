@@ -138,8 +138,8 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
         try {
             codeGenerator.createNewFileByPath(Dependencies(aggregating = true), HOOKS_FILE_NAME, "").bufferedWriter()
                 .use { writer ->
-                    val json = json.encodeToString(hookMeta)
-                    writer.write(json)
+                    val jsonString = json.encodeToString(hookMeta)
+                    writer.write(jsonString)
                 }
 
             logger.info("Wrote Hooks to: $HOOKS_FILE_NAME")
