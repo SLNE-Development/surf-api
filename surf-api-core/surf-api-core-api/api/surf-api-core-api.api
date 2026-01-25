@@ -23,6 +23,11 @@ public final class dev/slne/surf/surfapi/core/api/algorithms/ConvexHull2DKt {
 	public static final fun convexHull2D ([Lorg/spongepowered/math/vector/Vectord;)Lit/unimi/dsi/fastutil/objects/ObjectList;
 }
 
+public final class dev/slne/surf/surfapi/core/api/algorithms/Kahn_topological_sortKt {
+	public static final fun topologicalSort (Ljava/util/Map;)Ljava/util/List;
+	public static final fun topologicalSortSafe (Ljava/util/Map;)Ljava/lang/Object;
+}
+
 public final class dev/slne/surf/surfapi/core/api/collection/TransformingObjectSet : it/unimi/dsi/fastutil/objects/ObjectSet {
 	public fun <init> (Lit/unimi/dsi/fastutil/objects/ObjectSet;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public fun add (Ljava/lang/Object;)Z
