@@ -196,7 +196,11 @@ abstract class HookService {
             visiting.add(className)
 
             val dependencies = metaByClassName[className]?.hookDependencies ?: emptyList()
-            for (depClassName in dependencies) {
+            // Sort dependencies by priority to use priority as a tie-breaker
+            val sortedDeps = dependencies.sortedBy { depClassName ->
+                hooksByClassName[depClassName]?.priority ?: Short.MAX_VALUE
+            }
+            for (depClassName in sortedDeps) {
                 if (depClassName in hooksByClassName) {
                     visit(depClassName)
                 }
@@ -208,8 +212,9 @@ abstract class HookService {
             hooksByClassName[className]?.let { sorted.add(it) }
         }
 
-        validHooks.forEach { (meta, _) -> visit(meta.className) }
-        return sorted.sortedBy { it.priority }
+        // Sort validHooks by priority before visiting to use priority as a tie-breaker
+        validHooks.sortedBy { (_, hook) -> hook.priority }.forEach { (meta, _) -> visit(meta.className) }
+        return sorted
     }
 
     private fun buildCircularDependencyChain(
