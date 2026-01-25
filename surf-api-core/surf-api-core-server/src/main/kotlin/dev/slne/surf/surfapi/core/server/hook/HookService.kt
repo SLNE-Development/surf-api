@@ -2,11 +2,7 @@ package dev.slne.surf.surfapi.core.server.hook
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.asLoadingCache
-import dev.slne.surf.surfapi.core.api.util.mutableObject2IntMapOf
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
-import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
-import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
-import dev.slne.surf.surfapi.core.api.util.requiredService
+import dev.slne.surf.surfapi.core.api.util.*
 import dev.slne.surf.surfapi.shared.api.hook.Hook
 import dev.slne.surf.surfapi.shared.api.hook.condition.HookCondition
 import dev.slne.surf.surfapi.shared.api.hook.condition.HookConditionContext
@@ -15,7 +11,7 @@ import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
 import kotlinx.serialization.SerializationException
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.InputStream
-import java.util.PriorityQueue
+import java.util.*
 
 abstract class HookService {
 
@@ -261,7 +257,7 @@ abstract class HookService {
             visited.add(current)
             chain.add(current)
             // Find a successor that still has incoming edges (part of cycle)
-            current = graph[current]?.firstOrNull { incomingEdges[it] ?: 0 > 0 } ?: break
+            current = graph[current]?.firstOrNull { (incomingEdges[it] ?: 0) > 0 } ?: break
         }
 
         chain.add(current)
