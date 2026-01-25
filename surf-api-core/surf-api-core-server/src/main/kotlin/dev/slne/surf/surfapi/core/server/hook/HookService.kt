@@ -2,7 +2,9 @@ package dev.slne.surf.surfapi.core.server.hook
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.asLoadingCache
+import dev.slne.surf.surfapi.core.api.util.mutableObject2IntMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import dev.slne.surf.surfapi.shared.api.hook.Hook
@@ -13,6 +15,7 @@ import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
 import kotlinx.serialization.SerializationException
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.InputStream
+import java.util.PriorityQueue
 
 abstract class HookService {
 
@@ -179,54 +182,89 @@ abstract class HookService {
             return emptyList()
         }
 
-        val sorted = mutableListOf<Hook>()
-        val visited = mutableSetOf<String>()
-        val visiting = mutableSetOf<String>()
-
-        fun visit(className: String) {
-            if (className in visited) return
-
-            if (className in visiting) {
-                val chain = buildCircularDependencyChain(className, metaByClassName, visiting)
-                throw IllegalStateException(
-                    "Circular hook dependency detected: ${chain.joinToString(" -> ")}"
-                )
+        // Build dependency graph: className -> list of dependents (successors)
+        // Note: In Kahn's algorithm, edges go from dependency to dependent
+        val graph = mutableObject2ObjectMapOf<String, MutableList<String>>()
+        for ((meta, _) in validHooks) {
+            // Ensure all nodes exist in the graph
+            if (meta.className !in graph) {
+                graph[meta.className] = mutableListOf()
             }
-
-            visiting.add(className)
-
-            val dependencies = metaByClassName[className]?.hookDependencies ?: emptyList()
-            for (depClassName in dependencies) {
+            // Add edges from dependencies to this hook
+            for (depClassName in meta.hookDependencies) {
                 if (depClassName in hooksByClassName) {
-                    visit(depClassName)
+                    graph.computeIfAbsent(depClassName) { mutableListOf() }.add(meta.className)
                 }
             }
-
-            visiting.remove(className)
-            visited.add(className)
-
-            hooksByClassName[className]?.let { sorted.add(it) }
         }
 
-        validHooks.forEach { (meta, _) -> visit(meta.className) }
-        return sorted.sortedBy { it.priority }
+        // Kahn's algorithm with priority queue for tie-breaking
+        val incomingEdges = mutableObject2IntMapOf<String>()
+        for ((vertex, successors) in graph) {
+            if (vertex !in incomingEdges) {
+                incomingEdges[vertex] = 0
+            }
+            for (successor in successors) {
+                incomingEdges.mergeInt(successor, 1, Int::plus)
+            }
+        }
+
+        // Use a priority queue ordered by hook priority (lower priority value = higher priority)
+        val queue = PriorityQueue<String>(compareBy { className ->
+            hooksByClassName[className]?.priority ?: Short.MAX_VALUE
+        })
+        
+        incomingEdges.object2IntEntrySet().fastForEach { entry ->
+            val vertex = entry.key
+            val edges = entry.intValue
+            if (edges == 0) queue += vertex
+        }
+
+        val result = mutableObjectListOf<Hook>()
+
+        while (queue.isNotEmpty()) {
+            val vertex = queue.poll()
+            hooksByClassName[vertex]?.let { result += it }
+
+            for (successor in graph[vertex].orEmpty()) {
+                incomingEdges.mergeInt(successor, -1, Int::minus)
+                if (incomingEdges.getInt(successor) == 0) {
+                    queue += successor
+                }
+            }
+        }
+
+        if (result.size != incomingEdges.size) {
+            val chain = findCyclicDependency(graph, incomingEdges)
+            throw IllegalStateException(
+                "Circular hook dependency detected: ${chain.joinToString(" -> ")}"
+            )
+        }
+
+        return result
     }
 
-    private fun buildCircularDependencyChain(
-        startClassName: String,
-        metaByClassName: Map<String, PluginHookMeta.Hook>,
-        visiting: Set<String>
+    private fun findCyclicDependency(
+        graph: Map<String, List<String>>,
+        incomingEdges: Map<String, Int>
     ): List<String> {
-        val chain = mutableListOf<String>()
-        var current = startClassName
+        // Find a node that still has incoming edges (part of cycle)
+        val cycleNode = incomingEdges.entries.firstOrNull { it.value > 0 }?.key
+            ?: return emptyList()
 
-        while (current !in chain) {
+        // Trace back through dependencies to find the cycle
+        val visited = mutableSetOf<String>()
+        val chain = mutableListOf<String>()
+        var current = cycleNode
+
+        while (current !in visited) {
+            visited.add(current)
             chain.add(current)
-            val deps = metaByClassName[current]?.hookDependencies ?: break
-            current = deps.firstOrNull { it in visiting } ?: break
+            // Find a successor that still has incoming edges (part of cycle)
+            current = graph[current]?.firstOrNull { incomingEdges[it] ?: 0 > 0 } ?: break
         }
 
-        chain.add(startClassName)
+        chain.add(current)
         return chain
     }
 
