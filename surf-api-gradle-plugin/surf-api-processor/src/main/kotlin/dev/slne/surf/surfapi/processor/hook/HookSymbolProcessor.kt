@@ -26,6 +26,7 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
         private val DEPENDS_ON_ONE_PLUGIN_ANNOTATION = nameOf<DependsOnOnePlugin>()
         private val DEPENDS_ON_PLUGIN_ANNOTATION = nameOf<DependsOnPlugin>()
         private val DEPENDS_ON_HOOK_ANNOTATION = nameOf<DependsOnHook>()
+        private val CONDITIONAL_ON_CUSTOM_ANNOTATION = nameOf<ConditionalOnCustom>()
     }
 
     private val logger = environment.logger
@@ -127,12 +128,20 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
                         hookValue.declaration.closestClassDeclaration()?.toBinaryName()
                     }
 
+                val customConditions = hookClass.annotations.findAnnotations(CONDITIONAL_ON_CUSTOM_ANNOTATION)
+                    .mapNotNull { annotation ->
+                        val conditionValue = annotation.arguments.find { it.name?.asString() == "condition" }?.value as? KSType
+                        conditionValue?.declaration?.closestClassDeclaration()?.toBinaryName()
+                    }
+
                 PluginHookMeta.Hook(
                     priority = priority,
                     className = hookClass.toBinaryName(),
                     classDependencies = dependsOnClass.toList() + dependsOnClassName.toList(),
                     pluginDependencies = dependsOnPlugin.toList(),
-                    pluginOneDependencies = dependsOnOnePlugin.toList()
+                    pluginOneDependencies = dependsOnOnePlugin.toList(),
+                    hookDependencies = dependsOnHook.toList(),
+                    customConditions = customConditions.toList()
                 )
             }.toList()
 

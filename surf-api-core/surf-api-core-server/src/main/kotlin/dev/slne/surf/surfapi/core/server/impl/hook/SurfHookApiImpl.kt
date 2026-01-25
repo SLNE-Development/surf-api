@@ -1,9 +1,9 @@
 package dev.slne.surf.surfapi.core.server.impl.hook
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.surfapi.core.api.hook.AbstractHook
 import dev.slne.surf.surfapi.core.api.hook.SurfHookApi
 import dev.slne.surf.surfapi.core.server.hook.HookService
+import dev.slne.surf.surfapi.shared.api.hook.Hook
 
 @AutoService(SurfHookApi::class)
 class SurfHookApiImpl : SurfHookApi {
@@ -38,11 +38,26 @@ class SurfHookApiImpl : SurfHookApi {
         return hooks(owner).filterIsInstance(type)
     }
 
+    override fun <T : Any> hooksOfTypeLoaded(
+        owner: Any,
+        type: Class<T>
+    ): List<T> {
+        return hooksLoaded(owner).filterIsInstance(type)
+    }
+
     override suspend fun <T : Any> hooksOfType(type: Class<T>): List<T> {
         return HookService.get().getAllHooks().filterIsInstance(type)
     }
 
-    override suspend fun hooks(owner: Any): List<AbstractHook> {
+    override fun <T : Any> hooksOfTypeLoaded(type: Class<T>): List<T> {
+        return HookService.get().getAllHooksLoaded().filterIsInstance(type)
+    }
+
+    override suspend fun hooks(owner: Any): List<Hook> {
         return HookService.get().getHooks(owner)
+    }
+
+    override fun hooksLoaded(owner: Any): List<Hook> {
+        return HookService.get().getHooksLoaded(owner)
     }
 }

@@ -1,10 +1,13 @@
 package dev.slne.surf.surfapi.core.server.hook
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.sksamuel.aedile.core.asLoadingCache
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import dev.slne.surf.surfapi.shared.api.hook.Hook
+import dev.slne.surf.surfapi.shared.api.hook.condition.HookCondition
+import dev.slne.surf.surfapi.shared.api.hook.condition.HookConditionContext
 import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -19,7 +22,7 @@ abstract class HookService {
 
     private val hooksCache = Caffeine.newBuilder()
         .weakKeys()
-        .build<Any, List<Hook>> { owner -> loadHooks(owner) }
+        .asLoadingCache { owner -> loadHooks(owner) }
 
     private fun loadHooksMeta(owner: Any): PluginHookMeta {
         val rawStream = readHooksFileFromResources(owner, HOOKS_FILE_NAME) ?: return PluginHookMeta.empty()
@@ -32,7 +35,7 @@ abstract class HookService {
         }
     }
 
-    private fun loadHooks(owner: Any): List<Hook> {
+    private suspend fun loadHooks(owner: Any): List<Hook> {
         val meta = hookMetaCache.get(owner)
         val classLoader = getClassloader(owner)
 
@@ -48,7 +51,7 @@ abstract class HookService {
         return topologicalSort(hooksWithMeta, owner)
     }
 
-    private fun instantiateHookIfValid(
+    private suspend fun instantiateHookIfValid(
         owner: Any,
         hookMeta: PluginHookMeta.Hook,
         classLoader: ClassLoader
@@ -80,6 +83,8 @@ abstract class HookService {
             return null
         }
 
+        if (!evaluateConditions(owner, hookMeta, classLoader)) return null
+
         try {
             val hookClass = Class.forName(hookMeta.className, false, classLoader)
             val hookKClass = hookClass.kotlin
@@ -98,6 +103,36 @@ abstract class HookService {
         }
 
         return null
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun evaluateConditions(
+        owner: Any,
+        hookMeta: PluginHookMeta.Hook,
+        classLoader: ClassLoader
+    ): Boolean {
+        for (conditionClassName in hookMeta.customConditions) {
+            try {
+                val conditionClass = Class.forName(conditionClassName, false, classLoader)
+                val condition = conditionClass.getConstructor().newInstance() as HookCondition
+                val logger = getLogger(owner)
+
+                val context = HookConditionContext(
+                    owner = owner,
+                    logger = logger,
+                    hookClass = Class.forName(hookMeta.className, false, classLoader) as Class<out Hook>
+                )
+
+                if (!condition.evaluate(context)) {
+                    logger.debug("Hook ${hookMeta.className} skipped due to condition $conditionClassName")
+                    return false
+                }
+            } catch (e: Exception) {
+                getLogger(owner).error("Failed to evaluate condition $conditionClassName", e)
+                return false
+            }
+        }
+        return true
     }
 
     private fun topologicalSort(
@@ -210,12 +245,20 @@ abstract class HookService {
         )
     }
 
-    fun getHooks(owner: Any): List<Hook> {
+    suspend fun getHooks(owner: Any): List<Hook> {
         return hooksCache.get(owner)
     }
 
-    fun getAllHooks(): List<Hook> {
+    fun getHooksLoaded(owner: Any): List<Hook> {
+        return hooksCache.underlying().asMap()[owner]?.getNow(emptyList()) ?: emptyList()
+    }
+
+    suspend fun getAllHooks(): List<Hook> {
         return hooksCache.asMap().values.flatten().sorted()
+    }
+
+    fun getAllHooksLoaded(): List<Hook> {
+        return hooksCache.underlying().asMap().values.flatMap { it.getNow(emptyList()) }.sorted()
     }
 
     abstract fun readHooksFileFromResources(owner: Any, fileName: String): InputStream?
