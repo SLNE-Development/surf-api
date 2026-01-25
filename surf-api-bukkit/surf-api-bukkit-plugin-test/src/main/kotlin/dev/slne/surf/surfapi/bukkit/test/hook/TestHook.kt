@@ -2,12 +2,12 @@ package dev.slne.surf.surfapi.bukkit.test.hook
 
 import dev.slne.surf.surfapi.bukkit.test.BukkitPluginMain
 import dev.slne.surf.surfapi.core.api.hook.AbstractHook
-import dev.slne.surf.surfapi.core.api.hook.HookMeta
-import dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnClass
-import dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnClassName
-import dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnOnePlugin
-import dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnPlugin
 import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.surfapi.shared.api.hook.HookMeta
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnClass
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnClassName
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnOnePlugin
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnPlugin
 
 @HookMeta
 @DependsOnClass(BukkitPluginMain::class)

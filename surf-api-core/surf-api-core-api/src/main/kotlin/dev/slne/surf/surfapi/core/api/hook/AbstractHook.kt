@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.core.api.hook
 
 import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import dev.slne.surf.surfapi.shared.api.hook.HookMeta
 import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class AbstractHook : Comparable<AbstractHook> {

@@ -9,24 +9,25 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
+import dev.slne.surf.surfapi.processor.util.nameOf
 import dev.slne.surf.surfapi.processor.util.toBinaryName
-import kotlinx.serialization.json.Json
+import dev.slne.surf.surfapi.shared.api.hook.HookMeta
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnClass
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnClassName
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnOnePlugin
+import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnPlugin
+import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig.HOOKS_FILE_NAME
+import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig.json
+import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
 import java.io.IOException
 
 class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProcessor {
     companion object {
-        private const val HOOK_ANNOTATION = "dev.slne.surf.surfapi.core.api.hook.HookMeta"
-        private const val DEPENDS_ON_CLASS_ANNOTATION = "dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnClass"
-        private const val DEPENDS_ON_CLASS_NAME_ANNOTATION =
-            "dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnClassName"
-        private const val DEPENDS_ON_ONE_PLUGIN_ANNOTATION =
-            "dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnOnePlugin"
-        private const val DEPENDS_ON_PLUGIN_ANNOTATION =
-            "dev.slne.surf.surfapi.core.api.hook.requirement.DependsOnPlugin"
-
-        private const val HOOKS_FILE_NAME = "surf-hooks.json"
-
-        private val json = Json { prettyPrint = true }
+        private val HOOK_ANNOTATION = nameOf<HookMeta>()
+        private val DEPENDS_ON_CLASS_ANNOTATION = nameOf<DependsOnClass>()
+        private val DEPENDS_ON_CLASS_NAME_ANNOTATION = nameOf<DependsOnClassName>()
+        private val DEPENDS_ON_ONE_PLUGIN_ANNOTATION = nameOf<DependsOnOnePlugin>()
+        private val DEPENDS_ON_PLUGIN_ANNOTATION = nameOf<DependsOnPlugin>()
     }
 
     private val logger = environment.logger

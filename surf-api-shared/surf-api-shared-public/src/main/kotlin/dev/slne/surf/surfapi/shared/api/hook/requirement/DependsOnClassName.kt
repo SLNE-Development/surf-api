@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.core.api.hook.requirement
+package dev.slne.surf.surfapi.shared.api.hook.requirement
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)

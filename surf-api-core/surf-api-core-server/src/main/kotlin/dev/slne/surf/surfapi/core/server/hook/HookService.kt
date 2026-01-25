@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import dev.slne.surf.surfapi.core.api.util.requiredService
+import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger

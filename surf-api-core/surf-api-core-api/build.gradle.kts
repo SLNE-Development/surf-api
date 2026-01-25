@@ -4,13 +4,7 @@ plugins {
 }
 
 dependencies {
-    compileOnlyApi(libs.adventure.api)
-    compileOnlyApi(libs.adventure.text.logger.slf4j)
-    compileOnlyApi(libs.adventure.text.minimessage)
-    compileOnlyApi(libs.adventure.serializer.gson)
-    compileOnlyApi(libs.adventure.serializer.legacy)
-    compileOnlyApi(libs.adventure.serializer.plain)
-    compileOnlyApi(libs.adventure.serializer.ansi)
+    api(project(":surf-api-shared:surf-api-shared-public"))
     api(libs.adventure.nbt)
     compileOnlyApi(libs.packetevents.api)
     compileOnlyApi(libs.dazzleconf)
@@ -31,8 +25,6 @@ dependencies {
     api(libs.caffeine.courotines)
     api(libs.bundles.kotlin.coroutines)
     api(libs.bundles.reactor.netty)
-    api(libs.kotlin.reflect)
-    api(libs.bundles.kotlin.serialization)
 
     compileOnlyApi(libs.guava)
     compileOnlyApi(libs.caffeine)

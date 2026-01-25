@@ -13,3 +13,5 @@ fun KSClassDeclaration.toClassName(): ClassName {
 }
 
 fun KSClassDeclaration.toBinaryName(): String = toClassName().reflectionName()
+
+inline fun <reified T> nameOf(): String = T::class.java.name

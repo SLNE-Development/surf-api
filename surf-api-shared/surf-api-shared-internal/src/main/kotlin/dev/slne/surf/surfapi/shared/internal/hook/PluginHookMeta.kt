@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.processor.hook
+package dev.slne.surf.surfapi.shared.internal.hook
 
 import kotlinx.serialization.Serializable
 
