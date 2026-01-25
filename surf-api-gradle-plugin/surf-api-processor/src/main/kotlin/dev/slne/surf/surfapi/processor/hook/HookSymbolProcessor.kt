@@ -128,6 +128,10 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
                         hookValue.declaration.closestClassDeclaration()?.toBinaryName()
                     }
 
+                if (hasUnresolvedClassDependency) {
+                    return@mapNotNull null
+                }
+
                 val customConditions = hookClass.annotations.findAnnotations(CONDITIONAL_ON_CUSTOM_ANNOTATION)
                     .mapNotNull { annotation ->
                         val conditionValue = annotation.arguments.find { it.name?.asString() == "condition" }?.value as? KSType
