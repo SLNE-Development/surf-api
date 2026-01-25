@@ -12,10 +12,7 @@ import com.google.devtools.ksp.symbol.KSType
 import dev.slne.surf.surfapi.processor.util.nameOf
 import dev.slne.surf.surfapi.processor.util.toBinaryName
 import dev.slne.surf.surfapi.shared.api.hook.HookMeta
-import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnClass
-import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnClassName
-import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnOnePlugin
-import dev.slne.surf.surfapi.shared.api.hook.requirement.DependsOnPlugin
+import dev.slne.surf.surfapi.shared.api.hook.requirement.*
 import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig.HOOKS_FILE_NAME
 import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig.json
 import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
@@ -28,6 +25,7 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
         private val DEPENDS_ON_CLASS_NAME_ANNOTATION = nameOf<DependsOnClassName>()
         private val DEPENDS_ON_ONE_PLUGIN_ANNOTATION = nameOf<DependsOnOnePlugin>()
         private val DEPENDS_ON_PLUGIN_ANNOTATION = nameOf<DependsOnPlugin>()
+        private val DEPENDS_ON_HOOK_ANNOTATION = nameOf<DependsOnHook>()
     }
 
     private val logger = environment.logger
@@ -110,6 +108,23 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
                             return@mapNotNull null
                         }
                         pluginId
+                    }
+
+                val dependsOnHook = hookClass.annotations.findAnnotations(DEPENDS_ON_HOOK_ANNOTATION)
+                    .mapNotNull { annotation ->
+                        val hookValue = annotation.arguments.find { it.name?.asString() == "hook" }?.value as? KSType
+                        if (hookValue == null) {
+                            logger.error("@DependsOnHook annotation must have 'hook' parameter", annotation)
+                            return@mapNotNull null
+                        }
+
+                        if (hookValue.isError) {
+                            deferred += hookClass
+                            hasUnresolvedClassDependency = true
+                            return@mapNotNull null
+                        }
+
+                        hookValue.declaration.closestClassDeclaration()?.toBinaryName()
                     }
 
                 PluginHookMeta.Hook(

@@ -12,6 +12,7 @@ data class PluginHookMeta(val hooks: List<Hook>) {
         val classDependencies: List<String>,
         val pluginDependencies: List<String>,
         val pluginOneDependencies: List<List<String>>,
+        val hookDependencies: List<String>,
     )
 
     companion object {

@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.core.api.hook
 
 import dev.slne.surf.surfapi.core.api.util.requiredService
+import dev.slne.surf.surfapi.shared.api.hook.Hook
 
 interface SurfHookApi {
 
@@ -11,7 +12,7 @@ interface SurfHookApi {
 
     suspend fun <T : Any> hooksOfType(owner: Any, type: Class<T>): List<T>
     suspend fun <T: Any> hooksOfType(type: Class<T>): List<T>
-    suspend fun hooks(owner: Any): List<AbstractHook>
+    suspend fun hooks(owner: Any): List<Hook>
 
     companion object {
         val instance = requiredService<SurfHookApi>()

@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.hytale.api.coroutines
 
 import com.hypixel.hytale.server.core.plugin.JavaPlugin
-import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job

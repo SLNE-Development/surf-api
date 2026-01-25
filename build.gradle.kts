@@ -49,7 +49,7 @@ subprojects {
     afterEvaluate {
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
-                optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
+                optIn.add("dev.slne.surf.surfapi.shared.api.util.InternalSurfApi")
             }
         }
     }

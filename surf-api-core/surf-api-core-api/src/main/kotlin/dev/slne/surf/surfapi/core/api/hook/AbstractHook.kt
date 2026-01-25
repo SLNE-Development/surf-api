@@ -1,10 +1,11 @@
 package dev.slne.surf.surfapi.core.api.hook
 
-import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import dev.slne.surf.surfapi.shared.api.hook.Hook
 import dev.slne.surf.surfapi.shared.api.hook.HookMeta
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class AbstractHook : Comparable<AbstractHook> {
+abstract class AbstractHook : Hook {
     private val bootstrapped = AtomicBoolean(false)
     private val loaded = AtomicBoolean(false)
     private val enabled = AtomicBoolean(false)
@@ -13,15 +14,17 @@ abstract class AbstractHook : Comparable<AbstractHook> {
     private val meta: HookMeta = javaClass.getAnnotation(HookMeta::class.java)
         ?: error("HookMeta annotation is missing on hook class ${this::class.qualifiedName}")
 
+    override val priority = meta.priority
+
     @InternalSurfApi
-    suspend fun bootstrap() {
+    override suspend fun bootstrap() {
         if (bootstrapped.compareAndSet(false, true)) {
             onBootstrap()
         }
     }
 
     @InternalSurfApi
-    suspend fun load() {
+    override suspend fun load() {
         if (loaded.compareAndSet(false, true)) {
             bootstrap()
             onLoad()
@@ -29,7 +32,7 @@ abstract class AbstractHook : Comparable<AbstractHook> {
     }
 
     @InternalSurfApi
-    suspend fun enable() {
+    override suspend fun enable() {
         if (enabled.compareAndSet(false, true)) {
             load()
             onEnable()
@@ -37,14 +40,14 @@ abstract class AbstractHook : Comparable<AbstractHook> {
     }
 
     @InternalSurfApi
-    suspend fun disable() {
+    override suspend fun disable() {
         if (disabled.compareAndSet(false, true)) {
             onDisable()
         }
     }
 
-    final override fun compareTo(other: AbstractHook): Int {
-        return this.meta.priority.compareTo(other.meta.priority)
+    final override fun compareTo(other: Hook): Int {
+        return this.priority.compareTo(other.priority)
     }
 
     protected open suspend fun onBootstrap() {}
