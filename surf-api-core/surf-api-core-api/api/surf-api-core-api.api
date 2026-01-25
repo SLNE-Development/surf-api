@@ -6389,22 +6389,19 @@ public final class dev/slne/surf/surfapi/core/api/generated/VanillaAdvancementKe
 	public static final field UPGRADE_TOOLS Lnet/kyori/adventure/key/Key;
 }
 
-public abstract class dev/slne/surf/surfapi/core/api/hook/AbstractHook : java/lang/Comparable {
+public abstract class dev/slne/surf/surfapi/core/api/hook/AbstractHook : dev/slne/surf/surfapi/shared/api/hook/Hook {
 	public fun <init> ()V
 	public final fun bootstrap (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun compareTo (Ldev/slne/surf/surfapi/core/api/hook/AbstractHook;)I
+	public final fun compareTo (Ldev/slne/surf/surfapi/shared/api/hook/Hook;)I
 	public synthetic fun compareTo (Ljava/lang/Object;)I
 	public final fun disable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun enable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getPriority ()S
 	public final fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun onBootstrap (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun onDisable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun onEnable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun onLoad (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/HookMeta : java/lang/annotation/Annotation {
-	public abstract fun priority ()S
 }
 
 public abstract interface class dev/slne/surf/surfapi/core/api/hook/SurfHookApi {
@@ -6413,8 +6410,11 @@ public abstract interface class dev/slne/surf/surfapi/core/api/hook/SurfHookApi 
 	public abstract fun disable (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun enable (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun hooks (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun hooksLoaded (Ljava/lang/Object;)Ljava/util/List;
 	public abstract fun hooksOfType (Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun hooksOfType (Ljava/lang/Object;Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun hooksOfTypeLoaded (Ljava/lang/Class;)Ljava/util/List;
+	public abstract fun hooksOfTypeLoaded (Ljava/lang/Object;Ljava/lang/Class;)Ljava/util/List;
 	public abstract fun load (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -6424,38 +6424,6 @@ public final class dev/slne/surf/surfapi/core/api/hook/SurfHookApi$Companion {
 
 public final class dev/slne/surf/surfapi/core/api/hook/SurfHookApiKt {
 	public static final fun getSurfHookApi ()Ldev/slne/surf/surfapi/core/api/hook/SurfHookApi;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnClass : java/lang/annotation/Annotation {
-	public abstract fun clazz ()Ljava/lang/Class;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnClass$Container : java/lang/annotation/Annotation {
-	public abstract fun value ()[Ldev/slne/surf/surfapi/core/api/hook/requirement/DependsOnClass;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnClassName : java/lang/annotation/Annotation {
-	public abstract fun className ()Ljava/lang/String;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnClassName$Container : java/lang/annotation/Annotation {
-	public abstract fun value ()[Ldev/slne/surf/surfapi/core/api/hook/requirement/DependsOnClassName;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnOnePlugin : java/lang/annotation/Annotation {
-	public abstract fun pluginIds ()[Ljava/lang/String;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnOnePlugin$Container : java/lang/annotation/Annotation {
-	public abstract fun value ()[Ldev/slne/surf/surfapi/core/api/hook/requirement/DependsOnOnePlugin;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnPlugin : java/lang/annotation/Annotation {
-	public abstract fun pluginId ()Ljava/lang/String;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/hook/requirement/DependsOnPlugin$Container : java/lang/annotation/Annotation {
-	public abstract fun value ()[Ldev/slne/surf/surfapi/core/api/hook/requirement/DependsOnPlugin;
 }
 
 public final class dev/slne/surf/surfapi/core/api/math/VoxelLineTracer {
@@ -10281,9 +10249,6 @@ public final class dev/slne/surf/surfapi/core/api/util/Fast_util_utilKt {
 	public static final fun toShortSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toShortSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toShortSet ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/util/InternalSurfApi : java/lang/annotation/Annotation {
 }
 
 public abstract interface class dev/slne/surf/surfapi/core/api/util/ItemStackFactory {

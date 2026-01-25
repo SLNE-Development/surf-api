@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.shared.api.hook.condition
 import dev.slne.surf.surfapi.shared.api.hook.Hook
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 
+@JvmRecord
 data class HookConditionContext(
     val owner: Any,
     val hookClass: Class<out Hook>,

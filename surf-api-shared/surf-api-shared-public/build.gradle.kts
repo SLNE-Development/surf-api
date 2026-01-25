@@ -1,5 +1,15 @@
+@file:OptIn(ExperimentalAbiValidation::class)
+
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+
 plugins {
     `core-convention`
+}
+
+kotlin {
+    abiValidation {
+        enabled = true
+    }
 }
 
 dependencies {
