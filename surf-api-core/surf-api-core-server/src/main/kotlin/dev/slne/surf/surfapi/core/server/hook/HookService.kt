@@ -197,13 +197,12 @@ abstract class HookService {
 
             val dependencies = metaByClassName[className]?.hookDependencies ?: emptyList()
             // Sort dependencies by priority to use priority as a tie-breaker
-            val sortedDeps = dependencies.sortedBy { depClassName ->
-                hooksByClassName[depClassName]?.priority ?: Short.MAX_VALUE
-            }
+            // Only sort dependencies that are actually loaded
+            val sortedDeps = dependencies
+                .filter { it in hooksByClassName }
+                .sortedBy { hooksByClassName[it]!!.priority }
             for (depClassName in sortedDeps) {
-                if (depClassName in hooksByClassName) {
-                    visit(depClassName)
-                }
+                visit(depClassName)
             }
 
             visiting.remove(className)
