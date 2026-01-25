@@ -8,9 +8,9 @@ import dev.slne.surf.surfapi.core.api.util.requiredService
 import dev.slne.surf.surfapi.shared.api.hook.Hook
 import dev.slne.surf.surfapi.shared.api.hook.condition.HookCondition
 import dev.slne.surf.surfapi.shared.api.hook.condition.HookConditionContext
+import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig
 import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.InputStream
 
@@ -25,12 +25,12 @@ abstract class HookService {
         .asLoadingCache { owner -> loadHooks(owner) }
 
     private fun loadHooksMeta(owner: Any): PluginHookMeta {
-        val rawStream = readHooksFileFromResources(owner, HOOKS_FILE_NAME) ?: return PluginHookMeta.empty()
+        val rawStream = readHooksFileFromResources(owner, HooksConfig.HOOKS_FILE_NAME) ?: return PluginHookMeta.empty()
         val raw = rawStream.bufferedReader().use { it.readText() }
         return try {
-            Json.decodeFromString<PluginHookMeta>(raw)
+            HooksConfig.json.decodeFromString<PluginHookMeta>(raw)
         } catch (e: SerializationException) {
-            getLogger(owner).error("Failed to parse $HOOKS_FILE_NAME", e)
+            getLogger(owner).error("Failed to parse ${HooksConfig.HOOKS_FILE_NAME}", e)
             PluginHookMeta.empty()
         }
     }
@@ -267,8 +267,6 @@ abstract class HookService {
     abstract fun getLogger(owner: Any): ComponentLogger
 
     companion object {
-        const val HOOKS_FILE_NAME = "surf-hooks.json"
-
         val instance = requiredService<HookService>()
         fun get() = instance
     }

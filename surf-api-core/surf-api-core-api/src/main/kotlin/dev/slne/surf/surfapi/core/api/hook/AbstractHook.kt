@@ -14,17 +14,17 @@ abstract class AbstractHook : Hook {
     private val meta: HookMeta = javaClass.getAnnotation(HookMeta::class.java)
         ?: error("HookMeta annotation is missing on hook class ${this::class.qualifiedName}")
 
-    override val priority = meta.priority
+    final override val priority = meta.priority
 
     @InternalSurfApi
-    override suspend fun bootstrap() {
+    final override suspend fun bootstrap() {
         if (bootstrapped.compareAndSet(false, true)) {
             onBootstrap()
         }
     }
 
     @InternalSurfApi
-    override suspend fun load() {
+    final override suspend fun load() {
         if (loaded.compareAndSet(false, true)) {
             bootstrap()
             onLoad()
@@ -32,7 +32,7 @@ abstract class AbstractHook : Hook {
     }
 
     @InternalSurfApi
-    override suspend fun enable() {
+    final override suspend fun enable() {
         if (enabled.compareAndSet(false, true)) {
             load()
             onEnable()
@@ -40,7 +40,7 @@ abstract class AbstractHook : Hook {
     }
 
     @InternalSurfApi
-    override suspend fun disable() {
+    final override suspend fun disable() {
         if (disabled.compareAndSet(false, true)) {
             onDisable()
         }

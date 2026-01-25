@@ -7,5 +7,7 @@ object HooksConfig {
     val json = Json {
         prettyPrint = true
         encodeDefaults = false
+        ignoreUnknownKeys = true
+        prettyPrintIndent = "  "
     }
 }
