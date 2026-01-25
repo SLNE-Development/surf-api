@@ -38,12 +38,6 @@ dependencies {
     api(libs.datafixerupper) { isTransitive = false }
 }
 
-kotlin {
-    compilerOptions {
-        optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
-    }
-}
-
 tasks {
     shadowJar {
         val relocationPrefix: String by project

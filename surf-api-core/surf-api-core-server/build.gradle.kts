@@ -8,11 +8,4 @@ dependencies {
     compileOnly(libs.packetevents.netty.common)
 }
 
-
-kotlin {
-    compilerOptions {
-        optIn.add("dev.slne.surf.surfapi.core.api.util.InternalSurfApi")
-    }
-}
-
 description = "surf-api-core-server"
