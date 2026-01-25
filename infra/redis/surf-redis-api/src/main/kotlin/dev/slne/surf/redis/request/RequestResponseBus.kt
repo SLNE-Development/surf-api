@@ -1,6 +1,7 @@
 package dev.slne.surf.redis.request
 
 import dev.slne.surf.redis.request.RequestResponseBus.Companion.DEFAULT_TIMEOUT_MS
+import dev.slne.surf.redis.util.Initializable
 import dev.slne.surf.redis.util.InternalRedisAPI
 import java.io.Closeable
 
@@ -22,21 +23,13 @@ import java.io.Closeable
  * The owning [dev.slne.surf.redis.RedisApi] initializes the bus during startup via [init]
  * and closes it during shutdown.
  */
-interface RequestResponseBus : Closeable {
+interface RequestResponseBus : Closeable, Initializable {
     companion object {
         /**
          * Default timeout (in milliseconds) for awaiting the first response.
          */
         const val DEFAULT_TIMEOUT_MS = 5000L
     }
-
-    /**
-     * Initializes the bus (e.g. subscribes to request/response channels).
-     *
-     * This is an internal lifecycle hook and is called by [dev.slne.surf.redis.RedisApi].
-     */
-    @InternalRedisAPI
-    fun init()
 
     /**
      * Sends [request] and awaits the first matching response of type [responseType].

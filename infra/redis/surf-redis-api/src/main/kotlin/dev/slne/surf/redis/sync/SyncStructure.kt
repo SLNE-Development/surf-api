@@ -1,8 +1,7 @@
 package dev.slne.surf.redis.sync
 
-import dev.slne.surf.redis.util.InternalRedisAPI
+import dev.slne.surf.redis.util.Initializable
 import reactor.core.Disposable
-import reactor.core.publisher.Mono
 import kotlin.time.Duration
 
 /**
@@ -26,7 +25,7 @@ import kotlin.time.Duration
  * Structures expose a lightweight listener mechanism to deliver change events of type [L] to
  * consumers. Listener invocation and threading are implementation-defined.
  */
-interface SyncStructure<L> : Disposable {
+interface SyncStructure<L> : Disposable, Initializable {
 
     /**
      * Logical structure identifier (used to derive Redis keys/channels).
@@ -37,17 +36,6 @@ interface SyncStructure<L> : Disposable {
      * Time-to-live/heartbeat configuration used by the implementation.
      */
     val ttl: Duration
-
-    /**
-     * Internal initialization hook invoked by surf-redis during startup.
-     *
-     * Implementations typically use this to:
-     * - register Redis listeners
-     * - load initial remote state
-     * - write/refresh remote TTL and start periodic refresh tasks
-     */
-    @InternalRedisAPI
-    fun init(): Mono<Void>
 
     /**
      * Registers a listener that will be notified with change events of type [L].

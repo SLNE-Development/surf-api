@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import reactor.core.Disposable
+import reactor.core.publisher.Mono
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -54,9 +55,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      *
      * This method is blocking and should only be called during startup.
      */
-    override fun init() {
-        setupSubscription()
-    }
+    override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
 
     /**
      * Installs the Redis Pub/Sub listener and subscribes to request/response channels.
