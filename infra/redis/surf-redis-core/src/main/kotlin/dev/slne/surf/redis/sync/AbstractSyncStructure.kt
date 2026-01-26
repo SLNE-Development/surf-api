@@ -1,7 +1,6 @@
 package dev.slne.surf.redis.sync
 
 import dev.slne.surf.redis.RedisApi
-import dev.slne.surf.redis.RedisInstance
 import dev.slne.surf.redis.util.DisposableAware
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -11,7 +10,6 @@ import reactor.util.function.Tuple2
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.math.min
 import kotlin.time.Duration
 
 
@@ -36,12 +34,6 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     override fun init(): Mono<Void> {
         return registerListeners()
             .then(loadFromRemote())
-            .then(refreshTtl())
-            .doOnSuccess {
-                trackDisposable(
-                    startTtlRefresh().subscribeOn(RedisInstance.get().ttlRefreshScheduler).subscribe()
-                )
-            }
             .then()
     }
 
@@ -109,24 +101,6 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     protected abstract fun loadFromRemote0(): Mono<R>
     protected abstract fun overrideFromRemote(raw: R)
 
-    private fun startTtlRefresh(): Flux<Void> {
-        if (ttl == Duration.ZERO || ttl.isNegative()) return Flux.empty()
-        val period = java.time.Duration.ofSeconds(Math.clamp(ttl.inWholeSeconds - 2, 1L, 8L))
-
-        return Flux.interval(period, RedisInstance.get().ttlRefreshScheduler)
-            .concatMap {
-                refreshTtl()
-                    .then()
-                    .onErrorResume { e ->
-                        log.atSevere()
-                            .withCause(e)
-                            .log("Failed to refresh TTL for $id")
-                        Mono.empty()
-                    }
-            }
-    }
-
-    protected abstract fun refreshTtl(): Mono<*>
 
     interface VersionedSnapshot {
         val version: Long

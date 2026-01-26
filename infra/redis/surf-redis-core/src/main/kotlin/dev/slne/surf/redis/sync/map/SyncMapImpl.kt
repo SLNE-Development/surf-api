@@ -5,6 +5,7 @@ import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
+import dev.slne.surf.redis.util.RedisExpirableUtils
 import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
@@ -57,6 +58,14 @@ class SyncMapImpl<K : Any, V : Any>(
 
     private val map = Object2ObjectOpenHashMap<K, V>()
     private val remoteMap by lazy { api.redissonReactive.getMap<String, String>(dataKey, StringCodec.INSTANCE) }
+
+    override fun init(): Mono<Void> {
+        return super.init()
+            .doOnSuccess {
+                trackDisposable(RedisExpirableUtils.refreshContinuously(ttl, remoteMap))
+            }
+            .then()
+    }
 
     override fun registerListeners0(): List<Mono<Int>> = listOf(
         remoteMap.addListener(DeletedObjectListener { requestResync() }),
@@ -141,10 +150,6 @@ class SyncMapImpl<K : Any, V : Any>(
 
         super.overrideFromRemote(raw)
     }
-
-    override fun refreshTtl0(): Mono<*> = Mono.`when`(
-        remoteMap.expire(ttl.toJavaDuration())
-    )
 
     private fun putRemote(key: K, value: V) {
         writeToRemote(PUT_SCRIPT, EVENT_PUT, encodeKey(key), encodeValue(value))

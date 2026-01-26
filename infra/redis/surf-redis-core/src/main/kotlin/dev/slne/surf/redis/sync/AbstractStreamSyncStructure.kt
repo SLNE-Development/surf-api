@@ -4,6 +4,7 @@ import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisInstance
 import dev.slne.surf.redis.util.LuaScriptExecutor
 import dev.slne.surf.redis.util.LuaScriptRegistry
+import dev.slne.surf.redis.util.RedisExpirableUtils
 import dev.slne.surf.redis.util.fetchLatestStreamId
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -65,7 +66,10 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         return stream.fetchLatestStreamId()
             .doOnNext { cursorId.set(it) }
             .then(super.init())
-            .doOnSuccess { trackDisposable(startPolling()) }
+            .doOnSuccess {
+                trackDisposable(startPolling())
+                trackDisposable(RedisExpirableUtils.refreshContinuously(ttl, stream, versionCounter))
+            }
             .then()
     }
 
@@ -177,16 +181,6 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             }
         }
     }
-
-    protected fun expireStreamKey(): Mono<Boolean> {
-        return stream.expire(ttl.toJavaDuration())
-    }
-
-    final override fun refreshTtl(): Mono<*> {
-        return Mono.`when`(expireStreamKey(), versionCounter.expire(ttl.toJavaDuration()), refreshTtl0())
-    }
-
-    protected open fun refreshTtl0(): Mono<*> = Mono.empty<Void>()
 
     private fun startPolling(): Disposable {
         return pollOnce()
