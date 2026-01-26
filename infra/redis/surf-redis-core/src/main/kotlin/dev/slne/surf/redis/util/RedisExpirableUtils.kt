@@ -17,7 +17,7 @@ object RedisExpirableUtils {
         vararg objects: RExpirableReactive
     ): Disposable {
         if (ttl == Duration.ZERO || ttl.isNegative()) return Disposables.disposed()
-        val delay = (ttl.inWholeSeconds / 2).coerceIn(1, 15)
+        val delay = Math.clamp(ttl.inWholeSeconds - 2, 1L, 15L)
         val objectNames = objects.joinToString(", ") { it.name }
 
         return Mono.defer {
