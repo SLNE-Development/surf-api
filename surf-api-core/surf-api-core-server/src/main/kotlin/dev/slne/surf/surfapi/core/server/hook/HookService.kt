@@ -244,25 +244,55 @@ abstract class HookService {
         graph: Map<String, List<String>>,
         incomingEdges: Map<String, Int>
     ): List<String> {
-        // Find a node that still has incoming edges (part of cycle)
-        val cycleNode = incomingEdges.entries.firstOrNull { it.value > 0 }?.key
-            ?: return emptyList()
+        // Find nodes that are part of a cycle (still have incoming edges after topological sort)
+        val nodesInCycle = incomingEdges.filter { it.value > 0 }.keys
+        if (nodesInCycle.isEmpty()) return emptyList()
 
-        // Trace back through dependencies to find the cycle
+        // Use DFS to find an actual cycle path
         val visited = mutableSetOf<String>()
-        val chain = mutableListOf<String>()
-        var current = cycleNode
+        val recursionStack = mutableSetOf<String>()
+        val path = mutableListOf<String>()
 
-        while (current !in visited) {
-            visited.add(current)
-            chain.add(current)
-            // Find a successor that still has incoming edges (part of cycle)
-            current = graph[current]?.firstOrNull { (incomingEdges[it] ?: 0) > 0 } ?: break
+        fun dfs(node: String): List<String>? {
+            if (node in recursionStack) {
+                // Found a cycle! Build the cycle path
+                val cycleStart = path.indexOf(node)
+                return if (cycleStart >= 0) {
+                    path.subList(cycleStart, path.size) + node
+                } else {
+                    listOf(node)
+                }
+            }
+
+            if (node in visited) return null
+
+            visited.add(node)
+            recursionStack.add(node)
+            path.add(node)
+
+            // Explore successors
+            for (successor in graph[node].orEmpty()) {
+                val cycle = dfs(successor)
+                if (cycle != null) return cycle
+            }
+
+            recursionStack.remove(node)
+            path.removeAt(path.lastIndex)
+            return null
         }
 
-        chain.add(current)
-        return chain
+        // Start DFS from any node that's part of a cycle
+        for (startNode in nodesInCycle) {
+            if (startNode !in visited) {
+                val cycle = dfs(startNode)
+                if (cycle != null) return cycle
+            }
+        }
+
+        // Fallback: if no cycle found via DFS, return the nodes with remaining edges
+        return nodesInCycle.toList()
     }
+
 
     private fun logMissingDependencies(owner: Any, hookClassName: String, missing: Map<String, Set<String>>) {
         val logger = getLogger(owner)
