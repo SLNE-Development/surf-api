@@ -61,7 +61,7 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
 
     @MustBeInvokedByOverriders
     override fun dispose0() {
-        unregisterListeners().subscribe()
+        unregisterListeners().block()
     }
 
     override fun addListener(listener: (L) -> Unit) {
