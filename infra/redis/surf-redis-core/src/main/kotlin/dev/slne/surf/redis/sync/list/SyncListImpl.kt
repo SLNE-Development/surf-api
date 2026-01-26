@@ -5,6 +5,7 @@ import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
+import dev.slne.surf.redis.util.RedisExpirableUtils
 import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.serialization.KSerializer
@@ -63,6 +64,14 @@ class SyncListImpl<T : Any>(
 
     private val list = ObjectArrayList<T>()
     private val remoteList by lazy { api.redissonReactive.getList<String>(dataKey, StringCodec.INSTANCE) }
+
+    override fun init(): Mono<Void> {
+        return super.init()
+            .doOnSuccess {
+                trackDisposable(RedisExpirableUtils.refreshContinuously(ttl, remoteList))
+            }
+            .then()
+    }
 
     override fun registerListeners0(): List<Mono<Int>> = listOf(
         remoteList.addListener(DeletedObjectListener { requestResync() }),
@@ -165,10 +174,6 @@ class SyncListImpl<T : Any>(
         }
         super.overrideFromRemote(raw)
     }
-
-    override fun refreshTtl0(): Mono<*> = Mono.`when`(
-        remoteList.expire(ttl.toJavaDuration())
-    )
 
     private fun appendRemote(encoded: String) {
         writeToRemote(APPEND_SCRIPT, EVENT_ADDED, encoded)

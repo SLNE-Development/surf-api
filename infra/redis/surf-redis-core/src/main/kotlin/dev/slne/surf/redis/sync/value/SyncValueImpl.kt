@@ -5,6 +5,7 @@ import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
+import dev.slne.surf.redis.util.RedisExpirableUtils
 import dev.slne.surf.surfapi.core.api.util.logger
 import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
@@ -13,7 +14,6 @@ import org.redisson.client.codec.StringCodec
 import reactor.core.publisher.Mono
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
-import kotlin.time.toJavaDuration
 
 class SyncValueImpl<T : Any>(
     api: RedisApi,
@@ -41,6 +41,14 @@ class SyncValueImpl<T : Any>(
 
     private val bucket by lazy { api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE) }
     private val value = AtomicReference(defaultValue)
+
+    override fun init(): Mono<Void> {
+        return super.init()
+            .doOnSuccess {
+                trackDisposable(RedisExpirableUtils.refreshContinuously(ttl, bucket))
+            }
+            .then()
+    }
 
     override fun registerListeners0(): List<Mono<Int>> = listOf(
         bucket.addListener(ExpiredObjectListener { requestResync() }),
@@ -74,8 +82,6 @@ class SyncValueImpl<T : Any>(
         val old = value.getAndSet(decoded)
         notifyListeners(SyncValueChange.Updated(decoded, old))
     }
-
-    override fun refreshTtl0(): Mono<*> = bucket.expire(ttl.toJavaDuration())
 
     override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<String?>> = Mono.zip(
         bucket.get(),

@@ -4,6 +4,7 @@ import dev.slne.surf.redis.RedisInstance
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.redisson.api.RExpirableReactive
 import reactor.core.Disposable
+import reactor.core.Disposables
 import reactor.core.publisher.Mono
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
@@ -15,7 +16,8 @@ object RedisExpirableUtils {
         ttl: Duration,
         vararg objects: RExpirableReactive
     ): Disposable {
-        val delay = (ttl.inWholeSeconds / 2).coerceIn(1, 15)
+        if (ttl == Duration.ZERO || ttl.isNegative()) return Disposables.disposed()
+        val delay = Math.clamp(ttl.inWholeSeconds - 2, 1L, 15L)
         val objectNames = objects.joinToString(", ") { it.name }
 
         return Mono.defer {
