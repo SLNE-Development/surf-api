@@ -8,10 +8,12 @@ import dev.slne.surf.surfapi.shared.api.hook.condition.HookCondition
 import dev.slne.surf.surfapi.shared.api.hook.condition.HookConditionContext
 import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig
 import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
-import kotlinx.serialization.SerializationException
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import java.io.File
 import java.io.InputStream
+import java.net.URI
 import java.util.*
+import java.util.jar.JarFile
 
 abstract class HookService {
 
@@ -24,14 +26,56 @@ abstract class HookService {
         .asLoadingCache { owner -> loadHooks(owner) }
 
     private fun loadHooksMeta(owner: Any): PluginHookMeta {
-        val rawStream = readHooksFileFromResources(owner, HooksConfig.HOOKS_FILE_NAME) ?: return PluginHookMeta.empty()
-        val raw = rawStream.bufferedReader().use { it.readText() }
-        return try {
-            HooksConfig.json.decodeFromString<PluginHookMeta>(raw)
-        } catch (e: SerializationException) {
-            getLogger(owner).error("Failed to parse ${HooksConfig.HOOKS_FILE_NAME}", e)
-            PluginHookMeta.empty()
+        val classloader = getClassloader(owner)
+        val logger = getLogger(owner)
+        var meta = PluginHookMeta.empty()
+
+        try {
+            val resources = classloader.getResources(HooksConfig.HOOKS_DIRECTORY)
+            while (resources.hasMoreElements()) {
+                val url = resources.nextElement()
+
+                if (url.protocol == "jar") {
+                    val jarPath = url.path.substringBefore("!")
+                    val jarFile = JarFile(File(URI(jarPath)))
+                    jarFile.entries().asSequence()
+                        .filter { it.name.startsWith(HooksConfig.HOOKS_DIRECTORY) && it.name.endsWith(".json") }
+                        .forEach { entry ->
+                            try {
+                                val raw = jarFile.getInputStream(entry).bufferedReader().use { it.readText() }
+                                val decoded = HooksConfig.json.decodeFromString<PluginHookMeta>(raw)
+                                meta += decoded
+                            } catch (e: Exception) {
+                                logger.error("Failed to parse ${entry.name}", e)
+                            }
+                        }
+                } else {
+                    val dir = File(url.toURI())
+                    dir.listFiles { file -> file.extension == "json" }?.forEach { file ->
+                        try {
+                            val raw = file.readText()
+                            val decoded = HooksConfig.json.decodeFromString<PluginHookMeta>(raw)
+                            meta += decoded
+                        } catch (e: Exception) {
+                            logger.error("Failed to parse ${file.name}", e)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("No hooks directory found or error reading hooks", e)
         }
+
+        return meta
+
+//        val rawStream = readHooksFileFromResources(owner, HooksConfig.HOOKS_FILE_PATH) ?: return PluginHookMeta.empty()
+//        val raw = rawStream.bufferedReader().use { it.readText() }
+//        return try {
+//            HooksConfig.json.decodeFromString<PluginHookMeta>(raw)
+//        } catch (e: SerializationException) {
+//            getLogger(owner).error("Failed to parse ${HooksConfig.HOOKS_FILE_PATH}", e)
+//            PluginHookMeta.empty()
+//        }
     }
 
     private suspend fun loadHooks(owner: Any): List<Hook> {
@@ -209,7 +253,7 @@ abstract class HookService {
         val queue = PriorityQueue<String>(compareBy { className ->
             hooksByClassName[className]?.priority ?: Short.MAX_VALUE
         })
-        
+
         incomingEdges.object2IntEntrySet().fastForEach { entry ->
             val vertex = entry.key
             val edges = entry.intValue

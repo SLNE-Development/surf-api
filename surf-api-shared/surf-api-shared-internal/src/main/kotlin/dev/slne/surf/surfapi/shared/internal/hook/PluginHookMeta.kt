@@ -16,6 +16,21 @@ data class PluginHookMeta(val hooks: List<Hook>) {
         val customConditions: List<String> = emptyList(),
     )
 
+    fun mergeWith(other: PluginHookMeta): PluginHookMeta {
+        val mergedHooks = ArrayList<Hook>(this.hooks.size + other.hooks.size)
+        mergedHooks.addAll(this.hooks)
+        for (hook in other.hooks) {
+            if (!mergedHooks.any { it.className == hook.className }) {
+                mergedHooks.add(hook)
+            } else {
+                throw IllegalStateException("Duplicate hook className found during merge: ${hook.className}")
+            }
+        }
+        return PluginHookMeta(mergedHooks)
+    }
+
+    operator fun plus(other: PluginHookMeta) = mergeWith(other)
+
     companion object {
         fun empty() = PluginHookMeta(emptyList())
     }

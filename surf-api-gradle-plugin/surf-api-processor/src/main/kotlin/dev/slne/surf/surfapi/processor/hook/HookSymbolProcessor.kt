@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.processor.hook
 
+import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.closestClassDeclaration
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
@@ -13,7 +14,7 @@ import dev.slne.surf.surfapi.processor.util.nameOf
 import dev.slne.surf.surfapi.processor.util.toBinaryName
 import dev.slne.surf.surfapi.shared.api.hook.HookMeta
 import dev.slne.surf.surfapi.shared.api.hook.requirement.*
-import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig.HOOKS_FILE_NAME
+import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig.HOOKS_DIRECTORY
 import dev.slne.surf.surfapi.shared.internal.hook.HooksConfig.json
 import dev.slne.surf.surfapi.shared.internal.hook.PluginHookMeta
 import java.io.IOException
@@ -31,9 +32,11 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
 
     private val logger = environment.logger
     private val codeGenerator = environment.codeGenerator
-    private val hooks = mutableSetOf<PluginHookMeta.Hook>()
+    private val hooks = mutableMapOf<String, MutableSet<PluginHookMeta.Hook>>()
 
+    @OptIn(KspExperimental::class)
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        val moduleName = resolver.getModuleName().asString()
         val deferred = mutableListOf<KSAnnotated>()
         val hooksMetas = resolver.getSymbolsWithAnnotation(HOOK_ANNOTATION)
             .filterIsInstance<KSClassDeclaration>()
@@ -134,7 +137,8 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
 
                 val customConditions = hookClass.annotations.findAnnotations(CONDITIONAL_ON_CUSTOM_ANNOTATION)
                     .mapNotNull { annotation ->
-                        val conditionValue = annotation.arguments.find { it.name?.asString() == "condition" }?.value as? KSType
+                        val conditionValue =
+                            annotation.arguments.find { it.name?.asString() == "condition" }?.value as? KSType
                         conditionValue?.declaration?.closestClassDeclaration()?.toBinaryName()
                     }
 
@@ -149,12 +153,14 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
                 )
             }.toList()
 
-        hooks.addAll(hooksMetas)
+        hooks.getOrPut(moduleName) { mutableSetOf() }.addAll(hooksMetas)
+
         return deferred
     }
 
     override fun finish() {
         generatePluginHookFile()
+        hooks.clear()
     }
 
 
@@ -163,17 +169,21 @@ class HookSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProce
             return
         }
 
-        val hookMeta = PluginHookMeta(hooks.toList())
-        try {
-            codeGenerator.createNewFileByPath(Dependencies(aggregating = true), HOOKS_FILE_NAME, "").bufferedWriter()
-                .use { writer ->
-                    val jsonString = json.encodeToString(hookMeta)
-                    writer.write(jsonString)
-                }
+        for ((moduleName, moduleHooks) in hooks) {
+            val hookMeta = PluginHookMeta(moduleHooks.toList())
+            val filePath = "$HOOKS_DIRECTORY/$moduleName.json"
+            try {
+                codeGenerator.createNewFileByPath(Dependencies(aggregating = true), filePath, "")
+                    .bufferedWriter()
+                    .use { writer ->
+                        val jsonString = json.encodeToString(hookMeta)
+                        writer.write(jsonString)
+                    }
 
-            logger.info("Wrote Hooks to: $HOOKS_FILE_NAME")
-        } catch (e: IOException) {
-            logger.error("Unable to create $HOOKS_FILE_NAME, $e")
+                logger.info("Wrote Hooks to: $filePath")
+            } catch (e: IOException) {
+                logger.error("Unable to create $filePath, $e")
+            }
         }
     }
 
