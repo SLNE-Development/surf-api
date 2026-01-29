@@ -4,9 +4,11 @@ import dev.slne.surf.surfapi.bukkit.test.BukkitPluginMain
 import dev.slne.surf.surfapi.core.api.component.AbstractComponent
 import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
+import dev.slne.surf.surfapi.shared.api.component.Priority
 import dev.slne.surf.surfapi.shared.api.component.requirement.*
 
 @ComponentMeta
+@Priority(10)
 @DependsOnClass(BukkitPluginMain::class)
 @DependsOnClassName("dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig")
 @DependsOnPlugin("SurfBukkitPluginTest")

@@ -14,6 +14,7 @@ import com.google.devtools.ksp.symbol.KSType
 import dev.slne.surf.surfapi.processor.util.nameOf
 import dev.slne.surf.surfapi.processor.util.toBinaryName
 import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
+import dev.slne.surf.surfapi.shared.api.component.Priority
 import dev.slne.surf.surfapi.shared.api.component.processor.ComponentPostProcessor
 import dev.slne.surf.surfapi.shared.api.component.requirement.*
 import dev.slne.surf.surfapi.shared.internal.component.ComponentsConfig.COMPONENTS_DIRECTORY
@@ -24,6 +25,7 @@ import java.io.IOException
 class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : SymbolProcessor {
     companion object {
         private val COMPONENT_ANNOTATION = nameOf<ComponentMeta>()
+        private val PRIORITY_ANNOTATION = nameOf<Priority>()
         private val DEPENDS_ON_CLASS_ANNOTATION = nameOf<DependsOnClass>()
         private val DEPENDS_ON_CLASS_NAME_ANNOTATION = nameOf<DependsOnClassName>()
         private val DEPENDS_ON_ONE_PLUGIN_ANNOTATION = nameOf<DependsOnOnePlugin>()
@@ -96,7 +98,8 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
     }
 
     /**
-     * Gets the @ComponentMeta annotation, either directly on the class or from a meta-annotation
+     * Checks if a class has @ComponentMeta (directly or via meta-annotation)
+     * and returns the priority from @Priority annotation
      */
     private fun findComponentMeta(classDecl: KSClassDeclaration): Pair<KSAnnotation?, Short>? {
         // First, check for direct @ComponentMeta
@@ -105,7 +108,7 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
         }
         
         if (directMeta != null) {
-            val priority = directMeta.arguments.find { it.name?.asString() == "priority" }?.value as? Short ?: 0
+            val priority = findPriority(classDecl)
             return directMeta to priority
         }
 
@@ -119,18 +122,39 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
             }
             
             if (componentMetaOnAnnotation != null) {
-                // Try to get priority from the meta-annotation's @ComponentMeta
-                val metaPriority = componentMetaOnAnnotation.arguments.find { it.name?.asString() == "priority" }?.value as? Short ?: 0
-                
-                // Also check if the annotation itself has a priority parameter
-                val annotationPriority = annotation.arguments.find { it.name?.asString() == "priority" }?.value as? Short
-                
-                val finalPriority = annotationPriority ?: metaPriority
-                return annotation to finalPriority
+                val priority = findPriority(classDecl, annotationDecl)
+                return annotation to priority
             }
         }
 
         return null
+    }
+
+    /**
+     * Finds the priority for a component class.
+     * Direct @Priority on the class takes precedence over meta-annotation @Priority.
+     */
+    private fun findPriority(classDecl: KSClassDeclaration, metaAnnotationDecl: KSClassDeclaration? = null): Short {
+        // First check for direct @Priority annotation on the class
+        val directPriority = classDecl.annotations.find {
+            it.annotationType.resolve().declaration.qualifiedName?.asString() == PRIORITY_ANNOTATION
+        }
+        if (directPriority != null) {
+            return directPriority.arguments.find { it.name?.asString() == "value" }?.value as? Short ?: 0
+        }
+
+        // Then check for @Priority on the meta-annotation
+        if (metaAnnotationDecl != null) {
+            val metaPriority = metaAnnotationDecl.annotations.find {
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == PRIORITY_ANNOTATION
+            }
+            if (metaPriority != null) {
+                return metaPriority.arguments.find { it.name?.asString() == "value" }?.value as? Short ?: 0
+            }
+        }
+
+        // Default priority
+        return 0
     }
 
     private fun processComponentClass(
