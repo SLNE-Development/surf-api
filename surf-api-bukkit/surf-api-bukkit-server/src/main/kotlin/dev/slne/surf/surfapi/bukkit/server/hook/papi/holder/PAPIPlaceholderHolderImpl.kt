@@ -1,6 +1,6 @@
-package dev.slne.surf.surfapi.bukkit.server.component.papi.holder
+package dev.slne.surf.surfapi.bukkit.server.hook.papi.holder
 
-import dev.slne.surf.surfapi.bukkit.api.component.papi.expansion.PapiExpansion
+import dev.slne.surf.surfapi.bukkit.api.hook.papi.expansion.PapiExpansion
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
 import org.bukkit.OfflinePlayer
 

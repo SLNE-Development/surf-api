@@ -1,15 +1,15 @@
-package dev.slne.surf.surfapi.bukkit.server.component.papi
+package dev.slne.surf.surfapi.bukkit.server.hook.papi
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.surfapi.bukkit.api.component.papi.SurfBukkitPAPIComponent
-import dev.slne.surf.surfapi.bukkit.api.component.papi.expansion.PapiExpansion
-import dev.slne.surf.surfapi.bukkit.server.component.papi.holder.PAPIPlaceholderHolder
-import dev.slne.surf.surfapi.bukkit.server.component.papi.holder.PAPIPlaceholderHolderImpl
-import dev.slne.surf.surfapi.bukkit.server.component.papi.holder.PAPIPlaceholderHolderNOOP
+import dev.slne.surf.surfapi.bukkit.api.hook.papi.SurfBukkitPAPIHook
+import dev.slne.surf.surfapi.bukkit.api.hook.papi.expansion.PapiExpansion
+import dev.slne.surf.surfapi.bukkit.server.hook.papi.holder.PAPIPlaceholderHolder
+import dev.slne.surf.surfapi.bukkit.server.hook.papi.holder.PAPIPlaceholderHolderImpl
+import dev.slne.surf.surfapi.bukkit.server.hook.papi.holder.PAPIPlaceholderHolderNOOP
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 
-@AutoService(SurfBukkitPAPIComponent::class)
-class SurfBukkitPAPIComponentImpl : SurfBukkitPAPIComponent {
+@AutoService(SurfBukkitPAPIHook::class)
+class SurfBukkitPAPIHookImpl : SurfBukkitPAPIHook {
     private val expansionHolders = mutableObject2ObjectMapOf<String, PAPIPlaceholderHolder>()
     private var loaded = false
 

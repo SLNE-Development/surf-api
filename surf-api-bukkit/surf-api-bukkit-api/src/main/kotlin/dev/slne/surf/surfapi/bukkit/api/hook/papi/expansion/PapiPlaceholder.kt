@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.api.component.papi.expansion
+package dev.slne.surf.surfapi.bukkit.api.hook.papi.expansion
 
 import org.bukkit.OfflinePlayer
 
