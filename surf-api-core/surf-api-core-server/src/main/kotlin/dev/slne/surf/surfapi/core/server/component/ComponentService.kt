@@ -448,41 +448,52 @@ abstract class ComponentService {
 
     /**
      * Reconstructs a readable cycle path from an SCC.
+     * Returns a list where the first and last elements are the same, representing the cycle.
      */
     private fun reconstructCyclePath(
         scc: List<String>,
         dependencyMap: Map<String, List<String>>
     ): List<String> {
-        if (scc.size <= 1) return scc
-
-        val sccSet = scc.toSet()
-        val start = scc[0]
-        val visited = mutableSetOf<String>()
-        val path = mutableListOf<String>()
-
-        fun dfs(node: String): Boolean {
-            if (node in visited && node == start && path.isNotEmpty()) {
-                path.add(node) // Complete the cycle
-                return true
-            }
-            if (node in visited) return false
-            
-            visited.add(node)
-            path.add(node)
-
-            for (dep in dependencyMap[node].orEmpty()) {
-                if (dep in sccSet) {
-                    if (dfs(dep)) return true
-                }
-            }
-
-            path.removeAt(path.lastIndex)
-            visited.remove(node)
-            return false
+        if (scc.size <= 1) {
+            // Self-loop case
+            return if (scc.isNotEmpty()) listOf(scc[0], scc[0]) else scc
         }
 
-        dfs(start)
-        return if (path.isNotEmpty()) path else scc + scc[0]
+        val sccSet = scc.toSet()
+        
+        // Try to find a cycle starting from each node in the SCC
+        for (startNode in scc) {
+            val path = mutableListOf<String>()
+            val visited = mutableSetOf<String>()
+            
+            fun dfs(node: String): Boolean {
+                if (node == startNode && path.isNotEmpty()) {
+                    path.add(node) // Complete the cycle
+                    return true
+                }
+                if (node in visited) return false
+                
+                visited.add(node)
+                path.add(node)
+
+                for (dep in dependencyMap[node].orEmpty()) {
+                    if (dep in sccSet) {
+                        if (dfs(dep)) return true
+                    }
+                }
+
+                path.removeAt(path.lastIndex)
+                visited.remove(node)
+                return false
+            }
+
+            if (dfs(startNode) && path.size > 1) {
+                return path
+            }
+        }
+        
+        // Fallback: construct a simple representation from the SCC
+        return scc + scc[0]
     }
 
     /**
@@ -497,21 +508,22 @@ abstract class ComponentService {
         sb.appendLine()
 
         cycles.forEachIndexed { index, cycle ->
+            // Show short names in summary for readability
             val cycleDisplay = cycle.map { it.substringAfterLast('.') }
             sb.appendLine("  Cycle ${index + 1}: ${cycleDisplay.joinToString(" → ")}")
         }
 
         sb.appendLine()
-        sb.appendLine("Details:")
+        sb.appendLine("Details (full class names):")
 
         for (cycle in cycles) {
             for (i in 0 until cycle.size - 1) {
                 val from = cycle[i]
                 val to = cycle[i + 1]
-                val shortFrom = from.substringAfterLast('.')
-                val shortTo = to.substringAfterLast('.')
-                sb.appendLine("  - $shortFrom depends on $shortTo (via @DependsOnComponent)")
+                sb.appendLine("  - $from")
+                sb.appendLine("      depends on $to (via @DependsOnComponent)")
             }
+            sb.appendLine()
         }
 
         return sb.toString()
