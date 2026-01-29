@@ -8,6 +8,7 @@ import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache
 import dev.slne.surf.redis.credentials.RedisCredentialsProvider
 import dev.slne.surf.redis.event.RedisEvent
+import dev.slne.surf.redis.internal.RedissonConfigDetails
 import dev.slne.surf.redis.request.*
 import dev.slne.surf.redis.sync.SyncStructure
 import dev.slne.surf.redis.sync.list.SyncList
@@ -225,21 +226,12 @@ class RedisApi private constructor(
             redisURI: RedisURI,
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
-            val config = Config()
-                .setPassword(redisURI.password)
-                .setTransportMode(transportMode)
-                .setTcpKeepAlive(true)
-                .setTcpKeepAliveInterval(5.seconds.inWholeMilliseconds.toInt())
-                .setEventLoopGroup(RedisComponentProvider.get().eventLoopGroup)
-                .setExecutor(RedisComponentProvider.get().redissonExecutorService)
-                .apply {
-                    useSingleServer()
-                        .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
-                        .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
-                        .setRetryAttempts(10)
-                        .setRetryDelay(EqualJitterDelay(200.milliseconds.toJavaDuration(), 1.seconds.toJavaDuration()))
-                        .setAddress(redisURI.toString())
-                }
+            val config = RedisComponentProvider.get().createRedissonConfig(
+                RedissonConfigDetails(
+                    redisURI = redisURI,
+                    serializerModule = serializerModule,
+                )
+            )
 
             val api = RedisApi(config, createJson(serializerModule))
             return api
