@@ -1,13 +1,13 @@
-package dev.slne.surf.surfapi.core.server.hook
+package dev.slne.surf.surfapi.core.server.component
 
 import com.google.auto.service.AutoService
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.kyori.adventure.util.Services
 import java.io.InputStream
 
-@AutoService(HookService::class)
-class HookServiceFallback : HookService(), Services.Fallback {
-    override fun readHooksFileFromResources(owner: Any, fileName: String): InputStream? {
+@AutoService(ComponentService::class)
+class ComponentServiceFallback : ComponentService(), Services.Fallback {
+    override fun readComponentsFileFromResources(owner: Any, fileName: String): InputStream? {
         throwNotImplementedOnThisPlatform()
     }
 
@@ -24,6 +24,6 @@ class HookServiceFallback : HookService(), Services.Fallback {
     }
 
     private fun throwNotImplementedOnThisPlatform(): Nothing {
-        throw UnsupportedOperationException("This platform does not yet support hooks")
+        throw UnsupportedOperationException("This platform does not yet support components")
     }
 }

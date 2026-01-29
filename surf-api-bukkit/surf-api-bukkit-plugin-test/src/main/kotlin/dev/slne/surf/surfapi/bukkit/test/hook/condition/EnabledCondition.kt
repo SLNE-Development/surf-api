@@ -1,11 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.test.hook.condition
 
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
-import dev.slne.surf.surfapi.shared.api.hook.condition.HookCondition
-import dev.slne.surf.surfapi.shared.api.hook.condition.HookConditionContext
+import dev.slne.surf.surfapi.shared.api.component.condition.ComponentCondition
+import dev.slne.surf.surfapi.shared.api.component.condition.ComponentConditionContext
 
-class EnabledCondition : HookCondition {
-    override suspend fun evaluate(context: HookConditionContext): Boolean {
+class EnabledCondition : ComponentCondition {
+    override suspend fun evaluate(context: ComponentConditionContext): Boolean {
         return ModernTestConfig.getConfig().enabled
     }
 }

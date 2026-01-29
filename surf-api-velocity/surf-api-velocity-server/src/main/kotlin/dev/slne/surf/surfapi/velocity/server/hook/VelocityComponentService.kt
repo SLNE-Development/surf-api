@@ -1,16 +1,16 @@
 package dev.slne.surf.surfapi.velocity.server.hook
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.surfapi.core.server.hook.HookService
+import dev.slne.surf.surfapi.core.server.component.ComponentService
 import dev.slne.surf.surfapi.velocity.server.velocityMain
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.IOException
 import java.io.InputStream
 import kotlin.jvm.optionals.getOrNull
 
-@AutoService(HookService::class)
-class VelocityHookService : HookService() {
-    override fun readHooksFileFromResources(owner: Any, fileName: String): InputStream? {
+@AutoService(ComponentService::class)
+class VelocityComponentService : ComponentService() {
+    override fun readComponentsFileFromResources(owner: Any, fileName: String): InputStream? {
         return try {
             val url = getClassloader(owner).getResource(fileName) ?: return null
             val connection = url.openConnection()
