@@ -10,7 +10,7 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInven
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
-import dev.slne.surf.surfapi.core.api.hook.surfHookApi
+import dev.slne.surf.surfapi.core.api.component.surfComponentApi
 
 @OptIn(NmsUseWithCaution::class)
 class BukkitPluginMain : SuspendingJavaPlugin() {
@@ -18,7 +18,7 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
         ModernTestConfig.init()
         ModernTestConfig.randomise()
 
-        surfHookApi.load(this)
+        surfComponentApi.load(this)
         packetListenerApi.registerListeners(ChatListener())
         TestInventoryView.register()
     }
@@ -27,12 +27,12 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
         SurfApiTestCommand().register()
         Reflection::class.java.getClassLoader() // initialize Reflection
 
-        surfHookApi.enable(this)
+        surfComponentApi.enable(this)
     }
 
     override suspend fun onDisableAsync() {
         CommandAPI.unregister("surfapitest")
-        surfHookApi.disable(this)
+        surfComponentApi.disable(this)
     }
 
     companion object {

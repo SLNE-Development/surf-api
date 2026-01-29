@@ -6,7 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
-import dev.slne.surf.surfapi.bukkit.server.hook.SurfBukkitHookManager
+import dev.slne.surf.surfapi.bukkit.server.component.SurfBukkitComponentManager
 import dev.slne.surf.surfapi.bukkit.server.impl.scoreboard.SurfScoreboardBuilderImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler
@@ -29,7 +29,7 @@ class SurfBukkitApiImpl : SurfCoreApiImpl(), SurfBukkitApi {
     }
 
     fun onEnable() {
-        SurfBukkitHookManager.onEnable()
+        SurfBukkitComponentManager.onEnable()
     }
 
     @ObsoleteScoreboardApi
