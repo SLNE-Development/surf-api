@@ -21,7 +21,7 @@ commandapi = "11.1.0"
 luckperms = "v5.5.0-bukkit"
 
 # Scoreboard Library
-scoreboard-library = "2.4.3"
+scoreboard-library = "2.4.4"
 scoreboard-library-implementation = "2.4.4"
 scoreboard-library-modern = "2.4.3"
 
