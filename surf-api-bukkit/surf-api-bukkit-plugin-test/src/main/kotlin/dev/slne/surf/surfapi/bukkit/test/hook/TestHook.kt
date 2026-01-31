@@ -6,19 +6,18 @@ import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
 import dev.slne.surf.surfapi.shared.api.component.requirement.DependsOnClass
 import dev.slne.surf.surfapi.shared.api.component.requirement.DependsOnClassName
-import dev.slne.surf.surfapi.shared.api.component.requirement.DependsOnComponent
 
 @ComponentMeta
 @DependsOnClass(BukkitPluginMain::class)
 @DependsOnClassName("dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig")
 //@DependsOnPlugin("SurfBukkitPluginTest")
 //@DependsOnOnePlugin(["SurfBukkitPlugin", "surf-bukkit-plugin", "SurfBukkitPluginTest"])
-@DependsOnComponent(PrimaryTestHook::class)
+//@DependsOnComponent(PrimaryTestHook::class)
 class TestHook : AbstractComponent() {
     private val log = logger()
 
     override suspend fun onBootstrap() {
-        log.atInfo().log("TestHook bootstrapped")
+        log.atInfo().log("TestHook bootstrapped0")
     }
 
     override suspend fun onLoad() {

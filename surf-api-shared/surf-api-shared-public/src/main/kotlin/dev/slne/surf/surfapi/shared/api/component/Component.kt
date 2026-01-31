@@ -66,4 +66,8 @@ interface Component : Comparable<Component> {
      * Components are disabled in reverse order of their initialization.
      */
     suspend fun disable()
+
+    override fun compareTo(other: Component): Int {
+        return priority.compareTo(other.priority)
+    }
 }

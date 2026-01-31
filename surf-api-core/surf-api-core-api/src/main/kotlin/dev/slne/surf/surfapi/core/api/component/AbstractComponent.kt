@@ -105,7 +105,7 @@ abstract class AbstractComponent : Component {
     }
 
     final override fun compareTo(other: Component): Int {
-        return this.priority.compareTo(other.priority)
+        return super.compareTo(other)
     }
 
     /**

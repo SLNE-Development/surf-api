@@ -20,15 +20,15 @@ import java.util.jar.JarFile
 abstract class ComponentService {
 
     private val componentMetaCache = Caffeine.newBuilder()
-        .weakKeys()
+//        .weakKeys()
         .build<Any, PluginComponentMeta> { owner -> loadComponentsMeta(owner) }
 
     private val componentsCache = Caffeine.newBuilder()
-        .weakKeys()
+//        .weakKeys()
         .asLoadingCache { owner -> loadComponents(owner) }
 
     private val postProcessorsCache = Caffeine.newBuilder()
-        .weakKeys()
+//        .weakKeys()
         .build<Any, List<ComponentPostProcessor>> { owner -> loadPostProcessors(owner) }
 
     private fun loadComponentsMeta(owner: Any): PluginComponentMeta {
@@ -43,18 +43,19 @@ abstract class ComponentService {
 
                 if (url.protocol == "jar") {
                     val jarPath = url.path.substringBefore("!")
-                    val jarFile = JarFile(File(URI(jarPath)))
-                    jarFile.entries().asSequence()
-                        .filter { it.name.startsWith(ComponentsConfig.COMPONENTS_DIRECTORY) && it.name.endsWith(".json") }
-                        .forEach { entry ->
-                            try {
-                                val raw = jarFile.getInputStream(entry).bufferedReader().use { it.readText() }
-                                val decoded = ComponentsConfig.json.decodeFromString<PluginComponentMeta>(raw)
-                                meta += decoded
-                            } catch (e: Exception) {
-                                logger.error("Failed to parse ${entry.name}", e)
+                    JarFile(File(URI(jarPath))).use { jarFile ->
+                        jarFile.entries().asSequence()
+                            .filter { it.name.startsWith(ComponentsConfig.COMPONENTS_DIRECTORY) && it.name.endsWith(".json") }
+                            .forEach { entry ->
+                                try {
+                                    val raw = jarFile.getInputStream(entry).bufferedReader().use { it.readText() }
+                                    val decoded = ComponentsConfig.json.decodeFromString<PluginComponentMeta>(raw)
+                                    meta += decoded
+                                } catch (e: Exception) {
+                                    logger.error("Failed to parse ${entry.name}", e)
+                                }
                             }
-                        }
+                    }
                 } else {
                     val dir = File(url.toURI())
                     dir.listFiles { file -> file.extension == "json" }?.forEach { file ->
