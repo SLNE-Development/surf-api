@@ -39,7 +39,7 @@ abstract class RedisInstance {
             }
             .factory()
 
-        eventLoopGroup = MultiThreadIoEventLoopGroup(4, nettyThreadFactory, ioHandlerFactory)
+        eventLoopGroup = MultiThreadIoEventLoopGroup(16, nettyThreadFactory, ioHandlerFactory)
         redissonExecutorService = Executors.newThreadPerTaskExecutor(redissonThreadFactory)
     }
 
@@ -81,6 +81,8 @@ abstract class RedisInstance {
     }
 
     fun getResourceAsStream(name: String): InputStream? = javaClass.getResourceAsStream(name)
+
+    abstract fun tryExtractPluginNameFromClass(clazz: Class<*>): String
 
     companion object {
         private val log = logger()

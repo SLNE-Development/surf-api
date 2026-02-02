@@ -35,8 +35,11 @@ public final class dev/slne/surf/redis/RedisApi {
 }
 
 public final class dev/slne/surf/redis/RedisApi$Companion {
+	public final fun create (Ljava/lang/String;)Ldev/slne/surf/redis/RedisApi;
+	public final fun create (Ljava/lang/String;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Ljava/nio/file/Path;Ljava/nio/file/Path;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
+	public final fun create (Lorg/redisson/misc/RedisURI;Ljava/lang/String;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Lorg/redisson/misc/RedisURI;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Ljava/nio/file/Path;Ljava/nio/file/Path;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
