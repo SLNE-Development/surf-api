@@ -18,8 +18,8 @@ import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.Initializable
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDStringSerializer
+import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import dev.slne.surf.surfapi.core.api.util.logger
-import io.netty.channel.epoll.Epoll
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -40,16 +40,11 @@ import org.redisson.api.RedissonReactiveClient
 import org.redisson.api.redisnode.RedisNodes
 import org.redisson.codec.BaseEventCodec
 import org.redisson.config.Config
-import org.redisson.config.EqualJitterDelay
-import org.redisson.config.TransportMode
 import org.redisson.misc.RedisURI
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
 import java.nio.file.Path
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 /**
  * Central entry point for surf-redis.
@@ -131,6 +126,7 @@ import kotlin.time.toJavaDuration
  * }
  * ```
  */
+@Suppress("unused")
 class RedisApi private constructor(
     private val config: Config,
     /** JSON instance used internally for (de-)serialization. */
@@ -207,29 +203,28 @@ class RedisApi private constructor(
 
     companion object {
         private val log = logger()
-        private val transportMode = if (Epoll.isAvailable()) {
-            TransportMode.EPOLL
-        } else {
-            TransportMode.NIO
-        }
 
         /**
-         * Creates a [RedisApi] instance from an explicit [RedisURI].
+         * Creates a [RedisApi] instance using the given [redisURI].
          *
-         * The returned instance is not connected yet. Call [freeze] and then [connect],
-         * or use [freezeAndConnect].
+         * This is the most explicit factory method. The [pluginName] is used for
+         * identification and logging purposes and is typically derived automatically
+         * via the caller when not provided explicitly.
          *
          * @param redisURI Redis connection URI.
+         * @param pluginName Logical name of the calling plugin or component.
          * @param serializerModule Additional serializers to be included in the internal [Json] instance.
          */
         fun create(
             redisURI: RedisURI,
-            serializerModule: SerializersModule = EmptySerializersModule()
+            pluginName: String,
+            serializerModule: SerializersModule
         ): RedisApi {
             val config = RedisComponentProvider.get().createRedissonConfig(
                 RedissonConfigDetails(
                     redisURI = redisURI,
                     serializerModule = serializerModule,
+                    pluginName = pluginName
                 )
             )
 
@@ -238,35 +233,63 @@ class RedisApi private constructor(
         }
 
         /**
-         * Creates a [RedisApi] instance using plugin configuration.
+         * Creates a [RedisApi] instance using the given [redisURI].
+         *
+         * The plugin name is resolved automatically from the calling class.
+         *
+         * @param redisURI Redis connection URI.
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
+         */
+        fun create(
+            redisURI: RedisURI,
+            serializerModule: SerializersModule = EmptySerializersModule()
+        ): RedisApi = create(redisURI, getCallingPluginName(), serializerModule)
+
+        /**
+         * Creates a [RedisApi] instance using credentials provided by
+         * [RedisCredentialsProvider].
+         *
+         * The plugin name is resolved automatically from the calling class.
+         *
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
+         */
+        fun create(
+            serializerModule: SerializersModule = EmptySerializersModule()
+        ): RedisApi = create(RedisCredentialsProvider.instance.redisURI(), getCallingPluginName(), serializerModule)
+
+        /**
+         * Creates a [RedisApi] instance using the default Redis credentials.
+         *
+         * @param pluginName Logical name of the calling plugin or component.
+         */
+        fun create(pluginName: String): RedisApi =
+            create(RedisCredentialsProvider.instance.redisURI(), pluginName, EmptySerializersModule())
+
+        /**
+         * Creates a [RedisApi] instance using the default Redis credentials.
+         *
+         * @param pluginName Logical name of the calling plugin or component.
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
+         */
+        fun create(pluginName: String, serializerModule: SerializersModule): RedisApi =
+            create(RedisCredentialsProvider.instance.redisURI(), pluginName, serializerModule)
+
+        /**
+         * Creates a [RedisApi] instance using plugin file system paths.
          *
          * @deprecated Surf Redis is no longer shaded into plugins. Paths are no longer relevant.
          */
         @Deprecated(
             message = "Surf Redis is no longer shaded into plugins. Therefore, plugin paths are no longer relevant.",
             replaceWith = ReplaceWith("create(serializerModule)"),
-            level = DeprecationLevel.WARNING
+            level = DeprecationLevel.ERROR
         )
         fun create(
             pluginDataPath: Path,
             pluginsPath: Path = pluginDataPath.parent,
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
-            return create(serializerModule)
-        }
-
-        /**
-         * Creates a [RedisApi] instance using [RedisCredentialsProvider].
-         *
-         * The returned instance is not connected yet. Call [freeze] and then [connect],
-         * or use [freezeAndConnect].
-         *
-         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
-         */
-        fun create(
-            serializerModule: SerializersModule = EmptySerializersModule()
-        ): RedisApi {
-            return create(RedisCredentialsProvider.instance.redisURI(), serializerModule)
+            return create(serializerModule = serializerModule, pluginName = getCallingPluginName())
         }
 
         @OptIn(ExperimentalSerializationApi::class)
@@ -280,6 +303,11 @@ class RedisApi private constructor(
 
                 include(serializerModule)
             }
+        }
+
+        private fun getCallingPluginName(): String {
+            val caller = getCallerClass(1) ?: return "Unknown"
+            return RedisComponentProvider.get().tryExtractPluginNameFromClass(caller)
         }
     }
 

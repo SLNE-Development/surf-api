@@ -2,6 +2,7 @@ package dev.slne.surf.redis
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.redis.cache.*
+import dev.slne.surf.redis.config.RedisConfig
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.event.RedisEventBusImpl
 import dev.slne.surf.redis.internal.RedissonConfigDetails
@@ -15,22 +16,13 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.set.SyncSetImpl
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
-import io.netty.bootstrap.Bootstrap
-import io.netty.channel.Channel
-import io.netty.channel.ChannelDuplexHandler
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelPromise
 import io.netty.channel.epoll.Epoll
-import io.netty.handler.logging.LogLevel
-import io.netty.handler.logging.LoggingHandler
-import io.netty.handler.timeout.IdleStateHandler
 import kotlinx.serialization.KSerializer
-import org.redisson.client.NettyHook
 import org.redisson.config.Config
 import org.redisson.config.EqualJitterDelay
+import org.redisson.config.Protocol
 import org.redisson.config.TransportMode
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -54,14 +46,20 @@ class RedisComponentProviderImpl : RedisComponentProvider {
     override fun createRedissonConfig(details: RedissonConfigDetails): Config {
         val config = Config()
             .setPassword(details.redisURI.password)
-            .setTransportMode(transportMode)
-            .setTcpKeepAlive(true)
-            .setTcpNoDelay(true)
-            .setTcpKeepAliveInterval(5.seconds.inWholeMilliseconds.toInt())
-            .setEventLoopGroup(eventLoopGroup)
             .setExecutor(redissonExecutorService)
+            .setTransportMode(transportMode)
+            .setEventLoopGroup(eventLoopGroup)
+            .setTcpKeepAlive(true)
+            .setTcpUserTimeout(10.seconds.inWholeMilliseconds.toInt())
+            .setTcpKeepAliveCount(3)
+            .setTcpKeepAliveInterval(10)
+            .setTcpKeepAliveIdle(60)
+            .setTcpNoDelay(true)
+            .setKeepPubSubOrder(false)
+            .setProtocol(Protocol.RESP3)
             .apply {
                 useSingleServer()
+                    .setClientName(RedisConfig.getConfig().clientName + "-" + details.pluginName)
                     .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
                     .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
                     .setRetryAttempts(10)
@@ -69,62 +67,11 @@ class RedisComponentProviderImpl : RedisComponentProvider {
                     .setAddress(details.redisURI.toString())
             }
 
-        config.setNettyHook(object : NettyHook {
-            override fun afterBoostrapInitialization(bootstrap: Bootstrap) {
-
-            }
-
-            override fun afterChannelInitialization(channel: Channel) {
-                val id = channel.id().asShortText()
-                val remote = channel.remoteAddress()
-                val local = channel.localAddress()
-
-//                channel.pipeline().addFirst("netty-logger", LoggingHandler(LogLevel.INFO))
-                channel.pipeline().addFirst("idle", IdleStateHandler(30, 30, 0, TimeUnit.SECONDS))
-
-                channel.pipeline().addLast("redis-conn-debug", object : ChannelDuplexHandler() {
-                    private fun meta(ctx: ChannelHandlerContext): String {
-                        val ch = ctx.channel()
-                        return "id=${ch.id().asShortText()} " +
-                                "ch=${ch.javaClass.simpleName} " +
-                                "active=${ch.isActive} open=${ch.isOpen} " +
-                                "local=${ch.localAddress()} remote=${ch.remoteAddress()}"
-                    }
-
-                    override fun channelActive(ctx: ChannelHandlerContext) {
-                        println("[redis] ACTIVE ${meta(ctx)}")
-                        super.channelActive(ctx)
-                    }
-
-                    override fun channelInactive(ctx: ChannelHandlerContext) {
-                        println("[redis] INACTIVE ${meta(ctx)}")
-                        super.channelInactive(ctx)
-                    }
-
-                    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-                        println("[redis] EXCEPTION ${meta(ctx)} cause=${cause::class.qualifiedName}: ${cause.message}")
-                        cause.printStackTrace()
-                        super.exceptionCaught(ctx, cause)
-                    }
-
-                    override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-                        println("[redis] EVENT ${meta(ctx)} evt=${evt::class.qualifiedName} $evt")
-                        super.userEventTriggered(ctx, evt)
-                    }
-
-                    override fun close(ctx: ChannelHandlerContext, promise: ChannelPromise) {
-                        println("[redis] CLOSE called ${meta(ctx)}")
-                        super.close(ctx, promise)
-                    }
-                })
-
-                channel.closeFuture().addListener {
-                    println("[redis][$id] CLOSE_FUTURE done success=${it.isSuccess} local=$local remote=$remote cause=${it.cause()?.message}")
-                }
-            }
-        })
-
         return config
+    }
+
+    override fun tryExtractPluginNameFromClass(clazz: Class<*>): String {
+        return RedisInstance.get().tryExtractPluginNameFromClass(clazz)
     }
 
     override fun <K : Any, V : Any> createSimpleCache(

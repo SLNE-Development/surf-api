@@ -7,5 +7,6 @@ import org.redisson.misc.RedisURI
 @InternalRedisAPI
 data class RedissonConfigDetails(
     val redisURI: RedisURI,
-    val serializerModule: SerializersModule
+    val serializerModule: SerializersModule,
+    val pluginName: String
 )
