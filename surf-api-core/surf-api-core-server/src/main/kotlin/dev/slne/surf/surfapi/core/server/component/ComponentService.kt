@@ -2,7 +2,10 @@ package dev.slne.surf.surfapi.core.server.component
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.asLoadingCache
-import dev.slne.surf.surfapi.core.api.util.*
+import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
+import dev.slne.surf.surfapi.core.api.util.requiredService
 import dev.slne.surf.surfapi.shared.api.component.Component
 import dev.slne.surf.surfapi.shared.api.component.condition.ComponentCondition
 import dev.slne.surf.surfapi.shared.api.component.condition.ComponentConditionContext
@@ -14,21 +17,20 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.File
 import java.io.InputStream
 import java.net.URI
-import java.util.*
 import java.util.jar.JarFile
 
 abstract class ComponentService {
 
     private val componentMetaCache = Caffeine.newBuilder()
-//        .weakKeys()
+        .weakKeys()
         .build<Any, PluginComponentMeta> { owner -> loadComponentsMeta(owner) }
 
     private val componentsCache = Caffeine.newBuilder()
-//        .weakKeys()
+        .weakKeys()
         .asLoadingCache { owner -> loadComponents(owner) }
 
     private val postProcessorsCache = Caffeine.newBuilder()
-//        .weakKeys()
+        .weakKeys()
         .build<Any, List<ComponentPostProcessor>> { owner -> loadPostProcessors(owner) }
 
     private fun loadComponentsMeta(owner: Any): PluginComponentMeta {
@@ -50,6 +52,10 @@ abstract class ComponentService {
                                 try {
                                     val raw = jarFile.getInputStream(entry).bufferedReader().use { it.readText() }
                                     val decoded = ComponentsConfig.json.decodeFromString<PluginComponentMeta>(raw)
+                                    repeat(20) {
+                                        logger.info("Loaded component meta from ${entry.name} for owner ${owner::class.qualifiedName}")
+                                        logger.info("Decoded meta: $decoded")
+                                    }
                                     meta += decoded
                                 } catch (e: Exception) {
                                     logger.error("Failed to parse ${entry.name}", e)
@@ -80,20 +86,22 @@ abstract class ComponentService {
         val meta = componentMetaCache.get(owner)
         val classLoader = getClassloader(owner)
 
-        val componentsWithMeta = meta.components.mapNotNull { componentMeta ->
-            val hook = instantiateComponentIfValid(owner, componentMeta, classLoader)
-            if (hook != null) {
-                componentMeta to hook
-            } else {
-                null
+        repeat(20) {
+            getLogger(owner).info("Loading components for owner ${owner::class.qualifiedName} (found ${meta.components.size} components)")
+        }
+
+        val sortedComponentMetas = ComponentSorting.topologicalSort(meta.components)
+        val loadedComponents = mutableObjectListOf<Component>()
+        for (meta in sortedComponentMetas) {
+            val component = instantiateComponentIfValid(owner, loadedComponents, meta, classLoader)
+            if (component != null) {
+                loadedComponents.add(component)
             }
         }
 
-        val sortedComponents = topologicalSort(componentsWithMeta, owner)
-
         // Load and apply post-processors
         val postProcessors = postProcessorsCache.get(owner)
-        return applyPostProcessors(sortedComponents, postProcessors, owner)
+        return applyPostProcessors(loadedComponents, postProcessors, owner)
     }
 
     private fun loadPostProcessors(owner: Any): List<ComponentPostProcessor> {
@@ -179,6 +187,7 @@ abstract class ComponentService {
 
     private suspend fun instantiateComponentIfValid(
         owner: Any,
+        loadedComponents: List<Component>,
         componentMeta: PluginComponentMeta.Component,
         classLoader: ClassLoader
     ): Component? {
@@ -201,6 +210,17 @@ abstract class ComponentService {
             if (pluginDependenciesIds.none { isPluginLoaded(it) }) {
                 missingDependencies.computeIfAbsent("Plugin (one of)") { mutableObjectSetOf() }
                     .add(pluginDependenciesIds.joinToString("|"))
+            }
+        }
+
+        for (componentDependency in componentMeta.componentDependencies) {
+            val isLoaded = loadedComponents.any {
+                val kClass = it::class
+                val className = kClass.qualifiedName ?: kClass.java.name
+                className == componentDependency
+            }
+            if (!isLoaded) {
+                missingDependencies.computeIfAbsent("Component") { mutableObjectSetOf() }.add(componentDependency)
             }
         }
 
@@ -259,279 +279,6 @@ abstract class ComponentService {
             }
         }
         return true
-    }
-
-    private fun topologicalSort(
-        componentsWithMeta: List<Pair<PluginComponentMeta.Component, Component>>,
-        owner: Any
-    ): List<Component> {
-        // If no components depend on other components, simply sort by priority
-        if (componentsWithMeta.none { it.first.componentDependencies.isNotEmpty() }) {
-            return componentsWithMeta.map { it.second }.sorted()
-        }
-
-        val componentsByClassName = componentsWithMeta.associate { (meta, component) ->
-            meta.className to component
-        }
-
-        val metaByClassName = componentsWithMeta.associate { (meta, _) ->
-            meta.className to meta
-        }
-
-        val missingComponentDeps = mutableMapOf<String, MutableSet<String>>()
-        for ((meta, _) in componentsWithMeta) {
-            for (depClassName in meta.componentDependencies) {
-                if (depClassName !in componentsByClassName) {
-                    missingComponentDeps.computeIfAbsent(meta.className) { mutableSetOf() }
-                        .add(depClassName)
-                }
-            }
-        }
-
-        if (missingComponentDeps.isNotEmpty()) {
-            val logger = getLogger(owner)
-            for ((componentClassName, missingDeps) in missingComponentDeps) {
-                logger.warn(
-                    "Component $componentClassName depends on components that are not loaded: ${
-                        missingDeps.joinToString(
-                            ", "
-                        )
-                    }"
-                )
-            }
-        }
-
-        val validComponents = componentsWithMeta.filter { (meta, _) ->
-            meta.className !in missingComponentDeps
-        }
-
-        if (validComponents.isEmpty()) {
-            return emptyList()
-        }
-
-        // Build dependency graph: className -> list of dependents (successors)
-        val graph = mutableObject2ObjectMapOf<String, MutableList<String>>()
-        val dependencyMap = mutableObject2ObjectMapOf<String, MutableList<String>>()
-
-        for ((meta, _) in validComponents) {
-            if (meta.className !in graph) {
-                graph[meta.className] = mutableListOf()
-            }
-            if (meta.className !in dependencyMap) {
-                dependencyMap[meta.className] = mutableListOf()
-            }
-            for (depClassName in meta.componentDependencies) {
-                if (depClassName in componentsByClassName) {
-                    graph.computeIfAbsent(depClassName) { mutableListOf() }.add(meta.className)
-                    dependencyMap.computeIfAbsent(meta.className) { mutableListOf() }.add(depClassName)
-                }
-            }
-        }
-
-        // Check for cycles using Tarjan's SCC algorithm
-        val cycles = findCyclesWithTarjan(graph, dependencyMap)
-        if (cycles.isNotEmpty()) {
-            val errorMessage = buildCycleErrorMessage(cycles, metaByClassName)
-            throw IllegalStateException(errorMessage)
-        }
-
-        // Kahn's algorithm with priority queue for tie-breaking
-        val incomingEdges = mutableObject2IntMapOf<String>()
-        for ((vertex, successors) in graph) {
-            if (vertex !in incomingEdges) {
-                incomingEdges[vertex] = 0
-            }
-            for (successor in successors) {
-                incomingEdges.mergeInt(successor, 1, Int::plus)
-            }
-        }
-
-        // Use a priority queue ordered by component priority (lower priority value = higher priority)
-        val queue = PriorityQueue<String>(compareBy { className ->
-            componentsByClassName[className]?.priority ?: Short.MAX_VALUE
-        })
-
-        incomingEdges.object2IntEntrySet().fastForEach { entry ->
-            val vertex = entry.key
-            val edges = entry.intValue
-            if (edges == 0) queue += vertex
-        }
-
-        val result = mutableObjectListOf<Component>()
-
-        while (queue.isNotEmpty()) {
-            val vertex = queue.poll()
-            componentsByClassName[vertex]?.let { result += it }
-
-            for (successor in graph[vertex].orEmpty()) {
-                incomingEdges.mergeInt(successor, -1, Int::minus)
-                if (incomingEdges.getInt(successor) == 0) {
-                    queue += successor
-                }
-            }
-        }
-
-        return result
-    }
-
-    /**
-     * Finds all cycles in the dependency graph using Tarjan's Strongly Connected Components algorithm.
-     *
-     * @param graph The forward dependency graph (dependency -> dependents)
-     * @param dependencyMap The reverse dependency map (component -> its dependencies)
-     * @return A list of cycles, where each cycle is a list of class names forming the cycle
-     */
-    private fun findCyclesWithTarjan(
-        graph: Map<String, List<String>>,
-        dependencyMap: Map<String, List<String>>
-    ): List<List<String>> {
-        val nodes = graph.keys.toSet()
-        if (nodes.isEmpty()) return emptyList()
-
-        var index = 0
-        val nodeIndex = mutableObject2IntMapOf<String>().apply { defaultReturnValue(-1) }
-        val lowLink = mutableObject2IntMapOf<String>().apply { defaultReturnValue(-1) }
-        val onStack = mutableObjectSetOf<String>()
-        val stack = ArrayDeque<String>()
-        val sccs = mutableObjectListOf<List<String>>()
-
-        fun strongConnect(node: String) {
-            nodeIndex[node] = index
-            lowLink[node] = index
-            index++
-            stack.addFirst(node)
-            onStack.add(node)
-
-            // Consider all successors (nodes that this node depends on)
-            for (dependency in dependencyMap[node].orEmpty()) {
-                if (dependency !in nodes) continue
-
-                if (dependency !in nodeIndex) {
-                    strongConnect(dependency)
-                    lowLink[node] = minOf(lowLink.getInt(node), lowLink.getInt(dependency))
-                } else if (dependency in onStack) {
-                    lowLink[node] = minOf(lowLink.getInt(node), nodeIndex.getInt(dependency))
-                }
-            }
-
-            // If node is a root node, pop the stack and generate an SCC
-            if (lowLink.getInt(node) == nodeIndex.getInt(node)) {
-                val scc = mutableObjectListOf<String>()
-                do {
-                    val w = stack.removeFirst()
-                    onStack.remove(w)
-                    scc.add(w)
-                } while (w != node)
-                sccs.add(scc)
-            }
-        }
-
-        for (node in nodes) {
-            if (node !in nodeIndex) {
-                strongConnect(node)
-            }
-        }
-
-        // Filter for SCCs that represent cycles (size > 1 or self-loop)
-        val cycles = mutableObjectListOf<List<String>>()
-        for (scc in sccs) {
-            if (scc.size > 1) {
-                // Reconstruct the cycle path
-                val cyclePath = reconstructCyclePath(scc, dependencyMap)
-                cycles.add(cyclePath)
-            } else if (scc.size == 1) {
-                // Check for self-loop
-                val node = scc[0]
-                if (dependencyMap[node]?.contains(node) == true) {
-                    cycles.add(listOf(node, node))
-                }
-            }
-        }
-
-        return cycles
-    }
-
-    /**
-     * Reconstructs a readable cycle path from an SCC.
-     * Returns a list where the first and last elements are the same, representing the cycle.
-     */
-    private fun reconstructCyclePath(
-        scc: List<String>,
-        dependencyMap: Map<String, List<String>>
-    ): List<String> {
-        if (scc.size <= 1) {
-            // Self-loop case
-            return if (scc.isNotEmpty()) listOf(scc[0], scc[0]) else scc
-        }
-
-        val sccSet = scc.toObjectSet()
-
-        // Try to find a cycle starting from each node in the SCC
-        for (startNode in scc) {
-            val path = mutableObjectListOf<String>()
-            val visited = mutableObjectSetOf<String>()
-
-            fun dfs(node: String): Boolean {
-                if (node == startNode && path.isNotEmpty()) {
-                    path.add(node) // Complete the cycle
-                    return true
-                }
-                if (node in visited) return false
-
-                visited.add(node)
-                path.add(node)
-
-                for (dep in dependencyMap[node].orEmpty()) {
-                    if (dep in sccSet) {
-                        if (dfs(dep)) return true
-                    }
-                }
-
-                path.removeAt(path.lastIndex)
-                visited.remove(node)
-                return false
-            }
-
-            if (dfs(startNode) && path.size > 1) {
-                return path
-            }
-        }
-
-        // Fallback: construct a simple representation from the SCC
-        return scc + scc[0]
-    }
-
-    /**
-     * Builds a detailed error message for detected cycles.
-     */
-    private fun buildCycleErrorMessage(
-        cycles: List<List<String>>,
-        metaByClassName: Map<String, PluginComponentMeta.Component>
-    ): String {
-        val sb = StringBuilder()
-        sb.appendLine("Circular component dependencies detected:")
-        sb.appendLine()
-
-        cycles.forEachIndexed { index, cycle ->
-            // Show short names in summary for readability
-            val cycleDisplay = cycle.map { it.substringAfterLast('.') }
-            sb.appendLine("  Cycle ${index + 1}: ${cycleDisplay.joinToString(" → ")}")
-        }
-
-        sb.appendLine()
-        sb.appendLine("Details (full class names):")
-
-        for (cycle in cycles) {
-            for (i in 0 until cycle.size - 1) {
-                val from = cycle[i]
-                val to = cycle[i + 1]
-                sb.appendLine("  — $from")
-                sb.appendLine("      depends on $to (via @DependsOnComponent)")
-            }
-            sb.appendLine()
-        }
-
-        return sb.toString()
     }
 
     private fun logMissingDependencies(owner: Any, componentClassName: String, missing: Map<String, Set<String>>) {
