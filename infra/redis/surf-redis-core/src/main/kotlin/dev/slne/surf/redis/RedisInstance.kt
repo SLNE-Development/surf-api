@@ -6,7 +6,11 @@ import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.epoll.Epoll
 import io.netty.channel.epoll.EpollIoHandler
+import io.netty.channel.kqueue.KQueue
+import io.netty.channel.kqueue.KQueueIoHandler
 import io.netty.channel.nio.NioIoHandler
+import io.netty.channel.uring.IoUring
+import io.netty.channel.uring.IoUringIoHandler
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
 import java.io.InputStream
@@ -20,7 +24,13 @@ abstract class RedisInstance {
     val redissonExecutorService: ExecutorService
 
     init {
-        val ioHandlerFactory = if (Epoll.isAvailable()) EpollIoHandler.newFactory() else NioIoHandler.newFactory()
+        val ioHandlerFactory = when {
+            IoUring.isAvailable() -> IoUringIoHandler.newFactory()
+            Epoll.isAvailable() -> EpollIoHandler.newFactory()
+            KQueue.isAvailable() -> KQueueIoHandler.newFactory()
+            else -> NioIoHandler.newFactory()
+        }
+
         val nettyThreadFactory = Thread.ofPlatform()
             .name("redisson-netty-thread-", 0)
             .uncaughtExceptionHandler { thread, throwable ->
@@ -56,13 +66,15 @@ abstract class RedisInstance {
     abstract val dataPath: Path
 
     fun load() {
-        if (Epoll.isAvailable()) {
-            log.atInfo()
-                .log("Using Epoll for Redis networking")
-        } else {
-            log.atInfo()
-                .log("Using NIO for Redis networking")
+        val networkingString = when {
+            IoUring.isAvailable() -> "IoUring"
+            Epoll.isAvailable() -> "Epoll"
+            KQueue.isAvailable() -> "KQueue"
+            else -> "NIO"
         }
+
+        log.atInfo()
+            .log("Enabling Redis networking using %s transport", networkingString)
         RedisConfig.init()
     }
 

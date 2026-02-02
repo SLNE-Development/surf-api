@@ -17,6 +17,8 @@ import dev.slne.surf.redis.sync.set.SyncSetImpl
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
 import io.netty.channel.epoll.Epoll
+import io.netty.channel.kqueue.KQueue
+import io.netty.channel.uring.IoUring
 import kotlinx.serialization.KSerializer
 import org.redisson.config.Config
 import org.redisson.config.EqualJitterDelay
@@ -30,10 +32,11 @@ import kotlin.time.toJavaDuration
 
 @AutoService(RedisComponentProvider::class)
 class RedisComponentProviderImpl : RedisComponentProvider {
-    private val transportMode = if (Epoll.isAvailable()) {
-        TransportMode.EPOLL
-    } else {
-        TransportMode.NIO
+    private val transportMode = when {
+        IoUring.isAvailable() -> TransportMode.IO_URING
+        Epoll.isAvailable() -> TransportMode.EPOLL
+        KQueue.isAvailable() -> TransportMode.KQUEUE
+        else -> TransportMode.NIO
     }
 
     override val eventLoopGroup get() = RedisInstance.instance.eventLoopGroup
