@@ -179,6 +179,9 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         original.getParameterCount());
     final String methodName = getMethodName(original, nameAnnotation, null, staticAnnotation, null);
     final Method method = MethodUtils.getMatchingMethod(clazz, methodName, paramTypes);
+    if (method != null) {
+      method.setAccessible(true);
+    }
     if (method == null) {
       throw new NoSuchMethodException(
           "Method " + methodName + " with params " + Arrays.toString(paramTypes));
