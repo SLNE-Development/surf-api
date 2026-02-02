@@ -7,10 +7,7 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSAnnotation
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.*
 import dev.slne.surf.surfapi.processor.util.nameOf
 import dev.slne.surf.surfapi.processor.util.toBinaryName
 import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
@@ -66,18 +63,27 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
             .toList()
 
         // Get all classes that have annotations which are themselves annotated with @ComponentMeta (meta-annotations)
-        val metaAnnotated = resolver.getAllFiles()
-            .flatMap { it.declarations }
-            .filterIsInstance<KSClassDeclaration>()
-            .filter { classDecl ->
-                // Check if any annotation on this class is itself annotated with @ComponentMeta
-                classDecl.annotations.any { annotation ->
-                    hasComponentMetaAnnotation(annotation)
-                }
-            }
-            .toList()
+        val metaAnnotationClasses = directlyAnnotated
+            .filter { it.classKind == ClassKind.ANNOTATION_CLASS }
 
-        val allComponentClasses = (directlyAnnotated + metaAnnotated).distinctBy { it.qualifiedName?.asString() }
+        val metaAnnotated = metaAnnotationClasses.flatMap { metaAnnotation ->
+            val qualifiedName = metaAnnotation.qualifiedName?.asString()
+            if (qualifiedName == null) {
+                logger.warn("Meta-annotation has no qualified name: $metaAnnotation")
+                return@flatMap emptyList()
+            }
+
+            logger.info("Searching for classes with meta-annotation: $qualifiedName")
+
+            resolver.getSymbolsWithAnnotation(qualifiedName)
+                .filterIsInstance<KSClassDeclaration>()
+                .filter { it.classKind != ClassKind.ANNOTATION_CLASS } // Exclude annotation classes themselves
+                .toList()
+                .also { logger.info("Found ${it.size} classes with @$qualifiedName") }
+        }
+
+        val allComponentClasses = (directlyAnnotated.filter { it.classKind != ClassKind.ANNOTATION_CLASS } + metaAnnotated)
+            .distinctBy { it.qualifiedName?.asString() }
 
         val componentMetas = allComponentClasses.mapNotNull { componentClass ->
             processComponentClass(componentClass, deferred)
