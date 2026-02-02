@@ -6,6 +6,12 @@ import dev.slne.surf.surfapi.core.api.reflection.Static;
 import dev.slne.surf.surfapi.core.api.util.SurfUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -19,11 +25,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
-import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
@@ -176,7 +177,10 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
     final Class<?>[] paramTypes = Arrays.copyOfRange(original.getParameterTypes(), paramOffset,
         original.getParameterCount());
     final String methodName = getMethodName(original, nameAnnotation, null, staticAnnotation, null);
-    final Method method = MethodUtils.getMatchingAccessibleMethod(clazz, methodName, paramTypes);
+    final Method method = MethodUtils.getMatchingMethod(clazz, methodName, paramTypes);
+    if (method != null) {
+      method.setAccessible(true);
+    }
     if (method == null) {
       throw new NoSuchMethodException(
           "Method " + methodName + " with params " + Arrays.toString(paramTypes));
