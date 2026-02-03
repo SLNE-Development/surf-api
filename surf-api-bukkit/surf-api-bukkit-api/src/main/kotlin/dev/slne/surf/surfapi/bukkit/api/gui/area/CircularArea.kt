@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.area
 
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
-import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
@@ -11,8 +10,7 @@ import kotlin.math.sqrt
  */
 data class CircularArea(
     val center: Slot,
-    val radius: Double,
-    override val priority: ComponentPriority = ComponentPriority.NORMAL
+    val radius: Double
 ) : ComponentArea {
     override fun slots(): Set<Slot> {
         val slots = mutableSetOf<Slot>()

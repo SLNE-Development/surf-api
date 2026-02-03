@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.area
 
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
-import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 
 /**
  * A rectangular (cuboid) area defined by start and end slots.
@@ -9,8 +8,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
  */
 data class CuboidArea(
     val startSlot: Slot,
-    val endSlot: Slot,
-    override val priority: ComponentPriority = ComponentPriority.NORMAL
+    val endSlot: Slot
 ) : ComponentArea {
     override fun slots(): Set<Slot> {
         val slots = mutableSetOf<Slot>()

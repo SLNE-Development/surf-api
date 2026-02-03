@@ -1,15 +1,13 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.area
 
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
-import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 
 /**
  * An area consisting of a single slot.
  * Used for simple components like buttons or single items.
  */
 data class SingleSlotArea(
-    val slot: Slot,
-    override val priority: ComponentPriority = ComponentPriority.NORMAL
+    val slot: Slot
 ) : ComponentArea {
     override fun slots(): Set<Slot> = setOf(slot)
     

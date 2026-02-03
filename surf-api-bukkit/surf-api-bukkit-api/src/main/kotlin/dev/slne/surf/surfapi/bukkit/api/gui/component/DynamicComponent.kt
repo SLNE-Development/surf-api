@@ -13,10 +13,10 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 open class DynamicComponent(
     slot: Slot,
     private val renderer: (ViewContext) -> GuiItem?,
-    priority: ComponentPriority = ComponentPriority.NORMAL,
+    override val priority: ComponentPriority = ComponentPriority.NORMAL,
     private val clickHandler: (ClickContext.() -> Unit)? = null
 ) : Component() {
-    override val area: ComponentArea = SingleSlotArea(slot, priority)
+    override val area: ComponentArea = SingleSlotArea(slot)
     
     override fun render(context: ViewContext): GuiItem? = renderer(context)
 

@@ -24,10 +24,9 @@ abstract class Component {
     
     /**
      * Priority for handling clicks and rendering when components overlap.
-     * Delegates to the area's priority.
+     * Higher priority components are rendered on top and handle clicks first.
      */
-    val priority: ComponentPriority
-        get() = area.priority
+    abstract val priority: ComponentPriority
     
     /**
      * Width of the component's bounding box.

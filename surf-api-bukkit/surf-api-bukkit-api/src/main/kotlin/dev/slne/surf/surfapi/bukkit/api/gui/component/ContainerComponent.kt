@@ -11,7 +11,8 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
  * The area can be any shape (cuboid, circular, custom).
  */
 abstract class ContainerComponent(
-    override val area: ComponentArea
+    override val area: ComponentArea,
+    override val priority: ComponentPriority = ComponentPriority.NORMAL
 ) : Component() {
     /**
      * Render multiple items at their respective slots.

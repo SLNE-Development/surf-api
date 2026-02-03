@@ -24,9 +24,9 @@ class PaginationComponent<T>(
     endSlot: Slot,
     private val items: () -> List<T>,
     private val itemRenderer: (T, ViewContext) -> GuiItem?,
-    priority: ComponentPriority = ComponentPriority.NORMAL,
+    override val priority: ComponentPriority = ComponentPriority.NORMAL,
     private val onItemClick: ((T, ClickContext) -> Unit)? = null
-) : ContainerComponent(CuboidArea(startSlot, endSlot, priority)) {
+) : ContainerComponent(CuboidArea(startSlot, endSlot), priority) {
     private val currentPages = mutableMapOf<UUID, Int>()
     
     /**
