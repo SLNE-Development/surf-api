@@ -33,4 +33,22 @@ interface ComponentArea {
      * Height of the bounding box containing this area.
      */
     val height: Int
+
+    /**
+     * Get the first slot in this area based on index.
+     *
+     * @return The slot with the lowest index, or null if area is empty.
+     */
+    fun first(): Slot? {
+        return slots().minByOrNull { it.index }
+    }
+
+    /**
+     * Get the last slot in this area based on index.
+     *
+     * @return The slot with the highest index, or null if area is empty.
+     */
+    fun last(): Slot? {
+        return slots().maxByOrNull { it.index }
+    }
 }

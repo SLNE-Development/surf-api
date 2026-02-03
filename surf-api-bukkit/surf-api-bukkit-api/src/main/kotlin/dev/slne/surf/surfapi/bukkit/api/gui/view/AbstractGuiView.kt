@@ -51,7 +51,7 @@ open class AbstractGuiView : GuiView() {
                 // Get highest priority component
                 val component = componentsAtSlot.first()
                 val context = createViewContext(player)
-                
+
                 // Check if it's a container component
                 val slotsToRender = component.renderSlots(context)
                 if (slotsToRender.isNotEmpty()) {
@@ -63,7 +63,7 @@ open class AbstractGuiView : GuiView() {
                     }
                 } else {
                     // Regular component - only render at its start slot
-                    if (slot == component.startSlot) {
+                    if (slot == component.area.first()) {
                         val guiItem = component.render(context)
                         if (guiItem != null && slot.index < inventory.size) {
                             inventory.setItem(slot.index, guiItem.toItemStack())
@@ -129,7 +129,7 @@ open class AbstractGuiView : GuiView() {
 
         // Clear inventory first
         inventory.clear()
-        
+
         // Render all slots, respecting priority
         val allSlots = (0 until inventory.size).map { Slot.of(it) }
         allSlots.forEach { slot ->
@@ -138,7 +138,7 @@ open class AbstractGuiView : GuiView() {
                 // Get highest priority component
                 val component = componentsAtSlot.first()
                 val context = createViewContext(player)
-                
+
                 // Check if it's a container component
                 val slotsToRender = component.renderSlots(context)
                 if (slotsToRender.isNotEmpty()) {
@@ -150,7 +150,7 @@ open class AbstractGuiView : GuiView() {
                     }
                 } else {
                     // Regular component - only render at its start slot
-                    if (slot == component.startSlot) {
+                    if (slot == component.area.first()) {
                         val guiItem = component.render(context)
                         if (guiItem != null && slot.index < inventory.size) {
                             inventory.setItem(slot.index, guiItem.toItemStack())
@@ -167,7 +167,7 @@ open class AbstractGuiView : GuiView() {
     private fun refreshComponentSlots(player: Player, component: Component) {
         val inventory = inventories[player.uniqueId] ?: return
         val context = createViewContext(player)
-        
+
         // Get all slots this component occupies
         val slotsToRender = component.renderSlots(context)
         if (slotsToRender.isNotEmpty()) {
@@ -181,8 +181,9 @@ open class AbstractGuiView : GuiView() {
             }
         } else {
             // Regular component - refresh its start slot
-            val slot = component.startSlot
+            val slot = component.area.first() ?: return
             val highestPriorityComponent = findComponentsBySlot(slot).firstOrNull()
+
             if (highestPriorityComponent == component) {
                 val guiItem = component.render(context)
                 if (guiItem != null && slot.index < inventory.size) {
@@ -201,10 +202,10 @@ open class AbstractGuiView : GuiView() {
         }
 
         val slot = Slot.of(event.slot)
-        
+
         // Find all components at this slot, sorted by priority (highest first)
         val componentsAtSlot = findComponentsBySlot(slot)
-        
+
         // Only the highest priority component handles the click
         val component = componentsAtSlot.firstOrNull()
 
