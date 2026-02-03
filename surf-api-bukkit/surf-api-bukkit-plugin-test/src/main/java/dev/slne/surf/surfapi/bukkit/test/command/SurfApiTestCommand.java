@@ -18,26 +18,26 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.VisualizerTest;
 
 public class SurfApiTestCommand extends CommandAPICommand {
 
-  public SurfApiTestCommand() {
-    super("surfapitest");
+    public SurfApiTestCommand() {
+        super("surfapitest");
 
-    withPermission("surfapitest.use");
+        withPermission("surfapitest.use");
 
-    withSubcommands(
-        new PacketLoreTest("packetlore"),
-        new ScoreboardTest("scoreboard"),
-        new SmoothTimeSkip("smoothtimeskip"),
-        new PacketEntityTest("packetentity"),
-        new ReflectionTest("reflection"),
-        new PrefixConfigTest("prefixconfig"),
-        new CommandExceptionTest("commandexception"),
-        new MaxStacksizeTest("maxstacksize"),
-        new VisualizerTest("visualizer"),
-        new GlowingTest("glowing"),
-        new PaginationTest("pagination"),
-        new ToastTest(("toast")),
-        new SuspendCommandExecutionTest("suspendCommandExecution"),
-        new GuiTest("gui")
-    );
-  }
+        withSubcommands(
+            new PacketLoreTest("packetlore"),
+            new ScoreboardTest("scoreboard"),
+            new SmoothTimeSkip("smoothtimeskip"),
+            new PacketEntityTest("packetentity"),
+            new ReflectionTest("reflection"),
+            new PrefixConfigTest("prefixconfig"),
+            new CommandExceptionTest("commandexception"),
+            new MaxStacksizeTest("maxstacksize"),
+            new VisualizerTest("visualizer"),
+            new GlowingTest("glowing"),
+            new PaginationTest("pagination"),
+            new ToastTest("toast"),
+            new SuspendCommandExecutionTest("suspendCommandExecution"),
+            new GuiTest("gui")
+        );
+    }
 }
