@@ -2,7 +2,6 @@ package dev.slne.surf.surfapi.bukkit.api.gui.context
 
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
-import dev.slne.surf.surfapi.bukkit.api.gui.props.PropContext
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -31,15 +30,9 @@ interface ViewContext {
         get() = player.uniqueId
     
     /**
-     * Props context for accessing prop values.
+     * Get a prop value from the view.
      */
-    val propContext: PropContext
-        get() = PropContext(viewerId, player)
-    
-    /**
-     * Get a prop value.
-     */
-    fun <T> getProp(prop: Prop<T>): T = prop.get(propContext)
+    fun <T> getProp(prop: Prop<T>): T = prop.get()
     
     /**
      * Navigate to another view.

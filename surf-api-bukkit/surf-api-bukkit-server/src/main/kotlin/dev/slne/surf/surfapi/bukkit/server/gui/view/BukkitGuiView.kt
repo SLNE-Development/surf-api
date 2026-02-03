@@ -34,8 +34,15 @@ abstract class BukkitGuiView : GuiView() {
     override fun open(player: Player) {
         super.open(player)
         
-        // Create inventory
-        val inventory = Bukkit.createInventory(null, config.size, config.title)
+        // Create inventory based on type
+        val inventory = when (config.type) {
+            org.bukkit.event.inventory.InventoryType.CHEST -> {
+                Bukkit.createInventory(null, config.size, config.title)
+            }
+            else -> {
+                Bukkit.createInventory(null, config.type, config.title)
+            }
+        }
         inventories[player.uniqueId] = inventory
         
         // Register with listener
@@ -44,8 +51,22 @@ abstract class BukkitGuiView : GuiView() {
         // Render components
         components.forEach { (slot, component) ->
             val context = createViewContext(player)
-            val item = component.render(context)
-            inventory.setItem(slot, item)
+            
+            // Handle container components (render multiple slots)
+            val slotsToRender = component.renderSlots(context)
+            if (slotsToRender.isNotEmpty()) {
+                slotsToRender.forEach { (slotPos, item) ->
+                    if (slotPos < inventory.size) {
+                        inventory.setItem(slotPos, item)
+                    }
+                }
+            } else {
+                // Regular component (single item)
+                val item = component.render(context)
+                if (item != null && slot < inventory.size) {
+                    inventory.setItem(slot, item)
+                }
+            }
         }
         
         // Open inventory
@@ -107,8 +128,22 @@ abstract class BukkitGuiView : GuiView() {
         
         components.forEach { (slot, component) ->
             val context = createViewContext(player)
-            val item = component.render(context)
-            inventory.setItem(slot, item)
+            
+            // Handle container components
+            val slotsToRender = component.renderSlots(context)
+            if (slotsToRender.isNotEmpty()) {
+                slotsToRender.forEach { (slotPos, item) ->
+                    if (slotPos < inventory.size) {
+                        inventory.setItem(slotPos, item)
+                    }
+                }
+            } else {
+                // Regular component
+                val item = component.render(context)
+                if (item != null && slot < inventory.size) {
+                    inventory.setItem(slot, item)
+                }
+            }
         }
     }
     
@@ -120,8 +155,22 @@ abstract class BukkitGuiView : GuiView() {
         val slot = components.entries.find { it.value == component }?.key ?: return
         
         val context = createViewContext(player)
-        val item = component.render(context)
-        inventory.setItem(slot, item)
+        
+        // Handle container components
+        val slotsToRender = component.renderSlots(context)
+        if (slotsToRender.isNotEmpty()) {
+            slotsToRender.forEach { (slotPos, item) ->
+                if (slotPos < inventory.size) {
+                    inventory.setItem(slotPos, item)
+                }
+            }
+        } else {
+            // Regular component
+            val item = component.render(context)
+            if (item != null && slot < inventory.size) {
+                inventory.setItem(slot, item)
+            }
+        }
     }
     
     /**

@@ -3,9 +3,9 @@ package dev.slne.surf.surfapi.bukkit.api.gui.view
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
-import dev.slne.surf.surfapi.bukkit.api.gui.props.PropContext
 import net.kyori.adventure.text.Component as AdventureComponent
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryType
 import kotlin.time.Duration
 
 /**
@@ -13,10 +13,23 @@ import kotlin.time.Duration
  */
 data class ViewConfig(
     var title: AdventureComponent = AdventureComponent.text("GUI"),
-    var size: Int = 54, // 6 rows by default
+    var size: Int = 54, // 6 rows by default for CHEST
+    var type: InventoryType = InventoryType.CHEST,
     var cancelOnClick: Boolean = true,
     var closeOnClickOutside: Boolean = false
-)
+) {
+    /**
+     * Set rows (only for CHEST type).
+     * Automatically adjusts size.
+     */
+    var rows: Int
+        get() = size / 9
+        set(value) {
+            require(type == InventoryType.CHEST) { "Rows can only be set for CHEST type" }
+            require(value in 1..6) { "Rows must be between 1 and 6" }
+            size = value * 9
+        }
+}
 
 /**
  * Base class for all GUI views.

@@ -2,18 +2,27 @@ package dev.slne.surf.surfapi.bukkit.api.gui.props
 
 /**
  * Default pagination prop for managing paginated content in GUIs.
+ * Viewer-specific pagination state.
  */
 class PaginationProp<T>(
     override val name: String = "pagination",
     private val items: () -> List<T>,
-    private val pageSize: Int = 9,
-    private val scope: PropScope = PropScope.VIEWER
+    private val pageSize: Int = 9
 ) : Prop<PaginationState<T>> {
     
     private val currentPages = mutableMapOf<java.util.UUID, Int>()
     
-    override fun get(context: PropContext): PaginationState<T> {
-        val currentPage = currentPages.getOrPut(context.viewerId) { 0 }
+    override fun get(): PaginationState<T> {
+        // Default state when no viewer context
+        return getState(0)
+    }
+    
+    fun get(viewerId: java.util.UUID): PaginationState<T> {
+        val currentPage = currentPages.getOrPut(viewerId) { 0 }
+        return getState(currentPage)
+    }
+    
+    private fun getState(currentPage: Int): PaginationState<T> {
         val allItems = items()
         val totalPages = (allItems.size + pageSize - 1) / pageSize
         
@@ -36,26 +45,30 @@ class PaginationProp<T>(
         )
     }
     
-    fun nextPage(context: PropContext) {
-        val current = currentPages.getOrPut(context.viewerId) { 0 }
-        val state = get(context)
+    fun nextPage(viewerId: java.util.UUID) {
+        val current = currentPages.getOrPut(viewerId) { 0 }
+        val state = getState(current)
         if (state.hasNextPage) {
-            currentPages[context.viewerId] = current + 1
+            currentPages[viewerId] = current + 1
         }
     }
     
-    fun previousPage(context: PropContext) {
-        val current = currentPages.getOrPut(context.viewerId) { 0 }
+    fun previousPage(viewerId: java.util.UUID) {
+        val current = currentPages.getOrPut(viewerId) { 0 }
         if (current > 0) {
-            currentPages[context.viewerId] = current - 1
+            currentPages[viewerId] = current - 1
         }
     }
     
-    fun setPage(context: PropContext, page: Int) {
-        val state = get(context)
+    fun setPage(viewerId: java.util.UUID, page: Int) {
+        val state = getState(0) // Get state to check total pages
         if (page in 0 until state.totalPages) {
-            currentPages[context.viewerId] = page
+            currentPages[viewerId] = page
         }
+    }
+    
+    fun clear(viewerId: java.util.UUID) {
+        currentPages.remove(viewerId)
     }
 }
 

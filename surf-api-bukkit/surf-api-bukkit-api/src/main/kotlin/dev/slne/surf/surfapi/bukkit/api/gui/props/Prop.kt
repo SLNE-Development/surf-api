@@ -7,13 +7,13 @@ import kotlin.reflect.KProperty
 
 /**
  * Base interface for all props in the GUI framework.
- * Props can be scoped as global (shared across all viewers) or viewer-specific (isolated per viewer).
+ * All props are global to the view and shared across all viewers.
  */
 sealed interface Prop<T> {
     /**
-     * Gets the value of this prop for the given context.
+     * Gets the value of this prop.
      */
-    fun get(context: PropContext): T
+    fun get(): T
     
     /**
      * The name of this prop.
@@ -22,21 +22,21 @@ sealed interface Prop<T> {
 }
 
 /**
- * Context for prop evaluation, contains information about the current viewer.
+ * Viewer-specific prop storage.
+ * Maps viewer UUIDs to their prop values.
  */
-data class PropContext(
-    val viewerId: UUID,
-    val viewer: Player?
-)
-
-/**
- * Defines the scope of a prop.
- */
-enum class PropScope {
-    /** Shared across all viewers */
-    GLOBAL,
-    /** Isolated per viewer */
-    VIEWER
+class ViewerPropStorage<T>(private val initialValue: () -> T) {
+    private val storage = mutableMapOf<UUID, T>()
+    
+    fun get(viewerId: UUID): T = storage.getOrPut(viewerId) { initialValue() }
+    
+    fun set(viewerId: UUID, value: T) {
+        storage[viewerId] = value
+    }
+    
+    fun clear(viewerId: UUID) {
+        storage.remove(viewerId)
+    }
 }
 
 /**
@@ -44,42 +44,55 @@ enum class PropScope {
  */
 class ImmutableProp<T>(
     override val name: String,
-    private val value: T,
-    private val scope: PropScope = PropScope.VIEWER
+    private val value: T
 ) : Prop<T> {
-    override fun get(context: PropContext): T = value
+    override fun get(): T = value
     
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
 }
 
 /**
  * Mutable prop - always available and mutable.
+ * Global to the view, shared across all viewers.
  */
 class MutableProp<T>(
     override val name: String,
-    initialValue: T,
-    private val scope: PropScope = PropScope.VIEWER
+    initialValue: T
 ) : Prop<T> {
-    private val globalValue = AtomicReference(initialValue)
-    private val viewerValues = mutableMapOf<UUID, T>()
+    private val value = AtomicReference(initialValue)
     
-    override fun get(context: PropContext): T {
-        return when (scope) {
-            PropScope.GLOBAL -> globalValue.get()
-            PropScope.VIEWER -> viewerValues.getOrPut(context.viewerId) { globalValue.get() }
-        }
+    override fun get(): T = value.get()
+    
+    fun set(value: T) {
+        this.value.set(value)
     }
     
-    fun set(context: PropContext, value: T) {
-        when (scope) {
-            PropScope.GLOBAL -> globalValue.set(value)
-            PropScope.VIEWER -> viewerValues[context.viewerId] = value
-        }
-    }
-    
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T = globalValue.get()
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value.get()
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        globalValue.set(value)
+        this.value.set(value)
+    }
+}
+
+/**
+ * Viewer-specific mutable prop - isolated per viewer.
+ */
+class ViewerMutableProp<T>(
+    override val name: String,
+    initialValue: T
+) : Prop<T> {
+    private val globalDefault = initialValue
+    private val storage = ViewerPropStorage { globalDefault }
+    
+    override fun get(): T = globalDefault
+    
+    fun get(viewerId: UUID): T = storage.get(viewerId)
+    
+    fun set(viewerId: UUID, value: T) {
+        storage.set(viewerId, value)
+    }
+    
+    fun clear(viewerId: UUID) {
+        storage.clear(viewerId)
     }
 }
 
@@ -88,10 +101,9 @@ class MutableProp<T>(
  */
 class ComputedProp<T>(
     override val name: String,
-    private val compute: (PropContext) -> T,
-    private val scope: PropScope = PropScope.VIEWER
+    private val compute: () -> T
 ) : Prop<T> {
-    override fun get(context: PropContext): T = compute(context)
+    override fun get(): T = compute()
 }
 
 /**
@@ -99,36 +111,24 @@ class ComputedProp<T>(
  */
 class LazyProp<T>(
     override val name: String,
-    private val initializer: (PropContext) -> T,
-    private val mutable: Boolean = false,
-    private val scope: PropScope = PropScope.VIEWER
+    private val initializer: () -> T,
+    private val mutable: Boolean = false
 ) : Prop<T> {
-    private val globalValue = lazy { initializer(PropContext(UUID.randomUUID(), null)) }
-    private val viewerValues = mutableMapOf<UUID, T>()
-    private val initialized = mutableSetOf<UUID>()
+    private val value = lazy { initializer() }
+    private var mutableValue: T? = null
     
-    override fun get(context: PropContext): T {
-        return when (scope) {
-            PropScope.GLOBAL -> {
-                if (mutable && context.viewerId in initialized) {
-                    viewerValues.getOrPut(context.viewerId) { globalValue.value }
-                } else {
-                    globalValue.value
-                }
-            }
-            PropScope.VIEWER -> {
-                viewerValues.getOrPut(context.viewerId) {
-                    initialized.add(context.viewerId)
-                    initializer(context)
-                }
-            }
+    override fun get(): T {
+        return if (mutable && mutableValue != null) {
+            mutableValue!!
+        } else {
+            value.value
         }
     }
     
-    fun set(context: PropContext, value: T) {
+    fun set(value: T) {
         if (!mutable) {
             throw UnsupportedOperationException("Cannot set immutable lazy prop")
         }
-        viewerValues[context.viewerId] = value
+        mutableValue = value
     }
 }

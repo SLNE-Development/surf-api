@@ -43,7 +43,7 @@ class ComponentBuilder {
     /**
      * Build the component.
      */
-    internal fun build(renderer: (ViewContext) -> ItemStack): Component {
+    internal fun build(renderer: (ViewContext) -> ItemStack?): Component {
         return object : DynamicComponent(renderer, onClick) {
             override val updateInterval: Duration? = this@ComponentBuilder.updateInterval
             override val props: Map<String, Prop<*>> = _props
@@ -85,7 +85,7 @@ fun component(
  * Create a component with a dynamic renderer.
  */
 fun dynamicComponent(
-    renderer: (ViewContext) -> ItemStack,
+    renderer: (ViewContext) -> ItemStack?,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
@@ -103,36 +103,43 @@ class PropsBuilder {
     /**
      * Create an immutable prop.
      */
-    fun <T> immutable(name: String, value: T, scope: PropScope = PropScope.VIEWER): ImmutableProp<T> {
-        return ImmutableProp(name, value, scope).also { _props[name] = it }
+    fun <T> immutable(name: String, value: T): ImmutableProp<T> {
+        return ImmutableProp(name, value).also { _props[name] = it }
     }
     
     /**
-     * Create a mutable prop.
+     * Create a mutable prop (global to view).
      */
-    fun <T> mutable(name: String, initialValue: T, scope: PropScope = PropScope.VIEWER): MutableProp<T> {
-        return MutableProp(name, initialValue, scope).also { _props[name] = it }
+    fun <T> mutable(name: String, initialValue: T): MutableProp<T> {
+        return MutableProp(name, initialValue).also { _props[name] = it }
+    }
+    
+    /**
+     * Create a viewer-specific mutable prop.
+     */
+    fun <T> viewerMutable(name: String, initialValue: T): ViewerMutableProp<T> {
+        return ViewerMutableProp(name, initialValue).also { _props[name] = it }
     }
     
     /**
      * Create a computed prop.
      */
-    fun <T> computed(name: String, scope: PropScope = PropScope.VIEWER, compute: (PropContext) -> T): ComputedProp<T> {
-        return ComputedProp(name, compute, scope).also { _props[name] = it }
+    fun <T> computed(name: String, compute: () -> T): ComputedProp<T> {
+        return ComputedProp(name, compute).also { _props[name] = it }
     }
     
     /**
      * Create a lazy prop.
      */
-    fun <T> lazy(name: String, mutable: Boolean = false, scope: PropScope = PropScope.VIEWER, initializer: (PropContext) -> T): LazyProp<T> {
-        return LazyProp(name, initializer, mutable, scope).also { _props[name] = it }
+    fun <T> lazy(name: String, mutable: Boolean = false, initializer: () -> T): LazyProp<T> {
+        return LazyProp(name, initializer, mutable).also { _props[name] = it }
     }
     
     /**
      * Create a pagination prop.
      */
-    fun <T> pagination(name: String = "pagination", pageSize: Int = 9, scope: PropScope = PropScope.VIEWER, items: () -> List<T>): PaginationProp<T> {
-        return PaginationProp(name, items, pageSize, scope).also { _props[name] = it }
+    fun <T> pagination(name: String = "pagination", pageSize: Int = 9, items: () -> List<T>): PaginationProp<T> {
+        return PaginationProp(name, items, pageSize).also { _props[name] = it }
     }
     
     /**

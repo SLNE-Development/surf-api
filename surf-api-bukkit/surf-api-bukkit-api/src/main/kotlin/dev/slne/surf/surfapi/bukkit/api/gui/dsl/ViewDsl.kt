@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import dev.slne.surf.surfapi.bukkit.api.gui.view.ViewConfig
 import net.kyori.adventure.text.Component as AdventureComponent
 import org.bukkit.Material
+import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 
 /**
@@ -21,9 +22,12 @@ annotation class ViewDsl
 class ViewConfigBuilder {
     var title: AdventureComponent = AdventureComponent.text("GUI")
     var size: Int = 54
+    var type: InventoryType = InventoryType.CHEST
     var rows: Int
-        get() = size / 9
+        get() = if (type == InventoryType.CHEST) size / 9 else 1
         set(value) {
+            require(type == InventoryType.CHEST) { "Rows can only be set for CHEST type" }
+            require(value in 1..6) { "Rows must be between 1 and 6" }
             size = value * 9
         }
     var cancelOnClick: Boolean = true
@@ -32,7 +36,12 @@ class ViewConfigBuilder {
     internal fun build(): ViewConfig {
         return ViewConfig().apply {
             this.title = this@ViewConfigBuilder.title
-            this.size = this@ViewConfigBuilder.size
+            this.type = this@ViewConfigBuilder.type
+            this.size = if (this.type == InventoryType.CHEST) {
+                this@ViewConfigBuilder.size
+            } else {
+                this.type.defaultSize
+            }
             this.cancelOnClick = this@ViewConfigBuilder.cancelOnClick
             this.closeOnClickOutside = this@ViewConfigBuilder.closeOnClickOutside
         }

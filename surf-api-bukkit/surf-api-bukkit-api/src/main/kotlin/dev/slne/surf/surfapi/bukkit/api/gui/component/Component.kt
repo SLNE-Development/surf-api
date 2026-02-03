@@ -76,8 +76,15 @@ abstract class Component {
     
     /**
      * Renders the component to an ItemStack.
+     * For container components, return null.
      */
-    abstract fun render(context: ViewContext): ItemStack
+    open fun render(context: ViewContext): ItemStack? = null
+    
+    /**
+     * For container components, render multiple items at specific slots.
+     * Returns a map of slot to ItemStack.
+     */
+    open fun renderSlots(context: ViewContext): Map<Int, ItemStack> = emptyMap()
     
     /**
      * Add a child component.
@@ -143,11 +150,11 @@ open class ItemComponent(
  * Dynamic component that renders based on a callback.
  */
 open class DynamicComponent(
-    private val renderer: (ViewContext) -> ItemStack,
+    private val renderer: (ViewContext) -> ItemStack?,
     private val clickHandler: (ClickContext.() -> Unit)? = null
 ) : Component() {
     
-    override fun render(context: ViewContext): ItemStack = renderer(context)
+    override fun render(context: ViewContext): ItemStack? = renderer(context)
     
     override fun onClick(context: ClickContext) {
         clickHandler?.invoke(context)
@@ -155,17 +162,18 @@ open class DynamicComponent(
 }
 
 /**
- * Container component that can hold multiple child components.
+ * Container component that renders multiple items at specific slots.
+ * This is useful for paginated components or complex layouts.
  */
 abstract class ContainerComponent : Component() {
     /**
-     * Layout children within the container.
-     * Returns a map of slot positions to components.
+     * Render multiple items at their respective slots.
+     * Override this to provide the slot-to-item mapping.
      */
-    abstract fun layout(context: ViewContext): Map<Int, Component>
+    abstract override fun renderSlots(context: ViewContext): Map<Int, ItemStack>
     
-    override fun render(context: ViewContext): ItemStack {
-        // Container doesn't render itself, only lays out children
-        return ItemStack.empty()
-    }
+    /**
+     * Container doesn't render a single item.
+     */
+    final override fun render(context: ViewContext): ItemStack? = null
 }
