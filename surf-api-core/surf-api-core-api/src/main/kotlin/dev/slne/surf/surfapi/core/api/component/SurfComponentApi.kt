@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.core.api.component
 
+import dev.slne.surf.surfapi.core.api.component.SurfComponentApi.Companion.bootstrap
+import dev.slne.surf.surfapi.core.api.component.SurfComponentApi.Companion.load
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import dev.slne.surf.surfapi.shared.api.component.Component
 
@@ -9,6 +11,12 @@ import dev.slne.surf.surfapi.shared.api.component.Component
  * This API provides methods to trigger lifecycle phases for components
  * and to query loaded components. Components are loaded lazily when
  * their lifecycle methods are first called.
+ *
+ * Phase chaining behavior:
+ * - If a component **extends `AbstractComponent`**, calling a later phase will automatically invoke
+ *   the required previous phases (e.g. `enable()` will call `load()` and `bootstrap()` first if needed).
+ * - If a component **only implements `Component`** (and does **not** extend `AbstractComponent`),
+ *   phases are **not** automatically chained. You must call the phases in order yourself.
  *
  * Typical usage in a plugin:
  * ```kotlin
@@ -42,7 +50,12 @@ interface SurfComponentApi {
 
     /**
      * Triggers the load phase for all components owned by the given owner.
-     * This also triggers the bootstrap phase if not already done.
+     *
+     * If the component extends [AbstractComponent], this also triggers the bootstrap phase
+     * if not already done.
+     *
+     * If the component only implements [Component] (and does not extend [AbstractComponent]),
+     * this method does **not** automatically call [bootstrap]; you must call it yourself if required.
      *
      * @param owner The owner of the components (a plugin instance)
      */
@@ -50,7 +63,13 @@ interface SurfComponentApi {
 
     /**
      * Triggers the enable phase for all components owned by the given owner.
-     * This also triggers the load phase if not already done.
+     *
+     * If the component extends [AbstractComponent], this also triggers the load (and bootstrap) phase
+     * if not already done.
+     *
+     * If the component only implements [Component] (and does not extend [AbstractComponent]),
+     * this method does **not** automatically call [load] or [bootstrap]; you must call them yourself
+     * in the correct order.
      *
      * @param owner The owner of the components (a plugin instance)
      */
