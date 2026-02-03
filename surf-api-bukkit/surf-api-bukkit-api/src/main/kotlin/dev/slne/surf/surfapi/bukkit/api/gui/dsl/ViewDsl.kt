@@ -167,7 +167,7 @@ fun RenderContext.centerInRow(row: Int, component: Component) {
  */
 @ComponentDsl
 fun RenderContext.centerComponents(row: Int, components: List<Component>) {
-    val centerOffset = 4 - (components.size / 2)
+    val centerOffset = 4 - ((components.size - 1) / 2)
     components.forEachIndexed { index, component ->
         val slot = row * 9 + centerOffset + index
         renderComponent(slot, component)

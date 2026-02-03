@@ -29,6 +29,7 @@ abstract class BukkitGuiView : GuiView() {
     
     private val inventories = ConcurrentHashMap<UUID, Inventory>()
     private val updateJobs = ConcurrentHashMap<UUID, Job>()
+    private val componentJobs = ConcurrentHashMap<UUID, MutableList<Job>>()
     
     override fun open(player: Player) {
         super.open(player)
@@ -53,32 +54,42 @@ abstract class BukkitGuiView : GuiView() {
         // Start update task if configured (Folia-compatible)
         updateInterval?.let { interval ->
             val job = plugin.launch(player.entityDispatcher) {
-                while (true) {
+                while (isActive) {
                     delay(interval)
-                    update()
+                    if (isActive) {
+                        update()
+                    }
                 }
             }
             updateJobs[player.uniqueId] = job
         }
         
         // Start component update tasks (Folia-compatible)
+        val playerComponentJobs = mutableListOf<Job>()
         components.values.forEach { component ->
             component.updateInterval?.let { interval ->
-                plugin.launch(player.entityDispatcher) {
-                    while (true) {
+                val job = plugin.launch(player.entityDispatcher) {
+                    while (isActive) {
                         delay(interval)
-                        val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
-                        component.onUpdate(lifecycleContext)
-                        refreshComponentSlot(player, component)
+                        if (isActive) {
+                            val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
+                            component.onUpdate(lifecycleContext)
+                            refreshComponentSlot(player, component)
+                        }
                     }
                 }
+                playerComponentJobs.add(job)
             }
+        }
+        if (playerComponentJobs.isNotEmpty()) {
+            componentJobs[player.uniqueId] = playerComponentJobs
         }
     }
     
     override fun close(player: Player) {
-        // Cancel update jobs
+        // Cancel all update jobs
         updateJobs.remove(player.uniqueId)?.cancel()
+        componentJobs.remove(player.uniqueId)?.forEach { it.cancel() }
         
         // Unregister inventory
         inventories.remove(player.uniqueId)?.let { inventory ->
