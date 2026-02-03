@@ -10,6 +10,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.component.PaginationComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
+import dev.slne.surf.surfapi.bukkit.api.gui.dsl.slot
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.bukkit.api.gui.view.AbstractGuiView
@@ -28,36 +29,9 @@ object PaginatedShopGuiView : AbstractGuiView() {
     private val coinsDisplayRef = Ref<Component>()
 
     // Shop items
-    private val shopItems = listOf(
-        ShopItem(Material.DIAMOND_SWORD, "Diamond Sword", 100),
-        ShopItem(Material.DIAMOND_PICKAXE, "Diamond Pickaxe", 80),
-        ShopItem(Material.DIAMOND_AXE, "Diamond Axe", 75),
-        ShopItem(Material.DIAMOND_SHOVEL, "Diamond Shovel", 70),
-        ShopItem(Material.DIAMOND_HOE, "Diamond Hoe", 65),
-        ShopItem(Material.IRON_SWORD, "Iron Sword", 50),
-        ShopItem(Material.IRON_PICKAXE, "Iron Pickaxe", 40),
-        ShopItem(Material.IRON_AXE, "Iron Axe", 35),
-        ShopItem(Material.IRON_SHOVEL, "Iron Shovel", 30),
-        ShopItem(Material.IRON_HOE, "Iron Hoe", 25),
-        ShopItem(Material.GOLDEN_SWORD, "Golden Sword", 80),
-        ShopItem(Material.GOLDEN_PICKAXE, "Golden Pickaxe", 70),
-        ShopItem(Material.GOLDEN_AXE, "Golden Axe", 65),
-        ShopItem(Material.GOLDEN_SHOVEL, "Golden Shovel", 60),
-        ShopItem(Material.GOLDEN_HOE, "Golden Hoe", 55),
-        ShopItem(Material.BOW, "Bow", 50),
-        ShopItem(Material.CROSSBOW, "Crossbow", 75),
-        ShopItem(Material.SHIELD, "Shield", 45),
-        ShopItem(Material.FISHING_ROD, "Fishing Rod", 30),
-        ShopItem(Material.SHEARS, "Shears", 20),
-        ShopItem(Material.FLINT_AND_STEEL, "Flint and Steel", 15),
-        ShopItem(Material.COMPASS, "Compass", 25),
-        ShopItem(Material.CLOCK, "Clock", 25),
-        ShopItem(Material.SPYGLASS, "Spyglass", 40),
-        ShopItem(Material.LEAD, "Lead", 20),
-        ShopItem(Material.NAME_TAG, "Name Tag", 50),
-        ShopItem(Material.SADDLE, "Saddle", 60),
-        ShopItem(Material.ELYTRA, "Elytra", 500)
-    )
+    private val shopItems = Material.entries.filter {
+        it.isItem && !it.isAir
+    }.map { ShopItem(it, it.name, (10..500).random()) }.shuffled()
 
     // Pagination component - 4 rows of 7 items (columns 1-7, rows 1-4)
     private val paginationComponent = PaginationComponent(
@@ -109,79 +83,83 @@ object PaginatedShopGuiView : AbstractGuiView() {
 
     override fun onFirstRender(context: RenderContext) {
         // Coins display at top center
-        context.slot(dynamicComponent(
-            Slot.at(4, 0),
-            renderer = { ctx ->
-                val coins = coinsProp.get(ctx.player) ?: 0
+        context.slot(
+            dynamicComponent(
+                Slot.at(4, 0),
+                renderer = { ctx ->
+                    val coins = coinsProp.get(ctx.player) ?: 0
 
-                GuiItem.of(ItemStack(Material.GOLD_INGOT) {
-                    displayName {
-                        gold("Coins: ")
-                        yellow("$coins")
-                    }
-                })
-            }
-        ) {
-            ref = coinsDisplayRef
-        })
+                    GuiItem.of(ItemStack(Material.GOLD_INGOT) {
+                        displayName {
+                            gold("Coins: ")
+                            yellow("$coins")
+                        }
+                    })
+                }
+            ) {
+                ref = coinsDisplayRef
+            })
 
         // Render pagination component
         context.slot(paginationComponent)
 
         // Previous page button
-        context.slot(component(
-            Slot.at(2, 5),
-            GuiItem.of(ItemStack(Material.ARROW) {
-                displayName {
-                    info("Previous Page")
-                }
-                buildLore {
-                    line {
-                        gray("Click to go to the previous page")
-                    }
-                }
-            })
-        ) {
-            onClick = {
-                paginationComponent.previousPage(player)
-                view.update()
-            }
-        })
-
-        // Page indicator
-        context.slot(dynamicComponent(
-            Slot.at(4, 5),
-            renderer = { ctx ->
-                val currentPage = paginationComponent.getCurrentPage(ctx.player) + 1
-                val totalPages = paginationComponent.getTotalPages()
-
-                GuiItem.of(ItemStack(Material.PAPER) {
+        context.slot(
+            component(
+                Slot.at(2, 5),
+                GuiItem.of(ItemStack(Material.ARROW) {
                     displayName {
-                        info("Page $currentPage / $totalPages")
+                        info("Previous Page")
+                    }
+                    buildLore {
+                        line {
+                            gray("Click to go to the previous page")
+                        }
                     }
                 })
-            }
-        ))
-
-        // Next page button
-        context.slot(component(
-            Slot.at(6, 5),
-            GuiItem.of(ItemStack(Material.ARROW) {
-                displayName {
-                    info("Next Page")
-                }
-                buildLore {
-                    line {
-                        gray("Click to go to the next page")
-                    }
+            ) {
+                onClick = {
+                    paginationComponent.previousPage(player)
+                    view.update()
                 }
             })
-        ) {
-            onClick = {
-                paginationComponent.nextPage(player)
-                view.update()
-            }
-        })
+
+        // Page indicator
+        context.slot(
+            dynamicComponent(
+                Slot.at(4, 5),
+                renderer = { ctx ->
+                    val currentPage = paginationComponent.getCurrentPage(ctx.player) + 1
+                    val totalPages = paginationComponent.getTotalPages()
+
+                    GuiItem.of(ItemStack(Material.PAPER) {
+                        displayName {
+                            info("Page $currentPage / $totalPages")
+                        }
+                    })
+                }
+            ))
+
+        // Next page button
+        context.slot(
+            component(
+                Slot.at(6, 5),
+                GuiItem.of(ItemStack(Material.ARROW) {
+                    displayName {
+                        info("Next Page")
+                    }
+                    buildLore {
+                        line {
+                            gray("Click to go to the next page")
+                        }
+                    }
+                })
+            ) {
+                onClick = {
+                    paginationComponent.nextPage(player)
+                    view.update()
+                }
+            })
     }
 
     private data class ShopItem(
