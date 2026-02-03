@@ -19,7 +19,7 @@ class Ref<T : Component> {
     /**
      * Sets the component reference.
      */
-    internal fun set(component: T?) {
+    fun set(component: T?) {
         reference.set(component)
     }
     
