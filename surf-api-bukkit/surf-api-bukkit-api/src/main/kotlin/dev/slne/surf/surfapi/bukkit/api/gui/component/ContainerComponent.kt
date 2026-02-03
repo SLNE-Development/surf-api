@@ -11,7 +11,8 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
  */
 abstract class ContainerComponent(
     override val startSlot: Slot,
-    override val endSlot: Slot
+    override val endSlot: Slot,
+    override val priority: ComponentPriority = ComponentPriority.NORMAL
 ) : Component() {
     /**
      * Render multiple items at their respective slots.

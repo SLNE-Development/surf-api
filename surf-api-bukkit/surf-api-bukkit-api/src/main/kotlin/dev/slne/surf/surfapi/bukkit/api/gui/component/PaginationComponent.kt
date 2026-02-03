@@ -18,12 +18,19 @@ import java.util.*
  * Renders multiple items across specified slots based on current page.
  */
 class PaginationComponent<T>(
+    startSlot: Slot,
+    endSlot: Slot,
     private val items: () -> List<T>,
-    private val pageSize: Int = 9,
     private val itemRenderer: (T, ViewContext) -> GuiItem?,
+    priority: ComponentPriority = ComponentPriority.NORMAL,
     private val onItemClick: ((T, ClickContext) -> Unit)? = null
-) : ContainerComponent() {
+) : ContainerComponent(startSlot, endSlot, priority) {
     private val currentPages = mutableMapOf<UUID, Int>()
+    
+    /**
+     * Calculate page size from the area.
+     */
+    private val pageSize: Int = width * height
 
     /**
      * Get the current page for a viewer.
@@ -116,7 +123,11 @@ class PaginationComponent<T>(
             val guiItem = itemRenderer(item, context)
 
             if (guiItem != null) {
-                renderedSlots[Slot.of(index)] = guiItem
+                // Calculate slot position within the area
+                val row = index / width
+                val col = index % width
+                val slot = Slot.at(startSlot.column + col, startSlot.row + row)
+                renderedSlots[slot] = guiItem
             }
         }
 
@@ -126,11 +137,14 @@ class PaginationComponent<T>(
     override fun onClick(context: ClickContext) {
         if (onItemClick != null) {
             val pageItems = getPageItems(context.player)
-            val slotIndex = context.slot.index
+            
+            // Calculate the index within the pagination area
+            val relativeCol = context.slot.column - startSlot.column
+            val relativeRow = context.slot.row - startSlot.row
+            val index = relativeRow * width + relativeCol
 
-            if (slotIndex in pageItems.indices) {
-                val item = pageItems[slotIndex]
-
+            if (index in pageItems.indices) {
+                val item = pageItems[index]
                 onItemClick.invoke(item, context)
             }
         }

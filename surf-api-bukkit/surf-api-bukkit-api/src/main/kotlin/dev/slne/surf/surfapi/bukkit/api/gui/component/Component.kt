@@ -26,6 +26,13 @@ abstract class Component {
     abstract val endSlot: Slot
     
     /**
+     * Priority for handling clicks and rendering when components overlap.
+     * Higher priority components are rendered on top and handle clicks first.
+     * Default is NORMAL.
+     */
+    open val priority: ComponentPriority = ComponentPriority.NORMAL
+    
+    /**
      * Width of the component in columns (derived from start and end slots).
      */
     val width: Int

@@ -16,12 +16,16 @@ class AbstractRenderContext(
     override val player: Player,
     private val bukkitView: AbstractGuiView
 ) : RenderContext {
-    override fun renderComponent(slot: Slot, component: Component) {
-        bukkitView.addComponent(slot, component)
+    override fun renderComponent(component: Component) {
+        bukkitView.addComponent(component)
     }
 
     override fun clearSlot(slot: Slot) {
-        bukkitView.removeComponent(slot)
+        // Find and remove all components that occupy this slot
+        val componentsToRemove = bukkitView.findComponentsBySlot(slot)
+        componentsToRemove.forEach { component ->
+            bukkitView.removeComponent(component)
+        }
     }
 
     override fun setItem(slot: Slot, item: GuiItem) {

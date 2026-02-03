@@ -23,10 +23,20 @@ abstract class GuiView {
     open val updateInterval: Duration? = null
 
     /**
-     * Components in this view, mapped by slot.
+     * Components in this view.
+     * Components can overlap, and priority determines rendering and click handling order.
      */
-    private val _components = mutableMapOf<Slot, Component>()
-    val components: Map<Slot, Component> get() = _components.toMap()
+    private val _components = mutableListOf<Component>()
+    val components: List<Component> get() = _components.toList()
+    
+    /**
+     * Find all components that contain the given slot, sorted by priority (highest first).
+     */
+    fun findComponentsBySlot(slot: Slot): List<Component> {
+        return _components
+            .filter { it.contains(slot) }
+            .sortedByDescending { it.priority.value }
+    }
 
     /**
      * Whether this view has been initialized.
@@ -137,19 +147,18 @@ abstract class GuiView {
     }
 
     /**
-     * Add a component at a slot.
+     * Add a component to the view.
      */
-    fun addComponent(slot: Slot, component: Component) {
+    fun addComponent(component: Component) {
         component.view = this
-
-        _components[slot] = component
+        _components.add(component)
     }
 
     /**
-     * Remove a component from a slot.
+     * Remove a component from the view.
      */
-    fun removeComponent(slot: Slot) {
-        _components.remove(slot)
+    fun removeComponent(component: Component) {
+        _components.remove(component)
     }
 
     /**

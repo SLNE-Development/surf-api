@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.bukkit.api.gui.dsl
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
+import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 import dev.slne.surf.surfapi.bukkit.api.gui.component.DynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.component.ItemComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
@@ -29,6 +30,7 @@ annotation class ComponentDsl
 class ComponentBuilder {
     var updateInterval: Duration? = null
     var ref: Ref<Component>? = null
+    var priority: ComponentPriority = ComponentPriority.NORMAL
     var onUpdate: (LifecycleContext.() -> Unit)? = null
     var onClick: (ClickContext.() -> Unit)? = null
 
@@ -44,8 +46,8 @@ class ComponentBuilder {
     /**
      * Build the component.
      */
-    internal fun build(renderer: (ViewContext) -> GuiItem?): Component {
-        return object : DynamicComponent(renderer, onClick) {
+    internal fun build(slot: Slot, renderer: (ViewContext) -> GuiItem?): Component {
+        return object : DynamicComponent(slot, renderer, priority, onClick) {
             override val updateInterval: Duration? = this@ComponentBuilder.updateInterval
             override val props: Map<String, Prop<*>> = _props
 
@@ -61,27 +63,29 @@ class ComponentBuilder {
 }
 
 /**
- * Create a component with a static item.
+ * Create a component with a static item at a specific slot.
  */
 fun component(
+    slot: Slot,
     item: GuiItem,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
     componentBuilder.builder()
-    return componentBuilder.build { item }
+    return componentBuilder.build(slot) { item }
 }
 
 /**
- * Create a component with a dynamic renderer.
+ * Create a component with a dynamic renderer at a specific slot.
  */
 fun dynamicComponent(
+    slot: Slot,
     renderer: (ViewContext) -> GuiItem?,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
     componentBuilder.builder()
-    return componentBuilder.build(renderer)
+    return componentBuilder.build(slot, renderer)
 }
 
 /**
@@ -159,15 +163,15 @@ fun props(builder: PropsBuilder.() -> Unit): Map<String, Prop<*>> {
  * DSL for rendering components in a view.
  */
 @ComponentDsl
-fun RenderContext.slot(slot: Slot, component: Component) {
-    renderComponent(slot, component)
+fun RenderContext.slot(component: Component) {
+    renderComponent(component)
 }
 
 /**
- * DSL for rendering components in a view with item.
+ * DSL for rendering components in a view with item at a specific slot.
  */
 @ComponentDsl
-fun RenderContext.slot(slot: Slot, item: GuiItem, onClick: (ClickContext.() -> Unit)? = null) {
-    val component = ItemComponent(item, onClick)
-    renderComponent(slot, component)
+fun RenderContext.slot(slot: Slot, item: GuiItem, priority: ComponentPriority = ComponentPriority.NORMAL, onClick: (ClickContext.() -> Unit)? = null) {
+    val component = ItemComponent(slot, item, priority, onClick)
+    renderComponent(component)
 }

@@ -12,6 +12,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 open class ItemComponent(
     private val slot: Slot,
     private val item: GuiItem,
+    override val priority: ComponentPriority = ComponentPriority.NORMAL,
     private val clickHandler: (ClickContext.() -> Unit)? = null
 ) : Component() {
     override val startSlot: Slot = slot

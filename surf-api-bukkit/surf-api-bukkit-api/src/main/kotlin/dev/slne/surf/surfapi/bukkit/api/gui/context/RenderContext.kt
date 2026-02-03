@@ -9,9 +9,10 @@ import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
  */
 interface RenderContext : ViewContext {
     /**
-     * Render a component at the specified slot.
+     * Render a component.
+     * The component contains its own slot information (startSlot/endSlot).
      */
-    fun renderComponent(slot: Slot, component: Component)
+    fun renderComponent(component: Component)
     
     /**
      * Clear a slot.
