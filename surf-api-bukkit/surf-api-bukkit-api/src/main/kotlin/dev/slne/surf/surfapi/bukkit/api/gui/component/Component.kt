@@ -16,6 +16,38 @@ import kotlin.time.Duration
  */
 abstract class Component {
     /**
+     * The start slot (top-left corner) of this component's area.
+     */
+    abstract val startSlot: Slot
+    
+    /**
+     * The end slot (bottom-right corner) of this component's area.
+     */
+    abstract val endSlot: Slot
+    
+    /**
+     * Width of the component in columns (derived from start and end slots).
+     */
+    val width: Int
+        get() = endSlot.column - startSlot.column + 1
+    
+    /**
+     * Height of the component in rows (derived from start and end slots).
+     */
+    val height: Int
+        get() = endSlot.row - startSlot.row + 1
+    
+    /**
+     * Check if a slot is within this component's area.
+     */
+    fun contains(slot: Slot): Boolean {
+        return slot.column >= startSlot.column &&
+                slot.column <= endSlot.column &&
+                slot.row >= startSlot.row &&
+                slot.row <= endSlot.row
+    }
+    
+    /**
      * The parent component, if any.
      */
     var parent: Component? = null

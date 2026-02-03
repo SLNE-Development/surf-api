@@ -7,8 +7,12 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 /**
  * Container component that renders multiple items at specific slots.
  * This is useful for paginated components or complex layouts.
+ * The area is defined by startSlot (top-left) and endSlot (bottom-right).
  */
-abstract class ContainerComponent : Component() {
+abstract class ContainerComponent(
+    override val startSlot: Slot,
+    override val endSlot: Slot
+) : Component() {
     /**
      * Render multiple items at their respective slots.
      * Override this to provide the slot-to-item mapping.
