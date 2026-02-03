@@ -2,14 +2,15 @@ package dev.slne.surf.surfapi.bukkit.test.hook
 
 import dev.slne.surf.surfapi.core.api.component.AbstractComponent
 import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
+import dev.slne.surf.surfapi.shared.api.component.types.Service
 
-@ComponentMeta
-//@DependsOnClass(BukkitPluginMain::class)
-//@DependsOnClassName("dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig")
-//@DependsOnPlugin("SurfBukkitPluginTest")
-//@DependsOnOnePlugin(["SurfBukkitPlugin", "surf-bukkit-plugin", "SurfBukkitPluginTest"])
-//@DependsOnComponent(PrimaryTestHook::class)
+@Service
+annotation class TestHookMeta
+
+@TestHookMeta
+annotation class TestHookMeta2
+
+@TestHookMeta2
 class TestHook : AbstractComponent() {
     private val log = logger()
 

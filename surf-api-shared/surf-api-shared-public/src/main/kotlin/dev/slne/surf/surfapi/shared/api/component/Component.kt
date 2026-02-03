@@ -33,41 +33,30 @@ typealias SurfComponent = Component
  * @see ComponentMeta
  */
 @ApiStatus.NonExtendable
-interface Component : Comparable<Component> {
-    /**
-     * The priority of this component for ordering purposes.
-     * Lower values indicate higher priority (initialized first).
-     * Components with the same priority are ordered by their dependencies.
-     */
-    val priority: Short
-
+interface Component {
     /**
      * Called during the bootstrap phase.
      * This is the first lifecycle method called on the component.
      * Use this for early initialization that doesn't depend on other components.
      */
-    suspend fun bootstrap()
+    suspend fun bootstrap() = Unit
 
     /**
      * Called during the load phase, after [bootstrap].
      * Use this for loading configuration, resources, or other data.
      */
-    suspend fun load()
+    suspend fun load() = Unit
 
     /**
      * Called during the enable phase, after [load].
      * Use this to activate the component's functionality.
      */
-    suspend fun enable()
+    suspend fun enable() = Unit
 
     /**
      * Called during the disable phase, during shutdown.
      * Use this to clean up resources and deactivate functionality.
      * Components are disabled in reverse order of their initialization.
      */
-    suspend fun disable()
-
-    override fun compareTo(other: Component): Int {
-        return priority.compareTo(other.priority)
-    }
+    suspend fun disable() = Unit
 }

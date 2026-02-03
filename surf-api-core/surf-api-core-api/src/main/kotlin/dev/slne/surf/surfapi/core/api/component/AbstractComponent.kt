@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.api.component
 
+import dev.slne.surf.surfapi.shared.api.annotation.AnnotationUtils
 import dev.slne.surf.surfapi.shared.api.component.Component
 import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
 import dev.slne.surf.surfapi.shared.api.component.Priority
@@ -42,36 +43,8 @@ abstract class AbstractComponent : Component {
     private val disabled = AtomicBoolean(false)
 
     init {
-        // Validate that the class has @ComponentMeta (directly or via meta-annotation)
-        val hasComponentMeta = javaClass.getAnnotation(ComponentMeta::class.java) != null
-                || findMetaAnnotation<ComponentMeta>() != null
-        if (!hasComponentMeta) {
-            error("ComponentMeta annotation is missing on component class ${this::class.qualifiedName}")
-        }
-    }
-
-    final override val priority: Short = findPriority()
-
-    /**
-     * Finds the priority from @Priority annotation on the class or its meta-annotations.
-     * Direct annotations take precedence over meta-annotations.
-     */
-    private fun findPriority(): Short {
-        // First check for direct @Priority annotation
-        javaClass.getAnnotation(Priority::class.java)?.let { return it.value }
-
-        // Then check meta-annotations for @Priority
-        findMetaAnnotation<Priority>()?.let { return it.value }
-
-        // Default priority
-        return 0
-    }
-
-    /**
-     * Searches for an annotation on the class's annotations (meta-annotation support)
-     */
-    private inline fun <reified T : Annotation> findMetaAnnotation(): T? {
-        return javaClass.annotations.firstNotNullOfOrNull { it.annotationClass.java.getAnnotation(T::class.java) }
+        AnnotationUtils.findAnnotation(javaClass, ComponentMeta::class.java)
+            ?: error("ComponentMeta annotation is missing on component class ${this::class.qualifiedName}")
     }
 
     @InternalSurfApi
@@ -102,10 +75,6 @@ abstract class AbstractComponent : Component {
         if (disabled.compareAndSet(false, true)) {
             onDisable()
         }
-    }
-
-    final override fun compareTo(other: Component): Int {
-        return super.compareTo(other)
     }
 
     /**

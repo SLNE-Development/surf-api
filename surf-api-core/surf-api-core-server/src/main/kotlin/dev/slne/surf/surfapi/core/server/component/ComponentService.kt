@@ -52,10 +52,6 @@ abstract class ComponentService {
                                 try {
                                     val raw = jarFile.getInputStream(entry).bufferedReader().use { it.readText() }
                                     val decoded = ComponentsConfig.json.decodeFromString<PluginComponentMeta>(raw)
-                                    repeat(20) {
-                                        logger.info("Loaded component meta from ${entry.name} for owner ${owner::class.qualifiedName}")
-                                        logger.info("Decoded meta: $decoded")
-                                    }
                                     meta += decoded
                                 } catch (e: Exception) {
                                     logger.error("Failed to parse ${entry.name}", e)
@@ -79,19 +75,15 @@ abstract class ComponentService {
             logger.warn("No components directory found or error reading components", e)
         }
 
-        return meta
+        return meta.sorted()
     }
 
-    private suspend fun loadComponents(owner: Any): List<Component> {
+    private suspend fun loadComponents(owner: Any): List<ComponentEntry> {
         val meta = componentMetaCache.get(owner)
         val classLoader = getClassloader(owner)
 
-        repeat(20) {
-            getLogger(owner).info("Loading components for owner ${owner::class.qualifiedName} (found ${meta.components.size} components)")
-        }
-
         val sortedComponentMetas = ComponentSorting.topologicalSort(meta.components)
-        val loadedComponents = mutableObjectListOf<Component>()
+        val loadedComponents = mutableObjectListOf<ComponentEntry>()
         for (meta in sortedComponentMetas) {
             val component = instantiateComponentIfValid(owner, loadedComponents, meta, classLoader)
             if (component != null) {
@@ -99,7 +91,6 @@ abstract class ComponentService {
             }
         }
 
-        // Load and apply post-processors
         val postProcessors = postProcessorsCache.get(owner)
         return applyPostProcessors(loadedComponents, postProcessors, owner)
     }
@@ -133,26 +124,28 @@ abstract class ComponentService {
     }
 
     private suspend fun applyPostProcessors(
-        components: List<Component>,
+        components: List<ComponentEntry>,
         postProcessors: List<ComponentPostProcessor>,
         owner: Any
-    ): List<Component> {
+    ): List<ComponentEntry> {
         if (postProcessors.isEmpty()) {
             return components
         }
 
         val context = ComponentContext(
             owner = owner,
-            allComponents = components
+            allComponents = components.map { it.component }
         )
 
-        return components.map { component ->
-            var processedComponent = component
+        return components.map { entry ->
+            var processedComponent = entry
             for (processor in postProcessors) {
-                processedComponent = processor.postProcessAfterInitialization(
-                    processedComponent,
-                    processedComponent::class.qualifiedName ?: processedComponent::class.java.name,
-                    context
+                processedComponent = ComponentEntry(
+                    processor.postProcessAfterInitialization(
+                        processedComponent.component,
+                        processedComponent::class.qualifiedName ?: processedComponent::class.java.name,
+                        context
+                    ), entry.priority
                 )
             }
             processedComponent
@@ -187,10 +180,10 @@ abstract class ComponentService {
 
     private suspend fun instantiateComponentIfValid(
         owner: Any,
-        loadedComponents: List<Component>,
+        loadedComponents: List<ComponentEntry>,
         componentMeta: PluginComponentMeta.Component,
         classLoader: ClassLoader
-    ): Component? {
+    ): ComponentEntry? {
         val missingDependencies = mutableObject2ObjectMapOf<String, MutableSet<String>>()
         for (classDependency in componentMeta.classDependencies) {
             try {
@@ -214,8 +207,8 @@ abstract class ComponentService {
         }
 
         for (componentDependency in componentMeta.componentDependencies) {
-            val isLoaded = loadedComponents.any {
-                val kClass = it::class
+            val isLoaded = loadedComponents.any { (component) ->
+                val kClass = component::class
                 val className = kClass.qualifiedName ?: kClass.java.name
                 className == componentDependency
             }
@@ -237,12 +230,12 @@ abstract class ComponentService {
             val objectInstance = hookKClass.objectInstance
             if (objectInstance != null) {
                 require(objectInstance is Component) { "Component class must implement Component" }
-                return objectInstance
+                return ComponentEntry(objectInstance, componentMeta.priority)
             } else {
                 val constructor = hookClass.getConstructor()
                 val instance = constructor.newInstance()
                 require(instance is Component) { "Component class must implement Component" }
-                return instance
+                return ComponentEntry(instance, componentMeta.priority)
             }
         } catch (e: Exception) {
             getLogger(owner).error("Failed to load component ${componentMeta.className}", e)
@@ -297,19 +290,19 @@ abstract class ComponentService {
     }
 
     suspend fun getOrLoadComponents(owner: Any): List<Component> {
-        return componentsCache.get(owner)
+        return componentsCache.get(owner).map { it.component }
     }
 
     fun getLoadedComponents(owner: Any): List<Component> {
-        return componentsCache.underlying().asMap()[owner]?.getNow(emptyList()) ?: emptyList()
+        return (componentsCache.underlying().asMap()[owner]?.getNow(emptyList()) ?: emptyList()).map { it.component }
     }
 
     suspend fun getAllComponents(): List<Component> {
-        return componentsCache.asMap().values.flatten().sorted()
+        return componentsCache.asMap().values.flatten().map { it.component }
     }
 
     fun getAllComponentsLoaded(): List<Component> {
-        return componentsCache.underlying().asMap().values.flatMap { it.getNow(emptyList()) }.sorted()
+        return componentsCache.underlying().asMap().values.flatMap { it.getNow(emptyList()) }.map { it.component }
     }
 
     abstract fun readComponentsFileFromResources(owner: Any, fileName: String): InputStream?
@@ -320,5 +313,14 @@ abstract class ComponentService {
     companion object {
         val instance = requiredService<ComponentService>()
         fun get() = instance
+    }
+
+    data class ComponentEntry(
+        val component: Component,
+        val priority: Short,
+    ) : Comparable<ComponentEntry> {
+        override fun compareTo(other: ComponentEntry): Int {
+            return this.priority.compareTo(other.priority)
+        }
     }
 }

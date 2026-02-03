@@ -10,7 +10,7 @@ data class PluginComponentMeta(
 
     @Serializable
     data class Component(
-        val priority: Short,
+        val priority: Short = 0,
         val className: String,
         val classDependencies: List<String> = emptyList(),
         val pluginDependencies: List<String> = emptyList(),
@@ -50,6 +50,12 @@ data class PluginComponentMeta(
     }
 
     operator fun plus(other: PluginComponentMeta) = mergeWith(other)
+
+    fun sorted(): PluginComponentMeta {
+        val sortedComponents = components.sortedBy { it.priority }
+        val sortedPostProcessors = postProcessors.sortedBy { it.priority }
+        return PluginComponentMeta(sortedComponents, sortedPostProcessors)
+    }
 
     companion object {
         fun empty() = PluginComponentMeta(emptyList(), emptyList())
