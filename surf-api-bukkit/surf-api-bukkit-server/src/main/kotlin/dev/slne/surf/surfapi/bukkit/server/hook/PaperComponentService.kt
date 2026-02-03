@@ -6,16 +6,11 @@ import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection
 import dev.slne.surf.surfapi.core.server.component.ComponentService
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.bukkit.plugin.java.JavaPlugin
-import java.io.InputStream
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 @AutoService(ComponentService::class)
 class PaperComponentService : ComponentService() {
-    override fun readComponentsFileFromResources(owner: Any, fileName: String): InputStream? {
-        ensureOwnerIsPlugin(owner)
-        return owner.getResource(fileName)
-    }
 
     override fun getClassloader(owner: Any): ClassLoader {
         ensureOwnerIsPlugin(owner)

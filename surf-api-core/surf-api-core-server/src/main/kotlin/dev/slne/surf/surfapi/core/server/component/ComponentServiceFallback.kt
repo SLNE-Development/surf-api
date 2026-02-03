@@ -3,13 +3,9 @@ package dev.slne.surf.surfapi.core.server.component
 import com.google.auto.service.AutoService
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.kyori.adventure.util.Services
-import java.io.InputStream
 
 @AutoService(ComponentService::class)
 class ComponentServiceFallback : ComponentService(), Services.Fallback {
-    override fun readComponentsFileFromResources(owner: Any, fileName: String): InputStream? {
-        throwNotImplementedOnThisPlatform()
-    }
 
     override fun getClassloader(owner: Any): ClassLoader {
         throwNotImplementedOnThisPlatform()

@@ -15,7 +15,6 @@ import dev.slne.surf.surfapi.shared.internal.hook.ComponentsConfig
 import dev.slne.surf.surfapi.shared.internal.hook.PluginComponentMeta
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.File
-import java.io.InputStream
 import java.net.URI
 import java.util.jar.JarFile
 
@@ -306,7 +305,6 @@ abstract class ComponentService {
         return componentsCache.underlying().asMap().values.flatMap { it.getNow(emptyList()) }.map { it.component }
     }
 
-    abstract fun readComponentsFileFromResources(owner: Any, fileName: String): InputStream?
     abstract fun getClassloader(owner: Any): ClassLoader
     abstract fun isPluginLoaded(pluginId: String): Boolean
     abstract fun getLogger(owner: Any): ComponentLogger
