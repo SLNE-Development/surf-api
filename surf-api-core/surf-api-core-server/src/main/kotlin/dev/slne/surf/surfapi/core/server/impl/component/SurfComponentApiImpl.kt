@@ -28,7 +28,7 @@ class SurfComponentApiImpl : SurfComponentApi {
     override suspend fun disable(owner: Any) {
         ComponentService.get().invokePostProcessorsBeforeDestruction(owner)
 
-        for (component in components(owner).reversed()) {
+        for (component in ComponentService.get().awaitLoadedComponents(owner).reversed()) {
             component.disable()
         }
     }

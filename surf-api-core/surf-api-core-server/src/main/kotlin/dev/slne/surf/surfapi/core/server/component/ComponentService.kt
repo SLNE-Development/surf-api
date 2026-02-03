@@ -153,7 +153,7 @@ abstract class ComponentService {
     }
 
     suspend fun invokePostProcessorsBeforeDestruction(owner: Any) {
-        val components = getLoadedComponents(owner)
+        val components = awaitLoadedComponents(owner)
         val postProcessors = postProcessorsCache.getIfPresent(owner) ?: return
 
         if (postProcessors.isEmpty() || components.isEmpty()) {
@@ -295,6 +295,10 @@ abstract class ComponentService {
 
     fun getLoadedComponents(owner: Any): List<Component> {
         return (componentsCache.underlying().asMap()[owner]?.getNow(emptyList()) ?: emptyList()).map { it.component }
+    }
+
+    suspend fun awaitLoadedComponents(owner: Any): List<Component> {
+        return componentsCache.getIfPresent(owner)?.map { it.component } ?: emptyList()
     }
 
     suspend fun getAllComponents(): List<Component> {
