@@ -32,7 +32,7 @@ interface ViewContext {
     /**
      * Get a prop value from the view.
      */
-    fun <T> getProp(prop: Prop<T>): T = prop.get()
+    suspend fun <T> getProp(prop: Prop<T>): T = prop.get()
     
     /**
      * Navigate to another view.
