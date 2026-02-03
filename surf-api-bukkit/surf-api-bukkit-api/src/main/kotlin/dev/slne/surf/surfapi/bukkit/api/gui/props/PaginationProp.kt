@@ -12,7 +12,7 @@ class PaginationProp<T>(
     
     private val currentPages = mutableMapOf<java.util.UUID, Int>()
     
-    override fun get(): PaginationState<T> {
+    override suspend fun get(): PaginationState<T> {
         // Default state when no viewer context
         return getState(0)
     }

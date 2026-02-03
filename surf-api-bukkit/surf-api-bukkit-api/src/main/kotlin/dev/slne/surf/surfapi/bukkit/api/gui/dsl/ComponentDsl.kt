@@ -124,15 +124,22 @@ class PropsBuilder {
     /**
      * Create a computed prop.
      */
-    fun <T> computed(name: String, compute: () -> T): ComputedProp<T> {
+    fun <T> computed(name: String, compute: suspend () -> T): ComputedProp<T> {
         return ComputedProp(name, compute).also { _props[name] = it }
     }
     
     /**
-     * Create a lazy prop.
+     * Create an immutable lazy prop.
      */
-    fun <T> lazy(name: String, mutable: Boolean = false, initializer: () -> T): LazyProp<T> {
-        return LazyProp(name, initializer, mutable).also { _props[name] = it }
+    fun <T> immutableLazy(name: String, initializer: () -> T): ImmutableLazyProp<T> {
+        return ImmutableLazyProp(name, initializer).also { _props[name] = it }
+    }
+    
+    /**
+     * Create a mutable lazy prop.
+     */
+    fun <T> mutableLazy(name: String, initializer: () -> T): MutableLazyProp<T> {
+        return MutableLazyProp(name, initializer).also { _props[name] = it }
     }
     
     /**
