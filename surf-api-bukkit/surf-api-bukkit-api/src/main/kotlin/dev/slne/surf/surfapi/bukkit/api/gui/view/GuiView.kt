@@ -4,6 +4,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import org.bukkit.entity.Player
+import java.util.*
 import kotlin.time.Duration
 
 /**
@@ -28,7 +29,7 @@ abstract class GuiView {
      */
     private val _components = mutableListOf<Component>()
     val components: List<Component> get() = _components.toList()
-    
+
     /**
      * Find all components that contain the given slot, sorted by priority (highest first).
      */
@@ -46,12 +47,12 @@ abstract class GuiView {
     /**
      * Whether this view has been rendered for the first time.
      */
-    private val firstRenderPerViewer = mutableSetOf<java.util.UUID>()
+    private val firstRenderPerViewer = mutableSetOf<UUID>()
 
     /**
      * Current viewers of this view.
      */
-    private val viewers = mutableMapOf<java.util.UUID, Player>()
+    private val viewers = mutableMapOf<UUID, Player>()
 
     /**
      * Configuration for this view.
