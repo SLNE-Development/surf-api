@@ -74,12 +74,10 @@ abstract class BukkitGuiView : GuiView() {
         
         // Start update task if configured (Folia-compatible)
         updateInterval?.let { interval ->
-            val job = plugin.launch(player.entityDispatcher) {
-                while (isActive) {
+            val job = plugin.launch(plugin.entityDispatcher(player)) {
+                while (true) {
                     delay(interval)
-                    if (isActive) {
-                        update()
-                    }
+                    update()
                 }
             }
             updateJobs[player.uniqueId] = job
@@ -89,14 +87,12 @@ abstract class BukkitGuiView : GuiView() {
         val playerComponentJobs = mutableListOf<Job>()
         components.values.forEach { component ->
             component.updateInterval?.let { interval ->
-                val job = plugin.launch(player.entityDispatcher) {
-                    while (isActive) {
+                val job = plugin.launch(plugin.entityDispatcher(player)) {
+                    while (true) {
                         delay(interval)
-                        if (isActive) {
-                            val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
-                            component.onUpdate(lifecycleContext)
-                            refreshComponentSlot(player, component)
-                        }
+                        val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
+                        component.onUpdate(lifecycleContext)
+                        refreshComponentSlot(player, component)
                     }
                 }
                 playerComponentJobs.add(job)
@@ -234,7 +230,7 @@ object GuiViewListener : Listener {
         val view = viewsByInventory[inventory] ?: return
         val player = event.player as? Player ?: return
         
-        // Don't close if navigating or resuming
-        // This will be handled by the navigation logic
+        // Close the view when inventory is closed
+        view.close(player)
     }
 }
