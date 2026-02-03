@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server
 
 import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
-import dev.slne.surf.surfapi.bukkit.server.gui.view.GuiViewListener
 import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl
 import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager
 import dev.slne.surf.surfapi.bukkit.server.packet.PacketApiLoader
@@ -22,9 +21,6 @@ object BukkitInstance : CoreInstance() {
 
         PacketApiLoader.onEnable()
         ListenerManager.registerListeners()
-        
-        // Register GUI framework listener
-        plugin.server.pluginManager.registerEvents(GuiViewListener, plugin)
         
         (surfBukkitApi as SurfBukkitApiImpl).onEnable()
     }
