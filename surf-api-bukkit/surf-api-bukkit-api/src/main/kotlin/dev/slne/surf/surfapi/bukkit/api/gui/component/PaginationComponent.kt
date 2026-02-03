@@ -5,6 +5,8 @@ import dev.slne.surf.surfapi.bukkit.api.builder.buildLore
 import dev.slne.surf.surfapi.bukkit.api.builder.displayName
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
+import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
+import dev.slne.surf.surfapi.bukkit.api.gui.area.CuboidArea
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
@@ -24,13 +26,19 @@ class PaginationComponent<T>(
     private val itemRenderer: (T, ViewContext) -> GuiItem?,
     priority: ComponentPriority = ComponentPriority.NORMAL,
     private val onItemClick: ((T, ClickContext) -> Unit)? = null
-) : ContainerComponent(startSlot, endSlot, priority) {
+) : ContainerComponent(CuboidArea(startSlot, endSlot, priority)) {
     private val currentPages = mutableMapOf<UUID, Int>()
     
     /**
      * Calculate page size from the area.
      */
     private val pageSize: Int = width * height
+    
+    /**
+     * Start slot of the area (convenience accessor).
+     */
+    private val startSlot: Slot
+        get() = (area as CuboidArea).startSlot
 
     /**
      * Get the current page for a viewer.
@@ -163,8 +171,8 @@ class PaginationComponent<T>(
             }
         })
 
-        fun buildNextPageComponent(paginationComponent: PaginationComponent<*>) =
-            component(NEXT_PAGE_ITEM) {
+        fun buildNextPageComponent(paginationComponent: PaginationComponent<*>, slot: Slot) =
+            component(slot, NEXT_PAGE_ITEM) {
                 onClick = {
                     paginationComponent.nextPage(player)
                     view.update()
@@ -183,8 +191,8 @@ class PaginationComponent<T>(
             }
         })
 
-        fun buildPreviousPageComponent(paginationComponent: PaginationComponent<*>) =
-            component(PREVIOUS_PAGE_ITEM) {
+        fun buildPreviousPageComponent(paginationComponent: PaginationComponent<*>, slot: Slot) =
+            component(slot, PREVIOUS_PAGE_ITEM) {
                 onClick = {
                     paginationComponent.previousPage(player)
                     view.update()
@@ -204,8 +212,8 @@ class PaginationComponent<T>(
                 }
             })
 
-        fun buildPageIndicatorComponent(paginationComponent: PaginationComponent<*>) =
-            dynamicComponent(renderer = { ctx ->
+        fun buildPageIndicatorComponent(paginationComponent: PaginationComponent<*>, slot: Slot) =
+            dynamicComponent(slot, renderer = { ctx ->
                 val currentPage = paginationComponent.getCurrentPage(ctx.player) + 1
                 val totalPages = paginationComponent.getTotalPages()
 

@@ -2,21 +2,21 @@ package dev.slne.surf.surfapi.bukkit.api.gui.component
 
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
+import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
+import dev.slne.surf.surfapi.bukkit.api.gui.area.SingleSlotArea
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 
 /**
- * Simple item component that renders a static item.
- * Takes a single slot for both start and end (1x1 area).
+ * Simple item component that renders a static item at a single slot.
  */
 open class ItemComponent(
-    private val slot: Slot,
+    slot: Slot,
     private val item: GuiItem,
-    override val priority: ComponentPriority = ComponentPriority.NORMAL,
+    priority: ComponentPriority = ComponentPriority.NORMAL,
     private val clickHandler: (ClickContext.() -> Unit)? = null
 ) : Component() {
-    override val startSlot: Slot = slot
-    override val endSlot: Slot = slot
+    override val area: ComponentArea = SingleSlotArea(slot, priority)
     
     override fun render(context: ViewContext): GuiItem = item
 

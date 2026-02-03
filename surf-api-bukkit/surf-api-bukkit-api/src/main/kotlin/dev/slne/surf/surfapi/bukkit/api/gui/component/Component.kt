@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.gui.component
 
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
+import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
@@ -16,43 +17,37 @@ import kotlin.time.Duration
  */
 abstract class Component {
     /**
-     * The start slot (top-left corner) of this component's area.
+     * The area this component occupies in the GUI.
+     * Can be any shape (cuboid, circular, custom).
      */
-    abstract val startSlot: Slot
-    
-    /**
-     * The end slot (bottom-right corner) of this component's area.
-     */
-    abstract val endSlot: Slot
+    abstract val area: ComponentArea
     
     /**
      * Priority for handling clicks and rendering when components overlap.
-     * Higher priority components are rendered on top and handle clicks first.
-     * Default is NORMAL.
+     * Delegates to the area's priority.
      */
-    open val priority: ComponentPriority = ComponentPriority.NORMAL
+    val priority: ComponentPriority
+        get() = area.priority
     
     /**
-     * Width of the component in columns (derived from start and end slots).
+     * Width of the component's bounding box.
+     * Delegates to the area's width.
      */
     val width: Int
-        get() = endSlot.column - startSlot.column + 1
+        get() = area.width
     
     /**
-     * Height of the component in rows (derived from start and end slots).
+     * Height of the component's bounding box.
+     * Delegates to the area's height.
      */
     val height: Int
-        get() = endSlot.row - startSlot.row + 1
+        get() = area.height
     
     /**
      * Check if a slot is within this component's area.
+     * Delegates to the area's contains method.
      */
-    fun contains(slot: Slot): Boolean {
-        return slot.column >= startSlot.column &&
-                slot.column <= endSlot.column &&
-                slot.row >= startSlot.row &&
-                slot.row <= endSlot.row
-    }
+    fun contains(slot: Slot): Boolean = area.contains(slot)
     
     /**
      * The parent component, if any.

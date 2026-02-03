@@ -2,17 +2,16 @@ package dev.slne.surf.surfapi.bukkit.api.gui.component
 
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
+import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 
 /**
  * Container component that renders multiple items at specific slots.
- * This is useful for paginated components or complex layouts.
- * The area is defined by startSlot (top-left) and endSlot (bottom-right).
+ * This is useful for paginated components, panels, or complex layouts.
+ * The area can be any shape (cuboid, circular, custom).
  */
 abstract class ContainerComponent(
-    override val startSlot: Slot,
-    override val endSlot: Slot,
-    override val priority: ComponentPriority = ComponentPriority.NORMAL
+    override val area: ComponentArea
 ) : Component() {
     /**
      * Render multiple items at their respective slots.
