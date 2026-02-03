@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.gui.props
 
 import org.bukkit.entity.Player
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
 /**
@@ -59,7 +60,7 @@ class MutableProp<T>(
     initialValue: T,
     private val scope: PropScope = PropScope.VIEWER
 ) : Prop<T> {
-    private val globalValue = ThreadLocal.withInitial { initialValue }
+    private val globalValue = AtomicReference(initialValue)
     private val viewerValues = mutableMapOf<UUID, T>()
     
     override fun get(context: PropContext): T {

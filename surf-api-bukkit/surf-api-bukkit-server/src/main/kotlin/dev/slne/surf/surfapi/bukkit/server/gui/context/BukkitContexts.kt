@@ -9,6 +9,41 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.inventory.ItemStack
 
 /**
+ * Shared navigation logic for all context implementations.
+ */
+private object NavigationHelper {
+    fun navigateTo(currentView: GuiView, targetView: GuiView, player: Player, passProps: Boolean) {
+        if (targetView is BukkitGuiView) {
+            targetView.parent = currentView
+            player.closeInventory()
+            targetView.open(player)
+        }
+    }
+    
+    fun navigateBack(currentView: GuiView, player: Player) {
+        val parent = currentView.parent
+        if (parent is BukkitGuiView) {
+            player.closeInventory()
+            val resumeContext = parent.createResumeContext(player, currentView)
+            parent.onResume(resumeContext)
+            parent.open(player)
+        } else {
+            player.closeInventory()
+        }
+    }
+    
+    fun close(player: Player) {
+        player.closeInventory()
+    }
+    
+    fun update(view: GuiView, player: Player) {
+        if (view is BukkitGuiView) {
+            view.refreshInventory(player)
+        }
+    }
+}
+
+/**
  * Bukkit implementation of ViewContext.
  */
 internal class BukkitViewContext(
@@ -17,33 +52,19 @@ internal class BukkitViewContext(
 ) : ViewContext {
     
     override fun navigateTo(view: GuiView, passProps: Boolean) {
-        if (view is BukkitGuiView) {
-            view.parent = this.view
-            player.closeInventory()
-            view.open(player)
-        }
+        NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
     
     override fun navigateBack() {
-        val parent = view.parent
-        if (parent is BukkitGuiView) {
-            player.closeInventory()
-            val resumeContext = parent.createResumeContext(player, view)
-            parent.onResume(resumeContext)
-            parent.open(player)
-        } else {
-            close()
-        }
+        NavigationHelper.navigateBack(view, player)
     }
     
     override fun close() {
-        player.closeInventory()
+        NavigationHelper.close(player)
     }
     
     override fun update() {
-        if (view is BukkitGuiView) {
-            view.refreshInventory(player)
-        }
+        NavigationHelper.update(view, player)
     }
 }
 
@@ -58,33 +79,19 @@ internal class BukkitClickContext(
 ) : ClickContext {
     
     override fun navigateTo(view: GuiView, passProps: Boolean) {
-        if (view is BukkitGuiView) {
-            view.parent = this.view
-            player.closeInventory()
-            view.open(player)
-        }
+        NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
     
     override fun navigateBack() {
-        val parent = view.parent
-        if (parent is BukkitGuiView) {
-            player.closeInventory()
-            val resumeContext = parent.createResumeContext(player, view)
-            parent.onResume(resumeContext)
-            parent.open(player)
-        } else {
-            close()
-        }
+        NavigationHelper.navigateBack(view, player)
     }
     
     override fun close() {
-        player.closeInventory()
+        NavigationHelper.close(player)
     }
     
     override fun update() {
-        if (view is BukkitGuiView) {
-            view.refreshInventory(player)
-        }
+        NavigationHelper.update(view, player)
     }
 }
 
@@ -113,31 +120,19 @@ internal class BukkitRenderContext(
     }
     
     override fun navigateTo(view: GuiView, passProps: Boolean) {
-        if (view is BukkitGuiView) {
-            view.parent = this.view
-            player.closeInventory()
-            view.open(player)
-        }
+        NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
     
     override fun navigateBack() {
-        val parent = view.parent
-        if (parent is BukkitGuiView) {
-            player.closeInventory()
-            val resumeContext = parent.createResumeContext(player, view)
-            parent.onResume(resumeContext)
-            parent.open(player)
-        } else {
-            close()
-        }
+        NavigationHelper.navigateBack(view, player)
     }
     
     override fun close() {
-        player.closeInventory()
+        NavigationHelper.close(player)
     }
     
     override fun update() {
-        bukkitView.refreshInventory(player)
+        NavigationHelper.update(view, player)
     }
 }
 
@@ -151,33 +146,19 @@ internal class BukkitLifecycleContext(
 ) : LifecycleContext {
     
     override fun navigateTo(view: GuiView, passProps: Boolean) {
-        if (view is BukkitGuiView) {
-            view.parent = this.view
-            player.closeInventory()
-            view.open(player)
-        }
+        NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
     
     override fun navigateBack() {
-        val parent = view.parent
-        if (parent is BukkitGuiView) {
-            player.closeInventory()
-            val resumeContext = parent.createResumeContext(player, view)
-            parent.onResume(resumeContext)
-            parent.open(player)
-        } else {
-            close()
-        }
+        NavigationHelper.navigateBack(view, player)
     }
     
     override fun close() {
-        player.closeInventory()
+        NavigationHelper.close(player)
     }
     
     override fun update() {
-        if (view is BukkitGuiView) {
-            view.refreshInventory(player)
-        }
+        NavigationHelper.update(view, player)
     }
 }
 
@@ -193,32 +174,18 @@ internal class BukkitResumeContext(
     override val eventType: LifecycleEventType = LifecycleEventType.RESUME
     
     override fun navigateTo(view: GuiView, passProps: Boolean) {
-        if (view is BukkitGuiView) {
-            view.parent = this.view
-            player.closeInventory()
-            view.open(player)
-        }
+        NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
     
     override fun navigateBack() {
-        val parent = view.parent
-        if (parent is BukkitGuiView) {
-            player.closeInventory()
-            val resumeContext = parent.createResumeContext(player, view)
-            parent.onResume(resumeContext)
-            parent.open(player)
-        } else {
-            close()
-        }
+        NavigationHelper.navigateBack(view, player)
     }
     
     override fun close() {
-        player.closeInventory()
+        NavigationHelper.close(player)
     }
     
     override fun update() {
-        if (view is BukkitGuiView) {
-            view.refreshInventory(player)
-        }
+        NavigationHelper.update(view, player)
     }
 }
