@@ -1,12 +1,13 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.component
 
+import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
+import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
-import org.bukkit.inventory.ItemStack
 import kotlin.time.Duration
 
 /**
@@ -59,16 +60,16 @@ abstract class Component {
     open fun onClick(context: ClickContext) {}
     
     /**
-     * Renders the component to an ItemStack.
+     * Renders the component to a GuiItem.
      * For container components, return null.
      */
-    open fun render(context: ViewContext): ItemStack? = null
+    open fun render(context: ViewContext): GuiItem? = null
     
     /**
      * For container components, render multiple items at specific slots.
-     * Returns a map of slot to ItemStack.
+     * Returns a map of Slot to GuiItem.
      */
-    open fun renderSlots(context: ViewContext): Map<Int, ItemStack> = emptyMap()
+    open fun renderSlots(context: ViewContext): Map<Slot, GuiItem> = emptyMap()
     
     /**
      * Add a child component.

@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.dsl
 
+import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
+import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.component.DynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.component.ItemComponent
@@ -10,7 +12,6 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.props.*
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
-import org.bukkit.inventory.ItemStack
 import kotlin.time.Duration
 
 /**
@@ -41,7 +42,7 @@ class ComponentBuilder {
     /**
      * Build the component.
      */
-    internal fun build(renderer: (ViewContext) -> ItemStack?): Component {
+    internal fun build(renderer: (ViewContext) -> GuiItem?): Component {
         return object : DynamicComponent(renderer, onClick) {
             override val updateInterval: Duration? = this@ComponentBuilder.updateInterval
             override val props: Map<String, Prop<*>> = _props
@@ -61,7 +62,7 @@ class ComponentBuilder {
  * Create a component with a static item.
  */
 fun component(
-    item: ItemStack,
+    item: GuiItem,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
@@ -73,7 +74,7 @@ fun component(
  * Create a component with a dynamic renderer.
  */
 fun dynamicComponent(
-    renderer: (ViewContext) -> ItemStack?,
+    renderer: (ViewContext) -> GuiItem?,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
@@ -131,13 +132,6 @@ class PropsBuilder {
     }
     
     /**
-     * Create a pagination prop.
-     */
-    fun <T> pagination(name: String = "pagination", pageSize: Int = 9, items: () -> List<T>): PaginationProp<T> {
-        return PaginationProp(name, items, pageSize).also { _props[name] = it }
-    }
-    
-    /**
      * Get all props.
      */
     internal fun build(): Map<String, Prop<*>> = _props.toMap()
@@ -156,7 +150,7 @@ fun props(builder: PropsBuilder.() -> Unit): Map<String, Prop<*>> {
  * DSL for rendering components in a view.
  */
 @ComponentDsl
-fun RenderContext.slot(slot: Int, component: Component) {
+fun RenderContext.slot(slot: Slot, component: Component) {
     renderComponent(slot, component)
 }
 
@@ -164,7 +158,7 @@ fun RenderContext.slot(slot: Int, component: Component) {
  * DSL for rendering components in a view with item.
  */
 @ComponentDsl
-fun RenderContext.slot(slot: Int, item: ItemStack, onClick: (ClickContext.() -> Unit)? = null) {
+fun RenderContext.slot(slot: Slot, item: GuiItem, onClick: (ClickContext.() -> Unit)? = null) {
     val component = ItemComponent(item, onClick)
     renderComponent(slot, component)
 }

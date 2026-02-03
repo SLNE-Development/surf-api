@@ -2,8 +2,11 @@ package dev.slne.surf.surfapi.bukkit.server.gui.view
 
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
+import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
+import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
+import dev.slne.surf.surfapi.bukkit.api.gui.toItemStack
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import dev.slne.surf.surfapi.bukkit.server.gui.context.*
 import dev.slne.surf.surfapi.bukkit.server.plugin
@@ -55,16 +58,16 @@ abstract class BukkitGuiView : GuiView() {
             // Handle container components (render multiple slots)
             val slotsToRender = component.renderSlots(context)
             if (slotsToRender.isNotEmpty()) {
-                slotsToRender.forEach { (slotPos, item) ->
-                    if (slotPos < inventory.size) {
-                        inventory.setItem(slotPos, item)
+                slotsToRender.forEach { (slotObj, guiItem) ->
+                    if (slotObj.index < inventory.size) {
+                        inventory.setItem(slotObj.index, guiItem.toItemStack())
                     }
                 }
             } else {
                 // Regular component (single item)
-                val item = component.render(context)
-                if (item != null && slot < inventory.size) {
-                    inventory.setItem(slot, item)
+                val guiItem = component.render(context)
+                if (guiItem != null && slot.index < inventory.size) {
+                    inventory.setItem(slot.index, guiItem.toItemStack())
                 }
             }
         }
@@ -128,16 +131,16 @@ abstract class BukkitGuiView : GuiView() {
             // Handle container components
             val slotsToRender = component.renderSlots(context)
             if (slotsToRender.isNotEmpty()) {
-                slotsToRender.forEach { (slotPos, item) ->
-                    if (slotPos < inventory.size) {
-                        inventory.setItem(slotPos, item)
+                slotsToRender.forEach { (slotObj, guiItem) ->
+                    if (slotObj.index < inventory.size) {
+                        inventory.setItem(slotObj.index, guiItem.toItemStack())
                     }
                 }
             } else {
                 // Regular component
-                val item = component.render(context)
-                if (item != null && slot < inventory.size) {
-                    inventory.setItem(slot, item)
+                val guiItem = component.render(context)
+                if (guiItem != null && slot.index < inventory.size) {
+                    inventory.setItem(slot.index, guiItem.toItemStack())
                 }
             }
         }
@@ -155,16 +158,16 @@ abstract class BukkitGuiView : GuiView() {
         // Handle container components
         val slotsToRender = component.renderSlots(context)
         if (slotsToRender.isNotEmpty()) {
-            slotsToRender.forEach { (slotPos, item) ->
-                if (slotPos < inventory.size) {
-                    inventory.setItem(slotPos, item)
+            slotsToRender.forEach { (slotObj, guiItem) ->
+                if (slotObj.index < inventory.size) {
+                    inventory.setItem(slotObj.index, guiItem.toItemStack())
                 }
             }
         } else {
             // Regular component
-            val item = component.render(context)
-            if (item != null && slot < inventory.size) {
-                inventory.setItem(slot, item)
+            val guiItem = component.render(context)
+            if (guiItem != null && slot.index < inventory.size) {
+                inventory.setItem(slot.index, guiItem.toItemStack())
             }
         }
     }
@@ -177,7 +180,7 @@ abstract class BukkitGuiView : GuiView() {
             event.isCancelled = true
         }
         
-        val slot = event.slot
+        val slot = Slot.of(event.slot)
         val component = components[slot]
         
         val clickContext = BukkitClickContext(this, player, event, component)

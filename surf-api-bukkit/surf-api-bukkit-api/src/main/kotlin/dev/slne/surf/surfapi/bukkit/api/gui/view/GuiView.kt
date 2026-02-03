@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.view
 
+import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
@@ -57,8 +58,8 @@ abstract class GuiView {
     /**
      * Components in this view, mapped by slot.
      */
-    private val _components = mutableMapOf<Int, Component>()
-    val components: Map<Int, Component> get() = _components.toMap()
+    private val _components = mutableMapOf<Slot, Component>()
+    val components: Map<Slot, Component> get() = _components.toMap()
     
     /**
      * Whether this view has been initialized.
@@ -171,7 +172,7 @@ abstract class GuiView {
     /**
      * Add a component at a slot.
      */
-    fun addComponent(slot: Int, component: Component) {
+    fun addComponent(slot: Slot, component: Component) {
         component.view = this
         _components[slot] = component
     }
@@ -179,16 +180,8 @@ abstract class GuiView {
     /**
      * Remove a component from a slot.
      */
-    fun removeComponent(slot: Int) {
+    fun removeComponent(slot: Slot) {
         _components.remove(slot)
-    }
-    
-    /**
-     * Get a prop value for a specific player.
-     */
-    fun <T> getProp(player: Player, prop: Prop<T>): T {
-        val context = PropContext(player.uniqueId, player)
-        return prop.get(context)
     }
     
     /**

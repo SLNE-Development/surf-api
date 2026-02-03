@@ -1,12 +1,14 @@
 package dev.slne.surf.surfapi.bukkit.server.gui.context
 
+import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
+import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
+import dev.slne.surf.surfapi.bukkit.api.gui.toItemStack
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import dev.slne.surf.surfapi.bukkit.server.gui.view.BukkitGuiView
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.inventory.ItemStack
 
 /**
  * Shared navigation logic for all context implementations.
@@ -104,18 +106,18 @@ internal class BukkitRenderContext(
     private val bukkitView: BukkitGuiView
 ) : RenderContext {
     
-    override fun renderComponent(slot: Int, component: Component) {
+    override fun renderComponent(slot: Slot, component: Component) {
         bukkitView.addComponent(slot, component)
     }
     
-    override fun clearSlot(slot: Int) {
+    override fun clearSlot(slot: Slot) {
         bukkitView.removeComponent(slot)
     }
     
-    override fun setItem(slot: Int, item: ItemStack) {
+    override fun setItem(slot: Slot, item: GuiItem) {
         val inventory = player.openInventory.topInventory
-        if (slot in 0 until inventory.size) {
-            inventory.setItem(slot, item)
+        if (slot.index in 0 until inventory.size) {
+            inventory.setItem(slot.index, item.toItemStack())
         }
     }
     
