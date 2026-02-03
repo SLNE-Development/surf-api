@@ -118,11 +118,7 @@ class LazyProp<T>(
     private var mutableValue: T? = null
     
     override fun get(): T {
-        return if (mutable && mutableValue != null) {
-            mutableValue!!
-        } else {
-            value.value
-        }
+        return mutableValue ?: value.value
     }
     
     fun set(value: T) {

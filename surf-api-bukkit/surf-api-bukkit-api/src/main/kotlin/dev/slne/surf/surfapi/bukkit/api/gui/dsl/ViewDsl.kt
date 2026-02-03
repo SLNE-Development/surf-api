@@ -26,7 +26,9 @@ class ViewConfigBuilder {
     var rows: Int
         get() = if (type == InventoryType.CHEST) size / 9 else 1
         set(value) {
-            require(type == InventoryType.CHEST) { "Rows can only be set for CHEST type" }
+            require(type == InventoryType.CHEST) { 
+                "Rows can only be set for CHEST type inventories. For other types, the size is determined by the inventory type." 
+            }
             require(value in 1..6) { "Rows must be between 1 and 6" }
             size = value * 9
         }
