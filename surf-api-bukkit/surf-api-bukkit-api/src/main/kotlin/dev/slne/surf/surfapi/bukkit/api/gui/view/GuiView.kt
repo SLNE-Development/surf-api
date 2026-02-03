@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.api.gui.view
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
-import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import org.bukkit.entity.Player
 import kotlin.time.Duration
 
@@ -17,11 +16,6 @@ abstract class GuiView {
      */
     var parent: GuiView? = null
         internal set
-
-    /**
-     * Props for this view.
-     */
-    protected open val props: Map<String, Prop<*>> = emptyMap()
 
     /**
      * Update interval for the entire view.
@@ -136,8 +130,8 @@ abstract class GuiView {
      */
     internal fun updateComponent(component: Component) {
         viewers.values.forEach { player ->
-            val context = createViewContext(player)
             val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
+
             component.onUpdate(lifecycleContext)
         }
     }
@@ -147,6 +141,7 @@ abstract class GuiView {
      */
     fun addComponent(slot: Slot, component: Component) {
         component.view = this
+
         _components[slot] = component
     }
 
@@ -158,19 +153,28 @@ abstract class GuiView {
     }
 
     /**
+     * Set the parent view for navigation.
+     */
+    fun withParent(parentView: GuiView): GuiView {
+        this.parent = parentView
+
+        return this
+    }
+
+    /**
      * Create a view context for a player.
      */
-    protected abstract fun createViewContext(player: Player): ViewContext
+    abstract fun createViewContext(player: Player): ViewContext
 
     /**
      * Create a render context for a player.
      */
-    protected abstract fun createRenderContext(player: Player): RenderContext
+    abstract fun createRenderContext(player: Player): RenderContext
 
     /**
      * Create a lifecycle context for a player.
      */
-    protected abstract fun createLifecycleContext(
+    abstract fun createLifecycleContext(
         player: Player,
         eventType: LifecycleEventType
     ): LifecycleContext
@@ -178,7 +182,10 @@ abstract class GuiView {
     /**
      * Create a resume context for a player.
      */
-    protected abstract fun createResumeContext(player: Player, origin: GuiView?): ResumeContext
+    abstract fun createResumeContext(
+        player: Player,
+        origin: GuiView?
+    ): ResumeContext
 }
 
 /**

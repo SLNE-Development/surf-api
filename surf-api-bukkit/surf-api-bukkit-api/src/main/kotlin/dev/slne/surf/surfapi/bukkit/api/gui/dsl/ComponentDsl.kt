@@ -9,7 +9,10 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
-import dev.slne.surf.surfapi.bukkit.api.gui.props.*
+import dev.slne.surf.surfapi.bukkit.api.gui.props.ComputedProp
+import dev.slne.surf.surfapi.bukkit.api.gui.props.LazyProp
+import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
+import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import kotlin.time.Duration
 
@@ -91,22 +94,29 @@ class PropsBuilder {
     /**
      * Create an immutable prop.
      */
-    fun <T> immutable(name: String, value: T): ImmutableProp<T> {
-        return ImmutableProp(name, value).also { _props[name] = it }
+    fun <T> immutable(name: String, value: T): Prop.Immutable<T> {
+        return Prop.Immutable(name, value).also { _props[name] = it }
     }
 
     /**
      * Create a mutable prop (global to view).
      */
-    fun <T> mutable(name: String, initialValue: T): MutableProp<T> {
-        return MutableProp(name, initialValue).also { _props[name] = it }
+    fun <T> mutable(name: String, initialValue: T?): Prop.Mutable<T> {
+        return Prop.Mutable(name, initialValue).also { _props[name] = it }
+    }
+
+    /**
+     * Create a viewer-specific immutable prop.
+     */
+    fun <T> viewerImmutable(name: String, initialValue: T): ViewerProp<T> {
+        return ViewerProp(name, initialValue).also { _props[name] = it }
     }
 
     /**
      * Create a viewer-specific mutable prop.
      */
-    fun <T> viewerMutable(name: String, initialValue: T): ViewerMutableProp<T> {
-        return ViewerMutableProp(name, initialValue).also { _props[name] = it }
+    fun <T> viewerMutable(name: String, initialValue: T?): ViewerProp.Mutable<T> {
+        return ViewerProp.Mutable(name, initialValue).also { _props[name] = it }
     }
 
     /**
@@ -119,15 +129,15 @@ class PropsBuilder {
     /**
      * Create an immutable lazy prop.
      */
-    fun <T> immutableLazy(name: String, initializer: () -> T): ImmutableLazyProp<T> {
-        return ImmutableLazyProp(name, initializer).also { _props[name] = it }
+    fun <T> immutableLazy(name: String, initializer: () -> T): LazyProp<T> {
+        return LazyProp(name, initializer).also { _props[name] = it }
     }
 
     /**
      * Create a mutable lazy prop.
      */
-    fun <T> mutableLazy(name: String, initializer: () -> T): MutableLazyProp<T> {
-        return MutableLazyProp(name, initializer).also { _props[name] = it }
+    fun <T> mutableLazy(name: String, initializer: () -> T?): LazyProp.Mutable<T> {
+        return LazyProp.Mutable(name, initializer).also { _props[name] = it }
     }
 
     /**

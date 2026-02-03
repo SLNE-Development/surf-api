@@ -16,28 +16,31 @@ import org.bukkit.event.inventory.InventoryClickEvent
 private object NavigationHelper {
     fun navigateTo(currentView: GuiView, targetView: GuiView, player: Player, passProps: Boolean) {
         if (targetView is BukkitGuiView) {
-            targetView.parent = currentView
+            targetView.withParent(currentView)
             player.closeInventory()
             targetView.open(player)
         }
     }
-    
+
     fun navigateBack(currentView: GuiView, player: Player) {
         val parent = currentView.parent
+
         if (parent is BukkitGuiView) {
             player.closeInventory()
+
             val resumeContext = parent.createResumeContext(player, currentView)
+
             parent.onResume(resumeContext)
             parent.open(player)
         } else {
             player.closeInventory()
         }
     }
-    
+
     fun close(player: Player) {
         player.closeInventory()
     }
-    
+
     fun update(view: GuiView, player: Player) {
         if (view is BukkitGuiView) {
             view.refreshInventory(player)
@@ -52,19 +55,18 @@ internal class BukkitViewContext(
     override val view: GuiView,
     override val player: Player
 ) : ViewContext {
-    
     override fun navigateTo(view: GuiView, passProps: Boolean) {
         NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
-    
+
     override fun navigateBack() {
         NavigationHelper.navigateBack(view, player)
     }
-    
+
     override fun close() {
         NavigationHelper.close(player)
     }
-    
+
     override fun update() {
         NavigationHelper.update(view, player)
     }
@@ -79,19 +81,18 @@ internal class BukkitClickContext(
     override val event: InventoryClickEvent,
     override val component: Component?
 ) : ClickContext {
-    
     override fun navigateTo(view: GuiView, passProps: Boolean) {
         NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
-    
+
     override fun navigateBack() {
         NavigationHelper.navigateBack(view, player)
     }
-    
+
     override fun close() {
         NavigationHelper.close(player)
     }
-    
+
     override fun update() {
         NavigationHelper.update(view, player)
     }
@@ -105,34 +106,33 @@ internal class BukkitRenderContext(
     override val player: Player,
     private val bukkitView: BukkitGuiView
 ) : RenderContext {
-    
     override fun renderComponent(slot: Slot, component: Component) {
         bukkitView.addComponent(slot, component)
     }
-    
+
     override fun clearSlot(slot: Slot) {
         bukkitView.removeComponent(slot)
     }
-    
+
     override fun setItem(slot: Slot, item: GuiItem) {
         val inventory = player.openInventory.topInventory
         if (slot.index in 0 until inventory.size) {
             inventory.setItem(slot.index, item.toItemStack())
         }
     }
-    
+
     override fun navigateTo(view: GuiView, passProps: Boolean) {
         NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
-    
+
     override fun navigateBack() {
         NavigationHelper.navigateBack(view, player)
     }
-    
+
     override fun close() {
         NavigationHelper.close(player)
     }
-    
+
     override fun update() {
         NavigationHelper.update(view, player)
     }
@@ -146,19 +146,18 @@ internal class BukkitLifecycleContext(
     override val player: Player,
     override val eventType: LifecycleEventType
 ) : LifecycleContext {
-    
     override fun navigateTo(view: GuiView, passProps: Boolean) {
         NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
-    
+
     override fun navigateBack() {
         NavigationHelper.navigateBack(view, player)
     }
-    
+
     override fun close() {
         NavigationHelper.close(player)
     }
-    
+
     override fun update() {
         NavigationHelper.update(view, player)
     }
@@ -172,21 +171,20 @@ internal class BukkitResumeContext(
     override val player: Player,
     override val origin: GuiView?
 ) : ResumeContext {
-    
     override val eventType: LifecycleEventType = LifecycleEventType.RESUME
-    
+
     override fun navigateTo(view: GuiView, passProps: Boolean) {
         NavigationHelper.navigateTo(this.view, view, player, passProps)
     }
-    
+
     override fun navigateBack() {
         NavigationHelper.navigateBack(view, player)
     }
-    
+
     override fun close() {
         NavigationHelper.close(player)
     }
-    
+
     override fun update() {
         NavigationHelper.update(view, player)
     }
