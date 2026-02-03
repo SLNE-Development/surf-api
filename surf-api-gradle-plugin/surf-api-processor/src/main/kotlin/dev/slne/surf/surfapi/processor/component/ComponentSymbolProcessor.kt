@@ -7,6 +7,7 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -138,6 +139,7 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
             .filter { classDecl ->
                 classDecl.qualifiedName?.asString() != ClassNames.COMPONENT_POST_PROCESSOR
             }
+            .filter { it.classKind == ClassKind.CLASS || it.classKind == ClassKind.OBJECT }
             .toList()
 
         val postProcessorMetas = postProcessorClasses.map { postProcessorClass ->
