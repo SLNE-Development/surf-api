@@ -1,10 +1,14 @@
 package dev.slne.surf.surfapi.bukkit.server.gui.view
 
+import com.github.shynixn.mccoroutine.folia.entityDispatcher
+import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import dev.slne.surf.surfapi.bukkit.server.gui.context.*
 import dev.slne.surf.surfapi.bukkit.server.plugin
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -15,14 +19,16 @@ import org.bukkit.event.inventory.InventoryOpenEvent
 import org.bukkit.inventory.Inventory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Bukkit-specific implementation of GuiView.
+ * Folia-compatible using entity dispatchers.
  */
 abstract class BukkitGuiView : GuiView() {
     
     private val inventories = ConcurrentHashMap<UUID, Inventory>()
-    private val updateTasks = ConcurrentHashMap<UUID, Int>()
+    private val updateJobs = ConcurrentHashMap<UUID, Job>()
     
     override fun open(player: Player) {
         super.open(player)
@@ -44,39 +50,35 @@ abstract class BukkitGuiView : GuiView() {
         // Open inventory
         player.openInventory(inventory)
         
-        // Start update task if configured
+        // Start update task if configured (Folia-compatible)
         updateInterval?.let { interval ->
-            val taskId = Bukkit.getScheduler().runTaskTimer(
-                plugin,
-                Runnable { update() },
-                interval.inWholeSeconds * 20L,
-                interval.inWholeSeconds * 20L
-            ).taskId
-            updateTasks[player.uniqueId] = taskId
+            val job = plugin.launch(player.entityDispatcher) {
+                while (true) {
+                    delay(interval)
+                    update()
+                }
+            }
+            updateJobs[player.uniqueId] = job
         }
         
-        // Start component update tasks
+        // Start component update tasks (Folia-compatible)
         components.values.forEach { component ->
             component.updateInterval?.let { interval ->
-                Bukkit.getScheduler().runTaskTimer(
-                    plugin,
-                    Runnable { 
+                plugin.launch(player.entityDispatcher) {
+                    while (true) {
+                        delay(interval)
                         val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
                         component.onUpdate(lifecycleContext)
                         refreshComponentSlot(player, component)
-                    },
-                    interval.inWholeSeconds * 20L,
-                    interval.inWholeSeconds * 20L
-                )
+                    }
+                }
             }
         }
     }
     
     override fun close(player: Player) {
-        // Cancel update tasks
-        updateTasks.remove(player.uniqueId)?.let { taskId ->
-            Bukkit.getScheduler().cancelTask(taskId)
-        }
+        // Cancel update jobs
+        updateJobs.remove(player.uniqueId)?.cancel()
         
         // Unregister inventory
         inventories.remove(player.uniqueId)?.let { inventory ->

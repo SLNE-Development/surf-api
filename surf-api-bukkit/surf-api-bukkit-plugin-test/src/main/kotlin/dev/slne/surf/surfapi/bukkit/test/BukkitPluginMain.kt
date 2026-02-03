@@ -4,7 +4,6 @@ import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import dev.jorel.commandapi.CommandAPI
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
-import dev.slne.surf.surfapi.bukkit.server.gui.view.GuiViewListener
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
@@ -17,9 +16,6 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
         ModernTestConfig.randomise()
 
         packetListenerApi.registerListeners(ChatListener())
-        
-        // Register new GUI framework listener
-        server.pluginManager.registerEvents(GuiViewListener, this)
     }
 
     override fun onEnable() {
