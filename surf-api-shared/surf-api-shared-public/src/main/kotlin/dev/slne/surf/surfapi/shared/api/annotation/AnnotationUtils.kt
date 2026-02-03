@@ -29,7 +29,13 @@ object AnnotationUtils {
             annotationType = annotationType,
             visitedClasses = HashSet(),
             visitedAnnotationTypes = HashSet()
-        )
+        ).also {
+            putCached(
+                clazz = clazz,
+                annotationType = annotationType,
+                value = it ?: NULL_SENTINEL
+            )
+        }
     }
 
     private fun <A : Annotation> getCached(clazz: Class<*>, annotationType: Class<A>): Any? {
