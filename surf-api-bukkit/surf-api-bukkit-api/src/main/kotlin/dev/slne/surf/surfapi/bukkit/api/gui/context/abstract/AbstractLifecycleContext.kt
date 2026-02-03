@@ -1,0 +1,30 @@
+package dev.slne.surf.surfapi.bukkit.api.gui.context.abstract
+
+import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
+import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleEventType
+import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
+import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import org.bukkit.entity.Player
+
+@InternalSurfApi
+class AbstractLifecycleContext(
+    override val view: GuiView,
+    override val player: Player,
+    override val eventType: LifecycleEventType
+) : LifecycleContext {
+    override fun navigateTo(view: GuiView, passProps: Boolean) {
+        NavigationHelper.navigateTo(this.view, view, player, passProps)
+    }
+
+    override fun navigateBack() {
+        NavigationHelper.navigateBack(view, player)
+    }
+
+    override fun close() {
+        NavigationHelper.close(player)
+    }
+
+    override fun update() {
+        NavigationHelper.update(view, player)
+    }
+}

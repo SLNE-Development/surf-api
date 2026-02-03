@@ -1,9 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.component
 
+import dev.slne.surf.surfapi.bukkit.api.builder.ItemStack
+import dev.slne.surf.surfapi.bukkit.api.builder.buildLore
+import dev.slne.surf.surfapi.bukkit.api.builder.displayName
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
+import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
+import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.util.*
 
@@ -124,9 +130,72 @@ class PaginationComponent<T>(
 
             if (slotIndex in pageItems.indices) {
                 val item = pageItems[slotIndex]
-                
+
                 onItemClick.invoke(item, context)
             }
         }
+    }
+
+    companion object {
+        val NEXT_PAGE_ITEM = GuiItem(ItemStack(Material.ARROW) {
+            displayName {
+                info("Next Page")
+            }
+
+            buildLore {
+                line {
+                    gray("Click to go to the next page")
+                }
+            }
+        })
+
+        fun buildNextPageComponent(paginationComponent: PaginationComponent<*>) =
+            component(NEXT_PAGE_ITEM) {
+                onClick = {
+                    paginationComponent.nextPage(player)
+                    view.update()
+                }
+            }
+
+        val PREVIOUS_PAGE_ITEM = GuiItem(ItemStack(Material.ARROW) {
+            displayName {
+                info("Previous Page")
+            }
+
+            buildLore {
+                line {
+                    gray("Click to go to the previous page")
+                }
+            }
+        })
+
+        fun buildPreviousPageComponent(paginationComponent: PaginationComponent<*>) =
+            component(PREVIOUS_PAGE_ITEM) {
+                onClick = {
+                    paginationComponent.previousPage(player)
+                    view.update()
+                }
+            }
+
+        fun buildPageIndicatorItem(pageNumber: Int, maxPages: Int) =
+            GuiItem(ItemStack(Material.PAPER) {
+                displayName {
+                    info("Page $pageNumber")
+                }
+
+                buildLore {
+                    line {
+                        gray("Page $pageNumber of $maxPages")
+                    }
+                }
+            })
+
+        fun buildPageIndicatorComponent(paginationComponent: PaginationComponent<*>) =
+            dynamicComponent(renderer = { ctx ->
+                val currentPage = paginationComponent.getCurrentPage(ctx.player) + 1
+                val totalPages = paginationComponent.getTotalPages()
+
+                buildPageIndicatorItem(currentPage, totalPages)
+            })
     }
 }

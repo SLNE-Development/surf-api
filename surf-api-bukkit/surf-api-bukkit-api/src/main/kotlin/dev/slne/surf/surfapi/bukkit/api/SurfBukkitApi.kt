@@ -5,11 +5,15 @@ import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
 import dev.slne.surf.surfapi.core.api.SurfCoreApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import net.kyori.adventure.text.Component
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
 import org.bukkit.World
+import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Represents the API for SurfBukkit.
@@ -103,6 +107,13 @@ interface SurfBukkitApi : SurfCoreApi {
      * @see SkipOperations
      */
     suspend fun skipTimeSmoothly(skipOperation: SkipOperation): Map<World, TimeSkipResult>
+
+    fun launch(
+        context: CoroutineContext,
+        block: suspend CoroutineScope.() -> Unit
+    ): Job
+
+    fun entityDispatcher(entity: Entity): CoroutineContext
 
     companion object {
         @JvmStatic

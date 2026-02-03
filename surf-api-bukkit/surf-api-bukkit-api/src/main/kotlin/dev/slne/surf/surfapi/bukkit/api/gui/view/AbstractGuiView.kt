@@ -1,32 +1,24 @@
-package dev.slne.surf.surfapi.bukkit.server.gui.view
+package dev.slne.surf.surfapi.bukkit.api.gui.view
 
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
-import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
+import dev.slne.surf.surfapi.bukkit.api.gui.context.abstract.*
 import dev.slne.surf.surfapi.bukkit.api.gui.toItemStack
-import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
-import dev.slne.surf.surfapi.bukkit.server.gui.context.*
-import dev.slne.surf.surfapi.bukkit.server.plugin
+import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
+import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.Inventory
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Bukkit-specific implementation of GuiView.
- * Folia-compatible using entity dispatchers.
- */
-abstract class BukkitGuiView : GuiView() {
+@InternalSurfApi
+open class AbstractGuiView : GuiView() {
     private val inventories = ConcurrentHashMap<UUID, Inventory>()
     private val updateJobs = ConcurrentHashMap<UUID, Job>()
     private val componentJobs = ConcurrentHashMap<UUID, MutableList<Job>>()
@@ -48,7 +40,7 @@ abstract class BukkitGuiView : GuiView() {
         inventories[player.uniqueId] = inventory
 
         // Register with listener
-        GuiViewListener.registerView(inventory, this)
+        ViewManager.registerView(inventory, this)
 
         // Render components
         components.forEach { (slot, component) ->
@@ -76,7 +68,7 @@ abstract class BukkitGuiView : GuiView() {
 
         // Start update task if configured (Folia-compatible)
         updateInterval?.let { interval ->
-            val job = plugin.launch(plugin.entityDispatcher(player)) {
+            val job = surfBukkitApi.launch(surfBukkitApi.entityDispatcher(player)) {
                 while (true) {
                     delay(interval)
                     update()
@@ -89,7 +81,7 @@ abstract class BukkitGuiView : GuiView() {
         val playerComponentJobs = mutableListOf<Job>()
         components.values.forEach { component ->
             component.updateInterval?.let { interval ->
-                val job = plugin.launch(plugin.entityDispatcher(player)) {
+                val job = surfBukkitApi.launch(surfBukkitApi.entityDispatcher(player)) {
                     while (true) {
                         delay(interval)
                         val lifecycleContext =
@@ -113,7 +105,7 @@ abstract class BukkitGuiView : GuiView() {
 
         // Unregister inventory
         inventories.remove(player.uniqueId)?.let { inventory ->
-            GuiViewListener.unregisterView(inventory)
+            ViewManager.unregisterView(inventory)
         }
 
         super.close(player)
@@ -175,7 +167,7 @@ abstract class BukkitGuiView : GuiView() {
     /**
      * Handle click event.
      */
-    internal fun handleClick(player: Player, event: InventoryClickEvent) {
+    fun handleClick(player: Player, event: InventoryClickEvent) {
         if (config.cancelOnClick) {
             event.isCancelled = true
         }
@@ -183,60 +175,26 @@ abstract class BukkitGuiView : GuiView() {
         val slot = Slot.of(event.slot)
         val component = components[slot]
 
-        val clickContext = BukkitClickContext(this, player, event, component)
+        val clickContext = AbstractClickContext(this, player, event, component)
         component?.onClick(clickContext)
     }
 
     override fun createViewContext(player: Player): ViewContext {
-        return BukkitViewContext(this, player)
+        return AbstractViewContext(this, player)
     }
 
     override fun createRenderContext(player: Player): RenderContext {
-        return BukkitRenderContext(this, player, this)
+        return AbstractRenderContext(this, player, this)
     }
 
     override fun createLifecycleContext(
         player: Player,
         eventType: LifecycleEventType
     ): LifecycleContext {
-        return BukkitLifecycleContext(this, player, eventType)
+        return AbstractLifecycleContext(this, player, eventType)
     }
 
     override fun createResumeContext(player: Player, origin: GuiView?): ResumeContext {
-        return BukkitResumeContext(this, player, origin)
-    }
-}
-
-/**
- * Global event listener for all GUI views.
- */
-object GuiViewListener : Listener {
-    private val viewsByInventory = ConcurrentHashMap<Inventory, BukkitGuiView>()
-
-    fun registerView(inventory: Inventory, view: BukkitGuiView) {
-        viewsByInventory[inventory] = view
-    }
-
-    fun unregisterView(inventory: Inventory) {
-        viewsByInventory.remove(inventory)
-    }
-
-    @EventHandler
-    fun onInventoryClick(event: InventoryClickEvent) {
-        val inventory = event.clickedInventory ?: return
-        val view = viewsByInventory[inventory] ?: return
-        val player = event.whoClicked as? Player ?: return
-
-        view.handleClick(player, event)
-    }
-
-    @EventHandler
-    fun onInventoryClose(event: InventoryCloseEvent) {
-        val inventory = event.inventory
-        val view = viewsByInventory[inventory] ?: return
-        val player = event.player as? Player ?: return
-
-        // Close the view when inventory is closed
-        view.close(player)
+        return AbstractResumeContext(this, player, origin)
     }
 }

@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.api.gui
 
-import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
@@ -11,30 +10,30 @@ import org.bukkit.inventory.ItemStack
 class GuiItem(
     val itemStack: ItemStack
 ) {
-    
+
     /**
      * Get the material of this item.
      */
     val material: Material
         get() = itemStack.type
-    
+
     /**
      * Get the amount of this item.
      */
     val amount: Int
         get() = itemStack.amount
-    
+
     /**
      * Check if this item is empty (AIR).
      */
     val isEmpty: Boolean
         get() = itemStack.type == Material.AIR || itemStack.amount == 0
-    
+
     /**
      * Create a copy of this GuiItem.
      */
     fun copy(): GuiItem = GuiItem(itemStack.clone())
-    
+
     /**
      * Create a copy with modified properties.
      */
@@ -47,20 +46,13 @@ class GuiItem(
         amount?.let { newStack.amount = it }
         return GuiItem(newStack)
     }
-    
+
     companion object {
         /**
          * Create a GuiItem from an ItemStack.
          */
         fun of(itemStack: ItemStack): GuiItem = GuiItem(itemStack)
-        
-        /**
-         * Create a GuiItem from a material.
-         */
-        fun of(material: Material, amount: Int = 1): GuiItem {
-            return GuiItem(ItemStack(material, amount))
-        }
-        
+
         /**
          * Create an empty GuiItem (AIR).
          */
