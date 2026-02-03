@@ -143,7 +143,8 @@ abstract class ComponentService {
                 processedComponent = ComponentEntry(
                     processor.postProcessAfterInitialization(
                         processedComponent.component,
-                        processedComponent::class.qualifiedName ?: processedComponent::class.java.name,
+                        processedComponent.component::class.qualifiedName
+                            ?: processedComponent.component::class.java.name,
                         context
                     ), entry.priority
                 )
