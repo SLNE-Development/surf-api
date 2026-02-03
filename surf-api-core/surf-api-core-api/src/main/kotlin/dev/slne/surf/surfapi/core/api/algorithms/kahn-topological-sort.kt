@@ -32,7 +32,7 @@ fun <T> Graph<T>.topologicalSortSafe(): Result<List<T>> {
         result += vertex
 
         for (successor in graph[vertex].orEmpty()) {
-            incomingEdges.mergeInt(successor, -1, Int::minus)
+            incomingEdges.mergeInt(successor, -1, Int::plus)
             if (incomingEdges.getInt(successor) == 0) {
                 queue += successor
             }
