@@ -11,9 +11,8 @@ open class ItemComponent(
     private val item: GuiItem,
     private val clickHandler: (ClickContext.() -> Unit)? = null
 ) : Component() {
-    
     override fun render(context: ViewContext): GuiItem = item
-    
+
     override fun onClick(context: ClickContext) {
         clickHandler?.invoke(context)
     }

@@ -11,7 +11,6 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.props.*
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
-import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import kotlin.time.Duration
 
 /**
@@ -29,16 +28,16 @@ class ComponentBuilder {
     var ref: Ref<Component>? = null
     var onUpdate: (LifecycleContext.() -> Unit)? = null
     var onClick: (ClickContext.() -> Unit)? = null
-    
+
     private val _props = mutableMapOf<String, Prop<*>>()
-    
+
     /**
      * Add a prop to this component.
      */
     fun <T> prop(name: String, prop: Prop<T>) {
         _props[name] = prop
     }
-    
+
     /**
      * Build the component.
      */
@@ -46,7 +45,7 @@ class ComponentBuilder {
         return object : DynamicComponent(renderer, onClick) {
             override val updateInterval: Duration? = this@ComponentBuilder.updateInterval
             override val props: Map<String, Prop<*>> = _props
-            
+
             override fun onUpdate(context: LifecycleContext) {
                 super.onUpdate(context)
                 this@ComponentBuilder.onUpdate?.invoke(context)
@@ -88,49 +87,49 @@ fun dynamicComponent(
 @ComponentDsl
 class PropsBuilder {
     private val _props = mutableMapOf<String, Prop<*>>()
-    
+
     /**
      * Create an immutable prop.
      */
     fun <T> immutable(name: String, value: T): ImmutableProp<T> {
         return ImmutableProp(name, value).also { _props[name] = it }
     }
-    
+
     /**
      * Create a mutable prop (global to view).
      */
     fun <T> mutable(name: String, initialValue: T): MutableProp<T> {
         return MutableProp(name, initialValue).also { _props[name] = it }
     }
-    
+
     /**
      * Create a viewer-specific mutable prop.
      */
     fun <T> viewerMutable(name: String, initialValue: T): ViewerMutableProp<T> {
         return ViewerMutableProp(name, initialValue).also { _props[name] = it }
     }
-    
+
     /**
      * Create a computed prop.
      */
     fun <T> computed(name: String, compute: suspend () -> T): ComputedProp<T> {
         return ComputedProp(name, compute).also { _props[name] = it }
     }
-    
+
     /**
      * Create an immutable lazy prop.
      */
     fun <T> immutableLazy(name: String, initializer: () -> T): ImmutableLazyProp<T> {
         return ImmutableLazyProp(name, initializer).also { _props[name] = it }
     }
-    
+
     /**
      * Create a mutable lazy prop.
      */
     fun <T> mutableLazy(name: String, initializer: () -> T): MutableLazyProp<T> {
         return MutableLazyProp(name, initializer).also { _props[name] = it }
     }
-    
+
     /**
      * Get all props.
      */

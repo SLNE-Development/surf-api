@@ -1,11 +1,10 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.context
 
-import dev.slne.surf.surfapi.bukkit.api.gui.props.PaginationProp
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerMutableProp
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import org.bukkit.entity.Player
-import java.util.UUID
+import java.util.*
 
 /**
  * Context representing a snapshot of the current GUI state and props.
@@ -16,23 +15,17 @@ interface ViewContext {
      * The view this context belongs to.
      */
     val view: GuiView
-    
+
     /**
      * The player interacting with the GUI.
      */
     val player: Player
-    
-    /**
-     * The unique ID of the viewer.
-     */
-    val viewerId: UUID
-        get() = player.uniqueId
-    
+
     /**
      * Get a prop value from the view.
      */
     suspend fun <T> getProp(prop: Prop<T>): T = prop.get()
-    
+
     /**
      * Get a prop value for a specific player.
      * This is useful for ViewerMutableProp and PaginationProp which have per-viewer state.
@@ -40,26 +33,25 @@ interface ViewContext {
     fun <T> getPropForPlayer(prop: Prop<T>, playerId: UUID): T {
         return when (prop) {
             is ViewerMutableProp -> prop.get(playerId)
-            is PaginationProp -> prop.get(playerId)
             else -> throw UnsupportedOperationException("getPropForPlayer only supports ViewerMutableProp and PaginationProp")
         }
     }
-    
+
     /**
      * Navigate to another view.
      */
     fun navigateTo(view: GuiView, passProps: Boolean = false)
-    
+
     /**
      * Navigate back to parent view.
      */
     fun navigateBack()
-    
+
     /**
      * Close the GUI.
      */
     fun close()
-    
+
     /**
      * Update the current view.
      */
