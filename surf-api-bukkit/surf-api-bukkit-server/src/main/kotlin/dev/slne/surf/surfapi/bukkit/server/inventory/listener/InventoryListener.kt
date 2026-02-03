@@ -20,11 +20,8 @@ class InventoryListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onInventoryOpen(event: InventoryOpenEvent) {
-        val player = event.player as? Player ?: return
-        val gui = InventoryManager.getGui(event.inventory) ?: return
-
-        // Register the GUI with the manager
-        InventoryManager.registerGui(player, gui)
+        // GUI is already registered in GuiComponentImpl.open()
+        // Nothing to do here
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

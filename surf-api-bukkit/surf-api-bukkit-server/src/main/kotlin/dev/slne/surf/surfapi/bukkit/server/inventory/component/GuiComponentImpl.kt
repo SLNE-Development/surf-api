@@ -4,6 +4,7 @@ import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.inventory.component.Component
 import dev.slne.surf.surfapi.bukkit.api.inventory.component.GuiComponent
 import dev.slne.surf.surfapi.bukkit.api.inventory.component.ItemComponent
+import dev.slne.surf.surfapi.bukkit.server.inventory.manager.InventoryManager
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component as AdventureComponent
@@ -74,6 +75,8 @@ class GuiComponentImpl(
         // Use Folia-safe scheduling
         plugin.launch(player) {
             val inventory = getOrCreateInventory(player)
+            // Register before opening so the listener can find it
+            InventoryManager.registerGui(player, this@GuiComponentImpl)
             render(player)
             player.openInventory(inventory)
         }
@@ -97,8 +100,6 @@ class GuiComponentImpl(
     }
 
     override suspend fun updateFor(player: Player) {
-        plugin.launch(player) {
-            render(player)
-        }
+        render(player)
     }
 }

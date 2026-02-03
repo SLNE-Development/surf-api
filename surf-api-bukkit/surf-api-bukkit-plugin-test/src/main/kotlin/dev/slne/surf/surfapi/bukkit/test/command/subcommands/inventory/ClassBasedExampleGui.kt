@@ -83,23 +83,31 @@ class ClassBasedExampleGui(private val player: Player) : AbstractGuiComponent(
 
     override suspend fun onUpdate() {
         // Find and update the diamond item
-        children.filterIsInstance<ItemComponentImpl>().find { it.slot == 13 }?.let { item ->
-            val newItem = ItemComponentImpl(
-                slot = 13,
-                itemStack = buildItem(Material.DIAMOND) {
-                    displayName {
-                        text("Click me! (Clicks: $clickCount)", NamedTextColor.AQUA)
-                    }
-                },
-                canTake = false,
-                clickHandler = { p, _ ->
-                    clickCount++
-                    onDiamondClick(p)
-                }
-            )
-            removeChild(item)
-            addItem(newItem)
+        // We need to remove and re-add the item with updated properties
+        val diamondSlot = 13
+        
+        // Remove current item
+        val currentItem = children.filterIsInstance<ItemComponent>().find { it.slot == diamondSlot }
+        if (currentItem != null) {
+            removeChild(currentItem)
         }
+        
+        // Add updated item using the server's item component implementation
+        // Since we're in the API layer, we use the component factory pattern
+        val newItem = dev.slne.surf.surfapi.bukkit.server.inventory.component.ItemComponentImpl(
+            slot = diamondSlot,
+            itemStack = buildItem(Material.DIAMOND) {
+                displayName {
+                    text("Click me! (Clicks: $clickCount)", NamedTextColor.AQUA)
+                }
+            },
+            canTake = false,
+            clickHandler = { p, _ ->
+                clickCount++
+                onDiamondClick(p)
+            }
+        )
+        addItem(newItem)
     }
 }
 

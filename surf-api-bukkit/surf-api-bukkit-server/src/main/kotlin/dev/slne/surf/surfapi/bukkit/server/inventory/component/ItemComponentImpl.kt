@@ -33,16 +33,8 @@ class ItemComponentImpl(
     }
 
     override suspend fun update() {
-        // Propagate updates to parent GUI
-        parentGui?.let { gui ->
-            // Get all viewers of the GUI and update for each
-            plugin.launch {
-                // This is a simplified approach - in practice, you'd track viewers
-                // For now, we'll just trigger a general update
-            }
-        }
-
-        // Propagate to children
+        // Update would propagate to parent GUI if needed
+        // For now, we just propagate to children
         children.forEach { child ->
             child.update()
         }
@@ -62,19 +54,13 @@ class ItemComponentImpl(
         val gui = parentGui ?: return
         val inventory = gui.getInventory(player) ?: return
 
-        plugin.launch(player) {
-            if (itemStack != null && slot in 0 until inventory.size) {
-                inventory.setItem(slot, itemStack)
-            }
+        if (itemStack != null && slot in 0 until inventory.size) {
+            inventory.setItem(slot, itemStack)
         }
     }
 
     override suspend fun onClick(player: Player, clickType: ClickType) {
-        if (clickHandler != null) {
-            plugin.launch(player) {
-                clickHandler.invoke(player, clickType)
-            }
-        }
+        clickHandler?.invoke(player, clickType)
     }
 
     override suspend fun updateFor(player: Player) {
