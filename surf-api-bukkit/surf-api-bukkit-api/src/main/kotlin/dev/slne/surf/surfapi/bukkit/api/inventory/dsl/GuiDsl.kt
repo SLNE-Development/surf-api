@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.inventory.dsl
 
 import dev.slne.surf.surfapi.bukkit.api.inventory.component.GuiComponent
 import dev.slne.surf.surfapi.bukkit.api.inventory.component.ItemComponent
-import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component as AdventureComponent
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.ItemStack
@@ -18,7 +18,7 @@ annotation class GuiDsl
  */
 @GuiDsl
 class GuiBuilder {
-    var title: Component = Component.text("GUI")
+    var title: AdventureComponent = AdventureComponent.text("GUI")
     var rows: Int = 3
     private val items = mutableListOf<ItemBuilder>()
 
@@ -98,7 +98,7 @@ class ItemBuilder(
  * This should be implemented by the server module.
  */
 interface GuiComponentFactory {
-    fun createGui(title: Component, rows: Int, items: List<ItemComponent>): GuiComponent
+    fun createGui(title: AdventureComponent, rows: Int, items: List<ItemComponent>): GuiComponent
     fun createItem(
         slot: Int,
         itemStack: ItemStack,

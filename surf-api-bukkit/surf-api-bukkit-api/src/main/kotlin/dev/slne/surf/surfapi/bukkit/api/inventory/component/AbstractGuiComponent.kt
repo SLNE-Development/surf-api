@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.component
 
-import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component as AdventureComponent
 import org.bukkit.entity.Player
 
 /**
@@ -8,7 +8,7 @@ import org.bukkit.entity.Player
  * This provides a convenient way to create custom GUIs using class-based approach.
  */
 abstract class AbstractGuiComponent(
-    override val title: Component,
+    override val title: AdventureComponent,
     override val rows: Int = 3
 ) : GuiComponent {
     override val parent: Component? = null
