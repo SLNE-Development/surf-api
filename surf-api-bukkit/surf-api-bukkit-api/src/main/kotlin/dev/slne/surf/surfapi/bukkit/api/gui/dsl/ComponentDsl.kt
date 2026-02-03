@@ -26,8 +26,6 @@ annotation class ComponentDsl
 class ComponentBuilder {
     var updateInterval: Duration? = null
     var ref: Ref<Component>? = null
-    var onMount: (LifecycleContext.() -> Unit)? = null
-    var onUnmount: (LifecycleContext.() -> Unit)? = null
     var onUpdate: (LifecycleContext.() -> Unit)? = null
     var onClick: (ClickContext.() -> Unit)? = null
     
@@ -47,16 +45,6 @@ class ComponentBuilder {
         return object : DynamicComponent(renderer, onClick) {
             override val updateInterval: Duration? = this@ComponentBuilder.updateInterval
             override val props: Map<String, Prop<*>> = _props
-            
-            override fun onMount(context: LifecycleContext) {
-                super.onMount(context)
-                this@ComponentBuilder.onMount?.invoke(context)
-            }
-            
-            override fun onUnmount(context: LifecycleContext) {
-                super.onUnmount(context)
-                this@ComponentBuilder.onUnmount?.invoke(context)
-            }
             
             override fun onUpdate(context: LifecycleContext) {
                 super.onUpdate(context)

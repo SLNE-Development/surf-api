@@ -174,27 +174,12 @@ abstract class GuiView {
     fun addComponent(slot: Int, component: Component) {
         component.view = this
         _components[slot] = component
-        
-        if (!component.isMounted) {
-            viewers.values.forEach { player ->
-                val lifecycleContext = createLifecycleContext(player, LifecycleEventType.MOUNT)
-                component.onMount(lifecycleContext)
-            }
-            component.isMounted = true
-        }
     }
     
     /**
      * Remove a component from a slot.
      */
     fun removeComponent(slot: Int) {
-        _components[slot]?.let { component ->
-            viewers.values.forEach { player ->
-                val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UNMOUNT)
-                component.onUnmount(lifecycleContext)
-            }
-            component.isMounted = false
-        }
         _components.remove(slot)
     }
     

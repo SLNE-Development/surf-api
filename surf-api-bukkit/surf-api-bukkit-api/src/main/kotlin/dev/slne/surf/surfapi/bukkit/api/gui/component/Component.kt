@@ -38,12 +38,6 @@ abstract class Component {
     open val updateInterval: Duration? = null
     
     /**
-     * Whether this component is currently mounted.
-     */
-    var isMounted: Boolean = false
-        internal set
-    
-    /**
      * Props accessible by this component.
      * Children can access parent props.
      */
@@ -53,16 +47,6 @@ abstract class Component {
      * Ref attached to this component, if any.
      */
     internal var attachedRef: Ref<Component>? = null
-    
-    /**
-     * Called when the component is mounted.
-     */
-    open fun onMount(context: LifecycleContext) {}
-    
-    /**
-     * Called when the component is unmounted.
-     */
-    open fun onUnmount(context: LifecycleContext) {}
     
     /**
      * Called when the component is updated.
@@ -117,9 +101,7 @@ abstract class Component {
      * Trigger an update of this component.
      */
     fun update() {
-        if (isMounted) {
-            view.updateComponent(this)
-        }
+        view.updateComponent(this)
     }
     
     /**
