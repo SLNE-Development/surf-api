@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.test.command;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.CommandExceptionTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.GlowingTest;
-import dev.slne.surf.surfapi.bukkit.test.command.subcommands.InventoryTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.MaxStacksizeTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.NewGuiTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PacketEntityTest;
@@ -16,7 +15,6 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SmoothTimeSkip;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SuspendCommandExecutionTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ToastTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.VisualizerTest;
-import dev.slne.surf.surfapi.bukkit.test.command.subcommands.gui.InventoryFrameworkTest;
 
 public class SurfApiTestCommand extends CommandAPICommand {
 
@@ -33,12 +31,10 @@ public class SurfApiTestCommand extends CommandAPICommand {
         new ReflectionTest("reflection"),
         new PrefixConfigTest("prefixconfig"),
         new CommandExceptionTest("commandexception"),
-        new InventoryFrameworkTest("inventoryframework"),
         new MaxStacksizeTest("maxstacksize"),
         new VisualizerTest("visualizer"),
         new GlowingTest("glowing"),
         new PaginationTest("pagination"),
-        new InventoryTest("inventory"),
         new ToastTest(("toast")),
         new SuspendCommandExecutionTest("suspendCommandExecution"),
         new NewGuiTest("newgui")
