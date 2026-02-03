@@ -5,6 +5,7 @@ import dev.jorel.commandapi.CommandAPI
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.register
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
+import dev.slne.surf.surfapi.bukkit.server.gui.view.GuiViewListener
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
@@ -19,6 +20,9 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
 
         packetListenerApi.registerListeners(ChatListener())
         TestInventoryView.register()
+        
+        // Register new GUI framework listener
+        server.pluginManager.registerEvents(GuiViewListener, this)
     }
 
     override fun onEnable() {

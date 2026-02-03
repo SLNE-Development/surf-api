@@ -5,6 +5,7 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.CommandExceptionTes
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.GlowingTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.InventoryTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.MaxStacksizeTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.NewGuiTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PacketEntityTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PacketLoreTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PaginationTest;
@@ -39,7 +40,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
         new PaginationTest("pagination"),
         new InventoryTest("inventory"),
         new ToastTest(("toast")),
-        new SuspendCommandExecutionTest("suspendCommandExecution")
+        new SuspendCommandExecutionTest("suspendCommandExecution"),
+        new NewGuiTest("newgui")
     );
   }
 }

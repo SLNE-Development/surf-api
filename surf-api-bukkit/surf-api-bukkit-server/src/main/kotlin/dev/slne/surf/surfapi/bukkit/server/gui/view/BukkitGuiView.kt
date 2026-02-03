@@ -31,6 +31,9 @@ abstract class BukkitGuiView : GuiView() {
         val inventory = Bukkit.createInventory(null, config.size, config.title)
         inventories[player.uniqueId] = inventory
         
+        // Register with listener
+        GuiViewListener.registerView(inventory, this)
+        
         // Render components
         components.forEach { (slot, component) ->
             val context = createViewContext(player)
@@ -75,8 +78,10 @@ abstract class BukkitGuiView : GuiView() {
             Bukkit.getScheduler().cancelTask(taskId)
         }
         
-        // Clean up
-        inventories.remove(player.uniqueId)
+        // Unregister inventory
+        inventories.remove(player.uniqueId)?.let { inventory ->
+            GuiViewListener.unregisterView(inventory)
+        }
         
         super.close(player)
     }
