@@ -97,6 +97,7 @@ open class AbstractGuiView : GuiView() {
 
         allSlots.forEach { slot ->
             val componentsAtSlot = findComponentsBySlot(slot)
+
             if (componentsAtSlot.isNotEmpty()) {
                 // Get highest priority component
                 val component = componentsAtSlot.first()
@@ -104,6 +105,7 @@ open class AbstractGuiView : GuiView() {
 
                 // Check if it's a container component
                 val slotsToRender = component.renderSlots(context)
+                
                 if (slotsToRender.isNotEmpty()) {
                     // Only render this slot if it's in the container's output
                     slotsToRender[slot]?.let { guiItem ->
