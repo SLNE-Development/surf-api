@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection
 import dev.slne.surf.surfapi.core.server.component.ComponentService
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -24,6 +25,11 @@ class PaperComponentService : ComponentService() {
     override fun getLogger(owner: Any): ComponentLogger {
         ensureOwnerIsPlugin(owner)
         return owner.componentLogger
+    }
+
+    override fun getDataFolder(owner: Any): File {
+        ensureOwnerIsPlugin(owner)
+        return owner.dataFolder
     }
 
     @OptIn(ExperimentalContracts::class)

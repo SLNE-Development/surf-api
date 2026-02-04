@@ -116,6 +116,26 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
             collectKSTypeAnnotationClassNames(component, ClassNames.CONDITIONAL_ON, "condition", deferred)
                 ?: return null
 
+        // Process ConditionalOnEnvironment annotations
+        val conditionalOnEnvironments = component.findAllAnnotationsRecursive(ClassNames.CONDITIONAL_ON_ENVIRONMENT)
+            .collectArgumentValuesGrouped<String>("environments")
+
+        // Process ConditionalOnMissingComponent annotations
+        val conditionalOnMissingComponents =
+            collectKSTypeAnnotationClassNames(component, ClassNames.CONDITIONAL_ON_MISSING_COMPONENT, "component", deferred)
+                ?: return null
+
+        // Process ConditionalOnProperty annotations
+        val conditionalOnProperties = component.findAllAnnotationsRecursive(ClassNames.CONDITIONAL_ON_PROPERTY)
+            .map { annotation ->
+                PluginComponentMeta.PropertyCondition(
+                    key = annotation.getArgumentValueAs<String>("key") ?: "",
+                    havingValue = annotation.getArgumentValueAs<String>("havingValue") ?: "",
+                    matchIfMissing = annotation.getArgumentValueAs<Boolean>("matchIfMissing") ?: false,
+                    file = annotation.getArgumentValueAs<String>("file") ?: ""
+                )
+            }
+
         return PluginComponentMeta.Component(
             className = component.toBinaryName(),
             priority = priority.toShort(),
@@ -123,7 +143,10 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
             pluginOneDependencies = dependsOnOnePlugin,
             pluginDependencies = dependsOnPlugin,
             componentDependencies = dependsOnComponent,
-            customConditions = conditionalOn
+            customConditions = conditionalOn,
+            conditionalOnEnvironments = conditionalOnEnvironments,
+            conditionalOnMissingComponents = conditionalOnMissingComponents,
+            conditionalOnProperties = conditionalOnProperties
         )
     }
 

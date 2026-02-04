@@ -17,6 +17,24 @@ data class PluginComponentMeta(
         val pluginOneDependencies: List<List<String>> = emptyList(),
         val componentDependencies: List<String> = emptyList(),
         val customConditions: List<String> = emptyList(),
+        val conditionalOnEnvironments: List<List<String>> = emptyList(),
+        val conditionalOnMissingComponents: List<String> = emptyList(),
+        val conditionalOnProperties: List<PropertyCondition> = emptyList(),
+    )
+
+    /**
+     * Represents a property condition for conditional component loading.
+     * @property key The property key to check
+     * @property havingValue The expected value (empty string means just check existence)
+     * @property matchIfMissing If true, condition matches when property is missing
+     * @property file Optional custom file path for the property source
+     */
+    @Serializable
+    data class PropertyCondition(
+        val key: String,
+        val havingValue: String = "",
+        val matchIfMissing: Boolean = false,
+        val file: String = ""
     )
 
     @Serializable

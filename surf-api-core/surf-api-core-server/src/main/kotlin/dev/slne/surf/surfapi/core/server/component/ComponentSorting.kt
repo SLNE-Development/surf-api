@@ -9,6 +9,19 @@ import java.util.*
 
 
 object ComponentSorting {
+    /**
+     * Performs a topological sort on the components, respecting dependencies.
+     *
+     * This method considers:
+     * - Component dependencies (from @DependsOnComponent)
+     * - Missing component conditions (from @ConditionalOnMissingComponent) - these create
+     *   implicit dependencies where a component with this condition should be loaded after
+     *   the component it checks for, so we can properly evaluate if it's missing.
+     *
+     * @param componentsMeta List of component metadata to sort
+     * @return Sorted list of components in dependency order
+     * @throws IllegalStateException if a cyclic dependency is detected
+     */
     fun topologicalSort(
         componentsMeta: List<PluginComponentMeta.Component>,
     ): List<PluginComponentMeta.Component> {
@@ -26,10 +39,23 @@ object ComponentSorting {
         for (candidate in sorted) {
             graph.addNode(candidate)
 
+            // Add edges for explicit component dependencies
             for (dependency in candidate.componentDependencies) {
                 val depCandidate = candidateMap[dependency]
                 if (depCandidate != null) {
                     graph.putEdge(candidate, depCandidate)
+                }
+            }
+
+            // Add edges for missing component conditions
+            // If a component has @ConditionalOnMissingComponent(X::class), it should be
+            // processed after X (if X exists), so we can check if X was actually loaded
+            for (missingComponent in candidate.conditionalOnMissingComponents) {
+                val missingCandidate = candidateMap[missingComponent]
+                if (missingCandidate != null) {
+                    // The component with the condition depends on the referenced component
+                    // being processed first (so we know if it's loaded or not)
+                    graph.putEdge(candidate, missingCandidate)
                 }
             }
         }
