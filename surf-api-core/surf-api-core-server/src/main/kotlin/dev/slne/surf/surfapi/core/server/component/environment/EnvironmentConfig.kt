@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.server.component.environment
 
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.Properties
 
@@ -21,6 +22,8 @@ import java.util.Properties
  * ```
  */
 object EnvironmentConfig {
+    private val logger = LoggerFactory.getLogger(EnvironmentConfig::class.java)
+    
     private const val ENV_FILE_NAME = "surf-api.env"
     private const val ENV_KEY = "SURF_ENVIRONMENT"
     private const val DEFAULT_ENVIRONMENT = "production"
@@ -89,8 +92,8 @@ object EnvironmentConfig {
                 properties.getProperty(ENV_KEY)?.takeIf { it.isNotBlank() }?.let {
                     return it.trim().lowercase()
                 }
-            } catch (_: Exception) {
-                // Ignore file read errors, fall through to default
+            } catch (e: Exception) {
+                logger.debug("Failed to read environment file: {}", file.absolutePath, e)
             }
         }
 

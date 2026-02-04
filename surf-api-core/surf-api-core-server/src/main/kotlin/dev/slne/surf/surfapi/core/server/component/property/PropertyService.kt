@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.core.server.component.property
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import org.slf4j.LoggerFactory
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.File
 import java.time.Duration
@@ -20,6 +21,8 @@ import java.time.Duration
  * ```
  */
 object PropertyService {
+    private val logger = LoggerFactory.getLogger(PropertyService::class.java)
+    
     private const val DEFAULT_PROPERTIES_FILE = "properties.yml"
 
     private val propertyCache = Caffeine.newBuilder()
@@ -98,7 +101,8 @@ object PropertyService {
                     .build()
                 val rootNode = loader.load()
                 nodeToMap(rootNode)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                logger.debug("Failed to load properties file: {}", propertiesFile.absolutePath, e)
                 emptyMap()
             }
         }

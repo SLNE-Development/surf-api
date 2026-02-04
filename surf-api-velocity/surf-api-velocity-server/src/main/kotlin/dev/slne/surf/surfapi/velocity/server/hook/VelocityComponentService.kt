@@ -24,13 +24,9 @@ class VelocityComponentService : ComponentService() {
 
     override fun getDataFolder(owner: Any): File {
         val pluginContainer = getPluginContainerFromOwner(owner)
-        val dataDirectory = velocityMain.server.pluginManager.ensurePluginContainer(owner)
-            .let { container ->
-                // Velocity plugins use @DataDirectory annotation to get data folder
-                // We'll use the plugins directory with the plugin id as a fallback
-                File("plugins/${container.description.id}")
-            }
-        return dataDirectory
+        // Velocity plugins use @DataDirectory annotation to get data folder
+        // We'll use the plugins directory with the plugin id as a fallback
+        return File("plugins/${pluginContainer.description.id}")
     }
 
     private fun getPluginContainerFromOwner(owner: Any) =
