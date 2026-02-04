@@ -73,10 +73,12 @@ fun component(
     slot: Slot,
     item: GuiItem,
     priority: ComponentPriority = ComponentPriority.NORMAL,
+    onUpdate: (LifecycleContext.() -> Unit)? = null,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
     componentBuilder.priority = priority
+    componentBuilder.onUpdate = onUpdate
     componentBuilder.builder()
     return componentBuilder.build(slot) { item }
 }
