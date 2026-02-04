@@ -28,10 +28,12 @@ object PaginatedShopGuiView : AbstractGuiView() {
     private val coinsProp = ViewerProp.Mutable("coins", 1000)
     private val coinsDisplayRef = Ref<Component>()
 
-    // Shop items
-    private val shopItems = Material.entries.filter {
-        it.isItem && !it.isAir
-    }.map { ShopItem(it, it.name, (10..500).random()) }.shuffled()
+    // Shop items - lazy to avoid initialization issues
+    private val shopItems by lazy {
+        Material.entries.filter {
+            it.isItem && !it.isAir
+        }.map { ShopItem(it, it.name, (10..500).random()) }.shuffled()
+    }
 
     // Pagination component - includes built-in navigation buttons
     // The component will use 4 rows: 3 for items + 1 for buttons
