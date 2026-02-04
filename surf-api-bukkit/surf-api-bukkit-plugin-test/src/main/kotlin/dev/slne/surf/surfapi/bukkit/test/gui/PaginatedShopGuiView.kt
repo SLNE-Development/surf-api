@@ -23,7 +23,7 @@ import org.bukkit.event.inventory.InventoryType
  * Example GUI demonstrating ViewerMutableProp and PaginationComponent.
  * Each player has their own coins (viewer-specific state).
  */
-object PaginatedShopGuiView : AbstractGuiView() {
+class PaginatedShopGuiView : AbstractGuiView() {
     private val coinsProp = ViewerProp.Mutable("coins", 1000)
     private val coinsDisplayRef = Ref<Component>()
 
