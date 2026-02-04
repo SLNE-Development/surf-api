@@ -31,6 +31,7 @@ annotation class ComponentDsl
 class ComponentBuilder {
     var ref: Ref<Component>? = null
     var priority: ComponentPriority = ComponentPriority.NORMAL
+    var cancelOnClick: Boolean = true
     var initComponent: (LifecycleContext.() -> Unit)? = null
     var onFirstRender: (LifecycleContext.() -> Unit)? = null
     var onUpdate: (LifecycleContext.() -> Unit)? = null
@@ -55,6 +56,7 @@ class ComponentBuilder {
             override val props: ObjectList<Prop<*>> = _props
             override var hidden by this@ComponentBuilder::hidden
             override var disabled by this@ComponentBuilder::disabled
+            override var cancelOnClick by this@ComponentBuilder::cancelOnClick
 
             override fun initComponent(context: LifecycleContext) {
                 super.initComponent(context)

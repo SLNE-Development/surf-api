@@ -11,7 +11,6 @@ data class ViewConfig(
     var size: Int = 54, // 6 rows by default for CHEST
     var type: InventoryType = InventoryType.CHEST,
     var cancelOnClick: Boolean = true,
-    var closeOnClickOutside: Boolean = false
 ) {
     /**
      * Set rows (only for CHEST type).
@@ -28,6 +27,6 @@ data class ViewConfig(
         }
 
     override fun toString(): String {
-        return "ViewConfig(title=$title, size=$size, type=$type, cancelOnClick=$cancelOnClick, closeOnClickOutside=$closeOnClickOutside, rows=$rows)"
+        return "ViewConfig(title=$title, size=$size, type=$type, cancelOnClick=$cancelOnClick, rows=$rows)"
     }
 }

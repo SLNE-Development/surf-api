@@ -13,7 +13,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.slot
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
-import dev.slne.surf.surfapi.bukkit.api.gui.view.AbstractGuiView
+import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import dev.slne.surf.surfapi.core.api.util.toObjectList
@@ -26,7 +26,7 @@ import org.bukkit.inventory.ItemType
  * Example GUI demonstrating ViewerMutableProp and PaginationComponent.
  * Each player has their own coins (viewer-specific state).
  */
-class PaginatedShopGuiView : AbstractGuiView() {
+class PaginatedShopGuiView : GuiView() {
     private val coinsProp = ViewerProp.Mutable("coins", 1000)
     private val coinsDisplayRef = Ref<Component>()
 

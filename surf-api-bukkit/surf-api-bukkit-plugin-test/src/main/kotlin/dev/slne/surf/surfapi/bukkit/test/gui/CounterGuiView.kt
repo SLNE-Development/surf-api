@@ -13,10 +13,12 @@ import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.slot
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
-import dev.slne.surf.surfapi.bukkit.api.gui.view.AbstractGuiView
+import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import dev.slne.surf.surfapi.bukkit.test.plugin
+import dev.slne.surf.surfapi.core.api.messages.adventure.plain
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import kotlinx.coroutines.runBlocking
+import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Material
 import org.bukkit.event.inventory.InventoryType
 
@@ -24,7 +26,7 @@ import org.bukkit.event.inventory.InventoryType
  * Example GUI demonstrating MutableProp usage with a counter.
  * The counter is shared across all viewers (global state).
  */
-object CounterGuiView : AbstractGuiView() {
+object CounterGuiView : GuiView() {
     private val counterProp = Prop.Mutable("counter", 0)
     private val counterDisplayRef = Ref<Component>()
 
@@ -32,6 +34,30 @@ object CounterGuiView : AbstractGuiView() {
         context.config().type = InventoryType.CHEST
         context.config().rows = 3
         context.config().title = text("Counter Gui")
+
+        context.slot(
+            component(
+                Slot.at(0, 0),
+                GuiItem.of(ItemStack(Material.NAME_TAG) {
+                    displayName {
+                        success("Randomize Title")
+                    }
+                })
+            ) {
+                onClick = {
+                    val randomHex = List(6) {
+                        ('0'..'9') + ('A'..'F')
+                    }.flatten().shuffled().take(6).joinToString("")
+
+                    val textColor = TextColor.fromHexString(randomHex)
+                    val oldTitle = view.title.plain()
+
+                    view.modifyConfig {
+                        title = text(oldTitle, textColor)
+                    }
+                }
+            }
+        )
 
         // Counter display at top center
         context.slot(

@@ -60,12 +60,24 @@ abstract class Component {
     var parent: Component? = null
         internal set
 
+    /**
+     * Whether to cancel click events on this component.
+     */
+    open var cancelOnClick: Boolean = true
+
     private val firstRenderPerPlayer = ConcurrentHashMap.newKeySet<UUID>()
 
     fun renderFirstRenderPerPlayer(player: Player): Boolean {
-        if(!firstRenderPerPlayer.add(player.uniqueId)) return false
+        if (!firstRenderPerPlayer.add(player.uniqueId)) return false
 
-        view?.let { onFirstRender(it.createLifecycleContext(player, LifecycleEventType.FIRST_RENDER)) }
+        view?.let {
+            onFirstRender(
+                it.createLifecycleContext(
+                    player,
+                    LifecycleEventType.FIRST_RENDER
+                )
+            )
+        }
 
         return true
     }

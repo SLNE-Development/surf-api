@@ -1,9 +1,12 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.view
 
+import dev.slne.surf.surfapi.bukkit.api.event.cancel
 import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
+import dev.slne.surf.surfapi.bukkit.api.gui.context.abstract.*
+import dev.slne.surf.surfapi.bukkit.api.gui.toItemStack
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.toObjectList
@@ -80,9 +83,17 @@ abstract class GuiView {
      */
     internal val config = ViewConfig()
 
+    val title by config::title
+    val size by config::size
+    val type by config::type
+    val cancelOnClick by config::cancelOnClick
+
     protected fun init() {
         onInit(createInitializeContext())
+        recreateInventory()
+    }
 
+    protected fun recreateInventory() {
         this.inventory = when (config.type) {
             InventoryType.CHEST -> {
                 Bukkit.createInventory(null, config.size, config.title)
@@ -91,6 +102,17 @@ abstract class GuiView {
             else -> {
                 Bukkit.createInventory(null, config.type, config.title)
             }
+        }
+    }
+
+    fun modifyConfig(modifier: ViewConfig.() -> Unit) {
+        config.modifier()
+        initialized = false
+
+        init()
+
+        viewerPlayers().forEach { viewer ->
+            open(viewer)
         }
     }
 
@@ -161,6 +183,11 @@ abstract class GuiView {
         viewers.add(player.uniqueId)
 
         onOpen(createViewContext(player))
+
+        renderAllSlots(player)
+
+        // Open inventory
+        player.openInventory(inventory)
     }
 
     /**
@@ -170,6 +197,7 @@ abstract class GuiView {
         val context = createViewContext(player)
         onClose(context)
         viewers.remove(player.uniqueId)
+        ViewManager.removeActiveView(player)
     }
 
     /**
@@ -178,6 +206,63 @@ abstract class GuiView {
     fun update() {
         viewerPlayers().forEach { player ->
             onUpdate(createViewContext(player))
+        }
+    }
+
+    private fun renderAllSlots(player: Player) {
+        val allSlots = (0 until inventory.size).map { Slot.of(it) }
+
+        allSlots.forEach { slot ->
+            renderSlot(player, slot)
+        }
+    }
+
+    private fun renderSlot(
+        player: Player,
+        slot: Slot
+    ) {
+        if (slot.index >= inventory.size) return
+
+        val resolved = resolveSlot(player, slot)
+        resolved?.component?.renderFirstRenderPerPlayer(player)
+
+        inventory.setItem(
+            slot.index,
+            resolved?.guiItem?.toItemStack()
+        )
+    }
+
+
+    /**
+     * Refresh the inventory for a player.
+     */
+    internal fun refreshInventory(player: Player) {
+        // Clear inventory first
+        inventory.clear()
+
+        // Re-render all slots
+        renderAllSlots(player)
+    }
+
+    /**
+     * Refresh all slots occupied by a specific component and its children.
+     */
+    internal fun refreshComponentSlots(player: Player, component: Component) {
+        // Collect all slots from this component and all its children recursively
+        // Only refresh this component's own slots, not children's
+        // Children will refresh their own slots when updateChildrenRecursively calls them
+        fun collectAllSlots(comp: Component): Set<Slot> {
+            val slots = mutableSetOf(*comp.area.slots().toTypedArray())
+
+            comp.children.forEach { child ->
+                slots.addAll(collectAllSlots(child))
+            }
+
+            return slots
+        }
+
+        collectAllSlots(component).forEach { slot ->
+            renderSlot(player, slot)
         }
     }
 
@@ -213,15 +298,64 @@ abstract class GuiView {
 
             // Refresh the component's slots to update the visual display
             // This now includes all children's slots, so everything updates together
-            refreshComponentSlotsInternal(player, component)
+            refreshComponentSlots(player, component)
         }
     }
 
+    private fun resolveSlot(
+        player: Player,
+        slot: Slot
+    ): ResolvedSlot? {
+        val componentsAtSlot = findComponentsBySlot(slot)
+        if (componentsAtSlot.isEmpty()) return null
+
+        val highestPriority = componentsAtSlot.first().priority.value
+        val candidates = componentsAtSlot
+            .takeWhile { it.priority.value == highestPriority }
+
+        val viewContext = createViewContext(player)
+
+        for (component in candidates) {
+            component.initComponent(
+                createLifecycleContext(
+                    player,
+                    LifecycleEventType.INIT_COMPONENT
+                )
+            )
+            if (component.hidden) continue
+
+            val slots = component.renderSlots(viewContext)
+
+            if (slots.isNotEmpty()) {
+                slots[slot]?.let { guiItem ->
+                    return ResolvedSlot(component, guiItem)
+                }
+            } else if (slot == component.area.first()) {
+                component.render(viewContext)?.let { guiItem ->
+                    return ResolvedSlot(component, guiItem)
+                }
+            }
+        }
+
+        return null
+    }
+
     /**
-     * Internal method to refresh component slots.
-     * Must be implemented by concrete view implementations.
+     * Handle click event.
      */
-    protected abstract fun refreshComponentSlotsInternal(player: Player, component: Component)
+    fun handleClick(player: Player, event: InventoryClickEvent) {
+        if (config.cancelOnClick) {
+            event.isCancelled = true
+        }
+
+        val slot = Slot.of(event.rawSlot)
+        val resolved = resolveSlot(player, slot) ?: return
+
+        if (resolved.component.disabled) return event.cancel()
+        if (resolved.component.cancelOnClick) event.cancel()
+
+        resolved.component.onClick(createClickContext(player, event, resolved.component))
+    }
 
     /**
      * Add a component to the view.
@@ -250,37 +384,37 @@ abstract class GuiView {
     /**
      * Create a click context for a player and click event.
      */
-    abstract fun createClickContext(
+    fun createClickContext(
         player: Player,
         event: InventoryClickEvent,
         component: Component,
-    ): ClickContext
+    ): ClickContext = AbstractClickContext(this, player, event, component)
 
     /**
      * Create a view context for a player.
      */
-    abstract fun createViewContext(player: Player): ViewContext
+    fun createViewContext(player: Player): ViewContext = AbstractViewContext(this, player)
 
     /**
      * Create a render context for a player.
      */
-    abstract fun createInitializeContext(): InitializeContext
+    fun createInitializeContext(): InitializeContext = AbstractInitializeContext(config, this)
 
     /**
      * Create a lifecycle context for a player.
      */
-    abstract fun createLifecycleContext(
+    fun createLifecycleContext(
         player: Player,
         eventType: LifecycleEventType
-    ): LifecycleContext
+    ): LifecycleContext = AbstractLifecycleContext(this, player, eventType)
 
     /**
      * Create a resume context for a player.
      */
-    abstract fun createResumeContext(
+    fun createResumeContext(
         player: Player,
         origin: GuiView?
-    ): ResumeContext
+    ): ResumeContext = AbstractResumeContext(this, player, origin)
 
     override fun toString(): String {
         return "GuiView(parent=$parent, components=$components, initialized=$initialized, viewers=$viewers, config=$config)"

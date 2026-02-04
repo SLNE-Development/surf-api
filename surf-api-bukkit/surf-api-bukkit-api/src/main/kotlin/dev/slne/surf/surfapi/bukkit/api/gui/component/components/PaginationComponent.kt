@@ -109,6 +109,8 @@ class PaginationComponent<T>(
             }
         }),
     ) {
+        this.cancelOnClick = true
+
         initComponent = {
             if (!hasPreviousPage(player)) {
                 disabled = true
@@ -134,7 +136,9 @@ class PaginationComponent<T>(
                 }
             })
         },
-    )
+    ) {
+        this.cancelOnClick = true
+    }
 
     private fun createNextButtonComponent() = component(
         slot = calculatedNextButtonSlot,
@@ -145,6 +149,8 @@ class PaginationComponent<T>(
             }
         }),
     ) {
+        this.cancelOnClick = true
+
         initComponent = {
             if (!hasNextPage(player)) {
                 disabled = true
