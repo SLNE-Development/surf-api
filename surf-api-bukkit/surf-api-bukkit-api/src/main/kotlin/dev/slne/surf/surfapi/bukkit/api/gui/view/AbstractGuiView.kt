@@ -172,31 +172,19 @@ open class AbstractGuiView : GuiView() {
         val context = createViewContext(player)
 
         // Collect all slots from this component and all its children recursively
-        fun collectAllSlots(comp: Component): Set<Slot> {
-            val slots = mutableSetOf<Slot>()
-            slots.addAll(comp.area.slots())
-            comp.children.forEach { child ->
-                slots.addAll(collectAllSlots(child))
-            }
-            return slots
-        }
-
-        println("=".repeat(20))
-        // Get all slots this component and its children could occupy
-        collectAllSlots(component).forEach { slot ->
-            println("Trying to update slot $slot")
+        // Only refresh this component's own slots, not children's
+        // Children will refresh their own slots when updateChildrenRecursively calls them
+        component.area.slots().forEach { slot ->
             if (slot.index >= inventory.size) return@forEach
 
             // Find all components at this slot, sorted by priority
             val componentsAtSlot = findComponentsBySlot(slot)
-            println("Components at slot: $componentsAtSlot")
 
             // Try each component from highest to lowest priority until one renders something
             var rendered = false
             for (comp in componentsAtSlot) {
                 val renderedItems = comp.renderSlots(context)
                 val item = renderedItems[slot]
-                println("Found item at slot $item")
 
                 if (item != null) {
                     // This component renders something at this slot
@@ -209,11 +197,9 @@ open class AbstractGuiView : GuiView() {
             // If no component rendered at this slot, clear it
             // This ensures slots are properly cleared when components become hidden
             if (!rendered) {
-                println("Item not rendered, clearing slot $slot")
                 inventory.setItem(slot.index, null)
             }
         }
-        println("#".repeat(20))
     }
 
     /**
