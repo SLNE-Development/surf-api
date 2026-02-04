@@ -12,9 +12,9 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
+import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import java.util.*
 
 /**
  * Component for paginated content with built-in navigation buttons.
@@ -35,12 +35,14 @@ class PaginationComponent<T>(
     private val pageIndicatorSlot: Slot? = null,
     override val area: ComponentArea = CuboidArea(startSlot, endSlot)
 ) : ContainerComponent(area, priority) {
+    private val currentPages = ViewerProp.Mutable("pagination_current_page", 0)
+
     init {
         require(area.width >= 3) { "PaginationComponent width must be at least 3 (current: ${area.width})" }
         require(area.height >= 2) { "PaginationComponent height must be at least 2 (current: ${area.height})" }
-    }
 
-    private val currentPages = mutableMapOf<UUID, Int>()
+        props.add(currentPages)
+    }
 
     /**
      * Start slot of the area (convenience accessor).
@@ -142,7 +144,7 @@ class PaginationComponent<T>(
      * Get the current page for a viewer.
      */
     fun getCurrentPage(viewer: Player): Int {
-        return currentPages.getOrDefault(viewer.uniqueId, 0)
+        return currentPages.getOrDefault(viewer, 0)
     }
 
     /**
@@ -229,7 +231,7 @@ class PaginationComponent<T>(
      */
     fun setPage(viewer: Player, page: Int) {
         if (page in 0 until getTotalPages()) {
-            currentPages[viewer.uniqueId] = page
+            currentPages.set(viewer, page)
         }
     }
 
@@ -237,7 +239,7 @@ class PaginationComponent<T>(
      * Clear the page state for a viewer.
      */
     fun clearPage(viewer: Player) {
-        currentPages.remove(viewer.uniqueId)
+        currentPages.clear(viewer)
     }
 
     override fun onUpdate(context: LifecycleContext) {

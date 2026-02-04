@@ -92,7 +92,7 @@ abstract class Component {
      * Props accessible by this component.
      * Children can access parent props.
      */
-    protected open val props: Map<String, Prop<*>> = emptyMap()
+    protected open val props: MutableList<Prop<*>> = mutableListOf()
 
     /**
      * Ref attached to this component, if any.
@@ -142,10 +142,12 @@ abstract class Component {
     /**
      * Get all props including parent props.
      */
-    fun getAllProps(): Map<String, Prop<*>> {
-        val allProps = mutableMapOf<String, Prop<*>>()
-        parent?.getAllProps()?.let { allProps.putAll(it) }
-        allProps.putAll(props)
+    fun getAllProps(): List<Prop<*>> {
+        val allProps = mutableListOf<Prop<*>>()
+
+        parent?.getAllProps()?.let { allProps.addAll(it) }
+        allProps.addAll(props)
+
         return allProps
     }
 

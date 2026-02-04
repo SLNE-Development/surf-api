@@ -14,8 +14,12 @@ open class ViewerProp<T>(
     override suspend fun get(): T =
         throw UnsupportedOperationException("Use get(viewer: Player) for ViewerProp")
 
-    fun get(viewer: Player): T = storage.get(viewer.uniqueId)
+    fun get(viewer: Player): T = storage.get(viewer)
         ?: throw IllegalStateException("Value for viewer ${viewer.uniqueId} is not set")
+
+    fun clear(viewer: Player) {
+        storage.clear(viewer)
+    }
 
     override fun toString(): String {
         return "ViewerProp(name='$name', storage=$storage)"
@@ -30,14 +34,18 @@ open class ViewerProp<T>(
         override suspend fun get(): T =
             throw UnsupportedOperationException("Use get(viewer: Player) for ViewerProp.MutableViewerProp")
 
-        fun get(viewer: Player): T? = storage.get(viewer.uniqueId)
+        fun get(viewer: Player): T? = storage.get(viewer)
+
+        fun getOrDefault(viewer: Player, defaultValue: T): T {
+            return storage.get(viewer) ?: defaultValue
+        }
 
         fun set(viewer: Player, value: T?) {
-            storage.set(viewer.uniqueId, value)
+            storage.set(viewer, value)
         }
 
         fun clear(viewer: Player) {
-            storage.clear(viewer.uniqueId)
+            storage.clear(viewer)
         }
 
         override fun toString(): String {
