@@ -88,20 +88,6 @@ abstract class Component {
     var disabled: Boolean = false
 
     /**
-     * Set the hidden state of this component.
-     */
-    fun setHidden(hidden: Boolean) {
-        this.hidden = hidden
-    }
-
-    /**
-     * Set the disabled state of this component.
-     */
-    fun setDisabled(disabled: Boolean) {
-        this.disabled = disabled
-    }
-
-    /**
      * Props accessible by this component.
      * Children can access parent props.
      */
