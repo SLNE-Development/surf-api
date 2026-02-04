@@ -5,14 +5,12 @@ public final class dev/slne/surf/surfapi/shared/api/annotation/AnnotationUtils {
 }
 
 public abstract interface class dev/slne/surf/surfapi/shared/api/component/Component {
-	public fun bootstrap (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun disable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun enable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/surfapi/shared/api/component/Component$DefaultImpls {
-	public static fun bootstrap (Ldev/slne/surf/surfapi/shared/api/component/Component;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun disable (Ldev/slne/surf/surfapi/shared/api/component/Component;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun enable (Ldev/slne/surf/surfapi/shared/api/component/Component;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun load (Ldev/slne/surf/surfapi/shared/api/component/Component;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -82,8 +80,21 @@ public abstract interface annotation class dev/slne/surf/surfapi/shared/api/comp
 	public abstract fun value ()[Ldev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOn;
 }
 
+public abstract interface annotation class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnDevelopmentEnvironment : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnEnvironment : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnEnvironment$Companion;
+	public static final field DEVELOPMENT_ENVIRONMENT Ljava/lang/String;
+	public static final field ENV_PROPERTY_NAME Ljava/lang/String;
+	public static final field PRODUCTION_ENVIRONMENT Ljava/lang/String;
 	public abstract fun environments ()[Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnEnvironment$Companion {
+	public static final field DEVELOPMENT_ENVIRONMENT Ljava/lang/String;
+	public static final field ENV_PROPERTY_NAME Ljava/lang/String;
+	public static final field PRODUCTION_ENVIRONMENT Ljava/lang/String;
 }
 
 public abstract interface annotation class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnEnvironment$Container : java/lang/annotation/Annotation {
@@ -98,10 +109,20 @@ public abstract interface annotation class dev/slne/surf/surfapi/shared/api/comp
 	public abstract fun value ()[Ldev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnMissingComponent;
 }
 
+public abstract interface annotation class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnProductionEnvironment : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnProperty : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnProperty$Companion;
+	public static final field DEFAULT_PROPERTIES_FILE Ljava/lang/String;
+	public abstract fun file ()Ljava/lang/String;
 	public abstract fun havingValue ()Ljava/lang/String;
-	public abstract fun key ()Ljava/lang/String;
+	public abstract fun key ()[Ljava/lang/String;
 	public abstract fun matchIfMissing ()Z
+}
+
+public final class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnProperty$Companion {
+	public static final field DEFAULT_PROPERTIES_FILE Ljava/lang/String;
 }
 
 public abstract interface annotation class dev/slne/surf/surfapi/shared/api/component/requirement/ConditionalOnProperty$Container : java/lang/annotation/Annotation {

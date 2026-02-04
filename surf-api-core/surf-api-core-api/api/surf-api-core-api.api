@@ -82,11 +82,9 @@ public final class dev/slne/surf/surfapi/core/api/command/exception/WrapperComma
 
 public abstract class dev/slne/surf/surfapi/core/api/component/AbstractComponent : dev/slne/surf/surfapi/shared/api/component/Component {
 	public fun <init> ()V
-	public final fun bootstrap (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun disable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun enable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	protected fun onBootstrap (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun onDisable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun onEnable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun onLoad (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -94,7 +92,6 @@ public abstract class dev/slne/surf/surfapi/core/api/component/AbstractComponent
 
 public abstract interface class dev/slne/surf/surfapi/core/api/component/SurfComponentApi {
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/component/SurfComponentApi$Companion;
-	public abstract fun bootstrap (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun components (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun componentsLoaded (Ljava/lang/Object;)Ljava/util/List;
 	public abstract fun componentsOfType (Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -107,7 +104,6 @@ public abstract interface class dev/slne/surf/surfapi/core/api/component/SurfCom
 }
 
 public final class dev/slne/surf/surfapi/core/api/component/SurfComponentApi$Companion : dev/slne/surf/surfapi/core/api/component/SurfComponentApi {
-	public fun bootstrap (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun components (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun componentsLoaded (Ljava/lang/Object;)Ljava/util/List;
 	public fun componentsOfType (Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
