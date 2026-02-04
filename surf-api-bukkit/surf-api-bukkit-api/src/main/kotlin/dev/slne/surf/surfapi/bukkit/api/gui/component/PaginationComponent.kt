@@ -95,7 +95,7 @@ class PaginationComponent<T>(
                 line { gray("Click to go to the previous page") }
             }
         }),
-        priority = ComponentPriority.HIGH
+        priority = this@PaginationComponent.priority
     ) {
         onClick = {
             previousPage(player)
@@ -116,7 +116,7 @@ class PaginationComponent<T>(
                 }
             })
         },
-        priority = ComponentPriority.HIGH
+        priority = this@PaginationComponent.priority
     )
 
     private fun createNextButtonComponent() = component(
@@ -127,7 +127,7 @@ class PaginationComponent<T>(
                 line { gray("Click to go to the next page") }
             }
         }),
-        priority = ComponentPriority.HIGH
+        priority = this@PaginationComponent.priority
     ) {
         onClick = {
             nextPage(player)
