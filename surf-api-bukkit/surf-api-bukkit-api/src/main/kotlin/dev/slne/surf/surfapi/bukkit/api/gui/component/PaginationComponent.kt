@@ -193,6 +193,8 @@ class PaginationComponent<T>(
         val hasPrev = hasPreviousPage(viewer)
         val hasNext = hasNextPage(viewer)
 
+        println("Click caused: hasPrev=$hasPrev, hasNext=$hasNext for viewer ${viewer.name}")
+
         previousButtonComponent.hidden = !hasPrev
         previousButtonComponent.disabled = !hasPrev
 

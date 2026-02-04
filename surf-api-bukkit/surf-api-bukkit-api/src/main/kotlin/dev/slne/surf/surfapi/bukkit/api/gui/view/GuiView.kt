@@ -40,6 +40,7 @@ abstract class GuiView {
         // Helper function to recursively collect components and their children
         fun collectComponents(component: Component) {
             allComponents.add(component)
+            
             component.children.forEach { child ->
                 collectComponents(child)
             }
