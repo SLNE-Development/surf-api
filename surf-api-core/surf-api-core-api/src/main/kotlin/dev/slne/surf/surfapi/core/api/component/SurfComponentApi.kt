@@ -50,7 +50,7 @@ interface SurfComponentApi {
     /**
      * Triggers the enable phase for all components owned by the given owner.
      *
-     * If the component extends [AbstractComponent], this also triggers the load (and bootstrap) phase
+     * If the component extends [AbstractComponent], this also triggers the load phase
      * if not already done.
      *
      * If the component only implements [Component] (and does not extend [AbstractComponent]),
@@ -130,4 +130,3 @@ interface SurfComponentApi {
 }
 
 val surfComponentApi = requiredService<SurfComponentApi>()
-
