@@ -41,6 +41,8 @@ class PaginationComponent<T>(
 
     private val currentPages = mutableMapOf<UUID, Int>()
     private val pageIndicatorRef = dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref<Component>()
+    private val previousButtonRef = dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref<Component>()
+    private val nextButtonRef = dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref<Component>()
 
     /**
      * Start slot of the area (convenience accessor).
@@ -98,6 +100,7 @@ class PaginationComponent<T>(
         }),
         priority = this@PaginationComponent.priority
     ) {
+        ref = previousButtonRef
         onClick = {
             previousPage(player)
             this@PaginationComponent.update()
@@ -132,6 +135,7 @@ class PaginationComponent<T>(
         }),
         priority = this@PaginationComponent.priority
     ) {
+        ref = nextButtonRef
         onClick = {
             nextPage(player)
             this@PaginationComponent.update()
@@ -187,6 +191,28 @@ class PaginationComponent<T>(
     }
 
     /**
+     * Update the state of navigation buttons based on available pages.
+     */
+    private fun updateNavigationButtonsState(viewer: Player) {
+        val hasPrev = hasPreviousPage(viewer)
+        val hasNext = hasNextPage(viewer)
+
+        // Update previous button
+        previousButtonRef.current?.let { button ->
+            button.setDisabled(!hasPrev)
+            button.setHidden(!hasPrev)
+            button.update()
+        }
+
+        // Update next button
+        nextButtonRef.current?.let { button ->
+            button.setDisabled(!hasNext)
+            button.setHidden(!hasNext)
+            button.update()
+        }
+    }
+
+    /**
      * Go to the next page for a viewer.
      */
     fun nextPage(viewer: Player) {
@@ -194,6 +220,7 @@ class PaginationComponent<T>(
 
         if (hasNextPage(viewer)) {
             setPage(viewer, currentPage + 1)
+            updateNavigationButtonsState(viewer)
         }
     }
 
@@ -205,6 +232,7 @@ class PaginationComponent<T>(
 
         if (hasPreviousPage(viewer)) {
             setPage(viewer, currentPage - 1)
+            updateNavigationButtonsState(viewer)
         }
     }
 
@@ -215,6 +243,7 @@ class PaginationComponent<T>(
         if (page in 0 until getTotalPages()) {
             currentPages[viewer.uniqueId] = page
             pageIndicatorRef.update()
+            updateNavigationButtonsState(viewer)
         }
     }
 
@@ -226,6 +255,9 @@ class PaginationComponent<T>(
     }
 
     override fun renderSlots(context: ViewContext): Map<Slot, GuiItem> {
+        // Update navigation button states for this viewer
+        updateNavigationButtonsState(context.player)
+        
         val pageItems = getPageItems(context.player)
         val renderedSlots = mutableMapOf<Slot, GuiItem>()
 
