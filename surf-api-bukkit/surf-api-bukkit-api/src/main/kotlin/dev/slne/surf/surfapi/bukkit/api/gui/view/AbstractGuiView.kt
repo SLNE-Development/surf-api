@@ -116,11 +116,6 @@ open class AbstractGuiView : GuiView() {
         val resolved = resolveSlot(player, slot)
 
         if (firstRender && resolved != null) {
-            // Call onInit before onFirstRender if component hasn't been initialized yet
-            if (!isComponentInitialized(resolved.component)) {
-                initializeComponentRecursively(resolved.component, player)
-            }
-            
             resolved.component.onFirstRender(
                 createLifecycleContext(player, LifecycleEventType.FIRST_RENDER)
             )
@@ -130,29 +125,6 @@ open class AbstractGuiView : GuiView() {
             slot.index,
             resolved?.guiItem?.toItemStack()
         )
-    }
-    
-    /**
-     * Check if a component has been initialized.
-     */
-    private fun isComponentInitialized(component: Component): Boolean {
-        return initializedComponents.contains(component)
-    }
-    
-    /**
-     * Initialize a component and all its children recursively.
-     */
-    private fun initializeComponentRecursively(component: Component, player: Player) {
-        if (!initializedComponents.contains(component)) {
-            val lifecycleContext = createLifecycleContext(player, LifecycleEventType.INIT)
-            component.onInit(lifecycleContext)
-            initializedComponents.add(component)
-            
-            // Initialize all children
-            component.children.forEach { child ->
-                initializeComponentRecursively(child, player)
-            }
-        }
     }
 
     /**

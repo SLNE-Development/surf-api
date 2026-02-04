@@ -100,12 +100,6 @@ abstract class Component {
     internal var attachedRef: Ref<Component>? = null
 
     /**
-     * Called when the component is initialized, before the first render.
-     * Use this to set up initial state or modify properties before rendering.
-     */
-    open fun onInit(context: LifecycleContext) {}
-
-    /**
      * Called when the component is rendered for the first time.
      */
     open fun onFirstRender(context: LifecycleContext) {}
