@@ -31,29 +31,29 @@ class PaginationComponent<T>(
     private val onItemClick: ((T, ClickContext) -> Unit)? = null,
     private val previousButtonSlot: Slot? = null,
     private val nextButtonSlot: Slot? = null,
-    private val pageIndicatorSlot: Slot? = null
-) : ContainerComponent(CuboidArea(startSlot, endSlot), priority) {
-    
+    private val pageIndicatorSlot: Slot? = null,
+    override val area: ComponentArea = CuboidArea(startSlot, endSlot)
+) : ContainerComponent(area, priority) {
     init {
-        val cuboidArea = area as CuboidArea
-        require(cuboidArea.width >= 3) { "PaginationComponent width must be at least 3 (current: ${cuboidArea.width})" }
-        require(cuboidArea.height >= 2) { "PaginationComponent height must be at least 2 (current: ${cuboidArea.height})" }
+        require(area.width >= 3) { "PaginationComponent width must be at least 3 (current: ${area.width})" }
+        require(area.height >= 2) { "PaginationComponent height must be at least 2 (current: ${area.height})" }
     }
+
     private val currentPages = mutableMapOf<UUID, Int>()
-    
+
     /**
      * Start slot of the area (convenience accessor).
      */
     private val startSlot: Slot
-        get() = (area as CuboidArea).startSlot
-    
+        get() = area.first()
+
     /**
      * Calculate page size from the area.
      * Items use height - 1 rows (last row is for buttons).
      */
     private val itemsHeight: Int = height - 1
     private val pageSize: Int = width * itemsHeight
-    
+
     /**
      * Calculated button slots (centered in last row by default).
      */
@@ -61,30 +61,32 @@ class PaginationComponent<T>(
         get() = previousButtonSlot ?: run {
             val lastRowY = startSlot.row + height - 1
             val centerX = startSlot.column + (width - 3) / 2
+
             Slot.at(centerX, lastRowY)
         }
-    
+
     private val calculatedPageIndicatorSlot: Slot
         get() = pageIndicatorSlot ?: run {
             val lastRowY = startSlot.row + height - 1
             val centerX = startSlot.column + (width - 3) / 2 + 1
+
             Slot.at(centerX, lastRowY)
         }
-    
+
     private val calculatedNextButtonSlot: Slot
         get() = nextButtonSlot ?: run {
             val lastRowY = startSlot.row + height - 1
             val centerX = startSlot.column + (width - 3) / 2 + 2
+
             Slot.at(centerX, lastRowY)
         }
-    
+
     init {
-        // Create navigation button children
         addChild(createPreviousButtonComponent())
         addChild(createPageIndicatorComponent())
         addChild(createNextButtonComponent())
     }
-    
+
     private fun createPreviousButtonComponent() = component(
         slot = calculatedPreviousButtonSlot,
         item = GuiItem(ItemStack(Material.ARROW) {
@@ -96,18 +98,17 @@ class PaginationComponent<T>(
         priority = ComponentPriority.HIGH
     ) {
         onClick = {
-            if (hasPreviousPage(player)) {
-                previousPage(player)
-                view.update()
-            }
+            previousPage(player)
+            this@PaginationComponent.update()
         }
     }
-    
+
     private fun createPageIndicatorComponent() = dynamicComponent(
         slot = calculatedPageIndicatorSlot,
         renderer = { ctx ->
             val currentPage = getCurrentPage(ctx.player) + 1
             val totalPages = getTotalPages()
+
             GuiItem(ItemStack(Material.PAPER) {
                 displayName { info("Page $currentPage") }
                 buildLore {
@@ -117,7 +118,7 @@ class PaginationComponent<T>(
         },
         priority = ComponentPriority.HIGH
     )
-    
+
     private fun createNextButtonComponent() = component(
         slot = calculatedNextButtonSlot,
         item = GuiItem(ItemStack(Material.ARROW) {
@@ -129,10 +130,8 @@ class PaginationComponent<T>(
         priority = ComponentPriority.HIGH
     ) {
         onClick = {
-            if (hasNextPage(player)) {
-                nextPage(player)
-                view.update()
-            }
+            nextPage(player)
+            this@PaginationComponent.update()
         }
     }
 
@@ -148,6 +147,7 @@ class PaginationComponent<T>(
      */
     fun getTotalPages(): Int {
         val allItems = items()
+
         return (allItems.size + pageSize - 1) / pageSize
     }
 
@@ -206,17 +206,17 @@ class PaginationComponent<T>(
     /**
      * Set a specific page for a viewer.
      */
-    fun setPage(viewerId: UUID, page: Int) {
+    fun setPage(viewer: Player, page: Int) {
         if (page in 0 until getTotalPages()) {
-            currentPages[viewerId] = page
+            currentPages[viewer.uniqueId] = page
         }
     }
 
     /**
      * Clear the page state for a viewer.
      */
-    fun clearPage(viewerId: UUID) {
-        currentPages.remove(viewerId)
+    fun clearPage(viewer: Player) {
+        currentPages.remove(viewer.uniqueId)
     }
 
     override fun renderSlots(context: ViewContext): Map<Slot, GuiItem> {
@@ -230,10 +230,11 @@ class PaginationComponent<T>(
                 // Calculate slot position within the items area (height - 1)
                 val row = index / width
                 val col = index % width
-                
+
                 // Only render if within items area (not in button row)
                 if (row < itemsHeight) {
                     val slot = Slot.at(startSlot.column + col, startSlot.row + row)
+
                     renderedSlots[slot] = guiItem
                 }
             }
@@ -245,15 +246,15 @@ class PaginationComponent<T>(
     override fun onClick(context: ClickContext) {
         // Check if click is in the items area (not button row)
         val relativeRow = context.slot.row - startSlot.row
-        
+
         if (relativeRow >= itemsHeight) {
             // Click is in button row, let children handle it
             return
         }
-        
+
         if (onItemClick != null) {
             val pageItems = getPageItems(context.player)
-            
+
             // Calculate the index within the pagination area
             val relativeCol = context.slot.column - startSlot.column
             val index = relativeRow * width + relativeCol

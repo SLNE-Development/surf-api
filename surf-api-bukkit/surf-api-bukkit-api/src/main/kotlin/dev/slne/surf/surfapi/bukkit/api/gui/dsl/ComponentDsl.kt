@@ -68,9 +68,11 @@ class ComponentBuilder {
 fun component(
     slot: Slot,
     item: GuiItem,
+    priority: ComponentPriority = ComponentPriority.NORMAL,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
+    componentBuilder.priority = priority
     componentBuilder.builder()
     return componentBuilder.build(slot) { item }
 }
@@ -81,9 +83,11 @@ fun component(
 fun dynamicComponent(
     slot: Slot,
     renderer: (ViewContext) -> GuiItem?,
+    priority: ComponentPriority = ComponentPriority.NORMAL,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
+    componentBuilder.priority = priority
     componentBuilder.builder()
     return componentBuilder.build(slot, renderer)
 }
@@ -171,7 +175,12 @@ fun RenderContext.slot(component: Component) {
  * DSL for rendering components in a view with item at a specific slot.
  */
 @ComponentDsl
-fun RenderContext.slot(slot: Slot, item: GuiItem, priority: ComponentPriority = ComponentPriority.NORMAL, onClick: (ClickContext.() -> Unit)? = null) {
+fun RenderContext.slot(
+    slot: Slot,
+    item: GuiItem,
+    priority: ComponentPriority = ComponentPriority.NORMAL,
+    onClick: (ClickContext.() -> Unit)? = null
+) {
     val component = ItemComponent(slot, item, priority, onClick)
     renderComponent(component)
 }
