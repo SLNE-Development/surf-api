@@ -10,7 +10,7 @@ import java.util.*
 @AutoService(ViewManager::class)
 class ViewManagerImpl : ViewManager {
     private val activePerPlayer = Caffeine.newBuilder()
-        .weakValues()
+        .maximumSize(10_000)
         .build<UUID, GuiView>()
 
     override fun getActiveView(player: Player): GuiView? {

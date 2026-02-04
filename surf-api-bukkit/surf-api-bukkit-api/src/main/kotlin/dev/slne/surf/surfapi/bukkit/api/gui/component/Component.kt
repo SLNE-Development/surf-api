@@ -178,6 +178,6 @@ abstract class Component {
     }
 
     override fun toString(): String {
-        return "Component(area=$area, priority=$priority, width=$width, height=$height, children=$children, view=$view, hidden=$hidden, disabled=$disabled, props=$props, attachedRef=${attachedRef.hashCode()})"
+        return "Component(area=$area, priority=$priority, width=$width, height=$height, children=$children, hidden=$hidden, disabled=$disabled)"
     }
 }

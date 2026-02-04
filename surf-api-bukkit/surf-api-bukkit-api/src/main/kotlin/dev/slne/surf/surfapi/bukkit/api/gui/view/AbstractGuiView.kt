@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.view
 
+import dev.slne.surf.surfapi.bukkit.api.event.cancel
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
@@ -14,7 +15,6 @@ open class AbstractGuiView : GuiView() {
     override fun open(player: Player) {
         super.open(player)
 
-        ViewManager.setActiveView(player, this)
         renderAllSlots(player)
 
         // Open inventory
@@ -130,10 +130,10 @@ open class AbstractGuiView : GuiView() {
             event.isCancelled = true
         }
 
-        val slot = Slot.of(event.slot)
+        val slot = Slot.of(event.rawSlot)
         val resolved = resolveSlot(player, slot) ?: return
 
-        if (resolved.component.disabled) return
+        if (resolved.component.disabled) return event.cancel()
 
         resolved.component.onClick(createClickContext(player, event, resolved.component))
     }

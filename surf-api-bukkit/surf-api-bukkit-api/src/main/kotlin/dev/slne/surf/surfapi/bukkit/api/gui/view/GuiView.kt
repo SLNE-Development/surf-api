@@ -156,6 +156,8 @@ abstract class GuiView {
      */
     open fun open(player: Player) {
         ensureInitialized()
+
+        ViewManager.setActiveView(player, this)
         viewers.add(player.uniqueId)
 
         onOpen(createViewContext(player))

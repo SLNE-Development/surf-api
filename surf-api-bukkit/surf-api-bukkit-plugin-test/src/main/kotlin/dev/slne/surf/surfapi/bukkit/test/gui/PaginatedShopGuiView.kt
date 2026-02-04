@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.gui
 
 import dev.slne.surf.surfapi.bukkit.api.builder.ItemStack
+import dev.slne.surf.surfapi.bukkit.api.builder.buildItem
 import dev.slne.surf.surfapi.bukkit.api.builder.buildLore
 import dev.slne.surf.surfapi.bukkit.api.builder.displayName
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
@@ -17,7 +18,9 @@ import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import dev.slne.surf.surfapi.core.api.util.toObjectList
 import org.bukkit.Material
+import org.bukkit.Registry
 import org.bukkit.event.inventory.InventoryType
+import org.bukkit.inventory.ItemType
 
 /**
  * Example GUI demonstrating ViewerMutableProp and PaginationComponent.
@@ -29,9 +32,9 @@ class PaginatedShopGuiView : AbstractGuiView() {
 
     // Shop items - lazy to avoid initialization issues
     private val shopItems by lazy {
-        Material.entries.filter {
-            it.isItem && !it.isAir
-        }.map { ShopItem(it, it.name, (10..500).random()) }.shuffled().toObjectList()
+        Registry.ITEM.map {
+            ShopItem(it, it.key.asString(), (10..500).random())
+        }.shuffled().toObjectList()
     }
 
     // Pagination component - includes built-in navigation buttons
@@ -42,7 +45,7 @@ class PaginatedShopGuiView : AbstractGuiView() {
         endSlot = Slot.at(7, 4),     // Column 8, Row 4 (9 cols x 4 rows = 36 slots total)
         items = { shopItems },
         itemRenderer = { item, ctx ->
-            GuiItem.of(ItemStack(item.material) {
+            GuiItem.of(buildItem(item.type) {
                 displayName {
                     gold(item.name)
                 }
@@ -106,7 +109,7 @@ class PaginatedShopGuiView : AbstractGuiView() {
     }
 
     private data class ShopItem(
-        val material: Material,
+        val type: ItemType,
         val name: String,
         val price: Int
     )
