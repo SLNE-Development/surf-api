@@ -99,6 +99,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
     final var constructorAnnotation = method.getDeclaredAnnotation(
         dev.slne.surf.surfapi.core.api.reflection.Constructor.class);
     final var nameAnnotation = method.getDeclaredAnnotation(Name.class);
+    final var privateLookup = sneaky(() -> MethodHandles.privateLookupIn(proxiedClass, LOOKUP));
 
     if (fieldAnnotation != null) {
       final String fieldName = getMethodName(method, nameAnnotation, fieldAnnotation,
@@ -106,9 +107,9 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
       final Field field = sneaky(() -> findField(proxiedClass, fieldName));
       final boolean isGetter = fieldAnnotation.type() == Type.GETTER;
       final MethodHandle handleGetter =
-          isGetter ? sneaky(() -> LOOKUP.unreflectGetter(field)) : null;
+          isGetter ? sneaky(() -> privateLookup.unreflectGetter(field)) : null;
       final MethodHandle handleSetter = !isGetter && !fieldAnnotation.overrideFinal()
-          ? sneaky(() -> LOOKUP.unreflectSetter(field)) : null;
+          ? sneaky(() -> privateLookup.unreflectSetter(field)) : null;
 
       if (isGetter) {
         checkParamCount(method, staticAnnotation != null ? 0 : 1);
@@ -126,7 +127,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     if (constructorAnnotation != null) {
       final var handle = sneaky(
-          () -> LOOKUP.unreflectConstructor(findConstructor(proxiedClass, method)));
+          () -> privateLookup.unreflectConstructor(findConstructor(proxiedClass, method)));
       return new HandleInvokable(normalizeMethodHandleType(handle));
     }
 
@@ -137,7 +138,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     final Method target = sneaky(
         () -> findMethod(proxiedClass, method, nameAnnotation, staticAnnotation));
-    final MethodHandle handle = sneaky(() -> LOOKUP.unreflect(target));
+    final MethodHandle handle = sneaky(() -> privateLookup.unreflect(target));
     return new HandleInvokable(normalizeMethodHandleType(handle));
   }
 

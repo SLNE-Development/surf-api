@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.hytale.api.coroutines
 
-import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 

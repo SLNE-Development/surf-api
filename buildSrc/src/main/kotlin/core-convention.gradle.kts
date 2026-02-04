@@ -27,7 +27,9 @@ repositories {
 
 dependencies {
     compileOnly(libs.auto.service.annotations)
-    ksp(project(":surf-api-gradle-plugin:surf-api-processor"))
+    if (!project.path.contains("surf-api-shared")) {
+        ksp(project(":surf-api-gradle-plugin:surf-api-processor"))
+    }
 
     compileOnlyApi("org.jetbrains:annotations:26.0.2-1")
 }

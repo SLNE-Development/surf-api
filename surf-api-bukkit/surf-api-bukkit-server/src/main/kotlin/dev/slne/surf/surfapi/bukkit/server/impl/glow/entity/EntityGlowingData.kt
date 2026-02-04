@@ -35,7 +35,7 @@ data class EntityGlowingData(
     @OptIn(NmsUseWithCaution::class)
     fun removeFromTeam(): PacketOperation {
         val color = color ?: return PacketOperationImpl.empty()
-        val teamData = TeamData.Companion.getByColorOrNull(color) ?: return PacketOperationImpl.empty()
+        val teamData = TeamData.getByColorOrNull(color) ?: return PacketOperationImpl.empty()
 
         val operation = PacketOperation.start()
         if (teamData.removeSeen(playerData.uuid)) {
