@@ -12,7 +12,6 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
-import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.util.*
@@ -42,9 +41,6 @@ class PaginationComponent<T>(
     }
 
     private val currentPages = mutableMapOf<UUID, Int>()
-    private val pageIndicatorRef = Ref<Component>()
-    private val previousButtonRef = Ref<Component>()
-    private val nextButtonRef = Ref<Component>()
 
     /**
      * Start slot of the area (convenience accessor).
@@ -86,10 +82,14 @@ class PaginationComponent<T>(
             Slot.at(centerX, lastRowY)
         }
 
+    private val previousButtonComponent = createPreviousButtonComponent()
+    private val nextButtonComponent = createNextButtonComponent()
+    private val pageIndicatorComponent = createPageIndicatorComponent()
+
     init {
-        addChild(createPreviousButtonComponent())
-        addChild(createPageIndicatorComponent())
-        addChild(createNextButtonComponent())
+        addChild(previousButtonComponent)
+        addChild(pageIndicatorComponent)
+        addChild(nextButtonComponent)
     }
 
     private fun createPreviousButtonComponent() = component(
@@ -102,10 +102,8 @@ class PaginationComponent<T>(
         }),
         priority = this@PaginationComponent.priority
     ) {
-        ref = previousButtonRef
         onClick = {
             previousPage(player)
-            this@PaginationComponent.update()
         }
     }
 
@@ -123,9 +121,7 @@ class PaginationComponent<T>(
             })
         },
         priority = this@PaginationComponent.priority
-    ) {
-        ref = pageIndicatorRef
-    }
+    )
 
     private fun createNextButtonComponent() = component(
         slot = calculatedNextButtonSlot,
@@ -137,10 +133,8 @@ class PaginationComponent<T>(
         }),
         priority = this@PaginationComponent.priority
     ) {
-        ref = nextButtonRef
         onClick = {
             nextPage(player)
-            this@PaginationComponent.update()
         }
     }
 
@@ -199,16 +193,14 @@ class PaginationComponent<T>(
         val hasPrev = hasPreviousPage(viewer)
         val hasNext = hasNextPage(viewer)
 
-        // Update previous button
-        previousButtonRef.current?.let { button ->
-            button.disabled = !hasPrev
-            button.hidden = !hasPrev
+        previousButtonComponent.apply {
+            disabled = !hasPrev
+            hidden = !hasPrev
         }
 
-        // Update next button
-        nextButtonRef.current?.let { button ->
-            button.disabled = !hasNext
-            button.hidden = !hasNext
+        nextButtonComponent.apply {
+            disabled = !hasNext
+            hidden = !hasNext
         }
     }
 
@@ -220,7 +212,7 @@ class PaginationComponent<T>(
 
         if (hasNextPage(viewer)) {
             setPage(viewer, currentPage + 1)
-            updateNavigationButtonsState(viewer)
+            this@PaginationComponent.update()
         }
     }
 
@@ -232,7 +224,7 @@ class PaginationComponent<T>(
 
         if (hasPreviousPage(viewer)) {
             setPage(viewer, currentPage - 1)
-            updateNavigationButtonsState(viewer)
+            this@PaginationComponent.update()
         }
     }
 
@@ -253,7 +245,6 @@ class PaginationComponent<T>(
     }
 
     override fun onUpdate(context: LifecycleContext) {
-        pageIndicatorRef.update()
         updateNavigationButtonsState(context.player)
     }
 
@@ -302,6 +293,7 @@ class PaginationComponent<T>(
 
             if (index in pageItems.indices) {
                 val item = pageItems[index]
+                
                 onItemClick.invoke(item, context)
             }
         }
