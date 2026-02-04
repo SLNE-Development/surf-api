@@ -22,7 +22,7 @@ class GuiTest(name: String) : CommandAPICommand(name) {
             // Shop subcommand
             CommandAPICommand("shop")
                 .executesPlayer(PlayerCommandExecutor { player, _ ->
-                    PaginatedShopGuiView().open(player)
+                    PaginatedShopGuiView.open(player)
                 })
         )
     }
