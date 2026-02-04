@@ -156,11 +156,7 @@ abstract class Component {
         view?.updateComponent(this, viewer)
     }
 
-    /**
-     * Trigger an update of this component and all children.
-     */
-    fun updateWithChildren() {
-        update()
-        children.forEach { it.updateWithChildren() }
+    override fun toString(): String {
+        return "Component(area=$area, priority=$priority, width=$width, height=$height, children=$children, view=$view, updateInterval=$updateInterval, hidden=$hidden, disabled=$disabled, props=$props, attachedRef=${attachedRef.hashCode()})"
     }
 }

@@ -27,4 +27,8 @@ class AbstractLifecycleContext(
     override fun update() {
         NavigationHelper.update(view, player)
     }
+
+    override fun toString(): String {
+        return "AbstractLifecycleContext(view=$view, player=$player, eventType=$eventType)"
+    }
 }

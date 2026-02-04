@@ -12,6 +12,10 @@ open class LazyProp<T>(
 
     override suspend fun get(): T = value.value
 
+    override fun toString(): String {
+        return "LazyProp(name='$name', initializer=$initializer, value=$value)"
+    }
+
     /**
      * Mutable lazy prop - gets available when accessed, using a callback.
      * Can be modified after initialization.
@@ -29,6 +33,10 @@ open class LazyProp<T>(
 
         fun set(value: T) {
             mutableValue = value
+        }
+
+        override fun toString(): String {
+            return "Mutable(name='$name', initializer=$initializer, value=$value, mutableValue=$mutableValue)"
         }
     }
 }

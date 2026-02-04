@@ -26,4 +26,8 @@ data class ViewConfig(
             require(value in 1..6) { "Rows must be between 1 and 6" }
             size = value * 9
         }
+
+    override fun toString(): String {
+        return "ViewConfig(title=$title, size=$size, type=$type, cancelOnClick=$cancelOnClick, closeOnClickOutside=$closeOnClickOutside, rows=$rows)"
+    }
 }

@@ -29,4 +29,8 @@ class AbstractResumeContext(
     override fun update() {
         NavigationHelper.update(view, player)
     }
+
+    override fun toString(): String {
+        return "AbstractResumeContext(view=$view, player=$player, origin=$origin, eventType=$eventType)"
+    }
 }

@@ -18,4 +18,8 @@ class ViewerPropStorage<T>(private val initialValue: () -> T) {
     fun clear(viewerId: UUID) {
         storage.remove(viewerId)
     }
+
+    override fun toString(): String {
+        return "ViewerPropStorage(initialValue=$initialValue, storage=$storage)"
+    }
 }

@@ -25,4 +25,8 @@ class AbstractViewContext(
     override fun update() {
         NavigationHelper.update(view, player)
     }
+
+    override fun toString(): String {
+        return "AbstractViewContext(view=$view, player=$player)"
+    }
 }

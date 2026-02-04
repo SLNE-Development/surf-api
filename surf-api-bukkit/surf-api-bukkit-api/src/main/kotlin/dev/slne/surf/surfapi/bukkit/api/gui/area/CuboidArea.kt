@@ -19,17 +19,21 @@ data class CuboidArea(
         }
         return slots
     }
-    
+
     override fun contains(slot: Slot): Boolean {
         return slot.column >= startSlot.column &&
                 slot.column <= endSlot.column &&
                 slot.row >= startSlot.row &&
                 slot.row <= endSlot.row
     }
-    
+
+    override fun toString(): String {
+        return "CuboidArea(startSlot=$startSlot, endSlot=$endSlot, width=$width, height=$height)"
+    }
+
     override val width: Int
         get() = endSlot.column - startSlot.column + 1
-    
+
     override val height: Int
         get() = endSlot.row - startSlot.row + 1
 }

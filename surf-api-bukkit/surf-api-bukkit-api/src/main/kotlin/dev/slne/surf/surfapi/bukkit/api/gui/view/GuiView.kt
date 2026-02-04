@@ -36,7 +36,7 @@ abstract class GuiView {
      */
     fun findComponentsBySlot(slot: Slot): List<Component> {
         val allComponents = mutableListOf<Component>()
-        
+
         // Helper function to recursively collect components and their children
         fun collectComponents(component: Component) {
             allComponents.add(component)
@@ -44,10 +44,10 @@ abstract class GuiView {
                 collectComponents(child)
             }
         }
-        
+
         // Collect all components including children
         _components.forEach { collectComponents(it) }
-        
+
         // Filter by slot, exclude hidden components, and sort by priority
         return allComponents
             .filter { it.contains(slot) && !it.hidden }
@@ -158,34 +158,41 @@ abstract class GuiView {
      * @param viewer The specific viewer to update for, or null to update for all viewers
      */
     internal fun updateComponent(component: Component, viewer: Player? = null) {
+        println("Updating component ${component} for viewer ${viewer?.name ?: "all viewers"}")
         val viewersToUpdate = if (viewer != null) {
             listOfNotNull(viewers[viewer.uniqueId])
         } else {
             viewers.values.toList()
         }
-        
+
         viewersToUpdate.forEach { player ->
             val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
 
             // Call onUpdate on this component
             component.onUpdate(lifecycleContext)
-            
+
             // Recursively call onUpdate on all children with the same viewer context
             // This allows children to update their state (like hidden/disabled properties)
             fun updateChildrenRecursively(comp: Component) {
                 comp.children.forEach { child ->
+                    println("#".repeat(20))
+                    println("Calling child ${child} recursive update")
                     child.onUpdate(lifecycleContext)
                     updateChildrenRecursively(child)
+                    println("#".repeat(20))
                 }
             }
+            println("-".repeat(20))
+            println("Calling main child recursive update")
             updateChildrenRecursively(component)
-            
+            println("-".repeat(20))
+
             // Refresh the component's slots to update the visual display
             // This now includes all children's slots, so everything updates together
             refreshComponentSlotsInternal(player, component)
         }
     }
-    
+
     /**
      * Internal method to refresh component slots.
      * Must be implemented by concrete view implementations.
@@ -241,6 +248,10 @@ abstract class GuiView {
         player: Player,
         origin: GuiView?
     ): ResumeContext
+
+    override fun toString(): String {
+        return "GuiView(parent=$parent, updateInterval=$updateInterval, components=$components, initialized=$initialized, firstRenderPerViewer=$firstRenderPerViewer, viewers=$viewers, config=$config)"
+    }
 }
 
 /**

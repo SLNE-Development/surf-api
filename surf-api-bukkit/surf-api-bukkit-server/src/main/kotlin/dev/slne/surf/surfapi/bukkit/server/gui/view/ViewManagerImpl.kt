@@ -27,4 +27,8 @@ class ViewManagerImpl : ViewManager {
     override fun unregisterView(inventory: Inventory) {
         _views.remove(inventory)
     }
+
+    override fun toString(): String {
+        return "ViewManagerImpl(views=$views)"
+    }
 }

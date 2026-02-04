@@ -17,6 +17,10 @@ open class ViewerProp<T>(
     fun get(viewer: Player): T = storage.get(viewer.uniqueId)
         ?: throw IllegalStateException("Value for viewer ${viewer.uniqueId} is not set")
 
+    override fun toString(): String {
+        return "ViewerProp(name='$name', storage=$storage)"
+    }
+
     class Mutable<T>(
         override val name: String,
         initialValue: T?
@@ -34,6 +38,10 @@ open class ViewerProp<T>(
 
         fun clear(viewer: Player) {
             storage.clear(viewer.uniqueId)
+        }
+
+        override fun toString(): String {
+            return "Mutable(name='$name', storage=$storage)"
         }
     }
 }

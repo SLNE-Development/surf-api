@@ -47,6 +47,10 @@ class GuiItem(
         return GuiItem(newStack)
     }
 
+    override fun toString(): String {
+        return "GuiItem(itemStack=$itemStack, material=$material, amount=$amount, isEmpty=$isEmpty)"
+    }
+
     companion object {
         /**
          * Create a GuiItem from an ItemStack.

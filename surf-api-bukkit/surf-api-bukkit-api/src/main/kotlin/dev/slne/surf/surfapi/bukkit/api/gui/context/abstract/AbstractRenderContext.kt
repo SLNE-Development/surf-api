@@ -50,4 +50,8 @@ class AbstractRenderContext(
     override fun update() {
         NavigationHelper.update(view, player)
     }
+
+    override fun toString(): String {
+        return "AbstractRenderContext(view=$view, player=$player, bukkitView=$bukkitView)"
+    }
 }

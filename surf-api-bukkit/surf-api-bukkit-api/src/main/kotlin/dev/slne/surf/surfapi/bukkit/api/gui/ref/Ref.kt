@@ -36,6 +36,10 @@ class Ref<T : Component> {
      * Checks if the ref has a current value.
      */
     fun isSet(): Boolean = current != null
+    
+    override fun toString(): String {
+        return "Ref(reference=$reference, current=$current)"
+    }
 }
 
 /**

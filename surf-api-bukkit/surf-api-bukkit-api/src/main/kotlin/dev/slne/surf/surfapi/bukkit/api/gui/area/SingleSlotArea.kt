@@ -10,9 +10,13 @@ data class SingleSlotArea(
     val slot: Slot
 ) : ComponentArea {
     override fun slots(): Set<Slot> = setOf(slot)
-    
+
     override fun contains(slot: Slot): Boolean = this.slot == slot
     
+    override fun toString(): String {
+        return "SingleSlotArea(slot=$slot, width=$width, height=$height)"
+    }
+
     override val width: Int = 1
     override val height: Int = 1
 }

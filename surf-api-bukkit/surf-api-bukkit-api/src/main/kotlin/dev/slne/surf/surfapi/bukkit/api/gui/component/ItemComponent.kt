@@ -17,10 +17,14 @@ open class ItemComponent(
     private val clickHandler: (ClickContext.() -> Unit)? = null
 ) : Component() {
     override val area: ComponentArea = SingleSlotArea(slot)
-    
+
     override fun render(context: ViewContext): GuiItem = item
 
     override fun onClick(context: ClickContext) {
         clickHandler?.invoke(context)
+    }
+
+    override fun toString(): String {
+        return "ItemComponent(item=$item, priority=$priority, clickHandler=$clickHandler, area=$area) ${super.toString()}"
     }
 }

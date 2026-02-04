@@ -178,19 +178,23 @@ open class AbstractGuiView : GuiView() {
             return slots
         }
 
+        println("=".repeat(20))
         // Get all slots this component and its children could occupy
         collectAllSlots(component).forEach { slot ->
+            println("Trying to update slot $slot")
             if (slot.index >= inventory.size) return@forEach
-            
+
             // Find all components at this slot, sorted by priority
             val componentsAtSlot = findComponentsBySlot(slot)
-            
+            println("Components at slot: $componentsAtSlot")
+
             // Try each component from highest to lowest priority until one renders something
             var rendered = false
             for (comp in componentsAtSlot) {
                 val renderedItems = comp.renderSlots(context)
                 val item = renderedItems[slot]
-                
+                println("Found item at slot $item")
+
                 if (item != null) {
                     // This component renders something at this slot
                     inventory.setItem(slot.index, item.toItemStack())
@@ -198,15 +202,17 @@ open class AbstractGuiView : GuiView() {
                     break
                 }
             }
-            
+
             // If no component rendered at this slot, clear it
             // This ensures slots are properly cleared when components become hidden
             if (!rendered) {
+                println("Item not rendered, clearing slot $slot")
                 inventory.setItem(slot.index, null)
             }
         }
+        println("#".repeat(20))
     }
-    
+
     /**
      * Implementation of refreshComponentSlotsInternal for GuiView.
      */
@@ -253,5 +259,9 @@ open class AbstractGuiView : GuiView() {
 
     override fun createResumeContext(player: Player, origin: GuiView?): ResumeContext {
         return AbstractResumeContext(this, player, origin)
+    }
+
+    override fun toString(): String {
+        return "AbstractGuiView(inventories=$inventories, updateJobs=$updateJobs, componentJobs=$componentJobs)"
     }
 }

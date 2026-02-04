@@ -9,4 +9,8 @@ open class ComputedProp<T>(
     private val compute: suspend () -> T
 ) : Prop<T> {
     override suspend fun get(): T = compute()
+    
+    override fun toString(): String {
+        return "ComputedProp(name='$name', compute=$compute)"
+    }
 }

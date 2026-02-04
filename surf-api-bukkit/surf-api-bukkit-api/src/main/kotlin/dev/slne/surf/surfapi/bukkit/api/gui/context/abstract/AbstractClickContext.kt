@@ -29,4 +29,8 @@ class AbstractClickContext(
     override fun update() {
         NavigationHelper.update(view, player)
     }
+
+    override fun toString(): String {
+        return "AbstractClickContext(view=$view, player=$player, event=$event, component=$component)"
+    }
 }

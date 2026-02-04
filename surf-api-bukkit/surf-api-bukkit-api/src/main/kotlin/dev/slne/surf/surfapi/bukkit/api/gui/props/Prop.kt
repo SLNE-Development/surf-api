@@ -29,6 +29,10 @@ sealed interface Prop<T> {
         override suspend fun get(): T = value
 
         operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+
+        override fun toString(): String {
+            return "Immutable(name='$name', value=$value)"
+        }
     }
 
     /**
@@ -50,6 +54,10 @@ sealed interface Prop<T> {
         operator fun getValue(thisRef: Any?, property: KProperty<*>): T? = value.get()
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
             this.value.set(value)
+        }
+
+        override fun toString(): String {
+            return "Mutable(name='$name', value=$value)"
         }
     }
 }

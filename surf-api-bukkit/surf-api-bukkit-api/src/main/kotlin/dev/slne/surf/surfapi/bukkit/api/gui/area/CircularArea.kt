@@ -15,7 +15,7 @@ data class CircularArea(
     override fun slots(): Set<Slot> {
         val slots = mutableSetOf<Slot>()
         val radiusCeil = ceil(radius).toInt()
-        
+
         // Check all slots within the bounding box
         for (row in (center.row - radiusCeil)..(center.row + radiusCeil)) {
             for (col in (center.column - radiusCeil)..(center.column + radiusCeil)) {
@@ -25,20 +25,24 @@ data class CircularArea(
                 }
             }
         }
-        
+
         return slots
     }
-    
+
     override fun contains(slot: Slot): Boolean {
         val dx = (slot.column - center.column).toDouble()
         val dy = (slot.row - center.row).toDouble()
         val distance = sqrt(dx * dx + dy * dy)
         return distance <= radius
     }
-    
+
+    override fun toString(): String {
+        return "CircularArea(center=$center, radius=$radius, width=$width, height=$height)"
+    }
+
     override val width: Int
         get() = (ceil(radius) * 2 + 1).toInt()
-    
+
     override val height: Int
         get() = (ceil(radius) * 2 + 1).toInt()
 }

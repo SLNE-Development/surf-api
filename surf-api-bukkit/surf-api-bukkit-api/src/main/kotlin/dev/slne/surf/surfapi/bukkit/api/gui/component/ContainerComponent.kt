@@ -19,9 +19,13 @@ abstract class ContainerComponent(
      * Override this to provide the slot-to-item mapping.
      */
     abstract override fun renderSlots(context: ViewContext): Map<Slot, GuiItem>
-    
+
     /**
      * Container doesn't render a single item.
      */
     final override fun render(context: ViewContext): GuiItem? = null
+    
+    override fun toString(): String {
+        return "ContainerComponent(area=$area, priority=$priority) ${super.toString()}"
+    }
 }

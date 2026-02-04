@@ -291,4 +291,8 @@ class PaginationComponent<T>(
             }
         }
     }
+
+    override fun toString(): String {
+        return "PaginationComponent(items=$items, itemRenderer=$itemRenderer, priority=$priority, onItemClick=$onItemClick, previousButtonSlot=$previousButtonSlot, nextButtonSlot=$nextButtonSlot, pageIndicatorSlot=$pageIndicatorSlot, area=$area, currentPages=$currentPages, startSlot=$startSlot, itemsHeight=$itemsHeight, pageSize=$pageSize, calculatedPreviousButtonSlot=$calculatedPreviousButtonSlot, calculatedPageIndicatorSlot=$calculatedPageIndicatorSlot, calculatedNextButtonSlot=$calculatedNextButtonSlot, previousButtonComponent=$previousButtonComponent, nextButtonComponent=$nextButtonComponent, pageIndicatorComponent=$pageIndicatorComponent) ${super.toString()}"
+    }
 }
