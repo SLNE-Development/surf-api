@@ -64,7 +64,15 @@ abstract class Component {
      * The view this component belongs to.
      */
     lateinit var view: GuiView
-        internal set
+        internal set(value) {
+            field = value
+            // Propagate view to existing children
+            _children.forEach { child ->
+                if (!child::view.isInitialized) {
+                    child.view = value
+                }
+            }
+        }
     
     /**
      * Update interval for this component, if any.
@@ -109,7 +117,10 @@ abstract class Component {
      */
     fun addChild(child: Component) {
         child.parent = this
-        child.view = view
+        // Only set view if parent's view is already initialized
+        if (::view.isInitialized) {
+            child.view = view
+        }
         _children.add(child)
     }
     
