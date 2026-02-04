@@ -57,7 +57,7 @@ class ComponentBuilder {
             }
         }.also { component ->
             ref?.set(component)
-            component.attachedRef = ref as? Ref<Component>
+            component.attachedRef = ref
         }
     }
 }
