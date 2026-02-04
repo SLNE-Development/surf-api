@@ -13,7 +13,6 @@ import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import it.unimi.dsi.fastutil.objects.ObjectList
 import org.bukkit.entity.Player
-import kotlin.time.Duration
 
 /**
  * Base interface for all GUI components.
@@ -75,11 +74,6 @@ abstract class Component {
                 child.view = value
             }
         }
-
-    /**
-     * Update interval for this component, if any.
-     */
-    open val updateInterval: Duration? = null
 
     /**
      * Whether this component is hidden (not rendered at all).
@@ -167,6 +161,6 @@ abstract class Component {
     }
 
     override fun toString(): String {
-        return "Component(area=$area, priority=$priority, width=$width, height=$height, children=$children, view=$view, updateInterval=$updateInterval, hidden=$hidden, disabled=$disabled, props=$props, attachedRef=${attachedRef.hashCode()})"
+        return "Component(area=$area, priority=$priority, width=$width, height=$height, children=$children, view=$view, hidden=$hidden, disabled=$disabled, props=$props, attachedRef=${attachedRef.hashCode()})"
     }
 }

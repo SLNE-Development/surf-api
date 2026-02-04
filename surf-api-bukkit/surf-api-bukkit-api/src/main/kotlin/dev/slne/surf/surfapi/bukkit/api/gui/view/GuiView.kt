@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import java.util.*
-import kotlin.time.Duration
 
 /**
  * Base class for all GUI views.
@@ -20,11 +19,6 @@ abstract class GuiView {
      */
     var parent: GuiView? = null
         internal set
-
-    /**
-     * Update interval for the entire view.
-     */
-    open val updateInterval: Duration? = null
 
     /**
      * Components in this view.
@@ -256,7 +250,7 @@ abstract class GuiView {
     ): ResumeContext
 
     override fun toString(): String {
-        return "GuiView(parent=$parent, updateInterval=$updateInterval, components=$components, initialized=$initialized, firstRenderPerViewer=$firstRenderPerViewer, viewers=$viewers, config=$config)"
+        return "GuiView(parent=$parent, components=$components, initialized=$initialized, firstRenderPerViewer=$firstRenderPerViewer, viewers=$viewers, config=$config)"
     }
 }
 

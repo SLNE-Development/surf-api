@@ -5,10 +5,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import dev.slne.surf.surfapi.bukkit.api.gui.context.abstract.*
 import dev.slne.surf.surfapi.bukkit.api.gui.toItemStack
-import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
 import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -20,8 +17,6 @@ import java.util.concurrent.ConcurrentHashMap
 @InternalSurfApi
 open class AbstractGuiView : GuiView() {
     private val inventories = ConcurrentHashMap<UUID, Inventory>()
-    private val updateJobs = ConcurrentHashMap<UUID, Job>()
-    private val componentJobs = ConcurrentHashMap<UUID, MutableList<Job>>()
 
     override fun open(player: Player) {
         super.open(player)
@@ -46,44 +41,9 @@ open class AbstractGuiView : GuiView() {
 
         // Open inventory
         player.openInventory(inventory)
-
-        // Start update task if configured (Folia-compatible)
-        updateInterval?.let { interval ->
-            val job = surfBukkitApi.launch(surfBukkitApi.entityDispatcher(player)) {
-                while (true) {
-                    delay(interval)
-                    update()
-                }
-            }
-            updateJobs[player.uniqueId] = job
-        }
-
-        // Start component update tasks (Folia-compatible)
-        val playerComponentJobs = mutableListOf<Job>()
-        components.forEach { component ->
-            component.updateInterval?.let { interval ->
-                val job = surfBukkitApi.launch(surfBukkitApi.entityDispatcher(player)) {
-                    while (true) {
-                        delay(interval)
-                        val lifecycleContext =
-                            createLifecycleContext(player, LifecycleEventType.UPDATE)
-                        component.onUpdate(lifecycleContext)
-                        refreshComponentSlots(player, component)
-                    }
-                }
-                playerComponentJobs.add(job)
-            }
-        }
-        if (playerComponentJobs.isNotEmpty()) {
-            componentJobs[player.uniqueId] = playerComponentJobs
-        }
     }
 
     override fun close(player: Player) {
-        // Cancel all update jobs
-        updateJobs.remove(player.uniqueId)?.cancel()
-        componentJobs.remove(player.uniqueId)?.forEach { it.cancel() }
-
         // Unregister inventory
         // TODO: Fix, this currently can cause issues if multiple inventories are open
         inventories.remove(player.uniqueId)?.let { inventory ->
@@ -247,6 +207,6 @@ open class AbstractGuiView : GuiView() {
     }
 
     override fun toString(): String {
-        return "AbstractGuiView(inventories=$inventories, updateJobs=$updateJobs, componentJobs=$componentJobs)"
+        return "AbstractGuiView(inventories=$inventories)"
     }
 }

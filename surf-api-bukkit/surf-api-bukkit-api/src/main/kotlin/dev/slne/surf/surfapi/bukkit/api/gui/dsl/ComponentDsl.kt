@@ -17,7 +17,6 @@ import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import it.unimi.dsi.fastutil.objects.ObjectList
-import kotlin.time.Duration
 
 /**
  * DSL marker for component building.
@@ -30,7 +29,6 @@ annotation class ComponentDsl
  */
 @ComponentDsl
 class ComponentBuilder {
-    var updateInterval: Duration? = null
     var ref: Ref<Component>? = null
     var priority: ComponentPriority = ComponentPriority.NORMAL
     var onFirstRender: (LifecycleContext.() -> Unit)? = null
@@ -53,7 +51,6 @@ class ComponentBuilder {
      */
     internal fun build(slot: Slot, renderer: (ViewContext) -> GuiItem?): Component {
         return object : DynamicComponent(slot, renderer, priority, onClick) {
-            override val updateInterval: Duration? = this@ComponentBuilder.updateInterval
             override val props: ObjectList<Prop<*>> = _props
 
             override fun onFirstRender(context: LifecycleContext) {
@@ -67,7 +64,7 @@ class ComponentBuilder {
             }
 
             override fun toString(): String {
-                return "DSLGeneratedDynamicComponent(updateInterval=$updateInterval, props=$props) ${super.toString()}"
+                return "DSLGeneratedDynamicComponent(props=$props) ${super.toString()}"
             }
         }.also { component ->
             component.disabled = this.disabled
