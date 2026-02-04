@@ -49,6 +49,18 @@ abstract class Component {
     fun contains(slot: Slot): Boolean = area.contains(slot)
     
     /**
+     * The parent component, if any.
+     */
+    var parent: Component? = null
+        internal set
+    
+    /**
+     * The children of this component.
+     */
+    private val _children = mutableListOf<Component>()
+    val children: List<Component> get() = _children.toList()
+    
+    /**
      * The view this component belongs to.
      */
     lateinit var view: GuiView
@@ -93,9 +105,44 @@ abstract class Component {
     open fun renderSlots(context: ViewContext): Map<Slot, GuiItem> = emptyMap()
     
     /**
+     * Add a child component.
+     */
+    fun addChild(child: Component) {
+        child.parent = this
+        child.view = view
+        _children.add(child)
+    }
+    
+    /**
+     * Remove a child component.
+     */
+    fun removeChild(child: Component) {
+        _children.remove(child)
+        child.parent = null
+    }
+    
+    /**
+     * Get all props including parent props.
+     */
+    fun getAllProps(): Map<String, Prop<*>> {
+        val allProps = mutableMapOf<String, Prop<*>>()
+        parent?.getAllProps()?.let { allProps.putAll(it) }
+        allProps.putAll(props)
+        return allProps
+    }
+    
+    /**
      * Trigger an update of this component.
      */
     fun update() {
         view.updateComponent(this)
+    }
+    
+    /**
+     * Trigger an update of this component and all children.
+     */
+    fun updateWithChildren() {
+        update()
+        children.forEach { it.updateWithChildren() }
     }
 }
