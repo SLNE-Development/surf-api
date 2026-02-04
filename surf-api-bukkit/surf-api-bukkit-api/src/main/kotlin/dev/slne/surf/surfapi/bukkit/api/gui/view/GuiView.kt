@@ -65,6 +65,11 @@ abstract class GuiView {
      * Whether this view has been rendered for the first time.
      */
     private val firstRenderPerViewer = mutableSetOf<UUID>()
+    
+    /**
+     * Track which components have been initialized.
+     */
+    private val initializedComponents = mutableSetOf<Component>()
 
     /**
      * Current viewers of this view.
