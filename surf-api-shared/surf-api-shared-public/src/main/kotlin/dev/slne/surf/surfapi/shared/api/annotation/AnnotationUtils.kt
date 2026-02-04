@@ -94,6 +94,7 @@ object AnnotationUtils {
 
         // 4) Superclass
         val superclass = clazz.superclass ?: return null
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
         if (superclass == Any::class.java || superclass == Object::class.java) return null
 
         return findAnnotationInternal(

@@ -7,11 +7,6 @@ import dev.slne.surf.surfapi.shared.api.component.Component
 
 @AutoService(SurfComponentApi::class)
 class SurfComponentApiImpl : SurfComponentApi {
-    override suspend fun bootstrap(owner: Any) {
-        for (component in components(owner)) {
-            component.bootstrap()
-        }
-    }
 
     override suspend fun load(owner: Any) {
         for (component in components(owner)) {

@@ -6,16 +6,22 @@ import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import dev.slne.surf.surfapi.core.api.util.requiredService
+import dev.slne.surf.surfapi.core.server.component.environment.EnvironmentConfig
+import dev.slne.surf.surfapi.core.server.component.property.PropertyService
 import dev.slne.surf.surfapi.shared.api.component.Component
 import dev.slne.surf.surfapi.shared.api.component.condition.ComponentCondition
 import dev.slne.surf.surfapi.shared.api.component.condition.ComponentConditionContext
 import dev.slne.surf.surfapi.shared.api.component.processor.ComponentContext
 import dev.slne.surf.surfapi.shared.api.component.processor.ComponentPostProcessor
+import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOnEnvironment
+import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOnMissingComponent
+import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOnProperty
 import dev.slne.surf.surfapi.shared.internal.hook.ComponentsConfig
 import dev.slne.surf.surfapi.shared.internal.hook.PluginComponentMeta
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.io.File
 import java.net.URI
+import java.nio.file.Path
 import java.util.jar.JarFile
 
 abstract class ComponentService {
@@ -184,6 +190,7 @@ abstract class ComponentService {
         componentMeta: PluginComponentMeta.Component,
         classLoader: ClassLoader
     ): ComponentEntry? {
+        val logger = getLogger(owner)
         val missingDependencies = mutableObject2ObjectMapOf<String, MutableSet<String>>()
         for (classDependency in componentMeta.classDependencies) {
             try {
@@ -222,6 +229,15 @@ abstract class ComponentService {
             return null
         }
 
+        // Evaluate @ConditionalOnEnvironment
+        if (!evaluateEnvironmentConditions(componentMeta, logger)) return null
+
+        // Evaluate @ConditionalOnMissingComponent
+        if (!evaluateMissingComponentConditions(componentMeta, loadedComponents, logger)) return null
+
+        // Evaluate @ConditionalOnProperty
+        if (!evaluatePropertyConditions(owner, componentMeta, logger)) return null
+
         if (!evaluateConditions(owner, componentMeta, classLoader)) return null
 
         try {
@@ -238,10 +254,97 @@ abstract class ComponentService {
                 return ComponentEntry(instance, componentMeta.priority)
             }
         } catch (e: Exception) {
-            getLogger(owner).error("Failed to load component ${componentMeta.className}", e)
+            logger.error("Failed to load component ${componentMeta.className}", e)
         }
 
         return null
+    }
+
+    /**
+     * Evaluates @[ConditionalOnEnvironment] conditions.
+     * Returns true if all environment conditions are satisfied.
+     */
+    private fun evaluateEnvironmentConditions(
+        componentMeta: PluginComponentMeta.Component,
+        logger: ComponentLogger
+    ): Boolean {
+        for (environments in componentMeta.conditionalOnEnvironments) {
+            if (environments.isEmpty()) continue
+
+            if (!EnvironmentConfig.matchesAny(environments)) {
+                logger.debug(
+                    "Component {} skipped: environments '{}' does not match required environments {}",
+                    componentMeta.className,
+                    EnvironmentConfig.getEnvironments(),
+                    environments
+                )
+                return false
+            }
+        }
+        return true
+    }
+
+    /**
+     * Evaluates @[ConditionalOnMissingComponent] conditions.
+     * Returns true if all referenced components are NOT loaded.
+     */
+    private fun evaluateMissingComponentConditions(
+        componentMeta: PluginComponentMeta.Component,
+        loadedComponents: List<ComponentEntry>,
+        logger: ComponentLogger
+    ): Boolean {
+        for (missingComponent in componentMeta.conditionalOnMissingComponents) {
+            val isLoaded = loadedComponents.any { (component) ->
+                val kClass = component::class
+                val className = kClass.qualifiedName ?: kClass.java.name
+                className == missingComponent
+            }
+            if (isLoaded) {
+                logger.debug(
+                    "Component {} skipped: component {} is present (ConditionalOnMissingComponent)",
+                    componentMeta.className,
+                    missingComponent
+                )
+                return false
+            }
+        }
+        return true
+    }
+
+    /**
+     * Evaluates @[ConditionalOnProperty] conditions.
+     * Returns true if all property conditions are satisfied.
+     */
+    private fun evaluatePropertyConditions(
+        owner: Any,
+        componentMeta: PluginComponentMeta.Component,
+        logger: ComponentLogger
+    ): Boolean {
+        val dataPath = getDataPath(owner)
+
+        for (propertyCondition in componentMeta.conditionalOnProperties) {
+            val value = PropertyService.getProperty(dataPath, propertyCondition.key, propertyCondition.file)
+            val exists = value != null
+
+            val matches = when {
+                !exists -> propertyCondition.matchIfMissing
+                propertyCondition.havingValue.isEmpty() -> true
+                else -> value.equals(propertyCondition.havingValue, ignoreCase = true)
+            }
+
+            if (!matches) {
+                logger.debug(
+                    "Component {} skipped: property '{}' condition not satisfied (expected='{}', actual='{}', matchIfMissing={})",
+                    componentMeta.className,
+                    propertyCondition.key.joinToString("."),
+                    propertyCondition.havingValue,
+                    value ?: "<missing>",
+                    propertyCondition.matchIfMissing
+                )
+                return false
+            }
+        }
+        return true
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -312,6 +415,7 @@ abstract class ComponentService {
     abstract fun getClassloader(owner: Any): ClassLoader
     abstract fun isPluginLoaded(pluginId: String): Boolean
     abstract fun getLogger(owner: Any): ComponentLogger
+    abstract fun getDataPath(owner: Any): Path
 
     companion object {
         val instance = requiredService<ComponentService>()

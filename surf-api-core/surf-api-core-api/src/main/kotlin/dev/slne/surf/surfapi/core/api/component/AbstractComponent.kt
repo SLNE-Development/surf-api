@@ -37,7 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @see Priority
  */
 abstract class AbstractComponent : Component {
-    private val bootstrapped = AtomicBoolean(false)
     private val loaded = AtomicBoolean(false)
     private val enabled = AtomicBoolean(false)
     private val disabled = AtomicBoolean(false)
@@ -48,16 +47,8 @@ abstract class AbstractComponent : Component {
     }
 
     @InternalSurfApi
-    final override suspend fun bootstrap() {
-        if (bootstrapped.compareAndSet(false, true)) {
-            onBootstrap()
-        }
-    }
-
-    @InternalSurfApi
     final override suspend fun load() {
         if (loaded.compareAndSet(false, true)) {
-            bootstrap()
             onLoad()
         }
     }
@@ -76,12 +67,6 @@ abstract class AbstractComponent : Component {
             onDisable()
         }
     }
-
-    /**
-     * Called during the bootstrap phase.
-     * Override to perform early initialization.
-     */
-    protected open suspend fun onBootstrap() {}
 
     /**
      * Called during the load phase.

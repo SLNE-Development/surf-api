@@ -152,11 +152,20 @@ inline fun <reified T> KSAnnotation.getArgumentValueAs(name: String): T? {
     return getArgumentValue(name) as? T
 }
 
+inline fun <reified T> KSAnnotation.collectArgumentValues(argumentName: String): List<T> =
+    when (val value = getArgumentValue(argumentName)) {
+        is List<*> -> value.filterIsInstance<T>()
+        is T -> listOf(value)
+        is Array<*> -> value.filterIsInstance<T>().toList()
+        else -> emptyList()
+    }
+
 inline fun <reified T> List<KSAnnotation>.collectArgumentValues(argumentName: String = "value"): List<T> {
     return this.flatMap { annotation ->
         when (val value = annotation.getArgumentValue(argumentName)) {
             is List<*> -> value.filterIsInstance<T>()
             is T -> listOf(value)
+            is Array<*> -> value.filterIsInstance<T>().toList()
             else -> emptyList()
         }
     }

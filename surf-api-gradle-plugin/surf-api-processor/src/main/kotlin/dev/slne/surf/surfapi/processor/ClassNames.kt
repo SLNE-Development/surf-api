@@ -15,5 +15,8 @@ object ClassNames {
     val DEPENDS_ON_PLUGIN = nameOf<DependsOnPlugin>()
     val DEPENDS_ON_COMPONENT = nameOf<DependsOnComponent>()
     val CONDITIONAL_ON = nameOf<ConditionalOn>()
+    val CONDITIONAL_ON_ENVIRONMENT = nameOf<ConditionalOnEnvironment>()
+    val CONDITIONAL_ON_MISSING_COMPONENT = nameOf<ConditionalOnMissingComponent>()
+    val CONDITIONAL_ON_PROPERTY = nameOf<ConditionalOnProperty>()
     val COMPONENT_POST_PROCESSOR = nameOf<ComponentPostProcessor>()
 }

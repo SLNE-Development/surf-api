@@ -8,6 +8,7 @@ import dev.slne.surf.surfapi.shared.internal.hook.PluginComponentMeta
 import java.util.*
 
 
+@Suppress("UnstableApiUsage")
 object ComponentSorting {
     fun topologicalSort(
         componentsMeta: List<PluginComponentMeta.Component>,
@@ -30,6 +31,13 @@ object ComponentSorting {
                 val depCandidate = candidateMap[dependency]
                 if (depCandidate != null) {
                     graph.putEdge(candidate, depCandidate)
+                }
+            }
+
+            for (missingComponent in candidate.conditionalOnMissingComponents) {
+                val missingCandidate = candidateMap[missingComponent]
+                if (missingCandidate != null) {
+                    graph.putEdge(candidate, missingCandidate)
                 }
             }
         }

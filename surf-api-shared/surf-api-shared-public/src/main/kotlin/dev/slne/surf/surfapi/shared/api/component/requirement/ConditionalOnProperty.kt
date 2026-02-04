@@ -11,26 +11,39 @@ package dev.slne.surf.surfapi.shared.api.component.requirement
  *
  * Example:
  * ```kotlin
- * @ConditionalOnProperty(key = "feature.enabled", havingValue = "true")
+ * @ConditionalOnProperty(key = ["feature", "enabled"], havingValue = "true")
  * @ComponentMeta
  * class FeatureComponent : AbstractComponent() { ... }
  *
  * // Load if property is missing or equals "default"
- * @ConditionalOnProperty(key = "mode", havingValue = "default", matchIfMissing = true)
+ * @ConditionalOnProperty(key = ["mode"], havingValue = "default", matchIfMissing = true)
  * @ComponentMeta
  * class DefaultModeComponent : AbstractComponent() { ... }
+ *
+ * // Use a custom properties file
+ * @ConditionalOnProperty(key = ["custom", "setting"], havingValue = "enabled", file = "config/custom.yml")
+ * @ComponentMeta
+ * class CustomConfigComponent : AbstractComponent() { ... }
  * ```
  *
  * @property key The property key to check
  * @property havingValue The expected value. If empty, just checks for property existence.
  * @property matchIfMissing If true, the condition matches when the property is not set.
  *                          Default is false.
+ * @property file Optional path to a custom properties file, relative to the plugin's data folder.
+ * If empty, uses the default `properties.yml` file.
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @Repeatable
 annotation class ConditionalOnProperty(
-    val key: String,
+    val key: Array<String>,
     val havingValue: String = "",
-    val matchIfMissing: Boolean = false
-)
+    val matchIfMissing: Boolean = false,
+    val file: String = ""
+) {
+
+    companion object {
+        const val DEFAULT_PROPERTIES_FILE = "properties.yml"
+    }
+}

@@ -11,10 +11,6 @@ import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOn
 class PrimaryTestHook : AbstractComponent() {
     private val log = logger()
 
-    override suspend fun onBootstrap() {
-        log.atInfo().log("PrimaryTestHook bootstrapped")
-    }
-
     override suspend fun onLoad() {
         log.atInfo().log("PrimaryTestHook loaded")
     }

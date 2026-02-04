@@ -92,29 +92,64 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
         component: KSClassDeclaration,
         deferred: MutableList<KSAnnotated>
     ): PluginComponentMeta.Component? {
-        val priority = component.findAnnotationRecursive(ClassNames.PRIORITY)
+        val priority = component
+            .findAnnotationRecursive(ClassNames.PRIORITY)
             ?.getArgumentValueAs<Number>("value")
             ?: 0
 
-        val dependsOnClass =
-            collectKSTypeAnnotationClassNames(component, ClassNames.DEPENDS_ON_CLASS, "clazz", deferred) ?: return null
+        val dependsOnClass = collectKSTypeAnnotationClassNames(
+            component,
+            ClassNames.DEPENDS_ON_CLASS,
+            "clazz",
+            deferred
+        ) ?: return null
 
-        val dependsOnClassName = component.findAllAnnotationsRecursive(ClassNames.DEPENDS_ON_CLASS_NAME)
+        val dependsOnClassName = component
+            .findAllAnnotationsRecursive(ClassNames.DEPENDS_ON_CLASS_NAME)
             .collectArgumentValues<String>("className")
 
-        val dependsOnOnePlugin = component.findAllAnnotationsRecursive(ClassNames.DEPENDS_ON_ONE_PLUGIN)
+        val dependsOnOnePlugin = component
+            .findAllAnnotationsRecursive(ClassNames.DEPENDS_ON_ONE_PLUGIN)
             .collectArgumentValuesGrouped<String>("pluginIds")
 
-        val dependsOnPlugin = component.findAllAnnotationsRecursive(ClassNames.DEPENDS_ON_PLUGIN)
+        val dependsOnPlugin = component
+            .findAllAnnotationsRecursive(ClassNames.DEPENDS_ON_PLUGIN)
             .collectArgumentValues<String>("pluginId")
 
-        val dependsOnComponent =
-            collectKSTypeAnnotationClassNames(component, ClassNames.DEPENDS_ON_COMPONENT, "component", deferred)
-                ?: return null
+        val dependsOnComponent = collectKSTypeAnnotationClassNames(
+            component,
+            ClassNames.DEPENDS_ON_COMPONENT,
+            "component",
+            deferred
+        ) ?: return null
 
-        val conditionalOn =
-            collectKSTypeAnnotationClassNames(component, ClassNames.CONDITIONAL_ON, "condition", deferred)
-                ?: return null
+        val conditionalOn = collectKSTypeAnnotationClassNames(
+            component,
+            ClassNames.CONDITIONAL_ON,
+            "condition",
+            deferred
+        ) ?: return null
+
+        val conditionalOnEnvironments = component
+            .findAllAnnotationsRecursive(ClassNames.CONDITIONAL_ON_ENVIRONMENT)
+            .collectArgumentValuesGrouped<String>("environments")
+
+        val conditionalOnMissingComponents = collectKSTypeAnnotationClassNames(
+            component,
+            ClassNames.CONDITIONAL_ON_MISSING_COMPONENT,
+            "component",
+            deferred
+        ) ?: return null
+
+        val conditionalOnProperties = component.findAllAnnotationsRecursive(ClassNames.CONDITIONAL_ON_PROPERTY)
+            .map { annotation ->
+                PluginComponentMeta.PropertyCondition(
+                    key = annotation.collectArgumentValues<String>("key").toTypedArray(),
+                    havingValue = annotation.getArgumentValueAs<String>("havingValue") ?: "",
+                    matchIfMissing = annotation.getArgumentValueAs<Boolean>("matchIfMissing") ?: false,
+                    file = annotation.getArgumentValueAs<String>("file") ?: ""
+                )
+            }
 
         return PluginComponentMeta.Component(
             className = component.toBinaryName(),
@@ -123,7 +158,10 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
             pluginOneDependencies = dependsOnOnePlugin,
             pluginDependencies = dependsOnPlugin,
             componentDependencies = dependsOnComponent,
-            customConditions = conditionalOn
+            customConditions = conditionalOn,
+            conditionalOnEnvironments = conditionalOnEnvironments,
+            conditionalOnMissingComponents = conditionalOnMissingComponents,
+            conditionalOnProperties = conditionalOnProperties
         )
     }
 
