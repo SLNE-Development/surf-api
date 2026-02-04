@@ -106,6 +106,8 @@ open class AbstractGuiView : GuiView() {
 
         val componentsAtSlot = findComponentsBySlot(slot)
 
+        var rendered = false
+
         if (componentsAtSlot.isNotEmpty()) {
             // Get highest priority component
             val component = componentsAtSlot.first()
@@ -119,6 +121,7 @@ open class AbstractGuiView : GuiView() {
                 slotsToRender[slot]?.let { guiItem ->
                     if (slot.index < inventory.size) {
                         inventory.setItem(slot.index, guiItem.toItemStack())
+                        rendered = true
                     }
                 }
             } else {
@@ -127,9 +130,14 @@ open class AbstractGuiView : GuiView() {
                     val guiItem = component.render(context)
                     if (guiItem != null && slot.index < inventory.size) {
                         inventory.setItem(slot.index, guiItem.toItemStack())
+                        rendered = true
                     }
                 }
             }
+        }
+
+        if (!rendered) {
+            inventory.setItem(slot.index, null)
         }
     }
 
