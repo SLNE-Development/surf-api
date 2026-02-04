@@ -32,3 +32,6 @@ if (!ci) {
 //    include("surf-api-generator")
     include("surf-api-modern-generator")
 }
+include("surf-api-shared")
+include("surf-api-shared:surf-api-shared-public")
+include("surf-api-shared:surf-api-shared-internal")

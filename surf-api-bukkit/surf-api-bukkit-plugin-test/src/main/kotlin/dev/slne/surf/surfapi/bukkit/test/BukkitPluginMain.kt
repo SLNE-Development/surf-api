@@ -8,23 +8,28 @@ import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
+import dev.slne.surf.surfapi.core.api.component.surfComponentApi
 
 @OptIn(NmsUseWithCaution::class)
 class BukkitPluginMain : SuspendingJavaPlugin() {
-    override fun onLoad() {
+    override suspend fun onLoadAsync() {
         ModernTestConfig.init()
         ModernTestConfig.randomise()
 
+        surfComponentApi.load(this)
         packetListenerApi.registerListeners(ChatListener())
     }
 
-    override fun onEnable() {
+    override suspend fun onEnableAsync() {
         SurfApiTestCommand().register()
         Reflection::class.java.getClassLoader() // initialize Reflection
+
+        surfComponentApi.enable(this)
     }
 
-    override fun onDisable() {
+    override suspend fun onDisableAsync() {
         CommandAPI.unregister("surfapitest")
+        surfComponentApi.disable(this)
     }
 
     companion object {

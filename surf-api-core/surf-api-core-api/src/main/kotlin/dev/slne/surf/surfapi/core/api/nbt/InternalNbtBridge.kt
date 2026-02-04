@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.core.api.nbt
 
-import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
 import dev.slne.surf.surfapi.core.api.util.requiredService
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import net.kyori.adventure.nbt.CompoundBinaryTag
 
 @InternalSurfApi
