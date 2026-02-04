@@ -5,7 +5,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import dev.slne.surf.surfapi.bukkit.api.gui.context.abstract.*
 import dev.slne.surf.surfapi.bukkit.api.gui.toItemStack
-import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -145,6 +145,7 @@ open class AbstractGuiView : GuiView() {
         val viewContext = createViewContext(player)
 
         for (component in candidates) {
+            component.initComponent(createLifecycleContext(player, LifecycleEventType.INIT_COMPONENT))
             if (component.hidden) continue
 
             val slots = component.renderSlots(viewContext)

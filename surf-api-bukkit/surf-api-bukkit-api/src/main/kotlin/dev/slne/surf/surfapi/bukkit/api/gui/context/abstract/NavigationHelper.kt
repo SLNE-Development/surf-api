@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.gui.context.abstract
 
 import dev.slne.surf.surfapi.bukkit.api.gui.view.AbstractGuiView
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
-import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import org.bukkit.entity.Player
 
 @InternalSurfApi

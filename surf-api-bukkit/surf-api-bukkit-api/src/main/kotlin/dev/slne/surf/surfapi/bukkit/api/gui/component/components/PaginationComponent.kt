@@ -109,6 +109,13 @@ class PaginationComponent<T>(
             }
         }),
     ) {
+        initComponent = {
+            if (!hasPreviousPage(player)) {
+                disabled = true
+                hidden = true
+            }
+        }
+
         onClick = {
             previousPage(player)
         }
@@ -138,6 +145,12 @@ class PaginationComponent<T>(
             }
         }),
     ) {
+        initComponent = {
+            if (!hasNextPage(player)) {
+                disabled = true
+                hidden = true
+            }
+        }
         onClick = {
             nextPage(player)
         }

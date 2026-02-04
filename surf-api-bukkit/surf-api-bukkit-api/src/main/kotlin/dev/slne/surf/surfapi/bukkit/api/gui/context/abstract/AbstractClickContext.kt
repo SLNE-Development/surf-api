@@ -3,7 +3,7 @@ package dev.slne.surf.surfapi.bukkit.api.gui.context.abstract
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
-import dev.slne.surf.surfapi.core.api.util.InternalSurfApi
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 

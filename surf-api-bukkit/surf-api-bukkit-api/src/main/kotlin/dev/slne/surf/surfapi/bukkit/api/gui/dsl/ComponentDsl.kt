@@ -31,6 +31,7 @@ annotation class ComponentDsl
 class ComponentBuilder {
     var ref: Ref<Component>? = null
     var priority: ComponentPriority = ComponentPriority.NORMAL
+    var initComponent: (LifecycleContext.() -> Unit)? = null
     var onFirstRender: (LifecycleContext.() -> Unit)? = null
     var onUpdate: (LifecycleContext.() -> Unit)? = null
     var onClick: (ClickContext.() -> Unit)? = null
@@ -52,6 +53,13 @@ class ComponentBuilder {
     internal fun build(slot: Slot, renderer: (ViewContext) -> GuiItem?): Component {
         return object : DynamicComponent(slot, renderer, priority, onClick) {
             override val props: ObjectList<Prop<*>> = _props
+            override var hidden by this@ComponentBuilder::hidden
+            override var disabled by this@ComponentBuilder::disabled
+
+            override fun initComponent(context: LifecycleContext) {
+                super.initComponent(context)
+                this@ComponentBuilder.initComponent?.invoke(context)
+            }
 
             override fun onFirstRender(context: LifecycleContext) {
                 super.onFirstRender(context)
@@ -67,9 +75,6 @@ class ComponentBuilder {
                 return "DSLGeneratedDynamicComponent(props=$props) ${super.toString()}"
             }
         }.also { component ->
-            component.disabled = this.disabled
-            component.hidden = this.hidden
-
             ref?.set(component)
             component.attachedRef = ref
         }

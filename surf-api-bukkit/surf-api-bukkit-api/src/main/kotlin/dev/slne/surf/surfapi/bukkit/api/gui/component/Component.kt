@@ -78,12 +78,12 @@ abstract class Component {
     /**
      * Whether this component is hidden (not rendered at all).
      */
-    var hidden: Boolean = false
+    open var hidden: Boolean = false
 
     /**
      * Whether this component is disabled (rendered but onClick is blocked).
      */
-    var disabled: Boolean = false
+    open var disabled: Boolean = false
 
     /**
      * Props accessible by this component.
@@ -95,6 +95,8 @@ abstract class Component {
      * Ref attached to this component, if any.
      */
     internal var attachedRef: Ref<Component>? = null
+
+    open fun initComponent(context: LifecycleContext) {}
 
     /**
      * Called when the component is rendered for the first time.

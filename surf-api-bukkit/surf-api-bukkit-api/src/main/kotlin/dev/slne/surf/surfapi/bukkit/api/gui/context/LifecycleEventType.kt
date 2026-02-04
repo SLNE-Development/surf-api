@@ -5,6 +5,7 @@ package dev.slne.surf.surfapi.bukkit.api.gui.context
  */
 enum class LifecycleEventType {
     UPDATE,
+    INIT_COMPONENT,
     FIRST_RENDER,
     OPEN,
     CLOSE,
