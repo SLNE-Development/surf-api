@@ -33,10 +33,12 @@ object PaginatedShopGuiView : AbstractGuiView() {
         it.isItem && !it.isAir
     }.map { ShopItem(it, it.name, (10..500).random()) }.shuffled()
 
-    // Pagination component - 4 rows of 7 items (columns 1-7, rows 1-4)
+    // Pagination component - includes built-in navigation buttons
+    // The component will use 4 rows: 3 for items + 1 for buttons
+    // Items area: rows 1-3, Button row: row 4
     private val paginationComponent = PaginationComponent(
-        startSlot = Slot.at(1, 1),  // Column 1, Row 1
-        endSlot = Slot.at(7, 4),     // Column 7, Row 4 (28 slots total)
+        startSlot = Slot.at(0, 1),  // Column 0, Row 1
+        endSlot = Slot.at(8, 4),     // Column 8, Row 4 (9 cols x 4 rows = 36 slots total)
         items = { shopItems },
         itemRenderer = { item, ctx ->
             GuiItem.of(ItemStack(item.material) {
@@ -73,6 +75,7 @@ object PaginatedShopGuiView : AbstractGuiView() {
                 }
             }
         }
+        // Navigation buttons will be automatically created and centered in the last row
     )
 
     override fun onInit(config: ViewConfig) {
@@ -100,66 +103,8 @@ object PaginatedShopGuiView : AbstractGuiView() {
                 ref = coinsDisplayRef
             })
 
-        // Render pagination component
+        // Render pagination component (navigation buttons are now built-in as children)
         context.slot(paginationComponent)
-
-        // Previous page button
-        context.slot(
-            component(
-                Slot.at(2, 5),
-                GuiItem.of(ItemStack(Material.ARROW) {
-                    displayName {
-                        info("Previous Page")
-                    }
-                    buildLore {
-                        line {
-                            gray("Click to go to the previous page")
-                        }
-                    }
-                })
-            ) {
-                onClick = {
-                    paginationComponent.previousPage(player)
-                    view.update()
-                }
-            })
-
-        // Page indicator
-        context.slot(
-            dynamicComponent(
-                Slot.at(4, 5),
-                renderer = { ctx ->
-                    val currentPage = paginationComponent.getCurrentPage(ctx.player) + 1
-                    val totalPages = paginationComponent.getTotalPages()
-
-                    GuiItem.of(ItemStack(Material.PAPER) {
-                        displayName {
-                            info("Page $currentPage / $totalPages")
-                        }
-                    })
-                }
-            ))
-
-        // Next page button
-        context.slot(
-            component(
-                Slot.at(6, 5),
-                GuiItem.of(ItemStack(Material.ARROW) {
-                    displayName {
-                        info("Next Page")
-                    }
-                    buildLore {
-                        line {
-                            gray("Click to go to the next page")
-                        }
-                    }
-                })
-            ) {
-                onClick = {
-                    paginationComponent.nextPage(player)
-                    view.update()
-                }
-            })
     }
 
     private data class ShopItem(
