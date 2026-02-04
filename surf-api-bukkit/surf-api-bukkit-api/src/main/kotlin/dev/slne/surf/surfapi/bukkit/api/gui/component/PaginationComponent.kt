@@ -190,9 +190,10 @@ class PaginationComponent<T>(
      * Go to the next page for a viewer.
      */
     fun nextPage(viewer: Player) {
+        val currentPage = getCurrentPage(viewer)
+
         if (hasNextPage(viewer)) {
-            currentPages[viewer.uniqueId] = getCurrentPage(viewer) + 1
-            pageIndicatorRef.update()
+            setPage(viewer, currentPage + 1)
         }
     }
 
@@ -202,9 +203,8 @@ class PaginationComponent<T>(
     fun previousPage(viewer: Player) {
         val currentPage = getCurrentPage(viewer)
 
-        if (currentPage > 0) {
-            currentPages[viewer.uniqueId] = currentPage - 1
-            pageIndicatorRef.update()
+        if (hasPreviousPage(viewer)) {
+            setPage(viewer, currentPage - 1)
         }
     }
 
