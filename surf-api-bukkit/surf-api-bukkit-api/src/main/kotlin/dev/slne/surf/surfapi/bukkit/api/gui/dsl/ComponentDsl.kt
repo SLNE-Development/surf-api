@@ -55,6 +55,10 @@ class ComponentBuilder {
                 super.onUpdate(context)
                 this@ComponentBuilder.onUpdate?.invoke(context)
             }
+
+            override fun toString(): String {
+                return "DSLGeneratedDynamicComponent(updateInterval=$updateInterval, props=$props) ${super.toString()}"
+            }
         }.also { component ->
             ref?.set(component)
             component.attachedRef = ref
