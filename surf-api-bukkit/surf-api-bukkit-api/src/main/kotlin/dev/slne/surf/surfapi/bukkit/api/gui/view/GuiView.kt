@@ -1,13 +1,21 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.view
 
+import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
-import dev.slne.surf.surfapi.core.api.util.*
+import dev.slne.surf.surfapi.core.api.util.freeze
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import dev.slne.surf.surfapi.core.api.util.toObjectList
 import it.unimi.dsi.fastutil.objects.ObjectList
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryType
+import org.bukkit.inventory.Inventory
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.properties.Delegates
 
 /**
  * Base class for all GUI views.
@@ -19,6 +27,9 @@ abstract class GuiView {
      */
     var parent: GuiView? = null
         internal set
+
+    var inventory: Inventory by Delegates.notNull()
+        private set
 
     /**
      * Components in this view.
@@ -56,38 +67,43 @@ abstract class GuiView {
     /**
      * Whether this view has been initialized.
      */
+    @Volatile
     private var initialized = false
-
-    /**
-     * Whether this view has been rendered for the first time.
-     */
-    private val firstRenderPerViewer = mutableObjectSetOf<UUID>()
 
     /**
      * Current viewers of this view.
      */
-    private val viewers = mutableObject2ObjectMapOf<UUID, Player>()
+    private val viewers = ConcurrentHashMap.newKeySet<UUID>()
 
     /**
      * Configuration for this view.
      */
-    val config = ViewConfig()
+    internal val config = ViewConfig()
+
+    protected fun init() {
+        onInit(createInitializeContext())
+
+        this.inventory = when (config.type) {
+            InventoryType.CHEST -> {
+                Bukkit.createInventory(null, config.size, config.title)
+            }
+
+            else -> {
+                Bukkit.createInventory(null, config.type, config.title)
+            }
+        }
+    }
 
     /**
      * Initialize the view configuration.
      * Called once when the view is first created.
      */
-    open fun onInit(config: ViewConfig) {}
+    open fun onInit(context: InitializeContext) {}
 
     /**
      * Called when the view is opened for a player.
      */
     open fun onOpen(context: ViewContext) {}
-
-    /**
-     * Called the first time the view is rendered for a player.
-     */
-    open fun onFirstRender(context: RenderContext) {}
 
     /**
      * Called when the view is updated.
@@ -109,9 +125,30 @@ abstract class GuiView {
      */
     internal fun ensureInitialized() {
         if (!initialized) {
-            onInit(config)
-            initialized = true
+            synchronized(this) {
+                if (!initialized) {
+                    init()
+                    initialized = true
+                }
+            }
         }
+    }
+
+    fun viewerPlayers(): List<Player> {
+        val players = mutableObjectListOf<Player>()
+        val it = viewers.iterator()
+
+        while (it.hasNext()) {
+            val id = it.next()
+            val player = server.getPlayer(id)
+            if (player == null) {
+                it.remove()
+            } else {
+                players.add(player)
+            }
+        }
+
+        return players
     }
 
     /**
@@ -119,15 +156,9 @@ abstract class GuiView {
      */
     open fun open(player: Player) {
         ensureInitialized()
-        viewers[player.uniqueId] = player
+        viewers.add(player.uniqueId)
 
         onOpen(createViewContext(player))
-
-        if (player.uniqueId !in firstRenderPerViewer) {
-            onFirstRender(createRenderContext(player))
-
-            firstRenderPerViewer.add(player.uniqueId)
-        }
     }
 
     /**
@@ -143,7 +174,7 @@ abstract class GuiView {
      * Update the view for all viewers.
      */
     fun update() {
-        viewers.values.forEach { player ->
+        viewerPlayers().forEach { player ->
             onUpdate(createViewContext(player))
         }
     }
@@ -156,9 +187,9 @@ abstract class GuiView {
      */
     internal fun updateComponent(component: Component, viewer: Player? = null) {
         val viewersToUpdate = if (viewer != null) {
-            listOfNotNull(viewers[viewer.uniqueId])
+            listOf(viewer)
         } else {
-            viewers.values.toList()
+            viewerPlayers()
         }
 
         viewersToUpdate.forEach { player ->
@@ -231,7 +262,7 @@ abstract class GuiView {
     /**
      * Create a render context for a player.
      */
-    abstract fun createRenderContext(player: Player): RenderContext
+    abstract fun createInitializeContext(): InitializeContext
 
     /**
      * Create a lifecycle context for a player.
@@ -250,7 +281,7 @@ abstract class GuiView {
     ): ResumeContext
 
     override fun toString(): String {
-        return "GuiView(parent=$parent, components=$components, initialized=$initialized, firstRenderPerViewer=$firstRenderPerViewer, viewers=$viewers, config=$config)"
+        return "GuiView(parent=$parent, components=$components, initialized=$initialized, viewers=$viewers, config=$config)"
     }
 }
 

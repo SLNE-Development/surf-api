@@ -7,14 +7,13 @@ import dev.slne.surf.surfapi.bukkit.api.builder.displayName
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
-import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
+import dev.slne.surf.surfapi.bukkit.api.gui.context.InitializeContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.slot
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.bukkit.api.gui.view.AbstractGuiView
-import dev.slne.surf.surfapi.bukkit.api.gui.view.ViewConfig
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import kotlinx.coroutines.runBlocking
@@ -29,13 +28,11 @@ object CounterGuiView : AbstractGuiView() {
     private val counterProp = Prop.Mutable("counter", 0)
     private val counterDisplayRef = Ref<Component>()
 
-    override fun onInit(config: ViewConfig) {
-        config.type = InventoryType.CHEST
-        config.rows = 3
-        config.title = text("Counter Gui")
-    }
+    override fun onInit(context: InitializeContext) {
+        context.config().type = InventoryType.CHEST
+        context.config().rows = 3
+        context.config().title = text("Counter Gui")
 
-    override fun onFirstRender(context: RenderContext) {
         // Counter display at top center
         context.slot(
             dynamicComponent(

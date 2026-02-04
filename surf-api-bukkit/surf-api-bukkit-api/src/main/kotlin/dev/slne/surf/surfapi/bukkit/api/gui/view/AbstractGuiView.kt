@@ -6,80 +6,42 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import dev.slne.surf.surfapi.bukkit.api.gui.context.abstract.*
 import dev.slne.surf.surfapi.bukkit.api.gui.toItemStack
 import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
-import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.inventory.InventoryType
-import org.bukkit.inventory.Inventory
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 @InternalSurfApi
 open class AbstractGuiView : GuiView() {
-    private val inventories = ConcurrentHashMap<UUID, Inventory>()
-
     override fun open(player: Player) {
         super.open(player)
 
-        // Create inventory based on type
-        val inventory = when (config.type) {
-            InventoryType.CHEST -> {
-                Bukkit.createInventory(null, config.size, config.title)
-            }
-
-            else -> {
-                Bukkit.createInventory(null, config.type, config.title)
-            }
-        }
-
-        inventories[player.uniqueId] = inventory
-
-        // Register with listener
-        ViewManager.registerView(inventory, this)
-
-        renderAllSlots(player, inventory, true)
+        ViewManager.setActiveView(player, this)
+        renderAllSlots(player)
 
         // Open inventory
         player.openInventory(inventory)
     }
 
     override fun close(player: Player) {
-        // Unregister inventory
-        // TODO: Fix, this currently can cause issues if multiple inventories are open
-        inventories.remove(player.uniqueId)?.let { inventory ->
-            ViewManager.unregisterView(inventory)
-        }
-
+        ViewManager.removeActiveView(player)
         super.close(player)
     }
 
-    private fun renderAllSlots(
-        player: Player,
-        inventory: Inventory,
-        firstRender: Boolean
-    ) {
+    private fun renderAllSlots(player: Player) {
         val allSlots = (0 until inventory.size).map { Slot.of(it) }
 
         allSlots.forEach { slot ->
-            renderSlot(player, inventory, slot, firstRender)
+            renderSlot(player, slot)
         }
     }
 
     private fun renderSlot(
         player: Player,
-        inventory: Inventory,
-        slot: Slot,
-        firstRender: Boolean = false
+        slot: Slot
     ) {
         if (slot.index >= inventory.size) return
 
         val resolved = resolveSlot(player, slot)
-
-        if (firstRender && resolved != null) {
-            resolved.component.onFirstRender(
-                createLifecycleContext(player, LifecycleEventType.FIRST_RENDER)
-            )
-        }
+        resolved?.component?.renderFirstRenderPerPlayer(player)
 
         inventory.setItem(
             slot.index,
@@ -91,21 +53,17 @@ open class AbstractGuiView : GuiView() {
      * Refresh the inventory for a player.
      */
     internal fun refreshInventory(player: Player) {
-        val inventory = inventories[player.uniqueId] ?: return
-
         // Clear inventory first
         inventory.clear()
 
         // Re-render all slots
-        renderAllSlots(player, inventory, false)
+        renderAllSlots(player)
     }
 
     /**
      * Refresh all slots occupied by a specific component and its children.
      */
     internal fun refreshComponentSlots(player: Player, component: Component) {
-        val inventory = inventories[player.uniqueId] ?: return
-
         // Collect all slots from this component and all its children recursively
         // Only refresh this component's own slots, not children's
         // Children will refresh their own slots when updateChildrenRecursively calls them
@@ -120,7 +78,7 @@ open class AbstractGuiView : GuiView() {
         }
 
         collectAllSlots(component).forEach { slot ->
-            renderSlot(player, inventory, slot, false)
+            renderSlot(player, slot)
         }
     }
 
@@ -192,8 +150,8 @@ open class AbstractGuiView : GuiView() {
         return AbstractViewContext(this, player)
     }
 
-    override fun createRenderContext(player: Player): RenderContext {
-        return AbstractRenderContext(this, player, this)
+    override fun createInitializeContext(): InitializeContext {
+        return AbstractInitializeContext(config, this)
     }
 
     override fun createLifecycleContext(
@@ -208,6 +166,6 @@ open class AbstractGuiView : GuiView() {
     }
 
     override fun toString(): String {
-        return "AbstractGuiView(inventories=$inventories)"
+        return "AbstractGuiView() ${super.toString()}"
     }
 }

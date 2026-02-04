@@ -7,13 +7,12 @@ import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.component.components.PaginationComponent
-import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
+import dev.slne.surf.surfapi.bukkit.api.gui.context.InitializeContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.slot
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.bukkit.api.gui.view.AbstractGuiView
-import dev.slne.surf.surfapi.bukkit.api.gui.view.ViewConfig
 import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import dev.slne.surf.surfapi.core.api.util.toObjectList
@@ -80,14 +79,11 @@ class PaginatedShopGuiView : AbstractGuiView() {
         // Navigation buttons will be automatically created and centered in the last row
     )
 
-    override fun onInit(config: ViewConfig) {
-        config.type = InventoryType.CHEST
-        config.rows = 6
-        config.title = text("Shop")
-    }
+    override fun onInit(context: InitializeContext) {
+        context.config().type = InventoryType.CHEST
+        context.config().rows = 6
+        context.config().title = text("Shop")
 
-    override fun onFirstRender(context: RenderContext) {
-        // Coins display at top center
         context.slot(
             dynamicComponent(
                 Slot.at(4, 0),

@@ -1,34 +1,34 @@
 package dev.slne.surf.surfapi.bukkit.server.gui.view
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.auto.service.AutoService
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
 import dev.slne.surf.surfapi.bukkit.api.gui.view.ViewManager
-import dev.slne.surf.surfapi.core.api.util.freeze
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
-import org.bukkit.inventory.Inventory
+import org.bukkit.entity.Player
+import java.util.*
 
 @AutoService(ViewManager::class)
 class ViewManagerImpl : ViewManager {
-    private val _views = mutableObject2ObjectMapOf<Inventory, GuiView>()
-    override val views get() = _views.freeze()
+    private val activePerPlayer = Caffeine.newBuilder()
+        .weakValues()
+        .build<UUID, GuiView>()
 
-    override fun registerView(
-        inventory: Inventory,
+    override fun getActiveView(player: Player): GuiView? {
+        return activePerPlayer.getIfPresent(player.uniqueId)
+    }
+
+    override fun setActiveView(
+        player: Player,
         view: GuiView
     ) {
-        _views[inventory] = view
+        activePerPlayer.put(player.uniqueId, view)
     }
 
-    override fun unregisterView(view: GuiView) {
-        val entry = _views.entries.firstOrNull { it.value == view } ?: return
-        _views.remove(entry.key)
-    }
-
-    override fun unregisterView(inventory: Inventory) {
-        _views.remove(inventory)
+    override fun removeActiveView(player: Player) {
+        activePerPlayer.invalidate(player.uniqueId)
     }
 
     override fun toString(): String {
-        return "ViewManagerImpl(views=$views)"
+        return "ViewManagerImpl(activePerPlayer=$activePerPlayer)"
     }
 }

@@ -14,9 +14,8 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 object GuiViewListener : Listener {
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
-        val inventory = event.clickedInventory ?: return
-        val view = ViewManager.findByInventory(inventory) ?: return
         val player = event.whoClicked as? Player ?: return
+        val view = ViewManager.getActiveView(player) ?: return
 
         if (view is AbstractGuiView) {
             view.handleClick(player, event)
@@ -25,10 +24,8 @@ object GuiViewListener : Listener {
 
     @EventHandler
     fun onInventoryClose(event: InventoryCloseEvent) {
-        val inventory = event.inventory
-        val view = ViewManager.findByInventory(inventory) ?: return
         val player = event.player as? Player ?: return
-
+        val view = ViewManager.getActiveView(player) ?: return
         view.close(player)
     }
 }

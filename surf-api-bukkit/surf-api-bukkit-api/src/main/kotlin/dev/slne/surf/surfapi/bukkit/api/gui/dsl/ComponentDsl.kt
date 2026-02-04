@@ -7,8 +7,8 @@ import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 import dev.slne.surf.surfapi.bukkit.api.gui.component.components.DynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.component.components.ItemComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
+import dev.slne.surf.surfapi.bukkit.api.gui.context.InitializeContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
-import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ComputedProp
 import dev.slne.surf.surfapi.bukkit.api.gui.props.LazyProp
@@ -182,7 +182,7 @@ fun props(builder: PropsBuilder.() -> Unit): ObjectList<Prop<*>> {
  * DSL for rendering components in a view.
  */
 @ComponentDsl
-fun RenderContext.slot(component: Component) {
+fun InitializeContext.slot(component: Component) {
     renderComponent(component)
 }
 
@@ -190,7 +190,7 @@ fun RenderContext.slot(component: Component) {
  * DSL for rendering components in a view with item at a specific slot.
  */
 @ComponentDsl
-fun RenderContext.slot(
+fun InitializeContext.slot(
     slot: Slot,
     item: GuiItem,
     priority: ComponentPriority = ComponentPriority.NORMAL,

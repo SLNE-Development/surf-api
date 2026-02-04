@@ -5,6 +5,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
+import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleEventType
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
@@ -13,6 +14,8 @@ import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import it.unimi.dsi.fastutil.objects.ObjectList
 import org.bukkit.entity.Player
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Base interface for all GUI components.
@@ -56,6 +59,18 @@ abstract class Component {
      */
     var parent: Component? = null
         internal set
+
+    private val firstRenderPerPlayer = ConcurrentHashMap.newKeySet<UUID>()
+
+    fun renderFirstRenderPerPlayer(player: Player): Boolean {
+        if(!firstRenderPerPlayer.add(player.uniqueId)) return false
+
+        view?.let { onFirstRender(it.createLifecycleContext(player, LifecycleEventType.FIRST_RENDER)) }
+
+        return true
+    }
+
+    fun hasFirstRender(player: Player): Boolean = firstRenderPerPlayer.contains(player.uniqueId)
 
     /**
      * The children of this component.
