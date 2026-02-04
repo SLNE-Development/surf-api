@@ -195,9 +195,11 @@ class PaginationComponent<T>(
 
         previousButtonComponent.hidden = !hasPrev
         previousButtonComponent.disabled = !hasPrev
+        previousButtonComponent.update()
 
         nextButtonComponent.hidden = !hasNext
         nextButtonComponent.disabled = !hasNext
+        nextButtonComponent.update()
     }
 
     /**
