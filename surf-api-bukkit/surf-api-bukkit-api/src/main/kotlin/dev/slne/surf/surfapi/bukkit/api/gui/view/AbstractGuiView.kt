@@ -162,20 +162,31 @@ open class AbstractGuiView : GuiView() {
     }
 
     /**
-     * Refresh all slots occupied by a specific component.
+     * Refresh all slots occupied by a specific component and its children.
      */
     internal fun refreshComponentSlots(player: Player, component: Component) {
         val inventory = inventories[player.uniqueId] ?: return
         val context = createViewContext(player)
 
-        // Get all slots this component could occupy
-        component.area.slots().forEach { slot ->
+        // Collect all slots from this component and all its children recursively
+        fun collectAllSlots(comp: Component): Set<Slot> {
+            val slots = mutableSetOf<Slot>()
+            slots.addAll(comp.area.slots())
+            comp.children.forEach { child ->
+                slots.addAll(collectAllSlots(child))
+            }
+            return slots
+        }
+
+        // Get all slots this component and its children could occupy
+        collectAllSlots(component).forEach { slot ->
             if (slot.index >= inventory.size) return@forEach
             
             // Find all components at this slot, sorted by priority
             val componentsAtSlot = findComponentsBySlot(slot)
             
             // Try each component from highest to lowest priority until one renders something
+            var rendered = false
             for (comp in componentsAtSlot) {
                 val renderedItems = comp.renderSlots(context)
                 val item = renderedItems[slot]
@@ -183,10 +194,16 @@ open class AbstractGuiView : GuiView() {
                 if (item != null) {
                     // This component renders something at this slot
                     inventory.setItem(slot.index, item.toItemStack())
+                    rendered = true
                     break
                 }
             }
-            // Don't clear slots - let components maintain their own rendering
+            
+            // If no component rendered at this slot, clear it
+            // This ensures slots are properly cleared when components become hidden
+            if (!rendered) {
+                inventory.setItem(slot.index, null)
+            }
         }
     }
     
