@@ -32,9 +32,24 @@ abstract class GuiView {
 
     /**
      * Find all components that contain the given slot, sorted by priority (highest first).
+     * Includes children recursively.
      */
     fun findComponentsBySlot(slot: Slot): List<Component> {
-        return _components
+        val allComponents = mutableListOf<Component>()
+        
+        // Helper function to recursively collect components and their children
+        fun collectComponents(component: Component) {
+            allComponents.add(component)
+            component.children.forEach { child ->
+                collectComponents(child)
+            }
+        }
+        
+        // Collect all components including children
+        _components.forEach { collectComponents(it) }
+        
+        // Filter by slot and sort by priority
+        return allComponents
             .filter { it.contains(slot) }
             .sortedByDescending { it.priority.value }
     }
