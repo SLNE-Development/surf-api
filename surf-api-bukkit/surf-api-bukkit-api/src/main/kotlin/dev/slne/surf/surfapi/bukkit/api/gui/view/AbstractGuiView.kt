@@ -42,36 +42,7 @@ open class AbstractGuiView : GuiView() {
         // Register with listener
         ViewManager.registerView(inventory, this)
 
-        // Render all components, respecting priority
-        // For each slot, render only the highest priority component
-        val allSlots = (0 until inventory.size).map { Slot.of(it) }
-        allSlots.forEach { slot ->
-            val componentsAtSlot = findComponentsBySlot(slot)
-            if (componentsAtSlot.isNotEmpty()) {
-                // Get highest priority component
-                val component = componentsAtSlot.first()
-                val context = createViewContext(player)
-
-                // Check if it's a container component
-                val slotsToRender = component.renderSlots(context)
-                if (slotsToRender.isNotEmpty()) {
-                    // Only render this slot if it's in the container's output
-                    slotsToRender[slot]?.let { guiItem ->
-                        if (slot.index < inventory.size) {
-                            inventory.setItem(slot.index, guiItem.toItemStack())
-                        }
-                    }
-                } else {
-                    // Regular component - only render at its start slot
-                    if (slot == component.area.first()) {
-                        val guiItem = component.render(context)
-                        if (guiItem != null && slot.index < inventory.size) {
-                            inventory.setItem(slot.index, guiItem.toItemStack())
-                        }
-                    }
-                }
-            }
-        }
+        renderAllSlots(player, inventory)
 
         // Open inventory
         player.openInventory(inventory)
@@ -121,20 +92,11 @@ open class AbstractGuiView : GuiView() {
         super.close(player)
     }
 
-    /**
-     * Refresh the inventory for a player.
-     */
-    internal fun refreshInventory(player: Player) {
-        val inventory = inventories[player.uniqueId] ?: return
-
-        // Clear inventory first
-        inventory.clear()
-
-        // Render all slots, respecting priority
+    private fun renderAllSlots(player: Player, inventory: Inventory) {
         val allSlots = (0 until inventory.size).map { Slot.of(it) }
+
         allSlots.forEach { slot ->
             val componentsAtSlot = findComponentsBySlot(slot)
-
             if (componentsAtSlot.isNotEmpty()) {
                 // Get highest priority component
                 val component = componentsAtSlot.first()
@@ -142,7 +104,6 @@ open class AbstractGuiView : GuiView() {
 
                 // Check if it's a container component
                 val slotsToRender = component.renderSlots(context)
-
                 if (slotsToRender.isNotEmpty()) {
                     // Only render this slot if it's in the container's output
                     slotsToRender[slot]?.let { guiItem ->
@@ -154,7 +115,6 @@ open class AbstractGuiView : GuiView() {
                     // Regular component - only render at its start slot
                     if (slot == component.area.first()) {
                         val guiItem = component.render(context)
-
                         if (guiItem != null && slot.index < inventory.size) {
                             inventory.setItem(slot.index, guiItem.toItemStack())
                         }
@@ -162,6 +122,19 @@ open class AbstractGuiView : GuiView() {
                 }
             }
         }
+    }
+
+    /**
+     * Refresh the inventory for a player.
+     */
+    internal fun refreshInventory(player: Player) {
+        val inventory = inventories[player.uniqueId] ?: return
+
+        // Clear inventory first
+        inventory.clear()
+
+        // Re-render all slots
+        renderAllSlots(player, inventory)
     }
 
     /**
@@ -174,7 +147,16 @@ open class AbstractGuiView : GuiView() {
         // Collect all slots from this component and all its children recursively
         // Only refresh this component's own slots, not children's
         // Children will refresh their own slots when updateChildrenRecursively calls them
-        component.area.slots().forEach { slot ->
+        fun collectAllSlots(comp: Component): Set<Slot> {
+            val slots = mutableSetOf<Slot>()
+            slots.addAll(comp.area.slots())
+            comp.children.forEach { child ->
+                slots.addAll(collectAllSlots(child))
+            }
+            return slots
+        }
+
+        collectAllSlots(component).forEach { slot ->
             if (slot.index >= inventory.size) return@forEach
 
             // Find all components at this slot, sorted by priority

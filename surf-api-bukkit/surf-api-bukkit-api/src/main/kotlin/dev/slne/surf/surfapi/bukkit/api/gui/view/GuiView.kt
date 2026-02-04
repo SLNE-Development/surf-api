@@ -40,7 +40,7 @@ abstract class GuiView {
         // Helper function to recursively collect components and their children
         fun collectComponents(component: Component) {
             allComponents.add(component)
-            
+
             component.children.forEach { child ->
                 collectComponents(child)
             }
@@ -159,7 +159,6 @@ abstract class GuiView {
      * @param viewer The specific viewer to update for, or null to update for all viewers
      */
     internal fun updateComponent(component: Component, viewer: Player? = null) {
-        println("Updating component ${component} for viewer ${viewer?.name ?: "all viewers"}")
         val viewersToUpdate = if (viewer != null) {
             listOfNotNull(viewers[viewer.uniqueId])
         } else {
@@ -176,17 +175,12 @@ abstract class GuiView {
             // This allows children to update their state (like hidden/disabled properties)
             fun updateChildrenRecursively(comp: Component) {
                 comp.children.forEach { child ->
-                    println("#".repeat(20))
-                    println("Calling child ${child} recursive update")
                     child.onUpdate(lifecycleContext)
                     updateChildrenRecursively(child)
-                    println("#".repeat(20))
                 }
             }
-            println("-".repeat(20))
-            println("Calling main child recursive update")
+            
             updateChildrenRecursively(component)
-            println("-".repeat(20))
 
             // Refresh the component's slots to update the visual display
             // This now includes all children's slots, so everything updates together
