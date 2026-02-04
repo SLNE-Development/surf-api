@@ -176,7 +176,6 @@ open class AbstractGuiView : GuiView() {
             val componentsAtSlot = findComponentsBySlot(slot)
             
             // Try each component from highest to lowest priority until one renders something
-            var rendered = false
             for (comp in componentsAtSlot) {
                 val renderedItems = comp.renderSlots(context)
                 val item = renderedItems[slot]
@@ -184,18 +183,10 @@ open class AbstractGuiView : GuiView() {
                 if (item != null) {
                     // This component renders something at this slot
                     inventory.setItem(slot.index, item.toItemStack())
-                    rendered = true
                     break
                 }
             }
-            
-            if (!rendered) {
-                // No component rendered anything at this slot - check if we should clear it
-                // Only clear if the component we're refreshing was responsible for this slot
-                if (componentsAtSlot.contains(component)) {
-                    inventory.setItem(slot.index, null)
-                }
-            }
+            // Don't clear slots - let components maintain their own rendering
         }
     }
     
