@@ -8,7 +8,6 @@ import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.component.PaginationComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
-import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.slot
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
@@ -39,8 +38,8 @@ object PaginatedShopGuiView : AbstractGuiView() {
     // The component will use 4 rows: 3 for items + 1 for buttons
     // Items area: rows 1-3, Button row: row 4
     private val paginationComponent = PaginationComponent(
-        startSlot = Slot.at(0, 1),  // Column 0, Row 1
-        endSlot = Slot.at(8, 4),     // Column 8, Row 4 (9 cols x 4 rows = 36 slots total)
+        startSlot = Slot.at(1, 1),  // Column 0, Row 1
+        endSlot = Slot.at(7, 4),     // Column 8, Row 4 (9 cols x 4 rows = 36 slots total)
         items = { shopItems },
         itemRenderer = { item, ctx ->
             GuiItem.of(ItemStack(item.material) {
