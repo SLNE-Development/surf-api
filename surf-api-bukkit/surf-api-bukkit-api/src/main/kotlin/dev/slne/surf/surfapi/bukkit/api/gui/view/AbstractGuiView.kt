@@ -114,7 +114,6 @@ open class AbstractGuiView : GuiView() {
         if (slot.index >= inventory.size) return
 
         val componentsAtSlot = findComponentsBySlot(slot)
-
         var rendered = false
 
         if (componentsAtSlot.isNotEmpty()) {
