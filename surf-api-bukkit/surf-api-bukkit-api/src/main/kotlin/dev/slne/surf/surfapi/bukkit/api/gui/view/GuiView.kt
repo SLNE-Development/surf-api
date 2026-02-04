@@ -169,13 +169,15 @@ abstract class GuiView {
 
             component.onUpdate(lifecycleContext)
             
+            // Recursively update all children first with the same viewer context
+            // This ensures children are updated before we refresh parent's slots
+            component.children.forEach { child ->
+                updateComponent(child, if (viewer != null) player else null)
+            }
+            
             // Refresh the component's slots to update the visual display
+            // Children are now up-to-date, so findComponentsBySlot will see correct hidden states
             refreshComponentSlotsInternal(player, component)
-        }
-        
-        // Recursively update all children with the same viewer context
-        component.children.forEach { child ->
-            updateComponent(child, viewer)
         }
     }
     
