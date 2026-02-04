@@ -3,6 +3,8 @@ package dev.slne.surf.surfapi.bukkit.api.gui.view
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
+import dev.slne.surf.surfapi.core.api.util.*
+import it.unimi.dsi.fastutil.objects.ObjectList
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import java.util.*
@@ -28,15 +30,15 @@ abstract class GuiView {
      * Components in this view.
      * Components can overlap, and priority determines rendering and click handling order.
      */
-    private val _components = mutableListOf<Component>()
-    val components: List<Component> get() = _components.toList()
+    private val _components = mutableObjectListOf<Component>()
+    val components: ObjectList<Component> get() = _components.freeze()
 
     /**
      * Find all components that contain the given slot, sorted by priority (highest first).
      * Includes children recursively.
      */
-    fun findComponentsBySlot(slot: Slot): List<Component> {
-        val allComponents = mutableListOf<Component>()
+    fun findComponentsBySlot(slot: Slot): ObjectList<Component> {
+        val allComponents = mutableObjectListOf<Component>()
 
         // Helper function to recursively collect components and their children
         fun collectComponents(component: Component) {
@@ -54,6 +56,7 @@ abstract class GuiView {
         return allComponents
             .filter { it.contains(slot) && !it.hidden }
             .sortedByDescending { it.priority.value }
+            .toObjectList()
     }
 
     /**
@@ -64,12 +67,12 @@ abstract class GuiView {
     /**
      * Whether this view has been rendered for the first time.
      */
-    private val firstRenderPerViewer = mutableSetOf<UUID>()
+    private val firstRenderPerViewer = mutableObjectSetOf<UUID>()
 
     /**
      * Current viewers of this view.
      */
-    private val viewers = mutableMapOf<UUID, Player>()
+    private val viewers = mutableObject2ObjectMapOf<UUID, Player>()
 
     /**
      * Configuration for this view.

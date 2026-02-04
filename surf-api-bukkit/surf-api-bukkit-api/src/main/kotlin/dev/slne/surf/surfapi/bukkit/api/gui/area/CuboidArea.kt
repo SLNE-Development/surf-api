@@ -1,6 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.area
 
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
+import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
+import it.unimi.dsi.fastutil.objects.ObjectSet
 
 /**
  * A rectangular (cuboid) area defined by start and end slots.
@@ -10,13 +12,15 @@ data class CuboidArea(
     val startSlot: Slot,
     val endSlot: Slot
 ) : ComponentArea {
-    override fun slots(): Set<Slot> {
-        val slots = mutableSetOf<Slot>()
+    override fun slots(): ObjectSet<Slot> {
+        val slots = mutableObjectSetOf<Slot>()
+
         for (row in startSlot.row..endSlot.row) {
             for (col in startSlot.column..endSlot.column) {
                 slots.add(Slot.at(col, row))
             }
         }
+        
         return slots
     }
 

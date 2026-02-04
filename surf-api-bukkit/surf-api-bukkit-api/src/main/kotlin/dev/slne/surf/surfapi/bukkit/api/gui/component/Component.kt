@@ -9,6 +9,9 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
+import dev.slne.surf.surfapi.core.api.util.freeze
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import it.unimi.dsi.fastutil.objects.ObjectList
 import org.bukkit.entity.Player
 import kotlin.time.Duration
 
@@ -58,8 +61,8 @@ abstract class Component {
     /**
      * The children of this component.
      */
-    private val _children = mutableListOf<Component>()
-    val children: List<Component> get() = _children.toList()
+    private val _children = mutableObjectListOf<Component>()
+    val children: ObjectList<Component> get() = _children.freeze()
 
     /**
      * The view this component belongs to.
@@ -92,7 +95,7 @@ abstract class Component {
      * Props accessible by this component.
      * Children can access parent props.
      */
-    protected open val props: MutableList<Prop<*>> = mutableListOf()
+    protected open val props: ObjectList<Prop<*>> = mutableObjectListOf()
 
     /**
      * Ref attached to this component, if any.
@@ -147,8 +150,8 @@ abstract class Component {
     /**
      * Get all props including parent props.
      */
-    fun getAllProps(): List<Prop<*>> {
-        val allProps = mutableListOf<Prop<*>>()
+    fun getAllProps(): ObjectList<Prop<*>> {
+        val allProps = mutableObjectListOf<Prop<*>>()
 
         parent?.getAllProps()?.let { allProps.addAll(it) }
         allProps.addAll(props)

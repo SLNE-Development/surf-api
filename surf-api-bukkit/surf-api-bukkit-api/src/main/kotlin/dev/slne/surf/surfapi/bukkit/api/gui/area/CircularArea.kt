@@ -1,6 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.area
 
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
+import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
+import it.unimi.dsi.fastutil.objects.ObjectSet
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
@@ -12,8 +14,8 @@ data class CircularArea(
     val center: Slot,
     val radius: Double
 ) : ComponentArea {
-    override fun slots(): Set<Slot> {
-        val slots = mutableSetOf<Slot>()
+    override fun slots(): ObjectSet<Slot> {
+        val slots = mutableObjectSetOf<Slot>()
         val radiusCeil = ceil(radius).toInt()
 
         // Check all slots within the bounding box
@@ -33,6 +35,7 @@ data class CircularArea(
         val dx = (slot.column - center.column).toDouble()
         val dy = (slot.row - center.row).toDouble()
         val distance = sqrt(dx * dx + dy * dy)
+
         return distance <= radius
     }
 

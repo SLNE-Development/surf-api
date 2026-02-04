@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 
 /**
  * Container component that renders multiple items at specific slots.
@@ -20,7 +21,7 @@ abstract class ContainerComponent(
      * Render multiple items at their respective slots.
      * Override this to provide the slot-to-item mapping.
      */
-    abstract override fun renderSlots(context: ViewContext): Map<Slot, GuiItem>
+    abstract override fun renderSlots(context: ViewContext): Object2ObjectMap<Slot, GuiItem>
 
     /**
      * Container doesn't render a single item.

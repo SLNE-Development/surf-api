@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.area
 
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
+import it.unimi.dsi.fastutil.objects.ObjectSet
 
 /**
  * Defines the area that a component occupies in a GUI.
@@ -10,7 +11,7 @@ interface ComponentArea {
     /**
      * Get all slots that are part of this area.
      */
-    fun slots(): Set<Slot>
+    fun slots(): ObjectSet<Slot>
 
     /**
      * Check if a slot is within this area.

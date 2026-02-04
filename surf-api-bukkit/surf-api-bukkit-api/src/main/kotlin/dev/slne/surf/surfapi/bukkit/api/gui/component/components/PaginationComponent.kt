@@ -14,6 +14,11 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
+import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
+import dev.slne.surf.surfapi.core.api.util.objectListOf
+import dev.slne.surf.surfapi.core.api.util.toObjectList
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap
+import it.unimi.dsi.fastutil.objects.ObjectList
 import org.bukkit.Material
 import org.bukkit.entity.Player
 
@@ -27,7 +32,7 @@ import org.bukkit.entity.Player
 class PaginationComponent<T>(
     startSlot: Slot,
     endSlot: Slot,
-    private val items: () -> List<T>,
+    private val items: () -> ObjectList<T>,
     private val itemRenderer: (T, ViewContext) -> GuiItem?,
     override val priority: ComponentPriority = ComponentPriority.NORMAL,
     private val onItemClick: ((T, ClickContext) -> Unit)? = null,
@@ -157,16 +162,16 @@ class PaginationComponent<T>(
     /**
      * Get the items for the current page of a viewer.
      */
-    fun getPageItems(viewer: Player): List<T> {
+    fun getPageItems(viewer: Player): ObjectList<T> {
         val allItems = items()
         val currentPage = getCurrentPage(viewer)
         val startIndex = currentPage * pageSize
         val endIndex = minOf(startIndex + pageSize, allItems.size)
 
         return if (startIndex < allItems.size) {
-            allItems.subList(startIndex, endIndex)
+            allItems.subList(startIndex, endIndex).toObjectList()
         } else {
-            emptyList()
+            objectListOf()
         }
     }
 
@@ -244,9 +249,9 @@ class PaginationComponent<T>(
         updateNavigationButtonsState(context.player)
     }
 
-    override fun renderSlots(context: ViewContext): Map<Slot, GuiItem> {
+    override fun renderSlots(context: ViewContext): Object2ObjectMap<Slot, GuiItem> {
         val pageItems = getPageItems(context.player)
-        val renderedSlots = mutableMapOf<Slot, GuiItem>()
+        val renderedSlots = mutableObject2ObjectMapOf<Slot, GuiItem>()
 
         pageItems.forEachIndexed { index, item ->
             val guiItem = itemRenderer(item, context)

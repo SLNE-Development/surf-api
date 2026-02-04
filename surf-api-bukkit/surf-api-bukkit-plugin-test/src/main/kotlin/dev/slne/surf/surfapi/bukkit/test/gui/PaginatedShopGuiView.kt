@@ -16,6 +16,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.view.AbstractGuiView
 import dev.slne.surf.surfapi.bukkit.api.gui.view.ViewConfig
 import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
+import dev.slne.surf.surfapi.core.api.util.toObjectList
 import org.bukkit.Material
 import org.bukkit.event.inventory.InventoryType
 
@@ -31,7 +32,7 @@ class PaginatedShopGuiView : AbstractGuiView() {
     private val shopItems by lazy {
         Material.entries.filter {
             it.isItem && !it.isAir
-        }.map { ShopItem(it, it.name, (10..500).random()) }.shuffled()
+        }.map { ShopItem(it, it.name, (10..500).random()) }.shuffled().toObjectList()
     }
 
     // Pagination component - includes built-in navigation buttons

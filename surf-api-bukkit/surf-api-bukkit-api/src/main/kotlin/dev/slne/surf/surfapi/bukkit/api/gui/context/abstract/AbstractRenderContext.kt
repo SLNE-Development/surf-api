@@ -30,6 +30,7 @@ class AbstractRenderContext(
 
     override fun setItem(slot: Slot, item: GuiItem) {
         val inventory = player.openInventory.topInventory
+        
         if (slot.index in 0 until inventory.size) {
             inventory.setItem(slot.index, item.toItemStack())
         }
