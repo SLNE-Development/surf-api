@@ -164,6 +164,11 @@ abstract class GuiView {
             // Refresh the component's slots to update the visual display
             refreshComponentSlotsInternal(player, component)
         }
+        
+        // Recursively update all children
+        component.children.forEach { child ->
+            updateComponent(child)
+        }
     }
     
     /**

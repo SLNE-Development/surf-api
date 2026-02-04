@@ -203,16 +203,12 @@ class PaginationComponent<T>(
         previousButtonRef.current?.let { button ->
             button.disabled = !hasPrev
             button.hidden = !hasPrev
-
-            button.update()
         }
 
         // Update next button
         nextButtonRef.current?.let { button ->
             button.disabled = !hasNext
             button.hidden = !hasNext
-            
-            button.update()
         }
     }
 
@@ -246,7 +242,6 @@ class PaginationComponent<T>(
     fun setPage(viewer: Player, page: Int) {
         if (page in 0 until getTotalPages()) {
             currentPages[viewer.uniqueId] = page
-            this@PaginationComponent.update()
         }
     }
 
