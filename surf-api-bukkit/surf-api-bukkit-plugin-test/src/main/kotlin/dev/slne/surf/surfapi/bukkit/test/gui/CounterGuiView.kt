@@ -18,7 +18,7 @@ import dev.slne.surf.surfapi.bukkit.test.plugin
 import dev.slne.surf.surfapi.core.api.messages.adventure.plain
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import kotlinx.coroutines.runBlocking
-import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Material
 import org.bukkit.event.inventory.InventoryType
 
@@ -30,10 +30,26 @@ object CounterGuiView : GuiView() {
     private val counterProp = Prop.Mutable("counter", 0)
     private val counterDisplayRef = Ref<Component>()
 
+    enum class TitleColor(val color: NamedTextColor) {
+        RED(NamedTextColor.RED),
+        GREEN(NamedTextColor.GREEN),
+        BLUE(NamedTextColor.BLUE),
+        YELLOW(NamedTextColor.YELLOW),
+        PURPLE(NamedTextColor.LIGHT_PURPLE);
+
+        fun next(): TitleColor {
+            val values = entries
+
+            return values[(this.ordinal + 1) % values.size]
+        }
+    }
+
+    private var titleColor = TitleColor.entries.random()
+
     override fun onInit(context: InitializeContext) {
         context.config().type = InventoryType.CHEST
         context.config().rows = 3
-        context.config().title = text("Counter Gui")
+        context.config().title = text("Counter Gui", titleColor.color)
 
         context.slot(
             component(
@@ -45,15 +61,12 @@ object CounterGuiView : GuiView() {
                 })
             ) {
                 onClick = {
-                    val randomHex = List(6) {
-                        ('0'..'9') + ('A'..'F')
-                    }.flatten().shuffled().take(6).joinToString("")
-
-                    val textColor = TextColor.fromHexString(randomHex)
                     val oldTitle = view.title.plain()
+                    val nextColor = titleColor.next()
+                    titleColor = nextColor
 
-                    view.modifyConfig {
-                        title = text(oldTitle, textColor)
+                    view.modifyConfig { config ->
+                        config.title = text(oldTitle, titleColor.color)
                     }
                 }
             }

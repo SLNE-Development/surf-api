@@ -1,5 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.api.gui.view
 
+import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
+import com.github.shynixn.mccoroutine.folia.entityDispatcher
+import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.event.cancel
 import dev.slne.surf.surfapi.bukkit.api.extensions.server
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
@@ -11,11 +14,13 @@ import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import dev.slne.surf.surfapi.core.api.util.toObjectList
 import it.unimi.dsi.fastutil.objects.ObjectList
+import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.Inventory
+import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.properties.Delegates
@@ -105,14 +110,22 @@ abstract class GuiView {
         }
     }
 
-    fun modifyConfig(modifier: ViewConfig.() -> Unit) {
-        config.modifier()
+    fun modifyConfig(modifier: (config: ViewConfig) -> Unit) {
+        modifier(config)
+
         initialized = false
 
-        init()
+        ensureInitialized()
 
-        viewerPlayers().forEach { viewer ->
-            open(viewer)
+        val plugin = JavaPlugin.getProvidingPlugin(GuiView::class.java) as SuspendingJavaPlugin
+
+        plugin.launch {
+            viewerPlayers().forEach { viewer ->
+                withContext(plugin.entityDispatcher(viewer)) {
+                    viewer.closeInventory()
+                    open(viewer)
+                }
+            }
         }
     }
 
