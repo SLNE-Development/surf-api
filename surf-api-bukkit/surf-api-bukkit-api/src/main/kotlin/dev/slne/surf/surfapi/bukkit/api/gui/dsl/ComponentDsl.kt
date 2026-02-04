@@ -4,8 +4,8 @@ import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
-import dev.slne.surf.surfapi.bukkit.api.gui.component.DynamicComponent
-import dev.slne.surf.surfapi.bukkit.api.gui.component.ItemComponent
+import dev.slne.surf.surfapi.bukkit.api.gui.component.components.DynamicComponent
+import dev.slne.surf.surfapi.bukkit.api.gui.component.components.ItemComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
@@ -15,6 +15,8 @@ import dev.slne.surf.surfapi.bukkit.api.gui.props.LazyProp
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.props.ViewerProp
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
+import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlin.time.Duration
 
 /**
@@ -31,16 +33,19 @@ class ComponentBuilder {
     var updateInterval: Duration? = null
     var ref: Ref<Component>? = null
     var priority: ComponentPriority = ComponentPriority.NORMAL
+    var onFirstRender: (LifecycleContext.() -> Unit)? = null
     var onUpdate: (LifecycleContext.() -> Unit)? = null
     var onClick: (ClickContext.() -> Unit)? = null
+    var hidden: Boolean = false
+    var disabled: Boolean = false
 
-    private val _props = mutableMapOf<String, Prop<*>>()
+    private val _props = mutableObjectListOf<Prop<*>>()
 
     /**
      * Add a prop to this component.
      */
-    fun <T> prop(name: String, prop: Prop<T>) {
-        _props[name] = prop
+    fun <T> prop(prop: Prop<T>) {
+        _props.add(prop)
     }
 
     /**
@@ -49,7 +54,12 @@ class ComponentBuilder {
     internal fun build(slot: Slot, renderer: (ViewContext) -> GuiItem?): Component {
         return object : DynamicComponent(slot, renderer, priority, onClick) {
             override val updateInterval: Duration? = this@ComponentBuilder.updateInterval
-            override val props: Map<String, Prop<*>> = _props
+            override val props: ObjectList<Prop<*>> = _props
+
+            override fun onFirstRender(context: LifecycleContext) {
+                super.onFirstRender(context)
+                this@ComponentBuilder.onFirstRender?.invoke(context)
+            }
 
             override fun onUpdate(context: LifecycleContext) {
                 super.onUpdate(context)
@@ -60,6 +70,9 @@ class ComponentBuilder {
                 return "DSLGeneratedDynamicComponent(updateInterval=$updateInterval, props=$props) ${super.toString()}"
             }
         }.also { component ->
+            component.disabled = this.disabled
+            component.hidden = this.hidden
+            
             ref?.set(component)
             component.attachedRef = ref
         }
@@ -72,13 +85,9 @@ class ComponentBuilder {
 fun component(
     slot: Slot,
     item: GuiItem,
-    priority: ComponentPriority = ComponentPriority.NORMAL,
-    onUpdate: (LifecycleContext.() -> Unit)? = null,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
-    componentBuilder.priority = priority
-    componentBuilder.onUpdate = onUpdate
     componentBuilder.builder()
     return componentBuilder.build(slot) { item }
 }
@@ -89,13 +98,9 @@ fun component(
 fun dynamicComponent(
     slot: Slot,
     renderer: (ViewContext) -> GuiItem?,
-    priority: ComponentPriority = ComponentPriority.NORMAL,
-    onUpdate: (LifecycleContext.() -> Unit)? = null,
     builder: ComponentBuilder.() -> Unit = {}
 ): Component {
     val componentBuilder = ComponentBuilder()
-    componentBuilder.priority = priority
-    componentBuilder.onUpdate = onUpdate
     componentBuilder.builder()
     return componentBuilder.build(slot, renderer)
 }

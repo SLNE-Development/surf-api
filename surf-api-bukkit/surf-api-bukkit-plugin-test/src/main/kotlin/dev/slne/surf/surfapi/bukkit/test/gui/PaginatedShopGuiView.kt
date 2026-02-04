@@ -6,7 +6,7 @@ import dev.slne.surf.surfapi.bukkit.api.builder.displayName
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
-import dev.slne.surf.surfapi.bukkit.api.gui.component.PaginationComponent
+import dev.slne.surf.surfapi.bukkit.api.gui.component.components.PaginationComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.context.RenderContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.slot

@@ -123,12 +123,11 @@ abstract class GuiView {
         ensureInitialized()
         viewers[player.uniqueId] = player
 
-        val context = createViewContext(player)
-        onOpen(context)
+        onOpen(createViewContext(player))
 
         if (player.uniqueId !in firstRenderPerViewer) {
-            val renderContext = createRenderContext(player)
-            onFirstRender(renderContext)
+            onFirstRender(createRenderContext(player))
+
             firstRenderPerViewer.add(player.uniqueId)
         }
     }
@@ -147,8 +146,7 @@ abstract class GuiView {
      */
     fun update() {
         viewers.values.forEach { player ->
-            val context = createViewContext(player)
-            onUpdate(context)
+            onUpdate(createViewContext(player))
         }
     }
 
@@ -179,7 +177,7 @@ abstract class GuiView {
                     updateChildrenRecursively(child)
                 }
             }
-            
+
             updateChildrenRecursively(component)
 
             // Refresh the component's slots to update the visual display

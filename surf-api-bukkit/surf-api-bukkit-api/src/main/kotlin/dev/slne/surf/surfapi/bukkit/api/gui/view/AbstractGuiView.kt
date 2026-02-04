@@ -42,7 +42,7 @@ open class AbstractGuiView : GuiView() {
         // Register with listener
         ViewManager.registerView(inventory, this)
 
-        renderAllSlots(player, inventory)
+        renderAllSlots(player, inventory, true)
 
         // Open inventory
         player.openInventory(inventory)
@@ -93,15 +93,24 @@ open class AbstractGuiView : GuiView() {
         super.close(player)
     }
 
-    private fun renderAllSlots(player: Player, inventory: Inventory) {
+    private fun renderAllSlots(
+        player: Player,
+        inventory: Inventory,
+        firstRender: Boolean
+    ) {
         val allSlots = (0 until inventory.size).map { Slot.of(it) }
 
         allSlots.forEach { slot ->
-            renderSlot(player, inventory, slot)
+            renderSlot(player, inventory, slot, firstRender)
         }
     }
 
-    private fun renderSlot(player: Player, inventory: Inventory, slot: Slot) {
+    private fun renderSlot(
+        player: Player,
+        inventory: Inventory,
+        slot: Slot,
+        firstRender: Boolean = false
+    ) {
         if (slot.index >= inventory.size) return
 
         val componentsAtSlot = findComponentsBySlot(slot)
@@ -112,6 +121,15 @@ open class AbstractGuiView : GuiView() {
             // Get highest priority component
             val component = componentsAtSlot.first()
             val context = createViewContext(player)
+
+            if (firstRender) {
+                component.onFirstRender(
+                    createLifecycleContext(
+                        player,
+                        LifecycleEventType.FIRST_RENDER
+                    )
+                )
+            }
 
             // Check if it's a container component
             val slotsToRender = component.renderSlots(context)
@@ -151,7 +169,7 @@ open class AbstractGuiView : GuiView() {
         inventory.clear()
 
         // Re-render all slots
-        renderAllSlots(player, inventory)
+        renderAllSlots(player, inventory, false)
     }
 
     /**
@@ -174,7 +192,7 @@ open class AbstractGuiView : GuiView() {
         }
 
         collectAllSlots(component).forEach { slot ->
-            renderSlot(player, inventory, slot)
+            renderSlot(player, inventory, slot, false)
         }
     }
 

@@ -1,4 +1,4 @@
-package dev.slne.surf.surfapi.bukkit.api.gui.component
+package dev.slne.surf.surfapi.bukkit.api.gui.component.components
 
 import dev.slne.surf.surfapi.bukkit.api.builder.ItemStack
 import dev.slne.surf.surfapi.bukkit.api.builder.buildLore
@@ -7,6 +7,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
 import dev.slne.surf.surfapi.bukkit.api.gui.area.CuboidArea
+import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
@@ -102,7 +103,6 @@ class PaginationComponent<T>(
                 line { gray("Click to go to the previous page") }
             }
         }),
-        priority = ComponentPriority.HIGH  // High priority to render above items
     ) {
         onClick = {
             previousPage(player)
@@ -122,7 +122,6 @@ class PaginationComponent<T>(
                 }
             })
         },
-        priority = ComponentPriority.HIGH  // High priority to render above items
     )
 
     private fun createNextButtonComponent() = component(
@@ -133,7 +132,6 @@ class PaginationComponent<T>(
                 line { gray("Click to go to the next page") }
             }
         }),
-        priority = ComponentPriority.HIGH  // High priority to render above items
     ) {
         onClick = {
             nextPage(player)

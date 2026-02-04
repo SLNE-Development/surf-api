@@ -100,6 +100,11 @@ abstract class Component {
     internal var attachedRef: Ref<Component>? = null
 
     /**
+     * Called when the component is rendered for the first time.
+     */
+    open fun onFirstRender(context: LifecycleContext) {}
+
+    /**
      * Called when the component is updated.
      */
     open fun onUpdate(context: LifecycleContext) {}

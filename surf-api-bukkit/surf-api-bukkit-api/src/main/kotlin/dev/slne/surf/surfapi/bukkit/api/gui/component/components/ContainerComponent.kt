@@ -1,8 +1,10 @@
-package dev.slne.surf.surfapi.bukkit.api.gui.component
+package dev.slne.surf.surfapi.bukkit.api.gui.component.components
 
 import dev.slne.surf.surfapi.bukkit.api.gui.GuiItem
 import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
+import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
+import dev.slne.surf.surfapi.bukkit.api.gui.component.ComponentPriority
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 
 /**
@@ -24,7 +26,7 @@ abstract class ContainerComponent(
      * Container doesn't render a single item.
      */
     final override fun render(context: ViewContext): GuiItem? = null
-    
+
     override fun toString(): String {
         return "ContainerComponent(area=$area, priority=$priority) ${super.toString()}"
     }
