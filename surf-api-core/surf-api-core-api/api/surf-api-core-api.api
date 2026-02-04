@@ -23,6 +23,11 @@ public final class dev/slne/surf/surfapi/core/api/algorithms/ConvexHull2DKt {
 	public static final fun convexHull2D ([Lorg/spongepowered/math/vector/Vectord;)Lit/unimi/dsi/fastutil/objects/ObjectList;
 }
 
+public final class dev/slne/surf/surfapi/core/api/algorithms/Kahn_topological_sortKt {
+	public static final fun topologicalSort (Ljava/util/Map;)Ljava/util/List;
+	public static final fun topologicalSortSafe (Ljava/util/Map;)Ljava/lang/Object;
+}
+
 public final class dev/slne/surf/surfapi/core/api/collection/TransformingObjectSet : it/unimi/dsi/fastutil/objects/ObjectSet {
 	public fun <init> (Lit/unimi/dsi/fastutil/objects/ObjectSet;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public fun add (Ljava/lang/Object;)Z
@@ -73,6 +78,46 @@ public final class dev/slne/surf/surfapi/core/api/command/exception/WrapperComma
 }
 
 public final class dev/slne/surf/surfapi/core/api/command/exception/WrapperCommandExceptionComponent$Companion {
+}
+
+public abstract class dev/slne/surf/surfapi/core/api/component/AbstractComponent : dev/slne/surf/surfapi/shared/api/component/Component {
+	public fun <init> ()V
+	public final fun disable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun enable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun load (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected fun onDisable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected fun onEnable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected fun onLoad (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/component/SurfComponentApi {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/component/SurfComponentApi$Companion;
+	public abstract fun components (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun componentsLoaded (Ljava/lang/Object;)Ljava/util/List;
+	public abstract fun componentsOfType (Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun componentsOfType (Ljava/lang/Object;Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun componentsOfTypeLoaded (Ljava/lang/Class;)Ljava/util/List;
+	public abstract fun componentsOfTypeLoaded (Ljava/lang/Object;Ljava/lang/Class;)Ljava/util/List;
+	public abstract fun disable (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun enable (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun load (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/component/SurfComponentApi$Companion : dev/slne/surf/surfapi/core/api/component/SurfComponentApi {
+	public fun components (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun componentsLoaded (Ljava/lang/Object;)Ljava/util/List;
+	public fun componentsOfType (Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun componentsOfType (Ljava/lang/Object;Ljava/lang/Class;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun componentsOfTypeLoaded (Ljava/lang/Class;)Ljava/util/List;
+	public fun componentsOfTypeLoaded (Ljava/lang/Object;Ljava/lang/Class;)Ljava/util/List;
+	public fun disable (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun enable (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getInstance ()Ldev/slne/surf/surfapi/core/api/component/SurfComponentApi;
+	public fun load (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/component/SurfComponentApiKt {
+	public static final fun getSurfComponentApi ()Ldev/slne/surf/surfapi/core/api/component/SurfComponentApi;
 }
 
 public abstract interface annotation class dev/slne/surf/surfapi/core/api/config/JsonConfigFileNamePattern : java/lang/annotation/Annotation {
@@ -10212,9 +10257,6 @@ public final class dev/slne/surf/surfapi/core/api/util/Fast_util_utilKt {
 	public static final fun toShortSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toShortSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toShortSet ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/core/api/util/InternalSurfApi : java/lang/annotation/Annotation {
 }
 
 public abstract interface class dev/slne/surf/surfapi/core/api/util/ItemStackFactory {

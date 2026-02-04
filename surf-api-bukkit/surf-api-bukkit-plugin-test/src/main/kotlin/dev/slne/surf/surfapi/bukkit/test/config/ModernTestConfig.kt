@@ -18,7 +18,7 @@ data class ModernTestConfig(
         fun randomise() = edit {
             message = "Random Message ${Math.random()}"
             number = (Math.random() * 100).toInt()
-            enabled = Math.random() > 0.5
+//            enabled = Math.random() > 0.5
         }
     }
 }
