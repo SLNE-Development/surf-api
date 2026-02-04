@@ -201,14 +201,14 @@ class PaginationComponent<T>(
         previousButtonRef.current?.let { button ->
             button.setDisabled(!hasPrev)
             button.setHidden(!hasPrev)
-            button.update()
+            // No need to call update() - parent update will cascade
         }
 
         // Update next button
         nextButtonRef.current?.let { button ->
             button.setDisabled(!hasNext)
             button.setHidden(!hasNext)
-            button.update()
+            // No need to call update() - parent update will cascade
         }
     }
 
@@ -242,7 +242,7 @@ class PaginationComponent<T>(
     fun setPage(viewer: Player, page: Int) {
         if (page in 0 until getTotalPages()) {
             currentPages[viewer.uniqueId] = page
-            pageIndicatorRef.update()
+            // No need to call pageIndicatorRef.update() - parent update will cascade to children
             updateNavigationButtonsState(viewer)
         }
     }
