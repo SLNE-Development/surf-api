@@ -213,11 +213,13 @@ open class AbstractGuiView : GuiView() {
         // Find all components at this slot, sorted by priority (highest first)
         val componentsAtSlot = findComponentsBySlot(slot)
 
-        // Only the highest priority component handles the click
+        // Only the highest priority component handles the click, and only if not disabled
         val component = componentsAtSlot.firstOrNull()
 
-        val clickContext = AbstractClickContext(this, player, event, component)
-        component?.onClick(clickContext)
+        if (component != null && !component.disabled) {
+            val clickContext = AbstractClickContext(this, player, event, component)
+            component.onClick(clickContext)
+        }
     }
 
     override fun createViewContext(player: Player): ViewContext {

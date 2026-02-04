@@ -48,9 +48,9 @@ abstract class GuiView {
         // Collect all components including children
         _components.forEach { collectComponents(it) }
         
-        // Filter by slot and sort by priority
+        // Filter by slot, exclude hidden components, and sort by priority
         return allComponents
-            .filter { it.contains(slot) }
+            .filter { it.contains(slot) && !it.hidden }
             .sortedByDescending { it.priority.value }
     }
 

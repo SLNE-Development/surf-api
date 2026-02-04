@@ -78,6 +78,30 @@ abstract class Component {
     open val updateInterval: Duration? = null
 
     /**
+     * Whether this component is hidden (not rendered at all).
+     */
+    var hidden: Boolean = false
+
+    /**
+     * Whether this component is disabled (rendered but onClick is blocked).
+     */
+    var disabled: Boolean = false
+
+    /**
+     * Set the hidden state of this component.
+     */
+    fun setHidden(hidden: Boolean) {
+        this.hidden = hidden
+    }
+
+    /**
+     * Set the disabled state of this component.
+     */
+    fun setDisabled(disabled: Boolean) {
+        this.disabled = disabled
+    }
+
+    /**
      * Props accessible by this component.
      * Children can access parent props.
      */

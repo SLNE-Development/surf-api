@@ -40,6 +40,7 @@ class PaginationComponent<T>(
     }
 
     private val currentPages = mutableMapOf<UUID, Int>()
+    private val pageIndicatorRef = dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref<Component>()
 
     /**
      * Start slot of the area (convenience accessor).
@@ -117,7 +118,9 @@ class PaginationComponent<T>(
             })
         },
         priority = this@PaginationComponent.priority
-    )
+    ) {
+        ref = pageIndicatorRef
+    }
 
     private fun createNextButtonComponent() = component(
         slot = calculatedNextButtonSlot,
@@ -189,6 +192,7 @@ class PaginationComponent<T>(
     fun nextPage(viewer: Player) {
         if (hasNextPage(viewer)) {
             currentPages[viewer.uniqueId] = getCurrentPage(viewer) + 1
+            pageIndicatorRef.update()
         }
     }
 
@@ -200,6 +204,7 @@ class PaginationComponent<T>(
 
         if (currentPage > 0) {
             currentPages[viewer.uniqueId] = currentPage - 1
+            pageIndicatorRef.update()
         }
     }
 
@@ -209,6 +214,7 @@ class PaginationComponent<T>(
     fun setPage(viewer: Player, page: Int) {
         if (page in 0 until getTotalPages()) {
             currentPages[viewer.uniqueId] = page
+            pageIndicatorRef.update()
         }
     }
 
