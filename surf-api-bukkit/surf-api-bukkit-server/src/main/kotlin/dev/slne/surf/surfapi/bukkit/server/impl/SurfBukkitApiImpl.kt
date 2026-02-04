@@ -1,7 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.server.impl
 
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
-import com.github.shynixn.mccoroutine.folia.launch
 import com.google.auto.service.AutoService
 import com.google.common.io.ByteStreams
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
@@ -16,15 +14,12 @@ import dev.slne.surf.surfapi.core.api.SurfCoreApi
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.World
-import org.bukkit.entity.Entity
 import java.util.*
-import kotlin.coroutines.CoroutineContext
 
 @AutoService(SurfCoreApi::class)
 class SurfBukkitApiImpl : SurfCoreApiImpl(), SurfBukkitApi {
@@ -108,10 +103,4 @@ class SurfBukkitApiImpl : SurfCoreApiImpl(), SurfBukkitApi {
             }
         }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
     }
-
-    override fun launch(context: CoroutineContext, block: suspend CoroutineScope.() -> Unit) =
-        plugin.launch(context = context, block = block)
-
-    override fun entityDispatcher(entity: Entity) =
-        plugin.entityDispatcher(entity)
 }
