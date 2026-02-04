@@ -19,7 +19,7 @@ typealias SurfComponent = Component
  * They are automatically discovered at compile time and instantiated at runtime
  * based on their dependencies and conditions.
  *
- * The lifecycle of a component consists of four phases:
+ * The lifecycle of a component consists of three phases:
  * 1. [load] - Initial loading phase, called first
  * 2. [enable] - Enable phase, called after load
  * 3. [disable] - Disable phase, called during shutdown
