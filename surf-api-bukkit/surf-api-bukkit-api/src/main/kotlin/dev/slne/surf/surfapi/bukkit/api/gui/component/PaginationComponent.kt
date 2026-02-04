@@ -286,7 +286,7 @@ class PaginationComponent<T>(
 
             if (index in pageItems.indices) {
                 val item = pageItems[index]
-                
+
                 onItemClick.invoke(item, context)
             }
         }
