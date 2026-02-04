@@ -195,11 +195,9 @@ class PaginationComponent<T>(
 
         previousButtonComponent.hidden = !hasPrev
         previousButtonComponent.disabled = !hasPrev
-        previousButtonComponent.update()
 
         nextButtonComponent.hidden = !hasNext
         nextButtonComponent.disabled = !hasNext
-        nextButtonComponent.update()
     }
 
     /**
@@ -247,9 +245,6 @@ class PaginationComponent<T>(
     }
 
     override fun renderSlots(context: ViewContext): Map<Slot, GuiItem> {
-        // Update navigation button states for this viewer
-        updateNavigationButtonsState(context.player)
-
         val pageItems = getPageItems(context.player)
         val renderedSlots = mutableMapOf<Slot, GuiItem>()
 
