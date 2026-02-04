@@ -14,19 +14,13 @@ class Ref<T : Component> {
      * Gets the current component reference.
      */
     val current: T?
-        get() {
-            val comp = reference.get()
-            println("[Ref] Getting current: $comp (hashCode: ${comp?.hashCode()})")
-            return comp
-        }
+        get() = reference.get()
     
     /**
      * Sets the component reference.
      */
     fun set(component: T?) {
-        println("[Ref] Setting component: $component (hashCode: ${component.hashCode()})")
         reference.set(component)
-        println("[Ref] After set, current is: $current (hashCode: ${current?.hashCode()})")
     }
     
     /**
