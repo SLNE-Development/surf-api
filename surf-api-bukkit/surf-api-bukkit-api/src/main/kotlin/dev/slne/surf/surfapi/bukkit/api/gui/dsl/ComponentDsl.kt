@@ -58,6 +58,7 @@ class ComponentBuilder {
 
             override fun onFirstRender(context: LifecycleContext) {
                 super.onFirstRender(context)
+                println("First render invoked for component at slot $slot hidden: $hidden disabled: $disabled")
                 this@ComponentBuilder.onFirstRender?.invoke(context)
             }
 
@@ -72,7 +73,7 @@ class ComponentBuilder {
         }.also { component ->
             component.disabled = this.disabled
             component.hidden = this.hidden
-            
+
             ref?.set(component)
             component.attachedRef = ref
         }

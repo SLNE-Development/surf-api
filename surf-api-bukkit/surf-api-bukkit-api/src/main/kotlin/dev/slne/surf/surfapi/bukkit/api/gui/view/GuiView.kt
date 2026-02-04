@@ -4,6 +4,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.component.Component
 import dev.slne.surf.surfapi.bukkit.api.gui.context.*
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryClickEvent
 import java.util.*
 import kotlin.time.Duration
 
@@ -215,6 +216,15 @@ abstract class GuiView {
 
         return this
     }
+
+    /**
+     * Create a click context for a player and click event.
+     */
+    abstract fun createClickContext(
+        player: Player,
+        event: InventoryClickEvent,
+        component: Component,
+    ): ClickContext
 
     /**
      * Create a view context for a player.

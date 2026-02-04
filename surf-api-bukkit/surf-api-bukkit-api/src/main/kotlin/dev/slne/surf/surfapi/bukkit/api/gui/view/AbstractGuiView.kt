@@ -113,49 +113,18 @@ open class AbstractGuiView : GuiView() {
     ) {
         if (slot.index >= inventory.size) return
 
-        val componentsAtSlot = findComponentsBySlot(slot)
-        var rendered = false
+        val resolved = resolveSlot(player, slot)
 
-        if (componentsAtSlot.isNotEmpty()) {
-            // Get highest priority component
-            val component = componentsAtSlot.first()
-            val context = createViewContext(player)
-
-            if (firstRender) {
-                component.onFirstRender(
-                    createLifecycleContext(
-                        player,
-                        LifecycleEventType.FIRST_RENDER
-                    )
-                )
-            }
-
-            // Check if it's a container component
-            val slotsToRender = component.renderSlots(context)
-
-            if (slotsToRender.isNotEmpty()) {
-                // Only render this slot if it's in the container's output
-                slotsToRender[slot]?.let { guiItem ->
-                    if (slot.index < inventory.size) {
-                        inventory.setItem(slot.index, guiItem.toItemStack())
-                        rendered = true
-                    }
-                }
-            } else {
-                // Regular component - only render at its start slot
-                if (slot == component.area.first()) {
-                    val guiItem = component.render(context)
-                    if (guiItem != null && slot.index < inventory.size) {
-                        inventory.setItem(slot.index, guiItem.toItemStack())
-                        rendered = true
-                    }
-                }
-            }
+        if (firstRender && resolved != null) {
+            resolved.component.onFirstRender(
+                createLifecycleContext(player, LifecycleEventType.FIRST_RENDER)
+            )
         }
 
-        if (!rendered) {
-            inventory.setItem(slot.index, null)
-        }
+        inventory.setItem(
+            slot.index,
+            resolved?.guiItem?.toItemStack()
+        )
     }
 
     /**
@@ -202,6 +171,38 @@ open class AbstractGuiView : GuiView() {
         refreshComponentSlots(player, component)
     }
 
+    private fun resolveSlot(
+        player: Player,
+        slot: Slot
+    ): ResolvedSlot? {
+        val componentsAtSlot = findComponentsBySlot(slot)
+        if (componentsAtSlot.isEmpty()) return null
+
+        val highestPriority = componentsAtSlot.first().priority.value
+        val candidates = componentsAtSlot
+            .takeWhile { it.priority.value == highestPriority }
+
+        val viewContext = createViewContext(player)
+
+        for (component in candidates) {
+            if (component.hidden) continue
+
+            val slots = component.renderSlots(viewContext)
+
+            if (slots.isNotEmpty()) {
+                slots[slot]?.let { guiItem ->
+                    return ResolvedSlot(component, guiItem)
+                }
+            } else if (slot == component.area.first()) {
+                component.render(viewContext)?.let { guiItem ->
+                    return ResolvedSlot(component, guiItem)
+                }
+            }
+        }
+
+        return null
+    }
+
     /**
      * Handle click event.
      */
@@ -211,18 +212,19 @@ open class AbstractGuiView : GuiView() {
         }
 
         val slot = Slot.of(event.slot)
+        val resolved = resolveSlot(player, slot) ?: return
 
-        // Find all components at this slot, sorted by priority (highest first)
-        val componentsAtSlot = findComponentsBySlot(slot)
+        if (resolved.component.disabled) return
 
-        // Only the highest priority component handles the click, and only if not disabled
-        val component = componentsAtSlot.firstOrNull()
+        resolved.component.onClick(createClickContext(player, event, resolved.component))
+    }
 
-        if (component != null && !component.disabled) {
-            val clickContext = AbstractClickContext(this, player, event, component)
-
-            component.onClick(clickContext)
-        }
+    override fun createClickContext(
+        player: Player,
+        event: InventoryClickEvent,
+        component: Component
+    ): ClickContext {
+        return AbstractClickContext(this, player, event, component)
     }
 
     override fun createViewContext(player: Player): ViewContext {
