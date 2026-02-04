@@ -164,7 +164,7 @@ open class AbstractGuiView : GuiView() {
     /**
      * Refresh all slots occupied by a specific component.
      */
-    private fun refreshComponentSlots(player: Player, component: Component) {
+    internal fun refreshComponentSlots(player: Player, component: Component) {
         val inventory = inventories[player.uniqueId] ?: return
         val context = createViewContext(player)
 
@@ -181,7 +181,7 @@ open class AbstractGuiView : GuiView() {
             }
         } else {
             // Regular component - refresh its start slot
-            val slot = component.area.first() ?: return
+            val slot = component.area.slots().firstOrNull() ?: return
             val highestPriorityComponent = findComponentsBySlot(slot).firstOrNull()
 
             if (highestPriorityComponent == component) {
@@ -191,6 +191,13 @@ open class AbstractGuiView : GuiView() {
                 }
             }
         }
+    }
+    
+    /**
+     * Implementation of refreshComponentSlotsInternal for GuiView.
+     */
+    override fun refreshComponentSlotsInternal(player: Player, component: Component) {
+        refreshComponentSlots(player, component)
     }
 
     /**

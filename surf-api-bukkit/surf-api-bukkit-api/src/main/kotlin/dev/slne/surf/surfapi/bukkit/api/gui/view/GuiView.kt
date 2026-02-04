@@ -138,14 +138,24 @@ abstract class GuiView {
 
     /**
      * Update a specific component.
+     * Calls the onUpdate lifecycle hook and refreshes the component's slots in the inventory.
      */
     internal fun updateComponent(component: Component) {
         viewers.values.forEach { player ->
             val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
 
             component.onUpdate(lifecycleContext)
+            
+            // Refresh the component's slots to update the visual display
+            refreshComponentSlotsInternal(player, component)
         }
     }
+    
+    /**
+     * Internal method to refresh component slots.
+     * Must be implemented by concrete view implementations.
+     */
+    protected abstract fun refreshComponentSlotsInternal(player: Player, component: Component)
 
     /**
      * Add a component to the view.
