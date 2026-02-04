@@ -104,12 +104,6 @@ class PaginationComponent<T>(
             }
         }),
     ) {
-        onFirstRender = { ctx ->
-            val hasPrev = hasPreviousPage(ctx.player)
-
-            this.hidden = !hasPrev
-            this.disabled = !hasPrev
-        }
         onClick = {
             previousPage(player)
         }
@@ -139,12 +133,6 @@ class PaginationComponent<T>(
             }
         }),
     ) {
-        onFirstRender = { ctx ->
-            val hasNext = hasNextPage(ctx.player)
-
-            this.hidden = !hasNext
-            this.disabled = !hasNext
-        }
         onClick = {
             nextPage(player)
         }

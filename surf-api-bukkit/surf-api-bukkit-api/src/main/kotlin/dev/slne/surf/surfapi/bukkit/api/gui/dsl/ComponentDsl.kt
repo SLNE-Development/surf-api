@@ -58,7 +58,6 @@ class ComponentBuilder {
 
             override fun onFirstRender(context: LifecycleContext) {
                 super.onFirstRender(context)
-                println("First render invoked for component at slot $slot hidden: $hidden disabled: $disabled")
                 this@ComponentBuilder.onFirstRender?.invoke(context)
             }
 
@@ -111,67 +110,67 @@ fun dynamicComponent(
  */
 @ComponentDsl
 class PropsBuilder {
-    private val _props = mutableMapOf<String, Prop<*>>()
+    private val _props = mutableObjectListOf<Prop<*>>()
 
     /**
      * Create an immutable prop.
      */
     fun <T> immutable(name: String, value: T): Prop.Immutable<T> {
-        return Prop.Immutable(name, value).also { _props[name] = it }
+        return Prop.Immutable(name, value).also { _props.add(it) }
     }
 
     /**
      * Create a mutable prop (global to view).
      */
     fun <T> mutable(name: String, initialValue: T?): Prop.Mutable<T> {
-        return Prop.Mutable(name, initialValue).also { _props[name] = it }
+        return Prop.Mutable(name, initialValue).also { _props.add(it) }
     }
 
     /**
      * Create a viewer-specific immutable prop.
      */
     fun <T> viewerImmutable(name: String, initialValue: T): ViewerProp<T> {
-        return ViewerProp(name, initialValue).also { _props[name] = it }
+        return ViewerProp(name, initialValue).also { _props.add(it) }
     }
 
     /**
      * Create a viewer-specific mutable prop.
      */
     fun <T> viewerMutable(name: String, initialValue: T?): ViewerProp.Mutable<T> {
-        return ViewerProp.Mutable(name, initialValue).also { _props[name] = it }
+        return ViewerProp.Mutable(name, initialValue).also { _props.add(it) }
     }
 
     /**
      * Create a computed prop.
      */
     fun <T> computed(name: String, compute: suspend () -> T): ComputedProp<T> {
-        return ComputedProp(name, compute).also { _props[name] = it }
+        return ComputedProp(name, compute).also { _props.add(it) }
     }
 
     /**
      * Create an immutable lazy prop.
      */
     fun <T> immutableLazy(name: String, initializer: () -> T): LazyProp<T> {
-        return LazyProp(name, initializer).also { _props[name] = it }
+        return LazyProp(name, initializer).also { _props.add(it) }
     }
 
     /**
      * Create a mutable lazy prop.
      */
     fun <T> mutableLazy(name: String, initializer: () -> T?): LazyProp.Mutable<T> {
-        return LazyProp.Mutable(name, initializer).also { _props[name] = it }
+        return LazyProp.Mutable(name, initializer).also { _props.add(it) }
     }
 
     /**
      * Get all props.
      */
-    internal fun build(): Map<String, Prop<*>> = _props.toMap()
+    internal fun build(): ObjectList<Prop<*>> = mutableObjectListOf(_props)
 }
 
 /**
  * Create props using DSL.
  */
-fun props(builder: PropsBuilder.() -> Unit): Map<String, Prop<*>> {
+fun props(builder: PropsBuilder.() -> Unit): ObjectList<Prop<*>> {
     val propsBuilder = PropsBuilder()
     propsBuilder.builder()
     return propsBuilder.build()
