@@ -9,6 +9,7 @@ import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.props.Prop
 import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import dev.slne.surf.surfapi.bukkit.api.gui.view.GuiView
+import org.bukkit.entity.Player
 import kotlin.time.Duration
 
 /**
