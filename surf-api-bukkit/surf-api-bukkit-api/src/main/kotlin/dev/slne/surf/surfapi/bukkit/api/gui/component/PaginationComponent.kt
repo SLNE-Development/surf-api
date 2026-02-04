@@ -193,15 +193,11 @@ class PaginationComponent<T>(
         val hasPrev = hasPreviousPage(viewer)
         val hasNext = hasNextPage(viewer)
 
-        previousButtonComponent.apply {
-            disabled = !hasPrev
-            hidden = !hasPrev
-        }
+        previousButtonComponent.setHidden(!hasPrev)
+        previousButtonComponent.setDisabled(!hasPrev)
 
-        nextButtonComponent.apply {
-            disabled = !hasNext
-            hidden = !hasNext
-        }
+        nextButtonComponent.setHidden(!hasNext)
+        nextButtonComponent.setDisabled(!hasNext)
     }
 
     /**

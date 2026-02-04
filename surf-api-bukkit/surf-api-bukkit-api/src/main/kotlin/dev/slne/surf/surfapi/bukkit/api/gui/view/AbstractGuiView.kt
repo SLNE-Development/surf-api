@@ -168,26 +168,32 @@ open class AbstractGuiView : GuiView() {
         val inventory = inventories[player.uniqueId] ?: return
         val context = createViewContext(player)
 
-        // Get all slots this component occupies
-        val slotsToRender = component.renderSlots(context)
-        if (slotsToRender.isNotEmpty()) {
-            // Container component - refresh each slot it renders
-            slotsToRender.forEach { (slot, guiItem) ->
-                // Check if this component is still highest priority at this slot
-                val highestPriorityComponent = findComponentsBySlot(slot).firstOrNull()
-                if (highestPriorityComponent == component && slot.index < inventory.size) {
-                    inventory.setItem(slot.index, guiItem.toItemStack())
+        // Get all slots this component could occupy
+        component.area.slots().forEach { slot ->
+            if (slot.index >= inventory.size) return@forEach
+            
+            // Find all components at this slot, sorted by priority
+            val componentsAtSlot = findComponentsBySlot(slot)
+            
+            // Try each component from highest to lowest priority until one renders something
+            var rendered = false
+            for (comp in componentsAtSlot) {
+                val renderedItems = comp.renderSlots(context)
+                val item = renderedItems[slot]
+                
+                if (item != null) {
+                    // This component renders something at this slot
+                    inventory.setItem(slot.index, item.toItemStack())
+                    rendered = true
+                    break
                 }
             }
-        } else {
-            // Regular component - refresh its start slot
-            val slot = component.area.slots().firstOrNull() ?: return
-            val highestPriorityComponent = findComponentsBySlot(slot).firstOrNull()
-
-            if (highestPriorityComponent == component) {
-                val guiItem = component.render(context)
-                if (guiItem != null && slot.index < inventory.size) {
-                    inventory.setItem(slot.index, guiItem.toItemStack())
+            
+            if (!rendered) {
+                // No component rendered anything at this slot - check if we should clear it
+                // Only clear if the component we're refreshing was responsible for this slot
+                if (componentsAtSlot.contains(component)) {
+                    inventory.setItem(slot.index, null)
                 }
             }
         }
