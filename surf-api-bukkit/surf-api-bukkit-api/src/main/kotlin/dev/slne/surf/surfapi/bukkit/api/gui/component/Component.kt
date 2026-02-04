@@ -151,8 +151,8 @@ abstract class Component {
     /**
      * Trigger an update of this component.
      */
-    fun update() {
-        view?.updateComponent(this)
+    fun update(viewer: Player? = null) {
+        view?.updateComponent(this, viewer)
     }
 
     /**

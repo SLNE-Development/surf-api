@@ -154,9 +154,17 @@ abstract class GuiView {
     /**
      * Update a specific component.
      * Calls the onUpdate lifecycle hook and refreshes the component's slots in the inventory.
+     * @param component The component to update
+     * @param viewer The specific viewer to update for, or null to update for all viewers
      */
-    internal fun updateComponent(component: Component) {
-        viewers.values.forEach { player ->
+    internal fun updateComponent(component: Component, viewer: Player? = null) {
+        val viewersToUpdate = if (viewer != null) {
+            listOfNotNull(viewers[viewer.uniqueId])
+        } else {
+            viewers.values.toList()
+        }
+        
+        viewersToUpdate.forEach { player ->
             val lifecycleContext = createLifecycleContext(player, LifecycleEventType.UPDATE)
 
             component.onUpdate(lifecycleContext)
@@ -165,9 +173,9 @@ abstract class GuiView {
             refreshComponentSlotsInternal(player, component)
         }
         
-        // Recursively update all children
+        // Recursively update all children with the same viewer context
         component.children.forEach { child ->
-            updateComponent(child)
+            updateComponent(child, viewer)
         }
     }
     

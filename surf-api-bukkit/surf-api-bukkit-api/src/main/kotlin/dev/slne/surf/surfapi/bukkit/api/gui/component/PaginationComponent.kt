@@ -208,7 +208,7 @@ class PaginationComponent<T>(
 
         if (hasNextPage(viewer)) {
             setPage(viewer, currentPage + 1)
-            this@PaginationComponent.update()
+            this@PaginationComponent.update(viewer)
         }
     }
 
@@ -220,7 +220,7 @@ class PaginationComponent<T>(
 
         if (hasPreviousPage(viewer)) {
             setPage(viewer, currentPage - 1)
-            this@PaginationComponent.update()
+            this@PaginationComponent.update(viewer)
         }
     }
 

@@ -67,7 +67,7 @@ class PaginatedShopGuiView : AbstractGuiView() {
                     success(" for ")
                     gold("${item.price} coins")
                 }
-                coinsDisplayRef.update()
+                coinsDisplayRef.update(ctx.player)
             } else {
                 ctx.player.sendText {
                     error("You do not have enough coins to purchase ")

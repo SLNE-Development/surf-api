@@ -25,9 +25,10 @@ class Ref<T : Component> {
     
     /**
      * Updates the referenced component.
+     * @param viewer The specific viewer to update for, or null to update for all viewers
      */
-    fun update() {
-        current?.update()
+    fun update(viewer: Player? = null) {
+        current?.update(viewer)
     }
     
     /**
