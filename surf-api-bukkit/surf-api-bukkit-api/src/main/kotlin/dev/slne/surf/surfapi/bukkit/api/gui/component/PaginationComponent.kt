@@ -8,9 +8,11 @@ import dev.slne.surf.surfapi.bukkit.api.gui.Slot
 import dev.slne.surf.surfapi.bukkit.api.gui.area.ComponentArea
 import dev.slne.surf.surfapi.bukkit.api.gui.area.CuboidArea
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ClickContext
+import dev.slne.surf.surfapi.bukkit.api.gui.context.LifecycleContext
 import dev.slne.surf.surfapi.bukkit.api.gui.context.ViewContext
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.component
 import dev.slne.surf.surfapi.bukkit.api.gui.dsl.dynamicComponent
+import dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.util.*
@@ -40,9 +42,9 @@ class PaginationComponent<T>(
     }
 
     private val currentPages = mutableMapOf<UUID, Int>()
-    private val pageIndicatorRef = dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref<Component>()
-    private val previousButtonRef = dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref<Component>()
-    private val nextButtonRef = dev.slne.surf.surfapi.bukkit.api.gui.ref.Ref<Component>()
+    private val pageIndicatorRef = Ref<Component>()
+    private val previousButtonRef = Ref<Component>()
+    private val nextButtonRef = Ref<Component>()
 
     /**
      * Start slot of the area (convenience accessor).
@@ -199,15 +201,17 @@ class PaginationComponent<T>(
 
         // Update previous button
         previousButtonRef.current?.let { button ->
-            button.setDisabled(!hasPrev)
-            button.setHidden(!hasPrev)
+            button.disabled = !hasPrev
+            button.hidden = !hasPrev
+
             button.update()
         }
 
         // Update next button
         nextButtonRef.current?.let { button ->
-            button.setDisabled(!hasNext)
-            button.setHidden(!hasNext)
+            button.disabled = !hasNext
+            button.hidden = !hasNext
+            
             button.update()
         }
     }
@@ -242,8 +246,7 @@ class PaginationComponent<T>(
     fun setPage(viewer: Player, page: Int) {
         if (page in 0 until getTotalPages()) {
             currentPages[viewer.uniqueId] = page
-            pageIndicatorRef.update()
-            updateNavigationButtonsState(viewer)
+            this@PaginationComponent.update()
         }
     }
 
@@ -254,10 +257,15 @@ class PaginationComponent<T>(
         currentPages.remove(viewer.uniqueId)
     }
 
+    override fun onUpdate(context: LifecycleContext) {
+        pageIndicatorRef.update()
+        updateNavigationButtonsState(context.player)
+    }
+
     override fun renderSlots(context: ViewContext): Map<Slot, GuiItem> {
         // Update navigation button states for this viewer
         updateNavigationButtonsState(context.player)
-        
+
         val pageItems = getPageItems(context.player)
         val renderedSlots = mutableMapOf<Slot, GuiItem>()
 
