@@ -21,109 +21,105 @@ abstract class Component {
      * Can be any shape (cuboid, circular, custom).
      */
     abstract val area: ComponentArea
-    
+
     /**
      * Priority for handling clicks and rendering when components overlap.
      * Higher priority components are rendered on top and handle clicks first.
      */
     abstract val priority: ComponentPriority
-    
+
     /**
      * Width of the component's bounding box.
      * Delegates to the area's width.
      */
     val width: Int
         get() = area.width
-    
+
     /**
      * Height of the component's bounding box.
      * Delegates to the area's height.
      */
     val height: Int
         get() = area.height
-    
+
     /**
      * Check if a slot is within this component's area.
      * Delegates to the area's contains method.
      */
     fun contains(slot: Slot): Boolean = area.contains(slot)
-    
+
     /**
      * The parent component, if any.
      */
     var parent: Component? = null
         internal set
-    
+
     /**
      * The children of this component.
      */
     private val _children = mutableListOf<Component>()
     val children: List<Component> get() = _children.toList()
-    
+
     /**
      * The view this component belongs to.
      */
-    lateinit var view: GuiView
+    var view: GuiView? = null
         internal set(value) {
             field = value
             // Propagate view to existing children
             _children.forEach { child ->
-                if (!child::view.isInitialized) {
-                    child.view = value
-                }
+                child.view = value
             }
         }
-    
+
     /**
      * Update interval for this component, if any.
      */
     open val updateInterval: Duration? = null
-    
+
     /**
      * Props accessible by this component.
      * Children can access parent props.
      */
     protected open val props: Map<String, Prop<*>> = emptyMap()
-    
+
     /**
      * Ref attached to this component, if any.
      */
     internal var attachedRef: Ref<Component>? = null
-    
+
     /**
      * Called when the component is updated.
      */
     open fun onUpdate(context: LifecycleContext) {}
-    
+
     /**
      * Called when the component is clicked.
      */
     open fun onClick(context: ClickContext) {}
-    
+
     /**
      * Renders the component to a GuiItem.
      * For container components, return null.
      */
     open fun render(context: ViewContext): GuiItem? = null
-    
+
     /**
      * For container components, render multiple items at specific slots.
      * Returns a map of Slot to GuiItem.
      */
     open fun renderSlots(context: ViewContext): Map<Slot, GuiItem> = emptyMap()
-    
+
     /**
      * Add a child component.
      */
     fun addChild(child: Component) {
         child.parent = this
-        // Only set view if parent's view is already initialized
-        if (::view.isInitialized) {
-            child.view = view
-        }
+        child.view = view
+
         _children.add(child)
     }
-    
+
     /**
      * Remove a child component.
      */
@@ -131,7 +127,7 @@ abstract class Component {
         _children.remove(child)
         child.parent = null
     }
-    
+
     /**
      * Get all props including parent props.
      */
@@ -141,14 +137,14 @@ abstract class Component {
         allProps.putAll(props)
         return allProps
     }
-    
+
     /**
      * Trigger an update of this component.
      */
     fun update() {
-        view.updateComponent(this)
+        view?.updateComponent(this)
     }
-    
+
     /**
      * Trigger an update of this component and all children.
      */
