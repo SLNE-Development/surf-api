@@ -12,6 +12,7 @@ import io.papermc.paper.math.FinePosition
 import io.papermc.paper.math.Position
 import net.minecraft.advancements.AdvancementType
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Holder
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
@@ -128,6 +129,9 @@ val craftServer: CraftServer get() = server.toCraft()
 val commodore: Commodore get() = CraftMagicNumbers.INSTANCE.commodore
 
 fun EntityType.toNms(): net.minecraft.world.entity.EntityType<*> = CraftEntityType.bukkitToMinecraft(this)
+fun EntityType.toNmsHolder() =
+    CraftEntityType.bukkitToMinecraftHolder(this) as Holder.Reference<net.minecraft.world.entity.EntityType<*>>
+
 fun World.toNms(): ServerLevel = (this as CraftWorld).handle
 fun Entity.toNms(): net.minecraft.world.entity.Entity = (this as CraftEntity).handle
 fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity = (this as CraftLivingEntity).handle

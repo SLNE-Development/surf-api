@@ -10,6 +10,7 @@ import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import io.papermc.paper.math.BlockPosition
+import io.papermc.paper.math.Position
 import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -114,6 +115,16 @@ infix fun Location.distanceSqt(other: Location): Double = distanceSquared(other)
  * Gets the chunk X coordinate of this location.
  */
 val Location.chunkX get() = blockX shr 4
+
+/**
+ * Gets the chunk X coordinate of this position.
+ */
+val Position.chunkX get() = blockX() shr 4
+
+/**
+ * Gets the chunk Z coordinate of this position.
+ */
+val Position.chunkZ get() = blockZ() shr 4
 
 /**
  * Gets the chunk Z coordinate of this location.
