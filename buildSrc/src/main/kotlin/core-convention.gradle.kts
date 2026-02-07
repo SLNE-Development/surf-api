@@ -70,6 +70,9 @@ tasks {
     shadowJar {
         mergeServiceFiles()
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        val relocationPrefix: String by project
+        relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt")
     }
 
     javadoc {

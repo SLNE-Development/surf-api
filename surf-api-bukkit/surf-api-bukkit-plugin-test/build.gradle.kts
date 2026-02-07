@@ -50,7 +50,7 @@ tasks {
         minecraftVersion(findProperty("mcVersion") as String)
 
         downloadPlugins {
-//            hangar("CommandAPI", libs.versions.commandapi.get()) TODO: update to 1.21.11 when released
+            hangar("CommandAPI", libs.versions.commandapi.get())
             modrinth("packetevents", libs.versions.packetevents.plugin.get() + "+spigot")
         }
     }
