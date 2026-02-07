@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.core.api.config.manager
 import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.serializer.DefaultDazzlConfSerializers
 import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import space.arim.dazzleconf.ConfigurationOptions
 import space.arim.dazzleconf.error.ConfigFormatSyntaxException
 import space.arim.dazzleconf.error.InvalidConfigException
@@ -16,12 +17,19 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 @RequiresOptIn(
-    level = RequiresOptIn.Level.WARNING,
-    message = "Prefer using Sponge's Configurate library over DazzlConf"
+    level = RequiresOptIn.Level.ERROR,
+    message = DazzlConfDeprecationMessageHolder.MESSAGE
 )
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class PreferUsingSpongeConfigOverDazzlConf
+annotation class PreferUsingSpongeConfigOverDazzlConf {
+}
+
+@InternalSurfApi
+object DazzlConfDeprecationMessageHolder {
+    const val MESSAGE =
+        "Prefer using Sponge's Configurate library over DazzlConf. DazzlConf will be removed in a future release. If you need to use DazzlConf, please contact the developers to discuss your use case."
+}
 
 /**
  * Manages configurations using the DazzlConf library, including loading, saving, and reloading configurations.
@@ -31,6 +39,7 @@ annotation class PreferUsingSpongeConfigOverDazzlConf
  * @property config The current configuration instance, or `null` if not yet loaded.
  */
 @PreferUsingSpongeConfigOverDazzlConf
+@Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
 class DazzlConfConfigManager<C> private constructor(private val helper: ConfigurationHelper<C>) {
     @Volatile
     var config: C? = null
@@ -102,6 +111,7 @@ class DazzlConfConfigManager<C> private constructor(private val helper: Configur
          * @return A new instance of [DazzlConfConfigManager].
          */
         @JvmStatic
+        @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
         fun <C> create(
             configClass: Class<C>,
             configFolder: Path,

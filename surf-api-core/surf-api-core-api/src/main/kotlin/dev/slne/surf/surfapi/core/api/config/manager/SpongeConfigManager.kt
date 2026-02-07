@@ -4,7 +4,6 @@ import dev.slne.surf.surfapi.core.api.config.JsonConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.serializer.SpongeConfigSerializers
 import dev.slne.surf.surfapi.core.api.util.logger
-import org.jetbrains.annotations.Contract
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.ScopedConfigurationNode
@@ -15,6 +14,7 @@ import org.spongepowered.configurate.serialize.SerializationException
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.Serial
+import java.io.UncheckedIOException
 import java.nio.file.Path
 
 /**
@@ -24,7 +24,7 @@ import java.nio.file.Path
  * @param C The type of the configuration class.
  * @property config The current configuration instance.
  */
-class SpongeConfigManager<C> @Contract(pure = true) private constructor(
+class SpongeConfigManager<C> private constructor(
     private val configClass: Class<C>,
     @JvmField @field:Volatile var config: C,
     private val loader: ConfigurationLoader<out ConfigurationNode>,
@@ -34,8 +34,9 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
     /**
      * Saves the current configuration to the file.
      *
-     * @throws RuntimeException if an I/O error or serialization error occurs.
+     * @throws UncheckedIOException if an I/O error or serialization error occurs.
      */
+    @Throws(UncheckedIOException::class)
     fun save() {
         try {
             node.set(configClass, config)
@@ -44,7 +45,7 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
             log.atSevere()
                 .withCause(e)
                 .log("Failed to save config")
-            throw RuntimeException(e)
+            throw UncheckedIOException(e)
         }
     }
 
@@ -52,7 +53,7 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
      * Reloads the configuration from the file. If loading fails, the current configuration remains unchanged.
      *
      * @return The reloaded configuration instance.
-     * @throws RuntimeException if a critical error occurs during reload.
+     * @throws UncheckedIOException if an I/O error occurs during reload.
      */
     fun reloadFromFile(): C {
         try {
@@ -74,7 +75,7 @@ class SpongeConfigManager<C> @Contract(pure = true) private constructor(
             log.atSevere()
                 .withCause(e)
                 .log("Failed to reload config")
-            throw RuntimeException(e)
+            throw UncheckedIOException(e)
         }
     }
 
