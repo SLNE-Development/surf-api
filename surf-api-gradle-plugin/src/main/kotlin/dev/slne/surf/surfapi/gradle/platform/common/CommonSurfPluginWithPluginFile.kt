@@ -30,27 +30,28 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
             val createdPluginFile = createPluginFile(this)
             extensions.add("${platformName}PluginFile", createdPluginFile)
 
-            val generateTask = tasks.register<GeneratePluginFile>("generate${platformName.uppercaseFirstChar()}PluginFile") {
-                group = "surf-api"
+            val generateTask =
+                tasks.register<GeneratePluginFile>("generate${platformName.uppercaseFirstChar()}PluginFile") {
+                    group = "surf-api"
 
-                fileName.set(pluginFileName)
-                outputDirectory.set(generatedResourcesDirectory)
-                pluginFile.set(provider {
-                    createdPluginFile.setDefaults(target)
-                    createdPluginFile
-                })
+                    fileName.set(pluginFileName)
 
-                doFirst {
-                    if (createdPluginFile.isApplied()) {
-                        createdPluginFile.validate()
-                    } else {
-                        logger.warn(
-                            "Plugin file generation is skipped because the plugin file is not applied. " +
-                                    "Please check if the plugin file is applied in the build.gradle.kts file."
-                        )
-                    }
+                    outputFile.set(generatedResourcesDirectory.map { it.file(pluginFileName) })
+                    pluginFileJson.set(provider {
+                        createdPluginFile.setDefaults(target)
+
+                        if (createdPluginFile.isApplied()) {
+                            createdPluginFile.validate()
+                            GeneratePluginFile.json.encodeToString<CommonPluginFile>(createdPluginFile)
+                        } else {
+                            logger.warn(
+                                "Plugin file generation is skipped because the plugin file is not applied. " +
+                                        "Please check if the plugin file is applied in the build.gradle.kts file."
+                            )
+                            ""
+                        }
+                    })
                 }
-            }
 
             plugins.withType<JavaPlugin> {
                 extensions.getByType<SourceSetContainer>().named(SourceSet.MAIN_SOURCE_SET_NAME) {
