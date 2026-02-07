@@ -6,7 +6,7 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.translation.GlobalTranslator
-import net.kyori.adventure.translation.TranslationRegistry
+import net.kyori.adventure.translation.TranslationStore
 import net.kyori.adventure.util.UTF8ResourceBundleControl
 import org.jetbrains.annotations.NonNls
 import java.net.URLClassLoader
@@ -149,19 +149,19 @@ class SurfMessageBundle @JvmOverloads constructor(
         baseName: String,
         bundles: List<ResourceBundle>,
     ) {
-        val registry = TranslationRegistry.create(
+        val store = TranslationStore.messageFormat(
             Key.key(
                 "surf",
                 "bundle-${baseName.substringAfterLast('.').lowercase()}"
             )
         )
 
-        registry.defaultLocale(Locale.getDefault())
+        store.defaultLocale(Locale.getDefault())
         for (bundle in bundles) {
-            registry.registerAll(bundle.locale, bundle, true)
+            store.registerAll(bundle.locale, bundle, true)
         }
 
-        GlobalTranslator.translator().addSource(registry)
+        GlobalTranslator.translator().addSource(store)
     }
 
     /**
@@ -287,7 +287,6 @@ class SurfMessageBundle @JvmOverloads constructor(
                         baseName,
                         it,
                         classLoader,
-                        UTF8ResourceBundleControl.get()
                     )
                 }.getOrNull()
             }.toCollection(mutableObjectListOf())
