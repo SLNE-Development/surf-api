@@ -5,10 +5,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.register
 import java.io.IOException
 import java.io.InputStreamReader
@@ -19,6 +16,7 @@ import kotlin.reflect.typeOf
 
 const val PaperLibraryLoaderClassName = "PaperLibraryLoader"
 
+@CacheableTask
 abstract class GenerateLibrariesLoaderTask : DefaultTask() {
     @get:Input
     abstract val packageName: Property<String>
@@ -28,6 +26,7 @@ abstract class GenerateLibrariesLoaderTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
+        project.delete(outputDirectory)
         val loader = LibrariesLoaderGenerator.generate(packageName.get())
         loader.writeTo(outputDirectory.get().asFile)
     }
