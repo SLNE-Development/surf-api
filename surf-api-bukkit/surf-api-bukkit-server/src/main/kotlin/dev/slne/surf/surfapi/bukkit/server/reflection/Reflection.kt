@@ -12,6 +12,8 @@ object Reflection {
     val ENTITY_PROXY: EntityProxy
     val SERVER_CONNECTION_LISTENER_PROXY: ServerConnectionListenerProxy
     val JAVA_PLUGIN_PROXY: JavaPluginProxy
+    val VANILLA_ARGUMENT_PROVIDER_IMPL_PROXY: VanillaArgumentProviderImplProxy
+    val VANILLA_ARGUMENT_PROVIDER_PROXY: VanillaArgumentProviderProxy
 
     init {
         val remapper = ReflectionRemapper.forReobfMappingsInPaperJar()
@@ -23,6 +25,8 @@ object Reflection {
         ENTITY_PROXY = proxyFactory.reflectionProxy<EntityProxy>()
         SERVER_CONNECTION_LISTENER_PROXY = proxyFactory.reflectionProxy<ServerConnectionListenerProxy>()
         JAVA_PLUGIN_PROXY = surfReflection.createProxy<JavaPluginProxy>()
+        VANILLA_ARGUMENT_PROVIDER_IMPL_PROXY = surfReflection.createProxy<VanillaArgumentProviderImplProxy>()
+        VANILLA_ARGUMENT_PROVIDER_PROXY = surfReflection.createProxy<VanillaArgumentProviderProxy>()
 
         // gc the remapper
         System.gc()

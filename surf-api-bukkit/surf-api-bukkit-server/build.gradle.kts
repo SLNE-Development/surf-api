@@ -100,7 +100,6 @@ tasks {
     shadowJar {
         val relocationPrefix: String by project
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
-        relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt")
     }
 }
 

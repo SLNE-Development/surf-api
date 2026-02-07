@@ -8,6 +8,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     `publish-convention`
+    `java-toolchain-convention`
 }
 
 group = groupId

@@ -11,6 +11,7 @@ val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 plugins {
     `java-library`
     `kotlin-dsl`
+    `java-toolchain-convention`
 
     id("com.gradle.plugin-publish") version "1.3.1"
     kotlin("plugin.serialization")
