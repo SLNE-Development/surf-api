@@ -27,15 +27,13 @@ class SurfBukkitNmsCommandArgumentTypesBridgeImpl : SurfBukkitNmsCommandArgument
         checkInstantiationByServiceLoader()
     }
 
-    override fun compoundTag(): ArgumentType<CompoundBinaryTag> {
-        return wrap(CompoundTagArgument.compoundTag()) {
-            AdventureNBT.fromNms(it)
-        }
+    override fun compoundTag(): ArgumentType<*> {
+        return CompoundTagArgument.compoundTag()
     }
 
-    override fun <Source> getCompoundTag(ctx: CommandContext<Source>, key: String): CompoundBinaryTag {
-        val nms = ctx.getArgument(key, CompoundBinaryTag::class.java)
-        return nms
+    override fun getCompoundTag(ctx: CommandContext<*>, key: String): CompoundBinaryTag {
+        val nms = CompoundTagArgument.getCompoundTag(ctx, key)
+        return AdventureNBT.fromNms(nms)
     }
 
     private fun <B : Any, C : Any> wrap(
