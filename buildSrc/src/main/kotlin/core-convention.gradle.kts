@@ -2,11 +2,13 @@ import org.gradle.accessors.dm.LibrariesForLibs
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 val libs = the<LibrariesForLibs>()
+val javaVersion: String by project
 
 plugins {
     java
     `java-library`
     id("publish-convention")
+    id("java-toolchain-convention")
 
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -40,9 +42,6 @@ ksp {
 }
 
 extensions.configure<KotlinJvmProjectExtension> {
-    val javaVersion: String by project
-
-    jvmToolchain(javaVersion.toInt())
     compilerOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
     }

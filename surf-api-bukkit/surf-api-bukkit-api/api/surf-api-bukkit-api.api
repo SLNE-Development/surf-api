@@ -59,6 +59,23 @@ public final class dev/slne/surf/surfapi/bukkit/api/collections/LazyIntList {
 	public final fun set (II)V
 }
 
+public final class dev/slne/surf/surfapi/bukkit/api/command/args/AdventureCompoundBinaryTagArgument : dev/jorel/commandapi/arguments/SafeOverrideableArgument {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getArgumentType ()Ldev/jorel/commandapi/arguments/CommandAPIArgumentType;
+	public fun getPrimitiveType ()Ljava/lang/Class;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/command/args/AdventureCompoundBinaryTagArgumentKt {
+	public static final fun adventureCompoundBinaryTagArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static final fun adventureCompoundBinaryTagArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
+	public static final fun adventureCompoundBinaryTagArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
+	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
+	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
+}
+
 public class dev/slne/surf/surfapi/bukkit/api/command/args/MiniMessageArgument : dev/jorel/commandapi/arguments/CustomArgument {
 	public fun <init> (Ljava/lang/String;)V
 }
@@ -770,6 +787,22 @@ public final class dev/slne/surf/surfapi/bukkit/api/nms/SurfBukkitNmsBridgeKt {
 	public static final fun getNmsBridge ()Ldev/slne/surf/surfapi/bukkit/api/nms/SurfBukkitNmsBridge;
 }
 
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommandArgumentTypesBridge {
+	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommandArgumentTypesBridge$Companion;
+	public abstract fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
+	public abstract fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommandArgumentTypesBridge$Companion : dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommandArgumentTypesBridge {
+	public fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
+	public fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public final fun getInstance ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommandArgumentTypesBridge;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommandArgumentTypesBridgeKt {
+	public static final fun getCommandArgumentTypes ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommandArgumentTypesBridge;
+}
+
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridge {
 	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridge$Companion;
 	public abstract fun addCompostable (Lorg/bukkit/Material;F)V
@@ -799,6 +832,20 @@ public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCom
 
 public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridgeKt {
 	public static final fun getNmsCommonBridge ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsCommonBridge;
+}
+
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsEntityBridge {
+	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsEntityBridge$Companion;
+	public abstract fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsEntityBridge$Companion : dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsEntityBridge {
+	public fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
+	public final fun getInstance ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsEntityBridge;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsEntityBridgeKt {
+	public static final fun getEntityBridge ()Ldev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsEntityBridge;
 }
 
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/bridges/SurfBukkitNmsGlowingBridge {
@@ -1490,7 +1537,9 @@ public final class dev/slne/surf/surfapi/bukkit/api/util/UtilBukkit {
 	public static final fun getCallingPlugin (I)Lorg/bukkit/plugin/java/JavaPlugin;
 	public static synthetic fun getCallingPlugin$default (IILjava/lang/Object;)Lorg/bukkit/plugin/java/JavaPlugin;
 	public static final fun getChunkKey (Lorg/bukkit/Location;)J
+	public static final fun getChunkX (Lio/papermc/paper/math/Position;)I
 	public static final fun getChunkX (Lorg/bukkit/Location;)I
+	public static final fun getChunkZ (Lio/papermc/paper/math/Position;)I
 	public static final fun getChunkZ (Lorg/bukkit/Location;)I
 	public static final fun getHighestBlockYAtBlockCoordinates (Lorg/bukkit/ChunkSnapshot;II)I
 	public static final fun getXFromChunkKey (J)I
