@@ -112,6 +112,8 @@ class DazzlConfConfigManager<C> private constructor(private val helper: Configur
          */
         @JvmStatic
         @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
+        @PreferUsingSpongeConfigOverDazzlConf
+        @Suppress("DEPRECATION_ERROR")
         fun <C> create(
             configClass: Class<C>,
             configFolder: Path,

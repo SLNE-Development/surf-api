@@ -161,6 +161,7 @@ val surfConfigApi = requiredService<SurfConfigApi>()
  */
 @PreferUsingSpongeConfigOverDazzlConf
 @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
+@Suppress("DEPRECATION_ERROR")
 inline fun <reified C> SurfConfigApi.createDazzlConfig(
     configFolder: Path,
     configFileName: @YamlConfigFileNamePattern String,
@@ -174,6 +175,7 @@ inline fun <reified C> SurfConfigApi.createDazzlConfig(
  */
 @PreferUsingSpongeConfigOverDazzlConf
 @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
+@Suppress("DEPRECATION_ERROR")
 inline fun <reified C> SurfConfigApi.getDazzlConfig() = getDazzlConfig(C::class.java)
 
 /**
@@ -184,6 +186,7 @@ inline fun <reified C> SurfConfigApi.getDazzlConfig() = getDazzlConfig(C::class.
  */
 @PreferUsingSpongeConfigOverDazzlConf
 @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
+@Suppress("DEPRECATION_ERROR")
 inline fun <reified C> SurfConfigApi.reloadDazzlConfig() = reloadDazzlConfig(C::class.java)
 
 /**
