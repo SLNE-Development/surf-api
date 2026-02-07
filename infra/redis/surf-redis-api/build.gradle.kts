@@ -23,7 +23,7 @@ kotlin {
 }
 
 dependencies {
-    api("org.redisson:redisson:4.1.0") {
+    api("org.redisson:redisson:4.2.0") {
         exclude("org.slf4j")
         exclude("org.reactivestreams")
         exclude("io.projectreactor", "reactor-core")
