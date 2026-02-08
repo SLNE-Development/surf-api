@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.gradle.platform.common
 import dev.slne.surf.surfapi.gradle.generators.GeneratePluginFile
 import dev.slne.surf.surfapi.gradle.generators.pluginfiles.CommonPluginFile
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
+import kotlinx.serialization.SerializationStrategy
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSet
@@ -12,13 +13,16 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.gradle.kotlin.dsl.withType
 
-abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : CommonPluginFile>(
+abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : CommonPluginFile, D>(
     platformName: String,
     platform: SurfApiPlatform,
     private val pluginFileName: String,
 ) : CommonSurfPlugin<E>(platformName, platform) {
 
+    protected abstract val dtoSerializer: SerializationStrategy<D>
+
     protected abstract fun createPluginFile(project: Project): F
+    protected abstract fun createPluginFileDto(pluginFile: F): D
 
     override fun apply(target: Project) {
         super.apply(target)
@@ -35,14 +39,12 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
                     group = "surf-api"
 
                     fileName.set(pluginFileName)
-
                     outputFile.set(generatedResourcesDirectory.map { it.file(pluginFileName) })
                     pluginFileJson.set(provider {
-                        createdPluginFile.setDefaults(target)
-
                         if (createdPluginFile.isApplied()) {
                             createdPluginFile.validate()
-                            GeneratePluginFile.json.encodeToString<CommonPluginFile>(createdPluginFile)
+                            val dto = createPluginFileDto(createdPluginFile)
+                            GeneratePluginFile.json.encodeToString(dtoSerializer, dto)
                         } else {
                             logger.warn(
                                 "Plugin file generation is skipped because the plugin file is not applied. " +
