@@ -7,6 +7,7 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPARATOR
+import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPERATOR
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendNewline
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.clickOpensUrl
@@ -19,9 +20,9 @@ import net.kyori.adventure.text.format.TextColor
 import kotlin.time.Duration
 
 /**
- * Builds a [TextComponent] using the provided [block] to configure the component.
+ * Builds a [TextComponent] using the provided configuration block.
  *
- * @param block The configuration block for the text component.
+ * @param block Configuration block for the text component builder.
  * @return A built [TextComponent] instance.
  */
 @PublishedApi
@@ -29,10 +30,13 @@ internal inline fun buildText0(block: TextComponent.Builder.() -> Unit): TextCom
     return Component.text().apply(block).build()
 }
 
+/**
+ * Provides common text components and formatting utilities for messages.
+ */
 object CommonComponents {
 
     /**
-     * An ellipsis (`...`).
+     * An ellipsis component (`...`).
      */
     @JvmField
     val ELLIPSIS = text("...")
@@ -52,20 +56,19 @@ object CommonComponents {
     val MAP_SEPERATOR = MAP_SEPARATOR
 
     /**
-     * A separator (`:`) used to visually format time-related messages.
+     * A separator component (` : `) used to visually format time-related messages.
      */
     @JvmField
     val TIME_SEPARATOR = text(" : ", SPACER)
 
+    /**
+     * An em dash component (`—`) used as a visual separator.
+     */
+    @JvmField
     val EM_DASH = text("—", SPACER)
 
     /**
      * A clickable Discord link component (`discord.gg/castcrafter`).
-     *
-     * **Output Example:**
-     * ```
-     * discord.gg/castcrafter  (clickable)
-     * ```
      */
     @JvmField
     val DISCORD_LINK = buildText0 {
@@ -75,12 +78,14 @@ object CommonComponents {
     }
 
     /**
-     * The standard header for disconnection messages.
+     * The standard header for disconnection messages displaying the server name.
      *
-     * **Output Example:**
+     * **Output:**
      * ```
      * CASTCRAFTER
      * COMMUNITY SERVER
+     * <empty>
+     * <empty>
      * ```
      */
     @JvmField
@@ -94,10 +99,10 @@ object CommonComponents {
     /**
      * A footer message indicating the user should try again later.
      *
-     * **Output Example:**
+     * **Output:**
      * ```
-     * \
-     * \
+     * <empty>
+     * <empty>
      * Bitte versuche es später erneut.
      * ```
      */
@@ -108,17 +113,17 @@ object CommonComponents {
     }
 
     /**
-     * A footer message indicating the user should try again later and seek support if the issue persists.
+     * A footer message indicating the user should try again later and contact support if the issue persists.
      *
-     * **Output Example:**
+     * **Output:**
      * ```
-     * \
-     * \
+     * <empty>
+     * <empty>
      * Bitte versuche es später erneut.
      * Sollte das Problem weiterhin bestehen,
      * kontaktiere den Support in unserem Discord.
-     * \
-     * \
+     * <empty>
+     * <empty>
      * discord.gg/castcrafter (clickable)
      * ```
      */
@@ -134,26 +139,27 @@ object CommonComponents {
     }
 
     /**
-     * Renders a structured message for when a player is kicked from the server.
+     * Renders a structured kick message with custom content and footer.
      *
-     * @param messageRenderer A block to render the main message.
-     * @param footerRenderer A block to render the footer message.
-     * @return The formatted disconnect message.
+     * @param messageRenderer Block to render the main message content.
+     * @param footerRenderer Block to render the footer content.
+     * @return The formatted disconnect message component.
      *
      * **Output Example:**
      * ```
      * CASTCRAFTER
      * COMMUNITY SERVER
-     *
+     * <empty>
+     * <empty>
      * DU WURDEST VOM SERVER GEWORFEN
-     * \
-     * \
-     * \
-     * [Custom message]
-     * \
-     * \
-     * \
-     * [Footer message]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Custom message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Footer content]
      * ```
      */
     inline fun renderKickDisconnectMessage(
@@ -162,27 +168,29 @@ object CommonComponents {
     ) = renderKickDisconnectMessage(Component.text(), messageRenderer, footerRenderer)
 
     /**
-     * Renders a structured message for when a player is kicked from the server.
+     * Renders a structured kick message with custom content and footer using a provided builder.
      *
-     * @param builder The builder to use for the message.
-     * @param messageRenderer A block to render the main message.
-     * @param footerRenderer A block to render the footer message.
-     * @return The formatted disconnect message.
+     * @param B The type of builder.
+     * @param builder The builder to use for constructing the message.
+     * @param messageRenderer Block to render the main message content.
+     * @param footerRenderer Block to render the footer content.
+     * @return The formatted disconnect message component.
      *
      * **Output Example:**
      * ```
      * CASTCRAFTER
      * COMMUNITY SERVER
-     *
+     * <empty>
+     * <empty>
      * DU WURDEST VOM SERVER GEWORFEN
-     * \
-     * \
-     * \
-     * [Custom message]
-     * \
-     * \
-     * \
-     * [Footer message]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Custom message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Footer content]
      * ```
      */
     inline fun <B : TextComponent.Builder> renderKickDisconnectMessage(
@@ -203,11 +211,54 @@ object CommonComponents {
     }
 
     /**
-     * Renders a structured message for when a player is kicked from the server.
+     * Renders a structured kick message with an automatic issue or retry footer.
      *
-     * @param messageRenderer A block to render the main message.
-     * @param issue Whether the message should include an issue-related footer.
-     * @return The formatted disconnect message.
+     * @param messageRenderer Block to render the main message content.
+     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
+     * @return The formatted disconnect message component.
+     *
+     * **Output Example (issue = true):**
+     * ```
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <empty>
+     * DU WURDEST VOM SERVER GEWORFEN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Custom message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * Bitte versuche es später erneut.
+     * Sollte das Problem weiterhin bestehen,
+     * kontaktiere den Support in unserem Discord.
+     * <empty>
+     * <empty>
+     * discord.gg/castcrafter (clickable)
+     * ```
+     *
+     * **Output Example (issue = false):**
+     * ```
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <empty>
+     * DU WURDEST VOM SERVER GEWORFEN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Custom message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * Bitte versuche es später erneut.
+     * ```
      */
     inline fun renderKickDisconnectMessage(
         messageRenderer: TextComponent.Builder.() -> Unit,
@@ -215,12 +266,56 @@ object CommonComponents {
     ) = renderKickDisconnectMessage(Component.text(), messageRenderer, issue)
 
     /**
-     * Renders a structured message for when a player is kicked from the server.
+     * Renders a structured kick message with an automatic issue or retry footer using a provided builder.
      *
-     * @param builder The builder to use for the message.
-     * @param messageRenderer A block to render the main message.
-     * @param issue Whether the message should include an issue-related footer.
-     * @return The formatted disconnect message.
+     * @param B The type of builder.
+     * @param builder The builder to use for constructing the message.
+     * @param messageRenderer Block to render the main message content.
+     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
+     * @return The formatted disconnect message component.
+     *
+     * **Output Example (issue = true):**
+     * ```
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <empty>
+     * DU WURDEST VOM SERVER GEWORFEN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Custom message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * Bitte versuche es später erneut.
+     * Sollte das Problem weiterhin bestehen,
+     * kontaktiere den Support in unserem Discord.
+     * <empty>
+     * <empty>
+     * discord.gg/castcrafter (clickable)
+     * ```
+     *
+     * **Output Example (issue = false):**
+     * ```
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <empty>
+     * DU WURDEST VOM SERVER GEWORFEN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Custom message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * Bitte versuche es später erneut.
+     * ```
      */
     inline fun <B : TextComponent.Builder> renderKickDisconnectMessage(
         builder: B,
@@ -232,27 +327,28 @@ object CommonComponents {
     }
 
     /**
-     * Renders a structured message for when a player is disconnected from the server.
+     * Renders a structured disconnection message with a specific reason and help suggestion.
      *
-     * @param disconnectReason The reason for the disconnection.
-     * @param suggestHelp A block to render the help message.
-     * @param footerRenderer A block to render the footer message.
-     * @return The formatted disconnect message.
+     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
+     * @param suggestHelp Block to render the help message content.
+     * @param footerRenderer Block to render the footer content.
+     * @return The formatted disconnect message component.
      *
      * **Output Example:**
      * ```
      * CASTCRAFTER
      * COMMUNITY SERVER
-     *
-     * DU WURDEST VOM SERVER GEWORFEN
-     * \
-     * \
-     * \
-     * [Help message]
-     * \
-     * \
-     * \
-     * [Footer message]
+     * <empty>
+     * <empty>
+     * VERBINDUNG VERLOREN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Help message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Footer content]
      * ```
      */
     inline fun renderDisconnectMessage(
@@ -262,28 +358,30 @@ object CommonComponents {
     ) = renderDisconnectMessage(Component.text(), disconnectReason, suggestHelp, footerRenderer)
 
     /**
-     * Renders a structured message for when a player is disconnected from the server.
+     * Renders a structured disconnection message with a specific reason and help suggestion using a provided builder.
      *
-     * @param builder The builder to use for the message.
-     * @param disconnectReason The reason for the disconnection.
-     * @param suggestHelp A block to render the help message.
-     * @param footerRenderer A block to render the footer message.
-     * @return The formatted disconnect message.
+     * @param B The type of builder.
+     * @param builder The builder to use for constructing the message.
+     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
+     * @param suggestHelp Block to render the help message content.
+     * @param footerRenderer Block to render the footer content.
+     * @return The formatted disconnect message component.
      *
      * **Output Example:**
      * ```
      * CASTCRAFTER
      * COMMUNITY SERVER
-     *
-     * DU WURDEST VOM SERVER GEWORFEN
-     * \
-     * \
-     * \
-     * [Help message]
-     * \
-     * \
-     * \
-     * [Footer message]
+     * <empty>
+     * <empty>
+     * VERBINDUNG VERLOREN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Help message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Footer content]
      * ```
      */
     inline fun <B : TextComponent.Builder> renderDisconnectMessage(
@@ -305,12 +403,31 @@ object CommonComponents {
     }
 
     /**
-     * Renders a structured message for when a player is disconnected from the server.
+     * Renders a structured disconnection message with an automatic issue or retry footer.
      *
-     * @param disconnectReason The reason for the disconnection.
-     * @param suggestHelp A block to render the help message.
-     * @param issue Whether the message should include an issue-related footer.
-     * @return The formatted disconnect message.
+     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
+     * @param suggestHelp Block to render the help message content.
+     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
+     * @return The formatted disconnect message component.
+     *
+     * **Output Example (issue = false):**
+     * ```
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <empty>
+     * VERBINDUNG VERLOREN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Help message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * Bitte versuche es später erneut.
+     * ```
      */
     inline fun renderDisconnectMessage(
         disconnectReason: @NoLowercase String,
@@ -319,13 +436,33 @@ object CommonComponents {
     ) = renderDisconnectMessage(Component.text(), disconnectReason, suggestHelp, issue)
 
     /**
-     * Renders a structured message for when a player is disconnected from the server.
+     * Renders a structured disconnection message with an automatic issue or retry footer using a provided builder.
      *
-     * @param builder The builder to use for the message.
-     * @param disconnectReason The reason for the disconnection.
-     * @param suggestHelp A block to render the help message.
-     * @param issue Whether the message should include an issue-related footer.
-     * @return The formatted disconnect message.
+     * @param B The type of builder.
+     * @param builder The builder to use for constructing the message.
+     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
+     * @param suggestHelp Block to render the help message content.
+     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
+     * @return The formatted disconnect message component.
+     *
+     * **Output Example (issue = false):**
+     * ```
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <empty>
+     * VERBINDUNG VERLOREN
+     * <empty>
+     * <empty>
+     * <empty>
+     * [Help message content]
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * <empty>
+     * Bitte versuche es später erneut.
+     * ```
      */
     inline fun <B : TextComponent.Builder> renderDisconnectMessage(
         builder: B,
@@ -338,19 +475,20 @@ object CommonComponents {
     }
 
     /**
-     * Formats a collection into a comma-separated list.
+     * Formats a collection into a comma-separated list component.
      *
+     * @param E The element type.
      * @param collection The collection to format.
-     * @param formatter A function to format each element.
-     * @return A [Component] representing the formatted collection.
+     * @param formatter Function to convert each element to a component.
+     * @return A component representing the formatted collection.
      *
-     * **Example Usage:**
+     * **Example:**
      * ```kotlin
-     * val list = listOf("Apple", "Banana", "Cherry")
-     * val formatted = formatCollection(list) { text(it) }
+     * val fruits = listOf("Apple", "Banana", "Cherry")
+     * val formatted = formatCollection(fruits) { text(it) }
      * ```
      *
-     * **Output Example:**
+     * **Output:**
      * ```
      * Apple, Banana, Cherry
      * ```
@@ -365,21 +503,23 @@ object CommonComponents {
     }
 
     /**
-     * Formats a collection into a structured text representation with each element on a new line.
+     * Formats a collection into a structured list with each element on a new line, prefixed with an em dash.
      *
+     * @param E The element type.
      * @param collection The collection to format.
-     * @param linePrefix The prefix for each line.
-     * @param formatter A function to format each element.
-     * @return A [Component] representing the formatted collection.
+     * @param linePrefix The prefix component for each line.
+     * @param formatter Function to convert each element to a component.
+     * @return A component representing the formatted collection.
      *
-     * **Example Usage:**
+     * **Example:**
      * ```kotlin
-     * val list = listOf("Apple", "Banana", "Cherry")
-     * val formatted = formatCollectionNewLine(list, PREFIX) { text(it) }
+     * val fruits = listOf("Apple", "Banana", "Cherry")
+     * val formatted = formatCollectionNewLine(fruits, PREFIX) { text(it) }
      * ```
      *
-     * **Output Example:**
+     * **Output:**
      * ```
+     * <empty>
      * >> Surf | — Apple
      * >> Surf | — Banana
      * >> Surf | — Cherry
@@ -407,23 +547,26 @@ object CommonComponents {
     }
 
     /**
-     * Formats a map into a structured text representation.
+     * Formats a map into a structured list with each entry on a new line showing key-value pairs.
      *
+     * @param K The key type.
+     * @param V The value type.
      * @param map The map to format.
-     * @param keyFormatter A function to format the keys.
-     * @param valueFormatter A function to format the values.
-     * @param linePrefix The prefix for each line.
-     * @param keyValueSeparator The separator between keys and values.
-     * @return A formatted [Component].
+     * @param keyFormatter Function to convert each key to a component.
+     * @param valueFormatter Function to convert each value to a component.
+     * @param linePrefix The prefix component for each line.
+     * @param keyValueSeparator The separator component between keys and values.
+     * @return A component representing the formatted map.
      *
-     * **Example Usage:**
+     * **Example:**
      * ```kotlin
-     * val data = mapOf("Name" to "Alice", "Age" to "25")
-     * val formatted = formatMap(data, { text(it) }, { text(it) }, PREFIX, MAP_KEY_VALUE_SEPARATOR)
+     * val userData = mapOf("Name" to "Alice", "Age" to "25")
+     * val formatted = formatMap(userData, { text(it) }, { text(it) }, PREFIX, MAP_SEPERATOR)
      * ```
      *
-     * **Output Example:**
+     * **Output:**
      * ```
+     * <empty>
      * >> Surf | — Name -> Alice
      * >> Surf | — Age -> 25
      * ```
@@ -433,7 +576,7 @@ object CommonComponents {
         keyFormatter: (K) -> Component,
         valueFormatter: (V) -> Component,
         linePrefix: Component = PREFIX,
-        keyValueSeparator: Component = MAP_SEPARATOR,
+        keyValueSeparator: Component = MAP_SEPERATOR,
     ): Component {
         val separator = buildText0 {
             appendNewline()
@@ -462,10 +605,32 @@ object CommonComponents {
      *
      * @param time The duration to format.
      * @param showSeconds Whether to include seconds in the output.
-     * @param shortForms Whether to use short forms for time units (e.g., "d" instead of "Tag").
+     * @param shortForms Whether to use short forms for time units (e.g., "d" instead of "Tage").
      * @param separator The separator component between time units.
      * @param timeColor The color for the time values.
      * @return A component representing the formatted time.
+     *
+     * **Example (short forms):**
+     * ```kotlin
+     * val duration = Duration.parse("P123DT6H7M8S") // 123 days, 6 hours, 7 minutes, 8 seconds
+     * val formatted = formatTime(duration, showSeconds = true, shortForms = true)
+     * ```
+     *
+     * **Output:**
+     * ```
+     * 123d : 6h : 7m : 8s
+     * ```
+     *
+     * **Example (long forms):**
+     * ```kotlin
+     * val duration = Duration.parse("P45DT6H7M")
+     * val formatted = formatTime(duration, showSeconds = false, shortForms = false)
+     * ```
+     *
+     * **Output:**
+     * ```
+     * 45 Tage : 6 Stunden : 7 Minuten
+     * ```
      */
     fun formatTime(
         time: Duration,
@@ -475,9 +640,14 @@ object CommonComponents {
         timeColor: TextColor = VARIABLE_VALUE,
     ): Component {
         data class Formatter(val shortForms: Boolean, val timeColor: TextColor) {
-            operator fun invoke(time: Long, longForm: String, shortForm: String) = buildText0 {
+            operator fun invoke(time: Long, singularForm: String, pluralForm: String, shortForm: String) = buildText0 {
                 append(Component.text(time, timeColor))
-                appendText(if (shortForms) shortForm else " $longForm", timeColor)
+                appendText(
+                    if (shortForms) shortForm
+                    else if (time == 1L) " $singularForm"
+                    else " $pluralForm",
+                    timeColor
+                )
             }
         }
 
@@ -493,35 +663,72 @@ object CommonComponents {
 
         return buildText0 {
             var hasAddedComponent = false
-            fun addComponent(value: Long, longForm: String, shortForm: String) {
+
+            fun addComponent(value: Long, singularForm: String, pluralForm: String, shortForm: String) {
                 if (value > 0) {
                     if (hasAddedComponent) append(separator)
-                    append(formatter(value, longForm, shortForm))
+                    append(formatter(value, singularForm, pluralForm, shortForm))
                     hasAddedComponent = true
                 }
             }
 
-            addComponent(centuries, "Jahrhundert", "Jh")
-            addComponent(decades, "Jahrzehnt", "Jz")
-            addComponent(years, "Jahr", "J")
-            addComponent(days, "Tag", "d")
-            addComponent(hours, "Stunde", "h")
-            addComponent(minutes, "Minute", "m")
+            addComponent(centuries, "Jahrhundert", "Jahrhunderte", "Jh")
+            addComponent(decades, "Jahrzehnt", "Jahrzehnte", "Jz")
+            addComponent(years, "Jahr", "Jahre", "J")
+            addComponent(days, "Tag", "Tage", "d")
+            addComponent(hours, "Stunde", "Stunden", "h")
+            addComponent(minutes, "Minute", "Minuten", "m")
             if (showSeconds) {
-                addComponent(seconds, "Sekunde", "s")
+                addComponent(seconds, "Sekunde", "Sekunden", "s")
             }
         }
     }
 }
 
 /**
+ * Formats this collection into a comma-separated list component.
+ *
+ * @param E The element type.
+ * @param formatter Function to convert each element to a component.
+ * @return A component representing the formatted collection.
  * @see CommonComponents.formatCollection
+ *
+ * **Example:**
+ * ```kotlin
+ * val fruits = listOf("Apple", "Banana", "Cherry")
+ * val formatted = fruits.joinToComponent { text(it) }
+ * ```
+ *
+ * **Output:**
+ * ```
+ * Apple, Banana, Cherry
+ * ```
  */
 inline fun <E> Iterable<E>.joinToComponent(formatter: (E) -> Component) =
     CommonComponents.formatCollection(this, formatter)
 
 /**
+ * Formats this collection into a structured list with each element on a new line.
+ *
+ * @param E The element type.
+ * @param linePrefix The prefix component for each line.
+ * @param formatter Function to convert each element to a component.
+ * @return A component representing the formatted collection.
  * @see CommonComponents.formatCollectionNewLine
+ *
+ * **Example:**
+ * ```kotlin
+ * val tasks = listOf("Buy groceries", "Clean room", "Study")
+ * val formatted = tasks.joinToComponentNewLine(PREFIX) { text(it) }
+ * ```
+ *
+ * **Output:**
+ * ```
+ * <empty>
+ * >> Surf | — Buy groceries
+ * >> Surf | — Clean room
+ * >> Surf | — Study
+ * ```
  */
 inline fun <E> Iterable<E>.joinToComponentNewLine(
     linePrefix: Component = PREFIX,
@@ -529,11 +736,36 @@ inline fun <E> Iterable<E>.joinToComponentNewLine(
 ) = CommonComponents.formatCollectionNewLine(this, linePrefix, formatter)
 
 /**
+ * Formats this map into a structured list with each entry on a new line showing key-value pairs.
+ *
+ * @param K The key type.
+ * @param V The value type.
+ * @param keyFormatter Function to convert each key to a component.
+ * @param valueFormatter Function to convert each value to a component.
+ * @param linePrefix The prefix component for each line.
+ * @param keyValueSeparator The separator component between keys and values.
+ * @return A component representing the formatted map.
  * @see CommonComponents.formatMap
+ *
+ * **Example:**
+ * ```kotlin
+ * val settings = mapOf("Volume" to "80%", "Quality" to "High")
+ * val formatted = settings.joinToComponent(
+ *     keyFormatter = { text(it) },
+ *     valueFormatter = { text(it) }
+ * )
+ * ```
+ *
+ * **Output:**
+ * ```
+ * <empty>
+ * >> Surf | — Volume -> 80%
+ * >> Surf | — Quality -> High
+ * ```
  */
 inline fun <K, V> Map<K, V>.joinToComponent(
     keyFormatter: (K) -> Component,
     valueFormatter: (V) -> Component,
     linePrefix: Component = PREFIX,
-    keyValueSeparator: Component = CommonComponents.MAP_SEPARATOR,
+    keyValueSeparator: Component = MAP_SEPERATOR,
 ) = CommonComponents.formatMap(this, keyFormatter, valueFormatter, linePrefix, keyValueSeparator)
