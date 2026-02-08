@@ -19,6 +19,7 @@ data class PaginationImpl<T>(
     private val lastPageButton: PageButton,
     private val clickEventProvider: PaginationClickEventProvider<T>,
 ) : Pagination<T> {
+
     override fun render(
         content: Collection<T>,
         page: Int,
@@ -67,30 +68,30 @@ data class PaginationImpl<T>(
     }
 
     companion object {
-        private fun pages(pageSize: Int, count: Int): Int = (count + pageSize - 1) / pageSize
-    }
-}
+        fun pages(pageSize: Int, count: Int): Int = (count + pageSize - 1) / pageSize
 
-private fun <T> forEachPageEntry(
-    content: Collection<T>,
-    pageSize: Int,
-    page: Int,
-    consumer: (T, Int) -> Unit,
-) {
-    val size = content.size
-    val start = pageSize * (page - 1)
-    val end = pageSize * page
+        inline fun <T> forEachPageEntry(
+            content: Collection<T>,
+            pageSize: Int,
+            page: Int,
+            consumer: (T, Int) -> Unit,
+        ) {
+            val size = content.size
+            val start = pageSize * (page - 1)
+            val end = pageSize * page
 
-    if (content is List<T> && content is RandomAccess) {
-        for (i in start until end.coerceAtMost(size)) {
-            consumer(content[i], i)
-        }
-    } else {
-        val iterator = content.iterator()
-        // Skip previous pages
-        repeat(start) { iterator.next() }
-        for (i in start until end.coerceAtMost(size)) {
-            consumer(iterator.next(), i)
+            if (content is List<T> && content is RandomAccess) {
+                for (i in start until end.coerceAtMost(size)) {
+                    consumer(content[i], i)
+                }
+            } else {
+                val iterator = content.iterator()
+                // Skip previous pages
+                repeat(start) { iterator.next() }
+                for (i in start until end.coerceAtMost(size)) {
+                    consumer(iterator.next(), i)
+                }
+            }
         }
     }
 }

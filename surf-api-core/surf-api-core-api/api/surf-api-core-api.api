@@ -5,8 +5,10 @@ public abstract interface class dev/slne/surf/surfapi/core/api/SurfCoreApi {
 	public abstract fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
-public final class dev/slne/surf/surfapi/core/api/SurfCoreApi$Companion {
+public final class dev/slne/surf/surfapi/core/api/SurfCoreApi$Companion : dev/slne/surf/surfapi/core/api/SurfCoreApi {
 	public final fun getInstance ()Ldev/slne/surf/surfapi/core/api/SurfCoreApi;
+	public fun getPlayer (Ljava/util/UUID;)Ljava/lang/Object;
+	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
 public final class dev/slne/surf/surfapi/core/api/SurfCoreApiKt {
@@ -160,8 +162,18 @@ public abstract interface class dev/slne/surf/surfapi/core/api/config/SurfConfig
 	public abstract fun reloadSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
 }
 
-public final class dev/slne/surf/surfapi/core/api/config/SurfConfigApi$Companion {
+public final class dev/slne/surf/surfapi/core/api/config/SurfConfigApi$Companion : dev/slne/surf/surfapi/core/api/config/SurfConfigApi {
+	public fun createDazzlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
+	public fun createSpongeJsonConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
+	public fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public fun createSpongeYmlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
+	public fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public fun getDazzlConfig (Ljava/lang/Class;)Ljava/lang/Object;
 	public final fun getInstance ()Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi;
+	public fun getSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
+	public fun getSpongeConfigManagerForConfig (Ljava/lang/Class;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public fun reloadDazzlConfig (Ljava/lang/Class;)Ljava/lang/Object;
+	public fun reloadSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/surfapi/core/api/config/SurfConfigApiKt {
@@ -182,6 +194,11 @@ public final class dev/slne/surf/surfapi/core/api/config/manager/DazzlConfConfig
 
 public final class dev/slne/surf/surfapi/core/api/config/manager/DazzlConfConfigManager$Companion {
 	public final fun create (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/DazzlConfConfigManager;
+}
+
+public final class dev/slne/surf/surfapi/core/api/config/manager/DazzlConfDeprecationMessageHolder {
+	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/config/manager/DazzlConfDeprecationMessageHolder;
+	public static final field MESSAGE Ljava/lang/String;
 }
 
 public final class dev/slne/surf/surfapi/core/api/config/manager/LoadConfigException : java/lang/RuntimeException {
@@ -221,7 +238,7 @@ public final class dev/slne/surf/surfapi/core/api/config/manager/SpongeConfigMan
 
 public final class dev/slne/surf/surfapi/core/api/config/serializer/DefaultDazzlConfSerializers {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/config/serializer/DefaultDazzlConfSerializers;
-	public final fun getDEFAULTS ()Ljava/util/List;
+	public final fun getDEFAULTS ()Ljava/util/concurrent/CopyOnWriteArrayList;
 }
 
 public final class dev/slne/surf/surfapi/core/api/config/serializer/DefaultDazzlConfSerializers$ComponentSerializer : space/arim/dazzleconf/serialiser/ValueSerialiser {
@@ -271,7 +288,8 @@ public final class dev/slne/surf/surfapi/core/api/extensions/Packet_eventsKt {
 }
 
 public final class dev/slne/surf/surfapi/core/api/font/Small_capsKt {
-	public static final fun toSmallCaps (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun toSmallCaps (Ljava/lang/CharSequence;)Ljava/lang/String;
+	public static final synthetic fun toSmallCaps (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class dev/slne/surf/surfapi/core/api/generated/BlockTypeKeys {
@@ -7815,6 +7833,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/bundle/SurfMessageBun
 public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/InternalPaginationBridge {
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/pagination/InternalPaginationBridge$Companion;
 	public abstract fun createPaginationBuilder ()Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationBuilder;
+	public abstract fun createPaginationBuilderSuspend ()Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;
 }
 
 public final class dev/slne/surf/surfapi/core/api/messages/pagination/InternalPaginationBridge$Companion {
@@ -7884,6 +7903,7 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/paginati
 	public fun nextPageButton (Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
 	public fun previousPageButton (Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
 	public fun rowRenderer (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer;)V
+	public fun rowRendererSimple (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer$Simple;)V
 	public abstract fun setClickEventProvider (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationClickEventProvider;)V
 	public abstract fun setFirstPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;)V
 	public abstract fun setIndent (I)V
@@ -7910,6 +7930,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/pagination/Pagination
 	public static fun nextPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
 	public static fun previousPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
 	public static fun rowRenderer (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationBuilder;Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer;)V
+	public static fun rowRendererSimple (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationBuilder;Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer$Simple;)V
 	public static fun title (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationBuilder;Lkotlin/jvm/functions/Function1;)V
 }
 
@@ -7958,6 +7979,149 @@ public final class dev/slne/surf/surfapi/core/api/messages/pagination/Pagination
 
 public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer {
 	public abstract fun renderRow (Ljava/lang/Object;I)Ljava/util/Collection;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer$Simple : dev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer {
+	public abstract fun render (Ljava/lang/Object;)Lnet/kyori/adventure/text/Component;
+	public fun renderRow (Ljava/lang/Object;I)Ljava/util/Collection;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer$Simple$DefaultImpls {
+	public static fun renderRow (Ldev/slne/surf/surfapi/core/api/messages/pagination/PaginationRowRenderer$Simple;Ljava/lang/Object;I)Ljava/util/Collection;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination$Companion;
+	public abstract fun render (Ljava/util/Collection;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun render$default (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;Ljava/util/Collection;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public fun renderComponent (Ljava/util/Collection;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun renderComponent$default (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;Ljava/util/Collection;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination$Companion {
+	public final fun invoke (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination$DefaultImpls {
+	public static synthetic fun render$default (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;Ljava/util/Collection;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun renderComponent (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;Ljava/util/Collection;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun renderComponent$default (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;Ljava/util/Collection;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder$Companion;
+	public abstract fun build ()Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;
+	public fun clickEventProvider (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider;)V
+	public fun firstPageButton (Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public abstract fun getClickEventProvider ()Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider;
+	public abstract fun getFirstPageButton ()Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;
+	public abstract fun getIndent ()I
+	public abstract fun getLastPageButton ()Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;
+	public abstract fun getNextPageButton ()Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;
+	public abstract fun getPreviousPageButton ()Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;
+	public abstract fun getRenderer ()Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;
+	public abstract fun getResultsPerPage ()I
+	public abstract fun getRowRenderer ()Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer;
+	public abstract fun getTitle ()Lnet/kyori/adventure/text/Component;
+	public abstract fun getWidth ()I
+	public fun lastPageButton (Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public fun nextPageButton (Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public fun previousPageButton (Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public fun rowRenderer (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer;)V
+	public fun rowRendererSimple (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer$Simple;)V
+	public abstract fun setClickEventProvider (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider;)V
+	public abstract fun setFirstPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;)V
+	public abstract fun setIndent (I)V
+	public abstract fun setLastPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;)V
+	public abstract fun setNextPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;)V
+	public abstract fun setPreviousPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;)V
+	public abstract fun setRenderer (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;)V
+	public abstract fun setResultsPerPage (I)V
+	public abstract fun setRowRenderer (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer;)V
+	public abstract fun setTitle (Lnet/kyori/adventure/text/Component;)V
+	public abstract fun setWidth (I)V
+	public fun title (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder$Companion {
+	public final fun builder ()Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;
+	public final fun invoke (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder$DefaultImpls {
+	public static fun clickEventProvider (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider;)V
+	public static fun firstPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public static fun lastPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public static fun nextPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public static fun previousPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/Style;Lnet/kyori/adventure/text/format/Style;)V
+	public static fun rowRenderer (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer;)V
+	public static fun rowRendererSimple (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer$Simple;)V
+	public static fun title (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationBuilder;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider$Companion;
+	public abstract fun getCallback (Lkotlinx/coroutines/CoroutineScope;ILdev/slne/surf/surfapi/core/api/messages/pagination/SuspendPagination;Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider$Companion {
+	public final fun default ()Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationClickEventProvider;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer {
+	public fun renderEmpty (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderFooter (Lkotlinx/coroutines/CoroutineScope;IIIILdev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderHeader (Lkotlinx/coroutines/CoroutineScope;IILnet/kyori/adventure/text/Component;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderNextPageButton (Lkotlinx/coroutines/CoroutineScope;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lnet/kyori/adventure/text/event/ClickEvent;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderPreviousPageButton (Lkotlinx/coroutines/CoroutineScope;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lnet/kyori/adventure/text/event/ClickEvent;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderRow (Lkotlinx/coroutines/CoroutineScope;IIIILjava/lang/Object;ILdev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderUnknownPage (Lkotlinx/coroutines/CoroutineScope;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer$DEFAULT : dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer {
+	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer$DEFAULT;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun renderEmpty (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderFooter (Lkotlinx/coroutines/CoroutineScope;IIIILdev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderHeader (Lkotlinx/coroutines/CoroutineScope;IILnet/kyori/adventure/text/Component;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderNextPageButton (Lkotlinx/coroutines/CoroutineScope;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lnet/kyori/adventure/text/event/ClickEvent;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderPreviousPageButton (Lkotlinx/coroutines/CoroutineScope;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lnet/kyori/adventure/text/event/ClickEvent;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderRow (Lkotlinx/coroutines/CoroutineScope;IIIILjava/lang/Object;ILdev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderUnknownPage (Lkotlinx/coroutines/CoroutineScope;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer$DefaultImpls {
+	public static fun renderEmpty (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun renderFooter (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;Lkotlinx/coroutines/CoroutineScope;IIIILdev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun renderHeader (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;Lkotlinx/coroutines/CoroutineScope;IILnet/kyori/adventure/text/Component;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun renderNextPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;Lkotlinx/coroutines/CoroutineScope;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lnet/kyori/adventure/text/event/ClickEvent;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun renderPreviousPageButton (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;Lkotlinx/coroutines/CoroutineScope;Ldev/slne/surf/surfapi/core/api/messages/pagination/PageButton;Lnet/kyori/adventure/text/event/ClickEvent;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun renderRow (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;Lkotlinx/coroutines/CoroutineScope;IIIILjava/lang/Object;ILdev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun renderUnknownPage (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRenderer;Lkotlinx/coroutines/CoroutineScope;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer {
+	public abstract fun renderRow (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer$Simple : dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer {
+	public abstract fun render (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderRow (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer$Simple$DefaultImpls {
+	public static fun renderRow (Ldev/slne/surf/surfapi/core/api/messages/pagination/SuspendPaginationRowRenderer$Simple;Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/minimessage/SurfMiniMessageHolder {
+	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/minimessage/SurfMiniMessageHolder;
+	public final fun miniMessage ()Lnet/kyori/adventure/text/minimessage/MiniMessage;
+}
+
+public final class dev/slne/surf/surfapi/core/api/minimessage/SurfMiniMessageHolderKt {
+	public static final fun getMiniMessage ()Lnet/kyori/adventure/text/minimessage/MiniMessage;
 }
 
 public final class dev/slne/surf/surfapi/core/api/nbt/CollectionBinaryTag : java/lang/Iterable {
