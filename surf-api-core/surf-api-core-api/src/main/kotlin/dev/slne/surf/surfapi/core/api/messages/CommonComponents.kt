@@ -458,24 +458,14 @@ object CommonComponents {
     }
 
     /**
-     * Formats a duration into a human-readable time representation.
+     * Formats a duration into a human-readable time representation. Supports multiple time units from centuries to seconds.
      *
      * @param time The duration to format.
      * @param showSeconds Whether to include seconds in the output.
-     * @param shortForms Whether to use short forms for time units.
-     * @param separator The separator between time units.
+     * @param shortForms Whether to use short forms for time units (e.g., "d" instead of "Tag").
+     * @param separator The separator component between time units.
      * @param timeColor The color for the time values.
-     * @return A formatted [Component] representing the time.
-     *
-     * **Example Usage:**
-     * ```kotlin
-     * val time = Duration.ofSeconds(123456)
-     * val formatted = formatTime(time, showSeconds = true, shortForms = true)
-     * ```
-     * **Output Example:**
-     * ```
-     * 1d:10h:17m:36s
-     * ```
+     * @return A component representing the formatted time.
      */
     fun formatTime(
         time: Duration,
@@ -494,7 +484,7 @@ object CommonComponents {
         val formatter = Formatter(shortForms, timeColor)
 
         val centuries = time.inWholeDays / 365 / 100
-        val decades = time.inWholeDays / 365 % 100
+        val decades = time.inWholeDays / 365 % 100 / 10
         val years = time.inWholeDays / 365 % 10
         val days = time.inWholeDays % 365
         val hours = time.inWholeHours % 24
@@ -502,30 +492,23 @@ object CommonComponents {
         val seconds = time.inWholeSeconds % 60
 
         return buildText0 {
-            if (centuries > 0) append(formatter(centuries, "Jahrhundert", "Jh"))
-            if (decades > 0) {
-                append(separator)
-                append(formatter(decades, "Jahrzehnt", "Jz"))
+            var hasAddedComponent = false
+            fun addComponent(value: Long, longForm: String, shortForm: String) {
+                if (value > 0) {
+                    if (hasAddedComponent) append(separator)
+                    append(formatter(value, longForm, shortForm))
+                    hasAddedComponent = true
+                }
             }
-            if (years > 0) {
-                append(separator)
-                append(formatter(years, "Jahr", "J"))
-            }
-            if (days > 0) {
-                append(separator)
-                append(formatter(days, "Tag", "d"))
-            }
-            if (hours > 0) {
-                append(separator)
-                append(formatter(hours, "Stunde", "h"))
-            }
-            if (minutes > 0) {
-                append(separator)
-                append(formatter(minutes, "Minute", "m"))
-            }
+
+            addComponent(centuries, "Jahrhundert", "Jh")
+            addComponent(decades, "Jahrzehnt", "Jz")
+            addComponent(years, "Jahr", "J")
+            addComponent(days, "Tag", "d")
+            addComponent(hours, "Stunde", "h")
+            addComponent(minutes, "Minute", "m")
             if (showSeconds) {
-                append(separator)
-                append(formatter(seconds, "Sekunde", "s"))
+                addComponent(seconds, "Sekunde", "s")
             }
         }
     }
