@@ -6,7 +6,7 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PRIMARY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPERATOR
+import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPARATOR
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendNewline
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.clickOpensUrl
@@ -37,11 +37,19 @@ object CommonComponents {
     @JvmField
     val ELLIPSIS = text("...")
 
+
     /**
      * A separator (`->`) used to visually separate key-value pairs in text components.
      */
     @JvmField
-    val MAP_SEPERATOR = text(" -> ", SPACER)
+    val MAP_SEPARATOR = text(" -> ", SPACER)
+
+    /**
+     * @deprecated Use [MAP_SEPARATOR] instead.
+     */
+    @Deprecated("Use MAP_SEPARATOR instead", ReplaceWith("MAP_SEPARATOR"))
+    @JvmField
+    val MAP_SEPERATOR = MAP_SEPARATOR
 
     /**
      * A separator (`:`) used to visually format time-related messages.
@@ -425,7 +433,7 @@ object CommonComponents {
         keyFormatter: (K) -> Component,
         valueFormatter: (V) -> Component,
         linePrefix: Component = PREFIX,
-        keyValueSeparator: Component = MAP_SEPERATOR,
+        keyValueSeparator: Component = MAP_SEPARATOR,
     ): Component {
         val separator = buildText0 {
             appendNewline()
@@ -544,5 +552,5 @@ inline fun <K, V> Map<K, V>.joinToComponent(
     keyFormatter: (K) -> Component,
     valueFormatter: (V) -> Component,
     linePrefix: Component = PREFIX,
-    keyValueSeparator: Component = MAP_SEPERATOR,
+    keyValueSeparator: Component = CommonComponents.MAP_SEPARATOR,
 ) = CommonComponents.formatMap(this, keyFormatter, valueFormatter, linePrefix, keyValueSeparator)
