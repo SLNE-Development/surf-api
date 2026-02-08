@@ -58,11 +58,11 @@ interface Colors {
         val SUCCESS: TextColor = color(0x65ff64)
 
         /**
-         * Warning message color (#f9c353).
+         * Warning message color (#ffa64d).
          * Use to indicate potential issues or caution users about actions that may lead to errors.
          */
         @JvmField
-        val WARNING: TextColor = color(0xf9c353)
+        val WARNING: TextColor = color(0xffa64d)
 
         /**
          * Error message color (#ee3d51).
@@ -83,7 +83,7 @@ interface Colors {
          * Use to highlight dynamic values in messages (e.g., "Your property 'PROPERTY' has been sold").
          */
         @JvmField
-        val VARIABLE_VALUE: TextColor = WARNING
+        val VARIABLE_VALUE: TextColor = color(0xf9c353)
 
         /**
          * Standard spacer color (GRAY).
