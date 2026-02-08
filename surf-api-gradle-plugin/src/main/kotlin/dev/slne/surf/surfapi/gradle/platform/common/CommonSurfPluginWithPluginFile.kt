@@ -38,7 +38,7 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
                     group = "surf-api"
 
                     fileName.set(pluginFileName)
-                    outputFile.set(generatedResourcesDirectory.map { it.file(pluginFileName) })
+                    outputDir.set(generatedResourcesDirectory)
                     pluginFileJson.set(provider {
                         if (createdPluginFile.isApplied()) {
                             createdPluginFile.validate()
