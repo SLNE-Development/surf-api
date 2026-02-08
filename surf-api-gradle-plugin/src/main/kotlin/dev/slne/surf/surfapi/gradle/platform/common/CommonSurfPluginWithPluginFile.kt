@@ -32,7 +32,6 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
                 layout.buildDirectory.dir("generated/surf-api/$platformName")
 
             val createdPluginFile = createPluginFile(this)
-            extensions.add("${platformName}PluginFile", createdPluginFile)
 
             val generateTask =
                 tasks.register<GeneratePluginFile>("generate${platformName.uppercaseFirstChar()}PluginFile") {
