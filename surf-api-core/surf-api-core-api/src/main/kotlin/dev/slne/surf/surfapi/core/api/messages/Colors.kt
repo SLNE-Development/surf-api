@@ -72,11 +72,11 @@ interface Colors {
         val ERROR: TextColor = color(0xee3d51)
 
         /**
-         * Variable key color (#97B3F7).
+         * Variable key color (#6B9BD1).
          * Use for keys in key-value pairs (e.g., "Name: John").
          */
         @JvmField
-        val VARIABLE_KEY: TextColor = INFO
+        val VARIABLE_KEY: TextColor = color(0x6B9BD1)
 
         /**
          * Variable value color (#f9c353).
