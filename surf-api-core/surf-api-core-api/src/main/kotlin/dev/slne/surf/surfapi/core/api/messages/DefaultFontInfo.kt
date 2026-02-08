@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.core.api.messages
 /**
  * @see <a href="https://www.spigotmc.org/threads/free-code-sending-perfectly-centered-chat-message.95872/">SpigotMC Forum</a>
  */
+@Suppress("EnumEntryName")
 enum class DefaultFontInfo(val character: Char, val length: Int) {
     A('A', 5),
     a('a', 5),
