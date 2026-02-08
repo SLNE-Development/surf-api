@@ -7,7 +7,6 @@ import dev.slne.surf.surfapi.gradle.util.registerRequired
 import net.minecrell.pluginyml.GeneratePluginDescription
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 import org.gradle.api.Project
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -19,6 +18,8 @@ import xyz.jpenilla.runpaper.task.RunServer
 
 internal class PaperPluginSurfPlugin :
     AbstractPaperSurfPlugin<PaperPluginSurfExtension>("paperPlugin") {
+
+    override val extensionClass = PaperPluginSurfExtension::class.java
 
     init {
         addRelocationsForDependency(
@@ -94,9 +95,6 @@ internal class PaperPluginSurfPlugin :
             }
         }
     }
-
-    override fun createExtension(objects: ObjectFactory, project: Project) =
-        PaperPluginSurfExtension(objects)
 
     override fun Project.applyPlugins0() {
         paperPlugins.forEach { plugin ->

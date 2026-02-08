@@ -9,7 +9,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
@@ -40,11 +39,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private val relocations = mutableMapOf<String, String>()
     private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
 
-    protected abstract fun createExtension(objects: ObjectFactory, project: Project): E
+    protected abstract val extensionClass: Class<E>
 
     override fun apply(target: Project) = with(target) {
-        val extension = createExtension(objects, this)
-        extensions.add("surf${platformName.replaceFirstChar { it.uppercase() }}Api", extension)
+        val extension = extensions.create("surf${platformName.replaceFirstChar { it.uppercase() }}Api", extensionClass)
 
         applyRepositories()
         applyPlugins()
