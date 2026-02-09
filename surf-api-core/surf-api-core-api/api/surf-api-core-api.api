@@ -8314,7 +8314,9 @@ public abstract interface class dev/slne/surf/surfapi/core/api/reflection/SurfRe
 	public static fun getInstance ()Ldev/slne/surf/surfapi/core/api/reflection/SurfReflection;
 }
 
-public final class dev/slne/surf/surfapi/core/api/reflection/SurfReflection$Companion {
+public final class dev/slne/surf/surfapi/core/api/reflection/SurfReflection$Companion : dev/slne/surf/surfapi/core/api/reflection/SurfReflection {
+	public fun createProxy (Ljava/lang/Class;)Ljava/lang/Object;
+	public fun createProxy (Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/lang/Object;
 	public final fun getInstance ()Ldev/slne/surf/surfapi/core/api/reflection/SurfReflection;
 }
 
@@ -9337,8 +9339,69 @@ public final class dev/slne/surf/surfapi/core/api/serializer/spongepowered/math/
 
 public final class dev/slne/surf/surfapi/core/api/service/PlayerLookupService {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService;
+	public final fun getCacheStats ()Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$CacheStats;
 	public final fun getUsername (Ljava/util/UUID;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getUuid (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/core/api/service/PlayerLookupService$CacheStats {
+	public fun <init> (DJDJ)V
+	public final fun component1 ()D
+	public final fun component2 ()J
+	public final fun component3 ()D
+	public final fun component4 ()J
+	public final fun copy (DJDJ)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$CacheStats;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$CacheStats;DJDJILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$CacheStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNameToUuidHitRate ()D
+	public final fun getNameToUuidSize ()J
+	public final fun getUuidToNameHitRate ()D
+	public final fun getUuidToNameSize ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult {
+}
+
+public final class dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Failed : dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult {
+	public fun <init> (Ljava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/Throwable;)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Failed;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Failed;Ljava/lang/Throwable;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Found : dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Found;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Found;Ljava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$Found;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$NotFound : dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult {
+	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$NotFound;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$RateLimited : dev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$RateLimited;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$RateLimited;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/service/PlayerLookupService$LookupResult$RateLimited;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class dev/slne/surf/surfapi/core/api/util/ByEnum {
