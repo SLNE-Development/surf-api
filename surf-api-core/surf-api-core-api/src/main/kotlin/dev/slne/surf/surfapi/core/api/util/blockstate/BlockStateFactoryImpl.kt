@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.protocol.world.BlockFace
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
 import com.github.retrooper.packetevents.protocol.world.states.enums.*
 
+@Deprecated("Not longer maintained.")
 class BlockStateFactoryImpl {
     internal data class BuilderImpl(val blockState: WrappedBlockState) : BlockStateFactory.Builder {
         override fun age(): Int {
