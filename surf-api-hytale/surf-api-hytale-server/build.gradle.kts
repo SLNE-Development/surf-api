@@ -28,6 +28,7 @@ dependencies {
     api(libs.configurate.jackson)
     api(libs.flogger)
     api(libs.commons.math4.core)
+    api(libs.commons.math3)
     implementation(libs.packetevents.netty.common)
     runtimeOnly(libs.flogger.slf4j.backend)
 }

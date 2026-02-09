@@ -45,6 +45,7 @@ gson = "2.13.2"
 commons-lang3 = "3.20.0"
 commons-text = "1.15.0"
 commons-math4-core = "4.0-beta1"
+commons-math3 = "3.6.1"
 plugin-yml-paper = "0.8.0"
 spongepowered-math = "2.0.1"
 fastutil = "8.5.18"
@@ -139,6 +140,7 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
 commons-math4-core = { module = "org.apache.commons:commons-math4-core", version.ref = "commons-math4-core" }
+commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
 spongepowered-math = { module = "org.spongepowered:math", version.ref = "spongepowered-math" }
 fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }

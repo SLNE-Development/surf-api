@@ -6504,8 +6504,10 @@ public final class dev/slne/surf/surfapi/core/api/messages/CommonComponents {
 	public static final field DISCONNECT_HEADER Lnet/kyori/adventure/text/TextComponent;
 	public static final field DISCORD_LINK Lnet/kyori/adventure/text/TextComponent;
 	public static final field ELLIPSIS Lnet/kyori/adventure/text/TextComponent;
+	public static final field EM_DASH Lnet/kyori/adventure/text/TextComponent;
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/messages/CommonComponents;
 	public static final field ISSUE_FOOTER Lnet/kyori/adventure/text/TextComponent;
+	public static final field MAP_SEPARATOR Lnet/kyori/adventure/text/TextComponent;
 	public static final field MAP_SEPERATOR Lnet/kyori/adventure/text/TextComponent;
 	public static final field RETRY_LATER_FOOTER Lnet/kyori/adventure/text/TextComponent;
 	public static final field TIME_SEPARATOR Lnet/kyori/adventure/text/TextComponent;
@@ -6516,7 +6518,6 @@ public final class dev/slne/surf/surfapi/core/api/messages/CommonComponents {
 	public static synthetic fun formatMap$default (Ldev/slne/surf/surfapi/core/api/messages/CommonComponents;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Lnet/kyori/adventure/text/Component;
 	public final fun formatTime-gRj5Bb8 (JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/Component;
 	public static synthetic fun formatTime-gRj5Bb8$default (Ldev/slne/surf/surfapi/core/api/messages/CommonComponents;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Lnet/kyori/adventure/text/Component;
-	public final fun getEM_DASH ()Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
@@ -6666,12 +6667,20 @@ public abstract interface annotation class dev/slne/surf/surfapi/core/api/messag
 }
 
 public final class dev/slne/surf/surfapi/core/api/messages/adventure/Audience_extensionKt {
+	public static final fun displayName (Lnet/kyori/adventure/audience/Audience;)Lnet/kyori/adventure/text/Component;
+	public static final fun displayNameOrNull (Lnet/kyori/adventure/audience/Audience;)Lnet/kyori/adventure/text/Component;
+	public static final fun hasPermission (Lnet/kyori/adventure/audience/Audience;Ljava/lang/String;)Z
+	public static final fun name (Lnet/kyori/adventure/audience/Audience;)Ljava/lang/String;
+	public static final fun nameOrNull (Lnet/kyori/adventure/audience/Audience;)Ljava/lang/String;
 	public static final fun openBook (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;ZLkotlin/jvm/functions/Function1;)V
 	public static final fun sendText (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showBossBar (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showTitle (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
+	public static final fun testPermission (Lnet/kyori/adventure/audience/Audience;Ljava/lang/String;)Lnet/kyori/adventure/util/TriState;
+	public static final fun uuid (Lnet/kyori/adventure/audience/Audience;)Ljava/util/UUID;
+	public static final fun uuidOrNull (Lnet/kyori/adventure/audience/Audience;)Ljava/util/UUID;
 }
 
 public abstract interface annotation class dev/slne/surf/surfapi/core/api/messages/adventure/BookDsl : java/lang/annotation/Annotation {
@@ -6708,6 +6717,24 @@ public abstract interface annotation class dev/slne/surf/surfapi/core/api/messag
 public final class dev/slne/surf/surfapi/core/api/messages/adventure/Bossbar_extensionKt {
 	public static final fun BossBar (Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/bossbar/BossBar;
 	public static final fun bossBar (Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/bossbar/BossBar;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/adventure/Callback_extensionKt {
+	public static final fun clickCallback (Lnet/kyori/adventure/text/ComponentBuilder;Lnet/kyori/adventure/text/event/ClickCallback;)Lnet/kyori/adventure/text/ComponentBuilder;
+	public static final fun clickCallbackWithOptions (Lnet/kyori/adventure/text/ComponentBuilder;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/ComponentBuilder;
+	public static final fun lifetime-HG0u8IE (Lnet/kyori/adventure/text/event/ClickCallback$Options$Builder;J)Lnet/kyori/adventure/text/event/ClickCallback$Options$Builder;
+}
+
+public final class dev/slne/surf/surfapi/core/api/messages/adventure/ClickCallbackWithOptionsBuilder {
+	public fun <init> (Ljava/lang/Class;)V
+	public final fun build ()Lnet/kyori/adventure/text/event/ClickEvent;
+	public final fun callback (Lnet/kyori/adventure/text/event/ClickCallback;)V
+	public final fun options (Lkotlin/jvm/functions/Function1;)V
+	public final fun requiresPermission (Ljava/lang/String;)V
+	public final fun requiresPermissionOrElse (Ljava/lang/String;Ljava/util/function/Consumer;)V
+}
+
+public abstract interface annotation class dev/slne/surf/surfapi/core/api/messages/adventure/ClickCallbackWithOptionsBuilderDsl : java/lang/annotation/Annotation {
 }
 
 public final class dev/slne/surf/surfapi/core/api/messages/adventure/Component_extensionKt {
@@ -8124,7 +8151,7 @@ public final class dev/slne/surf/surfapi/core/api/minimessage/SurfMiniMessageHol
 	public static final fun getMiniMessage ()Lnet/kyori/adventure/text/minimessage/MiniMessage;
 }
 
-public final class dev/slne/surf/surfapi/core/api/nbt/CollectionBinaryTag : java/lang/Iterable {
+public final class dev/slne/surf/surfapi/core/api/nbt/CollectionBinaryTag : java/lang/Iterable, kotlin/jvm/internal/markers/KMappedMarker {
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/nbt/CollectionBinaryTag$Companion;
 	public static final synthetic fun box-impl (Lnet/kyori/adventure/nbt/BinaryTag;)Ldev/slne/surf/surfapi/core/api/nbt/CollectionBinaryTag;
 	public fun equals (Ljava/lang/Object;)Z
@@ -8191,47 +8218,59 @@ public final class dev/slne/surf/surfapi/core/api/nbt/Nbt_extensionKt {
 	public static final fun tagStream (Lnet/kyori/adventure/nbt/LongArrayBinaryTag;)Ljava/util/stream/Stream;
 }
 
-public final class dev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum : java/lang/Enum, dev/slne/surf/surfapi/core/api/random/Weighted {
-	public static final field COMMON Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
-	public static final field Companion Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum$Companion;
-	public static final field EXTREMELY_RARE Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
-	public static final field RARE Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
-	public static final field UNCOMMON Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
-	public static final field VERY_RARE Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public fun getWeight ()D
-	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
-	public static fun values ()[Ldev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum;
+public final class dev/slne/surf/surfapi/core/api/random/Jdk2ApacheRandomGenerator : org/apache/commons/math3/random/RandomGenerator {
+	public fun <init> (Ljava/util/random/RandomGenerator;)V
+	public fun nextBoolean ()Z
+	public fun nextBytes ([B)V
+	public fun nextDouble ()D
+	public fun nextFloat ()F
+	public fun nextGaussian ()D
+	public fun nextInt ()I
+	public fun nextInt (I)I
+	public fun nextLong ()J
+	public fun setSeed (I)V
+	public fun setSeed (J)V
+	public fun setSeed ([I)V
 }
 
-public final class dev/slne/surf/surfapi/core/api/random/ExampleWeightedEnum$Companion {
-	public final fun getSelector ()Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+public final class dev/slne/surf/surfapi/core/api/random/Jdk2ApacheRandomGeneratorKt {
+	public static final fun toApache (Ljava/util/random/RandomGenerator;)Lorg/apache/commons/math3/random/RandomGenerator;
+	public static final fun toApacheNullable (Ljava/util/random/RandomGenerator;)Lorg/apache/commons/math3/random/RandomGenerator;
 }
 
 public abstract interface class dev/slne/surf/surfapi/core/api/random/RandomSelector {
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/random/RandomSelector$Companion;
+	public abstract fun flow ()Lkotlinx/coroutines/flow/Flow;
 	public abstract fun flow (Ljava/util/random/RandomGenerator;)Lkotlinx/coroutines/flow/Flow;
-	public static synthetic fun flow$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector;Ljava/util/random/RandomGenerator;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun flowOrNull (D)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun pick ()Ljava/lang/Object;
 	public abstract fun pick (Ljava/util/random/RandomGenerator;)Ljava/lang/Object;
-	public static synthetic fun pick$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector;Ljava/util/random/RandomGenerator;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun pickOrNull (D)Ljava/lang/Object;
+	public abstract fun sequence ()Lkotlin/sequences/Sequence;
+	public abstract fun sequenceOrNull (D)Lkotlin/sequences/Sequence;
 }
 
 public final class dev/slne/surf/surfapi/core/api/random/RandomSelector$Companion {
+	public final fun fromFlow (Lkotlinx/coroutines/flow/Flow;Ljava/util/random/RandomGenerator;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun fromFlow (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun fromFlow (Lkotlinx/coroutines/flow/Flow;Lorg/apache/commons/math3/random/RandomGenerator;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun fromFlow$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector$Companion;Lkotlinx/coroutines/flow/Flow;Ljava/util/random/RandomGenerator;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun fromInfinityFlow (Lkotlinx/coroutines/flow/Flow;Ljava/util/random/RandomGenerator;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
 	public final fun fromInfinityFlow (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public final fun fromInfinityFlow (Lkotlinx/coroutines/flow/Flow;Lorg/apache/commons/math3/random/RandomGenerator;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public static synthetic fun fromInfinityFlow$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector$Companion;Lkotlinx/coroutines/flow/Flow;Ljava/util/random/RandomGenerator;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
 	public final fun fromIterable (Ljava/lang/Iterable;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public final fun fromIterable (Ljava/lang/Iterable;Ljava/util/random/RandomGenerator;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public final fun fromIterable (Ljava/lang/Iterable;Lorg/apache/commons/math3/random/RandomGenerator;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public static synthetic fun fromIterable$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector$Companion;Ljava/lang/Iterable;Ljava/util/random/RandomGenerator;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
 	public final fun fromWeightedIterable (Ljava/lang/Iterable;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public final fun fromWeightedIterable (Ljava/lang/Iterable;Ljava/util/random/RandomGenerator;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public final fun fromWeightedIterable (Ljava/lang/Iterable;Ljava/util/random/RandomGenerator;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
 	public final fun fromWeightedIterable (Ljava/lang/Iterable;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
-}
-
-public final class dev/slne/surf/surfapi/core/api/random/RandomSelector$DefaultImpls {
-	public static synthetic fun flow$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector;Ljava/util/random/RandomGenerator;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
-	public static synthetic fun pick$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector;Ljava/util/random/RandomGenerator;ILjava/lang/Object;)Ljava/lang/Object;
-}
-
-public final class dev/slne/surf/surfapi/core/api/random/RandomSelectorKt {
-	public static final fun main ()V
-	public static synthetic fun main ([Ljava/lang/String;)V
+	public final fun fromWeightedIterable (Ljava/lang/Iterable;Lorg/apache/commons/math3/random/RandomGenerator;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public final fun fromWeightedIterable (Ljava/lang/Iterable;Lorg/apache/commons/math3/random/RandomGenerator;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public static synthetic fun fromWeightedIterable$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector$Companion;Ljava/lang/Iterable;Ljava/util/random/RandomGenerator;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
+	public static synthetic fun fromWeightedIterable$default (Ldev/slne/surf/surfapi/core/api/random/RandomSelector$Companion;Ljava/lang/Iterable;Ljava/util/random/RandomGenerator;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/random/RandomSelector;
 }
 
 public abstract interface class dev/slne/surf/surfapi/core/api/random/Weighted {
