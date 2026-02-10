@@ -67,6 +67,10 @@ object CommonComponents {
     @JvmField
     val EM_DASH = text("—", SPACER)
 
+    @Suppress("FunctionName")
+    @Deprecated("Binary compatibility", ReplaceWith("EM_DASH"), DeprecationLevel.HIDDEN)
+    fun getEM_DASH() = EM_DASH
+
     /**
      * A clickable Discord link component (`discord.gg/castcrafter`).
      */

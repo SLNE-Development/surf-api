@@ -6519,6 +6519,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/CommonComponents {
 	public static synthetic fun formatMap$default (Ldev/slne/surf/surfapi/core/api/messages/CommonComponents;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Lnet/kyori/adventure/text/Component;
 	public final fun formatTime-gRj5Bb8 (JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/Component;
 	public static synthetic fun formatTime-gRj5Bb8$default (Ldev/slne/surf/surfapi/core/api/messages/CommonComponents;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Lnet/kyori/adventure/text/Component;
+	public final synthetic fun getEM_DASH ()Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
