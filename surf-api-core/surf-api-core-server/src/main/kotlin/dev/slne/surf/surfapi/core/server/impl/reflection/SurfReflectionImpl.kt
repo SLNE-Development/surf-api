@@ -4,7 +4,7 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.surfapi.core.api.reflection.SurfProxy
 import dev.slne.surf.surfapi.core.api.reflection.SurfReflection
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
-import java.lang.reflect.Proxy.newProxyInstance
+import java.lang.reflect.Proxy
 
 @AutoService(SurfReflection::class)
 class SurfReflectionImpl : SurfReflection {
@@ -13,7 +13,7 @@ class SurfReflectionImpl : SurfReflection {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T: Any> createProxy(
+    override fun <T : Any> createProxy(
         clazz: Class<T>,
         classLoader: ClassLoader
     ): T {
@@ -32,12 +32,12 @@ class SurfReflectionImpl : SurfReflection {
         } else {
             try {
                 proxyClass = Class.forName(surfProxy.qualifiedName, true, classLoader)
-            } catch (_: ClassNotFoundException) {
-                error("Could not find class " + surfProxy.qualifiedName)
+            } catch (e: ClassNotFoundException) {
+                throw ClassNotFoundException("Could not find class " + surfProxy.qualifiedName, e)
             }
         }
 
-        return newProxyInstance(
+        return Proxy.newProxyInstance(
             classLoader,
             arrayOf(clazz),
             SurfInvocationHandlerJava(clazz, proxyClass)
