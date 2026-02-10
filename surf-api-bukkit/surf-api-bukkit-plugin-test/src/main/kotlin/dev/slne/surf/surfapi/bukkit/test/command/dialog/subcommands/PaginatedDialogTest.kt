@@ -1,11 +1,12 @@
 @file:OptIn(NmsUseWithCaution::class)
 
-package dev.slne.surf.surfapi.bukkit.test.command.subcommands
+package dev.slne.surf.surfapi.bukkit.test.command.dialog.subcommands
 
 import com.github.shynixn.mccoroutine.folia.launch
 import com.github.shynixn.mccoroutine.folia.scope
-import dev.jorel.commandapi.kotlindsl.commandAPICommand
+import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
+import dev.jorel.commandapi.kotlindsl.subcommand
 import dev.slne.surf.surfapi.bukkit.api.dialog.base
 import dev.slne.surf.surfapi.bukkit.api.dialog.builder.actionButton
 import dev.slne.surf.surfapi.bukkit.api.dialog.clearDialogs
@@ -113,8 +114,8 @@ object PaginatedDialogTest {
     }
 }
 
-fun paginationDialogTestCommand() = commandAPICommand("paginationdialog") {
-    playerExecutor { player, arguments ->
+fun CommandAPICommand.paginationDialogTestCommand() = subcommand("paginated") {
+    playerExecutor { player, _ ->
         plugin.launch {
             paginatedDialog(
                 player = player,
