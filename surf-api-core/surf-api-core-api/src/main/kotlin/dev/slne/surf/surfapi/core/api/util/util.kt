@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalContracts::class)
 @file:JvmName("SurfUtil")
+@file:Suppress("removal", "DEPRECATION")
 
 package dev.slne.surf.surfapi.core.api.util
 
@@ -31,14 +32,10 @@ import kotlin.reflect.KProperty
 import kotlin.streams.asSequence
 
 /**
- * A lazily-initialized instance of `SecureRandom` providing a secure source of randomness.
+ * Lazily initialized secure random instance.
  *
- * This variable attempts to obtain a strong `SecureRandom` instance using `SecureRandom.getInstanceStrong()`.
- * If this operation fails (e.g., due to system or environment limitations), it logs the error and falls back
- * to a default `SecureRandom` instance.
- *
- * This ensures that a `SecureRandom` instance is always available, prioritizing strong cryptographic security
- * when possible, while maintaining resilience to initialization failures.
+ * Attempts to use a strong instance via [SecureRandom.getInstanceStrong], falling back to the default
+ * implementation if unavailable. Initialization failures are logged but do not prevent fallback.
  */
 val random: SecureRandom by lazy {
     try {
@@ -52,24 +49,18 @@ val random: SecureRandom by lazy {
 }
 
 /**
- * Provides a `FluentLogger` instance associated with the enclosing class.
+ * Returns a [FluentLogger] for the enclosing class.
  *
- * This method is intended to simplify access to `FluentLogger` for logging
- * purposes, automatically associating the logger with the class that calls it.
- *
- * @return A `FluentLogger` instance for the enclosing class.
+ * This function is caller-sensitive and must be inlined to correctly identify the enclosing class.
  */
 @Suppress("NOTHING_TO_INLINE") // Caller sensitive
 inline fun logger(): FluentLogger = FluentLogger.forEnclosingClass()
 
 /**
- * Executes the provided logging operation if the specified condition evaluates to true.
+ * Executes the logging operation only if the condition evaluates to true.
  *
- * This function allows for conditional logging using a specified `LoggingApi`.
- * The logging operation will only be performed if the `condition` lambda returns true.
- *
- * @param condition A lambda that provides a condition to evaluate. The logging operation will be executed only if this condition returns true.
- * @param logOperation The logging operation to perform if the condition is satisfied. This is an extension function on the logging API.
+ * @param condition Lambda returning true if logging should occur.
+ * @param logOperation Logging operation to execute conditionally.
  */
 inline fun <API : LoggingApi<API>> LoggingApi<API>.logIf(
     condition: () -> Boolean,
@@ -85,71 +76,32 @@ inline fun <API : LoggingApi<API>> LoggingApi<API>.logIf(
 }
 
 /**
- * A singleton instance of `StackWalker` configured with the `Option.RETAIN_CLASS_REFERENCE` option.
- *
- * This instance is used for retrieving information about the current call stack,
- * including details such as the declaring class of a caller. The
- * `RETAIN_CLASS_REFERENCE` option ensures that the `Class` objects of stack frames
- * are retained, making it possible to perform operations requiring class meta-information.
- *
- * Typical usage of this instance involves walking the stack to identify or introspect
- * the caller classes or methods with precise class retention capabilities. This is
- * particularly beneficial in scenarios where well-defined caller verification or context
- * inference is needed.
+ * Stack walker instance configured to retain class references for caller inspection.
  */
 private val STACK_WALK_INSTANCE: StackWalker =
     StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
 
 /**
- * Retrieves the class of the method's immediate caller.
+ * Returns the class of the immediate caller.
  *
- * This utility function uses a `StackWalker` instance to walk the call stack
- * and retrieve the class that invoked the current method.
- * The `depth` parameter determines how far back in the call stack the search
- * proceeds, relative to the default offset used internally.
- *
- * This function is useful for tasks such as debugging, logging, or implementing
- * caller-sensitive behaviors.
- *
- * Note: Invoking this function may have performance overhead depending on the
- * depth of the stack and the number of elements traversed.
- *
- * @return The `Class` object of the caller, or null if no caller is found in the
- * stack at the specified depth.
+ * @return The caller's class, or null if unavailable.
  */
 fun getCallerClass() = getCallerClass(0)
 
 /**
- * Retrieves the class of a caller at a specific depth in the call stack.
+ * Returns the class of the caller at the specified stack depth.
  *
- * This utility function uses a `StackWalker` instance to walk the call stack
- * and retrieve the class that invoked the current method at a specified depth.
- * The `depth` parameter determines how many levels to move up in the stack
- * to locate the desired caller.
- *
- * This function is commonly used for tasks such as debugging, logging, or implementing
- * caller-sensitive behaviors.
- *
- * Note: The default offset of 3 accounts for the internal implementation of the stack walker.
- *
- * @param depth The number of levels to walk up the call stack to locate the desired caller.
- *              A value of 0 corresponds to the immediate caller, while higher values
- *              move further up the stack.
- * @return The `Class` object of the caller at the specified depth, or null if no class
- *         is found at that depth in the call stack.
+ * @param depth Number of additional stack frames to skip (0 for immediate caller).
+ * @return The caller's class at the specified depth, or null if unavailable.
  */
 fun getCallerClass(depth: Int) =
     STACK_WALK_INSTANCE.walk { it.asSequence().drop(3 + depth).firstOrNull()?.declaringClass }
 
 /**
- * Checks if the immediate caller class matches the expected class.
+ * Verifies that the immediate caller is the expected class.
  *
- * This function verifies that the class of the immediate caller matches the provided
- * expected class. If the caller class does not match, an `IllegalStateException` is thrown.
- *
- * @param expected The `Class` object representing the expected caller class. This is the class
- *                 that the function expects to be the direct invoker of the current method.
- * @throws IllegalStateException If the class of the immediate caller does not match the expected class.
+ * @param expected The expected caller class.
+ * @throws IllegalStateException if the caller does not match.
  */
 fun checkCallerClass(expected: Class<*>) {
     if (getCallerClass(1) != expected) {
@@ -158,21 +110,22 @@ fun checkCallerClass(expected: Class<*>) {
 }
 
 /**
- * Verifies that the current method is instantiated by `java.util.ServiceLoader`.
+ * Verifies that instantiation occurs via [ServiceLoader].
  *
- * This function checks the call stack to ensure that the class instantiating
- * an object is `java.util.ServiceLoader`. It prevents direct instantiation of
- * the object outside of the expected context (i.e., via `ServiceLoader`).
+ * Prevents direct instantiation by ensuring the caller is from the ServiceLoader class hierarchy.
  *
- * If the instantiation is not performed by `ServiceLoader`, an `IllegalStateException`
- * is thrown with an appropriate error message, enforcing proper usage.
- *
- * @throws IllegalStateException If the instantiation is not done by `java.util.ServiceLoader`.
+ * @throws IllegalStateException if not instantiated by ServiceLoader.
  */
 fun checkInstantiationByServiceLoader() {
     check(getCallerClass(1)?.name?.startsWith("java.util.ServiceLoader") == true) { "Cannot instantiate instance directly" }
 }
 
+/**
+ * Direct access to the JVM's Unsafe API.
+ *
+ * This provides low-level memory operations that bypass Java's type safety and access control.
+ * Use only when absolutely necessary, as misuse can cause JVM crashes.
+ */
 val unsafe = try {
     val unsafeField = Unsafe::class.java.getDeclaredField("theUnsafe")
     unsafeField.isAccessible = true
@@ -181,125 +134,363 @@ val unsafe = try {
     throw RuntimeException(e)
 }
 
+/**
+ * Modifies a static final object field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Any?) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putObject(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final object field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Any?) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putObject(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final int field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Int) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putInt(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final int field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Int) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putInt(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final long field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Long) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putLong(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final long field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Long) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putLong(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final boolean field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Boolean) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putBoolean(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final boolean field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Boolean) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putBoolean(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final byte field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Byte) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putByte(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final byte field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Byte) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putByte(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final short field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Short) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putShort(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final short field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Short) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putShort(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final float field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Float) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putFloat(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final float field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Float) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putFloat(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final double field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Double) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putDouble(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final double field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Double) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putDouble(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies a static final char field.
+ *
+ * @param field The static final field to modify.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setStaticFinalField(field: Field, value: Char) {
     processStaticFinalField(field) { unsafe, fieldBase, fieldOffset ->
         unsafe.putChar(fieldBase, fieldOffset, value)
     }
 }
 
+/**
+ * Modifies an instance final char field.
+ *
+ * @param field The final field to modify.
+ * @param instance The object containing the field.
+ * @param value The new value.
+ */
+@Deprecated(
+    message = "Uses internal Unsafe API which bypasses Java's security and type safety. " +
+            "This can cause JVM instability and is not guaranteed to work in future Java versions. " +
+            "Consider using VarHandles or redesigning to avoid modifying final fields.",
+    level = DeprecationLevel.WARNING
+)
 fun setFinalField(field: Field, instance: Any, value: Char) {
     processFinalField(field) { unsafe, fieldOffset ->
         unsafe.putChar(instance, fieldOffset, value)
     }
 }
 
+/**
+ * Internal helper for modifying static final fields using Unsafe.
+ */
 private fun processStaticFinalField(field: Field, putOperation: (Unsafe, Any, Long) -> Unit) {
     val fieldBase = unsafe.staticFieldBase(field)
     val fieldOffset = unsafe.staticFieldOffset(field)
     putOperation(unsafe, fieldBase, fieldOffset)
 }
 
+/**
+ * Internal helper for modifying instance final fields using Unsafe.
+ */
 private fun processFinalField(field: Field, putOperation: (Unsafe, Long) -> Unit) {
     val fieldOffset = unsafe.objectFieldOffset(field)
     putOperation(unsafe, fieldOffset)
 }
 
+/**
+ * Creates an unmodifiable map from enum constants to their string IDs.
+ *
+ * @param enumClass The enum class.
+ * @param idMapper Function mapping each enum constant to its string ID.
+ * @return Unmodifiable map from string IDs to enum constants.
+ */
 fun <T : Enum<T>> byStringIdMap(
     enumClass: Class<T>,
     idMapper: (T) -> String,
@@ -309,7 +500,13 @@ fun <T : Enum<T>> byStringIdMap(
     )
 )
 
-
+/**
+ * Creates an unmodifiable map from enum constants to their integer IDs.
+ *
+ * @param enumClass The enum class.
+ * @param idMapper Function mapping each enum constant to its integer ID.
+ * @return Unmodifiable map from integer IDs to enum constants.
+ */
 fun <T : Enum<T>> byIdMap(
     enumClass: Class<T>,
     idMapper: ToIntFunction<T>,
@@ -317,6 +514,13 @@ fun <T : Enum<T>> byIdMap(
     return byIdMap(idMapper, enumClass.enumConstants)
 }
 
+/**
+ * Creates an unmodifiable map from values to their integer IDs.
+ *
+ * @param idMapper Function mapping each value to its integer ID.
+ * @param values Array of values to map.
+ * @return Unmodifiable map from integer IDs to values.
+ */
 fun <T> byIdMap(
     idMapper: ToIntFunction<T>,
     values: Array<T>,
@@ -328,6 +532,13 @@ fun <T> byIdMap(
     )
 }
 
+/**
+ * Creates an unmodifiable map from values to their integer IDs.
+ *
+ * @param idMapper Function mapping each value to its integer ID.
+ * @param values Array of values to map.
+ * @return Unmodifiable map from integer IDs to values.
+ */
 fun <T> byIdMap(
     idMapper: (T) -> Int,
     values: Array<T>,
@@ -339,6 +550,13 @@ fun <T> byIdMap(
     )
 }
 
+/**
+ * Creates an unmodifiable map from values to their byte IDs.
+ *
+ * @param values Array of values to map.
+ * @param idMapper Function mapping each value to its byte ID.
+ * @return Unmodifiable map from byte IDs to values.
+ */
 fun <T> byByteIdMap(
     values: Array<T>,
     idMapper: (T) -> Byte,
@@ -350,6 +568,12 @@ fun <T> byByteIdMap(
     )
 }
 
+/**
+ * Creates an unmodifiable map from enum constants to computed values.
+ *
+ * @param valueMapper Function mapping each enum constant to its associated value.
+ * @return Unmodifiable map from enum constants to their values.
+ */
 inline fun <reified T : Enum<T>> byEnumMap(
     valueMapper: (T) -> Any,
 ): Object2ObjectMap<T, Any> {
@@ -360,14 +584,25 @@ inline fun <reified T : Enum<T>> byEnumMap(
     )
 }
 
+/**
+ * Functional interface for mapping a value to a byte.
+ */
 fun interface ToByteFunction<T> {
     fun applyAsByte(value: T): Byte
 }
 
+/**
+ * Interface for types that can be identified by an enum value.
+ */
 fun interface ByEnum<T> {
     fun value(): T
 }
 
+/**
+ * Converts a sequence to an enumeration.
+ *
+ * @return An enumeration that iterates over the sequence elements.
+ */
 fun <T> Sequence<T>.toEnumeration(): Enumeration<T> {
     val iterator = iterator()
     return object : Enumeration<T> {
@@ -376,17 +611,41 @@ fun <T> Sequence<T>.toEnumeration(): Enumeration<T> {
     }
 }
 
+/**
+ * Returns the size of this iterable if it is a collection, otherwise returns the default value.
+ *
+ * @param default The value to return if this is not a collection.
+ * @return The collection size, or the default value.
+ */
 fun <E> Iterable<E>.collectionSizeOrDefault(default: Int) =
     if (this is Collection<*>) this.size else default
 
+/**
+ * Delegation operator for [WeakReference] allowing property-style access.
+ *
+ * @return The referenced object, or null if collected.
+ */
 operator fun <T> WeakReference<T>.getValue(thisRef: Any?, property: KProperty<*>): T? {
     return get()
 }
 
+/**
+ * Delegation operator for [SoftReference] allowing property-style access.
+ *
+ * @return The referenced object, or null if collected.
+ */
 operator fun <T> SoftReference<T>.getValue(thisRef: Any?, property: KProperty<*>): T? {
     return get()
 }
 
+/**
+ * Maps each element asynchronously using coroutines.
+ *
+ * All transformations run concurrently, and this function suspends until all complete.
+ *
+ * @param transform Suspending transformation function applied to each element.
+ * @return List of transformed elements in the original order.
+ */
 suspend inline fun <E, R> Iterable<E>.mapAsync(crossinline transform: suspend (E) -> R): List<R> {
     return coroutineScope {
         map { element ->
