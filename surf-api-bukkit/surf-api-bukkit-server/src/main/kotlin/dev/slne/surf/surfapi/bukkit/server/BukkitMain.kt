@@ -33,7 +33,7 @@ class BukkitMain : SuspendingJavaPlugin() {
         }
 
         try {
-            metrics = Metrics(this, 29464)
+            metrics = Metrics(this, 29465)
         } catch (e: Exception) {
             log.atWarning()
                 .withCause(e)
