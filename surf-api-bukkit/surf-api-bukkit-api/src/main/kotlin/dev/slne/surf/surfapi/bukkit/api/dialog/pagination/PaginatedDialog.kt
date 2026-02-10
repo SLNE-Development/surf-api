@@ -1,0 +1,144 @@
+@file:Suppress("UnstableApiUsage")
+
+package dev.slne.surf.surfapi.bukkit.api.dialog.pagination
+
+import dev.slne.surf.surfapi.bukkit.api.dialog.base
+import dev.slne.surf.surfapi.bukkit.api.dialog.builder.actionButton
+import dev.slne.surf.surfapi.bukkit.api.dialog.composition.composableDialog
+import dev.slne.surf.surfapi.bukkit.api.dialog.dialog
+import dev.slne.surf.surfapi.bukkit.api.dialog.query.DialogQuery
+import dev.slne.surf.surfapi.bukkit.api.dialog.query.PageResult
+import dev.slne.surf.surfapi.bukkit.api.dialog.query.PageState
+import dev.slne.surf.surfapi.bukkit.api.dialog.type
+import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
+import io.papermc.paper.dialog.Dialog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import net.kyori.adventure.text.Component
+import org.bukkit.entity.Player
+
+suspend fun <T> paginatedDialog(
+    player: Player,
+    query: DialogQuery<PageState, T>,
+    titleBuilder: SurfComponentBuilder.(PageState, PageResult<T>) -> Unit = { _, result ->
+        text("Seite ${result.page} von ${result.totalPages}")
+    },
+    searchable: Boolean = false,
+    itemBuilder: (T) -> Pair<Component, Dialog>,
+    scope: CoroutineScope
+) = composableDialog(
+    player = player,
+    initialState = PageState(),
+    scope = scope
+) {
+    val state = state()
+    val page = remember(state.page, state.search) {
+        query.execute(state)
+    }
+
+    dialog {
+        base {
+            title {
+                titleBuilder(this, state, page)
+            }
+
+            if (searchable) {
+                input {
+                    text("search") {
+                        label {
+                            text("Suche")
+                        }
+
+                        initial(state.search ?: "")
+                    }
+                }
+            }
+        }
+
+        type {
+            multiAction {
+                columns(1)
+
+                // Item Buttons
+                page.items.forEach { item ->
+                    val (dialogTitle, dialog) = itemBuilder(item)
+
+                    action(actionButton {
+                        label(dialogTitle)
+
+                        action {
+                            playerCallback {
+                                player.showDialog(dialog)
+                            }
+                        }
+                    })
+                }
+
+                // Pagination Buttons
+                if (state.page > 1) {
+                    action(actionButton {
+                        label {
+                            text("Zurück")
+                        }
+
+                        action {
+                            playerCallback {
+                                scope.launch {
+                                    setState { copy(page = page.page - 1) }
+                                }
+                            }
+                        }
+                    })
+                }
+
+                if (state.page < page.totalPages) {
+                    action(actionButton {
+                        label {
+                            text("Weiter")
+                        }
+
+                        action {
+                            playerCallback {
+                                scope.launch {
+                                    setState { copy(page = page.page + 1) }
+                                }
+                            }
+                        }
+                    })
+                }
+
+                if (searchable) {
+                    action(actionButton {
+                        label {
+                            text("Suche zurücksetzen")
+                        }
+
+                        action {
+                            playerCallback {
+                                scope.launch {
+                                    setState { copy(search = null, page = 1) }
+                                }
+                            }
+                        }
+                    })
+
+                    action(actionButton {
+                        label {
+                            text("Suchen")
+                        }
+
+                        action {
+                            customPlayerClick { response, player ->
+                                val search = response.getText("search") ?: ""
+
+                                scope.launch {
+                                    setState { copy(search = search, page = 1) }
+                                }
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    }
+}

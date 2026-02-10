@@ -7,6 +7,7 @@ import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.paginationDialogTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
@@ -25,6 +26,7 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         SurfApiTestCommand().register()
+        paginationDialogTestCommand()
         Reflection::class.java.getClassLoader() // initialize Reflection
 
         surfComponentApi.enable(this)
