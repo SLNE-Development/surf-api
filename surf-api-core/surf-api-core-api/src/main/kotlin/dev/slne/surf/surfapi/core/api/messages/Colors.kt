@@ -9,15 +9,11 @@ import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextColor.color
 
 /**
- * A class that defines all the colors used in the Surf system, ensuring a consistent visual style
- * across all Surf plugins.
- * This class provides predefined colors for various UI elements, including
- * informational messages, warnings, errors, and formatting components.
+ * Defines the standardized color palette for the Surf system.
  *
- * For reference,
- * see [Simons dc post](https://discord.com/channels/1094422317783851108/1096084922499862658).
- *
- * @see [Simons dc post](https://discord.com/channels/1094422317783851108/1096084922499862658)
+ * This interface provides a consistent visual style across all Surf plugins through predefined colors
+ * for UI elements, messages, and formatting components. All colors are defined as static fields
+ * in the companion object.
  */
 @Suppress("unused")
 interface Colors {
@@ -25,89 +21,80 @@ interface Colors {
         // -------------------- Surf Colors -------------------- //
 
         /**
-         * The primary Surf color (#3b92d1).
-         * Although rarely used in the system, it can be utilized
-         * for elements like titles and subtitles.
+         * Primary brand color (#3b92d1).
+         * Use for prominent UI elements such as titles and branded components.
          */
         @JvmField
         val PRIMARY: TextColor = color(0x3b92d1)
 
         /**
-         * The secondary Surf color (#5b5b5b), mainly used for elements such as subtitles.
+         * Secondary color (#5b5b5b).
+         * Use for less prominent elements such as subtitles and secondary text.
          */
         @JvmField
         val SECONDARY: TextColor = color(0x5b5b5b)
 
         /**
-         * The info color (#40d1db).
-         * Used to convey neutral information to users that is not directly
-         * a result of their actions,
-         * except in cases such as delayed status updates or toggle messages.
+         * Informational message color (#97B3F7).
+         * Use for neutral system information, status updates, and toggle confirmations
+         * that are not direct responses to user actions.
          */
         @JvmField
         val INFO: TextColor = color(0x97B3F7)
 
         /**
-         * The note color (#6EA6D9).
-         * Used for supplemental or side-note information that adds context,
-         * tips, or clarifications to a primary message.
-         * Prefer this for ancillary guidance rather than main content:
-         * use [INFO] for neutral system messages or status updates, and [PRIMARY]
-         * for branded elements such as titles or key headings.
+         * Note color (#6EA6D9).
+         * Use for supplemental information, tips, or clarifications that accompany primary messages.
+         * Prefer [INFO] for system messages and [PRIMARY] for branded headings.
          */
         @JvmField
         val NOTE: TextColor = color(0x6EA6D9)
 
         /**
-         * The success color (#65ff64).
-         * Indicates a positive outcome of a user action and is always
-         * used in direct response to the user.
+         * Success message color (#65ff64).
+         * Use exclusively for positive outcomes in direct response to user actions.
          */
         @JvmField
         val SUCCESS: TextColor = color(0x65ff64)
 
         /**
-         * The warning color (#f9c353).
-         * Used to caution users about potential issues, often serving
-         * as a precursor to an error message.
+         * Warning message color (#ffa64d).
+         * Use to indicate potential issues or caution users about actions that may lead to errors.
          */
         @JvmField
-        val WARNING: TextColor = color(0xf9c353)
+        val WARNING: TextColor = color(0xffa64d)
 
         /**
-         * The error (or danger) color (#ee3d51).
-         * Represents error messages directed at the user,
-         * often following a direct user action or warning of a critical issue.
+         * Error message color (#ee3d51).
+         * Use for error messages and critical issues resulting from user actions or system failures.
          */
         @JvmField
         val ERROR: TextColor = color(0xee3d51)
 
         /**
-         * The variable key color (#3b92d1).
-         * Typically used for key-value pair representations,
-         * such as in lists (for example, "Key 1: Value").
+         * Variable key color (#6B9BD1).
+         * Use for keys in key-value pairs (e.g., "Name: John").
          */
         @JvmField
-        val VARIABLE_KEY: TextColor = INFO
+        val VARIABLE_KEY: TextColor = color(0x6B9BD1)
 
         /**
-         * The variable value color (#f9c353).
-         * Commonly used to highlight values in lists and
-         * chat messages (for example, "Your property 'PROPERTY' has been sold.").
+         * Variable value color (#f9c353).
+         * Use to highlight dynamic values in messages (e.g., "Your property 'PROPERTY' has been sold").
          */
         @JvmField
-        val VARIABLE_VALUE: TextColor = WARNING
+        val VARIABLE_VALUE: TextColor = color(0xf9c353)
 
         /**
-         * The spacer color (GRAY). Used for visual separators such as "-", "...", and "/".
+         * Standard spacer color (GRAY).
+         * Use for visual separators such as "-", "...", and "/".
          */
         @JvmField
         val SPACER: NamedTextColor = NamedTextColor.GRAY
 
         /**
-         * The dark spacer color (DARK_GRAY).
-         * Used for darker separators, such as those found in
-         * prefixes like ">>" or "|".
+         * Dark spacer color (DARK_GRAY).
+         * Use for darker separators such as ">>" or "|" in prefixes.
          */
         @JvmField
         val DARK_SPACER: NamedTextColor = NamedTextColor.DARK_GRAY
@@ -115,8 +102,8 @@ interface Colors {
         // -------------------- Prefix -------------------- //
 
         /**
-         * The default prefix color (#3b92d1).
-         * Applied to all prefixes for consistency across Surf plugins.
+         * Default prefix color (#3b92d1).
+         * Applied to all message prefixes for consistency across Surf plugins.
          */
         @JvmField
         val PREFIX_COLOR: TextColor = PRIMARY
@@ -136,32 +123,31 @@ interface Colors {
         }
 
         /**
-         * The default prefix used across all Surf plugins, ensuring a recognizable and uniform
-         * identifier in messages.
+         * Default message prefix used across all Surf plugins.
          */
         @JvmField
         val PREFIX: Component = buildPrefix(PREFIX_COLOR)
 
         /**
-         * The default info prefix used in informational messages.
+         * Prefix for informational messages.
          */
         @JvmField
         val INFO_PREFIX: Component = buildPrefix(INFO)
 
         /**
-         * The default success prefix used in success messages.
+         * Prefix for success messages.
          */
         @JvmField
         val SUCCESS_PREFIX: Component = buildPrefix(SUCCESS)
 
         /**
-         * The default warning prefix used in warning messages.
+         * Prefix for warning messages.
          */
         @JvmField
         val WARNING_PREFIX: Component = buildPrefix(WARNING)
 
         /**
-         * The default error prefix used in error messages.
+         * Prefix for error messages.
          */
         @JvmField
         val ERROR_PREFIX: Component = buildPrefix(ERROR)
@@ -169,97 +155,97 @@ interface Colors {
         // -------------------- Default Colors -------------------- //
 
         /**
-         * Represents the color black.
+         * Minecraft black color.
          */
         @JvmField
         val BLACK: NamedTextColor = NamedTextColor.BLACK
 
         /**
-         * Represents the color dark blue.
+         * Minecraft dark blue color.
          */
         @JvmField
         val DARK_BLUE: NamedTextColor = NamedTextColor.DARK_BLUE
 
         /**
-         * Represents the color dark green.
+         * Minecraft dark green color.
          */
         @JvmField
         val DARK_GREEN: NamedTextColor = NamedTextColor.DARK_GREEN
 
         /**
-         * Represents the color dark aqua.
+         * Minecraft dark aqua color.
          */
         @JvmField
         val DARK_AQUA: NamedTextColor = NamedTextColor.DARK_AQUA
 
         /**
-         * Represents the color dark red.
+         * Minecraft dark red color.
          */
         @JvmField
         val DARK_RED: NamedTextColor = NamedTextColor.DARK_RED
 
         /**
-         * Represents the color dark purple.
+         * Minecraft dark purple color.
          */
         @JvmField
         val DARK_PURPLE: NamedTextColor = NamedTextColor.DARK_PURPLE
 
         /**
-         * Represents the color gold.
+         * Minecraft gold color.
          */
         @JvmField
         val GOLD: NamedTextColor = NamedTextColor.GOLD
 
         /**
-         * Represents the color gray.
+         * Minecraft gray color.
          */
         @JvmField
         val GRAY: NamedTextColor = NamedTextColor.GRAY
 
         /**
-         * Represents the color dark gray.
+         * Minecraft dark gray color.
          */
         @JvmField
         val DARK_GRAY: NamedTextColor = NamedTextColor.DARK_GRAY
 
         /**
-         * Represents the color blue.
+         * Minecraft blue color.
          */
         @JvmField
         val BLUE: NamedTextColor = NamedTextColor.BLUE
 
         /**
-         * Represents the color green.
+         * Minecraft green color.
          */
         @JvmField
         val GREEN: NamedTextColor = NamedTextColor.GREEN
 
         /**
-         * Represents the color aqua.
+         * Minecraft aqua color.
          */
         @JvmField
         val AQUA: NamedTextColor = NamedTextColor.AQUA
 
         /**
-         * Represents the color red.
+         * Minecraft red color.
          */
         @JvmField
         val RED: NamedTextColor = NamedTextColor.RED
 
         /**
-         * Represents the color light purple.
+         * Minecraft light purple color.
          */
         @JvmField
         val LIGHT_PURPLE: NamedTextColor = NamedTextColor.LIGHT_PURPLE
 
         /**
-         * Represents the color yellow.
+         * Minecraft yellow color.
          */
         @JvmField
         val YELLOW: NamedTextColor = NamedTextColor.YELLOW
 
         /**
-         * Represents the color white.
+         * Minecraft white color.
          */
         @JvmField
         val WHITE: NamedTextColor = NamedTextColor.WHITE

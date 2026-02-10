@@ -19,6 +19,7 @@ dependencies {
     api(libs.configurate.kotlin)
     compileOnlyApi(libs.flogger)
     compileOnlyApi(libs.commons.math4.core)
+    compileOnlyApi(libs.commons.math3)
     compileOnlyApi(libs.aide.reflection)
     api(libs.glm)
 

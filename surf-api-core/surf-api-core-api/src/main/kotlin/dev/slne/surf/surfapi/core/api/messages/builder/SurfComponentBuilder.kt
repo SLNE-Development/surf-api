@@ -7,7 +7,6 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCONNECT_HEADER
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCORD_LINK
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPERATOR
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.TIME_SEPARATOR
 import dev.slne.surf.surfapi.core.api.messages.NoLowercase
 import dev.slne.surf.surfapi.core.api.messages.joinToComponent
@@ -130,7 +129,7 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
         keyFormatter: (K) -> Component,
         valueFormatter: (V) -> Component,
         linePrefix: Component = PREFIX,
-        keyValueSeparator: Component = MAP_SEPERATOR,
+        keyValueSeparator: Component = CommonComponents.MAP_SEPARATOR,
     ) = append(map.joinToComponent(keyFormatter, valueFormatter, linePrefix, keyValueSeparator))
 
     fun appendTime(

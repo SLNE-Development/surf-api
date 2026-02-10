@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.core.api.config
 
+import dev.slne.surf.surfapi.core.api.config.manager.DazzlConfDeprecationMessageHolder
 import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager
 import dev.slne.surf.surfapi.core.api.util.requiredService
@@ -21,6 +22,7 @@ interface SurfConfigApi {
      * @return An instance of the configuration class [C].
      */
     @PreferUsingSpongeConfigOverDazzlConf
+    @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
     fun <C> createDazzlConfig(
         configClass: Class<C>,
         configFolder: Path,
@@ -35,6 +37,7 @@ interface SurfConfigApi {
      * @return An instance of the configuration class [C].
      */
     @PreferUsingSpongeConfigOverDazzlConf
+    @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
     fun <C> getDazzlConfig(configClass: Class<C>): C
 
     /**
@@ -45,6 +48,7 @@ interface SurfConfigApi {
      * @return The reloaded instance of the configuration class [C].
      */
     @PreferUsingSpongeConfigOverDazzlConf
+    @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
     fun <C> reloadDazzlConfig(configClass: Class<C>): C
 
     /**
@@ -134,18 +138,18 @@ interface SurfConfigApi {
      */
     fun <C> getSpongeConfigManagerForConfig(configClass: Class<C>): SpongeConfigManager<C>
 
-    companion object {
+    companion object: SurfConfigApi by surfConfigApi {
         /**
          * Retrieves the singleton instance of [SurfConfigApi].
          */
-        val instance = requiredService<SurfConfigApi>()
+        val instance = surfConfigApi
     }
 }
 
 /**
  * Retrieves the singleton instance of [SurfConfigApi].
  */
-val surfConfigApi get() = SurfConfigApi.instance
+val surfConfigApi = requiredService<SurfConfigApi>()
 
 /**
  * Creates a DazzlConf configuration using a reified type.
@@ -156,6 +160,8 @@ val surfConfigApi get() = SurfConfigApi.instance
  * @return An instance of the configuration class [C].
  */
 @PreferUsingSpongeConfigOverDazzlConf
+@Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
+@Suppress("DEPRECATION_ERROR")
 inline fun <reified C> SurfConfigApi.createDazzlConfig(
     configFolder: Path,
     configFileName: @YamlConfigFileNamePattern String,
@@ -168,6 +174,8 @@ inline fun <reified C> SurfConfigApi.createDazzlConfig(
  * @return An instance of the configuration class [C].
  */
 @PreferUsingSpongeConfigOverDazzlConf
+@Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
+@Suppress("DEPRECATION_ERROR")
 inline fun <reified C> SurfConfigApi.getDazzlConfig() = getDazzlConfig(C::class.java)
 
 /**
@@ -177,6 +185,8 @@ inline fun <reified C> SurfConfigApi.getDazzlConfig() = getDazzlConfig(C::class.
  * @return The reloaded instance of the configuration class [C].
  */
 @PreferUsingSpongeConfigOverDazzlConf
+@Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
+@Suppress("DEPRECATION_ERROR")
 inline fun <reified C> SurfConfigApi.reloadDazzlConfig() = reloadDazzlConfig(C::class.java)
 
 /**

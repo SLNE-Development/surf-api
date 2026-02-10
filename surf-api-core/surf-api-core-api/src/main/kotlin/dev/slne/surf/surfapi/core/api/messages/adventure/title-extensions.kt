@@ -165,17 +165,17 @@ class TitleTimesBuilder {
     /**
      * The fade-in duration before the title fully appears.
      */
-    internal var fadeIn: JavaDuration = Ticks.duration(10)
+    internal var fadeIn: JavaDuration = Title.DEFAULT_TIMES.fadeIn()
 
     /**
      * The duration for which the title remains visible.
      */
-    internal var stay: JavaDuration = Ticks.duration(70)
+    internal var stay: JavaDuration = Title.DEFAULT_TIMES.stay()
 
     /**
      * The fade-out duration before the title disappears.
      */
-    internal var fadeOut: JavaDuration = Ticks.duration(20)
+    internal var fadeOut: JavaDuration = Title.DEFAULT_TIMES.fadeOut()
 
 
     /**

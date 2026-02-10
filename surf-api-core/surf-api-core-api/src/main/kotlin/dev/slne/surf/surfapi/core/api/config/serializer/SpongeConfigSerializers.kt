@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.core.api.config.serializer
 
 import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
-import dev.slne.surf.surfapi.core.api.config.serializer.DefaultDazzlConfSerializers.ComponentSerializer.Companion.miniMessage
+import dev.slne.surf.surfapi.core.api.minimessage.SurfMiniMessageHolder
 import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.text.Component
 import org.spongepowered.configurate.ConfigurationNode
@@ -11,8 +11,8 @@ import org.spongepowered.configurate.serialize.SerializationException
 import org.spongepowered.configurate.serialize.TypeSerializer
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import org.spongepowered.configurate.util.CheckedConsumer
+import java.lang.reflect.AnnotatedParameterizedType
 import java.lang.reflect.AnnotatedType
-import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.*
 import java.util.function.Consumer
@@ -38,13 +38,9 @@ object SpongeConfigSerializers {
 
         @OptIn(PreferUsingSpongeConfigOverDazzlConf::class)
         override fun deserialize(type: Type?, node: ConfigurationNode): Component {
-            val message = node.string
+            val message = node.string ?: return Component.empty()
 
-            if (message == null) {
-                return Component.empty()
-            }
-
-            return miniMessage.deserialize(message)
+            return SurfMiniMessageHolder.miniMessage().deserialize(message)
         }
 
         @OptIn(PreferUsingSpongeConfigOverDazzlConf::class)
@@ -53,7 +49,7 @@ object SpongeConfigSerializers {
                 return
             }
 
-            node.set(miniMessage.serialize(obj))
+            node.set(SurfMiniMessageHolder.miniMessage().serialize(obj))
         }
     }
 
@@ -62,18 +58,16 @@ object SpongeConfigSerializers {
      */
     class LinkedListSerializer : AbstractListChildSerializer<LinkedList<Any>>() {
 
-        override fun elementType(containerType: Type?): Type {
-            if (containerType !is ParameterizedType) {
-                throw SerializationException(
-                    containerType,
-                    "Raw types are not supported for collections"
-                )
+        override fun elementType(containerType: AnnotatedType): AnnotatedType? {
+            if (containerType !is AnnotatedParameterizedType) {
+                throw SerializationException(containerType, "Raw types are not supported for collections")
             }
-            return containerType.actualTypeArguments[0]
+
+            return containerType.annotatedActualTypeArguments[0]
         }
 
-        override fun createNew(length: Int, elementType: AnnotatedType?): LinkedList<Any>? {
-            return LinkedList()
+        override fun createNew(length: Int, elementType: AnnotatedType?): LinkedList<Any> {
+            return LinkedList<Any>()
         }
 
         @Throws(SerializationException::class)

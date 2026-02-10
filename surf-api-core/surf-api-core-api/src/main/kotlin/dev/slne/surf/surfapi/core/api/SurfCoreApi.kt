@@ -21,17 +21,17 @@ interface SurfCoreApi {
      */
     fun getPlayer(playerUuid: UUID): Any?
 
-    companion object {
+    companion object : SurfCoreApi by surfCoreApi {
 
         /**
          * The instance of the SurfCoreApi.
          */
         @JvmStatic
-        val instance = requiredService<SurfCoreApi>()
+        val instance = surfCoreApi
     }
 }
 
 /**
  * The instance of the SurfCoreApi.
  */
-val surfCoreApi get() = SurfCoreApi.instance
+val surfCoreApi = requiredService<SurfCoreApi>()

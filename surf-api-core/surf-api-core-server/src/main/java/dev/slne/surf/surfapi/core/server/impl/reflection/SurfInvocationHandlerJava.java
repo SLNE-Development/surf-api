@@ -4,21 +4,18 @@ import dev.slne.surf.surfapi.core.api.reflection.Field.Type;
 import dev.slne.surf.surfapi.core.api.reflection.Name;
 import dev.slne.surf.surfapi.core.api.reflection.Static;
 import dev.slne.surf.surfapi.core.api.util.SurfUtil;
+import dev.slne.surf.surfapi.core.server.impl.reflection.reflection.ProxyCreationException;
+import dev.slne.surf.surfapi.core.server.impl.reflection.reflection.ProxyInvocationException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
+import java.lang.invoke.VarHandle;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +31,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     private final Class<T> proxyClass;
     private final Class<?> proxiedClass;
-    private final Object2ObjectMap<Method, Invokable> cache;
+    private final Object2ObjectMap<Method, @Nullable Invokable> cache;
     private final Map<Method, MethodHandle> defaultCache = new ConcurrentHashMap<>();
 
     public SurfInvocationHandlerJava(Class<T> proxyClass, Class<?> proxiedClass) {
@@ -52,13 +49,13 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         } else if (isHashCodeMethod(method)) {
             return System.identityHashCode(proxy);
         } else if (isToStringMethod(method)) {
-            return ToStringBuilder.reflectionToString(proxy);
+            return "SurfProxy[" + proxiedClass.getName() + "@" + Integer.toHexString(System.identityHashCode(proxy)) + "]";
         } else if (method.isDefault()) {
             return invokeDefault(proxy, method, args);
         } else {
             final Invokable invokable = cache.get(method);
             if (invokable == null) {
-                throw new IllegalStateException("No handler cached for " + method.getName());
+                throw new ProxyInvocationException("No handler found for method '" + method.getName() + "' in proxy for class " + proxiedClass.getName());
             } else {
                 return invokable.invoke(args != null ? args : EMPTY_ARGS);
             }
@@ -99,32 +96,22 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         final var constructorAnnotation = method.getDeclaredAnnotation(
                 dev.slne.surf.surfapi.core.api.reflection.Constructor.class);
         final var nameAnnotation = method.getDeclaredAnnotation(Name.class);
-        final var privateLookup = sneaky(() -> MethodHandles.privateLookupIn(proxiedClass, LOOKUP));
+
+        validateAnnotationCombination(method, fieldAnnotation, staticAnnotation, constructorAnnotation);
+
+        final MethodHandles.Lookup privateLookup;
+        try {
+            privateLookup = MethodHandles.privateLookupIn(proxiedClass, LOOKUP);
+        } catch (IllegalAccessException e) {
+            throw new ProxyCreationException(
+                    "Cannot access class " + proxiedClass.getName() +
+                            ". Module may not be open for reflection. " +
+                            "Consider adding 'opens " + proxiedClass.getPackageName() +
+                            ";' to your module-info.java", e);
+        }
 
         if (fieldAnnotation != null) {
-            final String fieldName = getMethodName(method, nameAnnotation, fieldAnnotation,
-                    staticAnnotation, constructorAnnotation);
-            final Field field = sneaky(() -> findField(proxiedClass, fieldName));
-            final boolean isGetter = fieldAnnotation.type() == Type.GETTER;
-            final MethodHandle handleGetter =
-                    isGetter ? sneaky(() -> privateLookup.unreflectGetter(field)) : null;
-            final MethodHandle handleSetter = !isGetter && !fieldAnnotation.overrideFinal()
-                    ? sneaky(() -> privateLookup.unreflectSetter(field)) : null;
-
-            if (isGetter) {
-                checkParamCount(method, staticAnnotation != null ? 0 : 1);
-                final boolean hasParams = staticAnnotation == null; // instance parameter
-                return new HandleInvokable(normalizeMethodHandleType(handleGetter), hasParams);
-            } else {
-                if (fieldAnnotation.overrideFinal()) {
-                    checkParamCount(method, staticAnnotation != null ? 1 : 2);
-                    return new ReflectionSetterInvokable(field, staticAnnotation != null);
-                }
-
-                checkParamCount(method, staticAnnotation != null ? 1 : 2);
-                final boolean hasParams = true; // setter always has params
-                return new HandleInvokable(normalizeMethodHandleType(handleSetter), hasParams);
-            }
+            return createFieldInvokable(method, fieldAnnotation, staticAnnotation, nameAnnotation, privateLookup);
         }
 
         if (constructorAnnotation != null) {
@@ -135,8 +122,9 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         }
 
         if (staticAnnotation == null && method.getParameterCount() == 0) {
-            throw new IllegalStateException(
-                    "Instance method '" + method.getName() + "' must have a receiver parameter");
+            throw new ProxyCreationException(
+                    "Instance method '" + method.getName() + "' must have at least one parameter " +
+                            "(the instance object). Add @Static if this should be a static method call.");
         }
 
         final Method target = sneaky(
@@ -144,6 +132,69 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         final MethodHandle handle = sneaky(() -> privateLookup.unreflect(target));
         final boolean hasParams = handle.type().parameterCount() > 0;
         return new HandleInvokable(normalizeMethodHandleType(handle), hasParams);
+    }
+
+    private Invokable createFieldInvokable(
+            final Method method,
+            final dev.slne.surf.surfapi.core.api.reflection.Field fieldAnnotation,
+            final @Nullable Static staticAnnotation,
+            final @Nullable Name nameAnnotation,
+            final MethodHandles.Lookup privateLookup
+    ) {
+        final String fieldName = getMethodName(method, nameAnnotation, fieldAnnotation,
+                staticAnnotation, null);
+        final Field field = sneaky(() -> findField(proxiedClass, fieldName));
+        final boolean isGetter = fieldAnnotation.type() == Type.GETTER;
+
+        if (isGetter) {
+            final java.lang.invoke.MethodHandle handleGetter = sneaky(() -> privateLookup.unreflectGetter(field));
+            final boolean hasParams = staticAnnotation == null;
+            return new HandleInvokable(normalizeMethodHandleType(handleGetter), hasParams);
+        } else {
+            if (fieldAnnotation.overrideFinal()) {
+                return new VarHandleSetterInvokable(field, staticAnnotation != null, privateLookup);
+            }
+
+            final java.lang.invoke.MethodHandle handleSetter = sneaky(() -> privateLookup.unreflectSetter(field));
+            return new HandleInvokable(normalizeMethodHandleType(handleSetter), true);
+        }
+    }
+
+    private static void validateAnnotationCombination(
+            final Method method,
+            final dev.slne.surf.surfapi.core.api.reflection.@Nullable Field fieldAnnotation,
+            final @Nullable Static staticAnnotation,
+            final dev.slne.surf.surfapi.core.api.reflection.@Nullable Constructor constructorAnnotation
+    ) {
+        int annotationCount = 0;
+        if (fieldAnnotation != null) annotationCount++;
+        if (constructorAnnotation != null) annotationCount++;
+
+        if (annotationCount > 1) {
+            throw new ProxyCreationException(
+                    "Method '" + method.getName() + "' has multiple incompatible annotations. " +
+                            "Use only one of: @Field, @Constructor");
+        }
+
+        if (constructorAnnotation != null && staticAnnotation != null) {
+            throw new ProxyCreationException(
+                    "Method '" + method.getName() + "' cannot have both @Constructor and @Static");
+        }
+
+        if (fieldAnnotation != null) {
+            final boolean isStatic = staticAnnotation != null;
+            final boolean isGetter = fieldAnnotation.type() == Type.GETTER;
+            final int paramCount = method.getParameterCount();
+            final int expectedParams = isStatic ? (isGetter ? 0 : 1) : (isGetter ? 1 : 2);
+
+            if (paramCount != expectedParams) {
+                throw new ProxyCreationException(
+                        "Method '" + method.getName() + "' has invalid parameter count. " +
+                                "Expected " + expectedParams + " parameters for " +
+                                (isStatic ? "static " : "instance ") +
+                                (isGetter ? "getter" : "setter") + ", found " + paramCount);
+            }
+        }
     }
 
     private static MethodHandle normalizeMethodHandleType(final MethodHandle handle) {
@@ -157,10 +208,23 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     private static Field findField(final Class<?> clazz, final String name)
             throws NoSuchFieldException {
-        final Field field = FieldUtils.getField(clazz, name, true);
-        if (field == null) {
-            throw new NoSuchFieldException(name);
+        Field field = null;
+        Class<?> current = clazz;
+
+        while (current != null && field == null) {
+            try {
+                field = current.getDeclaredField(name);
+            } catch (NoSuchFieldException e) {
+                current = current.getSuperclass();
+            }
         }
+
+        if (field == null) {
+            throw new NoSuchFieldException("Field '" + name + "' not found in class " +
+                    clazz.getName() + " or its superclasses");
+        }
+
+        field.setAccessible(true);
         return field;
     }
 
@@ -181,32 +245,50 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         final Class<?>[] paramTypes = Arrays.copyOfRange(original.getParameterTypes(), paramOffset,
                 original.getParameterCount());
         final String methodName = getMethodName(original, nameAnnotation, null, staticAnnotation, null);
-        Method method = MethodUtils.getMatchingMethod(clazz, methodName, paramTypes);
+        Method method = findMethodExact(clazz, methodName, paramTypes);
 
         if (method == null && isAllObjectParams(paramTypes)) {
-            method = findMethodByNameAndParamCount(clazz, methodName, paramTypes.length);
+            method = Arrays.stream(clazz.getDeclaredMethods())
+                    .filter(m -> m.getName().equals(methodName))
+                    .filter(m -> m.getParameterCount() == paramTypes.length)
+                    .findFirst()
+                    .orElse(null);
         }
 
         if (method != null) {
             method.setAccessible(true);
+            return method;
         }
 
-        if (method == null) {
-            throw new NoSuchMethodException(
-                    "Method '" + methodName + "' with params " + Arrays.toString(paramTypes));
-        }
+        final String availableMethods = Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> m.getName().equals(methodName))
+                .map(m -> methodName + "(" +
+                        Arrays.stream(m.getParameterTypes())
+                                .map(Class::getSimpleName)
+                                .collect(Collectors.joining(", ")) + ")")
+                .collect(Collectors.joining(", "));
 
-        return method;
+        throw new NoSuchMethodException(
+                "Method '" + methodName + "' with parameters [" +
+                        Arrays.stream(paramTypes).map(Class::getSimpleName).collect(Collectors.joining(", ")) +
+                        "] not found in class " + clazz.getName() +
+                        (availableMethods.isEmpty() ? "" : ". Available methods with same name: " + availableMethods));
     }
 
-    private static @Nullable Method findMethodByNameAndParamCount(
-            final Class<?> clazz,
-            final String methodName,
-            final int paramCount
-    ) {
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (method.getName().equals(methodName) && method.getParameterCount() == paramCount) {
-                return method;
+    private static @Nullable Method findMethodExact(final Class<?> clazz, final String name,
+                                                    final Class<?>[] paramTypes) {
+        Class<?> current = clazz;
+        while (current != null) {
+            try {
+                return current.getDeclaredMethod(name, paramTypes);
+            } catch (NoSuchMethodException e) {
+                for (Method method : current.getDeclaredMethods()) {
+                    if (method.getName().equals(name) &&
+                            Arrays.equals(method.getParameterTypes(), paramTypes)) {
+                        return method;
+                    }
+                }
+                current = current.getSuperclass();
             }
         }
         return null;
@@ -228,7 +310,6 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
             final @Nullable Static staticAnnotation,
             final dev.slne.surf.surfapi.core.api.reflection.@Nullable Constructor constructorAnnotation
     ) {
-        // when block converted to if-else structure
         if (nameAnnotation != null && !nameAnnotation.value().isBlank()) {
             return nameAnnotation.value();
         } else if (fieldAnnotation != null && !fieldAnnotation.name().isBlank()) {
@@ -267,7 +348,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         return isEqualsMethod(method) || isHashCodeMethod(method) || isToStringMethod(method);
     }
 
-    private sealed interface Invokable permits HandleInvokable, ReflectionSetterInvokable {
+    private sealed interface Invokable permits HandleInvokable, ReflectionSetterInvokable, VarHandleSetterInvokable {
 
         @Nullable
         Object invoke(final Object[] args) throws Throwable;
@@ -298,6 +379,109 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
             return null;
         }
     }
+
+    private record VarHandleSetterInvokable(Field field, boolean isStatic,
+                                            MethodHandles.Lookup lookup) implements Invokable {
+        @Override
+        public @Nullable Object invoke(Object[] args) throws ProxyInvocationException {
+            if (Modifier.isFinal(field.getModifiers())) {
+                return setFieldViaUnsafe(args);
+            }
+
+            try {
+                VarHandle varHandle = isStatic
+                        ? lookup.findStaticVarHandle(field.getDeclaringClass(), field.getName(), field.getType())
+                        : lookup.findVarHandle(field.getDeclaringClass(), field.getName(), field.getType());
+
+                if (isStatic) {
+                    varHandle.set(args[0]);
+                } else {
+                    varHandle.set(args[0], args[1]);
+                }
+                return null;
+            } catch (Exception e) {
+                try {
+                    return setFieldViaUnsafe(args);
+                } catch (Exception e2) {
+                    // If we reach this point, it means we failed to set the final field using both VarHandle and Unsafe.
+                    String moduleName = field.getDeclaringClass().getModule().getName();
+                    String errorMsg = buildFinalFieldErrorMessage(moduleName);
+                    throw new ProxyInvocationException(errorMsg, e2);
+                }
+            }
+        }
+
+        @SuppressWarnings("removal")
+        private @Nullable Object setFieldViaUnsafe(Object[] args) throws ProxyInvocationException {
+            sun.misc.Unsafe unsafe = SurfUtil.getUnsafe();
+
+            long offset = isStatic
+                    ? unsafe.staticFieldOffset(field)
+                    : unsafe.objectFieldOffset(field);
+
+            Object value = isStatic ? args[0] : args[1];
+            Object target = isStatic ? unsafe.staticFieldBase(field) : args[0];
+
+            Class<?> type = field.getType();
+            if (type == int.class) {
+                unsafe.putInt(target, offset, (Integer) value);
+            } else if (type == long.class) {
+                unsafe.putLong(target, offset, (Long) value);
+            } else if (type == boolean.class) {
+                unsafe.putBoolean(target, offset, (Boolean) value);
+            } else if (type == byte.class) {
+                unsafe.putByte(target, offset, (Byte) value);
+            } else if (type == short.class) {
+                unsafe.putShort(target, offset, (Short) value);
+            } else if (type == char.class) {
+                unsafe.putChar(target, offset, (Character) value);
+            } else if (type == float.class) {
+                unsafe.putFloat(target, offset, (Float) value);
+            } else if (type == double.class) {
+                unsafe.putDouble(target, offset, (Double) value);
+            } else {
+                unsafe.putObject(target, offset, value);
+            }
+
+            return null;
+        }
+
+        private String buildFinalFieldErrorMessage(@Nullable String moduleName) {
+            String javaVersion = System.getProperty("java.version");
+            String fieldInfo = (isStatic ? "static " : "") + "final field '" +
+                    field.getName() + "' in class " +
+                    field.getDeclaringClass().getName();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Cannot set ").append(fieldInfo).append(".\n\n");
+            sb.append("Java ").append(javaVersion).append(" enforces final field immutability (JEP 500).\n\n");
+            sb.append("SHORT-TERM SOLUTIONS:\n");
+            sb.append("1. Allow final field mutation temporarily:\n");
+            sb.append("   --illegal-final-field-mutation=allow\n\n");
+            sb.append("2. Get warnings but allow mutation (current default in JDK 26):\n");
+            sb.append("   --illegal-final-field-mutation=warn\n\n");
+            sb.append("RECOMMENDED SOLUTION:\n");
+            sb.append("Enable final field mutation for your module:\n");
+
+            if (moduleName != null && !moduleName.isEmpty()) {
+                sb.append("   --enable-final-field-mutation=").append(moduleName).append("\n\n");
+            } else {
+                sb.append("   --enable-final-field-mutation=ALL-UNNAMED\n\n");
+            }
+
+            sb.append("Add this to:\n");
+            sb.append("- Command line: java --enable-final-field-mutation=... -jar app.jar\n");
+            sb.append("- Environment: export JDK_JAVA_OPTIONS=\"--enable-final-field-mutation=...\"\n");
+            sb.append("- JAR Manifest: Enable-Final-Field-Mutation: ALL-UNNAMED\n\n");
+
+            sb.append("IMPORTANT: This capability will be further restricted in future Java releases.\n");
+            sb.append("Consider refactoring to avoid final field mutation where possible.\n");
+            sb.append("See: https://openjdk.org/jeps/500");
+
+            return sb.toString();
+        }
+    }
+
 
     private static <T> T sneaky(final ExceptionalSupplier<T> supplier) {
         try {

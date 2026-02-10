@@ -1,63 +1,151 @@
 package dev.slne.surf.surfapi.core.api.util
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import dev.slne.surf.surfapi.core.api.util.SurfTypeParameterMatcher.Companion.find
+import dev.slne.surf.surfapi.core.api.util.SurfTypeParameterMatcher.Companion.get
 import java.lang.reflect.Array
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
-import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * A utility class for matching type parameters of generic types at runtime.
+ * A utility class for matching type parameters of generic types at runtime using reflection.
+ *
+ * This class resolves and matches generic type parameters from parameterized superclasses or interfaces,
+ * enabling runtime type checking of generic types. It provides caching mechanisms to optimize repeated
+ * lookups and is fully thread-safe.
+ *
+ * ## Example Usage
+ *
+ * ```kotlin
+ * // Define a generic handler interface
+ * interface MessageHandler<T> {
+ *     fun handle(message: T)
+ * }
+ *
+ * // Implement the handler with a concrete type
+ * class StringMessageHandler : MessageHandler<String> {
+ *     override fun handle(message: String) {
+ *         println("Handling: $message")
+ *     }
+ * }
+ *
+ * // Use the type parameter matcher
+ * val handler = StringMessageHandler()
+ * val matcher = SurfTypeParameterMatcher.find(handler, MessageHandler::class.java, "T")
+ *
+ * println(matcher.match("Hello"))  // true - String matches
+ * println(matcher.match(123))      // false - Int doesn't match
+ * ```
+ *
+ * ## Thread Safety
+ *
+ * All caching operations are thread-safe. Multiple threads can concurrently call [get] and [find]
+ * without external synchronization.
  */
 abstract class SurfTypeParameterMatcher {
 
     /**
-     * Determines whether the provided object matches the criteria defined by the matcher.
+     * Determines whether the provided object matches the expected type parameter.
      *
-     * @param any The object to be checked.
-     * @return `true` if the object matches the criteria, `false` otherwise.
+     * @param any The object to be checked against the type parameter.
+     * @return `true` if the object is an instance of the matched type, `false` otherwise.
      */
     abstract fun match(any: Any): Boolean
 
     companion object {
         /**
-         * Cache for storing matchers based on their parameter types.
+         * Thread-safe cache for storing matchers based on parameterized types and type parameter names.
+         * The outer map is concurrent, and each inner map is synchronized during creation.
          */
-        private val getCache = IdentityHashMap<Class<*>, SurfTypeParameterMatcher>()
+        private val findCache = ConcurrentHashMap<Class<*>, ConcurrentHashMap<String, SurfTypeParameterMatcher>>()
 
         /**
-         * Cache for storing matchers based on their parameterized superclass and type parameter names.
-         */
-        private val findCache =
-            IdentityHashMap<Class<*>, Object2ObjectMap<String, SurfTypeParameterMatcher>>()
-
-        /**
-         * A no-operation matcher that always returns `true`.
+         * A no-operation matcher that always returns `true`, used for [Object] type parameters.
          */
         private val noop = object : SurfTypeParameterMatcher() {
             override fun match(any: Any): Boolean = true
         }
 
         /**
-         * Retrieves a [SurfTypeParameterMatcher] for the given parameter type.
-         *
-         * @param parameterType The class representing the type parameter.
-         * @return A [SurfTypeParameterMatcher] for the provided type.
+         * Thread-safe cache for storing matchers based on parameter types.
+         * Uses [ClassValue] to ensure that the cache is automatically cleaned up when classes are unloaded,
+         * preventing memory leaks.
          */
-        operator fun get(parameterType: Class<*>): SurfTypeParameterMatcher =
-            getCache.computeIfAbsent(parameterType) {
-                if (parameterType == Object::class.java) noop else ReflectiveMatcher(parameterType)
+        private val getCache = object : ClassValue<SurfTypeParameterMatcher>() {
+            @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+            override fun computeValue(type: Class<*>): SurfTypeParameterMatcher {
+                if (type == Object::class.java) return noop
+                return ReflectiveMatcher(type)
             }
+        }
 
         /**
-         * Finds and retrieves a [SurfTypeParameterMatcher] for a specified type parameter name of
-         * a parameterized superclass or interface.
+         * Retrieves a [SurfTypeParameterMatcher] for the given parameter type.
+         *
+         * Results are cached for performance. For `Object` type, returns a no-op matcher
+         * that always matches any object.
+         *
+         * ## Example
+         *
+         * ```kotlin
+         * val stringMatcher = SurfTypeParameterMatcher[String::class.java]
+         * println(stringMatcher.match("test"))  // true
+         * println(stringMatcher.match(42))      // false
+         *
+         * val objectMatcher = SurfTypeParameterMatcher[Object::class.java]
+         * println(objectMatcher.match("anything"))  // true (always matches)
+         * ```
+         *
+         * @param parameterType The class representing the type parameter to match.
+         * @return A [SurfTypeParameterMatcher] for the provided type.
+         */
+        operator fun get(parameterType: Class<*>): SurfTypeParameterMatcher = getCache.get(parameterType)
+
+        /**
+         * Finds and retrieves a [SurfTypeParameterMatcher] for a specified type parameter name
+         * from a parameterized superclass or interface.
+         *
+         * This method analyzes the object's class hierarchy to resolve the actual runtime type
+         * of the specified generic type parameter. Results are cached per class and type parameter name.
+         *
+         * ## Example
+         *
+         * ```kotlin
+         * // Generic repository interface
+         * interface Repository<T, ID> {
+         *     fun findById(id: ID): T?
+         * }
+         *
+         * // Concrete implementation
+         * class UserRepository : Repository<User, Long> {
+         *     override fun findById(id: Long): User? = null
+         * }
+         *
+         * val repo = UserRepository()
+         *
+         * // Match the entity type parameter
+         * val entityMatcher = SurfTypeParameterMatcher.find(
+         *     repo,
+         *     Repository::class.java,
+         *     "T"
+         * )
+         * println(entityMatcher.match(User()))  // true
+         *
+         * // Match the ID type parameter
+         * val idMatcher = SurfTypeParameterMatcher.find(
+         *     repo,
+         *     Repository::class.java,
+         *     "ID"
+         * )
+         * println(idMatcher.match(123L))  // true
+         * println(idMatcher.match("not-a-long"))  // false
+         * ```
          *
          * @param any The object whose type parameters are being analyzed.
          * @param parametrizedType The class representing the parameterized superclass or interface.
-         * @param typeParamName The name of the type parameter to resolve.
+         * @param typeParamName The name of the type parameter to resolve (e.g., "T", "E", "K").
          * @return A [SurfTypeParameterMatcher] for the resolved type parameter.
+         * @throws IllegalStateException If the type parameter cannot be resolved from the class hierarchy.
          */
         fun find(
             any: Any,
@@ -65,8 +153,8 @@ abstract class SurfTypeParameterMatcher {
             typeParamName: String
         ): SurfTypeParameterMatcher {
             val thisClass = any.javaClass
-            val map = findCache.computeIfAbsent(thisClass) { Object2ObjectOpenHashMap() }
-            return map.computeIfAbsent(typeParamName) {
+            val innerMap = findCache.computeIfAbsent(thisClass) { ConcurrentHashMap() }
+            return innerMap.computeIfAbsent(typeParamName) {
                 get(find0(any, parametrizedType, typeParamName))
             }
         }
@@ -93,6 +181,14 @@ abstract class SurfTypeParameterMatcher {
             return result ?: fail(thisClass, typeParamName)
         }
 
+        /**
+         * Attempts to resolve the type parameter by traversing the superclass hierarchy.
+         *
+         * @param currentClass The class to start traversal from.
+         * @param parametrizedType The target parameterized type.
+         * @param typeParamName The name of the type parameter.
+         * @return The resolved class or `null` if not found in the superclass hierarchy.
+         */
         private fun resolveTypeFromSuperclass(
             currentClass: Class<*>,
             parametrizedType: Class<*>,
@@ -112,6 +208,14 @@ abstract class SurfTypeParameterMatcher {
             return null
         }
 
+        /**
+         * Attempts to resolve the type parameter by examining implemented interfaces.
+         *
+         * @param currentClass The class whose interfaces are being examined.
+         * @param parametrizedType The target parameterized type.
+         * @param typeParamName The name of the type parameter.
+         * @return The resolved class or `null` if not found in the interfaces.
+         */
         private fun resolveTypeFromInterfaces(
             currentClass: Class<*>,
             parametrizedType: Class<*>,
@@ -129,6 +233,14 @@ abstract class SurfTypeParameterMatcher {
             return null
         }
 
+        /**
+         * Extracts the actual type argument from a parameterized type.
+         *
+         * @param parameterizedType The parameterized type containing type arguments.
+         * @param parametrizedType The base parameterized class/interface.
+         * @param typeParamName The name of the type parameter to extract.
+         * @return The resolved class or `null` if extraction fails.
+         */
         private fun resolveTypeFromGenericInfo(
             parameterizedType: ParameterizedType?,
             parametrizedType: Class<*>,
@@ -156,7 +268,7 @@ abstract class SurfTypeParameterMatcher {
          *
          * @param type The class being analyzed.
          * @param typeParamName The name of the type parameter.
-         * @throws IllegalStateException Always thrown with a message indicating the unresolved parameter.
+         * @throws IllegalStateException Always thrown with a descriptive error message.
          */
         private fun fail(type: Class<*>, typeParamName: String): Nothing {
             throw IllegalStateException(
@@ -165,9 +277,10 @@ abstract class SurfTypeParameterMatcher {
         }
 
         /**
-         * A [SurfTypeParameterMatcher] implementation that matches objects based on their runtime type.
+         * A [SurfTypeParameterMatcher] implementation that matches objects based on their runtime type
+         * using [Class.isInstance].
          *
-         * @param type The class representing the type to match.
+         * @param type The class representing the type to match against.
          */
         private class ReflectiveMatcher(private val type: Class<*>) : SurfTypeParameterMatcher() {
             override fun match(any: Any) = type.isInstance(any)

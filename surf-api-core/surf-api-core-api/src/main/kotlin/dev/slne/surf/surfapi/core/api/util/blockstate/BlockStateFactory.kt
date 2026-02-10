@@ -8,6 +8,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
+@Deprecated("Not longer maintained.")
 interface BlockStateFactory {
     @Suppress("unused")
     interface Builder {

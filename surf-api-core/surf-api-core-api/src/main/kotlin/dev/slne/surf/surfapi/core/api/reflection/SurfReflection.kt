@@ -3,54 +3,86 @@ package dev.slne.surf.surfapi.core.api.reflection
 import dev.slne.surf.surfapi.core.api.util.requiredService
 
 /**
- * Represents a high-level interface for creating dynamic proxies for classes.
- * The SurfReflection interface enables creation of proxy instances for given
- * classes at runtime, typically for facilitating reflective operations or interception.
+ * Provides a high-level interface for creating dynamic proxies that enable reflective access to classes.
+ *
+ * SurfReflection allows you to define an interface annotated with [SurfProxy] and its methods with
+ * reflection annotations ([Field], [Constructor], [Static], etc.) to access private or internal
+ * members of a target class at runtime without direct reflection calls.
+ *
+ * Example usage:
+ * ```kotlin
+ * @SurfProxy(qualifiedName = "com.example.internal.HiddenClass")
+ * interface HiddenClassProxy {
+ *     // Access private field
+ *     @Field(name = "secretValue", type = Field.Type.GETTER)
+ *     fun getSecret(instance: Any): String
+ *
+ *     // Call private static method
+ *     @Static
+ *     fun staticMethod(param: String): Int
+ *
+ *     // Invoke constructor
+ *     @Constructor
+ *     fun create(arg: String): Any
+ * }
+ *
+ * // Create proxy and use it
+ * val proxy = surfReflection.createProxy<HiddenClassProxy>()
+ * val instance = proxy.create("test")
+ * val secret = proxy.getSecret(instance)
+ * val result = proxy.staticMethod("value")
+ * ```
  */
 interface SurfReflection {
     /**
      * Creates a dynamic proxy instance for the specified class using the provided class loader.
-     * This function is typically used for creating runtime proxies to enable reflective operations
-     * or to intercept method calls on the provided class type.
      *
-     * @param T The type of the class for which the proxy is created.
-     * @param clazz The `Class` object representing the class for which the proxy needs to be created.
-     * @param classLoader The `ClassLoader` to be used for defining the proxy class.
-     * @return A dynamic proxy instance of the specified class type `T`.
-     * @throws IllegalArgumentException If the provided class or class loader is invalid, or if a proxy cannot be created.
+     * The class must be an interface annotated with [SurfProxy]. The proxy will intercept method
+     * calls and translate them to reflective operations on the target class specified in [SurfProxy].
+     *
+     * @param T The proxy interface type, must be annotated with [SurfProxy]
+     * @param clazz The interface class object for which the proxy is created
+     * @param classLoader The ClassLoader to use for loading the target class and defining the proxy
+     * @return A dynamic proxy instance implementing the specified interface
+     * @throws IllegalArgumentException If the class is not an interface, lacks [SurfProxy] annotation,
+     *         or if the target class specified in [SurfProxy] cannot be found
      */
-    fun <T: Any> createProxy(clazz: Class<T>, classLoader: ClassLoader): T
+    fun <T : Any> createProxy(clazz: Class<T>, classLoader: ClassLoader): T
 
     /**
-     * Creates a dynamic proxy instance for the specified class using its class loader.
-     * This method simplifies the creation of runtime proxies by leveraging the provided class.
+     * Creates a dynamic proxy instance using the class's own ClassLoader.
      *
-     * @param T The type of the class for which the proxy is created.
-     * @param clazz The `Class` object representing the class for which the proxy needs to be created.
-     * @return A dynamic proxy instance of the specified class type `T`.
-     * @throws IllegalArgumentException If the provided class or class loader is invalid, or if a proxy cannot be created.
+     * This is a convenience method that delegates to [createProxy] with the class's own ClassLoader.
+     *
+     * @param T The proxy interface type, must be annotated with [SurfProxy]
+     * @param clazz The interface class object for which the proxy is created
+     * @return A dynamic proxy instance implementing the specified interface
+     * @throws IllegalArgumentException If the class is not an interface, lacks [SurfProxy] annotation,
+     *         or if the target class cannot be found or accessed
      */
-    fun <T: Any> createProxy(clazz: Class<T>): T = createProxy<T>(clazz, clazz.getClassLoader())
+    fun <T : Any> createProxy(clazz: Class<T>): T = createProxy(clazz, clazz.classLoader)
 
-    companion object {
+    companion object : SurfReflection by surfReflection {
         /**
          * The singleton instance of the SurfReflection interface.
          */
         @JvmStatic
-        val instance = requiredService<SurfReflection>()
+        val instance = surfReflection
     }
 }
 
 /**
  * The singleton instance of the SurfReflection interface.
  */
-val surfReflection get() = SurfReflection.instance
+val surfReflection = requiredService<SurfReflection>()
 
 /**
- * Creates a dynamic proxy instance for the specified class type using its class loader.
- * This method provides a concise inline approach by leveraging the reified type parameter.
+ * Creates a dynamic proxy for the reified type parameter.
  *
- * @return A dynamic proxy instance of the specified class type `T`.
- * @throws IllegalArgumentException If the proxy cannot be created for the provided class type `T`.
+ * This inline extension function provides type-safe proxy creation without explicitly passing the class.
+ *
+ * @param T The proxy interface type, must be annotated with [SurfProxy]
+ * @return A dynamic proxy instance of type T
+ * @throws IllegalArgumentException If T is not properly configured for proxy creation
  */
-inline fun <reified T: Any> SurfReflection.createProxy(): T = createProxy<T>(T::class.java)
+inline fun <reified T : Any> SurfReflection.createProxy(): T = createProxy(T::class.java)

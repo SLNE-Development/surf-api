@@ -7,6 +7,21 @@ import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.Style
 import kotlin.experimental.ExperimentalTypeInference
 
+interface SuspendPagination<T> {
+    suspend fun render(content: Collection<T>, page: Int = 1): List<Component>
+    suspend fun renderComponent(content: Collection<T>, page: Int = 1): Component {
+        return Component.join(JoinConfiguration.newlines(), render(content, page))
+    }
+
+    companion object {
+        @OptIn(ExperimentalTypeInference::class)
+        operator fun <T> invoke(@BuilderInference block: SuspendPaginationBuilder<T>.() -> Unit): SuspendPagination<T> {
+            val builder = InternalPaginationBridge.instance.createPaginationBuilderSuspend<T>()
+            builder.block()
+            return builder.build()
+        }
+    }
+}
 
 interface Pagination<T> {
 

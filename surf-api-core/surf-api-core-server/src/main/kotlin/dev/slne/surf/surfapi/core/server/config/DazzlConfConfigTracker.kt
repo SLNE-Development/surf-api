@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION_ERROR")
 package dev.slne.surf.surfapi.core.server.config
 
 import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
