@@ -4,6 +4,10 @@ import com.github.retrooper.packetevents.event.PacketListenerAbstract
 import com.github.retrooper.packetevents.event.PacketListenerPriority
 import com.github.retrooper.packetevents.event.PacketSendEvent
 import com.github.retrooper.packetevents.protocol.packettype.PacketType.Play
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage
+import dev.slne.surf.surfapi.core.api.messages.ComponentMessage
+import dev.slne.surf.surfapi.core.api.messages.adventure.plain
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 
 class ChatPacketListener(priority: PacketListenerPriority) : PacketListenerAbstract(priority) {
     override fun onPacketSend(event: PacketSendEvent) { // TODO: 02.03.2024 00:34 - packet events need to fix their wrapper
@@ -11,20 +15,17 @@ class ChatPacketListener(priority: PacketListenerPriority) : PacketListenerAbstr
             return
         }
 
-        //    final WrapperPlayServerSystemChatMessage packet = new WrapperPlayServerSystemChatMessage(event);
-//    final String message = serializer.serialize(packet.getMessage());
+        val packet = WrapperPlayServerSystemChatMessage(event)
+        val message = packet.message.plain()
 
-//    System.out.println("Message: " + message);
-//
-//    if (!message.startsWith(ComponentMessage.COMPONENT_MESSAGE_PREFIX)) {
-//      return;
-//    }
-//
-//    System.out.println("Message starts with prefix");
-//
-//    final Component coloredMessage = GsonComponentSerializer.gson()
-//        .deserialize(message.substring(ComponentMessage.COMPONENT_MESSAGE_PREFIX.length()));
-//
-//    packet.setMessage(coloredMessage);
+        if (!message.startsWith(ComponentMessage.COMPONENT_MESSAGE_PREFIX)) {
+            return
+        }
+
+        val coloredMessage = GsonComponentSerializer.gson()
+            .deserialize(message.substring(ComponentMessage.COMPONENT_MESSAGE_PREFIX.length))
+
+        packet.message = coloredMessage
+        event.markForReEncode(true)
     }
 }
