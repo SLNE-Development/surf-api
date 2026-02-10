@@ -1,13 +1,16 @@
 package dev.slne.surf.surfapi.core.api.util
 
 import net.kyori.adventure.util.Services
+import java.util.*
 
 /**
- * Retrieves a required service of the specified type using `Services.serviceWithFallback`.
- * If the service is not available, it throws an `Error`.
+ * Retrieves a required service of type [T] using the Adventure service provider mechanism.
  *
- * @return The service instance of the specified type `T` if available.
- * @throws Error if the service of type `T` is not available.
+ * This function uses `Services.serviceWithFallback` to locate a service implementation.
+ * If no service provider is registered for the specified type, an exception is thrown.
+ *
+ * @return the service instance of type [T]
+ * @throws ServiceConfigurationError if the service of type [T] is not available
  */
 inline fun <reified T> requiredService(): T = Services.serviceWithFallback(T::class.java)
-    .orElseThrow { Error("Service ${T::class.java.name} not available") }
+    .orElseThrow { ServiceConfigurationError("Service ${T::class.java.name} not available") }
