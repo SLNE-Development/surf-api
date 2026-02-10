@@ -1,30 +1,27 @@
 @file:Suppress("DEPRECATION_ERROR")
+
 package dev.slne.surf.surfapi.core.server.config
 
 import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.manager.DazzlConfConfigManager
 import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
-import dev.slne.surf.surfapi.core.api.util.synchronize
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 @PreferUsingSpongeConfigOverDazzlConf
 object DazzlConfConfigTracker {
-    private val configManagers =
-        mutableObject2ObjectMapOf<Class<*>, DazzlConfConfigManager<*>>().synchronize()
+    private val configManagers = ConcurrentHashMap<Class<*>, DazzlConfConfigManager<*>>()
 
     @Suppress("UNCHECKED_CAST")
     fun <C> getConfig(configClass: Class<C>): C {
-        val manager =
-            configManagers[configClass] ?: error("No config manager found for $configClass")
+        val manager = configManagers[configClass] ?: error("No config manager found for $configClass")
 
         return manager.config as C
     }
 
     @Suppress("UNCHECKED_CAST")
     fun <C> reloadConfig(configClass: Class<C>): C {
-        val manager =
-            configManagers[configClass] ?: error("No config manager found for $configClass")
+        val manager = configManagers[configClass] ?: error("No config manager found for $configClass")
 
         return manager.reloadConfig() as C
     }
@@ -34,7 +31,6 @@ object DazzlConfConfigTracker {
         configFolder: Path,
         configFileName: @YamlConfigFileNamePattern String
     ) {
-        configManagers[configClass] =
-            DazzlConfConfigManager.create(configClass, configFolder, configFileName)
+        configManagers[configClass] = DazzlConfConfigManager.create(configClass, configFolder, configFileName)
     }
 }
