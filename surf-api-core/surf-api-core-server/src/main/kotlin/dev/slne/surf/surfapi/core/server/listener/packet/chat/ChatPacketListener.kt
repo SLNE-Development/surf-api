@@ -10,7 +10,7 @@ import dev.slne.surf.surfapi.core.api.messages.adventure.plain
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 
 class ChatPacketListener(priority: PacketListenerPriority) : PacketListenerAbstract(priority) {
-    override fun onPacketSend(event: PacketSendEvent) { // TODO: 02.03.2024 00:34 - packet events need to fix their wrapper
+    override fun onPacketSend(event: PacketSendEvent) {
         if (event.packetType != Play.Server.SYSTEM_CHAT_MESSAGE) {
             return
         }
