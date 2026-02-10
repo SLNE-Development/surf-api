@@ -10,6 +10,7 @@ import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
 import dev.slne.surf.surfapi.core.server.CoreInstance
+import dev.slne.surf.surfapi.velocity.api.metrics.Metrics
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -29,7 +30,11 @@ class VelocityMain @Inject constructor(
     val pluginContainer: PluginContainer,
     @param:DataDirectory val dataDirectory: Path,
     val executorService: ExecutorService,
+    val metricsFactory: Metrics.Factory
 ) : CoreInstance() {
+
+    private var metrics: Metrics? = null
+
 
     init {
         instance = this
@@ -45,11 +50,17 @@ class VelocityMain @Inject constructor(
     @Subscribe
     suspend fun onProxyInitialization(unused: ProxyInitializeEvent) {
         onEnable()
+        try {
+            metrics = metricsFactory.make(this, 29466)
+        } catch (e: Exception) {
+            logger.error("Failed to initialize Metrics", e)
+        }
     }
 
     @Subscribe
     suspend fun onProxyShutdown(unused: ProxyShutdownEvent) {
         onDisable()
+        metrics?.shutdown()
     }
 
     companion object {
