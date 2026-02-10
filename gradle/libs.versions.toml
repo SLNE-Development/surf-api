@@ -29,7 +29,7 @@ scoreboard-library-modern = "2.5.0"
 adventure-api = "4.26.1"
 
 # Velocity
-velocity-api = "3.4.0-SNAPSHOT"
+velocity-api = "4.0.0-SNAPSHOT"
 
 # PAPI
 placeholder-api = "2.11.6"
