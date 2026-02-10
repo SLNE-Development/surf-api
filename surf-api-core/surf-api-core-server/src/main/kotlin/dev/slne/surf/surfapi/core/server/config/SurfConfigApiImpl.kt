@@ -9,6 +9,7 @@ import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import java.nio.file.Path
 
+@Suppress("OVERRIDE_DEPRECATION")
 @AutoService(SurfConfigApi::class)
 class SurfConfigApiImpl : SurfConfigApi {
     init {
