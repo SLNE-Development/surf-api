@@ -112,6 +112,8 @@ interface Colors {
         @JvmField
         val DARK_SPACER: NamedTextColor = NamedTextColor.DARK_GRAY
 
+        // -------------------- Prefix -------------------- //
+
         /**
          * The default prefix color (#3b92d1).
          * Applied to all prefixes for consistency across Surf plugins.
@@ -119,61 +121,52 @@ interface Colors {
         @JvmField
         val PREFIX_COLOR: TextColor = PRIMARY
 
-        // -------------------- Default Colors -------------------- //
+        /**
+         * The default prefix character ('»').
+         */
+        @Suppress("MayBeConstant")
+        @JvmField
+        val PREFIX_CHARACTER = '»'
+
+        private fun buildPrefix(color: TextColor) = buildText {
+            text(PREFIX_CHARACTER, color)
+            appendSpace()
+            darkSpacer("|")
+            appendSpace()
+        }
 
         /**
          * The default prefix used across all Surf plugins, ensuring a recognizable and uniform
          * identifier in messages.
          */
         @JvmField
-        val PREFIX: Component = buildText {
-            spacer("»")
-            appendSpace()
-        }
+        val PREFIX: Component = buildPrefix(PREFIX_COLOR)
 
         /**
          * The default info prefix used in informational messages.
          */
         @JvmField
-        val INFO_PREFIX: Component = buildText {
-            spacer("[")
-            info("ℹ")
-            spacer("]")
-            appendSpace()
-        }
+        val INFO_PREFIX: Component = buildPrefix(INFO)
 
         /**
          * The default success prefix used in success messages.
          */
         @JvmField
-        val SUCCESS_PREFIX: Component = buildText {
-            spacer("[")
-            success("✔")
-            spacer("]")
-            appendSpace()
-        }
+        val SUCCESS_PREFIX: Component = buildPrefix(SUCCESS)
 
         /**
          * The default warning prefix used in warning messages.
          */
         @JvmField
-        val WARNING_PREFIX: Component = buildText {
-            spacer("[")
-            warning("⚠")
-            spacer("]")
-            appendSpace()
-        }
+        val WARNING_PREFIX: Component = buildPrefix(WARNING)
 
         /**
          * The default error prefix used in error messages.
          */
         @JvmField
-        val ERROR_PREFIX: Component = buildText {
-            spacer("[")
-            error("✖")
-            spacer("]")
-            appendSpace()
-        }
+        val ERROR_PREFIX: Component = buildPrefix(ERROR)
+
+        // -------------------- Default Colors -------------------- //
 
         /**
          * Represents the color black.
