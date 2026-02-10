@@ -11,8 +11,7 @@ object SpongeConfigTracker {
     }
 
     fun <C> reloadConfig(configClass: Class<C>): C {
-        val manager =
-            configManagers[configClass] ?: error("No config manager found for $configClass")
+        val manager = configManagers[configClass] ?: error("No config manager found for $configClass")
 
         return manager.reloadFromFile() as C
     }
