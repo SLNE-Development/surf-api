@@ -8,6 +8,8 @@ import net.kyori.adventure.text.format.TextDecoration
 interface WarningComponentBuilderColor : ComponentBuilderColor {
     fun SurfComponentBuilder.appendWarningPrefix() = append(Colors.WARNING_PREFIX)
     fun SurfComponentBuilder.appendNewWarningPrefixedLine() = appendNewline().appendWarningPrefix()
+    suspend fun SurfComponentBuilder.appendNewWarningPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
+        appendNewline().appendWarningPrefix().appendAsync(block)
 
     fun SurfComponentBuilder.warning(text: String, vararg decoration: TextDecoration) =
         coloredComponent(text, Colors.WARNING, *decoration)
