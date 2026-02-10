@@ -23,7 +23,7 @@ luckperms = "v5.5.0-bukkit"
 # Scoreboard Library
 scoreboard-library = "2.4.4"
 scoreboard-library-implementation = "2.4.4"
-scoreboard-library-modern = "2.4.3"
+scoreboard-library-modern = "2.5.0"
 
 # Adventure
 adventure-api = "4.26.1"
@@ -70,7 +70,7 @@ bytebuddy = "1.18.4"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
-shadow-gradle-plugin = "9.3.0"
+shadow-gradle-plugin = "9.3.1"
 run-paper-gradle-plugin = "3.0.2"
 dokka = "2.1.0"
 

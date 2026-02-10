@@ -8,6 +8,8 @@ import net.kyori.adventure.text.format.TextDecoration
 interface ErrorComponentBuilderColor : ComponentBuilderColor {
     fun SurfComponentBuilder.appendErrorPrefix() = append(Colors.ERROR_PREFIX)
     fun SurfComponentBuilder.appendNewErrorPrefixedLine() = appendNewline().appendErrorPrefix()
+    suspend fun SurfComponentBuilder.appendNewErrorPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
+        appendNewline().appendErrorPrefix().appendAsync(block)
 
     fun SurfComponentBuilder.error(text: String, vararg decoration: TextDecoration) =
         coloredComponent(text, Colors.ERROR, *decoration)

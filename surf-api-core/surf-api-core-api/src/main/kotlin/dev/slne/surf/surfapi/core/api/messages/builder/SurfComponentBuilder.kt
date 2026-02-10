@@ -53,9 +53,11 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
     suspend fun appendNewlineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
         appendNewline().appendAsync(block)
 
+    @Deprecated("Use TYPE specific functions")
     fun appendNewPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
         appendNewPrefixedLine().append(block)
 
+    @Deprecated("Use TYPE specific functions")
     suspend fun appendNewPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
         appendNewPrefixedLine().appendAsync(block)
 

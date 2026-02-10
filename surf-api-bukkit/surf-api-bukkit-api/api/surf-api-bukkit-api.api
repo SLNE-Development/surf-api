@@ -461,6 +461,154 @@ public final class dev/slne/surf/surfapi/bukkit/api/dialog/builder/DialogTypeBui
 	public static final fun dialogType (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/type/DialogType;
 }
 
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/composition/DialogScope {
+	public fun <init> (Ldev/slne/surf/surfapi/bukkit/api/dialog/composition/DialogStore;Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun remember ([Ljava/lang/Object;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setState (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun state ()Ldev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/composition/DialogStore {
+	public fun <init> (Ldev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState;Ljava/util/UUID;Lkotlin/jvm/functions/Function2;Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun getState ()Ldev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState;
+	public final fun open (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun recall (Ljava/util/List;)Ljava/lang/Object;
+	public final fun remember (Ljava/util/List;Ljava/lang/Object;)V
+	public final fun update (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/composition/DslKt {
+	public static final fun composableDialog (Lorg/bukkit/entity/Player;Ldev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/pagination/PaginatedDialogKt {
+	public static final fun paginatedDialog (Lorg/bukkit/entity/Player;Ldev/slne/surf/surfapi/bukkit/api/dialog/query/DialogQuery;Lkotlin/jvm/functions/Function3;ZLkotlin/jvm/functions/Function1;Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun paginatedDialog$default (Lorg/bukkit/entity/Player;Ldev/slne/surf/surfapi/bukkit/api/dialog/query/DialogQuery;Lkotlin/jvm/functions/Function3;ZLkotlin/jvm/functions/Function1;Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/dialog/query/CursorDialogQuery {
+	public abstract fun execute (Ldev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/query/CursorResult {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Z)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Z)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/CursorResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/query/CursorResult;Ljava/util/List;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/CursorResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHasMore ()Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getNextCursor ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/query/CursorState : dev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;ILjava/lang/String;)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/CursorState;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/query/CursorState;Ljava/lang/String;Ljava/util/List;ILjava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/CursorState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getHistory ()Ljava/util/List;
+	public final fun getLimit ()I
+	public final fun getSearch ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/dialog/query/DialogQuery {
+	public abstract fun execute (Ldev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/query/PageResult {
+	public fun <init> (Ljava/util/List;IILjava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/util/List;IILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/util/List;IILjava/lang/Integer;)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/PageResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/query/PageResult;Ljava/util/List;IILjava/lang/Integer;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/PageResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getPage ()I
+	public final fun getTotalItems ()Ljava/lang/Integer;
+	public final fun getTotalPages ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/query/PageState : dev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState {
+	public fun <init> ()V
+	public fun <init> (IILjava/lang/String;)V
+	public synthetic fun <init> (IILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (IILjava/lang/String;)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/PageState;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/query/PageState;IILjava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/dialog/query/PageState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLimit ()I
+	public final fun getPage ()I
+	public final fun getSearch ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/search/SearchDialogAction {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public final fun component1 ()Lkotlin/jvm/functions/Function1;
+	public final fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/dialog/search/SearchDialogAction;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/search/SearchDialogAction;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/dialog/search/SearchDialogAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getTooltip ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public final fun setLabel (Lkotlin/jvm/functions/Function1;)V
+	public final fun setTooltip (Lkotlin/jvm/functions/Function1;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/search/SearchDialogKt {
+	public static final fun searchDialog (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZLio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;)Lio/papermc/paper/dialog/Dialog;
+	public static synthetic fun searchDialog$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZLio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/dialog/search/SearchInput {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/dialog/search/SearchInput;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/bukkit/api/dialog/search/SearchInput;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/dialog/search/SearchInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInitialValue ()Ljava/lang/String;
+	public final fun getInputModifier ()Lkotlin/jvm/functions/Function1;
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getLabel ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public final fun setInitialValue (Ljava/lang/String;)V
+	public final fun setInputModifier (Lkotlin/jvm/functions/Function1;)V
+	public final fun setKey (Ljava/lang/String;)V
+	public final fun setLabel (Lkotlin/jvm/functions/Function1;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/dialog/state/DialogState {
+}
+
 public final class dev/slne/surf/surfapi/bukkit/api/event/Listener_extensionKt {
 	public static final fun cancel (Lorg/bukkit/event/Cancellable;)V
 	public static final fun listen (Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/event/SingleListener;
