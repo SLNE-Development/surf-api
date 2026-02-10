@@ -19,6 +19,10 @@ object PlayerSkinFetcher {
             .expireAfterWrite(10.minutes)
             .asLoadingCache<UUID, List<TextureProperty>> { fetchSkin0(it) }
 
+    fun init() {
+
+    }
+
     suspend fun fetchSkin(playerUuid: UUID) = SKIN_CACHE.get(playerUuid)
 
     @OptIn(ExperimentalCoroutinesApi::class)

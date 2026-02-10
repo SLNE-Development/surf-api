@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.core.server
 
-import dev.slne.surf.surfapi.core.api.messages.Colors
 import dev.slne.surf.surfapi.core.server.listener.CoreListenerManager
 import dev.slne.surf.surfapi.core.server.util.PlayerSkinFetcher
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -27,7 +26,6 @@ abstract class CoreInstance {
     }
 
     private fun initObjects() {
-        PlayerSkinFetcher
-        Colors
+        PlayerSkinFetcher.init()
     }
 }
