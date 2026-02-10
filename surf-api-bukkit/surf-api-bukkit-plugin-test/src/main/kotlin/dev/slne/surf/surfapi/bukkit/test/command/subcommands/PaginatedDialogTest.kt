@@ -114,7 +114,7 @@ object PaginatedDialogTest {
 }
 
 fun paginationDialogTestCommand() = commandAPICommand("paginationdialog") {
-    playerExecutor { player, arguments ->
+    playerExecutor { player, _ ->
         plugin.launch {
             paginatedDialog(
                 player = player,

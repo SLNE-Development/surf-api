@@ -21,7 +21,11 @@ suspend fun <T> paginatedDialog(
     player: Player,
     query: DialogQuery<PageState, T>,
     titleBuilder: SurfComponentBuilder.(PageState, PageResult<T>) -> Unit = { _, result ->
-        text("Seite ${result.page} von ${result.totalPages}")
+        if (result.totalPages == 0) {
+            text("Keine Ergebnisse")
+        } else {
+            text("Seite ${result.page} von ${result.totalPages}")
+        }
     },
     searchable: Boolean = false,
     itemBuilder: (T) -> Pair<Component, Dialog>,
@@ -128,7 +132,7 @@ suspend fun <T> paginatedDialog(
                         }
 
                         action {
-                            customPlayerClick { response, player ->
+                            customPlayerClick { response, _ ->
                                 val search = response.getText("search") ?: ""
 
                                 scope.launch {
