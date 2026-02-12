@@ -88,7 +88,7 @@ fun searchDialog(
 
         type {
             confirmation {
-                yes {
+                no {
                     label(searchButton.label)
                     tooltip(searchButton.tooltip)
 
@@ -102,7 +102,7 @@ fun searchDialog(
                     }
                 }
 
-                no {
+                yes {
                     label(cancelButton.label)
                     tooltip(cancelButton.tooltip)
 
