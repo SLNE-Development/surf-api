@@ -113,6 +113,15 @@ public final class dev/slne/surf/redis/cache/SimpleSetRedisCache$DefaultImpls {
 	public static fun findFirstByIndexCached (Ldev/slne/surf/redis/cache/SimpleSetRedisCache;Ldev/slne/surf/redis/cache/RedisSetIndex;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/StringCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/UUIDCodec;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/ClassLoader;)V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/nio/charset/Charset;)V
+	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
+}
+
 public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion {
 	public final fun getInstance ()Ldev/slne/surf/redis/credentials/RedisCredentialsProvider;
 }
