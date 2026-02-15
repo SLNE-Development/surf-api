@@ -22,7 +22,6 @@ subprojects {
         val base = "dev.slne.surf.redis.libs."
 
         relocate("com.esotericsoftware", base + "kryo")
-        relocate("io.netty", base + "netty")
         relocate("io.reactivex", base + "reactivex")
         relocate("javax.cache", base + "javax.cache")
         relocate("jodd", base + "jodd")

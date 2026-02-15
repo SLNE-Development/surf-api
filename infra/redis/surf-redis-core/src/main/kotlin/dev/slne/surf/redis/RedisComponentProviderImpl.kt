@@ -1,13 +1,11 @@
 package dev.slne.surf.redis
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.redis.cache.RedisSetIndexes
-import dev.slne.surf.redis.cache.SimpleRedisCache
-import dev.slne.surf.redis.cache.SimpleRedisCacheImpl
-import dev.slne.surf.redis.cache.SimpleSetRedisCache
-import dev.slne.surf.redis.cache.SimpleSetRedisCacheImpl
+import dev.slne.surf.redis.cache.*
+import dev.slne.surf.redis.config.RedisConfig
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.event.RedisEventBusImpl
+import dev.slne.surf.redis.internal.RedissonConfigDetails
 import dev.slne.surf.redis.request.RequestResponseBus
 import dev.slne.surf.redis.request.RequestResponseBusImpl
 import dev.slne.surf.redis.sync.list.SyncList
@@ -18,18 +16,68 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.set.SyncSetImpl
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
+import io.netty.channel.epoll.Epoll
+import io.netty.channel.kqueue.KQueue
+import io.netty.channel.uring.IoUring
 import kotlinx.serialization.KSerializer
+import org.redisson.config.Config
+import org.redisson.config.EqualJitterDelay
+import org.redisson.config.Protocol
+import org.redisson.config.TransportMode
 import java.util.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 @AutoService(RedisComponentProvider::class)
 class RedisComponentProviderImpl : RedisComponentProvider {
+    private val transportMode = when {
+        IoUring.isAvailable() -> TransportMode.IO_URING
+        Epoll.isAvailable() -> TransportMode.EPOLL
+        KQueue.isAvailable() -> TransportMode.KQUEUE
+        else -> TransportMode.NIO
+    }
+
     override val eventLoopGroup get() = RedisInstance.instance.eventLoopGroup
     override val redissonExecutorService get() = RedisInstance.instance.redissonExecutorService
     override val clientId = UUID.randomUUID().toString()
         .split("-")
         .take(2)
         .joinToString("")
+
+    override fun createRedissonConfig(details: RedissonConfigDetails): Config {
+        val config = Config()
+            .setPassword(details.redisURI.password)
+            .setExecutor(redissonExecutorService)
+            .setTransportMode(transportMode)
+            .setEventLoopGroup(eventLoopGroup)
+            .setTcpKeepAlive(true)
+            .setTcpUserTimeout(10.seconds.inWholeMilliseconds.toInt())
+            .setTcpKeepAliveCount(3)
+            .setTcpKeepAliveInterval(10)
+            .setTcpKeepAliveIdle(60)
+            .setTcpNoDelay(true)
+            .setKeepPubSubOrder(false)
+            .setProtocol(Protocol.RESP3)
+            .apply {
+                useSingleServer()
+                    .setConnectionMinimumIdleSize(2)
+                    .setConnectionPoolSize(8)
+                    .setClientName(RedisConfig.getConfig().clientName + "-" + details.pluginName)
+                    .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
+                    .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
+                    .setRetryAttempts(10)
+                    .setRetryDelay(EqualJitterDelay(200.milliseconds.toJavaDuration(), 1.seconds.toJavaDuration()))
+                    .setAddress(details.redisURI.toString())
+            }
+
+        return config
+    }
+
+    override fun tryExtractPluginNameFromClass(clazz: Class<*>): String {
+        return RedisInstance.get().tryExtractPluginNameFromClass(clazz)
+    }
 
     override fun <K : Any, V : Any> createSimpleCache(
         namespace: String,

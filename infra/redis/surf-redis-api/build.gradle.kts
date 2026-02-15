@@ -23,12 +23,11 @@ kotlin {
 }
 
 dependencies {
-    api("org.redisson:redisson:4.1.0") {
+    api("org.redisson:redisson:4.2.0") {
         exclude("org.slf4j")
         exclude("org.reactivestreams")
         exclude("io.projectreactor", "reactor-core")
     }
-    implementation("io.netty:netty-transport-native-epoll:4.2.9.Final")
 
     testImplementation(kotlin("test"))
     testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")

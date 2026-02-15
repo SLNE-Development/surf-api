@@ -35,8 +35,11 @@ public final class dev/slne/surf/redis/RedisApi {
 }
 
 public final class dev/slne/surf/redis/RedisApi$Companion {
+	public final fun create (Ljava/lang/String;)Ldev/slne/surf/redis/RedisApi;
+	public final fun create (Ljava/lang/String;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Ljava/nio/file/Path;Ljava/nio/file/Path;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
+	public final fun create (Lorg/redisson/misc/RedisURI;Ljava/lang/String;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Lorg/redisson/misc/RedisURI;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Ljava/nio/file/Path;Ljava/nio/file/Path;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
@@ -75,7 +78,7 @@ protected final class dev/slne/surf/redis/cache/RedisSetIndexes$IndexDelegate {
 	public final fun provideDelegate (Ljava/lang/Object;Lkotlin/reflect/KProperty;)Lkotlin/properties/ReadOnlyProperty;
 }
 
-public abstract interface class dev/slne/surf/redis/cache/SimpleRedisCache : reactor/core/Disposable {
+public abstract interface class dev/slne/surf/redis/cache/SimpleRedisCache : dev/slne/surf/redis/util/Initializable, reactor/core/Disposable {
 	public abstract fun cachedOrLoad (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun cachedOrLoadNullable (Ljava/lang/Object;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun cachedOrLoadNullable$default (Ldev/slne/surf/redis/cache/SimpleRedisCache;Ljava/lang/Object;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
@@ -89,7 +92,7 @@ public final class dev/slne/surf/redis/cache/SimpleRedisCache$DefaultImpls {
 	public static synthetic fun cachedOrLoadNullable$default (Ldev/slne/surf/redis/cache/SimpleRedisCache;Ljava/lang/Object;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public abstract interface class dev/slne/surf/redis/cache/SimpleSetRedisCache : reactor/core/Disposable {
+public abstract interface class dev/slne/surf/redis/cache/SimpleSetRedisCache : dev/slne/surf/redis/util/Initializable, reactor/core/Disposable {
 	public abstract fun add (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun clearNearCacheOnly ()V
 	public abstract fun findByIndexCached (Ldev/slne/surf/redis/cache/RedisSetIndex;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -108,6 +111,15 @@ public abstract interface class dev/slne/surf/redis/cache/SimpleSetRedisCache : 
 
 public final class dev/slne/surf/redis/cache/SimpleSetRedisCache$DefaultImpls {
 	public static fun findFirstByIndexCached (Ldev/slne/surf/redis/cache/SimpleSetRedisCache;Ldev/slne/surf/redis/cache/RedisSetIndex;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/StringCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/UUIDCodec;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/ClassLoader;)V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/nio/charset/Charset;)V
+	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
 }
 
 public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion {
@@ -131,7 +143,7 @@ public final class dev/slne/surf/redis/event/RedisEvent$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public abstract interface class dev/slne/surf/redis/event/RedisEventBus : java/io/Closeable {
+public abstract interface class dev/slne/surf/redis/event/RedisEventBus : dev/slne/surf/redis/util/Initializable, java/io/Closeable {
 	public abstract fun publish (Ldev/slne/surf/redis/event/RedisEvent;)Lkotlinx/coroutines/Deferred;
 	public abstract fun registerListener (Ljava/lang/Object;)V
 }
@@ -171,7 +183,7 @@ public final class dev/slne/surf/redis/request/RequestContext {
 	public final fun respond (Ldev/slne/surf/redis/request/RedisResponse;)Lkotlinx/coroutines/Deferred;
 }
 
-public abstract interface class dev/slne/surf/redis/request/RequestResponseBus : java/io/Closeable {
+public abstract interface class dev/slne/surf/redis/request/RequestResponseBus : dev/slne/surf/redis/util/Initializable, java/io/Closeable {
 	public static final field Companion Ldev/slne/surf/redis/request/RequestResponseBus$Companion;
 	public static final field DEFAULT_TIMEOUT_MS J
 	public abstract fun registerRequestHandler (Ljava/lang/Object;)V
@@ -195,7 +207,7 @@ public final class dev/slne/surf/redis/request/RequestTimeoutException : java/la
 public final class dev/slne/surf/redis/request/RequestTimeoutException$Companion {
 }
 
-public abstract interface class dev/slne/surf/redis/sync/SyncStructure : reactor/core/Disposable {
+public abstract interface class dev/slne/surf/redis/sync/SyncStructure : dev/slne/surf/redis/util/Initializable, reactor/core/Disposable {
 	public abstract fun addListener (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun getId ()Ljava/lang/String;
 	public abstract fun getTtl-UwyO8pc ()J

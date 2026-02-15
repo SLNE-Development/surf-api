@@ -1,22 +1,25 @@
 package dev.slne.surf.redis
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi.Companion.create
 import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache
 import dev.slne.surf.redis.credentials.RedisCredentialsProvider
 import dev.slne.surf.redis.event.RedisEvent
+import dev.slne.surf.redis.internal.RedissonConfigDetails
 import dev.slne.surf.redis.request.*
 import dev.slne.surf.redis.sync.SyncStructure
 import dev.slne.surf.redis.sync.list.SyncList
 import dev.slne.surf.redis.sync.map.SyncMap
 import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
+import dev.slne.surf.redis.util.Initializable
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDStringSerializer
+import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
-import io.netty.channel.epoll.Epoll
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -37,15 +40,11 @@ import org.redisson.api.RedissonReactiveClient
 import org.redisson.api.redisnode.RedisNodes
 import org.redisson.codec.BaseEventCodec
 import org.redisson.config.Config
-import org.redisson.config.EqualJitterDelay
-import org.redisson.config.TransportMode
 import org.redisson.misc.RedisURI
 import reactor.core.Disposable
+import reactor.core.publisher.Mono
 import java.nio.file.Path
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 /**
  * Central entry point for surf-redis.
@@ -127,6 +126,7 @@ import kotlin.time.toJavaDuration
  * }
  * ```
  */
+@Suppress("unused")
 class RedisApi private constructor(
     private val config: Config,
     /** JSON instance used internally for (de-)serialization. */
@@ -192,22 +192,50 @@ class RedisApi private constructor(
         }
     )
 
-    private val disposables = mutableObjectListOf<Disposable>()
+    private val initializables = Caffeine.newBuilder().weakKeys().build<Initializable, Unit>()
+    private val disposables = Caffeine.newBuilder().weakKeys().build<Disposable, Unit>()
     private var frozen = false
+
+    init {
+        initializables.put(eventBus, Unit)
+        initializables.put(requestResponseBus, Unit)
+    }
 
     companion object {
         private val log = logger()
-        private val transportMode = if (Epoll.isAvailable()) {
-            TransportMode.EPOLL
-        } else {
-            TransportMode.NIO
+
+        /**
+         * Creates a [RedisApi] instance using the given [redisURI].
+         *
+         * This is the most explicit factory method. The [pluginName] is used for
+         * identification and logging purposes and is typically derived automatically
+         * via the caller when not provided explicitly.
+         *
+         * @param redisURI Redis connection URI.
+         * @param pluginName Logical name of the calling plugin or component.
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
+         */
+        fun create(
+            redisURI: RedisURI,
+            pluginName: String,
+            serializerModule: SerializersModule
+        ): RedisApi {
+            val config = RedisComponentProvider.get().createRedissonConfig(
+                RedissonConfigDetails(
+                    redisURI = redisURI,
+                    serializerModule = serializerModule,
+                    pluginName = pluginName
+                )
+            )
+
+            val api = RedisApi(config, createJson(serializerModule))
+            return api
         }
 
         /**
-         * Creates a [RedisApi] instance from an explicit [RedisURI].
+         * Creates a [RedisApi] instance using the given [redisURI].
          *
-         * The returned instance is not connected yet. Call [freeze] and then [connect],
-         * or use [freezeAndConnect].
+         * The plugin name is resolved automatically from the calling class.
          *
          * @param redisURI Redis connection URI.
          * @param serializerModule Additional serializers to be included in the internal [Json] instance.
@@ -215,57 +243,53 @@ class RedisApi private constructor(
         fun create(
             redisURI: RedisURI,
             serializerModule: SerializersModule = EmptySerializersModule()
-        ): RedisApi {
-            val config = Config()
-                .setPassword(redisURI.password)
-                .setTransportMode(transportMode)
-                .setTcpKeepAlive(true)
-                .setTcpKeepAliveInterval(5.seconds.inWholeMilliseconds.toInt())
-                .setEventLoopGroup(RedisComponentProvider.get().eventLoopGroup)
-                .setExecutor(RedisComponentProvider.get().redissonExecutorService)
-                .apply {
-                    useSingleServer()
-                        .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
-                        .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
-                        .setRetryAttempts(10)
-                        .setRetryDelay(EqualJitterDelay(200.milliseconds.toJavaDuration(), 1.seconds.toJavaDuration()))
-                        .setAddress(redisURI.toString())
-                }
-
-            val api = RedisApi(config, createJson(serializerModule))
-            return api
-        }
+        ): RedisApi = create(redisURI, getCallingPluginName(), serializerModule)
 
         /**
-         * Creates a [RedisApi] instance using plugin configuration.
+         * Creates a [RedisApi] instance using credentials provided by
+         * [RedisCredentialsProvider].
+         *
+         * The plugin name is resolved automatically from the calling class.
+         *
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
+         */
+        fun create(
+            serializerModule: SerializersModule = EmptySerializersModule()
+        ): RedisApi = create(RedisCredentialsProvider.instance.redisURI(), getCallingPluginName(), serializerModule)
+
+        /**
+         * Creates a [RedisApi] instance using the default Redis credentials.
+         *
+         * @param pluginName Logical name of the calling plugin or component.
+         */
+        fun create(pluginName: String): RedisApi =
+            create(RedisCredentialsProvider.instance.redisURI(), pluginName, EmptySerializersModule())
+
+        /**
+         * Creates a [RedisApi] instance using the default Redis credentials.
+         *
+         * @param pluginName Logical name of the calling plugin or component.
+         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
+         */
+        fun create(pluginName: String, serializerModule: SerializersModule): RedisApi =
+            create(RedisCredentialsProvider.instance.redisURI(), pluginName, serializerModule)
+
+        /**
+         * Creates a [RedisApi] instance using plugin file system paths.
          *
          * @deprecated Surf Redis is no longer shaded into plugins. Paths are no longer relevant.
          */
         @Deprecated(
             message = "Surf Redis is no longer shaded into plugins. Therefore, plugin paths are no longer relevant.",
             replaceWith = ReplaceWith("create(serializerModule)"),
-            level = DeprecationLevel.WARNING
+            level = DeprecationLevel.ERROR
         )
         fun create(
             pluginDataPath: Path,
             pluginsPath: Path = pluginDataPath.parent,
             serializerModule: SerializersModule = EmptySerializersModule()
         ): RedisApi {
-            return create(serializerModule)
-        }
-
-        /**
-         * Creates a [RedisApi] instance using [RedisCredentialsProvider].
-         *
-         * The returned instance is not connected yet. Call [freeze] and then [connect],
-         * or use [freezeAndConnect].
-         *
-         * @param serializerModule Additional serializers to be included in the internal [Json] instance.
-         */
-        fun create(
-            serializerModule: SerializersModule = EmptySerializersModule()
-        ): RedisApi {
-            return create(RedisCredentialsProvider.instance.redisURI(), serializerModule)
+            return create(serializerModule = serializerModule, pluginName = getCallingPluginName())
         }
 
         @OptIn(ExperimentalSerializationApi::class)
@@ -279,6 +303,11 @@ class RedisApi private constructor(
 
                 include(serializerModule)
             }
+        }
+
+        private fun getCallingPluginName(): String {
+            val caller = getCallerClass(1) ?: return "Unknown"
+            return RedisComponentProvider.get().tryExtractPluginNameFromClass(caller)
         }
     }
 
@@ -310,13 +339,32 @@ class RedisApi private constructor(
 
         fetchRedisOs()
 
-        eventBus.init()
-        requestResponseBus.init()
-
-        for (structure in syncStructures) {
-            structure.init().block()
+        val initializables = this.initializables.asMap().keys
+        if (initializables.isEmpty()) {
+            log.atInfo()
+                .log("No initializable Redis components registered; skipping initialization step.")
+        } else {
+            Mono.`when`(
+                initializables.map { initializable ->
+                    initialize(initializable)
+                }
+            ).doOnError { throwable ->
+                log.atSevere()
+                    .withCause(throwable)
+                    .log("RedisApi.connect() failed because one or more components could not be initialized.")
+            }.block()
         }
     }
+
+    private fun initialize(initializable: Initializable) = initializable.init()
+        .doOnError { throwable ->
+            log.atSevere()
+                .withCause(throwable)
+                .log(
+                    "Failed to initialize Redis component: %s",
+                    initializable::class.qualifiedName ?: initializable.toString()
+                )
+        }
 
     @Blocking
     private fun fetchRedisOs() {
@@ -385,18 +433,14 @@ class RedisApi private constructor(
     @Blocking
     fun disconnect() {
         if (!isConnected()) return
+
+        val disposables = this.disposables.asMap().keys
+        disposables.forEach { it.dispose() }
+        disposables.clear()
+
+        syncStructureScope.cancel("RedisApi disconnected")
         requestResponseBus.close()
         eventBus.close()
-
-        for (structure in syncStructures) {
-            structure.dispose()
-        }
-        syncStructureScope.cancel("RedisApi disconnected")
-
-        for (disposable in disposables) {
-            disposable.dispose()
-        }
-        disposables.clear()
 
         redisson.shutdown()
     }
@@ -599,7 +643,8 @@ class RedisApi private constructor(
     private inline fun <S : SyncStructure<*>> createSyncStructure(creator: () -> S): S {
         require(!isFrozen()) { "Redis client must not be frozen to create sync structures" }
         val structure = creator()
-        syncStructures.add(structure)
+        initializables.put(structure, Unit)
+        disposables.put(structure, Unit)
         return structure
     }
 
@@ -630,7 +675,24 @@ class RedisApi private constructor(
         ttl: Duration,
         keyToString: (K) -> String = { it.toString() }
     ): SimpleRedisCache<K, V> {
-        return RedisComponentProvider.get().createSimpleCache(namespace, serializer, ttl, keyToString, this)
+        val cache = RedisComponentProvider.get().createSimpleCache(namespace, serializer, ttl, keyToString, this)
+
+        if (isConnected()) {
+            log.atWarning()
+                .withStackTrace(StackSize.MEDIUM)
+                .log(
+                    "Creating SimpleRedisCache '%s' after RedisApi is connected; initializing immediately (blocking). " +
+                            "Consider creating caches before connecting to avoid this blocking call.",
+                    namespace
+                )
+
+            initialize(cache).block()
+        } else {
+            initializables.put(cache, Unit)
+        }
+
+        disposables.put(cache, Unit)
+        return cache
     }
 
     /**
@@ -670,6 +732,23 @@ class RedisApi private constructor(
         idOf: (T) -> String,
         indexes: RedisSetIndexes<T> = RedisSetIndexes.empty()
     ): SimpleSetRedisCache<T> {
-        return RedisComponentProvider.get().createSimpleSetRedisCache(namespace, serializer, ttl, idOf, indexes, this)
+        val cache =
+            RedisComponentProvider.get().createSimpleSetRedisCache(namespace, serializer, ttl, idOf, indexes, this)
+
+        if (isConnected()) {
+            log.atWarning()
+                .withStackTrace(StackSize.MEDIUM)
+                .log(
+                    "Creating SimpleSetRedisCache '%s' after RedisApi is connected; initializing immediately (blocking). " +
+                            "Consider creating caches before connecting to avoid this blocking call.",
+                    namespace
+                )
+            initialize(cache).block()
+        } else {
+            initializables.put(cache, Unit)
+        }
+
+        disposables.put(cache, Unit)
+        return cache
     }
 }

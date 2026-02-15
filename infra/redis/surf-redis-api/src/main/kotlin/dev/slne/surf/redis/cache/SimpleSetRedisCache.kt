@@ -1,5 +1,6 @@
 package dev.slne.surf.redis.cache
 
+import dev.slne.surf.redis.util.Initializable
 import reactor.core.Disposable
 
 /**
@@ -12,7 +13,7 @@ import reactor.core.Disposable
  * - `condition: (T) -> Boolean` can NOT be evaluated server-side, so `findCached(condition)` always scans.
  * - Index queries are fast (use Redis sets), but still validate results to self-heal stale index entries.
  */
-interface SimpleSetRedisCache<T : Any> : Disposable {
+interface SimpleSetRedisCache<T : Any> : Disposable, Initializable {
 
     suspend fun findCached(condition: (T) -> Boolean): Set<T>
     suspend fun getCachedById(id: String): T?

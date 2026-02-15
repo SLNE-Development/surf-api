@@ -5,6 +5,7 @@ import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
+import dev.slne.surf.redis.util.RedisExpirableUtils
 import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.serialization.KSerializer
@@ -51,6 +52,14 @@ class SyncSetImpl<T : Any>(
     private val set = ObjectOpenHashSet<T>()
 
     private val remoteSet by lazy { api.redissonReactive.getSet<String>(dataKey, StringCodec.INSTANCE) }
+
+    override fun init(): Mono<Void> {
+        return super.init()
+            .doOnSuccess {
+                trackDisposable(RedisExpirableUtils.refreshContinuously(ttl, remoteSet))
+            }
+            .then()
+    }
 
     override fun registerListeners0(): List<Mono<Int>> = listOf(
         remoteSet.addListener(DeletedObjectListener { requestResync() }),
@@ -189,10 +198,6 @@ class SyncSetImpl<T : Any>(
         }
         super.overrideFromRemote(raw)
     }
-
-    override fun refreshTtl0(): Mono<*> = Mono.`when`(
-        remoteSet.expire(ttl.toJavaDuration())
-    )
 
     private fun encodeValue(value: T) = api.json.encodeToString(elementSerializer, value)
     private fun decodeValue(value: String) = api.json.decodeFromString(elementSerializer, value)

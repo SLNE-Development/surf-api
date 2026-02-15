@@ -1,8 +1,13 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
+      <w>maxlen</w>
+      <w>pexpire</w>
+      <w>sadd</w>
+      <w>spop</w>
       <w>tonumber</w>
       <w>tostring</w>
+      <w>xadd</w>
     </words>
   </dictionary>
 </component>

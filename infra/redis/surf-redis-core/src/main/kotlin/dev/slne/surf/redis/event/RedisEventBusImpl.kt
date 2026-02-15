@@ -15,6 +15,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
+import reactor.core.publisher.Mono
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -51,9 +52,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         private val lookup = MethodHandles.lookup()
     }
 
-    override fun init() {
-        setupSubscription()
-    }
+    override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
 
     /**
      * Sets up the Redis Pub/Sub subscription and installs the message listener.

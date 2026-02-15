@@ -1,18 +1,15 @@
 package dev.slne.surf.redis.sync
 
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.util.DisposableAware
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
-import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
 import reactor.util.function.Tuple2
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.math.min
 import kotlin.time.Duration
 
 
@@ -20,11 +17,10 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     protected val api: RedisApi,
     id: String,
     override val ttl: Duration
-) : SyncStructure<L> {
+) : DisposableAware(), SyncStructure<L> {
     companion object {
         const val NAMESPACE = "surf-redis:sync:"
         private val log = logger()
-        internal val scheduler = Schedulers.newParallel("surf-redis-sync-structure", 2)
     }
 
     override val id = id.replace(":", "_")
@@ -32,17 +28,12 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     private val listeners = CopyOnWriteArrayList<(L) -> Unit>()
     protected val lock = ReentrantReadWriteLock()
 
-    private val disposables = ConcurrentHashMap.newKeySet<Disposable>(1)
-    private val disposed = AtomicBoolean(false)
-
     private val listenerIds = ConcurrentHashMap.newKeySet<Int>()
 
     @MustBeInvokedByOverriders
     override fun init(): Mono<Void> {
         return registerListeners()
             .then(loadFromRemote())
-            .then(refreshTtl())
-            .doOnSuccess { trackDisposable(startHeartbeat().subscribeOn(scheduler).subscribe()) }
             .then()
     }
 
@@ -69,21 +60,8 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     protected abstract fun unregisterListener(id: Int): Mono<*>
 
     @MustBeInvokedByOverriders
-    override fun dispose() {
-        if (!disposed.compareAndSet(false, true)) return
-
-        unregisterListeners().subscribe()
-
-        disposables.forEach(Disposable::dispose)
-        disposables.clear()
-    }
-
-    override fun isDisposed(): Boolean {
-        return disposed.get()
-    }
-
-    protected fun trackDisposable(disposable: Disposable) {
-        disposables.add(disposable)
+    override fun dispose0() {
+        unregisterListeners().block()
     }
 
     override fun addListener(listener: (L) -> Unit) {
@@ -123,24 +101,6 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     protected abstract fun loadFromRemote0(): Mono<R>
     protected abstract fun overrideFromRemote(raw: R)
 
-    private fun startHeartbeat(): Flux<Void> {
-        if (ttl == Duration.ZERO || ttl.isNegative()) return Flux.empty()
-        val period = java.time.Duration.ofSeconds(min(ttl.inWholeSeconds - 2, 5))
-
-        return Flux.interval(period, scheduler)
-            .concatMap {
-                refreshTtl()
-                    .then()
-                    .onErrorResume { e ->
-                        log.atSevere()
-                            .withCause(e)
-                            .log("Failed to refresh TTL for $id")
-                        Mono.empty()
-                    }
-            }
-    }
-
-    protected abstract fun refreshTtl(): Mono<*>
 
     interface VersionedSnapshot {
         val version: Long
