@@ -233,7 +233,7 @@ abstract class ComponentService {
         if (!evaluateEnvironmentConditions(componentMeta, logger)) return null
 
         // Evaluate @ConditionalOnMissingComponent
-        if (!evaluateMissingComponentConditions(componentMeta, loadedComponents, logger)) return null
+        if (!evaluateMissingComponentConditions(componentMeta, loadedComponents, classLoader, logger)) return null
 
         // Evaluate @ConditionalOnProperty
         if (!evaluatePropertyConditions(owner, componentMeta, logger)) return null
@@ -291,13 +291,19 @@ abstract class ComponentService {
     private fun evaluateMissingComponentConditions(
         componentMeta: PluginComponentMeta.Component,
         loadedComponents: List<ComponentEntry>,
+        classLoader: ClassLoader,
         logger: ComponentLogger
     ): Boolean {
         for (missingComponent in componentMeta.conditionalOnMissingComponents) {
             val isLoaded = loadedComponents.any { (component) ->
-                val kClass = component::class
-                val className = kClass.qualifiedName ?: kClass.java.name
-                className == missingComponent
+                val loadedComponentClass = component.javaClass
+                val missingComponentClass = try {
+                    Class.forName(missingComponent, false, classLoader)
+                } catch (_: ClassNotFoundException) {
+                    null
+                }
+
+                missingComponentClass != null && missingComponentClass.isAssignableFrom(loadedComponentClass)
             }
             if (isLoaded) {
                 logger.debug(
