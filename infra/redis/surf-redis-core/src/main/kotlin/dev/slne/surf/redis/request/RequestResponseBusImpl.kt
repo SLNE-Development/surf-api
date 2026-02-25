@@ -109,7 +109,8 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             request = request,
             respondCallback = { response ->
                 sendResponse(envelope.requestId, response)
-            }
+            },
+            coroutineScope = api.redisListenerScope
         )
 
         try {
