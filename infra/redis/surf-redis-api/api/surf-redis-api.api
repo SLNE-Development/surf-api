@@ -177,7 +177,8 @@ public final class dev/slne/surf/redis/request/RedisResponse$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class dev/slne/surf/redis/request/RequestContext {
+public final class dev/slne/surf/redis/request/RequestContext : kotlinx/coroutines/CoroutineScope {
+	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 	public final fun getRequest ()Ldev/slne/surf/redis/request/RedisRequest;
 	public final fun originatesFromThisClient ()Z
 	public final fun respond (Ldev/slne/surf/redis/request/RedisResponse;)Lkotlinx/coroutines/Deferred;
