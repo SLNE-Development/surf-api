@@ -16,6 +16,7 @@ import dev.slne.surf.redis.sync.map.SyncMap
 import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.Initializable
+import dev.slne.surf.redis.util.InternalRedisAPI
 import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDStringSerializer
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
@@ -40,6 +41,7 @@ import org.redisson.api.RedissonReactiveClient
 import org.redisson.api.redisnode.RedisNodes
 import org.redisson.codec.BaseEventCodec
 import org.redisson.config.Config
+import org.redisson.config.ConfigSupport
 import org.redisson.misc.RedisURI
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
@@ -132,6 +134,8 @@ class RedisApi private constructor(
     /** JSON instance used internally for (de-)serialization. */
     val json: Json,
 ) {
+    private val parsedConfig = ConfigSupport.getConfig(config)
+
     /**
      * Underlying Redisson client.
      *
@@ -180,12 +184,36 @@ class RedisApi private constructor(
     private val syncStructureScope = CoroutineScope(
         Dispatchers.Default
                 + SupervisorJob()
-                + CoroutineName("surf-redis-sync-structures")
+                + CoroutineName("surf-redis-sync-structures-${parsedConfig.clientName}")
                 + CoroutineExceptionHandler { context, throwable ->
             log.atSevere()
                 .withCause(throwable)
                 .log(
                     "Uncaught exception in Redis sync structure coroutine (context: ${
+                        context.toString().replace("{", "[").replace("}", "]")
+                    })"
+                )
+        }
+    )
+
+    /**
+     * Coroutine scope for Redis listener coroutines, including [RequestContext] instances.
+     *
+     * The scope is named after the configured client name for easier identification in diagnostics.
+     * It is cancelled automatically during [disconnect].
+     *
+     * **Internal API** — not intended for use outside of surf-redis internals.
+     */
+    @InternalRedisAPI
+    val redisListenerScope = CoroutineScope(
+        Dispatchers.Default
+                + SupervisorJob()
+                + CoroutineName("surf-redis-listeners-${parsedConfig.clientName}")
+                + CoroutineExceptionHandler { context, throwable ->
+            log.atSevere()
+                .withCause(throwable)
+                .log(
+                    "Uncaught exception in Redis listener coroutine (context: ${
                         context.toString().replace("{", "[").replace("}", "]")
                     })"
                 )
@@ -426,7 +454,7 @@ class RedisApi private constructor(
      * On disconnect:
      * - request/response and event buses are closed
      * - all sync structures are disposed
-     * - internal coroutine scope is cancelled
+     * - internal coroutine scopes (`syncStructureScope`, `redisListenerScope`) are cancelled
      * - reactive disposables are disposed
      * - Redisson is shut down
      */
@@ -439,6 +467,7 @@ class RedisApi private constructor(
         disposables.clear()
 
         syncStructureScope.cancel("RedisApi disconnected")
+        redisListenerScope.cancel("RedisApi disconnected")
         requestResponseBus.close()
         eventBus.close()
 
