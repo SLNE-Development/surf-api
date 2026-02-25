@@ -418,17 +418,39 @@ Event handlers (`@OnRedisEvent`) and request handlers (`@HandleRedisRequest`) ar
 
 Do not block:
 
-* database calls
+* blocking database drivers
 * file I/O
-* long computations
+* blocking network calls
+* long CPU-intensive computations
 
-Delegate explicitly:
+`RequestContext` implements `CoroutineScope`, bound to the internal Redis listener scope
+(using `Dispatchers.Default`). Use it to launch coroutines directly.
+Pick the right dispatcher for the work being done:
 
 ```kotlin
+// CPU-intensive work —> Default dispatcher (already used by the scope)
 @HandleRedisRequest
 fun handle(ctx: RequestContext<MyRequest>) {
-    coroutineScope.launch {
-        val result = doBlockingWork()
+    ctx.launch {
+        val result = computeSomething()
+        ctx.respond(MyResponse(result))
+    }
+}
+
+// Blocking I/O (blocking DB drivers, file access, blocking network calls) —> Dispatchers.IO
+@HandleRedisRequest
+fun handle(ctx: RequestContext<MyRequest>) {
+    ctx.launch(Dispatchers.IO) {
+        val result = loadFromDatabaseBlocking()
+        ctx.respond(MyResponse(result))
+    }
+}
+
+// Non-blocking / suspending I/O (e.g. R2DBC, async clients) —> no dispatcher switch needed
+@HandleRedisRequest
+fun handle(ctx: RequestContext<MyRequest>) {
+    ctx.launch {
+        val result = loadFromDatabaseSuspending()
         ctx.respond(MyResponse(result))
     }
 }
