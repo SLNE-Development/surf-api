@@ -1,5 +1,7 @@
 package dev.slne.surf.redis.event;
 
+import dev.slne.surf.redis.util.InvokerUtils;
+import dev.slne.surf.redis.util.RedisHiddenInvokerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -32,11 +34,11 @@ final class RedisEventInvokerTemplate implements RedisEventInvoker {
 
     static {
         final MethodHandles.Lookup lookup = MethodHandles.lookup();
-        final RedisEventInvokerFactory.ClassData classData = RedisEventInvokerFactory.classData(lookup);
+        final RedisHiddenInvokerUtil.ClassData<RedisEvent> classData = RedisEventInvokerFactory.classData(lookup);
 
         METHOD = classData.method();
         HANDLE = classData.methodHandle();
-        REDIS_EVENT_CLASS = classData.redisEventClass();
+        REDIS_EVENT_CLASS = classData.payloadClass();
     }
 
 
@@ -46,17 +48,12 @@ final class RedisEventInvokerTemplate implements RedisEventInvoker {
         try {
             HANDLE.invokeExact(event);
         } catch (Throwable t) {
-            sneakyThrow(t);
+            InvokerUtils.sneakyThrow(t);
         }
     }
 
     @Override
     public String toString() {
         return "RedisEventInvokerTemplate{" + METHOD + "}";
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends Throwable> void sneakyThrow(final Throwable t) throws T {
-        throw (T) t;
     }
 }
