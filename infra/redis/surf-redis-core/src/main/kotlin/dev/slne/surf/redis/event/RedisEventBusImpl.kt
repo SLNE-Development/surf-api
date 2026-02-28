@@ -19,8 +19,9 @@ import reactor.core.publisher.Mono
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.lang.reflect.InaccessibleObjectException
 import java.lang.reflect.Method
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.write
 
 
 class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
@@ -31,12 +32,18 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
      * Dispatch is exact-type only for maximum performance.
      */
     private val eventHandlers =
-        Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<MethodHandle>>()
+        Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<RedisEventInvoker>>()
 
     /**
      * Registry mapping serialized event type identifiers to event classes.
      */
     private val eventTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisEvent>>()
+
+    /**
+     * Lock used during event handler registration to ensure thread safety when modifying the handler and type registries.
+     * After the api is frozen, registration is disallowed, and this lock is no longer needed for dispatching events, which is a read-only operation.
+     */
+    private val registrationLock = ReentrantReadWriteLock()
 
     /**
      * Cache for event serializers, resolved once per event class.
@@ -105,9 +112,9 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         val handlers = eventHandlers[eventClass]
         if (handlers.isNullOrEmpty()) return
 
-        for (methodHandle in handlers) {
+        for (invoker in handlers) {
             try {
-                methodHandle.invoke(event)
+                invoker.invoke(event)
             } catch (e: Throwable) {
                 log.atSevere()
                     .withCause(e)
@@ -153,20 +160,17 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                 @Suppress("UNCHECKED_CAST")
                 firstParamType as Class<out RedisEvent>
 
-                eventTypeRegistry[firstParamType.name] = firstParamType
-
-                try {
-                    method.isAccessible = true
-                } catch (e: InaccessibleObjectException) {
-                    log.atWarning()
-                        .withCause(e)
-                        .log("Unable to set accessible flag for method ${method.name}.")
-                    continue
+                registrationLock.write {
+                    eventTypeRegistry[firstParamType.name] = firstParamType
                 }
 
-                val invoker = createRedisEventInvoker(listener, method)
-                eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
-                    .add(invoker)
+                method.trySetAccessible()
+                val invoker = RedisEventInvokerFactory.create(listener, method, firstParamType)
+
+                registrationLock.write {
+                    eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
+                        .add(invoker)
+                }
             }
         }
     }
