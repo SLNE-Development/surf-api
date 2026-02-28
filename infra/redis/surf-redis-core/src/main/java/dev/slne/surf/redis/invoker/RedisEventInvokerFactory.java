@@ -1,6 +1,7 @@
-package dev.slne.surf.redis.event;
+package dev.slne.surf.redis.invoker;
 
-import dev.slne.surf.redis.util.RedisHiddenInvokerUtil;
+import dev.slne.surf.redis.event.RedisEvent;
+import dev.slne.surf.redis.event.RedisEventInvoker;
 import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 
 @NullMarked
-final class RedisEventInvokerFactory {
+public final class RedisEventInvokerFactory {
 
     private static final byte[] TEMPLATE_CLASS_BYTES;
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();

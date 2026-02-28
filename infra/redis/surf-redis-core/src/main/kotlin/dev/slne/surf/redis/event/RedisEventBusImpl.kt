@@ -3,6 +3,7 @@ package dev.slne.surf.redis.event
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
+import dev.slne.surf.redis.invoker.RedisEventInvokerFactory
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.util.logger

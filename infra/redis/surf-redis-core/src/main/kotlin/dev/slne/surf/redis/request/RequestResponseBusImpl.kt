@@ -3,6 +3,7 @@ package dev.slne.surf.redis.request
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
+import dev.slne.surf.redis.invoker.RedisRequestHandlerInvokerFactory
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.SerializableUUID
