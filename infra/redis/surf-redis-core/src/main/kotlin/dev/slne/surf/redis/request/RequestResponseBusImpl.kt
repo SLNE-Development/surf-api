@@ -30,12 +30,28 @@ import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
 
+    /**
+     * Registered request handlers indexed by the concrete [RedisRequest] subclass they handle.
+     *
+     * Each entry maps a request type to a single [RedisRequestHandlerInvoker] instance.
+     * Invokers are hidden-class-backed wrappers around the original handler `MethodHandle`,
+     * enabling JIT-constant-folding of the dispatch target.
+     *
+     * Only one handler per request type is allowed; duplicate registrations are logged and ignored.
+     */
     private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, RedisRequestHandlerInvoker>()
     private val pendingRequests = ConcurrentHashMap<UUID, CompletableDeferred<RedisResponse>>()
 
     private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
     private val responseTypeRegistry = ConcurrentHashMap<String, Class<out RedisResponse>>()
 
+    /**
+     * Read-write lock guarding mutations to [requestHandlers] during handler registration.
+     *
+     * After the owning [RedisApi] is frozen, no further registration is allowed and
+     * request dispatching operates as a read-only path, so this lock is not contended
+     * during normal operation.
+     */
     private val registrationLock = ReentrantReadWriteLock()
 
     private val serializerCache = KotlinSerializerCache<Any>(api.json.serializersModule)

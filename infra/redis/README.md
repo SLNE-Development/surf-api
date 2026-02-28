@@ -322,6 +322,31 @@ These APIs:
 
 ---
 
+## Handler Dispatch (Internals)
+
+Event handlers (`@OnRedisEvent`) and request handlers (`@HandleRedisRequest`) are dispatched
+through **JVM hidden classes** generated at registration time.
+
+Each handler method is resolved into a `MethodHandle`, which is then embedded as a
+`static final` constant in a hidden class implementing `RedisEventInvoker` or
+`RedisRequestHandlerInvoker`. This allows the JIT compiler to constant-fold and inline the
+entire dispatch path — significantly outperforming raw `MethodHandle.invoke()` polymorphic calls.
+
+Hidden classes are:
+
+* **Not discoverable** by name — no classloader pollution
+* **Garbage-collectible** when no longer referenced
+* **JIT-friendly** — the dispatch target is a compile-time constant
+
+This approach combines the flexibility of reflection-based handler discovery with
+near-direct-call performance at runtime.
+
+> [!NOTE]
+> This is an implementation detail. The public API for registering handlers
+> (`@OnRedisEvent`, `@HandleRedisRequest`) remains unchanged.
+
+---
+
 ## Guarantees & Non-Guarantees
 
 Guaranteed:

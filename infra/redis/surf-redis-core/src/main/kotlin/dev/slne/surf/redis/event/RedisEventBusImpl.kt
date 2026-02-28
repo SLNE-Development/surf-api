@@ -30,7 +30,11 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     /**
      * Registered event handlers indexed by exact event type.
      *
-     * Dispatch is exact-type only for maximum performance.
+     * Each entry maps a concrete [RedisEvent] subclass to an ordered list of
+     * [RedisEventInvoker] instances. Invokers are hidden-class-backed wrappers around
+     * the original handler `MethodHandle`, enabling JIT-constant-folding of the dispatch target.
+     *
+     * Dispatch is exact-type only (no inheritance lookup) for maximum performance.
      */
     private val eventHandlers =
         Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<RedisEventInvoker>>()
@@ -41,8 +45,12 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     private val eventTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisEvent>>()
 
     /**
-     * Lock used during event handler registration to ensure thread safety when modifying the handler and type registries.
-     * After the api is frozen, registration is disallowed, and this lock is no longer needed for dispatching events, which is a read-only operation.
+     * Read-write lock guarding mutations to [eventHandlers] and [eventTypeRegistry]
+     * during handler registration.
+     *
+     * After the owning [RedisApi] is frozen, no further registration is allowed and
+     * event dispatching operates as a read-only path, so this lock is not contended
+     * during normal operation.
      */
     private val registrationLock = ReentrantReadWriteLock()
 

@@ -19,8 +19,10 @@ import java.io.Closeable
  * ## Dispatch
  * Event handlers are invoked synchronously on a Redisson/Reactor thread (see [OnRedisEvent]).
  *
- * For invocation, the implementation uses `MethodHandle`s (via `java.lang.invoke`) rather than
- * JVM-generated lambda factories to avoid classloader-related issues.
+ * For invocation, the implementation generates **JVM hidden classes** at registration time.
+ * Each hidden class wraps a `MethodHandle` as a `static final` constant, enabling the JIT
+ * compiler to constant-fold and inline the dispatch target. This provides near-direct-call
+ * performance while retaining the flexibility of reflection-based handler discovery.
  *
  * ## Lifecycle
  * The owning [RedisApi] initializes the bus during [RedisApi.connect] via [init] and closes it during
