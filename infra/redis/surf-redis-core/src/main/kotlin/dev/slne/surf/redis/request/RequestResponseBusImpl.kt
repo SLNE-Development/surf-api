@@ -18,21 +18,24 @@ import reactor.core.publisher.Mono
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.lang.reflect.InaccessibleObjectException
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.write
 import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 
 class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
 
-    private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, MethodHandle>()
+    private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, RedisRequestHandlerInvoker>()
     private val pendingRequests = ConcurrentHashMap<UUID, CompletableDeferred<RedisResponse>>()
 
     private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
     private val responseTypeRegistry = ConcurrentHashMap<String, Class<out RedisResponse>>()
+
+    private val registrationLock = ReentrantReadWriteLock()
 
     private val serializerCache = KotlinSerializerCache<Any>(api.json.serializersModule)
 
@@ -256,18 +259,10 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             requestType as Class<out RedisRequest>
 
             requestTypeRegistry[requestType.name] = requestType
+            method.trySetAccessible()
 
-            try {
-                method.isAccessible = true
-            } catch (e: InaccessibleObjectException) {
-                log.atWarning()
-                    .withCause(e)
-                    .log("Unable to make method ${method.name} in class ${handlerClass.name} accessible.")
-                continue
-            }
-
-            val invoker = createRequestInvoker(handler, method)
-            val current = requestHandlers.putIfAbsent(requestType, invoker)
+            val invoker = RedisRequestHandlerInvokerFactory.create(handler, method, requestType)
+            val current = registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
 
             if (current != null) {
                 log.atWarning()
