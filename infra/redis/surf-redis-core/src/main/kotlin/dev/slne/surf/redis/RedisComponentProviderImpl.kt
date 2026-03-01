@@ -6,7 +6,6 @@ import dev.slne.surf.redis.config.RedisConfig
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.event.RedisEventBusImpl
 import dev.slne.surf.redis.internal.RedissonConfigDetails
-import dev.slne.surf.redis.reflection.ServiceManagerProxy
 import dev.slne.surf.redis.request.RequestResponseBus
 import dev.slne.surf.redis.request.RequestResponseBusImpl
 import dev.slne.surf.redis.sync.list.SyncList
@@ -19,10 +18,8 @@ import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
 import io.netty.channel.epoll.Epoll
 import io.netty.channel.kqueue.KQueue
-import io.netty.channel.uring.IoUringSocketChannel
+import io.netty.channel.uring.IoUring
 import kotlinx.serialization.KSerializer
-import org.redisson.Redisson
-import org.redisson.api.RedissonClient
 import org.redisson.config.Config
 import org.redisson.config.EqualJitterDelay
 import org.redisson.config.Protocol
@@ -36,7 +33,7 @@ import kotlin.time.toJavaDuration
 @AutoService(RedisComponentProvider::class)
 class RedisComponentProviderImpl : RedisComponentProvider {
     private val redissonTransportMode = when {
-//        IoUring.isAvailable() -> TransportMode.IO_URING
+        IoUring.isAvailable() -> TransportMode.IO_URING
         Epoll.isAvailable() -> TransportMode.EPOLL
         KQueue.isAvailable() -> TransportMode.KQUEUE
         else -> TransportMode.NIO
@@ -63,7 +60,6 @@ class RedisComponentProviderImpl : RedisComponentProvider {
             .setTcpNoDelay(true)
             .setKeepPubSubOrder(false)
             .setProtocol(Protocol.RESP3)
-            .setAddressResolverGroupFactory(SequentialIoUringDnsAddressResolverFactory(RedisInstance.get().realTransportMode == TransportMode.IO_URING))
             .apply {
                 useSingleServer()
                     .setConnectionMinimumIdleSize(2)
@@ -77,14 +73,6 @@ class RedisComponentProviderImpl : RedisComponentProvider {
             }
 
         return config
-    }
-
-    override fun modifyRedisson(client: RedissonClient) {
-        require(client is Redisson)
-
-        if (RedisInstance.get().realTransportMode == TransportMode.IO_URING) {
-            ServiceManagerProxy.get().setSocketChannelClass(client.serviceManager, IoUringSocketChannel::class.java)
-        }
     }
 
     override fun tryExtractPluginNameFromClass(clazz: Class<*>): String {

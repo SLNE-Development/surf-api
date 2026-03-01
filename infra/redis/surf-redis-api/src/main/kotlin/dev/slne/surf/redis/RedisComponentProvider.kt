@@ -30,7 +30,6 @@ interface RedisComponentProvider {
     val clientId: String
 
     fun createRedissonConfig(details: RedissonConfigDetails): Config
-    fun modifyRedisson(client: RedissonClient)
     fun tryExtractPluginNameFromClass(clazz: Class<*>): String
 
     fun <K : Any, V : Any> createSimpleCache(

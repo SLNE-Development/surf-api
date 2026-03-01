@@ -11,7 +11,6 @@ import io.netty.channel.kqueue.KQueueIoHandler
 import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.uring.IoUring
 import io.netty.channel.uring.IoUringIoHandler
-import org.redisson.config.TransportMode
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
 import java.io.InputStream
@@ -24,8 +23,6 @@ abstract class RedisInstance {
     val eventLoopGroup: MultiThreadIoEventLoopGroup
     val redissonExecutorService: ExecutorService
 
-    val realTransportMode: TransportMode
-
     init {
         val contextClassLoader = Thread.currentThread().contextClassLoader
         try {
@@ -35,13 +32,6 @@ abstract class RedisInstance {
                 Epoll.isAvailable() -> EpollIoHandler.newFactory()
                 KQueue.isAvailable() -> KQueueIoHandler.newFactory()
                 else -> NioIoHandler.newFactory()
-            }
-
-            realTransportMode = when {
-                IoUring.isAvailable() -> TransportMode.IO_URING
-                Epoll.isAvailable() -> TransportMode.EPOLL
-                KQueue.isAvailable() -> TransportMode.KQUEUE
-                else -> TransportMode.NIO
             }
 
             val nettyThreadFactory = Thread.ofPlatform()
@@ -71,6 +61,8 @@ abstract class RedisInstance {
         } finally {
             Thread.currentThread().contextClassLoader = contextClassLoader
         }
+
+        IoUringRedissonPatcher.patch(javaClass.classLoader)
     }
 
     val streamPollScheduler: Scheduler = Schedulers.newBoundedElastic(
