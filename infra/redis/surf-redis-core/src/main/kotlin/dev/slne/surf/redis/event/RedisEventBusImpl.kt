@@ -17,10 +17,7 @@ import kotlinx.serialization.json.JsonElement
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
-import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
-import java.lang.reflect.Method
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
@@ -65,7 +62,6 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     companion object {
         private val log = logger()
         private const val REDIS_CHANNEL = "surf-redis:events"
-        private val lookup = MethodHandles.lookup()
     }
 
     override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
@@ -182,18 +178,6 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                 }
             }
         }
-    }
-
-    private fun createRedisEventInvoker(
-        listener: Any,
-        method: Method
-    ): MethodHandle {
-        val listenerClass = listener.javaClass
-        val listenerLookup = MethodHandles.privateLookupIn(listenerClass, lookup)
-
-        return listenerLookup.unreflect(method)
-            .bindTo(listener)
-            .asType(MethodType.methodType(Void.TYPE, Any::class.java))
     }
 
     /**

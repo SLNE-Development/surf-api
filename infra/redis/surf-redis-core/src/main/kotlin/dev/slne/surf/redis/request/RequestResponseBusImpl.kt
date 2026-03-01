@@ -16,10 +16,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
-import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -66,8 +62,6 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         private val log = logger()
         private const val REQUEST_CHANNEL = "surf-redis:requests"
         private const val RESPONSE_CHANNEL = "surf-redis:responses"
-
-        private val lookup = MethodHandles.lookup()
     }
 
     /**
@@ -287,16 +281,6 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                     .log("A request handler is already registered for request type: ${requestType.name} - ignoring duplicate registration in method ${method.name} of class ${handlerClass.name}.")
             }
         }
-    }
-
-
-    private fun createRequestInvoker(instance: Any, method: Method): MethodHandle {
-        val handlerClass = instance.javaClass
-        val handlerLookup = MethodHandles.privateLookupIn(handlerClass, lookup)
-
-        return handlerLookup.unreflect(method)
-            .bindTo(instance)
-            .asType(MethodType.methodType(Void.TYPE, RequestContext::class.java))
     }
 
     /**
