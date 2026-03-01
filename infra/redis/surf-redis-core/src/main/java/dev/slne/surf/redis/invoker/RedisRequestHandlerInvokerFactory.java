@@ -55,7 +55,7 @@ public final class RedisRequestHandlerInvokerFactory {
     }
 
     private RedisRequestHandlerInvokerFactory() {
-        throw new UnsupportedOperationException("RedisRequestHandlerInvokerFactor is a utility class and cannot be instantiated");
+        throw new UnsupportedOperationException("RedisRequestHandlerInvokerFactory is a utility class and cannot be instantiated");
     }
 
     /**
