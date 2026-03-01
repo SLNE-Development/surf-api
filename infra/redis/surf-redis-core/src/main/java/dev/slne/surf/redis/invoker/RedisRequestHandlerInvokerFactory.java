@@ -59,6 +59,22 @@ public final class RedisRequestHandlerInvokerFactory {
     }
 
     /**
+     * Checks whether a hidden class invoker can be created for the given handler and method.
+     * Validates that privateLookupIn succeeds and the method can be unreflected.
+     *
+     * @return true if {@link #create} will succeed, false if the module does not open the package
+     */
+    public static boolean canAccess(final Object handler, final Method method) {
+        try {
+            MethodHandles.privateLookupIn(handler.getClass(), LOOKUP).unreflect(method);
+            return true;
+        } catch (IllegalAccessException e) {
+            return false;
+        }
+    }
+
+
+    /**
      * Creates a new {@link RedisRequestHandlerInvoker} for the given handler and method.
      *
      * <p>A new hidden class is defined from the pre-loaded template bytecode. The hidden class

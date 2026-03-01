@@ -266,6 +266,17 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                 continue
             }
 
+            if (!RedisRequestHandlerInvokerFactory.canAccess(handler, method)) {
+                log.atSevere()
+                    .withStackTrace(StackSize.MEDIUM)
+                    .log(
+                        "Method ${method.name} in ${handlerClass.name} is not accessible via privateLookupIn " +
+                                "— ensure the package '${handlerClass.packageName}' is opened to the surf-redis module. " +
+                                "Cannot register as request handler."
+                    )
+                continue
+            }
+
             @Suppress("UNCHECKED_CAST")
             requestType as Class<out RedisRequest>
 
