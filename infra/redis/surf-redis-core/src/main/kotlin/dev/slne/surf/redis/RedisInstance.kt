@@ -62,7 +62,9 @@ abstract class RedisInstance {
             Thread.currentThread().contextClassLoader = contextClassLoader
         }
 
-        IoUringRedissonPatcher.patch(javaClass.classLoader)
+        if (IoUring.isAvailable()) {
+            IoUringRedissonPatcher.patch(javaClass.classLoader)
+        }
     }
 
     val streamPollScheduler: Scheduler = Schedulers.newBoundedElastic(
