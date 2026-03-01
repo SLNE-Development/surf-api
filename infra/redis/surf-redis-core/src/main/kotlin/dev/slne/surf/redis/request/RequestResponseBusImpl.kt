@@ -270,7 +270,6 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             requestType as Class<out RedisRequest>
 
             requestTypeRegistry[requestType.name] = requestType
-            method.trySetAccessible()
 
             val invoker = RedisRequestHandlerInvokerFactory.create(handler, method, requestType)
             val current = registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }

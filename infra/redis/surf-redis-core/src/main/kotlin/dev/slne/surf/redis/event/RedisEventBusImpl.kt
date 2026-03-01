@@ -168,7 +168,6 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                     eventTypeRegistry[firstParamType.name] = firstParamType
                 }
 
-                method.trySetAccessible()
                 val invoker = RedisEventInvokerFactory.create(listener, method, firstParamType)
 
                 registrationLock.write {
