@@ -11,6 +11,7 @@ import io.netty.channel.kqueue.KQueueIoHandler
 import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.uring.IoUring
 import io.netty.channel.uring.IoUringIoHandler
+import org.redisson.config.TransportMode
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
 import java.io.InputStream
@@ -23,34 +24,53 @@ abstract class RedisInstance {
     val eventLoopGroup: MultiThreadIoEventLoopGroup
     val redissonExecutorService: ExecutorService
 
+    val realTransportMode: TransportMode
+
     init {
-        val ioHandlerFactory = when {
-            IoUring.isAvailable() -> IoUringIoHandler.newFactory()
-            Epoll.isAvailable() -> EpollIoHandler.newFactory()
-            KQueue.isAvailable() -> KQueueIoHandler.newFactory()
-            else -> NioIoHandler.newFactory()
+        val contextClassLoader = Thread.currentThread().contextClassLoader
+        try {
+            Thread.currentThread().contextClassLoader = this.javaClass.classLoader
+            val ioHandlerFactory = when {
+                IoUring.isAvailable() -> IoUringIoHandler.newFactory()
+                Epoll.isAvailable() -> EpollIoHandler.newFactory()
+                KQueue.isAvailable() -> KQueueIoHandler.newFactory()
+                else -> NioIoHandler.newFactory()
+            }
+
+            realTransportMode = when {
+                IoUring.isAvailable() -> TransportMode.IO_URING
+                Epoll.isAvailable() -> TransportMode.EPOLL
+                KQueue.isAvailable() -> TransportMode.KQUEUE
+                else -> TransportMode.NIO
+            }
+
+            val nettyThreadFactory = Thread.ofPlatform()
+                .name("redisson-netty-thread-", 0)
+                .uncaughtExceptionHandler { thread, throwable ->
+                    log.atSevere()
+                        .withCause(throwable)
+                        .log("Uncaught exception in Redisson Netty thread (%s): %s", thread.name, throwable)
+                }
+                .factory()
+
+            val redissonThreadFactory = Thread.ofVirtual()
+                .name("redisson-virtual-thread-executor-", 0)
+                .uncaughtExceptionHandler { thread, throwable ->
+                    log.atSevere()
+                        .withCause(throwable)
+                        .log(
+                            "Uncaught exception in Redisson virtual thread executor (%s): %s",
+                            thread.name,
+                            throwable
+                        )
+                }
+                .factory()
+
+            eventLoopGroup = MultiThreadIoEventLoopGroup(16, nettyThreadFactory, ioHandlerFactory)
+            redissonExecutorService = Executors.newThreadPerTaskExecutor(redissonThreadFactory)
+        } finally {
+            Thread.currentThread().contextClassLoader = contextClassLoader
         }
-
-        val nettyThreadFactory = Thread.ofPlatform()
-            .name("redisson-netty-thread-", 0)
-            .uncaughtExceptionHandler { thread, throwable ->
-                log.atSevere()
-                    .withCause(throwable)
-                    .log("Uncaught exception in Redisson Netty thread (%s): %s", thread.name, throwable)
-            }
-            .factory()
-
-        val redissonThreadFactory = Thread.ofVirtual()
-            .name("redisson-virtual-thread-executor-", 0)
-            .uncaughtExceptionHandler { thread, throwable ->
-                log.atSevere()
-                    .withCause(throwable)
-                    .log("Uncaught exception in Redisson virtual thread executor (%s): %s", thread.name, throwable)
-            }
-            .factory()
-
-        eventLoopGroup = MultiThreadIoEventLoopGroup(16, nettyThreadFactory, ioHandlerFactory)
-        redissonExecutorService = Executors.newThreadPerTaskExecutor(redissonThreadFactory)
     }
 
     val streamPollScheduler: Scheduler = Schedulers.newBoundedElastic(

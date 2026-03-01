@@ -363,6 +363,8 @@ class RedisApi private constructor(
             .log("Connecting to Redis...")
 
         redisson = Redisson.create(config)
+        RedisComponentProvider.get().modifyRedisson(redisson)
+
         redissonReactive = redisson.reactive()
 
         fetchRedisOs()
