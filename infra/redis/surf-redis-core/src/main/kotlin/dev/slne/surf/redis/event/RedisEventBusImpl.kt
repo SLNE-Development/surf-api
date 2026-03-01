@@ -161,6 +161,17 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                     continue
                 }
 
+                if (!RedisEventInvokerFactory.canAccess(listener, method)) {
+                    log.atSevere()
+                        .withStackTrace(StackSize.MEDIUM)
+                        .log(
+                            "Method ${method.name} in ${listener.javaClass.name} is not accessible via privateLookupIn " +
+                                    "— ensure the package '${listener.javaClass.packageName}' is opened to the surf-redis module. " +
+                                    "Cannot register as event handler."
+                        )
+                    continue
+                }
+
                 @Suppress("UNCHECKED_CAST")
                 firstParamType as Class<out RedisEvent>
 
