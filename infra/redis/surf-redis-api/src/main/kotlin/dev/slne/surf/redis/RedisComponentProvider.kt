@@ -16,6 +16,7 @@ import dev.slne.surf.redis.util.InternalRedisAPI
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import kotlinx.serialization.KSerializer
+import org.redisson.api.RedissonClient
 import org.redisson.config.Config
 import java.util.concurrent.ExecutorService
 import kotlin.time.Duration

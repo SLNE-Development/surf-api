@@ -32,7 +32,7 @@ import kotlin.time.toJavaDuration
 
 @AutoService(RedisComponentProvider::class)
 class RedisComponentProviderImpl : RedisComponentProvider {
-    private val transportMode = when {
+    private val redissonTransportMode = when {
         IoUring.isAvailable() -> TransportMode.IO_URING
         Epoll.isAvailable() -> TransportMode.EPOLL
         KQueue.isAvailable() -> TransportMode.KQUEUE
@@ -50,7 +50,7 @@ class RedisComponentProviderImpl : RedisComponentProvider {
         val config = Config()
             .setPassword(details.redisURI.password)
             .setExecutor(redissonExecutorService)
-            .setTransportMode(transportMode)
+            .setTransportMode(redissonTransportMode)
             .setEventLoopGroup(eventLoopGroup)
             .setTcpKeepAlive(true)
             .setTcpUserTimeout(10.seconds.inWholeMilliseconds.toInt())
