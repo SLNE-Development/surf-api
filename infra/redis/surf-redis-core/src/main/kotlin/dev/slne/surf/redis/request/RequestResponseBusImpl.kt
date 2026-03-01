@@ -3,6 +3,7 @@ package dev.slne.surf.redis.request
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
+import dev.slne.surf.redis.invoker.RedisRequestHandlerInvokerFactory
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.SerializableUUID
@@ -15,24 +16,39 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
-import java.lang.reflect.InaccessibleObjectException
-import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.write
 import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
 
 class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
 
-    private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, MethodHandle>()
+    /**
+     * Registered request handlers indexed by the concrete [RedisRequest] subclass they handle.
+     *
+     * Each entry maps a request type to a single [RedisRequestHandlerInvoker] instance.
+     * Invokers are hidden-class-backed wrappers around the original handler `MethodHandle`,
+     * enabling JIT-constant-folding of the dispatch target.
+     *
+     * Only one handler per request type is allowed; duplicate registrations are logged and ignored.
+     */
+    private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, RedisRequestHandlerInvoker>()
     private val pendingRequests = ConcurrentHashMap<UUID, CompletableDeferred<RedisResponse>>()
 
     private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
     private val responseTypeRegistry = ConcurrentHashMap<String, Class<out RedisResponse>>()
+
+    /**
+     * Read-write lock guarding mutations to [requestHandlers] during handler registration.
+     *
+     * After the owning [RedisApi] is frozen, no further registration is allowed and
+     * request dispatching operates as a read-only path, so this lock is not contended
+     * during normal operation.
+     */
+    private val registrationLock = ReentrantReadWriteLock()
 
     private val serializerCache = KotlinSerializerCache<Any>(api.json.serializersModule)
 
@@ -46,8 +62,6 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         private val log = logger()
         private const val REQUEST_CHANNEL = "surf-redis:requests"
         private const val RESPONSE_CHANNEL = "surf-redis:responses"
-
-        private val lookup = MethodHandles.lookup()
     }
 
     /**
@@ -252,22 +266,26 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                 continue
             }
 
-            @Suppress("UNCHECKED_CAST")
-            requestType as Class<out RedisRequest>
-
-            requestTypeRegistry[requestType.name] = requestType
-
-            try {
-                method.isAccessible = true
-            } catch (e: InaccessibleObjectException) {
-                log.atWarning()
-                    .withCause(e)
-                    .log("Unable to make method ${method.name} in class ${handlerClass.name} accessible.")
+            if (!RedisRequestHandlerInvokerFactory.canAccess(handler, method)) {
+                log.atSevere()
+                    .withStackTrace(StackSize.MEDIUM)
+                    .log(
+                        "Method ${method.name} in ${handlerClass.name} is not accessible via privateLookupIn " +
+                                "— ensure the package '${handlerClass.packageName}' is opened to the surf-redis module. " +
+                                "Cannot register as request handler."
+                    )
                 continue
             }
 
-            val invoker = createRequestInvoker(handler, method)
-            val current = requestHandlers.putIfAbsent(requestType, invoker)
+            @Suppress("UNCHECKED_CAST")
+            requestType as Class<out RedisRequest>
+
+            registrationLock.write {
+                requestTypeRegistry[requestType.name] = requestType
+            }
+
+            val invoker = RedisRequestHandlerInvokerFactory.create(handler, method, requestType)
+            val current = registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
 
             if (current != null) {
                 log.atWarning()
@@ -275,16 +293,6 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                     .log("A request handler is already registered for request type: ${requestType.name} - ignoring duplicate registration in method ${method.name} of class ${handlerClass.name}.")
             }
         }
-    }
-
-
-    private fun createRequestInvoker(instance: Any, method: Method): MethodHandle {
-        val handlerClass = instance.javaClass
-        val handlerLookup = MethodHandles.privateLookupIn(handlerClass, lookup)
-
-        return handlerLookup.unreflect(method)
-            .bindTo(instance)
-            .asType(MethodType.methodType(Void.TYPE, RequestContext::class.java))
     }
 
     /**

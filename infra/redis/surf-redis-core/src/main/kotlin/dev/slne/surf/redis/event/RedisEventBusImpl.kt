@@ -3,6 +3,7 @@ package dev.slne.surf.redis.event
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
+import dev.slne.surf.redis.invoker.RedisEventInvokerFactory
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
 import dev.slne.surf.surfapi.core.api.util.logger
@@ -16,11 +17,8 @@ import kotlinx.serialization.json.JsonElement
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
-import java.lang.reflect.InaccessibleObjectException
-import java.lang.reflect.Method
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.write
 
 
 class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
@@ -28,15 +26,29 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     /**
      * Registered event handlers indexed by exact event type.
      *
-     * Dispatch is exact-type only for maximum performance.
+     * Each entry maps a concrete [RedisEvent] subclass to an ordered list of
+     * [RedisEventInvoker] instances. Invokers are hidden-class-backed wrappers around
+     * the original handler `MethodHandle`, enabling JIT-constant-folding of the dispatch target.
+     *
+     * Dispatch is exact-type only (no inheritance lookup) for maximum performance.
      */
     private val eventHandlers =
-        Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<MethodHandle>>()
+        Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<RedisEventInvoker>>()
 
     /**
      * Registry mapping serialized event type identifiers to event classes.
      */
     private val eventTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisEvent>>()
+
+    /**
+     * Read-write lock guarding mutations to [eventHandlers] and [eventTypeRegistry]
+     * during handler registration.
+     *
+     * After the owning [RedisApi] is frozen, no further registration is allowed and
+     * event dispatching operates as a read-only path, so this lock is not contended
+     * during normal operation.
+     */
+    private val registrationLock = ReentrantReadWriteLock()
 
     /**
      * Cache for event serializers, resolved once per event class.
@@ -49,7 +61,6 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     companion object {
         private val log = logger()
         private const val REDIS_CHANNEL = "surf-redis:events"
-        private val lookup = MethodHandles.lookup()
     }
 
     override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
@@ -105,9 +116,9 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         val handlers = eventHandlers[eventClass]
         if (handlers.isNullOrEmpty()) return
 
-        for (methodHandle in handlers) {
+        for (invoker in handlers) {
             try {
-                methodHandle.invoke(event)
+                invoker.invoke(event)
             } catch (e: Throwable) {
                 log.atSevere()
                     .withCause(e)
@@ -150,37 +161,32 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                     continue
                 }
 
-                @Suppress("UNCHECKED_CAST")
-                firstParamType as Class<out RedisEvent>
-
-                eventTypeRegistry[firstParamType.name] = firstParamType
-
-                try {
-                    method.isAccessible = true
-                } catch (e: InaccessibleObjectException) {
-                    log.atWarning()
-                        .withCause(e)
-                        .log("Unable to set accessible flag for method ${method.name}.")
+                if (!RedisEventInvokerFactory.canAccess(listener, method)) {
+                    log.atSevere()
+                        .withStackTrace(StackSize.MEDIUM)
+                        .log(
+                            "Method ${method.name} in ${listener.javaClass.name} is not accessible via privateLookupIn " +
+                                    "— ensure the package '${listener.javaClass.packageName}' is opened to the surf-redis module. " +
+                                    "Cannot register as event handler."
+                        )
                     continue
                 }
 
-                val invoker = createRedisEventInvoker(listener, method)
-                eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
-                    .add(invoker)
+                @Suppress("UNCHECKED_CAST")
+                firstParamType as Class<out RedisEvent>
+
+                registrationLock.write {
+                    eventTypeRegistry[firstParamType.name] = firstParamType
+                }
+
+                val invoker = RedisEventInvokerFactory.create(listener, method, firstParamType)
+
+                registrationLock.write {
+                    eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
+                        .add(invoker)
+                }
             }
         }
-    }
-
-    private fun createRedisEventInvoker(
-        listener: Any,
-        method: Method
-    ): MethodHandle {
-        val listenerClass = listener.javaClass
-        val listenerLookup = MethodHandles.privateLookupIn(listenerClass, lookup)
-
-        return listenerLookup.unreflect(method)
-            .bindTo(listener)
-            .asType(MethodType.methodType(Void.TYPE, Any::class.java))
     }
 
     /**
