@@ -269,7 +269,9 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             @Suppress("UNCHECKED_CAST")
             requestType as Class<out RedisRequest>
 
-            requestTypeRegistry[requestType.name] = requestType
+            registrationLock.write {
+                requestTypeRegistry[requestType.name] = requestType
+            }
 
             val invoker = RedisRequestHandlerInvokerFactory.create(handler, method, requestType)
             val current = registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
