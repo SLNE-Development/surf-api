@@ -4,6 +4,10 @@ import dev.slne.surf.surfapi.bukkit.server.plugin
 import me.devnatan.inventoryframework.ViewFrame
 
 object InventoryLoader {
+    init {
+        InventoryViewRemapper.remap()
+    }
+
     lateinit var viewFrame: ViewFrame
 
     fun load() {
