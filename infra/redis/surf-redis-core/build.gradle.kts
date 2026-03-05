@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     api(projects.surfRedisApi)
-    api(platform("io.netty:netty-bom:4.2.10.Final"))
+    api(platform(libs.netty.bom))
 
     // transport classes
     implementation("io.netty:netty-transport-classes-io_uring")

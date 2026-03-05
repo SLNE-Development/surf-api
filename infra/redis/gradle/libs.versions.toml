@@ -1,0 +1,7 @@
+[versions]
+redisson = "4.3.0"
+netty = "4.2.10.Final"
+
+[libraries]
+redisson = { group = "org.redisson", name = "redisson", version.ref = "redisson" }
+netty-bom = { group = "io.netty", name = "netty-bom", version.ref = "netty" }
