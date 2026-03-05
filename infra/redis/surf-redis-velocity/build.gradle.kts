@@ -8,5 +8,5 @@ velocityPluginFile {
 }
 
 dependencies {
-    api(project(":surf-redis-core"))
+    api(projects.surfRedisCore)
 }

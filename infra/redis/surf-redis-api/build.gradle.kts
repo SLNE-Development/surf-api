@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     id("dev.slne.surf.surfapi.gradle.core")
-//    id("dev.slne.surf.surfapi.gradle.standalone") /* Uncomment to use tests */
 }
 
 surfCoreApi {
@@ -23,17 +22,11 @@ kotlin {
 }
 
 dependencies {
-    api("org.redisson:redisson:4.2.0") {
+    api(libs.redisson) {
         exclude("org.slf4j")
         exclude("org.reactivestreams")
         exclude("io.projectreactor", "reactor-core")
     }
-
-    testImplementation(kotlin("test"))
-    testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
-    testImplementation("com.redis:testcontainers-redis:2.2.4")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 }
 
 publishing {
