@@ -3,9 +3,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-redis-api"))
-
-    api(platform("io.netty:netty-bom:4.2.9.Final"))
+    api(projects.surfRedisApi)
+    api(platform("io.netty:netty-bom:4.2.10.Final"))
 
     // transport classes
     implementation("io.netty:netty-transport-classes-io_uring")
