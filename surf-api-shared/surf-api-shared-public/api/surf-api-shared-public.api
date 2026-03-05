@@ -4,6 +4,9 @@ public final class dev/slne/surf/surfapi/shared/api/annotation/AnnotationUtils {
 	public final fun findAnnotation (Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
 }
 
+public abstract interface annotation class dev/slne/surf/surfapi/shared/api/annotation/InternalAPIMarker : java/lang/annotation/Annotation {
+}
+
 public abstract interface class dev/slne/surf/surfapi/shared/api/component/Component {
 	public fun disable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun enable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
