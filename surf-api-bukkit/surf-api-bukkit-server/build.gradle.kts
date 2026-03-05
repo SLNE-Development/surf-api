@@ -25,7 +25,6 @@ dependencies {
 
     // -------------------- Paper Libraries -------------------- //
     runtimeOnly(libs.scoreboard.library.implementation)
-    runtimeOnly(libs.scoreboard.library.modern)
     paperLibrary(libs.scoreboard.library.api)
     api(libs.stefvanschie.`if`)
     paperLibrary(libs.guava)
