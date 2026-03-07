@@ -233,12 +233,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
 
         val bucket = api.redissonReactive.getBucket<String>(redisKey, StringCodec)
-        val raw = bucket.get().awaitSingleOrNull()
-
-        if (raw == null) {
-            nearCache.put(localKey, CacheEntry.Null)
-            return null
-        }
+        val raw = bucket.get().awaitSingleOrNull() ?: return null
 
         bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
         refreshTtl(localKey, redisKey)
@@ -293,15 +288,38 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         cacheNull: Boolean,
         loader: suspend () -> V?
     ): V? {
-        val existing = getCached(key)
-        if (existing != null) return existing
-        if (nearCache.getIfPresent(localKey(key)) == CacheEntry.Null) return null
+        val localKey = localKey(key)
+
+        when (val entry = nearCache.getIfPresent(localKey)) {
+            is CacheEntry.Value -> return entry.value
+            CacheEntry.Null -> return null
+            null -> Unit
+        }
+
+
+        val redisKey = redisKey(key)
+        val bucket = api.redissonReactive.getBucket<String>(redisKey, StringCodec)
+        val raw = bucket.get().awaitSingleOrNull()
+
+        if (raw != null) {
+            bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+            refreshTtl(localKey, redisKey)
+            return if (raw == NULL_MARKER) {
+                nearCache.put(localKey, CacheEntry.Null)
+                null
+            } else {
+                val value = api.json.decodeFromString(serializer, raw)
+                nearCache.put(localKey, CacheEntry.Value(value))
+                value
+            }
+        }
 
         val loaded = loader()
         when {
             loaded != null -> put(key, loaded)
             cacheNull -> putNull(key)
         }
+
         return loaded
     }
 
