@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-core:surf-api-core-api"))
+    api(projects.surfApiCore.surfApiCoreApi)
     api(libs.mccoroutine.velocity.api)
     api(libs.mccoroutine.velocity.core)
     compileOnlyApi(libs.velocity.api)

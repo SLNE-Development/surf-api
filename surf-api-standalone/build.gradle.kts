@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-core:surf-api-core-server")) {
+    api(projects.surfApiCore.surfApiCoreServer) {
         exclude(libs.commandapi.core)
         exclude(libs.brigadier)
     }

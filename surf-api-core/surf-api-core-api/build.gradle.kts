@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-shared:surf-api-shared-public"))
+    api(projects.surfApiShared.surfApiSharedPublic)
     api(libs.adventure.nbt)
     compileOnlyApi(libs.packetevents.api)
     compileOnlyApi(libs.dazzleconf)

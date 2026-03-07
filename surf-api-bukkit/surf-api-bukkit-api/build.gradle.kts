@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-core:surf-api-core-api"))
+    api(projects.surfApiCore.surfApiCoreApi)
     compileOnly(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
     api(libs.scoreboard.library.api)
