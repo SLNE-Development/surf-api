@@ -16,8 +16,8 @@ kotlin {
 }
 
 dependencies {
-    api(project(":surf-api-bukkit:surf-api-bukkit-api"))
-    api(project(":surf-api-core:surf-api-core-server"))
+    api(projects.surfApiBukkit.surfApiBukkitApi)
+    api(projects.surfApiCore.surfApiCoreServer)
 
     paperweight.paperDevBundle(libs.paper.api.get().version)
 

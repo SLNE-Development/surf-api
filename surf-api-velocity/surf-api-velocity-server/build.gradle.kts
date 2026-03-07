@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-core:surf-api-core-server"))
-    api(project(":surf-api-velocity:surf-api-velocity-api"))
+    api(projects.surfApiCore.surfApiCoreServer)
+    api(projects.surfApiVelocity.surfApiVelocityApi)
     api(libs.dazzleconf)
     api(libs.spongepowered.math)
     api(libs.commons.lang3)

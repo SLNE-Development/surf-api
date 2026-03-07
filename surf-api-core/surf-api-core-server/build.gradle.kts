@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-core:surf-api-core-api"))
-    api(project(":surf-api-shared:surf-api-shared-internal"))
+    api(projects.surfApiShared.surfApiSharedInternal)
+    api(projects.surfApiCore.surfApiCoreApi)
     compileOnly(libs.packetevents.netty.common)
     api(libs.bytebuddy)
 }

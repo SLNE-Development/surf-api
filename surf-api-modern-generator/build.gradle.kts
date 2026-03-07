@@ -22,7 +22,7 @@ dependencies {
     implementation("org.jetbrains:annotations:26.1.0")
     implementation(libs.paper.api)
 
-    implementation(project(":surf-api-core:surf-api-core-api"))
+    implementation(projects.surfApiCore.surfApiCoreApi)
 }
 
 val mcManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
@@ -72,7 +72,7 @@ val downloadRegistriesTask by tasks.register("downloadRegistries") {
         val execOps = project.serviceOf<ExecOperations>()
         execOps.javaexec {
             mainClass.set("net.minecraft.data.Main")
-            classpath =  files(classPath.map { it.toFile() })
+            classpath = files(classPath.map { it.toFile() })
             args("--reports", "--output", outputDir.absolutePath, "--all")
 
             standardOutput = System.out

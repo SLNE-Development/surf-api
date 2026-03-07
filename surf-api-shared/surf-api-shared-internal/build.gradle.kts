@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    api(project(":surf-api-shared:surf-api-shared-public"))
+    api(projects.surfApiShared.surfApiSharedPublic)
 }

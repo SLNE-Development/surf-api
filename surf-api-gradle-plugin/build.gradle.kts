@@ -51,6 +51,11 @@ dependencies {
 
 gradlePlugin {
     plugins {
+        create("settings") {
+            id = "dev.slne.surf.surfapi.gradle.settings"
+            implementationClass = "dev.slne.surf.surfapi.gradle.settings.SurfSettingsPlugin"
+        }
+
         create("core") {
             id = "dev.slne.surf.surfapi.gradle.core"
             implementationClass = "dev.slne.surf.surfapi.gradle.platform.core.CoreSurfPlugin"
@@ -77,12 +82,6 @@ gradlePlugin {
             id = "dev.slne.surf.surfapi.gradle.velocity"
             implementationClass =
                 "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
-        }
-
-        create("hytale") {
-            id = "dev.slne.surf.surfapi.gradle.hytale"
-            implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.hytale.HytaleSurfPlugin"
         }
     }
 
@@ -136,7 +135,6 @@ val generateConstants by tasks.registering {
             |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-releases"
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
-            |    const val HYTALE_SERVER = "${libs.hytale.server.get()}"
             |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
             |    const val AUTO_SERVICE = "${generator.group}:${generator.name}:${generator.version}"
             |
