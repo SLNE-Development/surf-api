@@ -1,24 +1,36 @@
 package dev.slne.surf.microservice.api
 
+import com.google.common.flogger.FluentLogger
 import dev.slne.surf.microservice.api.util.InternalMicroserviceApi
-import kotlin.reflect.full.findAnnotation
+import dev.slne.surf.surfapi.standalone.SurfApiStandaloneBootstrap
 
 abstract class Microservice {
-    private val annotation = this::class.findAnnotation<SurfMicroservice>()
-        ?: throw IllegalStateException("Microservice class must be annotated with @SurfMicroservice")
-
-    val id: String by annotation::name
+    abstract val logger: FluentLogger
 
     @InternalMicroserviceApi
-    suspend fun bootstrap() {
+    suspend fun bootstrap(args: List<String>) {
+        SurfApiStandaloneBootstrap.bootstrap()
+        SurfApiStandaloneBootstrap.enable()
 
+        onBootstrap(args)
     }
 
     @InternalMicroserviceApi
     suspend fun disable() {
+        onDisable()
 
+        SurfApiStandaloneBootstrap.shutdown()
     }
 
-    open suspend fun onBootstrap() {}
+    open suspend fun onBootstrap(args: List<String>) {}
     open suspend fun onDisable() {}
+
+    companion object {
+        @InternalMicroserviceApi
+        lateinit var INSTANCE: Microservice
+            internal set
+    }
 }
+
+val microservice get() = Microservice.INSTANCE
+val log get() = microservice.logger

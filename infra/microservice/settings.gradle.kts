@@ -1,6 +1,7 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
+        mavenLocal()
         maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
     }
 }
@@ -14,6 +15,4 @@ rootProject.name = "surf-microservice"
 
 include("surf-microservice-api")
 include("surf-microservice-plugin")
-include("surf-microservice-launcher")
-include("surf-microservice-test:surf-microservice-test-service")
-include("surf-microservice-test:surf-microservice-test-launcher")
+include("surf-microservice-test")

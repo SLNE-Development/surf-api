@@ -1,5 +1,7 @@
 package dev.slne.surf.microservice.api.util
 
+import dev.slne.surf.surfapi.shared.api.annotation.InternalAPIMarker
+
 @Target(
     AnnotationTarget.CLASS,
     AnnotationTarget.ANNOTATION_CLASS,
@@ -15,4 +17,5 @@ package dev.slne.surf.microservice.api.util
 )
 @Retention(AnnotationRetention.RUNTIME)
 @RequiresOptIn
+@InternalAPIMarker
 annotation class InternalMicroserviceApi
