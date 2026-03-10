@@ -48,6 +48,7 @@ surfPaperPluginApi { // name changes depending on the plugin type
 - `dev.slne.surf.surfapi.gradle.core` for core modules (applies kotlin and other plugins, adds surf-core-api compileOnly dependency)
 - `dev.slne.surf.surfapi.gradle.paper-plugin` for paper plugin modules (all core features, adds paper-api dependency, generation of paper-plugin.yml and runServer configuration)
 - `dev.slne.surf.surfapi.gradle.paper-raw` for paper plugin modules (all core features, adds paper-api dependency, **NO** generation of paper-plugin.yml nor runServer configuration)
+- `dev.slne.surf.surfapi.gradle.canvas-plugin` for canvas plugin modules (all paper-plugin features, adds canvas-api dependency and Canvas maven repository)
 - `dev.slne.surf.surfapi.gradle.standalone` for standalone modules (all core features, adds surf-core-api dependency, shades surf-api-standalone)
 - `dev.slne.surf.surfapi.gradle.velocity` for velocity modules (all core features, adds velocity-api dependency)
 
@@ -84,5 +85,12 @@ plugins {
 ```kotlin
 plugins {
     id("dev.slne.surf.surfapi.gradle.velocity")
+}
+```
+
+#### Canvas Plugin
+```kotlin
+plugins {
+    id("dev.slne.surf.surfapi.gradle.canvas-plugin")
 }
 ```

@@ -72,6 +72,12 @@ gradlePlugin {
                 "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
         }
 
+        create("canvas-plugin") {
+            id = "dev.slne.surf.surfapi.gradle.canvas-plugin"
+            implementationClass =
+                "dev.slne.surf.surfapi.gradle.platform.canvas.CanvasPluginSurfPlugin"
+        }
+
         create("standalone") {
             id = "dev.slne.surf.surfapi.gradle.standalone"
             implementationClass =
@@ -109,6 +115,7 @@ val generateConstants by tasks.registering {
     inputs.property("javaVersion", javaVersion)
     inputs.property("mcVersion", mcVersion)
     inputs.property("libs.paper.api", libs.paper.api.get().toString())
+    inputs.property("libs.canvas.api", libs.canvas.api.get().toString())
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
@@ -134,6 +141,7 @@ val generateConstants by tasks.registering {
             |    const val SNAPSHOT_REPO_ID = "maven-releases"
             |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-releases"
             |    const val PAPER_API = "${libs.paper.api.get()}"
+            |    const val CANVAS_API = "${libs.canvas.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
             |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
             |    const val AUTO_SERVICE = "${generator.group}:${generator.name}:${generator.version}"
