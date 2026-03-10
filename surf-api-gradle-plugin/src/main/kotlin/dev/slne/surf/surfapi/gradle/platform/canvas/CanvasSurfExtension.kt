@@ -5,4 +5,9 @@ import org.gradle.api.model.ObjectFactory
 import javax.inject.Inject
 
 open class CanvasSurfExtension @Inject constructor(objects: ObjectFactory) :
-    PaperPluginSurfExtension(objects)
+    PaperPluginSurfExtension(objects) {
+
+    init {
+        foliaSupported.convention(true)
+    }
+}
