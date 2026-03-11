@@ -43,7 +43,7 @@ internal class PaperPluginSurfPlugin :
             main = extension.mainClass.get()
             bootstrapper = extension.bootstrapper.orNull
             apiVersion = Constants.MINECRAFT_VERSION
-            foliaSupported = extension.foliaSupported.get()
+            foliaSupported = extension.useCanvasMc.get() || extension.foliaSupported.get()
 
             if (extension.generateLibraryLoader.get()) {
                 generateLibrariesJson = true

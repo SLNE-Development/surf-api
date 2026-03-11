@@ -21,7 +21,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.12.3")
+    append("-1.13.0")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -109,14 +109,15 @@ val generateConstants by tasks.registering {
     inputs.property("javaVersion", javaVersion)
     inputs.property("mcVersion", mcVersion)
     inputs.property("libs.paper.api", libs.paper.api.get().toString())
+    inputs.property("libs.canvas.api", libs.canvas.api.get().toString())
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
-    inputs.property("libs.versions.commandapi", libs.versions.commandapi.get().toString())
-    inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get().toString())
-    inputs.property("libs.versions.luckperms", libs.versions.luckperms.get().toString())
+    inputs.property("libs.versions.commandapi", libs.versions.commandapi.get())
+    inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
+    inputs.property("libs.versions.luckperms", libs.versions.luckperms.get())
     inputs.property(
         "libs.versions.packetevents",
-        libs.versions.packetevents.plugin.get().toString()
+        libs.versions.packetevents.plugin.get()
     )
     inputs.property(
         "version",
@@ -134,6 +135,7 @@ val generateConstants by tasks.registering {
             |    const val SNAPSHOT_REPO_ID = "maven-releases"
             |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-releases"
             |    const val PAPER_API = "${libs.paper.api.get()}"
+            |    const val CANVAS_API = "${libs.canvas.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
             |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
             |    const val AUTO_SERVICE = "${generator.group}:${generator.name}:${generator.version}"

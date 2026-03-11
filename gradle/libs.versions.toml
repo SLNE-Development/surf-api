@@ -1,6 +1,7 @@
 [versions]
 # Paper
 paper-api = "1.21.11-R0.1-SNAPSHOT"
+canvas-api = "1.21.11-R0.1-SNAPSHOT"
 
 # Hytale
 hytale-server = "1.0.0"
@@ -77,6 +78,7 @@ dokka = "2.1.0"
 [libraries]
 # Paper
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
+canvas-api = { module = "io.canvasmc.canvas:canvas-api", version.ref = "canvas-api" }
 
 # Hytale
 hytale-server = { module = "dev.hypixel:hytale-server", version.ref = "hytale-server" }

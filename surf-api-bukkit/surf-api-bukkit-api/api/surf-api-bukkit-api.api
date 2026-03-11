@@ -2,6 +2,8 @@ public abstract interface class dev/slne/surf/surfapi/bukkit/api/SurfBukkitApi :
 	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/SurfBukkitApi$Companion;
 	public abstract fun createScoreboard (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/surfapi/bukkit/api/scoreboard/SurfScoreboardBuilder;
 	public static fun getInstance ()Ldev/slne/surf/surfapi/bukkit/api/SurfBukkitApi;
+	public abstract fun isCanvasMc ()Z
+	public abstract fun isFolia ()Z
 	public abstract fun scoreboardLibrary ()Lnet/megavex/scoreboardlibrary/api/ScoreboardLibrary;
 	public fun sendPlayerToServer (Lorg/bukkit/entity/Player;Ljava/lang/String;)V
 	public abstract fun skipTimeSmoothly (JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
