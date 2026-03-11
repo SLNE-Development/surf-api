@@ -16,6 +16,12 @@ inline fun RepositoryHandler.slnePublic(crossinline block: MavenArtifactReposito
         block()
     }
 
+inline fun RepositoryHandler.canvasMaven(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
+    maven("https://maven.canvasmc.io/snapshots") {
+        name = "Canvas"
+        block()
+    }
+
 inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
     maven("https://repo.slne.dev/repository/maven-releases/") {
         name = "maven-releases"

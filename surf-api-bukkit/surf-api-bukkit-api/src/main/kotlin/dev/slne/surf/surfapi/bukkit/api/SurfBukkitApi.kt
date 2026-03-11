@@ -17,6 +17,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface SurfBukkitApi : SurfCoreApi {
 
+    val isFolia: Boolean
+    val isCanvasMc: Boolean
+
     @ObsoleteScoreboardApi
     fun scoreboardLibrary(): ScoreboardLibrary
 

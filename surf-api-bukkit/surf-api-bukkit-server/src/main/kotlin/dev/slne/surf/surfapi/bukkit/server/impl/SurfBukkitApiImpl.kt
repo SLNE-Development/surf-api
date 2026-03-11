@@ -32,6 +32,9 @@ class SurfBukkitApiImpl : SurfCoreApiImpl(), SurfBukkitApi {
         SurfBukkitHookManager.onEnable()
     }
 
+    override val isFolia: Boolean by lazy { runCatching { Class.forName("io.papermc.paper.threadedregions.RegionizedServer") }.isSuccess }
+    override val isCanvasMc: Boolean by lazy { runCatching { Class.forName("io.canvasmc.canvas.event.EntityPortalAsyncEvent") }.isSuccess }
+
     @ObsoleteScoreboardApi
     override fun scoreboardLibrary() = plugin.getScoreboardLibrary()
 
