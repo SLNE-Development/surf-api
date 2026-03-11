@@ -19,7 +19,7 @@ internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(
     override fun Project.configure0() {
     }
 
-    override fun Project.afterEvaluated1(extension: E) {
+    final override fun Project.afterEvaluated1(extension: E) {
         if (extension.useCanvasMc.get()) {
             repositories {
                 canvasMaven()
@@ -41,6 +41,11 @@ internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(
                 }
             }
         }
+
+        afterEvaluated2(extension)
     }
 
+    open fun Project.afterEvaluated2(extension: E) {
+
+    }
 }
