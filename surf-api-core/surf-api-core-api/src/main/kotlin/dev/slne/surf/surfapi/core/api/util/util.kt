@@ -24,6 +24,7 @@ import java.lang.ref.WeakReference
 import java.lang.reflect.Field
 import java.security.SecureRandom
 import java.util.*
+import java.util.function.BiConsumer
 import java.util.function.ToIntFunction
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -654,4 +655,14 @@ suspend inline fun <E, R> Iterable<E>.mapAsync(crossinline transform: suspend (E
             }
         }.awaitAll()
     }
+}
+
+/**
+ * Returns a new [BiConsumer] that first executes the given [prepend] consumer before this one.
+ *
+ * @return A composed [BiConsumer] that performs the [prepend] operation followed by this operation.
+ */
+fun <T, U> BiConsumer<T, U>?.prepend(prepend: BiConsumer<in T, in U>): BiConsumer<T, U> = { t, u ->
+    prepend.accept(t, u)
+    this?.accept(t, u)
 }
