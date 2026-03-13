@@ -49,6 +49,8 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     protected open fun onPaginatedRender(render: RenderContext) = Unit
     protected open fun onPaginatedClick(click: SlotClickContext) = Unit
     protected open fun onPaginatedClose(close: CloseContext) = Unit
+    protected open fun onPaginatedUpdate(update: Context) = Unit
+
 
     private fun updatePaginationGlyph(context: Context) {
         val pagination = paginationState.get(context) ?: return
@@ -81,12 +83,12 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     protected open fun applyContainerDefaults() {
     }
 
-    override fun onViewInit(config: ViewConfigBuilder) {
+    final override fun onViewInit(config: ViewConfigBuilder) {
         paginationState // initialize pagination state
         onPaginatedInit(config)
     }
 
-    override fun onViewOpen(open: OpenContext) {
+    final override fun onViewOpen(open: OpenContext) {
         val layout = arrayOfNulls<String>(settings.rows.rows)
         layout[0] = EMPTY_ROW
         repeat(settings.rows.rows - 2) { i ->
@@ -128,6 +130,11 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
     final override fun onViewClose(close: CloseContext) {
         onPaginatedClose(close)
+    }
+
+
+    final override fun onViewUpdate(update: Context) {
+        onPaginatedUpdate(update)
     }
 
     private inner class InitialPaginationStateWatcher : StateWatcher {

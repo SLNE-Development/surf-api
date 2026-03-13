@@ -26,6 +26,7 @@ abstract class AbstractSurfView(
     protected open fun onViewRender(render: RenderContext) = Unit
     protected open fun onViewClick(click: SlotClickContext) = Unit
     protected open fun onViewClose(close: CloseContext) = Unit
+    protected open fun onViewUpdate(update: Context) = Unit
 
     protected fun modifyContainer(
         updateContext: Context? = null,
@@ -101,6 +102,14 @@ abstract class AbstractSurfView(
         }
 
         onViewClick(click)
+    }
+
+    final override fun onClose(close: CloseContext) {
+        onViewClose(close)
+    }
+
+    final override fun onUpdate(update: Context) {
+        onViewUpdate(update)
     }
 
     private fun handleOutsideClick(click: SlotClickContext) {
