@@ -11,7 +11,7 @@ enum class ViewIconType(
     CHECK("check"),
     USERS("users"),
     HOME("home"),
-    COG("cover"),
+    COG("cog"),
     BELL("bell"),
     PLUS("plus"),
     MINUS("minus"),
