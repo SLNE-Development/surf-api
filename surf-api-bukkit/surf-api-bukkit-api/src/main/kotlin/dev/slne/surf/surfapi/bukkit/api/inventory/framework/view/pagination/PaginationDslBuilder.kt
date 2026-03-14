@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination
 
 import com.github.shynixn.mccoroutine.folia.scope
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFrameworkDSL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder
@@ -40,7 +40,7 @@ import java.util.function.BiConsumer
  * @see pagination
  * @see PaginationSourceType
  */
-@InventoryFramworkDSL
+@InventoryFrameworkDSL
 class PaginationDslBuilder<T> @PublishedApi internal constructor() {
 
     @PublishedApi
@@ -73,7 +73,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param provider lambda returning the items to paginate
      */
-    fun source(provider: @InventoryFramworkDSL () -> Iterable<T>) {
+    fun source(provider: @InventoryFrameworkDSL () -> Iterable<T>) {
         sourceType = PaginationSourceType.Static(provider)
     }
 
@@ -82,7 +82,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param provider lambda receiving the current [Context] and returning items to paginate
      */
-    fun computedSource(provider: @InventoryFramworkDSL (Context) -> Iterable<T>) {
+    fun computedSource(provider: @InventoryFrameworkDSL (Context) -> Iterable<T>) {
         sourceType = PaginationSourceType.Computed(provider)
     }
 
@@ -92,7 +92,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param provider lambda receiving [Context] and returning a [CompletableFuture] of items
      */
-    fun asyncSource(provider: @InventoryFramworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
+    fun asyncSource(provider: @InventoryFrameworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
         sourceType = PaginationSourceType.ComputedAsync(provider)
     }
 
@@ -102,7 +102,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param provider lazy lambda receiving [Context] and returning items
      */
-    fun lazySource(provider: @InventoryFramworkDSL (Context) -> Iterable<T>) {
+    fun lazySource(provider: @InventoryFrameworkDSL (Context) -> Iterable<T>) {
         sourceType = PaginationSourceType.Lazy(provider)
     }
 
@@ -112,7 +112,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param provider lazy lambda returning a [CompletableFuture] of items
      */
-    fun lazyAsyncSource(provider: @InventoryFramworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
+    fun lazyAsyncSource(provider: @InventoryFrameworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
         sourceType = PaginationSourceType.LazyAsync(provider)
     }
 
@@ -126,7 +126,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      */
     fun suspendSource(
         scope: CoroutineScope,
-        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) {
         sourceType = PaginationSourceType.ComputedAsync { context ->
             scope.future { provider(context) }.thenApply { it }
@@ -141,7 +141,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      */
     fun suspendSource(
         plugin: Plugin,
-        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) = suspendSource(scope = plugin.scope, provider = provider)
 
     /**
@@ -153,7 +153,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      */
     fun lazySuspendSource(
         scope: CoroutineScope,
-        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) {
         sourceType = PaginationSourceType.LazyAsync { context ->
             scope.future { provider(context) }.thenApply { it }
@@ -168,7 +168,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      */
     fun lazySuspendSource(
         plugin: Plugin,
-        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) = lazySuspendSource(scope = plugin.scope, provider = provider)
 
     /**
@@ -186,7 +186,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param factory the item builder lambda
      */
-    fun itemFactory(factory: @InventoryFramworkDSL BukkitItemComponentBuilder.(T) -> Unit) {
+    fun itemFactory(factory: @InventoryFrameworkDSL BukkitItemComponentBuilder.(T) -> Unit) {
         this.simpleItemFactory = BiConsumer(factory)
         this.elementFactory = null
     }
@@ -199,7 +199,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param factory the element builder callback
      */
-    fun elementFactory(factory: @InventoryFramworkDSL (context: Context, builder: BukkitItemComponentBuilder, index: Int, value: T) -> Unit) {
+    fun elementFactory(factory: @InventoryFrameworkDSL (context: Context, builder: BukkitItemComponentBuilder, index: Int, value: T) -> Unit) {
         this.elementFactory = PaginationValueConsumer { context, builder, index, value ->
             factory(context, builder, index, value)
         }
@@ -211,7 +211,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param handler lambda receiving the [Context] and the new [Pagination] state
      */
-    fun onPageSwitch(handler: @InventoryFramworkDSL (Context, Pagination) -> Unit) {
+    fun onPageSwitch(handler: @InventoryFrameworkDSL (Context, Pagination) -> Unit) {
         this.pageSwitchHandler = BiConsumer(handler)
     }
 

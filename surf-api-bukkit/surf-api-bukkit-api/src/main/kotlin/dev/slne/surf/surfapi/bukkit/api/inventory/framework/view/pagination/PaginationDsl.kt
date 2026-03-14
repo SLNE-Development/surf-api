@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.PaginatedSurfViewContext
 import dev.slne.surf.surfapi.core.api.util.toMutableObjectList
 import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder
@@ -36,7 +36,7 @@ import me.devnatan.inventoryframework.context.Context
  * @see PaginationDslBuilder
  */
 context(ctx: PaginatedSurfViewContext)
-inline fun <T> pagination(block: @InventoryFramworkDSL PaginationDslBuilder<T>.() -> Unit) {
+inline fun <T> pagination(block: @InventoryFrameworkDSL PaginationDslBuilder<T>.() -> Unit) {
     val builder = PaginationDslBuilder<T>().apply(block)
 
     val sourceType = requireNotNull(builder.sourceType) {

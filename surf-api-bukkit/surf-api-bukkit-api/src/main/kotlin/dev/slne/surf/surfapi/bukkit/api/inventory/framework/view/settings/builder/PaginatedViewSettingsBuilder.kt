@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginatedViewSettings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginationButtonPosition
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginationViewRows
@@ -30,7 +30,7 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SurfVi
  * @see SurfViewSettingsBuilder
  * @see PaginatedViewSettings
  */
-@InventoryFramworkDSL
+@InventoryFrameworkDSL
 class PaginatedViewSettingsBuilder @PublishedApi internal constructor() : SurfViewSettingsBuilder() {
 
     /**

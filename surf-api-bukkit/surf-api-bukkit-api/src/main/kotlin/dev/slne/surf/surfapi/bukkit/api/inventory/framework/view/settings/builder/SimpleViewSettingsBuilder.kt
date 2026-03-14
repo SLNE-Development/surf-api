@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.ViewRows
@@ -27,7 +27,7 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.ViewRo
  * @see SurfViewSettingsBuilder
  * @see SimpleViewSettings
  */
-@InventoryFramworkDSL
+@InventoryFrameworkDSL
 class SimpleViewSettingsBuilder @PublishedApi internal constructor() : SurfViewSettingsBuilder() {
     /**
      * The number of rows for the inventory.

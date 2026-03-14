@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.dsl
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFrameworkDSL
 import me.devnatan.inventoryframework.ViewConfigBuilder
 
 /**
@@ -29,7 +29,7 @@ import me.devnatan.inventoryframework.ViewConfigBuilder
  *
  * @see layout
  */
-@InventoryFramworkDSL
+@InventoryFrameworkDSL
 class LayoutBuilder @PublishedApi internal constructor() {
     @PublishedApi
     internal val rows = mutableListOf<String>()
@@ -126,6 +126,6 @@ class LayoutBuilder @PublishedApi internal constructor() {
  * @param block configuration block applied to a new [LayoutBuilder]
  * @see LayoutBuilder
  */
-inline fun ViewConfigBuilder.layout(block: @InventoryFramworkDSL LayoutBuilder.() -> Unit) {
+inline fun ViewConfigBuilder.layout(block: @InventoryFrameworkDSL LayoutBuilder.() -> Unit) {
     layout(*LayoutBuilder().apply(block).build())
 }

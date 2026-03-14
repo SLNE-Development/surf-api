@@ -29,7 +29,7 @@ import me.devnatan.inventoryframework.context.*
  * @param block the init callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onInit(block: context (ViewRef) (@InventoryFramworkDSL ViewConfigBuilder).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onInit(block: context (ViewRef) (@InventoryFrameworkDSL ViewConfigBuilder).() -> Unit) {
     ctx.onInit = block
 }
 
@@ -51,7 +51,7 @@ fun <ViewRef : AbstractSurfViewRef> onInit(block: context (ViewRef) (@InventoryF
  * @param block the open callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onOpen(block: context(ViewRef) (@InventoryFramworkDSL OpenContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onOpen(block: context(ViewRef) (@InventoryFrameworkDSL OpenContext).() -> Unit) {
     ctx.onOpen = block
 }
 
@@ -73,7 +73,7 @@ fun <ViewRef : AbstractSurfViewRef> onOpen(block: context(ViewRef) (@InventoryFr
  * @param block the render callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onFirstRender(block: context(ViewRef) (@InventoryFramworkDSL RenderContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onFirstRender(block: context(ViewRef) (@InventoryFrameworkDSL RenderContext).() -> Unit) {
     ctx.onFirstRender = block
 }
 
@@ -95,7 +95,7 @@ fun <ViewRef : AbstractSurfViewRef> onFirstRender(block: context(ViewRef) (@Inve
  * @param block the click callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onClick(block: context(ViewRef) (@InventoryFramworkDSL SlotClickContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onClick(block: context(ViewRef) (@InventoryFrameworkDSL SlotClickContext).() -> Unit) {
     ctx.onClick = block
 }
 
@@ -117,7 +117,7 @@ fun <ViewRef : AbstractSurfViewRef> onClick(block: context(ViewRef) (@InventoryF
  * @param block the close callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onClose(block: context(ViewRef) (@InventoryFramworkDSL CloseContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onClose(block: context(ViewRef) (@InventoryFrameworkDSL CloseContext).() -> Unit) {
     ctx.onClose = block
 }
 
@@ -133,7 +133,7 @@ fun <ViewRef : AbstractSurfViewRef> onClose(block: context(ViewRef) (@InventoryF
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
 fun <ViewRef : AbstractSurfViewRef> onUpdate(
-    block: context(ViewRef) (@InventoryFramworkDSL Context).() -> Unit
+    block: context(ViewRef) (@InventoryFrameworkDSL Context).() -> Unit
 ) {
     ctx.onUpdate = block
 }
@@ -156,7 +156,7 @@ fun <ViewRef : AbstractSurfViewRef> onUpdate(
  * @param block the container defaults callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> containerDefaults(block: context (@InventoryFramworkDSL ViewContainerModificationContext, ViewRef) () -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> containerDefaults(block: context (@InventoryFrameworkDSL ViewContainerModificationContext, ViewRef) () -> Unit) {
     ctx.containerDefaults = block
 }
 
@@ -179,7 +179,7 @@ fun <ViewRef : AbstractSurfViewRef> containerDefaults(block: context (@Inventory
  * @param block configuration block applied to the [SimpleViewSettingsBuilder]
  */
 context(ctx: SurfViewContext)
-fun settings(block: @InventoryFramworkDSL SimpleViewSettingsBuilder.() -> Unit) {
+fun settings(block: @InventoryFrameworkDSL SimpleViewSettingsBuilder.() -> Unit) {
     ctx.settings = simpleViewSettings(block)
 }
 
@@ -202,7 +202,7 @@ fun settings(block: @InventoryFramworkDSL SimpleViewSettingsBuilder.() -> Unit) 
  * @param block configuration block applied to the [PaginatedViewSettingsBuilder]
  */
 context(ctx: PaginatedSurfViewContext)
-fun settings(block: @InventoryFramworkDSL PaginatedViewSettingsBuilder.() -> Unit) {
+fun settings(block: @InventoryFrameworkDSL PaginatedViewSettingsBuilder.() -> Unit) {
     ctx.settings = paginatedViewSettings(block)
 }
 

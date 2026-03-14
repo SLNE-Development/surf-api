@@ -27,7 +27,7 @@ import me.devnatan.inventoryframework.context.*
  * @see SurfViewRef
  * @see AbstractSurfViewRef
  */
-@InventoryFramworkDSL
+@InventoryFrameworkDSL
 abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @PublishedApi internal constructor() {
     @PublishedApi
     internal val stateRegistry = StateRegistry()
@@ -63,7 +63,7 @@ abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @Published
  * @see surfView
  * @see dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SimpleViewSettings
  */
-@InventoryFramworkDSL
+@InventoryFrameworkDSL
 class SurfViewContext @PublishedApi internal constructor() : AbstractSurfViewContext<SurfViewRef>() {
     @PublishedApi
     internal var settings: SurfViewSettings = SimpleViewSettings()
@@ -83,7 +83,7 @@ class SurfViewContext @PublishedApi internal constructor() : AbstractSurfViewCon
  * @see paginatedSurfView
  * @see dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginatedViewSettings
  */
-@InventoryFramworkDSL
+@InventoryFrameworkDSL
 class PaginatedSurfViewContext @PublishedApi internal constructor() : AbstractSurfViewContext<PaginatedSurfViewRef>() {
     @PublishedApi
     internal var settings: PaginatedViewSettings = PaginatedViewSettings()

@@ -2,7 +2,7 @@
 
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
@@ -121,7 +121,7 @@ fun View.open(players: Collection<Player>, data: Any) {
  * @param title DSL block used to construct the title [net.kyori.adventure.text.Component]
  * @return this [ViewConfigBuilder] for chaining
  */
-inline fun ViewConfigBuilder.titleBuilder(title: @InventoryFramworkDSL SurfComponentBuilder.() -> Unit): ViewConfigBuilder =
+inline fun ViewConfigBuilder.titleBuilder(title: @InventoryFrameworkDSL SurfComponentBuilder.() -> Unit): ViewConfigBuilder =
     this.title(SurfComponentBuilder(title))
 
 /**
@@ -141,5 +141,5 @@ inline fun ViewConfigBuilder.titleBuilder(title: @InventoryFramworkDSL SurfCompo
  * @receiver the [OpenContext] whose config is being modified
  * @param modifier DSL block applied to the [ViewConfigBuilder]
  */
-inline fun OpenContext.modifyConfig(modifier: @InventoryFramworkDSL ViewConfigBuilder.() -> Unit) =
+inline fun OpenContext.modifyConfig(modifier: @InventoryFrameworkDSL ViewConfigBuilder.() -> Unit) =
     this.modifyConfig().apply(modifier)
