@@ -5,10 +5,9 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.Abst
 /**
  * Creates a simple (non-paginated) [AbstractSurfView] using a DSL builder.
  *
- * The [block] is called with both a [SurfViewContext] (for lifecycle hooks and settings)
- * and a [SurfViewRef] (for accessing the view inside callbacks) as context receivers.
- * After the block executes, the concrete view implementation is instantiated and the
- * reference is resolved.
+ * The [block] is called with a [SurfViewContext] as its context receiver, which exposes
+ * lifecycle hooks and view settings for configuration. After the block executes, the
+ * concrete view implementation is instantiated and its internal reference is resolved.
  *
  * ```kotlin
  * val myView = surfView("Inventory Title") {
@@ -25,7 +24,7 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.Abst
  * ```
  *
  * @param header the plain-text title rendered in the inventory header
- * @param block DSL configuration block accepting both [SurfViewContext] and [SurfViewRef]
+ * @param block DSL configuration block with [SurfViewContext] as its context receiver
  * @return the fully configured [AbstractSurfView]
  * @see paginatedSurfView
  * @see AbstractSurfView
@@ -47,9 +46,9 @@ inline fun surfView(header: String, block: context (SurfViewContext) () -> Unit)
 /**
  * Creates a paginated [AbstractPaginatedSurfView] using a DSL builder.
  *
- * Works the same as [surfView] but accepts a [PaginatedSurfViewContext] and
- * [PaginatedSurfViewRef]. The [block] must configure at least a `layoutTarget` character
- * and a `pagination { }` block, otherwise [IllegalStateException] is thrown at view creation.
+ * Works similarly to [surfView] but uses a [PaginatedSurfViewContext] as the context
+ * receiver. The [block] must configure at least a `layoutTarget` character and a
+ * `pagination { }` block, otherwise [IllegalStateException] is thrown at view creation.
  *
  * ```kotlin
  * val listView = paginatedSurfView("Item List") {
@@ -68,7 +67,7 @@ inline fun surfView(header: String, block: context (SurfViewContext) () -> Unit)
  * ```
  *
  * @param header the plain-text title rendered in the inventory header
- * @param block DSL configuration block accepting both [PaginatedSurfViewContext] and [PaginatedSurfViewRef]
+ * @param block DSL configuration block with [PaginatedSurfViewContext] as its context receiver
  * @return the fully configured [AbstractPaginatedSurfView]
  * @see surfView
  * @see dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.AbstractPaginatedSurfView
