@@ -30,7 +30,7 @@ import org.bukkit.plugin.java.JavaPlugin
  * and an aligned title text component. The container can be modified at any time via
  * [modifyContainer].
  *
- * Subclasses are typically not created directly — use [surfView] or [paginatedSurfView] instead.
+ * You can directly create a subclass or use the dsl functions ([surfView] or [paginatedSurfView]) instead.
  *
  * ```kotlin
  * val view = surfView("My View") {
@@ -39,7 +39,7 @@ import org.bukkit.plugin.java.JavaPlugin
  *         slot(4, 1) { withItem(Material.DIAMOND) }
  *     }
  * }
- * view.register()
+ * view.register() // Called in JavaPlugin#onLoad
  * view.open(player)
  * ```
  *
@@ -48,6 +48,7 @@ import org.bukkit.plugin.java.JavaPlugin
  * @see paginatedSurfView
  * @see SurfViewSettings
  */
+@Suppress("UnstableApiUsage")
 abstract class AbstractSurfView(
     private val header: String,
 ) : View() {
