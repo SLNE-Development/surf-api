@@ -8299,6 +8299,22 @@ public abstract interface class dev/slne/surf/surfapi/core/api/random/Weighted {
 	public abstract fun getWeight ()D
 }
 
+public final class dev/slne/surf/surfapi/core/api/rarity/Rarity : java/lang/Enum, net/kyori/adventure/text/ComponentLike {
+	public static final field COMMON Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+	public static final field EPIC Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+	public static final field LEGENDARY Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+	public static final field MYTHIC Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+	public static final field RARE Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+	public static final field UNCOMMON Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+	public synthetic fun asComponent ()Lnet/kyori/adventure/text/Component;
+	public fun asComponent ()Lnet/kyori/adventure/text/TextComponent;
+	public final fun getColor ()Lnet/kyori/adventure/text/format/TextColor;
+	public final fun getDisplayName ()Lnet/kyori/adventure/text/TextComponent;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+	public static fun values ()[Ldev/slne/surf/surfapi/core/api/rarity/Rarity;
+}
+
 public abstract interface annotation class dev/slne/surf/surfapi/core/api/reflection/Constructor : java/lang/annotation/Annotation {
 }
 

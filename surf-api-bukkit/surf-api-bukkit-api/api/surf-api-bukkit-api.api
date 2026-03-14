@@ -2177,6 +2177,22 @@ public abstract class dev/slne/surf/surfapi/bukkit/api/permission/PermissionRegi
 	public final fun create (Ljava/lang/String;)Ljava/lang/String;
 }
 
+public final class dev/slne/surf/surfapi/bukkit/api/rarity/Rarity : java/lang/Enum, net/kyori/adventure/text/ComponentLike {
+	public static final field COMMON Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+	public static final field EPIC Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+	public static final field LEGENDARY Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+	public static final field MYTHIC Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+	public static final field RARE Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+	public static final field UNCOMMON Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+	public synthetic fun asComponent ()Lnet/kyori/adventure/text/Component;
+	public fun asComponent ()Lnet/kyori/adventure/text/TextComponent;
+	public final fun getColor ()Lnet/kyori/adventure/text/format/TextColor;
+	public final fun getDisplayName ()Lnet/kyori/adventure/text/TextComponent;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+	public static fun values ()[Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
+}
+
 public abstract interface annotation class dev/slne/surf/surfapi/bukkit/api/scoreboard/ObsoleteScoreboardApi : java/lang/annotation/Annotation {
 }
 
