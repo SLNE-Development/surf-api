@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state
 
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state.DeferredState.*
+import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.context.Context
 import java.util.function.Function
@@ -26,7 +27,7 @@ class StateRegistry @PublishedApi internal constructor() {
     internal val deferredStates = mutableListOf<DeferredState<*>>()
 
     @PublishedApi
-    internal val resolvedStates = mutableListOf<Any>()
+    internal val resolvedStates = mutableObjectListOf<Any>()
 
     @PublishedApi
     internal var nextIndex = 0
@@ -39,6 +40,7 @@ class StateRegistry @PublishedApi internal constructor() {
      */
     @PublishedApi
     internal fun <S> register(deferred: DeferredState<S>): Int {
+        require(deferredStates.isEmpty()) { "Cannot register new states after resolution has begun" }
         deferredStates.add(deferred)
         return nextIndex++
     }
@@ -71,5 +73,8 @@ class StateRegistry @PublishedApi internal constructor() {
 
             resolvedStates.add(resolved)
         }
+
+        deferredStates.clear()
+        resolvedStates.trim()
     }
 }

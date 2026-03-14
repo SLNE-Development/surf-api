@@ -1,5 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.align
 
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.align.TextAlignment.Companion.calculateTextWidth
+
+
 /**
  * Defines the horizontal alignment of title text within the inventory header container area.
  *
@@ -17,8 +20,10 @@ enum class TextAlignment {
      * Aligns the title to the left edge of the container area (plus [TextAlignmentOptions.padding]).
      */
     LEFT {
-        override fun calculateShift(text: String, options: TextAlignmentOptions): Int = options.leftShift + options.padding
+        override fun calculateShift(text: String, options: TextAlignmentOptions): Int =
+            options.leftShift + options.padding
     },
+
     /**
      * Aligns the title to the right edge of the container area.
      */
@@ -32,6 +37,7 @@ enum class TextAlignment {
             return options.leftShift + freeSpace + 1 + options.padding
         }
     },
+
     /**
      * Centers the title horizontally within the container area.
      */

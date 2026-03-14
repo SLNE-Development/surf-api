@@ -15,7 +15,7 @@ import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
  *
  * @property rows the [ViewRows] value whose glyph character should be rendered
  */
-internal class ViewContainerGlyphComponent(val rows: ViewRows): ViewContainerComponent {
+internal class ViewContainerGlyphComponent(val rows: ViewRows) : ViewContainerComponent {
     override val positionalShift = -48
     override val textureWidth = 223
 

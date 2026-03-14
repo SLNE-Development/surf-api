@@ -1,6 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components
 
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.CHAR_SIZE
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.CHAR_SPACING
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.CONTAINER_WIDTH
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.LEFT_SHIFT
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.PADDING
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.align.TextAlignment
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.align.TextAlignmentOptions
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.util.shift
@@ -82,12 +87,16 @@ internal class ViewContainerTitleComponent(
     companion object {
         /** The base pixel offset from the left edge of the container area. */
         const val LEFT_SHIFT = 31
+
         /** Horizontal padding on each side of the title text within the container. */
         const val PADDING = 2
+
         /** Total usable pixel width of the title container area. */
         const val CONTAINER_WIDTH = 100
+
         /** Pixel width of a single uppercase character in the title font. */
         const val CHAR_SIZE = 9
+
         /** Default inter-character spacing (negative = tighter). */
         const val CHAR_SPACING = -1
     }

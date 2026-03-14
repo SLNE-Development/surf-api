@@ -1,7 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state
 
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.AbstractSurfViewContext
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.AbstractSurfViewRef
 import me.devnatan.inventoryframework.context.Context
 import me.devnatan.inventoryframework.state.MutableIntState
 import me.devnatan.inventoryframework.state.MutableState

@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination
 
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.PaginationButtonGlyphComponent.Companion.getByPaginationState
 import dev.slne.surf.surfapi.core.api.messages.Colors
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import me.devnatan.inventoryframework.component.Pagination

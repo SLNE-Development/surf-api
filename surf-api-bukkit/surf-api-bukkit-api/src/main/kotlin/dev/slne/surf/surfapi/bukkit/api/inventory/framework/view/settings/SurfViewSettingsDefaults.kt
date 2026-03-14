@@ -18,12 +18,16 @@ import dev.slne.surf.surfapi.core.api.messages.adventure.key
 object SurfViewSettingsDefaults {
     /** Default value for [SurfViewSettings.cancelOnClick]: `true`. */
     const val DEFAULT_CANCEL_ON_CLICK = true
+
     /** Default value for [SurfViewSettings.cancelOnDrag]: `true`. */
     const val DEFAULT_CANCEL_ON_DRAG = true
+
     /** Default value for [SurfViewSettings.cancelOnDrop]: `true`. */
     const val DEFAULT_CANCEL_ON_DROP = true
+
     /** Default value for [SurfViewSettings.cancelOnPickup]: `true`. */
     const val DEFAULT_CANCEL_ON_PICKUP = true
+
     /** Default value for [SurfViewSettings.navigateBackOnOutsideClick]: `true`. */
     const val DEFAULT_NAVIGATE_BACK_ON_CLOSE = true
 

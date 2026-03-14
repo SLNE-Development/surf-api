@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings
 
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.ViewRows.Companion.byRows
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.ViewRows.Companion.byRowsOrNull
 import dev.slne.surf.surfapi.core.api.util.freeze
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.intellij.lang.annotations.MagicConstant
@@ -21,14 +23,19 @@ import org.intellij.lang.annotations.MagicConstant
 enum class ViewRows(val glyph: Char) {
     /** 1-row inventory. */
     ONE('ꐓ'),
+
     /** 2-row inventory. */
     TWO('ꐔ'),
+
     /** 3-row inventory. */
     THREE('ꐭ'),
+
     /** 4-row inventory. */
     FOUR('ꐮ'),
+
     /** 5-row inventory. */
     FIVE('ꐯ'),
+
     /** 6-row inventory. */
     SIX('ꐰ');
 

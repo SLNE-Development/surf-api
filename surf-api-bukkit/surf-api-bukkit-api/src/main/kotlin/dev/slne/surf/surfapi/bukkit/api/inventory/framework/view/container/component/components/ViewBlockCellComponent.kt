@@ -62,14 +62,19 @@ class ViewBlockCellComponent(
     ) {
         /** Block-cell glyph for row 1. */
         ONE('ꐱ', 1),
+
         /** Block-cell glyph for row 2. */
         TWO('ꐲ', 2),
+
         /** Block-cell glyph for row 3. */
         THREE('ꐳ', 3),
+
         /** Block-cell glyph for row 4. */
         FOUR('ꐴ', 4),
+
         /** Block-cell glyph for row 5. */
         FIVE('ꐵ', 5),
+
         /** Block-cell glyph for row 6. */
         SIX('ꐶ', 6);
 
