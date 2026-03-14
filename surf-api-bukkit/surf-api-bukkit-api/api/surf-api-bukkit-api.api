@@ -865,7 +865,6 @@ public abstract class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/
 	protected fun containerDefaults (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
 	public fun getSettings ()Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/settings/SurfViewSettings;
 	protected final fun modifyContainer (Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun modifyContainer$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfView;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public synthetic fun onClick (Lme/devnatan/inventoryframework/context/IFSlotClickContext;)V
 	public final fun onClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
 	public final fun onClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
@@ -934,8 +933,6 @@ public abstract class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/
 	protected fun getLayoutTarget ()C
 	public fun getSettings ()Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/settings/PaginatedViewSettings;
 	public synthetic fun getSettings ()Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/settings/SurfViewSettings;
-	public final fun modifyContainer (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/PaginatedSurfViewRef;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun modifyContainer$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/PaginatedSurfViewDSLImpl;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/PaginatedSurfViewRef;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	protected fun onPaginatedClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
 	protected fun onPaginatedClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
 	protected fun onPaginatedInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
@@ -949,8 +946,8 @@ public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/Pag
 }
 
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewBuilderKt {
-	public static final fun paginatedSurfView (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/pagination/AbstractPaginatedSurfView;
-	public static final fun surfView (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfView;
+	public static final fun paginatedSurfView (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/pagination/AbstractPaginatedSurfView;
+	public static final fun surfView (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfView;
 }
 
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewContext : dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfViewContext {
@@ -963,8 +960,6 @@ public abstract class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/
 	public fun <init> (Ljava/lang/String;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewContext;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewRef;)V
 	protected fun containerDefaults (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
 	public fun getSettings ()Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/settings/SurfViewSettings;
-	public final fun modifyContainer (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewRef;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun modifyContainer$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewDSLImpl;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewRef;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	protected fun onViewClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
 	protected fun onViewClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
 	protected fun onViewInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
@@ -976,6 +971,7 @@ public abstract class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/SurfViewLifecycleDslKt {
 	public static final fun containerDefaults (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
 	public static final fun layoutTarget (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/PaginatedSurfViewContext;C)V
+	public static final fun modifyContainer (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfViewRef;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
 	public static final fun onClick (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
 	public static final fun onClose (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
 	public static final fun onFirstRender (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
@@ -1034,6 +1030,24 @@ public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/con
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/component/components/ViewContainerTitleComponent : dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/component/ViewContainerComponent {
+	public static final field CHAR_SIZE I
+	public static final field CHAR_SPACING I
+	public static final field CONTAINER_WIDTH I
+	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/component/components/ViewContainerTitleComponent$Companion;
+	public static final field LEFT_SHIFT I
+	public static final field PADDING I
+	public fun <init> (Ljava/lang/String;Lnet/kyori/adventure/key/Key;ILdev/slne/surf/surfapi/bukkit/api/inventory/framework/view/settings/align/TextAlignment;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPositionalShift ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/component/components/ViewContainerTitleComponent$Companion {
+}
+
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerDSLKt {
 	public static final fun addChild (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/component/ViewContainerComponent;)V
 	public static final fun backHint (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
@@ -1045,6 +1059,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/con
 	public static final fun blockRow (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[I)V
 	public static synthetic fun blockRow$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILjava/lang/Object;)V
 	public static final fun hasComponentOfType (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ljava/lang/Class;)Z
+	public static final fun header (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfViewRef;Ljava/lang/String;)V
 	public static final fun removeChild (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/component/ViewContainerComponent;)V
 	public static final fun removeChildrenOfType (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ljava/lang/Class;)V
 }
@@ -1054,6 +1069,60 @@ public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/con
 	public final fun getContainer ()Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/container/ViewContainer;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIcon {
+	public fun <init> (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;)V
+	public final fun build (Lkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
+	public final fun getColor ()Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+	public final fun getIcon ()Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public final fun getItemModel ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor : java/lang/Enum {
+	public static final field BLUE Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field GREEN Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field RED Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field WHITE Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field YELLOW Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+	public static fun values ()[Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconKt {
+	public static final fun viewIcon (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;Lkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
+	public static synthetic fun viewIcon$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/bukkit/inventory/ItemStack;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType : java/lang/Enum {
+	public static final field ARROW_DOWN Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_LEFT Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_NEXT Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_PREVIOUS Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_RIGHT Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_UP Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field BELL Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field CHECK Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field CIRCLE Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field COG Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field CROSS Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field EQUALS Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field EXCLAMATION_MARK Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field HOME Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field MENU Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field MINUS Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field PLUS Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION_MARK Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field RELOAD Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field SEARCH Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static final field USERS Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
+	public static fun values ()[Ldev/slne/surf/surfapi/bukkit/api/inventory/framework/view/icon/ViewIconType;
 }
 
 public abstract class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/pagination/AbstractPaginatedSurfView : dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/AbstractSurfView {
@@ -2175,22 +2244,6 @@ public abstract interface class dev/slne/surf/surfapi/bukkit/api/pdc/block/Custo
 public abstract class dev/slne/surf/surfapi/bukkit/api/permission/PermissionRegistry {
 	public fun <init> ()V
 	public final fun create (Ljava/lang/String;)Ljava/lang/String;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/rarity/Rarity : java/lang/Enum, net/kyori/adventure/text/ComponentLike {
-	public static final field COMMON Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
-	public static final field EPIC Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
-	public static final field LEGENDARY Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
-	public static final field MYTHIC Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
-	public static final field RARE Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
-	public static final field UNCOMMON Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
-	public synthetic fun asComponent ()Lnet/kyori/adventure/text/Component;
-	public fun asComponent ()Lnet/kyori/adventure/text/TextComponent;
-	public final fun getColor ()Lnet/kyori/adventure/text/format/TextColor;
-	public final fun getDisplayName ()Lnet/kyori/adventure/text/TextComponent;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
-	public static fun values ()[Ldev/slne/surf/surfapi/bukkit/api/rarity/Rarity;
 }
 
 public abstract interface annotation class dev/slne/surf/surfapi/bukkit/api/scoreboard/ObsoleteScoreboardApi : java/lang/annotation/Annotation {

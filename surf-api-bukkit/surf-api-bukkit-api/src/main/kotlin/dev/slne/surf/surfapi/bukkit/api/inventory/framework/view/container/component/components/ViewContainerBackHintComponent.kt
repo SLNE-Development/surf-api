@@ -13,8 +13,8 @@ import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
  * texture width 15 pixels) to hint to the player that clicking outside the inventory navigates back.
  */
 data object ViewContainerBackHintComponent : ViewContainerComponent {
-    override val positionalShift = -21
-    override val textureWidth = 15
+    override val positionalShift = -22
+    override val textureWidth = 15 + 2 // 2 pixel for spacing
 
     override fun SurfComponentBuilder.renderComponent() {
         text("ꐷ")

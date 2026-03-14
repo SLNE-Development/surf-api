@@ -46,7 +46,7 @@ object PacketLoreListener : PacketListener {
     }
 
     @ClientboundListener
-    fun onContainerData(event: ClientboundContainerSetSlotPacket): ClientboundContainerSetSlotPacket {
+    fun onSetSlotPacket(event: ClientboundContainerSetSlotPacket): ClientboundContainerSetSlotPacket {
         return ClientboundContainerSetSlotPacket(
             event.containerId,
             event.stateId,
@@ -98,6 +98,10 @@ object PacketLoreListener : PacketListener {
                 .map { it.toNms() }
                 .toList()
         )
+
+        if (updatedNmsLore == nmsLore) {
+            return item
+        }
 
         item.set(DataComponents.LORE, updatedNmsLore)
         CustomData.update(DataComponents.CUSTOM_DATA, item) { tag ->
