@@ -18,7 +18,7 @@ import java.util.function.Supplier
  * surfView("My View") {
  *     val counter = state(0)
  *     onFirstRender {
- *         val value = counter.value.get(this)
+ *         val value = counter[this]
  *         // ...
  *     }
  * }
