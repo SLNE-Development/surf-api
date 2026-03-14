@@ -132,9 +132,9 @@ fun blockRow(row: Int, exemptColumns: IntCollection = IntLists.EMPTY_LIST) {
  */
 context(context: ViewContainerModificationContext)
 fun blockColumn(column: Int, exemptRows: IntArray) {
-    for (y in 0 until 9) {
-        if (y in exemptRows) continue
-        blockCell(column, y)
+    for (row in 1..6) {
+        if (row in exemptRows) continue
+        blockCell(column, row)
     }
 }
 
@@ -146,9 +146,9 @@ fun blockColumn(column: Int, exemptRows: IntArray) {
  */
 context(context: ViewContainerModificationContext)
 fun blockColumn(column: Int, exemptRows: IntCollection = IntLists.EMPTY_LIST) {
-    for (y in 0 until 9) {
-        if (exemptRows.contains(y)) continue
-        blockCell(column, y)
+    for (row in 1..6) {
+        if (exemptRows.contains(row)) continue
+        blockCell(column, row)
     }
 }
 
