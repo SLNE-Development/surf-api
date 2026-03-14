@@ -9,7 +9,7 @@ import me.devnatan.inventoryframework.context.IFSlotClickContext
  * or the default click action from executing.
  *
  * ```kotlin
- * onViewClick { click ->
+ * onClick { click ->
  *     click.cancel()
  * }
  * ```

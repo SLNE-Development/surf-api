@@ -9,7 +9,7 @@ import me.devnatan.inventoryframework.context.IFOpenContext
  * to the player.
  *
  * ```kotlin
- * onViewOpen { open ->
+ * onOpen { open ->
  *     if (!player.hasPermission("myPlugin.view")) open.cancel()
  * }
  * ```

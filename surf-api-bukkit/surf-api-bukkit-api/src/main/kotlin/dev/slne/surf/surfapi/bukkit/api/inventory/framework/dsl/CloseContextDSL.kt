@@ -8,7 +8,7 @@ import me.devnatan.inventoryframework.context.IFCloseContext
  * Sets [IFCloseContext.isCancelled] to `true`, preventing the inventory from closing.
  *
  * ```kotlin
- * onViewClose { close ->
+ * onClose { close ->
  *     if (!allowClose) close.cancel()
  * }
  * ```
