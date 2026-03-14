@@ -4,6 +4,22 @@ import dev.slne.surf.surfapi.core.api.util.freeze
 import glm_.func.common.abs
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
+/**
+ * Produces the minimal string of shift-glyph characters that sum to the given [amount].
+ *
+ * This is a convenience wrapper around [GlyphShift.renderGlyphs].
+ *
+ * ```kotlin
+ * // Shift right by 10 pixels: produces 2 glyphs (8 + 2)
+ * val rightShift = shift(10)
+ * // Shift left by 32 pixels: produces 1 glyph (-32)
+ * val leftShift = shift(-32)
+ * ```
+ *
+ * @param amount the total pixel shift; positive shifts right, negative shifts left
+ * @return a string of resource-pack font glyph characters representing the shift, or `""` if zero
+ * @see GlyphShift
+ */
 @Suppress("NOTHING_TO_INLINE")
 inline fun shift(amount: Int) = GlyphShift(amount).renderGlyphs()
 

@@ -3,6 +3,29 @@ package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.align.TextAlignment
 import net.kyori.adventure.key.Key
 
+/**
+ * View settings for a paginated [AbstractPaginatedSurfView].
+ *
+ * Extends [SurfViewSettings] with pagination-specific configuration:
+ * - The number of visible content rows and the total inventory rows via [paginationViewRows]
+ * - The position (top or bottom) of the previous/next navigation buttons via [paginationButtonPosition]
+ *
+ * Create instances via the DSL builder [paginatedViewSettings] or through the
+ * [PaginatedViewSettingsBuilder] within a `settings { }` DSL block.
+ *
+ * @property font the Adventure [Key] of the font used for the inventory title
+ * @property headerTextAlignment horizontal alignment of the title text in the header
+ * @property cancelOnClick whether inventory click events should be cancelled by default
+ * @property cancelOnDrag whether inventory drag events should be cancelled by default
+ * @property cancelOnDrop whether item-drop events should be cancelled by default
+ * @property cancelOnPickup whether item-pickup events should be cancelled by default
+ * @property navigateBackOnOutsideClick whether an outside click navigates to the parent view
+ * @property paginationViewRows the [PaginationViewRows] controlling the number of content rows
+ * @property paginationButtonPosition the [PaginationButtonPosition] for navigation buttons
+ * @see SurfViewSettings
+ * @see PaginationViewRows
+ * @see PaginationButtonPosition
+ */
 data class PaginatedViewSettings(
     override val font: Key = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT,
     override val headerTextAlignment: TextAlignment = SurfViewSettingsDefaults.DEFAULT_HEADER_ALIGNMENT,

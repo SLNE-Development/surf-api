@@ -6,6 +6,21 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.util.shift
 import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import java.util.concurrent.CopyOnWriteArrayList
 
+/**
+ * An ordered, thread-safe collection of [ViewContainerComponent]s that compose the
+ * rendered inventory title.
+ *
+ * Components are stored in a [CopyOnWriteArrayList] to allow concurrent iteration and
+ * modification. Duplicate components (by [equals]/[hashCode]) are silently ignored on
+ * [addChild]. The [render] method builds the final Adventure [Component][net.kyori.adventure.text.Component]
+ * by iterating each child and applying its positional shift glyphs around its visual.
+ *
+ * This class is `@PublishedApi internal` — it is not part of the public API. Use
+ * [ViewContainerModificationContext] and the DSL helpers in `ViewContainerDSL.kt` instead.
+ *
+ * @see ViewContainerComponent
+ * @see ViewContainerModificationContext
+ */
 @PublishedApi
 internal class ViewContainer {
     private val _children = CopyOnWriteArrayList<ViewContainerComponent>()

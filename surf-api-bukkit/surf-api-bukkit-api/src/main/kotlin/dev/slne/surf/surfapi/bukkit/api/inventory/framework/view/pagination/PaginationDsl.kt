@@ -7,6 +7,34 @@ import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder
 import me.devnatan.inventoryframework.component.PaginationStateBuilder
 import me.devnatan.inventoryframework.context.Context
 
+/**
+ * Configures pagination for the current [PaginatedSurfViewContext].
+ *
+ * Builds a [PaginationDslBuilder] from the [block] and stores a factory function in the context
+ * that creates the [PaginationStateBuilder] when the view is instantiated. The builder must
+ * specify at least one source (via [PaginationDslBuilder.source], [PaginationDslBuilder.computedSource], etc.)
+ * and an item factory (via [PaginationDslBuilder.itemFactory] or [PaginationDslBuilder.elementFactory]).
+ *
+ * ```kotlin
+ * paginatedSurfView("Items") {
+ *     layoutTarget('I')
+ *     pagination<String> {
+ *         source { listOf("Item A", "Item B", "Item C") }
+ *         itemFactory { name ->
+ *             withItem(Material.PAPER) {
+ *                 itemMeta = itemMeta?.also { it.displayName(Component.text(name)) }
+ *             }
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * @param T the type of items in the pagination source
+ * @receiver the [PaginatedSurfViewContext] for the current view DSL scope
+ * @param block configuration block applied to a [PaginationDslBuilder]
+ * @throws IllegalStateException if no source is configured in [block]
+ * @see PaginationDslBuilder
+ */
 context(ctx: PaginatedSurfViewContext)
 inline fun <T> pagination(block: @InventoryFramworkDSL PaginationDslBuilder<T>.() -> Unit) {
     val builder = PaginationDslBuilder<T>().apply(block)

@@ -8,6 +8,26 @@ import dev.slne.surf.surfapi.core.api.messages.Colors
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.key.Key
 
+/**
+ * A [ViewContainerComponent] that renders the inventory title text using a custom font.
+ *
+ * The title string is converted to uppercase and inter-character spacing glyphs are inserted
+ * between each letter using [shift]. The horizontal position is calculated from the
+ * [textAlignment] so that the text is positioned correctly within the background texture.
+ *
+ * The component uses constants from its companion object to define the geometry of the
+ * container area:
+ * - [LEFT_SHIFT]: the base pixel offset from the left edge of the container
+ * - [PADDING]: horizontal padding on each side
+ * - [CONTAINER_WIDTH]: the usable pixel width of the title area
+ * - [CHAR_SIZE]: the pixel width of a single character in the title font
+ * - [CHAR_SPACING]: the inter-character spacing (negative = tighter)
+ *
+ * @param title the plain-text inventory title to render
+ * @param font the Adventure [Key] identifying the resource-pack font to use
+ * @param charSpacing the pixel spacing to insert between each character
+ * @param textAlignment the [TextAlignment] controlling horizontal positioning
+ */
 internal class ViewContainerTitleComponent(
     title: String,
     private val font: Key,
@@ -60,10 +80,15 @@ internal class ViewContainerTitleComponent(
 
 
     companion object {
+        /** The base pixel offset from the left edge of the container area. */
         const val LEFT_SHIFT = 31
+        /** Horizontal padding on each side of the title text within the container. */
         const val PADDING = 2
+        /** Total usable pixel width of the title container area. */
         const val CONTAINER_WIDTH = 100
+        /** Pixel width of a single uppercase character in the title font. */
         const val CHAR_SIZE = 9
+        /** Default inter-character spacing (negative = tighter). */
         const val CHAR_SPACING = -1
     }
 }
