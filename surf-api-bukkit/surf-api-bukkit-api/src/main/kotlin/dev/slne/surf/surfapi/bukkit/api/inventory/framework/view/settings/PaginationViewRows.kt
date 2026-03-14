@@ -18,14 +18,14 @@ package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings
  */
 enum class PaginationViewRows(val actualRows: ViewRows, val paginationContentRows: IntRange) {
     /** 1 content row; 3 total inventory rows. */
-    ONE(ViewRows.THREE, 1..1),
+    ONE(ViewRows.THREE, 2..2),
 
     /** 2 content rows; 4 total inventory rows. */
-    TWO(ViewRows.FOUR, 1..2),
+    TWO(ViewRows.FOUR, 2..3),
 
     /** 3 content rows; 5 total inventory rows. */
-    THREE(ViewRows.FIVE, 1..3),
+    THREE(ViewRows.FIVE, 2..4),
 
     /** 4 content rows; 6 total inventory rows. */
-    FOUR(ViewRows.SIX, 1..4);
+    FOUR(ViewRows.SIX, 2..5);
 }
