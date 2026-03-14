@@ -223,11 +223,13 @@ abstract class AbstractSurfView(
             }
 
             val player = click.player
+            val previousState = viewer.previousContext.initialData
 
             viewer.previousContext = null
             click.closeForPlayer()
+
             player.scheduler.run(JavaPlugin.getProvidingPlugin(javaClass), {
-                viewFrame.open(previousView.javaClass, player)
+                viewFrame.open(previousView.javaClass, player, previousState)
             }, null)
         }
     }
