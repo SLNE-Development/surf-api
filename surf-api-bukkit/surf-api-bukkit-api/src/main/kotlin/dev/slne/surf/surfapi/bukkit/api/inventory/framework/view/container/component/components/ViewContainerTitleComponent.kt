@@ -61,8 +61,7 @@ class ViewContainerTitleComponent(
     )
 
     override val positionalShift = textAlignment.calculateShift(title, alignmentOptions)
-    override val textureWidth =
-        TextAlignment.calculateTextWidth(title, alignmentOptions) - 1 // -1 because of the last char spacing
+    override val textureWidth = TextAlignment.calculateTextWidth(title, alignmentOptions)
 
     override fun SurfComponentBuilder.renderComponent() {
         text(formattedTitle)
