@@ -5,10 +5,35 @@ import dev.slne.surf.surfapi.core.api.messages.Colors
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import me.devnatan.inventoryframework.component.Pagination
 
+/**
+ * A [ViewContainerComponent] that renders the pagination button overlay glyph in the inventory header.
+ *
+ * There are four visual states depending on whether the left and right navigation buttons are
+ * available ([Pagination.canBack] / [Pagination.canAdvance]):
+ * - [Disabled] — neither button is available
+ * - [DisabledLeft] — only the right (next) button is available
+ * - [DisabledRight] — only the left (previous) button is available
+ * - [Enabled] — both buttons are available
+ *
+ * Each subclass contains a per-row glyph lookup. The correct glyph character is selected based
+ * on the [row] (1-based) in which the buttons appear. The component has a fixed positional shift
+ * of 38 pixels and a texture width of 88 pixels.
+ *
+ * Use [getByPaginationState] to obtain the correct instance for a given [Pagination] state.
+ *
+ * @param row the 1-based inventory row where the pagination buttons are located
+ */
 internal sealed class PaginationButtonGlyphComponent(private val row: Int) : ViewContainerComponent {
     override val positionalShift = 38
     override val textureWidth = 88
 
+    /**
+     * Returns the glyph character for this button state at the given [rows] (1-based row index).
+     *
+     * @param rows the 1-based row number of the button row
+     * @return the corresponding Unicode glyph character
+     * @throws IllegalStateException if [rows] is outside the valid range 1..6
+     */
     abstract fun glyph(rows: Int): Char
 
     override fun SurfComponentBuilder.renderComponent() {
@@ -29,6 +54,7 @@ internal sealed class PaginationButtonGlyphComponent(private val row: Int) : Vie
         return row
     }
 
+    /** Both navigation buttons are disabled (no previous and no next page). */
     class Disabled(row: Int) : PaginationButtonGlyphComponent(row) {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐕ'
@@ -41,6 +67,7 @@ internal sealed class PaginationButtonGlyphComponent(private val row: Int) : Vie
         }
     }
 
+    /** The right (next) button is disabled; only the left (previous) button is active. */
     class DisabledRight(row: Int) : PaginationButtonGlyphComponent(row) {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐖ'
@@ -53,6 +80,7 @@ internal sealed class PaginationButtonGlyphComponent(private val row: Int) : Vie
         }
     }
 
+    /** The left (previous) button is disabled; only the right (next) button is active. */
     class DisabledLeft(row: Int) : PaginationButtonGlyphComponent(row) {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐗ'
@@ -65,6 +93,7 @@ internal sealed class PaginationButtonGlyphComponent(private val row: Int) : Vie
         }
     }
 
+    /** Both navigation buttons are active (there are previous and next pages). */
     class Enabled(row: Int) : PaginationButtonGlyphComponent(row) {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐘ'
@@ -78,6 +107,16 @@ internal sealed class PaginationButtonGlyphComponent(private val row: Int) : Vie
     }
 
     companion object {
+        /**
+         * Returns the appropriate [PaginationButtonGlyphComponent] for the given [pagination] state.
+         *
+         * Selects the subclass based on whether [Pagination.canBack] and [Pagination.canAdvance]
+         * are true or false.
+         *
+         * @param row the 1-based row index where the buttons are located
+         * @param pagination the current [Pagination] state
+         * @return the matching [PaginationButtonGlyphComponent]
+         */
         fun getByPaginationState(row: Int, pagination: Pagination): PaginationButtonGlyphComponent =
             when {
                 !pagination.canBack() && !pagination.canAdvance() -> Disabled(row)

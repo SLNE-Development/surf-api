@@ -24,8 +24,32 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Abstract base class for paginated Surf inventory views.
+ *
+ * [AbstractPaginatedSurfView] extends [AbstractSurfView] with pagination support provided
+ * by the inventory framework. It manages a [Pagination] state that is automatically
+ * initialized from [createPagination] and wires up:
+ * - A layout containing a configurable [layoutTarget] character that marks paginated item slots.
+ * - Left/right navigation buttons in the designated button row.
+ * - A [PaginationButtonGlyphComponent] overlay that reflects the current pagination state
+ *   (both-disabled, left-disabled, right-disabled, or both-enabled).
+ *
+ * The initial pagination glyph is updated asynchronously one tick after the pagination state
+ * first resolves (via [InitialPaginationStateWatcher]) to work around Folia scheduling constraints.
+ *
+ * Subclasses are not created directly — use [paginatedSurfView][dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.paginatedSurfView] instead.
+ *
+ * @param header the plain-text title rendered in the inventory header
+ * @see dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.paginatedSurfView
+ * @see PaginatedViewSettings
+ */
 @Suppress("UnstableApiUsage")
 abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(header) {
+    /**
+     * The layout character that identifies pagination item slots in the inventory layout.
+     * Must match the character used in the layout pattern passed to [ViewConfigBuilder.layout].
+     */
     protected abstract val layoutTarget: Char
     override val settings: PaginatedViewSettings = PaginatedViewSettings()
 
@@ -41,13 +65,60 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
     private val paginationRow: String by lazy { " " + layoutTarget.toString().repeat(7) + " " }
 
+    /**
+     * Creates and returns the [PaginationStateBuilder] that configures the pagination data source
+     * and item factory. Called once lazily the first time [paginationState] is accessed.
+     *
+     * @return a configured [PaginationStateBuilder]
+     */
     protected abstract fun createPagination(): PaginationStateBuilder<Context, BukkitItemComponentBuilder, *>
 
+    /**
+     * Called during [onViewInit] after the container defaults are applied.
+     * Override to perform additional [ViewConfigBuilder] configuration.
+     *
+     * @param config the [ViewConfigBuilder] from the inventory framework
+     */
     protected open fun onPaginatedInit(config: ViewConfigBuilder) = Unit
+
+    /**
+     * Called during [onViewOpen].
+     * Override to react to the view being opened for a player.
+     *
+     * @param open the [OpenContext] from the inventory framework
+     */
     protected open fun onPaginatedOpen(open: OpenContext) = Unit
+
+    /**
+     * Called during [onViewRender].
+     * Override to place additional items in the inventory.
+     *
+     * @param render the [RenderContext] from the inventory framework
+     */
     protected open fun onPaginatedRender(render: RenderContext) = Unit
+
+    /**
+     * Called during [onViewClick].
+     * Override to handle slot click events within the paginated view.
+     *
+     * @param click the [SlotClickContext] from the inventory framework
+     */
     protected open fun onPaginatedClick(click: SlotClickContext) = Unit
+
+    /**
+     * Called during [onViewClose].
+     * Override to react to the view being closed.
+     *
+     * @param close the [CloseContext] from the inventory framework
+     */
     protected open fun onPaginatedClose(close: CloseContext) = Unit
+
+    /**
+     * Called during [onViewUpdate].
+     * Override to update the view's contents on state changes.
+     *
+     * @param update the [Context] from the inventory framework
+     */
     protected open fun onPaginatedUpdate(update: Context) = Unit
 
 
@@ -64,6 +135,12 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         }
     }
 
+    /**
+     * Applies the paginated container defaults: blocks all border cells and all cells outside
+     * the pagination content rows, then calls [applyContainerDefaults] for subclass customisation.
+     *
+     * This override is `final` — subclasses should override [applyContainerDefaults] instead.
+     */
     context(_: ViewContainerModificationContext)
     final override fun containerDefaults() {
         val paginationContentRows = settings.paginationViewRows.paginationContentRows
@@ -78,6 +155,12 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         applyContainerDefaults()
     }
 
+    /**
+     * Override this hook in [PaginatedSurfViewDSLImpl] (or subclasses) to add additional container
+     * components after the standard block cells have been applied.
+     *
+     * Called from [containerDefaults] after the block cells are placed.
+     */
     context(_: ViewContainerModificationContext)
     protected open fun applyContainerDefaults() {
     }

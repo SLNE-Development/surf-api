@@ -19,10 +19,10 @@ import org.bukkit.inventory.ItemStack
  * ```kotlin
  * staticPane(slot(0, 0), height = 1) {
  *     item(slot(4, 0), ItemStack(Material.EMERALD)) {
- *         condition = { player.hasPermission("myPlugin.emerald") }
+ *         condition = { someCondition }
  *         click = {
  *             isCancelled = true
- *             player.sendMessage("You clicked the emerald!")
+ *             whoClicked.sendMessage(Component.text("You clicked the emerald!"))
  *         }
  *     }
  * }

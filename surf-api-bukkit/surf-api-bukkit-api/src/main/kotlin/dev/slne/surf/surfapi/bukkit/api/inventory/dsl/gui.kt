@@ -148,7 +148,7 @@ fun playerMenu(
  * val parent = menu(Component.text("Main")) { ... }
  * val child = parent.childMenu(Component.text("Sub"), rows = 3) {
  *     staticPane(slot(0, 0), height = 1) {
- *         item(slot(8, 0)) { click = { player.backToParent() } }
+ *         item(slot(8, 0)) { click = { whoClicked.backToParent() } }
  *     }
  * }
  * child.gui.show(player)
@@ -187,7 +187,7 @@ fun SurfChestGui.childMenu(
  * val parent = playerMenu(Component.text("Main"), player) { ... }
  * val child = parent.childPlayerMenu(Component.text("Settings"), rows = 3) {
  *     staticPane(slot(0, 0), height = 1) {
- *         item(slot(8, 0)) { click = { player.backToParent() } }
+ *         item(slot(8, 0)) { click = { whoClicked.backToParent() } }
  *     }
  * }
  * child.open()

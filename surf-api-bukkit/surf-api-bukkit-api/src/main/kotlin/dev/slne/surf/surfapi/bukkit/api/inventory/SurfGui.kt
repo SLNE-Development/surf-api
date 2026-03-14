@@ -25,7 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin
  * val gui = menu(Component.text("My Menu")) {
  *     staticPane(slot(0, 0), height = 1) {
  *         item(slot(0, 0), ItemStack(Material.DIAMOND)) {
- *             click = { player.sendMessage("Clicked!") }
+ *             click = { isCancelled = true }
  *         }
  *     }
  * }
@@ -57,7 +57,7 @@ interface SurfGui {
      *
      * ```kotlin
      * item(slot(8, 0)) {
-     *     click = { player.backToParent() }
+     *     click = { whoClicked.backToParent() }
      * }
      * ```
      *
@@ -98,7 +98,7 @@ interface SurfGui {
      * staticPane(slot(0, 0), height = 1) {
      *     item(slot(0, 0), ItemStack(Material.DIAMOND)) {
      *         click = { isCancelled = true }
-     *         condition = { player.hasPermission("myPlugin.diamond") }
+     *         condition = { someCondition }
      *     }
      * }
      * ```
