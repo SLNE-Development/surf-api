@@ -16,7 +16,7 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.Abst
  *     onFirstRender {
  *         slot(4, 1) { withItem(Material.DIAMOND) }
  *     }
- *     onViewClick { click ->
+ *     onClick { click ->
  *         click.cancel()
  *     }
  * }
