@@ -251,7 +251,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
             simpleItemFactory != null -> stateBuilder.itemFactory(simpleItemFactory!!)
             else -> error(
                 "Pagination item factory must be configured. " +
-                        "Use itemFactory { builder, item -> ... } or elementFactory { ctx, builder, index, item -> ... }"
+                        "Use itemFactory { item -> ... } or elementFactory { ctx, builder, index, item -> ... }"
             )
         }
 
