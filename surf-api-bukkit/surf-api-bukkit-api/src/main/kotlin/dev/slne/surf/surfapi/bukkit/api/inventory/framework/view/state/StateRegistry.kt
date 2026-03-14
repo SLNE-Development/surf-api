@@ -40,7 +40,7 @@ class StateRegistry @PublishedApi internal constructor() {
      */
     @PublishedApi
     internal fun <S> register(deferred: DeferredState<S>): Int {
-        require(deferredStates.isEmpty()) { "Cannot register new states after resolution has begun" }
+        require(resolvedStates.isEmpty) { "Cannot register new states after resolution has begun" }
         deferredStates.add(deferred)
         return nextIndex++
     }
