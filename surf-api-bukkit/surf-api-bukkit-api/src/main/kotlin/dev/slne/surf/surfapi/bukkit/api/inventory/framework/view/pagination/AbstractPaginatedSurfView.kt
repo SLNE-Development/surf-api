@@ -145,7 +145,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     final override fun containerDefaults() {
         val paginationContentRows = settings.paginationViewRows.paginationContentRows
 
-        for (y in 0 until settings.rows.rows) {
+        for (y in 1..settings.rows.rows) {
             for (x in 0 until 9) {
                 if (y in paginationContentRows && x in 1..7) continue
                 blockCell(x, y)
