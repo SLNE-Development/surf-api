@@ -1,0 +1,51 @@
+package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination
+
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.PaginatedSurfViewContext
+import dev.slne.surf.surfapi.core.api.util.toMutableObjectList
+import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder
+import me.devnatan.inventoryframework.component.PaginationStateBuilder
+import me.devnatan.inventoryframework.context.Context
+
+context(ctx: PaginatedSurfViewContext)
+inline fun <T> pagination(block: @InventoryFramworkDSL PaginationDslBuilder<T>.() -> Unit) {
+    val builder = PaginationDslBuilder<T>().apply(block)
+
+    val sourceType = requireNotNull(builder.sourceType) {
+        "Pagination source must be configured. " +
+                "Use source { }, computedSource { }, asyncSource { }, lazySource { }, " +
+                "suspendSource { }, etc."
+    }
+
+    ctx.paginationStateBuilder = { view ->
+        @Suppress("UNCHECKED_CAST")
+        val stateBuilder: PaginationStateBuilder<Context, BukkitItemComponentBuilder, T> =
+            when (sourceType) {
+                is PaginationSourceType.Static ->
+                    view.buildPaginationState(sourceType.provider().toMutableObjectList())
+
+                is PaginationSourceType.Computed ->
+                    view.buildComputedPaginationState { c ->
+                        sourceType.provider(c).toMutableObjectList()
+                    }
+
+                is PaginationSourceType.ComputedAsync ->
+                    view.buildComputedAsyncPaginationState { c ->
+                        sourceType.provider(c).thenApply { it.toMutableObjectList() }
+                    }
+
+                is PaginationSourceType.Lazy ->
+                    view.buildLazyPaginationState { c ->
+                        sourceType.provider(c).toMutableObjectList()
+                    }
+
+                is PaginationSourceType.LazyAsync ->
+                    view.buildLazyAsyncPaginationState { c ->
+                        sourceType.provider(c).thenApply { it.toMutableObjectList() }
+                    }
+            }
+
+        builder.applyTo(stateBuilder)
+        stateBuilder
+    }
+}

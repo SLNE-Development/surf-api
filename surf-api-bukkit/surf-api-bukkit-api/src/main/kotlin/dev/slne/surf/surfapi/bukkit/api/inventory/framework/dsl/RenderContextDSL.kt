@@ -41,7 +41,3 @@ inline fun RenderContext.resultSlot(block: @InventoryFramworkDSL BukkitItemCompo
     resultSlot().apply(block)
 }
 
-
-
-
-
