@@ -11,6 +11,23 @@ import me.devnatan.inventoryframework.context.*
 import java.util.function.Function
 import java.util.function.Supplier
 
+/**
+ * The concrete implementation of a DSL-configured paginated Surf view.
+ *
+ * [PaginatedSurfViewDSLImpl] is created by [paginatedSurfView] and wires the lifecycle
+ * callbacks from [PaginatedSurfViewContext] to the corresponding hooks in
+ * [AbstractPaginatedSurfView]. It also resolves all [DeferredState] entries registered
+ * during the DSL block into actual IF state objects at construction time.
+ *
+ * This class is not intended to be used or subclassed directly; use [paginatedSurfView] instead.
+ *
+ * @param header the plain-text inventory title
+ * @param ctx the [PaginatedSurfViewContext] holding lifecycle callbacks and pagination config
+ * @param ref the [PaginatedSurfViewRef] that will be resolved once the view is built
+ * @see paginatedSurfView
+ * @see AbstractPaginatedSurfView
+ * @see PaginatedSurfViewContext
+ */
 abstract class PaginatedSurfViewDSLImpl @PublishedApi internal constructor(
     header: String,
     private val ctx: PaginatedSurfViewContext,
@@ -89,6 +106,16 @@ abstract class PaginatedSurfViewDSLImpl @PublishedApi internal constructor(
         ctx.containerDefaults?.invoke(modificationCtx, ref)
     }
 
+    /**
+     * Modifies the [ViewContainer] of this paginated view from within a lifecycle callback.
+     *
+     * Only callable inside a [PaginatedSurfViewRef] context (i.e. within lifecycle callbacks).
+     * Delegates to the internal `modifyContainer` method of [AbstractSurfView].
+     *
+     * @param updateContext optional context used to propagate the updated title;
+     *   pass `null` to skip the title update
+     * @param block modifications to apply to the [ViewContainer]
+     */
     context(_: PaginatedSurfViewRef)
     fun modifyContainer(
         updateContext: Context? = null,
