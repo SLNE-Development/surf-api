@@ -30,11 +30,11 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.Abst
  * @see paginatedSurfView
  * @see AbstractSurfView
  */
-inline fun surfView(header: String, block: context (SurfViewContext, SurfViewRef) () -> Unit): AbstractSurfView {
+inline fun surfView(header: String, block: context (SurfViewContext) () -> Unit): AbstractSurfView {
     val ctx = SurfViewContext()
     val ref = SurfViewRef()
 
-    context(ctx, ref) {
+    context(ctx) {
         block()
     }
 
@@ -75,12 +75,12 @@ inline fun surfView(header: String, block: context (SurfViewContext, SurfViewRef
  */
 inline fun paginatedSurfView(
     header: String,
-    block: context (PaginatedSurfViewContext, PaginatedSurfViewRef) () -> Unit
+    block: context (PaginatedSurfViewContext) () -> Unit
 ): AbstractPaginatedSurfView {
     val ctx = PaginatedSurfViewContext()
     val ref = PaginatedSurfViewRef()
 
-    context(ctx, ref) {
+    context(ctx) {
         block()
     }
 

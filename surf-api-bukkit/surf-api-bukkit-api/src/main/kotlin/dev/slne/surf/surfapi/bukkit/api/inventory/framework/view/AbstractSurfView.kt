@@ -43,21 +43,22 @@ import org.bukkit.plugin.java.JavaPlugin
  * view.open(player)
  * ```
  *
- * @param header the plain-text title string rendered in the inventory's title bar
+ * @param defaultHeader the plain-text title string rendered in the inventory's title bar
  * @see surfView
  * @see paginatedSurfView
  * @see SurfViewSettings
  */
 @Suppress("UnstableApiUsage")
 abstract class AbstractSurfView(
-    private val header: String,
+    private val defaultHeader: String,
 ) : View() {
     /**
      * The [SurfViewSettings] controlling layout, cancel behaviours, font, and alignment.
      * Defaults to [SimpleViewSettings] with all defaults applied.
      */
     open val settings: SurfViewSettings = SimpleViewSettings()
-    private val container = ViewContainer()
+
+    private val containerState = lazyState { _ -> ViewContainer() }
 
     /**
      * Called during [onInit] after the container defaults are applied.
@@ -111,39 +112,39 @@ abstract class AbstractSurfView(
      * Applies modifications to the [ViewContainer] and optionally updates the inventory title.
      *
      * The [block] is executed within a [ViewContainerModificationContext] that provides
-     * component management functions. If [updateContext] is provided:
+     * component management functions. If [context] is provided:
      * - For an [OpenContext], the title is set via `modifyConfig`.
      * - For any other context, `updateTitleForEveryone` is called to update all viewers.
      *
-     * @param updateContext optional context used to propagate the title change; `null` skips
+     * @param context optional context used to propagate the title change; `null` skips
      *   the title update (useful during initial setup)
      * @param block modifications to apply to the [ViewContainer]
      */
     protected fun modifyContainer(
-        updateContext: Context? = null,
+        context: Context,
         block: context(ViewContainerModificationContext) () -> Unit
     ) {
+        val container = containerState.get(context)
+
         context(ViewContainerModificationContext(container)) {
             block()
         }
 
-        if (updateContext != null) {
-            if (updateContext is OpenContext) {
-                updateContext.modifyConfig {
-                    title(container.render())
-                }
-            } else {
-                updateContext.updateTitleForEveryone(container.render())
+        if (context is OpenContext) {
+            context.modifyConfig {
+                title(container.render())
             }
+        } else {
+            context.updateTitleForEveryone(container.render())
         }
     }
 
-    private fun applyContainerDefaults() {
-        modifyContainer {
+    private fun applyContainerDefaults(context: Context) {
+        modifyContainer(context) {
             addChild(ViewContainerGlyphComponent(settings.rows))
             addChild(
                 ViewContainerTitleComponent(
-                    title = header,
+                    title = defaultHeader,
                     font = settings.font,
                     charSpacing = ViewContainerTitleComponent.CHAR_SPACING,
                     textAlignment = settings.headerTextAlignment
@@ -169,8 +170,6 @@ abstract class AbstractSurfView(
     }
 
     final override fun onInit(config: ViewConfigBuilder) {
-        applyContainerDefaults()
-
         with(settings) {
             if (cancelOnPickup) config.cancelOnPickup()
             if (cancelOnDrag) config.cancelOnDrag()
@@ -180,12 +179,12 @@ abstract class AbstractSurfView(
 
         onViewInit(config)
 
-        config.title(container.render())
         config.size(settings.rows.rows)
         config.type(ViewType.CHEST)
     }
 
     final override fun onOpen(open: OpenContext) {
+        applyContainerDefaults(open)
         onViewOpen(open)
     }
 

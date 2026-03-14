@@ -33,7 +33,7 @@ import net.kyori.adventure.key.Key
  * @param charSpacing the pixel spacing to insert between each character
  * @param textAlignment the [TextAlignment] controlling horizontal positioning
  */
-internal class ViewContainerTitleComponent(
+class ViewContainerTitleComponent(
     title: String,
     private val font: Key,
     charSpacing: Int,
