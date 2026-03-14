@@ -89,7 +89,8 @@ value class GlyphShift(val amount: Int) {
         PLUS_FIVE_TWELVE('', 512);
 
         init {
-            require(amount and (amount - 1) == 0) { "Glyph amount must be a power of two" }
+            val abs = amount.abs
+            require(abs > 0 && abs and (abs - 1) == 0) { "Glyph amount must be a power of two, was $amount" }
         }
 
         companion object {

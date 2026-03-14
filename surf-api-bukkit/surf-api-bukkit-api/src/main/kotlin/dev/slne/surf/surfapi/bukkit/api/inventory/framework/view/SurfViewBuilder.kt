@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.register
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.AbstractPaginatedSurfView
 
 inline fun surfView(header: String, block: context (SurfViewContext, SurfViewRef) () -> Unit): AbstractSurfView {
@@ -14,7 +13,6 @@ inline fun surfView(header: String, block: context (SurfViewContext, SurfViewRef
     val view = object : SurfViewDSLImpl(header, ctx, ref) {}
     ref.view = view
 
-    view.register()
     return view
 }
 
@@ -32,6 +30,5 @@ inline fun paginatedSurfView(
     val view = object : PaginatedSurfViewDSLImpl(header, ctx, ref) {}
     ref.view = view
 
-    view.register()
     return view
 }

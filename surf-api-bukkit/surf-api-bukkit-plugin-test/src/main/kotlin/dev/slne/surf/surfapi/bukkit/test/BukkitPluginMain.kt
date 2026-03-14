@@ -8,6 +8,7 @@ import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
 import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.dialog.dialogTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testInventoryViewDsl
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
@@ -22,6 +23,7 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
         surfComponentApi.load(this)
         packetListenerApi.registerListeners(ChatListener())
         TestInventoryView.register()
+        testInventoryViewDsl.register()
     }
 
     override suspend fun onEnableAsync() {
