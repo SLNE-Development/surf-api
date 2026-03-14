@@ -57,9 +57,9 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         createPagination()
             .layoutTarget(layoutTarget)
             .apply {
-                pageSwitchHandler.prepend { context, _ ->
+                onPageSwitch(pageSwitchHandler.prepend { context, _ ->
                     updatePaginationGlyph(context)
-                }
+                })
             }.build()
     }
 
