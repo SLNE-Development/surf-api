@@ -14,6 +14,42 @@ import org.jetbrains.annotations.Range
 import kotlin.math.min
 
 
+/**
+ * An inventory-framework [Pane] that acts as a drop-zone for player-submitted items.
+ *
+ * Players can place items into the pane's slots; each placed [ItemStack] is tracked
+ * in [submittedItems]. Only items that pass the [filter] predicate are accepted —
+ * attempts to place other items cancel the click event automatically.
+ *
+ * Supported click actions:
+ * - **PICKUP_ALL / PICKUP_SOME / PICKUP_HALF / PICKUP_ONE** — remove an item from the pane
+ * - **PLACE_ALL / PLACE_SOME / PLACE_ONE** — add an item to the pane
+ * - **SWAP_WITH_CURSOR** — swap the pane's item with the cursor item
+ * - All other actions are cancelled
+ *
+ * Create instances via the DSL helpers
+ * [dev.slne.surf.surfapi.bukkit.api.inventory.dsl.makeSubmitItemPane] or via the constructors.
+ *
+ * ```kotlin
+ * menu(Component.text("Submit Items")) {
+ *     val submitPane = makeSubmitItemPane(
+ *         slot = slot(2, 1),
+ *         length = 5,
+ *         height = 2,
+ *         filter = listOf(Material.DIAMOND, Material.EMERALD)
+ *     )
+ *     // later:
+ *     val submitted: Map<Slot, ItemStack> = submitPane.submittedItems
+ * }
+ * ```
+ *
+ * @param slot the top-left [Slot] of this pane
+ * @param length the number of columns this pane spans (1..6)
+ * @param height the number of rows this pane spans (1..6)
+ * @param filter predicate called on each candidate [ItemStack]; must return `true` for the item to be accepted
+ * @param priority the [Pane.Priority] of this pane; defaults to [Priority.NORMAL]
+ * @see dev.slne.surf.surfapi.bukkit.api.inventory.dsl.makeSubmitItemPane
+ */
 class SubmitItemPane @JvmOverloads constructor(
     slot: Slot,
     length: @Range(from = 1, to = 6) Int,
@@ -22,6 +58,17 @@ class SubmitItemPane @JvmOverloads constructor(
     priority: Priority = Priority.NORMAL
 ) : Pane(slot, length, height, priority) {
 
+    /**
+     * Convenience constructor that accepts a whitelist of [Material]s as the filter.
+     *
+     * An item is accepted if its [ItemStack.getType] is contained in [filter].
+     *
+     * @param slot the top-left [Slot] of this pane
+     * @param length the number of columns this pane spans (1..6)
+     * @param height the number of rows this pane spans (1..6)
+     * @param filter the list of allowed [Material]s
+     * @param priority the [Pane.Priority] of this pane; defaults to [Priority.NORMAL]
+     */
     constructor(
         slot: Slot,
         length: @Range(from = 1, to = 6) Int,
@@ -31,6 +78,13 @@ class SubmitItemPane @JvmOverloads constructor(
     ) : this(slot, length, height, { filter.contains(type) }, priority)
 
     private val _items = mutableMapOf<Slot, ItemStack>()
+
+    /**
+     * A read-only snapshot of the items currently placed in this pane, keyed by their [Slot].
+     *
+     * The map is updated live as players place or remove items. Each call returns a new
+     * immutable copy.
+     */
     val submittedItems get() = _items.toMap()
 
     override fun display(
