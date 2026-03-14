@@ -109,15 +109,14 @@ abstract class AbstractSurfView(
     protected open fun onViewUpdate(update: Context) = Unit
 
     /**
-     * Applies modifications to the [ViewContainer] and optionally updates the inventory title.
+     * Applies modifications to the [ViewContainer] and updates the inventory title.
      *
      * The [block] is executed within a [ViewContainerModificationContext] that provides
-     * component management functions. If [context] is provided:
+     * component management functions. Title updates are propagated based on [context]:
      * - For an [OpenContext], the title is set via `modifyConfig`.
      * - For any other context, `updateTitleForEveryone` is called to update all viewers.
      *
-     * @param context optional context used to propagate the title change; `null` skips
-     *   the title update (useful during initial setup)
+     * @param context context used to propagate the title change to viewers
      * @param block modifications to apply to the [ViewContainer]
      */
     protected fun modifyContainer(
