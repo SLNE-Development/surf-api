@@ -20,7 +20,7 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.Abst
  *         click.cancel()
  *     }
  * }
- * myView.register()
+ * myView.register() // Called in JavaPlugin#onLoad
  * myView.open(player)
  * ```
  *

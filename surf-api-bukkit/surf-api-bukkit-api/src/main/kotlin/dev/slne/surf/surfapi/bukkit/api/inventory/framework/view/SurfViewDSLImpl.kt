@@ -5,8 +5,6 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state.DeferredS
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state.StateRegistry
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.context.*
-import java.util.function.Function
-import java.util.function.Supplier
 
 /**
  * The concrete implementation of a DSL-configured simple Surf view.
@@ -36,40 +34,7 @@ abstract class SurfViewDSLImpl @PublishedApi internal constructor(
     override val settings get() = ctx.settings
 
     init {
-        resolveStates(ctx.stateRegistry)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun resolveStates(registry: StateRegistry) {
-        for (deferred in registry.deferredStates) {
-            val resolved: Any = when (deferred) {
-                is DeferredState.Immutable<*> ->
-                    state(deferred.initialValue)
-
-                is DeferredState.Mutable<*> ->
-                    mutableState(deferred.initialValue)
-
-                is DeferredState.MutableInt ->
-                    mutableState(deferred.initialValue)
-
-                is DeferredState.Computed<*> ->
-                    computedState(deferred.computation as Function<Context, Any?>)
-
-                is DeferredState.ComputedSupplier<*> ->
-                    computedState(deferred.computation as Supplier<Any?>)
-
-                is DeferredState.Lazy<*> ->
-                    lazyState(deferred.computation as Function<Context, Any?>)
-
-                is DeferredState.LazySupplier<*> ->
-                    lazyState(deferred.computation as Supplier<Any?>)
-
-                is DeferredState.Initial<*> ->
-                    if (deferred.key != null) initialState<Any>(deferred.key)
-                    else initialState<Any>()
-            }
-            registry.resolvedStates.add(resolved)
-        }
+        ctx.stateRegistry.resolveStates(this)
     }
 
     override fun onViewInit(config: ViewConfigBuilder) {

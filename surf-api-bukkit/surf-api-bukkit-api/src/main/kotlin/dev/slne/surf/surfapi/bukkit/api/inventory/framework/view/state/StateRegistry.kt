@@ -1,5 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state
 
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state.DeferredState.*
+import me.devnatan.inventoryframework.View
+import me.devnatan.inventoryframework.context.Context
+import java.util.function.Function
+import java.util.function.Supplier
+
 /**
  * Stores [DeferredState] registrations during DSL configuration and holds the resolved IF
  * state objects after the view is built.
@@ -48,4 +54,22 @@ class StateRegistry @PublishedApi internal constructor() {
      */
     @Suppress("UNCHECKED_CAST")
     fun <S> get(index: Int): S = resolvedStates[index] as S
+
+    @Suppress("UNCHECKED_CAST")
+    internal fun resolveStates(view: View) {
+        for (deferred in deferredStates) {
+            val resolved: Any = when (deferred) {
+                is Immutable<*> -> view.state(deferred.initialValue)
+                is Mutable<*> -> view.mutableState(deferred.initialValue)
+                is MutableInt -> view.mutableState(deferred.initialValue)
+                is Computed<*> -> view.computedState(deferred.computation as Function<Context, Any?>)
+                is ComputedSupplier<*> -> view.computedState(deferred.computation as Supplier<Any?>)
+                is Lazy<*> -> view.lazyState(deferred.computation as Function<Context, Any?>)
+                is LazySupplier<*> -> view.lazyState(deferred.computation as Supplier<Any?>)
+                is Initial<*> -> if (deferred.key != null) view.initialState<Any>(deferred.key) else view.initialState<Any>()
+            }
+
+            resolvedStates.add(resolved)
+        }
+    }
 }
