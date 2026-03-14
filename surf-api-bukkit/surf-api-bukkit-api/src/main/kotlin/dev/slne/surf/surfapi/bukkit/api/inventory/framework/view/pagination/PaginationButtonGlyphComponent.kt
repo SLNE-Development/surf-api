@@ -24,8 +24,9 @@ import me.devnatan.inventoryframework.component.Pagination
  *
  * @param row the 1-based inventory row where the pagination buttons are located
  */
-internal sealed class PaginationButtonGlyphComponent(private val row: Int) : ViewContainerComponent {
-    override val positionalShift = 38
+internal sealed class PaginationButtonGlyphComponent(private val row: Int) :
+    ViewContainerComponent {
+    override val positionalShift = 39
     override val textureWidth = 88
 
     /**
