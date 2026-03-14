@@ -20,7 +20,7 @@ import org.bukkit.inventory.ItemType
  * ```kotlin
  * slot(4, 2) {
  *     withItem(ItemType.DIAMOND, amount = 1) {
- *         itemMeta = itemMeta?.also { it.displayName(Component.text("Special")) }
+ *         displayName { primary("Special") }
  *     }
  * }
  * ```
@@ -45,7 +45,7 @@ inline fun BukkitItemComponentBuilder.withItem(
  * ```kotlin
  * slot(4, 2) {
  *     renderWith(ItemType.DIAMOND) {
- *         itemMeta = itemMeta?.also { it.displayName(Component.text("Dynamic")) }
+ *         displayName { primary("Dynamic") }
  *     }
  * }
  * ```
@@ -68,7 +68,7 @@ inline fun BukkitItemComponentBuilder.renderWith(
  * ```kotlin
  * slot(4, 2) {
  *     withItem(Material.EMERALD) {
- *         itemMeta = itemMeta?.also { it.displayName(Component.text("Gem")) }
+ *         displayName { primary("Gem") }
  *     }
  * }
  * ```

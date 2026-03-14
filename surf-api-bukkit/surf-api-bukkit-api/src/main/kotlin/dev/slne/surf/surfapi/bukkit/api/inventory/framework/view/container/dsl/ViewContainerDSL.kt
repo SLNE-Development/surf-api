@@ -89,7 +89,7 @@ fun blockCell(column: Int, row: Int) {
  *
  * ```kotlin
  * containerDefaults {
- *     blockRow(0, intArrayOf(4)) // block row 0 except column 4
+ *     blockRow(1, intArrayOf(4)) // block row 1 except column 4
  * }
  * ```
  *
