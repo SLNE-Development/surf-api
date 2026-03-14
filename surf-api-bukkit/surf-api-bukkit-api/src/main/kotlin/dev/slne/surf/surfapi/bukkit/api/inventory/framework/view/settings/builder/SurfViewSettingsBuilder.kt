@@ -1,12 +1,12 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.SurfViewDsl
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SurfViewSettings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.align.TextAlignment
 import net.kyori.adventure.key.Key
 
-@SurfViewDsl
+@InventoryFramworkDSL
 sealed class SurfViewSettingsBuilder {
 
     var font: Key = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT

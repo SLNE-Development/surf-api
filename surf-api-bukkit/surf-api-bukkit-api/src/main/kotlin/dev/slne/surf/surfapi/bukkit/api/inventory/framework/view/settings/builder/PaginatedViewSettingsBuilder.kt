@@ -1,12 +1,12 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.SurfViewDsl
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginatedViewSettings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginationButtonPosition
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginationViewRows
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SurfViewSettingsDefaults
 
-@SurfViewDsl
+@InventoryFramworkDSL
 class PaginatedViewSettingsBuilder @PublishedApi internal constructor() : SurfViewSettingsBuilder() {
 
     var paginationViewRows: PaginationViewRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_VIEW_ROWS

@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
 import com.github.shynixn.mccoroutine.folia.ticks
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.modifyConfig
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.AbstractSurfView
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.dsl.ViewContainerModificationContext
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.dsl.addChild
@@ -86,9 +85,10 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     final override fun onViewInit(config: ViewConfigBuilder) {
         paginationState // initialize pagination state
         onPaginatedInit(config)
+        config.layout(*createLayout())
     }
 
-    final override fun onViewOpen(open: OpenContext) {
+    private fun createLayout(): Array<String> {
         val layout = arrayOfNulls<String>(settings.rows.rows)
         layout[0] = EMPTY_ROW
         repeat(settings.rows.rows - 2) { i ->
@@ -96,10 +96,10 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         }
         layout[layout.lastIndex] = EMPTY_ROW
 
-        open.modifyConfig {
-            layout(*layout)
-        }
+        return layout.requireNoNulls()
+    }
 
+    final override fun onViewOpen(open: OpenContext) {
         onPaginatedOpen(open)
     }
 

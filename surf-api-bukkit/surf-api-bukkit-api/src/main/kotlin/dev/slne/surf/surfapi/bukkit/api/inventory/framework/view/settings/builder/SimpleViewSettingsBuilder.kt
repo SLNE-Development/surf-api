@@ -1,11 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder
 
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.SurfViewDsl
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFramworkDSL
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.ViewRows
 
-@SurfViewDsl
+@InventoryFramworkDSL
 class SimpleViewSettingsBuilder @PublishedApi internal constructor() : SurfViewSettingsBuilder() {
     var rows: ViewRows = SurfViewSettingsDefaults.DEFAULT_VIEW_ROWS
         private set

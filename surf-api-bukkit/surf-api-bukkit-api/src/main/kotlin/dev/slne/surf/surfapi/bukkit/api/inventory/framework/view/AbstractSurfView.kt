@@ -12,13 +12,14 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SurfVi
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.viewFrame
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
+import me.devnatan.inventoryframework.ViewType
 import me.devnatan.inventoryframework.context.*
 import org.bukkit.plugin.java.JavaPlugin
 
 abstract class AbstractSurfView(
     private val header: String,
 ) : View() {
-    protected open val settings: SurfViewSettings = SimpleViewSettings()
+    open val settings: SurfViewSettings = SimpleViewSettings()
     private val container = ViewContainer()
 
     protected open fun onViewInit(config: ViewConfigBuilder) = Unit
@@ -74,8 +75,6 @@ abstract class AbstractSurfView(
     final override fun onInit(config: ViewConfigBuilder) {
         applyContainerDefaults()
 
-        config.title(container.render())
-
         with(settings) {
             if (cancelOnPickup) config.cancelOnPickup()
             if (cancelOnDrag) config.cancelOnDrag()
@@ -83,8 +82,11 @@ abstract class AbstractSurfView(
             if (cancelOnDrop) config.cancelOnDrop()
         }
 
-        config.size(settings.rows.rows)
         onViewInit(config)
+
+        config.title(container.render())
+        config.size(settings.rows.rows)
+        config.type(ViewType.CHEST)
     }
 
     final override fun onOpen(open: OpenContext) {

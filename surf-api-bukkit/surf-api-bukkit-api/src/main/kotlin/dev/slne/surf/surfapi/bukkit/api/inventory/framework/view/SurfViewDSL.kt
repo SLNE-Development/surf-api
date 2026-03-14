@@ -1,11 +1,12 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view
 
 import com.github.shynixn.mccoroutine.folia.scope
-import dev.slne.surf.surfapi.bukkit.api.builder.buildItem
+import dev.slne.surf.surfapi.bukkit.api.builder.buildLore
 import dev.slne.surf.surfapi.bukkit.api.builder.displayName
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.open
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.dsl.*
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.register
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.dsl.ViewContainerModificationContext
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.dsl.blockRow
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.pagination.AbstractPaginatedSurfView
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.PaginatedViewSettings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.SimpleViewSettings
@@ -14,8 +15,9 @@ import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builde
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder.SimpleViewSettingsBuilder
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder.paginatedViewSettings
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.settings.builder.simpleViewSettings
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.withItem
-import dev.slne.surf.surfapi.core.api.util.mutableLongSetOf
+import dev.slne.surf.surfapi.core.api.font.toSmallCaps
+import dev.slne.surf.surfapi.core.api.messages.adventure.plain
+import dev.slne.surf.surfapi.core.api.util.emptyObjectList
 import dev.slne.surf.surfapi.core.api.util.toMutableObjectList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -29,6 +31,7 @@ import me.devnatan.inventoryframework.context.*
 import me.devnatan.inventoryframework.state.MutableIntState
 import me.devnatan.inventoryframework.state.MutableState
 import me.devnatan.inventoryframework.state.State
+import net.kyori.adventure.translation.GlobalTranslator
 import org.bukkit.inventory.ItemType
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
@@ -36,12 +39,13 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.BiConsumer
 import java.util.function.Function
 import java.util.function.Supplier
+import kotlin.time.Duration.Companion.seconds
 
 @DslMarker
 @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
-annotation class SurfViewDsl
+annotation class InventoryFramworkDSL
 
-@SurfViewDsl
+@InventoryFramworkDSL
 abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @PublishedApi internal constructor() {
     @PublishedApi
     internal val stateRegistry = StateRegistry()
@@ -65,7 +69,7 @@ abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @Published
     internal var onClose: (context(ViewRef) CloseContext.() -> Unit)? = null
 
     @PublishedApi
-    internal var containerDefaults: (context (ViewContainerModificationContext, ViewRef) () -> Unit)? = {}
+    internal var containerDefaults: (context (ViewContainerModificationContext, ViewRef) () -> Unit)? = null
 }
 
 abstract class AbstractSurfViewRef @PublishedApi internal constructor() {
@@ -84,13 +88,13 @@ abstract class AbstractSurfViewRef @PublishedApi internal constructor() {
 class SurfViewRef @PublishedApi internal constructor() : AbstractSurfViewRef()
 class PaginatedSurfViewRef @PublishedApi internal constructor() : AbstractSurfViewRef()
 
-@SurfViewDsl
+@InventoryFramworkDSL
 class SurfViewContext @PublishedApi internal constructor() : AbstractSurfViewContext<SurfViewRef>() {
     @PublishedApi
     internal var settings: SurfViewSettings = SimpleViewSettings()
 }
 
-@SurfViewDsl
+@InventoryFramworkDSL
 class PaginatedSurfViewContext @PublishedApi internal constructor() : AbstractSurfViewContext<PaginatedSurfViewRef>() {
     @PublishedApi
     internal var settings: PaginatedViewSettings = PaginatedViewSettings()
@@ -120,49 +124,49 @@ class PaginatedSurfViewContext @PublishedApi internal constructor() : AbstractSu
 }
 
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onInit(block: context (ViewRef) (@SurfViewDsl ViewConfigBuilder).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onInit(block: context (ViewRef) (@InventoryFramworkDSL ViewConfigBuilder).() -> Unit) {
     ctx.onInit = block
 }
 
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onOpen(block: context(ViewRef) (@SurfViewDsl OpenContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onOpen(block: context(ViewRef) (@InventoryFramworkDSL OpenContext).() -> Unit) {
     ctx.onOpen = block
 }
 
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onFirstRender(block: context(ViewRef) (@SurfViewDsl RenderContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onFirstRender(block: context(ViewRef) (@InventoryFramworkDSL RenderContext).() -> Unit) {
     ctx.onFirstRender = block
 }
 
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onClick(block: context(ViewRef) (@SurfViewDsl SlotClickContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onClick(block: context(ViewRef) (@InventoryFramworkDSL SlotClickContext).() -> Unit) {
     ctx.onClick = block
 }
 
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onClose(block: context(ViewRef) (@SurfViewDsl CloseContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onClose(block: context(ViewRef) (@InventoryFramworkDSL CloseContext).() -> Unit) {
     ctx.onClose = block
 }
 
 context(ctx: AbstractSurfViewContext<ViewRef>)
 fun <ViewRef : AbstractSurfViewRef> onUpdate(
-    block: context(ViewRef) (@SurfViewDsl Context).() -> Unit
+    block: context(ViewRef) (@InventoryFramworkDSL Context).() -> Unit
 ) {
     ctx.onUpdate = block
 }
 
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> containerDefaults(block: context (@SurfViewDsl ViewContainerModificationContext, ViewRef) () -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> containerDefaults(block: context (@InventoryFramworkDSL ViewContainerModificationContext, ViewRef) () -> Unit) {
     ctx.containerDefaults = block
 }
 
 context(ctx: SurfViewContext)
-fun settings(block: @SurfViewDsl SimpleViewSettingsBuilder.() -> Unit) {
+fun settings(block: @InventoryFramworkDSL SimpleViewSettingsBuilder.() -> Unit) {
     ctx.settings = simpleViewSettings(block)
 }
 
 context(ctx: PaginatedSurfViewContext)
-fun settings(block: @SurfViewDsl PaginatedViewSettingsBuilder.() -> Unit) {
+fun settings(block: @InventoryFramworkDSL PaginatedViewSettingsBuilder.() -> Unit) {
     ctx.settings = paginatedViewSettings(block)
 }
 
@@ -180,7 +184,7 @@ internal sealed interface PaginationSourceType<T> {
     class LazyAsync<T>(val provider: (Context) -> CompletableFuture<Iterable<T>>) : PaginationSourceType<T>
 }
 
-@SurfViewDsl
+@InventoryFramworkDSL
 class PaginationDslBuilder<T> @PublishedApi internal constructor() {
 
     @PublishedApi
@@ -203,29 +207,29 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
         sourceType = PaginationSourceType.Static { items }
     }
 
-    fun source(provider: @SurfViewDsl () -> Iterable<T>) {
+    fun source(provider: @InventoryFramworkDSL () -> Iterable<T>) {
         sourceType = PaginationSourceType.Static(provider)
     }
 
-    fun computedSource(provider: @SurfViewDsl (Context) -> Iterable<T>) {
+    fun computedSource(provider: @InventoryFramworkDSL (Context) -> Iterable<T>) {
         sourceType = PaginationSourceType.Computed(provider)
     }
 
-    fun asyncSource(provider: @SurfViewDsl (Context) -> CompletableFuture<Iterable<T>>) {
+    fun asyncSource(provider: @InventoryFramworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
         sourceType = PaginationSourceType.ComputedAsync(provider)
     }
 
-    fun lazySource(provider: @SurfViewDsl (Context) -> Iterable<T>) {
+    fun lazySource(provider: @InventoryFramworkDSL (Context) -> Iterable<T>) {
         sourceType = PaginationSourceType.Lazy(provider)
     }
 
-    fun lazyAsyncSource(provider: @SurfViewDsl (Context) -> CompletableFuture<Iterable<T>>) {
+    fun lazyAsyncSource(provider: @InventoryFramworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
         sourceType = PaginationSourceType.LazyAsync(provider)
     }
 
     fun suspendSource(
         scope: CoroutineScope,
-        provider: @SurfViewDsl suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) {
         sourceType = PaginationSourceType.ComputedAsync { context ->
             scope.future { provider(context) }.thenApply { it }
@@ -234,12 +238,12 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
 
     fun suspendSource(
         plugin: Plugin,
-        provider: @SurfViewDsl suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) = suspendSource(scope = plugin.scope, provider = provider)
 
     fun lazySuspendSource(
         scope: CoroutineScope,
-        provider: @SurfViewDsl suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) {
         sourceType = PaginationSourceType.LazyAsync { context ->
             scope.future { provider(context) }.thenApply { it }
@@ -248,22 +252,22 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
 
     fun lazySuspendSource(
         plugin: Plugin,
-        provider: @SurfViewDsl suspend CoroutineScope.(Context) -> Iterable<T>,
+        provider: @InventoryFramworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) = lazySuspendSource(scope = plugin.scope, provider = provider)
 
-    fun itemFactory(factory: @SurfViewDsl BukkitItemComponentBuilder.(T) -> Unit) {
+    fun itemFactory(factory: @InventoryFramworkDSL BukkitItemComponentBuilder.(T) -> Unit) {
         this.simpleItemFactory = BiConsumer(factory)
         this.elementFactory = null
     }
 
-    fun elementFactory(factory: @SurfViewDsl (context: Context, builder: BukkitItemComponentBuilder, index: Int, value: T) -> Unit) {
+    fun elementFactory(factory: @InventoryFramworkDSL (context: Context, builder: BukkitItemComponentBuilder, index: Int, value: T) -> Unit) {
         this.elementFactory = PaginationValueConsumer { context, builder, index, value ->
             factory(context, builder, index, value)
         }
         this.simpleItemFactory = null
     }
 
-    fun onPageSwitch(handler: @SurfViewDsl (Context, Pagination) -> Unit) {
+    fun onPageSwitch(handler: @InventoryFramworkDSL (Context, Pagination) -> Unit) {
         this.pageSwitchHandler = BiConsumer(handler)
     }
 
@@ -296,7 +300,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
 }
 
 context(ctx: PaginatedSurfViewContext)
-inline fun <T> pagination(block: @SurfViewDsl PaginationDslBuilder<T>.() -> Unit) {
+inline fun <T> pagination(block: @InventoryFramworkDSL PaginationDslBuilder<T>.() -> Unit) {
     val builder = PaginationDslBuilder<T>().apply(block)
 
     val sourceType = requireNotNull(builder.sourceType) {
