@@ -10620,6 +10620,7 @@ public final class dev/slne/surf/surfapi/core/api/util/SurfUtil {
 	public static final fun logIf (Lcom/google/common/flogger/LoggingApi;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
 	public static final fun logger ()Lcom/google/common/flogger/FluentLogger;
 	public static final fun mapAsync (Ljava/lang/Iterable;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun prepend (Ljava/util/function/BiConsumer;Ljava/util/function/BiConsumer;)Ljava/util/function/BiConsumer;
 	public static final fun setFinalField (Ljava/lang/reflect/Field;Ljava/lang/Object;B)V
 	public static final fun setFinalField (Ljava/lang/reflect/Field;Ljava/lang/Object;C)V
 	public static final fun setFinalField (Ljava/lang/reflect/Field;Ljava/lang/Object;D)V

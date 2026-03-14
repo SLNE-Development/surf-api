@@ -3,7 +3,15 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory
 import dev.slne.surf.surfapi.bukkit.api.builder.buildItem
 import dev.slne.surf.surfapi.bukkit.api.builder.displayName
 import dev.slne.surf.surfapi.bukkit.api.dialog.noticeDialog
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.dsl.slot
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.dsl.withItem
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.titleBuilder
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.onClose
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.onFirstRender
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state.get
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state.increment
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.state.mutableState
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.surfView
 import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
@@ -12,6 +20,29 @@ import me.devnatan.inventoryframework.context.CloseContext
 import me.devnatan.inventoryframework.context.RenderContext
 import org.bukkit.inventory.ItemType
 
+val testInventoryViewDsl = surfView("TestInventoryView") {
+    val counterState = mutableState(0)
+
+    onFirstRender {
+        slot(1) {
+            onClick(counterState::increment)
+            withItem(ItemType.DIAMOND) {
+                displayName {
+                    text("Diamond")
+                }
+            }
+        }
+    }
+
+    onClose {
+        player.showDialog(
+            noticeDialog(
+                text("Du hast das Inventar geschlossen!"),
+                text("Du hast den Diamanten ${counterState[this]} mal geklickt!")
+            )
+        )
+    }
+}
 
 object TestInventoryView : View() {
     private val counterState = mutableState(0)

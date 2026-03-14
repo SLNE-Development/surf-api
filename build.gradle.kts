@@ -50,6 +50,7 @@ subprojects {
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
                 optIn.add("dev.slne.surf.surfapi.shared.api.util.InternalSurfApi")
+                freeCompilerArgs.add("-Xcontext-parameters")
             }
         }
     }

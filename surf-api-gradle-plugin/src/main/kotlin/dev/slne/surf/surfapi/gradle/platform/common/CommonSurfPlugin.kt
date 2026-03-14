@@ -200,7 +200,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
-            freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
+            freeCompilerArgs.addAll(listOf("-Xjsr305=strict", "-Xcontext-parameters"))
         }
     }
 
