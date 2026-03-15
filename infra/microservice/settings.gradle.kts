@@ -17,4 +17,7 @@ include("surf-microservice-api")
 include("surf-microservice-plugin")
 include("surf-microservice-test:surf-microservice-test-plugin")
 include("surf-microservice-test:surf-microservice-test-microservice")
-include("surf-microservice-test:surf-microservice-test-core")
+include("surf-microservice-test:surf-microservice-test-api")
+
+include("surf-microservice-test:surf-microservice-test-core:surf-microservice-test-core-common")
+include("surf-microservice-test:surf-microservice-test-core:surf-microservice-test-core-client")

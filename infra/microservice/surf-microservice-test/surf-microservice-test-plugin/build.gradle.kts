@@ -5,13 +5,13 @@ plugins {
 }
 
 surfPaperPluginApi {
-    mainClass("dev.slne.surf.test.microservice.TestPaperMain")
+    mainClass("dev.slne.surf.microservice.test.paper.TestPaperMain")
+
     serverDependencies {
         registerRequired("surf-rabbitmq-paper")
     }
 }
 
 dependencies {
-    compileOnly("dev.slne.surf.rabbitmq:surf-rabbitmq-client-api:1.0.0-SNAPSHOT")
-    api(projects.surfMicroserviceTest.surfMicroserviceTestCore)
+    api(projects.surfMicroserviceTest.surfMicroserviceTestCore.surfMicroserviceTestCoreClient)
 }
