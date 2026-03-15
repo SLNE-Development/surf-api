@@ -152,3 +152,5 @@ interface SurfBukkitPacketApi {
         val instance = requiredService<SurfBukkitPacketApi>()
     }
 }
+
+val surfBukkitPacketApi get() = SurfBukkitPacketApi.instance
