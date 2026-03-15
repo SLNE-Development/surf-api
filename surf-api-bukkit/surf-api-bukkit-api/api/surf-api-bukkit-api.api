@@ -2155,8 +2155,10 @@ public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/listener/pa
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi {
 	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi$Companion;
 	public static fun getInstance ()Ldev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi;
-	public abstract fun registerPacketLoreListener (Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandler;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandler;)V
 	public fun registerPacketLoreListener (Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandlerSimple;)V
+	public abstract fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandler;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandlerSimple;)V
 	public abstract fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandler;)V
 	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandlerSimple;)V
 	public abstract fun unregisterPacketLoreListener (Lorg/bukkit/NamespacedKey;)V
@@ -2168,7 +2170,9 @@ public final class dev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi$C
 }
 
 public final class dev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi$DefaultImpls {
+	public static fun registerPacketLoreListener (Ldev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandler;)V
 	public static fun registerPacketLoreListener (Ldev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandlerSimple;)V
+	public static fun registerPacketLoreListener (Ldev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi;Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandlerSimple;)V
 	public static fun registerPacketLoreListenerGlobal (Ldev/slne/surf/surfapi/bukkit/api/packet/SurfBukkitPacketApi;Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/surfapi/bukkit/api/packet/lore/SurfBukkitPacketLoreHandlerSimple;)V
 }
 
