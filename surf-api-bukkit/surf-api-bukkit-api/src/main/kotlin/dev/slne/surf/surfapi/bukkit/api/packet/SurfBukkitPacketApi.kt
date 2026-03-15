@@ -10,36 +10,48 @@ import org.bukkit.plugin.Plugin
 /**
  * The SurfBukkitPacketApi interface extends packet handling capabilities for Bukkit environments.
  *
- * It provides methods for registering and unregistering lore listeners, enabling dynamic modification
- * of item stack lore based on custom logic. It also includes global registration methods for listening
- * to all items and utilities for managing these listeners efficiently.
+ * Provides methods for registering and unregistering lore listeners, enabling dynamic modification
+ * of item stack lore based on custom logic. Includes global registration for all items and utilities
+ * for managing these listeners efficiently.
  *
- * This API allows developers to enhance item lore dynamically, providing a flexible system for plugins
- * that need to alter or interact with lore without directly modifying the underlying item stack data.
+ * Prefer the overloads that accept an explicit [Plugin] parameter over the deprecated ones,
+ * as automatic caller-plugin detection via `getCallingPlugin` is unreliable across different
+ * call-site configurations.
  */
 interface SurfBukkitPacketApi {
 
     /**
-     * Registers a listener for modifying the lore of a specific item stack identified by the given key.
+     * Registers a listener for modifying the lore of a specific item stack identified by [identifier].
      *
-     * @param identifier A unique key representing the item to listen for. Must not be null.
-     * @param listener   The listener that modifies the lore of the item stack. Must not be null.
+     * @param identifier A unique key representing the item to listen for.
+     * @param listener The listener that modifies the lore of the item stack.
      *
-     * Example Usage:
-     * ```
-     * val key = NamespacedKey("myplugin", "custom_item")
-     * surfBukkitPacketApi.registerPacketLoreListener(key, SurfBukkitPacketLoreHandler { lore, _, _ ->
-     *     lore.add(Component.text("Special Lore!"))
-     * })
-     * ```
+     * @deprecated Automatic plugin detection via `getCallingPlugin` is unreliable. Use
+     * [registerPacketLoreListener(Plugin, NamespacedKey, SurfBukkitPacketLoreHandler)] instead
+     * and pass your plugin instance explicitly.
      */
+    @Deprecated(
+        message = "Automatic plugin detection is unreliable. Pass your plugin instance explicitly.",
+        replaceWith = ReplaceWith("registerPacketLoreListener(plugin, identifier, listener)")
+    )
     fun registerPacketLoreListener(
         identifier: NamespacedKey,
         listener: SurfBukkitPacketLoreHandler
     ) {
-        registerPacketLoreListener(getCallingPlugin(), identifier, listener)
+        registerPacketLoreListener(getCallingPlugin(2), identifier, listener)
     }
 
+    /**
+     * Registers a listener for modifying the lore of a specific item stack identified by [identifier].
+     *
+     * This is the preferred overload. The [plugin] reference is used to properly manage the
+     * listener lifecycle — all listeners registered under a plugin are automatically cleaned up
+     * when [unregisterPacketLoreListener(Plugin)] is called.
+     *
+     * @param plugin The plugin registering the listener. Used for lifecycle management.
+     * @param identifier A unique key representing the item to listen for.
+     * @param listener The listener that modifies the lore of the item stack.
+     */
     fun registerPacketLoreListener(
         plugin: Plugin,
         identifier: NamespacedKey,
@@ -47,20 +59,39 @@ interface SurfBukkitPacketApi {
     )
 
     /**
-     * Registers a simplified packet lore listener for a specific item.
+     * Registers a simplified listener for modifying the lore of a specific item stack identified by [identifier].
      *
-     * @param identifier A unique key representing the item to listen for. Must not be null.
-     * @param listener   The simplified packet lore listener that focuses solely on modifying the lore list.
+     * Delegates to [registerPacketLoreListener(Plugin, NamespacedKey, SurfBukkitPacketLoreHandler)].
      *
-     * This method delegates to the standard [registerPacketLoreListener] implementation.
+     * @param identifier A unique key representing the item to listen for.
+     * @param listener The simplified lore listener that focuses solely on modifying the lore list.
+     *
+     * @deprecated Automatic plugin detection is unreliable. Use
+     * [registerPacketLoreListener(Plugin, NamespacedKey, SurfBukkitPacketLoreHandlerSimple)] instead
+     * and pass your plugin instance explicitly.
      */
+    @Deprecated(
+        message = "Automatic plugin detection is unreliable. Pass your plugin instance explicitly.",
+        replaceWith = ReplaceWith("registerPacketLoreListener(plugin, identifier, listener)")
+    )
     fun registerPacketLoreListener(
         identifier: NamespacedKey,
         listener: SurfBukkitPacketLoreHandlerSimple
     ) {
-        registerPacketLoreListener(getCallingPlugin(), identifier, listener)
+        registerPacketLoreListener(getCallingPlugin(2), identifier, listener)
     }
 
+    /**
+     * Registers a simplified listener for modifying the lore of a specific item stack identified by [identifier].
+     *
+     * This is the preferred overload. Delegates to
+     * [registerPacketLoreListener(Plugin, NamespacedKey, SurfBukkitPacketLoreHandler)].
+     * The [plugin] reference is used to properly manage the listener lifecycle.
+     *
+     * @param plugin The plugin registering the listener. Used for lifecycle management.
+     * @param identifier A unique key representing the item to listen for.
+     * @param listener The simplified lore listener that focuses solely on modifying the lore list.
+     */
     fun registerPacketLoreListener(
         plugin: Plugin,
         identifier: NamespacedKey,
@@ -70,17 +101,14 @@ interface SurfBukkitPacketApi {
     }
 
     /**
-     * Registers a packet lore listener globally to handle lore modifications for all items.
+     * Registers a lore listener globally to handle lore modifications for all items.
      *
-     * @param plugin   The plugin registering the listener. Used to manage lifecycle and cleanup.
+     * Unlike the key-based overloads, this listener fires for every item stack regardless of
+     * its identifier. Use this only when you genuinely need to intercept all items, as it has
+     * a broader performance impact.
+     *
+     * @param plugin The plugin registering the listener. Used for lifecycle management.
      * @param listener The lore listener to handle lore modifications globally.
-     *
-     * Example Usage:
-     * ```
-     * surfBukkitPacketApi.registerPacketLoreListenerGlobal(myPlugin, SurfBukkitPacketLoreHandler { lore, _, _ ->
-     *     lore.add(Component.text("Global Lore Modification"))
-     * })
-     * ```
      */
     fun registerPacketLoreListenerGlobal(
         plugin: Plugin,
@@ -88,12 +116,12 @@ interface SurfBukkitPacketApi {
     )
 
     /**
-     * Registers a simplified packet lore listener globally for all items.
+     * Registers a simplified lore listener globally for all items.
      *
-     * @param plugin   The plugin registering the listener. Used for proper cleanup during plugin shutdown.
+     * Delegates to [registerPacketLoreListenerGlobal(Plugin, SurfBukkitPacketLoreHandler)].
+     *
+     * @param plugin The plugin registering the listener. Used for lifecycle management.
      * @param listener The simplified lore listener that focuses solely on the lore list.
-     *
-     * This method delegates to the standard [registerPacketLoreListenerGlobal] implementation.
      */
     fun registerPacketLoreListenerGlobal(
         plugin: Plugin,
@@ -103,26 +131,19 @@ interface SurfBukkitPacketApi {
     }
 
     /**
-     * Unregisters a previously registered packet lore listener identified by the given key.
+     * Unregisters the packet lore listener associated with the given [identifier].
      *
      * @param identifier The key identifying the listener to unregister.
-     *
-     * Example Usage:
-     * ```
-     * surfBukkitPacketApi.unregisterPacketLoreListener(NamespacedKey("myplugin", "custom_item"))
-     * ```
      */
     fun unregisterPacketLoreListener(identifier: NamespacedKey)
 
     /**
-     * Unregisters all packet lore listeners associated with the given plugin.
+     * Unregisters all packet lore listeners associated with the given [plugin].
+     *
+     * Call this during plugin shutdown to ensure all listeners registered under this plugin
+     * are properly cleaned up.
      *
      * @param plugin The plugin whose listeners should be unregistered.
-     *
-     * Example Usage:
-     * ```
-     * surfBukkitPacketApi.unregisterPacketLoreListener(myPlugin)
-     * ```
      */
     fun unregisterPacketLoreListener(plugin: Plugin)
 
@@ -131,5 +152,3 @@ interface SurfBukkitPacketApi {
         val instance = requiredService<SurfBukkitPacketApi>()
     }
 }
-
-val surfBukkitPacketApi get() = SurfBukkitPacketApi.instance
