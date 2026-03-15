@@ -11,6 +11,7 @@ import dev.slne.surf.surfapi.bukkit.server.nms.toNms
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import it.unimi.dsi.fastutil.objects.ObjectLists
 import net.kyori.adventure.text.format.TextDecoration
 import net.minecraft.core.component.DataComponents
 import net.minecraft.network.protocol.game.*
@@ -155,17 +156,20 @@ object PacketLoreListener : PacketListener {
         }
 
         /*
-         * We need Bukkit PDC for the current handler API.
-         * But we only use the original mirror to cheaply determine
-         * whether any keyed handlers actually match.
+         * We need Bukkit PDC for the current handler API, but only when there
+         * are keyed handlers to consider. The original mirror is used to cheaply
+         * determine whether any keyed handlers actually match.
          */
-        val originalBukkitStack = original.asBukkitMirror()
-        val originalPdc = originalBukkitStack.persistentDataContainer
-
-        val matchingKeyedHandlers = resolveMatchingKeyedHandlers(
-            originalPdc.keys,
-            keyedSnapshot
-        )
+        val matchingKeyedHandlers = if (keyedSnapshot.isNotEmpty()) {
+            val originalBukkitStack = original.asBukkitMirror()
+            val originalPdc = originalBukkitStack.persistentDataContainer
+            resolveMatchingKeyedHandlers(
+                originalPdc.keys,
+                keyedSnapshot
+            )
+        } else {
+            ObjectLists.emptyList()
+        }
 
         if (matchingKeyedHandlers.isEmpty() && globalSnapshot.isEmpty()) {
             return original
