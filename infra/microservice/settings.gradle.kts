@@ -15,4 +15,6 @@ rootProject.name = "surf-microservice"
 
 include("surf-microservice-api")
 include("surf-microservice-plugin")
-include("surf-microservice-test")
+include("surf-microservice-test:surf-microservice-test-plugin")
+include("surf-microservice-test:surf-microservice-test-microservice")
+include("surf-microservice-test:surf-microservice-test-core")

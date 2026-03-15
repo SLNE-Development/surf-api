@@ -1,12 +1,9 @@
 package dev.slne.surf.microservice.api
 
-import com.google.common.flogger.FluentLogger
 import dev.slne.surf.microservice.api.util.InternalMicroserviceApi
 import dev.slne.surf.surfapi.standalone.SurfApiStandaloneBootstrap
 
 abstract class Microservice {
-    abstract val logger: FluentLogger
-
     @InternalMicroserviceApi
     suspend fun bootstrap(args: List<String>) {
         SurfApiStandaloneBootstrap.bootstrap()
@@ -33,4 +30,3 @@ abstract class Microservice {
 }
 
 val microservice get() = Microservice.INSTANCE
-val log get() = microservice.logger

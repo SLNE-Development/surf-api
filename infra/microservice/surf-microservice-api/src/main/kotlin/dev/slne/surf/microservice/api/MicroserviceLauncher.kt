@@ -1,9 +1,12 @@
 package dev.slne.surf.microservice.api
 
 import dev.slne.surf.microservice.api.command.MicroserviceCommandManager
+import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import kotlinx.coroutines.*
 import java.util.*
+
+private val log = logger()
 
 suspend fun main(args: Array<String>) {
     Microservice.INSTANCE = requiredService<Microservice>()

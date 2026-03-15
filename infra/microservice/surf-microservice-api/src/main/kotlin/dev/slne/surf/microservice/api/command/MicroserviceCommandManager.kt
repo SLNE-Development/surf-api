@@ -5,6 +5,7 @@ import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 object MicroserviceCommandManager {
     private val _commands = mutableObjectSetOf<MicroserviceCommand>()
@@ -36,7 +37,9 @@ object MicroserviceCommandManager {
             return
         }
 
-        command.execute(scope, args)
+        scope.launch {
+            with(command) { execute(args) }
+        }
     }
 
     private fun printUnknownOrIncompleteCommand(label: String) {
