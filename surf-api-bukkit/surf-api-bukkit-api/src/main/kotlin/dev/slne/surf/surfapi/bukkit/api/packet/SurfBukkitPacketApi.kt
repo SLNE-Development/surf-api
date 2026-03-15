@@ -2,6 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.packet
 
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandlerSimple
+import dev.slne.surf.surfapi.bukkit.api.util.getCallingPlugin
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
@@ -35,6 +36,14 @@ interface SurfBukkitPacketApi {
     fun registerPacketLoreListener(
         identifier: NamespacedKey,
         listener: SurfBukkitPacketLoreHandler
+    ) {
+        registerPacketLoreListener(getCallingPlugin(), identifier, listener)
+    }
+
+    fun registerPacketLoreListener(
+        plugin: Plugin,
+        identifier: NamespacedKey,
+        listener: SurfBukkitPacketLoreHandler
     )
 
     /**
@@ -49,7 +58,15 @@ interface SurfBukkitPacketApi {
         identifier: NamespacedKey,
         listener: SurfBukkitPacketLoreHandlerSimple
     ) {
-        registerPacketLoreListener(identifier, listener as SurfBukkitPacketLoreHandler)
+        registerPacketLoreListener(getCallingPlugin(), identifier, listener)
+    }
+
+    fun registerPacketLoreListener(
+        plugin: Plugin,
+        identifier: NamespacedKey,
+        listener: SurfBukkitPacketLoreHandlerSimple
+    ) {
+        registerPacketLoreListener(plugin, identifier, listener as SurfBukkitPacketLoreHandler)
     }
 
     /**

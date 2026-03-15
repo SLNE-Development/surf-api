@@ -15,10 +15,11 @@ class SurfBukkitPacketApiImpl : SurfBukkitPacketApi {
     }
 
     override fun registerPacketLoreListener(
+        plugin: Plugin,
         identifier: NamespacedKey,
         listener: SurfBukkitPacketLoreHandler
     ) {
-        PacketLoreListener.register(identifier, listener)
+        PacketLoreListener.register(plugin, identifier, listener)
     }
 
     override fun registerPacketLoreListenerGlobal(
