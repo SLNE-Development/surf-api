@@ -15,6 +15,10 @@ inline fun Audience.sendText(block: SurfComponentBuilder.() -> Unit) {
     sendMessage(SurfComponentBuilder(block))
 }
 
+inline fun Audience.sendActionBar(block: SurfComponentBuilder.() -> Unit) {
+    sendActionBar(SurfComponentBuilder(block))
+}
+
 inline fun Audience.openBook(block: @BookDsl Book.Builder.() -> Unit) {
     openBook(Book(block))
 }
@@ -45,8 +49,11 @@ inline fun Audience.uuid() = uuidOrNull() ?: error("Audience does not have a UUI
 inline fun Audience.nameOrNull() = getPointer(Identity.NAME)
 inline fun Audience.name() = nameOrNull() ?: error("Audience does not have a name pointer")
 inline fun Audience.displayNameOrNull() = getPointer(Identity.DISPLAY_NAME)
-inline fun Audience.displayName() = displayNameOrNull() ?: error("Audience does not have a display name pointer")
+inline fun Audience.displayName() =
+    displayNameOrNull() ?: error("Audience does not have a display name pointer")
+
 inline fun Audience.testPermission(permission: String) =
     getPointer(PermissionChecker.POINTER)?.value(permission) ?: TriState.NOT_SET
 
-inline fun Audience.hasPermission(permission: String) = getPointer(PermissionChecker.POINTER)?.test(permission) ?: false
+inline fun Audience.hasPermission(permission: String) =
+    getPointer(PermissionChecker.POINTER)?.test(permission) ?: false

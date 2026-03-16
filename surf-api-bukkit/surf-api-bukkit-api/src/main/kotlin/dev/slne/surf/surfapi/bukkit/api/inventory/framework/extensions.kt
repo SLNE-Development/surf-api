@@ -2,11 +2,15 @@
 
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework
 
+import dev.slne.surf.surfapi.bukkit.api.builder.buildItem
+import dev.slne.surf.surfapi.bukkit.api.builder.displayName
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.surfapi.core.api.messages.builder.SurfComponentBuilder
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.context.OpenContext
+import net.kyori.adventure.text.Component
+import org.bukkit.Material
 import org.bukkit.entity.Player
 
 /**
@@ -143,3 +147,8 @@ inline fun ViewConfigBuilder.titleBuilder(title: @InventoryFrameworkDSL SurfComp
  */
 inline fun OpenContext.modifyConfig(modifier: @InventoryFrameworkDSL ViewConfigBuilder.() -> Unit) =
     this.modifyConfig().apply(modifier)
+
+val View.outlineItem
+    get() = buildItem(Material.GRAY_STAINED_GLASS_PANE) {
+        displayName(Component.empty())
+    }

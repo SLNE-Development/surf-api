@@ -2,6 +2,8 @@
 
 package dev.slne.surf.surfapi.bukkit.api.util
 
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
@@ -281,3 +283,18 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
         )
     }
 }
+
+fun PacketWrapper<*>.sendPacket(uuid: UUID) {
+    val player = Bukkit.getPlayer(uuid) ?: return
+    val packetPlayer = PacketEvents.getAPI().playerManager.getUser(player) ?: return
+
+    packetPlayer.sendPacket(this)
+}
+
+fun PacketWrapper<*>.sendPacket(player: Player) =
+    PacketEvents.getAPI().playerManager.getUser(player)?.sendPacket(this)
+
+fun Location.readableString(showRotation: Boolean) =
+    "${world?.name ?: "null"}: (${x.toInt()}, ${y.toInt()}, ${z.toInt()})" + if (showRotation) " (yaw: ${yaw.toInt()}, pitch: ${pitch.toInt()})" else ""
+
+typealias BukkitSound = Sound
