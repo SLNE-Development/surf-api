@@ -14,6 +14,10 @@ version = buildString {
     append("-1.0.0")
 }
 
+dependencies {
+    implementation("dev.slne.surf:surf-api-gradle-plugin:$mcVersion+")
+}
+
 class PluginInfo(
     val id: String,
     implementationClass: String

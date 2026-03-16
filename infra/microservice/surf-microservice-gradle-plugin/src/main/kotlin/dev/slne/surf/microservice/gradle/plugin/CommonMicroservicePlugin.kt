@@ -26,6 +26,23 @@ abstract class CommonMicroservicePlugin<E : CommonMicroserviceExtension>(
                 )
             }
 
+            extension.rabbitSettings.orNull?.let { rabbitSettings ->
+                val moduleName = rabbitSettings.rabbitModule.module
+                val applyServerRuntimeDependency = rabbitSettings.applyRabbitServerRuntimeDependency
+
+                dependencies.add(
+                    "compileOnlyApi",
+                    "dev.slne.surf.rabbitmq:surf-rabbitmq-$moduleName:+"
+                )
+
+                if (applyServerRuntimeDependency) {
+                    dependencies.add(
+                        "runtimeOnly",
+                        "dev.slne.surf.rabbitmq:surf-rabbitmq-server:+"
+                    )
+                }
+            }
+
             afterEvaluate0(extension)
         }
     }

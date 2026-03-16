@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 abstract class ApiMicroserviceExtension @Inject constructor(
     objects: ObjectFactory
-) : CommonMicroserviceExtension() {
+) : CommonMicroserviceExtension(objects) {
     override val module = objects.property<SurfMicroserviceApiModule>()
 
     fun withCommon() {
