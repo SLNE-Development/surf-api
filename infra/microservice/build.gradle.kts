@@ -1,3 +1,4 @@
+import dev.slne.surf.surfapi.gradle.util.slneReleases
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 buildscript {
@@ -11,7 +12,7 @@ buildscript {
 }
 
 allprojects {
-    group = "dev.slne.surf"
+    group = "dev.slne.surf.microservice"
     version = findProperty("version") as String
 }
 
@@ -20,6 +21,12 @@ subprojects {
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
                 optIn.add("dev.slne.surf.microservice.api.util.InternalMicroserviceApi")
+            }
+        }
+
+        extensions.findByType<PublishingExtension>()?.apply {
+            repositories {
+                slneReleases()
             }
         }
     }

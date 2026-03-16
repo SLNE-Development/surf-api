@@ -13,11 +13,25 @@ plugins {
 
 rootProject.name = "surf-microservice"
 
-include("surf-microservice-api")
-include("surf-microservice-plugin")
-include("surf-microservice-test:surf-microservice-test-plugin")
-include("surf-microservice-test:surf-microservice-test-microservice")
-include("surf-microservice-test:surf-microservice-test-api")
+// Api
+include("surf-microservice-api:surf-microservice-api-common")
+include("surf-microservice-api:surf-microservice-api-microservice")
+include("surf-microservice-api:surf-microservice-api-runtime:surf-microservice-api-runtime-common")
+include("surf-microservice-api:surf-microservice-api-runtime:surf-microservice-api-runtime-paper")
+include("surf-microservice-api:surf-microservice-api-runtime:surf-microservice-api-runtime-velocity")
 
-include("surf-microservice-test:surf-microservice-test-core:surf-microservice-test-core-common")
-include("surf-microservice-test:surf-microservice-test-core:surf-microservice-test-core-client")
+// Core
+include("surf-microservice-core:surf-microservice-core-common")
+include("surf-microservice-core:surf-microservice-core-microservice")
+include("surf-microservice-core:surf-microservice-core-runtime:surf-microservice-core-runtime-common")
+include("surf-microservice-core:surf-microservice-core-runtime:surf-microservice-core-runtime-paper")
+include("surf-microservice-core:surf-microservice-core-runtime:surf-microservice-core-runtime-velocity")
+
+// Runtime
+include("surf-microservice-runtime:surf-microservice-runtime-common")
+include("surf-microservice-runtime:surf-microservice-runtime-microservice")
+include("surf-microservice-runtime:surf-microservice-runtime-paper")
+include("surf-microservice-runtime:surf-microservice-runtime-velocity")
+
+// Gradle Plugin
+include("surf-microservice-gradle-plugin")
