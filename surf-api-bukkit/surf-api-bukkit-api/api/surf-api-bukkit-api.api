@@ -776,6 +776,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/StaticPaneScop
 }
 
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/InventoryFrameworkExtensions {
+	public static final fun getOutlineItem (Lme/devnatan/inventoryframework/View;)Lorg/bukkit/inventory/ItemStack;
 	public static final fun modifyConfig (Lme/devnatan/inventoryframework/context/OpenContext;Lkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/ViewConfigBuilder;
 	public static final fun open (Lme/devnatan/inventoryframework/View;Ljava/util/Collection;)V
 	public static final fun open (Lme/devnatan/inventoryframework/View;Ljava/util/Collection;Ljava/lang/Object;)V
@@ -2431,6 +2432,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/util/UtilBukkit {
 	public static final fun isChunkVisible (Lorg/bukkit/entity/Player;Lorg/bukkit/Location;)Z
 	public static final fun isChunkVisible (Lorg/bukkit/entity/Player;Lorg/bukkit/World;II)Z
 	public static final fun key (Ljava/lang/String;)Lorg/bukkit/NamespacedKey;
+	public static final fun readableString (Lorg/bukkit/Location;Z)Ljava/lang/String;
 	public static final fun toOfflinePlayers (Ljava/lang/Iterable;)Ljava/util/List;
 	public static final fun toOfflinePlayers (Lkotlin/sequences/Sequence;)Lkotlin/sequences/Sequence;
 	public static final fun toPlayers (Ljava/lang/Iterable;)Ljava/util/List;

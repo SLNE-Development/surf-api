@@ -281,3 +281,30 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
         )
     }
 }
+
+/**
+ * Constructs a human-readable string representing the location, including coordinates and optionally
+ * rotation data.
+ *
+ * @param showRotation Determines whether to include rotation values (yaw and pitch) in the output string.
+ */
+fun Location.readableString(showRotation: Boolean) = buildString {
+    append(world?.name ?: "null")
+    append(":(")
+    append("%.2f".format(x))
+    append(", ")
+    append("%.2f".format(y))
+    append(", ")
+    append("%.2f".format(z))
+    if (showRotation) {
+        append(") [")
+        append("%.2f".format(yaw))
+        append(", ")
+        append("%.2f".format(pitch))
+        append("]")
+    } else {
+        append(")")
+    }
+}
+
+typealias BukkitSound = Sound
