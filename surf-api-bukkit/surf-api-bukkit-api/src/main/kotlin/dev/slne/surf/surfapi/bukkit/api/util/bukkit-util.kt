@@ -2,12 +2,10 @@
 
 package dev.slne.surf.surfapi.bukkit.api.util
 
-import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
-import dev.slne.surf.surfapi.core.api.extensions.packetEvents
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
@@ -284,17 +282,29 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
     }
 }
 
-fun PacketWrapper<*>.sendPacket(uuid: UUID) {
-    val player = Bukkit.getPlayer(uuid) ?: return
-    val packetPlayer = packetEvents.playerManager.getUser(player) ?: return
-
-    packetPlayer.sendPacket(this)
+/**
+ * Constructs a human-readable string representing the location, including coordinates and optionally
+ * rotation data.
+ *
+ * @param showRotation Determines whether to include rotation values (yaw and pitch) in the output string.
+ */
+fun Location.readableString(showRotation: Boolean) = buildString {
+    append(world?.name ?: "null")
+    append(":(")
+    append("%.2f".format(x))
+    append(", ")
+    append("%.2f".format(y))
+    append(", ")
+    append("%.2f".format(z))
+    if (showRotation) {
+        append(") [")
+        append("%.2f".format(yaw))
+        append(", ")
+        append("%.2f".format(pitch))
+        append("]")
+    } else {
+        append(")")
+    }
 }
-
-fun PacketWrapper<*>.sendPacket(player: Player) =
-    packetEvents.playerManager.getUser(player)?.sendPacket(this)
-
-fun Location.readableString(showRotation: Boolean) =
-    "${world?.name ?: "null"}: (${x.toInt()}, ${y.toInt()}, ${z.toInt()})" + if (showRotation) " (yaw: ${yaw.toInt()}, pitch: ${pitch.toInt()})" else ""
 
 typealias BukkitSound = Sound
