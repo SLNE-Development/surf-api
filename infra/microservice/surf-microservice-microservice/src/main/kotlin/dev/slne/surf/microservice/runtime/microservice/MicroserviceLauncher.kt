@@ -1,7 +1,7 @@
 package dev.slne.surf.microservice.runtime.microservice
 
+import dev.slne.surf.microservice.api.common.util.InternalMicroserviceApi
 import dev.slne.surf.microservice.api.microservice.Microservice
-import dev.slne.surf.microservice.api.util.InternalMicroserviceApi
 import dev.slne.surf.microservice.runtime.microservice.command.microserviceCommandManagerImpl
 import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.requiredService

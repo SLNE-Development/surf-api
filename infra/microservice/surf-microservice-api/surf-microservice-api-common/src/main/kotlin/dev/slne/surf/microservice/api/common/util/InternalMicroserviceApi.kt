@@ -1,4 +1,4 @@
-package dev.slne.surf.microservice.api.util
+package dev.slne.surf.microservice.api.common.util
 
 import dev.slne.surf.surfapi.shared.api.annotation.InternalAPIMarker
 

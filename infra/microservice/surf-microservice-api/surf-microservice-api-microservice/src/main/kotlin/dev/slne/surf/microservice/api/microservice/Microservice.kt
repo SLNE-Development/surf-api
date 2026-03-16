@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.api.microservice
 
-import dev.slne.surf.microservice.api.util.InternalMicroserviceApi
+import dev.slne.surf.microservice.api.common.util.InternalMicroserviceApi
 
 abstract class Microservice {
     @InternalMicroserviceApi
@@ -21,5 +21,3 @@ abstract class Microservice {
         lateinit var INSTANCE: Microservice
     }
 }
-
-val microservice get() = Microservice.INSTANCE

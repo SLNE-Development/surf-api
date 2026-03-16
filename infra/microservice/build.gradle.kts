@@ -20,7 +20,7 @@ subprojects {
     afterEvaluate {
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
-                optIn.add("dev.slne.surf.microservice.api.util.InternalMicroserviceApi")
+                optIn.add("dev.slne.surf.microservice.api.common.util.InternalMicroserviceApi")
             }
         }
 
