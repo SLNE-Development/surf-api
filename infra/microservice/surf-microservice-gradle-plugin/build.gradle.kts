@@ -2,6 +2,7 @@ import java.nio.file.Files
 
 plugins {
     id("dev.slne.surf.surfapi.gradle.core")
+
     idea
     `kotlin-dsl`
 }
@@ -11,10 +12,6 @@ val mcVersion: String by project
 version = buildString {
     append(mcVersion)
     append("-1.0.0")
-}
-
-dependencies {
-    implementation("com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin:8.1.1")
 }
 
 class PluginInfo(

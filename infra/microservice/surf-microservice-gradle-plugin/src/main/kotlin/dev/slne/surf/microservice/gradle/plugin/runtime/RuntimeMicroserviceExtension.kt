@@ -7,22 +7,22 @@ import javax.inject.Inject
 
 abstract class RuntimeMicroserviceExtension @Inject constructor(
     objects: ObjectFactory
-) : CommonMicroserviceExtension(objects) {
-    internal val coreModule = objects.property<SurfMicroserviceRuntimeModule>()
+) : CommonMicroserviceExtension() {
+    override val module = objects.property<SurfMicroserviceRuntimeModule>()
 
     fun withRuntimeCommon() {
-        coreModule.set(SurfMicroserviceRuntimeModule.COMMON)
+        module.set(SurfMicroserviceRuntimeModule.COMMON)
     }
 
     fun withRuntimeMicroservice() {
-        coreModule.set(SurfMicroserviceRuntimeModule.MICROSERVICE)
+        module.set(SurfMicroserviceRuntimeModule.MICROSERVICE)
     }
 
     fun withRuntimePaper() {
-        coreModule.set(SurfMicroserviceRuntimeModule.PAPER)
+        module.set(SurfMicroserviceRuntimeModule.PAPER)
     }
 
     fun withRuntimeVelocity() {
-        coreModule.set(SurfMicroserviceRuntimeModule.VELOCITY)
+        module.set(SurfMicroserviceRuntimeModule.VELOCITY)
     }
 }

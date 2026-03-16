@@ -17,17 +17,12 @@ abstract class CommonMicroservicePlugin<E : CommonMicroserviceExtension>(
         )
 
         afterEvaluate {
-            println("Applying CommonMicroservicePlugin for $platformName, $extensionClass, ${extension.module.orNull?.surfApiPlugin ?: "no module"}")
-
             extension.module.orNull?.let { moduleDependency ->
                 val moduleName = moduleDependency.module
-                val surfApiPluginName = moduleDependency.surfApiPlugin.pluginName
-
-                plugins.apply(surfApiPluginName)
 
                 dependencies.add(
                     "api",
-                    "${moduleName}:${Constants.SURF_MICROSERVICE_VERSION}"
+                    "dev.slne.surf.microservice:${moduleName}:${Constants.MINECRAFT_VERSION}+"
                 )
             }
 

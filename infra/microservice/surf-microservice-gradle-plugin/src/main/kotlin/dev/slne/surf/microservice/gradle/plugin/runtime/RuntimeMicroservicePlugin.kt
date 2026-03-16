@@ -1,8 +1,9 @@
 package dev.slne.surf.microservice.gradle.plugin.runtime
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.microservice.gradle.plugin.CommonMicroservicePlugin
 import org.gradle.api.Project
+import org.gradle.jvm.tasks.Jar
+import org.gradle.kotlin.dsl.withType
 
 internal class RuntimeMicroservicePlugin : CommonMicroservicePlugin<RuntimeMicroserviceExtension>(
     platformName = "runtime"
@@ -16,15 +17,25 @@ internal class RuntimeMicroservicePlugin : CommonMicroservicePlugin<RuntimeMicro
             if (module == SurfMicroserviceRuntimeModule.MICROSERVICE.module) {
                 pluginManager.apply("application")
 
-                tasks.named("shadowJar", ShadowJar::class.java).configure {
+                tasks.withType<Jar> {
                     manifest {
                         attributes(
                             mapOf(
-                                "Main-Class" to "dev.slne.surf.microservice.api.MicroserviceLauncherKt"
+                                "Main-Class" to "dev.slne.surf.microservice.runtime.microservice.MicroserviceLauncherKt"
                             )
                         )
                     }
                 }
+
+//                tasks.named("shadowJar", ShadowJar::class.java).configure {
+//                    manifest {
+//                        attributes(
+//                            mapOf(
+//                                "Main-Class" to "dev.slne.surf.microservice.api.MicroserviceLauncherKt"
+//                            )
+//                        )
+//                    }
+//                }
             }
         }
     }

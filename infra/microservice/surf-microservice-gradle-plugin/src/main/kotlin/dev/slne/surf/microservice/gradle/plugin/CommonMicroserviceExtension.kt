@@ -1,10 +1,7 @@
 package dev.slne.surf.microservice.gradle.plugin
 
-import org.gradle.api.model.ObjectFactory
-import org.gradle.kotlin.dsl.property
+import org.gradle.api.provider.Property
 
-abstract class CommonMicroserviceExtension(
-    objects: ObjectFactory
-) {
-    internal val module = objects.property<ModuleDependency>()
+abstract class CommonMicroserviceExtension {
+    abstract val module: Property<out ModuleDependency>
 }
