@@ -16,22 +16,19 @@ rootProject.name = "surf-microservice"
 // Api
 include("surf-microservice-api:surf-microservice-api-common")
 include("surf-microservice-api:surf-microservice-api-microservice")
-include("surf-microservice-api:surf-microservice-api-runtime:surf-microservice-api-runtime-common")
-include("surf-microservice-api:surf-microservice-api-runtime:surf-microservice-api-runtime-paper")
-include("surf-microservice-api:surf-microservice-api-runtime:surf-microservice-api-runtime-velocity")
+include("surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-common")
+include("surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-paper")
+include("surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-velocity")
 
 // Core
-include("surf-microservice-core:surf-microservice-core-common")
-include("surf-microservice-core:surf-microservice-core-microservice")
-include("surf-microservice-core:surf-microservice-core-runtime:surf-microservice-core-runtime-common")
-include("surf-microservice-core:surf-microservice-core-runtime:surf-microservice-core-runtime-paper")
-include("surf-microservice-core:surf-microservice-core-runtime:surf-microservice-core-runtime-velocity")
+include("surf-microservice-core")
 
-// Runtime
-include("surf-microservice-runtime:surf-microservice-runtime-common")
-include("surf-microservice-runtime:surf-microservice-runtime-microservice")
-include("surf-microservice-runtime:surf-microservice-runtime-paper")
-include("surf-microservice-runtime:surf-microservice-runtime-velocity")
+// Client
+include("surf-microservice-client:surf-microservice-client-common")
+include("surf-microservice-client:surf-microservice-client-paper")
+include("surf-microservice-client:surf-microservice-client-velocity")
+include("surf-microservice-microservice")
 
 // Gradle Plugin
 include("surf-microservice-gradle-plugin")
+include("surf-microservice-client:surf-microservice-client-common")

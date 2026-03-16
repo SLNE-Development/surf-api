@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
-    api(projects.surfMicroserviceCore.surfMicroserviceCoreMicroservice)
+    api(projects.surfMicroserviceApi.surfMicroserviceApiMicroservice)
+    api(projects.surfMicroserviceCore)
     runtimeOnly(libs.bundles.log4j)
 }

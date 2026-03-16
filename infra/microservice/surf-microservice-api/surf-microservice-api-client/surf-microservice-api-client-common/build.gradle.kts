@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    api(projects.surfMicroserviceApi.surfMicroserviceApiMicroservice)
+    api(projects.surfMicroserviceApi.surfMicroserviceApiCommon)
 }
