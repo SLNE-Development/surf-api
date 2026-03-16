@@ -5,7 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.internal.extensions.stdlib.capitalized
 
-abstract class CommonMicroservicePlugin<E : CommonMicroserviceExtension>(
+abstract class CommonMicroservicePlugin<E : MicroserviceExtension>(
     protected val platformName: String,
 ) : Plugin<Project> {
     protected abstract val extensionClass: Class<E>
@@ -18,7 +18,7 @@ abstract class CommonMicroservicePlugin<E : CommonMicroserviceExtension>(
 
         afterEvaluate {
             extension.module.orNull?.let { moduleDependency ->
-                val moduleName = moduleDependency.module
+                val moduleName = moduleDependency.apiModule
 
                 dependencies.add(
                     "api",

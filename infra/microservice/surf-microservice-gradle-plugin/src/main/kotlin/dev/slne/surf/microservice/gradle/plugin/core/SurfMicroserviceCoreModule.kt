@@ -5,11 +5,7 @@ import dev.slne.surf.microservice.gradle.plugin.ModuleDependency
 enum class SurfMicroserviceCoreModule(
     module: String,
 ) : ModuleDependency {
-    COMMON("common"),
-    MICROSERVICE("microservice"),
-    RUNTIME_COMMON("runtime-common"),
-    RUNTIME_PAPER("runtime-paper"),
-    RUNTIME_VELOCITY("runtime-velocity");
+    COMMON("common");
 
-    override val module: String = "surf-microservice-core-$module"
+    override val apiModule: String = "surf-microservice-core-$module"
 }

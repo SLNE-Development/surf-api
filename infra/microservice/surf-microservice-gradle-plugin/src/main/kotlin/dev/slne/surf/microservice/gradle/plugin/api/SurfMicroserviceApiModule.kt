@@ -11,5 +11,5 @@ enum class SurfMicroserviceApiModule(
     RUNTIME_PAPER("runtime-paper"),
     RUNTIME_VELOCITY("runtime-velocity");
 
-    override val module: String = "surf-microservice-api-$module"
+    override val apiModule: String = "surf-microservice-api-$module"
 }

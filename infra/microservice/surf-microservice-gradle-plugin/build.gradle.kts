@@ -28,10 +28,6 @@ class PluginInfo(
 
 val pluginInfos = mutableListOf(
     PluginInfo(
-        id = "settings",
-        implementationClass = "settings.SettingsMicroservicePlugin",
-    ),
-    PluginInfo(
         id = "api",
         implementationClass = "api.ApiMicroservicePlugin",
     ),
@@ -40,8 +36,8 @@ val pluginInfos = mutableListOf(
         implementationClass = "core.CoreMicroservicePlugin",
     ),
     PluginInfo(
-        id = "runtime",
-        implementationClass = "runtime.RuntimeMicroservicePlugin",
+        id = "client",
+        implementationClass = "runtime.ClientMicroservicePlugin",
     )
 )
 

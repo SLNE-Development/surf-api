@@ -1,32 +1,39 @@
 package dev.slne.surf.microservice.gradle.plugin.api
 
-import dev.slne.surf.microservice.gradle.plugin.CommonMicroserviceExtension
+import dev.slne.surf.microservice.gradle.plugin.MicroserviceExtension
+import dev.slne.surf.microservice.gradle.plugin.client.SurfMicroserviceModule
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.property
 import javax.inject.Inject
 
+surfMicroserviceAPi {
+    withMicroservice()
+    withMicroserviceAPi()
+
+    withMicroserv iceCore()
+}
+
 abstract class ApiMicroserviceExtension @Inject constructor(
     objects: ObjectFactory
-) : CommonMicroserviceExtension(objects) {
-    override val module = objects.property<SurfMicroserviceApiModule>()
+) : MicroserviceExtension(objects) {
 
     fun withCommon() {
-        module.set(SurfMicroserviceApiModule.COMMON)
+        module.set(SurfMicroserviceModule.COMMON)
     }
 
     fun withMicroservice() {
-        module.set(SurfMicroserviceApiModule.MICROSERVICE)
+        module.set(SurfMicroserviceModule.MICROSERVICE)
     }
 
     fun withRuntimeCommon() {
-        module.set(SurfMicroserviceApiModule.RUNTIME_COMMON)
+        module.set(SurfMicroserviceModule.RUNTIME_COMMON)
     }
 
     fun withRuntimePaper() {
-        module.set(SurfMicroserviceApiModule.RUNTIME_PAPER)
+        module.set(SurfMicroserviceModule.RUNTIME_PAPER)
     }
 
     fun withRuntimeVelocity() {
-        module.set(SurfMicroserviceApiModule.RUNTIME_VELOCITY)
+        module.set(SurfMicroserviceModule.RUNTIME_VELOCITY)
     }
 }
