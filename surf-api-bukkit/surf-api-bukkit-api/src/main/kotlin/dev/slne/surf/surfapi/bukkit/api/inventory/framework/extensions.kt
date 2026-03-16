@@ -148,6 +148,12 @@ inline fun ViewConfigBuilder.titleBuilder(title: @InventoryFrameworkDSL SurfComp
 inline fun OpenContext.modifyConfig(modifier: @InventoryFrameworkDSL ViewConfigBuilder.() -> Unit) =
     this.modifyConfig().apply(modifier)
 
+/**
+ * Builds a neutral outline item for this [View], typically used as a UI border or filler slot.
+ *
+ * The returned item is a gray stained glass pane with an empty display name so it does not
+ * distract from interactive elements in the inventory.
+ */
 val View.outlineItem
     get() = buildItem(Material.GRAY_STAINED_GLASS_PANE) {
         displayName(Component.empty())
