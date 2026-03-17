@@ -12,9 +12,11 @@ import dev.slne.surf.surfapi.bukkit.api.util.isChunkVisible
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.UpdateStrategy
+import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.entity.Player
+import java.util.*
 
 class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisualizerImpl(),
     SurfVisualizerSingleLocation {
@@ -34,12 +36,33 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
             update()
         }
 
+    override fun createCleanupState(): CleanupState {
+        return SingleLocationCleanupState(entityId, viewerUuids)
+    }
+
+    private class SingleLocationCleanupState(
+        private val entityId: Int,
+        private val viewerUuids: MutableSet<UUID>,
+    ) : CleanupState() {
+        override fun cleanup() {
+            val despawn = nmsSpawnPackets.despawn(entityId)
+            for (uuid in viewerUuids) {
+                val player = Bukkit.getPlayer(uuid) ?: continue
+                despawn.execute(player)
+            }
+            viewerUuids.clear()
+        }
+    }
+
     override fun startVisualizingInternal() {
         update()
     }
 
     override fun stopVisualizingInternal() {
-        viewers.forEach { despawnPacket().execute(it) }
+        for (uuid in viewers) {
+            val player = Bukkit.getPlayer(uuid) ?: continue
+            despawnPacket().execute(player)
+        }
     }
 
     override fun onPlayerReceiveChunk(player: Player, chunk: Chunk) {
@@ -55,7 +78,7 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
     }
 
     override fun update(strategy: UpdateStrategy) {
-        if (!visualizing) return
+        if (!visualizing.get()) return
 
         when (strategy) {
             UpdateStrategy.ALL -> {
@@ -63,11 +86,14 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
                 val spawn = spawnPacket()
 
                 for (viewer in viewers) {
-                    despawn.execute(viewer)
-                    val seesLocation = viewer.isChunkVisible(location)
+                    val player = Bukkit.getPlayer(viewer) ?: continue
+                    player.enterContextIfNeeded {
+                        despawn.execute(player)
+                        val seesLocation = player.isChunkVisible(location)
 
-                    if (seesLocation) {
-                        spawn.execute(viewer)
+                        if (seesLocation) {
+                            spawn.execute(player)
+                        }
                     }
                 }
             }
@@ -75,10 +101,13 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
             UpdateStrategy.POSITION -> {
                 val updatePosition = updatePositionPacket()
                 for (viewer in viewers) {
-                    if (viewer.isChunkVisible(location)) {
-                        updatePosition.execute(viewer)
-                    } else {
-                        despawnPacket().execute(viewer)
+                    val player = Bukkit.getPlayer(viewer) ?: continue
+                    player.enterContextIfNeeded {
+                        if (player.isChunkVisible(location)) {
+                            updatePosition.execute(player)
+                        } else {
+                            despawnPacket().execute(player)
+                        }
                     }
                 }
             }

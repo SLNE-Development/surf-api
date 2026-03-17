@@ -2,8 +2,6 @@
 
 package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
-import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.nmsCommonBridge
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation
@@ -12,15 +10,21 @@ import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.nmsSpawnPacke
 import dev.slne.surf.surfapi.bukkit.api.util.isChunkVisible
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerMultipleLocations
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.UpdateStrategy
-import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.core.api.util.*
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap
+import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.spongepowered.math.vector.Vector3d
 import java.lang.ref.WeakReference
 import java.util.*
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizerImpl(),
     SurfVisualizerMultipleLocations {
@@ -31,10 +35,42 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
     private val id2point = mutableInt2ObjectMapOf<VisualPoint>()
     private val point2Id =
         mutableObject2IntMapOf<VisualPoint>().apply { defaultReturnValue(Int.MIN_VALUE) }
+
     private val sentToPlayers = mutableObject2ObjectMapOf<UUID, IntSet>()
 
+    private val lock = ReentrantReadWriteLock()
+
     override val visualLocations
-        get() = id2point.mapTo(mutableObjectSetOf()) { it.value.location }.freeze()
+        get() = readLocked { id2point.mapTo(mutableObjectSetOf(id2point.size)) { it.value.location } }.freeze()
+
+    private inline fun <R> readLocked(block: () -> R): R = lock.read(block)
+    private inline fun <R> writeLocked(block: () -> R): R = lock.write(block)
+
+    override fun createCleanupState(): CleanupState {
+        return MultiLocationCleanupState(id2point, viewerUuids, sentToPlayers)
+    }
+
+    private class MultiLocationCleanupState(
+        private val id2point: Int2ObjectMap<VisualPoint>,
+        private val viewerUuids: MutableSet<UUID>,
+        private val sentToPlayers: Object2ObjectMap<UUID, IntSet>,
+    ) : CleanupState() {
+        override fun cleanup() {
+            if (id2point.isEmpty()) return
+
+            val allIds = IntOpenHashSet(id2point.keys)
+            val despawn = nmsSpawnPackets.despawn(allIds)
+
+            for (uuid in viewerUuids) {
+                val player = Bukkit.getPlayer(uuid) ?: continue
+                despawn.execute(player)
+            }
+
+            id2point.clear()
+            viewerUuids.clear()
+            sentToPlayers.clear()
+        }
+    }
 
     override fun startVisualizingInternal() {
         update()
@@ -42,62 +78,88 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
 
     override fun stopVisualizingInternal() {
         for (viewer in viewers) {
-            nmsSpawnPackets.despawn(id2point.keys).execute(viewer)
-            getSentToPlayer(viewer).clear()
+            val sent = drainSentToPlayer(viewer) ?: continue
+            if (sent.isEmpty()) continue
+
+            val player = Bukkit.getPlayer(viewer) ?: continue
+            nmsSpawnPackets.despawn(sent).execute(player)
         }
     }
 
     override fun update(strategy: UpdateStrategy) {
-        if (!visualizing) return
+        if (!visualizing.get()) return
         if (!checkNotNullWorld()) return
 
         when (strategy) {
             UpdateStrategy.ALL -> {
+                val pointsSnapshot = readLocked {
+                    point2Id.object2IntEntrySet().map { it.intValue to it.key }
+                }
+
                 for (viewer in viewers) {
-                    plugin.launch(plugin.entityDispatcher(viewer)) {
-                        val sent = getSentToPlayer(viewer)
-                        nmsSpawnPackets.despawn(sent).execute(viewer)
-                        sent.clear()
+                    val sent = drainSentToPlayer(viewer)
+                    val player = Bukkit.getPlayer(viewer) ?: continue
+                    player.enterContextIfNeeded {
+                        if (!sent.isNullOrEmpty()) {
+                            nmsSpawnPackets.despawn(sent).execute(player)
+                        }
 
+                        val idsToMarkSent = mutableIntSetOf()
                         val spawn = PacketOperation.start()
-                        point2Id.object2IntEntrySet().fastForEach { entry ->
-                            val point = entry.key
-                            val id = entry.intValue
 
-                            if (viewer.isChunkVisible(
-                                    world,
-                                    point.chunkX,
-                                    point.chunkZ
-                                ) && sent.add(id)
-                            ) {
+                        for ((id, point) in pointsSnapshot) {
+                            if (player.isChunkVisible(world, point.chunkX, point.chunkZ) && idsToMarkSent.add(id)) {
                                 spawn + spawnPacket(id, point)
                             }
                         }
-                        spawn.execute(viewer)
+
+                        writeLocked {
+                            getOrCreateSentToPlayer(viewer).addAll(idsToMarkSent)
+                        }
+
+                        spawn.execute(player)
                     }
                 }
             }
 
             UpdateStrategy.POSITION -> {
                 for (viewer in viewers) {
-                    plugin.launch(plugin.entityDispatcher(viewer)) {
-                        val operation = PacketOperation.start()
-                        val sent = getSentToPlayer(viewer)
-
-                        val sentIterator = sent.intIterator()
-                        while (sentIterator.hasNext()) {
-                            val id = sentIterator.nextInt()
-                            val point = id2point[id] ?: continue
-
-                            if (viewer.isChunkVisible(world, point.chunkX, point.chunkZ)) {
-                                operation + updatePositionPacket(id, point)
-                            } else {
-                                operation + nmsSpawnPackets.despawn(id)
-                                sentIterator.remove()
-                            }
-                        }
-                        operation.execute(viewer)
+                    val player = Bukkit.getPlayer(viewer)
+                    if (player == null) {
+                        drainSentToPlayer(viewer)
+                        continue
                     }
+
+                    val sentSnapshot = getSentToPlayerSnapshot(viewer)
+                    val operation = PacketOperation.start()
+                    val idsToRemove = mutableIntSetOf()
+
+                    val iterator = sentSnapshot.iterator()
+                    while (iterator.hasNext()) {
+                        val id = iterator.nextInt()
+                        val point = readLocked { id2point[id] }
+
+                        if (point == null) {
+                            operation + nmsSpawnPackets.despawn(id)
+                            idsToRemove.add(id)
+                            continue
+                        }
+
+                        if (player.isChunkVisible(world, point.chunkX, point.chunkZ)) {
+                            operation + updatePositionPacket(id, point)
+                        } else {
+                            operation + nmsSpawnPackets.despawn(id)
+                            idsToRemove.add(id)
+                        }
+                    }
+
+                    if (idsToRemove.isNotEmpty()) {
+                        writeLocked {
+                            getSentToPlayer(viewer)?.removeAll(idsToRemove)
+                        }
+                    }
+
+                    operation.execute(player)
                 }
             }
         }
@@ -111,11 +173,12 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         val point = VisualPoint(visualLocation, settings)
         put(id, point)
 
-        if (!visualizing) return
+        if (!visualizing.get()) return
         if (!checkNotNullWorld()) return
 
         for (viewer in viewers) {
-            spawn(viewer, id, point)
+            val player = Bukkit.getPlayer(viewer) ?: continue
+            spawn(player, id, point)
         }
     }
 
@@ -126,36 +189,42 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
             return
         }
 
-        if (!visualizing) {
+        if (!visualizing.get()) {
             for ((loc, setting) in locations) {
                 addVisualLocation(loc, setting)
             }
-        } else {
-            val toSpawn = mutableInt2ObjectMapOf<VisualPoint>()
+            return
+        }
 
-            for ((loc, setting) in locations) {
-                val id = nmsCommonBridge.nextEntityId()
-                val point = VisualPoint(loc, setting)
-                put(id, point)
-                toSpawn[id] = point
-            }
+        val toSpawn = mutableInt2ObjectMapOf<VisualPoint>()
+        for ((loc, setting) in locations) {
+            val id = nmsCommonBridge.nextEntityId()
+            val point = VisualPoint(loc, setting)
+            put(id, point)
+            toSpawn[id] = point
+        }
 
-            for (player in viewers) {
-                plugin.launch(plugin.entityDispatcher(player)) {
-                    val sent = getSentToPlayer(player)
-                    val spawnOperation = PacketOperation.start()
+        for (viewer in viewers) {
+            val player = Bukkit.getPlayer(viewer) ?: continue
+            player.enterContextIfNeeded {
+                val idsToAdd = mutableIntSetOf()
+                val spawnOperation = PacketOperation.start()
 
-                    toSpawn.int2ObjectEntrySet().fastForEach { entry ->
-                        val id = entry.intKey
-                        val point = entry.value
+                toSpawn.int2ObjectEntrySet().fastForEach { entry ->
+                    val id = entry.intKey
+                    val point = entry.value
 
-                        if (player.isChunkVisible(world, point.chunkX, point.chunkZ) && sent.add(id)) {
-                            spawnOperation + spawnPacket(id, point)
-                        }
+                    if (player.isChunkVisible(world, point.chunkX, point.chunkZ)) {
+                        idsToAdd.add(id)
+                        spawnOperation + spawnPacket(id, point)
                     }
-
-                    spawnOperation.execute(player)
                 }
+
+                writeLocked {
+                    getOrCreateSentToPlayer(viewer).addAll(idsToAdd)
+                }
+
+                spawnOperation.execute(player)
             }
         }
     }
@@ -164,33 +233,36 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         val result = remove(visualLocation) ?: return
         val (id, point) = result
 
-        if (!visualizing) return
+        if (!visualizing.get()) return
         if (!checkNotNullWorld()) return
 
         for (viewer in viewers) {
-            despawn(viewer, id, point, true)
+            val player = Bukkit.getPlayer(viewer) ?: continue
+            despawn(player, id, point, true)
         }
     }
 
     override fun clearVisualLocations() {
-        if (visualizing && checkNotNullWorld()) {
-            val idsToRemove = id2point.keys
+        val idsToRemove = readLocked {
+            IntOpenHashSet(id2point.keys)
+        }
+
+        if (visualizing.get() && checkNotNullWorld() && idsToRemove.isNotEmpty()) {
             for (viewer in viewers) {
-                nmsSpawnPackets.despawn(idsToRemove).execute(viewer)
+                val player = Bukkit.getPlayer(viewer) ?: continue
+                nmsSpawnPackets.despawn(idsToRemove).execute(player)
             }
         }
 
         clear()
     }
 
-    @Synchronized
-    private fun put(id: Int, point: VisualPoint) {
+    private fun put(id: Int, point: VisualPoint) = writeLocked {
         id2point[id] = point
         point2Id[point] = id
     }
 
-    @Synchronized
-    private fun remove(location: Vector3d): Pair<Int, VisualPoint>? {
+    private fun remove(location: Vector3d): Pair<Int, VisualPoint>? = writeLocked {
         val point = point2Id.keys.find { it.location == location } ?: return null
         val id = point2Id.removeInt(point)
 
@@ -202,31 +274,46 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         return null
     }
 
-    @Synchronized
-    private fun clear() {
+    private fun clear() = writeLocked {
         id2point.clear()
         point2Id.clear()
         sentToPlayers.clear()
     }
 
-    @Synchronized
-    private fun getSentToPlayer(player: Player) =
-        sentToPlayers.computeIfAbsent(player.uniqueId) { mutableIntSetOf() }
+    private fun getSentToPlayer(uuid: UUID): IntSet? = readLocked {
+        sentToPlayers[uuid]
+    }
+
+    private fun getOrCreateSentToPlayer(uuid: UUID): IntSet = writeLocked {
+        sentToPlayers.computeIfAbsent(uuid) { mutableIntSetOf() }
+    }
+
+    private fun getSentToPlayerSnapshot(uuid: UUID) = readLocked {
+        sentToPlayers[uuid]?.let { IntOpenHashSet(it) } ?: IntOpenHashSet()
+    }
+
+    private fun drainSentToPlayer(uuid: UUID) = writeLocked {
+        sentToPlayers.remove(uuid)
+    }
 
     private fun spawn(player: Player, id: Int, point: VisualPoint) {
-        plugin.launch(plugin.entityDispatcher(player)) {
+        player.enterContextIfNeeded {
             if (player.isChunkVisible(world, point.chunkX, point.chunkZ)) {
                 spawnPacket(id, point).execute(player)
-                getSentToPlayer(player).add(id)
+                writeLocked {
+                    getOrCreateSentToPlayer(player.uniqueId).add(id)
+                }
             }
         }
     }
 
     private fun despawn(player: Player, id: Int, point: VisualPoint, force: Boolean = false) {
-        plugin.launch(plugin.entityDispatcher(player)) {
+        player.enterContextIfNeeded {
             if (force || !player.isChunkVisible(world, point.chunkX, point.chunkZ)) {
                 nmsSpawnPackets.despawn(id).execute(player)
-                getSentToPlayer(player).remove(id)
+                writeLocked {
+                    getOrCreateSentToPlayer(player.uniqueId).remove(id)
+                }
             }
         }
     }
@@ -238,31 +325,46 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         nmsSpawnPackets.teleport(id, point.pos)
 
     override fun onPlayerReceiveChunk(player: Player, chunk: Chunk) {
-        val spawnOperation = PacketOperation.start()
-        val sent = getSentToPlayer(player)
+        val entries = readLocked {
+            point2Id.object2IntEntrySet().map { it.intValue to it.key }
+        }
 
-        point2Id.object2IntEntrySet().fastForEach { entry ->
-            val point = entry.key
-            val id = entry.intValue
-            if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) return@fastForEach
+        val spawnOperation = PacketOperation.start()
+        val idsToAdd = mutableIntSetOf()
+
+
+        for ((id, point) in entries) {
+            if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) continue
             spawnOperation + spawnPacket(id, point)
-            sent.add(id)
+            idsToAdd.add(id)
+        }
+
+        if (idsToAdd.isNotEmpty()) {
+            writeLocked {
+                getOrCreateSentToPlayer(player.uniqueId).addAll(idsToAdd)
+            }
         }
 
         spawnOperation.execute(player)
     }
 
     override fun onPlayerUnloadChunk(player: Player, chunk: Chunk) {
-        val sent = getSentToPlayer(player)
+        val sentSnapshot = getSentToPlayerSnapshot(player.uniqueId)
         val despawn = mutableIntSetOf()
-        val it = sent.intIterator()
 
-        while (it.hasNext()) {
-            val id = it.nextInt()
-            val point = id2point[id] ?: continue
-            if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) continue
+        val iterator = sentSnapshot.iterator()
+        while (iterator.hasNext()) {
+            val id = iterator.nextInt()
+            val point = readLocked { id2point[id] }
+            if (point != null && (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z)) {
+                continue
+            }
             despawn.add(id)
-            it.remove()
+        }
+
+        if (despawn.isEmpty()) return
+        writeLocked {
+            getSentToPlayer(player.uniqueId)?.removeAll(despawn)
         }
 
         nmsSpawnPackets.despawn(despawn).execute(player)
@@ -271,8 +373,10 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
 
     fun checkNotNullWorld(): Boolean {
         if (worldReference.get() == null) {
-            visualizing = false
-            viewerUuids.clear()
+            visualizing.set(false)
+            writeLocked {
+                sentToPlayers.clear()
+            }
             log.atWarning()
                 .log("World reference is no longer valid, stopping visualizer")
             return false

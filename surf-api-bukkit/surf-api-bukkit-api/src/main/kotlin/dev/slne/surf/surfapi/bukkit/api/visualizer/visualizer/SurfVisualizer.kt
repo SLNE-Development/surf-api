@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer
 
-import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.bukkit.block.BlockType
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.UnmodifiableView
@@ -52,7 +51,7 @@ interface SurfVisualizer {
      * Modifications to the set directly are not allowed, ensuring consistency
      * with the visualizer's state.
      */
-    val viewers: @UnmodifiableView ObjectSet<Player>
+    val viewers: @UnmodifiableView Set<UUID>
 
     /**
      * Adds a specified player to the list of viewers for this visualizer.

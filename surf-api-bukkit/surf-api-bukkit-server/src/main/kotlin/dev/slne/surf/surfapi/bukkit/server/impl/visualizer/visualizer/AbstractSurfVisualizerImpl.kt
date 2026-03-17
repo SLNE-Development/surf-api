@@ -4,16 +4,14 @@ import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.server.plugin
-import dev.slne.surf.surfapi.core.api.collection.TransformingObjectSet
-import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
-import dev.slne.surf.surfapi.core.api.util.synchronize
 import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.entity.Player
 import java.lang.ref.Cleaner
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     protected val log = logger()
@@ -22,29 +20,43 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
         private val cleaner = Cleaner.create()
     }
 
-    protected val viewerUuids = mutableObjectSetOf<UUID>().synchronize()
-    private val _viewers =
-        TransformingObjectSet(viewerUuids, { Bukkit.getPlayer(it) }, { it.uniqueId })
-    override val viewers  = _viewers.freeze()
+    protected val viewerUuids: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
+    override val viewers: Set<UUID> = Collections.unmodifiableSet(viewerUuids)
     override val uid: UUID = UUID.randomUUID()
 
-    @Volatile
-    protected var visualizing = false
+    protected val visualizing = AtomicBoolean(false)
 
     init {
-        cleaner.register(this) {
-            stopVisualizing()
+        val cleanupState = createCleanupState()
+        cleaner.register(this, cleanupState)
+    }
+
+    protected abstract fun createCleanupState(): CleanupState
+
+    abstract class CleanupState : Runnable {
+        private val log = logger()
+
+        override fun run() {
+            try {
+                cleanup()
+            } catch (e: Throwable) {
+                log.atWarning()
+                    .withCause(e)
+                    .log("Failed to clean up visualizer on GC")
+            }
         }
+
+        protected abstract fun cleanup()
     }
 
     override fun startVisualizing(): Boolean {
-        if (visualizing) return false
+        if (!visualizing.compareAndSet(false, true)) return false
 
         try {
-            visualizing = true
             startVisualizingInternal()
             return true
         } catch (e: Throwable) {
+            visualizing.set(false)
             log.atSevere()
                 .withCause(e)
                 .log("Failed to start visualizing")
@@ -53,13 +65,13 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     }
 
     override fun stopVisualizing(): Boolean {
-        if (!visualizing) return false
+        if (!visualizing.compareAndSet(true, false)) return false
 
         try {
             stopVisualizingInternal()
-            visualizing = false
             return true
         } catch (e: Throwable) {
+            visualizing.set(true)
             log.atSevere()
                 .withCause(e)
                 .log("Failed to stop visualizing")
@@ -68,7 +80,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     }
 
 
-    override fun isVisualizing() = visualizing
+    override fun isVisualizing() = visualizing.get()
 
     override fun addViewer(player: Player) {
         if (player.isOnline && viewerUuids.add(player.uniqueId)) {
@@ -85,22 +97,21 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     }
 
     override fun clearViewers() {
-        for (uuid in viewerUuids) {
-            Bukkit.getPlayer(uuid)
-                ?.takeIf { it.isOnline }
-                ?.let { onViewerRemoved(it) }
+        val iterator = viewerUuids.iterator()
+        while (iterator.hasNext()) {
+            val next = iterator.next()
+            Bukkit.getPlayer(next)?.let { onViewerRemoved(it) }
+            iterator.remove()
         }
-
-        viewerUuids.clear()
     }
 
     override fun hasViewers() = viewerUuids.isNotEmpty()
     override fun visibleTo(player: Player) = player.uniqueId in viewerUuids
 
     open fun onViewerAdded(player: Player) {
-        if (!visualizing) return
+        if (!visualizing.get()) return
 
-        plugin.launch(plugin.entityDispatcher(player)) {
+        player.enterContextIfNeeded {
             player.sentChunks.forEach { chunk ->
                 onPlayerReceiveChunk(player, chunk)
             }
@@ -108,8 +119,9 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     }
 
     open fun onViewerRemoved(player: Player) {
-        if (!visualizing) return
-        plugin.launch(plugin.entityDispatcher(player)) {
+        if (!visualizing.get()) return
+
+        player.enterContextIfNeeded {
             player.sentChunks.forEach { chunk ->
                 onPlayerUnloadChunk(player, chunk)
             }
@@ -121,6 +133,16 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
 
     abstract fun onPlayerReceiveChunk(player: Player, chunk: Chunk)
     abstract fun onPlayerUnloadChunk(player: Player, chunk: Chunk)
+
+    protected inline fun Player.enterContextIfNeeded(crossinline action: () -> Unit) {
+        if (server.isOwnedByCurrentRegion(this)) {
+            action()
+        } else {
+            plugin.launch(plugin.entityDispatcher(this)) {
+                action()
+            }
+        }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
