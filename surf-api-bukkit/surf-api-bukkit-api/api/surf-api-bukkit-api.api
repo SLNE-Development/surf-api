@@ -2073,6 +2073,7 @@ public final class dev/slne/surf/surfapi/bukkit/api/nms/bridges/packets/player/t
 
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/listener/NmsClientboundPacketListener : dev/slne/surf/surfapi/bukkit/api/nms/listener/NmsPacketListener {
 	public abstract fun handleClientboundPacket (Ldev/slne/surf/surfapi/bukkit/api/nms/listener/packets/NmsPacket;Lorg/bukkit/entity/Player;)Ldev/slne/surf/surfapi/bukkit/api/packet/listener/listener/PacketListenerResult;
+	public fun handleEarlyClientboundPacket (Ldev/slne/surf/surfapi/bukkit/api/nms/listener/packets/NmsPacket;Lorg/bukkit/entity/Player;)Ldev/slne/surf/surfapi/bukkit/api/packet/listener/listener/PacketListenerResult;
 }
 
 public abstract interface class dev/slne/surf/surfapi/bukkit/api/nms/listener/NmsPacketListener {

@@ -5,9 +5,11 @@ import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.NmsPacket;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 @NmsUseWithCaution
+@NullMarked
 public interface NmsServerboundPacketListener<Packet extends NmsPacket> extends
         NmsPacketListener<Packet> {
 
@@ -19,7 +21,11 @@ public interface NmsServerboundPacketListener<Packet extends NmsPacket> extends
         if (player != null) {
             return handleServerboundPacket(packet, player);
         } else {
-            return PacketListenerResult.CONTINUE;
+            throw new IllegalStateException(
+                    "No player is available for this serverbound packet yet. " +
+                            "This can happen during early connection phases such as login. " +
+                            "Override handleEarlyServerboundPacket(...) if your listener should handle packets before a Player exists."
+            );
         }
     }
 }

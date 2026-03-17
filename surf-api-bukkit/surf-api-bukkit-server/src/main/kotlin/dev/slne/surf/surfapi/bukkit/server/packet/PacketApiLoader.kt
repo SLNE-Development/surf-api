@@ -34,6 +34,7 @@ object PacketApiLoader {
         packetEvents.terminate()
         packetListenerApi.unregisterListeners(PacketLoreListener)
         PluginDisablePacketLoreListener.unregister()
+        PlayerChannelInjector.unregister()
     }
 
     private fun setupPacketEvents() {
