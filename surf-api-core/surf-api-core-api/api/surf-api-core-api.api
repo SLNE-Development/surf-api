@@ -285,6 +285,8 @@ public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfig
 
 public final class dev/slne/surf/surfapi/core/api/extensions/Packet_eventsKt {
 	public static final fun getPacketEvents ()Lcom/github/retrooper/packetevents/PacketEventsAPI;
+	public static final fun sendPacket (Lcom/github/retrooper/packetevents/wrapper/PacketWrapper;Ljava/lang/Object;)V
+	public static final fun sendPacket (Lcom/github/retrooper/packetevents/wrapper/PacketWrapper;Ljava/util/UUID;)V
 }
 
 public final class dev/slne/surf/surfapi/core/api/font/Small_capsKt {
@@ -6677,6 +6679,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/adventure/Audience_ex
 	public static final fun openBook (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;ZLkotlin/jvm/functions/Function1;)V
+	public static final fun sendActionBar (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun sendText (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showBossBar (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showTitle (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
@@ -7073,6 +7076,8 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;ZLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun translatable (Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun translatable$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 }
 
 public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder$Companion {
@@ -7215,6 +7220,8 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;ZLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun translatable (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun translatable$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun variableKey (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun variableKey (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun variableKey (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;

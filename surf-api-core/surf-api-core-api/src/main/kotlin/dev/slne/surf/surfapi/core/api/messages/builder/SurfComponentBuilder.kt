@@ -1,16 +1,13 @@
 package dev.slne.surf.surfapi.core.api.messages.builder
 
+import dev.slne.surf.surfapi.core.api.messages.*
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.NOTE
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.PREFIX
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCONNECT_HEADER
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCORD_LINK
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.TIME_SEPARATOR
-import dev.slne.surf.surfapi.core.api.messages.NoLowercase
-import dev.slne.surf.surfapi.core.api.messages.joinToComponent
-import dev.slne.surf.surfapi.core.api.messages.joinToComponentNewLine
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.*
 import net.kyori.adventure.text.event.ClickEvent
@@ -83,6 +80,11 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
     fun note(any: Any, vararg decoration: TextDecoration) = text(any.toString(), NOTE, *decoration)
 
     fun ellipsis(color: TextColor? = SPACER) = append(CommonComponents.ELLIPSIS.color(color))
+    fun translatable(
+        key: String,
+        color: TextColor? = Colors.WHITE,
+        vararg decoration: TextDecoration
+    ) = append(Component.translatable(key, color, *decoration))
 
     fun appendDiscordLink() = append(DISCORD_LINK)
     fun appendDisconnectHeader() = append(DISCONNECT_HEADER)
