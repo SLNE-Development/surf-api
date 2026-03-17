@@ -1,15 +1,17 @@
 package dev.slne.surf.surfapi.bukkit.server.packet.listener
 
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.sksamuel.aedile.core.expireAfterAccess
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
-import dev.slne.surf.surfapi.bukkit.api.nms.nmsBridge
+import dev.slne.surf.surfapi.bukkit.api.nms.SurfBukkitNmsBridge
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.SurfBukkitNmsBridgeImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.NmsPacketImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.listener.packets.PacketRegistry
 import dev.slne.surf.surfapi.bukkit.server.impl.packet.listener.SurfBukkitPacketListenerApiImpl
 import dev.slne.surf.surfapi.bukkit.server.nms.toNms
 import dev.slne.surf.surfapi.bukkit.server.plugin
+import dev.slne.surf.surfapi.core.api.messages.Colors
+import dev.slne.surf.surfapi.core.api.messages.CommonComponents
+import dev.slne.surf.surfapi.core.api.messages.adventure.text
 import dev.slne.surf.surfapi.core.api.reflection.Field
 import dev.slne.surf.surfapi.core.api.reflection.SurfProxy
 import dev.slne.surf.surfapi.core.api.reflection.createProxy
@@ -19,6 +21,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
+import io.netty.util.AttributeKey
 import io.papermc.paper.connection.PaperPlayerLoginConnection
 import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl
 import io.papermc.paper.event.connection.PlayerConnectionValidateLoginEvent
@@ -27,71 +30,84 @@ import net.kyori.adventure.key.Key
 import net.minecraft.network.Connection
 import net.minecraft.network.HandlerNames
 import net.minecraft.network.protocol.Packet
-import net.minecraft.network.protocol.login.ClientboundLoginFinishedPacket
+import net.minecraft.server.level.ServerPlayer
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
-import java.util.*
-import kotlin.time.Duration.Companion.minutes
 import dev.slne.surf.surfapi.bukkit.api.event.register as registerListener
 import dev.slne.surf.surfapi.bukkit.api.event.unregister as unregisterListener
 
+@Suppress("UnstableApiUsage")
 object PlayerChannelInjector : Listener {
     private val log = logger()
 
     private val CHANNEL_KEY = Key.key("surf-api", "packet-listener")
     private const val CHANNEL_NAME = "surf_api_packet_listener"
 
-    private val playerInjectorCache = Caffeine.newBuilder()
-        .weakValues()
-        .expireAfterAccess(1.minutes)
-        .build<UUID, Connection>()
-
-    private val injectedChannels = Caffeine.newBuilder()
-        .weakKeys()
-        .build<Channel, Boolean>()
+    private val packetHandlerKey = AttributeKey.newInstance<PacketHandler>("surf_api_packet_handler")
 
     fun register() {
-        ChannelInitializeListenerHolder.addListener(CHANNEL_KEY) { this.injectChannel(it) }
+        ChannelInitializeListenerHolder.addListener(CHANNEL_KEY) { this.getOrInjectPacketHandler(it) }
         registerListener(plugin)
     }
 
     fun unregister() {
-        ChannelInitializeListenerHolder.removeListener(CHANNEL_KEY)
         unregisterListener()
+        ChannelInitializeListenerHolder.removeListener(CHANNEL_KEY)
     }
 
-    private fun injectChannel(channel: Channel): PacketHandler {
-        val channelHandler = PacketHandler()
+    private fun getOrInjectPacketHandler(channel: Channel): PacketHandler {
+        val handler = PacketHandler()
+        val attr = channel.attr(packetHandlerKey)
 
-        channel.eventLoop().submit {
-            if (injectedChannels.asMap().putIfAbsent(channel, true) == null) {
-                val pipeline = channel.pipeline()
+        if (!attr.compareAndSet(null, handler)) {
+            return attr.get()
+        }
 
-                if (pipeline.get(CHANNEL_NAME) != null) {
-                    return@submit
-                }
-
-                pipeline.addBefore(HandlerNames.PACKET_HANDLER, CHANNEL_NAME, channelHandler)
+        val command = Runnable {
+            if (channel.pipeline().get(CHANNEL_NAME) == null) {
+                channel.pipeline().addBefore(HandlerNames.PACKET_HANDLER, CHANNEL_NAME, handler)
             }
         }
 
-        return channelHandler
+        if (channel.eventLoop().inEventLoop()) {
+            command.run()
+        } else {
+            channel.eventLoop().execute(command)
+        }
+
+        return handler
     }
 
     @EventHandler
     fun onPlayerLogin(event: PlayerConnectionValidateLoginEvent) {
         val paperConnection = event.connection
         if (paperConnection is PaperPlayerLoginConnection) {
-            val profile =
-                paperConnection.authenticatedProfile ?: error("Authenticated profile is null")
-            val connection =
-                ReadablePlayerCookieConnectionImplProxy.instance.getConnection(paperConnection)
-            playerInjectorCache.put(
-                profile.id ?: error("PlayerProfile does not provide a uuid"),
-                connection
-            )
+            val profile = paperConnection.authenticatedProfile
+
+            if (profile == null) {
+                event.kickMessage(
+                    CommonComponents.renderDisconnectMessage(
+                        "FAILED TO INJECT PACKET LISTENER",
+                        {
+                            text(
+                                "Dein Profil ist nicht authentifiziert, daher können wir den Paket-Listener nicht einbinden. Dies ist wahrscheinlich ein Problem mit deiner Verbindung zu den Authentifizierungsservern von Mojang.",
+                                Colors.ERROR
+                            )
+                        },
+                        issue = true
+                    )
+                )
+
+                log.atWarning()
+                    .log("Failed to inject packet listener for player (${paperConnection.unsafeProfile}) with unauthenticated profile: ${paperConnection.address} - ${paperConnection.clientAddress}")
+                return
+            }
+
+            val connection = ReadablePlayerCookieConnectionImplProxy.instance.getConnection(paperConnection)
+            val channel = connection.channel
+            getOrInjectPacketHandler(channel).connection = connection
         }
     }
 
@@ -99,132 +115,78 @@ object PlayerChannelInjector : Listener {
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player.toNms()
         val connection = player.connection.connection
-        val channelHandler = connection.channel.pipeline().get(CHANNEL_NAME)
+        val channel = connection.channel
 
-        if (channelHandler != null) {
-            if (channelHandler is PacketHandler) {
-                channelHandler.connection = connection
-                playerInjectorCache.invalidate(player.uuid)
-            }
-            return
-        }
-
-        injectChannel(connection.channel).connection = connection
+        getOrInjectPacketHandler(channel).connection = connection
     }
 
+    @OptIn(NmsUseWithCaution::class)
     private class PacketHandler : ChannelDuplexHandler() {
+        private val bridge = SurfBukkitNmsBridge.instance as SurfBukkitNmsBridgeImpl
+        private val packetListenerApi = SurfBukkitPacketListenerApi.instance as SurfBukkitPacketListenerApiImpl
+
         @Volatile
         var connection: Connection? = null
 
-        override fun channelUnregistered(ctx: ChannelHandlerContext) {
-            injectedChannels.invalidate(ctx.channel())
-            super.channelUnregistered(ctx)
-        }
-
         @OptIn(NmsUseWithCaution::class)
         override fun write(
-            ctx: ChannelHandlerContext?,
-            msg: Any?,
-            promise: ChannelPromise?,
+            ctx: ChannelHandlerContext,
+            msg: Any,
+            promise: ChannelPromise,
         ) { // server -> client
-
-            var msg = msg
-            if (msg !is Packet<*>) { // not our packet
-                super.write(ctx, msg, promise)
-                return
-            }
-
-            if (connection == null && msg is ClientboundLoginFinishedPacket) {
-                val uuid = msg.gameProfile().id
-                val cachedConnection = playerInjectorCache.getIfPresent(uuid)
-                if (cachedConnection != null) {
-                    connection = cachedConnection
-                }
-            }
-
-            val connection = connection
-            val player = connection?.player
-            if (connection == null || player == null) {
-                super.write(ctx, msg, promise)
-                return
-            }
-
-            var cancelled = false
-
-            try {
-                // first, we try to handle the packet with the nms packet listener
-                msg = this.packetListenerApi.handleClientboundPacket(msg, connection.player)
-
-                if (msg == null) {
-                    // no need to handle the packet further
-                    cancelled = true
-                } else {
-                    // then we try to handle the packet with the api packet listener
-                    msg = handleClientboundPacketFromBridge(connection, msg)
-                    cancelled = (msg == null)
-                }
-            } catch (error: OutOfMemoryError) {
-                throw error
-            } catch (t: Throwable) {
-                log.atSevere()
-                    .withCause(t)
-                    .log("Failed to handle clientbound packet")
-                super.write(ctx, msg, promise)
-            }
-
-            if (!cancelled) {
-                super.write(ctx, msg, promise)
-            }
+            handlePacket(
+                originalMsg = msg,
+                passthrough = { super.write(ctx, it, promise) },
+                nmsHandler = packetListenerApi::handleClientboundPacket,
+                bridgeHandler = ::handleClientboundPacketFromBridge
+            )
         }
 
-        @Suppress("UNNECESSARY_SAFE_CALL")
         @OptIn(NmsUseWithCaution::class)
-        override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) { // client -> server
-            var msg = msg
-            if (msg !is Packet<*>) { // not our packet
-                super.channelRead(ctx, msg)
+        override fun channelRead(ctx: ChannelHandlerContext, msg: Any) { // client -> server
+            handlePacket(
+                originalMsg = msg,
+                passthrough = { super.channelRead(ctx, it) },
+                nmsHandler = packetListenerApi::handleServerboundPacket,
+                bridgeHandler = ::handleServerboundPacketFromBridge
+            )
+        }
+
+        private inline fun handlePacket(
+            originalMsg: Any,
+            passthrough: (Any) -> Unit,
+            nmsHandler: (Packet<*>, ServerPlayer?) -> Packet<*>?,
+            bridgeHandler: (ServerPlayer?, Packet<*>) -> Packet<*>?
+        ) {
+            var msg = originalMsg
+            if (msg !is Packet<*>) {
+                passthrough(msg)
                 return
             }
 
             val connection = connection
             if (connection == null) {
-                super.channelRead(ctx, msg)
+                passthrough(msg)
                 return
             }
 
-            val player = connection?.player
-            var cancelled = false
+            val player = connection.player as ServerPlayer?
 
             try {
-                // first, we try to handle the packet with the nms packet listener
-                msg = this.packetListenerApi.handleServerboundPacket(msg, player)
-
-                if (msg == null) {
-                    // no need to handle the packet further
-                    cancelled = true
-                } else {
-                    // then we try to handle the packet with the api packet listener
-                    msg = handleServerboundPacketFromBridge(connection, msg)
-                    cancelled = (msg == null)
-                }
-            } catch (error: OutOfMemoryError) {
-                throw error
+                msg = nmsHandler(msg, player) ?: return
+                msg = bridgeHandler(player, msg) ?: return
+                passthrough(msg)
+            } catch (outOfMemoryError: OutOfMemoryError) {
+                throw outOfMemoryError
             } catch (t: Throwable) {
-                log.atSevere()
-                    .withCause(t)
-                    .log("Failed to handle serverbound packet")
-                super.channelRead(ctx, msg)
-            }
-
-            if (!cancelled) {
-                super.channelRead(ctx, msg)
+                log.atSevere().withCause(t).log("Failed to handle packet")
+                passthrough(msg)
             }
         }
 
         @OptIn(NmsUseWithCaution::class)
-        @Suppress("UNNECESSARY_SAFE_CALL")
         fun handleServerboundPacketFromBridge(
-            connection: Connection,
+            serverPlayer: ServerPlayer?,
             packet: Packet<*>,
         ): Packet<*>? {
             val apiPacket = PacketRegistry.createServerboundPacketOrNull(packet)
@@ -232,7 +194,7 @@ object PlayerChannelInjector : Listener {
             if (apiPacket != null) { // we have an api packet wrapper for this packet
                 val resultApi = this.bridge.handleServerboundPacket(
                     apiPacket,
-                    connection.player?.bukkitEntity
+                    serverPlayer?.bukkitEntity
                 )
 
                 if (resultApi != null) { // we may have a modified packet
@@ -245,9 +207,8 @@ object PlayerChannelInjector : Listener {
             return null // the packet was canceled
         }
 
-        @OptIn(NmsUseWithCaution::class)
         fun handleClientboundPacketFromBridge(
-            connection: Connection,
+            serverPlayer: ServerPlayer?,
             packet: Packet<*>,
         ): Packet<*>? {
             val apiPacket = PacketRegistry.createClientboundPacketOrNull(packet)
@@ -255,7 +216,7 @@ object PlayerChannelInjector : Listener {
             if (apiPacket != null) {
                 val resultApi = this.bridge.handleClientboundPacket(
                     apiPacket,
-                    connection.player.bukkitEntity
+                    serverPlayer?.bukkitEntity
                 )
 
                 if (resultApi != null) {
@@ -267,12 +228,6 @@ object PlayerChannelInjector : Listener {
 
             return null
         }
-
-        @OptIn(NmsUseWithCaution::class)
-        val bridge get() = nmsBridge as SurfBukkitNmsBridgeImpl
-
-        @OptIn(NmsUseWithCaution::class)
-        val packetListenerApi get() = dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi as SurfBukkitPacketListenerApiImpl
     }
 
     @SurfProxy(ReadablePlayerCookieConnectionImpl::class)
