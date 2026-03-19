@@ -21,11 +21,7 @@ public interface NmsServerboundPacketListener<Packet extends NmsPacket> extends
         if (player != null) {
             return handleServerboundPacket(packet, player);
         } else {
-            throw new IllegalStateException(
-                    "No player is available for this serverbound packet yet. " +
-                            "This can happen during early connection phases such as login. " +
-                            "Override handleEarlyServerboundPacket(...) if your listener should handle packets before a Player exists."
-            );
+            return PacketListenerResult.CONTINUE;
         }
     }
 }

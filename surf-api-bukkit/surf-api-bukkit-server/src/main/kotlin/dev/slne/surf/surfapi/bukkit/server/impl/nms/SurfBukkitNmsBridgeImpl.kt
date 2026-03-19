@@ -89,7 +89,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
             } catch (e: Throwable) {
                 log.atSevere()
                     .withCause(e)
-                    .log("Failed to handle serverbound packet")
+                    .log("Failed to handle serverbound packet $clazz for listener $listener")
                 PacketListenerResult.CONTINUE
             }
 
@@ -118,7 +118,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
             } catch (e: Throwable) {
                 log.atSevere()
                     .withCause(e)
-                    .log("Failed to handle clientbound packet")
+                    .log("Failed to handle clientbound packet ${packet.packetClass} for listener $listener")
                 PacketListenerResult.CONTINUE
             }
 

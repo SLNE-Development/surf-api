@@ -1,8 +1,10 @@
 package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer
 
+import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.bukkit.block.BlockType
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.UnmodifiableView
+import java.lang.AutoCloseable
 import java.util.*
 
 
@@ -15,7 +17,7 @@ import java.util.*
  * and may be subject to changes in future updates.
  */
 @ExperimentalVisualizerApi
-interface SurfVisualizer {
+interface SurfVisualizer : AutoCloseable {
     /**
      * A unique identifier for the visualizer instance.
      * This identifier is used to distinguish one visualizer object from another.
@@ -51,7 +53,10 @@ interface SurfVisualizer {
      * Modifications to the set directly are not allowed, ensuring consistency
      * with the visualizer's state.
      */
-    val viewers: @UnmodifiableView Set<UUID>
+    val viewerUuids: @UnmodifiableView Set<UUID>
+
+    @Deprecated("Use viewerUuids instead", ReplaceWith("viewerUuids"))
+    val viewers: @UnmodifiableView ObjectSet<Player>
 
     /**
      * Adds a specified player to the list of viewers for this visualizer.
@@ -102,6 +107,9 @@ interface SurfVisualizer {
      * aspects like position updates.
      */
     fun update(strategy: UpdateStrategy = UpdateStrategy.ALL)
+
+
+    override fun close() // TODO: Provide kdocs
 
     /**
      * Companion object for the `SurfVisualizer` interface.

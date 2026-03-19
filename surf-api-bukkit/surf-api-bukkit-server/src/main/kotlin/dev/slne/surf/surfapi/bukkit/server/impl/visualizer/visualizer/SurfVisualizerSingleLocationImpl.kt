@@ -24,6 +24,7 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
 
     override var location: Location = location
         set(value) {
+            ensureNotClosed()
             field = value
             update(UpdateStrategy.POSITION)
         }
@@ -32,12 +33,13 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
         blockData = SurfVisualizer.DEFAULT_BLOCK_TYPE.createBlockData()
     }
         set(value) {
+            ensureNotClosed()
             field = value
             update()
         }
 
-    override fun createCleanupState(): CleanupState {
-        return SingleLocationCleanupState(entityId, viewerUuids)
+    init {
+        cleaner.register(this, SingleLocationCleanupState(entityId, internalViewerUuids))
     }
 
     private class SingleLocationCleanupState(
@@ -54,30 +56,41 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
         }
     }
 
+    override fun onClose() {
+    }
+
     override fun startVisualizingInternal() {
         update()
     }
 
     override fun stopVisualizingInternal() {
-        for (uuid in viewers) {
+        for (uuid in viewerUuids) {
             val player = Bukkit.getPlayer(uuid) ?: continue
             despawnPacket().execute(player)
         }
     }
 
     override fun onPlayerReceiveChunk(player: Player, chunk: Chunk) {
+        ensureNotClosed()
         if (chunk.world == location.world && location.chunkX == chunk.x && location.chunkZ == chunk.z) {
             spawnPacket().execute(player)
         }
     }
 
     override fun onPlayerUnloadChunk(player: Player, chunk: Chunk) {
+        ensureNotClosed()
         if (chunk.world == location.world && location.chunkX == chunk.x && location.chunkZ == chunk.z) {
             despawnPacket().execute(player)
         }
     }
 
+    override fun onViewerRemoved(player: Player) {
+        ensureNotClosed()
+        despawnPacket().execute(player)
+    }
+
     override fun update(strategy: UpdateStrategy) {
+        ensureNotClosed()
         if (!visualizing.get()) return
 
         when (strategy) {
@@ -85,10 +98,11 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
                 val despawn = despawnPacket()
                 val spawn = spawnPacket()
 
-                for (viewer in viewers) {
+                for (viewer in viewerUuids) {
                     val player = Bukkit.getPlayer(viewer) ?: continue
                     player.enterContextIfNeeded {
                         despawn.execute(player)
+                        if (!visualizing.get()) return@enterContextIfNeeded
                         val seesLocation = player.isChunkVisible(location)
 
                         if (seesLocation) {
@@ -100,10 +114,11 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
 
             UpdateStrategy.POSITION -> {
                 val updatePosition = updatePositionPacket()
-                for (viewer in viewers) {
+                for (viewer in viewerUuids) {
                     val player = Bukkit.getPlayer(viewer) ?: continue
                     player.enterContextIfNeeded {
                         if (player.isChunkVisible(location)) {
+                            if (!visualizing.get()) return@enterContextIfNeeded
                             updatePosition.execute(player)
                         } else {
                             despawnPacket().execute(player)
@@ -115,6 +130,7 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
     }
 
     override fun settings(consumer: BlockDisplaySettings.() -> Unit) {
+        ensureNotClosed()
         settings.consumer()
         update()
     }

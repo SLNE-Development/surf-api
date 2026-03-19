@@ -94,6 +94,11 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         
         active.forEach { it.removeViewer(player) }
     }
+
+    fun onVisualizerClose(visualizer: AbstractSurfVisualizerImpl) {
+        visualizers.invalidate(visualizer.uid)
+        areaVisualizers.invalidate(visualizer.uid)
+    }
 }
 
 val visualizerApiImpl get() = SurfBukkitVisualizerApi.instance as SurfBukkitVisualizerApiImpl
