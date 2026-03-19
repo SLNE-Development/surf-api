@@ -1,4 +1,4 @@
-package dev.slne.surf.microservice.gradle.plugin.utils
+package dev.slne.surf.microservice.gradle.plugin.rabbit
 
 enum class RabbitModule(
     val module: String

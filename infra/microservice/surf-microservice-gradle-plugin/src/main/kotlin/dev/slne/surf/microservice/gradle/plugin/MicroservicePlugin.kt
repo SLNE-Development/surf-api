@@ -1,29 +1,37 @@
 package dev.slne.surf.microservice.gradle.plugin
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.microservice.gradle.generated.Constants
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.internal.extensions.stdlib.capitalized
+import org.gradle.kotlin.dsl.create
 
-abstract class CommonMicroservicePlugin<E : MicroserviceExtension>(
-    protected val platformName: String,
-) : Plugin<Project> {
-    protected abstract val extensionClass: Class<E>
-
+abstract class MicroservicePlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
-        val extension = extensions.create(
-            "surfMicroservice${platformName.capitalized()}",
-            extensionClass
-        )
+        val extension = extensions.create<MicroserviceExtension>("surfMicroservice")
 
         afterEvaluate {
+            val relocation = extension.relocation.orNull ?: run {
+                throw IllegalArgumentException("Relocation must be specified for the microservice plugin. Use the withRelocation() method in the extension to set it.")
+            }
+
             extension.module.orNull?.let { moduleDependency ->
-                val moduleName = moduleDependency.apiModule
+                val apiModule = moduleDependency.apiModule
+                val runtimeModule = moduleDependency.runtimeModule
 
                 dependencies.add(
-                    "api",
-                    "dev.slne.surf.microservice:${moduleName}:${Constants.MINECRAFT_VERSION}+"
+                    "compileOnlyApi",
+                    "${apiModule}:${Constants.MINECRAFT_VERSION}+"
                 )
+
+                dependencies.add(
+                    "runtimeOnly",
+                    "${runtimeModule}:${Constants.MINECRAFT_VERSION}+"
+                )
+
+                tasks.named("shadowJar", ShadowJar::class.java) {
+                    relocate("dev.slne.surf.microservice", relocation)
+                }
             }
 
             extension.rabbitSettings.orNull?.let { rabbitSettings ->
@@ -42,12 +50,6 @@ abstract class CommonMicroservicePlugin<E : MicroserviceExtension>(
                     )
                 }
             }
-
-            afterEvaluate0(extension)
         }
-    }
-
-    protected open fun Project.afterEvaluate0(extension: E) {
-
     }
 }

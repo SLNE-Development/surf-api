@@ -1,4 +1,4 @@
-package dev.slne.surf.microservice.gradle.plugin.utils
+package dev.slne.surf.microservice.gradle.plugin.rabbit
 
 data class RabbitModuleSettings(
     val rabbitModule: RabbitModule,

@@ -37,7 +37,7 @@ val pluginInfos = mutableListOf(
     ),
     PluginInfo(
         id = "client",
-        implementationClass = "runtime.ClientMicroservicePlugin",
+        implementationClass = "client.ClientMicroservicePlugin",
     )
 )
 
