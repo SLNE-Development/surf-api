@@ -1,16 +1,31 @@
 package dev.slne.surf.microservice.gradle.plugin
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.api.Project
+
 enum class SurfMicroserviceModule(
-    override val apiModule: String,
-    override val runtimeModule: String
-) : ModuleDependency {
+    val apiModule: String,
+    val runtimeModule: String,
+    val moduleProjectModification: (Project) -> Unit = {}
+) {
     COMMON(
         apiModule = "surf-microservice-api-common",
         runtimeModule = "surf-microservice-core"
     ),
     MICROSERVICE(
         apiModule = "surf-microservice-api-microservice",
-        runtimeModule = "surf-microservice-microservice"
+        runtimeModule = "surf-microservice-microservice",
+        moduleProjectModification = { project ->
+            project.tasks.named("shadowJar", ShadowJar::class.java) {
+                manifest {
+                    attributes(
+                        mapOf(
+                            "Main-Class" to "dev.slne.surf.microservice.runtime.microservice.MicroserviceLauncherKt"
+                        )
+                    )
+                }
+            }
+        }
     ),
     CLIENT_COMMON(
         apiModule = "surf-microservice-api-client-common",

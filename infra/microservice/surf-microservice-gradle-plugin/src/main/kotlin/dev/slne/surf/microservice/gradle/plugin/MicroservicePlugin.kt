@@ -14,6 +14,7 @@ abstract class MicroservicePlugin : Plugin<Project> {
             extension.module.orNull?.let { moduleDependency ->
                 val apiModule = moduleDependency.apiModule
                 val runtimeModule = moduleDependency.runtimeModule
+                val projectModification = moduleDependency.moduleProjectModification
 
                 val relocation = extension.relocation.orNull ?: run {
                     throw IllegalArgumentException("Relocation must be specified for the microservice plugin. Use the withRelocation() method in the extension to set it.")
@@ -29,8 +30,11 @@ abstract class MicroservicePlugin : Plugin<Project> {
                     "dev.slne.surf.microservice:${runtimeModule}:${Constants.MINECRAFT_VERSION}+"
                 )
 
+                projectModification(this)
+
                 tasks.named("shadowJar", ShadowJar::class.java) {
-                    relocate("dev.slne.surf.microservice", relocation)
+                    relocate("dev.slne.surf.microservice.api", "$relocation.api")
+                    relocate("dev.slne.surf.microservice.client", "$relocation.client")
                 }
             }
 

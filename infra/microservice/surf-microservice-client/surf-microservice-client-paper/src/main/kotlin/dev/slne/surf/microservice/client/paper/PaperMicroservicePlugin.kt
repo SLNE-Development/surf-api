@@ -1,8 +1,8 @@
-package dev.slne.surf.microservice.runtime.paper
+package dev.slne.surf.microservice.client.paper
 
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 
-abstract class PaperMicroservicePlugin: SuspendingJavaPlugin() {
+abstract class PaperMicroservicePlugin : SuspendingJavaPlugin() {
     override suspend fun onLoadAsync() {
 
     }
