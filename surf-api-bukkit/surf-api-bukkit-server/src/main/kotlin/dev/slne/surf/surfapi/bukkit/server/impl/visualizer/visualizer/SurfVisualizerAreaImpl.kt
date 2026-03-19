@@ -88,8 +88,8 @@ class SurfVisualizerAreaImpl(
 
     private suspend fun recompute() = recomputationMutex.withLock {
         delegate.clearVisualLocations()
-        if (corners.size < 2) return
-        if (!delegate.checkNotNullWorld()) return
+        if (corners.size < 2) return@withLock
+        if (!delegate.checkNotNullWorld()) return@withLock
 
         val hull = corners.convexHull2D()
         val cornerBlocks = hull
@@ -111,7 +111,7 @@ class SurfVisualizerAreaImpl(
         }
 
         if (placeDelay.isPositive()) {
-            for ((i, point) in finalEdgePoints.convexHull2D().withIndex()) {
+            for ((i, point) in finalEdgePoints.withIndex()) {
                 delegate.addVisualLocation(point, settings)
                 if (i < finalEdgePoints.size - 1) {
                     delay(placeDelay)
