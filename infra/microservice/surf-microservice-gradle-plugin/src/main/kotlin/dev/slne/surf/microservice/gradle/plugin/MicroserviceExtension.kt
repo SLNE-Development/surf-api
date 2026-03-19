@@ -6,15 +6,8 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.property
 
 abstract class MicroserviceExtension(objects: ObjectFactory) {
-    internal val relocation = objects.property<String>()
-
     internal val module = objects.property<SurfMicroserviceModule>()
     internal val rabbitSettings = objects.property<RabbitModuleSettings>()
-
-    fun withRelocation(relocation: String) {
-        this.relocation.set(relocation)
-        this.relocation.finalizeValue()
-    }
 
     fun withRabbitModule(
         rabbitModule: RabbitModule,

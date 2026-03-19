@@ -1,6 +1,5 @@
 package dev.slne.surf.microservice.gradle.plugin
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.microservice.gradle.generated.Constants
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -16,10 +15,6 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 val runtimeModule = moduleDependency.runtimeModule
                 val projectModification = moduleDependency.moduleProjectModification
 
-                val relocation = extension.relocation.orNull ?: run {
-                    throw IllegalArgumentException("Relocation must be specified for the microservice plugin. Use the withRelocation() method in the extension to set it.")
-                }
-
                 dependencies.add(
                     "compileOnlyApi",
                     "dev.slne.surf.microservice:${apiModule}:${Constants.MINECRAFT_VERSION}+"
@@ -31,11 +26,6 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 )
 
                 projectModification(this)
-
-                tasks.named("shadowJar", ShadowJar::class.java) {
-                    relocate("dev.slne.surf.microservice.api.common", "$relocation.api.common")
-                    relocate("dev.slne.surf.microservice.client", "$relocation.client")
-                }
             }
 
             extension.rabbitSettings.orNull?.let { rabbitSettings ->
