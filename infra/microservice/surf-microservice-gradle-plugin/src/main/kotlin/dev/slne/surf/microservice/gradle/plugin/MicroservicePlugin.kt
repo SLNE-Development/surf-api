@@ -33,7 +33,7 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 projectModification(this)
 
                 tasks.named("shadowJar", ShadowJar::class.java) {
-                    relocate("dev.slne.surf.microservice.api", "$relocation.api")
+                    relocate("dev.slne.surf.microservice.api.common", "$relocation.api.common")
                     relocate("dev.slne.surf.microservice.client", "$relocation.client")
                 }
             }
