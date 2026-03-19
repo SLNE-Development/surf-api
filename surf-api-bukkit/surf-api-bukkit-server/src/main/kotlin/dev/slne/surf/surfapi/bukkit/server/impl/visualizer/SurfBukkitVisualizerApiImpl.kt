@@ -11,23 +11,25 @@ import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.AbstractSu
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerAreaImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerMultipleLocationsImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerSingleLocationImpl
-import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.spongepowered.math.vector.Vector3d
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 @AutoService(SurfBukkitVisualizerApi::class)
 class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
     private val visualizers = Caffeine.newBuilder()
-        .softValues()
+        .weakValues()
         .build<UUID, AbstractSurfVisualizerImpl>()
     private val areaVisualizers = Caffeine.newBuilder()
-        .softValues()
+        .weakValues()
         .build<UUID, SurfVisualizerArea>()
+
+    private val playerToVisualizers = ConcurrentHashMap<UUID, MutableSet<UUID>>()
 
     override fun createSingleLocationVisualizer(location: Location): SurfVisualizerSingleLocation {
         return SurfVisualizerSingleLocationImpl(location).also { visualizers.put(it.uid, it) }
@@ -57,11 +59,22 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         return areaVisualizers.getIfPresent(uid) ?: visualizers.getIfPresent(uid)
     }
 
-    private fun getActiveVisualizers(player: Player) =
-        visualizers.asMap().values.filter { !it.isClosed() && it.isVisualizing() && it.visibleTo(player) }
+    private fun getActiveVisualizers(player: Player): List<AbstractSurfVisualizerImpl> {
+        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
+        return visualizerUuids.mapNotNull { uid ->
+            visualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
+        }
+    }
 
+    fun onViewerAdded(visualizerUid: UUID, playerUid: UUID) {
+        playerToVisualizers.computeIfAbsent(playerUid) { ConcurrentHashMap.newKeySet() }
+            .add(visualizerUid)
+    }
 
-    private val log = logger()
+    fun onViewerRemoved(visualizerUid: UUID, playerUid: UUID) {
+        playerToVisualizers[playerUid]?.remove(visualizerUid)
+    }
+
     fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
         val active = getActiveVisualizers(player)
         active.forEach { it.onPlayerReceiveChunk(player, chunk) }
@@ -73,6 +86,8 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
     }
 
     fun processPlayerQuit(player: Player) {
+        playerToVisualizers.remove(player.uniqueId)
+
         for (active in visualizers.asMap().values) {
             if (active.isClosed()) continue
             active.removeViewer(player)

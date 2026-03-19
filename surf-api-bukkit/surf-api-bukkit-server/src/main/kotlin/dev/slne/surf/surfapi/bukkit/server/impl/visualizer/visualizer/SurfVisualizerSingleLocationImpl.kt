@@ -89,6 +89,10 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
         despawnPacket().execute(player)
     }
 
+    override fun clearStaleData(uuid: UUID) {
+
+    }
+
     override fun update(strategy: UpdateStrategy) {
         ensureNotClosed()
         if (!visualizing.get()) return
