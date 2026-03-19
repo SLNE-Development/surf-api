@@ -21,12 +21,12 @@ abstract class MicroservicePlugin : Plugin<Project> {
 
                 dependencies.add(
                     "compileOnlyApi",
-                    "${apiModule}:${Constants.MINECRAFT_VERSION}+"
+                    "dev.slne.surf.microservice:${apiModule}:${Constants.MINECRAFT_VERSION}+"
                 )
 
                 dependencies.add(
                     "runtimeOnly",
-                    "${runtimeModule}:${Constants.MINECRAFT_VERSION}+"
+                    "dev.slne.surf.microservice:${runtimeModule}:${Constants.MINECRAFT_VERSION}+"
                 )
 
                 tasks.named("shadowJar", ShadowJar::class.java) {
