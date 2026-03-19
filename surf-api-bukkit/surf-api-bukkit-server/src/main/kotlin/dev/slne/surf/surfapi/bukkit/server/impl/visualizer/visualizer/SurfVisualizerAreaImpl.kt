@@ -111,7 +111,7 @@ class SurfVisualizerAreaImpl(
         }
 
         if (placeDelay.isPositive()) {
-            for ((i, point) in finalEdgePoints.withIndex()) {
+            for ((i, point) in finalEdgePoints.convexHull2D().withIndex()) {
                 delegate.addVisualLocation(point, settings)
                 if (i < finalEdgePoints.size - 1) {
                     delay(placeDelay)
@@ -119,11 +119,7 @@ class SurfVisualizerAreaImpl(
             }
         } else {
             delegate.addVisualLocations(finalEdgePoints, settings)
-            finalEdgePoints.forEach {
-                delegate.addVisualLocation(it, settings)
-            }
         }
-
     }
 
     override fun equals(other: Any?): Boolean {

@@ -128,6 +128,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
                         }
 
                         writeLocked {
+                            if (!visualizing.get()) return@enterContextIfNeeded
                             getOrCreateSentToPlayer(viewer).addAll(idsToMarkSent)
                         }
 
@@ -163,6 +164,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
                             }
 
                             if (player.isChunkVisible(world, point.chunkX, point.chunkZ)) {
+                                if (!visualizing.get()) continue
                                 operation + updatePositionPacket(id, point)
                             } else {
                                 operation + nmsSpawnPackets.despawn(id)
@@ -242,6 +244,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
                 }
 
                 writeLocked {
+                    if (!visualizing.get()) return@enterContextIfNeeded
                     getOrCreateSentToPlayer(viewer).addAll(idsToAdd)
                 }
 
@@ -357,10 +360,11 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
 
         val spawnOperation = PacketOperation.start()
         val idsToAdd = mutableIntSetOf()
-
+        val sent = getSentToPlayerSnapshot(player.uniqueId)
 
         for ((id, point) in entries) {
             if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) continue
+            if (sent.contains(id)) continue
             spawnOperation + spawnPacket(id, point)
             idsToAdd.add(id)
         }
@@ -405,6 +409,10 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
         val sent = drainSentToPlayer(player.uniqueId) ?: return
         if (sent.isEmpty()) return
         nmsSpawnPackets.despawn(sent).execute(player)
+    }
+
+    override fun clearStaleData(uuid: UUID) {
+        drainSentToPlayer(uuid)
     }
 
     fun checkNotNullWorld(): Boolean {

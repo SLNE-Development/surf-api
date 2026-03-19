@@ -110,6 +110,7 @@ interface SurfVisualizer : AutoCloseable {
 
 
     override fun close() // TODO: Provide kdocs
+    fun isClosed(): Boolean
 
     /**
      * Companion object for the `SurfVisualizer` interface.

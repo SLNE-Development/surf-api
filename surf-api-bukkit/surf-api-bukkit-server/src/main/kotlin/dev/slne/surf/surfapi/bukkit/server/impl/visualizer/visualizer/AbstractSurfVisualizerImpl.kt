@@ -103,6 +103,8 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
         if (internalViewerUuids.remove(player.uniqueId)) {
             if (player.isOnline) {
                 onViewerRemoved(player)
+            } else {
+                clearStaleData(player.uniqueId)
             }
         }
     }
@@ -112,7 +114,12 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
         val iterator = internalViewerUuids.iterator()
         while (iterator.hasNext()) {
             val next = iterator.next()
-            Bukkit.getPlayer(next)?.let { onViewerRemoved(it) }
+            val player = Bukkit.getPlayer(next)
+            if (player != null) {
+                onViewerRemoved(player)
+            } else {
+                clearStaleData(next)
+            }
             iterator.remove()
         }
     }
@@ -133,6 +140,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     }
 
     abstract fun onViewerRemoved(player: Player)
+    abstract fun clearStaleData(uuid: UUID)
 
     @Synchronized
     final override fun close() {
@@ -143,6 +151,10 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
         stopVisualizing(true)
         onClose()
         internalViewerUuids.clear()
+    }
+
+    override fun isClosed(): Boolean {
+        return closed.get()
     }
 
     protected abstract fun onClose()

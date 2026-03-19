@@ -58,41 +58,25 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
     }
 
     private fun getActiveVisualizers(player: Player) =
-        visualizers.asMap().values.filter { it.isVisualizing() && it.visibleTo(player) }
+        visualizers.asMap().values.filter { !it.isClosed() && it.isVisualizing() && it.visibleTo(player) }
 
 
     private val log = logger()
     fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
         val active = getActiveVisualizers(player)
-
-        if (active.isNotEmpty()) {
-            log.atInfo()
-                .log("Received update for player ${player.name} for ${active.size} visualizers")
-        }
-
         active.forEach { it.onPlayerReceiveChunk(player, chunk) }
     }
 
     fun processChunkUnloadForPlayer(player: Player, chunk: Chunk) {
         val active = getActiveVisualizers(player)
-
-        if (active.isNotEmpty()) {
-            log.atInfo()
-                .log("Received unload for player ${player.name} for ${active.size} visualizers")
-        }
-
         active.forEach { it.onPlayerUnloadChunk(player, chunk) }
     }
 
     fun processPlayerQuit(player: Player) {
-        val active = visualizers.asMap().values
-
-        if (active.isNotEmpty()) {
-            log.atInfo()
-                .log("Player ${player.name} quit, removing from ${active.size} visualizers")
+        for (active in visualizers.asMap().values) {
+            if (active.isClosed()) continue
+            active.removeViewer(player)
         }
-        
-        active.forEach { it.removeViewer(player) }
     }
 
     fun onVisualizerClose(visualizer: AbstractSurfVisualizerImpl) {
