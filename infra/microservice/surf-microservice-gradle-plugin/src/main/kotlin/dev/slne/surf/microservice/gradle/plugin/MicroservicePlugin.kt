@@ -11,13 +11,13 @@ abstract class MicroservicePlugin : Plugin<Project> {
         val extension = extensions.create<MicroserviceExtension>("surfMicroservice")
 
         afterEvaluate {
-            val relocation = extension.relocation.orNull ?: run {
-                throw IllegalArgumentException("Relocation must be specified for the microservice plugin. Use the withRelocation() method in the extension to set it.")
-            }
-
             extension.module.orNull?.let { moduleDependency ->
                 val apiModule = moduleDependency.apiModule
                 val runtimeModule = moduleDependency.runtimeModule
+
+                val relocation = extension.relocation.orNull ?: run {
+                    throw IllegalArgumentException("Relocation must be specified for the microservice plugin. Use the withRelocation() method in the extension to set it.")
+                }
 
                 dependencies.add(
                     "compileOnlyApi",

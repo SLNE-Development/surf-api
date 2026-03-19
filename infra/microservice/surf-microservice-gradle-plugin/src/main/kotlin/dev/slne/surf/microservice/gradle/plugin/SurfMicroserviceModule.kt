@@ -5,23 +5,23 @@ enum class SurfMicroserviceModule(
     override val runtimeModule: String
 ) : ModuleDependency {
     COMMON(
-        apiModule = "surf-microservice-api:surf-microservice-api-common",
+        apiModule = "surf-microservice-api-common",
         runtimeModule = "surf-microservice-core"
     ),
     MICROSERVICE(
-        apiModule = "surf-microservice-api:surf-microservice-api-microservice",
+        apiModule = "surf-microservice-api-microservice",
         runtimeModule = "surf-microservice-microservice"
     ),
     CLIENT_COMMON(
-        apiModule = "surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-common",
-        runtimeModule = "surf-microservice-client:surf-microservice-client-common"
+        apiModule = "surf-microservice-api-client-common",
+        runtimeModule = "surf-microservice-client-common"
     ),
     CLIENT_PAPER(
-        apiModule = "surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-paper",
-        runtimeModule = "surf-microservice-client:surf-microservice-client-paper"
+        apiModule = "surf-microservice-api-client-paper",
+        runtimeModule = "surf-microservice-client-paper"
     ),
     CLIENT_VELOCITY(
-        apiModule = "surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-velocity",
-        runtimeModule = "surf-microservice-client:surf-microservice-api-client-velocity"
+        apiModule = "surf-microservice-api-client-velocity",
+        runtimeModule = "surf-microservice-client-velocity"
     );
 }
