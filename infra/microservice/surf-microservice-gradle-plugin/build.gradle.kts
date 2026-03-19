@@ -18,36 +18,11 @@ dependencies {
     implementation("dev.slne.surf:surf-api-gradle-plugin:$mcVersion+")
 }
 
-class PluginInfo(
-    val id: String,
-    implementationClass: String
-) {
-    val pluginId = "dev.slne.surf.microservice.gradle.plugin.$id"
-    val implementationClass = "dev.slne.surf.microservice.gradle.plugin.$implementationClass"
-}
-
-val pluginInfos = mutableListOf(
-    PluginInfo(
-        id = "api",
-        implementationClass = "api.ApiMicroservicePlugin",
-    ),
-    PluginInfo(
-        id = "core",
-        implementationClass = "core.CoreMicroservicePlugin",
-    ),
-    PluginInfo(
-        id = "client",
-        implementationClass = "client.ClientMicroservicePlugin",
-    )
-)
-
 gradlePlugin {
     plugins {
-        pluginInfos.forEach { pluginInfo ->
-            create(pluginInfo.pluginId) {
-                id = pluginInfo.pluginId
-                implementationClass = pluginInfo.implementationClass
-            }
+        create("dev.slne.surf.microservice.gradle.plugin") {
+            id = "dev.slne.surf.microservice"
+            implementationClass = "dev.slne.surf.microservice.gradle.plugin.MicroservicePlugin"
         }
     }
 
