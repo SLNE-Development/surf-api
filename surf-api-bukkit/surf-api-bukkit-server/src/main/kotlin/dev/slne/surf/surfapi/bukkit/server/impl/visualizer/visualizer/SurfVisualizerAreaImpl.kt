@@ -39,6 +39,8 @@ class SurfVisualizerAreaImpl(
         plugin.scope.coroutineContext + SupervisorJob(plugin.scope.coroutineContext[Job])
     )
 
+    private val workerJob: Job
+
     override var settings: BlockDisplaySettings = initialSettings ?: BlockDisplaySettings.create {
         blockData = SurfVisualizer.DEFAULT_BLOCK_TYPE.createBlockData()
     }
@@ -53,7 +55,7 @@ class SurfVisualizerAreaImpl(
             launchRecompute()
         }
 
-        scope.launch {
+        workerJob = scope.launch {
             computationChannel.consumeEach {
                 recompute()
             }
@@ -100,7 +102,7 @@ class SurfVisualizerAreaImpl(
     }
 
     private suspend fun recompute() {
-        if (delegate.isClosed()) return
+        if (delegate.isClosed() || !isVisualizing()) return
         val cornersSnapshot = ObjectLinkedOpenHashSet(corners)
         val settingsSnapshot = settings.clone()
 
@@ -109,6 +111,7 @@ class SurfVisualizerAreaImpl(
         if (!delegate.checkNotNullWorld()) return
 
         currentCoroutineContext().ensureActive()
+        if (!isVisualizing()) return
 
         val hull = cornersSnapshot.convexHull2D()
         val edgePoints = ObjectLinkedOpenHashSet<Vector3d>()
@@ -121,6 +124,7 @@ class SurfVisualizerAreaImpl(
         }
 
         currentCoroutineContext().ensureActive()
+        if (!isVisualizing()) return
 
         val finalEdgePoints: ObjectSet<Vector3d> = if (useHighestYBlock) {
             edgePoints.map { it.toInt() }
@@ -132,10 +136,12 @@ class SurfVisualizerAreaImpl(
         }
 
         currentCoroutineContext().ensureActive()
+        if (!isVisualizing()) return
 
         if (placeDelay.isPositive()) {
             for ((i, point) in finalEdgePoints.withIndex()) {
                 currentCoroutineContext().ensureActive()
+                if (!isVisualizing()) return
                 delegate.addVisualLocation(point, settingsSnapshot)
                 if (i < finalEdgePoints.size - 1) {
                     delay(placeDelay)
@@ -153,7 +159,9 @@ class SurfVisualizerAreaImpl(
     }
 
     override fun stopVisualizing(): Boolean {
-        scope.coroutineContext[Job]?.children?.forEach { it.cancel() }
+        scope.coroutineContext[Job]?.children?.forEach { child ->
+            if (child !== workerJob) child.cancel()
+        }
         return delegate.stopVisualizing()
     }
 
