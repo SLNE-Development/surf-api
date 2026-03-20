@@ -10,9 +10,37 @@ class TransformingSet2ObjectSet<O, M>(
 ) : ObjectSet<M> {
     override fun iterator() = object : ObjectIterator<M> {
         private val iterator = fromSet.iterator()
+        private var nextValue: M? = null
+        private var nextComputed: Boolean = false
+
+        override fun hasNext(): Boolean {
+            if (nextComputed) {
+                return nextValue != null
+            }
+            while (iterator.hasNext()) {
+                val transformed = transformTo(iterator.next())
+                if (transformed != null) {
+                    nextValue = transformed
+                    nextComputed = true
+                    return true
+                }
+            }
+            nextValue = null
+            nextComputed = true
+            return false
+        }
+
+        override fun next(): M {
+            if (!hasNext()) {
+                throw NoSuchElementException()
+            }
+            nextComputed = false
+            val result = nextValue
+            nextValue = null
+            @Suppress("UNCHECKED_CAST")
+            return result as M
+        }
         override fun remove() = iterator.remove()
-        override fun next(): M? = toTransformer(iterator.next())
-        override fun hasNext() = iterator.hasNext()
     }
 
     override fun add(element: M): Boolean = transformFrom(element)?.let(fromSet::add) == true

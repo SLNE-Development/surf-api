@@ -94,9 +94,6 @@ class SurfVisualizerAreaImpl(
 
     private fun launchRecompute() {
         computationChannel.trySend(Unit)
-//        plugin.launch {
-//            recompute()
-//        }
     }
 
     private suspend fun recompute() {
@@ -155,6 +152,11 @@ class SurfVisualizerAreaImpl(
     override fun stopVisualizing(): Boolean {
         scope.coroutineContext[Job]?.children?.forEach { it.cancel() }
         return delegate.stopVisualizing()
+    }
+
+    override fun startVisualizing(): Boolean {
+
+        return delegate.startVisualizing()
     }
 
     override fun equals(other: Any?): Boolean {

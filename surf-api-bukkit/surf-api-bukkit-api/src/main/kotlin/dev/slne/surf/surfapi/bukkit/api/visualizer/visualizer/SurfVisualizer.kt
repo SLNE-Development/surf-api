@@ -108,8 +108,25 @@ interface SurfVisualizer : AutoCloseable {
      */
     fun update(strategy: UpdateStrategy = UpdateStrategy.ALL)
 
+    /**
+     * Closes the current visualizer instance, releasing any resources or connections
+     * associated with it. This method stops any ongoing visualization activities
+     * and ensures that all registered viewers are cleared.
+     *
+     * Once this method is called, the visualizer transitions into a closed state,
+     * making it unavailable for further operations unless explicitly restarted
+     * or reinitialized.
+     *
+     * Typical usage scenarios include shutting down the visualizer gracefully
+     * or when it is no longer needed.
+     */
+    override fun close()
 
-    override fun close() // TODO: Provide kdocs
+    /**
+     * Checks whether the visualizer has been closed.
+     *
+     * @return `true` if the visualizer is in a closed state, `false` otherwise.
+     */
     fun isClosed(): Boolean
 
     /**
