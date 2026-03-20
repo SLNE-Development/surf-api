@@ -49,6 +49,25 @@ public final class dev/slne/surf/surfapi/core/api/collection/TransformingObjectS
 	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
 }
 
+public final class dev/slne/surf/surfapi/core/api/collection/TransformingSet2ObjectSet : it/unimi/dsi/fastutil/objects/ObjectSet {
+	public fun <init> (Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public fun add (Ljava/lang/Object;)Z
+	public fun addAll (Ljava/util/Collection;)Z
+	public fun clear ()V
+	public fun contains (Ljava/lang/Object;)Z
+	public fun containsAll (Ljava/util/Collection;)Z
+	public fun getSize ()I
+	public fun isEmpty ()Z
+	public fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+	public synthetic fun iterator ()Ljava/util/Iterator;
+	public fun remove (Ljava/lang/Object;)Z
+	public fun removeAll (Ljava/util/Collection;)Z
+	public fun retainAll (Ljava/util/Collection;)Z
+	public final fun size ()I
+	public fun toArray ()[Ljava/lang/Object;
+	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
+}
+
 public final class dev/slne/surf/surfapi/core/api/command/SurfCommandUtil {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/command/SurfCommandUtil;
 	public static final fun createException (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/surfapi/core/api/command/exception/WrapperCommandExceptionComponent;

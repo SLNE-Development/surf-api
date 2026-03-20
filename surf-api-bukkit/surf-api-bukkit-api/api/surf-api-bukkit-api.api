@@ -2252,6 +2252,30 @@ public abstract class dev/slne/surf/surfapi/bukkit/api/permission/PermissionRegi
 	public final fun create (Ljava/lang/String;)Ljava/lang/String;
 }
 
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/region/TickThreadGuard {
+	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/region/TickThreadGuard$Companion;
+	public abstract fun ensureTickThread (Lorg/bukkit/World;DDLjava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;IILjava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;ILjava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;Ljava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;Lorg/bukkit/util/BoundingBox;Ljava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/entity/Entity;Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/region/TickThreadGuard$Companion : dev/slne/surf/surfapi/bukkit/api/region/TickThreadGuard {
+	public fun ensureTickThread (Lorg/bukkit/World;DDLjava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;IILjava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;ILjava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;Ljava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;Lorg/bukkit/util/BoundingBox;Ljava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/entity/Entity;Ljava/lang/String;)V
+	public final fun getInstance ()Ldev/slne/surf/surfapi/bukkit/api/region/TickThreadGuard;
+}
+
+public final class dev/slne/surf/surfapi/bukkit/api/region/TickThreadGuardKt {
+	public static final fun getTickThreadGuard ()Ldev/slne/surf/surfapi/bukkit/api/region/TickThreadGuard;
+}
+
 public abstract interface annotation class dev/slne/surf/surfapi/bukkit/api/scoreboard/ObsoleteScoreboardApi : java/lang/annotation/Annotation {
 }
 
@@ -2466,14 +2490,17 @@ public final class dev/slne/surf/surfapi/bukkit/api/visualizer/SurfBukkitVisuali
 public abstract interface annotation class dev/slne/surf/surfapi/bukkit/api/visualizer/visualizer/ExperimentalVisualizerApi : java/lang/annotation/Annotation {
 }
 
-public abstract interface class dev/slne/surf/surfapi/bukkit/api/visualizer/visualizer/SurfVisualizer {
+public abstract interface class dev/slne/surf/surfapi/bukkit/api/visualizer/visualizer/SurfVisualizer : java/lang/AutoCloseable {
 	public static final field Companion Ldev/slne/surf/surfapi/bukkit/api/visualizer/visualizer/SurfVisualizer$Companion;
 	public static final field DEFAULT_BLOCK_TYPE Lorg/bukkit/block/BlockType;
 	public abstract fun addViewer (Lorg/bukkit/entity/Player;)V
 	public abstract fun clearViewers ()V
+	public abstract fun close ()V
 	public abstract fun getUid ()Ljava/util/UUID;
+	public abstract fun getViewerUuids ()Ljava/util/Set;
 	public abstract fun getViewers ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
 	public abstract fun hasViewers ()Z
+	public abstract fun isClosed ()Z
 	public abstract fun isVisualizing ()Z
 	public abstract fun removeViewer (Lorg/bukkit/entity/Player;)V
 	public abstract fun startVisualizing ()Z
