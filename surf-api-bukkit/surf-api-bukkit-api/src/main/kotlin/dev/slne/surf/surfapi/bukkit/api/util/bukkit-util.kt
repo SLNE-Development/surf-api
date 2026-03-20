@@ -244,10 +244,17 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
             val key = iterator.nextLong()
             launch {
                 semaphore.withPermit {
-                    val snapshot = world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
+                    val chunk = world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
                         .await()
-                        .getChunkSnapshot(true, false, false, false)
-                    snapshots[key] = snapshot
+
+                    withContext(
+                        JavaPlugin.getProvidingPlugin(SurfBukkitApi::class.java)
+                            .regionDispatcher(world, chunk.x, chunk.z)
+                    ) {
+                        val snapshot = chunk
+                            .getChunkSnapshot(true, false, false, false)
+                        snapshots[key] = snapshot
+                    }
                 }
             }
         }

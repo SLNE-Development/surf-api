@@ -15,6 +15,7 @@ import java.lang.ref.Cleaner
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     protected val log = logger()
@@ -34,6 +35,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
 
     protected val visualizing = AtomicBoolean(false)
     protected val closed = AtomicBoolean(false)
+    private val stateVersion = AtomicLong(0)
 
     abstract class CleanupState : Runnable {
         private val log = logger()
@@ -54,6 +56,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     override fun startVisualizing(): Boolean {
         ensureNotClosed()
         if (!visualizing.compareAndSet(false, true)) return false
+        nextStateVersion()
 
         try {
             startVisualizingInternal()
@@ -77,6 +80,8 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
         if (!force) {
             ensureNotClosed()
         }
+
+        nextStateVersion()
 
         try {
             stopVisualizingInternal()
@@ -136,8 +141,9 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
         ensureNotClosed()
         if (!visualizing.get()) return
 
+        val version = currentStateVersion()
         player.enterContextIfNeeded {
-            if (!visualizing.get()) return@enterContextIfNeeded
+            if (!isActiveVersion(version)) return@enterContextIfNeeded
             player.sentChunks.forEach { chunk ->
                 onPlayerReceiveChunk(player, chunk)
             }
@@ -188,6 +194,10 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
             throw IllegalStateException("Visualizer is already closed!")
         }
     }
+
+    protected fun nextStateVersion(): Long = stateVersion.incrementAndGet()
+    protected fun currentStateVersion(): Long = stateVersion.get()
+    protected fun isActiveVersion(version: Long): Boolean = visualizing.get() && stateVersion.get() == version
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

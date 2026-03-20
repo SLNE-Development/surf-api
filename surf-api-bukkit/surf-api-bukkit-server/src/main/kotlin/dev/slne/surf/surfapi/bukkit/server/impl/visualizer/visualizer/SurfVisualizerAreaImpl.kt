@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
-import com.github.shynixn.mccoroutine.folia.launch
+import com.github.shynixn.mccoroutine.folia.scope
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.surfapi.bukkit.api.util.computeHighestYBlock
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
@@ -12,11 +12,12 @@ import dev.slne.surf.surfapi.core.api.math.VoxelLineTracer
 import dev.slne.surf.surfapi.core.api.util.toObjectSet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectSet
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 class SurfVisualizerAreaImpl(
@@ -30,9 +31,13 @@ class SurfVisualizerAreaImpl(
     ),
 ) : SurfVisualizer by delegate, SurfVisualizerArea {
 
-    private val corners = ObjectLinkedOpenHashSet(initialEdges)
-    override val cornerLocations by lazy { corners.toObjectSet() }
-    private val recomputationMutex = Mutex()
+    private val corners = ConcurrentHashMap.newKeySet<Vector3d>(initialEdges.size)
+    override val cornerLocations get() = corners.toObjectSet()
+    private val computationChannel = Channel<Unit>(Channel.CONFLATED)
+
+    private val scope = CoroutineScope(
+        plugin.scope.coroutineContext + SupervisorJob(plugin.scope.coroutineContext[Job])
+    )
 
     override var settings: BlockDisplaySettings = initialSettings ?: BlockDisplaySettings.create {
         blockData = SurfVisualizer.DEFAULT_BLOCK_TYPE.createBlockData()
@@ -43,8 +48,15 @@ class SurfVisualizerAreaImpl(
         }
 
     init {
-        if (initialEdges.isNotEmpty()) {
+        corners.addAll(initialEdges)
+        if (corners.isNotEmpty()) {
             launchRecompute()
+        }
+
+        scope.launch {
+            computationChannel.consumeEach {
+                recompute()
+            }
         }
     }
 
@@ -81,26 +93,35 @@ class SurfVisualizerAreaImpl(
     }
 
     private fun launchRecompute() {
-        plugin.launch {
-            recompute()
-        }
+        computationChannel.trySend(Unit)
+//        plugin.launch {
+//            recompute()
+//        }
     }
 
-    private suspend fun recompute() = recomputationMutex.withLock {
+    private suspend fun recompute() {
+        if (delegate.isClosed()) return
+        val cornersSnapshot = ObjectLinkedOpenHashSet(corners)
+        val settingsSnapshot = settings.clone()
+
         delegate.clearVisualLocations()
-        if (corners.size < 2) return@withLock
-        if (!delegate.checkNotNullWorld()) return@withLock
+        if (cornersSnapshot.size < 2) return
+        if (!delegate.checkNotNullWorld()) return
 
-        val hull = corners.convexHull2D()
-        val cornerBlocks = hull
+        currentCoroutineContext().ensureActive()
 
+        val hull = cornersSnapshot.convexHull2D()
         val edgePoints = ObjectLinkedOpenHashSet<Vector3d>()
-        for (i in cornerBlocks.indices) {
+
+        for (i in hull.indices) {
             edgePoints += VoxelLineTracer.trace(
-                cornerBlocks[i],
-                cornerBlocks[(i + 1) % cornerBlocks.size]
+                hull[i],
+                hull[(i + 1) % hull.size]
             )
         }
+
+        currentCoroutineContext().ensureActive()
+
         val finalEdgePoints: ObjectSet<Vector3d> = if (useHighestYBlock) {
             edgePoints.map { it.toInt() }
                 .computeHighestYBlock(delegate.world)
@@ -110,16 +131,30 @@ class SurfVisualizerAreaImpl(
             edgePoints
         }
 
+        currentCoroutineContext().ensureActive()
+
         if (placeDelay.isPositive()) {
             for ((i, point) in finalEdgePoints.withIndex()) {
-                delegate.addVisualLocation(point, settings)
+                currentCoroutineContext().ensureActive()
+                delegate.addVisualLocation(point, settingsSnapshot)
                 if (i < finalEdgePoints.size - 1) {
                     delay(placeDelay)
                 }
             }
         } else {
-            delegate.addVisualLocations(finalEdgePoints, settings)
+            delegate.addVisualLocations(finalEdgePoints, settingsSnapshot)
         }
+    }
+
+    override fun close() {
+        scope.cancel("Visualizer closed.")
+        computationChannel.close()
+        delegate.close()
+    }
+
+    override fun stopVisualizing(): Boolean {
+        scope.coroutineContext[Job]?.children?.forEach { it.cancel() }
+        return delegate.stopVisualizing()
     }
 
     override fun equals(other: Any?): Boolean {

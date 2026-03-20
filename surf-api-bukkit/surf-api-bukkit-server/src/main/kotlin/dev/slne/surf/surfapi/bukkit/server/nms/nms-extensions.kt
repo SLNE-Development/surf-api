@@ -133,7 +133,7 @@ fun EntityType.toNmsHolder() =
     CraftEntityType.bukkitToMinecraftHolder(this) as Holder.Reference<net.minecraft.world.entity.EntityType<*>>
 
 fun World.toNms(): ServerLevel = (this as CraftWorld).handle
-fun Entity.toNms(): net.minecraft.world.entity.Entity = (this as CraftEntity).handle
+fun Entity.toNms(): net.minecraft.world.entity.Entity = (this as CraftEntity).handleRaw
 fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity = (this as CraftLivingEntity).handle
 fun DamageSource.toNms(): net.minecraft.world.damagesource.DamageSource = (this as CraftDamageSource).handle
 

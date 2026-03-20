@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer
 
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
 import it.unimi.dsi.fastutil.objects.ObjectSet
-import org.jetbrains.annotations.UnmodifiableView
+import org.jetbrains.annotations.Unmodifiable
 import org.spongepowered.math.vector.Vector3d
 
 /**
@@ -27,7 +27,7 @@ interface SurfVisualizerArea : SurfVisualizer {
      *
      * This property is part of the experimental API and may be subject to changes in the future.
      */
-    val cornerLocations: @UnmodifiableView ObjectSet<Vector3d>
+    val cornerLocations: @Unmodifiable ObjectSet<Vector3d>
 
     /**
      * Adds a location to the set of corner locations in the visualizer area.
