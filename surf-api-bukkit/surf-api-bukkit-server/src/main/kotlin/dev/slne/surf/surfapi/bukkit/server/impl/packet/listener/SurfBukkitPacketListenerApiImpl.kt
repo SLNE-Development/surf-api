@@ -211,7 +211,7 @@ class SurfBukkitPacketListenerApiImpl : SurfBukkitPacketListenerApi {
     }
 
     fun interface ListenerResultConverter<T> {
-        fun convert(result: T, packet: Packet<*>?): Packet<*>?
+        fun convert(result: T?, packet: Packet<*>?): Packet<*>?
     }
 
     fun interface ListenerInvoker {

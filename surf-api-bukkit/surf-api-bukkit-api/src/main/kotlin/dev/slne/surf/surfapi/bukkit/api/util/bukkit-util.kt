@@ -7,16 +7,15 @@ import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
 import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
-import dev.slne.surf.surfapi.core.api.util.mutableLong2ObjectMapOf
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.Position
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectList
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.bukkit.*
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
@@ -25,6 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.spongepowered.math.vector.Vector3d
 import org.spongepowered.math.vector.Vector3i
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Creates a [NamespacedKey] using the calling plugin and the given name.
@@ -230,38 +230,42 @@ fun ChunkSnapshot.getHighestBlockYAtBlockCoordinates(
 }
 
 suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<Vector3i> {
-    val byChunk = mutableLong2ObjectMapOf<ObjectList<Vector3i>>(size / 4 + 1)
+    val chunkKeys = LongOpenHashSet(size / 4 + 1)
     for (point in this) {
         val key = Chunk.getChunkKey(point.x() shr 4, point.z() shr 4)
-        val list = byChunk.computeIfAbsent(key) { mutableObjectListOf() }
-        list.add(point)
+        chunkKeys.add(key)
     }
 
-    val snapshots = mutableLong2ObjectMapOf<ChunkSnapshot>(byChunk.size)
+    val snapshots = ConcurrentHashMap<Long, ChunkSnapshot>(chunkKeys.size)
     coroutineScope {
-        byChunk.keys.map { key ->
-            async {
-                val snapshot =
-                    world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
+        val semaphore = Semaphore(16) // Limit concurrent chunk loads to prevent overwhelming the server
+        val iterator = chunkKeys.iterator()
+        while (iterator.hasNext()) {
+            val key = iterator.nextLong()
+            launch {
+                semaphore.withPermit {
+                    val chunk = world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
                         .await()
-                        .getChunkSnapshot(true, false, false, false)
-                snapshots.put(key, snapshot)
-            }
-        }.awaitAll()
-    }
 
+                    withContext(
+                        JavaPlugin.getProvidingPlugin(SurfBukkitApi::class.java)
+                            .regionDispatcher(world, chunk.x, chunk.z)
+                    ) {
+                        val snapshot = chunk
+                            .getChunkSnapshot(true, false, false, false)
+                        snapshots[key] = snapshot
+                    }
+                }
+            }
+        }
+    }
 
     val result = mutableObjectListOf<Vector3i>(size)
-    val it = byChunk.long2ObjectEntrySet().fastIterator()
-    while (it.hasNext()) {
-        val entry = it.next()
-        val key = entry.longKey
-        val pointsInChunk = entry.value
+    for (point in this) {
+        val key = Chunk.getChunkKey(point.x() shr 4, point.z() shr 4)
         val snapshot = snapshots[key] ?: error("ChunkSnapshot for key $key not found")
-        for (point in pointsInChunk) {
-            val y = snapshot.getHighestBlockYAtBlockCoordinates(point.x(), point.z())
-            result.add(Vector3i(point.x(), y, point.z()))
-        }
+        val y = snapshot.getHighestBlockYAtBlockCoordinates(point.x(), point.z())
+        result.add(Vector3i(point.x(), y, point.z()))
     }
 
     return result
