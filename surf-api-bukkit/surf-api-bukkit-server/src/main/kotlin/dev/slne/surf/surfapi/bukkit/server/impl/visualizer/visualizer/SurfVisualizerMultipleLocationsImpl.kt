@@ -35,6 +35,8 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
     val world: World
         get() = worldReference.get() ?: error("World reference is no longer valid")
 
+    fun getWorldIfPresent(): World? = worldReference.get()
+
     private val id2point = mutableInt2ObjectMapOf<VisualPoint>()
     private val point2Id =
         mutableObject2IntMapOf<VisualPoint>().apply { defaultReturnValue(Int.MIN_VALUE) }

@@ -27,7 +27,7 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         .build<UUID, AbstractSurfVisualizerImpl>()
     private val areaVisualizers = Caffeine.newBuilder()
         .weakValues()
-        .build<UUID, SurfVisualizerArea>()
+        .build<UUID, SurfVisualizerAreaImpl>()
 
     private val playerToVisualizers = ConcurrentHashMap<UUID, MutableSet<UUID>>()
 
@@ -66,6 +66,13 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         }
     }
 
+    private fun getActiveAreaVisualizers(player: Player): List<SurfVisualizerAreaImpl> {
+        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
+        return visualizerUuids.mapNotNull { uid ->
+            areaVisualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
+        }
+    }
+
     fun onViewerAdded(visualizerUid: UUID, playerUid: UUID) {
         playerToVisualizers.computeIfAbsent(playerUid) { ConcurrentHashMap.newKeySet() }
             .add(visualizerUid)
@@ -76,6 +83,9 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
     }
 
     fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
+        val activeAreas = getActiveAreaVisualizers(player)
+        activeAreas.forEach { it.onChunkBecameVisible(player, chunk) }
+
         val active = getActiveVisualizers(player)
         active.forEach { it.onPlayerReceiveChunk(player, chunk) }
     }
