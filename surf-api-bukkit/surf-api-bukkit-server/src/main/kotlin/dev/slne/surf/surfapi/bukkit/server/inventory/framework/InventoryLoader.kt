@@ -6,6 +6,7 @@ import me.devnatan.inventoryframework.ViewFrame
 object InventoryLoader {
     init {
         InventoryViewRemapper.remap()
+        CloseContextRemapper.remap()
     }
 
     lateinit var viewFrame: ViewFrame
