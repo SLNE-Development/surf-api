@@ -39,6 +39,8 @@ class SurfVisualizerAreaImpl(
         plugin.scope.coroutineContext + SupervisorJob(plugin.scope.coroutineContext[Job])
     )
 
+    private var workerJob: Job? = null
+
     override var settings: BlockDisplaySettings = initialSettings ?: BlockDisplaySettings.create {
         blockData = SurfVisualizer.DEFAULT_BLOCK_TYPE.createBlockData()
     }
@@ -51,12 +53,6 @@ class SurfVisualizerAreaImpl(
         corners.addAll(initialEdges)
         if (corners.isNotEmpty()) {
             launchRecompute()
-        }
-
-        scope.launch {
-            computationChannel.consumeEach {
-                recompute()
-            }
         }
     }
 
@@ -94,6 +90,15 @@ class SurfVisualizerAreaImpl(
 
     private fun launchRecompute() {
         computationChannel.trySend(Unit)
+    }
+
+    private fun startRecompute() {
+        workerJob?.cancel("Visualizer recompute cancelled.")
+        workerJob = scope.launch {
+            computationChannel.consumeEach {
+                recompute()
+            }
+        }
     }
 
     private suspend fun recompute() {
@@ -150,12 +155,11 @@ class SurfVisualizerAreaImpl(
     }
 
     override fun stopVisualizing(): Boolean {
-        scope.coroutineContext[Job]?.children?.forEach { it.cancel() }
+        scope.coroutineContext[Job]?.cancelChildren()
         return delegate.stopVisualizing()
     }
 
     override fun startVisualizing(): Boolean {
-
         return delegate.startVisualizing()
     }
 
