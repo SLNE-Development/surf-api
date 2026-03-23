@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.gradle.platform.common
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import dev.slne.surf.surfapi.gradle.compiler.SurfCompilerSubplugin
 import dev.slne.surf.surfapi.gradle.generated.Constants
 import dev.slne.surf.surfapi.gradle.platform.SurfApiPlatform
 import dev.slne.surf.surfapi.gradle.platform.core.CoreSurfExtension
@@ -188,6 +189,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         configureAutoService()
         configureKotlin()
         configureAllOpen()
+        configureCompilerPlugin()
         configure0()
     }
 
@@ -207,6 +209,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private fun Project.configureAutoService() = dependencies {
         add(COMPILE_ONLY, Constants.AUTO_SERVICE_ANNOTATIONS)
         add("ksp", Constants.AUTO_SERVICE)
+    }
+
+    private fun Project.configureCompilerPlugin() {
+        pluginManager.apply(SurfCompilerSubplugin::class.java)
     }
 
     protected open fun Project.configure0() {

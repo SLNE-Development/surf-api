@@ -21,7 +21,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.13.2")
+    append("-1.13.3")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -47,6 +47,7 @@ dependencies {
 
     implementation("com.palantir.javapoet:javapoet:0.12.0")
     implementation(libs.bundles.kotlin.serialization)
+    implementation(kotlin("gradle-plugin-api"))
 }
 
 gradlePlugin {
@@ -127,6 +128,7 @@ val generateConstants by tasks.registering {
 
     doLast {
         val generator = project(":surf-api-gradle-plugin:surf-api-processor")
+        val compilerPlugin = project(":surf-compiler-plugin")
         val content = """
             |package dev.slne.surf.surfapi.gradle.generated
             |
@@ -150,6 +152,10 @@ val generateConstants by tasks.registering {
             |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"
             |    
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
+            |    
+            |    const val COMPILER_PLUGIN_GROUP = "${compilerPlugin.group}"
+            |    const val COMPILER_PLUGIN_ARTIFACT = "${compilerPlugin.name}"
+            |    const val COMPILER_PLUGIN_VERSION = "${compilerPlugin.version}"
             |}
         """.trimMargin()
 
