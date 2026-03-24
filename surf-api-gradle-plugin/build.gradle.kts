@@ -124,11 +124,16 @@ val generateConstants by tasks.registering {
         "version",
         rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
     )
+
+    val compilerPlugin = project(":surf-compiler-plugin")
+    inputs.property("compilerPlugin.group", compilerPlugin.group)
+    inputs.property("compilerPlugin.name", compilerPlugin.name)
+    inputs.property("compilerPlugin.version", compilerPlugin.version)
+
     outputs.dir(constantsOutputDir)
 
     doLast {
         val generator = project(":surf-api-gradle-plugin:surf-api-processor")
-        val compilerPlugin = project(":surf-compiler-plugin")
         val content = """
             |package dev.slne.surf.surfapi.gradle.generated
             |

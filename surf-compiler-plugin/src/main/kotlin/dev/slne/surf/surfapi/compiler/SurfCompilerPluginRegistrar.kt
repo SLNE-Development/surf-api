@@ -18,6 +18,6 @@ class SurfCompilerPluginRegistrar : CompilerPluginRegistrar() {
         FirExtensionRegistrarAdapter.registerExtension(SurfFirExtensionRegistrar())
 
         IrGenerationExtension.registerExtension(TestFieldGeneration())
-        IrGenerationExtension.registerExtension(BuilderIrGenerationExtension())
+//        IrGenerationExtension.registerExtension(BuilderIrGenerationExtension())
     }
 }

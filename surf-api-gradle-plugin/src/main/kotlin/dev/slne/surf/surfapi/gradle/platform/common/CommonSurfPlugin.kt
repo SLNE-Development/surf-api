@@ -212,6 +212,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     private fun Project.configureCompilerPlugin() {
+        println("Applying Surf Compiler Plugin to project ${project.name} (" + Constants.COMPILER_PLUGIN_GROUP + ":" + Constants.COMPILER_PLUGIN_ARTIFACT + ":" + Constants.COMPILER_PLUGIN_VERSION + ")")
         pluginManager.apply(SurfCompilerSubplugin::class.java)
     }
 
