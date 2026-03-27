@@ -1,6 +1,8 @@
 package dev.slne.surf.surfapi.core.api.invoker;
 
+import dev.slne.surf.surfapi.shared.api.util.InternalInvokerApi;
 import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.constant.ConstantDescs;
@@ -39,7 +41,9 @@ import java.util.List;
  * <p>This class is package-private and not intended for external use.
  */
 @NullMarked
-final class HiddenInvokerUtil {
+@InternalInvokerApi
+@ApiStatus.Internal
+public final class HiddenInvokerUtil {
 
     private HiddenInvokerUtil() {
         throw new UnsupportedOperationException();
@@ -52,7 +56,7 @@ final class HiddenInvokerUtil {
      * {@link Continuation} parameter as the last parameter,
      * and return {@link Object}.
      */
-    static boolean isSuspendFunction(final Method method) {
+    public static boolean isSuspendFunction(final Method method) {
         final Class<?>[] params = method.getParameterTypes();
         if (params.length == 0) return false;
 
@@ -152,7 +156,7 @@ final class HiddenInvokerUtil {
      * @return an {@link InvokerClassData} record
      * @throws ReflectiveOperationException if class data extraction or handle resolution fails
      */
-    static InvokerClassData loadClassData(
+    public static InvokerClassData loadClassData(
             final MethodHandles.Lookup lookup,
             final MethodType methodType,
             final MethodType suspendMethodType
@@ -173,11 +177,30 @@ final class HiddenInvokerUtil {
      * Overload for factories that don't support suspend (backward compatible).
      * Suspend methods will cause an error at template classData() time.
      */
-    static InvokerClassData loadClassData(
+    public static InvokerClassData loadClassData(
             final MethodHandles.Lookup lookup,
             final MethodType methodType
     ) throws ReflectiveOperationException {
         return loadClassData(lookup, methodType, methodType);
+    }
+
+    /**
+     * Loads the class data for a hidden invoker class, automatically configuring it for
+     * compatibility with Kotlin suspend functions, if applicable.
+     *
+     * @param lookup     the {@link MethodHandles.Lookup} used for access checks and defining
+     *                   the hidden class.
+     * @param methodType the expected {@link MethodType} for non-suspend handler methods.
+     * @return an {@link InvokerClassData} instance containing the resolved handler method
+     *         information, along with metadata on whether it's a suspend function.
+     * @throws ReflectiveOperationException if class data extraction or handle resolution fails.
+     */
+    public static InvokerClassData loadClassDataWithAutoSuspend(
+            final MethodHandles.Lookup lookup,
+            final MethodType methodType
+    ) throws ReflectiveOperationException {
+        final MethodType suspendMethodType = methodType.changeReturnType(Object.class).appendParameterTypes(Continuation.class);
+        return loadClassData(lookup, methodType, suspendMethodType);
     }
 
     /**
