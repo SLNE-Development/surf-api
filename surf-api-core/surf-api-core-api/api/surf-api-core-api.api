@@ -6473,6 +6473,36 @@ public final class dev/slne/surf/surfapi/core/api/generated/VanillaAdvancementKe
 	public static final field UPGRADE_TOOLS Lnet/kyori/adventure/key/Key;
 }
 
+public final class dev/slne/surf/surfapi/core/api/invoker/InvokerClassData : java/lang/Record {
+	public fun <init> (Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandle;Ljava/lang/Class;Z)V
+	public final fun equals (Ljava/lang/Object;)Z
+	public final fun hashCode ()I
+	public fun isSuspend ()Z
+	public fun method ()Ljava/lang/reflect/Method;
+	public fun methodHandle ()Ljava/lang/invoke/MethodHandle;
+	public fun payloadClass ()Ljava/lang/Class;
+	public final fun toString ()Ljava/lang/String;
+}
+
+public class dev/slne/surf/surfapi/core/api/invoker/InvokerFactory {
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;)V
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/invoke/MethodHandles$Lookup;)V
+	public fun canAccess (Ljava/lang/Object;Ljava/lang/reflect/Method;)Z
+	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/Object;
+	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;Z)Ljava/lang/Object;
+	public fun getLookup ()Ljava/lang/invoke/MethodHandles$Lookup;
+	public fun getTemplateClassBytes ()[B
+}
+
+public final class dev/slne/surf/surfapi/core/api/invoker/SuspendInvokerSupport {
+	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/invoker/SuspendInvokerSupport;
+	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;)V
+	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun invokeSuspend$default (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun invokeSuspendDirect (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun invokeSuspendDirect$default (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class dev/slne/surf/surfapi/core/api/math/VoxelLineTracer {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/math/VoxelLineTracer;
 	public final fun trace (Lorg/spongepowered/math/vector/Vector3d;Lorg/spongepowered/math/vector/Vector3d;)Lkotlin/sequences/Sequence;
