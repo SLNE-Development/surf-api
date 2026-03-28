@@ -13,7 +13,7 @@ plugins {
     `kotlin-dsl`
     `java-toolchain-convention`
 
-    id("com.gradle.plugin-publish") version "2.1.0"
+    id("com.gradle.plugin-publish") version "2.1.1"
     kotlin("plugin.serialization")
     idea
 }
