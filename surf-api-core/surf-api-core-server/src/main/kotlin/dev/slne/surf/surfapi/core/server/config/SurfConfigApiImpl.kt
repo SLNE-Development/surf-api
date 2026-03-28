@@ -6,6 +6,7 @@ import dev.slne.surf.surfapi.core.api.config.SurfConfigApi
 import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager
+import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigrationBuilder
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import java.nio.file.Path
 
@@ -37,9 +38,10 @@ class SurfConfigApiImpl : SurfConfigApi {
     override fun <C> createSpongeYmlConfigManager(
         configClass: Class<C>,
         configFolder: Path,
-        configFileName: @YamlConfigFileNamePattern String
+        configFileName: @YamlConfigFileNamePattern String,
+        migrations: ConfigMigrationBuilder
     ): SpongeConfigManager<C> {
-        val manager = SpongeConfigManager.yaml(configClass, configFolder, configFileName)
+        val manager = SpongeConfigManager.yaml(configClass, configFolder, configFileName, migrations)
         SpongeConfigTracker.registerConfig(configClass, manager)
 
         return manager
@@ -48,9 +50,10 @@ class SurfConfigApiImpl : SurfConfigApi {
     override fun <C> createSpongeJsonConfigManager(
         configClass: Class<C>,
         configFolder: Path,
-        configFileName: @JsonConfigFileNamePattern String
+        configFileName: @JsonConfigFileNamePattern String,
+        migrations: ConfigMigrationBuilder
     ): SpongeConfigManager<C> {
-        val manager = SpongeConfigManager.json(configClass, configFolder, configFileName)
+        val manager = SpongeConfigManager.json(configClass, configFolder, configFileName, migrations)
         SpongeConfigTracker.registerConfig(configClass, manager)
 
         return manager

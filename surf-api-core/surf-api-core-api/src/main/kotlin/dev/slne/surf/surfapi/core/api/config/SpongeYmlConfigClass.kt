@@ -6,7 +6,7 @@ import java.nio.file.Path
  * Convenience base class for YAML-backed Sponge configuration classes.
  *
  * This class wires the common configuration metadata ([configFolder], [fileName])
- * to a YAML-based [dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager] instance created by [surfConfigApi].
+ * to a YAML-based [SpongeConfigManager][dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager] instance created by [surfConfigApi].
  *
  * Typical usage is via a companion object on a `@ConfigSerializable` data class:
  * ```kotlin
@@ -19,6 +19,9 @@ import java.nio.file.Path
  *         Path("config/my-plugin"),
  *         "my-config.yml"
  *     ) {
+ *         init {
+ *             migration(1, MyFirstMigration)
+ *         }
  *     }
  * }
  * ```
@@ -34,8 +37,8 @@ abstract class SpongeYmlConfigClass<C>(
      * YAML-backed configuration manager for this config type.
      *
      * The manager is created using [SurfConfigApi.createSpongeYmlConfigManager]
-     * with [configClass], [configFolder] and [fileName].
+     * with [configClass], [configFolder], [fileName] and [migrationBuilder].
      */
     override val manager =
-        surfConfigApi.createSpongeYmlConfigManager(configClass, configFolder, fileName)
+        surfConfigApi.createSpongeYmlConfigManager(configClass, configFolder, fileName, migrationBuilder)
 }
