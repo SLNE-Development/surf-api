@@ -7,7 +7,7 @@ canvas-api = "1.21.11-R0.1-SNAPSHOT"
 hytale-server = "1.0.0"
 
 # Kolin
-kotlinVersion = "2.3.10"
+kotlinVersion = "2.3.20"
 kotlinxCoroutines = "1.10.2"
 kotlinx-serialization = "1.10.0"
 
@@ -22,8 +22,8 @@ commandapi = "11.1.0"
 luckperms = "v5.5.0-bukkit"
 
 # Scoreboard Library
-scoreboard-library = "2.7.0"
-scoreboard-library-implementation = "2.7.0"
+scoreboard-library = "2.7.1"
+scoreboard-library-implementation = "2.7.1"
 
 # Adventure
 adventure-api = "4.26.1"
@@ -70,7 +70,7 @@ bytebuddy = "1.18.7"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
-shadow-gradle-plugin = "9.3.2"
+shadow-gradle-plugin = "9.4.1"
 run-paper-gradle-plugin = "3.0.2"
 dokka = "2.1.0"
 
