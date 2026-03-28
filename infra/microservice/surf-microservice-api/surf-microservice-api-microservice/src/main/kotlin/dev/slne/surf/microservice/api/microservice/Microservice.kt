@@ -1,8 +1,11 @@
 package dev.slne.surf.microservice.api.microservice
 
 import dev.slne.surf.microservice.api.common.util.InternalMicroserviceApi
+import java.nio.file.Path
 
 abstract class Microservice {
+    abstract val dataPath: Path
+
     @InternalMicroserviceApi
     suspend fun bootstrap(args: List<String>) {
         onBootstrap(args)
@@ -21,3 +24,5 @@ abstract class Microservice {
         lateinit var INSTANCE: Microservice
     }
 }
+
+inline fun <reified M : Microservice> getMicroservice() = Microservice.INSTANCE as M

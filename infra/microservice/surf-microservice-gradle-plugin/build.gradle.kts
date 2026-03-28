@@ -9,11 +9,6 @@ plugins {
 
 val mcVersion: String by project
 
-version = buildString {
-    append(mcVersion)
-    append("-1.0.0")
-}
-
 dependencies {
     implementation("dev.slne.surf:surf-api-gradle-plugin:$mcVersion+")
 }
