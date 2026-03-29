@@ -39,6 +39,7 @@ abstract class SpongeJsonConfigClass<C>(
      * The manager is created using [SurfConfigApi.createSpongeJsonConfigManager]
      * with [configClass], [configFolder], [fileName] and [migrationBuilder].
      */
-    override val manager =
+    override val manager by lazy {
         surfConfigApi.createSpongeJsonConfigManager(configClass, configFolder, fileName, migrationBuilder)
+    }
 }

@@ -172,5 +172,7 @@ sealed class SpongeConfigClass<C>(
      *
      * This method is a no-op and can be safely called multiple times.
      */
-    fun init() = Unit
+    fun init() {
+        manager
+    }
 }

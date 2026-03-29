@@ -39,6 +39,7 @@ abstract class SpongeYmlConfigClass<C>(
      * The manager is created using [SurfConfigApi.createSpongeYmlConfigManager]
      * with [configClass], [configFolder], [fileName] and [migrationBuilder].
      */
-    override val manager =
+    override val manager by lazy {
         surfConfigApi.createSpongeYmlConfigManager(configClass, configFolder, fileName, migrationBuilder)
+    }
 }

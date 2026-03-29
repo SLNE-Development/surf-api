@@ -13,7 +13,7 @@ import org.spongepowered.configurate.transformation.ConfigurationTransformation
  * Collects [ConfigMigration] instances keyed by target version and builds
  * a Configurate [ConfigurationTransformation.Versioned] from them.
  *
- * The version key defaults to `"version"` at the root of the config file.
+ * The version key defaults to `"_config_version"` at the root of the config file.
  * This can be customized via [versionKey].
  *
  * ## Backwards Compatibility
@@ -172,7 +172,7 @@ class ConfigMigrationBuilder {
         /**
          * Default key used to store the config schema version.
          */
-        const val DEFAULT_VERSION_KEY = "version"
+        const val DEFAULT_VERSION_KEY = "_config_version"
     }
 }
 
