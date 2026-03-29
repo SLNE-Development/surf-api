@@ -11,6 +11,7 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInven
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testInventoryViewDsl
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
+import dev.slne.surf.surfapi.bukkit.test.config.MyPluginConfig
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
 import dev.slne.surf.surfapi.core.api.component.surfComponentApi
 
@@ -30,6 +31,8 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
         SurfApiTestCommand().register()
         dialogTestCommand()
         Reflection::class.java.getClassLoader() // initialize Reflection
+
+        MyPluginConfig.init()
 
         surfComponentApi.enable(this)
     }
