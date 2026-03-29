@@ -129,7 +129,7 @@ interface SurfConfigApi {
         configFolder: Path,
         configFileName: @JsonConfigFileNamePattern String,
     ): SpongeConfigManager<C> =
-        createSpongeYmlConfigManager(configClass, configFolder, configFileName, ConfigMigrationBuilder())
+        createSpongeJsonConfigManager(configClass, configFolder, configFileName, ConfigMigrationBuilder())
 
     /**
      * Creates a Sponge JSON configuration manager.
