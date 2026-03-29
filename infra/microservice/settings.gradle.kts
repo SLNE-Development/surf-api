@@ -31,4 +31,3 @@ include("surf-microservice-microservice")
 
 // Gradle Plugin
 include("surf-microservice-gradle-plugin")
-include("surf-microservice-client:surf-microservice-client-common")
