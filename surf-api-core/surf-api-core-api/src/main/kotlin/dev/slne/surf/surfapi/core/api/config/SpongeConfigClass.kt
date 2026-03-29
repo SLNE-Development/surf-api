@@ -112,7 +112,7 @@ sealed class SpongeConfigClass<C>(
     /**
      * Sets the path in the config file where the version number is stored.
      *
-     * Defaults to `"config-version"`. Call this in the `init` block before
+     * Defaults to `"_config_version"`. Call this in the `init` block before
      * any migration registrations if you need a custom key.
      *
      * @param path the path components to the version key
