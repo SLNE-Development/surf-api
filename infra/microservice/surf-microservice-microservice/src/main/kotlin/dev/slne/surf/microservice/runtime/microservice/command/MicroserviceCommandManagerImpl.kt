@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommand
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandManager
 import dev.slne.surf.microservice.runtime.microservice.command.commands.exitCommand
+import dev.slne.surf.microservice.runtime.microservice.command.commands.sparkCommand
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.logger
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
@@ -20,6 +21,7 @@ class MicroserviceCommandManagerImpl : MicroserviceCommandManager {
 
     fun initDefaultCommands() {
         exitCommand()
+        sparkCommand()
     }
 
     override fun findCommand(label: String): MicroserviceCommand? {
