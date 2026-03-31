@@ -1,7 +1,10 @@
 package dev.slne.surf.surfapi.bukkit.test
 
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.destroystokyo.paper.event.server.ServerTickStartEvent
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import dev.jorel.commandapi.CommandAPI
+import dev.slne.surf.surfapi.bukkit.api.event.listen
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.register
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
@@ -14,6 +17,9 @@ import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.config.MyPluginConfig
 import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
 import dev.slne.surf.surfapi.core.api.component.surfComponentApi
+import net.minecraft.server.MinecraftServer
+import org.bukkit.inventory.ItemType
+import kotlin.concurrent.thread
 
 @OptIn(NmsUseWithCaution::class)
 class BukkitPluginMain : SuspendingJavaPlugin() {
@@ -35,6 +41,33 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
         MyPluginConfig.init()
 
         surfComponentApi.enable(this)
+
+        fun runAction() {
+            for (player in server.onlinePlayers) {
+                player.scheduler.run(this@BukkitPluginMain, {
+                    player.inventory.clear()
+                    player.inventory.addItem(ItemType.DIAMOND.createItemStack(64))
+                }, null)
+            }
+        }
+
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
+            runAction()
+        })
+
+        listen<ServerTickStartEvent> {
+            if (!MinecraftServer.getServer().isRunning) {
+                print("Running action on shutdown in tick start event!")
+                runAction()
+            }
+        }
+
+        listen<ServerTickEndEvent> {
+            if (!MinecraftServer.getServer().isRunning) {
+                print("Running action on shutdown in tick end event!")
+                runAction()
+            }
+        }
     }
 
     override suspend fun onDisableAsync() {
