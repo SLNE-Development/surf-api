@@ -15,6 +15,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLists
 import net.kyori.adventure.text.format.TextDecoration
 import net.minecraft.core.component.DataComponents
 import net.minecraft.network.protocol.game.*
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.item.component.ItemLore
@@ -118,6 +119,35 @@ object PacketLoreListener : PacketListener {
         return ClientboundSetPlayerInventoryPacket(
             event.slot(),
             updated
+        )
+    }
+
+    @ServerboundListener
+    fun onContainerClickPacket(
+        event: ServerboundContainerClickPacket,
+        player: ServerPlayer
+    ): ServerboundContainerClickPacket {
+        if (!hasAnyHandlers()) return event
+
+        val container = player.containerMenu
+        val currentStateId = container.stateId
+
+        val brokenStateId = if (event.stateId() == currentStateId) {
+            currentStateId - 1
+        } else {
+            event.stateId()
+        }
+
+        if (brokenStateId == event.stateId()) return event
+
+        return ServerboundContainerClickPacket(
+            event.containerId(),
+            brokenStateId,
+            event.slotNum(),
+            event.buttonNum(),
+            event.clickType(),
+            event.changedSlots(),
+            event.carriedItem()
         )
     }
 

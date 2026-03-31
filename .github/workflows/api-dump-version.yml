@@ -33,7 +33,7 @@ jobs:
         id: check_api
         run: |
           set +e
-          ./gradlew checkLegacyAbi
+          ./gradlew checkKotlinAbi
           CHECK_EXIT=$?
           echo "check_exit=$CHECK_EXIT" >> $GITHUB_OUTPUT
           set -e
@@ -46,7 +46,7 @@ jobs:
             echo "✅ No API changes detected."
           else
             echo "api_changed=true" >> $GITHUB_OUTPUT
-            echo "❌ API changes detected! To update the reference, run './gradlew updateLegacyAbi' locally and commit the changes." >&2
+            echo "❌ API changes detected! To update the reference, run './gradlew updateKotlinAbi' locally and commit the changes." >&2
           fi
 
       - name: Comment on PR if API changed
@@ -61,7 +61,7 @@ jobs:
             This PR contains changes that modified the public API. To update the reference ABI dumps:
             
             ```bash
-            ./gradlew updateLegacyAbi
+            ./gradlew updateKotlinAbi
             git add **/api/**
             git commit -m "Update ABI reference"
             git push
