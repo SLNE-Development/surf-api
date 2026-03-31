@@ -88,7 +88,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
     /**
      * Installs the Redis Pub/Sub listener and subscribes to request/response channels.
      *
-     * Incoming messages are handled synchronously on a Redisson/Reactor thread.
+     * Incoming messages are dispatched to handler coroutines on `Dispatchers.Default`.
      */
     private fun setupSubscription() {
         val requestId = requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) }.block()

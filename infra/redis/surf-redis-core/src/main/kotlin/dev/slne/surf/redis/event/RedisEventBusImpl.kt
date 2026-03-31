@@ -83,7 +83,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     /**
      * Sets up the Redis Pub/Sub subscription and installs the message listener.
      *
-     * Incoming messages are dispatched synchronously on a Redisson/Reactor thread.
+     * Incoming messages are dispatched to handler coroutines on `Dispatchers.Default`.
      */
     private fun setupSubscription() {
         val listenerId = topic.addListener(String::class.java) { _, msg -> handleIncomingMessage(msg) }.block()

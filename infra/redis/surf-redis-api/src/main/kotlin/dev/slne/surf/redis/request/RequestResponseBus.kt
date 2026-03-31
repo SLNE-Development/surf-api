@@ -15,9 +15,9 @@ import java.io.Closeable
  * Request handlers are discovered via [HandleRedisRequest].
  *
  * ## Threading
- * Handler methods are invoked synchronously on a Redisson/Reactor thread.
- * If suspending or long-running work is required, the handler must explicitly delegate it
- * (for example by launching a coroutine) and call [RequestContext.respond] later.
+ * Handler methods are invoked inside a coroutine launched on `Dispatchers.Default`.
+ * Both regular and `suspend` handler methods are supported.
+ * Blocking work must not be performed directly — switch to `Dispatchers.IO` for blocking calls.
  *
  * ## Lifecycle
  * The owning [dev.slne.surf.redis.RedisApi] initializes the bus during startup via [init]

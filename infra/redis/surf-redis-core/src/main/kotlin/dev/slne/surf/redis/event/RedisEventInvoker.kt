@@ -19,7 +19,8 @@ fun interface RedisEventInvoker {
     /**
      * Dispatches the given [event] to the bound handler method.
      *
-     * This method is called synchronously on a Redisson/Reactor thread during event delivery.
+     * This method is called from within a coroutine on [kotlinx.coroutines.Dispatchers.Default].
+     * Both regular and `suspend` handler methods are supported via this interface.
      * Exceptions thrown by the underlying handler are propagated to the caller.
      *
      * @param event the deserialized event to dispatch to the handler
