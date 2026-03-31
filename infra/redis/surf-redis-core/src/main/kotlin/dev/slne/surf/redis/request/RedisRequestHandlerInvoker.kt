@@ -25,5 +25,5 @@ fun interface RedisRequestHandlerInvoker {
      *
      * @param context the request context containing the deserialized request and response callback
      */
-    fun invoke(context: RequestContext<*>)
+    suspend fun invoke(context: RequestContext<*>)
 }

@@ -1,13 +1,19 @@
+@file:Suppress("InternalApiUsage")
+
 package dev.slne.surf.redis.request
 
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
-import dev.slne.surf.redis.invoker.RedisRequestHandlerInvokerFactory
+import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
+import dev.slne.surf.redis.invoker.RedisRequestHandlerInvokerTemplate
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
+import dev.slne.surf.surfapi.core.api.invoker.HiddenInvokerUtil
+import dev.slne.surf.surfapi.core.api.invoker.InvokerFactory
 import dev.slne.surf.surfapi.core.api.serializer.java.uuid.SerializableUUID
 import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.surfapi.shared.api.util.InternalInvokerApi
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
@@ -21,9 +27,11 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
+import kotlin.time.Duration.Companion.milliseconds
 import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
 
-
+@OptIn(InternalInvokerApi::class)
+@Suppress("UnstableApiUsage")
 class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
 
     /**
@@ -62,6 +70,12 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         private val log = logger()
         private const val REQUEST_CHANNEL = "surf-redis:requests"
         private const val RESPONSE_CHANNEL = "surf-redis:responses"
+
+        private val INVOKER_FACTORY = InvokerFactory(
+            /* templateClass = */ RedisRequestHandlerInvokerTemplate::class.java,
+            /* invokerInterface = */ RedisRequestHandlerInvoker::class.java,
+            /* lookup = */ RedisInvokerLookupProvider.LOOKUP
+        )
     }
 
     /**
@@ -77,19 +91,15 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      * Incoming messages are handled synchronously on a Redisson/Reactor thread.
      */
     private fun setupSubscription() {
-        requestDisposable = requestTopic.getMessages(String::class.java)
-            .onErrorContinue(this::handleGenericError)
-            .subscribe(this::handleIncomingRequest)
+        val requestId = requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) }.block()
+        val responseId = responseTopic.addListener(String::class.java) { _, msg -> handleIncomingResponse(msg) }.block()
 
-        responseDisposable = responseTopic.getMessages(String::class.java)
-            .onErrorContinue(this::handleGenericError)
-            .subscribe(this::handleIncomingResponse)
-    }
-
-    private fun handleGenericError(e: Throwable, message: Any) {
-        log.atSevere()
-            .withCause(e)
-            .log("Error handling message: ${message.toString().take(1000).replace("{", "[").replace("}", "]")}")
+        requestDisposable = {
+            requestTopic.removeListener(requestId).block()
+        }
+        responseDisposable = {
+            responseTopic.removeListener(responseId).block()
+        }
     }
 
     /**
@@ -127,13 +137,15 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             coroutineScope = api.redisListenerScope
         )
 
-        try {
-            handler.invoke(context)
-        } catch (e: Throwable) {
-            log.atWarning()
-                .withCause(e)
-                .log("Error handling request ${request::class.simpleName}: ${e.message}")
-
+        api.redisListenerScope.launch {
+            try {
+                handler.invoke(context)
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+                log.atWarning()
+                    .withCause(e)
+                    .log("Error handling request ${request::class.simpleName}: ${e.message}")
+            }
         }
     }
 
@@ -191,7 +203,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         requestTopic.publish(message).awaitSingle()
 
         try {
-            return withTimeout(timeoutMs) {
+            return withTimeout(timeoutMs.milliseconds) {
                 val response = deferred.await()
                 responseType.cast(response)
             }
@@ -226,8 +238,12 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
 
         for (method in methods) {
             if (!method.isAnnotationPresent(HandleRedisRequest::class.java)) continue
+            val validParamCount = when {
+                HiddenInvokerUtil.isSuspendFunction(method) -> 2
+                else -> 1
+            }
 
-            if (method.parameterCount != 1) {
+            if (method.parameterCount != validParamCount) {
                 log.atWarning()
                     .withStackTrace(StackSize.MEDIUM)
                     .log("Method ${method.name} in class ${handlerClass.name} is annotated with @RequestHandler but has ${method.parameterCount} parameters. Expected exactly 1 parameter of type RequestContext<T>.")
@@ -266,7 +282,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                 continue
             }
 
-            if (!RedisRequestHandlerInvokerFactory.canAccess(handler, method)) {
+            if (!INVOKER_FACTORY.canAccess(handler, method)) {
                 log.atSevere()
                     .withStackTrace(StackSize.MEDIUM)
                     .log(
@@ -284,7 +300,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
                 requestTypeRegistry[requestType.name] = requestType
             }
 
-            val invoker = RedisRequestHandlerInvokerFactory.create(handler, method, requestType)
+            val invoker = INVOKER_FACTORY.create(handler, method, requestType)
             val current = registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
 
             if (current != null) {

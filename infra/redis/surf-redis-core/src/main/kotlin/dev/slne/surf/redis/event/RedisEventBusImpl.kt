@@ -1,16 +1,24 @@
+@file:Suppress("InternalApiUsage")
+
 package dev.slne.surf.redis.event
 
 import com.google.common.flogger.StackSize
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
-import dev.slne.surf.redis.invoker.RedisEventInvokerFactory
+import dev.slne.surf.redis.invoker.RedisEventInvokerTemplate
+import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
+import dev.slne.surf.surfapi.core.api.invoker.HiddenInvokerUtil
+import dev.slne.surf.surfapi.core.api.invoker.InvokerFactory
 import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.surfapi.shared.api.util.InternalInvokerApi
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
@@ -20,7 +28,8 @@ import reactor.core.publisher.Mono
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
-
+@Suppress("UnstableApiUsage")
+@OptIn(InternalInvokerApi::class)
 class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
 
     /**
@@ -61,6 +70,12 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     companion object {
         private val log = logger()
         private const val REDIS_CHANNEL = "surf-redis:events"
+
+        private val INVOKER_FACTORY = InvokerFactory(
+            /* templateClass = */ RedisEventInvokerTemplate::class.java,
+            /* invokerInterface = */ RedisEventInvoker::class.java,
+            /* lookup = */ RedisInvokerLookupProvider.LOOKUP
+        )
     }
 
     override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
@@ -71,17 +86,10 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
      * Incoming messages are dispatched synchronously on a Redisson/Reactor thread.
      */
     private fun setupSubscription() {
-        subscription = topic.getMessages(String::class.java)
-            .onErrorContinue { t, message ->
-                log.atSevere()
-                    .withCause(t)
-                    .log(
-                        "Error receiving Redis Pub/Sub message: ${
-                            message.toString().replace("{", "[").replace("}", "]")
-                        }"
-                    )
-            }
-            .subscribe(this::handleIncomingMessage)
+        val listenerId = topic.addListener(String::class.java) { _, msg -> handleIncomingMessage(msg) }.block()
+        subscription = {
+            topic.removeListener(listenerId).block()
+        }
     }
 
     override fun close() {
@@ -117,12 +125,15 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         if (handlers.isNullOrEmpty()) return
 
         for (invoker in handlers) {
-            try {
-                invoker.invoke(event)
-            } catch (e: Throwable) {
-                log.atSevere()
-                    .withCause(e)
-                    .log("Error handling event ${event::class.simpleName}: ${e.message}")
+            api.redisListenerScope.launch {
+                try {
+                    invoker.invoke(event)
+                } catch (e: Throwable) {
+                    if (e is CancellationException) throw e
+                    log.atSevere()
+                        .withCause(e)
+                        .log("Error handling event ${event::class.simpleName}: ${e.message}")
+                }
             }
         }
     }
@@ -145,7 +156,12 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
 
         for (method in methods) {
             if (method.isAnnotationPresent(OnRedisEvent::class.java)) {
-                if (method.parameterCount != 1) {
+                val validParamCount = when {
+                    HiddenInvokerUtil.isSuspendFunction(method) -> 2
+                    else -> 1
+                }
+
+                if (method.parameterCount != validParamCount) {
                     log.atSevere()
                         .withStackTrace(StackSize.MEDIUM)
                         .log("Method ${method.name} has invalid parameter count - cannot register as event handler.")
@@ -161,7 +177,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                     continue
                 }
 
-                if (!RedisEventInvokerFactory.canAccess(listener, method)) {
+                if (!INVOKER_FACTORY.canAccess(listener, method)) {
                     log.atSevere()
                         .withStackTrace(StackSize.MEDIUM)
                         .log(
@@ -179,7 +195,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                     eventTypeRegistry[firstParamType.name] = firstParamType
                 }
 
-                val invoker = RedisEventInvokerFactory.create(listener, method, firstParamType)
+                val invoker = INVOKER_FACTORY.create(listener, method, firstParamType)
 
                 registrationLock.write {
                     eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }

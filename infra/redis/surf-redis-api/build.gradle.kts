@@ -14,7 +14,7 @@ surfCoreApi {
 kotlin {
     abiValidation {
         filters {
-            excluded {
+            exclude {
                 annotatedWith.add("dev.slne.surf.redis.util.InternalRedisAPI")
             }
         }
