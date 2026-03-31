@@ -17,7 +17,9 @@ import java.io.Closeable
  * Handler methods are discovered via [OnRedisEvent].
  *
  * ## Dispatch
- * Event handlers are invoked synchronously on a Redisson/Reactor thread (see [OnRedisEvent]).
+ * Event handlers are invoked inside a coroutine launched on the internal Redis listener scope,
+ * which runs on **[kotlinx.coroutines.Dispatchers.Default]** (see [OnRedisEvent]).
+ * Both regular and `suspend` handler methods are supported.
  *
  * For invocation, the implementation generates **JVM hidden classes** at registration time.
  * Each hidden class wraps a `MethodHandle` as a `static final` constant, enabling the JIT

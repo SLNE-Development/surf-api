@@ -135,8 +135,32 @@ class PlayerListener {
 }
 ```
 
-* Handlers are invoked **synchronously** on a Redisson/Reactor thread
-* Long-running or suspending work must be delegated manually
+Handlers can also be `suspend` functions — they run directly in the listener coroutine:
+
+```kotlin
+class PlayerListener {
+
+    @OnRedisEvent
+    suspend fun onJoin(event: PlayerJoinedEvent) {
+        if (event.originatesFromThisClient()) return
+        val profile = fetchProfileSuspending(event.playerId)
+        println("Profile: $profile")
+    }
+}
+```
+
+* Handlers are invoked inside a coroutine on **`Dispatchers.Default`**
+* Both regular and `suspend` functions are supported
+* **Do not perform blocking work directly** — switch dispatchers for blocking I/O:
+
+```kotlin
+@OnRedisEvent
+suspend fun onJoin(event: PlayerJoinedEvent) {
+    withContext(Dispatchers.IO) {
+        loadFromDatabase(event.playerId)
+    }
+}
+```
 
 ---
 
@@ -168,6 +192,34 @@ class PlayerRequestHandler {
         val player = loadPlayer(ctx.request.playerId)
         ctx.respond(PlayerResponse(player.name))
     }
+}
+```
+
+Handlers can also be `suspend` functions — [RequestContext.respond] can be called at any suspension point:
+
+```kotlin
+class PlayerRequestHandler {
+
+    @HandleRedisRequest
+    suspend fun handle(ctx: RequestContext<GetPlayerRequest>) {
+        if (ctx.originatesFromThisClient()) return
+
+        val player = fetchPlayerSuspending(ctx.request.playerId)
+        ctx.respond(PlayerResponse(player.name))
+    }
+}
+```
+
+* Handlers are invoked inside a coroutine on **`Dispatchers.Default`**
+* Both regular and `suspend` functions are supported
+* **Do not perform blocking work directly** — switch to `Dispatchers.IO` for blocking calls:
+
+```kotlin
+@HandleRedisRequest
+suspend fun handle(ctx: RequestContext<GetPlayerRequest>) {
+    if (ctx.originatesFromThisClient()) return
+    val player = withContext(Dispatchers.IO) { loadFromDatabaseBlocking(ctx.request.playerId) }
+    ctx.respond(PlayerResponse(player.name))
 }
 ```
 
@@ -439,30 +491,47 @@ They are designed for coordination and shared state, not transactional consisten
 ### 3. Doing blocking work in event or request handlers
 
 Event handlers (`@OnRedisEvent`) and request handlers (`@HandleRedisRequest`) are invoked
-**synchronously** on a Redisson/Reactor thread.
+inside a coroutine launched on **`Dispatchers.Default`**.
 
-Do not block:
+Both regular and `suspend` handler methods are supported. However, even though handlers run
+in a coroutine, **do not perform blocking work directly**:
 
 * blocking database drivers
 * file I/O
 * blocking network calls
 * long CPU-intensive computations
 
-`RequestContext` implements `CoroutineScope`, bound to the internal Redis listener scope
-(using `Dispatchers.Default`). Use it to launch coroutines directly.
+Blocking a `Dispatchers.Default` thread stalls the shared thread pool and degrades the entire application.
+Always switch the dispatcher for blocking operations.
+
+`RequestContext` implements `CoroutineScope` — you can `launch` additional coroutines from it.
 Pick the right dispatcher for the work being done:
 
 ```kotlin
-// CPU-intensive work —> Default dispatcher (already used by the scope)
+// CPU-intensive work — Default dispatcher is already correct, no switch needed
 @HandleRedisRequest
-fun handle(ctx: RequestContext<MyRequest>) {
-    ctx.launch {
-        val result = computeSomething()
-        ctx.respond(MyResponse(result))
-    }
+suspend fun handle(ctx: RequestContext<MyRequest>) {
+    val result = computeSomething()
+    ctx.respond(MyResponse(result))
 }
 
-// Blocking I/O (blocking DB drivers, file access, blocking network calls) —> Dispatchers.IO
+// Blocking I/O (blocking DB drivers, file access, blocking network calls) — switch to Dispatchers.IO
+@HandleRedisRequest
+suspend fun handle(ctx: RequestContext<MyRequest>) {
+    val result = withContext(Dispatchers.IO) {
+        loadFromDatabaseBlocking()
+    }
+    ctx.respond(MyResponse(result))
+}
+
+// Non-blocking / suspending I/O (e.g. R2DBC, async clients) — no dispatcher switch needed
+@HandleRedisRequest
+suspend fun handle(ctx: RequestContext<MyRequest>) {
+    val result = loadFromDatabaseSuspending()
+    ctx.respond(MyResponse(result))
+}
+
+// From a non-suspend handler — launch a coroutine manually
 @HandleRedisRequest
 fun handle(ctx: RequestContext<MyRequest>) {
     ctx.launch(Dispatchers.IO) {
@@ -470,13 +539,17 @@ fun handle(ctx: RequestContext<MyRequest>) {
         ctx.respond(MyResponse(result))
     }
 }
+```
 
-// Non-blocking / suspending I/O (e.g. R2DBC, async clients) —> no dispatcher switch needed
-@HandleRedisRequest
-fun handle(ctx: RequestContext<MyRequest>) {
-    ctx.launch {
-        val result = loadFromDatabaseSuspending()
-        ctx.respond(MyResponse(result))
+The same applies to event handlers:
+
+```kotlin
+// Suspend event handler with blocking I/O
+@OnRedisEvent
+suspend fun onJoin(event: PlayerJoinedEvent) {
+    if (event.originatesFromThisClient()) return
+    withContext(Dispatchers.IO) {
+        loadFromDatabase(event.playerId)
     }
 }
 ```

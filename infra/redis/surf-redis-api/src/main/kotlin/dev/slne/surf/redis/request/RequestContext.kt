@@ -16,13 +16,29 @@ import java.util.concurrent.atomic.AtomicBoolean
  * respond to the same request. This context enforces the rule that a single
  * handler instance may only send **one** response.
  *
- * `RequestContext` implements [CoroutineScope], bound to the Redis listener scope.
- * Handlers that require asynchronous processing can launch coroutines directly
- * via `launch { }` without managing their own scope.
+ * `RequestContext` implements [CoroutineScope], bound to the Redis listener scope
+ * (`Dispatchers.Default`). Handlers that require asynchronous processing can launch
+ * coroutines directly via `launch { }` without managing their own scope.
+ *
+ * Handler methods annotated with [HandleRedisRequest] may also be declared as `suspend`
+ * functions — in that case they run directly in the listener coroutine and [respond]
+ * can be called at any suspension point.
  *
  * ## Response handling
- * - [respond] may be called synchronously or from within a launched coroutine
+ * - [respond] may be called synchronously, from within a launched coroutine, or from a
+ *   `suspend` handler
  * - Calling [respond] more than once results in an exception
+ *
+ * ## Blocking work
+ * Even though handlers run on `Dispatchers.Default`, **do not perform blocking work directly**.
+ * Switch the dispatcher for blocking operations:
+ * ```
+ * @HandleRedisRequest
+ * suspend fun handle(ctx: RequestContext<MyRequest>) {
+ *     val result = withContext(Dispatchers.IO) { loadFromDatabaseBlocking(ctx.request) }
+ *     ctx.respond(MyResponse(result))
+ * }
+ * ```
  *
  * @param TRequest the concrete request type handled by this context
  */

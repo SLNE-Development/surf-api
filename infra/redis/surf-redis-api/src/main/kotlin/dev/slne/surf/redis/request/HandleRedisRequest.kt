@@ -10,14 +10,30 @@ package dev.slne.surf.redis.request
  * A request handler method must:
  * - have **exactly one parameter** of type [RequestContext]<T>
  * - where `T` is a subtype of [RedisRequest]
- * - **not** be a `suspend` function
+ * - be either a regular or a `suspend` function
  * - return `Unit`
  *
  * ## Execution model
- * Request handler methods are invoked synchronously on a Redisson/Reactor thread.
- * If asynchronous or suspending work is required, the handler must explicitly
- * delegate that work (for example by launching a coroutine) and call
- * [RequestContext.respond] from there.
+ * Request handler methods are invoked inside a coroutine launched on the internal Redis listener
+ * scope, which uses **[kotlinx.coroutines.Dispatchers.Default]**.
+ *
+ * Regular (non-suspend) handlers run on a `Dispatchers.Default` thread.
+ * `suspend` handlers are fully supported — [RequestContext.respond] can be called at any
+ * suspension point.
+ *
+ * Even though the handler runs in a coroutine, **do not perform blocking work directly**
+ * (e.g. blocking I/O, blocking database drivers, `Thread.sleep`). Always switch the
+ * dispatcher for blocking operations:
+ *
+ * ```
+ * @HandleRedisRequest
+ * suspend fun handle(ctx: RequestContext<MyRequest>) {
+ *     val result = withContext(Dispatchers.IO) {
+ *         loadFromDatabaseBlocking(ctx.request)
+ *     }
+ *     ctx.respond(MyResponse(result))
+ * }
+ * ```
  *
  * ## Responses
  * Since requests are broadcasted, multiple handlers on different servers may
@@ -26,19 +42,28 @@ package dev.slne.surf.redis.request
  *
  * ## Example
  * ```
+ * // Regular handler
  * @HandleRedisRequest
  * fun handlePlayerRequest(ctx: RequestContext<GetPlayerRequest>) {
- *     if (ctx.originatesFromThisClient()) return // ignore self-originated requests
- *     val players = loadPlayers(ctx.request)
- *     ctx.respond(PlayerListResponse(players))
+ *     if (ctx.originatesFromThisClient()) return
+ *     val player = loadPlayer(ctx.request.playerId)
+ *     ctx.respond(PlayerListResponse(player.name))
  * }
  *
+ * // Suspend handler — can use suspend functions directly
  * @HandleRedisRequest
- * fun handlePlayerRequestAsync(ctx: RequestContext<GetPlayerRequest>) {
- *     coroutineScope.launch {
- *         val players = fetchPlayersAsync(ctx.request)
- *         ctx.respond(PlayerListResponse(players))
- *     }
+ * suspend fun handlePlayerRequestSuspend(ctx: RequestContext<GetPlayerRequest>) {
+ *     if (ctx.originatesFromThisClient()) return
+ *     val player = fetchPlayerSuspending(ctx.request.playerId)
+ *     ctx.respond(PlayerListResponse(player.name))
+ * }
+ *
+ * // Blocking I/O — switch to Dispatchers.IO
+ * @HandleRedisRequest
+ * suspend fun handlePlayerRequestBlocking(ctx: RequestContext<GetPlayerRequest>) {
+ *     if (ctx.originatesFromThisClient()) return
+ *     val player = withContext(Dispatchers.IO) { loadFromDatabaseBlocking(ctx.request.playerId) }
+ *     ctx.respond(PlayerListResponse(player.name))
  * }
  * ```
  */

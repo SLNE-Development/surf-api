@@ -10,19 +10,20 @@ package dev.slne.surf.redis.event
  * better dispatch performance compared to raw `MethodHandle.invoke()` calls.
  *
  * Each [RedisEventInvoker] instance is bound to a specific listener object and handler method
- * at creation time by [dev.slne.surf.redis.invoker.RedisEventInvokerFactory].
+ * at creation time by [InvokerFactory][dev.slne.surf.surfapi.core.api.invoker.InvokerFactory].
  *
- * @see dev.slne.surf.redis.invoker.RedisEventInvokerFactory
+ * @see dev.slne.surf.surfapi.core.api.invoker.InvokerFactory
  * @see RedisEventBusImpl
  */
 fun interface RedisEventInvoker {
     /**
      * Dispatches the given [event] to the bound handler method.
      *
-     * This method is called synchronously on a Redisson/Reactor thread during event delivery.
+     * This method is called from within a coroutine on [kotlinx.coroutines.Dispatchers.Default].
+     * Both regular and `suspend` handler methods are supported via this interface.
      * Exceptions thrown by the underlying handler are propagated to the caller.
      *
      * @param event the deserialized event to dispatch to the handler
      */
-    fun invoke(event: RedisEvent)
+    suspend fun invoke(event: RedisEvent)
 }

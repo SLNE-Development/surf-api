@@ -20,10 +20,11 @@ fun interface RedisRequestHandlerInvoker {
     /**
      * Dispatches the given request [context] to the bound handler method.
      *
-     * This method is called synchronously on a Redisson/Reactor thread during request handling.
+     * This method is called from within a coroutine on [kotlinx.coroutines.Dispatchers.Default].
+     * Both regular and `suspend` handler methods are supported via this interface.
      * Exceptions thrown by the underlying handler are propagated to the caller.
      *
      * @param context the request context containing the deserialized request and response callback
      */
-    fun invoke(context: RequestContext<*>)
+    suspend fun invoke(context: RequestContext<*>)
 }
