@@ -134,10 +134,13 @@ public final class HiddenInvokerUtil {
         final List<Object> classData = List.of(target, payloadClass, method, privateLookupIn, isSuspend);
         final MethodHandles.Lookup hiddenClassLookup = lookup.defineHiddenClassWithClassData(templateBytes, classData, true);
 
-        return hiddenClassLookup.lookupClass()
-                .asSubclass(invokerInterface)
-                .getDeclaredConstructor()
-                .newInstance();
+        final MethodHandle constructor = hiddenClassLookup.findConstructor(hiddenClassLookup.lookupClass(), MethodType.methodType(void.class));
+
+        try {
+            return invokerInterface.cast(constructor.invoke());
+        } catch (Throwable e) {
+            throw new ReflectiveOperationException("Failed to instantiate hidden class", e);
+        }
     }
 
     /**
@@ -192,7 +195,7 @@ public final class HiddenInvokerUtil {
      *                   the hidden class.
      * @param methodType the expected {@link MethodType} for non-suspend handler methods.
      * @return an {@link InvokerClassData} instance containing the resolved handler method
-     *         information, along with metadata on whether it's a suspend function.
+     * information, along with metadata on whether it's a suspend function.
      * @throws ReflectiveOperationException if class data extraction or handle resolution fails.
      */
     public static InvokerClassData loadClassDataWithAutoSuspend(
