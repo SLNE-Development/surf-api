@@ -6530,6 +6530,14 @@ public final class dev/slne/surf/surfapi/core/api/generated/VanillaAdvancementKe
 	public static final field UPGRADE_TOOLS Lnet/kyori/adventure/key/Key;
 }
 
+public final class dev/slne/surf/surfapi/core/api/invoker/HiddenInvokerUtil {
+	public static fun isSuspendFunction (Ljava/lang/reflect/Method;)Z
+	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/surfapi/core/api/invoker/InvokerClassData;
+	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/surfapi/core/api/invoker/InvokerClassData;
+	public static fun loadClassDataWithAutoSuspend (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/surfapi/core/api/invoker/InvokerClassData;
+	public static fun sneakyThrow (Ljava/lang/Throwable;)V
+}
+
 public final class dev/slne/surf/surfapi/core/api/invoker/InvokerClassData : java/lang/Record {
 	public fun <init> (Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandle;Ljava/lang/Class;Z)V
 	public final fun equals (Ljava/lang/Object;)Z
