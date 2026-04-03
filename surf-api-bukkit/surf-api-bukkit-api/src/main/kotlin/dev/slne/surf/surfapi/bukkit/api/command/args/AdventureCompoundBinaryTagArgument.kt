@@ -15,7 +15,7 @@ import net.kyori.adventure.nbt.TagStringIO
 @OptIn(NmsUseWithCaution::class)
 class AdventureCompoundBinaryTagArgument(nodeName: String) :
     SafeOverrideableArgument<CompoundBinaryTag, CompoundBinaryTag>(
-        nodeName, commandArgumentTypes.compoundTag(), { TagStringIO.tagStringIO().asString(it) }
+        nodeName, commandArgumentTypes::compoundTag, { TagStringIO.tagStringIO().asString(it) }
     ) {
     override fun getPrimitiveType(): Class<CompoundBinaryTag> {
         return CompoundBinaryTag::class.java
@@ -38,17 +38,20 @@ inline fun CommandTree.adventureCompoundBinaryTagArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<*>.() -> Unit = {}
-): CommandTree = then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
+): CommandTree =
+    then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
 
 inline fun Argument<*>.adventureCompoundBinaryTagArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<*>.() -> Unit = {}
-): Argument<*> = then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
+): Argument<*> =
+    then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
 
 
 inline fun CommandAPICommand.adventureCompoundBinaryTagArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<*>.() -> Unit = {}
-): CommandAPICommand = withArguments(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand =
+    withArguments(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
