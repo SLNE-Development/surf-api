@@ -91,6 +91,13 @@ paper {
     }
 }
 
+tasks {
+    shadowJar {
+        val relocationPrefix: String by project
+        relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
+    }
+}
+
 tasks.generatePaperPluginDescription {
     useDefaultCentralProxy()
 }
