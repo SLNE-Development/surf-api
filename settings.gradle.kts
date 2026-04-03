@@ -34,5 +34,5 @@ val ci = System.getenv("CI")?.toBoolean() ?: false
 
 if (!ci) {
     include(":surf-api-bukkit:surf-api-bukkit-plugin-test")
-    include("surf-api-modern-generator")
+    include("surf-api-generator")
 }

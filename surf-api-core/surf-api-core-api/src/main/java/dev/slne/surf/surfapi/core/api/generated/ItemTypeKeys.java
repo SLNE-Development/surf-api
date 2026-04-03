@@ -3944,6 +3944,13 @@ public final class ItemTypeKeys {
   public static final Key GOLDEN_CHESTPLATE = key("minecraft:golden_chestplate");
 
   /**
+   * {@code minecraft:golden_dandelion}
+   *
+   * @apiNote This field is version-dependent and may be removed in future Minecraft versions
+   */
+  public static final Key GOLDEN_DANDELION = key("minecraft:golden_dandelion");
+
+  /**
    * {@code minecraft:golden_helmet}
    *
    * @apiNote This field is version-dependent and may be removed in future Minecraft versions

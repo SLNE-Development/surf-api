@@ -544,6 +544,10 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/chiseled_deepslate_from_cobbled_deepslate_stonecutting")
 
             @JvmField
+            public val CHISELED_DEEPSLATE_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/chiseled_deepslate_from_deepslate_stonecutting")
+
+            @JvmField
             public val CHISELED_NETHER_BRICKS: Key =
                 key("recipes/building_blocks/chiseled_nether_bricks")
 
@@ -603,8 +607,8 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/chiseled_stone_bricks_from_stone_bricks_stonecutting")
 
             @JvmField
-            public val CHISELED_STONE_BRICKS_STONE_FROM_STONECUTTING: Key =
-                key("recipes/building_blocks/chiseled_stone_bricks_stone_from_stonecutting")
+            public val CHISELED_STONE_BRICKS_FROM_STONE_STONECUTTING: Key =
+                key("recipes/building_blocks/chiseled_stone_bricks_from_stone_stonecutting")
 
             @JvmField
             public val CHISELED_TUFF: Key = key("recipes/building_blocks/chiseled_tuff")
@@ -639,12 +643,20 @@ public object VanillaAdvancementKeys {
             public val COARSE_DIRT: Key = key("recipes/building_blocks/coarse_dirt")
 
             @JvmField
+            public val COBBLED_DEEPSLATE_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/cobbled_deepslate_from_deepslate_stonecutting")
+
+            @JvmField
             public val COBBLED_DEEPSLATE_SLAB: Key =
                 key("recipes/building_blocks/cobbled_deepslate_slab")
 
             @JvmField
             public val COBBLED_DEEPSLATE_SLAB_FROM_COBBLED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/building_blocks/cobbled_deepslate_slab_from_cobbled_deepslate_stonecutting")
+
+            @JvmField
+            public val COBBLED_DEEPSLATE_SLAB_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/cobbled_deepslate_slab_from_deepslate_stonecutting")
 
             @JvmField
             public val COBBLED_DEEPSLATE_STAIRS: Key =
@@ -655,6 +667,14 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/cobbled_deepslate_stairs_from_cobbled_deepslate_stonecutting")
 
             @JvmField
+            public val COBBLED_DEEPSLATE_STAIRS_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/cobbled_deepslate_stairs_from_deepslate_stonecutting")
+
+            @JvmField
+            public val COBBLESTONE_FROM_STONE_STONECUTTING: Key =
+                key("recipes/building_blocks/cobblestone_from_stone_stonecutting")
+
+            @JvmField
             public val COBBLESTONE_SLAB: Key = key("recipes/building_blocks/cobblestone_slab")
 
             @JvmField
@@ -662,11 +682,19 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/cobblestone_slab_from_cobblestone_stonecutting")
 
             @JvmField
+            public val COBBLESTONE_SLAB_FROM_STONE_STONECUTTING: Key =
+                key("recipes/building_blocks/cobblestone_slab_from_stone_stonecutting")
+
+            @JvmField
             public val COBBLESTONE_STAIRS: Key = key("recipes/building_blocks/cobblestone_stairs")
 
             @JvmField
             public val COBBLESTONE_STAIRS_FROM_COBBLESTONE_STONECUTTING: Key =
                 key("recipes/building_blocks/cobblestone_stairs_from_cobblestone_stonecutting")
+
+            @JvmField
+            public val COBBLESTONE_STAIRS_FROM_STONE_STONECUTTING: Key =
+                key("recipes/building_blocks/cobblestone_stairs_from_stone_stonecutting")
 
             @JvmField
             public val COPPER_BLOCK: Key = key("recipes/building_blocks/copper_block")
@@ -833,6 +861,10 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/deepslate_brick_slab_from_deepslate_bricks_stonecutting")
 
             @JvmField
+            public val DEEPSLATE_BRICK_SLAB_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/deepslate_brick_slab_from_deepslate_stonecutting")
+
+            @JvmField
             public val DEEPSLATE_BRICK_SLAB_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/building_blocks/deepslate_brick_slab_from_polished_deepslate_stonecutting")
 
@@ -849,6 +881,10 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/deepslate_brick_stairs_from_deepslate_bricks_stonecutting")
 
             @JvmField
+            public val DEEPSLATE_BRICK_STAIRS_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/deepslate_brick_stairs_from_deepslate_stonecutting")
+
+            @JvmField
             public val DEEPSLATE_BRICK_STAIRS_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/building_blocks/deepslate_brick_stairs_from_polished_deepslate_stonecutting")
 
@@ -858,6 +894,10 @@ public object VanillaAdvancementKeys {
             @JvmField
             public val DEEPSLATE_BRICKS_FROM_COBBLED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/building_blocks/deepslate_bricks_from_cobbled_deepslate_stonecutting")
+
+            @JvmField
+            public val DEEPSLATE_BRICKS_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/deepslate_bricks_from_deepslate_stonecutting")
 
             @JvmField
             public val DEEPSLATE_BRICKS_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
@@ -873,6 +913,10 @@ public object VanillaAdvancementKeys {
             @JvmField
             public val DEEPSLATE_TILE_SLAB_FROM_DEEPSLATE_BRICKS_STONECUTTING: Key =
                 key("recipes/building_blocks/deepslate_tile_slab_from_deepslate_bricks_stonecutting")
+
+            @JvmField
+            public val DEEPSLATE_TILE_SLAB_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/deepslate_tile_slab_from_deepslate_stonecutting")
 
             @JvmField
             public val DEEPSLATE_TILE_SLAB_FROM_DEEPSLATE_TILES_STONECUTTING: Key =
@@ -895,6 +939,10 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/deepslate_tile_stairs_from_deepslate_bricks_stonecutting")
 
             @JvmField
+            public val DEEPSLATE_TILE_STAIRS_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/deepslate_tile_stairs_from_deepslate_stonecutting")
+
+            @JvmField
             public val DEEPSLATE_TILE_STAIRS_FROM_DEEPSLATE_TILES_STONECUTTING: Key =
                 key("recipes/building_blocks/deepslate_tile_stairs_from_deepslate_tiles_stonecutting")
 
@@ -912,6 +960,10 @@ public object VanillaAdvancementKeys {
             @JvmField
             public val DEEPSLATE_TILES_FROM_DEEPSLATE_BRICKS_STONECUTTING: Key =
                 key("recipes/building_blocks/deepslate_tiles_from_deepslate_bricks_stonecutting")
+
+            @JvmField
+            public val DEEPSLATE_TILES_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/deepslate_tiles_from_deepslate_stonecutting")
 
             @JvmField
             public val DEEPSLATE_TILES_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
@@ -1002,8 +1054,8 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/end_stone_brick_slab")
 
             @JvmField
-            public val END_STONE_BRICK_SLAB_FROM_END_STONE_BRICK_STONECUTTING: Key =
-                key("recipes/building_blocks/end_stone_brick_slab_from_end_stone_brick_stonecutting")
+            public val END_STONE_BRICK_SLAB_FROM_END_STONE_BRICKS_STONECUTTING: Key =
+                key("recipes/building_blocks/end_stone_brick_slab_from_end_stone_bricks_stonecutting")
 
             @JvmField
             public val END_STONE_BRICK_SLAB_FROM_END_STONE_STONECUTTING: Key =
@@ -1014,8 +1066,8 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/end_stone_brick_stairs")
 
             @JvmField
-            public val END_STONE_BRICK_STAIRS_FROM_END_STONE_BRICK_STONECUTTING: Key =
-                key("recipes/building_blocks/end_stone_brick_stairs_from_end_stone_brick_stonecutting")
+            public val END_STONE_BRICK_STAIRS_FROM_END_STONE_BRICKS_STONECUTTING: Key =
+                key("recipes/building_blocks/end_stone_brick_stairs_from_end_stone_bricks_stonecutting")
 
             @JvmField
             public val END_STONE_BRICK_STAIRS_FROM_END_STONE_STONECUTTING: Key =
@@ -1241,16 +1293,16 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/mossy_stone_brick_slab")
 
             @JvmField
-            public val MOSSY_STONE_BRICK_SLAB_FROM_MOSSY_STONE_BRICK_STONECUTTING: Key =
-                key("recipes/building_blocks/mossy_stone_brick_slab_from_mossy_stone_brick_stonecutting")
+            public val MOSSY_STONE_BRICK_SLAB_FROM_MOSSY_STONE_BRICKS_STONECUTTING: Key =
+                key("recipes/building_blocks/mossy_stone_brick_slab_from_mossy_stone_bricks_stonecutting")
 
             @JvmField
             public val MOSSY_STONE_BRICK_STAIRS: Key =
                 key("recipes/building_blocks/mossy_stone_brick_stairs")
 
             @JvmField
-            public val MOSSY_STONE_BRICK_STAIRS_FROM_MOSSY_STONE_BRICK_STONECUTTING: Key =
-                key("recipes/building_blocks/mossy_stone_brick_stairs_from_mossy_stone_brick_stonecutting")
+            public val MOSSY_STONE_BRICK_STAIRS_FROM_MOSSY_STONE_BRICKS_STONECUTTING: Key =
+                key("recipes/building_blocks/mossy_stone_brick_stairs_from_mossy_stone_bricks_stonecutting")
 
             @JvmField
             public val MOSSY_STONE_BRICKS_FROM_MOSS_BLOCK: Key =
@@ -1527,12 +1579,20 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/polished_deepslate_from_cobbled_deepslate_stonecutting")
 
             @JvmField
+            public val POLISHED_DEEPSLATE_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/polished_deepslate_from_deepslate_stonecutting")
+
+            @JvmField
             public val POLISHED_DEEPSLATE_SLAB: Key =
                 key("recipes/building_blocks/polished_deepslate_slab")
 
             @JvmField
             public val POLISHED_DEEPSLATE_SLAB_FROM_COBBLED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/building_blocks/polished_deepslate_slab_from_cobbled_deepslate_stonecutting")
+
+            @JvmField
+            public val POLISHED_DEEPSLATE_SLAB_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/polished_deepslate_slab_from_deepslate_stonecutting")
 
             @JvmField
             public val POLISHED_DEEPSLATE_SLAB_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
@@ -1545,6 +1605,10 @@ public object VanillaAdvancementKeys {
             @JvmField
             public val POLISHED_DEEPSLATE_STAIRS_FROM_COBBLED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/building_blocks/polished_deepslate_stairs_from_cobbled_deepslate_stonecutting")
+
+            @JvmField
+            public val POLISHED_DEEPSLATE_STAIRS_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/building_blocks/polished_deepslate_stairs_from_deepslate_stonecutting")
 
             @JvmField
             public val POLISHED_DEEPSLATE_STAIRS_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
@@ -1650,16 +1714,16 @@ public object VanillaAdvancementKeys {
                 key("recipes/building_blocks/prismarine_brick_slab")
 
             @JvmField
-            public val PRISMARINE_BRICK_SLAB_FROM_PRISMARINE_STONECUTTING: Key =
-                key("recipes/building_blocks/prismarine_brick_slab_from_prismarine_stonecutting")
+            public val PRISMARINE_BRICK_SLAB_FROM_PRISMARINE_BRICKS_STONECUTTING: Key =
+                key("recipes/building_blocks/prismarine_brick_slab_from_prismarine_bricks_stonecutting")
 
             @JvmField
             public val PRISMARINE_BRICK_STAIRS: Key =
                 key("recipes/building_blocks/prismarine_brick_stairs")
 
             @JvmField
-            public val PRISMARINE_BRICK_STAIRS_FROM_PRISMARINE_STONECUTTING: Key =
-                key("recipes/building_blocks/prismarine_brick_stairs_from_prismarine_stonecutting")
+            public val PRISMARINE_BRICK_STAIRS_FROM_PRISMARINE_BRICKS_STONECUTTING: Key =
+                key("recipes/building_blocks/prismarine_brick_stairs_from_prismarine_bricks_stonecutting")
 
             @JvmField
             public val PRISMARINE_BRICKS: Key = key("recipes/building_blocks/prismarine_bricks")
@@ -1734,8 +1798,8 @@ public object VanillaAdvancementKeys {
             public val QUARTZ_SLAB: Key = key("recipes/building_blocks/quartz_slab")
 
             @JvmField
-            public val QUARTZ_SLAB_FROM_STONECUTTING: Key =
-                key("recipes/building_blocks/quartz_slab_from_stonecutting")
+            public val QUARTZ_SLAB_FROM_QUARTZ_BLOCK_STONECUTTING: Key =
+                key("recipes/building_blocks/quartz_slab_from_quartz_block_stonecutting")
 
             @JvmField
             public val QUARTZ_STAIRS: Key = key("recipes/building_blocks/quartz_stairs")
@@ -3007,11 +3071,19 @@ public object VanillaAdvancementKeys {
                 key("recipes/decorations/cobbled_deepslate_wall_from_cobbled_deepslate_stonecutting")
 
             @JvmField
+            public val COBBLED_DEEPSLATE_WALL_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/decorations/cobbled_deepslate_wall_from_deepslate_stonecutting")
+
+            @JvmField
             public val COBBLESTONE_WALL: Key = key("recipes/decorations/cobblestone_wall")
 
             @JvmField
             public val COBBLESTONE_WALL_FROM_COBBLESTONE_STONECUTTING: Key =
                 key("recipes/decorations/cobblestone_wall_from_cobblestone_stonecutting")
+
+            @JvmField
+            public val COBBLESTONE_WALL_FROM_STONE_STONECUTTING: Key =
+                key("recipes/decorations/cobblestone_wall_from_stone_stonecutting")
 
             @JvmField
             public val COMPOSTER: Key = key("recipes/decorations/composter")
@@ -3100,6 +3172,10 @@ public object VanillaAdvancementKeys {
                 key("recipes/decorations/deepslate_brick_wall_from_deepslate_bricks_stonecutting")
 
             @JvmField
+            public val DEEPSLATE_BRICK_WALL_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/decorations/deepslate_brick_wall_from_deepslate_stonecutting")
+
+            @JvmField
             public val DEEPSLATE_BRICK_WALL_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/decorations/deepslate_brick_wall_from_polished_deepslate_stonecutting")
 
@@ -3113,6 +3189,10 @@ public object VanillaAdvancementKeys {
             @JvmField
             public val DEEPSLATE_TILE_WALL_FROM_DEEPSLATE_BRICKS_STONECUTTING: Key =
                 key("recipes/decorations/deepslate_tile_wall_from_deepslate_bricks_stonecutting")
+
+            @JvmField
+            public val DEEPSLATE_TILE_WALL_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/decorations/deepslate_tile_wall_from_deepslate_stonecutting")
 
             @JvmField
             public val DEEPSLATE_TILE_WALL_FROM_DEEPSLATE_TILES_STONECUTTING: Key =
@@ -3238,8 +3318,8 @@ public object VanillaAdvancementKeys {
             public val END_STONE_BRICK_WALL: Key = key("recipes/decorations/end_stone_brick_wall")
 
             @JvmField
-            public val END_STONE_BRICK_WALL_FROM_END_STONE_BRICK_STONECUTTING: Key =
-                key("recipes/decorations/end_stone_brick_wall_from_end_stone_brick_stonecutting")
+            public val END_STONE_BRICK_WALL_FROM_END_STONE_BRICKS_STONECUTTING: Key =
+                key("recipes/decorations/end_stone_brick_wall_from_end_stone_bricks_stonecutting")
 
             @JvmField
             public val END_STONE_BRICK_WALL_FROM_END_STONE_STONECUTTING: Key =
@@ -3262,6 +3342,9 @@ public object VanillaAdvancementKeys {
 
             @JvmField
             public val GLOW_ITEM_FRAME: Key = key("recipes/decorations/glow_item_frame")
+
+            @JvmField
+            public val GOLDEN_DANDELION: Key = key("recipes/decorations/golden_dandelion")
 
             @JvmField
             public val GRANITE_WALL: Key = key("recipes/decorations/granite_wall")
@@ -3504,8 +3587,8 @@ public object VanillaAdvancementKeys {
                 key("recipes/decorations/mossy_stone_brick_wall")
 
             @JvmField
-            public val MOSSY_STONE_BRICK_WALL_FROM_MOSSY_STONE_BRICK_STONECUTTING: Key =
-                key("recipes/decorations/mossy_stone_brick_wall_from_mossy_stone_brick_stonecutting")
+            public val MOSSY_STONE_BRICK_WALL_FROM_MOSSY_STONE_BRICKS_STONECUTTING: Key =
+                key("recipes/decorations/mossy_stone_brick_wall_from_mossy_stone_bricks_stonecutting")
 
             @JvmField
             public val MUD_BRICK_WALL: Key = key("recipes/decorations/mud_brick_wall")
@@ -3643,6 +3726,10 @@ public object VanillaAdvancementKeys {
             @JvmField
             public val POLISHED_DEEPSLATE_WALL_FROM_COBBLED_DEEPSLATE_STONECUTTING: Key =
                 key("recipes/decorations/polished_deepslate_wall_from_cobbled_deepslate_stonecutting")
+
+            @JvmField
+            public val POLISHED_DEEPSLATE_WALL_FROM_DEEPSLATE_STONECUTTING: Key =
+                key("recipes/decorations/polished_deepslate_wall_from_deepslate_stonecutting")
 
             @JvmField
             public val POLISHED_DEEPSLATE_WALL_FROM_POLISHED_DEEPSLATE_STONECUTTING: Key =
@@ -3794,8 +3881,8 @@ public object VanillaAdvancementKeys {
                 key("recipes/decorations/stone_brick_wall_from_stone_bricks_stonecutting")
 
             @JvmField
-            public val STONE_BRICK_WALLS_FROM_STONE_STONECUTTING: Key =
-                key("recipes/decorations/stone_brick_walls_from_stone_stonecutting")
+            public val STONE_BRICK_WALL_FROM_STONE_STONECUTTING: Key =
+                key("recipes/decorations/stone_brick_wall_from_stone_stonecutting")
 
             @JvmField
             public val STONECUTTER: Key = key("recipes/decorations/stonecutter")
@@ -4047,6 +4134,10 @@ public object VanillaAdvancementKeys {
             @JvmField
             public val SUSPICIOUS_STEW_FROM_DANDELION: Key =
                 key("recipes/food/suspicious_stew_from_dandelion")
+
+            @JvmField
+            public val SUSPICIOUS_STEW_FROM_GOLDEN_DANDELION: Key =
+                key("recipes/food/suspicious_stew_from_golden_dandelion")
 
             @JvmField
             public val SUSPICIOUS_STEW_FROM_LILY_OF_THE_VALLEY: Key =
@@ -4446,7 +4537,22 @@ public object VanillaAdvancementKeys {
             public val LEATHER: Key = key("recipes/misc/leather")
 
             @JvmField
+            public val LEATHER_BOOTS_DYED: Key = key("recipes/misc/leather_boots_dyed")
+
+            @JvmField
+            public val LEATHER_CHESTPLATE_DYED: Key = key("recipes/misc/leather_chestplate_dyed")
+
+            @JvmField
+            public val LEATHER_HELMET_DYED: Key = key("recipes/misc/leather_helmet_dyed")
+
+            @JvmField
             public val LEATHER_HORSE_ARMOR: Key = key("recipes/misc/leather_horse_armor")
+
+            @JvmField
+            public val LEATHER_HORSE_ARMOR_DYED: Key = key("recipes/misc/leather_horse_armor_dyed")
+
+            @JvmField
+            public val LEATHER_LEGGINGS_DYED: Key = key("recipes/misc/leather_leggings_dyed")
 
             @JvmField
             public val LIGHT_BLUE_DYE_FROM_BLUE_ORCHID: Key =
@@ -4502,6 +4608,9 @@ public object VanillaAdvancementKeys {
 
             @JvmField
             public val MAP: Key = key("recipes/misc/map")
+
+            @JvmField
+            public val MAP_CLONING: Key = key("recipes/misc/map_cloning")
 
             @JvmField
             public val MELON_SEEDS: Key = key("recipes/misc/melon_seeds")
@@ -4695,6 +4804,9 @@ public object VanillaAdvancementKeys {
                 key("recipes/misc/tide_armor_trim_smithing_template_smithing_trim")
 
             @JvmField
+            public val TIPPED_ARROW: Key = key("recipes/misc/tipped_arrow")
+
+            @JvmField
             public val VEX_ARMOR_TRIM_SMITHING_TEMPLATE: Key =
                 key("recipes/misc/vex_armor_trim_smithing_template")
 
@@ -4740,11 +4852,18 @@ public object VanillaAdvancementKeys {
             public val WIND_CHARGE: Key = key("recipes/misc/wind_charge")
 
             @JvmField
+            public val WOLF_ARMOR_DYED: Key = key("recipes/misc/wolf_armor_dyed")
+
+            @JvmField
             public val WRITABLE_BOOK: Key = key("recipes/misc/writable_book")
 
             @JvmField
             public val YELLOW_DYE_FROM_DANDELION: Key =
                 key("recipes/misc/yellow_dye_from_dandelion")
+
+            @JvmField
+            public val YELLOW_DYE_FROM_GOLDEN_DANDELION: Key =
+                key("recipes/misc/yellow_dye_from_golden_dandelion")
 
             @JvmField
             public val YELLOW_DYE_FROM_SUNFLOWER: Key =
@@ -5240,6 +5359,9 @@ public object VanillaAdvancementKeys {
 
             @JvmField
             public val MAGENTA_BUNDLE: Key = key("recipes/tools/magenta_bundle")
+
+            @JvmField
+            public val NAME_TAG: Key = key("recipes/tools/name_tag")
 
             @JvmField
             public val NETHERITE_AXE_SMITHING: Key = key("recipes/tools/netherite_axe_smithing")
