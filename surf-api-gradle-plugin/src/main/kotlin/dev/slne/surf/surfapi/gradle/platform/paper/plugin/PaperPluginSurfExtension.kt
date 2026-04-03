@@ -18,7 +18,7 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
     internal val serverDependencies =
         objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
     internal val runServer = objects.property<Action<RunServer>>()
-    internal val foliaSupported = objects.property<Boolean>().convention(false)
+    internal val foliaSupported = objects.property<Boolean>().convention(true)
     internal val generateLibraryLoader = objects.property<Boolean>().convention(false)
 
     fun mainClass(mainClass: String) {
