@@ -6,7 +6,7 @@ import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager.Compani
 import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager.Companion.yaml
 import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigration
 import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigrationBuilder
-import dev.slne.surf.surfapi.core.api.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.surfapi.core.api.config.serializer.surfSpongeConfigSerializers
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
@@ -130,7 +130,10 @@ class SpongeConfigManager<C> private constructor(
      * @param migration the migration lambda
      * @return this manager for chaining
      */
-    inline fun addMigration(version: Int, crossinline migration: (ConfigurationNode) -> Unit): SpongeConfigManager<C> {
+    inline fun addMigration(
+        version: Int,
+        crossinline migration: (ConfigurationNode) -> Unit
+    ): SpongeConfigManager<C> {
         return addMigration(version, ConfigMigration { node -> migration(node) })
     }
 
@@ -226,7 +229,7 @@ class SpongeConfigManager<C> private constructor(
         ): SpongeConfigManager<C> {
             val loader = builder.path(configFolder.resolve(configFileName))
                 .defaultOptions {
-                    it.serializers(SpongeConfigSerializers.SERIALIZERS)
+                    it.serializers(surfSpongeConfigSerializers.buildSerializersModule())
                         .shouldCopyDefaults(true)
                 }
                 .build()

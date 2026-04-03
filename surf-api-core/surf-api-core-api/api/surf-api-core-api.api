@@ -333,10 +333,15 @@ public final class dev/slne/surf/surfapi/core/api/config/serializer/DefaultDazzl
 	public final fun getMiniMessage ()Lnet/kyori/adventure/text/minimessage/MiniMessage;
 }
 
-public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers {
-	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers;
-	public final fun getSERIALIZERS ()Ljava/util/function/Consumer;
-	public final fun setSERIALIZERS (Ljava/util/function/Consumer;)V
+public abstract class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers {
+	public fun <init> ()V
+	public final fun buildSerializersModule ()Ljava/util/function/Consumer;
+	public final fun getClassSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
+	public final fun getTypeTokenSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
+	public final fun registerClassSerializer (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
+	public final fun registerTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
+	public final fun unregisterSerializer (Ljava/lang/Class;)V
+	public final fun unregisterTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;)V
 }
 
 public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers$ComponentSerializer : org/spongepowered/configurate/serialize/TypeSerializer {
@@ -357,6 +362,10 @@ public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfig
 
 public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers$LinkedListSerializer$Companion {
 	public final fun getTYPE ()Lio/leangen/geantyref/TypeToken;
+}
+
+public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializersKt {
+	public static final fun getSurfSpongeConfigSerializers ()Ldev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers;
 }
 
 public final class dev/slne/surf/surfapi/core/api/extensions/Packet_eventsKt {
