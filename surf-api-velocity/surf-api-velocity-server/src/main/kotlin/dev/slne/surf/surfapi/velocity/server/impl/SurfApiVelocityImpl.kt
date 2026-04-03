@@ -6,7 +6,7 @@ import dev.slne.surf.surfapi.core.api.SurfApiCore
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
 import dev.slne.surf.surfapi.core.server.impl.SurfApiCoreImpl
 import dev.slne.surf.surfapi.velocity.api.SurfApiVelocity
-import dev.slne.surf.surfapi.velocity.server.velocityMain
+import dev.slne.surf.surfapi.velocity.server.plugin
 import java.util.*
 
 
@@ -16,16 +16,16 @@ class SurfApiVelocityImpl : SurfApiCoreImpl(), SurfApiVelocity {
         checkInstantiationByServiceLoader()
     }
 
-    override val executorService get() = velocityMain.executorService
+    override val executorService get() = plugin.executorService
 
     override fun sendPlayerToServer(playerUuid: UUID, server: String) {
 
-        val proxy = velocityMain.server
+        val proxy = plugin.server
         proxy.getPlayer(playerUuid).ifPresent { player ->
             proxy.getServer(server).ifPresent { server -> player.createConnectionRequest(server) }
         }
     }
 
     override fun getPlayer(playerUuid: UUID): Player =
-        velocityMain.server.getPlayer(playerUuid).orElse(null)
+        plugin.server.getPlayer(playerUuid).orElse(null)
 }

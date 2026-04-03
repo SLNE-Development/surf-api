@@ -3,7 +3,7 @@ package dev.slne.surf.surfapi.velocity.server.component
 import com.google.auto.service.AutoService
 import com.velocitypowered.api.plugin.PluginContainer
 import dev.slne.surf.surfapi.core.server.component.ComponentService
-import dev.slne.surf.surfapi.velocity.server.velocityMain
+import dev.slne.surf.surfapi.velocity.server.plugin
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.nio.file.Path
 import kotlin.contracts.ExperimentalContracts
@@ -22,7 +22,7 @@ class VelocityComponentService : ComponentService() {
     }
 
     override fun isPluginLoaded(pluginId: String): Boolean {
-        return velocityMain.server.pluginManager.isLoaded(pluginId)
+        return plugin.server.pluginManager.isLoaded(pluginId)
     }
 
     override fun getLogger(owner: Any): ComponentLogger {

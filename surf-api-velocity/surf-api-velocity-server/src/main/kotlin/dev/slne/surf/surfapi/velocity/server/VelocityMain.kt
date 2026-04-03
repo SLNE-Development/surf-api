@@ -57,4 +57,4 @@ class VelocityMain @Inject constructor(
     }
 }
 
-val velocityMain get() = VelocityMain.instance
+val plugin get() = VelocityMain.instance
