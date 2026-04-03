@@ -49,6 +49,25 @@ public final class dev/slne/surf/surfapi/core/api/collection/TransformingObjectS
 	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
 }
 
+public final class dev/slne/surf/surfapi/core/api/collection/TransformingSet2ObjectSet : it/unimi/dsi/fastutil/objects/ObjectSet {
+	public fun <init> (Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public fun add (Ljava/lang/Object;)Z
+	public fun addAll (Ljava/util/Collection;)Z
+	public fun clear ()V
+	public fun contains (Ljava/lang/Object;)Z
+	public fun containsAll (Ljava/util/Collection;)Z
+	public fun getSize ()I
+	public fun isEmpty ()Z
+	public fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+	public synthetic fun iterator ()Ljava/util/Iterator;
+	public fun remove (Ljava/lang/Object;)Z
+	public fun removeAll (Ljava/util/Collection;)Z
+	public fun retainAll (Ljava/util/Collection;)Z
+	public final fun size ()I
+	public fun toArray ()[Ljava/lang/Object;
+	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
+}
+
 public final class dev/slne/surf/surfapi/core/api/command/SurfCommandUtil {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/command/SurfCommandUtil;
 	public static final fun createException (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/surfapi/core/api/command/exception/WrapperCommandExceptionComponent;
@@ -133,9 +152,13 @@ public abstract class dev/slne/surf/surfapi/core/api/config/SpongeConfigClass {
 	protected final fun getConfigFolder ()Ljava/nio/file/Path;
 	protected final fun getFileName ()Ljava/lang/String;
 	public abstract fun getManager ()Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	protected final fun getMigrationBuilder ()Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;
 	public final fun init ()V
+	protected final fun migration (ILdev/slne/surf/surfapi/core/api/config/migration/ConfigMigration;)V
+	protected final fun migration (ILkotlin/jvm/functions/Function1;)V
 	public final fun reloadFromFile ()Ljava/lang/Object;
 	public final fun save ()V
+	protected final fun versionKey ([Ljava/lang/Object;)V
 }
 
 public abstract class dev/slne/surf/surfapi/core/api/config/SpongeJsonConfigClass : dev/slne/surf/surfapi/core/api/config/SpongeConfigClass {
@@ -152,9 +175,11 @@ public abstract interface class dev/slne/surf/surfapi/core/api/config/SurfConfig
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi$Companion;
 	public abstract fun createDazzlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
 	public abstract fun createSpongeJsonConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
-	public abstract fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public abstract fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
 	public abstract fun createSpongeYmlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
-	public abstract fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public abstract fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
 	public abstract fun getDazzlConfig (Ljava/lang/Class;)Ljava/lang/Object;
 	public abstract fun getSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
 	public abstract fun getSpongeConfigManagerForConfig (Ljava/lang/Class;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
@@ -166,8 +191,10 @@ public final class dev/slne/surf/surfapi/core/api/config/SurfConfigApi$Companion
 	public fun createDazzlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
 	public fun createSpongeJsonConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
 	public fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
 	public fun createSpongeYmlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
 	public fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
 	public fun getDazzlConfig (Ljava/lang/Class;)Ljava/lang/Object;
 	public final fun getInstance ()Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi;
 	public fun getSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
@@ -176,7 +203,14 @@ public final class dev/slne/surf/surfapi/core/api/config/SurfConfigApi$Companion
 	public fun reloadSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
 }
 
+public final class dev/slne/surf/surfapi/core/api/config/SurfConfigApi$DefaultImpls {
+	public static fun createSpongeJsonConfigManager (Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public static fun createSpongeYmlConfigManager (Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+}
+
 public final class dev/slne/surf/surfapi/core/api/config/SurfConfigApiKt {
+	public static final synthetic fun createSpongeJsonConfigManager (Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public static final synthetic fun createSpongeYmlConfigManager (Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
 	public static final fun getSurfConfigApi ()Ldev/slne/surf/surfapi/core/api/config/SurfConfigApi;
 }
 
@@ -224,16 +258,58 @@ public final class dev/slne/surf/surfapi/core/api/config/manager/SerializationCo
 public final class dev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager {
 	public static final field Companion Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager$Companion;
 	public field config Ljava/lang/Object;
-	public synthetic fun <init> (Ljava/lang/Class;Ljava/lang/Object;Lorg/spongepowered/configurate/loader/ConfigurationLoader;Lorg/spongepowered/configurate/ConfigurationNode;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/Class;Ljava/lang/Object;Lorg/spongepowered/configurate/loader/ConfigurationLoader;Lorg/spongepowered/configurate/ConfigurationNode;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addMigration (ILdev/slne/surf/surfapi/core/api/config/migration/ConfigMigration;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public final fun addMigration (ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
 	public final fun edit (ZLkotlin/jvm/functions/Function1;)V
 	public static synthetic fun edit$default (Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun migrations ()Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;
 	public final fun reloadFromFile ()Ljava/lang/Object;
 	public final fun save ()V
 }
 
 public final class dev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager$Companion {
 	public final fun json (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public final fun json (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public static synthetic fun json$default (Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager$Companion;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
 	public final fun yaml (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public final fun yaml (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+	public static synthetic fun yaml$default (Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager$Companion;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/config/manager/SpongeConfigManager;
+}
+
+public abstract interface class dev/slne/surf/surfapi/core/api/config/migration/ConfigMigration {
+	public abstract fun migrate (Lorg/spongepowered/configurate/ConfigurationNode;)V
+}
+
+public final class dev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder$Companion;
+	public static final field DEFAULT_VERSION_KEY Ljava/lang/String;
+	public fun <init> ()V
+	public final fun buildTransformation ()Lorg/spongepowered/configurate/transformation/ConfigurationTransformation$Versioned;
+	public final fun hasMigrations ()Z
+	public final fun latestVersion ()I
+	public final fun migrate (Lorg/spongepowered/configurate/ConfigurationNode;)Ldev/slne/surf/surfapi/core/api/config/migration/MigrationResult;
+	public final fun migration (ILdev/slne/surf/surfapi/core/api/config/migration/ConfigMigration;)Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;
+	public final fun migration (ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;
+	public final fun versionKey ([Ljava/lang/Object;)Ldev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder;
+}
+
+public final class dev/slne/surf/surfapi/core/api/config/migration/ConfigMigrationBuilder$Companion {
+}
+
+public final class dev/slne/surf/surfapi/core/api/config/migration/MigrationResult {
+	public fun <init> (IIZ)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Z
+	public final fun copy (IIZ)Ldev/slne/surf/surfapi/core/api/config/migration/MigrationResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/core/api/config/migration/MigrationResult;IIZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/config/migration/MigrationResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFromVersion ()I
+	public final fun getMigrated ()Z
+	public final fun getToVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/slne/surf/surfapi/core/api/config/serializer/DefaultDazzlConfSerializers {
@@ -257,10 +333,15 @@ public final class dev/slne/surf/surfapi/core/api/config/serializer/DefaultDazzl
 	public final fun getMiniMessage ()Lnet/kyori/adventure/text/minimessage/MiniMessage;
 }
 
-public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers {
-	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers;
-	public final fun getSERIALIZERS ()Ljava/util/function/Consumer;
-	public final fun setSERIALIZERS (Ljava/util/function/Consumer;)V
+public abstract class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers {
+	public fun <init> ()V
+	public final fun buildSerializersModule ()Ljava/util/function/Consumer;
+	public final fun getClassSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
+	public final fun getTypeTokenSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
+	public final fun registerClassSerializer (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
+	public final fun registerTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
+	public final fun unregisterSerializer (Ljava/lang/Class;)V
+	public final fun unregisterTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;)V
 }
 
 public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers$ComponentSerializer : org/spongepowered/configurate/serialize/TypeSerializer {
@@ -283,8 +364,14 @@ public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfig
 	public final fun getTYPE ()Lio/leangen/geantyref/TypeToken;
 }
 
+public final class dev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializersKt {
+	public static final fun getSurfSpongeConfigSerializers ()Ldev/slne/surf/surfapi/core/api/config/serializer/SpongeConfigSerializers;
+}
+
 public final class dev/slne/surf/surfapi/core/api/extensions/Packet_eventsKt {
 	public static final fun getPacketEvents ()Lcom/github/retrooper/packetevents/PacketEventsAPI;
+	public static final fun sendPacket (Lcom/github/retrooper/packetevents/wrapper/PacketWrapper;Ljava/lang/Object;)V
+	public static final fun sendPacket (Lcom/github/retrooper/packetevents/wrapper/PacketWrapper;Ljava/util/UUID;)V
 }
 
 public final class dev/slne/surf/surfapi/core/api/font/Small_capsKt {
@@ -6452,6 +6539,44 @@ public final class dev/slne/surf/surfapi/core/api/generated/VanillaAdvancementKe
 	public static final field UPGRADE_TOOLS Lnet/kyori/adventure/key/Key;
 }
 
+public final class dev/slne/surf/surfapi/core/api/invoker/HiddenInvokerUtil {
+	public static fun isSuspendFunction (Ljava/lang/reflect/Method;)Z
+	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/surfapi/core/api/invoker/InvokerClassData;
+	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/surfapi/core/api/invoker/InvokerClassData;
+	public static fun loadClassDataWithAutoSuspend (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/surfapi/core/api/invoker/InvokerClassData;
+	public static fun sneakyThrow (Ljava/lang/Throwable;)V
+}
+
+public final class dev/slne/surf/surfapi/core/api/invoker/InvokerClassData : java/lang/Record {
+	public fun <init> (Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandle;Ljava/lang/Class;Z)V
+	public final fun equals (Ljava/lang/Object;)Z
+	public final fun hashCode ()I
+	public fun isSuspend ()Z
+	public fun method ()Ljava/lang/reflect/Method;
+	public fun methodHandle ()Ljava/lang/invoke/MethodHandle;
+	public fun payloadClass ()Ljava/lang/Class;
+	public final fun toString ()Ljava/lang/String;
+}
+
+public class dev/slne/surf/surfapi/core/api/invoker/InvokerFactory {
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;)V
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/invoke/MethodHandles$Lookup;)V
+	public fun canAccess (Ljava/lang/Object;Ljava/lang/reflect/Method;)Z
+	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/Object;
+	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;Z)Ljava/lang/Object;
+	public fun getLookup ()Ljava/lang/invoke/MethodHandles$Lookup;
+	public fun getTemplateClassBytes ()[B
+}
+
+public final class dev/slne/surf/surfapi/core/api/invoker/SuspendInvokerSupport {
+	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/invoker/SuspendInvokerSupport;
+	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;)V
+	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun invokeSuspend$default (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun invokeSuspendDirect (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun invokeSuspendDirect$default (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class dev/slne/surf/surfapi/core/api/math/VoxelLineTracer {
 	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/math/VoxelLineTracer;
 	public final fun trace (Lorg/spongepowered/math/vector/Vector3d;Lorg/spongepowered/math/vector/Vector3d;)Lkotlin/sequences/Sequence;
@@ -6677,6 +6802,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/adventure/Audience_ex
 	public static final fun openBook (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun playSound (Lnet/kyori/adventure/audience/Audience;ZLkotlin/jvm/functions/Function1;)V
+	public static final fun sendActionBar (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun sendText (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showBossBar (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
 	public static final fun showTitle (Lnet/kyori/adventure/audience/Audience;Lkotlin/jvm/functions/Function1;)V
@@ -7073,6 +7199,8 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;ZLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun translatable (Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun translatable$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 }
 
 public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder$Companion {
@@ -7215,6 +7343,8 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun text$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;ZLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun translatable (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun translatable$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun variableKey (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun variableKey (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun variableKey (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -10605,6 +10735,43 @@ public final class dev/slne/surf/surfapi/core/api/util/ParticleFactory$Companion
 	public final fun of (Lcom/github/retrooper/packetevents/protocol/particle/type/ParticleType;Lcom/github/retrooper/packetevents/protocol/world/states/WrappedBlockState;)Lcom/github/retrooper/packetevents/protocol/particle/Particle;
 	public final fun of (Lcom/github/retrooper/packetevents/protocol/particle/type/ParticleType;Lcom/github/retrooper/packetevents/util/Vector3i;II)Lcom/github/retrooper/packetevents/protocol/particle/Particle;
 	public final fun of (Lcom/github/retrooper/packetevents/protocol/particle/type/ParticleType;Lcom/github/retrooper/packetevents/util/Vector3i;Lcom/github/retrooper/packetevents/util/Vector3i;I)Lcom/github/retrooper/packetevents/protocol/particle/Particle;
+}
+
+public final class dev/slne/surf/surfapi/core/api/util/SerializableError {
+	public static final field Companion Ldev/slne/surf/surfapi/core/api/util/SerializableError$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/util/SerializableError;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/util/SerializableError;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun buildFakeThrowable ()Ljava/lang/Throwable;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ldev/slne/surf/surfapi/core/api/util/SerializableError;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/util/SerializableError;)Ldev/slne/surf/surfapi/core/api/util/SerializableError;
+	public static synthetic fun copy$default (Ldev/slne/surf/surfapi/core/api/util/SerializableError;Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/surfapi/core/api/util/SerializableError;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/util/SerializableError;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ldev/slne/surf/surfapi/core/api/util/SerializableError;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/slne/surf/surfapi/core/api/util/SerializableError$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/slne/surf/surfapi/core/api/util/SerializableError$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/slne/surf/surfapi/core/api/util/SerializableError;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/slne/surf/surfapi/core/api/util/SerializableError;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/surfapi/core/api/util/SerializableError$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/surfapi/core/api/util/SerializableErrorKt {
+	public static final fun toSerializableError (Ljava/lang/Throwable;)Ldev/slne/surf/surfapi/core/api/util/SerializableError;
 }
 
 public abstract class dev/slne/surf/surfapi/core/api/util/SurfTypeParameterMatcher {

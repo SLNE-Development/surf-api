@@ -32,7 +32,9 @@ import java.util.concurrent.CompletableFuture
 abstract class SuspendCustomArgument<T, B>(
     private val base: Argument<B>,
     private val scope: CoroutineScope = defaultScope
-) : Argument<Deferred<T>>(base.nodeName, base.rawType) {
+) : Argument<Deferred<T>>(base.nodeName, {
+    base.rawType
+}) {
     private val primitiveType by lazy { object : TypeToken<Deferred<T>>(javaClass) {} }
 
     override fun instance() = this
@@ -42,7 +44,10 @@ abstract class SuspendCustomArgument<T, B>(
 
     protected abstract inner class SuspendArgumentSuggestions : ArgumentSuggestions<CommandSource> {
         @Throws(CommandSyntaxException::class)
-        abstract suspend fun CoroutineScope.suggest(info: SuggestionInfo<CommandSource>, builder: SuggestionsBuilder)
+        abstract suspend fun CoroutineScope.suggest(
+            info: SuggestionInfo<CommandSource>,
+            builder: SuggestionsBuilder
+        )
 
         final override fun suggest(
             info: SuggestionInfo<CommandSource>,

@@ -5,9 +5,11 @@ import dev.slne.surf.surfapi.bukkit.api.nms.listener.packets.NmsPacket;
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListenerResult;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 @NmsUseWithCaution
+@NullMarked
 public interface NmsServerboundPacketListener<Packet extends NmsPacket> extends
         NmsPacketListener<Packet> {
 

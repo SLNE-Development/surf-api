@@ -14,7 +14,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.ParsingException
 
 open class MiniMessageArgument(nodeName: String) :
-    Argument<Component>(nodeName, StringArgumentType.string()) {
+    Argument<Component>(nodeName, StringArgumentType::string) {
     override fun getPrimitiveType(): Class<Component> {
         return Component::class.java
     }

@@ -13,7 +13,7 @@ plugins {
     `kotlin-dsl`
     `java-toolchain-convention`
 
-    id("com.gradle.plugin-publish") version "2.1.0"
+    id("com.gradle.plugin-publish") version "2.1.1"
     kotlin("plugin.serialization")
     idea
 }
@@ -21,7 +21,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.13.2")
+    append("-1.13.3")
     if (snapshot) append("-SNAPSHOT")
 }
 

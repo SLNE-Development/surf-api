@@ -115,10 +115,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         }
 
         if (constructorAnnotation != null) {
-            final var handle = sneaky(
-                    () -> privateLookup.unreflectConstructor(findConstructor(proxiedClass, method)));
-            final boolean hasParams = handle.type().parameterCount() > 0;
-            return new HandleInvokable(normalizeMethodHandleType(handle), hasParams);
+            return new ConstructorInvokable(proxiedClass, method, privateLookup);
         }
 
         if (staticAnnotation == null && method.getParameterCount() == 0) {
@@ -228,11 +225,132 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         return field;
     }
 
-    private static Constructor<?> findConstructor(final Class<?> clazz, final Method method)
-            throws NoSuchMethodException {
-        final Constructor<?> constructor = clazz.getDeclaredConstructor(method.getParameterTypes());
-        constructor.setAccessible(true);
-        return constructor;
+    private static Constructor<?> findConstructor(
+            final Class<?> clazz,
+            final Method method,
+            final Object[] args
+    ) throws NoSuchMethodException {
+
+        final Class<?>[] declaredTypes = method.getParameterTypes();
+
+        try {
+            final Constructor<?> exact = clazz.getDeclaredConstructor(declaredTypes);
+            exact.trySetAccessible();
+            return exact;
+        } catch (final NoSuchMethodException ignored) {
+        }
+
+        final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+        Constructor<?> best = null;
+        int bestScore = Integer.MIN_VALUE;
+
+        for (final Constructor<?> constructor : constructors) {
+            final Class<?>[] ctorTypes = constructor.getParameterTypes();
+
+            if (ctorTypes.length != declaredTypes.length) {
+                continue;
+            }
+
+            final int score = scoreExecutableMatch(ctorTypes, declaredTypes, args);
+            if (score > bestScore) {
+                best = constructor;
+                bestScore = score;
+            }
+        }
+
+        if (best == null) {
+            throw new NoSuchMethodException(
+                    "No compatible constructor found for " + clazz.getName()
+                            + " with declared parameters " + Arrays.toString(declaredTypes)
+                            + " and runtime arguments " + runtimeTypesToString(args)
+            );
+        }
+
+        best.setAccessible(true);
+        return best;
+    }
+
+    private static int scoreExecutableMatch(
+            final Class<?>[] targetTypes,
+            final Class<?>[] declaredTypes,
+            final Object @Nullable [] args
+    ) {
+        int score = 0;
+
+        for (int i = 0; i < targetTypes.length; i++) {
+            final Class<?> target = wrap(targetTypes[i]);
+            final Class<?> declared = wrap(declaredTypes[i]);
+            final Object arg = args != null && i < args.length ? args[i] : null;
+
+            if (arg == null) {
+                if (targetTypes[i].isPrimitive()) {
+                    return Integer.MIN_VALUE;
+                }
+
+                if (declared.equals(target)) {
+                    score += 20;
+                } else if (target.isAssignableFrom(declared)) {
+                    score += 10;
+                } else {
+                    score += 1;
+                }
+                continue;
+            }
+
+            final Class<?> runtime = wrap(arg.getClass());
+
+            if (!target.isAssignableFrom(runtime)) {
+                return Integer.MIN_VALUE;
+            }
+
+            if (target.equals(runtime)) {
+                score += 100;
+            } else if (target.equals(declared)) {
+                score += 50;
+            } else if (target.isAssignableFrom(declared)) {
+                score += 25;
+            } else {
+                score += 10;
+            }
+        }
+
+        return score;
+    }
+
+    private static Class<?> wrap(final Class<?> type) {
+        if (!type.isPrimitive()) {
+            return type;
+        }
+
+        if (type == boolean.class) return Boolean.class;
+        if (type == byte.class) return Byte.class;
+        if (type == short.class) return Short.class;
+        if (type == char.class) return Character.class;
+        if (type == int.class) return Integer.class;
+        if (type == long.class) return Long.class;
+        if (type == float.class) return Float.class;
+        if (type == double.class) return Double.class;
+        if (type == void.class) return Void.class;
+
+        return type;
+    }
+
+    private static String runtimeTypesToString(final @Nullable Object @Nullable [] args) {
+        if (args == null) {
+            return "[]";
+        }
+
+        final StringBuilder builder = new StringBuilder("[");
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+
+            final Object arg = args[i];
+            builder.append(arg == null ? "null" : arg.getClass().getName());
+        }
+        builder.append(']');
+        return builder.toString();
     }
 
     private static Method findMethod(
@@ -348,7 +466,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         return isEqualsMethod(method) || isHashCodeMethod(method) || isToStringMethod(method);
     }
 
-    private sealed interface Invokable permits HandleInvokable, ReflectionSetterInvokable, VarHandleSetterInvokable {
+    private sealed interface Invokable permits ConstructorInvokable, HandleInvokable, ReflectionSetterInvokable, VarHandleSetterInvokable {
 
         @Nullable
         Object invoke(final Object[] args) throws Throwable;
@@ -360,6 +478,27 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         @Override
         public @Nullable Object invoke(final Object[] args) throws Throwable {
             if (hasParams) {
+                return handle.invokeExact(args);
+            } else {
+                return handle.invokeExact();
+            }
+        }
+    }
+
+    private record ConstructorInvokable(
+            Class<?> proxiedClass,
+            Method method,
+            MethodHandles.Lookup privateLookup
+    ) implements Invokable {
+
+        @Override
+        public @Nullable Object invoke(final Object[] args) throws Throwable {
+            final Constructor<?> constructor = findConstructor(proxiedClass, method, args);
+            final MethodHandle handle = normalizeMethodHandleType(
+                    privateLookup.unreflectConstructor(constructor)
+            );
+
+            if (handle.type().parameterCount() > 0) {
                 return handle.invokeExact(args);
             } else {
                 return handle.invokeExact();

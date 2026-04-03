@@ -84,7 +84,15 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         var cancel = false
         for (listener in listener) {
             listener as NmsServerboundPacketListener<Packet>
-            val result = listener.handleEarlyServerboundPacket(packet, player)
+            val result = try {
+                listener.handleEarlyServerboundPacket(packet, player)
+            } catch (e: Throwable) {
+                log.atSevere()
+                    .withCause(e)
+                    .log("Failed to handle serverbound packet $clazz for listener $listener")
+                PacketListenerResult.CONTINUE
+            }
+
             if (result == PacketListenerResult.CANCEL) {
                 cancel = true
             }
@@ -96,7 +104,7 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
     @Suppress("UNCHECKED_CAST")
     fun <Packet : NmsClientboundPacket> handleClientboundPacket(
         packet: Packet,
-        player: Player,
+        player: Player?,
     ): Packet? {
         val listeners = clientboundPacketListeners[packet.packetClass] ?: return packet
 
@@ -105,7 +113,15 @@ class SurfBukkitNmsBridgeImpl : SurfBukkitNmsBridge {
         var cancel = false
         for (listener in listeners) {
             listener as NmsClientboundPacketListener<Packet>
-            val result = listener.handleClientboundPacket(packet, player)
+            val result = try {
+                listener.handleEarlyClientboundPacket(packet, player)
+            } catch (e: Throwable) {
+                log.atSevere()
+                    .withCause(e)
+                    .log("Failed to handle clientbound packet ${packet.packetClass} for listener $listener")
+                PacketListenerResult.CONTINUE
+            }
+
             if (result == PacketListenerResult.CANCEL) {
                 cancel = true
             }

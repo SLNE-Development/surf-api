@@ -11,7 +11,6 @@ dependencies {
     compileOnlyApi(libs.commandapi.paper)
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
-    compileOnlyApi(libs.stefvanschie.`if`)
     api(libs.bundles.inventory.framework)
 
     api(libs.commandapi.bukkit.kotlin)

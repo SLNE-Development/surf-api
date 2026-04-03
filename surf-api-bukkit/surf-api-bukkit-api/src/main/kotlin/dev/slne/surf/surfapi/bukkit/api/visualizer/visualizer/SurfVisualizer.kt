@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.bukkit.block.BlockType
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.UnmodifiableView
+import java.lang.AutoCloseable
 import java.util.*
 
 
@@ -16,7 +17,7 @@ import java.util.*
  * and may be subject to changes in future updates.
  */
 @ExperimentalVisualizerApi
-interface SurfVisualizer {
+interface SurfVisualizer : AutoCloseable {
     /**
      * A unique identifier for the visualizer instance.
      * This identifier is used to distinguish one visualizer object from another.
@@ -52,6 +53,9 @@ interface SurfVisualizer {
      * Modifications to the set directly are not allowed, ensuring consistency
      * with the visualizer's state.
      */
+    val viewerUuids: @UnmodifiableView Set<UUID>
+
+    @Deprecated("Use viewerUuids instead", ReplaceWith("viewerUuids"))
     val viewers: @UnmodifiableView ObjectSet<Player>
 
     /**
@@ -103,6 +107,27 @@ interface SurfVisualizer {
      * aspects like position updates.
      */
     fun update(strategy: UpdateStrategy = UpdateStrategy.ALL)
+
+    /**
+     * Closes the current visualizer instance, releasing any resources or connections
+     * associated with it. This method stops any ongoing visualization activities
+     * and ensures that all registered viewers are cleared.
+     *
+     * Once this method is called, the visualizer transitions into a closed state,
+     * making it unavailable for further operations unless explicitly restarted
+     * or reinitialized.
+     *
+     * Typical usage scenarios include shutting down the visualizer gracefully
+     * or when it is no longer needed.
+     */
+    override fun close()
+
+    /**
+     * Checks whether the visualizer has been closed.
+     *
+     * @return `true` if the visualizer is in a closed state, `false` otherwise.
+     */
+    fun isClosed(): Boolean
 
     /**
      * Companion object for the `SurfVisualizer` interface.

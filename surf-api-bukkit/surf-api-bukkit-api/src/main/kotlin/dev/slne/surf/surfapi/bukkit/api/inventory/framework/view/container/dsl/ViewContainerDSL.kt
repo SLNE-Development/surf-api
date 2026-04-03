@@ -1,8 +1,10 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.dsl
 
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.AbstractSurfViewRef
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewBlockCellComponent
 import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewContainerBackHintComponent
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.component.components.ViewContainerTitleComponent
 import it.unimi.dsi.fastutil.ints.IntCollection
 import it.unimi.dsi.fastutil.ints.IntLists
 
@@ -164,4 +166,28 @@ fun blockColumn(column: Int, exemptRows: IntCollection = IntLists.EMPTY_LIST) {
 context(context: ViewContainerModificationContext)
 fun backHint() {
     addChild(ViewContainerBackHintComponent)
+}
+
+/**
+ * Sets a title header for the [ViewContainer][dev.slne.surf.surfapi.bukkit.api.inventory.framework.view.container.ViewContainer] by removing any existing title component
+ * and adding a new `ViewContainerTitleComponent` with the specified header text.
+ *
+ * @param header The text to set as the title for the container.
+ * @param context Provides access to the container modification API for the current view.
+ * @param ref A deferred reference to the associated view, providing configuration details
+ *            such as font and text alignment settings.
+ */
+context(context: ViewContainerModificationContext, ref: AbstractSurfViewRef)
+fun header(header: String) {
+    removeChildrenOfType<ViewContainerTitleComponent>()
+
+    val settings = ref.getRegisteredView().settings
+    addChild(
+        ViewContainerTitleComponent(
+            header,
+            settings.font,
+            ViewContainerTitleComponent.CHAR_SPACING,
+            settings.headerTextAlignment
+        )
+    )
 }

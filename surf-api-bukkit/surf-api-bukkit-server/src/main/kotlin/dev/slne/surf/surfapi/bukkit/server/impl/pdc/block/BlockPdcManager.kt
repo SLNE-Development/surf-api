@@ -26,15 +26,15 @@ import com.github.shynixn.mccoroutine.folia.globalRegionDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
 import com.github.shynixn.mccoroutine.folia.ticks
 import dev.slne.surf.surfapi.bukkit.server.plugin
-import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import io.papermc.paper.math.BlockPosition
 import kotlinx.coroutines.delay
 import org.bukkit.block.Block
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 
 object BlockPdcManager {
-    private val dirtyBlocks = mutableObjectSetOf<Pair<UUID, BlockPosition>>()
+    private val dirtyBlocks = ConcurrentHashMap.newKeySet<Pair<UUID, BlockPosition>>()
 
     fun isDirty(block: Block): Boolean {
         val entry = getEntry(block)

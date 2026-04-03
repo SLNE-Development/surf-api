@@ -2,7 +2,11 @@ package dev.slne.surf.surfapi.core.api.config.manager
 
 import dev.slne.surf.surfapi.core.api.config.JsonConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
-import dev.slne.surf.surfapi.core.api.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager.Companion.json
+import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager.Companion.yaml
+import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigration
+import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigrationBuilder
+import dev.slne.surf.surfapi.core.api.config.serializer.surfSpongeConfigSerializers
 import dev.slne.surf.surfapi.core.api.util.logger
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
@@ -21,6 +25,10 @@ import java.nio.file.Path
  * Manages configurations using Sponge's Configurate library, including loading, saving, and reloading configurations.
  * Supports multiple formats, including YAML and JSON.
  *
+ * Optionally supports **versioned migrations** via [ConfigMigrationBuilder]. When migrations are
+ * registered (either via the builder overloads of [yaml]/[json] or after construction via
+ * [addMigration]), they are applied automatically on first load and on every [reloadFromFile].
+ *
  * @param C The type of the configuration class.
  * @property config The current configuration instance.
  */
@@ -28,7 +36,8 @@ class SpongeConfigManager<C> private constructor(
     private val configClass: Class<C>,
     @JvmField @field:Volatile var config: C,
     private val loader: ConfigurationLoader<out ConfigurationNode>,
-    private val node: ConfigurationNode
+    private val node: ConfigurationNode,
+    private val migrationBuilder: ConfigMigrationBuilder
 ) {
 
     /**
@@ -52,12 +61,18 @@ class SpongeConfigManager<C> private constructor(
     /**
      * Reloads the configuration from the file. If loading fails, the current configuration remains unchanged.
      *
+     * Migrations are applied automatically if any are registered.
+     *
      * @return The reloaded configuration instance.
      * @throws UncheckedIOException if an I/O error occurs during reload.
      */
     fun reloadFromFile(): C {
         try {
             val reloadedNode: ConfigurationNode = loader.load()
+
+            // Apply migrations before deserializing
+            applyMigrations(reloadedNode)
+
             val reloadedConfig = reloadedNode.get(configClass)
 
             if (reloadedConfig == null) {
@@ -93,6 +108,62 @@ class SpongeConfigManager<C> private constructor(
         }
     }
 
+    /**
+     * Registers a migration for the given target version.
+     *
+     * This can be called after construction to add migrations dynamically.
+     * Note: Migrations added after initial load will only take effect on the next [reloadFromFile].
+     *
+     * @param version the target version this migration upgrades to (must be >= 0)
+     * @param migration the migration to apply
+     * @return this manager for chaining
+     */
+    fun addMigration(version: Int, migration: ConfigMigration): SpongeConfigManager<C> {
+        migrationBuilder.migration(version, migration)
+        return this
+    }
+
+    /**
+     * Registers an inline migration for the given target version.
+     *
+     * @param version the target version this migration upgrades to (must be >= 0)
+     * @param migration the migration lambda
+     * @return this manager for chaining
+     */
+    inline fun addMigration(
+        version: Int,
+        crossinline migration: (ConfigurationNode) -> Unit
+    ): SpongeConfigManager<C> {
+        return addMigration(version, ConfigMigration { node -> migration(node) })
+    }
+
+    /**
+     * Returns the [ConfigMigrationBuilder] used by this manager.
+     *
+     * Can be used to inspect registered migrations or customize the version key.
+     */
+    fun migrations(): ConfigMigrationBuilder = migrationBuilder
+
+    /**
+     * Applies pending migrations to the given node and saves if any were applied.
+     */
+    private fun applyMigrations(node: ConfigurationNode) {
+        if (!migrationBuilder.hasMigrations()) return
+
+        try {
+            val result = migrationBuilder.migrate(node)
+            if (result.migrated) {
+                // Save the migrated node immediately so the version is persisted
+                loader.save(node)
+            }
+        } catch (e: ConfigurateException) {
+            log.atSevere()
+                .withCause(e)
+                .log("Failed to apply config migrations")
+            throw e
+        }
+    }
+
 
     companion object {
         private val log = logger()
@@ -104,18 +175,22 @@ class SpongeConfigManager<C> private constructor(
          * @param configClass The class of the configuration.
          * @param configFolder The folder where the configuration file is stored.
          * @param configFileName The name of the configuration file. Must match the YAML file name pattern.
+         * @param migrations Optional migration builder with pre-registered migrations.
          * @return A new instance of [SpongeConfigManager].
          */
+        @JvmOverloads
         fun <C> yaml(
             configClass: Class<C>,
             configFolder: Path,
-            configFileName: @YamlConfigFileNamePattern String
+            configFileName: @YamlConfigFileNamePattern String,
+            migrations: ConfigMigrationBuilder = ConfigMigrationBuilder()
         ): SpongeConfigManager<C> = buildConfigManager(
             "https://yamlchecker.com/",
             YamlConfigurationLoader.builder().nodeStyle(NodeStyle.BLOCK),
             configClass,
             configFolder,
-            configFileName
+            configFileName,
+            migrations
         )
 
         /**
@@ -125,18 +200,22 @@ class SpongeConfigManager<C> private constructor(
          * @param configClass The class of the configuration.
          * @param configFolder The folder where the configuration file is stored.
          * @param configFileName The name of the configuration file. Must match the JSON file name pattern.
+         * @param migrations Optional migration builder with pre-registered migrations.
          * @return A new instance of [SpongeConfigManager].
          */
+        @JvmOverloads
         fun <C> json(
             configClass: Class<C>,
             configFolder: Path,
-            configFileName: @JsonConfigFileNamePattern String
+            configFileName: @JsonConfigFileNamePattern String,
+            migrations: ConfigMigrationBuilder = ConfigMigrationBuilder()
         ): SpongeConfigManager<C> = buildConfigManager(
             "https://jsonlint.com/",
             JacksonConfigurationLoader.builder(),
             configClass,
             configFolder,
-            configFileName
+            configFileName,
+            migrations
         )
 
 
@@ -144,24 +223,39 @@ class SpongeConfigManager<C> private constructor(
             verifyToolUrl: String,
             builder: AbstractConfigurationLoader.Builder<T, L>,
             configClass: Class<C>,
-            configFolder: Path, configFileName: String
+            configFolder: Path,
+            configFileName: String,
+            migrations: ConfigMigrationBuilder
         ): SpongeConfigManager<C> {
             val loader = builder.path(configFolder.resolve(configFileName))
                 .defaultOptions {
-                    it.serializers(SpongeConfigSerializers.SERIALIZERS)
+                    it.serializers(surfSpongeConfigSerializers.buildSerializersModule())
                         .shouldCopyDefaults(true)
                 }
                 .build()
 
             try {
                 val node: ScopedConfigurationNode<*> = loader.load()
+
+                // Apply migrations before deserializing into the config class.
+                // This handles both:
+                // - Existing configs without a version field (version = -1, all migrations run)
+                // - Configs with an older version (only newer migrations run)
+                if (migrations.hasMigrations()) {
+                    val result = migrations.migrate(node)
+                    if (result.migrated) {
+                        loader.save(node) // persist migration + version field
+                    }
+                }
+
                 val config =
                     node.get(configClass) ?: throw LoadConfigException("Config is null after load")
 
-                loader.save(node)
+                // Re-save to ensure defaults are written
                 node.set(configClass, config)
+                loader.save(node)
 
-                return SpongeConfigManager(configClass, config, loader, node)
+                return SpongeConfigManager(configClass, config, loader, node, migrations)
             } catch (e: SerializationException) {
                 log.atSevere()
                     .withCause(e)

@@ -178,6 +178,9 @@ public abstract interface annotation class dev/slne/surf/surfapi/shared/api/comp
 public abstract interface annotation class dev/slne/surf/surfapi/shared/api/component/types/Service : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class dev/slne/surf/surfapi/shared/api/util/InternalInvokerApi : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class dev/slne/surf/surfapi/shared/api/util/InternalSurfApi : java/lang/annotation/Annotation {
 }
 

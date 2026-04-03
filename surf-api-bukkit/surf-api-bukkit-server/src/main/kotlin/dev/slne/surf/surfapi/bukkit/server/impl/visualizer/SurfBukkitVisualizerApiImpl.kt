@@ -11,23 +11,25 @@ import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.AbstractSu
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerAreaImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerMultipleLocationsImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer.SurfVisualizerSingleLocationImpl
-import dev.slne.surf.surfapi.core.api.util.logger
 import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.spongepowered.math.vector.Vector3d
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 @AutoService(SurfBukkitVisualizerApi::class)
 class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
     private val visualizers = Caffeine.newBuilder()
-        .softValues()
+        .weakValues()
         .build<UUID, AbstractSurfVisualizerImpl>()
     private val areaVisualizers = Caffeine.newBuilder()
-        .softValues()
-        .build<UUID, SurfVisualizerArea>()
+        .weakValues()
+        .build<UUID, SurfVisualizerAreaImpl>()
+
+    private val playerToVisualizers = ConcurrentHashMap<UUID, MutableSet<UUID>>()
 
     override fun createSingleLocationVisualizer(location: Location): SurfVisualizerSingleLocation {
         return SurfVisualizerSingleLocationImpl(location).also { visualizers.put(it.uid, it) }
@@ -57,42 +59,54 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         return areaVisualizers.getIfPresent(uid) ?: visualizers.getIfPresent(uid)
     }
 
-    private fun getActiveVisualizers(player: Player) =
-        visualizers.asMap().values.filter { it.isVisualizing() && it.visibleTo(player) }
-
-
-    private val log = logger()
-    fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
-        val active = getActiveVisualizers(player)
-
-        if (active.isNotEmpty()) {
-            log.atInfo()
-                .log("Received update for player ${player.name} for ${active.size} visualizers")
+    private fun getActiveVisualizers(player: Player): List<AbstractSurfVisualizerImpl> {
+        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
+        return visualizerUuids.mapNotNull { uid ->
+            visualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
         }
+    }
 
+    private fun getActiveAreaVisualizers(player: Player): List<SurfVisualizerAreaImpl> {
+        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
+        return visualizerUuids.mapNotNull { uid ->
+            areaVisualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
+        }
+    }
+
+    fun onViewerAdded(visualizerUid: UUID, playerUid: UUID) {
+        playerToVisualizers.computeIfAbsent(playerUid) { ConcurrentHashMap.newKeySet() }
+            .add(visualizerUid)
+    }
+
+    fun onViewerRemoved(visualizerUid: UUID, playerUid: UUID) {
+        playerToVisualizers[playerUid]?.remove(visualizerUid)
+    }
+
+    fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
+        val activeAreas = getActiveAreaVisualizers(player)
+        activeAreas.forEach { it.onChunkBecameVisible(player, chunk) }
+
+        val active = getActiveVisualizers(player)
         active.forEach { it.onPlayerReceiveChunk(player, chunk) }
     }
 
     fun processChunkUnloadForPlayer(player: Player, chunk: Chunk) {
         val active = getActiveVisualizers(player)
-
-        if (active.isNotEmpty()) {
-            log.atInfo()
-                .log("Received unload for player ${player.name} for ${active.size} visualizers")
-        }
-
         active.forEach { it.onPlayerUnloadChunk(player, chunk) }
     }
 
     fun processPlayerQuit(player: Player) {
-        val active = visualizers.asMap().values
+        playerToVisualizers.remove(player.uniqueId)
 
-        if (active.isNotEmpty()) {
-            log.atInfo()
-                .log("Player ${player.name} quit, removing from ${active.size} visualizers")
+        for (active in visualizers.asMap().values) {
+            if (active.isClosed()) continue
+            active.removeViewer(player)
         }
-        
-        active.forEach { it.removeViewer(player) }
+    }
+
+    fun onVisualizerClose(visualizer: AbstractSurfVisualizerImpl) {
+        visualizers.invalidate(visualizer.uid)
+        areaVisualizers.invalidate(visualizer.uid)
     }
 }
 

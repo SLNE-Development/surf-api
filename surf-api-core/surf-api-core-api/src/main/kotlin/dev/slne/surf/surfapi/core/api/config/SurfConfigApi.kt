@@ -3,6 +3,7 @@ package dev.slne.surf.surfapi.core.api.config
 import dev.slne.surf.surfapi.core.api.config.manager.DazzlConfDeprecationMessageHolder
 import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager
+import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigrationBuilder
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import java.nio.file.Path
 
@@ -79,6 +80,24 @@ interface SurfConfigApi {
         configClass: Class<C>,
         configFolder: Path,
         configFileName: @YamlConfigFileNamePattern String,
+    ): SpongeConfigManager<C> =
+        createSpongeYmlConfigManager(configClass, configFolder, configFileName, ConfigMigrationBuilder())
+
+    /**
+     * Creates a Sponge YAML configuration manager.
+     *
+     * @param C The type of the configuration class.
+     * @param configClass The class of the configuration.
+     * @param configFolder The folder where the configuration file is stored.
+     * @param configFileName The name of the configuration file. Must follow the YAML file name pattern.
+     * @param migrations Optional migration builder with pre-registered migrations.
+     * @return An instance of [SpongeConfigManager] for the configuration class [C].
+     */
+    fun <C> createSpongeYmlConfigManager(
+        configClass: Class<C>,
+        configFolder: Path,
+        configFileName: @YamlConfigFileNamePattern String,
+        migrations: ConfigMigrationBuilder,
     ): SpongeConfigManager<C>
 
     /**
@@ -109,6 +128,24 @@ interface SurfConfigApi {
         configClass: Class<C>,
         configFolder: Path,
         configFileName: @JsonConfigFileNamePattern String,
+    ): SpongeConfigManager<C> =
+        createSpongeJsonConfigManager(configClass, configFolder, configFileName, ConfigMigrationBuilder())
+
+    /**
+     * Creates a Sponge JSON configuration manager.
+     *
+     * @param C The type of the configuration class.
+     * @param configClass The class of the configuration.
+     * @param configFolder The folder where the configuration file is stored.
+     * @param configFileName The name of the configuration file. Must follow the JSON file name pattern.
+     * @param migrations Optional migration builder with pre-registered migrations.
+     * @return An instance of [SpongeConfigManager] for the configuration class [C].
+     */
+    fun <C> createSpongeJsonConfigManager(
+        configClass: Class<C>,
+        configFolder: Path,
+        configFileName: @JsonConfigFileNamePattern String,
+        migrations: ConfigMigrationBuilder,
     ): SpongeConfigManager<C>
 
     /**
@@ -138,7 +175,7 @@ interface SurfConfigApi {
      */
     fun <C> getSpongeConfigManagerForConfig(configClass: Class<C>): SpongeConfigManager<C>
 
-    companion object: SurfConfigApi by surfConfigApi {
+    companion object : SurfConfigApi by surfConfigApi {
         /**
          * Retrieves the singleton instance of [SurfConfigApi].
          */
@@ -153,11 +190,6 @@ val surfConfigApi = requiredService<SurfConfigApi>()
 
 /**
  * Creates a DazzlConf configuration using a reified type.
- *
- * @param C The type of the configuration class.
- * @param configFolder The folder where the configuration file is stored.
- * @param configFileName The name of the configuration file. Must follow the YAML file name pattern.
- * @return An instance of the configuration class [C].
  */
 @PreferUsingSpongeConfigOverDazzlConf
 @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
@@ -169,9 +201,6 @@ inline fun <reified C> SurfConfigApi.createDazzlConfig(
 
 /**
  * Retrieves a DazzlConf configuration using a reified type.
- *
- * @param C The type of the configuration class.
- * @return An instance of the configuration class [C].
  */
 @PreferUsingSpongeConfigOverDazzlConf
 @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
@@ -180,9 +209,6 @@ inline fun <reified C> SurfConfigApi.getDazzlConfig() = getDazzlConfig(C::class.
 
 /**
  * Reloads a DazzlConf configuration using a reified type.
- *
- * @param C The type of the configuration class.
- * @return The reloaded instance of the configuration class [C].
  */
 @PreferUsingSpongeConfigOverDazzlConf
 @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
@@ -191,11 +217,6 @@ inline fun <reified C> SurfConfigApi.reloadDazzlConfig() = reloadDazzlConfig(C::
 
 /**
  * Creates a Sponge YAML configuration using a reified type.
- *
- * @param C The type of the configuration class.
- * @param configFolder The folder where the configuration file is stored.
- * @param configFileName The name of the configuration file. Must follow the YAML file name pattern.
- * @return An instance of the configuration class [C].
  */
 inline fun <reified C> SurfConfigApi.createSpongeYmlConfig(
     configFolder: Path,
@@ -204,24 +225,16 @@ inline fun <reified C> SurfConfigApi.createSpongeYmlConfig(
 
 /**
  * Creates a Sponge YAML configuration manager using a reified type.
- *
- * @param C The type of the configuration class.
- * @param configFolder The folder where the configuration file is stored.
- * @param configFileName The name of the configuration file. Must follow the YAML file name pattern.
- * @return An instance of [SpongeConfigManager] for the configuration class [C].
  */
+@JvmOverloads
 inline fun <reified C> SurfConfigApi.createSpongeYmlConfigManager(
     configFolder: Path,
     configFileName: @YamlConfigFileNamePattern String,
-) = createSpongeYmlConfigManager(C::class.java, configFolder, configFileName)
+    migrations: ConfigMigrationBuilder = ConfigMigrationBuilder(),
+) = createSpongeYmlConfigManager(C::class.java, configFolder, configFileName, migrations)
 
 /**
  * Creates a Sponge JSON configuration using a reified type.
- *
- * @param C The type of the configuration class.
- * @param configFolder The folder where the configuration file is stored.
- * @param configFileName The name of the configuration file. Must follow the JSON file name pattern.
- * @return An instance of the configuration class [C].
  */
 inline fun <reified C> SurfConfigApi.createSpongeJsonConfig(
     configFolder: Path,
@@ -230,21 +243,15 @@ inline fun <reified C> SurfConfigApi.createSpongeJsonConfig(
 
 /**
  * Creates a Sponge JSON configuration manager using a reified type.
- *
- * @param C The type of the configuration class.
- * @param configFolder The folder where the configuration file is stored.
- * @param configFileName The name of the configuration file. Must follow the JSON file name pattern.
- * @return An instance of [SpongeConfigManager] for the configuration class [C].
  */
+@JvmOverloads
 inline fun <reified C> SurfConfigApi.createSpongeJsonConfigManager(
     configFolder: Path,
     configFileName: @JsonConfigFileNamePattern String,
-) = createSpongeJsonConfigManager(C::class.java, configFolder, configFileName)
+    migrations: ConfigMigrationBuilder = ConfigMigrationBuilder(),
+) = createSpongeJsonConfigManager(C::class.java, configFolder, configFileName, migrations)
 
 /**
  * Retrieves a Sponge configuration using a reified type.
- *
- * @param C The type of the configuration class.
- * @return An instance of the configuration class [C].
  */
 inline fun <reified C> SurfConfigApi.getSpongeConfig() = getSpongeConfig(C::class.java)

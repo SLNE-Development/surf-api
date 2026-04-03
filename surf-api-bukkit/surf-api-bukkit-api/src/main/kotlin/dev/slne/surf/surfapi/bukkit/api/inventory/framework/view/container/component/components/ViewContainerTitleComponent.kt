@@ -33,7 +33,7 @@ import net.kyori.adventure.key.Key
  * @param charSpacing the pixel spacing to insert between each character
  * @param textAlignment the [TextAlignment] controlling horizontal positioning
  */
-internal class ViewContainerTitleComponent(
+class ViewContainerTitleComponent(
     title: String,
     private val font: Key,
     charSpacing: Int,
@@ -61,8 +61,7 @@ internal class ViewContainerTitleComponent(
     )
 
     override val positionalShift = textAlignment.calculateShift(title, alignmentOptions)
-    override val textureWidth =
-        TextAlignment.calculateTextWidth(title, alignmentOptions) - 1 // -1 because of the last char spacing
+    override val textureWidth = TextAlignment.calculateTextWidth(title, alignmentOptions)
 
     override fun SurfComponentBuilder.renderComponent() {
         text(formattedTitle)

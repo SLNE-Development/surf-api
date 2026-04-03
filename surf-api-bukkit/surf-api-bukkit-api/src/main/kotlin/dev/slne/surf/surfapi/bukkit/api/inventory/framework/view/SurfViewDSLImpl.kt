@@ -66,37 +66,8 @@ abstract class SurfViewDSLImpl @PublishedApi internal constructor(
         ctx.containerDefaults?.invoke(modificationCtx, ref)
     }
 
-    /**
-     * Modifies the [ViewContainer] of this view from within a lifecycle callback.
-     *
-     * This function is only callable inside a [SurfViewRef] context (i.e. within lifecycle
-     * callbacks). It is a type-safe forwarding wrapper that delegates to the internal
-     * `modifyContainer` method of [AbstractSurfView].
-     *
-     * ```kotlin
-     * onFirstRender {
-     *     with(view) {
-     *         modifyContainer {
-     *             blockRow(5)
-     *         }
-     *     }
-     * }
-     * ```
-     *
-     * @param updateContext optional context used to propagate the updated title;
-     *   pass `null` to skip the title update
-     * @param block modifications to apply to the [ViewContainer]
-     */
-    context(_: SurfViewRef)
-    fun modifyContainer(
-        updateContext: Context? = null,
-        block: context(ViewContainerModificationContext) () -> Unit
-    ) {
-        modifyContainer0(updateContext, block)
-    }
-
-    private fun modifyContainer0(
-        updateContext: Context? = null,
+    internal fun modifyContainer0(
+        updateContext: Context,
         block: context(ViewContainerModificationContext) () -> Unit
     ) = modifyContainer(updateContext, block)
 }

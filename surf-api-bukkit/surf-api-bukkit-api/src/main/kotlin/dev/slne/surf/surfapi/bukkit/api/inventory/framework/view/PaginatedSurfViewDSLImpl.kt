@@ -70,26 +70,8 @@ abstract class PaginatedSurfViewDSLImpl @PublishedApi internal constructor(
         ctx.containerDefaults?.invoke(modificationCtx, ref)
     }
 
-    /**
-     * Modifies the [ViewContainer] of this paginated view from within a lifecycle callback.
-     *
-     * Only callable inside a [PaginatedSurfViewRef] context (i.e. within lifecycle callbacks).
-     * Delegates to the internal `modifyContainer` method of [AbstractSurfView].
-     *
-     * @param updateContext optional context used to propagate the updated title;
-     *   pass `null` to skip the title update
-     * @param block modifications to apply to the [ViewContainer]
-     */
-    context(_: PaginatedSurfViewRef)
-    fun modifyContainer(
-        updateContext: Context? = null,
-        block: context(ViewContainerModificationContext) () -> Unit
-    ) {
-        modifyContainer0(updateContext, block)
-    }
-
-    private fun modifyContainer0(
-        updateContext: Context? = null,
+    internal fun modifyContainer0(
+        updateContext: Context,
         block: context(ViewContainerModificationContext) () -> Unit
     ) = modifyContainer(updateContext, block)
 }

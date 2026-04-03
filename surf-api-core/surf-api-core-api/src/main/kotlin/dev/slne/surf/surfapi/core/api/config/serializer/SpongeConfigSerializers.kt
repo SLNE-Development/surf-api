@@ -2,6 +2,9 @@ package dev.slne.surf.surfapi.core.api.config.serializer
 
 import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.minimessage.SurfMiniMessageHolder
+import dev.slne.surf.surfapi.core.api.util.freeze
+import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
+import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.text.Component
 import org.spongepowered.configurate.ConfigurationNode
@@ -17,17 +20,56 @@ import java.lang.reflect.Type
 import java.util.*
 import java.util.function.Consumer
 
+val surfSpongeConfigSerializers = requiredService<SpongeConfigSerializers>()
+
 /**
  * Serializers for Sponge configurations, including support for Adventure [Component] and other types.
  */
-object SpongeConfigSerializers {
+abstract class SpongeConfigSerializers {
+    private val _typeTokenSerializers = mutableObject2ObjectMapOf<TypeToken<*>, TypeSerializer<*>>()
+    val typeTokenSerializers get() = _typeTokenSerializers.freeze()
+
+    private val _classSerializers = mutableObject2ObjectMapOf<Class<*>, TypeSerializer<*>>()
+    val classSerializers get() = _classSerializers.freeze()
+
+    init {
+        registerClassSerializer(Component::class.java, ComponentSerializer())
+        registerTypeTokenSerializer(LinkedListSerializer.TYPE, LinkedListSerializer())
+    }
+
+    fun <T : Any> registerClassSerializer(clazz: Class<T>, serializer: TypeSerializer<T>) {
+        _classSerializers[clazz] = serializer
+    }
+
+    inline fun <reified T : Any> registerClassSerializer(serializer: TypeSerializer<T>) {
+        registerClassSerializer(T::class.java, serializer)
+    }
+
+    fun unregisterSerializer(clazz: Class<*>) {
+        _classSerializers.remove(clazz)
+    }
+
+    fun registerTypeTokenSerializer(typeToken: TypeToken<*>, serializer: TypeSerializer<*>) {
+        _typeTokenSerializers[typeToken] = serializer
+    }
+
+    fun unregisterTypeTokenSerializer(typeToken: TypeToken<*>) {
+        _typeTokenSerializers.remove(typeToken)
+    }
 
     /**
      * Registers custom serializers with the provided builder.
      */
-    var SERIALIZERS: Consumer<TypeSerializerCollection.Builder> = Consumer { builder ->
-        builder.register(Component::class.java, ComponentSerializer())
-        builder.register(LinkedListSerializer.TYPE, LinkedListSerializer())
+    @Suppress("UNCHECKED_CAST")
+    fun buildSerializersModule(): Consumer<TypeSerializerCollection.Builder> = Consumer { builder ->
+        _classSerializers.forEach { (clazz, serializer) ->
+            builder.register(clazz as Class<Any>, serializer as TypeSerializer<Any>)
+        }
+
+        _typeTokenSerializers.forEach { (type, serializer) ->
+            builder.register(type as TypeToken<Any>, serializer as TypeSerializer<Any>)
+        }
+
         builder.registerAnnotatedObjects(objectMapperFactory())
     }
 
@@ -35,7 +77,6 @@ object SpongeConfigSerializers {
      * Serializer for [Component] objects in Sponge configurations.
      */
     class ComponentSerializer : TypeSerializer<Component> {
-
         @OptIn(PreferUsingSpongeConfigOverDazzlConf::class)
         override fun deserialize(type: Type?, node: ConfigurationNode): Component {
             val message = node.string ?: return Component.empty()
@@ -57,10 +98,12 @@ object SpongeConfigSerializers {
      * Serializer for [LinkedList] objects in Sponge configurations.
      */
     class LinkedListSerializer : AbstractListChildSerializer<LinkedList<Any>>() {
-
         override fun elementType(containerType: AnnotatedType): AnnotatedType? {
             if (containerType !is AnnotatedParameterizedType) {
-                throw SerializationException(containerType, "Raw types are not supported for collections")
+                throw SerializationException(
+                    containerType,
+                    "Raw types are not supported for collections"
+                )
             }
 
             return containerType.annotatedActualTypeArguments[0]

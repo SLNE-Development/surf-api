@@ -48,7 +48,7 @@ enum class TextAlignment {
         ): Int {
             val usableWidth = options.containerWidth - (options.padding * 2)
             val freeSpace = usableWidth - calculateTextWidth(text, options)
-            return options.leftShift + (freeSpace / 2) + options.padding
+            return options.leftShift + (freeSpace / 2) + 1 + options.padding
         }
     };
 

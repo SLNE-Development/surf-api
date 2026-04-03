@@ -160,6 +160,24 @@ fun <ViewRef : AbstractSurfViewRef> containerDefaults(block: context (@Inventory
     ctx.containerDefaults = block
 }
 
+
+/**
+ * Modifies the [ViewContainer] of this view from within a lifecycle callback.
+ * This function is only callable inside a [AbstractSurfViewRef] context (i.e. within lifecycle
+ * callbacks). It is a type-safe forwarding wrapper that delegates to the internal `modifyContainer` method of [AbstractSurfView].
+ *
+ */
+context(ref: AbstractSurfViewRef)
+fun Context.modifyContainer(
+    block: context(ViewContainerModificationContext) () -> Unit
+) {
+    when (val view = ref.getRegisteredView()) {
+        is SurfViewDSLImpl -> view.modifyContainer0(this, block)
+        is PaginatedSurfViewDSLImpl -> view.modifyContainer0(this, block)
+        else -> error("Unknown view type: ${view::class}")
+    }
+}
+
 /**
  * Configures the [SimpleViewSettings] for this simple (non-paginated) view.
  *
