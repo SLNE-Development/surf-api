@@ -128,14 +128,20 @@ fun Server.toCraft() = this as CraftServer
 val craftServer: CraftServer get() = server.toCraft()
 val commodore: Commodore get() = CraftMagicNumbers.INSTANCE.commodore
 
-fun EntityType.toNms(): net.minecraft.world.entity.EntityType<*> = CraftEntityType.bukkitToMinecraft(this)
+fun EntityType.toNms(): net.minecraft.world.entity.EntityType<*> =
+    CraftEntityType.bukkitToMinecraft(this)
+
+@Suppress("DEPRECATION")
 fun EntityType.toNmsHolder() =
     CraftEntityType.bukkitToMinecraftHolder(this) as Holder.Reference<net.minecraft.world.entity.EntityType<*>>
 
 fun World.toNms(): ServerLevel = (this as CraftWorld).handle
 fun Entity.toNms(): net.minecraft.world.entity.Entity = (this as CraftEntity).handleRaw
-fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity = (this as CraftLivingEntity).handle
-fun DamageSource.toNms(): net.minecraft.world.damagesource.DamageSource = (this as CraftDamageSource).handle
+fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity =
+    (this as CraftLivingEntity).handle
+
+fun DamageSource.toNms(): net.minecraft.world.damagesource.DamageSource =
+    (this as CraftDamageSource).handle
 
 fun AdvancementDisplay.Frame.toNms() = when (this) {
     CHALLENGE -> AdvancementType.CHALLENGE

@@ -1,7 +1,11 @@
+@file:OptIn(NmsUseWithCaution::class)
+@file:Suppress("UnstableApiUsage")
+
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
+import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.player.toast.toast
 import io.papermc.paper.advancement.AdvancementDisplay
 import io.papermc.paper.datacomponent.DataComponentTypes
@@ -27,7 +31,10 @@ class ToastTest(name: String) : CommandAPICommand(name) {
         playerExecutor { player, _ ->
             val playerHeadToast = toast {
                 icon(ItemType.PLAYER_HEAD) {
-                    setData(DataComponentTypes.PROFILE, ResolvableProfile.resolvableProfile(player.playerProfile))
+                    setData(
+                        DataComponentTypes.PROFILE,
+                        ResolvableProfile.resolvableProfile(player.playerProfile)
+                    )
                 }
 
                 title {

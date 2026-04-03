@@ -44,7 +44,8 @@ object PacketLoreListener : PacketListener {
     private val ORIGINAL_LORE_KEY = key("original_lore")
     private val ORIGINAL_LORE_KEY_STRING = ORIGINAL_LORE_KEY.asString()
 
-    private fun hasAnyHandlers(): Boolean = keyedHandlersSnapshot.isNotEmpty() || globalHandlersSnapshot.isNotEmpty()
+    private fun hasAnyHandlers(): Boolean =
+        keyedHandlersSnapshot.isNotEmpty() || globalHandlersSnapshot.isNotEmpty()
 
     @ServerboundListener
     fun onPacketReceive(event: ServerboundSetCreativeModeSlotPacket) {
@@ -145,7 +146,7 @@ object PacketLoreListener : PacketListener {
             brokenStateId,
             event.slotNum(),
             event.buttonNum(),
-            event.clickType(),
+            event.containerInput(),
             event.changedSlots(),
             event.carriedItem()
         )
@@ -230,7 +231,8 @@ object PacketLoreListener : PacketListener {
 
         val updatedLines = ObjectArrayList<MinecraftComponent>(mutableLore.size)
         for (i in mutableLore.indices) {
-            val line = mutableLore[i].decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
+            val line =
+                mutableLore[i].decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
             updatedLines.add(line.toNms())
         }
 
@@ -301,7 +303,8 @@ object PacketLoreListener : PacketListener {
                 "A PacketLore handler for $identifier is already registered!"
             }
 
-            val handlers = keyedHandlersByPlugin.computeIfAbsent(plugin) { Object2ObjectLinkedOpenHashMap() }
+            val handlers =
+                keyedHandlersByPlugin.computeIfAbsent(plugin) { Object2ObjectLinkedOpenHashMap() }
 
             val previous = handlers.putIfAbsent(identifier, listener)
             check(previous == null) {
@@ -316,7 +319,8 @@ object PacketLoreListener : PacketListener {
 
     fun register(plugin: Plugin, listener: SurfBukkitPacketLoreHandler) {
         synchronized(this) {
-            val handlers = globalHandlersByPlugin.computeIfAbsent(plugin) { ObjectLinkedOpenHashSet() }
+            val handlers =
+                globalHandlersByPlugin.computeIfAbsent(plugin) { ObjectLinkedOpenHashSet() }
             if (handlers.add(listener)) {
                 rebuildGlobalHandlersSnapshot()
             } else {

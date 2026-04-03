@@ -50,14 +50,14 @@ object ConvexHull2D {
         return hull
     }
 
-    private inline fun <V : Vectord> V.x(): Double = when (this) {
+    private fun <V : Vectord> V.x(): Double = when (this) {
         is Vector2d -> x()
         is Vector3d -> x()
         is Vector4d -> x()
         else -> error("Unsupported vector type: ${this::class.simpleName}")
     }
 
-    private inline fun <V : Vectord> V.z(): Double = when (this) {
+    private fun <V : Vectord> V.z(): Double = when (this) {
         is Vector2d -> y()
         is Vector3d -> z()
         is Vector4d -> z()

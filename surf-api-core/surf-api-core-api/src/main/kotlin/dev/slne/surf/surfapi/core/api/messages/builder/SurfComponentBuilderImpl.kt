@@ -11,7 +11,8 @@ import net.kyori.adventure.util.ARGBLike
 import java.util.function.Consumer
 import java.util.function.Function
 
-internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Builder) : SurfComponentBuilder {
+internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Builder) :
+    SurfComponentBuilder {
     private fun withDelegate(block: TextComponent.Builder.() -> Unit): SurfComponentBuilderImpl {
         delegate.block()
         return this
@@ -68,9 +69,12 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
     override fun font(font: Key?) = withDelegate { font(font) }
     override fun hoverEvent(source: HoverEventSource<*>?) = withDelegate { hoverEvent(source) }
     override fun insertion(insertion: String?) = withDelegate { insertion(insertion) }
+
+    @Suppress("DEPRECATION")
     override fun mapChildren(function: Function<BuildableComponent<*, *>?, out BuildableComponent<*, *>?>) =
         withDelegate { mapChildren(function) }
 
+    @Suppress("DEPRECATION")
     override fun mapChildrenDeep(function: Function<BuildableComponent<*, *>?, out BuildableComponent<*, *>?>) =
         withDelegate { mapChildrenDeep(function) }
 

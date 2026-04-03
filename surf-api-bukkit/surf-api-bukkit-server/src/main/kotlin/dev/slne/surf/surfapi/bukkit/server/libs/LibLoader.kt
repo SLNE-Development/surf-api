@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 package dev.slne.surf.surfapi.bukkit.server.libs
 
 import dev.slne.surf.surfapi.bukkit.server.libs.reflection.LibReflection
@@ -132,6 +134,7 @@ class LibLoader(pluginClassLoader: ClassLoader) {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun getOrCreateSurfLibClassLoader(): SurfLibJoinClassLoader {
         val libraryLoader =
             LibReflection.PAPER_PLUGIN_CLASS_LOADER_PROXY.getLibraryLoader(pluginClassLoader)

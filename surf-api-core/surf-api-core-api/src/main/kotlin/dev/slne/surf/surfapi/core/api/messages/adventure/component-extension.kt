@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package dev.slne.surf.surfapi.core.api.messages.adventure
 
 import dev.slne.surf.surfapi.core.api.messages.Colors
@@ -27,6 +29,7 @@ inline fun buildText(block: SurfComponentBuilder.() -> Unit): TextComponent {
  * @param color The optional text color.
  * @return The modified builder instance.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendText(
     text: String,
     color: TextColor? = null,
@@ -41,6 +44,7 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
  * @param block The configuration block for the text component.
  * @return The modified builder instance.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendText(
     text: String,
     color: TextColor? = null,
@@ -53,6 +57,7 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
  * @param url The URL to open on click.
  * @return The modified builder instance.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickOpensUrl(
     url: String,
 ) = clickEvent(ClickEvent.openUrl(url))
@@ -63,6 +68,7 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
  * @param command The command to run on click.
  * @return The modified builder instance.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickRunsCommand(
     command: String,
 ) = clickEvent(ClickEvent.runCommand(command))
@@ -73,6 +79,7 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
  * @param command The command to suggest on click.
  * @return The modified builder instance.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickSuggestsCommand(
     command: String,
 ) = clickEvent(ClickEvent.suggestCommand(command))
@@ -83,6 +90,7 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
  * @param value The value to copy to the clipboard on click.
  * @return The modified builder instance.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCopiesToClipboard(
     value: String,
 ) = clickEvent(ClickEvent.copyToClipboard(value))
@@ -93,6 +101,7 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
  * @param amount The number of newline characters to append.
  * @return The modified builder instance.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendNewline(
     amount: Int,
 ) = repeat(amount) { appendNewline() }
@@ -102,6 +111,7 @@ fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<
  *
  * @param amount The number of times to append a newline followed by the prefix.
  */
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendNewPrefixedLine(
     amount: Int,
 ) = repeat(amount) { appendNewline().append(Colors.PREFIX) }

@@ -32,12 +32,6 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
             builder().apply(block).build()
     }
 
-    @Deprecated("Use TYPE specific functions")
-    fun appendPrefix() = append(PREFIX)
-
-    @Deprecated("Use TYPE specific functions")
-    fun appendNewPrefixedLine() = appendNewline().appendPrefix()
-
     fun append(block: SurfComponentBuilder.() -> Unit): SurfComponentBuilder =
         append(SurfComponentBuilder(block))
 
@@ -49,14 +43,6 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
 
     suspend fun appendNewlineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
         appendNewline().appendAsync(block)
-
-    @Deprecated("Use TYPE specific functions")
-    fun appendNewPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
-        appendNewPrefixedLine().append(block)
-
-    @Deprecated("Use TYPE specific functions")
-    suspend fun appendNewPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
-        appendNewPrefixedLine().appendAsync(block)
 
     fun text(text: String, color: TextColor? = null, vararg decoration: TextDecoration) =
         append(Component.text(text, color, *decoration))
@@ -179,7 +165,11 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
     override fun font(font: Key?): SurfComponentBuilder
     override fun hoverEvent(source: HoverEventSource<*>?): SurfComponentBuilder
     override fun insertion(insertion: String?): SurfComponentBuilder
+
+    @Suppress("DEPRECATION")
     override fun mapChildren(function: Function<BuildableComponent<*, *>?, out BuildableComponent<*, *>?>): SurfComponentBuilder
+
+    @Suppress("DEPRECATION")
     override fun mapChildrenDeep(function: Function<BuildableComponent<*, *>?, out BuildableComponent<*, *>?>): SurfComponentBuilder
     override fun mergeStyle(that: Component): SurfComponentBuilder
     override fun mergeStyle(that: Component, merges: Set<Style.Merge?>): SurfComponentBuilder

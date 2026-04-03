@@ -21,12 +21,12 @@ class SuspendCommandExecutionDelayWithSuspendArgTest(name: String) : CommandAPIC
             val player = arguments.awaiting<Player>("player")
 
             sender.sendText {
-                appendPrefix()
+                appendInfoPrefix()
                 info("Delay 3 seconds...")
             }
             delay(3.seconds)
             sender.sendText {
-                appendPrefix()
+                appendInfoPrefix()
                 info("Done!")
                 appendSpace()
                 info("Player: ")
@@ -39,14 +39,14 @@ class SuspendCommandExecutionDelayWithSuspendArgTest(name: String) : CommandAPIC
         SuspendCustomArgument<Player, String>(StringArgument(nodeName)) {
         override suspend fun CoroutineScope.parse(info: CustomArgumentInfo<String>): Player {
             info.sender.sendText {
-                appendPrefix()
+                appendInfoPrefix()
                 info("Delaying in command parsing")
             }
             delay(2.seconds)
             val playerName = info.input()
 
             info.sender.sendText {
-                appendPrefix()
+                appendInfoPrefix()
                 info("Done delaying in command parsing")
             }
 

@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package dev.slne.surf.surfapi.core.api.messages.adventure
 
 import net.kyori.adventure.audience.Audience
@@ -10,21 +12,25 @@ import kotlin.experimental.ExperimentalTypeInference
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallback(
     callback: ClickCallback<Audience>,
 ) = clickEvent(ClickEvent.callback(callback))
 
+@Suppress("DEPRECATION")
 fun <C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallbackWithOptions(
     builder: ClickCallbackWithOptionsBuilder<Audience>.() -> Unit,
 ) = clickEvent(ClickCallbackWithOptionsBuilder(Audience::class.java).apply(builder).build())
 
+@Suppress("DEPRECATION")
 inline fun <reified T : Audience, C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallbackTyped(
     callback: ClickCallback<T>,
 ) = clickEvent(ClickEvent.callback(ClickCallback.widen(callback, T::class.java)))
 
 @OptIn(ExperimentalTypeInference::class)
+@Suppress("DEPRECATION")
 inline fun <reified T : Audience, C : BuildableComponent<C, B>, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallbackTypedWithOptions(
-    @ClickCallbackWithOptionsBuilderDsl @BuilderInference builder: ClickCallbackWithOptionsBuilder<T>.() -> Unit
+    @BuilderInference builder: ClickCallbackWithOptionsBuilder<T>.() -> Unit
 ) = clickEvent(ClickCallbackWithOptionsBuilder(T::class.java).apply(builder).build())
 
 fun ClickCallback.Options.Builder.lifetime(duration: Duration) = lifetime(duration.toJavaDuration())
@@ -45,13 +51,13 @@ class ClickCallbackWithOptionsBuilder<T : Audience> @PublishedApi internal const
 
     fun requiresPermissionOrElse(
         permission: String,
-        @ClickCallbackWithOptionsBuilderDsl callback: Consumer<in Audience>
+        callback: Consumer<in Audience>
     ) {
         this.permission = permission
         this.permissionOtherwise = callback
     }
 
-    fun callback(@ClickCallbackWithOptionsBuilderDsl callback: ClickCallback<T>) {
+    fun callback(callback: ClickCallback<T>) {
         this.callback = callback
     }
 

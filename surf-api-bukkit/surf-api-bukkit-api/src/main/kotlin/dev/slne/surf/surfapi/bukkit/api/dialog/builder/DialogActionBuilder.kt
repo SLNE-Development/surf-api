@@ -58,7 +58,7 @@ class DialogActionBuilder {
     fun playerCallback(callback: ClickCallback<Player>) {
         callback(ClickCallback.widen(callback, Player::class.java) { other ->
             other.sendText {
-                appendPrefix()
+                appendErrorPrefix()
                 error("Only players can use this action!")
             }
         })
@@ -97,7 +97,7 @@ class DialogActionBuilder {
         ) { response, audience ->
             if (audience !is Player) {
                 audience.sendText {
-                    appendPrefix()
+                    appendErrorPrefix()
                     error("Only players can use this action!")
                 }
             } else {

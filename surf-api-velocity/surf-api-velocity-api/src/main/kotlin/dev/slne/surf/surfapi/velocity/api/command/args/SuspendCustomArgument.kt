@@ -38,6 +38,8 @@ abstract class SuspendCustomArgument<T, B>(
     private val primitiveType by lazy { object : TypeToken<Deferred<T>>(javaClass) {} }
 
     override fun instance() = this
+
+    @Suppress("UNCHECKED_CAST")
     override fun getPrimitiveType(): Class<Deferred<T>> {
         return primitiveType.rawType as Class<Deferred<T>>
     }

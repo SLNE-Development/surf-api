@@ -7,7 +7,6 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.translation.GlobalTranslator
 import net.kyori.adventure.translation.TranslationStore
-import net.kyori.adventure.util.UTF8ResourceBundleControl
 import org.jetbrains.annotations.NonNls
 import java.net.URLClassLoader
 import java.nio.file.Path
@@ -263,8 +262,7 @@ class SurfMessageBundle @JvmOverloads constructor(
                         ResourceBundle.getBundle(
                             fileName.substringBeforeLast('.'),
                             local,
-                            classLoader,
-                            UTF8ResourceBundleControl.get()
+                            classLoader
                         )
                     }.getOrNull()
                 }

@@ -26,6 +26,7 @@ class SurfBukkitNmsEntityBridgeImpl : SurfBukkitNmsEntityBridge {
         checkInstantiationByServiceLoader()
     }
 
+    @Suppress("UnstableApiUsage")
     override fun createEntityByNbt(
         world: World,
         type: EntityType,
@@ -33,13 +34,24 @@ class SurfBukkitNmsEntityBridgeImpl : SurfBukkitNmsEntityBridge {
         tag: CompoundBinaryTag
     ) {
         val worldNMS = world.toNms()
-        TickThread.ensureTickThread(worldNMS, pos.chunkX, pos.chunkZ, "Cannot create entity asynchronously")
+        TickThread.ensureTickThread(
+            worldNMS,
+            pos.chunkX,
+            pos.chunkZ,
+            "Cannot create entity asynchronously"
+        )
 
         val source = MinecraftServer.getServer().createCommandSourceStack()
             .withLevel(worldNMS)
 
         try {
-            SummonCommand.createEntity(source, type.toNmsHolder(), pos.toNms(), AdventureNBT.toNms(tag), false)
+            SummonCommand.createEntity(
+                source,
+                type.toNmsHolder(),
+                pos.toNms(),
+                AdventureNBT.toNms(tag),
+                false
+            )
         } catch (e: CommandSyntaxException) {
             throw WrapperCommandSyntaxException(e)
         }

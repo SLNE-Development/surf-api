@@ -43,7 +43,7 @@ class SurfBukkitNmsPlayerToastPacketsImpl : SurfBukkitNmsPlayerToastPackets {
     private fun createAdvancement(id: Identifier, toast: Toast) =
         Advancement.Builder.recipeAdvancement()
             .display(
-                toast.icon.toNms(),
+                toast.icon.toNms().item,
                 toast.title.toNms(),
                 Component.empty(),
                 null,

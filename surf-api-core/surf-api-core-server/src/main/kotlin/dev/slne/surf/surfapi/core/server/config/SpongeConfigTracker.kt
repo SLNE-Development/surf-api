@@ -6,10 +6,12 @@ import java.util.concurrent.ConcurrentHashMap
 object SpongeConfigTracker {
     private val configManagers = ConcurrentHashMap<Class<*>, SpongeConfigManager<*>>()
 
+    @Suppress("UNCHECKED_CAST")
     fun <C> getConfig(configClass: Class<C>): C? {
         return configManagers[configClass]?.config as? C
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <C> reloadConfig(configClass: Class<C>): C {
         val manager =
             configManagers[configClass] ?: error("No config manager found for $configClass")

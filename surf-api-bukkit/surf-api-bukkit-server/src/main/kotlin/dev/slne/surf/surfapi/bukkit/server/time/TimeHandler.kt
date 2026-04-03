@@ -15,6 +15,7 @@ object TimeHandler {
     const val DEFAULT_SKIP_AMOUNT: Long = 100L
     private val skippingWorlds = mutableObjectSetOf<UUID>().synchronize()
 
+    @Suppress("DEPRECATION")
     suspend fun skipTimeSmoothly(world: World, timeToAdd: Long, duration: Long): TimeSkipResult {
         val targetTime = world.fullTime + timeToAdd
         val step = timeToAdd / duration

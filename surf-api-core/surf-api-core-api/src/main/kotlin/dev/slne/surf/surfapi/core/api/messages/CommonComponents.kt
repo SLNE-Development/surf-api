@@ -7,7 +7,6 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.SPACER
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPARATOR
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents.MAP_SEPERATOR
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendNewline
 import dev.slne.surf.surfapi.core.api.messages.adventure.appendText
 import dev.slne.surf.surfapi.core.api.messages.adventure.clickOpensUrl
@@ -41,19 +40,11 @@ object CommonComponents {
     @JvmField
     val ELLIPSIS = text("...")
 
-
     /**
      * A separator (`->`) used to visually separate key-value pairs in text components.
      */
     @JvmField
     val MAP_SEPARATOR = text(" -> ", SPACER)
-
-    /**
-     * @deprecated Use [MAP_SEPARATOR] instead.
-     */
-    @Deprecated("Use MAP_SEPARATOR instead", ReplaceWith("MAP_SEPARATOR"))
-    @JvmField
-    val MAP_SEPERATOR = MAP_SEPARATOR
 
     /**
      * A separator component (` : `) used to visually format time-related messages.
@@ -580,7 +571,7 @@ object CommonComponents {
         keyFormatter: (K) -> Component,
         valueFormatter: (V) -> Component,
         linePrefix: Component = PREFIX,
-        keyValueSeparator: Component = MAP_SEPERATOR,
+        keyValueSeparator: Component = MAP_SEPARATOR,
     ): Component {
         val separator = buildText0 {
             appendNewline()
@@ -644,7 +635,12 @@ object CommonComponents {
         timeColor: TextColor = VARIABLE_VALUE,
     ): Component {
         data class Formatter(val shortForms: Boolean, val timeColor: TextColor) {
-            operator fun invoke(time: Long, singularForm: String, pluralForm: String, shortForm: String) = buildText0 {
+            operator fun invoke(
+                time: Long,
+                singularForm: String,
+                pluralForm: String,
+                shortForm: String
+            ) = buildText0 {
                 append(Component.text(time, timeColor))
                 appendText(
                     if (shortForms) shortForm
@@ -668,7 +664,12 @@ object CommonComponents {
         return buildText0 {
             var hasAddedComponent = false
 
-            fun addComponent(value: Long, singularForm: String, pluralForm: String, shortForm: String) {
+            fun addComponent(
+                value: Long,
+                singularForm: String,
+                pluralForm: String,
+                shortForm: String
+            ) {
                 if (value > 0) {
                     if (hasAddedComponent) append(separator)
                     append(formatter(value, singularForm, pluralForm, shortForm))
@@ -771,5 +772,5 @@ inline fun <K, V> Map<K, V>.joinToComponent(
     keyFormatter: (K) -> Component,
     valueFormatter: (V) -> Component,
     linePrefix: Component = PREFIX,
-    keyValueSeparator: Component = MAP_SEPERATOR,
+    keyValueSeparator: Component = MAP_SEPARATOR,
 ) = CommonComponents.formatMap(this, keyFormatter, valueFormatter, linePrefix, keyValueSeparator)

@@ -36,6 +36,7 @@ class SurfBukkitNmsCommandArgumentTypesBridgeImpl : SurfBukkitNmsCommandArgument
         return AdventureNBT.fromNms(nms)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun <B : Any, C : Any> wrap(
         base: ArgumentType<B>,
         converter: OpenedResultConverter<B, C>
@@ -68,6 +69,7 @@ class SurfBukkitNmsCommandArgumentTypesBridgeImpl : SurfBukkitNmsCommandArgument
             }
         }
 
+        @Suppress("UNCHECKED_CAST")
         private fun <B : Any, C : Any> createConverter(converter: OpenedResultConverter<B, C>): Any {
             val resultConverterInterface = Class.forName(
                 "io.papermc.paper.command.brigadier.argument.VanillaArgumentProviderImpl\$ResultConverter"

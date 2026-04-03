@@ -4,7 +4,6 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.surfapi.core.api.config.JsonConfigFileNamePattern
 import dev.slne.surf.surfapi.core.api.config.SurfConfigApi
 import dev.slne.surf.surfapi.core.api.config.YamlConfigFileNamePattern
-import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager
 import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigrationBuilder
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
@@ -16,32 +15,14 @@ class SurfConfigApiImpl : SurfConfigApi {
         checkInstantiationByServiceLoader()
     }
 
-    @PreferUsingSpongeConfigOverDazzlConf
-    override fun <C> createDazzlConfig(
-        configClass: Class<C>,
-        configFolder: Path,
-        configFileName: @YamlConfigFileNamePattern String
-    ): C {
-        DazzlConfConfigTracker.registerConfig(configClass, configFolder, configFileName)
-        DazzlConfConfigTracker.reloadConfig(configClass)
-        return DazzlConfConfigTracker.getConfig(configClass)
-    }
-
-    @PreferUsingSpongeConfigOverDazzlConf
-    override fun <C> getDazzlConfig(configClass: Class<C>): C =
-        DazzlConfConfigTracker.getConfig(configClass)
-
-    @PreferUsingSpongeConfigOverDazzlConf
-    override fun <C> reloadDazzlConfig(configClass: Class<C>): C =
-        DazzlConfConfigTracker.reloadConfig(configClass)
-
     override fun <C> createSpongeYmlConfigManager(
         configClass: Class<C>,
         configFolder: Path,
         configFileName: @YamlConfigFileNamePattern String,
         migrations: ConfigMigrationBuilder
     ): SpongeConfigManager<C> {
-        val manager = SpongeConfigManager.yaml(configClass, configFolder, configFileName, migrations)
+        val manager =
+            SpongeConfigManager.yaml(configClass, configFolder, configFileName, migrations)
         SpongeConfigTracker.registerConfig(configClass, manager)
 
         return manager
@@ -53,7 +34,8 @@ class SurfConfigApiImpl : SurfConfigApi {
         configFileName: @JsonConfigFileNamePattern String,
         migrations: ConfigMigrationBuilder
     ): SpongeConfigManager<C> {
-        val manager = SpongeConfigManager.json(configClass, configFolder, configFileName, migrations)
+        val manager =
+            SpongeConfigManager.json(configClass, configFolder, configFileName, migrations)
         SpongeConfigTracker.registerConfig(configClass, manager)
 
         return manager

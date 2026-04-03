@@ -14,6 +14,7 @@ interface SuspendPagination<T> {
     }
 
     companion object {
+        @Suppress("DEPRECATION")
         @OptIn(ExperimentalTypeInference::class)
         operator fun <T> invoke(@BuilderInference block: SuspendPaginationBuilder<T>.() -> Unit): SuspendPagination<T> {
             val builder = InternalPaginationBridge.instance.createPaginationBuilderSuspend<T>()
@@ -72,6 +73,7 @@ interface Pagination<T> {
             Style.style(Colors.GRAY)
         )
 
+        @Suppress("DEPRECATION")
         @OptIn(ExperimentalTypeInference::class)
         operator fun <T> invoke(@BuilderInference block: PaginationBuilder<T>.() -> Unit): Pagination<T> {
             val builder = InternalPaginationBridge.instance.createPaginationBuilder<T>()

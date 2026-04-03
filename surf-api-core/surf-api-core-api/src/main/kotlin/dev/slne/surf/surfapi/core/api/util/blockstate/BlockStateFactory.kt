@@ -260,10 +260,12 @@ interface BlockStateFactory {
 
     @OptIn(ExperimentalContracts::class)
     companion object {
+        @Suppress("DEPRECATION")
         @JvmStatic
         fun builder(stateType: StateType): Builder =
             BlockStateFactoryImpl.BuilderImpl(stateType.createBlockState().clone())
 
+        @Suppress("DEPRECATION")
         @JvmStatic
         fun builder(wrappedBlockState: WrappedBlockState): Builder =
             BlockStateFactoryImpl.BuilderImpl(wrappedBlockState.clone())
@@ -276,7 +278,10 @@ interface BlockStateFactory {
             return builder(stateType).apply(block).build()
         }
 
-        fun build(wrappedBlockState: WrappedBlockState, block: Builder.() -> Unit): WrappedBlockState {
+        fun build(
+            wrappedBlockState: WrappedBlockState,
+            block: Builder.() -> Unit
+        ): WrappedBlockState {
             contract {
                 callsInPlace(block, InvocationKind.EXACTLY_ONCE)
             }

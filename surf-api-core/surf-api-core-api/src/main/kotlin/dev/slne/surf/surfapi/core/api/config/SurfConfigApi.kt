@@ -1,7 +1,5 @@
 package dev.slne.surf.surfapi.core.api.config
 
-import dev.slne.surf.surfapi.core.api.config.manager.DazzlConfDeprecationMessageHolder
-import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.config.manager.SpongeConfigManager
 import dev.slne.surf.surfapi.core.api.config.migration.ConfigMigrationBuilder
 import dev.slne.surf.surfapi.core.api.util.requiredService
@@ -12,46 +10,6 @@ import java.nio.file.Path
  * Provides methods to create, retrieve, and reload configuration files in various formats (YAML, JSON).
  */
 interface SurfConfigApi {
-
-    /**
-     * Creates a DazzlConf configuration file.
-     *
-     * @param C The type of the configuration class.
-     * @param configClass The class of the configuration.
-     * @param configFolder The folder where the configuration file is stored.
-     * @param configFileName The name of the configuration file. Must follow the YAML file name pattern.
-     * @return An instance of the configuration class [C].
-     */
-    @PreferUsingSpongeConfigOverDazzlConf
-    @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
-    fun <C> createDazzlConfig(
-        configClass: Class<C>,
-        configFolder: Path,
-        configFileName: @YamlConfigFileNamePattern String,
-    ): C
-
-    /**
-     * Retrieves a DazzlConf configuration.
-     *
-     * @param C The type of the configuration class.
-     * @param configClass The class of the configuration.
-     * @return An instance of the configuration class [C].
-     */
-    @PreferUsingSpongeConfigOverDazzlConf
-    @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
-    fun <C> getDazzlConfig(configClass: Class<C>): C
-
-    /**
-     * Reloads a DazzlConf configuration from the file.
-     *
-     * @param C The type of the configuration class.
-     * @param configClass The class of the configuration.
-     * @return The reloaded instance of the configuration class [C].
-     */
-    @PreferUsingSpongeConfigOverDazzlConf
-    @Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
-    fun <C> reloadDazzlConfig(configClass: Class<C>): C
-
     /**
      * Creates a Sponge YAML configuration file.
      *
@@ -81,7 +39,12 @@ interface SurfConfigApi {
         configFolder: Path,
         configFileName: @YamlConfigFileNamePattern String,
     ): SpongeConfigManager<C> =
-        createSpongeYmlConfigManager(configClass, configFolder, configFileName, ConfigMigrationBuilder())
+        createSpongeYmlConfigManager(
+            configClass,
+            configFolder,
+            configFileName,
+            ConfigMigrationBuilder()
+        )
 
     /**
      * Creates a Sponge YAML configuration manager.
@@ -129,7 +92,12 @@ interface SurfConfigApi {
         configFolder: Path,
         configFileName: @JsonConfigFileNamePattern String,
     ): SpongeConfigManager<C> =
-        createSpongeJsonConfigManager(configClass, configFolder, configFileName, ConfigMigrationBuilder())
+        createSpongeJsonConfigManager(
+            configClass,
+            configFolder,
+            configFileName,
+            ConfigMigrationBuilder()
+        )
 
     /**
      * Creates a Sponge JSON configuration manager.
@@ -187,33 +155,6 @@ interface SurfConfigApi {
  * Retrieves the singleton instance of [SurfConfigApi].
  */
 val surfConfigApi = requiredService<SurfConfigApi>()
-
-/**
- * Creates a DazzlConf configuration using a reified type.
- */
-@PreferUsingSpongeConfigOverDazzlConf
-@Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
-@Suppress("DEPRECATION_ERROR")
-inline fun <reified C> SurfConfigApi.createDazzlConfig(
-    configFolder: Path,
-    configFileName: @YamlConfigFileNamePattern String,
-) = createDazzlConfig(C::class.java, configFolder, configFileName)
-
-/**
- * Retrieves a DazzlConf configuration using a reified type.
- */
-@PreferUsingSpongeConfigOverDazzlConf
-@Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
-@Suppress("DEPRECATION_ERROR")
-inline fun <reified C> SurfConfigApi.getDazzlConfig() = getDazzlConfig(C::class.java)
-
-/**
- * Reloads a DazzlConf configuration using a reified type.
- */
-@PreferUsingSpongeConfigOverDazzlConf
-@Deprecated(message = DazzlConfDeprecationMessageHolder.MESSAGE, level = DeprecationLevel.ERROR)
-@Suppress("DEPRECATION_ERROR")
-inline fun <reified C> SurfConfigApi.reloadDazzlConfig() = reloadDazzlConfig(C::class.java)
 
 /**
  * Creates a Sponge YAML configuration using a reified type.

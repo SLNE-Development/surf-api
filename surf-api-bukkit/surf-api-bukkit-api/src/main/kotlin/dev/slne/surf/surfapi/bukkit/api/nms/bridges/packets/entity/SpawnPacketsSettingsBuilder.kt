@@ -15,7 +15,7 @@ import org.spongepowered.math.vector.Vector3f
 annotation class SettingsDsl
 
 @SettingsDsl
-sealed class DisplaySettings: Cloneable {
+sealed class DisplaySettings : Cloneable {
     var pitch: Float = 0f
     var yaw: Float = 0f
     var translation: Vector3f? = null
@@ -28,6 +28,7 @@ sealed class DisplaySettings: Cloneable {
     public override fun clone() = super.clone() as DisplaySettings
 
     companion object {
+        @Suppress("UNCHECKED_CAST")
         inline fun <T : DisplaySettings> buildSettings(builder: T, block: T.() -> Unit): T {
             builder.apply(block)
             return builder.build() as T

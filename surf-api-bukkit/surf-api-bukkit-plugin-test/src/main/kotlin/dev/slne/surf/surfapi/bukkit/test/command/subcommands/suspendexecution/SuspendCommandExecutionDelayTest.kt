@@ -10,12 +10,12 @@ class SuspendCommandExecutionDelayTest(name: String) : CommandAPICommand(name) {
     init {
         anyExecutorSuspend { sender, arguments ->
             sender.sendText {
-                appendPrefix()
+                appendInfoPrefix()
                 info("Delay 3 seconds...")
             }
             delay(3.seconds)
             sender.sendText {
-                appendPrefix()
+                appendInfoPrefix()
                 info("Done!")
             }
         }
