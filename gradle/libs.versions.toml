@@ -16,7 +16,7 @@ packetevents = "2.11.2"
 packetevents-plugin = "2.11.2"
 
 # Command API
-commandapi = "11.1.0"
+commandapi = "11.2.0"
 
 # LuckPerms
 luckperms = "v5.5.0-bukkit"
@@ -62,11 +62,11 @@ flogger = "0.9"
 aide-reflection = "1.3"
 auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
-ktor = "3.4.1"
+ktor = "3.4.2"
 glm = "0.9.9.1-15"
 ksp-version = "2.3.6"
 reactor-netty = "1.3.4"
-bytebuddy = "1.18.7"
+bytebuddy = "1.18.8"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
