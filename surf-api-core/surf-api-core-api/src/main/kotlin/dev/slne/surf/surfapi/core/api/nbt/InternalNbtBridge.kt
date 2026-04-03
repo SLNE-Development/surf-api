@@ -4,12 +4,14 @@ import dev.slne.surf.surfapi.core.api.util.requiredService
 import dev.slne.surf.surfapi.shared.api.util.InternalSurfApi
 import net.kyori.adventure.nbt.CompoundBinaryTag
 
+private val bridge = requiredService<InternalNbtBridge>()
+
 @InternalSurfApi
 interface InternalNbtBridge {
 
     fun wrapCompoundBinaryTag(tag: CompoundBinaryTag, synchronize: Boolean): FastCompoundBinaryTag
 
-    companion object {
-        val instance = requiredService<InternalNbtBridge>()
+    companion object : InternalNbtBridge by bridge {
+        val INSTANCE get() = bridge
     }
 }

@@ -1,14 +1,14 @@
 package dev.slne.surf.surfapi.standalone.impl
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.surfapi.core.api.SurfCoreApi
+import dev.slne.surf.surfapi.core.api.SurfApiCore
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
-import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl
+import dev.slne.surf.surfapi.core.server.impl.SurfApiCoreImpl
 import java.nio.file.Path
 import java.util.*
 
-@AutoService(SurfCoreApi::class)
-class SurfStandaloneApiImpl : SurfCoreApiImpl() {
+@AutoService(SurfApiCore::class)
+class SurfStandaloneApiImpl : SurfApiCoreImpl() {
     init {
         checkInstantiationByServiceLoader()
     }

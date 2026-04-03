@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.core.api.config.serializer
 
-import dev.slne.surf.surfapi.core.api.config.manager.PreferUsingSpongeConfigOverDazzlConf
 import dev.slne.surf.surfapi.core.api.minimessage.SurfMiniMessageHolder
 import dev.slne.surf.surfapi.core.api.util.freeze
 import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
@@ -77,14 +76,12 @@ abstract class SpongeConfigSerializers {
      * Serializer for [Component] objects in Sponge configurations.
      */
     class ComponentSerializer : TypeSerializer<Component> {
-        @OptIn(PreferUsingSpongeConfigOverDazzlConf::class)
         override fun deserialize(type: Type?, node: ConfigurationNode): Component {
             val message = node.string ?: return Component.empty()
 
             return SurfMiniMessageHolder.miniMessage().deserialize(message)
         }
 
-        @OptIn(PreferUsingSpongeConfigOverDazzlConf::class)
         override fun serialize(type: Type?, obj: Component?, node: ConfigurationNode) {
             if (obj == null) {
                 return

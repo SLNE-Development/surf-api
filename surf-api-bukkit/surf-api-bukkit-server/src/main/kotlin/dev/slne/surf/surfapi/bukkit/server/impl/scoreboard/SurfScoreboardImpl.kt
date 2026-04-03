@@ -1,8 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.scoreboard
 
+import dev.slne.surf.surfapi.bukkit.api.SurfApiBukkit
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboard
-import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
 import net.kyori.adventure.text.Component
 import net.megavex.scoreboardlibrary.api.sidebar.Sidebar
 import net.megavex.scoreboardlibrary.api.sidebar.component.ComponentSidebarLayout
@@ -38,7 +38,7 @@ open class SurfScoreboardImpl(
     override fun enable() {
         check(!enabled) { "Scoreboard is already enabled" }
 
-        scoreboard = surfBukkitApi.scoreboardLibrary().createSidebar(maxLines)
+        scoreboard = SurfApiBukkit.scoreboardLibrary().createSidebar(maxLines)
         sidebarLayout = ComponentSidebarLayout(
             SidebarComponent.staticLine(title),
             sidebarComponent

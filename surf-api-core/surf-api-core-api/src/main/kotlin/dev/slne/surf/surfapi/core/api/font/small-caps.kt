@@ -35,13 +35,3 @@ fun CharSequence.toSmallCaps(): String {
     }
     return String(chars)
 }
-
-
-@Deprecated(
-    message = "Use CharSequence overload",
-    level = DeprecationLevel.HIDDEN
-)
-
-fun String.toSmallCaps(): String {
-    return (this as CharSequence).toSmallCaps()
-}

@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.server
 
-import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
-import dev.slne.surf.surfapi.bukkit.server.impl.SurfBukkitApiImpl
+import dev.slne.surf.surfapi.bukkit.api.SurfApiBukkit
+import dev.slne.surf.surfapi.bukkit.server.impl.SurfApiBukkitImpl
 import dev.slne.surf.surfapi.bukkit.server.inventory.framework.InventoryLoader
 import dev.slne.surf.surfapi.bukkit.server.listener.ListenerManager
 import dev.slne.surf.surfapi.bukkit.server.packet.PacketApiLoader
@@ -24,7 +24,7 @@ object BukkitInstance : CoreInstance() {
         PacketApiLoader.onEnable()
         InventoryLoader.enable()
         ListenerManager.registerListeners()
-        (surfBukkitApi as SurfBukkitApiImpl).onEnable()
+        (SurfApiBukkit.INSTANCE as SurfApiBukkitImpl).onEnable()
     }
 
     override suspend fun onDisable() {

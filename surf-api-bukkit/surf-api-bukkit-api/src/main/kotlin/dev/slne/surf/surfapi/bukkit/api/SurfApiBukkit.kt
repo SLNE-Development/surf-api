@@ -4,7 +4,7 @@ import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
-import dev.slne.surf.surfapi.core.api.SurfCoreApi
+import dev.slne.surf.surfapi.core.api.SurfApiCore
 import net.kyori.adventure.text.Component
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
 import org.bukkit.World
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
  * Represents the API for SurfBukkit.
  */
 @ApiStatus.NonExtendable
-interface SurfBukkitApi : SurfCoreApi {
+interface SurfApiBukkit : SurfApiCore {
 
     val isFolia: Boolean
     val isCanvasMc: Boolean
@@ -107,10 +107,7 @@ interface SurfBukkitApi : SurfCoreApi {
      */
     suspend fun skipTimeSmoothly(skipOperation: SkipOperation): Map<World, TimeSkipResult>
 
-    companion object {
-        @JvmStatic
-        val instance get() = SurfCoreApi.instance as SurfBukkitApi
+    companion object : SurfApiBukkit by SurfApiCore.instance as SurfApiBukkit {
+        val INSTANCE get() = SurfApiCore.instance as SurfApiBukkit
     }
 }
-
-val surfBukkitApi get() = SurfBukkitApi.instance

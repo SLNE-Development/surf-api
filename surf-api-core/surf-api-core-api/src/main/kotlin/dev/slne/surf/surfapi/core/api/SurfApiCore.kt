@@ -6,7 +6,7 @@ import java.util.*
 /**
  * The main API class for the SurfCoreApi.
  */
-interface SurfCoreApi {
+interface SurfApiCore {
 
     /**
      * Sends a player to a specified server.
@@ -21,17 +21,17 @@ interface SurfCoreApi {
      */
     fun getPlayer(playerUuid: UUID): Any?
 
-    companion object : SurfCoreApi by surfCoreApi {
+    companion object : SurfApiCore by api {
 
         /**
          * The instance of the SurfCoreApi.
          */
         @JvmStatic
-        val instance = surfCoreApi
+        val instance = api
     }
 }
 
 /**
  * The instance of the SurfCoreApi.
  */
-val surfCoreApi = requiredService<SurfCoreApi>()
+private val api = requiredService<SurfApiCore>()

@@ -5,7 +5,7 @@ package dev.slne.surf.surfapi.bukkit.api.util
 import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
-import dev.slne.surf.surfapi.bukkit.api.SurfBukkitApi
+import dev.slne.surf.surfapi.bukkit.api.SurfApiBukkit
 import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import dev.slne.surf.surfapi.core.api.util.mutableObjectListOf
 import io.papermc.paper.math.BlockPosition
@@ -238,7 +238,8 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
 
     val snapshots = ConcurrentHashMap<Long, ChunkSnapshot>(chunkKeys.size)
     coroutineScope {
-        val semaphore = Semaphore(16) // Limit concurrent chunk loads to prevent overwhelming the server
+        val semaphore =
+            Semaphore(16) // Limit concurrent chunk loads to prevent overwhelming the server
         val iterator = chunkKeys.iterator()
         while (iterator.hasNext()) {
             val key = iterator.nextLong()
@@ -248,7 +249,7 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
                         .await()
 
                     withContext(
-                        JavaPlugin.getProvidingPlugin(SurfBukkitApi::class.java)
+                        JavaPlugin.getProvidingPlugin(SurfApiBukkit::class.java)
                             .regionDispatcher(world, chunk.x, chunk.z)
                     ) {
                         val snapshot = chunk
@@ -274,7 +275,7 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
 suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
     val chunkX = pos.blockX() shr 4
     val chunkZ = pos.blockZ() shr 4
-    val plugin = JavaPlugin.getProvidingPlugin(SurfBukkitApi::class.java)
+    val plugin = JavaPlugin.getProvidingPlugin(SurfApiBukkit::class.java)
     val chunk = getChunkAtAsync(chunkX, chunkZ).await()
 
     return withContext(plugin.regionDispatcher(this, chunkX, chunkZ)) {

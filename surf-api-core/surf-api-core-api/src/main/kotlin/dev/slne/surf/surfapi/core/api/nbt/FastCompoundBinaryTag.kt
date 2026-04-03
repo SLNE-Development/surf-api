@@ -17,6 +17,7 @@ import org.jetbrains.annotations.UnmodifiableView
  * All operations (put, remove, etc.) mutate the tag directly, unlike the standard CompoundBinaryTag
  * which is immutable and returns a new tag for each operation.
  */
+@Suppress("NonExtendableApiUsage")
 interface FastCompoundBinaryTag : CompoundBinaryTag {
 
     /**
@@ -50,7 +51,7 @@ interface FastCompoundBinaryTag : CompoundBinaryTag {
  * @return A mutable FastCompoundBinaryTag backed by fastutil collections
  */
 fun CompoundBinaryTag.fast(synchronize: Boolean = false) =
-    InternalNbtBridge.instance.wrapCompoundBinaryTag(this, synchronize)
+    InternalNbtBridge.wrapCompoundBinaryTag(this, synchronize)
 
 /**
  * Builds and wraps the result in a mutable FastCompoundBinaryTag.

@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.scoreboard
 
-import dev.slne.surf.surfapi.bukkit.api.surfBukkitApi
+import dev.slne.surf.surfapi.bukkit.api.SurfApiBukkit
 import dev.slne.surf.surfapi.core.api.messages.Colors
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -127,7 +127,7 @@ interface SurfScoreboardBuilder {
          */
         @JvmStatic
         fun builder(title: Component): SurfScoreboardBuilder {
-            return surfBukkitApi.createScoreboard(title)
+            return SurfApiBukkit.createScoreboard(title)
         }
 
         /**

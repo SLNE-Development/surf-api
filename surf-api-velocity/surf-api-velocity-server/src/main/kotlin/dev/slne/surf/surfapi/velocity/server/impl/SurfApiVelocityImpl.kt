@@ -2,16 +2,16 @@ package dev.slne.surf.surfapi.velocity.server.impl
 
 import com.google.auto.service.AutoService
 import com.velocitypowered.api.proxy.Player
-import dev.slne.surf.surfapi.core.api.SurfCoreApi
+import dev.slne.surf.surfapi.core.api.SurfApiCore
 import dev.slne.surf.surfapi.core.api.util.checkInstantiationByServiceLoader
-import dev.slne.surf.surfapi.core.server.impl.SurfCoreApiImpl
-import dev.slne.surf.surfapi.velocity.api.SurfVelocityApi
+import dev.slne.surf.surfapi.core.server.impl.SurfApiCoreImpl
+import dev.slne.surf.surfapi.velocity.api.SurfApiVelocity
 import dev.slne.surf.surfapi.velocity.server.velocityMain
 import java.util.*
 
 
-@AutoService(SurfCoreApi::class)
-class SurfVelocityApiImpl : SurfCoreApiImpl(), SurfVelocityApi {
+@AutoService(SurfApiCore::class)
+class SurfApiVelocityImpl : SurfApiCoreImpl(), SurfApiVelocity {
     init {
         checkInstantiationByServiceLoader()
     }

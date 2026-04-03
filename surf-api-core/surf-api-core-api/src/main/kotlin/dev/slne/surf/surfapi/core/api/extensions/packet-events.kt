@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.core.api.extensions
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
-import dev.slne.surf.surfapi.core.api.surfCoreApi
+import dev.slne.surf.surfapi.core.api.SurfApiCore
 import java.util.*
 
 val packetEvents get() = PacketEvents.getAPI() ?: error("PacketEvents API is not yet initialized")
@@ -14,7 +14,7 @@ val packetEvents get() = PacketEvents.getAPI() ?: error("PacketEvents API is not
  * @param uuid the UUID of the player to whom the packet will be sent
  */
 fun PacketWrapper<*>.sendPacket(uuid: UUID) {
-    val player = surfCoreApi.getPlayer(uuid) ?: return
+    val player = SurfApiCore.getPlayer(uuid) ?: return
     sendPacket(player)
 }
 

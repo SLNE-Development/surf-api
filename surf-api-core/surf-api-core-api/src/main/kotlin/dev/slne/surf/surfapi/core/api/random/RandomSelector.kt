@@ -1,6 +1,5 @@
 package dev.slne.surf.surfapi.core.api.random
 
-import dev.slne.surf.surfapi.core.api.random.RandomSelector.Companion.fromInfinityFlow
 import dev.slne.surf.surfapi.core.api.random.RandomSelector.Companion.fromWeightedIterable
 import kotlinx.coroutines.flow.Flow
 import java.util.random.RandomGenerator
@@ -389,7 +388,8 @@ interface RandomSelector<E> {
             iterable: Iterable<E>,
             randomGenerator: RandomGenerator? = null,
             weighter: Weighter<E>,
-        ): RandomSelector<E> = RandomSelectorImpl.fromWeightedIterable(iterable, weighter, randomGenerator.toApache())
+        ): RandomSelector<E> =
+            RandomSelectorImpl.fromWeightedIterable(iterable, weighter, randomGenerator.toApache())
 
         /**
          * Creates a [RandomSelector] with custom weighted probability distribution from an [Iterable].
@@ -408,7 +408,8 @@ interface RandomSelector<E> {
             iterable: Iterable<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator,
             weighter: Weighter<E>,
-        ): RandomSelector<E> = RandomSelectorImpl.fromWeightedIterable(iterable, weighter, randomGenerator)
+        ): RandomSelector<E> =
+            RandomSelectorImpl.fromWeightedIterable(iterable, weighter, randomGenerator)
 
         /**
          * Creates a [RandomSelector] from an [Iterable] of elements implementing [Weighted].
@@ -439,7 +440,11 @@ interface RandomSelector<E> {
             iterable: Iterable<E>,
             randomGenerator: RandomGenerator? = null
         ): RandomSelector<E> =
-            RandomSelectorImpl.fromWeightedIterable(iterable, { it.weight }, randomGenerator.toApache())
+            RandomSelectorImpl.fromWeightedIterable(
+                iterable,
+                { it.weight },
+                randomGenerator.toApache()
+            )
 
         /**
          * Creates a [RandomSelector] from an [Iterable] of elements implementing [Weighted].
@@ -518,88 +523,5 @@ interface RandomSelector<E> {
             weighter: Weighter<E>
         ): RandomSelector<E> =
             RandomSelectorImpl.fromFlow(flow, weighter, randomGenerator)
-
-        /**
-         * Creates a [RandomSelector] from an infinite weighted [Flow].
-         *
-         * **DEPRECATED:** This method cannot provide statistically correct weighted random selection
-         * on infinite streams. The underlying reservoir sampling algorithm causes systematic bias where
-         * earlier elements become exponentially less likely to be selected over time, regardless of
-         * their weights.
-         *
-         * ## Why This is Problematic
-         *
-         * Consider an infinite stream with weights [A=1.0, B=1.0, C=1.0, ...]:
-         * - After 1000 elements: Element A has ~0.1% selection probability (not 33.3%)
-         * - After 10000 elements: Element A has ~0.01% selection probability
-         * - This violates the fundamental property of weighted random selection
-         *
-         * ## Recommended Alternatives
-         *
-         * 1. **Finite Collection**: Collect elements into a list first
-         * ```kotlin
-         * val items = infiniteFlow.take(1000).toList()
-         * val selector = RandomSelector.fromWeightedIterable(items) { it.weight }
-         * ```
-         *
-         * 2. **Direct Flow Consumption**: Process the flow without attempting random selection
-         * ```kotlin
-         * infiniteFlow.collect { element ->
-         *     // Process each element as it arrives
-         * }
-         * ```
-         *
-         * 3. **Windowed Selection**: Select from recent elements only
-         * ```kotlin
-         * infiniteFlow
-         *     .chunked(100)
-         *     .map { chunk -> RandomSelector.fromIterable(chunk).pick() }
-         *     .collect { selected -> /* use selected element */ }
-         * ```
-         *
-         * @param E The type of elements in the flow.
-         * @param flow The infinite source flow of elements.
-         * @param randomGenerator Optional custom random generator.
-         * @param weighter A function that extracts or calculates the weight for each element.
-         * @return A [RandomSelector] that uses biased reservoir sampling (NOT statistically correct).
-         */
-        @Deprecated(
-            message = "Cannot provide unbiased weighted random selection on infinite streams. " +
-                    "Reservoir sampling causes earlier elements to become increasingly unlikely over time. " +
-                    "Use fromIterable() with a finite collection or consume the flow directly.",
-            level = DeprecationLevel.WARNING
-        )
-        @JvmOverloads
-        fun <E> fromInfinityFlow(
-            flow: Flow<E>,
-            randomGenerator: RandomGenerator? = null,
-            weighter: Weighter<E>
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromInfinityFlow(flow, weighter, randomGenerator.toApache())
-
-        /**
-         * Creates a [RandomSelector] from an infinite weighted [Flow].
-         *
-         * **DEPRECATED:** See the other [fromInfinityFlow] overload for detailed explanation of why
-         * this method is problematic and recommended alternatives.
-         *
-         * @param E The type of elements in the flow.
-         * @param flow The infinite source flow of elements.
-         * @param randomGenerator Apache Commons Math random generator instance.
-         * @param weighter A function that extracts or calculates the weight for each element.
-         * @return A [RandomSelector] that uses biased reservoir sampling (NOT statistically correct).
-         */
-        @Deprecated(
-            message = "Cannot provide unbiased weighted random selection on infinite streams. " +
-                    "Reservoir sampling causes earlier elements to become increasingly unlikely over time. " +
-                    "Use fromIterable() with a finite collection or consume the flow directly.",
-            level = DeprecationLevel.WARNING
-        )
-        fun <E> fromInfinityFlow(
-            flow: Flow<E>,
-            randomGenerator: org.apache.commons.math3.random.RandomGenerator,
-            weighter: Weighter<E>
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromInfinityFlow(flow, weighter, randomGenerator)
     }
 }
