@@ -703,78 +703,6 @@ public abstract class dev/slne/surf/surfapi/bukkit/api/hook/papi/expansion/PapiP
 	public abstract fun parse (Lorg/bukkit/OfflinePlayer;Ljava/util/List;)Ljava/lang/String;
 }
 
-public abstract interface class dev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui : dev/slne/surf/surfapi/bukkit/api/inventory/SurfGui {
-	public abstract fun getPlayer ()Lorg/bukkit/entity/Player;
-	public fun open ()V
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui$DefaultImpls {
-	public static fun backToParent (Ldev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui;Lorg/bukkit/entity/HumanEntity;)V
-	public static fun item (Ldev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui;Lcom/github/stefvanschie/inventoryframework/pane/StaticPane;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
-	public static fun open (Ldev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui;)V
-	public static fun walkParents (Ldev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui;)Ljava/util/List;
-}
-
-public abstract interface class dev/slne/surf/surfapi/bukkit/api/inventory/SurfGui {
-	public fun backToParent (Lorg/bukkit/entity/HumanEntity;)V
-	public abstract fun getGui ()Lcom/github/stefvanschie/inventoryframework/gui/type/util/NamedGui;
-	public abstract fun getParent ()Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;
-	public fun item (Lcom/github/stefvanschie/inventoryframework/pane/StaticPane;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun item$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;Lcom/github/stefvanschie/inventoryframework/pane/StaticPane;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public fun walkParents ()Ljava/util/List;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/SurfGui$DefaultImpls {
-	public static fun backToParent (Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;Lorg/bukkit/entity/HumanEntity;)V
-	public static fun item (Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;Lcom/github/stefvanschie/inventoryframework/pane/StaticPane;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun item$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;Lcom/github/stefvanschie/inventoryframework/pane/StaticPane;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static fun walkParents (Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;)Ljava/util/List;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/GuiKt {
-	public static final fun childMenu (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;
-	public static final fun childPlayerMenu (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;
-	public static final fun menu (Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;
-	public static synthetic fun menu$default (Lnet/kyori/adventure/text/Component;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;
-	public static final fun playerMenu (Lnet/kyori/adventure/text/Component;Lorg/bukkit/entity/Player;ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;
-	public static synthetic fun playerMenu$default (Lnet/kyori/adventure/text/Component;Lorg/bukkit/entity/Player;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui;
-	public static final fun staticPane (Lcom/github/stefvanschie/inventoryframework/gui/type/util/MergedGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;)V
-	public static synthetic fun staticPane$default (Lcom/github/stefvanschie/inventoryframework/gui/type/util/MergedGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/MenuMarker : java/lang/annotation/Annotation {
-}
-
-public abstract interface annotation class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/PaneMarker : java/lang/annotation/Annotation {
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/PanesKt {
-	public static final fun addItem (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;Lcom/github/stefvanschie/inventoryframework/gui/GuiItem;)V
-	public static final fun addItems (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;[Lkotlin/Pair;)V
-	public static final fun drawOutline (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILcom/github/stefvanschie/inventoryframework/gui/GuiItem;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static final fun drawOutline (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static synthetic fun drawOutline$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILcom/github/stefvanschie/inventoryframework/gui/GuiItem;ILjava/lang/Object;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static synthetic fun drawOutline$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static final fun drawOutlineRow (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;IILcom/github/stefvanschie/inventoryframework/gui/GuiItem;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static final fun drawOutlineRow (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;IILkotlin/jvm/functions/Function1;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static synthetic fun drawOutlineRow$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;IILcom/github/stefvanschie/inventoryframework/gui/GuiItem;ILjava/lang/Object;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static synthetic fun drawOutlineRow$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;IILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/github/stefvanschie/inventoryframework/pane/OutlinePane;
-	public static final fun makeStaticPane (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;)Lcom/github/stefvanschie/inventoryframework/pane/StaticPane;
-	public static final fun makeSubmitItemPane (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILjava/util/List;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/pane/SubmitItemPane;
-	public static final fun makeSubmitItemPane (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/bukkit/api/inventory/pane/SubmitItemPane;
-	public static synthetic fun makeSubmitItemPane$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILjava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/inventory/pane/SubmitItemPane;
-	public static synthetic fun makeSubmitItemPane$default (Ldev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/surfapi/bukkit/api/inventory/pane/SubmitItemPane;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/SlotKt {
-	public static final fun slot (I)Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;
-	public static final fun slot (II)Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/dsl/StaticPaneScope : com/github/stefvanschie/inventoryframework/pane/StaticPane {
-	public fun <init> (Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;II)V
-}
-
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/InventoryFrameworkExtensions {
 	public static final fun getOutlineItem (Lme/devnatan/inventoryframework/View;)Lorg/bukkit/inventory/ItemStack;
 	public static final fun modifyConfig (Lme/devnatan/inventoryframework/context/OpenContext;Lkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/ViewConfigBuilder;
@@ -1528,55 +1456,6 @@ public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/uti
 
 public final class dev/slne/surf/surfapi/bukkit/api/inventory/framework/view/util/GlyphShiftKt {
 	public static final fun shift (I)Ljava/lang/String;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/item/GuiItemKt {
-	public static final fun guiItem (Lorg/bukkit/Material;Lkotlin/jvm/functions/Function1;)Lcom/github/stefvanschie/inventoryframework/gui/GuiItem;
-	public static final fun guiItem (Lorg/bukkit/Material;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/github/stefvanschie/inventoryframework/gui/GuiItem;
-	public static final fun guiItem (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)Lcom/github/stefvanschie/inventoryframework/gui/GuiItem;
-	public static synthetic fun guiItem$default (Lorg/bukkit/Material;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/github/stefvanschie/inventoryframework/gui/GuiItem;
-	public static synthetic fun guiItem$default (Lorg/bukkit/Material;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/github/stefvanschie/inventoryframework/gui/GuiItem;
-	public static synthetic fun guiItem$default (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/github/stefvanschie/inventoryframework/gui/GuiItem;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/item/SurfGuiItem : com/github/stefvanschie/inventoryframework/gui/GuiItem {
-	public fun <init> ()V
-	public fun <init> (Lorg/bukkit/inventory/ItemStack;)V
-	public final fun getClick ()Lkotlin/jvm/functions/Function1;
-	public final fun getCondition ()Lkotlin/jvm/functions/Function0;
-	public final fun getItemPermission ()Ljava/lang/String;
-	public final fun permission (Ldev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui;Ljava/lang/String;)V
-	public final fun setClick (Lkotlin/jvm/functions/Function1;)V
-	public final fun setCondition (Lkotlin/jvm/functions/Function0;)V
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/pane/SubmitItemPane : com/github/stefvanschie/inventoryframework/pane/Pane {
-	public fun <init> (Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILjava/util/List;Lcom/github/stefvanschie/inventoryframework/pane/Pane$Priority;)V
-	public synthetic fun <init> (Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILjava/util/List;Lcom/github/stefvanschie/inventoryframework/pane/Pane$Priority;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;)V
-	public fun <init> (Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;Lcom/github/stefvanschie/inventoryframework/pane/Pane$Priority;)V
-	public synthetic fun <init> (Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;IILkotlin/jvm/functions/Function1;Lcom/github/stefvanschie/inventoryframework/pane/Pane$Priority;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun clear ()V
-	public fun click (Lcom/github/stefvanschie/inventoryframework/gui/type/util/Gui;Lcom/github/stefvanschie/inventoryframework/gui/InventoryComponent;Lorg/bukkit/event/inventory/InventoryClickEvent;IIIII)Z
-	public fun copy ()Lcom/github/stefvanschie/inventoryframework/pane/Pane;
-	public fun display (Lcom/github/stefvanschie/inventoryframework/gui/InventoryComponent;IIII)V
-	public fun getItems ()Ljava/util/Collection;
-	public fun getPanes ()Ljava/util/Collection;
-	public final fun getSubmittedItems ()Ljava/util/Map;
-}
-
-public class dev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui : com/github/stefvanschie/inventoryframework/gui/type/ChestGui, dev/slne/surf/surfapi/bukkit/api/inventory/SurfGui {
-	public fun backToParent (Lorg/bukkit/entity/HumanEntity;)V
-	public fun getGui ()Lcom/github/stefvanschie/inventoryframework/gui/type/util/NamedGui;
-	public fun getParent ()Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;
-	public fun item (Lcom/github/stefvanschie/inventoryframework/pane/StaticPane;Lcom/github/stefvanschie/inventoryframework/pane/util/Slot;Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
-	public fun walkParents ()Ljava/util/List;
-}
-
-public final class dev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestSinglePlayerGui : dev/slne/surf/surfapi/bukkit/api/inventory/types/SurfChestGui, dev/slne/surf/surfapi/bukkit/api/inventory/SinglePlayerGui {
-	public fun getParent ()Ldev/slne/surf/surfapi/bukkit/api/inventory/SurfGui;
-	public fun getPlayer ()Lorg/bukkit/entity/Player;
-	public fun open ()V
 }
 
 public class dev/slne/surf/surfapi/bukkit/api/metrics/Metrics {

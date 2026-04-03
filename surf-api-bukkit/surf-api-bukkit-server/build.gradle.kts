@@ -26,7 +26,6 @@ dependencies {
     // -------------------- Paper Libraries -------------------- //
     runtimeOnly(libs.scoreboard.library.implementation)
     paperLibrary(libs.scoreboard.library.api)
-    api(libs.stefvanschie.`if`)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
     paperLibrary(libs.gson)
@@ -94,13 +93,6 @@ paper {
 
 tasks.generatePaperPluginDescription {
     useDefaultCentralProxy()
-}
-
-tasks {
-    shadowJar {
-        val relocationPrefix: String by project
-        relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
-    }
 }
 
 configurations.all {
