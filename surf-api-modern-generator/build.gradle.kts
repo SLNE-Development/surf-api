@@ -18,7 +18,7 @@ dependencies {
     implementation(libs.bundles.kotlin.serialization)
 
     implementation("com.squareup:javapoet:1.13.0")
-    implementation("com.squareup:kotlinpoet:2.2.0")
+    implementation("com.squareup:kotlinpoet:2.3.0")
     implementation("org.jetbrains:annotations:26.1.0")
     implementation(libs.paper.api)
 
