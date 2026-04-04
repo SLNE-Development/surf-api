@@ -7158,6 +7158,7 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/
 	public fun appendNewlineAsync (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun appendPlayerHead (Ljava/lang/String;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public fun appendPlayerHead (Ljava/util/UUID;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun appendPlayerHead (Lnet/kyori/adventure/text/object/PlayerHeadObjectContents$SkinSource;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/util/UUID;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public fun appendPrefix ()Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -7248,6 +7249,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 	public static fun appendNewlineAsync (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendPlayerHead (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendPlayerHead (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/util/UUID;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun appendPlayerHead (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/text/object/PlayerHeadObjectContents$SkinSource;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/util/UUID;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendPrefix (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;

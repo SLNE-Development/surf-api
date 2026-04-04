@@ -17,6 +17,7 @@ import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.`object`.ObjectContents
+import net.kyori.adventure.text.`object`.PlayerHeadObjectContents
 import net.kyori.adventure.util.ARGBLike
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -122,6 +123,14 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
                 ObjectContents.playerHead(uuid).toBuilder().hat(outerLayer).build()
             )
         )
+
+    /**
+     * Appends a player head component
+     *
+     * @param source The skin source for the player head
+     */
+    fun appendPlayerHead(source: PlayerHeadObjectContents.SkinSource) =
+        append(Component.`object`(ObjectContents.playerHead(source)))
 
     /**
      * Appends a sprite component from the specified atlas and sprite name
