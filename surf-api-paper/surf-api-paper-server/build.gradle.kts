@@ -52,7 +52,7 @@ dependencies {
 paper {
     name = "surf-paper-api"
     provides = listOf("SurfPaperAPI")
-    apiVersion = "1.21.11"
+    apiVersion = "26.1.1"
     description = "Surf API for Paper"
     website = "https://slne.dev"
     authors = listOf("twisti", "SLNE Development Team")
