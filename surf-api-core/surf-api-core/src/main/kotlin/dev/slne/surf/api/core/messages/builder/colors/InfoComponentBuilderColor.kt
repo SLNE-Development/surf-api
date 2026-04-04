@@ -7,8 +7,10 @@ import net.kyori.adventure.text.format.TextDecoration
 
 interface InfoComponentBuilderColor : ComponentBuilderColor {
     fun SurfComponentBuilder.appendInfoPrefix() = append(Colors.INFO_PREFIX)
-    
-    fun SurfComponentBuilder.appendNewInfoPrefixedLine() = appendNewline().appendInfoPrefix()
+
+    fun SurfComponentBuilder.appendNewInfoPrefixedLine(amount: Int = 1) =
+        repeat(amount) { appendNewline().appendInfoPrefix() }
+
     fun SurfComponentBuilder.appendNewInfoPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
         appendNewline().appendInfoPrefix().append(block)
 

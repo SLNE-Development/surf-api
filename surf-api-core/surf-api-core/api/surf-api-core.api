@@ -6916,7 +6916,6 @@ public abstract interface annotation class dev/slne/surf/api/core/messages/adven
 }
 
 public final class dev/slne/surf/api/core/messages/adventure/Component_extensionKt {
-	public static final fun appendNewPrefixedLine (Lnet/kyori/adventure/text/ComponentBuilder;I)V
 	public static final fun appendNewline (Lnet/kyori/adventure/text/ComponentBuilder;I)V
 	public static final fun appendText (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public static final fun appendText (Lnet/kyori/adventure/text/ComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/ComponentBuilder;
@@ -7058,13 +7057,17 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/Componen
 public final class dev/slne/surf/api/core/messages/builder/ComponentBuilderColors$DefaultImpls {
 	public static fun appendErrorPrefix (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendInfoPrefix (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewErrorPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewInfoPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewSuccessPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendSuccessPrefix (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendWarningPrefix (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7272,13 +7275,17 @@ public final class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder$
 	public static synthetic fun appendKickDisconnectMessage$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendMap (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendMap$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewErrorPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewInfoPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewSuccessPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendNewline (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewlineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -7429,7 +7436,9 @@ public final class dev/slne/surf/api/core/messages/builder/colors/DarkSpacerComp
 
 public abstract interface class dev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor : dev/slne/surf/api/core/messages/builder/ComponentBuilderColor {
 	public fun appendErrorPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewErrorPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public fun appendNewErrorPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun error (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun error (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7439,7 +7448,9 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/colors/E
 
 public final class dev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor$DefaultImpls {
 	public static fun appendErrorPrefix (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewErrorPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public static fun appendNewErrorPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;CLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/colors/ErrorComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7453,7 +7464,9 @@ public final class dev/slne/surf/api/core/messages/builder/colors/ErrorComponent
 
 public abstract interface class dev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor : dev/slne/surf/api/core/messages/builder/ComponentBuilderColor {
 	public fun appendInfoPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewInfoPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public fun appendNewInfoPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun info (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun info (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7463,7 +7476,9 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/colors/I
 
 public final class dev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor$DefaultImpls {
 	public static fun appendInfoPrefix (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewInfoPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public static fun appendNewInfoPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;CLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/colors/InfoComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7530,7 +7545,9 @@ public final class dev/slne/surf/api/core/messages/builder/colors/SpacerComponen
 }
 
 public abstract interface class dev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor : dev/slne/surf/api/core/messages/builder/ComponentBuilderColor {
-	public fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewSuccessPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public fun appendNewSuccessPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun appendSuccessPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun success (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7540,7 +7557,9 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/colors/S
 }
 
 public final class dev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor$DefaultImpls {
-	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewSuccessPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public static fun appendNewSuccessPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendSuccessPrefix (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/colors/SuccessComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;CLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7559,13 +7578,17 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/colors/S
 public final class dev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors$DefaultImpls {
 	public static fun appendErrorPrefix (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendInfoPrefix (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewErrorPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewErrorPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewInfoPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewInfoPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewSuccessPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewSuccessPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendSuccessPrefix (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendWarningPrefix (Ldev/slne/surf/api/core/messages/builder/colors/SurfComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7652,7 +7675,9 @@ public final class dev/slne/surf/api/core/messages/builder/colors/VariableValueC
 }
 
 public abstract interface class dev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor : dev/slne/surf/api/core/messages/builder/ComponentBuilderColor {
-	public fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewWarningPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun appendWarningPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun warning (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7662,7 +7687,9 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/colors/W
 }
 
 public final class dev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor$DefaultImpls {
-	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
+	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendNewWarningPrefixedLine$default (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILjava/lang/Object;)V
 	public static fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendWarningPrefix (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/colors/WarningComponentBuilderColor;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;CLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;

@@ -7,8 +7,10 @@ import net.kyori.adventure.text.format.TextDecoration
 
 interface SuccessComponentBuilderColor : ComponentBuilderColor {
     fun SurfComponentBuilder.appendSuccessPrefix() = append(Colors.SUCCESS_PREFIX)
-    
-    fun SurfComponentBuilder.appendNewSuccessPrefixedLine() = appendNewline().appendSuccessPrefix()
+
+    fun SurfComponentBuilder.appendNewSuccessPrefixedLine(amount: Int = 1) =
+        repeat(amount) { appendNewline().appendSuccessPrefix() }
+
     fun SurfComponentBuilder.appendNewSuccessPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
         appendNewline().appendSuccessPrefix().append(block)
 
