@@ -8,7 +8,6 @@ import dev.slne.surf.surfapi.core.api.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCONNECT_HEADER
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.DISCORD_LINK
 import dev.slne.surf.surfapi.core.api.messages.CommonComponents.TIME_SEPARATOR
-import dev.slne.surf.surfapi.core.api.minimessage.miniMessage
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.*
 import net.kyori.adventure.text.event.ClickEvent
@@ -17,6 +16,7 @@ import net.kyori.adventure.text.event.HoverEventSource
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.`object`.ObjectContents
 import net.kyori.adventure.util.ARGBLike
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -104,7 +104,11 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
      * @param outerLayer Whether to show the outer layer of the skin (default: true)
      */
     fun appendPlayerHead(username: String, outerLayer: Boolean = true) =
-        append(miniMessage.deserialize("<head:$username:$outerLayer>"))
+        append(
+            Component.`object`(
+                ObjectContents.playerHead(username).toBuilder().hat(outerLayer).build()
+            )
+        )
 
     /**
      * Appends a player head component
@@ -113,26 +117,30 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
      * @param outerLayer Whether to show the outer layer of the skin (default: true)
      */
     fun appendPlayerHead(uuid: UUID, outerLayer: Boolean = true) =
-        append(miniMessage.deserialize("<head:$uuid:$outerLayer>"))
+        append(
+            Component.`object`(
+                ObjectContents.playerHead(uuid).toBuilder().hat(outerLayer).build()
+            )
+        )
 
     /**
      * Appends a sprite component from the specified atlas and sprite name
      *
-     * @param atlas The name of the atlas
-     * @param sprite The name of the sprite
+     * @param atlas The name of the atlas as a key
+     * @param sprite The name of the sprite as a key
      *
      * eg. appendSprite("blocks", "block/stone"), appendSprite("minecraft:items", "item/porkchop")
      */
-    fun appendSprite(atlas: String, sprite: String) =
-        append(miniMessage.deserialize("<sprite:\"$atlas\":$sprite>"))
+    fun appendSprite(atlas: Key, sprite: Key) =
+        append(Component.`object`(ObjectContents.sprite(atlas, sprite)))
 
     /**
      * Appends a sprite component from the specified atlas and sprite name
      *
-     * @param spriteWithAtlas The combined atlas and sprite name in the format "atlas:sprite"
+     * @param sprite The name of the sprite, using the default atlas (minecraft:sprite)
      */
-    fun appendSprite(spriteWithAtlas: String) =
-        append(miniMessage.deserialize("<sprite:$spriteWithAtlas>"))
+    fun appendSprite(sprite: Key) =
+        append(Component.`object`(ObjectContents.sprite(sprite)))
 
     /**
      * Applies a hover event with the given content built by the provided block
