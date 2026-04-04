@@ -11,12 +11,16 @@ import dev.slne.surf.surfapi.core.api.messages.CommonComponents.TIME_SEPARATOR
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.*
 import net.kyori.adventure.text.event.ClickEvent
+import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.event.HoverEventSource
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.`object`.ObjectContents
+import net.kyori.adventure.text.`object`.PlayerHeadObjectContents
 import net.kyori.adventure.util.ARGBLike
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
 import kotlin.time.Duration
@@ -80,11 +84,81 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
     fun note(any: Any, vararg decoration: TextDecoration) = text(any.toString(), NOTE, *decoration)
 
     fun ellipsis(color: TextColor? = SPACER) = append(CommonComponents.ELLIPSIS.color(color))
+
+    /**
+     * Applies a translatable component with the given key and optional color and decorations.
+     *
+     * @param key The translation key
+     * @param color Optional text color for the translatable component
+     * @param decoration Optional text decorations for the translatable component
+     */
     fun translatable(
         key: String,
         color: TextColor? = Colors.WHITE,
         vararg decoration: TextDecoration
     ) = append(Component.translatable(key, color, *decoration))
+
+    /**
+     * Appends a player head component
+     *
+     * @param username The player's username
+     * @param outerLayer Whether to show the outer layer of the skin (default: true)
+     */
+    fun appendPlayerHead(username: String, outerLayer: Boolean = true) =
+        append(
+            Component.`object`(
+                ObjectContents.playerHead(username).toBuilder().hat(outerLayer).build()
+            )
+        )
+
+    /**
+     * Appends a player head component
+     *
+     * @param uuid The player's UUID
+     * @param outerLayer Whether to show the outer layer of the skin (default: true)
+     */
+    fun appendPlayerHead(uuid: UUID, outerLayer: Boolean = true) =
+        append(
+            Component.`object`(
+                ObjectContents.playerHead(uuid).toBuilder().hat(outerLayer).build()
+            )
+        )
+
+    /**
+     * Appends a player head component
+     *
+     * @param source The skin source for the player head
+     */
+    fun appendPlayerHead(source: PlayerHeadObjectContents.SkinSource) =
+        append(Component.`object`(ObjectContents.playerHead(source)))
+
+    /**
+     * Appends a sprite component from the specified atlas and sprite name
+     *
+     * @param atlas The name of the atlas as a key
+     * @param sprite The name of the sprite as a key
+     *
+     * eg. appendSprite(key("blocks"), key("block/stone")), appendSprite(key("minecraft:items"), key("item/porkchop"))
+     */
+    fun appendSprite(atlas: Key, sprite: Key) =
+        append(Component.`object`(ObjectContents.sprite(atlas, sprite)))
+
+    /**
+     * Appends a sprite component from the specified atlas and sprite name
+     *
+     * @param sprite The name of the sprite, using the default atlas (minecraft:sprite)
+     */
+    fun appendSprite(sprite: Key) =
+        append(Component.`object`(ObjectContents.sprite(sprite)))
+
+    /**
+     * Applies a hover event with the given content built by the provided block
+     * The block allows for building a complex component to be shown on hover using the same builder DSL.
+     *
+     * @param block A lambda with receiver that builds the hover event content using the same SurfComponentBuilder DSL
+     */
+    fun hoverEvent(block: SurfComponentBuilder.() -> Unit) =
+        hoverEvent(HoverEvent.showText(SurfComponentBuilder(block)))
 
     fun appendDiscordLink() = append(DISCORD_LINK)
     fun appendDisconnectHeader() = append(DISCONNECT_HEADER)

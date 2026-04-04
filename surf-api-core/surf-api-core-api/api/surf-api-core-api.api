@@ -7156,8 +7156,15 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/
 	public abstract fun appendNewline ()Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public fun appendNewline (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public fun appendNewlineAsync (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun appendPlayerHead (Ljava/lang/String;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun appendPlayerHead (Ljava/util/UUID;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun appendPlayerHead (Lnet/kyori/adventure/text/object/PlayerHeadObjectContents$SkinSource;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/util/UUID;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public fun appendPrefix ()Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun appendSpace ()Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun appendSprite (Lnet/kyori/adventure/key/Key;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun appendSprite (Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/key/Key;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public fun appendTime-gRj5Bb8 (JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendTime-gRj5Bb8$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun applicableApply (Lnet/kyori/adventure/text/ComponentBuilderApplicable;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -7178,6 +7185,7 @@ public abstract interface class dev/slne/surf/surfapi/core/api/messages/builder/
 	public fun ellipsis (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun ellipsis$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun font (Lnet/kyori/adventure/key/Key;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public fun hoverEvent (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun hoverEvent (Lnet/kyori/adventure/text/event/HoverEventSource;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun insertion (Ljava/lang/String;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public abstract fun mapChildren (Ljava/util/function/Function;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -7239,7 +7247,14 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 	public static fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendNewline (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendNewlineAsync (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun appendPlayerHead (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun appendPlayerHead (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/util/UUID;Z)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun appendPlayerHead (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/text/object/PlayerHeadObjectContents$SkinSource;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendPlayerHead$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/util/UUID;ZILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendPrefix (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun appendSprite (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/key/Key;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun appendSprite (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/key/Key;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendSuccessPrefix (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun appendTime-gRj5Bb8 (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendTime-gRj5Bb8$default (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
@@ -7306,6 +7321,7 @@ public final class dev/slne/surf/surfapi/core/api/messages/builder/SurfComponent
 	public static fun green (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun green (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun green (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
+	public static fun hoverEvent (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun info (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun info (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
 	public static fun info (Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/surfapi/core/api/messages/builder/SurfComponentBuilder;
