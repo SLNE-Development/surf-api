@@ -1,0 +1,64 @@
+package dev.slne.surf.api.paper.server.impl.scoreboard
+
+import dev.slne.surf.api.paper.scoreboard.SurfScoreboard
+import dev.slne.surf.api.paper.scoreboard.SurfScoreboardApi
+import net.kyori.adventure.text.Component
+import net.megavex.scoreboardlibrary.api.sidebar.Sidebar
+import net.megavex.scoreboardlibrary.api.sidebar.component.ComponentSidebarLayout
+import net.megavex.scoreboardlibrary.api.sidebar.component.SidebarComponent
+import net.megavex.scoreboardlibrary.api.sidebar.component.animation.FramedSidebarAnimation
+import net.megavex.scoreboardlibrary.api.sidebar.component.animation.SidebarAnimation
+import org.bukkit.entity.Player
+
+open class SurfScoreboardImpl(
+    protected val title: Component,
+    protected val maxLines: Int,
+    protected val sidebarComponent: SidebarComponent,
+    protected val animations: List<SidebarAnimation<Component>>
+) : SurfScoreboard {
+    protected var scoreboard: Sidebar? = null
+    protected var sidebarLayout: ComponentSidebarLayout? = null
+    protected var enabled: Boolean = false
+
+    override fun addViewer(viewer: Player) {
+        check(enabled) { "Scoreboard is not enabled. Did you forget to call enable()?" }
+
+        scoreboard!!.addPlayer(viewer)
+    }
+
+    override fun removeViewer(viewer: Player) {
+        check(enabled) { "Scoreboard is not enabled. Did you forget to call enable()?" }
+
+        scoreboard!!.removePlayer(viewer)
+    }
+
+    override fun enable() {
+        check(!enabled) { "Scoreboard is already enabled" }
+
+        scoreboard = SurfScoreboardApi.scoreboardLibrary().createSidebar(maxLines)
+        sidebarLayout = ComponentSidebarLayout(
+            SidebarComponent.staticLine(title),
+            sidebarComponent
+        ).also { it.apply(scoreboard!!) }
+
+        enabled = true
+    }
+
+    override fun disable() {
+        check(enabled) { "Scoreboard is not enabled. Did you forget to call enable()?" }
+
+        scoreboard!!.close()
+        animations.forEach { (it as? FramedSidebarAnimation<Component>)?.switchFrame(0) }
+
+        this.scoreboard = null
+        sidebarLayout = null
+        enabled = false
+    }
+
+    override fun update() {
+        check(enabled) { "Scoreboard is not enabled. Did you forget to call enable()?" }
+
+        animations.forEach { it.nextFrame() }
+        sidebarLayout!!.apply(scoreboard!!)
+    }
+}

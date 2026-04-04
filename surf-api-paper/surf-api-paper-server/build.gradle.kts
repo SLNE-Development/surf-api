@@ -44,6 +44,8 @@ dependencies {
     paperLibrary(libs.aide.reflection)
     api(libs.mccoroutine.folia.api)
     api(libs.mccoroutine.folia.core)
+    runtimeOnly(libs.scoreboard.library.implementation)
+    paperLibrary(libs.scoreboard.library.api)
 }
 
 

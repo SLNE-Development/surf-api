@@ -11,7 +11,7 @@ dependencies {
     compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
     api(libs.bundles.inventory.framework)
-
+    api(libs.scoreboard.library.api)
     api(libs.commandapi.bukkit.kotlin)
     compileOnlyApi(libs.mccoroutine.folia.api)
 }
