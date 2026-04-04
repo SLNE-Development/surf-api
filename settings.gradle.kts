@@ -13,13 +13,13 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "surf-api"
 
-include(":surf-api-core:surf-api-core-api")
+include(":surf-api-core:surf-api-core")
 include(":surf-api-core:surf-api-core-server")
 
-include(":surf-api-bukkit:surf-api-bukkit-api")
-include(":surf-api-bukkit:surf-api-bukkit-server")
+include(":surf-api-paper:surf-api-paper")
+include(":surf-api-paper:surf-api-paper-server")
 
-include(":surf-api-velocity:surf-api-velocity-api")
+include(":surf-api-velocity:surf-api-velocity")
 include(":surf-api-velocity:surf-api-velocity-server")
 
 include("surf-api-standalone")
@@ -33,6 +33,6 @@ include("surf-api-shared:surf-api-shared-internal")
 val ci = System.getenv("CI")?.toBoolean() ?: false
 
 if (!ci) {
-//    include(":surf-api-bukkit:surf-api-bukkit-plugin-test")
+//    include(":surf-api-paper:surf-api-paper-plugin-test")
     include("surf-api-generator")
 }

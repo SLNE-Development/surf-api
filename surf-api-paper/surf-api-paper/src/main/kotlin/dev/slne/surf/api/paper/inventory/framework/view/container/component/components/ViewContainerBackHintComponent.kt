@@ -1,0 +1,23 @@
+package dev.slne.surf.api.paper.inventory.framework.view.container.component.components
+
+import dev.slne.surf.api.core.messages.Colors
+import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.paper.inventory.framework.view.container.component.ViewContainerComponent
+
+/**
+ * A [ViewContainerComponent] that renders a "navigate back" hint glyph in the inventory header.
+ *
+ * This singleton component is added automatically when
+ * [SurfViewSettings.navigateBackOnOutsideClick][dev.slne.surf.api.paper.api.inventory.framework.view.settings.SurfViewSettings.navigateBackOnOutsideClick]
+ * is `true`. It displays a small arrow icon at a fixed position (shift of −21 pixels,
+ * texture width 15 pixels) to hint to the player that clicking outside the inventory navigates back.
+ */
+data object ViewContainerBackHintComponent : ViewContainerComponent {
+    override val positionalShift = -22
+    override val textureWidth = 15 + 2 // 2 pixel for spacing
+
+    override fun SurfComponentBuilder.renderComponent() {
+        text("ꐷ")
+        color(Colors.WHITE)
+    }
+}

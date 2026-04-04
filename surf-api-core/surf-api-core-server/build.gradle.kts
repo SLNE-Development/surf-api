@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     api(projects.surfApiShared.surfApiSharedInternal)
-    api(projects.surfApiCore.surfApiCoreApi)
+    api(projects.surfApiCore.surfApiCore)
     compileOnly(libs.packetevents.netty.common)
     api(libs.bytebuddy)
 }

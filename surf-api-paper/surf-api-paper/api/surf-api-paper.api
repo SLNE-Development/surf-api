@@ -1,0 +1,2340 @@
+public abstract interface class dev/slne/surf/api/paper/SurfApiPaper : dev/slne/surf/api/core/SurfApiCore {
+	public static final field Companion Ldev/slne/surf/api/paper/SurfApiPaper$Companion;
+	public abstract fun isCanvasMc ()Z
+	public abstract fun isFolia ()Z
+	public fun sendPlayerToServer (Lorg/bukkit/entity/Player;Ljava/lang/String;)V
+	public abstract fun skipTimeSmoothly (JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun skipTimeSmoothly (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun skipTimeSmoothly (Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun skipTimeSmoothly (Lorg/bukkit/World;JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun skipTimeSmoothly (Lorg/bukkit/World;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun skipTimeSmoothly (Lorg/bukkit/World;Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/SurfApiPaper$Companion : dev/slne/surf/api/paper/SurfApiPaper {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/SurfApiPaper;
+	public fun getPlayer (Ljava/util/UUID;)Ljava/lang/Object;
+	public fun isCanvasMc ()Z
+	public fun isFolia ()Z
+	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
+	public fun sendPlayerToServer (Lorg/bukkit/entity/Player;Ljava/lang/String;)V
+	public fun skipTimeSmoothly (JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun skipTimeSmoothly (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun skipTimeSmoothly (Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun skipTimeSmoothly (Lorg/bukkit/World;JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun skipTimeSmoothly (Lorg/bukkit/World;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun skipTimeSmoothly (Lorg/bukkit/World;Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/SurfApiPaper$DefaultImpls {
+	public static fun sendPlayerToServer (Ldev/slne/surf/api/paper/SurfApiPaper;Lorg/bukkit/entity/Player;Ljava/lang/String;)V
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics {
+	public fun <init> (Lorg/bukkit/plugin/Plugin;I)V
+	public fun addCustomChart (Ldev/slne/surf/api/paper/api/metrics/Metrics$CustomChart;)V
+	public fun shutdown ()V
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$AdvancedBarChart : dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$AdvancedPie : dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public abstract class dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	protected fun <init> (Ljava/lang/String;)V
+	protected abstract fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+	public fun getRequestJsonObject (Ljava/util/function/BiConsumer;Z)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$DrilldownPie : dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	public fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder {
+	public fun <init> ()V
+	public fun appendField (Ljava/lang/String;I)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;[I)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;[Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;[Ljava/lang/String;)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendNull (Ljava/lang/String;)Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder;
+	public fun build ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject {
+	public fun toString ()Ljava/lang/String;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$MetricsBase {
+	public static final field METRICS_VERSION Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;IZLjava/util/function/Consumer;Ljava/util/function/Consumer;Ljava/util/function/Consumer;Ljava/util/function/Supplier;Ljava/util/function/BiConsumer;Ljava/util/function/Consumer;ZZZZ)V
+	public fun addCustomChart (Ldev/slne/surf/api/paper/api/metrics/Metrics$CustomChart;)V
+	public fun shutdown ()V
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$MultiLineChart : dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$SimpleBarChart : dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$SimplePie : dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/paper/api/metrics/Metrics$SingleLineChart : dev/slne/surf/api/paper/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/paper/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public abstract interface class dev/slne/surf/api/paper/api/nms/listener/NmsClientboundPacketListener : dev/slne/surf/api/paper/api/nms/listener/NmsPacketListener {
+	public abstract fun handleClientboundPacket (Ldev/slne/surf/api/paper/nms/listener/packets/NmsPacket;Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+	public fun handleEarlyClientboundPacket (Ldev/slne/surf/api/paper/nms/listener/packets/NmsPacket;Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+}
+
+public abstract interface class dev/slne/surf/api/paper/api/nms/listener/NmsPacketListener {
+	public fun getPacketClass ()Ljava/lang/Class;
+}
+
+public abstract interface class dev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener : dev/slne/surf/api/paper/api/nms/listener/NmsPacketListener {
+	public fun handleEarlyServerboundPacket (Ldev/slne/surf/api/paper/nms/listener/packets/NmsPacket;Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+	public abstract fun handleServerboundPacket (Ldev/slne/surf/api/paper/nms/listener/packets/NmsPacket;Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/builder/ItemDsl : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/paper/builder/Item_stackKt {
+	public static final fun ItemStack (Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
+	public static synthetic fun ItemStack$default (Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/bukkit/inventory/ItemStack;
+	public static final fun buildItem (Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
+	public static final fun buildItem (Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
+	public static synthetic fun buildItem$default (Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/bukkit/inventory/ItemStack;
+	public static synthetic fun buildItem$default (Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/bukkit/inventory/ItemStack;
+	public static final fun buildLore (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
+	public static final fun displayName (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
+	public static final fun displayName (Lorg/bukkit/inventory/ItemStack;Lnet/kyori/adventure/text/Component;)V
+	public static final fun lore (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
+	public static final fun lore (Lorg/bukkit/inventory/ItemStack;[Lnet/kyori/adventure/text/Component;)V
+	public static final fun meta0 (Lorg/bukkit/inventory/ItemStack;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/builder/LoreBuilder {
+	public fun <init> ()V
+	public final fun build ()Ljava/util/List;
+	public final fun emptyLine ()V
+	public final fun line (Lkotlin/jvm/functions/Function1;)V
+	public final fun unaryPlus (Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/paper/collections/LazyIntList {
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public final fun clear ()V
+	public final fun get (I)I
+	public final fun listCopy ()Ljava/util/List;
+	public final fun listCopyNotNull ()Ljava/util/List;
+	public final fun set (II)V
+}
+
+public final class dev/slne/surf/api/paper/command/args/AdventureCompoundBinaryTagArgument : dev/jorel/commandapi/arguments/SafeOverrideableArgument {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getArgumentType ()Ldev/jorel/commandapi/arguments/CommandAPIArgumentType;
+	public fun getPrimitiveType ()Ljava/lang/Class;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+}
+
+public final class dev/slne/surf/api/paper/command/args/AdventureCompoundBinaryTagArgumentKt {
+	public static final fun adventureCompoundBinaryTagArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static final fun adventureCompoundBinaryTagArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
+	public static final fun adventureCompoundBinaryTagArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
+	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
+	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
+}
+
+public class dev/slne/surf/api/paper/command/args/MiniMessageArgument : dev/jorel/commandapi/arguments/CustomArgument {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/command/args/MiniMessageArgumentKt {
+	public static final fun miniMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static synthetic fun miniMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
+}
+
+public abstract class dev/slne/surf/api/paper/command/args/SuspendCustomArgument : dev/jorel/commandapi/arguments/CustomArgument {
+	public static final field Companion Ldev/slne/surf/api/paper/command/args/SuspendCustomArgument$Companion;
+	public fun <init> (Ldev/jorel/commandapi/arguments/Argument;Lkotlinx/coroutines/CoroutineScope;)V
+	public synthetic fun <init> (Ldev/jorel/commandapi/arguments/Argument;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public abstract fun parse (Lkotlinx/coroutines/CoroutineScope;Ldev/jorel/commandapi/arguments/CustomArgument$CustomArgumentInfo;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public final fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lkotlinx/coroutines/Deferred;
+}
+
+public final class dev/slne/surf/api/paper/command/args/SuspendCustomArgument$Companion {
+}
+
+public final class dev/slne/surf/api/paper/command/executors/SuspendCommandExecutorsKt {
+	public static final fun anyExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun anyExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun commandBlockExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun commandBlockExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun consoleExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun consoleExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun entityExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun entityExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun extractCallingPluginScopeOrThrow (Ljava/lang/Object;)Lkotlin/jvm/functions/Function0;
+	public static final fun handleCommandFailure (Lorg/bukkit/command/CommandSender;Ljava/lang/Throwable;)V
+	public static final fun launchCommandExecutor (Lkotlinx/coroutines/CoroutineScope;Lorg/bukkit/command/CommandSender;Lkotlin/jvm/functions/Function2;)V
+	public static final fun nativeExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun nativeExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun playerExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun playerExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun proxyExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun proxyExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun remoteConsoleExecutorSuspend (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static synthetic fun remoteConsoleExecutorSuspend$default (Ldev/jorel/commandapi/BukkitExecutable;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/BukkitExecutable;
+	public static final fun sendSyntaxMessageOrRethrow (Lorg/bukkit/command/CommandSender;Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class dev/slne/surf/api/paper/command/util/AsyncPlayerProfileArgumentUtilsKt {
+	public static final fun awaitAsyncPlayerProfile (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitAsyncPlayerProfileOptional (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun idOrThrow (Lcom/destroystokyo/paper/profile/PlayerProfile;)Ljava/util/UUID;
+}
+
+public final class dev/slne/surf/api/paper/dialog/CommonDialogsKt {
+	public static final fun noticeDialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun noticeDialog (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)Lio/papermc/paper/dialog/Dialog;
+	public static synthetic fun noticeDialog$default (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun noticeDialogWithBuilder (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static synthetic fun noticeDialogWithBuilder$default (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
+}
+
+public final class dev/slne/surf/api/paper/dialog/DialogBuilderKt {
+	public static final fun Dialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun base (Lio/papermc/paper/registry/data/dialog/DialogRegistryEntry$Builder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun clearDialogs (Lorg/bukkit/entity/Player;Z)V
+	public static synthetic fun clearDialogs$default (Lorg/bukkit/entity/Player;ZILjava/lang/Object;)V
+	public static final fun dialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
+	public static final fun type (Lio/papermc/paper/registry/data/dialog/DialogRegistryEntry$Builder;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogActionBuilder {
+	public fun <init> ()V
+	public final fun callback (Lnet/kyori/adventure/text/event/ClickCallback;)V
+	public final fun commandTemplate (Ljava/lang/String;)V
+	public final fun copyToClipboard (Ljava/lang/String;)V
+	public final fun customClick (Lnet/kyori/adventure/key/Key;Lkotlin/jvm/functions/Function1;)V
+	public final fun customClick (Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/api/BinaryTagHolder;)V
+	public final fun customClick (Lnet/kyori/adventure/text/event/ClickCallback$Options;Lio/papermc/paper/registry/data/dialog/action/DialogActionCallback;)V
+	public static synthetic fun customClick$default (Ldev/slne/surf/api/paper/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/api/BinaryTagHolder;ILjava/lang/Object;)V
+	public static synthetic fun customClick$default (Ldev/slne/surf/api/paper/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/text/event/ClickCallback$Options;Lio/papermc/paper/registry/data/dialog/action/DialogActionCallback;ILjava/lang/Object;)V
+	public final fun customPlayerClick (Lnet/kyori/adventure/text/event/ClickCallback$Options;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun customPlayerClick$default (Ldev/slne/surf/api/paper/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/text/event/ClickCallback$Options;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun openUrl (Ljava/lang/String;)V
+	public final fun openUrl (Ljava/net/URL;)V
+	public final fun playerCallback (Lnet/kyori/adventure/text/event/ClickCallback;)V
+	public final fun showDialog (Lkotlin/jvm/functions/Function1;)V
+	public final fun showDialog (Lnet/kyori/adventure/dialog/DialogLike;)V
+	public final fun staticAction (Lnet/kyori/adventure/text/event/ClickEvent;)V
+	public final fun suggestCommand (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogActionBuilderKt {
+	public static final fun DialogAction (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/action/DialogAction;
+	public static final fun dialogAction (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/action/DialogAction;
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogActionButtonBuilder {
+	public fun <init> ()V
+	public final fun action (Lio/papermc/paper/registry/data/dialog/action/DialogAction;)V
+	public final fun action (Lkotlin/jvm/functions/Function1;)V
+	public final fun getAction ()Lio/papermc/paper/registry/data/dialog/action/DialogAction;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getTooltip ()Lnet/kyori/adventure/text/Component;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun setAction (Lio/papermc/paper/registry/data/dialog/action/DialogAction;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setTooltip (Lnet/kyori/adventure/text/Component;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun tooltip (Lkotlin/jvm/functions/Function1;)V
+	public final fun tooltip (Lnet/kyori/adventure/text/Component;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogActionButtonBuilderKt {
+	public static final fun ActionButton (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public static final fun actionButton (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/ActionButton;
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogBaseBuilder {
+	public fun <init> ()V
+	public final fun afterAction (Lio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;)V
+	public final fun body (Lkotlin/jvm/functions/Function1;)V
+	public final fun externalTitle (Lkotlin/jvm/functions/Function1;)V
+	public final fun externalTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun getAfterAction ()Lio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;
+	public final fun getCanCloseWithEscape ()Ljava/lang/Boolean;
+	public final fun getExternalTitle ()Lnet/kyori/adventure/text/Component;
+	public final fun getTitle ()Lnet/kyori/adventure/text/Component;
+	public final fun input (Lkotlin/jvm/functions/Function1;)V
+	public final fun preventClosingWithEscape (Z)V
+	public static synthetic fun preventClosingWithEscape$default (Ldev/slne/surf/api/paper/dialog/builder/DialogBaseBuilder;ZILjava/lang/Object;)V
+	public final fun setAfterAction (Lio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;)V
+	public final fun setCanCloseWithEscape (Ljava/lang/Boolean;)V
+	public final fun setExternalTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun setTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun title (Lkotlin/jvm/functions/Function1;)V
+	public final fun title (Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogBaseBuilderKt {
+	public static final fun DialogBase (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/DialogBase;
+	public static final fun dialogBase (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/DialogBase;
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder {
+	public fun <init> ()V
+	public final fun item (Lkotlin/jvm/functions/Function1;)V
+	public final fun plain (Lkotlin/jvm/functions/Function1;)V
+	public final fun plainMessage (Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;)V
+	public final fun plainMessage (Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public final fun plainMessage (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)V
+	public static synthetic fun plainMessage$default (Ldev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun plainMessage$default (Ldev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder {
+	public fun <init> ()V
+	public final fun description (Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;)V
+	public final fun description (Lkotlin/jvm/functions/Function1;)V
+	public final fun getDescription ()Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;
+	public final fun getHeight ()Ljava/lang/Integer;
+	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
+	public final fun getShowDecorations ()Ljava/lang/Boolean;
+	public final fun getShowTooltip ()Ljava/lang/Boolean;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun height (I)V
+	public final fun item (Lorg/bukkit/inventory/ItemStack;)V
+	public final fun item (Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;)V
+	public static synthetic fun item$default (Ldev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun setDescription (Lio/papermc/paper/registry/data/dialog/body/PlainMessageDialogBody;)V
+	public final fun setHeight (Ljava/lang/Integer;)V
+	public final fun setItem (Lorg/bukkit/inventory/ItemStack;)V
+	public final fun setShowDecorations (Ljava/lang/Boolean;)V
+	public final fun setShowTooltip (Ljava/lang/Boolean;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun showDecorations (Z)V
+	public final fun showTooltip (Z)V
+	public final fun simpleDescription (Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleDescription (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)V
+	public static synthetic fun simpleDescription$default (Ldev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun simpleDescription$default (Ldev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogBodyBuilder$PlainDialogMessageBuilder {
+	public fun <init> ()V
+	public final fun getMessage ()Lnet/kyori/adventure/text/Component;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun message (Lkotlin/jvm/functions/Function1;)V
+	public final fun message (Lnet/kyori/adventure/text/Component;)V
+	public final fun setMessage (Lnet/kyori/adventure/text/Component;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogBodyBuilderKt {
+	public static final fun DialogBody (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+	public static final fun dialogBody (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogInputBuilder {
+	public fun <init> ()V
+	public final fun addInput (Lio/papermc/paper/registry/data/dialog/input/DialogInput;)V
+	public final fun boolean (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+	public final fun numberRange (Ljava/lang/String;Lkotlin/ranges/ClosedRange;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+	public final fun simpleBoolean (Ljava/lang/String;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleBoolean (Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/lang/Boolean;)V
+	public static synthetic fun simpleBoolean$default (Ldev/slne/surf/api/paper/dialog/builder/DialogInputBuilder;Ljava/lang/String;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun simpleBoolean$default (Ldev/slne/surf/api/paper/dialog/builder/DialogInputBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/lang/Boolean;ILjava/lang/Object;)V
+	public final fun simpleNumberRange (Ljava/lang/String;Lkotlin/ranges/ClosedRange;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleNumberRange (Ljava/lang/String;Lkotlin/ranges/ClosedRange;Lnet/kyori/adventure/text/Component;)V
+	public final fun simpleText (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleText (Ljava/lang/String;Lnet/kyori/adventure/text/Component;)V
+	public final fun singleOption (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+	public final fun text (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/input/DialogInput;
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogInputBuilder$BooleanDialogInput {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getInitial ()Ljava/lang/Boolean;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getOnFalse ()Ljava/lang/String;
+	public final fun getOnTrue ()Ljava/lang/String;
+	public final fun initial (Z)V
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun onFalse (Ljava/lang/String;)V
+	public final fun onTrue (Ljava/lang/String;)V
+	public final fun setInitial (Ljava/lang/Boolean;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setOnFalse (Ljava/lang/String;)V
+	public final fun setOnTrue (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogInputBuilder$NumberRangeDialogInput {
+	public fun <init> (Ljava/lang/String;FF)V
+	public final fun getInitial ()Ljava/lang/Float;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getLabelFormat ()Ljava/lang/String;
+	public final fun getStep ()Ljava/lang/Float;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun initial (F)V
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun labelFormat (Ljava/lang/String;)V
+	public final fun setInitial (Ljava/lang/Float;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLabelFormat (Ljava/lang/String;)V
+	public final fun setStep (Ljava/lang/Float;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun step (F)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogInputBuilder$SingleOptionDialogInput {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getEntries ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getLabelVisible ()Ljava/lang/Boolean;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun option (Lio/papermc/paper/registry/data/dialog/input/SingleOptionDialogInput$OptionEntry;)V
+	public final fun option (Ljava/lang/String;Lnet/kyori/adventure/text/Component;Z)V
+	public final fun option (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun option$default (Ldev/slne/surf/api/paper/dialog/builder/DialogInputBuilder$SingleOptionDialogInput;Ljava/lang/String;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)V
+	public static synthetic fun option$default (Ldev/slne/surf/api/paper/dialog/builder/DialogInputBuilder$SingleOptionDialogInput;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLabelVisible (Ljava/lang/Boolean;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogInputBuilder$TextDialogInput {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getInitial ()Ljava/lang/String;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getLabelVisible ()Ljava/lang/Boolean;
+	public final fun getMaxLength ()Ljava/lang/Integer;
+	public final fun getMultilineOptions ()Lio/papermc/paper/registry/data/dialog/input/TextDialogInput$MultilineOptions;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun initial (Ljava/lang/String;)V
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun labelVisible (Z)V
+	public final fun maxLength (I)V
+	public final fun multiline (Lio/papermc/paper/registry/data/dialog/input/TextDialogInput$MultilineOptions;)V
+	public final fun multiline (Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public static synthetic fun multiline$default (Ldev/slne/surf/api/paper/dialog/builder/DialogInputBuilder$TextDialogInput;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public final fun setInitial (Ljava/lang/String;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLabelVisible (Ljava/lang/Boolean;)V
+	public final fun setMaxLength (Ljava/lang/Integer;)V
+	public final fun setMultilineOptions (Lio/papermc/paper/registry/data/dialog/input/TextDialogInput$MultilineOptions;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogInputBuilderKt {
+	public static final fun DialogInput (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+	public static final fun dialogInput (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder {
+	public fun <init> ()V
+	public final fun confirmation (Lio/papermc/paper/registry/data/dialog/ActionButton;Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun confirmation (Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun confirmation$default (Ldev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun dialogList (Lkotlin/jvm/functions/Function1;)V
+	public final fun dialogList ([Lio/papermc/paper/dialog/Dialog;Lkotlin/jvm/functions/Function1;)V
+	public final fun dialogList ([Lio/papermc/paper/registry/TypedKey;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun dialogList$default (Ldev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/dialog/Dialog;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun dialogList$default (Ldev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/registry/TypedKey;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun multiAction (Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public final fun multiAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun multiAction ([Lio/papermc/paper/registry/data/dialog/ActionButton;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun multiAction$default (Ldev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun multiAction$default (Ldev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder;[Lio/papermc/paper/registry/data/dialog/ActionButton;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun notice ()V
+	public final fun notice (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun notice (Lkotlin/jvm/functions/Function1;)V
+	public final fun serverLinks (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder$DialogConfirmationTypeBuilder {
+	public fun <init> ()V
+	public final fun getNo ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun getYes ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun no (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun no (Lkotlin/jvm/functions/Function1;)V
+	public final fun setNo (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun setYes (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun yes (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun yes (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder$DialogListTypeBuilder {
+	public fun <init> ()V
+	public final fun addAll (Ljava/lang/Iterable;)V
+	public final fun addAll ([Lio/papermc/paper/dialog/Dialog;)V
+	public final fun buttonWidth (I)V
+	public final fun columns (I)V
+	public final fun dialog (Lio/papermc/paper/dialog/Dialog;)V
+	public final fun dialog (Lio/papermc/paper/registry/TypedKey;)V
+	public final fun dialog ([Lio/papermc/paper/registry/TypedKey;)V
+	public final fun exitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun getButtonWidth ()Ljava/lang/Integer;
+	public final fun getColumns ()Ljava/lang/Integer;
+	public final fun getExitAction ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun setButtonWidth (Ljava/lang/Integer;)V
+	public final fun setColumns (Ljava/lang/Integer;)V
+	public final fun setExitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder$DialogMultiActionTypeBuilder {
+	public fun <init> ()V
+	public final fun action (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun action (Lkotlin/jvm/functions/Function1;)V
+	public final fun columns (I)V
+	public final fun exitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun getColumns ()Ljava/lang/Integer;
+	public final fun getExitAction ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun setColumns (Ljava/lang/Integer;)V
+	public final fun setExitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogTypeBuilder$ServerLinksTypeBuilder {
+	public fun <init> ()V
+	public final fun buttonWidth (I)V
+	public final fun columns (I)V
+	public final fun exitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun getButtonWidth ()I
+	public final fun getColumns ()I
+	public final fun getExitAction ()Lio/papermc/paper/registry/data/dialog/ActionButton;
+	public final fun setButtonWidth (I)V
+	public final fun setColumns (I)V
+	public final fun setExitAction (Lio/papermc/paper/registry/data/dialog/ActionButton;)V
+}
+
+public final class dev/slne/surf/api/paper/dialog/builder/DialogTypeBuilderKt {
+	public static final fun DialogType (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/type/DialogType;
+	public static final fun dialogType (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/registry/data/dialog/type/DialogType;
+}
+
+public final class dev/slne/surf/api/paper/dialog/composition/DialogScope {
+	public fun <init> (Ldev/slne/surf/api/paper/dialog/composition/DialogStore;Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun remember ([Ljava/lang/Object;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setState (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun state ()Ldev/slne/surf/api/paper/dialog/state/DialogState;
+}
+
+public final class dev/slne/surf/api/paper/dialog/composition/DialogStore {
+	public fun <init> (Ldev/slne/surf/api/paper/dialog/state/DialogState;Ljava/util/UUID;Lkotlin/jvm/functions/Function2;Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun getState ()Ldev/slne/surf/api/paper/dialog/state/DialogState;
+	public final fun open (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun recall (Ljava/util/List;)Ljava/lang/Object;
+	public final fun remember (Ljava/util/List;Ljava/lang/Object;)V
+	public final fun update (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/dialog/composition/DslKt {
+	public static final fun composableDialog (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/dialog/state/DialogState;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/dialog/pagination/PaginatedDialogKt {
+	public static final fun paginatedDialog (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/dialog/query/DialogQuery;Lkotlin/jvm/functions/Function3;ZLkotlin/jvm/functions/Function1;Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun paginatedDialog$default (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/dialog/query/DialogQuery;Lkotlin/jvm/functions/Function3;ZLkotlin/jvm/functions/Function1;Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/api/paper/dialog/query/CursorDialogQuery {
+	public abstract fun execute (Ldev/slne/surf/api/paper/dialog/state/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/dialog/query/CursorResult {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Z)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Z)Ldev/slne/surf/api/paper/dialog/query/CursorResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/dialog/query/CursorResult;Ljava/util/List;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/dialog/query/CursorResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHasMore ()Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getNextCursor ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/dialog/query/CursorState : dev/slne/surf/api/paper/dialog/state/DialogState {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;ILjava/lang/String;)Ldev/slne/surf/api/paper/dialog/query/CursorState;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/dialog/query/CursorState;Ljava/lang/String;Ljava/util/List;ILjava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/paper/dialog/query/CursorState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getHistory ()Ljava/util/List;
+	public final fun getLimit ()I
+	public final fun getSearch ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/paper/dialog/query/DialogQuery {
+	public abstract fun execute (Ldev/slne/surf/api/paper/dialog/state/DialogState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/dialog/query/PageResult {
+	public fun <init> (Ljava/util/List;IILjava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/util/List;IILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/util/List;IILjava/lang/Integer;)Ldev/slne/surf/api/paper/dialog/query/PageResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/dialog/query/PageResult;Ljava/util/List;IILjava/lang/Integer;ILjava/lang/Object;)Ldev/slne/surf/api/paper/dialog/query/PageResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getPage ()I
+	public final fun getTotalItems ()Ljava/lang/Integer;
+	public final fun getTotalPages ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/dialog/query/PageState : dev/slne/surf/api/paper/dialog/state/DialogState {
+	public fun <init> ()V
+	public fun <init> (IILjava/lang/String;)V
+	public synthetic fun <init> (IILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (IILjava/lang/String;)Ldev/slne/surf/api/paper/dialog/query/PageState;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/dialog/query/PageState;IILjava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/paper/dialog/query/PageState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLimit ()I
+	public final fun getPage ()I
+	public final fun getSearch ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/dialog/search/SearchDialogAction {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public final fun component1 ()Lkotlin/jvm/functions/Function1;
+	public final fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/dialog/search/SearchDialogAction;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/dialog/search/SearchDialogAction;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/dialog/search/SearchDialogAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getTooltip ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public final fun setLabel (Lkotlin/jvm/functions/Function1;)V
+	public final fun setTooltip (Lkotlin/jvm/functions/Function1;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/dialog/search/SearchDialogKt {
+	public static final fun searchDialog (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZLio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;)Lio/papermc/paper/dialog/Dialog;
+	public static synthetic fun searchDialog$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZLio/papermc/paper/registry/data/dialog/DialogBase$DialogAfterAction;ILjava/lang/Object;)Lio/papermc/paper/dialog/Dialog;
+}
+
+public final class dev/slne/surf/api/paper/dialog/search/SearchInput {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/dialog/search/SearchInput;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/dialog/search/SearchInput;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/dialog/search/SearchInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInitialValue ()Ljava/lang/String;
+	public final fun getInputModifier ()Lkotlin/jvm/functions/Function1;
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getLabel ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public final fun setInitialValue (Ljava/lang/String;)V
+	public final fun setInputModifier (Lkotlin/jvm/functions/Function1;)V
+	public final fun setKey (Ljava/lang/String;)V
+	public final fun setLabel (Lkotlin/jvm/functions/Function1;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/paper/dialog/state/DialogState {
+}
+
+public final class dev/slne/surf/api/paper/event/Listener_extensionKt {
+	public static final fun cancel (Lorg/bukkit/event/Cancellable;)V
+	public static final fun listen (Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/event/SingleListener;
+	public static synthetic fun listen$default (Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/event/SingleListener;
+	public static final fun register (Ldev/slne/surf/api/paper/event/SingleListener;Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;)V
+	public static final fun register (Lorg/bukkit/event/Listener;)V
+	public static final fun register (Lorg/bukkit/event/Listener;Lorg/bukkit/plugin/Plugin;)V
+	public static final fun register (Lorg/bukkit/event/Listener;Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun register$default (Lorg/bukkit/event/Listener;Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun unregister (Lorg/bukkit/event/Listener;)V
+}
+
+public abstract class dev/slne/surf/api/paper/event/SingleListener : org/bukkit/event/Listener {
+	public fun <init> ()V
+	public fun <init> (Lorg/bukkit/event/EventPriority;Z)V
+	public synthetic fun <init> (Lorg/bukkit/event/EventPriority;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getIgnoreCancelled ()Z
+	public final fun getPriority ()Lorg/bukkit/event/EventPriority;
+	public abstract fun onEvent (Lorg/bukkit/event/Event;)V
+}
+
+public final class dev/slne/surf/api/paper/extensions/Org_bukkit_ServerExtensionsKt {
+	public static final fun getServer ()Lorg/bukkit/Server;
+}
+
+public final class dev/slne/surf/api/paper/extensions/Org_bukkit_plugin_PluginManagerExtensionsKt {
+	public static final fun getPluginManager ()Lorg/bukkit/plugin/PluginManager;
+}
+
+public abstract interface class dev/slne/surf/api/paper/glow/SurfGlowingApi {
+	public static final field Companion Ldev/slne/surf/api/paper/glow/SurfGlowingApi$Companion;
+	public abstract fun makeGlowing (ILjava/lang/String;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;B)V
+	public abstract fun makeGlowing (Lorg/bukkit/Location;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
+	public abstract fun makeGlowing (Lorg/bukkit/block/Block;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
+	public abstract fun makeGlowing (Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
+	public static synthetic fun makeGlowing$default (Ldev/slne/surf/api/paper/glow/SurfGlowingApi;ILjava/lang/String;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;BILjava/lang/Object;)V
+	public static synthetic fun makeGlowing$default (Ldev/slne/surf/api/paper/glow/SurfGlowingApi;Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;ILjava/lang/Object;)V
+	public abstract fun removeGlowing (ILorg/bukkit/entity/Player;)V
+	public abstract fun removeGlowing (Lorg/bukkit/Location;Lorg/bukkit/entity/Player;)V
+	public abstract fun removeGlowing (Lorg/bukkit/block/Block;Lorg/bukkit/entity/Player;)V
+	public abstract fun removeGlowing (Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;)V
+}
+
+public final class dev/slne/surf/api/paper/glow/SurfGlowingApi$Companion : dev/slne/surf/api/paper/glow/SurfGlowingApi {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/glow/SurfGlowingApi;
+	public fun makeGlowing (ILjava/lang/String;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;B)V
+	public fun makeGlowing (Lorg/bukkit/Location;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
+	public fun makeGlowing (Lorg/bukkit/block/Block;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
+	public fun makeGlowing (Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
+	public fun removeGlowing (ILorg/bukkit/entity/Player;)V
+	public fun removeGlowing (Lorg/bukkit/Location;Lorg/bukkit/entity/Player;)V
+	public fun removeGlowing (Lorg/bukkit/block/Block;Lorg/bukkit/entity/Player;)V
+	public fun removeGlowing (Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;)V
+}
+
+public final class dev/slne/surf/api/paper/glow/SurfGlowingApi$DefaultImpls {
+	public static synthetic fun makeGlowing$default (Ldev/slne/surf/api/paper/glow/SurfGlowingApi;ILjava/lang/String;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;BILjava/lang/Object;)V
+	public static synthetic fun makeGlowing$default (Ldev/slne/surf/api/paper/glow/SurfGlowingApi;Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;ILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook {
+	public static final field Companion Ldev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook$Companion;
+	public abstract fun register (Ldev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion;)V
+	public abstract fun unregister (Ldev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion;)V
+}
+
+public final class dev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook$Companion : dev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook;
+	public fun register (Ldev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion;)V
+	public fun unregister (Ldev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion;)V
+}
+
+public class dev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAuthor ()Ljava/lang/String;
+	public final fun getIdentifier ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPlaceholder ()Ljava/util/List;
+	public final fun getPlaceholders ()Ljava/util/Map;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun parseWithNoParams (Lorg/bukkit/OfflinePlayer;)Ljava/lang/String;
+}
+
+public abstract class dev/slne/surf/api/paper/hook/papi/expansion/PapiPlaceholder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public abstract fun parse (Lorg/bukkit/OfflinePlayer;Ljava/util/List;)Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/InventoryFrameworkExtensions {
+	public static final fun getOutlineItem (Lme/devnatan/inventoryframework/View;)Lorg/bukkit/inventory/ItemStack;
+	public static final fun modifyConfig (Lme/devnatan/inventoryframework/context/OpenContext;Lkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/ViewConfigBuilder;
+	public static final fun open (Lme/devnatan/inventoryframework/View;Ljava/util/Collection;)V
+	public static final fun open (Lme/devnatan/inventoryframework/View;Ljava/util/Collection;Ljava/lang/Object;)V
+	public static final fun open (Lme/devnatan/inventoryframework/View;Lorg/bukkit/entity/Player;)V
+	public static final fun open (Lme/devnatan/inventoryframework/View;Lorg/bukkit/entity/Player;Ljava/lang/Object;)V
+	public static final fun register (Lme/devnatan/inventoryframework/View;)V
+	public static final fun titleBuilder (Lme/devnatan/inventoryframework/ViewConfigBuilder;Lkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/ViewConfigBuilder;
+	public static final fun unregister (Lme/devnatan/inventoryframework/View;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor {
+	public static final field Companion Ldev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor$Companion;
+	public abstract fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor$Companion : dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor;
+	public fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessorKt {
+	public static final fun getViewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/ClickContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFSlotClickContext;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/CloseContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFCloseContext;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/IFConfinedContextDSLKt {
+	public static final fun openForPlayer (Lme/devnatan/inventoryframework/context/IFConfinedContext;Lme/devnatan/inventoryframework/RootView;)V
+	public static final fun openForPlayer (Lme/devnatan/inventoryframework/context/IFConfinedContext;Lme/devnatan/inventoryframework/RootView;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/IFContextDSLKt {
+	public static final fun openForEveryone (Lme/devnatan/inventoryframework/context/IFContext;Lme/devnatan/inventoryframework/RootView;)V
+	public static final fun openForEveryone (Lme/devnatan/inventoryframework/context/IFContext;Lme/devnatan/inventoryframework/RootView;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/LayoutBuilder {
+	public fun <init> ()V
+	public final fun border (C)V
+	public final fun build ()[Ljava/lang/String;
+	public final fun empty ()V
+	public final fun fill (C)V
+	public final fun getRows ()Ljava/util/List;
+	public final fun row (Ljava/lang/String;)V
+	public final fun unaryPlus (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/OpenContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFOpenContext;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/PaperItemComponentBuilderDSLKt {
+	public static final fun onItemClick (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun onItemRender (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun onItemUpdate (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun renderWith (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+	public static final fun renderWith (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+	public static synthetic fun renderWith$default (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+	public static synthetic fun renderWith$default (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+	public static final fun withItem (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+	public static final fun withItem (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+	public static synthetic fun withItem$default (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+	public static synthetic fun withItem$default (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/RenderContextDSLKt {
+	public static final fun availableSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun firstSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun lastSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun layoutSlot (Lme/devnatan/inventoryframework/context/RenderContext;CLkotlin/jvm/functions/Function1;)V
+	public static final fun resultSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun slot (Lme/devnatan/inventoryframework/context/RenderContext;IILkotlin/jvm/functions/Function1;)V
+	public static final fun slot (Lme/devnatan/inventoryframework/context/RenderContext;ILkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/dsl/ViewConfigBuilderDSLKt {
+	public static final fun layout (Lme/devnatan/inventoryframework/ViewConfigBuilder;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView : me/devnatan/inventoryframework/View {
+	public fun <init> (Ljava/lang/String;)V
+	protected fun containerDefaults (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	public fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	protected final fun modifyContainer (Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun onClick (Lme/devnatan/inventoryframework/context/IFSlotClickContext;)V
+	public final fun onClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	public final fun onClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	public synthetic fun onClose (Lme/devnatan/inventoryframework/context/IFCloseContext;)V
+	public synthetic fun onFirstRender (Lme/devnatan/inventoryframework/context/IFRenderContext;)V
+	public final fun onFirstRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	public final fun onInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	public synthetic fun onOpen (Lme/devnatan/inventoryframework/context/IFOpenContext;)V
+	public final fun onOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	public final fun onUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+	public synthetic fun onUpdate (Lme/devnatan/inventoryframework/context/IFContext;)V
+	protected fun onViewClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onViewClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onViewInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onViewOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onViewRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onViewUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext {
+	public fun <init> ()V
+	public final fun getContainerDefaults ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnClick ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnClose ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnFirstRender ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnInit ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnOpen ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnUpdate ()Lkotlin/jvm/functions/Function2;
+	public final fun getStateRegistry ()Ldev/slne/surf/api/paper/inventory/framework/view/state/StateRegistry;
+	public final fun setContainerDefaults (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnClick (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnClose (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnFirstRender (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnInit (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnOpen (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnUpdate (Lkotlin/jvm/functions/Function2;)V
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewRef {
+	public field view Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView;
+	public fun <init> ()V
+	public final fun getRegisteredView ()Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView;
+	public final fun getView ()Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView;
+	public final fun setView (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView;)V
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/inventory/framework/view/InventoryFrameworkDSL : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewContext : dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext {
+	public fun <init> ()V
+	public final fun getLayoutTarget ()Ljava/lang/Character;
+	public final fun getPaginationStateBuilder ()Lkotlin/jvm/functions/Function1;
+	public final fun getRegisteredLayoutTarget ()C
+	public final fun getRegisteredPaginationStateBuilder ()Lkotlin/jvm/functions/Function1;
+	public final fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+	public final fun setLayoutTarget (Ljava/lang/Character;)V
+	public final fun setPaginationStateBuilder (Lkotlin/jvm/functions/Function1;)V
+	public final fun setSettings (Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;)V
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewDSLImpl : dev/slne/surf/api/paper/inventory/framework/view/pagination/AbstractPaginatedSurfView {
+	public fun <init> (Ljava/lang/String;Ldev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewContext;Ldev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewRef;)V
+	protected fun applyContainerDefaults (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	protected fun createPagination ()Lme/devnatan/inventoryframework/component/PaginationStateBuilder;
+	protected fun getLayoutTarget ()C
+	public fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+	public synthetic fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	protected fun onPaginatedClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onPaginatedClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onPaginatedInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onPaginatedOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onPaginatedRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onPaginatedUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewRef : dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewRef {
+	public fun <init> ()V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/SurfViewBuilderKt {
+	public static final fun paginatedSurfView (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/pagination/AbstractPaginatedSurfView;
+	public static final fun surfView (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/SurfViewContext : dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext {
+	public fun <init> ()V
+	public final fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	public final fun setSettings (Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;)V
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/SurfViewDSLImpl : dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView {
+	public fun <init> (Ljava/lang/String;Ldev/slne/surf/api/paper/inventory/framework/view/SurfViewContext;Ldev/slne/surf/api/paper/inventory/framework/view/SurfViewRef;)V
+	protected fun containerDefaults (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	public fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	protected fun onViewClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onViewClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onViewInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onViewOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onViewRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onViewUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/SurfViewLifecycleDslKt {
+	public static final fun containerDefaults (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun layoutTarget (Ldev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewContext;C)V
+	public static final fun modifyContainer (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewRef;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
+	public static final fun onClick (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onClose (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onFirstRender (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onInit (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onOpen (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onUpdate (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun settings (Ldev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun settings (Ldev/slne/surf/api/paper/inventory/framework/view/SurfViewContext;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/SurfViewRef : dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewRef {
+	public fun <init> ()V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/SurfViewRefKt {
+	public static final fun getView (Ldev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewRef;)Ldev/slne/surf/api/paper/inventory/framework/view/pagination/AbstractPaginatedSurfView;
+	public static final fun getView (Ldev/slne/surf/api/paper/inventory/framework/view/SurfViewRef;)Ldev/slne/surf/api/paper/inventory/framework/view/SurfViewDSLImpl;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/ViewContainer {
+	public fun <init> ()V
+	public final fun addChild (Ldev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public final fun getChildren ()Ljava/util/List;
+	public final fun hasComponentOfType (Ljava/lang/Class;)Z
+	public final fun removeChild (Ldev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public final fun removeChildrenOfType (Ljava/lang/Class;)V
+	public final fun render ()Lnet/kyori/adventure/text/TextComponent;
+}
+
+public abstract interface class dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent {
+	public abstract fun equals (Ljava/lang/Object;)Z
+	public abstract fun getPositionalShift ()I
+	public abstract fun getTextureWidth ()I
+	public abstract fun hashCode ()I
+	public abstract fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewBlockCellComponent : dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent {
+	public fun <init> (II)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColumn ()I
+	public fun getPositionalShift ()I
+	public final fun getRow ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerBackHintComponent : dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerBackHintComponent;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPositionalShift ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerTitleComponent : dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent {
+	public static final field CHAR_SIZE I
+	public static final field CHAR_SPACING I
+	public static final field CONTAINER_WIDTH I
+	public static final field Companion Ldev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerTitleComponent$Companion;
+	public static final field LEFT_SHIFT I
+	public static final field PADDING I
+	public fun <init> (Ljava/lang/String;Lnet/kyori/adventure/key/Key;ILdev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPositionalShift ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerTitleComponent$Companion {
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerDSLKt {
+	public static final fun addChild (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public static final fun backHint (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	public static final fun blockCell (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;II)V
+	public static final fun blockColumn (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;)V
+	public static final fun blockColumn (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[I)V
+	public static synthetic fun blockColumn$default (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILjava/lang/Object;)V
+	public static final fun blockRow (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;)V
+	public static final fun blockRow (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[I)V
+	public static synthetic fun blockRow$default (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILjava/lang/Object;)V
+	public static final fun hasComponentOfType (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ljava/lang/Class;)Z
+	public static final fun header (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewRef;Ljava/lang/String;)V
+	public static final fun removeChild (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public static final fun removeChildrenOfType (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ljava/lang/Class;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContainer ()Ldev/slne/surf/api/paper/inventory/framework/view/container/ViewContainer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/icon/ViewIcon {
+	public fun <init> (Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;)V
+	public final fun build (Lkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
+	public final fun getColor ()Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+	public final fun getIcon ()Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public final fun getItemModel ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor : java/lang/Enum {
+	public static final field BLUE Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+	public static final field GREEN Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+	public static final field RED Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+	public static final field WHITE Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+	public static final field YELLOW Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconKt {
+	public static final fun viewIcon (Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;Lkotlin/jvm/functions/Function1;)Lorg/bukkit/inventory/ItemStack;
+	public static synthetic fun viewIcon$default (Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/bukkit/inventory/ItemStack;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType : java/lang/Enum {
+	public static final field ARROW_DOWN Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_LEFT Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_NEXT Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_PREVIOUS Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_RIGHT Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_UP Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field BELL Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field CHECK Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field CIRCLE Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field COG Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field CROSS Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field EQUALS Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field EXCLAMATION_MARK Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field HOME Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field MENU Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field MINUS Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field PLUS Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION_MARK Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field RELOAD Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field SEARCH Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static final field USERS Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/framework/view/icon/ViewIconType;
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/pagination/AbstractPaginatedSurfView : dev/slne/surf/api/paper/inventory/framework/view/AbstractSurfView {
+	public static final field Companion Ldev/slne/surf/api/paper/inventory/framework/view/pagination/AbstractPaginatedSurfView$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	protected fun applyContainerDefaults (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	protected final fun containerDefaults (Ldev/slne/surf/api/paper/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	protected abstract fun createPagination ()Lme/devnatan/inventoryframework/component/PaginationStateBuilder;
+	protected abstract fun getLayoutTarget ()C
+	public fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+	public synthetic fun getSettings ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	protected fun onPaginatedClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onPaginatedClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onPaginatedInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onPaginatedOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onPaginatedRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onPaginatedUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+	protected final fun onViewClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected final fun onViewClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected final fun onViewInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected final fun onViewOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected final fun onViewRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected final fun onViewUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/AbstractPaginatedSurfView$Companion {
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationDslBuilder {
+	public fun <init> ()V
+	public final fun applyTo (Lme/devnatan/inventoryframework/component/PaginationStateBuilder;)V
+	public final fun asyncSource (Lkotlin/jvm/functions/Function1;)V
+	public final fun computedSource (Lkotlin/jvm/functions/Function1;)V
+	public final fun elementFactory (Lkotlin/jvm/functions/Function4;)V
+	public final fun getElementFactory ()Lme/devnatan/inventoryframework/component/PaginationValueConsumer;
+	public final fun getOrientation ()Lme/devnatan/inventoryframework/component/Pagination$Orientation;
+	public final fun getPageSwitchHandler ()Ljava/util/function/BiConsumer;
+	public final fun getSimpleItemFactory ()Ljava/util/function/BiConsumer;
+	public final fun getSourceType ()Ldev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType;
+	public final fun horizontal ()V
+	public final fun itemFactory (Lkotlin/jvm/functions/Function2;)V
+	public final fun lazyAsyncSource (Lkotlin/jvm/functions/Function1;)V
+	public final fun lazySource (Lkotlin/jvm/functions/Function1;)V
+	public final fun lazySuspendSource (Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function3;)V
+	public final fun lazySuspendSource (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function3;)V
+	public final fun onPageSwitch (Lkotlin/jvm/functions/Function2;)V
+	public final fun orientation (Lme/devnatan/inventoryframework/component/Pagination$Orientation;)V
+	public final fun setElementFactory (Lme/devnatan/inventoryframework/component/PaginationValueConsumer;)V
+	public final fun setOrientation (Lme/devnatan/inventoryframework/component/Pagination$Orientation;)V
+	public final fun setPageSwitchHandler (Ljava/util/function/BiConsumer;)V
+	public final fun setSimpleItemFactory (Ljava/util/function/BiConsumer;)V
+	public final fun setSourceType (Ldev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType;)V
+	public final fun source (Ljava/lang/Iterable;)V
+	public final fun source (Lkotlin/jvm/functions/Function0;)V
+	public final fun suspendSource (Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function3;)V
+	public final fun suspendSource (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function3;)V
+	public final fun vertical ()V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationDslKt {
+	public static final fun pagination (Ldev/slne/surf/api/paper/inventory/framework/view/PaginatedSurfViewContext;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType {
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType$Computed : dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType$ComputedAsync : dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType$Lazy : dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType$LazyAsync : dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType$Static : dev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function0;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings : dev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings {
+	public fun <init> ()V
+	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;)V
+	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lnet/kyori/adventure/key/Key;
+	public final fun component2 ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public final fun component9 ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCancelOnClick ()Z
+	public fun getCancelOnDrag ()Z
+	public fun getCancelOnDrop ()Z
+	public fun getCancelOnPickup ()Z
+	public fun getFont ()Lnet/kyori/adventure/key/Key;
+	public fun getHeaderTextAlignment ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public fun getNavigateBackOnOutsideClick ()Z
+	public final fun getPaginationButtonPosition ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun getPaginationViewRows ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public fun getRows ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition : java/lang/Enum {
+	public static final field BOTTOM Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+	public static final field TOP Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows : java/lang/Enum {
+	public static final field FOUR Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public static final field ONE Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public static final field THREE Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public static final field TWO Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public final fun getActualRows ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getPaginationContentRows ()Lkotlin/ranges/IntRange;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings : dev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings {
+	public fun <init> ()V
+	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)V
+	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lnet/kyori/adventure/key/Key;
+	public final fun component2 ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCancelOnClick ()Z
+	public fun getCancelOnDrag ()Z
+	public fun getCancelOnDrop ()Z
+	public fun getCancelOnPickup ()Z
+	public fun getFont ()Lnet/kyori/adventure/key/Key;
+	public fun getHeaderTextAlignment ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public fun getNavigateBackOnOutsideClick ()Z
+	public fun getRows ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings {
+	public abstract fun getCancelOnClick ()Z
+	public abstract fun getCancelOnDrag ()Z
+	public abstract fun getCancelOnDrop ()Z
+	public abstract fun getCancelOnPickup ()Z
+	public abstract fun getFont ()Lnet/kyori/adventure/key/Key;
+	public abstract fun getHeaderTextAlignment ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public abstract fun getNavigateBackOnOutsideClick ()Z
+	public abstract fun getRows ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettingsDefaults {
+	public static final field DEFAULT_CANCEL_ON_CLICK Z
+	public static final field DEFAULT_CANCEL_ON_DRAG Z
+	public static final field DEFAULT_CANCEL_ON_DROP Z
+	public static final field DEFAULT_CANCEL_ON_PICKUP Z
+	public static final field DEFAULT_NAVIGATE_BACK_ON_CLOSE Z
+	public static final field INSTANCE Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettingsDefaults;
+	public final fun getDEFAULT_HEADER_ALIGNMENT ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public final fun getDEFAULT_HEADER_FONT ()Lnet/kyori/adventure/key/Key;
+	public final fun getDEFAULT_MENU_FONT ()Lnet/kyori/adventure/key/Key;
+	public final fun getDEFAULT_PAGINATION_BUTTON_POSITION ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun getDEFAULT_PAGINATION_VIEW_ROWS ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public final fun getDEFAULT_VIEW_ROWS ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows : java/lang/Enum {
+	public static final field Companion Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows$Companion;
+	public static final field FIVE Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static final field FOUR Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static final field ONE Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static final field SIX Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static final field THREE Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static final field TWO Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getGlyph ()C
+	public final fun getRows ()I
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows$Companion {
+	public final fun byRows (I)Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public final fun byRowsOrNull (I)Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows$Companion$Rows : java/lang/annotation/Annotation {
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment : java/lang/Enum {
+	public static final field CENTER Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public static final field Companion Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment$Companion;
+	public static final field LEFT Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public static final field RIGHT Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public abstract fun calculateShift (Ljava/lang/String;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;)I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment$Companion {
+	public final fun calculateTextWidth (Ljava/lang/String;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;)I
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions {
+	public fun <init> (IIIII)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun copy (IIIII)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;IIIIIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharSize ()I
+	public final fun getCharSpacing ()I
+	public final fun getContainerWidth ()I
+	public final fun getLeftShift ()I
+	public final fun getPadding ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/builder/PaginatedViewSettingsBuilder : dev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder {
+	public fun <init> ()V
+	public fun build ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+	public synthetic fun build ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	public final fun getPaginationButtonPosition ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun getPaginationViewRows ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;
+	public final fun paginationButtonPosition (Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;)V
+	public final fun paginationButtonsAtBottom ()V
+	public final fun paginationButtonsAtTop ()V
+	public final fun paginationViewRows (Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/builder/PaginatedViewSettingsBuilderKt {
+	public static final fun paginatedViewSettings (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/builder/SimpleViewSettingsBuilder : dev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder {
+	public fun <init> ()V
+	public fun build ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
+	public synthetic fun build ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	public final fun getRows ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;
+	public final fun rows (I)V
+	public final fun rows (Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/settings/builder/SimpleViewSettingsBuilderKt {
+	public static final fun simpleViewSettings (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
+}
+
+public abstract class dev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder {
+	public abstract fun build ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/SurfViewSettings;
+	public final fun cancelAllInteractions ()V
+	public final fun cancelOnClick (Z)V
+	public static synthetic fun cancelOnClick$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun cancelOnDrag (Z)V
+	public static synthetic fun cancelOnDrag$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun cancelOnDrop (Z)V
+	public static synthetic fun cancelOnDrop$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun cancelOnPickup (Z)V
+	public static synthetic fun cancelOnPickup$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun font (Lnet/kyori/adventure/key/Key;)V
+	public final fun getCancelOnClick ()Z
+	public final fun getCancelOnDrag ()Z
+	public final fun getCancelOnDrop ()Z
+	public final fun getCancelOnPickup ()Z
+	public final fun getFont ()Lnet/kyori/adventure/key/Key;
+	public final fun getHeaderTextAlignment ()Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
+	public final fun getNavigateBackOnOutsideClick ()Z
+	public final fun headerTextAlignment (Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;)V
+	public final fun navigateBackOnOutsideClick (Z)V
+	public static synthetic fun navigateBackOnOutsideClick$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$Computed : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Function;)V
+	public final fun getComputation ()Ljava/util/function/Function;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$ComputedSupplier : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Supplier;)V
+	public final fun getComputation ()Ljava/util/function/Supplier;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$Immutable : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun getInitialValue ()Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$Initial : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getKey ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$Lazy : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Function;)V
+	public final fun getComputation ()Ljava/util/function/Function;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$LazySupplier : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Supplier;)V
+	public final fun getComputation ()Ljava/util/function/Supplier;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$Mutable : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun getInitialValue ()Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState$MutableInt : dev/slne/surf/api/paper/inventory/framework/view/state/DeferredState {
+	public fun <init> (I)V
+	public final fun getInitialValue ()I
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/StateDslKt {
+	public static final fun computedState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function0;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun computedState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun initialState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun initialState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun lazyState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function0;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun lazyState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun mutableState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;I)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun mutableState (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+	public static final fun state (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/StateHandle {
+	public fun <init> (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateRegistry;I)V
+	public final fun getIndex ()I
+	public final fun getRegistry ()Ldev/slne/surf/api/paper/inventory/framework/view/state/StateRegistry;
+	public final fun resolve ()Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/StateHandleKt {
+	public static final fun decrement (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)I
+	public static final fun get (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)I
+	public static final fun get (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)Ljava/lang/Object;
+	public static final fun getMutableState (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)Ljava/lang/Object;
+	public static final fun increment (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)I
+	public static final fun set (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;I)V
+	public static final fun set (Ldev/slne/surf/api/paper/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/state/StateRegistry {
+	public fun <init> ()V
+	public final fun get (I)Ljava/lang/Object;
+	public final fun getDeferredStates ()Ljava/util/List;
+	public final fun getNextIndex ()I
+	public final fun getResolvedStates ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public final fun register (Ldev/slne/surf/api/paper/inventory/framework/view/state/DeferredState;)I
+	public final fun setNextIndex (I)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/util/GlyphShift {
+	public static final synthetic fun box-impl (I)Ldev/slne/surf/api/paper/inventory/framework/view/util/GlyphShift;
+	public static fun constructor-impl (I)I
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (ILjava/lang/Object;)Z
+	public static final fun equals-impl0 (II)Z
+	public final fun getAmount ()I
+	public fun hashCode ()I
+	public static fun hashCode-impl (I)I
+	public static final fun renderGlyphs-impl (I)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (I)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()I
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/util/GlyphShiftKt {
+	public static final fun shift (I)Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/nms/NmsUseWithCaution : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/SurfPaperNmsBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/SurfPaperNmsBridge$Companion;
+	public abstract fun registerClientboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsClientboundPacketListener;)V
+	public abstract fun registerServerboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener;)V
+	public abstract fun unregisterClientboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsClientboundPacketListener;)V
+	public abstract fun unregisterServerboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/SurfPaperNmsBridge$Companion : dev/slne/surf/api/paper/nms/SurfPaperNmsBridge {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/SurfPaperNmsBridge;
+	public fun registerClientboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsClientboundPacketListener;)V
+	public fun registerServerboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener;)V
+	public fun unregisterClientboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsClientboundPacketListener;)V
+	public fun unregisterServerboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion;
+	public abstract fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
+	public abstract fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge {
+	public fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
+	public fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$Companion;
+	public abstract fun addCompostable (Lorg/bukkit/Material;F)V
+	public abstract fun clearDialogs (Lorg/bukkit/entity/Player;Z)V
+	public static synthetic fun clearDialogs$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)V
+	public abstract fun generateNextInventoryId (Lorg/bukkit/entity/Player;)I
+	public abstract fun getServerIp ()Ljava/net/InetSocketAddress;
+	public abstract fun getStateId (Lorg/bukkit/Material;)I
+	public abstract fun getStateId (Lorg/bukkit/block/data/BlockData;)I
+	public abstract fun getVelocitySecret ()Ljava/lang/String;
+	public abstract fun isVelocityEnabled ()Z
+	public abstract fun nextEntityId ()I
+	public abstract fun removeCompostable (Lorg/bukkit/Material;)V
+	public abstract fun setOnlineMode (Z)V
+	public abstract fun setVelocityEnabled (Z)V
+	public abstract fun setVelocitySecret (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge {
+	public fun addCompostable (Lorg/bukkit/Material;F)V
+	public fun clearDialogs (Lorg/bukkit/entity/Player;Z)V
+	public fun generateNextInventoryId (Lorg/bukkit/entity/Player;)I
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge;
+	public fun getServerIp ()Ljava/net/InetSocketAddress;
+	public fun getStateId (Lorg/bukkit/Material;)I
+	public fun getStateId (Lorg/bukkit/block/data/BlockData;)I
+	public fun getVelocitySecret ()Ljava/lang/String;
+	public fun isVelocityEnabled ()Z
+	public fun nextEntityId ()I
+	public fun removeCompostable (Lorg/bukkit/Material;)V
+	public fun setOnlineMode (Z)V
+	public fun setVelocityEnabled (Z)V
+	public fun setVelocitySecret (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$DefaultImpls {
+	public static synthetic fun clearDialogs$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion;
+	public abstract fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
+	public fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge$Companion;
+	public abstract fun getCurrentFlags (Lorg/bukkit/entity/Entity;)B
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge {
+	public fun getCurrentFlags (Lorg/bukkit/entity/Entity;)B
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge$Companion;
+	public abstract fun setDefaultMaxStackSize (Lorg/bukkit/inventory/ItemType;I)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge;
+	public fun setDefaultMaxStackSize (Lorg/bukkit/inventory/ItemType;I)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge$Companion;
+	public abstract fun getDifferentLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Lorg/bukkit/entity/EntityType;Z)Ljava/util/Collection;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge {
+	public fun getDifferentLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Lorg/bukkit/entity/EntityType;Z)Ljava/util/Collection;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge$Companion;
+	public abstract fun getNbtString (Lorg/bukkit/inventory/ItemStack;Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun makeItemStackEntityInvisible (Lorg/bukkit/inventory/ItemStack;Lorg/bukkit/entity/EntityType;)Lorg/bukkit/inventory/ItemStack;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge;
+	public fun getNbtString (Lorg/bukkit/inventory/ItemStack;Ljava/lang/String;)Ljava/lang/String;
+	public fun makeItemStackEntityInvisible (Lorg/bukkit/inventory/ItemStack;Lorg/bukkit/entity/EntityType;)Lorg/bukkit/inventory/ItemStack;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$Companion;
+	public abstract fun getPlayerStatsAsJson (Lorg/bukkit/entity/Player;)Ljava/lang/String;
+	public abstract fun savePlayerStatsToFile (Lorg/bukkit/entity/Player;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge;
+	public fun getPlayerStatsAsJson (Lorg/bukkit/entity/Player;)Ljava/lang/String;
+	public fun savePlayerStatsToFile (Lorg/bukkit/entity/Player;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/PacketOperation {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation$Companion;
+	public abstract fun add (Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun execute (Lorg/bukkit/entity/Player;)V
+	public abstract fun isEmpty ()Z
+	public fun plus (Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/PacketOperation$Companion {
+	public final fun start ()Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/PacketOperation$DefaultImpls {
+	public static fun plus (Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/PacketOperationKt {
+	public static final synthetic fun PacketOperation (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static final fun PacketOperationInline (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges$Companion;
+	public abstract fun createEmptyPacketOperation ()Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges$Companion : dev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges {
+	public fun createEmptyPacketOperation ()Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets$Companion;
+	public abstract fun resetBlock (Lio/papermc/paper/math/BlockPosition;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun updateBlockData (Lio/papermc/paper/math/BlockPosition;Lorg/bukkit/block/data/BlockData;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets;
+	public fun resetBlock (Lio/papermc/paper/math/BlockPosition;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun updateBlockData (Lio/papermc/paper/math/BlockPosition;Lorg/bukkit/block/data/BlockData;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings : dev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings$Companion;
+	public fun <init> ()V
+	public fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;
+	public synthetic fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;
+	public fun clone ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;
+	public synthetic fun clone ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;
+	public synthetic fun clone ()Ljava/lang/Object;
+	public final fun getBlockData ()Lorg/bukkit/block/data/BlockData;
+	public final fun setBlockData (Lorg/bukkit/block/data/BlockData;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings$Companion {
+	public final fun create (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;
+	public final fun invoke (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;
+}
+
+public abstract class dev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings : java/lang/Cloneable {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings$Companion;
+	public abstract fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;
+	public fun clone ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;
+	public synthetic fun clone ()Ljava/lang/Object;
+	public final fun getBillboardConstraints ()Lorg/bukkit/entity/Display$Billboard;
+	public final fun getLeftRotation ()Lorg/spongepowered/math/imaginary/Quaternionf;
+	public final fun getPitch ()F
+	public final fun getRightRotation ()Lorg/spongepowered/math/imaginary/Quaternionf;
+	public final fun getScale ()Lorg/spongepowered/math/vector/Vector3f;
+	public final fun getTranslation ()Lorg/spongepowered/math/vector/Vector3f;
+	public final fun getYaw ()F
+	public final fun setBillboardConstraints (Lorg/bukkit/entity/Display$Billboard;)V
+	public final fun setLeftRotation (Lorg/spongepowered/math/imaginary/Quaternionf;)V
+	public final fun setPitch (F)V
+	public final fun setRightRotation (Lorg/spongepowered/math/imaginary/Quaternionf;)V
+	public final fun setScale (Lorg/spongepowered/math/vector/Vector3f;)V
+	public final fun setTranslation (Lorg/spongepowered/math/vector/Vector3f;)V
+	public final fun setYaw (F)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings$Companion {
+	public final fun buildSettings (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings : dev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings$Companion;
+	public fun <init> ()V
+	public synthetic fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;
+	public fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings;
+	public final fun getItemDisplayTransform ()Lorg/bukkit/entity/ItemDisplay$ItemDisplayTransform;
+	public final fun getItemStack ()Lorg/bukkit/inventory/ItemStack;
+	public final fun setItemDisplayTransform (Lorg/bukkit/entity/ItemDisplay$ItemDisplayTransform;)V
+	public final fun setItemStack (Lorg/bukkit/inventory/ItemStack;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings$Companion {
+	public final fun create (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings;
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/nms/bridges/packets/entity/SettingsDsl : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$Companion;
+	public fun <init> ()V
+	public final fun getBackText ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText;
+	public final fun getFrontText ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText;
+	public final fun setBackText (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText;)V
+	public final fun setFrontText (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText;)V
+	public final fun setText (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText;Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$Companion {
+	public final fun create (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText$Companion;
+	public fun <init> ()V
+	public final fun getLine1 ()Lnet/kyori/adventure/text/Component;
+	public final fun getLine2 ()Lnet/kyori/adventure/text/Component;
+	public final fun getLine3 ()Lnet/kyori/adventure/text/Component;
+	public final fun getLine4 ()Lnet/kyori/adventure/text/Component;
+	public final fun setLine1 (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLine2 (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLine3 (Lnet/kyori/adventure/text/Component;)V
+	public final fun setLine4 (Lnet/kyori/adventure/text/Component;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText$Companion {
+	public final fun create (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText;
+	public final fun empty ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings$SignText;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets$Companion;
+	public abstract fun despawn (Lit/unimi/dsi/fastutil/ints/IntList;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun despawn (Lit/unimi/dsi/fastutil/ints/IntSet;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun despawn ([I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun spawnBlockDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnBlockDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun spawnItemDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnItemDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun spawnTextDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnTextDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun teleport (ILio/papermc/paper/math/FinePosition;FFLio/papermc/paper/math/FinePosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static synthetic fun teleport$default (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;ILio/papermc/paper/math/FinePosition;FFLio/papermc/paper/math/FinePosition;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun updateSign (ILio/papermc/paper/math/BlockPosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun updateSign (ILio/papermc/paper/math/BlockPosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets {
+	public fun despawn (Lit/unimi/dsi/fastutil/ints/IntList;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun despawn (Lit/unimi/dsi/fastutil/ints/IntSet;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun despawn ([I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;
+	public fun spawnBlockDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnBlockDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnItemDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnItemDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnTextDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun spawnTextDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun teleport (ILio/papermc/paper/math/FinePosition;FFLio/papermc/paper/math/FinePosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun updateSign (ILio/papermc/paper/math/BlockPosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun updateSign (ILio/papermc/paper/math/BlockPosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets$DefaultImpls {
+	public static fun despawn (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;Lit/unimi/dsi/fastutil/ints/IntSet;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static fun spawnBlockDisplay (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static fun spawnItemDisplay (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static fun spawnTextDisplay (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static synthetic fun teleport$default (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;ILio/papermc/paper/math/FinePosition;FFLio/papermc/paper/math/FinePosition;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static fun updateSign (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;ILio/papermc/paper/math/BlockPosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings : dev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings$Companion;
+	public fun <init> ()V
+	public synthetic fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings;
+	public fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings;
+	public final fun getBackgroundColor ()Lnet/kyori/adventure/text/format/TextColor;
+	public final fun getLineWidth ()I
+	public final fun getText ()Lnet/kyori/adventure/text/Component;
+	public final fun getTextAlignment ()Lorg/bukkit/entity/TextDisplay$TextAlignment;
+	public final fun setBackgroundColor (Lnet/kyori/adventure/text/format/TextColor;)V
+	public final fun setLineWidth (I)V
+	public final fun setText (Lnet/kyori/adventure/text/Component;)V
+	public final fun setTextAlignment (Lorg/bukkit/entity/TextDisplay$TextAlignment;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings$Companion {
+	public final fun create (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets$Companion;
+	public abstract fun sendPlayerChatMessagePacket (Ljava/util/UUID;Lnet/kyori/adventure/text/Component;IILnet/kyori/adventure/chat/SignedMessage$Signature;JLjava/time/Instant;Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/util/Map;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets;
+	public fun sendPlayerChatMessagePacket (Ljava/util/UUID;Lnet/kyori/adventure/text/Component;IILnet/kyori/adventure/chat/SignedMessage$Signature;JLjava/time/Instant;Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/util/Map;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets$Companion;
+	public abstract fun closeInventory (I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun openInventory (ILorg/bukkit/event/inventory/InventoryType;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun openSignEditor (Lio/papermc/paper/math/BlockPosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun setInventorySlot (IIILorg/bukkit/inventory/ItemStack;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets {
+	public fun closeInventory (I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets;
+	public fun openInventory (ILorg/bukkit/event/inventory/InventoryType;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun openSignEditor (Lio/papermc/paper/math/BlockPosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun setInventorySlot (IIILorg/bukkit/inventory/ItemStack;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets$Companion;
+	public abstract fun showToast (Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets;
+	public fun showToast (Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast$Companion;
+	public fun <init> (Lorg/bukkit/inventory/ItemStack;Lnet/kyori/adventure/text/Component;Lio/papermc/paper/advancement/AdvancementDisplay$Frame;)V
+	public synthetic fun <init> (Lorg/bukkit/inventory/ItemStack;Lnet/kyori/adventure/text/Component;Lio/papermc/paper/advancement/AdvancementDisplay$Frame;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lorg/bukkit/inventory/ItemStack;
+	public final fun component2 ()Lnet/kyori/adventure/text/Component;
+	public final fun component3 ()Lio/papermc/paper/advancement/AdvancementDisplay$Frame;
+	public final fun copy (Lorg/bukkit/inventory/ItemStack;Lnet/kyori/adventure/text/Component;Lio/papermc/paper/advancement/AdvancementDisplay$Frame;)Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;Lorg/bukkit/inventory/ItemStack;Lnet/kyori/adventure/text/Component;Lio/papermc/paper/advancement/AdvancementDisplay$Frame;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;
+	public final fun createOperation ()Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrame ()Lio/papermc/paper/advancement/AdvancementDisplay$Frame;
+	public final fun getIcon ()Lorg/bukkit/inventory/ItemStack;
+	public final fun getTitle ()Lnet/kyori/adventure/text/Component;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast$Companion {
+	public final fun invoke (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast$Companion$Builder {
+	public fun <init> ()V
+	public final fun build ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;
+	public final fun frame (Lio/papermc/paper/advancement/AdvancementDisplay$Frame;)V
+	public final fun icon (Lorg/bukkit/inventory/ItemStack;)V
+	public final fun icon (Lorg/bukkit/inventory/ItemType;)V
+	public final fun icon (Lorg/bukkit/inventory/ItemType;Lkotlin/jvm/functions/Function1;)V
+	public final fun title (Lkotlin/jvm/functions/Function1;)V
+	public final fun title (Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/toast/ToastKt {
+	public static final fun toast (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/NmsPacket {
+	public abstract fun getPacketClass ()Ljava/lang/Class;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/clientbound/DisconnectPacket : dev/slne/surf/api/paper/nms/listener/packets/clientbound/NmsClientboundPacket {
+	public abstract fun getReason ()Lnet/kyori/adventure/text/Component;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/clientbound/NmsClientboundPacket : dev/slne/surf/api/paper/nms/listener/packets/NmsPacket {
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/clientbound/SystemChatPacket : dev/slne/surf/api/paper/nms/listener/packets/clientbound/NmsClientboundPacket {
+	public abstract fun getContent ()Lnet/kyori/adventure/text/Component;
+	public abstract fun getOverlay ()Z
+	public abstract fun setContent (Lnet/kyori/adventure/text/Component;)V
+	public abstract fun setOverlay (Z)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/serverbound/CommandSuggestionPacket : dev/slne/surf/api/paper/nms/listener/packets/serverbound/NmsServerboundPacket {
+	public abstract fun getCommand ()Ljava/lang/String;
+	public abstract fun getCompletionId ()I
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/serverbound/NmsServerboundPacket : dev/slne/surf/api/paper/nms/listener/packets/NmsPacket {
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/serverbound/RenameItemPacket : dev/slne/surf/api/paper/nms/listener/packets/serverbound/NmsServerboundPacket {
+	public abstract fun getNewName ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket : dev/slne/surf/api/paper/nms/listener/packets/serverbound/NmsServerboundPacket {
+	public abstract fun getPayload ()Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload;
+	public abstract fun setPayload (Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload {
+}
+
+public final class dev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Brand : dev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Brand;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Brand;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Brand;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBrand ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Discarded : dev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload {
+	public fun <init> (Lnet/kyori/adventure/key/Key;[B)V
+	public final fun component1 ()Lnet/kyori/adventure/key/Key;
+	public final fun component2 ()[B
+	public final fun copy (Lnet/kyori/adventure/key/Key;[B)Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Discarded;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Discarded;Lnet/kyori/adventure/key/Key;[BILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/listener/packets/serverbound/ServerboundCustomPayloadPacket$Payload$Discarded;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()[B
+	public final fun getId ()Lnet/kyori/adventure/key/Key;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/serverbound/SignUpdatePacket : dev/slne/surf/api/paper/nms/listener/packets/serverbound/NmsServerboundPacket {
+	public abstract fun getLine (I)Ljava/lang/String;
+	public abstract fun getLines ()[Ljava/lang/String;
+	public abstract fun getPosition ()Lio/papermc/paper/math/BlockPosition;
+	public abstract fun isFrontText ()Z
+}
+
+public abstract interface class dev/slne/surf/api/paper/packet/SurfPaperPacketApi {
+	public static final field Companion Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion;
+	public static fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;
+	public abstract fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public abstract fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public abstract fun unregisterPacketLoreListener (Lorg/bukkit/NamespacedKey;)V
+	public abstract fun unregisterPacketLoreListener (Lorg/bukkit/plugin/Plugin;)V
+}
+
+public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;
+}
+
+public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$DefaultImpls {
+	public static fun registerPacketLoreListener (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public static fun registerPacketLoreListenerGlobal (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi {
+	public static final field Companion Ldev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi$Companion;
+	public abstract fun registerListeners (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListener;)V
+	public abstract fun unregisterListeners (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListener;)V
+}
+
+public final class dev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi$Companion : dev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi;
+	public fun registerListeners (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListener;)V
+	public fun unregisterListeners (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListener;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/packet/listener/listener/PacketListener {
+}
+
+public final class dev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult : java/lang/Enum {
+	public static final field CANCEL Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+	public static final field CONTINUE Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+	public final fun combine (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;)Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+	public static fun values ()[Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/packet/listener/listener/annotation/ClientboundListener : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/packet/listener/listener/annotation/ServerboundListener : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler {
+	public abstract fun handleLore (Ljava/util/List;Lio/papermc/paper/persistence/PersistentDataContainerView;Lorg/bukkit/inventory/ItemStack;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple : dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler {
+	public abstract fun handleLore (Ljava/util/List;)V
+	public fun handleLore (Ljava/util/List;Lio/papermc/paper/persistence/PersistentDataContainerView;Lorg/bukkit/inventory/ItemStack;)V
+}
+
+public final class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple$DefaultImpls {
+	public static fun handleLore (Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;Ljava/util/List;Lio/papermc/paper/persistence/PersistentDataContainerView;Lorg/bukkit/inventory/ItemStack;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/pdc/block/BlockPdcProvider {
+	public static final field Companion Ldev/slne/surf/api/paper/pdc/block/BlockPdcProvider$Companion;
+	public abstract fun getPdc (Lorg/bukkit/block/Block;)Ldev/slne/surf/api/paper/pdc/block/CustomBlockPersistentDataContainer;
+}
+
+public final class dev/slne/surf/api/paper/pdc/block/BlockPdcProvider$Companion : dev/slne/surf/api/paper/pdc/block/BlockPdcProvider {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/pdc/block/BlockPdcProvider;
+	public fun getPdc (Lorg/bukkit/block/Block;)Ldev/slne/surf/api/paper/pdc/block/CustomBlockPersistentDataContainer;
+}
+
+public final class dev/slne/surf/api/paper/pdc/block/BlockPdcProviderKt {
+	public static final fun pdc (Lorg/bukkit/block/Block;)Ldev/slne/surf/api/paper/pdc/block/CustomBlockPersistentDataContainer;
+}
+
+public abstract interface class dev/slne/surf/api/paper/pdc/block/CustomBlockPersistentDataContainer : org/bukkit/persistence/PersistentDataContainer {
+	public abstract fun clear ()V
+	public abstract fun copyTo (Lorg/bukkit/block/Block;)V
+	public abstract fun getChunk ()Lorg/bukkit/Chunk;
+}
+
+public abstract class dev/slne/surf/api/paper/permission/PermissionRegistry {
+	public fun <init> ()V
+	public final fun create (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/paper/region/TickThreadGuard {
+	public static final field Companion Ldev/slne/surf/api/paper/region/TickThreadGuard$Companion;
+	public abstract fun ensureTickThread (Lorg/bukkit/World;DDLjava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;IILjava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;ILjava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;Ljava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/World;Lorg/bukkit/util/BoundingBox;Ljava/lang/String;)V
+	public abstract fun ensureTickThread (Lorg/bukkit/entity/Entity;Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/region/TickThreadGuard$Companion : dev/slne/surf/api/paper/region/TickThreadGuard {
+	public fun ensureTickThread (Lorg/bukkit/World;DDLjava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;IILjava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;ILjava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;Ljava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/World;Lorg/bukkit/util/BoundingBox;Ljava/lang/String;)V
+	public fun ensureTickThread (Lorg/bukkit/entity/Entity;Ljava/lang/String;)V
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/region/TickThreadGuard;
+}
+
+public final class dev/slne/surf/api/paper/serializer/bukkit/blockdata/BlockDataSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/serializer/bukkit/blockdata/BlockDataSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lorg/bukkit/block/data/BlockData;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lorg/bukkit/block/data/BlockData;)V
+}
+
+public final class dev/slne/surf/api/paper/serializer/bukkit/blockstate/BlockStateSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/serializer/bukkit/blockstate/BlockStateSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lorg/bukkit/block/BlockState;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lorg/bukkit/block/BlockState;)V
+}
+
+public final class dev/slne/surf/api/paper/serializer/bukkit/itemstack/ItemStackSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/serializer/bukkit/itemstack/ItemStackSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lorg/bukkit/inventory/ItemStack;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lorg/bukkit/inventory/ItemStack;)V
+}
+
+public final class dev/slne/surf/api/paper/serializer/bukkit/location/LocationSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/serializer/bukkit/location/LocationSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lorg/bukkit/Location;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lorg/bukkit/Location;)V
+}
+
+public final class dev/slne/surf/api/paper/serializer/bukkit/offlineplayer/OfflinePlayerSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/serializer/bukkit/offlineplayer/OfflinePlayerSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lorg/bukkit/OfflinePlayer;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lorg/bukkit/OfflinePlayer;)V
+}
+
+public final class dev/slne/surf/api/paper/serializer/bukkit/player/PlayerSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/serializer/bukkit/player/PlayerSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lorg/bukkit/entity/Player;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lorg/bukkit/entity/Player;)V
+}
+
+public final class dev/slne/surf/api/paper/time/SkipOperations {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/time/SkipOperations;
+	public static final field NEXT_DAY Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;
+	public static final field NEXT_MIDNIGHT Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;
+	public static final field NEXT_NIGHT Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;
+	public static final field NEXT_NOON Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;
+	public static final field NEXT_SUNRISE Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;
+	public static final field NEXT_SUNSET Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;
+}
+
+public abstract interface class dev/slne/surf/api/paper/time/SkipOperations$SkipOperation {
+	public abstract fun timeToAdd (Lorg/bukkit/World;)J
+}
+
+public final class dev/slne/surf/api/paper/time/TimeSkipResult : java/lang/Enum {
+	public static final field ALREADY_SKIPPING Ldev/slne/surf/api/paper/time/TimeSkipResult;
+	public static final field FAILED Ldev/slne/surf/api/paper/time/TimeSkipResult;
+	public static final field SUCCESS Ldev/slne/surf/api/paper/time/TimeSkipResult;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun toBoolean ()Z
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/time/TimeSkipResult;
+	public static fun values ()[Ldev/slne/surf/api/paper/time/TimeSkipResult;
+}
+
+public final class dev/slne/surf/api/paper/util/UtilBukkit {
+	public static final fun computeHighestYBlock (Ljava/util/Collection;Lorg/bukkit/World;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun distanceSqt (Lorg/bukkit/Location;Lorg/bukkit/Location;)D
+	public static final fun forEachPlayer (Lkotlin/jvm/functions/Function1;)V
+	public static final fun forEachPlayerInRegion (Lcom/github/shynixn/mccoroutine/folia/SuspendingPlugin;Lkotlin/jvm/functions/Function2;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun forEachPlayerInRegion (Lkotlin/jvm/functions/Function2;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun forEachPlayerInRegion$default (Lcom/github/shynixn/mccoroutine/folia/SuspendingPlugin;Lkotlin/jvm/functions/Function2;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun forEachPlayerInRegion$default (Lkotlin/jvm/functions/Function2;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun getBlockAtAsync (Lorg/bukkit/World;Lio/papermc/paper/math/BlockPosition;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun getCallingPlugin (I)Lorg/bukkit/plugin/java/JavaPlugin;
+	public static synthetic fun getCallingPlugin$default (IILjava/lang/Object;)Lorg/bukkit/plugin/java/JavaPlugin;
+	public static final fun getChunkKey (Lorg/bukkit/Location;)J
+	public static final fun getChunkX (Lio/papermc/paper/math/Position;)I
+	public static final fun getChunkX (Lorg/bukkit/Location;)I
+	public static final fun getChunkZ (Lio/papermc/paper/math/Position;)I
+	public static final fun getChunkZ (Lorg/bukkit/Location;)I
+	public static final fun getHighestBlockYAtBlockCoordinates (Lorg/bukkit/ChunkSnapshot;II)I
+	public static final fun getXFromChunkKey (J)I
+	public static final fun getZFromChunkKey (J)I
+	public static final fun isChunkVisible (Lorg/bukkit/entity/Player;Lorg/bukkit/Location;)Z
+	public static final fun isChunkVisible (Lorg/bukkit/entity/Player;Lorg/bukkit/World;II)Z
+	public static final fun namespacedKey (Ljava/lang/String;)Lorg/bukkit/NamespacedKey;
+	public static final fun readableString (Lorg/bukkit/Location;Z)Ljava/lang/String;
+	public static final fun toOfflinePlayers (Ljava/lang/Iterable;)Ljava/util/List;
+	public static final fun toOfflinePlayers (Lkotlin/sequences/Sequence;)Lkotlin/sequences/Sequence;
+	public static final fun toPlayers (Ljava/lang/Iterable;)Ljava/util/List;
+	public static final fun toPlayers (Lkotlin/sequences/Sequence;)Lkotlin/sequences/Sequence;
+	public static final fun toVector3d (Lorg/bukkit/Location;)Lorg/spongepowered/math/vector/Vector3d;
+}
+
+public abstract interface class dev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi {
+	public static final field Companion Ldev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi$Companion;
+	public abstract fun createAreaVisualizer-9VgGkz4 (Lorg/bukkit/World;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;Ljava/util/Collection;ZJ)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerArea;
+	public static synthetic fun createAreaVisualizer-9VgGkz4$default (Ldev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi;Lorg/bukkit/World;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;Ljava/util/Collection;ZJILjava/lang/Object;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerArea;
+	public abstract fun createMultiLocationVisualizer (Lorg/bukkit/World;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;
+	public abstract fun createSingleLocationVisualizer (Lorg/bukkit/Location;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerSingleLocation;
+	public abstract fun getByUid (Ljava/util/UUID;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer;
+	public static fun getINSTANCE ()Ldev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi;
+}
+
+public final class dev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi$Companion : dev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi {
+	public fun createAreaVisualizer-9VgGkz4 (Lorg/bukkit/World;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;Ljava/util/Collection;ZJ)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerArea;
+	public fun createMultiLocationVisualizer (Lorg/bukkit/World;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;
+	public fun createSingleLocationVisualizer (Lorg/bukkit/Location;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerSingleLocation;
+	public fun getByUid (Ljava/util/UUID;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi;
+}
+
+public final class dev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi$DefaultImpls {
+	public static synthetic fun createAreaVisualizer-9VgGkz4$default (Ldev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi;Lorg/bukkit/World;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;Ljava/util/Collection;ZJILjava/lang/Object;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerArea;
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/visualizer/visualizer/ExperimentalVisualizerApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer : java/lang/AutoCloseable {
+	public static final field Companion Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer$Companion;
+	public static final field DEFAULT_BLOCK_TYPE Lorg/bukkit/block/BlockType;
+	public abstract fun addViewer (Lorg/bukkit/entity/Player;)V
+	public abstract fun clearViewers ()V
+	public abstract fun close ()V
+	public abstract fun getUid ()Ljava/util/UUID;
+	public abstract fun getViewerUuids ()Ljava/util/Set;
+	public abstract fun getViewers ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+	public abstract fun hasViewers ()Z
+	public abstract fun isClosed ()Z
+	public abstract fun isVisualizing ()Z
+	public abstract fun removeViewer (Lorg/bukkit/entity/Player;)V
+	public abstract fun startVisualizing ()Z
+	public abstract fun stopVisualizing ()Z
+	public abstract fun update (Ldev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy;)V
+	public static synthetic fun update$default (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer;Ldev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy;ILjava/lang/Object;)V
+	public abstract fun visibleTo (Lorg/bukkit/entity/Player;)Z
+}
+
+public final class dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer$Companion {
+}
+
+public final class dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer$DefaultImpls {
+	public static synthetic fun update$default (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer;Ldev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy;ILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerArea : dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer {
+	public abstract fun addCornerLocation (Lorg/spongepowered/math/vector/Vector3d;)V
+	public abstract fun clearCornerLocations ()V
+	public abstract fun getCornerLocations ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+	public abstract fun getSettings ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;
+	public abstract fun removeCornerLocation (Lorg/spongepowered/math/vector/Vector3d;)V
+	public abstract fun setCornerLocations (Ljava/util/Collection;)V
+	public abstract fun setSettings (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)V
+	public abstract fun settings (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations : dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer {
+	public abstract fun addVisualLocation (Lorg/spongepowered/math/vector/Vector3d;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)V
+	public fun addVisualLocation (Lorg/spongepowered/math/vector/Vector3d;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun addVisualLocation$default (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;Lorg/spongepowered/math/vector/Vector3d;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public abstract fun addVisualLocations (Ljava/util/Collection;)V
+	public fun addVisualLocations (Ljava/util/Collection;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)V
+	public fun addVisualLocations (Ljava/util/Collection;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun addVisualLocations$default (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;Ljava/util/Collection;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public abstract fun clearVisualLocations ()V
+	public abstract fun getVisualLocations ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+	public abstract fun removeVisualLocation (Lorg/spongepowered/math/vector/Vector3d;)V
+}
+
+public final class dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations$DefaultImpls {
+	public static fun addVisualLocation (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;Lorg/spongepowered/math/vector/Vector3d;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun addVisualLocation$default (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;Lorg/spongepowered/math/vector/Vector3d;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static fun addVisualLocations (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;Ljava/util/Collection;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)V
+	public static fun addVisualLocations (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;Ljava/util/Collection;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun addVisualLocations$default (Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;Ljava/util/Collection;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerSingleLocation : dev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer {
+	public abstract fun getLocation ()Lorg/bukkit/Location;
+	public abstract fun getSettings ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;
+	public abstract fun setLocation (Lorg/bukkit/Location;)V
+	public abstract fun setSettings (Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)V
+	public abstract fun settings (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy : java/lang/Enum {
+	public static final field ALL Ldev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy;
+	public static final field POSITION Ldev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy;
+	public static fun values ()[Ldev/slne/surf/api/paper/visualizer/visualizer/UpdateStrategy;
+}
+

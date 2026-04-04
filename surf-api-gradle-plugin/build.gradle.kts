@@ -21,7 +21,7 @@ plugins {
 group = groupId
 version = buildString {
     append(mcVersion)
-    append("-1.14.0")
+    append("-2.0.0")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -52,36 +52,35 @@ dependencies {
 gradlePlugin {
     plugins {
         create("settings") {
-            id = "dev.slne.surf.surfapi.gradle.settings"
-            implementationClass = "dev.slne.surf.surfapi.gradle.settings.SurfSettingsPlugin"
+            id = "dev.slne.surf.api.gradle.settings"
+            implementationClass = "dev.slne.surf.api.gradle.settings.SurfSettingsPlugin"
         }
 
         create("core") {
-            id = "dev.slne.surf.surfapi.gradle.core"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.core.CoreSurfPlugin"
+            id = "dev.slne.surf.api.gradle.core"
+            implementationClass = "dev.slne.surf.api.gradle.platform.core.CoreSurfPlugin"
         }
 
         create("paper-plugin") {
-            id = "dev.slne.surf.surfapi.gradle.paper-plugin"
+            id = "dev.slne.surf.api.gradle.paper-plugin"
             implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
+                "dev.slne.surf.api.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
         }
+
         create("paper-raw") {
-            id = "dev.slne.surf.surfapi.gradle.paper-raw"
-            implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
+            id = "dev.slne.surf.api.gradle.paper-raw"
+            implementationClass = "dev.slne.surf.api.gradle.platform.paper.raw.RawPaperSurfPlugin"
         }
 
         create("standalone") {
-            id = "dev.slne.surf.surfapi.gradle.standalone"
+            id = "dev.slne.surf.api.gradle.standalone"
             implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.standalone.StandaloneSurfPlugin"
+                "dev.slne.surf.api.gradle.platform.standalone.StandaloneSurfPlugin"
         }
 
         create("velocity") {
-            id = "dev.slne.surf.surfapi.gradle.velocity"
-            implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
+            id = "dev.slne.surf.api.gradle.velocity"
+            implementationClass = "dev.slne.surf.api.gradle.platform.velocity.VelocitySurfPlugin"
         }
     }
 
@@ -101,7 +100,7 @@ gradlePlugin {
 }
 
 val constantsOutputDir =
-    layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
+    layout.buildDirectory.dir("generated/dev/slne/surf/api/gradle/generated")
 val generateConstants by tasks.registering {
     val outputFile = constantsOutputDir.map { it.file("Constants.kt") }
 
@@ -128,7 +127,7 @@ val generateConstants by tasks.registering {
     doLast {
         val generator = project(":surf-api-gradle-plugin:surf-api-processor")
         val content = """
-            |package dev.slne.surf.surfapi.gradle.generated
+            |package dev.slne.surf.api.gradle.generated
             |
             |internal object Constants {
             |    const val RELOCATION_PREFIX = "$relocationPrefix"

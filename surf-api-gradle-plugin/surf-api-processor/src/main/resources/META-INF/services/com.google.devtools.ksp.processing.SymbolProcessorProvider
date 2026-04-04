@@ -1,2 +1,2 @@
-dev.slne.surf.surfapi.processor.autoservice.AutoServiceSymbolProcessorProvider
-dev.slne.surf.surfapi.processor.component.ComponentSymbolProcessorProvider
+dev.slne.surf.api.processor.autoservice.AutoServiceSymbolProcessorProvider
+dev.slne.surf.api.processor.component.ComponentSymbolProcessorProvider

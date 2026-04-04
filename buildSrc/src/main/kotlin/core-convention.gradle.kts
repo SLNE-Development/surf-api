@@ -50,7 +50,7 @@ extensions.configure<KotlinJvmProjectExtension> {
 java {
     withSourcesJar()
 
-    if (project.name != "surf-api-bukkit-plugin-test") {
+    if (project.name != "surf-api-paper-plugin-test") {
         withJavadocJar()
     }
 }
