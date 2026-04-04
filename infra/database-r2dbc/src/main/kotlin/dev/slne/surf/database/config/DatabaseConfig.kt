@@ -1,7 +1,7 @@
 package dev.slne.surf.database.config
 
-import dev.slne.surf.surfapi.core.api.config.createSpongeYmlConfig
-import dev.slne.surf.surfapi.core.api.config.surfConfigApi
+import dev.slne.surf.api.core.config.createSpongeYmlConfig
+import dev.slne.surf.api.core.config.surfConfigApi
 import org.slf4j.event.Level
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import java.nio.file.Path

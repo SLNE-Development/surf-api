@@ -1,8 +1,8 @@
 package dev.slne.surf.database
 
+import dev.slne.surf.api.core.util.getCallerClass
 import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.logger.ComponentSqlLogger
-import dev.slne.surf.surfapi.core.api.util.getCallerClass
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.spi.ConnectionFactory
@@ -51,7 +51,14 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
                 .username(config.credentials.username)
                 .password(config.credentials.password)
                 .database(config.credentials.database)
-                .loopResources(LoopResources.create("mariadb-r2dbc-event-loop-$poolName", 1, 4, true))
+                .loopResources(
+                    LoopResources.create(
+                        "mariadb-r2dbc-event-loop-$poolName",
+                        1,
+                        4,
+                        true
+                    )
+                )
                 .build()
 
             val connectionFactory = MariadbConnectionFactory.from(configuration)
