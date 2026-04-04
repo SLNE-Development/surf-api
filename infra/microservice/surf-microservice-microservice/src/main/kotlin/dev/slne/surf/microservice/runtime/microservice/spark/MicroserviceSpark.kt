@@ -1,8 +1,8 @@
 package dev.slne.surf.microservice.runtime.microservice.spark
 
+import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.core.util.mutableObjectSetOf
 import dev.slne.surf.microservice.api.microservice.Microservice
-import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.mutableObjectSetOf
 import kotlinx.coroutines.*
 import me.lucko.spark.common.SparkPlatform
 import me.lucko.spark.common.SparkPlugin

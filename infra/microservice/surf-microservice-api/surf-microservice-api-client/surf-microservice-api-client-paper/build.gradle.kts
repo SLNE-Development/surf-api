@@ -1,5 +1,5 @@
 plugins {
-    id("dev.slne.surf.surfapi.gradle.paper-raw")
+    id("dev.slne.surf.api.gradle.paper-raw")
 }
 
 dependencies {

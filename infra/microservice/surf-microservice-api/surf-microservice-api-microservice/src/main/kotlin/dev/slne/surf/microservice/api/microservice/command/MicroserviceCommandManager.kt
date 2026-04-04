@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.api.microservice.command
 
-import dev.slne.surf.surfapi.core.api.util.requiredService
+import dev.slne.surf.api.core.util.requiredService
 import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.UnmodifiableView

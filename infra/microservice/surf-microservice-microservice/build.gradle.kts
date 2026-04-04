@@ -1,5 +1,5 @@
 plugins {
-    id("dev.slne.surf.surfapi.gradle.standalone")
+    id("dev.slne.surf.api.gradle.standalone")
 }
 
 dependencies {
