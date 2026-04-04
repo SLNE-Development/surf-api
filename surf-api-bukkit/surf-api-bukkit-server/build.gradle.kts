@@ -24,8 +24,6 @@ dependencies {
     compileOnly(libs.placeholder.api)
 
     // -------------------- Paper Libraries -------------------- //
-    runtimeOnly(libs.scoreboard.library.implementation)
-    paperLibrary(libs.scoreboard.library.api)
     paperLibrary(libs.guava)
     paperLibrary(libs.caffeine)
     paperLibrary(libs.gson)
@@ -52,7 +50,7 @@ dependencies {
 paper {
     name = "surf-bukkit-api"
     provides = listOf("SurfBukkitAPI")
-    apiVersion = "1.21"
+    apiVersion = "1.21.11"
     description = "Surf API for Bukkit"
     website = "https://slne.dev"
     authors = listOf("twisti", "SLNE Development Team")

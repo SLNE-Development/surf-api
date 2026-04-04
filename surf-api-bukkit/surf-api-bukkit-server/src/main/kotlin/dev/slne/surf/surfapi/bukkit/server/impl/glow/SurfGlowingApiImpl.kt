@@ -152,6 +152,8 @@ class SurfGlowingApiImpl : SurfGlowingApi {
     private fun teamIdFor(entity: Entity) = (entity as? Player)?.name ?: entity.uniqueId.toString()
 
     companion object {
+        val INSTANCE get() = SurfGlowingApi.INSTANCE as SurfGlowingApiImpl
+        
         private val entityPlayerData = ConcurrentHashMap<UUID, EntityPlayerData>()
         private val blockPlayerData = ConcurrentHashMap<UUID, BlockPlayerData>()
 
@@ -171,5 +173,3 @@ class SurfGlowingApiImpl : SurfGlowingApi {
         }
     }
 }
-
-val glowingApiImpl get() = SurfGlowingApi.instance as SurfGlowingApiImpl

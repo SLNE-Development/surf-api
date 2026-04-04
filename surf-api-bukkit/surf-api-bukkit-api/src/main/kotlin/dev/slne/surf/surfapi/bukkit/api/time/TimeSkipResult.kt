@@ -1,11 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.api.time
 
-import org.jetbrains.annotations.ApiStatus
-
 /**
  * Represents the result of a time skip operation.
  */
-@ApiStatus.NonExtendable
 enum class TimeSkipResult(
     /**
      * Represents the success status of a time skip operation.

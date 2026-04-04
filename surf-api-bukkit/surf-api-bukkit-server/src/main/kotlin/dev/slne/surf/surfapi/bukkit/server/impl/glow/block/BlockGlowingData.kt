@@ -1,11 +1,10 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.glow.block
 
-import dev.slne.surf.surfapi.bukkit.api.glow.glowingApi
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.SurfBukkitNmsCommonBridge
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.PacketOperation
 import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.nmsSpawnPackets
-import dev.slne.surf.surfapi.bukkit.server.impl.glow.glowingApiImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.glow.SurfGlowingApiImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.glowingBridgeImpl
 import dev.slne.surf.surfapi.bukkit.server.impl.nms.bridges.packets.PacketOperationImpl
 import dev.slne.surf.surfapi.bukkit.server.reflection.Reflection
@@ -55,12 +54,18 @@ class BlockGlowingData(
 
     fun updateColor() {
         val player = playerData.player ?: return
-        glowingApi.makeGlowing(entityId, uuid.toString(), player, color, invisibleFlag)
+        SurfGlowingApiImpl.INSTANCE.makeGlowing(
+            entityId,
+            uuid.toString(),
+            player,
+            color,
+            invisibleFlag
+        )
     }
 
     fun remove() {
         playerData.player?.let { nmsSpawnPackets.despawn(entityId).execute(it) }
-        glowingApiImpl.removeGlowing(entityId, playerData.uuid)
+        SurfGlowingApiImpl.INSTANCE.removeGlowing(entityId, playerData.uuid)
     }
 
     private fun initialize() {

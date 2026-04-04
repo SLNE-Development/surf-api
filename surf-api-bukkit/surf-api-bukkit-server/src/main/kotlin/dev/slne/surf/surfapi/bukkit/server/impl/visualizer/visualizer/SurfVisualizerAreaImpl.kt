@@ -9,7 +9,7 @@ import dev.slne.surf.surfapi.bukkit.api.util.getZFromChunkKey
 import dev.slne.surf.surfapi.bukkit.api.util.isChunkVisible
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerArea
-import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizerApiImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.SurfBukkitVisualizerApiImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.core.api.algorithms.convexHull2D
 import dev.slne.surf.surfapi.core.api.math.VoxelLineTracer
@@ -36,7 +36,7 @@ class SurfVisualizerAreaImpl(
     initialSettings: BlockDisplaySettings?,
     initialEdges: Collection<Vector3d>,
     private val placeDelay: Duration = Duration.ZERO,
-    private val delegate: SurfVisualizerMultipleLocationsImpl = visualizerApiImpl.createMultiLocationVisualizer(
+    private val delegate: SurfVisualizerMultipleLocationsImpl = SurfBukkitVisualizerApiImpl.INSTANCE.createMultiLocationVisualizer(
         world
     ),
 ) : SurfVisualizer by delegate, SurfVisualizerArea {

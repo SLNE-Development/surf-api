@@ -3,11 +3,9 @@ package dev.slne.surf.surfapi.bukkit.server.impl
 import com.google.auto.service.AutoService
 import com.google.common.io.ByteStreams
 import dev.slne.surf.surfapi.bukkit.api.SurfApiBukkit
-import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
 import dev.slne.surf.surfapi.bukkit.server.hook.SurfBukkitHookManager
-import dev.slne.surf.surfapi.bukkit.server.impl.scoreboard.SurfScoreboardBuilderImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.bukkit.server.time.TimeHandler
 import dev.slne.surf.surfapi.core.api.SurfApiCore
@@ -16,7 +14,6 @@ import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 import dev.slne.surf.surfapi.core.server.impl.SurfApiCoreImpl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.World
 import java.util.*
@@ -34,12 +31,6 @@ class SurfApiBukkitImpl : SurfApiCoreImpl(), SurfApiBukkit {
 
     override val isFolia: Boolean by lazy { runCatching { Class.forName("io.papermc.paper.threadedregions.RegionizedServer") }.isSuccess }
     override val isCanvasMc: Boolean by lazy { runCatching { Class.forName("io.canvasmc.canvas.event.EntityPortalAsyncEvent") }.isSuccess }
-
-    @ObsoleteScoreboardApi
-    override fun scoreboardLibrary() = plugin.getScoreboardLibrary()
-
-    @ObsoleteScoreboardApi
-    override fun createScoreboard(title: Component) = SurfScoreboardBuilderImpl(title)
 
     override fun sendPlayerToServer(playerUuid: UUID, server: String) {
         val player = Bukkit.getPlayer(playerUuid)

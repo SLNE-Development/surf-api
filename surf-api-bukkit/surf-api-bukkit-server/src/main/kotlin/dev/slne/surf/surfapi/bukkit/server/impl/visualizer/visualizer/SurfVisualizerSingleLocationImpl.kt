@@ -12,7 +12,7 @@ import dev.slne.surf.surfapi.bukkit.api.util.isChunkVisible
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.UpdateStrategy
-import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizerApiImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.SurfBukkitVisualizerApiImpl
 import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.Location
@@ -51,7 +51,7 @@ class SurfVisualizerSingleLocationImpl(location: Location) : AbstractSurfVisuali
         override fun cleanup() {
             val despawn = nmsSpawnPackets.despawn(entityId)
             for (uuid in viewerUuids) {
-                visualizerApiImpl.onViewerRemoved(uid, uuid)
+                SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(uid, uuid)
                 val player = Bukkit.getPlayer(uuid) ?: continue
                 despawn.execute(player)
             }

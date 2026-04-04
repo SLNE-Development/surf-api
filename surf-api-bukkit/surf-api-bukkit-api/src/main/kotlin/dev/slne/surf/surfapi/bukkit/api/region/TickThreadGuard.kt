@@ -8,7 +8,6 @@ import org.bukkit.util.BoundingBox
 
 @Suppress("UnstableApiUsage")
 interface TickThreadGuard {
-
     fun ensureTickThread(world: World, pos: Position, reason: String)
     fun ensureTickThread(world: World, pos: Position, blockRadius: Int, reason: String)
     fun ensureTickThread(world: World, chunkX: Int, chunkZ: Int, reason: String)
@@ -19,8 +18,8 @@ interface TickThreadGuard {
     fun ensureTickThread(world: World, blockX: Double, blockZ: Double, reason: String)
 
     companion object : TickThreadGuard by tickThreadGuard {
-        val instance = tickThreadGuard
+        val INSTANCE get() = tickThreadGuard
     }
 }
 
-val tickThreadGuard = requiredService<TickThreadGuard>()
+private val tickThreadGuard = requiredService<TickThreadGuard>()

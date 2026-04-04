@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 
-import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizerApiImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.SurfBukkitVisualizerApiImpl
 import io.papermc.paper.event.packet.PlayerChunkLoadEvent
 import io.papermc.paper.event.packet.PlayerChunkUnloadEvent
 import org.bukkit.event.EventHandler
@@ -11,16 +11,19 @@ object VisualizerListener : Listener {
 
     @EventHandler
     fun onPlayerChunkLoad(event: PlayerChunkLoadEvent) {
-        visualizerApiImpl.processChunkReceiveUpdateForPlayer(event.player, event.chunk)
+        SurfBukkitVisualizerApiImpl.INSTANCE.processChunkReceiveUpdateForPlayer(
+            event.player,
+            event.chunk
+        )
     }
 
     @EventHandler
     fun onPlayerChunkUnload(event: PlayerChunkUnloadEvent) {
-        visualizerApiImpl.processChunkUnloadForPlayer(event.player, event.chunk)
+        SurfBukkitVisualizerApiImpl.INSTANCE.processChunkUnloadForPlayer(event.player, event.chunk)
     }
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        visualizerApiImpl.processPlayerQuit(event.player)
+        SurfBukkitVisualizerApiImpl.INSTANCE.processPlayerQuit(event.player)
     }
 }

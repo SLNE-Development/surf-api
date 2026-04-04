@@ -7,10 +7,10 @@ interface SurfBukkitPAPIHook {
     fun register(expansion: PapiExpansion)
     fun unregister(expansion: PapiExpansion)
 
-    companion object {
+    companion object : SurfBukkitPAPIHook by papiHook {
         @JvmStatic
-        val instance = requiredService<SurfBukkitPAPIHook>()
+        val INSTANCE get() = papiHook
     }
 }
 
-val papiHook get() = SurfBukkitPAPIHook.instance
+private val papiHook = requiredService<SurfBukkitPAPIHook>()

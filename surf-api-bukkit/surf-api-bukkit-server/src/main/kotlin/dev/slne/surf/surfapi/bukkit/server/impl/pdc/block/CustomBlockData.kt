@@ -24,7 +24,7 @@ package dev.slne.surf.surfapi.bukkit.server.impl.pdc.block
 
 import dev.slne.surf.surfapi.bukkit.api.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.surfapi.bukkit.api.pdc.block.pdc
-import dev.slne.surf.surfapi.bukkit.api.util.key
+import dev.slne.surf.surfapi.bukkit.api.util.namespacedKey
 import org.bukkit.Chunk
 import org.bukkit.NamespacedKey
 import org.bukkit.block.Block
@@ -135,7 +135,7 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
 
     companion object {
         fun getKey(block: Block): NamespacedKey {
-            return key("x${block.x and 15}y${block.y}z${block.z and 15}")
+            return namespacedKey("x${block.x and 15}y${block.y}z${block.z and 15}")
         }
     }
 }

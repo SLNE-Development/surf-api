@@ -13,10 +13,10 @@ interface SurfBukkitNmsBridge {
     fun registerClientboundPacketListener(listener: NmsClientboundPacketListener<*>)
     fun unregisterClientboundPacketListener(listener: NmsClientboundPacketListener<*>)
 
-    companion object {
-        val instance = requiredService<SurfBukkitNmsBridge>()
+    companion object : SurfBukkitNmsBridge by bridge {
+        val instance get() = bridge
     }
 }
 
 @NmsUseWithCaution
-val nmsBridge get() = SurfBukkitNmsBridge.instance
+val bridge = requiredService<SurfBukkitNmsBridge>()

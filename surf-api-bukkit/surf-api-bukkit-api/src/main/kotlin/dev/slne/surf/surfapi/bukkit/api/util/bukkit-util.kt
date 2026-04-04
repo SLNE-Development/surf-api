@@ -1,4 +1,5 @@
 @file:JvmName("UtilBukkit")
+@file:Suppress("UnstableApiUsage")
 
 package dev.slne.surf.surfapi.bukkit.api.util
 
@@ -18,7 +19,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.bukkit.*
 import org.bukkit.block.Block
-import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import org.spongepowered.math.vector.Vector3d
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
  * @return The created [NamespacedKey].
  * @throws IllegalStateException If the calling plugin cannot be determined.
  */
-fun key(name: String): NamespacedKey { // TODO: Verify if this works
+fun namespacedKey(name: String): NamespacedKey {
     return NamespacedKey(getCallingPlugin(), name)
 }
 
@@ -179,30 +179,6 @@ fun Player.isChunkVisible(world: World, chunkX: Int, chunkZ: Int): Boolean {
     if (this.world != world) return false
     return this.isChunkSent(Chunk.getChunkKey(chunkX, chunkZ))
 }
-
-/**
- * Retrieves the coroutine dispatcher for this entity.
- *
- * @receiver The entity.
- * @param plugin The suspending plugin instance. Defaults to the calling suspending plugin.
- * @return The entity's coroutine dispatcher.
- */
-@Deprecated("Use 'plugin.entityDispatcher(this)' directly instead of relying on this helper, as it uses inefficient stacktrace inspection.")
-fun Entity.dispatcher(
-    plugin: SuspendingPlugin = getCallingSuspendingPlugin(),
-) = plugin.entityDispatcher(this)
-
-/**
- * Retrieves the coroutine dispatcher for this location.
- *
- * @receiver The location.
- * @param plugin The suspending plugin instance. Defaults to the calling suspending plugin.
- * @return The region's coroutine dispatcher.
- */
-@Deprecated("Use 'plugin.regionDispatcher(this)' directly instead of relying on this helper, as it uses inefficient stacktrace inspection.")
-fun Location.dispatcher(
-    plugin: SuspendingPlugin = getCallingSuspendingPlugin(),
-) = plugin.regionDispatcher(this)
 
 /**
  * Retrieves the calling suspending plugin.

@@ -11,7 +11,7 @@ import dev.slne.surf.surfapi.bukkit.api.region.TickThreadGuard
 import dev.slne.surf.surfapi.bukkit.api.util.isChunkVisible
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerMultipleLocations
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.UpdateStrategy
-import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizerApiImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.SurfBukkitVisualizerApiImpl
 import dev.slne.surf.surfapi.core.api.util.*
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -52,7 +52,10 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
     private inline fun <R> writeLocked(block: () -> R): R = lock.write(block)
 
     init {
-        cleaner.register(this, MultiLocationCleanupState(uid, id2point, internalViewerUuids, sentToPlayers, lock))
+        cleaner.register(
+            this,
+            MultiLocationCleanupState(uid, id2point, internalViewerUuids, sentToPlayers, lock)
+        )
     }
 
     private class MultiLocationCleanupState(
@@ -69,7 +72,7 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
             val despawn = nmsSpawnPackets.despawn(allIds)
 
             for (uuid in viewerUuids) {
-                visualizerApiImpl.onViewerRemoved(visualizerUuid, uuid)
+                SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(visualizerUuid, uuid)
                 val player = Bukkit.getPlayer(uuid) ?: continue
                 despawn.execute(player)
             }
@@ -146,7 +149,12 @@ class SurfVisualizerMultipleLocationsImpl(world: World) : AbstractSurfVisualizer
                         pointsSnapshot.int2ObjectEntrySet().fastForEach { entry ->
                             val id = entry.intKey
                             val point = entry.value
-                            if (player.isChunkVisible(world, point.chunkX, point.chunkZ) && idsToMarkSent.add(id)) {
+                            if (player.isChunkVisible(
+                                    world,
+                                    point.chunkX,
+                                    point.chunkZ
+                                ) && idsToMarkSent.add(id)
+                            ) {
                                 spawn + spawnPacket(id, point)
                             }
                         }

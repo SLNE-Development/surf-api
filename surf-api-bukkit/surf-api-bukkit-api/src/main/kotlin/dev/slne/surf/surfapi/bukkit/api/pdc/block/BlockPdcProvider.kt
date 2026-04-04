@@ -6,11 +6,11 @@ import org.bukkit.block.Block
 interface BlockPdcProvider {
     fun getPdc(block: Block): CustomBlockPersistentDataContainer
 
-    companion object {
-        val instance = requiredService<BlockPdcProvider>()
+    companion object : BlockPdcProvider by provider {
+        val INSTANCE get() = provider
     }
 }
 
-val blockPdcProvider: BlockPdcProvider get() = BlockPdcProvider.instance
+private val provider = requiredService<BlockPdcProvider>()
 
-fun Block.pdc() = blockPdcProvider.getPdc(this)
+fun Block.pdc() = provider.getPdc(this)

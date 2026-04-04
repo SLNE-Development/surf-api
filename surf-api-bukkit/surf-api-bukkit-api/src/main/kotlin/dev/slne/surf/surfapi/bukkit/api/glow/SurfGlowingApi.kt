@@ -8,7 +8,6 @@ import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 
 interface SurfGlowingApi {
-
     fun makeGlowing(target: Entity, viewer: Player, color: NamedTextColor? = null)
 
     fun makeGlowing(
@@ -28,9 +27,9 @@ interface SurfGlowingApi {
     fun removeGlowing(block: Block, viewer: Player)
     fun removeGlowing(location: Location, viewer: Player)
 
-    companion object {
-        val instance = requiredService<SurfGlowingApi>()
+    companion object : SurfGlowingApi by api {
+        val INSTANCE get() = api
     }
 }
 
-val glowingApi get() = SurfGlowingApi.instance
+private val api = requiredService<SurfGlowingApi>()

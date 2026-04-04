@@ -5,7 +5,7 @@ import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.PacketListener
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.ClientboundListener
 import dev.slne.surf.surfapi.bukkit.api.packet.listener.listener.annotation.ServerboundListener
 import dev.slne.surf.surfapi.bukkit.api.packet.lore.SurfBukkitPacketLoreHandler
-import dev.slne.surf.surfapi.bukkit.api.util.key
+import dev.slne.surf.surfapi.bukkit.api.util.namespacedKey
 import dev.slne.surf.surfapi.bukkit.server.nms.toBukkit
 import dev.slne.surf.surfapi.bukkit.server.nms.toNms
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
@@ -41,7 +41,7 @@ object PacketLoreListener : PacketListener {
     @Volatile
     private var globalHandlersSnapshot: Array<SurfBukkitPacketLoreHandler> = emptyArray()
 
-    private val ORIGINAL_LORE_KEY = key("original_lore")
+    private val ORIGINAL_LORE_KEY = namespacedKey("original_lore")
     private val ORIGINAL_LORE_KEY_STRING = ORIGINAL_LORE_KEY.asString()
 
     private fun hasAnyHandlers(): Boolean =

@@ -78,7 +78,7 @@ interface SurfBukkitVisualizerApi {
      * The `SurfBukkitVisualizerApi` interface and its associated features are marked as experimental,
      * and users must opt into this API with caution, as it may be subject to changes in future versions.
      */
-    companion object {
+    companion object : SurfBukkitVisualizerApi by api {
         /**
          * Singleton instance of the `SurfBukkitVisualizerApi` service.
          *
@@ -93,7 +93,7 @@ interface SurfBukkitVisualizerApi {
          * This property is annotated with `@JvmStatic`, making it accessible directly at the class level in Java.
          */
         @JvmStatic
-        val instance = requiredService<SurfBukkitVisualizerApi>()
+        val INSTANCE get() = api
     }
 }
 
@@ -131,4 +131,4 @@ inline fun <reified T : SurfVisualizer> SurfBukkitVisualizerApi.getByUid(uid: UU
  * @see UpdateStrategy
  */
 @ExperimentalVisualizerApi
-val surfVisualizerApi get() = SurfBukkitVisualizerApi.instance
+private val api = requiredService<SurfBukkitVisualizerApi>()

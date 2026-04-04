@@ -108,6 +108,8 @@ class SurfBukkitVisualizerApiImpl : SurfBukkitVisualizerApi {
         visualizers.invalidate(visualizer.uid)
         areaVisualizers.invalidate(visualizer.uid)
     }
-}
 
-val visualizerApiImpl get() = SurfBukkitVisualizerApi.instance as SurfBukkitVisualizerApiImpl
+    companion object {
+        val INSTANCE get() = SurfBukkitVisualizerApi.INSTANCE as SurfBukkitVisualizerApiImpl
+    }
+}

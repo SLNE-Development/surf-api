@@ -149,8 +149,8 @@ interface SurfBukkitPacketApi {
 
     companion object {
         @JvmStatic
-        val instance = requiredService<SurfBukkitPacketApi>()
+        val INSTANCE get() = api
     }
 }
 
-val surfBukkitPacketApi get() = SurfBukkitPacketApi.instance
+private val api = requiredService<SurfBukkitPacketApi>()

@@ -9,10 +9,10 @@ interface SurfBukkitPacketListenerApi {
     fun registerListeners(listener: PacketListener)
     fun unregisterListeners(listener: PacketListener)
 
-    companion object {
-        val instance = requiredService<SurfBukkitPacketListenerApi>()
+    companion object : SurfBukkitPacketListenerApi by api {
+        val INSTANCE get() = api
     }
 }
 
 @NmsUseWithCaution
-val packetListenerApi get() = SurfBukkitPacketListenerApi.instance
+private val api = requiredService<SurfBukkitPacketListenerApi>()

@@ -45,7 +45,8 @@ object PlayerChannelInjector : Listener {
     private val CHANNEL_KEY = Key.key("surf-api", "packet-listener")
     private const val CHANNEL_NAME = "surf_api_packet_listener"
 
-    private val packetHandlerKey = AttributeKey.newInstance<PacketHandler>("surf_api_packet_handler")
+    private val packetHandlerKey =
+        AttributeKey.newInstance<PacketHandler>("surf_api_packet_handler")
 
     fun register() {
         ChannelInitializeListenerHolder.addListener(CHANNEL_KEY) { this.getOrInjectPacketHandler(it) }
@@ -105,7 +106,8 @@ object PlayerChannelInjector : Listener {
                 return
             }
 
-            val connection = ReadablePlayerCookieConnectionImplProxy.instance.getConnection(paperConnection)
+            val connection =
+                ReadablePlayerCookieConnectionImplProxy.instance.getConnection(paperConnection)
             val channel = connection.channel
             getOrInjectPacketHandler(channel).connection = connection
         }
@@ -123,7 +125,8 @@ object PlayerChannelInjector : Listener {
     @OptIn(NmsUseWithCaution::class)
     private class PacketHandler : ChannelDuplexHandler() {
         private val bridge = SurfBukkitNmsBridge.instance as SurfBukkitNmsBridgeImpl
-        private val packetListenerApi = SurfBukkitPacketListenerApi.instance as SurfBukkitPacketListenerApiImpl
+        private val packetListenerApi =
+            SurfBukkitPacketListenerApi.INSTANCE as SurfBukkitPacketListenerApiImpl
 
         @Volatile
         var connection: Connection? = null

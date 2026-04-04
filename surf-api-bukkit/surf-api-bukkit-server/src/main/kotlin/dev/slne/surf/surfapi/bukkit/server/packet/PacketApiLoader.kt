@@ -4,7 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents
 import dev.slne.surf.surfapi.bukkit.api.event.register
 import dev.slne.surf.surfapi.bukkit.api.event.unregister
 import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
-import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
+import dev.slne.surf.surfapi.bukkit.api.packet.listener.SurfBukkitPacketListenerApi
 import dev.slne.surf.surfapi.bukkit.server.impl.glow.GlowingPacketListener
 import dev.slne.surf.surfapi.bukkit.server.packet.listener.PlayerChannelInjector
 import dev.slne.surf.surfapi.bukkit.server.packet.lore.PacketLoreListener
@@ -22,8 +22,8 @@ object PacketApiLoader {
     @OptIn(NmsUseWithCaution::class)
     fun onEnable() {
         packetEvents.init()
-        packetListenerApi.registerListeners(PacketLoreListener)
-        packetListenerApi.registerListeners(GlowingPacketListener)
+        SurfBukkitPacketListenerApi.registerListeners(PacketLoreListener)
+        SurfBukkitPacketListenerApi.registerListeners(GlowingPacketListener)
 
         PlayerChannelInjector.register()
         PluginDisablePacketLoreListener.register()
@@ -32,7 +32,7 @@ object PacketApiLoader {
     @OptIn(NmsUseWithCaution::class)
     fun onDisable() {
         packetEvents.terminate()
-        packetListenerApi.unregisterListeners(PacketLoreListener)
+        SurfBukkitPacketListenerApi.unregisterListeners(PacketLoreListener)
         PluginDisablePacketLoreListener.unregister()
         PlayerChannelInjector.unregister()
     }

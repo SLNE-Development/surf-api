@@ -1,5 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.api.inventory.framework
 
+import dev.slne.surf.surfapi.bukkit.api.inventory.framework.ViewFrameAccessor.Companion.viewFrame
 import dev.slne.surf.surfapi.core.api.util.requiredService
 import me.devnatan.inventoryframework.ViewFrame
 import org.jetbrains.annotations.ApiStatus
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Implementations of this interface are loaded via the service locator pattern
  * (`requiredService<ViewFrameAccessor>()`). The single instance is available through
- * [ViewFrameAccessor.instance] or the top-level [viewFrame] property.
+ * [ViewFrameAccessor.INSTANCE] or the top-level [viewFrame] property.
  *
  * This interface is not intended to be implemented outside the framework itself.
  *
@@ -27,18 +28,20 @@ interface ViewFrameAccessor {
      */
     fun viewFrame(): ViewFrame
 
-    companion object {
+    companion object : ViewFrameAccessor by accessor {
         /**
          * The singleton [ViewFrameAccessor] instance resolved from the service registry.
          */
-        val instance = requiredService<ViewFrameAccessor>()
+        val INSTANCE get() = accessor
     }
 }
+
+private val accessor = requiredService<ViewFrameAccessor>()
 
 /**
  * Top-level shortcut to the active [ViewFrame].
  *
- * Delegates to [ViewFrameAccessor.instance] on every access.
+ * Delegates to [ViewFrameAccessor.INSTANCE] on every access.
  *
  * ```kotlin
  * viewFrame.open(MyView::class.java, player)
@@ -46,5 +49,4 @@ interface ViewFrameAccessor {
  *
  * @see ViewFrameAccessor
  */
-val viewFrame: ViewFrame
-    get() = ViewFrameAccessor.instance.viewFrame()
+val viewFrame: ViewFrame get() = ViewFrameAccessor.INSTANCE.viewFrame()

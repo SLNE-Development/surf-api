@@ -1,12 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.api
 
-import dev.slne.surf.surfapi.bukkit.api.scoreboard.ObsoleteScoreboardApi
-import dev.slne.surf.surfapi.bukkit.api.scoreboard.SurfScoreboardBuilder
 import dev.slne.surf.surfapi.bukkit.api.time.SkipOperations.SkipOperation
 import dev.slne.surf.surfapi.bukkit.api.time.TimeSkipResult
 import dev.slne.surf.surfapi.core.api.SurfApiCore
-import net.kyori.adventure.text.Component
-import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.ApiStatus
@@ -16,21 +12,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.NonExtendable
 interface SurfApiBukkit : SurfApiCore {
-
     val isFolia: Boolean
     val isCanvasMc: Boolean
-
-    @ObsoleteScoreboardApi
-    fun scoreboardLibrary(): ScoreboardLibrary
-
-    /**
-     * Creates a SurfScoreboardBuilder with the given title.
-     *
-     * @param title the title of the scoreboard
-     * @return a SurfScoreboardBuilder with the given title
-     */
-    @ObsoleteScoreboardApi
-    fun createScoreboard(title: Component): SurfScoreboardBuilder
 
     /**
      * Sends a player to a specified server.

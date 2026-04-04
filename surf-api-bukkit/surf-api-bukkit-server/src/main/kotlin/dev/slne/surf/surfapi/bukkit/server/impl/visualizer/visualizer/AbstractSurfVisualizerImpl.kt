@@ -3,7 +3,7 @@ package dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizer
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizer
-import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.visualizerApiImpl
+import dev.slne.surf.surfapi.bukkit.server.impl.visualizer.SurfBukkitVisualizerApiImpl
 import dev.slne.surf.surfapi.bukkit.server.plugin
 import dev.slne.surf.surfapi.core.api.collection.TransformingSet2ObjectSet
 import dev.slne.surf.surfapi.core.api.util.logger
@@ -99,7 +99,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     override fun addViewer(player: Player) {
         ensureNotClosed()
         if (player.isOnline && internalViewerUuids.add(player.uniqueId)) {
-            visualizerApiImpl.onViewerAdded(uid, player.uniqueId)
+            SurfBukkitVisualizerApiImpl.INSTANCE.onViewerAdded(uid, player.uniqueId)
             onViewerAdded(player)
         }
     }
@@ -107,7 +107,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     override fun removeViewer(player: Player) {
         ensureNotClosed()
         if (internalViewerUuids.remove(player.uniqueId)) {
-            visualizerApiImpl.onViewerRemoved(uid, player.uniqueId)
+            SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(uid, player.uniqueId)
             if (player.isOnline) {
                 onViewerRemoved(player)
             } else {
@@ -123,7 +123,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
             val next = iterator.next()
             val player = Bukkit.getPlayer(next)
 
-            visualizerApiImpl.onViewerRemoved(uid, next)
+            SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(uid, next)
             if (player != null) {
                 onViewerRemoved(player)
             } else {
@@ -157,13 +157,13 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     final override fun close() {
         if (!closed.compareAndSet(false, true)) return
 
-        visualizerApiImpl.onVisualizerClose(this)
+        SurfBukkitVisualizerApiImpl.INSTANCE.onVisualizerClose(this)
 
         stopVisualizing(true)
         onClose()
 
         for (viewUuid in internalViewerUuids) {
-            visualizerApiImpl.onViewerRemoved(uid, viewUuid)
+            SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(uid, viewUuid)
         }
         internalViewerUuids.clear()
     }
@@ -197,7 +197,8 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
 
     protected fun nextStateVersion(): Long = stateVersion.incrementAndGet()
     protected fun currentStateVersion(): Long = stateVersion.get()
-    protected fun isActiveVersion(version: Long): Boolean = visualizing.get() && stateVersion.get() == version
+    protected fun isActiveVersion(version: Long): Boolean =
+        visualizing.get() && stateVersion.get() == version
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
