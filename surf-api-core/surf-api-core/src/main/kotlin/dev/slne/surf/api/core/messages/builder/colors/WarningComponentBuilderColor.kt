@@ -7,7 +7,13 @@ import net.kyori.adventure.text.format.TextDecoration
 
 interface WarningComponentBuilderColor : ComponentBuilderColor {
     fun SurfComponentBuilder.appendWarningPrefix() = append(Colors.WARNING_PREFIX)
-    fun SurfComponentBuilder.appendNewWarningPrefixedLine() = appendNewline().appendWarningPrefix()
+
+    fun SurfComponentBuilder.appendNewWarningPrefixedLine(amount: Int = 1) =
+        repeat(amount) { appendNewline().appendWarningPrefix() }
+
+    fun SurfComponentBuilder.appendNewWarningPrefixedLine(block: SurfComponentBuilder.() -> Unit) =
+        appendNewline().appendWarningPrefix().append(block)
+
     suspend fun SurfComponentBuilder.appendNewWarningPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit) =
         appendNewline().appendWarningPrefix().appendAsync(block)
 
