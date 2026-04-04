@@ -3,7 +3,7 @@ name: Publish to Maven & Create GitHub Release
 on:
   push:
     branches:
-      - master
+      - version/*
   workflow_dispatch:
 
 env:
