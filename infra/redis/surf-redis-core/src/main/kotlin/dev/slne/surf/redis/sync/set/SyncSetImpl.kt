@@ -1,12 +1,12 @@
 package dev.slne.surf.redis.sync.set
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
@@ -16,14 +16,19 @@ import reactor.core.publisher.Mono
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
-import kotlin.time.toJavaDuration
 
 class SyncSetImpl<T : Any>(
     api: RedisApi,
     id: String,
     ttl: Duration,
     private val elementSerializer: KSerializer<T>
-) : AbstractStreamSyncStructure<SyncSetChange, SimpleVersionedSnapshot<Set<String>>>(api, id, ttl, Scripts, NAMESPACE),
+) : AbstractStreamSyncStructure<SyncSetChange, SimpleVersionedSnapshot<Set<String>>>(
+    api,
+    id,
+    ttl,
+    Scripts,
+    NAMESPACE
+),
     SyncSet<T> {
 
     companion object {
@@ -51,7 +56,12 @@ class SyncSetImpl<T : Any>(
 
     private val set = ObjectOpenHashSet<T>()
 
-    private val remoteSet by lazy { api.redissonReactive.getSet<String>(dataKey, StringCodec.INSTANCE) }
+    private val remoteSet by lazy {
+        api.redissonReactive.getSet<String>(
+            dataKey,
+            StringCodec.INSTANCE
+        )
+    }
 
     override fun init(): Mono<Void> {
         return super.init()

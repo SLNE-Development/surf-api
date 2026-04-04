@@ -1,8 +1,8 @@
 package dev.slne.surf.redis
 
+import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.redis.config.RedisConfig
-import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.epoll.Epoll
 import io.netty.channel.epoll.EpollIoHandler
@@ -39,7 +39,11 @@ abstract class RedisInstance {
                 .uncaughtExceptionHandler { thread, throwable ->
                     log.atSevere()
                         .withCause(throwable)
-                        .log("Uncaught exception in Redisson Netty thread (%s): %s", thread.name, throwable)
+                        .log(
+                            "Uncaught exception in Redisson Netty thread (%s): %s",
+                            thread.name,
+                            throwable
+                        )
                 }
                 .factory()
 

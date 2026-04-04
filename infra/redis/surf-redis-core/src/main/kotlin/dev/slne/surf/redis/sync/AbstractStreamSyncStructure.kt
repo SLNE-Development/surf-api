@@ -1,12 +1,12 @@
 package dev.slne.surf.redis.sync
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisInstance
 import dev.slne.surf.redis.util.LuaScriptExecutor
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import dev.slne.surf.redis.util.fetchLatestStreamId
-import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.redisson.api.RAtomicLongReactive
 import org.redisson.api.RScript
@@ -58,7 +58,11 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected val versionKey = "${namespace}version"
     protected val streamKey: String = "${namespace}stream"
 
-    protected val versionCounter: RAtomicLongReactive by lazy { api.redissonReactive.getAtomicLong(versionKey) }
+    protected val versionCounter: RAtomicLongReactive by lazy {
+        api.redissonReactive.getAtomicLong(
+            versionKey
+        )
+    }
     protected val scriptExecutor = LuaScriptExecutor.getInstance(api, scriptRegistry)
 
     @MustBeInvokedByOverriders
@@ -68,7 +72,13 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             .then(super.init())
             .doOnSuccess {
                 trackDisposable(startPolling())
-                trackDisposable(RedisExpirableUtils.refreshContinuously(ttl, stream, versionCounter))
+                trackDisposable(
+                    RedisExpirableUtils.refreshContinuously(
+                        ttl,
+                        stream,
+                        versionCounter
+                    )
+                )
             }
             .then()
     }
@@ -157,7 +167,10 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                     else -> applyVersion(newVersion)
                 }
             },
-            { e -> log.atWarning().withCause(e).log("Error executing Lua script '$script' for '$id' ($streamKey)") }
+            { e ->
+                log.atWarning().withCause(e)
+                    .log("Error executing Lua script '$script' for '$id' ($streamKey)")
+            }
         )
     }
 
@@ -184,7 +197,10 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     private fun startPolling(): Disposable {
         return pollOnce()
-            .delayElement(streamPollInterval.toJavaDuration(), RedisInstance.get().streamPollScheduler)
+            .delayElement(
+                streamPollInterval.toJavaDuration(),
+                RedisInstance.get().streamPollScheduler
+            )
             .onErrorResume { e ->
                 log.atWarning().withCause(e).log("Stream poll failed for '$id' ($streamKey)")
                 requestResync()
@@ -209,7 +225,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                         processStreamEvent(type, msg)
                         cursorId.set(messageId)
                     } catch (t: Throwable) {
-                        log.atWarning().withCause(t).log("Error handling stream event for '$id' ($streamKey)")
+                        log.atWarning().withCause(t)
+                            .log("Error handling stream event for '$id' ($streamKey)")
                         requestResync()
                     }
                 }
@@ -233,5 +250,9 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         bootstrapped.set(true)
     }
 
-    protected data class StreamEventData(val version: Long, val origin: String, val payload: List<String>)
+    protected data class StreamEventData(
+        val version: Long,
+        val origin: String,
+        val payload: List<String>
+    )
 }

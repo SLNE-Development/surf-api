@@ -3,9 +3,9 @@ package dev.slne.surf.redis.cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.expireAfterAccess
 import com.sksamuel.aedile.core.expireAfterWrite
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.*
-import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
@@ -170,7 +170,8 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
 
         val version = versionStr.toLongOrNull()
         if (version == null) {
-            log.atWarning().log("Invalid version '$versionStr' in stream message for cache '$namespace'")
+            log.atWarning()
+                .log("Invalid version '$versionStr' in stream message for cache '$namespace'")
             return
         }
 

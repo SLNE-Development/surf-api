@@ -3,17 +3,17 @@
 package dev.slne.surf.redis.request
 
 import com.google.common.flogger.StackSize
+import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
+import dev.slne.surf.api.core.invoker.InvokerFactory
+import dev.slne.surf.api.core.serializer.java.uuid.SerializableUUID
+import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
 import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.invoker.RedisRequestHandlerInvokerTemplate
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
-import dev.slne.surf.surfapi.core.api.invoker.HiddenInvokerUtil
-import dev.slne.surf.surfapi.core.api.invoker.InvokerFactory
-import dev.slne.surf.surfapi.core.api.serializer.java.uuid.SerializableUUID
-import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.shared.api.util.InternalInvokerApi
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
@@ -43,7 +43,8 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      *
      * Only one handler per request type is allowed; duplicate registrations are logged and ignored.
      */
-    private val requestHandlers = Object2ObjectOpenHashMap<Class<out RedisRequest>, RedisRequestHandlerInvoker>()
+    private val requestHandlers =
+        Object2ObjectOpenHashMap<Class<out RedisRequest>, RedisRequestHandlerInvoker>()
     private val pendingRequests = ConcurrentHashMap<UUID, CompletableDeferred<RedisResponse>>()
 
     private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
@@ -61,7 +62,12 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
     private val serializerCache = KotlinSerializerCache<Any>(api.json.serializersModule)
 
     private val requestTopic by lazy { api.redissonReactive.getTopic(REQUEST_CHANNEL, StringCodec) }
-    private val responseTopic by lazy { api.redissonReactive.getTopic(RESPONSE_CHANNEL, StringCodec) }
+    private val responseTopic by lazy {
+        api.redissonReactive.getTopic(
+            RESPONSE_CHANNEL,
+            StringCodec
+        )
+    }
 
     private lateinit var requestDisposable: Disposable
     private lateinit var responseDisposable: Disposable
@@ -91,8 +97,12 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      * Incoming messages are dispatched to handler coroutines on `Dispatchers.Default`.
      */
     private fun setupSubscription() {
-        val requestId = requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) }.block()
-        val responseId = responseTopic.addListener(String::class.java) { _, msg -> handleIncomingResponse(msg) }.block()
+        val requestId =
+            requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) }
+                .block()
+        val responseId =
+            responseTopic.addListener(String::class.java) { _, msg -> handleIncomingResponse(msg) }
+                .block()
 
         requestDisposable = {
             requestTopic.removeListener(requestId).block()
@@ -189,7 +199,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         responseType: Class<T>,
         timeoutMs: Long
     ): T {
-        RedisComponentProvider.get().injectOriginId(request)
+        RedisComponentProvider.injectOriginId(request)
         val requestId = UUID.randomUUID()
         val requestData = serializeRequest(request) ?: throw IllegalStateException()
         val deferred = CompletableDeferred<RedisResponse>()
@@ -301,7 +311,8 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             }
 
             val invoker = INVOKER_FACTORY.create(handler, method, requestType)
-            val current = registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
+            val current =
+                registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
 
             if (current != null) {
                 log.atWarning()
@@ -454,7 +465,11 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         val requestData: JsonElement
     ) {
         companion object {
-            fun forRequest(request: RedisRequest, requestId: UUID, data: JsonElement): RequestEnvelope {
+            fun forRequest(
+                request: RedisRequest,
+                requestId: UUID,
+                data: JsonElement
+            ): RequestEnvelope {
                 return RequestEnvelope(
                     requestId = requestId,
                     requestClass = request.javaClass.name,

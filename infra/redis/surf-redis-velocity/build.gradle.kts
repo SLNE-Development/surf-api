@@ -1,5 +1,5 @@
 plugins {
-    id("dev.slne.surf.surfapi.gradle.velocity")
+    id("dev.slne.surf.api.gradle.velocity")
 }
 
 velocityPluginFile {

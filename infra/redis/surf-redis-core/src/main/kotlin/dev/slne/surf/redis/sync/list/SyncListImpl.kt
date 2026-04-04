@@ -1,12 +1,12 @@
 package dev.slne.surf.redis.sync.list
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
@@ -17,7 +17,6 @@ import java.util.*
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
-import kotlin.time.toJavaDuration
 
 class SyncListImpl<T : Any>(
     api: RedisApi,
@@ -63,7 +62,12 @@ class SyncListImpl<T : Any>(
 
 
     private val list = ObjectArrayList<T>()
-    private val remoteList by lazy { api.redissonReactive.getList<String>(dataKey, StringCodec.INSTANCE) }
+    private val remoteList by lazy {
+        api.redissonReactive.getList<String>(
+            dataKey,
+            StringCodec.INSTANCE
+        )
+    }
 
     override fun init(): Mono<Void> {
         return super.init()

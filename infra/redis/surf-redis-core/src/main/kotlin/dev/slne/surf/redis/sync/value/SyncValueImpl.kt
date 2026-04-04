@@ -1,12 +1,12 @@
 package dev.slne.surf.redis.sync.value
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import dev.slne.surf.surfapi.core.api.util.logger
 import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
@@ -21,7 +21,13 @@ class SyncValueImpl<T : Any>(
     private val serializer: KSerializer<T>,
     private val defaultValue: T,
     ttl: Duration
-) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(api, id, ttl, Registry, NAMESPACE),
+) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(
+    api,
+    id,
+    ttl,
+    Registry,
+    NAMESPACE
+),
     SyncValue<T> {
 
     companion object {
@@ -39,7 +45,12 @@ class SyncValueImpl<T : Any>(
         }
     }
 
-    private val bucket by lazy { api.redissonReactive.getBucket<String>(dataKey, StringCodec.INSTANCE) }
+    private val bucket by lazy {
+        api.redissonReactive.getBucket<String>(
+            dataKey,
+            StringCodec.INSTANCE
+        )
+    }
     private val value = AtomicReference(defaultValue)
 
     override fun init(): Mono<Void> {

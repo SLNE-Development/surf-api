@@ -1,6 +1,6 @@
 package dev.slne.surf.redis
 
-import dev.slne.surf.surfapi.core.api.util.logger
+import dev.slne.surf.api.core.util.logger
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.asm.AsmVisitorWrapper
 import net.bytebuddy.description.field.FieldDescription
@@ -82,19 +82,33 @@ object IoUringRedissonPatcher {
             version: Int, access: Int, name: String?,
             signature: String?, superName: String?, interfaces: Array<out String>?
         ) {
-            super.visit(version, access, name, remapDesc(signature), remapName(superName), interfaces)
+            super.visit(
+                version,
+                access,
+                name,
+                remapDesc(signature),
+                remapName(superName),
+                interfaces
+            )
         }
 
         override fun visitField(
             access: Int, name: String?, descriptor: String?,
             signature: String?, value: Any?
-        ): FieldVisitor = super.visitField(access, name, remapDesc(descriptor), remapDesc(signature), value)
+        ): FieldVisitor =
+            super.visitField(access, name, remapDesc(descriptor), remapDesc(signature), value)
 
         override fun visitMethod(
             access: Int, name: String?, descriptor: String?,
             signature: String?, exceptions: Array<out String>?
         ): MethodVisitor {
-            val mv = super.visitMethod(access, name, remapDesc(descriptor), remapDesc(signature), exceptions)
+            val mv = super.visitMethod(
+                access,
+                name,
+                remapDesc(descriptor),
+                remapDesc(signature),
+                exceptions
+            )
             return RemappingMethodVisitor(mv)
         }
     }
@@ -105,7 +119,12 @@ object IoUringRedissonPatcher {
             super.visitTypeInsn(opcode, remapName(type))
         }
 
-        override fun visitFieldInsn(opcode: Int, owner: String?, name: String?, descriptor: String?) {
+        override fun visitFieldInsn(
+            opcode: Int,
+            owner: String?,
+            name: String?,
+            descriptor: String?
+        ) {
             super.visitFieldInsn(opcode, remapName(owner), name, remapDesc(descriptor))
         }
 
@@ -113,7 +132,13 @@ object IoUringRedissonPatcher {
             opcode: Int, owner: String?, name: String?,
             descriptor: String?, isInterface: Boolean
         ) {
-            super.visitMethodInsn(opcode, remapName(owner), name, remapDesc(descriptor), isInterface)
+            super.visitMethodInsn(
+                opcode,
+                remapName(owner),
+                name,
+                remapDesc(descriptor),
+                isInterface
+            )
         }
 
         override fun visitLdcInsn(value: Any?) {
@@ -131,8 +156,10 @@ object IoUringRedissonPatcher {
             type: Int, numLocal: Int, local: Array<out Any>?,
             numStack: Int, stack: Array<out Any>?
         ) {
-            val remappedLocal = local?.map { if (it is String) remapName(it) ?: it else it }?.toTypedArray()
-            val remappedStack = stack?.map { if (it is String) remapName(it) ?: it else it }?.toTypedArray()
+            val remappedLocal =
+                local?.map { if (it is String) remapName(it) ?: it else it }?.toTypedArray()
+            val remappedStack =
+                stack?.map { if (it is String) remapName(it) ?: it else it }?.toTypedArray()
             super.visitFrame(type, numLocal, remappedLocal, numStack, remappedStack)
         }
 
@@ -140,10 +167,22 @@ object IoUringRedissonPatcher {
             name: String?, descriptor: String?, signature: String?,
             start: Label?, end: Label?, index: Int
         ) {
-            super.visitLocalVariable(name, remapDesc(descriptor), remapDesc(signature), start, end, index)
+            super.visitLocalVariable(
+                name,
+                remapDesc(descriptor),
+                remapDesc(signature),
+                start,
+                end,
+                index
+            )
         }
 
-        override fun visitTryCatchBlock(start: Label?, end: Label?, handler: Label?, type: String?) {
+        override fun visitTryCatchBlock(
+            start: Label?,
+            end: Label?,
+            handler: Label?,
+            type: String?
+        ) {
             super.visitTryCatchBlock(start, end, handler, remapName(type))
         }
 

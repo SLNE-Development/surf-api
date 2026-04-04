@@ -2,6 +2,10 @@ package dev.slne.surf.redis
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.flogger.StackSize
+import dev.slne.surf.api.core.serializer.SurfSerializerModule
+import dev.slne.surf.api.core.serializer.java.uuid.JavaUUIDStringSerializer
+import dev.slne.surf.api.core.util.getCallerClass
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi.Companion.create
 import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
@@ -17,10 +21,6 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.Initializable
 import dev.slne.surf.redis.util.InternalRedisAPI
-import dev.slne.surf.surfapi.core.api.serializer.SurfSerializerModule
-import dev.slne.surf.surfapi.core.api.serializer.java.uuid.JavaUUIDStringSerializer
-import dev.slne.surf.surfapi.core.api.util.getCallerClass
-import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -165,19 +165,19 @@ class RedisApi private constructor(
      *
      * The bus is initialized during [connect] and closed during [disconnect].
      */
-    val eventBus = RedisComponentProvider.get().createEventBus(this)
+    val eventBus = RedisComponentProvider.createEventBus(this)
 
     /**
      * Request/response bus used for sending [RedisRequest]s and receiving [RedisResponse]s.
      *
      * The bus is initialized during [connect] and closed during [disconnect].
      */
-    val requestResponseBus = RedisComponentProvider.get().createRequestResponseBus(this)
+    val requestResponseBus = RedisComponentProvider.createRequestResponseBus(this)
 
     /**
      * Identifier of the current client/node as provided by the component provider.
      */
-    val clientId get() = RedisComponentProvider.get().clientId
+    val clientId get() = RedisComponentProvider.clientId
 
 
     private val syncStructures = ObjectArrayList<SyncStructure<*>>()
@@ -248,7 +248,7 @@ class RedisApi private constructor(
             pluginName: String,
             serializerModule: SerializersModule
         ): RedisApi {
-            val config = RedisComponentProvider.get().createRedissonConfig(
+            val config = RedisComponentProvider.createRedissonConfig(
                 RedissonConfigDetails(
                     redisURI = redisURI,
                     serializerModule = serializerModule,
@@ -283,7 +283,8 @@ class RedisApi private constructor(
          */
         fun create(
             serializerModule: SerializersModule = EmptySerializersModule()
-        ): RedisApi = create(RedisCredentialsProvider.instance.redisURI(), getCallingPluginName(), serializerModule)
+        ): RedisApi =
+            create(RedisCredentialsProvider.redisURI(), getCallingPluginName(), serializerModule)
 
         /**
          * Creates a [RedisApi] instance using the default Redis credentials.
@@ -291,7 +292,7 @@ class RedisApi private constructor(
          * @param pluginName Logical name of the calling plugin or component.
          */
         fun create(pluginName: String): RedisApi =
-            create(RedisCredentialsProvider.instance.redisURI(), pluginName, EmptySerializersModule())
+            create(RedisCredentialsProvider.redisURI(), pluginName, EmptySerializersModule())
 
         /**
          * Creates a [RedisApi] instance using the default Redis credentials.
@@ -300,7 +301,7 @@ class RedisApi private constructor(
          * @param serializerModule Additional serializers to be included in the internal [Json] instance.
          */
         fun create(pluginName: String, serializerModule: SerializersModule): RedisApi =
-            create(RedisCredentialsProvider.instance.redisURI(), pluginName, serializerModule)
+            create(RedisCredentialsProvider.redisURI(), pluginName, serializerModule)
 
         /**
          * Creates a [RedisApi] instance using plugin file system paths.
@@ -335,7 +336,7 @@ class RedisApi private constructor(
 
         private fun getCallingPluginName(): String {
             val caller = getCallerClass(1) ?: return "Unknown"
-            return RedisComponentProvider.get().tryExtractPluginNameFromClass(caller)
+            return RedisComponentProvider.tryExtractPluginNameFromClass(caller)
         }
     }
 
@@ -577,7 +578,7 @@ class RedisApi private constructor(
         elementSerializer: KSerializer<E>,
         ttl: Duration = SyncList.DEFAULT_TTL
     ) = createSyncStructure {
-        RedisComponentProvider.get().createSyncList(id, elementSerializer, ttl, this)
+        RedisComponentProvider.createSyncList(id, elementSerializer, ttl, this)
     }
 
     /**
@@ -600,7 +601,7 @@ class RedisApi private constructor(
         elementSerializer: KSerializer<E>,
         ttl: Duration = SyncSet.DEFAULT_TTL
     ) = createSyncStructure {
-        RedisComponentProvider.get().createSyncSet(id, elementSerializer, ttl, this)
+        RedisComponentProvider.createSyncSet(id, elementSerializer, ttl, this)
     }
 
     /**
@@ -630,7 +631,7 @@ class RedisApi private constructor(
         defaultValue: T,
         ttl: Duration = SyncValue.DEFAULT_TTL
     ) = createSyncStructure {
-        RedisComponentProvider.get().createSyncValue(id, serializer, defaultValue, ttl, this)
+        RedisComponentProvider.createSyncValue(id, serializer, defaultValue, ttl, this)
     }
 
     /**
@@ -641,7 +642,12 @@ class RedisApi private constructor(
     inline fun <reified K : Any, reified V : Any> createSyncMap(
         id: String,
         ttl: Duration = SyncMap.DEFAULT_TTL
-    ): SyncMap<K, V> = createSyncMap(id, json.serializersModule.serializer(), json.serializersModule.serializer(), ttl)
+    ): SyncMap<K, V> = createSyncMap(
+        id,
+        json.serializersModule.serializer(),
+        json.serializersModule.serializer(),
+        ttl
+    )
 
     /**
      * Creates a new [SyncMap] instance identified by [id].
@@ -657,7 +663,7 @@ class RedisApi private constructor(
         valueSerializer: KSerializer<V>,
         ttl: Duration = SyncMap.DEFAULT_TTL
     ) = createSyncStructure {
-        RedisComponentProvider.get().createSyncMap(id, keySerializer, valueSerializer, ttl, this)
+        RedisComponentProvider.createSyncMap(id, keySerializer, valueSerializer, ttl, this)
     }
 
     /**
@@ -688,7 +694,8 @@ class RedisApi private constructor(
         namespace: String,
         ttl: Duration,
         noinline keyToString: (K) -> String = { it.toString() }
-    ): SimpleRedisCache<K, V> = createSimpleCache(namespace, json.serializersModule.serializer(), ttl, keyToString)
+    ): SimpleRedisCache<K, V> =
+        createSimpleCache(namespace, json.serializersModule.serializer(), ttl, keyToString)
 
     /**
      * Creates a [SimpleRedisCache] for the given [namespace] using the provided [serializer].
@@ -704,7 +711,8 @@ class RedisApi private constructor(
         ttl: Duration,
         keyToString: (K) -> String = { it.toString() }
     ): SimpleRedisCache<K, V> {
-        val cache = RedisComponentProvider.get().createSimpleCache(namespace, serializer, ttl, keyToString, this)
+        val cache =
+            RedisComponentProvider.createSimpleCache(namespace, serializer, ttl, keyToString, this)
 
         if (isConnected()) {
             log.atWarning()
@@ -740,7 +748,13 @@ class RedisApi private constructor(
         noinline idOf: (T) -> String,
         indexes: RedisSetIndexes<T> = RedisSetIndexes.empty()
     ): SimpleSetRedisCache<T> =
-        createSimpleSetRedisCache(namespace, json.serializersModule.serializer(), ttl, idOf, indexes)
+        createSimpleSetRedisCache(
+            namespace,
+            json.serializersModule.serializer(),
+            ttl,
+            idOf,
+            indexes
+        )
 
 
     /**
@@ -762,7 +776,14 @@ class RedisApi private constructor(
         indexes: RedisSetIndexes<T> = RedisSetIndexes.empty()
     ): SimpleSetRedisCache<T> {
         val cache =
-            RedisComponentProvider.get().createSimpleSetRedisCache(namespace, serializer, ttl, idOf, indexes, this)
+            RedisComponentProvider.createSimpleSetRedisCache(
+                namespace,
+                serializer,
+                ttl,
+                idOf,
+                indexes,
+                this
+            )
 
         if (isConnected()) {
             log.atWarning()

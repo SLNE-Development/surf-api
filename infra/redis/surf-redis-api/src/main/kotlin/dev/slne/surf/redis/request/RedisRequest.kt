@@ -44,7 +44,7 @@ abstract class RedisRequest {
      * @return `true` if the request originated from this client, `false` otherwise.
      */
     fun originatesFromThisClient(): Boolean {
-        return originId == RedisComponentProvider.get().clientId
+        return originId == RedisComponentProvider.clientId
     }
 
 }

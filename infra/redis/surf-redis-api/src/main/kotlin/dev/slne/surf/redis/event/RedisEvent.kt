@@ -43,6 +43,6 @@ abstract class RedisEvent {
      * @return `true` if the event originated from this client, `false` otherwise.
      */
     fun originatesFromThisClient(): Boolean {
-        return originId == RedisComponentProvider.get().clientId
+        return originId == RedisComponentProvider.clientId
     }
 }

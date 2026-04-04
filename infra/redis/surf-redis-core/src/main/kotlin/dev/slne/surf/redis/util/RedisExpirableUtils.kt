@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.util
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisInstance
-import dev.slne.surf.surfapi.core.api.util.logger
 import org.redisson.api.RExpirableReactive
 import reactor.core.Disposable
 import reactor.core.Disposables
@@ -29,7 +29,12 @@ object RedisExpirableUtils {
                     .log("Failed to refresh TTL for Redis expirable objects: $objectNames")
                 Mono.empty()
             }
-            .then(Mono.delay(java.time.Duration.ofSeconds(delay), RedisInstance.get().ttlRefreshScheduler))
+            .then(
+                Mono.delay(
+                    java.time.Duration.ofSeconds(delay),
+                    RedisInstance.get().ttlRefreshScheduler
+                )
+            )
             .repeat()
             .subscribe()
     }

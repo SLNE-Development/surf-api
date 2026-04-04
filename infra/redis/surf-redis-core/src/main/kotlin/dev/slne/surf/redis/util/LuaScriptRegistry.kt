@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.util
 
+import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.redis.RedisInstance
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
 
 abstract class LuaScriptRegistry(prefix: String) {
     private val prefix = prefix.removeSuffix(".").removeSuffix("/").replace('.', '/')

@@ -1,8 +1,8 @@
 package dev.slne.surf.redis.sync
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.DisposableAware
-import dev.slne.surf.surfapi.core.api.util.logger
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -111,7 +111,8 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
         override val version: Long
     ) : VersionedSnapshot {
         companion object {
-            fun <V : Any> fromTuple(tuple: Tuple2<V, Long>) = SimpleVersionedSnapshot(tuple.t1, tuple.t2)
+            fun <V : Any> fromTuple(tuple: Tuple2<V, Long>) =
+                SimpleVersionedSnapshot(tuple.t1, tuple.t2)
         }
     }
 }

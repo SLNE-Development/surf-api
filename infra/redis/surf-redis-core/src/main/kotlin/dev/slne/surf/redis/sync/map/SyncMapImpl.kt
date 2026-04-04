@@ -1,12 +1,12 @@
 package dev.slne.surf.redis.sync.map
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.serialization.KSerializer
@@ -17,7 +17,6 @@ import reactor.core.publisher.Mono
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
-import kotlin.time.toJavaDuration
 
 class SyncMapImpl<K : Any, V : Any>(
     api: RedisApi,
@@ -57,7 +56,12 @@ class SyncMapImpl<K : Any, V : Any>(
     }
 
     private val map = Object2ObjectOpenHashMap<K, V>()
-    private val remoteMap by lazy { api.redissonReactive.getMap<String, String>(dataKey, StringCodec.INSTANCE) }
+    private val remoteMap by lazy {
+        api.redissonReactive.getMap<String, String>(
+            dataKey,
+            StringCodec.INSTANCE
+        )
+    }
 
     override fun init(): Mono<Void> {
         return super.init()

@@ -3,16 +3,16 @@
 package dev.slne.surf.redis.event
 
 import com.google.common.flogger.StackSize
+import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
+import dev.slne.surf.api.core.invoker.InvokerFactory
+import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
 import dev.slne.surf.redis.invoker.RedisEventInvokerTemplate
 import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
-import dev.slne.surf.surfapi.core.api.invoker.HiddenInvokerUtil
-import dev.slne.surf.surfapi.core.api.invoker.InvokerFactory
-import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.shared.api.util.InternalInvokerApi
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CancellationException
@@ -86,7 +86,8 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
      * Incoming messages are dispatched to handler coroutines on `Dispatchers.Default`.
      */
     private fun setupSubscription() {
-        val listenerId = topic.addListener(String::class.java) { _, msg -> handleIncomingMessage(msg) }.block()
+        val listenerId =
+            topic.addListener(String::class.java) { _, msg -> handleIncomingMessage(msg) }.block()
         subscription = {
             topic.removeListener(listenerId).block()
         }
@@ -139,7 +140,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
     }
 
     override fun publish(event: RedisEvent): Deferred<Long> {
-        RedisComponentProvider.get().injectOriginId(event)
+        RedisComponentProvider.injectOriginId(event)
 
         val eventData = serializeEvent(event) ?: return CompletableDeferred(0L)
         val envelope = EventEnvelope.forEvent(event, eventData)

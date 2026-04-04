@@ -1,9 +1,9 @@
 package dev.slne.surf.redis
 
 import com.google.auto.service.AutoService
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.reflection.JavaPluginLoaderProxy
 import dev.slne.surf.redis.reflection.SerializedPluginDescriptionProxy
-import dev.slne.surf.surfapi.core.api.util.logger
 import kotlin.io.path.Path
 import kotlin.io.path.toPath
 import kotlin.jvm.optionals.getOrNull
@@ -14,13 +14,13 @@ class VelocityRedisInstanceImpl : RedisInstance() {
     override val dataPath get() = plugin.dataPath
 
     private val velocityPluginLoader by lazy {
-        JavaPluginLoaderProxy.get().createInstance(plugin.proxy, Path("plugins"))
+        JavaPluginLoaderProxy.createInstance(plugin.proxy, Path("plugins"))
     }
 
     override fun tryExtractPluginNameFromClass(clazz: Class<*>): String {
         try {
             val jarLocation = clazz.protectionDomain.codeSource.location.toURI().toPath()
-            val pluginInfo = JavaPluginLoaderProxy.get()
+            val pluginInfo = JavaPluginLoaderProxy
                 .getSerializedPluginInfo(velocityPluginLoader, jarLocation)
                 .getOrNull()
 
@@ -30,7 +30,7 @@ class VelocityRedisInstanceImpl : RedisInstance() {
                 return clazz.simpleName
             }
 
-            val id = SerializedPluginDescriptionProxy.get().getId(pluginInfo)
+            val id = SerializedPluginDescriptionProxy.getId(pluginInfo)
             return id
         } catch (e: Exception) {
             log.atWarning()

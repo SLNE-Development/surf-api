@@ -11,12 +11,12 @@ buildscript {
         maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
     }
     dependencies {
-        classpath("dev.slne.surf:surf-api-gradle-plugin:1.21.11+")
+        classpath("dev.slne.surf:surf-api-gradle-plugin:26.1+")
     }
 }
 
 allprojects {
-    group = "dev.slne.surf"
+    group = "dev.slne.surf.redis"
     version = findProperty("version") as String
 }
 

@@ -3,9 +3,9 @@ package dev.slne.surf.redis.cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
 import com.sksamuel.aedile.core.expireAfterWrite
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.*
-import dev.slne.surf.surfapi.core.api.util.logger
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -137,7 +137,9 @@ class SimpleSetRedisCacheImpl<T : Any>(
                 CacheEntry.Null -> nanos(ttl / 10)
             }
 
-            override fun expireAfterUpdate(k: String, v: CacheEntry<V>, t: Long, d: Long) = expireAfterCreate(k, v, t)
+            override fun expireAfterUpdate(k: String, v: CacheEntry<V>, t: Long, d: Long) =
+                expireAfterCreate(k, v, t)
+
             override fun expireAfterRead(k: String, v: CacheEntry<V>, t: Long, d: Long) = when (v) {
                 is CacheEntry.Value -> nanos(ttl)
                 CacheEntry.Null -> d // keep negative entry TTL on read
@@ -263,7 +265,8 @@ class SimpleSetRedisCacheImpl<T : Any>(
             }
 
             else -> {
-                log.atWarning().log("Unknown cache invalidation type '$type' for cache '$namespace'")
+                log.atWarning()
+                    .log("Unknown cache invalidation type '$type' for cache '$namespace'")
             }
         }
     }
@@ -295,7 +298,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
                 *argv.toTypedArray()
             ).subscribe(
                 { /* no payload needed */ },
-                { e -> log.atWarning().withCause(e).log("Failed to refresh TTL via TOUCH_VALUE for id=$id") })
+                { e ->
+                    log.atWarning().withCause(e)
+                        .log("Failed to refresh TTL via TOUCH_VALUE for id=$id")
+                })
         }
     }
 
@@ -303,7 +309,9 @@ class SimpleSetRedisCacheImpl<T : Any>(
         refreshTtl(refreshKeyIds()) {
             api.redissonReactive.getSet<String>(idsRedisKey, StringCodec.INSTANCE)
                 .expire(ttl.toJavaDuration())
-                .doOnError { e -> log.atWarning().withCause(e).log("Failed to refresh TTL for $idsRedisKey") }
+                .doOnError { e ->
+                    log.atWarning().withCause(e).log("Failed to refresh TTL for $idsRedisKey")
+                }
                 .subscribe()
         }
     }
@@ -313,7 +321,9 @@ class SimpleSetRedisCacheImpl<T : Any>(
         refreshTtl(refreshKeyIdx(indexName, indexValue)) {
             api.redissonReactive.getSet<String>(key, StringCodec.INSTANCE)
                 .expire(ttl.toJavaDuration())
-                .doOnError { e -> log.atWarning().withCause(e).log("Failed to refresh TTL for $key") }
+                .doOnError { e ->
+                    log.atWarning().withCause(e).log("Failed to refresh TTL for $key")
+                }
                 .subscribe()
         }
     }
@@ -343,7 +353,8 @@ class SimpleSetRedisCacheImpl<T : Any>(
             null -> Unit
         }
 
-        val bucket = api.redissonReactive.getBucket<String>(valueRedisKey(normId), StringCodec.INSTANCE)
+        val bucket =
+            api.redissonReactive.getBucket<String>(valueRedisKey(normId), StringCodec.INSTANCE)
         val raw = bucket.get().awaitSingleOrNull() ?: run {
             nearValues.put(normId, CacheEntry.Null)
             return null
@@ -389,7 +400,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
                 val ids = set.readAll().awaitSingleOrNull().orEmpty()
                 set.expire(ttl.toJavaDuration()).awaitSingleOrNull()
 
-                nearIndexIds.put(cacheKey, if (ids.isEmpty()) CacheEntry.Null else CacheEntry.Value(ids))
+                nearIndexIds.put(
+                    cacheKey,
+                    if (ids.isEmpty()) CacheEntry.Null else CacheEntry.Value(ids)
+                )
                 ids
             }
         }
@@ -430,7 +444,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
         }
 
         if (changed.get()) {
-            nearIndexIds.put(cacheKey, if (filteredIds.isEmpty()) CacheEntry.Null else CacheEntry.Value(filteredIds))
+            nearIndexIds.put(
+                cacheKey,
+                if (filteredIds.isEmpty()) CacheEntry.Null else CacheEntry.Value(filteredIds)
+            )
         }
 
         return result
@@ -540,7 +557,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
         return loaded
     }
 
-    override suspend fun findCachedOrLoadNullable(condition: (T) -> Boolean, loader: suspend () -> T?): T? {
+    override suspend fun findCachedOrLoadNullable(
+        condition: (T) -> Boolean,
+        loader: suspend () -> T?
+    ): T? {
         findCached(condition).firstOrNull()?.let { return it }
         val loaded = loader() ?: return null
         add(loaded)
@@ -716,7 +736,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
                 val set = api.redissonReactive.getSet<String>(idsRedisKey, StringCodec.INSTANCE)
                 val ids = set.readAll().awaitSingleOrNull().orEmpty()
                 set.expire(ttl.toJavaDuration()).awaitSingleOrNull()
-                nearIds.put(LOCAL_IDS_CACHE_KEY, if (ids.isEmpty()) CacheEntry.Null else CacheEntry.Value(ids))
+                nearIds.put(
+                    LOCAL_IDS_CACHE_KEY,
+                    if (ids.isEmpty()) CacheEntry.Null else CacheEntry.Value(ids)
+                )
                 return ids
             }
         }

@@ -1,24 +1,24 @@
 package dev.slne.surf.redis.invoker;
 
+import dev.slne.surf.api.core.invoker.HiddenInvokerUtil;
+import dev.slne.surf.api.core.invoker.InvokerClassData;
 import dev.slne.surf.redis.event.RedisEvent;
 import dev.slne.surf.redis.event.RedisEventInvoker;
-import dev.slne.surf.surfapi.core.api.invoker.HiddenInvokerUtil;
-import dev.slne.surf.surfapi.core.api.invoker.InvokerClassData;
-import kotlin.Unit;
-import kotlin.coroutines.Continuation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Hidden class template for Redis event invocation.
  */
 @SuppressWarnings("UnstableApiUsage")
 public final class RedisEventInvokerTemplate implements RedisEventInvoker {
+
     private static final Method METHOD;
     private static final MethodHandle HANDLE;
     private static final Class<?> REDIS_EVENT_CLASS;
@@ -27,7 +27,8 @@ public final class RedisEventInvokerTemplate implements RedisEventInvoker {
     static {
         try {
             final MethodHandles.Lookup lookup = MethodHandles.lookup();
-            final InvokerClassData classData = HiddenInvokerUtil.loadClassDataWithAutoSuspend(lookup, MethodType.methodType(void.class, RedisEvent.class));
+            final InvokerClassData classData = HiddenInvokerUtil.loadClassDataWithAutoSuspend(
+                lookup, MethodType.methodType(void.class, RedisEvent.class));
 
             METHOD = classData.method();
             HANDLE = classData.methodHandle();
@@ -39,8 +40,11 @@ public final class RedisEventInvokerTemplate implements RedisEventInvoker {
     }
 
     @Override
-    public @Nullable Object invoke(@NotNull RedisEvent event, @NotNull Continuation<? super @NotNull Unit> $completion) {
-        if (!REDIS_EVENT_CLASS.isInstance(event)) return Unit.INSTANCE;
+    public @Nullable Object invoke(@NotNull RedisEvent event,
+        @NotNull Continuation<? super @NotNull Unit> $completion) {
+        if (!REDIS_EVENT_CLASS.isInstance(event)) {
+            return Unit.INSTANCE;
+        }
 
         if (IS_SUSPEND) {
             try {

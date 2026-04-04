@@ -1,5 +1,6 @@
 package dev.slne.surf.redis
 
+import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache
@@ -13,10 +14,8 @@ import dev.slne.surf.redis.sync.map.SyncMap
 import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.InternalRedisAPI
-import dev.slne.surf.surfapi.core.api.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import kotlinx.serialization.KSerializer
-import org.redisson.api.RedissonClient
 import org.redisson.config.Config
 import java.util.concurrent.ExecutorService
 import kotlin.time.Duration
@@ -90,8 +89,9 @@ interface RedisComponentProvider {
         request.originId = clientId
     }
 
-    companion object {
-        val instance = requiredService<RedisComponentProvider>()
-        fun get() = instance
+    companion object : RedisComponentProvider by provider {
+        val INSTANCE get() = provider
     }
 }
+
+private val provider = requiredService<RedisComponentProvider>()
