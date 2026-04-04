@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * resolve dependencies and add them to the classpath.
  */
 @SuppressWarnings({"UnstableApiUsage", "unused"})
-public class BukkitLoader implements PluginLoader {
+public class PaperLoader implements PluginLoader {
 
     /**
      * The resolver variable is an instance of the MavenLibraryResolver class. It is used to resolve
