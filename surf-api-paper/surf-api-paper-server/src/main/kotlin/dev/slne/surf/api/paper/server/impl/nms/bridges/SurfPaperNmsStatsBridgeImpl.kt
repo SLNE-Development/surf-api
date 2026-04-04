@@ -16,7 +16,9 @@ class SurfPaperNmsStatsBridgeImpl : SurfPaperNmsStatsBridge {
     }
 
     override fun getPlayerStatsAsJson(player: Player): String {
-        return Reflection.SERVER_STATS_COUNTER_PROXY.toJson(player.toNms().stats)
+        val gson = Reflection.SERVER_STATS_COUNTER_PROXY.getGson()
+        val jsonElement = Reflection.SERVER_STATS_COUNTER_PROXY.toJson(player.toNms().stats)
+        return gson.toJson(jsonElement)
     }
 
     override fun savePlayerStatsToFile(player: Player) {

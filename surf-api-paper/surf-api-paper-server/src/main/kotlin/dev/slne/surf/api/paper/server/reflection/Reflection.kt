@@ -8,7 +8,6 @@ import xyz.jpenilla.reflectionremapper.proxy.ReflectionProxyFactory
 
 object Reflection {
     val SERVER_STATS_COUNTER_PROXY: ServerStatsCounterProxy
-    val ITEM_PROXY: ItemProxy
     val ENTITY_PROXY: EntityProxy
     val SERVER_CONNECTION_LISTENER_PROXY: ServerConnectionListenerProxy
     val JAVA_PLUGIN_PROXY: JavaPluginProxy
@@ -21,7 +20,6 @@ object Reflection {
             ReflectionProxyFactory.create(remapper, Reflection::class.java.classLoader)
 
         SERVER_STATS_COUNTER_PROXY = proxyFactory.reflectionProxy<ServerStatsCounterProxy>()
-        ITEM_PROXY = SurfReflection.createProxy<ItemProxy>()
         ENTITY_PROXY = proxyFactory.reflectionProxy<EntityProxy>()
         SERVER_CONNECTION_LISTENER_PROXY =
             proxyFactory.reflectionProxy<ServerConnectionListenerProxy>()
