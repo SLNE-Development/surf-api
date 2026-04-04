@@ -129,7 +129,7 @@ interface SurfComponentBuilder : TextComponent.Builder, ComponentBuilderColors {
      * @param atlas The name of the atlas as a key
      * @param sprite The name of the sprite as a key
      *
-     * eg. appendSprite("blocks", "block/stone"), appendSprite("minecraft:items", "item/porkchop")
+     * eg. appendSprite(key("blocks"), key("block/stone")), appendSprite(key("minecraft:items"), key("item/porkchop"))
      */
     fun appendSprite(atlas: Key, sprite: Key) =
         append(Component.`object`(ObjectContents.sprite(atlas, sprite)))
