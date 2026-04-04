@@ -227,7 +227,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         if (extension.withSurfRedis.get()) {
             if (extension.surfRedisRelocation.isPresent) {
                 dependencies {
-                    add(API, "dev.slne.surf:surf-redis:${extension.surfRedisVersion.get()}")
+                    add(API, "dev.slne.surf.redis:surf-redis:${extension.surfRedisVersion.get()}")
                 }
                 tasks.withType<ShadowJar>().configureEach {
                     doFirst {
@@ -236,7 +236,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 }
             } else {
                 dependencies {
-                    add(COMPILE_ONLY, "dev.slne.surf:surf-redis-api:${Constants.SURF_API_VERSION}")
+                    add(
+                        COMPILE_ONLY,
+                        "dev.slne.surf.redis:surf-redis-api:${Constants.SURF_API_VERSION}"
+                    )
                 }
             }
         }
