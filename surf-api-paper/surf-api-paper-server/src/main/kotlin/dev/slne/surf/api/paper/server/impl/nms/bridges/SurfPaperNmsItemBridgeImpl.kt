@@ -5,7 +5,6 @@ import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsItemBridge
 import dev.slne.surf.api.paper.server.nms.nms
-import dev.slne.surf.api.paper.server.reflection.Reflection
 import net.minecraft.core.component.DataComponentMap
 import net.minecraft.core.component.DataComponents
 import org.bukkit.inventory.ItemType
@@ -25,6 +24,7 @@ class SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
             .addAll(nmsItem.components())
             .set(DataComponents.MAX_STACK_SIZE, maxStackSize)
             .build()
-        Reflection.ITEM_PROXY.setComponents(nmsItem, updatedComponents)
+
+        nmsItem.builtInRegistryHolder().bindComponents(updatedComponents)
     }
 }
