@@ -18,6 +18,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Debug Secret Presence
+        run: |
+          if [ -z "${{ secrets.SLNE_SNAPSHOTS_REPO_USERNAME }}" ]; then
+            echo "Secret NOT available"
+          else
+            echo "Secret is available"
+          fi
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
 
