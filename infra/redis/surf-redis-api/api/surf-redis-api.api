@@ -46,9 +46,23 @@ public final class dev/slne/surf/redis/RedisApi$Companion {
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Lorg/redisson/misc/RedisURI;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 }
 
-public final class dev/slne/surf/redis/RedisComponentProvider$Companion {
-	public final fun get ()Ldev/slne/surf/redis/RedisComponentProvider;
-	public final fun getInstance ()Ldev/slne/surf/redis/RedisComponentProvider;
+public final class dev/slne/surf/redis/RedisComponentProvider$Companion : dev/slne/surf/redis/RedisComponentProvider {
+	public fun createEventBus (Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/event/RedisEventBus;
+	public fun createRedissonConfig (Ldev/slne/surf/redis/internal/RedissonConfigDetails;)Lorg/redisson/config/Config;
+	public fun createRequestResponseBus (Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/request/RequestResponseBus;
+	public fun createSimpleCache-1Y68eR8 (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/cache/SimpleRedisCache;
+	public fun createSimpleSetRedisCache-WPi__2c (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;Ldev/slne/surf/redis/cache/RedisSetIndexes;Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/cache/SimpleSetRedisCache;
+	public fun createSyncList-exY8QGI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/list/SyncList;
+	public fun createSyncMap-zkXUZaI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/map/SyncMap;
+	public fun createSyncSet-exY8QGI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/set/SyncSet;
+	public fun createSyncValue-zkXUZaI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/Object;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/value/SyncValue;
+	public fun getClientId ()Ljava/lang/String;
+	public fun getEventLoopGroup ()Lio/netty/channel/MultiThreadIoEventLoopGroup;
+	public final fun getINSTANCE ()Ldev/slne/surf/redis/RedisComponentProvider;
+	public fun getRedissonExecutorService ()Ljava/util/concurrent/ExecutorService;
+	public fun injectOriginId (Ldev/slne/surf/redis/event/RedisEvent;)V
+	public fun injectOriginId (Ldev/slne/surf/redis/request/RedisRequest;)V
+	public fun tryExtractPluginNameFromClass (Ljava/lang/Class;)Ljava/lang/String;
 }
 
 public final class dev/slne/surf/redis/cache/RedisSetIndex {
@@ -122,8 +136,9 @@ public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/Str
 	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
 }
 
-public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion {
-	public final fun getInstance ()Ldev/slne/surf/redis/credentials/RedisCredentialsProvider;
+public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion : dev/slne/surf/redis/credentials/RedisCredentialsProvider {
+	public final fun getINSTANCE ()Ldev/slne/surf/redis/credentials/RedisCredentialsProvider;
+	public fun redisURI ()Lorg/redisson/misc/RedisURI;
 }
 
 public abstract interface annotation class dev/slne/surf/redis/event/OnRedisEvent : java/lang/annotation/Annotation {
