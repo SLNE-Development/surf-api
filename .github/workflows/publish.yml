@@ -7,8 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  SLNE_SNAPSHOTS_REPO_USERNAME: ${{ secrets.SLNE_SNAPSHOTS_REPO_USERNAME }}
-  SLNE_SNAPSHOTS_REPO_PASSWORD: ${{ secrets.SLNE_SNAPSHOTS_REPO_PASSWORD }}
   SLNE_RELEASES_REPO_USERNAME: ${{ secrets.SLNE_RELEASES_REPO_USERNAME }}
   SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
   MODULE_REGEX: "surf-api-paper-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
@@ -20,7 +18,7 @@ jobs:
     steps:
       - name: Debug Secret Presence
         run: |
-          if [ -z "${{ secrets.SLNE_SNAPSHOTS_REPO_USERNAME }}" ]; then
+          if [ -z "${{ secrets.SLNE_RELEASES_REPO_USERNAME }}" ]; then
             echo "Secret NOT available"
           else
             echo "Secret is available"
