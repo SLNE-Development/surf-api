@@ -42,7 +42,9 @@ jobs:
           java-version: '25'
 
       - name: Build all modules with Gradle
-        run: ./gradlew build shadowJar --parallel --no-scan
+        run: |
+          chmod +x gradlew
+          ./gradlew build shadowJar --parallel --no-scan
 
       - name: Publish all modules to Maven
         run: ./gradlew publish --parallel --no-scan
