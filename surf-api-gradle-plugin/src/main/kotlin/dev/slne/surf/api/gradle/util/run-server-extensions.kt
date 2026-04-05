@@ -22,7 +22,7 @@ fun RunServer.withSurfApiBukkit() {
             "SLNE-Development",
             "surf-api",
             "v${Constants.SURF_API_FULL_VERSION}",
-            "surf-api-bukkit-server-${Constants.SURF_API_FULL_VERSION}-all.jar"
+            "surf-api-paper-server-${Constants.SURF_API_FULL_VERSION}-all.jar"
         )
     }
 }

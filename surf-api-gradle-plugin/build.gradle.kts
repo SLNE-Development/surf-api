@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.0.3")
+    append("2.0.4")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -138,7 +138,7 @@ val generateConstants by tasks.registering {
             |
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"
-            |    const val SURF_API_VERSION = "$mcVersion+"
+            |    const val SURF_API_VERSION = "+"
             |    
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
