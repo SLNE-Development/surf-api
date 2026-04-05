@@ -17,12 +17,12 @@ abstract class MicroservicePlugin : Plugin<Project> {
 
                 dependencies.add(
                     "compileOnlyApi",
-                    "dev.slne.surf.microservice:${apiModule}:${Constants.MINECRAFT_VERSION}+"
+                    "dev.slne.surf.microservice:${apiModule}:+"
                 )
 
                 dependencies.add(
                     "runtimeOnly",
-                    "dev.slne.surf.microservice:${runtimeModule}:${Constants.MINECRAFT_VERSION}+"
+                    "dev.slne.surf.microservice:${runtimeModule}:+"
                 )
 
                 projectModification(this)
