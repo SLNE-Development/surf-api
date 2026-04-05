@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shad
 import dev.slne.surf.api.gradle.util.slneReleases
 
 plugins {
-    id("dev.slne.surf.api.gradle.core") version "26.1+"
+    id("dev.slne.surf.api.gradle.core") version "+"
 }
 
 surfCoreApi {
@@ -65,7 +65,7 @@ publishing {
  * Only publish shadow variant
  */
 afterEvaluate {
-    tasks.named("publishPluginMavenPublicationToMaven-releasesRepository") {
+    tasks.named("publishPluginMavenPublicationToSlne-repository-releasesRepository") {
         enabled = false
     }
     tasks.named("publishPluginMavenPublicationToMavenLocal") {
