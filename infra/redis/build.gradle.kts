@@ -8,10 +8,10 @@ import java.util.zip.ZipOutputStream
 buildscript {
     repositories {
         gradlePluginPortal()
-        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
+        maven("https://reposilite.slne.dev/public/") { name = "public" }
     }
     dependencies {
-        classpath("dev.slne.surf:surf-api-gradle-plugin:26.1+")
+        classpath("dev.slne.surf.api:surf-api-gradle-plugin:+")
     }
 }
 
