@@ -11,8 +11,8 @@ const val DEFAULT_USERNAME_RELEASES = "SLNE_RELEASES_REPO_USERNAME"
 const val DEFAULT_PASSWORD_RELEASES = "SLNE_RELEASES_REPO_PASSWORD"
 
 inline fun RepositoryHandler.slnePublic(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://repo.slne.dev/repository/maven-public/") {
-        name = "maven-public"
+    maven("https://reposilite.slne.dev/public/") {
+        name = "slne-repository-public"
         block()
     }
 
@@ -23,8 +23,8 @@ inline fun RepositoryHandler.canvasMaven(crossinline block: MavenArtifactReposit
     }
 
 inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://repo.slne.dev/repository/maven-releases/") {
-        name = "maven-releases"
+    maven("https://reposilite.slne.dev/releases/") {
+        name = "slne-repository-releases"
         credentials {
             username = System.getenv(DEFAULT_USERNAME_RELEASES)
             password = System.getenv(DEFAULT_PASSWORD_RELEASES)
@@ -34,8 +34,8 @@ inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactReposi
     }
 
 inline fun RepositoryHandler.slnePrivate(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://repo.slne.dev/repository/maven-private/") {
-        name = "maven-private"
+    maven("https://reposilite.slne.dev/private/") {
+        name = "slne-repository-private"
         credentials {
             username = System.getenv(DEFAULT_USERNAME_ENV_PRIVATE)
             password = System.getenv(DEFAULT_PASSWORD_ENV_PRIVATE)

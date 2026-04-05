@@ -5,8 +5,8 @@ import org.jetbrains.kotlin.gradle.utils.API
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
 enum class SurfApiPlatform(val dependency: String, val scope: String = COMPILE_ONLY) {
-    CORE("dev.slne.surf:surf-api-core:${Constants.SURF_API_VERSION}"),
-    PAPER("dev.slne.surf:surf-api-paper:${Constants.SURF_API_VERSION}"),
-    VELOCITY("dev.slne.surf:surf-api-velocity:${Constants.SURF_API_VERSION}"),
-    STANDALONE("dev.slne.surf:surf-api-standalone:${Constants.SURF_API_VERSION}", API),
+    CORE("dev.slne.surf.api:surf-api-core:${Constants.SURF_API_VERSION}"),
+    PAPER("dev.slne.surf.api:surf-api-paper:${Constants.SURF_API_VERSION}"),
+    VELOCITY("dev.slne.surf.api:surf-api-velocity:${Constants.SURF_API_VERSION}"),
+    STANDALONE("dev.slne.surf.api:surf-api-standalone:${Constants.SURF_API_VERSION}", API),
 }

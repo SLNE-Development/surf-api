@@ -9,8 +9,9 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
     internal val addSurfApiToClasspath = objects.property<Boolean>().convention(true)
     internal val surfApiScope = objects.property<String>()
     internal val publishingUrl =
-        objects.property<String>().convention("https://repo.slne.dev/repository/maven-releases")
-    internal val publishingRepoName = objects.property<String>().convention("maven-releases")
+        objects.property<String>().convention("https://reposilite.slne.dev/releases")
+    internal val publishingRepoName =
+        objects.property<String>().convention("slne-repository-releases")
     internal val coreModule = objects.property<SurfCoreModules>()
     internal val withSurfRedis = objects.property<Boolean>().convention(false)
     internal val surfRedisVersion = objects.property<String>()

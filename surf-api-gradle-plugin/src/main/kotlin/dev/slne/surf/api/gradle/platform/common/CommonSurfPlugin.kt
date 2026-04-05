@@ -219,7 +219,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 add(
                     COMPILE_ONLY,
-                    "dev.slne.surf.core:${it.module}:${Constants.SURF_API_VERSION}"
+                    "dev.slne.surf.core:${it.module}:+"
                 )
             }
         }
@@ -227,7 +227,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         if (extension.withSurfRedis.get()) {
             if (extension.surfRedisRelocation.isPresent) {
                 dependencies {
-                    add(API, "dev.slne.surf.redis:surf-redis:${extension.surfRedisVersion.get()}")
+                    add(API, "dev.slne.surf.redis:surf-redis:+")
                 }
                 tasks.withType<ShadowJar>().configureEach {
                     doFirst {
@@ -238,7 +238,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 dependencies {
                     add(
                         COMPILE_ONLY,
-                        "dev.slne.surf.redis:surf-redis-api:${Constants.SURF_API_VERSION}"
+                        "dev.slne.surf.redis:surf-redis-api:+"
                     )
                 }
             }
@@ -248,7 +248,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 add(
                     API,
-                    "dev.slne.surf:surf-database-r2dbc:${extension.surfDatabaseR2dbcVersion.get()}"
+                    "dev.slne.surf:surf-database-r2dbc:+"
                 )
             }
 
