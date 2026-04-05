@@ -20,8 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append(mcVersion)
-    append("-2.0.3")
+    append("2.0.3")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -86,12 +85,10 @@ gradlePlugin {
 
     publishing {
         repositories {
-            maven("https://repo.slne.dev/repository/maven-releases/") {
-                name = "maven-releases"
+            maven("https://reposilite.slne.dev/releases/") {
+                name = "slne-repository-releases"
                 credentials {
-                    val getenv = System.getenv("SLNE_RELEASES_REPO_USERNAME")
-
-                    username = getenv
+                    username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
                     password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
                 }
             }
@@ -131,8 +128,8 @@ val generateConstants by tasks.registering {
             |
             |internal object Constants {
             |    const val RELOCATION_PREFIX = "$relocationPrefix"
-            |    const val SNAPSHOT_REPO_ID = "maven-releases"
-            |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-releases"
+            |    const val SNAPSHOT_REPO_ID = "slne-repository-releases"
+            |    const val SNAPSHOT_REPO = "https://reposilite.slne.dev/releases"
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val CANVAS_API = "${libs.canvas.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
