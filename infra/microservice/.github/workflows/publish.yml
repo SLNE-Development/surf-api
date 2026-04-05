@@ -11,7 +11,7 @@ env:
   SLNE_SNAPSHOTS_REPO_PASSWORD: ${{ secrets.SLNE_SNAPSHOTS_REPO_PASSWORD }}
   SLNE_RELEASES_REPO_USERNAME: ${{ secrets.SLNE_RELEASES_REPO_USERNAME }}
   SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
-  MODULE_REGEX: "surf-microservice-gradle-plugin.*-all\\.jar$|surf-microservice-microservice.*-all\\.jar$|surf-core-microservice.*-all\\.jar$"
+  MODULE_REGEX: "surf-microservice-gradle-plugin.*-all\\.jar$|surf-microservice-microservice.*-all\\.jar$"
   DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
 jobs:
