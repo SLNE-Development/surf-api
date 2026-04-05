@@ -32,7 +32,7 @@ velocity-api = "3.5.0-SNAPSHOT"
 placeholder-api = "2.12.2"
 
 # McCoroutine
-mccoroutine = "2.22.0"
+mccoroutine = "2.22.2"
 
 # Miscellaneous Libraries
 guava = "33.5.0-jre"
@@ -120,10 +120,10 @@ velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "vel
 placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }
 
 # McCoroutine
-mccoroutine-folia-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-folia-api", version.ref = "mccoroutine" }
-mccoroutine-folia-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-folia-core", version.ref = "mccoroutine" }
-mccoroutine-velocity-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
-mccoroutine-velocity-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
+mccoroutine-folia-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-folia-api", version.ref = "mccoroutine" }
+mccoroutine-folia-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-folia-core", version.ref = "mccoroutine" }
+mccoroutine-velocity-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
+mccoroutine-velocity-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
 
 # Miscellaneous Libraries
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
