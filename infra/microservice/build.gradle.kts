@@ -4,10 +4,10 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 buildscript {
     repositories {
         gradlePluginPortal()
-        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
+        maven("https://reposilite.slne.dev/releases")
     }
     dependencies {
-        classpath("dev.slne.surf:surf-api-gradle-plugin:26+")
+        classpath("dev.slne.surf.api:surf-api-gradle-plugin:+")
     }
 }
 

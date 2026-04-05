@@ -10,7 +10,7 @@ plugins {
 val mcVersion: String by project
 
 dependencies {
-    implementation("dev.slne.surf:surf-api-gradle-plugin:$mcVersion+")
+    implementation("dev.slne.surf.api:surf-api-gradle-plugin:+")
 }
 
 gradlePlugin {
@@ -23,8 +23,7 @@ gradlePlugin {
 
     publishing {
         repositories {
-            maven("https://repo.slne.dev/repository/maven-releases/") {
-                name = "maven-releases"
+            maven("https://reposilite.slne.dev/releases") {
                 credentials {
                     username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
                     password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
@@ -51,7 +50,7 @@ val generateConstants by tasks.registering {
             |
             |internal object Constants {
             |    const val MINECRAFT_VERSION = "$mcVersion"
-            |    const val SURF_MICROSERVICE_VERSION = "$mcVersion+"
+            |    const val SURF_MICROSERVICE_VERSION = "+"
             |    const val SURF_MICROSERVICE_FULL_VERSION = "${rootProject.findProperty("version") as String}"
             |}
         """.trimMargin()
