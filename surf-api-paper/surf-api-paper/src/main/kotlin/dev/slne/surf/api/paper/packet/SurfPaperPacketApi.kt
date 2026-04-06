@@ -102,8 +102,7 @@ interface SurfPaperPacketApi {
      */
     fun unregisterPacketLoreListener(plugin: Plugin)
 
-    companion object {
-        @JvmStatic
+    companion object : SurfPaperPacketApi by api {
         val INSTANCE get() = api
     }
 }
