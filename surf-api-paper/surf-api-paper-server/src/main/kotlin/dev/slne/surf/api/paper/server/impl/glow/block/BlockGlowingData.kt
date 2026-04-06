@@ -1,0 +1,80 @@
+package dev.slne.surf.api.paper.server.impl.glow.block
+
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
+import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
+import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPackets
+import dev.slne.surf.api.paper.server.impl.glow.SurfGlowingApiImpl
+import dev.slne.surf.api.paper.server.impl.nms.bridges.SurfPaperNmsGlowingBridgeImpl
+import dev.slne.surf.api.paper.server.impl.nms.bridges.packets.PacketOperationImpl
+import dev.slne.surf.api.paper.server.reflection.Reflection
+import glm_.shl
+import net.kyori.adventure.text.format.NamedTextColor
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.phys.Vec3
+import org.bukkit.Location
+import java.util.*
+
+@OptIn(NmsUseWithCaution::class)
+class BlockGlowingData(
+    val playerData: BlockPlayerData,
+    val location: Location,
+    var color: NamedTextColor,
+) {
+
+    private val entityId: Int by lazy { SurfPaperNmsCommonBridge.nextEntityId() }
+    private val uuid: UUID by lazy { UUID.randomUUID() }
+    private var initialized = false
+
+    fun spawn(): PacketOperation {
+        initialize()
+
+        val spawnOperation = PacketOperationImpl.simple {
+            ClientboundAddEntityPacket(
+                entityId,
+                uuid,
+                location.x,
+                location.y,
+                location.z,
+                location.pitch,
+                location.yaw,
+                EntityType.SHULKER,
+                0,
+                Vec3.ZERO,
+                0.0
+            )
+        }
+        val invisibleOperation = SurfPaperNmsGlowingBridgeImpl.INSTANCE
+            .setEntityFlags(entityId, invisibleFlag)
+        
+        return spawnOperation + invisibleOperation
+    }
+
+
+    fun updateColor() {
+        val player = playerData.player ?: return
+        SurfGlowingApiImpl.INSTANCE.makeGlowing(
+            entityId,
+            uuid.toString(),
+            player,
+            color,
+            invisibleFlag
+        )
+    }
+
+    fun remove() {
+        playerData.player?.let { SurfPaperNmsSpawnPackets.despawn(entityId).execute(it) }
+        SurfGlowingApiImpl.INSTANCE.removeGlowing(entityId, playerData.uuid)
+    }
+
+    private fun initialize() {
+        if (initialized) return
+        initialized = true
+        updateColor()
+    }
+
+    companion object {
+        val invisibleFlag = 1.toByte() shl Reflection.ENTITY_PROXY.getFlagInvisible()
+    }
+}

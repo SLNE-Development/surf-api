@@ -1,0 +1,162 @@
+public abstract interface class dev/slne/surf/api/velocity/SurfApiVelocity : dev/slne/surf/api/core/SurfApiCore {
+	public static final field Companion Ldev/slne/surf/api/velocity/SurfApiVelocity$Companion;
+	public abstract fun getExecutorService ()Ljava/util/concurrent/ExecutorService;
+}
+
+public final class dev/slne/surf/api/velocity/SurfApiVelocity$Companion : dev/slne/surf/api/velocity/SurfApiVelocity {
+	public fun getExecutorService ()Ljava/util/concurrent/ExecutorService;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/velocity/SurfApiVelocity;
+	public fun getPlayer (Ljava/util/UUID;)Ljava/lang/Object;
+	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics {
+	public fun addCustomChart (Ldev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart;)V
+	public fun shutdown ()V
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$AdvancedBarChart : dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$AdvancedPie : dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public abstract class dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	protected fun <init> (Ljava/lang/String;)V
+	protected abstract fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+	public fun getRequestJsonObject (Ljava/util/function/BiConsumer;Z)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$DrilldownPie : dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	public fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$Factory {
+	public fun make (Ljava/lang/Object;I)Ldev/slne/surf/api/velocity/api/metrics/Metrics;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder {
+	public fun <init> ()V
+	public fun appendField (Ljava/lang/String;I)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;[I)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;[Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendField (Ljava/lang/String;[Ljava/lang/String;)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder;
+	public fun appendNull (Ljava/lang/String;)Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder;
+	public fun build ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject {
+	public fun toString ()Ljava/lang/String;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$MetricsBase {
+	public static final field METRICS_VERSION Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;IZLjava/util/function/Consumer;Ljava/util/function/Consumer;Ljava/util/function/Consumer;Ljava/util/function/Supplier;Ljava/util/function/BiConsumer;Ljava/util/function/Consumer;ZZZZ)V
+	public fun addCustomChart (Ldev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart;)V
+	public fun shutdown ()V
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$MetricsConfig {
+	public fun <init> (Ljava/io/File;Z)V
+	public fun didExistBefore ()Z
+	public fun getServerUUID ()Ljava/lang/String;
+	public fun isEnabled ()Z
+	public fun isLogErrorsEnabled ()Z
+	public fun isLogResponseStatusTextEnabled ()Z
+	public fun isLogSentDataEnabled ()Z
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$MultiLineChart : dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$SimpleBarChart : dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$SimplePie : dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/api/metrics/Metrics$SingleLineChart : dev/slne/surf/api/velocity/api/metrics/Metrics$CustomChart {
+	public fun <init> (Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+	protected fun getChartData ()Ldev/slne/surf/api/velocity/api/metrics/Metrics$JsonObjectBuilder$JsonObject;
+}
+
+public class dev/slne/surf/api/velocity/command/args/MiniMessageArgument : dev/jorel/commandapi/arguments/Argument {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getArgumentType ()Ldev/jorel/commandapi/arguments/CommandAPIArgumentType;
+	public fun getPrimitiveType ()Ljava/lang/Class;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lnet/kyori/adventure/text/Component;
+}
+
+public final class dev/slne/surf/api/velocity/command/args/MiniMessageArgumentKt {
+	public static final fun miniMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static synthetic fun miniMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
+}
+
+public abstract class dev/slne/surf/api/velocity/command/args/SuspendCustomArgument : dev/jorel/commandapi/arguments/Argument {
+	public static final field Companion Ldev/slne/surf/api/velocity/command/args/SuspendCustomArgument$Companion;
+	public fun <init> (Ldev/jorel/commandapi/arguments/Argument;Lkotlinx/coroutines/CoroutineScope;)V
+	public synthetic fun <init> (Ldev/jorel/commandapi/arguments/Argument;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getArgumentType ()Ldev/jorel/commandapi/arguments/CommandAPIArgumentType;
+	public fun getPrimitiveType ()Ljava/lang/Class;
+	public synthetic fun instance ()Ldev/jorel/commandapi/arguments/Argument;
+	public fun instance ()Ldev/slne/surf/api/velocity/command/args/SuspendCustomArgument;
+	public synthetic fun instance ()Ljava/lang/Object;
+	public abstract fun parse (Lkotlinx/coroutines/CoroutineScope;Ldev/slne/surf/api/velocity/command/args/SuspendCustomArgument$CustomArgumentInfo;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public final fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lkotlinx/coroutines/Deferred;
+	protected final fun stringCollectionSuspend (Lkotlin/jvm/functions/Function3;)Ldev/jorel/commandapi/arguments/ArgumentSuggestions;
+}
+
+public final class dev/slne/surf/api/velocity/command/args/SuspendCustomArgument$Companion {
+}
+
+public final class dev/slne/surf/api/velocity/command/args/SuspendCustomArgument$CustomArgumentInfo : java/lang/Record {
+	public fun <init> (Lcom/velocitypowered/api/command/CommandSource;Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Ljava/lang/Object;)V
+	public final fun component1 ()Lcom/velocitypowered/api/command/CommandSource;
+	public final fun component2 ()Ldev/jorel/commandapi/executors/CommandArguments;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Object;
+	public final fun copy (Lcom/velocitypowered/api/command/CommandSource;Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Ljava/lang/Object;)Ldev/slne/surf/api/velocity/command/args/SuspendCustomArgument$CustomArgumentInfo;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/velocity/command/args/SuspendCustomArgument$CustomArgumentInfo;Lcom/velocitypowered/api/command/CommandSource;Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Ljava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/api/velocity/command/args/SuspendCustomArgument$CustomArgumentInfo;
+	public final fun currentInput ()Ljava/lang/Object;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun input ()Ljava/lang/String;
+	public final fun previousArgs ()Ldev/jorel/commandapi/executors/CommandArguments;
+	public final fun sender ()Lcom/velocitypowered/api/command/CommandSource;
+	public fun toString ()Ljava/lang/String;
+}
+
+protected abstract class dev/slne/surf/api/velocity/command/args/SuspendCustomArgument$SuspendArgumentSuggestions : dev/jorel/commandapi/arguments/ArgumentSuggestions {
+	public fun <init> (Ldev/slne/surf/api/velocity/command/args/SuspendCustomArgument;)V
+	public final fun suggest (Ldev/jorel/commandapi/SuggestionInfo;Lcom/mojang/brigadier/suggestion/SuggestionsBuilder;)Ljava/util/concurrent/CompletableFuture;
+	public abstract fun suggest (Lkotlinx/coroutines/CoroutineScope;Ldev/jorel/commandapi/SuggestionInfo;Lcom/mojang/brigadier/suggestion/SuggestionsBuilder;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/velocity/command/executors/SuspendCommandExecutorsKt {
+	public static final fun anyExecutorSuspend (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/VelocityExecutable;
+	public static synthetic fun anyExecutorSuspend$default (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/VelocityExecutable;
+	public static final fun consoleExecutorSuspend (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/VelocityExecutable;
+	public static synthetic fun consoleExecutorSuspend$default (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/VelocityExecutable;
+	public static final fun getDefaultScope ()Lkotlinx/coroutines/CoroutineScope;
+	public static final fun handleCommandFailure (Lcom/velocitypowered/api/command/CommandSource;Ljava/lang/Throwable;)V
+	public static final fun launchCommandExecutor (Lkotlinx/coroutines/CoroutineScope;Lcom/velocitypowered/api/command/CommandSource;Lkotlin/jvm/functions/Function2;)V
+	public static final fun playerExecutorSuspend (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/VelocityExecutable;
+	public static synthetic fun playerExecutorSuspend$default (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/VelocityExecutable;
+	public static final fun sendSyntaxMessageOrRethrow (Lcom/velocitypowered/api/command/CommandSource;Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+

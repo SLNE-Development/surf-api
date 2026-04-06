@@ -1,0 +1,37 @@
+package dev.slne.surf.api.core
+
+import dev.slne.surf.api.core.util.requiredService
+import java.util.*
+
+/**
+ * The main API class for the SurfCoreApi.
+ */
+interface SurfApiCore {
+
+    /**
+     * Sends a player to a specified server.
+     *
+     * @param playerUuid the UUID of the player to send
+     * @param server     the name of the server to send the player to
+     */
+    fun sendPlayerToServer(playerUuid: UUID, server: String)
+
+    /**
+     * Returns the platform-specific player object for the specified player.
+     */
+    fun getPlayer(playerUuid: UUID): Any?
+
+    companion object : SurfApiCore by api {
+
+        /**
+         * The instance of the SurfCoreApi.
+         */
+        @JvmStatic
+        val instance = api
+    }
+}
+
+/**
+ * The instance of the SurfCoreApi.
+ */
+private val api = requiredService<SurfApiCore>()

@@ -1,0 +1,126 @@
+import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
+import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
+
+
+plugins {
+    `core-convention`
+
+    alias(libs.plugins.plugin.yml.paper)
+    id("io.papermc.paperweight.userdev") apply true
+}
+
+kotlin {
+    compilerOptions {
+        optIn.add("dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi")
+    }
+}
+
+dependencies {
+    api(projects.surfApiPaper.surfApiPaper)
+    api(projects.surfApiCore.surfApiCoreServer)
+
+    paperweight.paperDevBundle(libs.paper.api.get().version)
+
+    compileOnly(libs.placeholder.api)
+
+    // -------------------- Paper Libraries -------------------- //
+    paperLibrary(libs.guava)
+    paperLibrary(libs.caffeine)
+    paperLibrary(libs.gson)
+    paperLibrary(libs.commons.lang3)
+    paperLibrary(libs.commons.text)
+    paperLibrary(libs.dazzleconf)
+    paperLibrary(libs.spongepowered.math)
+    paperLibrary(libs.okhttp)
+    paperLibrary(libs.fastutil)
+    paperLibrary(libs.reflection.remapper)
+    paperLibrary(libs.configurate.yaml)
+    paperLibrary(libs.configurate.jackson)
+    paperLibrary(libs.more.persistent.data.types)
+    paperLibrary(libs.flogger)
+    paperLibrary(libs.flogger.slf4j.backend)
+    paperLibrary(libs.commons.math4.core)
+    paperLibrary(libs.commons.math3)
+    paperLibrary(libs.aide.reflection)
+    api(libs.mccoroutine.folia.api)
+    api(libs.mccoroutine.folia.core)
+    runtimeOnly(libs.scoreboard.library.implementation)
+    paperLibrary(libs.scoreboard.library.api)
+}
+
+
+paper {
+    name = "surf-paper-api"
+    provides = listOf("SurfPaperAPI")
+    apiVersion = "26.1.1"
+    description = "Surf API for Paper"
+    website = "https://slne.dev"
+    authors = listOf("twisti", "SLNE Development Team")
+    main = "dev.slne.surf.api.paper.server.PaperMain"
+
+    // Bootstrap
+    bootstrapper = "dev.slne.surf.api.paper.server.PaperBoostrapper"
+    loader = "dev.slne.surf.api.paper.server.PaperLoader"
+    hasOpenClassloader = false
+    generateLibrariesJson = true
+
+    // Other
+    foliaSupported = true
+
+    // Plugin Dependencies
+    serverDependencies {
+        registerSoft("ProtocolLib")
+        registerSoft("ProtocolSupport")
+        registerSoft("ViaVersion")
+        registerSoft("ViaBackwards")
+        registerSoft("ViaRewind")
+        registerSoft("Geyser-Spigot")
+        registerSoft("PlaceholderAPI")
+
+        register("CommandAPI") {
+            required = true
+            joinClasspath = true
+            load = RelativeLoadOrder.BEFORE
+        }
+
+        register("packetevents") {
+            required = true
+            joinClasspath = true
+            load = RelativeLoadOrder.BEFORE
+        }
+    }
+}
+
+tasks {
+    shadowJar {
+        val relocationPrefix: String by project
+        relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
+    }
+}
+
+tasks.generatePaperPluginDescription {
+    useDefaultCentralProxy()
+}
+
+configurations.all {
+    exclude(group = "org.spigotmc", module = "spigot-api")
+}
+
+/**
+ * Registers a soft dependency.
+ *
+ * @param name The name of the dependency.
+ * @param required Whether the dependency is required.
+ * @param joinClassPath Whether the dependency should be joined to the classpath.
+ * @param loadOrder The load order of the dependency.
+ */
+fun NamedDomainObjectContainerScope<DependencyDefinition>.registerSoft(
+    name: String,
+    required: Boolean = false,
+    joinClassPath: Boolean = true,
+    loadOrder: RelativeLoadOrder = RelativeLoadOrder.BEFORE,
+) = register(name) {
+    this.required = required
+    this.joinClasspath = joinClassPath
+    this.load = loadOrder
+}

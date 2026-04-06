@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api(projects.surfApiCore.surfApiCoreServer)
-    api(projects.surfApiVelocity.surfApiVelocityApi)
+    api(projects.surfApiVelocity.surfApiVelocity)
     api(libs.dazzleconf)
     api(libs.spongepowered.math)
     api(libs.commons.lang3)

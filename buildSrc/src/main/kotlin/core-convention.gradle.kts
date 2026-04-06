@@ -24,7 +24,7 @@ version = findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
 
 repositories {
     mavenCentral()
-    maven("https://repo.slne.dev/repository/maven-public") { name = "maven-public" }
+    maven("https://reposilite.slne.dev/public") { name = "slne-repository-public" }
 }
 
 dependencies {
@@ -50,7 +50,7 @@ extensions.configure<KotlinJvmProjectExtension> {
 java {
     withSourcesJar()
 
-    if (project.name != "surf-api-bukkit-plugin-test") {
+    if (project.name != "surf-api-paper-plugin-test") {
         withJavadocJar()
     }
 }

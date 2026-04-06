@@ -5,7 +5,7 @@ on:
     types: [ opened, synchronize, reopened, labeled ]
 
 env:
-  MODULE_REGEX: "surf-api-bukkit-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$|surf-api-hytale-server.*-all\\.jar$"
+  MODULE_REGEX: "surf-api-paper-server.*-all\\.jar$|surf-api-velocity-server.*-all\\.jar$|surf-api-standalone-server.*-all\\.jar$"
 
 jobs:
   build_pr:

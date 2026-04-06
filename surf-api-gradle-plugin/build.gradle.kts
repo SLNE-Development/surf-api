@@ -20,8 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append(mcVersion)
-    append("-1.13.2")
+    append("2.0.4")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -52,47 +51,44 @@ dependencies {
 gradlePlugin {
     plugins {
         create("settings") {
-            id = "dev.slne.surf.surfapi.gradle.settings"
-            implementationClass = "dev.slne.surf.surfapi.gradle.settings.SurfSettingsPlugin"
+            id = "dev.slne.surf.api.gradle.settings"
+            implementationClass = "dev.slne.surf.api.gradle.settings.SurfSettingsPlugin"
         }
 
         create("core") {
-            id = "dev.slne.surf.surfapi.gradle.core"
-            implementationClass = "dev.slne.surf.surfapi.gradle.platform.core.CoreSurfPlugin"
+            id = "dev.slne.surf.api.gradle.core"
+            implementationClass = "dev.slne.surf.api.gradle.platform.core.CoreSurfPlugin"
         }
 
         create("paper-plugin") {
-            id = "dev.slne.surf.surfapi.gradle.paper-plugin"
+            id = "dev.slne.surf.api.gradle.paper-plugin"
             implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
+                "dev.slne.surf.api.gradle.platform.paper.plugin.PaperPluginSurfPlugin"
         }
+
         create("paper-raw") {
-            id = "dev.slne.surf.surfapi.gradle.paper-raw"
-            implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.paper.raw.RawPaperSurfPlugin"
+            id = "dev.slne.surf.api.gradle.paper-raw"
+            implementationClass = "dev.slne.surf.api.gradle.platform.paper.raw.RawPaperSurfPlugin"
         }
 
         create("standalone") {
-            id = "dev.slne.surf.surfapi.gradle.standalone"
+            id = "dev.slne.surf.api.gradle.standalone"
             implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.standalone.StandaloneSurfPlugin"
+                "dev.slne.surf.api.gradle.platform.standalone.StandaloneSurfPlugin"
         }
 
         create("velocity") {
-            id = "dev.slne.surf.surfapi.gradle.velocity"
-            implementationClass =
-                "dev.slne.surf.surfapi.gradle.platform.velocity.VelocitySurfPlugin"
+            id = "dev.slne.surf.api.gradle.velocity"
+            implementationClass = "dev.slne.surf.api.gradle.platform.velocity.VelocitySurfPlugin"
         }
     }
 
     publishing {
         repositories {
-            maven("https://repo.slne.dev/repository/maven-releases/") {
-                name = "maven-releases"
+            maven("https://reposilite.slne.dev/releases/") {
+                name = "slne-repository-releases"
                 credentials {
-                    val getenv = System.getenv("SLNE_RELEASES_REPO_USERNAME")
-
-                    username = getenv
+                    username = System.getenv("SLNE_RELEASES_REPO_USERNAME")
                     password = System.getenv("SLNE_RELEASES_REPO_PASSWORD")
                 }
             }
@@ -101,7 +97,7 @@ gradlePlugin {
 }
 
 val constantsOutputDir =
-    layout.buildDirectory.dir("generated/dev/slne/surf/surfapi/gradle/generated")
+    layout.buildDirectory.dir("generated/dev/slne/surf/api/gradle/generated")
 val generateConstants by tasks.registering {
     val outputFile = constantsOutputDir.map { it.file("Constants.kt") }
 
@@ -128,12 +124,12 @@ val generateConstants by tasks.registering {
     doLast {
         val generator = project(":surf-api-gradle-plugin:surf-api-processor")
         val content = """
-            |package dev.slne.surf.surfapi.gradle.generated
+            |package dev.slne.surf.api.gradle.generated
             |
             |internal object Constants {
             |    const val RELOCATION_PREFIX = "$relocationPrefix"
-            |    const val SNAPSHOT_REPO_ID = "maven-releases"
-            |    const val SNAPSHOT_REPO = "https://repo.slne.dev/repository/maven-releases"
+            |    const val SNAPSHOT_REPO_ID = "slne-repository-releases"
+            |    const val SNAPSHOT_REPO = "https://reposilite.slne.dev/releases"
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val CANVAS_API = "${libs.canvas.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
@@ -142,7 +138,7 @@ val generateConstants by tasks.registering {
             |
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"
-            |    const val SURF_API_VERSION = "$mcVersion+"
+            |    const val SURF_API_VERSION = "+"
             |    
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"

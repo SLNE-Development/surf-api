@@ -120,7 +120,8 @@ modules.xml
 **/.gradle/*
 **/build/*
 
-.kotlin/*
+**/.kotlin/*
 
 **/run/*
 logs/
+.claude
