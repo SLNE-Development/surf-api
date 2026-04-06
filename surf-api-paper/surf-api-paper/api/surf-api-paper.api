@@ -2024,7 +2024,6 @@ public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/ser
 
 public abstract interface class dev/slne/surf/api/paper/packet/SurfPaperPacketApi {
 	public static final field Companion Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion;
-	public static fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;
 	public abstract fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
 	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
 	public abstract fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
@@ -2033,8 +2032,14 @@ public abstract interface class dev/slne/surf/api/paper/packet/SurfPaperPacketAp
 	public abstract fun unregisterPacketLoreListener (Lorg/bukkit/plugin/Plugin;)V
 }
 
-public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion {
+public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion : dev/slne/surf/api/paper/packet/SurfPaperPacketApi {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public fun unregisterPacketLoreListener (Lorg/bukkit/NamespacedKey;)V
+	public fun unregisterPacketLoreListener (Lorg/bukkit/plugin/Plugin;)V
 }
 
 public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$DefaultImpls {
