@@ -387,7 +387,7 @@ object CommonComponents {
     ): TextComponent {
         with(builder) {
             append(DISCONNECT_HEADER)
-            appendText(disconnectReason.uppercase(), VARIABLE_VALUE)
+            appendText(disconnectReason.uppercase(), ERROR)
             appendNewline(3)
             suggestHelp()
             appendNewline(3)
