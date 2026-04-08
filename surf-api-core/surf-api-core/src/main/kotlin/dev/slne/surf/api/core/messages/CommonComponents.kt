@@ -7,15 +7,15 @@ import dev.slne.surf.api.core.messages.Colors.Companion.SPACER
 import dev.slne.surf.api.core.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.api.core.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.api.core.messages.CommonComponents.MAP_SEPARATOR
-import dev.slne.surf.api.core.messages.adventure.appendNewline
-import dev.slne.surf.api.core.messages.adventure.appendText
-import dev.slne.surf.api.core.messages.adventure.clickOpensUrl
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.core.messages.adventure.*
 import dev.slne.surf.api.core.util.mutableObjectListOf
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.translation.GlobalTranslator
+import net.kyori.adventure.translation.TranslationStore
+import java.util.*
 import kotlin.time.Duration
 
 /**
@@ -33,6 +33,15 @@ internal inline fun buildText0(block: TextComponent.Builder.() -> Unit): TextCom
  * Provides common text components and formatting utilities for messages.
  */
 object CommonComponents {
+
+    fun test() {
+        val store = TranslationStore.component(key("test"))
+
+        store.register("errors", Locale.GERMAN, text("test"))
+        GlobalTranslator.translator().addSource(store)
+
+        val translatable = Component.translatable("surf.enchantment.rarities.common", "Gewöhnlich")
+    }
 
     /**
      * An ellipsis component (`...`).
