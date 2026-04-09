@@ -1,7 +1,6 @@
 package dev.slne.surf.api.core.rarity
 
-import dev.slne.surf.api.core.messages.adventure.buildText
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.core.messages.adventure.text
 import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.format.TextColor
 
@@ -15,34 +14,34 @@ import net.kyori.adventure.text.format.TextColor
  * @property color       The textual color associated with the rarity level.
  */
 enum class Rarity(
-    displayName: SurfComponentBuilder.() -> Unit,
+    displayName: String,
     val color: TextColor
 ) : ComponentLike {
     COMMON(
-        displayName = { spacer("Gewöhnlich") },
-        color = TextColor.color(0xAAAAAA)
+        displayName = "Gewöhnlich",
+        color = TextColor.color(0xAAAAAA),
     ),
     UNCOMMON(
-        displayName = { spacer("Ungewöhnlich") },
+        displayName = "Ungewöhnlich",
         color = TextColor.color(0x55FF55)
     ),
     RARE(
-        displayName = { success("Selten") },
+        displayName = "Selten",
         color = TextColor.color(0x55FFFF)
     ),
     EPIC(
-        displayName = { info("Episch") },
+        displayName = "Episch",
         color = TextColor.color(0xFF55FF)
     ),
     LEGENDARY(
-        displayName = { warning("Legendär") },
+        displayName = "Legendär",
         color = TextColor.color(0xFFAA00)
     ),
     MYTHIC(
-        displayName = { error("Mythisch") },
+        displayName = "Mythisch",
         color = TextColor.color(0xAA00AA)
     );
 
-    val displayName = buildText(displayName)
+    val displayName = text(displayName, color)
     override fun asComponent() = displayName
 }
