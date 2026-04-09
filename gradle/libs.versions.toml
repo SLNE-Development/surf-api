@@ -19,7 +19,7 @@ commandapi = "11.2.0"
 luckperms = "v5.5.0-bukkit"
 
 # Scoreboard Library
-scoreboard-library = "2.7.1"
+scoreboard-library = "2.7.3"
 scoreboard-library-implementation = "2.7.1"
 
 # Adventure

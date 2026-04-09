@@ -28,14 +28,14 @@ class SurfScoreboardApiImpl : SurfScoreboardApi {
     }
 
     override fun scoreboardLibrary(): ScoreboardLibrary {
-        TODO("Not yet implemented")
+        return scoreboardLibrary
     }
 
     override fun createScoreboard(title: Component) = SurfScoreboardBuilderImpl(title)
 
     companion object {
         private val log = logger()
-        
+
         val INSTANCE get() = SurfScoreboardApi.INSTANCE as SurfScoreboardApiImpl
     }
 }
