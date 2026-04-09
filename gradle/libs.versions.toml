@@ -20,7 +20,6 @@ luckperms = "v5.5.0-bukkit"
 
 # Scoreboard Library
 scoreboard-library = "2.7.3"
-scoreboard-library-implementation = "2.7.1"
 
 # Adventure
 adventure-api = "4.26.1"
@@ -101,7 +100,7 @@ commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-kotlin-velocity", 
 
 # Scoreboard Library
 scoreboard-library-api = { module = "net.megavex:scoreboard-library-api", version.ref = "scoreboard-library" }
-scoreboard-library-implementation = { module = "net.megavex:scoreboard-library-implementation", version.ref = "scoreboard-library-implementation" }
+scoreboard-library-implementation = { module = "net.megavex:scoreboard-library-implementation", version.ref = "scoreboard-library" }
 
 # Adventure
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure-api" }
