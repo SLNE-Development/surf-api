@@ -67,7 +67,7 @@ bytebuddy = "1.18.8"
 maven-repo-auth = "3.0.4"
 shadow-gradle-plugin = "9.4.1"
 run-paper-gradle-plugin = "3.0.2"
-dokka = "2.1.0"
+dokka = "2.2.0"
 
 [libraries]
 # Paper
