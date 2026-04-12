@@ -3,7 +3,7 @@ package dev.slne.surf.api.paper.display.element
 import dev.slne.surf.api.paper.display.behavior.*
 import dev.slne.surf.api.paper.display.style.Style
 
-internal class Rect(var x: Int = 0, var y: Int = 0, var width: Int = 0, var height: Int = 0)
+class Rect(var x: Int = 0, var y: Int = 0, var width: Int = 0, var height: Int = 0)
 
 /**
  * Base class for all UI elements in the display system.
@@ -24,7 +24,7 @@ abstract class Element {
     val behaviors = mutableListOf<Behavior>()
 
     /** Computed layout bounds (set by the renderer). */
-    internal var bounds = Rect()
+    var bounds = Rect()
 
     /** Current interaction phase. */
     var phase: ElementPhase = ElementPhase.DEFAULT

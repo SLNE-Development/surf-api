@@ -16,6 +16,7 @@ import dev.slne.surf.api.paper.test.command.subcommands.SummonCommandTest;
 import dev.slne.surf.api.paper.test.command.subcommands.SuspendCommandExecutionTest;
 import dev.slne.surf.api.paper.test.command.subcommands.ToastTest;
 import dev.slne.surf.api.paper.test.command.subcommands.VisualizerTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.display.DisplayTest;
 
 public class SurfApiTestCommand extends CommandAPICommand {
 
@@ -39,7 +40,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
             new InventoryTest("inventory"),
             new ToastTest("toast"),
             new SuspendCommandExecutionTest("suspendCommandExecution"),
-            new SummonCommandTest("summoncommand")
+            new SummonCommandTest("summoncommand"),
+            new DisplayTest("display")
         );
     }
 }

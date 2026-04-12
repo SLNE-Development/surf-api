@@ -699,6 +699,454 @@ public final class dev/slne/surf/api/paper/dialog/search/SearchInput {
 public abstract interface class dev/slne/surf/api/paper/dialog/state/DialogState {
 }
 
+public final class dev/slne/surf/api/paper/display/ColorKt {
+	public static final fun argb (I)I
+	public static final fun argb (IIII)I
+	public static synthetic fun argb$default (IIIIILjava/lang/Object;)I
+	public static final fun color (I)I
+	public static final fun color (III)I
+	public static final fun color (IIII)I
+}
+
+public abstract interface class dev/slne/surf/api/paper/display/behavior/Behavior {
+}
+
+public final class dev/slne/surf/api/paper/display/behavior/Clickable : dev/slne/surf/api/paper/display/behavior/Behavior {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOnClick ()Lkotlin/jvm/functions/Function1;
+	public final fun getOnRightClick ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/paper/display/behavior/Draggable : dev/slne/surf/api/paper/display/behavior/Behavior {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOnDrag ()Lkotlin/jvm/functions/Function1;
+	public final fun getOnDragEnd ()Lkotlin/jvm/functions/Function1;
+	public final fun getOnDragStart ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/paper/display/behavior/ElementPhase : java/lang/Enum {
+	public static final field CLICK Ldev/slne/surf/api/paper/display/behavior/ElementPhase;
+	public static final field DEFAULT Ldev/slne/surf/api/paper/display/behavior/ElementPhase;
+	public static final field HOVER Ldev/slne/surf/api/paper/display/behavior/ElementPhase;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/behavior/ElementPhase;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/behavior/ElementPhase;
+}
+
+public final class dev/slne/surf/api/paper/display/behavior/Hoverable : dev/slne/surf/api/paper/display/behavior/Behavior {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOnEnter ()Lkotlin/jvm/functions/Function1;
+	public final fun getOnExit ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/paper/display/behavior/InteractionContext {
+	public fun <init> (Ljava/util/UUID;Ldev/slne/surf/api/paper/display/element/Element;II)V
+	public final fun component1 ()Ljava/util/UUID;
+	public final fun component2 ()Ldev/slne/surf/api/paper/display/element/Element;
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (Ljava/util/UUID;Ldev/slne/surf/api/paper/display/element/Element;II)Ldev/slne/surf/api/paper/display/behavior/InteractionContext;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/display/behavior/InteractionContext;Ljava/util/UUID;Ldev/slne/surf/api/paper/display/element/Element;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/display/behavior/InteractionContext;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getElement ()Ldev/slne/surf/api/paper/display/element/Element;
+	public final fun getPixelX ()I
+	public final fun getPixelY ()I
+	public final fun getPlayerId ()Ljava/util/UUID;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/display/behavior/Scrollable : dev/slne/surf/api/paper/display/behavior/Behavior {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOnScroll ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class dev/slne/surf/api/paper/display/behavior/TooltipBehavior : dev/slne/surf/api/paper/display/behavior/Behavior {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getText ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/display/cursor/CursorStyle : java/lang/Enum {
+	public static final field CROSSHAIR Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field DEFAULT Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field GRAB Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field GRABBING Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field MOVE Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field NOT_ALLOWED Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field POINTER Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field RESIZE_HORIZONTAL Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field RESIZE_VERTICAL Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field TEXT Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static final field WAIT Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getTexturePath ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+}
+
+public final class dev/slne/surf/api/paper/display/document/Document {
+	public fun <init> (II)V
+	public final fun getHeight ()I
+	public final fun getRoot ()Ldev/slne/surf/api/paper/display/element/Div;
+	public final fun getWidth ()I
+	public final fun render ()Ldev/slne/surf/api/paper/display/render/Canvas;
+}
+
+public final class dev/slne/surf/api/paper/display/document/DocumentKt {
+	public static final fun document (IILkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/display/document/Document;
+}
+
+public final class dev/slne/surf/api/paper/display/element/Div : dev/slne/surf/api/paper/display/element/Element {
+	public fun <init> ()V
+	public final fun div (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/display/element/Div;
+	public static synthetic fun div$default (Ldev/slne/surf/api/paper/display/element/Div;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/display/element/Div;
+	public final fun image (Ldev/slne/surf/api/paper/display/render/Canvas;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/display/element/ImageElement;
+	public static synthetic fun image$default (Ldev/slne/surf/api/paper/display/element/Div;Ldev/slne/surf/api/paper/display/render/Canvas;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/display/element/ImageElement;
+	public final fun label (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/display/element/Label;
+	public static synthetic fun label$default (Ldev/slne/surf/api/paper/display/element/Div;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/display/element/Label;
+	public final fun shape (Ldev/slne/surf/api/paper/display/shape/Shape;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/display/element/ShapeElement;
+	public static synthetic fun shape$default (Ldev/slne/surf/api/paper/display/element/Div;Ldev/slne/surf/api/paper/display/shape/Shape;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/display/element/ShapeElement;
+}
+
+public abstract class dev/slne/surf/api/paper/display/element/Element {
+	public fun <init> ()V
+	public final fun behavior (Ldev/slne/surf/api/paper/display/behavior/Behavior;)Ldev/slne/surf/api/paper/display/behavior/Behavior;
+	public final fun clickable (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun clickable$default (Ldev/slne/surf/api/paper/display/element/Element;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun draggable (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun draggable$default (Ldev/slne/surf/api/paper/display/element/Element;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun getBehaviors ()Ljava/util/List;
+	public final fun getBounds ()Ldev/slne/surf/api/paper/display/element/Rect;
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getPhase ()Ldev/slne/surf/api/paper/display/behavior/ElementPhase;
+	public final fun getStyle ()Ldev/slne/surf/api/paper/display/style/Style;
+	public final fun hoverable (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun hoverable$default (Ldev/slne/surf/api/paper/display/element/Element;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun onClick (Lkotlin/jvm/functions/Function1;)V
+	public final fun onRightClick (Lkotlin/jvm/functions/Function1;)V
+	public final fun scrollable (Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun scrollable$default (Ldev/slne/surf/api/paper/display/element/Element;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun setBounds (Ldev/slne/surf/api/paper/display/element/Rect;)V
+	public final fun style (Lkotlin/jvm/functions/Function1;)V
+	public final fun tooltip (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/display/element/ImageElement : dev/slne/surf/api/paper/display/element/Element {
+	public fun <init> (Ldev/slne/surf/api/paper/display/render/Canvas;)V
+	public final fun getSource ()Ldev/slne/surf/api/paper/display/render/Canvas;
+}
+
+public final class dev/slne/surf/api/paper/display/element/Label : dev/slne/surf/api/paper/display/element/Element {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getText ()Ljava/lang/String;
+	public final fun setText (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/paper/display/element/Rect {
+	public fun <init> ()V
+	public fun <init> (IIII)V
+	public synthetic fun <init> (IIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHeight ()I
+	public final fun getWidth ()I
+	public final fun getX ()I
+	public final fun getY ()I
+	public final fun setHeight (I)V
+	public final fun setWidth (I)V
+	public final fun setX (I)V
+	public final fun setY (I)V
+}
+
+public final class dev/slne/surf/api/paper/display/element/ShapeElement : dev/slne/surf/api/paper/display/element/Element {
+	public fun <init> (Ldev/slne/surf/api/paper/display/shape/Shape;)V
+	public final fun getShape ()Ldev/slne/surf/api/paper/display/shape/Shape;
+}
+
+public final class dev/slne/surf/api/paper/display/render/Canvas {
+	public static final field Companion Ldev/slne/surf/api/paper/display/render/Canvas$Companion;
+	public fun <init> (II)V
+	public final fun blend (Ldev/slne/surf/api/paper/display/render/Canvas;II)V
+	public final fun drawRect (IIIIII)V
+	public static synthetic fun drawRect$default (Ldev/slne/surf/api/paper/display/render/Canvas;IIIIIIILjava/lang/Object;)V
+	public final fun fill (I)V
+	public final fun fillRect (IIIII)V
+	public final fun fillRectBlended (IIIII)V
+	public final fun getHeight ()I
+	public final fun getPixel (II)I
+	public final fun getPixels ()[I
+	public final fun getWidth ()I
+	public final fun place (Ldev/slne/surf/api/paper/display/render/Canvas;II)V
+	public final fun popClip ()V
+	public final fun pushClip (IIII)V
+	public final fun setPixel (III)V
+	public final fun setPixelUnclipped (III)V
+	public final fun toMapColors (II)[B
+}
+
+public final class dev/slne/surf/api/paper/display/render/Canvas$Companion {
+	public final fun alphaBlend (II)I
+}
+
+public final class dev/slne/surf/api/paper/display/render/Renderer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/display/render/Renderer;
+	public final fun render (Ldev/slne/surf/api/paper/display/element/Element;Ldev/slne/surf/api/paper/display/render/Canvas;)V
+}
+
+public final class dev/slne/surf/api/paper/display/shape/CircleShape : dev/slne/surf/api/paper/display/shape/Shape {
+	public fun <init> (IZ)V
+	public synthetic fun <init> (IZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFilled ()Z
+	public fun getHeight ()I
+	public final fun getRadius ()I
+	public fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public fun rasterize ()Ljava/util/BitSet;
+}
+
+public final class dev/slne/surf/api/paper/display/shape/EllipseShape : dev/slne/surf/api/paper/display/shape/Shape {
+	public fun <init> (IIZ)V
+	public synthetic fun <init> (IIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFilled ()Z
+	public fun getHeight ()I
+	public final fun getRadiusX ()I
+	public final fun getRadiusY ()I
+	public fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public fun rasterize ()Ljava/util/BitSet;
+}
+
+public final class dev/slne/surf/api/paper/display/shape/LineShape : dev/slne/surf/api/paper/display/shape/Shape {
+	public fun <init> (III)V
+	public synthetic fun <init> (IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDx ()I
+	public final fun getDy ()I
+	public fun getHeight ()I
+	public final fun getThickness ()I
+	public fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public fun rasterize ()Ljava/util/BitSet;
+}
+
+public final class dev/slne/surf/api/paper/display/shape/PolygonShape : dev/slne/surf/api/paper/display/shape/Shape {
+	public fun <init> (Ljava/util/List;Z)V
+	public synthetic fun <init> (Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFilled ()Z
+	public fun getHeight ()I
+	public final fun getVertices ()Ljava/util/List;
+	public fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public fun rasterize ()Ljava/util/BitSet;
+}
+
+public final class dev/slne/surf/api/paper/display/shape/RectangleShape : dev/slne/surf/api/paper/display/shape/Shape {
+	public fun <init> (IIZ)V
+	public synthetic fun <init> (IIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFilled ()Z
+	public fun getHeight ()I
+	public fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public fun rasterize ()Ljava/util/BitSet;
+}
+
+public final class dev/slne/surf/api/paper/display/shape/RoundedRectangleShape : dev/slne/surf/api/paper/display/shape/Shape {
+	public fun <init> (IIIZ)V
+	public synthetic fun <init> (IIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCornerRadius ()I
+	public final fun getFilled ()Z
+	public fun getHeight ()I
+	public fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public fun rasterize ()Ljava/util/BitSet;
+}
+
+public abstract interface class dev/slne/surf/api/paper/display/shape/Shape {
+	public static final field Companion Ldev/slne/surf/api/paper/display/shape/Shape$Companion;
+	public abstract fun getHeight ()I
+	public abstract fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public abstract fun rasterize ()Ljava/util/BitSet;
+}
+
+public final class dev/slne/surf/api/paper/display/shape/Shape$Companion {
+	public final fun circle (IZ)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public static synthetic fun circle$default (Ldev/slne/surf/api/paper/display/shape/Shape$Companion;IZILjava/lang/Object;)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public final fun ellipse (IIZ)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public static synthetic fun ellipse$default (Ldev/slne/surf/api/paper/display/shape/Shape$Companion;IIZILjava/lang/Object;)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public final fun line (III)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public static synthetic fun line$default (Ldev/slne/surf/api/paper/display/shape/Shape$Companion;IIIILjava/lang/Object;)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public final fun polygon ([Lkotlin/Pair;Z)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public static synthetic fun polygon$default (Ldev/slne/surf/api/paper/display/shape/Shape$Companion;[Lkotlin/Pair;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public final fun rectangle (IIZ)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public static synthetic fun rectangle$default (Ldev/slne/surf/api/paper/display/shape/Shape$Companion;IIZILjava/lang/Object;)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public final fun roundedRectangle (IIIZ)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public static synthetic fun roundedRectangle$default (Ldev/slne/surf/api/paper/display/shape/Shape$Companion;IIIZILjava/lang/Object;)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public final fun triangle (IIZ)Ldev/slne/surf/api/paper/display/shape/Shape;
+	public static synthetic fun triangle$default (Ldev/slne/surf/api/paper/display/shape/Shape$Companion;IIZILjava/lang/Object;)Ldev/slne/surf/api/paper/display/shape/Shape;
+}
+
+public final class dev/slne/surf/api/paper/display/shape/Shape$DefaultImpls {
+	public static fun paint (Ldev/slne/surf/api/paper/display/shape/Shape;Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+}
+
+public final class dev/slne/surf/api/paper/display/shape/TriangleShape : dev/slne/surf/api/paper/display/shape/Shape {
+	public fun <init> (IIZ)V
+	public synthetic fun <init> (IIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFilled ()Z
+	public fun getHeight ()I
+	public fun getWidth ()I
+	public fun paint (Ldev/slne/surf/api/paper/display/render/Canvas;III)V
+	public fun rasterize ()Ljava/util/BitSet;
+}
+
+public final class dev/slne/surf/api/paper/display/style/AlignItems : java/lang/Enum {
+	public static final field CENTER Ldev/slne/surf/api/paper/display/style/AlignItems;
+	public static final field END Ldev/slne/surf/api/paper/display/style/AlignItems;
+	public static final field START Ldev/slne/surf/api/paper/display/style/AlignItems;
+	public static final field STRETCH Ldev/slne/surf/api/paper/display/style/AlignItems;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/style/AlignItems;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/style/AlignItems;
+}
+
+public final class dev/slne/surf/api/paper/display/style/Border {
+	public fun <init> ()V
+	public fun <init> (II)V
+	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Ldev/slne/surf/api/paper/display/style/Border;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/display/style/Border;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/display/style/Border;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()I
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/display/style/FlexDirection : java/lang/Enum {
+	public static final field COLUMN Ldev/slne/surf/api/paper/display/style/FlexDirection;
+	public static final field ROW Ldev/slne/surf/api/paper/display/style/FlexDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/style/FlexDirection;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/style/FlexDirection;
+}
+
+public final class dev/slne/surf/api/paper/display/style/Insets {
+	public static final field Companion Ldev/slne/surf/api/paper/display/style/Insets$Companion;
+	public fun <init> ()V
+	public fun <init> (IIII)V
+	public synthetic fun <init> (IIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (IIII)Ldev/slne/surf/api/paper/display/style/Insets;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/display/style/Insets;IIIIILjava/lang/Object;)Ldev/slne/surf/api/paper/display/style/Insets;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()I
+	public final fun getHorizontal ()I
+	public final fun getLeft ()I
+	public final fun getRight ()I
+	public final fun getTop ()I
+	public final fun getVertical ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/display/style/Insets$Companion {
+	public final fun all (I)Ldev/slne/surf/api/paper/display/style/Insets;
+	public final fun getZERO ()Ldev/slne/surf/api/paper/display/style/Insets;
+	public final fun horizontal (I)Ldev/slne/surf/api/paper/display/style/Insets;
+	public final fun symmetric (II)Ldev/slne/surf/api/paper/display/style/Insets;
+	public final fun vertical (I)Ldev/slne/surf/api/paper/display/style/Insets;
+}
+
+public final class dev/slne/surf/api/paper/display/style/JustifyContent : java/lang/Enum {
+	public static final field CENTER Ldev/slne/surf/api/paper/display/style/JustifyContent;
+	public static final field END Ldev/slne/surf/api/paper/display/style/JustifyContent;
+	public static final field SPACE_AROUND Ldev/slne/surf/api/paper/display/style/JustifyContent;
+	public static final field SPACE_BETWEEN Ldev/slne/surf/api/paper/display/style/JustifyContent;
+	public static final field START Ldev/slne/surf/api/paper/display/style/JustifyContent;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/style/JustifyContent;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/style/JustifyContent;
+}
+
+public final class dev/slne/surf/api/paper/display/style/Overflow : java/lang/Enum {
+	public static final field HIDDEN Ldev/slne/surf/api/paper/display/style/Overflow;
+	public static final field VISIBLE Ldev/slne/surf/api/paper/display/style/Overflow;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/style/Overflow;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/style/Overflow;
+}
+
+public final class dev/slne/surf/api/paper/display/style/Style {
+	public fun <init> ()V
+	public final fun getAlignItems ()Ldev/slne/surf/api/paper/display/style/AlignItems;
+	public final fun getBackgroundColor ()Ljava/lang/Integer;
+	public final fun getBorder ()Ldev/slne/surf/api/paper/display/style/Border;
+	public final fun getBorderRadius ()I
+	public final fun getColor ()I
+	public final fun getCursor ()Ldev/slne/surf/api/paper/display/cursor/CursorStyle;
+	public final fun getFlexDirection ()Ldev/slne/surf/api/paper/display/style/FlexDirection;
+	public final fun getFontSize ()I
+	public final fun getGap ()I
+	public final fun getHeight ()Ljava/lang/Integer;
+	public final fun getJustifyContent ()Ldev/slne/surf/api/paper/display/style/JustifyContent;
+	public final fun getMargin ()Ldev/slne/surf/api/paper/display/style/Insets;
+	public final fun getOpacity ()F
+	public final fun getOverflow ()Ldev/slne/surf/api/paper/display/style/Overflow;
+	public final fun getPadding ()Ldev/slne/surf/api/paper/display/style/Insets;
+	public final fun getTextAlign ()Ldev/slne/surf/api/paper/display/style/TextAlign;
+	public final fun getVerticalAlign ()Ldev/slne/surf/api/paper/display/style/VerticalAlign;
+	public final fun getVisible ()Z
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun setAlignItems (Ldev/slne/surf/api/paper/display/style/AlignItems;)V
+	public final fun setBackgroundColor (Ljava/lang/Integer;)V
+	public final fun setBorder (Ldev/slne/surf/api/paper/display/style/Border;)V
+	public final fun setBorderRadius (I)V
+	public final fun setColor (I)V
+	public final fun setCursor (Ldev/slne/surf/api/paper/display/cursor/CursorStyle;)V
+	public final fun setFlexDirection (Ldev/slne/surf/api/paper/display/style/FlexDirection;)V
+	public final fun setFontSize (I)V
+	public final fun setGap (I)V
+	public final fun setHeight (Ljava/lang/Integer;)V
+	public final fun setJustifyContent (Ldev/slne/surf/api/paper/display/style/JustifyContent;)V
+	public final fun setMargin (Ldev/slne/surf/api/paper/display/style/Insets;)V
+	public final fun setOpacity (F)V
+	public final fun setOverflow (Ldev/slne/surf/api/paper/display/style/Overflow;)V
+	public final fun setPadding (Ldev/slne/surf/api/paper/display/style/Insets;)V
+	public final fun setTextAlign (Ldev/slne/surf/api/paper/display/style/TextAlign;)V
+	public final fun setVerticalAlign (Ldev/slne/surf/api/paper/display/style/VerticalAlign;)V
+	public final fun setVisible (Z)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+}
+
+public final class dev/slne/surf/api/paper/display/style/TextAlign : java/lang/Enum {
+	public static final field CENTER Ldev/slne/surf/api/paper/display/style/TextAlign;
+	public static final field LEFT Ldev/slne/surf/api/paper/display/style/TextAlign;
+	public static final field RIGHT Ldev/slne/surf/api/paper/display/style/TextAlign;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/style/TextAlign;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/style/TextAlign;
+}
+
+public final class dev/slne/surf/api/paper/display/style/VerticalAlign : java/lang/Enum {
+	public static final field BOTTOM Ldev/slne/surf/api/paper/display/style/VerticalAlign;
+	public static final field CENTER Ldev/slne/surf/api/paper/display/style/VerticalAlign;
+	public static final field TOP Ldev/slne/surf/api/paper/display/style/VerticalAlign;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/display/style/VerticalAlign;
+	public static fun values ()[Ldev/slne/surf/api/paper/display/style/VerticalAlign;
+}
+
 public final class dev/slne/surf/api/paper/event/Listener_extensionKt {
 	public static final fun cancel (Lorg/bukkit/event/Cancellable;)V
 	public static final fun listen (Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/event/SingleListener;

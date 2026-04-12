@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.server
 
 import dev.slne.surf.api.core.server.CoreInstance
 import dev.slne.surf.api.paper.SurfApiPaper
+import dev.slne.surf.api.paper.server.display.DisplayLoader
 import dev.slne.surf.api.paper.server.impl.SurfApiPaperImpl
 import dev.slne.surf.api.paper.server.inventory.framework.InventoryLoader
 import dev.slne.surf.api.paper.server.listener.ListenerManager
@@ -22,6 +23,7 @@ object PaperInstance : CoreInstance() {
         super.onEnable()
 
         PacketApiLoader.onEnable()
+        DisplayLoader.onEnable()
         InventoryLoader.enable()
         ListenerManager.registerListeners()
         (SurfApiPaper.INSTANCE as SurfApiPaperImpl).onEnable()
@@ -30,6 +32,7 @@ object PaperInstance : CoreInstance() {
     override suspend fun onDisable() {
         super.onDisable()
 
+        DisplayLoader.onDisable()
         ListenerManager.unregisterListeners()
         PacketApiLoader.onDisable()
         InventoryLoader.disable()
