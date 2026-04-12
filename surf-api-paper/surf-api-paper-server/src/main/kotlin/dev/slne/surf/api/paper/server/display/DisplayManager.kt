@@ -4,6 +4,12 @@ import dev.slne.surf.api.paper.server.display.user.DisplayUser
 import org.bukkit.entity.Player
 import java.util.*
 
+/**
+ * Manages active display sessions for players.
+ *
+ * Maintains a registry of active [Display] instances per player UUID.
+ * Provides methods to open, close, and query displays.
+ */
 object DisplayManager {
     private val activeDisplays = mutableMapOf<UUID, Display>()
 

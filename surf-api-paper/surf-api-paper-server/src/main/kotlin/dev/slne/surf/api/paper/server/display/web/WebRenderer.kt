@@ -17,6 +17,17 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 
+/**
+ * Renders a web page (HTML/CSS/JS) offscreen using JavaFX WebView
+ * and provides the result as a [Canvas] for the map display system.
+ *
+ * The WebView renders internally at [renderWidth]×[renderHeight] (default 1280×720),
+ * then the snapshot is downscaled to [width]×[height] (the map display size) for
+ * readable text and properly fitting content.
+ *
+ * Mouse coordinates from the display are automatically scaled to the render
+ * resolution before being forwarded to the WebView.
+ */
 class WebRenderer(
     val width: Int,
     val height: Int,

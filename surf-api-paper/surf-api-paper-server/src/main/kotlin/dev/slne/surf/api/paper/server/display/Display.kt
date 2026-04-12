@@ -22,6 +22,25 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
+/**
+ * A display that renders a [Document] as a wall of map item frames in front of the player.
+ *
+ * The display is placed as a vertical wall at a fixed distance in front of the camera,
+ * oriented based on the player's cardinal facing direction. The player's yaw/pitch rotation
+ * maps to cursor position on the display.
+ *
+ * Features a software-rendered cursor that is drawn directly on the map tiles,
+ * eliminating the need for a resource pack.
+ *
+ * Supports a modal overlay system for dialogs and confirmations.
+ *
+ * Usage:
+ * ```kotlin
+ * val doc = document(384, 256) { ... }
+ * val display = Display(doc)
+ * DisplayManager.open(player, display)
+ * ```
+ */
 class Display(
     val document: Document,
 ) {

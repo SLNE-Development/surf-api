@@ -7,6 +7,15 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 
+/**
+ * Manages the JavaFX platform lifecycle for the display web rendering system.
+ *
+ * Extracts native libraries from the shadow JAR to a temp directory
+ * so JavaFX can load them, then starts the platform using the native
+ * Glass backend with software rendering (no GPU required on servers).
+ *
+ * Safe to call multiple times — only the first call has effect.
+ */
 object JavaFxPlatform {
     private val initialized = AtomicBoolean(false)
     private val logger = Logger.getLogger("SurfDisplay-JavaFX")

@@ -23,6 +23,15 @@ import org.bukkit.GameMode
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Manages a display session for a player.
+ *
+ * A session mounts the player on an invisible horse for yaw/pitch cursor tracking,
+ * creates a fake player entity as a camera, and applies visual effects (invisibility,
+ * empty inventory) to create a clean display viewing experience.
+ *
+ * Lifecycle: [open] → player interacts with display → [close] restores original state.
+ */
 class DisplaySession(
     val user: DisplayUser,
     private val centerYaw: Float = 0f,
