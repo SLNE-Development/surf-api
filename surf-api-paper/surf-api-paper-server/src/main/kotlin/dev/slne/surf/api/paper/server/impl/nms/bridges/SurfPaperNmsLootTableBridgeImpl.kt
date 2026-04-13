@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.util.emptyObjectList
 import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
@@ -18,7 +17,6 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.inventory.ItemStack
 import kotlin.jvm.optionals.getOrNull
 
-@AutoService(SurfPaperNmsLootTableBridge::class)
 @NmsUseWithCaution
 class SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
     override fun getDifferentLootTable(

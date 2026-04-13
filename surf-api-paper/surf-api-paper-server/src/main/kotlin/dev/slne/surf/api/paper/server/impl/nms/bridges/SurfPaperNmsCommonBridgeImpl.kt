@@ -1,7 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges
 
-import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.dialog.noticeDialogWithBuilder
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
@@ -21,11 +19,9 @@ import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
 import java.net.InetSocketAddress
 
-@AutoService(SurfPaperNmsCommonBridge::class)
 @NmsUseWithCaution
 class SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     init {
-        checkInstantiationByServiceLoader()
     }
 
     @Suppress("DEPRECATION")

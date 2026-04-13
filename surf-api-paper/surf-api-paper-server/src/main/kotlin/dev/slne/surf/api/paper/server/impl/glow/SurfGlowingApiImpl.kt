@@ -2,7 +2,6 @@ package dev.slne.surf.api.paper.server.impl.glow
 
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
@@ -24,7 +23,6 @@ import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-@AutoService(SurfGlowingApi::class)
 class SurfGlowingApiImpl : SurfGlowingApi {
 
     @OptIn(NmsUseWithCaution::class)

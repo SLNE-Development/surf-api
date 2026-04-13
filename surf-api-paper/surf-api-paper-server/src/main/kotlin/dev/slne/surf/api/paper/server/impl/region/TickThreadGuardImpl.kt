@@ -1,8 +1,6 @@
 package dev.slne.surf.api.paper.server.impl.region
 
 import ca.spottedleaf.moonrise.common.util.TickThread
-import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.paper.server.nms.toNms
 import dev.slne.surf.api.paper.util.chunkX
@@ -15,10 +13,8 @@ import org.bukkit.entity.Entity
 import org.bukkit.util.BoundingBox
 
 @Suppress("UnstableApiUsage")
-@AutoService(TickThreadGuard::class)
 class TickThreadGuardImpl : TickThreadGuard {
     init {
-        checkInstantiationByServiceLoader()
     }
 
     override fun ensureTickThread(world: World, pos: Position, reason: String) {

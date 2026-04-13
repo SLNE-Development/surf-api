@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges.packets.player
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.player.LastSeenMessagesPacked
@@ -20,7 +19,6 @@ import java.util.*
 import net.minecraft.network.chat.MessageSignature as NmsMessageSignature
 
 @NmsUseWithCaution
-@AutoService(SurfPaperNmsPlayerChatPackets::class)
 class SurfPaperNmsPlayerChatPacketsImpl : SurfPaperNmsPlayerChatPackets {
     override fun sendPlayerChatMessagePacket(
         senderUuid: UUID,

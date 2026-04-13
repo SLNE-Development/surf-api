@@ -1,10 +1,8 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges
 
 import ca.spottedleaf.moonrise.common.util.TickThread
-import com.google.auto.service.AutoService
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsEntityBridge
 import dev.slne.surf.api.paper.server.nms.AdventureNBT
@@ -20,10 +18,8 @@ import org.bukkit.World
 import org.bukkit.entity.EntityType
 
 @NmsUseWithCaution
-@AutoService(SurfPaperNmsEntityBridge::class)
 class SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
     init {
-        checkInstantiationByServiceLoader()
     }
 
     @Suppress("UnstableApiUsage")

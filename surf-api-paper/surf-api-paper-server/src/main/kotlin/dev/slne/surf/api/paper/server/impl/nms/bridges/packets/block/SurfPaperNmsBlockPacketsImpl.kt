@@ -2,8 +2,6 @@
 
 package dev.slne.surf.api.paper.server.impl.nms.bridges.packets.block
 
-import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.block.SurfPaperNmsBlockPackets
 import dev.slne.surf.api.paper.server.impl.nms.bridges.packets.PacketOperationImpl
@@ -12,11 +10,9 @@ import io.papermc.paper.math.BlockPosition
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket
 import org.bukkit.block.data.BlockData
 
-@AutoService(SurfPaperNmsBlockPackets::class)
 @NmsUseWithCaution
 class SurfPaperNmsBlockPacketsImpl : SurfPaperNmsBlockPackets {
     init {
-        checkInstantiationByServiceLoader()
     }
 
     override fun updateBlockData(position: BlockPosition, blockData: BlockData) =

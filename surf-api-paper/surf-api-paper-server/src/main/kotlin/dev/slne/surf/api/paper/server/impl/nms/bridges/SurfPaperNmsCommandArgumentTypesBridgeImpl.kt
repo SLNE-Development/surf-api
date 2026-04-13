@@ -1,10 +1,8 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges
 
-import com.google.auto.service.AutoService
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.CommandSyntaxException
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommandArgumentTypesBridge
 import dev.slne.surf.api.paper.server.nms.AdventureNBT
@@ -21,10 +19,8 @@ import java.lang.reflect.InvocationHandler
 import java.util.concurrent.ConcurrentHashMap
 
 @NmsUseWithCaution
-@AutoService(SurfPaperNmsCommandArgumentTypesBridge::class)
 class SurfPaperNmsCommandArgumentTypesBridgeImpl : SurfPaperNmsCommandArgumentTypesBridge {
     init {
-        checkInstantiationByServiceLoader()
     }
 
     override fun compoundTag(): ArgumentType<*> {

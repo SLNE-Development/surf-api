@@ -2,8 +2,6 @@
 
 package dev.slne.surf.api.paper.server.impl.nms.bridges.packets.player
 
-import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.server.impl.nms.bridges.packets.PacketOperationImpl
@@ -17,11 +15,9 @@ import net.minecraft.network.protocol.game.ClientboundOpenSignEditorPacket
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 
-@AutoService(SurfPaperNmsPlayerPackets::class)
 @NmsUseWithCaution
 class SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
     init {
-        checkInstantiationByServiceLoader()
     }
 
     override fun openSignEditor(

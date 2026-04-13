@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges.packets.player
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.toast.Toast
@@ -16,7 +15,6 @@ import java.util.*
 
 
 @NmsUseWithCaution
-@AutoService(SurfPaperNmsPlayerToastPackets::class)
 class SurfPaperNmsPlayerToastPacketsImpl : SurfPaperNmsPlayerToastPackets {
     override fun showToast(toast: Toast) = PacketOperationImpl.complex { _, packets ->
         val id = Identifier.fromNamespaceAndPath("surfapi", "toast_${UUID.randomUUID()}")

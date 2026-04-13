@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges.packets.entity
 
-import com.google.auto.service.AutoService
 import com.google.common.flogger.StackSize
 import com.mojang.math.Transformation
 import dev.slne.surf.api.core.util.logger
@@ -29,7 +28,6 @@ import kotlin.experimental.inv
 import kotlin.experimental.or
 
 @Suppress("UnstableApiUsage")
-@AutoService(SurfPaperNmsSpawnPackets::class)
 @NmsUseWithCaution
 class SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
     private val log = logger()

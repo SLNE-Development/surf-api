@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsNbtBridge
@@ -15,7 +14,6 @@ import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
 import kotlin.jvm.optionals.getOrNull
 
-@AutoService(SurfPaperNmsNbtBridge::class)
 @NmsUseWithCaution
 class SurfPaperNmsNbtBridgeImpl : SurfPaperNmsNbtBridge {
 

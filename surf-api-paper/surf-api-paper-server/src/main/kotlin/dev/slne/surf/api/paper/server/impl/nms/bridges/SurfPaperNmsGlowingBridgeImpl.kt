@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.nms.bridges
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsGlowingBridge
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
@@ -15,7 +14,6 @@ import net.minecraft.network.syncher.SynchedEntityData.DataValue
 import org.bukkit.entity.Entity
 
 @NmsUseWithCaution
-@AutoService(SurfPaperNmsGlowingBridge::class)
 class SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
     fun createTeam(data: TeamData): PacketOperation =
         PacketOperationImpl.simple {
