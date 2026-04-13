@@ -10,9 +10,11 @@ import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPacke
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChatPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
+import dev.slne.surf.api.paper.nms.common.GlowingLifecycleHandler
 import dev.slne.surf.api.paper.nms.common.NmsPacketBridgeHandler
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.NmsVersion
+import dev.slne.surf.api.paper.nms.common.PacketLoreRegistry
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
 
@@ -77,6 +79,12 @@ class V1_21_11NmsProvider : NmsProvider {
 
     override fun createPacketBridgeHandler(): NmsPacketBridgeHandler =
         TODO("Implement NmsPacketBridgeHandler for 1.21.11")
+
+    override fun createPacketLoreRegistry(): PacketLoreRegistry =
+        TODO("Implement PacketLoreRegistry for 1.21.11")
+
+    override fun createGlowingLifecycleHandler(): GlowingLifecycleHandler =
+        TODO("Implement GlowingLifecycleHandler for 1.21.11")
 
     override fun createGlowingApi(): SurfGlowingApi =
         TODO("Implement SurfGlowingApi for 1.21.11")

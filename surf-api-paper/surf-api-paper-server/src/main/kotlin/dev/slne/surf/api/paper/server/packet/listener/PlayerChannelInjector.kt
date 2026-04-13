@@ -10,10 +10,11 @@ import dev.slne.surf.api.core.reflection.createProxy
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
+import dev.slne.surf.api.paper.nms.common.NmsPacketBridgeHandler
+import dev.slne.surf.api.paper.nms.common.NmsProvider
+import dev.slne.surf.api.paper.nms.listener.packets.NmsPacket
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 import dev.slne.surf.api.paper.server.impl.nms.SurfPaperNmsBridgeImpl
-import dev.slne.surf.api.paper.server.impl.nms.listener.packets.NmsPacketImpl
-import dev.slne.surf.api.paper.server.impl.nms.listener.packets.PacketRegistry
 import dev.slne.surf.api.paper.server.impl.packet.listener.SurfPaperPacketListenerApiImpl
 import dev.slne.surf.api.paper.server.nms.toNms
 import dev.slne.surf.api.paper.server.plugin
@@ -127,6 +128,8 @@ object PlayerChannelInjector : Listener {
         private val bridge = SurfPaperNmsBridge.INSTANCE as SurfPaperNmsBridgeImpl
         private val packetListenerApi =
             SurfPaperPacketListenerApi.INSTANCE as SurfPaperPacketListenerApiImpl
+        private val packetBridgeHandler: NmsPacketBridgeHandler =
+            NmsProvider.current.createPacketBridgeHandler()
 
         @Volatile
         var connection: Connection? = null
@@ -192,7 +195,7 @@ object PlayerChannelInjector : Listener {
             serverPlayer: ServerPlayer?,
             packet: Packet<*>,
         ): Packet<*>? {
-            val apiPacket = PacketRegistry.createServerboundPacketOrNull(packet)
+            val apiPacket = packetBridgeHandler.wrapServerboundPacket(packet)
 
             if (apiPacket != null) { // we have an api packet wrapper for this packet
                 val resultApi = this.bridge.handleServerboundPacket(
@@ -201,7 +204,7 @@ object PlayerChannelInjector : Listener {
                 )
 
                 if (resultApi != null) { // we may have a modified packet
-                    return NmsPacketImpl.getFromApi(resultApi).nmsPacket
+                    return packetBridgeHandler.unwrapPacket(resultApi) as Packet<*>
                 }
             } else {
                 return packet // no api packet wrapper, so we just return the original packet
@@ -214,7 +217,7 @@ object PlayerChannelInjector : Listener {
             serverPlayer: ServerPlayer?,
             packet: Packet<*>,
         ): Packet<*>? {
-            val apiPacket = PacketRegistry.createClientboundPacketOrNull(packet)
+            val apiPacket = packetBridgeHandler.wrapClientboundPacket(packet)
 
             if (apiPacket != null) {
                 val resultApi = this.bridge.handleClientboundPacket(
@@ -223,7 +226,7 @@ object PlayerChannelInjector : Listener {
                 )
 
                 if (resultApi != null) {
-                    return NmsPacketImpl.getFromApi(resultApi).nmsPacket
+                    return packetBridgeHandler.unwrapPacket(resultApi) as Packet<*>
                 }
             } else {
                 return packet

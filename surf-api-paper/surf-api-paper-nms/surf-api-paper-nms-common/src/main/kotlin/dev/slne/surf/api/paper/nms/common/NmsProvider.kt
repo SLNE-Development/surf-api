@@ -52,6 +52,16 @@ interface NmsProvider {
      */
     fun createPacketBridgeHandler(): NmsPacketBridgeHandler
 
+    /**
+     * Creates the packet lore registry for managing version-specific lore handlers.
+     */
+    fun createPacketLoreRegistry(): PacketLoreRegistry
+
+    /**
+     * Creates the glowing lifecycle handler for event-driven glowing management.
+     */
+    fun createGlowingLifecycleHandler(): GlowingLifecycleHandler
+
     // ==================== Glowing API ==================== //
 
     /**

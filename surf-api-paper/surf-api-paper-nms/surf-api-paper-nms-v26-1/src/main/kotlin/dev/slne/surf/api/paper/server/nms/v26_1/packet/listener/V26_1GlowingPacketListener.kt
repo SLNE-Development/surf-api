@@ -7,7 +7,7 @@ import dev.slne.surf.api.core.util.toMutableObjectList
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
-import dev.slne.surf.api.paper.server.impl.glow.SurfGlowingApiImpl
+import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1SurfGlowingApiImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
 import glm_.or
 import net.minecraft.network.protocol.Packet
@@ -60,7 +60,7 @@ object V26_1GlowingPacketListener : PacketListener {
             return packet
         }
 
-        val playerData = SurfGlowingApiImpl.getEntityPlayerData(player) ?: return packet
+        val playerData = V26_1SurfGlowingApiImpl.getEntityPlayerData(player) ?: return packet
         val glowingData = playerData.entities.get(packet.id) ?: return packet
         val incoming = packet.packedItems
         var flagsFound = false
@@ -74,7 +74,7 @@ object V26_1GlowingPacketListener : PacketListener {
                 flagsFound = true
                 val current = dataValue.value as Byte
                 glowingData.otherFlags = current
-                val withGlow: Byte = current or SurfGlowingApiImpl.glowingFlag
+                val withGlow: Byte = current or V26_1SurfGlowingApiImpl.glowingFlag
 
                 if (withGlow != current) {
                     edited = true
@@ -88,7 +88,7 @@ object V26_1GlowingPacketListener : PacketListener {
         }
 
         if (!edited && !flagsFound) {
-            val withGlow = glowingData.otherFlags or SurfGlowingApiImpl.glowingFlag
+            val withGlow = glowingData.otherFlags or V26_1SurfGlowingApiImpl.glowingFlag
             if (withGlow != 0.toByte()) {
                 edited = true
                 newItems.add(DataValue(dataFlagsSharedId, dataFlagsShared.serializer, withGlow))

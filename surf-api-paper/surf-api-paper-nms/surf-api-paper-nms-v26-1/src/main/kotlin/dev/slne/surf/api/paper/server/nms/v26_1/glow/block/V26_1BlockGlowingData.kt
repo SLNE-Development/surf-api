@@ -4,10 +4,9 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPackets
-import dev.slne.surf.api.paper.server.impl.glow.SurfGlowingApiImpl
-import dev.slne.surf.api.paper.server.impl.glow.block.BlockPlayerData
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.V26_1SurfPaperNmsGlowingBridgeImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.V26_1PacketOperationImpl
+import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1SurfGlowingApiImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
 import glm_.shl
 import net.kyori.adventure.text.format.NamedTextColor
@@ -55,7 +54,7 @@ class V26_1BlockGlowingData(
 
     fun updateColor() {
         val player = playerData.player ?: return
-        SurfGlowingApiImpl.INSTANCE.makeGlowing(
+        V26_1SurfGlowingApiImpl.INSTANCE.makeGlowing(
             entityId,
             uuid.toString(),
             player,
@@ -66,7 +65,7 @@ class V26_1BlockGlowingData(
 
     fun remove() {
         playerData.player?.let { SurfPaperNmsSpawnPackets.despawn(entityId).execute(it) }
-        SurfGlowingApiImpl.INSTANCE.removeGlowing(entityId, playerData.uuid)
+        V26_1SurfGlowingApiImpl.INSTANCE.removeGlowing(entityId, playerData.uuid)
     }
 
     private fun initialize() {

@@ -6,14 +6,12 @@ import dev.slne.surf.api.paper.server.impl.SurfApiPaperImpl
 import dev.slne.surf.api.paper.server.inventory.framework.InventoryLoader
 import dev.slne.surf.api.paper.server.listener.ListenerManager
 import dev.slne.surf.api.paper.server.packet.PacketApiLoader
-import dev.slne.surf.api.paper.server.reflection.Reflection
 
 object PaperInstance : CoreInstance() {
 
     override suspend fun onLoad() {
         super.onLoad()
 
-        initObjects()
         PacketApiLoader.onLoad()
         InventoryLoader.load()
     }
@@ -33,9 +31,5 @@ object PaperInstance : CoreInstance() {
         ListenerManager.unregisterListeners()
         PacketApiLoader.onDisable()
         InventoryLoader.disable()
-    }
-
-    private fun initObjects() {
-        Reflection
     }
 }

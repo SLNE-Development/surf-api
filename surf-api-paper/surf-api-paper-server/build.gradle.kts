@@ -18,8 +18,12 @@ kotlin {
 dependencies {
     api(projects.surfApiPaper.surfApiPaper)
     api(projects.surfApiCore.surfApiCoreServer)
+    api(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsCommon)
 
     paperweight.paperDevBundle(libs.paper.api.get().version)
+
+    // Version-specific NMS modules (runtime only - loaded via ServiceLoader)
+    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV261)
 
     compileOnly(libs.placeholder.api)
 

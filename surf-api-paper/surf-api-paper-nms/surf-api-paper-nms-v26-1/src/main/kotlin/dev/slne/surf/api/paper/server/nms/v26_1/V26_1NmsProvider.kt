@@ -10,9 +10,11 @@ import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPacke
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChatPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
+import dev.slne.surf.api.paper.nms.common.GlowingLifecycleHandler
 import dev.slne.surf.api.paper.nms.common.NmsPacketBridgeHandler
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.NmsVersion
+import dev.slne.surf.api.paper.nms.common.PacketLoreRegistry
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.*
@@ -22,9 +24,11 @@ import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.entity.V26_1Surf
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.player.V26_1SurfPaperNmsPlayerChatPacketsImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.player.V26_1SurfPaperNmsPlayerPacketsImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.player.V26_1SurfPaperNmsPlayerToastPacketsImpl
+import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1GlowingLifecycleHandler
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1SurfGlowingApiImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.packet.listener.V26_1GlowingPacketListener
 import dev.slne.surf.api.paper.server.nms.v26_1.packet.lore.V26_1PacketLoreListener
+import dev.slne.surf.api.paper.server.nms.v26_1.packet.lore.V26_1PacketLoreRegistry
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
 import dev.slne.surf.api.paper.server.nms.v26_1.region.V26_1TickThreadGuard
 import org.bukkit.plugin.java.JavaPlugin
@@ -52,6 +56,8 @@ class V26_1NmsProvider : NmsProvider {
     override fun createPlayerToastPackets(): SurfPaperNmsPlayerToastPackets = V26_1SurfPaperNmsPlayerToastPacketsImpl()
     override fun createTickThreadGuard(): TickThreadGuard = V26_1TickThreadGuard()
     override fun createPacketBridgeHandler(): NmsPacketBridgeHandler = V26_1NmsPacketBridgeHandler()
+    override fun createPacketLoreRegistry(): PacketLoreRegistry = V26_1PacketLoreRegistry()
+    override fun createGlowingLifecycleHandler(): GlowingLifecycleHandler = V26_1GlowingLifecycleHandler()
 
     override fun createGlowingApi(): SurfGlowingApi {
         val plugin = JavaPlugin.getProvidingPlugin(V26_1NmsProvider::class.java) as JavaPlugin
