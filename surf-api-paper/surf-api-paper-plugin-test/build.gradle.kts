@@ -13,6 +13,7 @@ description = "surf-api-paper-plugin-test"
 
 dependencies {
     compileOnlyApi(projects.surfApiPaper.surfApiPaper)
+    compileOnlyApi(projects.surfApiPaper.surfApiPaperServer)
     compileOnlyApi(libs.commandapi.paper)
 
     paperweight.paperDevBundle(libs.paper.api.get().version)
