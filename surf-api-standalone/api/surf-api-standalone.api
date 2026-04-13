@@ -5,6 +5,10 @@ public final class dev/slne/surf/api/standalone/SurfApiStandaloneBootstrap {
 	public final fun shutdown (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class dev/slne/surf/api/standalone/impl/StandaloneSpongeConfigSerializers : dev/slne/surf/api/core/config/serializer/SpongeConfigSerializers {
+	public fun <init> ()V
+}
+
 public final class dev/slne/surf/api/standalone/impl/SurfStandaloneApiImpl : dev/slne/surf/api/core/server/impl/SurfApiCoreImpl {
 	public fun <init> ()V
 	public final fun getDataFolder ()Ljava/nio/file/Path;
