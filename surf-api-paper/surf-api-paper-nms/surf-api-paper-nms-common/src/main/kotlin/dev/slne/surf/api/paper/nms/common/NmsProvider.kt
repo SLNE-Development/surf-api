@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.nms.common
 
+import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
 import dev.slne.surf.api.paper.nms.bridges.*
 import dev.slne.surf.api.paper.nms.bridges.packets.SurfPaperNmsPacketBridges
@@ -43,6 +44,20 @@ interface NmsProvider {
     fun createPlayerChatPackets(): SurfPaperNmsPlayerChatPackets
     fun createPlayerToastPackets(): SurfPaperNmsPlayerToastPackets
     fun createTickThreadGuard(): TickThreadGuard
+
+    // ==================== Packet Bridge Handler ==================== //
+
+    /**
+     * Creates the packet bridge handler for wrapping/unwrapping NMS packets.
+     */
+    fun createPacketBridgeHandler(): NmsPacketBridgeHandler
+
+    // ==================== Glowing API ==================== //
+
+    /**
+     * Creates the version-specific glowing API implementation.
+     */
+    fun createGlowingApi(): SurfGlowingApi
 
     // ==================== Packet Listeners ==================== //
 
