@@ -74,8 +74,33 @@ class NmsTemplateGenerator(
             generated++
         }
 
+        // Generate META-INF/services file for ServiceLoader registration
+        generateServiceFile(repoRoot, target)
+
         println("Generated $generated files for ${target.versionId} in ${targetSourceRoot.toAbsolutePath()}")
         return generated
+    }
+
+    /**
+     * Generates the META-INF/services file for ServiceLoader registration.
+     * This ensures the NmsProvider implementation is discoverable at runtime,
+     * regardless of whether KSP annotation processing runs successfully.
+     */
+    private fun generateServiceFile(repoRoot: Path, target: NmsVersionConfig) {
+        val serviceDir = repoRoot.resolve(target.sourceModulePath)
+            .resolve("src/main/resources/META-INF/services")
+        serviceDir.createDirectories()
+
+        // Derive the provider class name from the reference module's NmsProvider
+        val referenceProviderPackage = "dev.slne.surf.api.paper.server.nms.$referenceVersionId"
+        val referenceProviderClass = "${referenceClassPrefix}NmsProvider"
+        val targetProviderPackage = "dev.slne.surf.api.paper.server.nms.${target.versionId}"
+        val targetProviderClass = "${target.classPrefix}NmsProvider"
+
+        val serviceFile = serviceDir.resolve("dev.slne.surf.api.paper.nms.common.NmsProvider")
+        serviceFile.writeText("$targetProviderPackage.$targetProviderClass\n")
+
+        println("Generated service file for ${target.versionId}: $targetProviderPackage.$targetProviderClass")
     }
 
     /**
