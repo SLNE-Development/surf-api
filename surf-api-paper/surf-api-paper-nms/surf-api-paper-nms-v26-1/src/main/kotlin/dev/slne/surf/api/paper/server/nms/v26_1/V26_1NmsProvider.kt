@@ -44,8 +44,11 @@ class V26_1NmsProvider : NmsProvider {
 
     override fun createItemBridge(): SurfPaperNmsItemBridge = V26_1SurfPaperNmsItemBridgeImpl()
     override fun createNbtBridge(): SurfPaperNmsNbtBridge = V26_1SurfPaperNmsNbtBridgeImpl()
-    override fun createGlowingBridge(): SurfPaperNmsGlowingBridge =
-        V26_1SurfPaperNmsGlowingBridgeImpl()
+    override fun createGlowingBridge(): SurfPaperNmsGlowingBridge {
+        val impl = V26_1SurfPaperNmsGlowingBridgeImpl()
+        V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE = impl
+        return impl
+    }
 
     override fun createStatsBridge(): SurfPaperNmsStatsBridge = V26_1SurfPaperNmsStatsBridgeImpl()
     override fun createLootTableBridge(): SurfPaperNmsLootTableBridge =
@@ -81,6 +84,7 @@ class V26_1NmsProvider : NmsProvider {
     override fun createGlowingApi(): SurfGlowingApi {
         val plugin = JavaPlugin.getProvidingPlugin(V26_1NmsProvider::class.java) as JavaPlugin
         val api = V26_1SurfGlowingApiImpl(plugin)
+        V26_1SurfGlowingApiImpl.INSTANCE = api
         glowingApi = api
         return api
     }

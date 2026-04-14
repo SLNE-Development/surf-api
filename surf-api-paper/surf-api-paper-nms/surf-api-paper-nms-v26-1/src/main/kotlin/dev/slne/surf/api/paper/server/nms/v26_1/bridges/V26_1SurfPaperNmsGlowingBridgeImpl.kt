@@ -55,6 +55,7 @@ class V26_1SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
     }
 
     companion object {
-        val INSTANCE get() = SurfPaperNmsGlowingBridge.INSTANCE as V26_1SurfPaperNmsGlowingBridgeImpl
+        lateinit var INSTANCE: V26_1SurfPaperNmsGlowingBridgeImpl
+            internal set
     }
 }
