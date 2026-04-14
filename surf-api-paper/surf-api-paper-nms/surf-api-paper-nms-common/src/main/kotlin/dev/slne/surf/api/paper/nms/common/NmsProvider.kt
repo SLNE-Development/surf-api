@@ -89,6 +89,8 @@ interface NmsProvider {
     fun shutdown()
 
     companion object {
+        private val log = dev.slne.surf.api.core.util.logger()
+
         /**
          * Loads the [NmsProvider] for the currently running Minecraft version.
          *
@@ -99,11 +101,22 @@ interface NmsProvider {
             val providers = java.util.ServiceLoader.load(
                 NmsProvider::class.java,
                 NmsProvider::class.java.classLoader
-            )
+            ).toList()
 
-            providers.firstOrNull { it.version == version }
-                ?: providers.maxByOrNull { it.version.versionPrefix }
-                ?: error("No NmsProvider implementations found")
+            log.atInfo().log("Looking for NmsProvider with version: %s", version)
+            log.atInfo().log("Available NmsProviders: %s", providers.map { "${it.version.name} (${it.version.versionPrefix})" }.joinToString(", "))
+
+            val matched = providers.firstOrNull { it.version == version }
+            if (matched != null) {
+                log.atInfo().log("Found matching NmsProvider: %s", matched.version.name)
+                matched
+            } else {
+                log.atWarning().log("No exact match for NmsProvider version %s, using fallback", version)
+                val fallback = providers.maxByOrNull { it.version.versionPrefix }
+                    ?: error("No NmsProvider implementations found")
+                log.atWarning().log("Selected fallback NmsProvider: %s", fallback.version.name)
+                fallback
+            }
         }
     }
 }
