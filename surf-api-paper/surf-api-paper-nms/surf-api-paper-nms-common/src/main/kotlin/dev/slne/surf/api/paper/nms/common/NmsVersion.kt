@@ -16,15 +16,12 @@ enum class NmsVersion(val versionPrefix: String) {
          * The NMS version of the currently running Minecraft server.
          *
          * Detected at runtime from `Bukkit.getMinecraftVersion()`.
-         *
-         * @throws IllegalStateException if the server version is not supported
+         * Uses latest provided NMS version if no exact match is found.
          */
         val current: NmsVersion by lazy {
             val mcVersion = Bukkit.getMinecraftVersion()
             entries.firstOrNull { mcVersion.startsWith(it.versionPrefix) }
-                ?: throw IllegalStateException(
-                    "Unsupported Minecraft version: $mcVersion. Supported versions: ${entries.joinToString { "${it.name} (${it.versionPrefix}*)" }}"
-                )
+                ?: entries.maxByOrNull { it.versionPrefix } ?: error("No NMS versions defined!")
         }
     }
 }

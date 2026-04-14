@@ -9,13 +9,13 @@ import net.minecraft.core.component.DataComponentPatch
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.component.CustomData
+import net.minecraft.world.item.component.TypedEntityData
 import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
 class V1_21_11SurfPaperNmsNbtBridgeImpl : SurfPaperNmsNbtBridge {
-
     private val log = logger()
 
     override fun makeItemStackEntityInvisible(
@@ -28,7 +28,7 @@ class V1_21_11SurfPaperNmsNbtBridgeImpl : SurfPaperNmsNbtBridge {
         nbt.putBoolean("Invisible", true)
         nbt.putString("id", invisibleEntityType.key.asString())
 
-        val entityData = CustomData.of(nbt)
+        val entityData = TypedEntityData.decodeEntity(nbt)
 
         val patch = DataComponentPatch.builder()
             .set(DataComponents.ENTITY_DATA, entityData)

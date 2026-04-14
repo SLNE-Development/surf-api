@@ -10,14 +10,14 @@ import net.minecraft.advancements.AdvancementProgress
 import net.minecraft.advancements.AdvancementRequirements
 import net.minecraft.network.chat.Component
 import net.minecraft.network.protocol.game.ClientboundUpdateAdvancementsPacket
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import java.util.*
 
 
 @NmsUseWithCaution
 class V1_21_11SurfPaperNmsPlayerToastPacketsImpl : SurfPaperNmsPlayerToastPackets {
     override fun showToast(toast: Toast) = V1_21_11PacketOperationImpl.complex { _, packets ->
-        val id = ResourceLocation.fromNamespaceAndPath("surfapi", "toast_${UUID.randomUUID()}")
+        val id = Identifier.fromNamespaceAndPath("surfapi", "toast_${UUID.randomUUID()}")
 
         packets.add(showPacket(id, toast))
         packets.add(hidePacket(id))
@@ -25,7 +25,7 @@ class V1_21_11SurfPaperNmsPlayerToastPacketsImpl : SurfPaperNmsPlayerToastPacket
         packets
     }
 
-    private fun showPacket(id: ResourceLocation, toast: Toast) =
+    private fun showPacket(id: Identifier, toast: Toast) =
         ClientboundUpdateAdvancementsPacket(
             false, listOf(createAdvancement(id, toast)), emptySet(), mapOf(
                 id to AdvancementProgress().apply {
@@ -34,11 +34,11 @@ class V1_21_11SurfPaperNmsPlayerToastPacketsImpl : SurfPaperNmsPlayerToastPacket
                 }), true
         )
 
-    private fun hidePacket(id: ResourceLocation) = ClientboundUpdateAdvancementsPacket(
+    private fun hidePacket(id: Identifier) = ClientboundUpdateAdvancementsPacket(
         false, emptyList(), setOf(id), emptyMap(), false
     )
 
-    private fun createAdvancement(id: ResourceLocation, toast: Toast) =
+    private fun createAdvancement(id: Identifier, toast: Toast) =
         Advancement.Builder.recipeAdvancement()
             .display(
                 toast.icon.toNms().item,

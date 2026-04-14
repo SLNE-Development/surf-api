@@ -146,7 +146,7 @@ object V1_21_11PacketLoreListener : PacketListener {
             brokenStateId,
             event.slotNum(),
             event.buttonNum(),
-            event.containerInput(),
+            event.clickType(),
             event.changedSlots(),
             event.carriedItem()
         )

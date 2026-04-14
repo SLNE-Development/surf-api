@@ -102,10 +102,8 @@ interface NmsProvider {
             )
 
             providers.firstOrNull { it.version == version }
-                ?: throw IllegalStateException(
-                    "No NMS provider found for version $version. " +
-                            "Available providers: ${providers.map { it.version }.joinToString()}"
-                )
+                ?: providers.maxByOrNull { it.version.versionPrefix }
+                ?: error("No NmsProvider implementations found")
         }
     }
 }

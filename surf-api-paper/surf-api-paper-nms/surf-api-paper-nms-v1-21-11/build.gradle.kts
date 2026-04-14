@@ -13,7 +13,7 @@ dependencies {
     api(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsCommon)
     api(projects.surfApiCore.surfApiCoreServer)
 
-    paperweight.paperDevBundle(libs.canvas.api.get().version)
+    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
 
     compileOnly(libs.placeholder.api)
     compileOnly(libs.reflection.remapper)
