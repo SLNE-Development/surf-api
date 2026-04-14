@@ -11,6 +11,7 @@ import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPack
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
+import java.util.*
 
 /**
  * Main interface for version-specific NMS operations.
@@ -98,27 +99,15 @@ interface NmsProvider {
          */
         val current: NmsProvider by lazy {
             val version = NmsVersion.current
-            val serviceLoader = java.util.ServiceLoader.load(
+            val providers = ServiceLoader.load(
                 NmsProvider::class.java,
                 NmsProvider::class.java.classLoader
-            )
-
-            val providers = buildList {
-                val iterator = serviceLoader.iterator()
-                while (iterator.hasNext()) {
-                    try {
-                        add(iterator.next())
-                    } catch (e: java.util.ServiceConfigurationError) {
-                        log.atWarning().withCause(e).log("Skipping NmsProvider that failed to load")
-                    }
-                }
-            }
+            ).toList()
 
             log.atInfo().log("Looking for NmsProvider with version: %s", version)
             log.atInfo().log(
                 "Available NmsProviders: %s",
-                providers.joinToString(", ") { "${it.version.name} (${it.version.versionPrefix})" }
-            )
+                providers.joinToString(", ") { "${it.version.name} (${it.version.versionPrefix})" })
 
             val matched = providers.firstOrNull { it.version == version }
             if (matched != null) {
@@ -128,10 +117,7 @@ interface NmsProvider {
                 log.atWarning()
                     .log("No exact match for NmsProvider version %s, using fallback", version)
                 val fallback = providers.maxByOrNull { it.version.versionPrefix }
-                    ?: error(
-                        "No NmsProvider implementations found for version $version. " +
-                                "Ensure the correct NMS module is included in the classpath."
-                    )
+                    ?: error("No NmsProvider implementations found")
                 log.atWarning().log("Selected fallback NmsProvider: %s", fallback.version.name)
                 fallback
             }

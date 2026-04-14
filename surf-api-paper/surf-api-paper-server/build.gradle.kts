@@ -22,9 +22,8 @@ dependencies {
 
     paperweight.paperDevBundle(libs.paper.api.get().version)
 
-    // Version-specific NMS modules (runtime only - loaded via ServiceLoader)
-    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV261)
     runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV12111)
+    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV261)
 
     compileOnly(libs.placeholder.api)
 
