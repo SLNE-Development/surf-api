@@ -24,6 +24,7 @@ dependencies {
 
     // Version-specific NMS modules (runtime only - loaded via ServiceLoader)
     runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV261)
+    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV12111)
 
     compileOnly(libs.placeholder.api)
 
