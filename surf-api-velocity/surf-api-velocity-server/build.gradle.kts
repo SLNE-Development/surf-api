@@ -24,10 +24,6 @@ tasks {
     shadowJar {
         val relocationPrefix: String by project
         relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
-
-        dependencies {
-            exclude(dependency("org.jetbrains.kotlin:.*"))
-        }
     }
 }
 
