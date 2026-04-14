@@ -103,8 +103,6 @@ interface NmsProvider {
                 NmsProvider::class.java.classLoader
             )
 
-            // Iterate safely — skip providers whose classes can't be loaded
-            // (e.g. version-specific NMS classes not present on this server)
             val providers = buildList {
                 val iterator = serviceLoader.iterator()
                 while (iterator.hasNext()) {
@@ -127,7 +125,8 @@ interface NmsProvider {
                 log.atInfo().log("Found matching NmsProvider: %s", matched.version.name)
                 matched
             } else {
-                log.atWarning().log("No exact match for NmsProvider version %s, using fallback", version)
+                log.atWarning()
+                    .log("No exact match for NmsProvider version %s, using fallback", version)
                 val fallback = providers.maxByOrNull { it.version.versionPrefix }
                     ?: error(
                         "No NmsProvider implementations found for version $version. " +

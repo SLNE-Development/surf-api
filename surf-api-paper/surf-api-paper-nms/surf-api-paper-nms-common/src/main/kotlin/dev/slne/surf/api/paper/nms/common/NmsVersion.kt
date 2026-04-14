@@ -23,17 +23,16 @@ enum class NmsVersion(val versionPrefix: String) {
          */
         val current: NmsVersion by lazy {
             val mcVersion = Bukkit.getMinecraftVersion()
-            log.atInfo().log("Detected Minecraft version from Bukkit: '%s'", mcVersion)
-            log.atInfo().log("Available NMS versions: %s", entries.joinToString(", ") { "${it.name}(${it.versionPrefix})" })
-
             val matched = entries.firstOrNull { mcVersion.startsWith(it.versionPrefix) }
             if (matched != null) {
-                log.atInfo().log("Selected NMS version: %s", matched.name)
                 matched
             } else {
-                log.atWarning().log("No exact NMS version match found, using fallback (maxByOrNull)")
-                val fallback = entries.maxByOrNull { it.versionPrefix } ?: error("No NMS versions defined!")
-                log.atWarning().log("Fallback NMS version selected: %s", fallback.name)
+                val fallback =
+                    entries.maxByOrNull { it.versionPrefix } ?: error("No NMS versions defined!")
+                log.atWarning().log(
+                    "There is no matching nms version, using fallback NMS version: %s",
+                    fallback.name
+                )
                 fallback
             }
         }
