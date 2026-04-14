@@ -102,7 +102,8 @@ interface NmsProvider {
             val providers = ServiceLoader.load(
                 NmsProvider::class.java,
                 NmsProvider::class.java.classLoader
-            ).toList()
+            )
+                .toList() // TODO: Bug: Finds only a single provider, even if multiple are present. The Provider which is declared as a dependency first is found.
 
             log.atInfo().log("Looking for NmsProvider with version: %s", version)
             log.atInfo().log(
