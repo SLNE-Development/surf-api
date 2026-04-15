@@ -50,29 +50,7 @@ object NmsVersionConfigs {
             // TypedEntityData → CustomData.of
             "TypedEntityData.decodeEntity(nbt)" to "CustomData.of(nbt)",
         ),
-        fileTransformers = mapOf(
-            // The CommonBridge needs special handling for clearDialogs (no dialog support in 1.21.11)
-            "dev/slne/surf/api/paper/server/nms/v26_1/bridges/V26_1SurfPaperNmsCommonBridgeImpl.kt" to { content ->
-                content
-                    // Remove dialog-related imports
-                    .replace("import dev.slne.surf.api.paper.dialog.noticeDialogWithBuilder\n", "")
-                    .replace("import net.minecraft.network.protocol.common.ClientboundClearDialogPacket\n", "")
-                    .replace("import net.kyori.adventure.text.Component\n", "")
-                    // Replace clearDialogs implementation with no-op
-                    .replace(
-                        """    override fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean) {
-        if (showEmptyDialogBefore) {
-            player.showDialog(noticeDialogWithBuilder(Component.empty()) {})
-        }
-
-        player.toNms().connection.send(ClientboundClearDialogPacket.INSTANCE)
-    }""",
-                        """    override fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean) {
-        // Dialogs are not supported in 1.21.11
-    }"""
-                    )
-            },
-        ),
+        fileTransformers = mapOf(),
     )
 
     /** All target versions that should be generated from the reference. */

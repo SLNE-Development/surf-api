@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
+import dev.slne.surf.api.paper.dialog.noticeDialogWithBuilder
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
@@ -7,6 +8,8 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNmsBlock
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNmsItem
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
 import io.papermc.paper.configuration.GlobalConfiguration
+import net.kyori.adventure.text.Component
+import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.ComposterBlock
@@ -68,7 +71,11 @@ class V1_21_11SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     }
 
     override fun clearDialogs(player: Player, showEmptyDialogBefore: Boolean) {
-        // Dialogs are not supported in 1.21.11
+        if (showEmptyDialogBefore) {
+            player.showDialog(noticeDialogWithBuilder(Component.empty()) {})
+        }
+
+        player.toNms().connection.send(ClientboundClearDialogPacket.INSTANCE)
     }
 
     override fun getServerIp(): InetSocketAddress {
