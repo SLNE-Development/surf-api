@@ -49,6 +49,7 @@ interface NmsProvider {
     fun createPlayerChatPackets(): SurfPaperNmsPlayerChatPackets
     fun createPlayerToastPackets(): SurfPaperNmsPlayerToastPackets
     fun createTickThreadGuard(): TickThreadGuard
+    fun getLibLoaderBridge(): LibLoaderBridge
 
     // ==================== Packet Bridge Handler ==================== //
 

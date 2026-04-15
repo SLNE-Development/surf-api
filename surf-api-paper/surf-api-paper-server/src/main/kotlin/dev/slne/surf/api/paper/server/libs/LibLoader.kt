@@ -3,15 +3,11 @@
 package dev.slne.surf.api.paper.server.libs
 
 import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.api.core.util.setFinalField
 import dev.slne.surf.api.core.util.toEnumeration
-import dev.slne.surf.api.paper.server.libs.reflection.LibReflection
-import dev.slne.surf.api.paper.server.nms.commodore
-import dev.slne.surf.api.paper.server.nms.craftServer
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.server.plugin
-import io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader
 import io.papermc.paper.plugin.provider.classloader.ConfiguredPluginClassLoader
-import org.bukkit.craftbukkit.util.ApiVersion
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
@@ -28,9 +24,11 @@ import kotlin.io.path.outputStream
 import kotlin.math.max
 import kotlin.math.min
 
+@OptIn(NmsUseWithCaution::class)
 class LibLoader(pluginClassLoader: ClassLoader) {
     private val logger = logger()
-    private val pluginClassLoader = pluginClassLoader as PaperPluginClassLoader
+    private val bridge by lazy { NmsProvider.current.getLibLoaderBridge() }
+    private val pluginClassLoader = pluginClassLoader as URLClassLoader
 
     fun loadLibs() {
     }
@@ -93,11 +91,11 @@ class LibLoader(pluginClassLoader: ClassLoader) {
     }
 
     private fun remapClass(jarName: String, clazz: ByteArray, apiVersion: String) =
-        commodore.convert(
+        bridge.convertWithCommodore(
             clazz,
             jarName,
-            ApiVersion.getOrCreateVersion(apiVersion),
-            craftServer.activeCompatibilities
+            apiVersion,
+            bridge.getActiveCompatibilities()
         )
 
     private fun loadTempFileFromResource(fileName: String): Path? {
@@ -136,18 +134,14 @@ class LibLoader(pluginClassLoader: ClassLoader) {
 
     @Suppress("DEPRECATION")
     private fun getOrCreateSurfLibClassLoader(): SurfLibJoinClassLoader {
-        val libraryLoader =
-            LibReflection.PAPER_PLUGIN_CLASS_LOADER_PROXY.getLibraryLoader(pluginClassLoader)
+        val libraryLoader = bridge.getLibraryLoader(pluginClassLoader)
 
         if (libraryLoader is SurfLibJoinClassLoader) {
             return libraryLoader
         }
 
         val surfLoader = SurfLibJoinClassLoader(libraryLoader)
-        PaperPluginClassLoader::class.java.getDeclaredField("libraryLoader").apply {
-            setAccessible(true)
-            setFinalField(this, pluginClassLoader, surfLoader)
-        }
+        bridge.overwriteLibraryLoader(pluginClassLoader, surfLoader)
 
         return surfLoader
     }
@@ -157,7 +151,8 @@ class LibLoader(pluginClassLoader: ClassLoader) {
     private inner class SurfLibJoinClassLoader(
         parent: URLClassLoader,
         vararg delegateClassLoaders: URLClassLoader,
-    ) : URLClassLoader(parent.urLs, parent), ConfiguredPluginClassLoader by pluginClassLoader {
+    ) : URLClassLoader(parent.urLs, parent),
+        ConfiguredPluginClassLoader by pluginClassLoader as ConfiguredPluginClassLoader {
         private val delegateClassLoaders = delegateClassLoaders.toMutableList()
 
         override fun findClass(name: String): Class<*>? {

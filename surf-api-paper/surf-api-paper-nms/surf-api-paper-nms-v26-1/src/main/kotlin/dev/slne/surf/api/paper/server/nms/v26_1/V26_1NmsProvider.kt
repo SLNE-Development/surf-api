@@ -76,6 +76,8 @@ class V26_1NmsProvider : NmsProvider {
         V26_1SurfPaperNmsPlayerToastPacketsImpl()
 
     override fun createTickThreadGuard(): TickThreadGuard = V26_1TickThreadGuard()
+    override fun getLibLoaderBridge(): LibLoaderBridge = V26_1LibLoaderBridgeImpl
+
     override fun getPacketBridgeHandler(): NmsPacketBridgeHandler = V26_1NmsPacketBridgeHandler
 
     override fun createPacketLoreRegistry(): PacketLoreRegistry = V26_1PacketLoreRegistry()
