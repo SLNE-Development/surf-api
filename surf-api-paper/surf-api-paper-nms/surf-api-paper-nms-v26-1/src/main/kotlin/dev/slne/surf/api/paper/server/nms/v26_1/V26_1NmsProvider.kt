@@ -33,6 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin
 class V26_1NmsProvider : NmsProvider {
     override val version: NmsVersion = NmsVersion.V26_1
 
+    private var glowingBridge: V26_1SurfPaperNmsGlowingBridgeImpl? = null
     private var glowingApi: V26_1SurfGlowingApiImpl? = null
 
     override fun createNmsBridge(): SurfPaperNmsBridge = V26_1SurfPaperNmsBridgeImpl()
@@ -45,9 +46,10 @@ class V26_1NmsProvider : NmsProvider {
     override fun createItemBridge(): SurfPaperNmsItemBridge = V26_1SurfPaperNmsItemBridgeImpl()
     override fun createNbtBridge(): SurfPaperNmsNbtBridge = V26_1SurfPaperNmsNbtBridgeImpl()
     override fun createGlowingBridge(): SurfPaperNmsGlowingBridge {
-        val impl = V26_1SurfPaperNmsGlowingBridgeImpl()
-        V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE = impl
-        return impl
+        return glowingBridge ?: V26_1SurfPaperNmsGlowingBridgeImpl().also {
+            glowingBridge = it
+            V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE = it
+        }
     }
 
     override fun createStatsBridge(): SurfPaperNmsStatsBridge = V26_1SurfPaperNmsStatsBridgeImpl()
@@ -82,6 +84,9 @@ class V26_1NmsProvider : NmsProvider {
         V26_1GlowingLifecycleHandler()
 
     override fun createGlowingApi(): SurfGlowingApi {
+        // Ensure glowing bridge is initialized before the API uses it
+        createGlowingBridge()
+
         val plugin = JavaPlugin.getProvidingPlugin(V26_1NmsProvider::class.java) as JavaPlugin
         val api = V26_1SurfGlowingApiImpl(plugin)
         V26_1SurfGlowingApiImpl.INSTANCE = api
