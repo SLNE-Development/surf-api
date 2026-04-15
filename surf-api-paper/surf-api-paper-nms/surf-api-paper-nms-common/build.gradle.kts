@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    api(projects.surfApiPaper.surfApiPaper)
+    compileOnlyApi(projects.surfApiPaper.surfApiPaper)
     compileOnly(libs.paper.api)
 }

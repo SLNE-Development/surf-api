@@ -12,6 +12,7 @@ import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChat
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
 import dev.slne.surf.api.paper.nms.common.*
+import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.*
@@ -23,6 +24,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.player.V1_21_
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.player.V1_21_11SurfPaperNmsPlayerToastPacketsImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.V1_21_11GlowingLifecycleHandler
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.V1_21_11SurfGlowingApiImpl
+import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.listener.V1_21_11ChannelInjector
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.listener.V1_21_11GlowingPacketListener
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLoreListener
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLoreRegistry
@@ -80,6 +82,8 @@ class V1_21_11NmsProvider : NmsProvider {
         V1_21_11GlowingLifecycleHandler()
 
     override fun createGlowingApi(): SurfGlowingApi = V1_21_11SurfGlowingApiImpl
+    override fun createChannelInjector(): AbstractChannelInjector<*> = V1_21_11ChannelInjector
+    override fun createPacketListenerApi(): SurfPaperPacketListenerApi = V1_21_11PacketListenerApiImpl()
 
     override fun createPacketListeners(): List<PacketListener> = listOf(
         V1_21_11PacketLoreListener,

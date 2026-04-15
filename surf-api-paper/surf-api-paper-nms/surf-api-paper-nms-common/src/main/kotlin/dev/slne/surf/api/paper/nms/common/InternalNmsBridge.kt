@@ -1,4 +1,4 @@
-package dev.slne.surf.api.paper.server.nms.bridge
+package dev.slne.surf.api.paper.nms.common
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
@@ -22,3 +22,4 @@ interface InternalNmsBridge : SurfPaperNmsBridge {
         fun get() = SurfPaperNmsBridge.INSTANCE as InternalNmsBridge
     }
 }
+

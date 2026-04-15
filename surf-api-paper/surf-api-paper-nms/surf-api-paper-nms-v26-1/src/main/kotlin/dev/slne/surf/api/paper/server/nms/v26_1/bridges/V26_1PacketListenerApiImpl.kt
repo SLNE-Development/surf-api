@@ -1,10 +1,9 @@
-package dev.slne.surf.api.paper.server.impl.packet.listener
+package dev.slne.surf.api.paper.server.nms.v26_1.bridges
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
+import dev.slne.surf.api.paper.nms.common.InternalPacketListenerApiBridge
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListenerResult
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
@@ -22,14 +21,13 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArraySet
 
 @NmsUseWithCaution
-@AutoService(SurfPaperPacketListenerApi::class)
-class SurfPaperPacketListenerApiImpl : SurfPaperPacketListenerApi {
+class V26_1PacketListenerApiImpl : InternalPacketListenerApiBridge {
+    private typealias ListenerMethodsMap = ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<ListenerMethod>>
+
     private val log = logger()
 
-    private val clientboundListenerMethods =
-        ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<ListenerMethod>>()
-    private val serverboundListenerMethods =
-        ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<ListenerMethod>>()
+    private val clientboundListenerMethods = ListenerMethodsMap()
+    private val serverboundListenerMethods = ListenerMethodsMap()
     private val lookup = MethodHandles.lookup()
 
     private val normalizedListenerType = MethodType.methodType(
@@ -39,7 +37,7 @@ class SurfPaperPacketListenerApiImpl : SurfPaperPacketListenerApi {
     )
 
     private val toBukkitPlayerHandle: MethodHandle = lookup.findStatic(
-        SurfPaperPacketListenerApiImpl::class.java,
+        V26_1PacketListenerApiImpl::class.java,
         "toBukkitPlayer",
         MethodType.methodType(Player::class.java, ServerPlayer::class.java)
     )
@@ -174,10 +172,10 @@ class SurfPaperPacketListenerApiImpl : SurfPaperPacketListenerApi {
         }
     }
 
-    fun handleClientboundPacket(
-        packet: Packet<*>,
-        serverPlayer: ServerPlayer?
-    ): Packet<*>? {
+    override fun handleClientboundPacket(packet: Any, serverPlayer: Any?): Any? {
+        packet as Packet<*>
+        serverPlayer as ServerPlayer?
+
         val methods = clientboundListenerMethods[packet.javaClass] ?: return packet
         var result: Packet<*>? = packet
 
@@ -195,10 +193,10 @@ class SurfPaperPacketListenerApiImpl : SurfPaperPacketListenerApi {
         return result
     }
 
-    fun handleServerboundPacket(
-        packet: Packet<*>,
-        serverPlayer: ServerPlayer?
-    ): Packet<*>? {
+    override fun handleServerboundPacket(packet: Any, serverPlayer: Any?): Any? {
+        packet as Packet<*>
+        serverPlayer as ServerPlayer?
+
         val methods = serverboundListenerMethods[packet.javaClass] ?: return packet
         var result: Packet<*>? = packet
 
