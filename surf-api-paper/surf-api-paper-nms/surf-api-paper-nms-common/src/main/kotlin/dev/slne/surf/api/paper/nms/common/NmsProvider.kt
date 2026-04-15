@@ -1,6 +1,8 @@
 package dev.slne.surf.api.paper.nms.common
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
 import dev.slne.surf.api.paper.nms.bridges.*
 import dev.slne.surf.api.paper.nms.bridges.packets.SurfPaperNmsPacketBridges
@@ -21,6 +23,7 @@ import java.util.*
  *
  * Implementations are discovered at runtime using [java.util.ServiceLoader].
  */
+@NmsUseWithCaution
 interface NmsProvider {
     /**
      * The NMS version this provider supports.
@@ -90,7 +93,7 @@ interface NmsProvider {
     fun shutdown()
 
     companion object {
-        private val log = dev.slne.surf.api.core.util.logger()
+        private val log = logger()
 
         /**
          * Loads the [NmsProvider] for the currently running Minecraft version.
@@ -99,11 +102,19 @@ interface NmsProvider {
          */
         val current: NmsProvider by lazy {
             val version = NmsVersion.current
-            val providers = ServiceLoader.load(
-                NmsProvider::class.java,
-                NmsProvider::class.java.classLoader
-            )
-                .toList() // TODO: Bug: Finds only a single provider, even if multiple are present. The Provider which is declared as a dependency first is found.
+            val loader = ServiceLoader.load(NmsProvider::class.java)
+            val providers = mutableListOf<NmsProvider>()
+
+            val iterator = loader.iterator()
+            while (iterator.hasNext()) {
+                val instance: NmsProvider?
+                try {
+                    instance = iterator.next()
+                } catch (_: ServiceConfigurationError) {
+                    continue
+                }
+                providers.add(instance)
+            }
 
             log.atInfo().log("Looking for NmsProvider with version: %s", version)
             log.atInfo().log(

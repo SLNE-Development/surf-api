@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
 import dev.slne.surf.api.paper.nms.bridges.*
 import dev.slne.surf.api.paper.nms.bridges.packets.SurfPaperNmsPacketBridges
@@ -27,14 +28,11 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLor
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLoreRegistry
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
 import dev.slne.surf.api.paper.server.nms.v1_21_11.region.V1_21_11TickThreadGuard
-import org.bukkit.plugin.java.JavaPlugin
 
+@OptIn(NmsUseWithCaution::class)
 @AutoService(NmsProvider::class)
 class V1_21_11NmsProvider : NmsProvider {
     override val version: NmsVersion = NmsVersion.V1_21_11
-
-    private var glowingBridge: V1_21_11SurfPaperNmsGlowingBridgeImpl? = null
-    private var glowingApi: V1_21_11SurfGlowingApiImpl? = null
 
     override fun createNmsBridge(): SurfPaperNmsBridge = V1_21_11SurfPaperNmsBridgeImpl()
     override fun createCommonBridge(): SurfPaperNmsCommonBridge =
@@ -45,12 +43,7 @@ class V1_21_11NmsProvider : NmsProvider {
 
     override fun createItemBridge(): SurfPaperNmsItemBridge = V1_21_11SurfPaperNmsItemBridgeImpl()
     override fun createNbtBridge(): SurfPaperNmsNbtBridge = V1_21_11SurfPaperNmsNbtBridgeImpl()
-    override fun createGlowingBridge(): SurfPaperNmsGlowingBridge {
-        return glowingBridge ?: V1_21_11SurfPaperNmsGlowingBridgeImpl().also {
-            glowingBridge = it
-            V1_21_11SurfPaperNmsGlowingBridgeImpl.INSTANCE = it
-        }
-    }
+    override fun createGlowingBridge(): SurfPaperNmsGlowingBridge = V1_21_11SurfPaperNmsGlowingBridgeImpl
 
     override fun createStatsBridge(): SurfPaperNmsStatsBridge =
         V1_21_11SurfPaperNmsStatsBridgeImpl()
@@ -87,16 +80,7 @@ class V1_21_11NmsProvider : NmsProvider {
     override fun createGlowingLifecycleHandler(): GlowingLifecycleHandler =
         V1_21_11GlowingLifecycleHandler()
 
-    override fun createGlowingApi(): SurfGlowingApi {
-        // Ensure glowing bridge is initialized before the API uses it
-        createGlowingBridge()
-
-        val plugin = JavaPlugin.getProvidingPlugin(V1_21_11NmsProvider::class.java) as JavaPlugin
-        val api = V1_21_11SurfGlowingApiImpl(plugin)
-        V1_21_11SurfGlowingApiImpl.INSTANCE = api
-        glowingApi = api
-        return api
-    }
+    override fun createGlowingApi(): SurfGlowingApi = V1_21_11SurfGlowingApiImpl
 
     override fun createPacketListeners(): List<PacketListener> = listOf(
         V1_21_11PacketLoreListener,

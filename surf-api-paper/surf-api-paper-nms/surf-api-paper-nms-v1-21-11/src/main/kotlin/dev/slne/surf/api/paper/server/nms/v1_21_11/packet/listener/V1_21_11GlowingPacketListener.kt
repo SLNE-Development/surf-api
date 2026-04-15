@@ -61,7 +61,7 @@ object V1_21_11GlowingPacketListener : PacketListener {
         }
 
         val playerData = V1_21_11SurfGlowingApiImpl.getEntityPlayerData(player) ?: return packet
-        val glowingData = playerData.entities.get(packet.id) ?: return packet
+        val glowingData = playerData.entities[packet.id] ?: return packet
         val incoming = packet.packedItems
         var flagsFound = false
         var edited = false

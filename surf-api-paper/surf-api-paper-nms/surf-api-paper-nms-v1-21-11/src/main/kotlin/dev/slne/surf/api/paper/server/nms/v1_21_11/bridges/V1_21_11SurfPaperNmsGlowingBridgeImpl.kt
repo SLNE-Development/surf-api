@@ -14,7 +14,7 @@ import net.minecraft.network.syncher.SynchedEntityData.DataValue
 import org.bukkit.entity.Entity
 
 @NmsUseWithCaution
-class V1_21_11SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
+object V1_21_11SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
     fun createTeam(data: V1_21_11TeamData): PacketOperation =
         V1_21_11PacketOperationImpl.simple {
             ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(data.team, true)
@@ -52,10 +52,5 @@ class V1_21_11SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
     override fun getCurrentFlags(entity: Entity): Byte {
         val dataAccessor = V1_21_11Reflection.ENTITY_PROXY.getDataFlagsSharedId()
         return entity.toNms().entityData.get(dataAccessor)
-    }
-
-    companion object {
-        lateinit var INSTANCE: V1_21_11SurfPaperNmsGlowingBridgeImpl
-            internal set
     }
 }

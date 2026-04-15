@@ -16,7 +16,6 @@ import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
 class V26_1SurfPaperNmsNbtBridgeImpl : SurfPaperNmsNbtBridge {
-
     private val log = logger()
 
     override fun makeItemStackEntityInvisible(

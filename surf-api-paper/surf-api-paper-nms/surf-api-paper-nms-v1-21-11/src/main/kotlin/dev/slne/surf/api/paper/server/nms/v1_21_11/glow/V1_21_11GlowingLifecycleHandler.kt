@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.glow
 
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.common.GlowingLifecycleHandler
 import dev.slne.surf.api.paper.util.chunkX
@@ -7,6 +8,7 @@ import dev.slne.surf.api.paper.util.chunkZ
 import org.bukkit.World
 import org.bukkit.entity.Player
 
+@NmsUseWithCaution
 class V1_21_11GlowingLifecycleHandler : GlowingLifecycleHandler {
     override fun removeAllGlowingOnQuit(player: Player) {
         V1_21_11SurfGlowingApiImpl.removeAllGlowingOnQuit(player)

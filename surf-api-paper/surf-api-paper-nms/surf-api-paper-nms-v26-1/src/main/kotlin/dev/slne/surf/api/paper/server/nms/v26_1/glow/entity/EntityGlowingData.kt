@@ -10,6 +10,7 @@ import glm_.and
 import glm_.or
 import net.minecraft.ChatFormatting
 
+@NmsUseWithCaution
 data class EntityGlowingData(
     val playerData: EntityPlayerData,
     val entityId: Int,
@@ -25,9 +26,9 @@ data class EntityGlowingData(
 
         val operation = PacketOperation.start()
         if (teamData.markSeen(playerData.uuid)) {
-            operation.add(V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE.createTeam(teamData))
+            operation.add(V26_1SurfPaperNmsGlowingBridgeImpl.createTeam(teamData))
         }
-        operation.add(V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE.addEntityToTeam(teamData, teamId))
+        operation.add(V26_1SurfPaperNmsGlowingBridgeImpl.addEntityToTeam(teamData, teamId))
 
         return operation
     }
@@ -40,7 +41,7 @@ data class EntityGlowingData(
         val operation = PacketOperation.start()
         if (teamData.removeSeen(playerData.uuid)) {
             operation.add(
-                V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE.removeEntityFromTeam(
+                V26_1SurfPaperNmsGlowingBridgeImpl.removeEntityFromTeam(
                     teamData,
                     teamId
                 )
@@ -58,7 +59,7 @@ data class EntityGlowingData(
             otherFlags and V26_1SurfGlowingApiImpl.glowingFlag.inv()
         }
 
-        return V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE.setEntityFlags(
+        return V26_1SurfPaperNmsGlowingBridgeImpl.setEntityFlags(
             entityId,
             newFlags,
             ignorePacket

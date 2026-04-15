@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v26_1
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
 import dev.slne.surf.api.paper.nms.bridges.*
 import dev.slne.surf.api.paper.nms.bridges.packets.SurfPaperNmsPacketBridges
@@ -27,14 +28,11 @@ import dev.slne.surf.api.paper.server.nms.v26_1.packet.lore.V26_1PacketLoreListe
 import dev.slne.surf.api.paper.server.nms.v26_1.packet.lore.V26_1PacketLoreRegistry
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
 import dev.slne.surf.api.paper.server.nms.v26_1.region.V26_1TickThreadGuard
-import org.bukkit.plugin.java.JavaPlugin
 
+@OptIn(NmsUseWithCaution::class)
 @AutoService(NmsProvider::class)
 class V26_1NmsProvider : NmsProvider {
     override val version: NmsVersion = NmsVersion.V26_1
-
-    private var glowingBridge: V26_1SurfPaperNmsGlowingBridgeImpl? = null
-    private var glowingApi: V26_1SurfGlowingApiImpl? = null
 
     override fun createNmsBridge(): SurfPaperNmsBridge = V26_1SurfPaperNmsBridgeImpl()
     override fun createCommonBridge(): SurfPaperNmsCommonBridge =
@@ -45,14 +43,11 @@ class V26_1NmsProvider : NmsProvider {
 
     override fun createItemBridge(): SurfPaperNmsItemBridge = V26_1SurfPaperNmsItemBridgeImpl()
     override fun createNbtBridge(): SurfPaperNmsNbtBridge = V26_1SurfPaperNmsNbtBridgeImpl()
-    override fun createGlowingBridge(): SurfPaperNmsGlowingBridge {
-        return glowingBridge ?: V26_1SurfPaperNmsGlowingBridgeImpl().also {
-            glowingBridge = it
-            V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE = it
-        }
-    }
+    override fun createGlowingBridge(): SurfPaperNmsGlowingBridge = V26_1SurfPaperNmsGlowingBridgeImpl
 
-    override fun createStatsBridge(): SurfPaperNmsStatsBridge = V26_1SurfPaperNmsStatsBridgeImpl()
+    override fun createStatsBridge(): SurfPaperNmsStatsBridge =
+        V26_1SurfPaperNmsStatsBridgeImpl()
+
     override fun createLootTableBridge(): SurfPaperNmsLootTableBridge =
         V26_1SurfPaperNmsLootTableBridgeImpl()
 
@@ -78,21 +73,14 @@ class V26_1NmsProvider : NmsProvider {
         V26_1SurfPaperNmsPlayerToastPacketsImpl()
 
     override fun createTickThreadGuard(): TickThreadGuard = V26_1TickThreadGuard()
-    override fun createPacketBridgeHandler(): NmsPacketBridgeHandler = V26_1NmsPacketBridgeHandler()
+    override fun createPacketBridgeHandler(): NmsPacketBridgeHandler =
+        V26_1NmsPacketBridgeHandler()
+
     override fun createPacketLoreRegistry(): PacketLoreRegistry = V26_1PacketLoreRegistry()
     override fun createGlowingLifecycleHandler(): GlowingLifecycleHandler =
         V26_1GlowingLifecycleHandler()
 
-    override fun createGlowingApi(): SurfGlowingApi {
-        // Ensure glowing bridge is initialized before the API uses it
-        createGlowingBridge()
-
-        val plugin = JavaPlugin.getProvidingPlugin(V26_1NmsProvider::class.java) as JavaPlugin
-        val api = V26_1SurfGlowingApiImpl(plugin)
-        V26_1SurfGlowingApiImpl.INSTANCE = api
-        glowingApi = api
-        return api
-    }
+    override fun createGlowingApi(): SurfGlowingApi = V26_1SurfGlowingApiImpl
 
     override fun createPacketListeners(): List<PacketListener> = listOf(
         V26_1PacketLoreListener,

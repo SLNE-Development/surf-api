@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.listener.packets
 
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.api.paper.nms.listener.packets.serverbound.NmsServerboundPacket
@@ -10,6 +9,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.listener.packets.serverbound.
 import dev.slne.surf.api.paper.server.nms.v1_21_11.listener.packets.serverbound.V1_21_11RenameItemPacketImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.listener.packets.serverbound.V1_21_11ServerboundCustomPayloadPacketImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.listener.packets.serverbound.V1_21_11SignUpdatePacketImpl
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.common.ClientCommonPacketListener
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket
@@ -23,10 +23,10 @@ import kotlin.reflect.KClass
 
 @OptIn(NmsUseWithCaution::class)
 object V1_21_11PacketRegistry {
-    private val SERVERBOUND_PACKETS =
-        mutableObject2ObjectMapOf<Class<out Packet<*>>, ServerboundPacketFactory<*, *>>()
-    private val CLIENTBOUND_PACKETS =
-        mutableObject2ObjectMapOf<Class<out Packet<*>>, ClientboundPacketFactory<*, *>>()
+    private typealias PacketMap<F> = Object2ObjectOpenHashMap<Class<out Packet<*>>, F>
+
+    private val SERVERBOUND_PACKETS = PacketMap<ServerboundPacketFactory<*, *>>()
+    private val CLIENTBOUND_PACKETS = PacketMap<ClientboundPacketFactory<*, *>>()
 
     init {
         // @formatter:off

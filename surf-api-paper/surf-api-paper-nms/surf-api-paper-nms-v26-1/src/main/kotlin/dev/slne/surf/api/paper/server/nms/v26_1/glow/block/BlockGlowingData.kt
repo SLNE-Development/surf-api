@@ -17,7 +17,7 @@ import org.bukkit.Location
 import java.util.*
 
 @OptIn(NmsUseWithCaution::class)
-class V26_1BlockGlowingData(
+class BlockGlowingData(
     val playerData: BlockPlayerData,
     val location: Location,
     var color: NamedTextColor,
@@ -45,16 +45,15 @@ class V26_1BlockGlowingData(
                 0.0
             )
         }
-        val invisibleOperation = V26_1SurfPaperNmsGlowingBridgeImpl.INSTANCE
-            .setEntityFlags(entityId, invisibleFlag)
-        
+        val invisibleOperation = V26_1SurfPaperNmsGlowingBridgeImpl.setEntityFlags(entityId, invisibleFlag)
+
         return spawnOperation + invisibleOperation
     }
 
 
     fun updateColor() {
         val player = playerData.player ?: return
-        V26_1SurfGlowingApiImpl.INSTANCE.makeGlowing(
+        V26_1SurfGlowingApiImpl.makeGlowing(
             entityId,
             uuid.toString(),
             player,
@@ -65,7 +64,7 @@ class V26_1BlockGlowingData(
 
     fun remove() {
         playerData.player?.let { SurfPaperNmsSpawnPackets.despawn(entityId).execute(it) }
-        V26_1SurfGlowingApiImpl.INSTANCE.removeGlowing(entityId, playerData.uuid)
+        V26_1SurfGlowingApiImpl.removeGlowing(entityId, playerData.uuid)
     }
 
     private fun initialize() {

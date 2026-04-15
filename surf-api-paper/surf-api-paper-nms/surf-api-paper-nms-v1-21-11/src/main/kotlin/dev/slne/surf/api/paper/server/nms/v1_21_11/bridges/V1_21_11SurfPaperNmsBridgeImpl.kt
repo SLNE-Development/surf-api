@@ -9,19 +9,18 @@ import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
 import dev.slne.surf.api.paper.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.api.paper.nms.listener.packets.serverbound.NmsServerboundPacket
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListenerResult
-import dev.slne.surf.api.paper.server.nms.v1_21_11.listener.packets.V1_21_11NmsPacketImpl
 import org.bukkit.entity.Player
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 
 @NmsUseWithCaution
 class V1_21_11SurfPaperNmsBridgeImpl : SurfPaperNmsBridge {
+    private typealias PacketListenerMap<T> = ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<T>>
+
     private val log = logger()
 
-    private val serverboundPacketListeners =
-        ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<NmsServerboundPacketListener<*>>>()
-    private val clientboundPacketListeners =
-        ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<NmsClientboundPacketListener<*>>>()
+    private val serverboundPacketListeners = PacketListenerMap<NmsServerboundPacketListener<*>>()
+    private val clientboundPacketListeners = PacketListenerMap<NmsClientboundPacketListener<*>>()
 
     override fun registerServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
         val packetClass = listener.packetClass
