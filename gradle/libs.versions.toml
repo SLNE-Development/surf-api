@@ -16,7 +16,7 @@ packetevents-plugin = "2.11.2"
 commandapi = "11.2.0"
 
 # LuckPerms
-luckperms = "v5.5.0-bukkit"
+luckperms = "5.4"
 
 # Scoreboard Library
 scoreboard-library = "2.7.3"
@@ -151,6 +151,7 @@ flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", v
 aide-reflection = { module = "tech.hiddenproject:aide-reflection", version.ref = "aide-reflection" }
 glm = { module = "io.github.kotlin-graphics:glm", version.ref = "glm" }
 datafixerupper = { module = "com.mojang:datafixerupper", version.ref = "datafixerupper" }
+luckperms = { module = "net.luckperms:api", version.ref = "luckperms" }
 
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
 auto-service = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-service-ksp" }

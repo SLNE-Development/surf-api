@@ -6,6 +6,7 @@ plugins {
 dependencies {
     api(projects.surfApiShared.surfApiSharedPublic)
     api(libs.adventure.nbt)
+    compileOnlyApi(libs.luckperms)
     compileOnlyApi(libs.packetevents.api)
     compileOnlyApi(libs.dazzleconf)
     compileOnlyApi(libs.spongepowered.math)
