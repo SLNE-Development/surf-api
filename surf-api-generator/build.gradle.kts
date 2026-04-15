@@ -105,15 +105,7 @@ tasks.register<JavaExec>("generate") {
     args(projectDir.toPath().resolve("generated").toString())
 }
 
-tasks.register<JavaExec>("generateNms") {
-    group = "generation"
-    description = "Generate version-specific NMS modules from the reference (v26-1) sources"
-    dependsOn(tasks.classes)
 
-    mainClass.set("dev.slne.surf.api.gen.nms.NmsGeneratorMainKt")
-    classpath(sourceSets.main.map { it.runtimeClasspath })
-    args(rootProject.projectDir.absolutePath)
-}
 
 
 private fun String.downloadTo(output: Path) {

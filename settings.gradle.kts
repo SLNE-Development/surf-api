@@ -3,6 +3,7 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
     }
+    includeBuild("surf-api-generator/gradle-nms-module-generator")
 }
 
 plugins {

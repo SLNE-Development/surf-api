@@ -2,7 +2,14 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.21" apply false
+    id("dev.slne.surf.api.generator.nms-module-generator")
 }
+
+//nmsGenerator {
+//    referenceVersion = NmsVersion.V26_1
+//    targetVersion    = NmsVersion.V1_21_11
+//}
+
 
 allprojects {
     repositories {
