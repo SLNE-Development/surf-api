@@ -20,6 +20,7 @@ import org.bukkit.entity.Player
 import java.net.InetSocketAddress
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     @Suppress("DEPRECATION")

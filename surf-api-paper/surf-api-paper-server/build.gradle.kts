@@ -97,6 +97,7 @@ paper {
 
 tasks {
     shadowJar {
+        mergeServiceFiles()
         val relocationPrefix: String by project
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
     }

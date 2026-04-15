@@ -6,6 +6,7 @@ import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toBukkit
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SignUpdatePacketImpl(nmsPacket: ServerboundSignUpdatePacket) :
     V26_1NmsServerboundPacketImpl<ServerboundSignUpdatePacket>(nmsPacket), SignUpdatePacket {
     override val position get() = nmsPacket.pos.toBukkit()

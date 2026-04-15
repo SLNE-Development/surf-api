@@ -29,6 +29,7 @@ import dev.slne.surf.api.paper.server.nms.v26_1.packet.lore.V26_1PacketLoreRegis
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
 import dev.slne.surf.api.paper.server.nms.v26_1.region.V26_1TickThreadGuard
 
+@Suppress("ClassName")
 @OptIn(NmsUseWithCaution::class)
 @AutoService(NmsProvider::class)
 class V26_1NmsProvider : NmsProvider {
@@ -73,8 +74,7 @@ class V26_1NmsProvider : NmsProvider {
         V26_1SurfPaperNmsPlayerToastPacketsImpl()
 
     override fun createTickThreadGuard(): TickThreadGuard = V26_1TickThreadGuard()
-    override fun createPacketBridgeHandler(): NmsPacketBridgeHandler =
-        V26_1NmsPacketBridgeHandler()
+    override fun getPacketBridgeHandler(): NmsPacketBridgeHandler = V26_1NmsPacketBridgeHandler
 
     override fun createPacketLoreRegistry(): PacketLoreRegistry = V26_1PacketLoreRegistry()
     override fun createGlowingLifecycleHandler(): GlowingLifecycleHandler =

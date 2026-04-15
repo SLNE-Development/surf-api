@@ -7,6 +7,7 @@ import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
 import org.bukkit.entity.Player
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsStatsBridgeImpl : SurfPaperNmsStatsBridge {
 
     override fun getPlayerStatsAsJson(player: Player): String {

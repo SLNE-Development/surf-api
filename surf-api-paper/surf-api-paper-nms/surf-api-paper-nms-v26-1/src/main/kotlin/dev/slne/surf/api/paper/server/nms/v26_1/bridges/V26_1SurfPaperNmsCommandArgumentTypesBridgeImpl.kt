@@ -19,6 +19,7 @@ import java.lang.reflect.InvocationHandler
 import java.util.concurrent.ConcurrentHashMap
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsCommandArgumentTypesBridgeImpl : SurfPaperNmsCommandArgumentTypesBridge {
 
     override fun compoundTag(): ArgumentType<*> {

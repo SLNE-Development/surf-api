@@ -7,6 +7,7 @@ import net.minecraft.network.protocol.common.ClientCommonPacketListener
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1ClientboundDisconnectPacketImpl(nmsPacket: ClientboundDisconnectPacket) :
     V26_1NmsClientboundPacketImpl<ClientboundDisconnectPacket, ClientCommonPacketListener>(nmsPacket),
     DisconnectPacket {

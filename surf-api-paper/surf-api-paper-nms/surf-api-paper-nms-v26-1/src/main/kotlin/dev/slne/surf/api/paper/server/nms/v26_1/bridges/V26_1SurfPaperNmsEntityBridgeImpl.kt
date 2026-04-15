@@ -18,6 +18,7 @@ import org.bukkit.World
 import org.bukkit.entity.EntityType
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
 
     @Suppress("UnstableApiUsage")

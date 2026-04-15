@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1ClientboundSystemChatPacketImpl(nmsPacket: ClientboundSystemChatPacket) :
     V26_1NmsClientboundPacketImpl<ClientboundSystemChatPacket, ClientGamePacketListener>(nmsPacket),
     SystemChatPacket {

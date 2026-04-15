@@ -19,6 +19,7 @@ import java.util.*
 import net.minecraft.network.chat.MessageSignature as NmsMessageSignature
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsPlayerChatPacketsImpl : SurfPaperNmsPlayerChatPackets {
     override fun sendPlayerChatMessagePacket(
         senderUuid: UUID,

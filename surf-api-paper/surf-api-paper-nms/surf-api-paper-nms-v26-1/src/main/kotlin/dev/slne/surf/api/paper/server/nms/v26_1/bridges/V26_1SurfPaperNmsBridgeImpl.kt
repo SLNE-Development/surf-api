@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsBridgeImpl : SurfPaperNmsBridge {
     private typealias PacketListenerMap<T> = ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<T>>
 

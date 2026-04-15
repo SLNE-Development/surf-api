@@ -5,6 +5,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 data class EntityPlayerData(val uuid: UUID) {
     val entities = ConcurrentHashMap<Int, EntityGlowingData>()
 }

@@ -11,6 +11,7 @@ import glm_.or
 import net.minecraft.ChatFormatting
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 data class EntityGlowingData(
     val playerData: EntityPlayerData,
     val entityId: Int,

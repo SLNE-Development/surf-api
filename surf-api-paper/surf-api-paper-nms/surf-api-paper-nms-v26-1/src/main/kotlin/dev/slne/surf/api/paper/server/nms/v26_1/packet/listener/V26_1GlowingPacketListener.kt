@@ -18,6 +18,7 @@ import org.bukkit.entity.Player
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(NmsUseWithCaution::class)
+@Suppress("ClassName")
 object V26_1GlowingPacketListener : PacketListener {
 
     val ignoreCache = Caffeine.newBuilder()

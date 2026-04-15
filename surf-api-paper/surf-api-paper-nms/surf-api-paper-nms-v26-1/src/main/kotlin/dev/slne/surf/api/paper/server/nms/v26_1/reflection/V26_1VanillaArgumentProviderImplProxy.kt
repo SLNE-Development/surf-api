@@ -7,6 +7,7 @@ import dev.slne.surf.api.core.reflection.SurfProxy
 import io.papermc.paper.command.brigadier.argument.VanillaArgumentProviderImpl
 
 @SurfProxy(VanillaArgumentProviderImpl::class)
+@Suppress("ClassName")
 interface V26_1VanillaArgumentProviderImplProxy {
 
     @Name("wrap")

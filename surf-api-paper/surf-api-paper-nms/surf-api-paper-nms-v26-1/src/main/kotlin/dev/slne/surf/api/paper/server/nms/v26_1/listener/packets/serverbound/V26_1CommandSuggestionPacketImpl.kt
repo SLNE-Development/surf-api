@@ -5,6 +5,7 @@ import dev.slne.surf.api.paper.nms.listener.packets.serverbound.CommandSuggestio
 import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1CommandSuggestionPacketImpl(nmsPacket: ServerboundCommandSuggestionPacket) :
     V26_1NmsServerboundPacketImpl<ServerboundCommandSuggestionPacket>(nmsPacket),
     CommandSuggestionPacket {

@@ -6,6 +6,7 @@ import xyz.jpenilla.reflectionremapper.proxy.annotation.FieldSetter
 import xyz.jpenilla.reflectionremapper.proxy.annotation.Proxies
 
 @Proxies(Item::class)
+@Suppress("ClassName")
 interface V26_1ItemProxy {
     @FieldSetter("components")
     fun setComponents(item: Item, components: DataComponentMap)

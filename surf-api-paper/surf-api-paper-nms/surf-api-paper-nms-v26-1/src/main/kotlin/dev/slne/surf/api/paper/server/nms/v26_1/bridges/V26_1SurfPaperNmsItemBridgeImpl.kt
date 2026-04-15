@@ -9,6 +9,7 @@ import net.minecraft.core.component.DataComponents
 import org.bukkit.inventory.ItemType
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
     override fun setDefaultMaxStackSize(item: ItemType, maxStackSize: Int) {
         require(maxStackSize in 1..100) { "Max stack size must be between 1 and 100" }

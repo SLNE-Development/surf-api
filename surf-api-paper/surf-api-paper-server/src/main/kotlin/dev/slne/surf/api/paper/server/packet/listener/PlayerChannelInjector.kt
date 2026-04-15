@@ -9,13 +9,10 @@ import dev.slne.surf.api.core.reflection.SurfReflection
 import dev.slne.surf.api.core.reflection.createProxy
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
-import dev.slne.surf.api.paper.nms.common.NmsPacketBridgeHandler
 import dev.slne.surf.api.paper.nms.common.NmsProvider
-import dev.slne.surf.api.paper.nms.listener.packets.NmsPacket
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
-import dev.slne.surf.api.paper.server.impl.nms.SurfPaperNmsBridgeImpl
 import dev.slne.surf.api.paper.server.impl.packet.listener.SurfPaperPacketListenerApiImpl
+import dev.slne.surf.api.paper.server.nms.bridge.InternalNmsBridge
 import dev.slne.surf.api.paper.server.nms.toNms
 import dev.slne.surf.api.paper.server.plugin
 import io.netty.channel.Channel
@@ -125,11 +122,10 @@ object PlayerChannelInjector : Listener {
 
     @OptIn(NmsUseWithCaution::class)
     private class PacketHandler : ChannelDuplexHandler() {
-        private val bridge = SurfPaperNmsBridge.INSTANCE as SurfPaperNmsBridgeImpl
+        private val bridge = InternalNmsBridge.get()
         private val packetListenerApi =
             SurfPaperPacketListenerApi.INSTANCE as SurfPaperPacketListenerApiImpl
-        private val packetBridgeHandler: NmsPacketBridgeHandler =
-            NmsProvider.current.createPacketBridgeHandler()
+        private val packetBridgeHandler = NmsProvider.current.getPacketBridgeHandler()
 
         @Volatile
         var connection: Connection? = null

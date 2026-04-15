@@ -16,6 +16,7 @@ import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
 
     override fun openSignEditor(

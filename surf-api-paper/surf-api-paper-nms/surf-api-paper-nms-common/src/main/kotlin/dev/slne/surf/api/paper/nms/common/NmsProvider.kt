@@ -54,7 +54,7 @@ interface NmsProvider {
     /**
      * Creates the packet bridge handler for wrapping/unwrapping NMS packets.
      */
-    fun createPacketBridgeHandler(): NmsPacketBridgeHandler
+    fun getPacketBridgeHandler(): NmsPacketBridgeHandler
 
     /**
      * Creates the packet lore registry for managing version-specific lore handlers.

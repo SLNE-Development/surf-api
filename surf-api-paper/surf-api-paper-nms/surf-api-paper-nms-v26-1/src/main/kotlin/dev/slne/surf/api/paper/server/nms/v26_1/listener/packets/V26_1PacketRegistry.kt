@@ -22,6 +22,7 @@ import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket
 import kotlin.reflect.KClass
 
 @OptIn(NmsUseWithCaution::class)
+@Suppress("ClassName")
 object V26_1PacketRegistry {
     private typealias PacketMap<F> = Object2ObjectOpenHashMap<Class<out Packet<*>>, F>
 

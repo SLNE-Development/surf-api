@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.server
 
 import dev.slne.surf.api.core.server.CoreInstance
 import dev.slne.surf.api.paper.SurfApiPaper
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.server.impl.SurfApiPaperImpl
 import dev.slne.surf.api.paper.server.inventory.framework.InventoryLoader
@@ -9,6 +10,7 @@ import dev.slne.surf.api.paper.server.listener.ListenerManager
 import dev.slne.surf.api.paper.server.packet.PacketApiLoader
 import org.bukkit.Bukkit
 
+@OptIn(NmsUseWithCaution::class)
 object PaperInstance : CoreInstance() {
 
     override suspend fun onLoad() {

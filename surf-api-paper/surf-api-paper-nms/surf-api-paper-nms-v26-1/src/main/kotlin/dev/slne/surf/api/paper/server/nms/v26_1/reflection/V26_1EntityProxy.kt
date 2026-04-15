@@ -7,6 +7,7 @@ import xyz.jpenilla.reflectionremapper.proxy.annotation.Proxies
 import xyz.jpenilla.reflectionremapper.proxy.annotation.Static
 
 @Proxies(Entity::class)
+@Suppress("ClassName")
 interface V26_1EntityProxy {
 
     @FieldGetter("FLAG_GLOWING")

@@ -27,7 +27,7 @@ import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "ClassName")
 @NmsUseWithCaution
 class V26_1SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
     private val log = logger()

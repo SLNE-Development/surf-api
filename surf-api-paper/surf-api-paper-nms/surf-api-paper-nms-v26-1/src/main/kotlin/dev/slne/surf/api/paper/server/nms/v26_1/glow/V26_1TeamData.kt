@@ -8,6 +8,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+@Suppress("ClassName")
 class V26_1TeamData(color: ChatFormatting) {
     private val scoreboard = Scoreboard()
     val teamId = "glow-${uid()}${color.char}"

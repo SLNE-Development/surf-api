@@ -6,6 +6,7 @@ import dev.slne.surf.api.paper.util.reflectionProxy
 import xyz.jpenilla.reflectionremapper.ReflectionRemapper
 import xyz.jpenilla.reflectionremapper.proxy.ReflectionProxyFactory
 
+@Suppress("ClassName")
 object V26_1Reflection {
     lateinit var SERVER_STATS_COUNTER_PROXY: V26_1ServerStatsCounterProxy
         private set

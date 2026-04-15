@@ -18,6 +18,7 @@ import org.bukkit.inventory.ItemStack
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
     override fun getDifferentLootTable(
         entity: LivingEntity,

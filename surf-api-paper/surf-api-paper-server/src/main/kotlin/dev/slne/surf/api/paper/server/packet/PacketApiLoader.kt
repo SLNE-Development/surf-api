@@ -13,6 +13,7 @@ import dev.slne.surf.api.paper.server.packet.lore.PluginDisablePacketLoreListene
 import dev.slne.surf.api.paper.server.plugin
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 
+@OptIn(NmsUseWithCaution::class)
 object PacketApiLoader {
 
     private var versionPacketListeners: List<PacketListener> = emptyList()

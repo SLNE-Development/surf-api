@@ -24,6 +24,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 object V26_1SurfGlowingApiImpl : SurfGlowingApi {
     private val entityPlayerData = ConcurrentHashMap<UUID, EntityPlayerData>()
     private val blockPlayerData = ConcurrentHashMap<UUID, BlockPlayerData>()

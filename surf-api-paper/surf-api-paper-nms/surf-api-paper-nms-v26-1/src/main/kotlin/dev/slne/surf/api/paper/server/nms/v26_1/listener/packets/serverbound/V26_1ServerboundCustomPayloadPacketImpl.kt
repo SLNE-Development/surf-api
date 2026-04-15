@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.common.custom.DiscardedPayload
 import dev.slne.surf.api.paper.nms.listener.packets.serverbound.ServerboundCustomPayloadPacket.Payload as ApiPayload
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1ServerboundCustomPayloadPacketImpl(
     nmsPacket: ServerboundCustomPayloadPacket
 ) : V26_1NmsServerboundPacketImpl<ServerboundCustomPayloadPacket>(nmsPacket),

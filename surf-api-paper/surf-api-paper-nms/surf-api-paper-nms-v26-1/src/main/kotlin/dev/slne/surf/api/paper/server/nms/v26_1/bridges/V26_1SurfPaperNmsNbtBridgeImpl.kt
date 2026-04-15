@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsNbtBridgeImpl : SurfPaperNmsNbtBridge {
     private val log = logger()
 

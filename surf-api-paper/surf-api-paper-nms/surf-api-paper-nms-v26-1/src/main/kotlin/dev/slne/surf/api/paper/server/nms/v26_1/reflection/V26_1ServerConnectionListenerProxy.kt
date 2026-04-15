@@ -6,6 +6,7 @@ import xyz.jpenilla.reflectionremapper.proxy.annotation.FieldGetter
 import xyz.jpenilla.reflectionremapper.proxy.annotation.Proxies
 
 @Proxies(ServerConnectionListener::class)
+@Suppress("ClassName")
 interface V26_1ServerConnectionListenerProxy {
     @FieldGetter("channels")
     fun getChannels(instance: ServerConnectionListener): List<ChannelFuture>

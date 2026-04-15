@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket
 import org.bukkit.block.data.BlockData
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsBlockPacketsImpl : SurfPaperNmsBlockPackets {
 
     override fun updateBlockData(position: BlockPosition, blockData: BlockData) =

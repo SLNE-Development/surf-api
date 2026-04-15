@@ -15,6 +15,7 @@ import java.util.*
 
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsPlayerToastPacketsImpl : SurfPaperNmsPlayerToastPackets {
     override fun showToast(toast: Toast) = V26_1PacketOperationImpl.complex { _, packets ->
         val id = Identifier.fromNamespaceAndPath("surfapi", "toast_${UUID.randomUUID()}")

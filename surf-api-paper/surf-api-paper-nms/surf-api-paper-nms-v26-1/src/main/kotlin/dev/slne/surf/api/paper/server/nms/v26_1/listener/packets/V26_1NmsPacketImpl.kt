@@ -6,6 +6,7 @@ import net.minecraft.network.PacketListener
 import net.minecraft.network.protocol.Packet
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 abstract class V26_1NmsPacketImpl<Nms : Packet<out Listener>, Listener : PacketListener>(var nmsPacket: Nms) :
     NmsPacket {
     val nmsClass = nmsPacket.javaClass

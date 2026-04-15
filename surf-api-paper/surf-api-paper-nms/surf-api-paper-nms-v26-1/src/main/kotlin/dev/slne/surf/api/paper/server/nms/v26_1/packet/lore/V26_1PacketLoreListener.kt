@@ -28,6 +28,7 @@ import net.minecraft.network.chat.Component as MinecraftComponent
  * handling the modification of lore on item stacks in packet events.
  */
 @OptIn(NmsUseWithCaution::class)
+@Suppress("ClassName")
 object V26_1PacketLoreListener : PacketListener {
     private val globalHandlersByPlugin =
         Object2ObjectLinkedOpenHashMap<Plugin, ObjectLinkedOpenHashSet<SurfPaperPacketLoreHandler>>()

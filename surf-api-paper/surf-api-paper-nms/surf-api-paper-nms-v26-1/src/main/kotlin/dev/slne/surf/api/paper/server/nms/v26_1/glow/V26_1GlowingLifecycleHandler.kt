@@ -9,6 +9,7 @@ import org.bukkit.World
 import org.bukkit.entity.Player
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1GlowingLifecycleHandler : GlowingLifecycleHandler {
     override fun removeAllGlowingOnQuit(player: Player) {
         V26_1SurfGlowingApiImpl.removeAllGlowingOnQuit(player)

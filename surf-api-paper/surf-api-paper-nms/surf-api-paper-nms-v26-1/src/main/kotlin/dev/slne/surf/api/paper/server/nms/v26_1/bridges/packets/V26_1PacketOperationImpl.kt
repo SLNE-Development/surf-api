@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import org.bukkit.entity.Player
 import java.util.*
 
+@Suppress("ClassName")
 class V26_1PacketOperationImpl : PacketOperation {
     private var operation: Operation
 

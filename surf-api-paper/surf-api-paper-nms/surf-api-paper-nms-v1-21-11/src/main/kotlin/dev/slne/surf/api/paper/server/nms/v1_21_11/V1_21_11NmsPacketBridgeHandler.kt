@@ -10,7 +10,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.listener.packets.V1_21_11Pack
 import net.minecraft.network.protocol.Packet
 
 @NmsUseWithCaution
-class V1_21_11NmsPacketBridgeHandler : NmsPacketBridgeHandler {
+object V1_21_11NmsPacketBridgeHandler : NmsPacketBridgeHandler {
 
     @Suppress("UNCHECKED_CAST")
     override fun wrapServerboundPacket(nmsPacket: Any): NmsServerboundPacket? {

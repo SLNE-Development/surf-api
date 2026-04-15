@@ -14,6 +14,7 @@ import net.minecraft.network.syncher.SynchedEntityData.DataValue
 import org.bukkit.entity.Entity
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 object V26_1SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
     fun createTeam(data: V26_1TeamData): PacketOperation =
         V26_1PacketOperationImpl.simple {

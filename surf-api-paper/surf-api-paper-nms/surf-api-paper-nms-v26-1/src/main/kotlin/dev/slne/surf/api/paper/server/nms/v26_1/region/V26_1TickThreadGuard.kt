@@ -12,7 +12,7 @@ import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.util.BoundingBox
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "ClassName")
 class V26_1TickThreadGuard : TickThreadGuard {
 
     override fun ensureTickThread(world: World, pos: Position, reason: String) {
