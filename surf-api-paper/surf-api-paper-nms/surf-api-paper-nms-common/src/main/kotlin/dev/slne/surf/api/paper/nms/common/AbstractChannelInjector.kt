@@ -13,7 +13,6 @@ import io.netty.util.AttributeKey
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
-import org.bukkit.plugin.Plugin
 import dev.slne.surf.api.paper.event.register as registerListener
 import dev.slne.surf.api.paper.event.unregister as unregisterListener
 
@@ -30,14 +29,9 @@ abstract class AbstractChannelInjector<H : AbstractChannelInjector.AbstractPacke
 
     private val packetHandlerKey = AttributeKey.newInstance<H>("surf_api_packet_handler")
 
-    /**
-     * The plugin instance used for listener registration.
-     */
-    protected abstract val plugin: Plugin
-
     fun register() {
         registerChannelInitializeListener(CHANNEL_KEY) { this.getOrInjectPacketHandler(it) }
-        registerListener(plugin)
+        registerListener(NmsProvider.current.plugin)
     }
 
     fun unregister() {

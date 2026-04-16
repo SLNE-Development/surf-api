@@ -21,14 +21,10 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.plugin.Plugin
-import org.bukkit.plugin.java.JavaPlugin
 
 @Suppress("ClassName", "UnstableApiUsage")
 object V26_1ChannelInjector : AbstractChannelInjector<V26_1ChannelInjector.PacketHandler>() {
     private val log = logger()
-
-    override val plugin: Plugin get() = JavaPlugin.getProvidingPlugin(V26_1ChannelInjector::class.java)
 
     override fun registerChannelInitializeListener(
         key: Key,

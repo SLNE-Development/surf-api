@@ -1,2 +1,3 @@
 dev.slne.surf.api.processor.autoservice.AutoServiceSymbolProcessorProvider
+dev.slne.surf.api.processor.nms.NmsProvidersCollectorProvider
 dev.slne.surf.api.processor.component.ComponentSymbolProcessorProvider

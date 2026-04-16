@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
@@ -30,10 +29,14 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLor
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLoreRegistry
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
 import dev.slne.surf.api.paper.server.nms.v1_21_11.region.V1_21_11TickThreadGuard
+import dev.slne.surf.api.shared.internal.nms.NmsProviderMarker
+import dev.slne.surf.api.shared.internal.nms.NmsVersion
+import org.bukkit.plugin.java.JavaPlugin
 
+@Suppress("ClassName")
 @OptIn(NmsUseWithCaution::class)
-@AutoService(NmsProvider::class)
-class V1_21_11NmsProvider : NmsProvider {
+@NmsProviderMarker(NmsVersion.V1_21_11)
+class V1_21_11NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
     override val version: NmsVersion = NmsVersion.V1_21_11
 
     override fun createNmsBridge(): SurfPaperNmsBridge = V1_21_11SurfPaperNmsBridgeImpl()

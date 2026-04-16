@@ -14,15 +14,19 @@ import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToas
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
-import java.util.*
+import dev.slne.surf.api.shared.internal.nms.NmsProviderConfig
+import dev.slne.surf.api.shared.internal.nms.NmsProviderMeta
+import dev.slne.surf.api.shared.internal.nms.NmsVersion
+import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
+import java.net.URI
+import java.util.jar.JarFile
 
 /**
  * Main interface for version-specific NMS operations.
  *
  * Each supported Minecraft version provides an implementation of this interface
  * that creates the appropriate NMS bridge implementations and packet listeners.
- *
- * Implementations are discovered at runtime using [java.util.ServiceLoader].
  */
 @NmsUseWithCaution
 interface NmsProvider {
@@ -30,6 +34,7 @@ interface NmsProvider {
      * The NMS version this provider supports.
      */
     val version: NmsVersion
+    val plugin: JavaPlugin
 
     // ==================== Bridge Factories ==================== //
 
@@ -106,37 +111,87 @@ interface NmsProvider {
          * @throws IllegalStateException if no provider is found for the current version
          */
         val current: NmsProvider by lazy {
-            val version = NmsVersion.current
-            val loader = ServiceLoader.load(NmsProvider::class.java)
-            val providers = mutableListOf<NmsProvider>()
+            val version = NmsVersionResolver.current
 
-            val iterator = loader.iterator()
-            while (iterator.hasNext()) {
-                val instance: NmsProvider?
-                try {
-                    instance = iterator.next()
-                } catch (_: ServiceConfigurationError) {
-                    continue
+            try {
+                val metas = mutableListOf<NmsProviderMeta>()
+
+                val resources = javaClass.classLoader.getResources(NmsProviderConfig.NMS_PROVIDERS_DIRECTORY)
+                while (resources.hasMoreElements()) {
+                    val url = resources.nextElement()
+
+                    if (url.protocol == "jar") {
+                        val jarPath = url.path.substringBefore("!")
+                        JarFile(File(URI(jarPath))).use { jarFile ->
+                            jarFile.entries().asSequence()
+                                .filter {
+                                    it.name.startsWith(NmsProviderConfig.NMS_PROVIDERS_DIRECTORY) && it.name.endsWith(
+                                        ".json"
+                                    )
+                                }
+                                .forEach { entry ->
+                                    try {
+                                        val raw = jarFile.getInputStream(entry).bufferedReader()
+                                            .use { it.readText() }
+                                        val decoded =
+                                            NmsProviderConfig.json.decodeFromString<List<NmsProviderMeta>>(raw)
+                                        metas += decoded
+                                    } catch (e: Exception) {
+                                        log.atSevere()
+                                            .withCause(e)
+                                            .log("Failed to parse ${entry.name}")
+                                    }
+                                }
+                        }
+                    } else {
+                        val dir = File(url.toURI())
+                        dir.listFiles { file -> file.extension == "json" }?.forEach { file ->
+                            try {
+                                val raw = file.readText()
+                                val decoded =
+                                    NmsProviderConfig.json.decodeFromString<List<NmsProviderMeta>>(raw)
+                                metas += decoded
+                            } catch (e: Exception) {
+                                log.atSevere()
+                                    .withCause(e)
+                                    .log("Failed to parse ${file.name}")
+                            }
+                        }
+                    }
                 }
-                providers.add(instance)
-            }
 
-            log.atInfo().log("Looking for NmsProvider with version: %s", version)
-            log.atInfo().log(
-                "Available NmsProviders: %s",
-                providers.joinToString(", ") { "${it.version.name} (${it.version.versionPrefix})" })
+                log.atInfo().log("Discovered %s NmsProviders: %s", metas.size, metas.joinToString(", "))
 
-            val matched = providers.firstOrNull { it.version == version }
-            if (matched != null) {
-                log.atInfo().log("Found matching NmsProvider: %s", matched.version.name)
-                matched
-            } else {
-                log.atWarning()
-                    .log("No exact match for NmsProvider version %s, using fallback", version)
-                val fallback = providers.maxByOrNull { it.version.versionPrefix }
-                    ?: error("No NmsProvider implementations found")
-                log.atWarning().log("Selected fallback NmsProvider: %s", fallback.version.name)
-                fallback
+                val selectedMeta = metas.find { it.version == version }?.also { meta ->
+                    log.atInfo().log("Found matching NmsProvider: %s", meta.version.versionPrefix)
+                } ?: run {
+                    log.atWarning()
+                        .log("No exact match for NmsProvider version %s, using fallback", version.versionPrefix)
+                    val fallback = metas.maxByOrNull { it.version.versionPrefix }
+                        ?: error("No NmsProvider implementations found")
+                    log.atWarning().log("Selected fallback NmsProvider: %s", fallback.version.versionPrefix)
+                    fallback
+                }
+
+                val clazz = try {
+                    Class.forName(selectedMeta.implementation)
+                } catch (e: Throwable) {
+                    throw IllegalStateException("Failed to load NmsProvider implementation", e)
+                }
+
+                val constructor = try {
+                    clazz.getConstructor(JavaPlugin::class.java)
+                } catch (e: Throwable) {
+                    throw IllegalStateException(
+                        "Failed to load NmsProvider implementation. Implementation must have a constructor with a single argument of type JavaPlugin",
+                        e
+                    )
+                }
+
+                constructor.newInstance(JavaPlugin.getProvidingPlugin(NmsProvider::class.java)) as NmsProvider
+            } catch (e: Exception) {
+                log.atSevere().withCause(e).log("Failed to load NmsProvider")
+                throw IllegalStateException("Failed to load NmsProvider", e)
             }
         }
     }

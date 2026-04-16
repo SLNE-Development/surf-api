@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.nms.v26_1.bridges
 
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.InternalPacketListenerApiBridge
@@ -46,10 +45,6 @@ class V26_1PacketListenerApiImpl : InternalPacketListenerApiBridge {
         @Suppress("unused")
         @JvmStatic
         fun toBukkitPlayer(serverPlayer: ServerPlayer?): Player? = serverPlayer?.bukkitEntity
-    }
-
-    init {
-        checkInstantiationByServiceLoader()
     }
 
     override fun registerListeners(listener: PacketListener) {

@@ -6,6 +6,7 @@ import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
+import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.V26_1SurfPaperNmsGlowingBridgeImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.block.BlockGlowingData
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.block.BlockPlayerData
@@ -19,7 +20,6 @@ import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
-import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -103,7 +103,7 @@ object V26_1SurfGlowingApiImpl : SurfGlowingApi {
             val newData = BlockGlowingData(playerData, blockLocation, color)
             playerData.blocks[blockLocation] = newData
 
-            val plugin = JavaPlugin.getProvidingPlugin(javaClass)
+            val plugin = NmsProvider.current.plugin
             plugin.launch(plugin.entityDispatcher(viewer)) {
                 if (viewer.isChunkVisible(blockLocation)) {
                     newData.spawn().execute(viewer)
