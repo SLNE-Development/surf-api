@@ -5,7 +5,7 @@ import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.api.nms.listener.NmsClientboundPacketListener
 import dev.slne.surf.api.paper.api.nms.listener.NmsServerboundPacketListener
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
+import dev.slne.surf.api.paper.nms.common.InternalNmsBridge
 import dev.slne.surf.api.paper.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.api.paper.nms.listener.packets.serverbound.NmsServerboundPacket
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListenerResult
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 
 @NmsUseWithCaution
-class V1_21_11SurfPaperNmsBridgeImpl : SurfPaperNmsBridge {
+class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
     private typealias PacketListenerMap<T> = ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<T>>
 
     private val log = logger()
@@ -69,7 +69,7 @@ class V1_21_11SurfPaperNmsBridgeImpl : SurfPaperNmsBridge {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <Packet : NmsServerboundPacket> handleServerboundPacket(
+    override fun <Packet : NmsServerboundPacket> handleServerboundPacket(
         packet: Packet,
         player: Player?,
     ): Packet? {
@@ -97,7 +97,7 @@ class V1_21_11SurfPaperNmsBridgeImpl : SurfPaperNmsBridge {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <Packet : NmsClientboundPacket> handleClientboundPacket(
+    override fun <Packet : NmsClientboundPacket> handleClientboundPacket(
         packet: Packet,
         player: Player?,
     ): Packet? {

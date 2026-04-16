@@ -2,7 +2,6 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11
 
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
 import dev.slne.surf.api.paper.nms.bridges.*
 import dev.slne.surf.api.paper.nms.bridges.packets.SurfPaperNmsPacketBridges
 import dev.slne.surf.api.paper.nms.bridges.packets.block.SurfPaperNmsBlockPackets
@@ -39,7 +38,7 @@ import org.bukkit.plugin.java.JavaPlugin
 class V1_21_11NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
     override val version: NmsVersion = NmsVersion.V1_21_11
 
-    override fun createNmsBridge(): SurfPaperNmsBridge = V1_21_11SurfPaperNmsBridgeImpl()
+    override fun createNmsBridge() = V1_21_11SurfPaperNmsBridgeImpl()
     override fun createCommonBridge(): SurfPaperNmsCommonBridge =
         V1_21_11SurfPaperNmsCommonBridgeImpl()
 

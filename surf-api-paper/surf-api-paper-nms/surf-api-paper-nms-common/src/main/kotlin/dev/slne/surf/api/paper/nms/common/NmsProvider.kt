@@ -3,7 +3,6 @@ package dev.slne.surf.api.paper.nms.common
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
 import dev.slne.surf.api.paper.nms.bridges.*
 import dev.slne.surf.api.paper.nms.bridges.packets.SurfPaperNmsPacketBridges
 import dev.slne.surf.api.paper.nms.bridges.packets.block.SurfPaperNmsBlockPackets
@@ -38,7 +37,7 @@ interface NmsProvider {
 
     // ==================== Bridge Factories ==================== //
 
-    fun createNmsBridge(): SurfPaperNmsBridge
+    fun createNmsBridge(): InternalNmsBridge
     fun createCommonBridge(): SurfPaperNmsCommonBridge
     fun createEntityBridge(): SurfPaperNmsEntityBridge
     fun createItemBridge(): SurfPaperNmsItemBridge
