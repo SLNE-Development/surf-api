@@ -10,7 +10,6 @@ import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChat
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
 import dev.slne.surf.api.paper.nms.common.*
-import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.*
@@ -87,7 +86,7 @@ class V26_1NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
 
     override fun createGlowingApi(): SurfGlowingApi = V26_1SurfGlowingApiImpl
     override fun createChannelInjector(): AbstractChannelInjector<*> = V26_1ChannelInjector
-    override fun createPacketListenerApi(): SurfPaperPacketListenerApi = V26_1PacketListenerApiImpl()
+    override fun createPacketListenerApi(): InternalPacketListenerApiBridge = V26_1PacketListenerApiImpl()
 
     override fun createPacketListeners(): List<PacketListener> = listOf(
         V26_1PacketLoreListener,

@@ -10,7 +10,6 @@ import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPacke
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChatPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
-import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.shared.internal.nms.NmsProviderConfig
@@ -82,7 +81,7 @@ interface NmsProvider {
     // ==================== Packet Listeners ==================== //
 
     fun createChannelInjector(): AbstractChannelInjector<*>
-    fun createPacketListenerApi(): SurfPaperPacketListenerApi
+    fun createPacketListenerApi(): InternalPacketListenerApiBridge
 
     /**
      * Creates version-specific packet listeners (e.g. lore handler, glowing handler).
