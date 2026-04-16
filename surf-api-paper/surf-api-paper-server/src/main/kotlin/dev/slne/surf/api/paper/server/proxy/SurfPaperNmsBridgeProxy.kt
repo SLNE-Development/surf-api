@@ -4,11 +4,12 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.SurfPaperNmsBridge
+import dev.slne.surf.api.paper.nms.common.InternalNmsBridge
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 
 @NmsUseWithCaution
 @AutoService(SurfPaperNmsBridge::class)
-class SurfPaperNmsBridgeProxy : SurfPaperNmsBridge by NmsProvider.current.createNmsBridge() {
+class SurfPaperNmsBridgeProxy : InternalNmsBridge by NmsProvider.current.createNmsBridge() {
     init {
         checkInstantiationByServiceLoader()
     }
