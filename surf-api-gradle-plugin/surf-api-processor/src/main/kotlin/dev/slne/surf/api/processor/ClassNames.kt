@@ -5,6 +5,7 @@ import dev.slne.surf.api.shared.api.component.Priority
 import dev.slne.surf.api.shared.api.component.SurfComponentMeta
 import dev.slne.surf.api.shared.api.component.processor.ComponentPostProcessor
 import dev.slne.surf.api.shared.api.component.requirement.*
+import dev.slne.surf.api.shared.internal.nms.NmsProviderMarker
 
 object ClassNames {
     val COMPONENT_META = nameOf<SurfComponentMeta>()
@@ -19,4 +20,5 @@ object ClassNames {
     val CONDITIONAL_ON_MISSING_COMPONENT = nameOf<ConditionalOnMissingComponent>()
     val CONDITIONAL_ON_PROPERTY = nameOf<ConditionalOnProperty>()
     val COMPONENT_POST_PROCESSOR = nameOf<ComponentPostProcessor>()
+    val NMS_PROVIDER = nameOf<NmsProviderMarker>()
 }

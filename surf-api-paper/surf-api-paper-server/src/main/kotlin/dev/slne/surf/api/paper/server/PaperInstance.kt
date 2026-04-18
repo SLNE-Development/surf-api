@@ -2,24 +2,32 @@ package dev.slne.surf.api.paper.server
 
 import dev.slne.surf.api.core.server.CoreInstance
 import dev.slne.surf.api.paper.SurfApiPaper
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.server.impl.SurfApiPaperImpl
 import dev.slne.surf.api.paper.server.inventory.framework.InventoryLoader
 import dev.slne.surf.api.paper.server.listener.ListenerManager
 import dev.slne.surf.api.paper.server.packet.PacketApiLoader
-import dev.slne.surf.api.paper.server.reflection.Reflection
+import org.bukkit.Bukkit
 
+@OptIn(NmsUseWithCaution::class)
 object PaperInstance : CoreInstance() {
 
     override suspend fun onLoad() {
         super.onLoad()
 
-        initObjects()
         PacketApiLoader.onLoad()
         InventoryLoader.load()
     }
 
     override suspend fun onEnable() {
         super.onEnable()
+
+        val pluginVersion = plugin.pluginMeta.version
+        val mcVersion = Bukkit.getMinecraftVersion()
+        val nmsVersion = NmsProvider.current.version
+
+        plugin.logger.info("\u001B[36m\u001B[1mLoading surf-api v$pluginVersion for minecraft $mcVersion with nms $nmsVersion")
 
         PacketApiLoader.onEnable()
         InventoryLoader.enable()
@@ -33,9 +41,5 @@ object PaperInstance : CoreInstance() {
         ListenerManager.unregisterListeners()
         PacketApiLoader.onDisable()
         InventoryLoader.disable()
-    }
-
-    private fun initObjects() {
-        Reflection
     }
 }

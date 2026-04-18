@@ -6,6 +6,9 @@ package dev.slne.surf.api.paper.util
 import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
+import dev.slne.surf.api.core.luckperms.LuckPermsAccess
+import dev.slne.surf.api.core.luckperms.prefix
+import dev.slne.surf.api.core.minimessage.miniMessage
 import dev.slne.surf.api.core.util.getCallerClass
 import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.paper.SurfApiPaper
@@ -262,6 +265,20 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
         )
     }
 }
+
+
+fun Player.getLuckPermsUser() = LuckPermsAccess.getUser(this.uniqueId)
+    ?: error("LuckPerms user not found for online player ${this.name}")
+
+fun Player.getLuckPermsUserOrNull() = LuckPermsAccess.getUser(this.uniqueId)
+
+suspend fun OfflinePlayer.getLuckPermsUser() = withContext(Dispatchers.IO) {
+    LuckPermsAccess.getUser(this@getLuckPermsUser.uniqueId)
+        ?: LuckPermsAccess.loadUser(this@getLuckPermsUser.uniqueId)
+}
+
+fun Player.getPrefixedName() =
+    miniMessage.deserialize("${this.getLuckPermsUserOrNull()?.prefix ?: ""}${this.name}")
 
 /**
  * Constructs a human-readable string representing the location, including coordinates and optionally

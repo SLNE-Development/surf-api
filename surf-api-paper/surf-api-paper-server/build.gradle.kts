@@ -6,7 +6,7 @@ plugins {
     `core-convention`
 
     alias(libs.plugins.plugin.yml.paper)
-    id("io.papermc.paperweight.userdev") apply true
+//    id("io.papermc.paperweight.userdev") apply true
 }
 
 kotlin {
@@ -18,8 +18,13 @@ kotlin {
 dependencies {
     api(projects.surfApiPaper.surfApiPaper)
     api(projects.surfApiCore.surfApiCoreServer)
+    api(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsCommon)
+    compileOnly(libs.paper.api)
 
-    paperweight.paperDevBundle(libs.paper.api.get().version)
+//    paperweight.paperDevBundle(libs.paper.api.get().version)
+
+    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV12111)
+    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV261)
 
     compileOnly(libs.placeholder.api)
 
@@ -93,6 +98,7 @@ paper {
 
 tasks {
     shadowJar {
+        mergeServiceFiles()
         val relocationPrefix: String by project
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
     }

@@ -2286,6 +2286,10 @@ public final class dev/slne/surf/api/paper/util/UtilBukkit {
 	public static final fun getChunkZ (Lio/papermc/paper/math/Position;)I
 	public static final fun getChunkZ (Lorg/bukkit/Location;)I
 	public static final fun getHighestBlockYAtBlockCoordinates (Lorg/bukkit/ChunkSnapshot;II)I
+	public static final fun getLuckPermsUser (Lorg/bukkit/OfflinePlayer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun getLuckPermsUser (Lorg/bukkit/entity/Player;)Lnet/luckperms/api/model/user/User;
+	public static final fun getLuckPermsUserOrNull (Lorg/bukkit/entity/Player;)Lnet/luckperms/api/model/user/User;
+	public static final fun getPrefixedName (Lorg/bukkit/entity/Player;)Lnet/kyori/adventure/text/Component;
 	public static final fun getXFromChunkKey (J)I
 	public static final fun getZFromChunkKey (J)I
 	public static final fun isChunkVisible (Lorg/bukkit/entity/Player;Lorg/bukkit/Location;)Z
