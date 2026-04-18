@@ -160,3 +160,9 @@ public final class dev/slne/surf/api/velocity/command/executors/SuspendCommandEx
 	public static final fun sendSyntaxMessageOrRethrow (Lcom/velocitypowered/api/command/CommandSource;Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public final class dev/slne/surf/api/velocity/util/Velocity_utilKt {
+	public static final fun getLuckPermsUser (Lcom/velocitypowered/api/proxy/Player;)Lnet/luckperms/api/model/user/User;
+	public static final fun getLuckPermsUserOrNull (Lcom/velocitypowered/api/proxy/Player;)Lnet/luckperms/api/model/user/User;
+	public static final fun getPrefixedName (Lcom/velocitypowered/api/proxy/Player;)Lnet/kyori/adventure/text/Component;
+}
+
