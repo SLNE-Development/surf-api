@@ -42,6 +42,7 @@ inline fun <reified T : Any> User.getMeta(key: String, default: T): T {
 }
 
 
-fun Audience.getLuckPermsUser() = this.uuidOrNull()?.let { LuckPermsAccess.getUser(it) }
-fun Audience.getLuckPermsUserOrNull() = this.uuidOrNull()?.let { LuckPermsAccess.getUser(it) }
+fun Audience.getLuckPermsUser(): User = this.getLuckPermsUserOrNull()
     ?: error("Audience does not have a valid UUID or LuckPerms user could not be found.")
+
+fun Audience.getLuckPermsUserOrNull(): User? = this.uuidOrNull()?.let { LuckPermsAccess.getUser(it) }
