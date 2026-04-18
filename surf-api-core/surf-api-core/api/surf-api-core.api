@@ -9343,6 +9343,20 @@ public final class dev/slne/surf/api/core/util/ById$Companion {
 	public final fun build (Ljava/lang/Class;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
 }
 
+public final class dev/slne/surf/api/core/util/Caffeine_utilKt {
+	public static final fun withAutoCloseOnRemoval (Lcom/github/benmanes/caffeine/cache/Caffeine;Lcom/github/benmanes/caffeine/cache/RemovalListener;)Lcom/github/benmanes/caffeine/cache/Caffeine;
+	public static synthetic fun withAutoCloseOnRemoval$default (Lcom/github/benmanes/caffeine/cache/Caffeine;Lcom/github/benmanes/caffeine/cache/RemovalListener;ILjava/lang/Object;)Lcom/github/benmanes/caffeine/cache/Caffeine;
+}
+
+public final class dev/slne/surf/api/core/util/Coroutine_utilKt {
+	public static final fun runAtFixedRate-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runAtFixedRate-vLdBGDU$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final fun runUntil-jKevqZI (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runUntil-jKevqZI$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final fun runWithFixedDelay-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runWithFixedDelay-vLdBGDU$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
 public final class dev/slne/surf/api/core/util/Date_utilKt {
 	public static final fun getCurrentDateTimeFormatted ()Ljava/lang/String;
 	public static final fun getDateTimeFormatter ()Ljava/time/format/DateTimeFormatter;
