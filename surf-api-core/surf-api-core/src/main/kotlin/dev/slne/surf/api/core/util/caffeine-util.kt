@@ -8,6 +8,19 @@ private val log = logger()
 
 private fun <K : Any, V : Any> noOpRemovalListener(): RemovalListener<K, V> = RemovalListener { _, _, _ -> }
 
+/**
+ * Configures a Caffeine cache to automatically close entries that are removed from the cache
+ * and invokes a specified `RemovalListener` before the auto-close operation is executed.
+ *
+ * This method ensures that if the key or value implements `AutoCloseable`, their `close` method
+ * is called when they are removed from the cache due to any removal cause (e.g., eviction, manual removal).
+ * If an exception occurs during the `close` or in the provided `beforeClose` listener, it is caught
+ * and logged as a warning.
+ *
+ * @param beforeClose an optional `RemovalListener` to be invoked before the automatic
+ * closing of the removed key and value occurs. A no-op listener is used if this parameter is not provided.
+ * @return a modified instance of the `Caffeine` cache configured with the automatic close-on-removal behavior.
+ */
 fun <K : Any, V : Any> Caffeine<K, V>.withAutoCloseOnRemoval(
     beforeClose: RemovalListener<K, V> = noOpRemovalListener()
 ): Caffeine<K, V> = removalListener { key, value, cause ->
