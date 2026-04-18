@@ -6,7 +6,7 @@ canvas-api = "1.21.11-R0.1-SNAPSHOT"
 # Kolin
 kotlinVersion = "2.3.20"
 kotlinxCoroutines = "1.10.2"
-kotlinx-serialization = "1.10.0"
+kotlinx-serialization = "1.11.0"
 
 # Packet Events
 packetevents = "2.11.2"
@@ -19,7 +19,7 @@ commandapi = "11.2.0"
 luckperms = "5.4"
 
 # Scoreboard Library
-scoreboard-library = "2.7.3"
+scoreboard-library = "2.7.4"
 
 # Adventure
 adventure-api = "4.26.1"
@@ -67,7 +67,7 @@ bytebuddy = "1.18.8"
 maven-repo-auth = "3.0.4"
 shadow-gradle-plugin = "9.4.1"
 run-paper-gradle-plugin = "3.0.2"
-dokka = "2.1.0"
+dokka = "2.2.0"
 
 [libraries]
 # Paper
