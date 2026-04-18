@@ -28,6 +28,8 @@ object PacketApiLoader {
 
         // Register version-specific packet listeners from NmsProvider
         val provider = NmsProvider.current
+        provider.initialize()
+        
         versionPacketListeners = provider.createPacketListeners()
         for (listener in versionPacketListeners) {
             SurfPaperPacketListenerApi.registerListeners(listener)
@@ -35,8 +37,6 @@ object PacketApiLoader {
 
         AbstractChannelInjector.instance.register()
         PluginDisablePacketLoreListener.register()
-
-        provider.initialize()
     }
 
     @OptIn(NmsUseWithCaution::class)
