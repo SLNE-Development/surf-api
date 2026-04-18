@@ -42,7 +42,6 @@ object PacketApiLoader {
     @OptIn(NmsUseWithCaution::class)
     fun onDisable() {
         val provider = NmsProvider.current
-        provider.shutdown()
 
         packetEvents.terminate()
         for (listener in versionPacketListeners) {
@@ -52,6 +51,7 @@ object PacketApiLoader {
 
         PluginDisablePacketLoreListener.unregister()
         AbstractChannelInjector.instance.unregister()
+        provider.shutdown()
     }
 
     private fun setupPacketEvents() {
