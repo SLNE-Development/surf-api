@@ -9,9 +9,7 @@ import net.luckperms.api.node.NodeType
 import java.util.*
 
 object LuckPermsAccess {
-    val luckperms by lazy {
-        LuckPermsProvider.get()
-    }
+    val luckperms get() = LuckPermsProvider.get()
 
     fun getUser(uuid: UUID) = luckperms.userManager.getUser(uuid)
     suspend fun loadUser(uuid: UUID): User = luckperms.userManager.loadUser(uuid).await()
