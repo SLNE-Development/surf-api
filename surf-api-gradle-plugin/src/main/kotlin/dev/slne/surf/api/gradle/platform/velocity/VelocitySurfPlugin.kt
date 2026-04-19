@@ -55,6 +55,11 @@ internal class VelocitySurfPlugin :
                 enabled.convention(true)
             }
 
+            register("LuckPerms") {
+                optional.convention(false)
+                enabled.convention(true)
+            }
+
             register("surf-core-velocity") {
                 optional.convention(false)
                 enabled.convention(coreEnabled)
