@@ -3,7 +3,6 @@ package dev.slne.surf.api.paper.server.nms.v26_1.bridges
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsItemBridge
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.nms
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
 import net.minecraft.core.component.DataComponentMap
 import net.minecraft.core.component.DataComponents
 import org.bukkit.inventory.ItemType
@@ -20,7 +19,7 @@ class V26_1SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
             .set(DataComponents.MAX_STACK_SIZE, maxStackSize)
             .build()
 
-
-        V26_1Reflection.ITEM_PROXY.setComponents(nmsItem, updatedComponents)
+        @Suppress("DEPRECATION")
+        nmsItem.builtInRegistryHolder().bindComponents(updatedComponents)
     }
 }
