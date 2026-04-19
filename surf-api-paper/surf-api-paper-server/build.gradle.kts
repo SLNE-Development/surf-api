@@ -93,6 +93,11 @@ paper {
             joinClasspath = true
             load = RelativeLoadOrder.BEFORE
         }
+        register("LuckPerms") {
+            required = true
+            joinClasspath = true
+            load = RelativeLoadOrder.BEFORE
+        }
     }
 }
 

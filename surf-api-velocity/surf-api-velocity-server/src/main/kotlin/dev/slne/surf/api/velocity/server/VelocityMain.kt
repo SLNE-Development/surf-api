@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutorService
     version = "2.0.0",
     description = "The Surf API Velocity plugin.",
     authors = ["twisti"],
-    dependencies = [Dependency(id = "packetevents"), Dependency(id = "commandapi")]
+    dependencies = [Dependency(id = "packetevents"), Dependency(id = "commandapi"), Dependency(id = "luckperms")]
 )
 class VelocityMain @Inject constructor(
     val server: ProxyServer,
