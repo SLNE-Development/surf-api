@@ -55,7 +55,7 @@ internal class VelocitySurfPlugin :
                 enabled.convention(true)
             }
 
-            register("LuckPerms") {
+            register("luckperms") {
                 optional.convention(false)
                 enabled.convention(true)
             }

@@ -56,6 +56,7 @@ internal class PaperPluginSurfPlugin :
 
             serverDependencies {
                 registerRequired("surf-paper-api")
+                registerRequired("LuckPerms")
                 if (extension.coreModule.isPresent) {
                     registerRequired("surf-core-paper")
                 }

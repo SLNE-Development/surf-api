@@ -212,6 +212,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 val scope = extension.surfApiScope.orNull ?: platform.scope
                 add(scope, platform.dependency)
+                add(COMPILE_ONLY, "net.luckperms:api:+")
             }
         }
 
