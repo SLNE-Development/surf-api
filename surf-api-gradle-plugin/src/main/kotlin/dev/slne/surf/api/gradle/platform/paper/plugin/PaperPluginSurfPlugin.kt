@@ -45,7 +45,6 @@ internal class PaperPluginSurfPlugin :
 
             bootstrapDependencies {
                 registerRequired("surf-paper-api")
-                registerRequired("LuckPerms")
 
                 if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
                     registerRequired("surf-redis-paper")
