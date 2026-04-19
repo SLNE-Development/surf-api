@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService
 @Plugin(
     id = "surf-api-velocity",
     name = "Surf API Velocity",
-    version = "3.2.0",
+    version = "3.2.1",
     description = "The Surf API Velocity plugin.",
     authors = ["twisti"],
     dependencies = [Dependency(id = "packetevents"), Dependency(id = "commandapi"), Dependency(id = "luckperms")]
