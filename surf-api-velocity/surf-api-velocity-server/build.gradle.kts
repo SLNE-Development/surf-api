@@ -1,6 +1,7 @@
 plugins {
     `core-convention`
     kotlin("kapt")
+    id("com.github.gmazzo.buildconfig") version "6.0.9"
 }
 
 dependencies {
@@ -31,4 +32,9 @@ description = "surf-api-velocity-server"
 
 kapt {
     keepJavacAnnotationProcessors = true
+}
+
+buildConfig {
+    packageName("dev.slne.surf.api.velocity.server.generated")
+    buildConfigField("VERSION", project.version.toString())
 }
