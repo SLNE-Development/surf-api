@@ -154,7 +154,7 @@ interface SurfConfigApi {
 /**
  * Retrieves the singleton instance of [SurfConfigApi].
  */
-val surfConfigApi = requiredService<SurfConfigApi>()
+val surfConfigApi by lazy { requiredService<SurfConfigApi>() }
 
 /**
  * Creates a Sponge YAML configuration using a reified type.
