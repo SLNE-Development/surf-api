@@ -10,6 +10,7 @@ import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
 import dev.slne.surf.api.core.server.CoreInstance
+import dev.slne.surf.api.velocity.server.generated.BuildConfig
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -18,9 +19,9 @@ import java.util.concurrent.ExecutorService
 @Plugin(
     id = "surf-api-velocity",
     name = "Surf API Velocity",
-    version = "3.2.1",
+    version = BuildConfig.VERSION,
     description = "The Surf API Velocity plugin.",
-    authors = ["twisti"],
+    authors = ["twisti", "SLNE Development Team"],
     dependencies = [Dependency(id = "packetevents"), Dependency(id = "commandapi"), Dependency(id = "luckperms")]
 )
 class VelocityMain @Inject constructor(
