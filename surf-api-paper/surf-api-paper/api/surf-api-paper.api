@@ -720,6 +720,20 @@ public abstract class dev/slne/surf/api/paper/event/SingleListener : org/bukkit/
 	public abstract fun onEvent (Lorg/bukkit/event/Event;)V
 }
 
+public abstract class dev/slne/surf/api/paper/event/surf/AbstractSurfPlayerEvent : dev/slne/surf/api/core/event/SurfAsyncEvent {
+	public fun <init> (Ljava/util/UUID;)V
+	public final fun getPlayerUuid ()Ljava/util/UUID;
+}
+
+public final class dev/slne/surf/api/paper/event/surf/PlayerAfkStateChangeEvent : dev/slne/surf/api/paper/event/surf/AbstractSurfPlayerEvent, dev/slne/surf/api/core/event/SurfCancellableEvent {
+	public fun <init> (Ljava/util/UUID;ZZ)V
+	public fun cancel ()V
+	public final fun getFromState ()Z
+	public final fun getToState ()Z
+	public fun isCancelled ()Z
+	public fun setCancelled (Z)V
+}
+
 public final class dev/slne/surf/api/paper/extensions/Org_bukkit_ServerExtensionsKt {
 	public static final fun getServer ()Lorg/bukkit/Server;
 }
