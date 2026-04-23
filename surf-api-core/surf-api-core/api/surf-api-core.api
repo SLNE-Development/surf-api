@@ -316,6 +316,93 @@ public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializ
 	public static final fun getSurfSpongeConfigSerializers ()Ldev/slne/surf/api/core/config/serializer/SpongeConfigSerializers;
 }
 
+public final class dev/slne/surf/api/core/event/Event_bus_extensionsKt {
+	public static final fun registerListeners (Ldev/slne/surf/api/core/event/SurfEventBus;[Ljava/lang/Object;)V
+}
+
+public abstract class dev/slne/surf/api/core/event/SurfAsyncEvent : dev/slne/surf/api/core/event/SurfEvent {
+	public fun <init> ()V
+}
+
+public abstract interface class dev/slne/surf/api/core/event/SurfCancellableEvent {
+	public fun cancel ()V
+	public abstract fun isCancelled ()Z
+	public abstract fun setCancelled (Z)V
+}
+
+public final class dev/slne/surf/api/core/event/SurfCancellableEvent$DefaultImpls {
+	public static fun cancel (Ldev/slne/surf/api/core/event/SurfCancellableEvent;)V
+}
+
+public abstract interface class dev/slne/surf/api/core/event/SurfEvent {
+}
+
+public abstract interface class dev/slne/surf/api/core/event/SurfEventBus {
+	public static final field Companion Ldev/slne/surf/api/core/event/SurfEventBus$Companion;
+	public abstract fun callAsync (Ldev/slne/surf/api/core/event/SurfAsyncEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun callSync (Ldev/slne/surf/api/core/event/SurfSyncEvent;)Ldev/slne/surf/api/core/event/SurfSyncEvent;
+	public abstract fun registerAsyncHandler (Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static synthetic fun registerAsyncHandler$default (Ldev/slne/surf/api/core/event/SurfEventBus;Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun registerHandler (Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static synthetic fun registerHandler$default (Ldev/slne/surf/api/core/event/SurfEventBus;Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun registerListeners (Ljava/lang/Object;)V
+	public abstract fun unregisterListeners (Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/core/event/SurfEventBus$Companion : dev/slne/surf/api/core/event/SurfEventBus {
+	public fun callAsync (Ldev/slne/surf/api/core/event/SurfAsyncEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun callSync (Ldev/slne/surf/api/core/event/SurfSyncEvent;)Ldev/slne/surf/api/core/event/SurfSyncEvent;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/core/event/SurfEventBus;
+	public fun registerAsyncHandler (Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public fun registerHandler (Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public fun registerListeners (Ljava/lang/Object;)V
+	public fun unregisterListeners (Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/core/event/SurfEventBus$DefaultImpls {
+	public static synthetic fun registerAsyncHandler$default (Ldev/slne/surf/api/core/event/SurfEventBus;Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun registerHandler$default (Ldev/slne/surf/api/core/event/SurfEventBus;Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/event/SurfEventHandler : java/lang/annotation/Annotation {
+	public abstract fun ignoreCancelled ()Z
+	public abstract fun priority ()Ldev/slne/surf/api/core/event/SurfEventPriority;
+}
+
+public final class dev/slne/surf/api/core/event/SurfEventPriority : java/lang/Enum {
+	public static final field HIGH Ldev/slne/surf/api/core/event/SurfEventPriority;
+	public static final field HIGHEST Ldev/slne/surf/api/core/event/SurfEventPriority;
+	public static final field LOW Ldev/slne/surf/api/core/event/SurfEventPriority;
+	public static final field LOWEST Ldev/slne/surf/api/core/event/SurfEventPriority;
+	public static final field MONITOR Ldev/slne/surf/api/core/event/SurfEventPriority;
+	public static final field NORMAL Ldev/slne/surf/api/core/event/SurfEventPriority;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/core/event/SurfEventPriority;
+	public static fun values ()[Ldev/slne/surf/api/core/event/SurfEventPriority;
+}
+
+public abstract class dev/slne/surf/api/core/event/SurfSyncEvent : dev/slne/surf/api/core/event/SurfEvent {
+	public fun <init> ()V
+}
+
+public abstract interface class dev/slne/surf/api/core/event/invoker/SurfAsyncEventInvoker {
+	public abstract fun invoke (Ldev/slne/surf/api/core/event/SurfAsyncEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public class dev/slne/surf/api/core/event/invoker/SurfAsyncEventInvokerTemplate : dev/slne/surf/api/core/event/invoker/SurfAsyncEventInvoker {
+	public fun <init> ()V
+	public fun invoke (Ldev/slne/surf/api/core/event/SurfAsyncEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/api/core/event/invoker/SurfSyncEventInvoker {
+	public abstract fun invoke (Ldev/slne/surf/api/core/event/SurfSyncEvent;)V
+}
+
+public class dev/slne/surf/api/core/event/invoker/SurfSyncEventInvokerTemplate : dev/slne/surf/api/core/event/invoker/SurfSyncEventInvoker {
+	public fun <init> ()V
+	public fun invoke (Ldev/slne/surf/api/core/event/SurfSyncEvent;)V
+}
+
 public final class dev/slne/surf/api/core/extensions/Packet_eventsKt {
 	public static final fun getPacketEvents ()Lcom/github/retrooper/packetevents/PacketEventsAPI;
 	public static final fun sendPacket (Lcom/github/retrooper/packetevents/wrapper/PacketWrapper;Ljava/lang/Object;)V
