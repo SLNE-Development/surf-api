@@ -15,6 +15,25 @@ package dev.slne.surf.api.core.event
  *    function, in which case it participates in structured concurrency on the
  *    coroutine that drives [SurfEventBus.callAsync].
  *
+ * ## Polymorphic dispatch
+ *
+ * The parameter type acts as a type filter based on `isAssignableFrom` semantics.
+ * A handler declared for event type `A` will also be invoked for any subtype `B : A`
+ * that is dispatched. Conversely, a handler declared for `B` is **not** invoked when
+ * only `A` is dispatched.
+ *
+ * Example:
+ * ```kotlin
+ * open class BaseEvent : SurfAsyncEvent()
+ * class SpecificEvent : BaseEvent()
+ *
+ * @SurfEventHandler
+ * suspend fun onBase(event: BaseEvent) { /* triggered by BaseEvent AND SpecificEvent */ }
+ *
+ * @SurfEventHandler
+ * suspend fun onSpecific(event: SpecificEvent) { /* triggered ONLY by SpecificEvent */ }
+ * ```
+ *
  * @property priority dispatch order, from [SurfEventPriority.LOWEST] (first) to
  *   [SurfEventPriority.MONITOR] (last). Defaults to [SurfEventPriority.NORMAL].
  * @property ignoreCancelled when `true`, the handler is skipped if a previous
