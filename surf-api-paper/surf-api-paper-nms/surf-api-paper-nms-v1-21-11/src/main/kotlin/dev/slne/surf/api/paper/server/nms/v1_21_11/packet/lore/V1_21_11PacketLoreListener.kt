@@ -178,6 +178,37 @@ object V1_21_11PacketLoreListener : PacketListener {
         return ClientboundSystemChatPacket(transformed, event.overlay())
     }
 
+    @ClientboundListener
+    fun onClientboundPlayerChatPacket(event: ClientboundPlayerChatPacket): ClientboundPlayerChatPacket {
+        if (!hasAnyHandlers()) return event
+        val unsignedContent = event.unsignedContent() ?: return event
+        val transformed = transformChatComponent(unsignedContent)
+
+        if (transformed === unsignedContent) return event
+
+        return ClientboundPlayerChatPacket(
+            event.globalIndex(),
+            event.sender(),
+            event.index(),
+            event.signature(),
+            event.body(),
+            transformed,
+            event.filterMask(),
+            event.chatType()
+        )
+    }
+
+    @ClientboundListener
+    fun onClientboundDisguisedChatPacket(event: ClientboundDisguisedChatPacket): ClientboundDisguisedChatPacket {
+        if (!hasAnyHandlers()) return event
+        val message = event.message()
+        val transformed = transformChatComponent(message)
+
+        if (transformed === message) return event
+
+        return ClientboundDisguisedChatPacket(transformed, event.chatType())
+    }
+
     /**
      * Recursively walks the component tree and rebuilds only the branches that actually
      * contain a [HoverEvent.ShowItem] whose item lore is mutated by the registered handlers.

@@ -248,6 +248,37 @@ object V26_1PacketLoreListener : PacketListener {
         return style.withHoverEvent(HoverEvent.ShowItem(newTemplate))
     }
 
+    @ClientboundListener
+    fun onClientboundPlayerChatPacket(event: ClientboundPlayerChatPacket): ClientboundPlayerChatPacket {
+        if (!hasAnyHandlers()) return event
+        val unsignedContent = event.unsignedContent() ?: return event
+        val transformed =transformChatComponent(unsignedContent)
+
+        if (transformed === unsignedContent) return event
+
+        return ClientboundPlayerChatPacket(
+            event.globalIndex(),
+            event.sender(),
+            event.index(),
+            event.signature(),
+            event.body(),
+            transformed,
+            event.filterMask(),
+            event.chatType()
+        )
+    }
+
+    @ClientboundListener
+    fun onClientboundDisguisedChatPacket(event: ClientboundDisguisedChatPacket): ClientboundDisguisedChatPacket {
+        if (!hasAnyHandlers()) return event
+        val message = event.message()
+        val transformed = transformChatComponent(message)
+
+        if (transformed === message) return event
+
+        return ClientboundDisguisedChatPacket(transformed, event.chatType())
+    }
+
     /**
      * Returns the original item if:
      * - item is empty
