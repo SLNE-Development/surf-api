@@ -45,8 +45,7 @@ tasks {
         dependsOn(":surf-api-paper:surf-api-paper-server:shadowJar")
         pluginJars.from(project(":surf-api-paper:surf-api-paper-server").tasks.shadowJar)
 
-//        minecraftVersion(findProperty("mcVersion") as String)
-minecraftVersion("1.21.11")
+        minecraftVersion(findProperty("mcVersion") as String)
 
         downloadPlugins {
             hangar("CommandAPI", libs.versions.commandapi.get())
