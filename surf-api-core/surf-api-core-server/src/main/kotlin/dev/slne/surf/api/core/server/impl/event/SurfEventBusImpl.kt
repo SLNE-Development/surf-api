@@ -8,10 +8,13 @@ import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.cancellation.CancellationException
 
 @OptIn(InternalInvokerApi::class)
 @AutoService(SurfEventBus::class)
@@ -96,9 +99,10 @@ class SurfEventBusImpl : SurfEventBus {
 
     override fun callSync(event: SurfSyncEvent): SurfSyncEvent {
         val matching = collectMatching(event.javaClass) ?: return event
+        val cancellable = event as? SurfCancellableEvent
 
         for (handler in matching) {
-            if (shouldSkipForCancellation(event, handler)) continue
+            if (handler.skipWhenCancelled && cancellable?.isCancelled == true) continue
             try {
                 handler as SurfEventHandlerEntry.SyncInvoker
                 handler.invoker.invoke(event)
@@ -117,13 +121,33 @@ class SurfEventBusImpl : SurfEventBus {
 
     override suspend fun callAsync(event: SurfAsyncEvent): SurfAsyncEvent {
         val matching = collectMatching(event.javaClass) ?: return event
+        val cancellable = event as? SurfCancellableEvent
 
         for (handler in matching) {
-            if (shouldSkipForCancellation(event, handler)) continue
+            currentCoroutineContext().ensureActive()
+
+            if (handler.skipWhenCancelled && cancellable?.isCancelled == true) continue
+
             try {
                 handler as SurfEventHandlerEntry.AsyncInvoker
                 handler.invoker.invoke(event)
             } catch (t: Throwable) {
+                // A listener may throw CancellationException on its own. In that case we do not
+                // abort event dispatch for later listeners. However, if the calling coroutine
+                // context is actually cancelled, ensureActive() rethrows and we stop dispatching.
+                if (t is CancellationException) {
+                    currentCoroutineContext().ensureActive()
+                    log.atWarning()
+                        .withCause(t)
+                        .log(
+                            "Async event handler for %s cancelled itself: %s",
+                            event.javaClass.name,
+                            handler.token
+                        )
+
+                    continue
+                }
+
                 log.atSevere()
                     .withCause(t)
                     .log(
@@ -134,12 +158,6 @@ class SurfEventBusImpl : SurfEventBus {
         }
 
         return event
-    }
-
-    private fun shouldSkipForCancellation(event: SurfEvent, handler: SurfEventHandlerEntry): Boolean {
-        if (!handler.ignoreCancelled || handler.priority == SurfEventPriority.MONITOR) return false
-        val cancellable = event as? SurfCancellableEvent ?: return false
-        return cancellable.isCancelled
     }
 
     private fun addHandler(eventType: Class<out SurfEvent>, handler: SurfEventHandlerEntry) {
