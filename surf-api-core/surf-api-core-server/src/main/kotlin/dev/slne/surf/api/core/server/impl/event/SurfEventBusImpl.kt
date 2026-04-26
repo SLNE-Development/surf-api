@@ -267,7 +267,7 @@ class SurfEventBusImpl : SurfEventBus {
             for (method in current.declaredMethods) {
                 if (method.isSynthetic || method.isBridge) continue
                 val annotation = method.getAnnotation(SurfEventHandler::class.java) ?: continue
-                val eventType = validateAndExtractEventType(type, method)
+                val eventType = validateAndExtractEventType(method)
                 out += HandlerMethod(method, annotation, eventType)
             }
             current = current.superclass
@@ -275,7 +275,7 @@ class SurfEventBusImpl : SurfEventBus {
         return out
     }
 
-    private fun validateAndExtractEventType(clazz: Class<*>, method: Method): Class<out SurfEvent> {
+    private fun validateAndExtractEventType(method: Method): Class<out SurfEvent> {
         val params = method.parameterTypes
         // Suspend functions have a trailing Continuation parameter, which we
         // accept here – the rest of the signature must still describe exactly
@@ -299,12 +299,12 @@ class SurfEventBusImpl : SurfEventBus {
             "@SurfEventHandler ${method.declaringClass.name}.${method.name} must not be static"
         }
 
-        val canAccess = HiddenInvokerUtil.canAccess(clazz, method, SurfEventInvokerFactory.lookup)
+        val canAccess = HiddenInvokerUtil.canAccess(method.declaringClass, method, SurfEventInvokerFactory.lookup)
         if (!canAccess) {
             throw IllegalAccessException(
                 "Cannot access @SurfEventHandler ${method.declaringClass.name}.${method.name} " +
                         "because it is declared in a class that is not accessible from " +
-                        "${clazz.name}"
+                        "${method.declaringClass.name}"
             )
         }
 
