@@ -5,7 +5,7 @@ import dev.jorel.commandapi.kotlindsl.booleanArgument
 import dev.jorel.commandapi.kotlindsl.entitySelectorArgumentOneEntity
 import dev.jorel.commandapi.kotlindsl.getValue
 import dev.jorel.commandapi.kotlindsl.playerExecutor
-import dev.slne.surf.surfapi.bukkit.api.glow.glowingApi
+import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Entity
 
@@ -19,9 +19,9 @@ class GlowingEntityTest(name: String) : CommandAPICommand(name) {
             val entity: Entity by args
 
             if (glow) {
-                glowingApi.makeGlowing(entity, sender, NamedTextColor.RED)
+                SurfGlowingApi.makeGlowing(entity, sender, NamedTextColor.RED)
             } else {
-                glowingApi.removeGlowing(entity, sender)
+                SurfGlowingApi.removeGlowing(entity, sender)
             }
 
             sender.sendMessage(

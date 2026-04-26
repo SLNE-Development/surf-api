@@ -1,13 +1,13 @@
 package dev.slne.surf.surfapi.bukkit.test.hook
 
-import dev.slne.surf.surfapi.core.api.component.AbstractComponent
-import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
-import dev.slne.surf.surfapi.shared.api.component.SurfComponent
-import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOnMissingComponent
-import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOnProductionEnvironment
-import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOnProperty
-import dev.slne.surf.surfapi.shared.api.component.types.Service
+import dev.slne.surf.api.core.component.AbstractComponent
+import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.shared.api.component.SurfComponent
+import dev.slne.surf.api.shared.api.component.SurfComponentMeta
+import dev.slne.surf.api.shared.api.component.requirement.ConditionalOnMissingComponent
+import dev.slne.surf.api.shared.api.component.requirement.ConditionalOnProductionEnvironment
+import dev.slne.surf.api.shared.api.component.requirement.ConditionalOnProperty
+import dev.slne.surf.api.shared.api.component.types.Service
 
 @Service
 annotation class TestHookMeta
@@ -35,7 +35,7 @@ class TestHook : AbstractComponent() {
 }
 
 @ConditionalOnMissingComponent(TestHook::class)
-@ComponentMeta
+@SurfComponentMeta
 class MissingTestHook : SurfComponent {
     override suspend fun load() {
         println("TestHook is not enabled. Try setting test.property=true in the plugins properties.yml")

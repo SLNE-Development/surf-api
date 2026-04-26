@@ -37,6 +37,6 @@ include("surf-api-shared:surf-api-shared-internal")
 val ci = System.getenv("CI")?.toBoolean() ?: false
 
 if (!ci) {
-//    include(":surf-api-paper:surf-api-paper-plugin-test")
+    include(":surf-api-paper:surf-api-paper-plugin-test")
     include("surf-api-generator")
 }

@@ -4,12 +4,12 @@ import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.arguments.ArgumentSuggestions
 import dev.jorel.commandapi.arguments.LocationType
 import dev.jorel.commandapi.kotlindsl.*
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.entity.BlockDisplaySettings
-import dev.slne.surf.surfapi.bukkit.api.util.toVector3d
-import dev.slne.surf.surfapi.bukkit.api.visualizer.surfVisualizerApi
-import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.ExperimentalVisualizerApi
-import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerArea
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
+import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
+import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
+import dev.slne.surf.api.paper.util.toVector3d
+import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
+import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
+import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
 import org.bukkit.Location
 import org.bukkit.block.BlockType
 import org.spongepowered.math.vector.Vector3f
@@ -32,7 +32,7 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                 val loc3: Location by args
                 val loc4: Location by args
 
-                surfVisualizerApi.createAreaVisualizer(
+                SurfPaperVisualizerApi.createAreaVisualizer(
                     sender.world,
                     useHighestYBlock = true,
                     initialSettings = BlockDisplaySettings {

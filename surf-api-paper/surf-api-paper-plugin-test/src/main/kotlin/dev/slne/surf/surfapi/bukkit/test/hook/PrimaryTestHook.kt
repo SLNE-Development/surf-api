@@ -1,13 +1,13 @@
 package dev.slne.surf.surfapi.bukkit.test.hook
 
+import dev.slne.surf.api.core.component.AbstractComponent
+import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.shared.api.component.SurfComponentMeta
+import dev.slne.surf.api.shared.api.component.requirement.ConditionalOn
 import dev.slne.surf.surfapi.bukkit.test.hook.condition.EnabledCondition
-import dev.slne.surf.surfapi.core.api.component.AbstractComponent
-import dev.slne.surf.surfapi.core.api.util.logger
-import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
-import dev.slne.surf.surfapi.shared.api.component.requirement.ConditionalOn
 
 @ConditionalOn(EnabledCondition::class)
-@ComponentMeta
+@SurfComponentMeta
 class PrimaryTestHook : AbstractComponent() {
     private val log = logger()
 

@@ -1,6 +1,10 @@
 package dev.slne.surf.api.core.invoker;
 
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi;
+import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.ApiStatus;
+import org.jspecify.annotations.NullMarked;
+
 import java.lang.constant.ConstantDescs;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -8,9 +12,6 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.List;
-import kotlin.coroutines.Continuation;
-import org.jetbrains.annotations.ApiStatus;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * Shared utility for creating and initializing hidden class–based invokers.
@@ -73,10 +74,24 @@ public final class HiddenInvokerUtil {
      * @param lookup the lookup to use for access checks
      * @return true if {@link #createInvoker} will succeed
      */
-    static boolean canAccess(final Object target, final Method method,
-        final MethodHandles.Lookup lookup) {
+    public static boolean canAccess(final Object target, final Method method,
+                                    final MethodHandles.Lookup lookup) {
+        return canAccess(target.getClass(), method, lookup);
+    }
+
+    /**
+     * Checks whether a hidden class invoker can be created for the given target and method.
+     * Validates that privateLookupIn succeeds and the method can be unreflected.
+     *
+     * @param targetClass the listener/handler class
+     * @param method the handler method
+     * @param lookup the lookup to use for access checks
+     * @return true if {@link #createInvoker} will succeed
+     */
+    public static boolean canAccess(final Class<?> targetClass, final Method method,
+                                    final MethodHandles.Lookup lookup) {
         try {
-            MethodHandles.privateLookupIn(target.getClass(), lookup).unreflect(method);
+            MethodHandles.privateLookupIn(targetClass, lookup).unreflect(method);
             return true;
         } catch (IllegalAccessException e) {
             return false;
@@ -107,16 +122,16 @@ public final class HiddenInvokerUtil {
      * @throws ReflectiveOperationException if hidden class definition or instantiation fails
      */
     static <I> I createInvoker(
-        final MethodHandles.Lookup lookup,
-        final byte[] templateBytes,
-        final Class<I> invokerInterface,
-        final Object target,
-        final Method method,
-        final Class<?> payloadClass
+            final MethodHandles.Lookup lookup,
+            final byte[] templateBytes,
+            final Class<I> invokerInterface,
+            final Object target,
+            final Method method,
+            final Class<?> payloadClass
     ) throws ReflectiveOperationException {
         final boolean isSuspend = isSuspendFunction(method);
         return createInvoker(lookup, templateBytes, invokerInterface, target, method, payloadClass,
-            isSuspend);
+                isSuspend);
     }
 
     /**
@@ -124,23 +139,23 @@ public final class HiddenInvokerUtil {
      * suspend=false even if the method has a Continuation param.
      */
     static <I> I createInvoker(
-        final MethodHandles.Lookup lookup,
-        final byte[] templateBytes,
-        final Class<I> invokerInterface,
-        final Object target,
-        final Method method,
-        final Class<?> payloadClass,
-        final boolean isSuspend
+            final MethodHandles.Lookup lookup,
+            final byte[] templateBytes,
+            final Class<I> invokerInterface,
+            final Object target,
+            final Method method,
+            final Class<?> payloadClass,
+            final boolean isSuspend
     ) throws ReflectiveOperationException {
         final MethodHandles.Lookup privateLookupIn = MethodHandles.privateLookupIn(
-            target.getClass(), lookup);
+                target.getClass(), lookup);
         final List<Object> classData = List.of(target, payloadClass, method, privateLookupIn,
-            isSuspend);
+                isSuspend);
         final MethodHandles.Lookup hiddenClassLookup = lookup.defineHiddenClassWithClassData(
-            templateBytes, classData, true);
+                templateBytes, classData, true);
 
         final MethodHandle constructor = hiddenClassLookup.findConstructor(
-            hiddenClassLookup.lookupClass(), MethodType.methodType(void.class));
+                hiddenClassLookup.lookupClass(), MethodType.methodType(void.class));
 
         try {
             return invokerInterface.cast(constructor.invoke());
@@ -166,24 +181,24 @@ public final class HiddenInvokerUtil {
      * @throws ReflectiveOperationException if class data extraction or handle resolution fails
      */
     public static InvokerClassData loadClassData(
-        final MethodHandles.Lookup lookup,
-        final MethodType methodType,
-        final MethodType suspendMethodType
+            final MethodHandles.Lookup lookup,
+            final MethodType methodType,
+            final MethodType suspendMethodType
     ) throws ReflectiveOperationException {
         final Object target = MethodHandles.classDataAt(lookup, ConstantDescs.DEFAULT_NAME,
-            Object.class, 0);
+                Object.class, 0);
         final Class<?> payload = MethodHandles.classDataAt(lookup, ConstantDescs.DEFAULT_NAME,
-            Class.class, 1);
+                Class.class, 1);
         final Method method = MethodHandles.classDataAt(lookup, ConstantDescs.DEFAULT_NAME,
-            Method.class, 2);
+                Method.class, 2);
         final MethodHandles.Lookup privateLookupIn = MethodHandles.classDataAt(lookup,
-            ConstantDescs.DEFAULT_NAME, MethodHandles.Lookup.class, 3);
+                ConstantDescs.DEFAULT_NAME, MethodHandles.Lookup.class, 3);
         final boolean isSuspend = MethodHandles.classDataAt(lookup, ConstantDescs.DEFAULT_NAME,
-            Boolean.class, 4);
+                Boolean.class, 4);
 
         final MethodType targetType = isSuspend ? suspendMethodType : methodType;
         final MethodHandle handle = privateLookupIn.unreflect(method).bindTo(target)
-            .asType(targetType);
+                .asType(targetType);
 
         return new InvokerClassData(method, handle, payload, isSuspend);
     }
@@ -193,8 +208,8 @@ public final class HiddenInvokerUtil {
      * cause an error at template classData() time.
      */
     public static InvokerClassData loadClassData(
-        final MethodHandles.Lookup lookup,
-        final MethodType methodType
+            final MethodHandles.Lookup lookup,
+            final MethodType methodType
     ) throws ReflectiveOperationException {
         return loadClassData(lookup, methodType, methodType);
     }
@@ -211,11 +226,11 @@ public final class HiddenInvokerUtil {
      * @throws ReflectiveOperationException if class data extraction or handle resolution fails.
      */
     public static InvokerClassData loadClassDataWithAutoSuspend(
-        final MethodHandles.Lookup lookup,
-        final MethodType methodType
+            final MethodHandles.Lookup lookup,
+            final MethodType methodType
     ) throws ReflectiveOperationException {
         final MethodType suspendMethodType = methodType.changeReturnType(Object.class)
-            .appendParameterTypes(Continuation.class);
+                .appendParameterTypes(Continuation.class);
         return loadClassData(lookup, methodType, suspendMethodType);
     }
 
