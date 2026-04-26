@@ -96,3 +96,47 @@ interface SurfEventBus {
 }
 
 private val bus = requiredService<SurfEventBus>()
+
+/**
+ * Registers an inline handler for [SurfSyncEvent]s of type [T] without
+ * requiring a dedicated listener class.
+ *
+ * The returned object can be passed to [SurfEventBus.unregisterListeners] to
+ * remove the handler again.
+ *
+ * Example:
+ * ```
+ * val token = SurfEventBus.on<MySyncEvent> { event -> ... }
+ * // later
+ * SurfEventBus.unregisterListeners(token)
+ * ```
+ * If [ignoreCancelled] is `true`, the handler is skipped once a
+ * [SurfCancellableEvent] has been cancelled. Handlers with
+ * MONITOR priority are always called.
+ */
+inline fun <reified T : SurfSyncEvent> SurfEventBus.on(
+    priority: SurfEventPriority = SurfEventPriority.NORMAL,
+    ignoreCancelled: Boolean = true,
+    crossinline handler: (T) -> Unit,
+): Any = registerHandler(T::class.java, priority, ignoreCancelled) { event ->
+    handler(event)
+}
+
+/**
+ * Registers an inline `suspend` handler for [SurfAsyncEvent]s of type [T]
+ * without requiring a dedicated listener class.
+ *
+ * The returned object can be passed to [SurfEventBus.unregisterListeners] to
+ * remove the handler again.
+ *
+ * If [ignoreCancelled] is `true`, the handler is skipped once a
+ * [SurfCancellableEvent] has been cancelled. Handlers with
+ * MONITOR priority are always called.
+ */
+inline fun <reified T : SurfAsyncEvent> SurfEventBus.onAsync(
+    priority: SurfEventPriority = SurfEventPriority.NORMAL,
+    ignoreCancelled: Boolean = true,
+    crossinline handler: suspend (T) -> Unit,
+): Any = registerAsyncHandler(T::class.java, priority, ignoreCancelled) { event ->
+    handler(event)
+}
