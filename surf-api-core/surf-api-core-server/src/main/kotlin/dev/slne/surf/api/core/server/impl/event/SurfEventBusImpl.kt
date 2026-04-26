@@ -10,8 +10,8 @@ import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(InternalInvokerApi::class)
 @AutoService(SurfEventBus::class)
@@ -24,16 +24,13 @@ class SurfEventBusImpl : SurfEventBus {
         private val log = logger()
     }
 
-    /**
-     * Per-event-class map of registered handlers, grouped by priority. Outer
-     * map and inner skip-list map are concurrent; the per-priority list uses
-     * [CopyOnWriteArrayList] so dispatch can iterate without copying or
-     * locking. The skip-list map keeps entries naturally ordered by priority,
-     * which we re-sort across multiple matching event types in
-     * [collectMatching].
-     */
     private val handlers =
-        ConcurrentHashMap<Class<out SurfEvent>, ConcurrentSkipListMap<SurfEventPriority, CopyOnWriteArrayList<SurfEventHandlerEntry>>>()
+        ConcurrentHashMap<Class<out SurfEvent>, ConcurrentHashMap<SurfEventPriority, CopyOnWriteArrayList<SurfEventHandlerEntry>>>()
+
+    private val dispatchCache = ConcurrentHashMap<Class<out SurfEvent>, Array<SurfEventHandlerEntry>>()
+    private val emptyHandlers = emptyArray<SurfEventHandlerEntry>()
+
+    private val nextOrder = AtomicLong()
 
     override fun registerListeners(listener: Any) {
         val handlerMethods = collectHandlerMethods(listener.javaClass)
@@ -51,6 +48,8 @@ class SurfEventBusImpl : SurfEventBus {
                 list.removeAll { it.token === listener }
             }
         }
+
+        dispatchCache.clear()
     }
 
     override fun <T : SurfSyncEvent> registerHandler(
@@ -66,7 +65,8 @@ class SurfEventBusImpl : SurfEventBus {
             token,
             handler as (SurfSyncEvent) -> Unit,
             priority,
-            ignoreCancelled
+            ignoreCancelled,
+            nextOrder.getAndIncrement()
         )
         addHandler(eventClass, entry)
 
@@ -86,7 +86,8 @@ class SurfEventBusImpl : SurfEventBus {
             token,
             handler as suspend (SurfAsyncEvent) -> Unit,
             priority,
-            ignoreCancelled
+            ignoreCancelled,
+            nextOrder.getAndIncrement()
         )
         addHandler(eventClass, entry)
 
@@ -143,29 +144,41 @@ class SurfEventBusImpl : SurfEventBus {
 
     private fun addHandler(eventType: Class<out SurfEvent>, handler: SurfEventHandlerEntry) {
         handlers
-            .computeIfAbsent(eventType) { ConcurrentSkipListMap() }
+            .computeIfAbsent(eventType) { ConcurrentHashMap() }
             .computeIfAbsent(handler.priority) { CopyOnWriteArrayList() }
             .add(handler)
+
+        dispatchCache.clear()
     }
 
-    /**
-     * Returns the flattened list of handlers whose registered event type is
-     * assignable from [concreteType], in dispatch order (priority asc, and
-     * within a priority the registration order). Returns `null` when there
-     * are no handlers, to avoid allocating an empty list on the hot path.
-     */
-    private fun collectMatching(concreteType: Class<out SurfEvent>): List<SurfEventHandlerEntry>? {
-        var result: MutableList<SurfEventHandlerEntry>? = null
+    private fun collectMatching(concreteType: Class<out SurfEvent>): Array<SurfEventHandlerEntry>? {
+        val handlers = dispatchCache.computeIfAbsent(concreteType, ::buildMatchingHandlers)
+        return handlers.takeIf { it.isNotEmpty() }
+    }
+
+    private fun buildMatchingHandlers(
+        concreteType: Class<out SurfEvent>
+    ): Array<SurfEventHandlerEntry> {
+        val result = ObjectArrayList<SurfEventHandlerEntry>()
+
         for ((registeredType, byPriority) in handlers) {
             if (!registeredType.isAssignableFrom(concreteType)) continue
+
             for ((_, list) in byPriority) {
-                if (list.isEmpty()) continue
-                val target = result ?: ObjectArrayList<SurfEventHandlerEntry>().also { result = it }
-                target.addAll(list)
+                if (list.isNotEmpty()) {
+                    result.addAll(list)
+                }
             }
         }
-        result?.sortBy { it.priority.ordinal }
-        return result
+
+        if (result.isEmpty) return emptyHandlers
+
+        result.sortWith(
+            compareBy<SurfEventHandlerEntry> { it.priority.ordinal }
+                .thenBy { it.order }
+        )
+
+        return result.toTypedArray()
     }
 
     private fun registerMethodHandler(
@@ -193,7 +206,8 @@ class SurfEventBusImpl : SurfEventBus {
                         listener,
                         invoker,
                         annotation.priority,
-                        annotation.ignoreCancelled
+                        annotation.ignoreCancelled,
+                        nextOrder.getAndIncrement()
                     )
                 )
             }
@@ -209,7 +223,8 @@ class SurfEventBusImpl : SurfEventBus {
                         listener,
                         invoker,
                         annotation.priority,
-                        annotation.ignoreCancelled
+                        annotation.ignoreCancelled,
+                        nextOrder.getAndIncrement()
                     )
                 )
             }
