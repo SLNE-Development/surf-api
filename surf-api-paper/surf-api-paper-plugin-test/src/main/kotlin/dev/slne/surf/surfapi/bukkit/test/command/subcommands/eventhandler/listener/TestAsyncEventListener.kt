@@ -28,7 +28,7 @@ object TestAsyncEventListener {
     }
 
     @SurfEventHandler
-    suspend fun onTestAsyncEvent(event: TestAsyncEvent) {
+    private suspend fun onTestAsyncEvent(event: TestAsyncEvent) {
         lastEvent = event
         lastHandledTime = System.currentTimeMillis()
         print("Delaying event for 1 second...")

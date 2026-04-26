@@ -22,7 +22,7 @@ object PlayerAfkStateChangeEventListener {
     }
 
     @SurfEventHandler
-    fun onPlayerAfkStateChange(event: PlayerAfkStateChangeEvent) {
+   private fun onPlayerAfkStateChange(event: PlayerAfkStateChangeEvent) {
         lastEvent = event
     }
 }
