@@ -6,12 +6,12 @@ import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
 
 class V1_21_11PacketLoreRegistry : PacketLoreRegistry {
-    override fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler) {
-        V1_21_11PacketLoreListener.register(plugin, identifier, listener)
+    override fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler, priority: Short) {
+        V1_21_11PacketLoreListener.register(plugin, identifier, listener, priority)
     }
 
-    override fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler) {
-        V1_21_11PacketLoreListener.register(plugin, listener)
+    override fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler, priority: Short) {
+        V1_21_11PacketLoreListener.register(plugin, listener, priority)
     }
 
     override fun unregister(identifier: NamespacedKey) {

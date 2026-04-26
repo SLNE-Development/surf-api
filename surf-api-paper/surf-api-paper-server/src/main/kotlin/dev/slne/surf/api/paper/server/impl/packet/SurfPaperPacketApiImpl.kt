@@ -22,16 +22,18 @@ class SurfPaperPacketApiImpl : SurfPaperPacketApi {
     override fun registerPacketLoreListener(
         plugin: Plugin,
         identifier: NamespacedKey,
-        listener: SurfPaperPacketLoreHandler
+        listener: SurfPaperPacketLoreHandler,
+        priority: Short
     ) {
-        packetLoreRegistry.register(plugin, identifier, listener)
+        packetLoreRegistry.register(plugin, identifier, listener, priority)
     }
 
     override fun registerPacketLoreListenerGlobal(
         plugin: Plugin,
-        listener: SurfPaperPacketLoreHandler
+        listener: SurfPaperPacketLoreHandler,
+        priority: Short
     ) {
-        packetLoreRegistry.register(plugin, listener)
+        packetLoreRegistry.register(plugin, listener, priority)
     }
 
     override fun unregisterPacketLoreListener(plugin: Plugin) {
