@@ -24,7 +24,7 @@ final class SurfAsyncEventInvokerTemplate implements SurfAsyncEventInvoker {
         try {
             final InvokerClassData data = HiddenInvokerUtil.loadClassDataWithAutoSuspend(
                     MethodHandles.lookup(),
-                    MethodType.methodType(void.class, SurfAsyncEventInvoker.class)
+                    MethodType.methodType(void.class, SurfAsyncEvent.class)
             );
             METHOD = data.method();
             HANDLE = data.methodHandle();
