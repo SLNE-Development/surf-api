@@ -69,6 +69,7 @@ class SurfEventBusImpl : SurfEventBus {
             ignoreCancelled
         )
         addHandler(eventClass, entry)
+
         return token
     }
 
@@ -88,11 +89,13 @@ class SurfEventBusImpl : SurfEventBus {
             ignoreCancelled
         )
         addHandler(eventClass, entry)
+
         return token
     }
 
     override fun callSync(event: SurfSyncEvent): SurfSyncEvent {
         val matching = collectMatching(event.javaClass) ?: return event
+
         for (handler in matching) {
             if (shouldSkipForCancellation(event, handler)) continue
             try {
@@ -113,6 +116,7 @@ class SurfEventBusImpl : SurfEventBus {
 
     override suspend fun callAsync(event: SurfAsyncEvent): SurfAsyncEvent {
         val matching = collectMatching(event.javaClass) ?: return event
+
         for (handler in matching) {
             if (shouldSkipForCancellation(event, handler)) continue
             try {
@@ -230,7 +234,6 @@ class SurfEventBusImpl : SurfEventBus {
                 if (method.isSynthetic || method.isBridge) continue
                 val annotation = method.getAnnotation(SurfEventHandler::class.java) ?: continue
                 val eventType = validateAndExtractEventType(method)
-                method.trySetAccessible()
                 out += HandlerMethod(method, annotation, eventType)
             }
             current = current.superclass
