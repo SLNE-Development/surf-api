@@ -1,8 +1,8 @@
 package dev.slne.surf.api.paper.test.listener;
 
-import dev.slne.surf.api.paper.api.packet.listener.listener.PacketListener;
-import dev.slne.surf.api.paper.api.packet.listener.listener.PacketListenerResult;
-import dev.slne.surf.api.paper.api.packet.listener.listener.annotation.ServerboundListener;
+import dev.slne.surf.api.paper.packet.listener.listener.PacketListener;
+import dev.slne.surf.api.paper.packet.listener.listener.PacketListenerResult;
+import dev.slne.surf.api.paper.packet.listener.listener.annotation.ServerboundListener;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +13,7 @@ public class ChatListener implements PacketListener {
 
     @ServerboundListener
     public PacketListenerResult onChatReceivePacket(ServerboundChatPacket packet,
-        ServerPlayer player) {
+                                                    ServerPlayer player) {
         LOGGER.info("Player {} sent a chat message: {}", player.getName(), packet.message());
         return PacketListenerResult.CANCEL;
     }

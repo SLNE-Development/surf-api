@@ -4,19 +4,19 @@ import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import com.destroystokyo.paper.event.server.ServerTickStartEvent
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import dev.jorel.commandapi.CommandAPI
-import dev.slne.surf.surfapi.bukkit.api.event.listen
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.register
-import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
-import dev.slne.surf.surfapi.bukkit.api.packet.listener.packetListenerApi
-import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand
+import dev.slne.surf.api.core.component.surfComponentApi
+import dev.slne.surf.api.paper.event.listen
+import dev.slne.surf.api.paper.inventory.framework.register
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
+import dev.slne.surf.api.paper.test.command.SurfApiTestCommand
+import dev.slne.surf.api.paper.test.command.subcommands.reflection.Reflection
+import dev.slne.surf.api.paper.test.listener.ChatListener
 import dev.slne.surf.surfapi.bukkit.test.command.dialog.dialogTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testInventoryViewDsl
-import dev.slne.surf.surfapi.bukkit.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.config.MyPluginConfig
-import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
-import dev.slne.surf.surfapi.core.api.component.surfComponentApi
 import net.minecraft.server.MinecraftServer
 import org.bukkit.inventory.ItemType
 import kotlin.concurrent.thread
@@ -28,7 +28,7 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
         ModernTestConfig.randomise()
 
         surfComponentApi.load(this)
-        packetListenerApi.registerListeners(ChatListener())
+        SurfPaperPacketListenerApi.registerListeners(ChatListener())
         TestInventoryView.register()
         testInventoryViewDsl.register()
     }
@@ -36,7 +36,7 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
     override suspend fun onEnableAsync() {
         SurfApiTestCommand().register()
         dialogTestCommand()
-        Reflection::class.java.getClassLoader() // initialize Reflection
+        Reflection::class.java.classLoader // initialize Reflection
 
         MyPluginConfig.init()
 

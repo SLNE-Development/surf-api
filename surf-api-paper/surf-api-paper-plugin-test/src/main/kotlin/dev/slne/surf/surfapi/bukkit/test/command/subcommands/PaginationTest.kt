@@ -3,9 +3,9 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.jorel.commandapi.kotlindsl.subcommand
-import dev.slne.surf.surfapi.core.api.messages.CommonComponents
-import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
-import dev.slne.surf.surfapi.core.api.messages.pagination.Pagination
+import dev.slne.surf.api.core.messages.CommonComponents
+import dev.slne.surf.api.core.messages.adventure.buildText
+import dev.slne.surf.api.core.messages.pagination.Pagination
 
 class PaginationTest(name: String) : CommandAPICommand(name) {
     val pagination = Pagination<ExampleData> {

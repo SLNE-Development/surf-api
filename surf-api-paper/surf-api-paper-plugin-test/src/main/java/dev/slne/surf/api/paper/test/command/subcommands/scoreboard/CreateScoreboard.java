@@ -2,16 +2,17 @@ package dev.slne.surf.api.paper.test.command.subcommands.scoreboard;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
-import dev.slne.surf.api.paper.api.scoreboard.SurfAutoUpdatablePlayerScoreboard;
-import dev.slne.surf.api.paper.api.scoreboard.SurfScoreboardBuilder;
-import dev.slne.surf.api.core.api.messages.Colors;
+import dev.slne.surf.api.core.messages.Colors;
+import dev.slne.surf.api.paper.scoreboard.SurfAutoUpdatablePlayerScoreboard;
+import dev.slne.surf.api.paper.scoreboard.SurfScoreboardBuilder;
+import net.kyori.adventure.text.Component;
+import net.minecraft.util.Util;
+import org.jetbrains.annotations.Contract;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
-import net.minecraft.util.Util;
-import org.jetbrains.annotations.Contract;
 
 public class CreateScoreboard extends CommandAPICommand {
 

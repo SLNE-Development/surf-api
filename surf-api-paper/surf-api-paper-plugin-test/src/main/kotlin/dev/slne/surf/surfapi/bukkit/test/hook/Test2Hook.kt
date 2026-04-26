@@ -1,10 +1,10 @@
 package dev.slne.surf.surfapi.bukkit.test.hook
 
-import dev.slne.surf.surfapi.bukkit.api.extensions.server
-import dev.slne.surf.surfapi.core.api.component.AbstractComponent
-import dev.slne.surf.surfapi.shared.api.component.ComponentMeta
+import dev.slne.surf.api.core.component.AbstractComponent
+import dev.slne.surf.api.paper.extensions.server
+import dev.slne.surf.api.shared.api.component.SurfComponentMeta
 
-@ComponentMeta
+@SurfComponentMeta
 class Test2Hook : AbstractComponent() {
 
     override suspend fun onLoad() {

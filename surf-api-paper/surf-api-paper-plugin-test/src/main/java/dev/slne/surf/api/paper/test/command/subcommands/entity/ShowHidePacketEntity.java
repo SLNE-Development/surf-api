@@ -4,8 +4,9 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.BooleanArgument;
 import dev.jorel.commandapi.arguments.PlayerProfileArgument;
 import dev.jorel.commandapi.arguments.UUIDArgument;
-import java.util.UUID;
 import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class ShowHidePacketEntity extends CommandAPICommand {
 

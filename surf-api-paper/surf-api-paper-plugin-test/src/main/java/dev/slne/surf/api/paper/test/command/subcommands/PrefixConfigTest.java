@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.test.command.subcommands;
 
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.slne.surf.api.core.api.messages.Colors;
+import dev.slne.surf.api.core.messages.Colors;
 import net.kyori.adventure.text.Component;
 
 public class PrefixConfigTest extends CommandAPICommand {

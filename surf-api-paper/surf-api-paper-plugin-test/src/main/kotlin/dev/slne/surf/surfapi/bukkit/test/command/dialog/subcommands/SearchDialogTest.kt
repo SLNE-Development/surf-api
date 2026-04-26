@@ -5,8 +5,8 @@ import dev.jorel.commandapi.kotlindsl.getValue
 import dev.jorel.commandapi.kotlindsl.greedyStringArgument
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.jorel.commandapi.kotlindsl.subcommand
-import dev.slne.surf.surfapi.bukkit.api.dialog.search.searchDialog
-import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
+import dev.slne.surf.api.core.messages.adventure.sendText
+import dev.slne.surf.api.paper.dialog.search.searchDialog
 
 fun CommandAPICommand.searchDialogTestCommand() = subcommand("search") {
     greedyStringArgument("initial")

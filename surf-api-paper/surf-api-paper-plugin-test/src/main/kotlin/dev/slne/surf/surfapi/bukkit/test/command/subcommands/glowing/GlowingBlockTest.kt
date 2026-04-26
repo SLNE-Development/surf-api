@@ -7,7 +7,7 @@ import dev.jorel.commandapi.kotlindsl.booleanArgument
 import dev.jorel.commandapi.kotlindsl.getValue
 import dev.jorel.commandapi.kotlindsl.locationArgument
 import dev.jorel.commandapi.kotlindsl.playerExecutor
-import dev.slne.surf.surfapi.bukkit.api.glow.glowingApi
+import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 
@@ -23,9 +23,9 @@ class GlowingBlockTest(name: String) : CommandAPICommand(name) {
             val color: NamedTextColor by args
 
             if (glow) {
-                glowingApi.makeGlowing(location, sender, color)
+                SurfGlowingApi.makeGlowing(location, sender, color)
             } else {
-                glowingApi.removeGlowing(location, sender)
+                SurfGlowingApi.removeGlowing(location, sender)
             }
 
             sender.sendMessage("Block at ${location.blockX}, ${location.blockY}, ${location.blockZ} is now ${if (glow) "glowing" else "not glowing"} with color $color.")

@@ -3,11 +3,11 @@ package dev.slne.surf.api.paper.test.command.subcommands.scoreboard;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;
-import dev.slne.surf.api.paper.api.scoreboard.SurfAutoUpdatablePlayerScoreboard;
+import dev.slne.surf.api.paper.scoreboard.SurfAutoUpdatablePlayerScoreboard;
 
-public class StopScoreboard extends CommandAPICommand {
+public class StartScoreboard extends CommandAPICommand {
 
-    public StopScoreboard(String commandName) {
+    public StartScoreboard(String commandName) {
         super(commandName);
 
         withArguments(new StringArgument("name")
@@ -22,7 +22,7 @@ public class StopScoreboard extends CommandAPICommand {
                 .get(name);
 
             assert scoreboard != null;
-            scoreboard.disable();
+            scoreboard.enable();
         });
     }
 }

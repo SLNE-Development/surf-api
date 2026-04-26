@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
-import dev.slne.surf.surfapi.bukkit.api.inventory.framework.open
+import dev.slne.surf.api.paper.inventory.framework.open
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testInventoryViewDsl
 
 class InventoryTest(name: String) : CommandAPICommand(name) {

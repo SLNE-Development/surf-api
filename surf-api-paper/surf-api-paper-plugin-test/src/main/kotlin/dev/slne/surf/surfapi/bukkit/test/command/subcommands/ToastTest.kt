@@ -5,8 +5,8 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
-import dev.slne.surf.surfapi.bukkit.api.nms.NmsUseWithCaution
-import dev.slne.surf.surfapi.bukkit.api.nms.bridges.packets.player.toast.toast
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.bridges.packets.player.toast.toast
 import io.papermc.paper.advancement.AdvancementDisplay
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.ResolvableProfile

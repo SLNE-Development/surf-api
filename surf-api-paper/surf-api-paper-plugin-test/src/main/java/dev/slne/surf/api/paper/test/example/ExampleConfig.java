@@ -1,16 +1,13 @@
-package dev.slne.surf.api.paper.example;
+package dev.slne.surf.api.paper.test.example;
 
-import java.net.URL;
-import space.arim.dazzleconf.annote.ConfComments;
+import space.arim.dazzleconf.annote.*;
 import space.arim.dazzleconf.annote.ConfDefault.DefaultDouble;
 import space.arim.dazzleconf.annote.ConfDefault.DefaultInteger;
 import space.arim.dazzleconf.annote.ConfDefault.DefaultObject;
 import space.arim.dazzleconf.annote.ConfDefault.DefaultString;
-import space.arim.dazzleconf.annote.ConfKey;
-import space.arim.dazzleconf.annote.ConfSerialisers;
-import space.arim.dazzleconf.annote.IntegerRange;
-import space.arim.dazzleconf.annote.NumericRange;
 import space.arim.dazzleconf.serialiser.URLValueSerialiser;
+
+import java.net.URL;
 
 @ConfSerialisers(URLValueSerialiser.class) // use other serialisers than the default ones
 public interface ExampleConfig {

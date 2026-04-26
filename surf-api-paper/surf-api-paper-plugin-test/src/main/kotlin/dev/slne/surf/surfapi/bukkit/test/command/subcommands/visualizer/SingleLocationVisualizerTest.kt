@@ -7,13 +7,13 @@ import dev.jorel.commandapi.CommandAPIPaper
 import dev.jorel.commandapi.arguments.ArgumentSuggestions
 import dev.jorel.commandapi.arguments.LocationType
 import dev.jorel.commandapi.kotlindsl.*
-import dev.slne.surf.surfapi.bukkit.api.visualizer.surfVisualizerApi
-import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.ExperimentalVisualizerApi
-import dev.slne.surf.surfapi.bukkit.api.visualizer.visualizer.SurfVisualizerSingleLocation
-import dev.slne.surf.surfapi.core.api.messages.Colors
-import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
-import dev.slne.surf.surfapi.core.api.random.RandomSelector
-import dev.slne.surf.surfapi.core.api.util.mutableObject2ObjectMapOf
+import dev.slne.surf.api.core.messages.Colors
+import dev.slne.surf.api.core.messages.adventure.buildText
+import dev.slne.surf.api.core.random.RandomSelector
+import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
+import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
+import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
+import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerSingleLocation
 import net.kyori.adventure.text.Component
 import org.bukkit.Location
 import org.bukkit.Registry
@@ -30,7 +30,7 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
             locationArgument("location", LocationType.BLOCK_POSITION)
             anyExecutor { sender, args ->
                 val location: Location by args
-                val visualizer = surfVisualizerApi.createSingleLocationVisualizer(location).apply {
+                val visualizer = SurfPaperVisualizerApi.createSingleLocationVisualizer(location).apply {
                     if (sender is Player) {
                         addViewer(sender)
                     }
