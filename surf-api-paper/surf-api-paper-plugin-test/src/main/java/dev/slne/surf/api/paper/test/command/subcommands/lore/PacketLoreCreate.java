@@ -4,7 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.NamespacedKeyArgument;
 import dev.slne.surf.api.core.messages.Colors;
 import dev.slne.surf.api.paper.packet.SurfPaperPacketApi;
-import dev.slne.surf.surfapi.bukkit.test.BukkitPluginMainKt;
+import dev.slne.surf.surfapi.bukkit.test.PaperPluginMainKt;
 import net.kyori.adventure.text.Component;
 import org.bukkit.NamespacedKey;
 
@@ -28,7 +28,7 @@ public class PacketLoreCreate extends CommandAPICommand {
             KEYS.add(key);
 
             SurfPaperPacketApi.Companion.registerPacketLoreListener(
-                    BukkitPluginMainKt.getPlugin(),
+                    PaperPluginMainKt.getPlugin(),
                     key,
                     (loreToDisplay, pdc, stack) -> {
                         loreToDisplay.add(Component.text("Hello, world!", Colors.AQUA));

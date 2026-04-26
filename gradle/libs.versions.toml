@@ -10,13 +10,14 @@ kotlinx-serialization = "1.11.0"
 
 # Packet Events
 packetevents = "2.11.2"
-packetevents-plugin = "2.11.2"
+packetevents-plugin = "2.12.1"
 
 # Command API
 commandapi = "11.2.0"
 
 # LuckPerms
 luckperms = "5.4"
+luckpermsplugin-bukkit = "v5.5.17-bukkit" # "luckpermsplugin" is written without a separating "-" between "luckperms" and "plugin", because Gradle interprets the version catalog key as a hierarchical alias and would split it into a nested accessor (libs.luckperms.plugin.bukkit), which conflicts with the existing libs.luckperms alias for the API dependency.
 
 # Scoreboard Library
 scoreboard-library = "2.7.4"

@@ -22,7 +22,7 @@ import org.bukkit.inventory.ItemType
 import kotlin.concurrent.thread
 
 @OptIn(NmsUseWithCaution::class)
-class BukkitPluginMain : SuspendingJavaPlugin() {
+class PaperPluginMain : SuspendingJavaPlugin() {
     override suspend fun onLoadAsync() {
         ModernTestConfig.init()
         ModernTestConfig.randomise()
@@ -44,7 +44,7 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
 
         fun runAction() {
             for (player in server.onlinePlayers) {
-                player.scheduler.run(this@BukkitPluginMain, {
+                player.scheduler.run(this@PaperPluginMain, {
                     player.inventory.clear()
                     player.inventory.addItem(ItemType.DIAMOND.createItemStack(64))
                 }, null)
@@ -76,9 +76,9 @@ class BukkitPluginMain : SuspendingJavaPlugin() {
     }
 
     companion object {
-        val instance: BukkitPluginMain
-            get() = getPlugin(BukkitPluginMain::class.java)
+        val instance: PaperPluginMain
+            get() = getPlugin(PaperPluginMain::class.java)
     }
 }
 
-val plugin get() = BukkitPluginMain.instance
+val plugin get() = PaperPluginMain.instance

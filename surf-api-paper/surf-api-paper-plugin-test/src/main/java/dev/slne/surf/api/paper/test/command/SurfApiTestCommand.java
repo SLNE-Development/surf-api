@@ -26,7 +26,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
                 new InventoryTest("inventory"),
                 new ToastTest("toast"),
                 new SuspendCommandExecutionTest("suspendCommandExecution"),
-                new SummonCommandTest("summoncommand")
+                new SummonCommandTest("summoncommand"),
+                new SurfEventHandlerTest("eventhandler")
         );
     }
 }

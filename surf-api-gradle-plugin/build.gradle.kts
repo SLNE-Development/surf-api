@@ -139,12 +139,12 @@ val generateConstants by tasks.registering {
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"
             |    const val SURF_API_VERSION = "+"
-            |    
+            |
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
             |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"
-            |    
+            |
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}
         """.trimMargin()

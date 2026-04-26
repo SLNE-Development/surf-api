@@ -19,7 +19,7 @@ dependencies {
 }
 
 paper {
-    main = "dev.slne.surf.api.paper.test.PaperPluginMain"
+    main = "dev.slne.surf.surfapi.bukkit.test.PaperPluginMain"
     name = "SurfPaperPluginTest"
     description = "Test plugin for Surf API for Paper"
     author = "twisti"
@@ -52,6 +52,7 @@ tasks {
         downloadPlugins {
             hangar("CommandAPI", libs.versions.commandapi.get())
             modrinth("packetevents", libs.versions.packetevents.plugin.get() + "+spigot")
+            modrinth("luckperms", libs.versions.luckpermsplugin.bukkit.get())
         }
     }
 }
