@@ -14,9 +14,12 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectLists
 import net.kyori.adventure.text.format.TextDecoration
 import net.minecraft.core.component.DataComponents
+import net.minecraft.network.chat.HoverEvent
+import net.minecraft.network.chat.Style
 import net.minecraft.network.protocol.game.*
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.ItemStackTemplate
 import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.item.component.ItemLore
 import org.bukkit.NamespacedKey
@@ -163,6 +166,86 @@ object V26_1PacketLoreListener : PacketListener {
         }
 
         return ClientboundSetCursorItemPacket(updated)
+    }
+
+    @ClientboundListener
+    fun onSystemChatPacket(event: ClientboundSystemChatPacket): ClientboundSystemChatPacket {
+        if (!hasAnyHandlers()) return event
+
+        val original = event.content()
+        val transformed = transformChatComponent(original)
+
+        if (transformed === original) return event
+
+        return ClientboundSystemChatPacket(transformed, event.overlay())
+    }
+
+    /**
+     * Recursively walks the component tree and rebuilds only the branches that actually
+     * contain a [HoverEvent.ShowItem] whose item lore is mutated by the registered handlers.
+     *
+     * Returns the same [component] reference if nothing changed, so the caller can short-circuit.
+     */
+    private fun transformChatComponent(component: MinecraftComponent): MinecraftComponent {
+        val style = component.style
+        val newStyle = transformStyle(style)
+
+        val siblings = component.siblings
+        var newSiblings: ObjectArrayList<MinecraftComponent>? = null
+
+        for (i in siblings.indices) {
+            val sibling = siblings[i]
+            val transformedSibling = transformChatComponent(sibling)
+
+            if (transformedSibling !== sibling && newSiblings == null) {
+                newSiblings = ObjectArrayList(siblings.size)
+                for (j in 0 until i) {
+                    newSiblings.add(siblings[j])
+                }
+            }
+
+            newSiblings?.add(transformedSibling)
+        }
+
+        if (newStyle === style && newSiblings == null) {
+            return component
+        }
+
+        val copy = component.copy()
+        if (newStyle !== style) {
+            copy.style = newStyle
+        }
+
+        if (newSiblings != null) {
+            val target = copy.siblings
+            target.clear()
+            target.addAll(newSiblings)
+        }
+
+        return copy
+    }
+
+    /**
+     * Applies the lore handlers to the item carried by a [HoverEvent.ShowItem], if any.
+     * Returns the original [style] reference when nothing changed.
+     */
+    private fun transformStyle(style: Style): Style {
+        val hoverEvent = style.hoverEvent ?: return style
+        if (hoverEvent !is HoverEvent.ShowItem) return style
+
+        val template = hoverEvent.item
+        val stack = ItemStack(template.item, template.count, template.components)
+        val updated = makeUpdatedItemStack(stack)
+
+        if (updated === stack) return style
+
+        val newTemplate = ItemStackTemplate(
+            updated.typeHolder(),
+            updated.count,
+            updated.componentsPatch
+        )
+
+        return style.withHoverEvent(HoverEvent.ShowItem(newTemplate))
     }
 
     /**
