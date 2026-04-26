@@ -41,8 +41,6 @@ paper {
 }
 
 tasks {
-
-
     runServer {
         dependsOn(":surf-api-paper:surf-api-paper-server:shadowJar")
         pluginJars.from(project(":surf-api-paper:surf-api-paper-server").tasks.shadowJar)
