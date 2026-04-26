@@ -23,6 +23,7 @@ import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.item.component.ItemLore
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
+import java.util.*
 import net.minecraft.network.chat.Component as MinecraftComponent
 
 /**
@@ -31,17 +32,25 @@ import net.minecraft.network.chat.Component as MinecraftComponent
  */
 @OptIn(NmsUseWithCaution::class)
 object V1_21_11PacketLoreListener : PacketListener {
+    private data class PriorityHandler(
+        val handler: SurfPaperPacketLoreHandler,
+        val priority: Short,
+    )
+
+    private val priorityComparator =
+        Comparator<PriorityHandler> { a, b -> a.priority.compareTo(b.priority) }
+
     private val globalHandlersByPlugin =
-        Object2ObjectLinkedOpenHashMap<Plugin, ObjectLinkedOpenHashSet<SurfPaperPacketLoreHandler>>()
+        Object2ObjectLinkedOpenHashMap<Plugin, ObjectLinkedOpenHashSet<PriorityHandler>>()
 
     private val keyedHandlersByPlugin =
-        Object2ObjectLinkedOpenHashMap<Plugin, Object2ObjectLinkedOpenHashMap<NamespacedKey, SurfPaperPacketLoreHandler>>()
+        Object2ObjectLinkedOpenHashMap<Plugin, Object2ObjectLinkedOpenHashMap<NamespacedKey, PriorityHandler>>()
 
     @Volatile
-    private var keyedHandlersSnapshot: Map<NamespacedKey, SurfPaperPacketLoreHandler> = emptyMap()
+    private var keyedHandlersSnapshot: Map<NamespacedKey, PriorityHandler> = emptyMap()
 
     @Volatile
-    private var globalHandlersSnapshot: Array<SurfPaperPacketLoreHandler> = emptyArray()
+    private var globalHandlersSnapshot: Array<PriorityHandler> = emptyArray()
 
     private val ORIGINAL_LORE_KEY = namespacedKey("original_lore")
     private val ORIGINAL_LORE_KEY_STRING = ORIGINAL_LORE_KEY.asString()
@@ -327,12 +336,22 @@ object V1_21_11PacketLoreListener : PacketListener {
             ObjectArrayList(originalLines.size)
         ) { it.toBukkit() }
 
-        for (i in matchingKeyedHandlers.indices) {
-            matchingKeyedHandlers[i].handleLore(mutableLore, pdc, bukkitStack)
+        /*
+         * Combine matching keyed handlers and global handlers, then sort by priority so that
+         * smaller priority values run earlier and larger values run later — across both
+         * keyed and global handlers.
+         */
+        val combined = ObjectArrayList<PriorityHandler>(matchingKeyedHandlers.size + globalSnapshot.size)
+        combined.addAll(matchingKeyedHandlers)
+        for (i in globalSnapshot.indices) {
+            combined.add(globalSnapshot[i])
+        }
+        if (combined.size > 1) {
+            combined.sortWith(priorityComparator)
         }
 
-        for (i in globalSnapshot.indices) {
-            globalSnapshot[i].handleLore(mutableLore, pdc, bukkitStack)
+        for (i in combined.indices) {
+            combined[i].handler.handleLore(mutableLore, pdc, bukkitStack)
         }
 
         val updatedLines = ObjectArrayList<MinecraftComponent>(mutableLore.size)
@@ -383,13 +402,13 @@ object V1_21_11PacketLoreListener : PacketListener {
 
     private fun resolveMatchingKeyedHandlers(
         itemKeys: Set<NamespacedKey>,
-        keyedSnapshot: Map<NamespacedKey, SurfPaperPacketLoreHandler>,
-    ): List<SurfPaperPacketLoreHandler> {
+        keyedSnapshot: Map<NamespacedKey, PriorityHandler>,
+    ): List<PriorityHandler> {
         if (itemKeys.isEmpty() || keyedSnapshot.isEmpty()) {
             return emptyList()
         }
 
-        var result: ObjectArrayList<SurfPaperPacketLoreHandler>? = null
+        var result: ObjectArrayList<PriorityHandler>? = null
         for (key in itemKeys) {
             val handler = keyedSnapshot[key] ?: continue
 
@@ -403,7 +422,7 @@ object V1_21_11PacketLoreListener : PacketListener {
         return result ?: emptyList()
     }
 
-    fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler) {
+    fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler, priority: Short) {
         synchronized(this) {
             check(!keyedHandlersSnapshot.containsKey(identifier)) {
                 "A PacketLore handler for $identifier is already registered!"
@@ -412,26 +431,32 @@ object V1_21_11PacketLoreListener : PacketListener {
             val handlers =
                 keyedHandlersByPlugin.computeIfAbsent(plugin) { Object2ObjectLinkedOpenHashMap() }
 
-            val previous = handlers.putIfAbsent(identifier, listener)
+            val priorityHandler = PriorityHandler(listener, priority)
+            val previous = handlers.putIfAbsent(identifier, priorityHandler)
             check(previous == null) {
                 "A PacketLore handler for $identifier is already registered for plugin ${plugin.name}!"
             }
 
             val newSnapshot = Object2ObjectLinkedOpenHashMap(keyedHandlersSnapshot)
-            newSnapshot[identifier] = listener
+            newSnapshot[identifier] = priorityHandler
             keyedHandlersSnapshot = newSnapshot
         }
     }
 
-    fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler) {
+    fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler, priority: Short) {
         synchronized(this) {
             val handlers =
                 globalHandlersByPlugin.computeIfAbsent(plugin) { ObjectLinkedOpenHashSet() }
-            if (handlers.add(listener)) {
-                rebuildGlobalHandlersSnapshot()
-            } else {
-                error("A PacketLore handler identical to the provided one (${listener.javaClass.name}) is already registered for plugin ${plugin.name}!")
+
+            // duplicate-detection by handler identity, regardless of priority
+            for (existing in handlers) {
+                if (existing.handler === listener) {
+                    error("A PacketLore handler identical to the provided one (${listener.javaClass.name}) is already registered for plugin ${plugin.name}!")
+                }
             }
+
+            handlers.add(PriorityHandler(listener, priority))
+            rebuildGlobalHandlersSnapshot()
         }
     }
 
@@ -481,7 +506,7 @@ object V1_21_11PacketLoreListener : PacketListener {
     }
 
     private fun rebuildGlobalHandlersSnapshot() {
-        val snapshot = ObjectArrayList<SurfPaperPacketLoreHandler>()
+        val snapshot = ObjectArrayList<PriorityHandler>()
 
         globalHandlersByPlugin.object2ObjectEntrySet().fastForEach { (plugin, handlers) ->
             if (plugin.isEnabled) {
@@ -489,6 +514,10 @@ object V1_21_11PacketLoreListener : PacketListener {
             }
         }
 
-        globalHandlersSnapshot = snapshot.toTypedArray()
+        val array = snapshot.toTypedArray()
+        if (array.size > 1) {
+            Arrays.sort(array, priorityComparator)
+        }
+        globalHandlersSnapshot = array
     }
 }

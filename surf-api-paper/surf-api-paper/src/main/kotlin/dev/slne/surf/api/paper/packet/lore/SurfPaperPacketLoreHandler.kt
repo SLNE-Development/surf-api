@@ -16,6 +16,19 @@ import org.bukkit.inventory.ItemStack
  */
 fun interface SurfPaperPacketLoreHandler {
     /**
+     * The priority controlling when this handler is invoked relative to others.
+     *
+     * Smaller values run earlier, larger values run later. Defaults to
+     * [SurfPaperPacketLorePriority.NORMAL]. See [SurfPaperPacketLorePriority] for the
+     * available predefined constants.
+     *
+     * Implementations may override this to provide a per-handler default. The priority
+     * passed when registering the handler (if any) takes precedence over this value.
+     */
+    val priority: Short
+        get() = SurfPaperPacketLorePriority.NORMAL
+
+    /**
      * Handles the modification of the lore of an item stack.
      *
      * @param loreToDisplay A mutable list of lore components representing the text displayed

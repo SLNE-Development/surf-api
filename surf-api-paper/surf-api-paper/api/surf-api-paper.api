@@ -2039,10 +2039,14 @@ public abstract interface class dev/slne/surf/api/paper/nms/listener/packets/ser
 
 public abstract interface class dev/slne/surf/api/paper/packet/SurfPaperPacketApi {
 	public static final field Companion Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion;
-	public abstract fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public abstract fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;S)V
 	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
-	public abstract fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
+	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public abstract fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;S)V
 	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
 	public abstract fun unregisterPacketLoreListener (Lorg/bukkit/NamespacedKey;)V
 	public abstract fun unregisterPacketLoreListener (Lorg/bukkit/plugin/Plugin;)V
 }
@@ -2050,16 +2054,24 @@ public abstract interface class dev/slne/surf/api/paper/packet/SurfPaperPacketAp
 public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion : dev/slne/surf/api/paper/packet/SurfPaperPacketApi {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;
 	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;S)V
 	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
 	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
+	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;S)V
 	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
 	public fun unregisterPacketLoreListener (Lorg/bukkit/NamespacedKey;)V
 	public fun unregisterPacketLoreListener (Lorg/bukkit/plugin/Plugin;)V
 }
 
 public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$DefaultImpls {
+	public static fun registerPacketLoreListener (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
 	public static fun registerPacketLoreListener (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public static fun registerPacketLoreListener (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
+	public static fun registerPacketLoreListenerGlobal (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
 	public static fun registerPacketLoreListenerGlobal (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
+	public static fun registerPacketLoreListenerGlobal (Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
 }
 
 public abstract interface class dev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi {
@@ -2093,7 +2105,12 @@ public abstract interface annotation class dev/slne/surf/api/paper/packet/listen
 }
 
 public abstract interface class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler {
+	public fun getPriority ()S
 	public abstract fun handleLore (Ljava/util/List;Lio/papermc/paper/persistence/PersistentDataContainerView;Lorg/bukkit/inventory/ItemStack;)V
+}
+
+public final class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler$DefaultImpls {
+	public static fun getPriority (Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)S
 }
 
 public abstract interface class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple : dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler {
@@ -2102,7 +2119,17 @@ public abstract interface class dev/slne/surf/api/paper/packet/lore/SurfPaperPac
 }
 
 public final class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple$DefaultImpls {
+	public static fun getPriority (Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)S
 	public static fun handleLore (Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;Ljava/util/List;Lio/papermc/paper/persistence/PersistentDataContainerView;Lorg/bukkit/inventory/ItemStack;)V
+}
+
+public final class dev/slne/surf/api/paper/packet/lore/SurfPaperPacketLorePriority {
+	public static final field EARLY S
+	public static final field FIRST S
+	public static final field INSTANCE Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLorePriority;
+	public static final field LAST S
+	public static final field LATE S
+	public static final field NORMAL S
 }
 
 public abstract interface class dev/slne/surf/api/paper/pdc/block/BlockPdcProvider {

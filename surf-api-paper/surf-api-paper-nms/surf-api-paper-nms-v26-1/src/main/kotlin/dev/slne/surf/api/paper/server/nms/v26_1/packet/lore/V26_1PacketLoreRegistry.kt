@@ -7,12 +7,12 @@ import org.bukkit.plugin.Plugin
 
 @Suppress("ClassName")
 class V26_1PacketLoreRegistry : PacketLoreRegistry {
-    override fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler) {
-        V26_1PacketLoreListener.register(plugin, identifier, listener)
+    override fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler, priority: Short) {
+        V26_1PacketLoreListener.register(plugin, identifier, listener, priority)
     }
 
-    override fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler) {
-        V26_1PacketLoreListener.register(plugin, listener)
+    override fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler, priority: Short) {
+        V26_1PacketLoreListener.register(plugin, listener, priority)
     }
 
     override fun unregister(identifier: NamespacedKey) {
