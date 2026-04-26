@@ -236,7 +236,7 @@ object V1_21_11PacketLoreListener : PacketListener {
 
         if (updated === stack) return style
 
-        return style.withHoverEvent(HoverEvent.ShowItem(stack))
+        return style.withHoverEvent(HoverEvent.ShowItem(updated))
     }
 
     /**
