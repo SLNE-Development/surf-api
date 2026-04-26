@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
@@ -292,6 +293,10 @@ class SurfEventBusImpl : SurfEventBus {
         require(SurfEvent::class.java.isAssignableFrom(eventParam)) {
             "@SurfEventHandler ${method.declaringClass.name}.${method.name} parameter type " +
                     "${eventParam.name} must be a subclass of SurfEvent"
+        }
+
+        require(!Modifier.isStatic(method.modifiers)) {
+            "@SurfEventHandler ${method.declaringClass.name}.${method.name} must not be static"
         }
 
         val canAccess = HiddenInvokerUtil.canAccess(clazz, method, SurfEventInvokerFactory.lookup)
