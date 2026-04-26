@@ -56,4 +56,9 @@ final class SurfAsyncEventInvokerTemplate implements SurfAsyncEventInvoker {
 
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "SurfAsyncEventInvokerTemplate[" + METHOD + "]";
+    }
 }
