@@ -22,13 +22,11 @@ import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.DyeColor
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemDisplayContext
+import net.minecraft.world.level.GameType
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.SignText
 import net.minecraft.world.phys.Vec3
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
-import org.bukkit.Server
-import org.bukkit.World
+import org.bukkit.*
 import org.bukkit.block.BlockState
 import org.bukkit.block.data.BlockData
 import org.bukkit.craftbukkit.CraftServer
@@ -153,3 +151,5 @@ fun AdvancementDisplay.Frame.toNms() = when (this) {
 }
 
 fun NamespacedKey.toIdentifier() = Identifier.fromNamespaceAndPath(namespace, key)
+
+fun GameMode.toNms() = GameType.byId(this.value)
