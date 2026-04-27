@@ -166,6 +166,23 @@ public final class dev/slne/surf/api/paper/command/args/AdventureCompoundBinaryT
 	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
 }
 
+public final class dev/slne/surf/api/paper/command/args/AsyncSignedMessageArgument : dev/jorel/commandapi/arguments/Argument {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getArgumentType ()Ldev/jorel/commandapi/arguments/CommandAPIArgumentType;
+	public fun getPrimitiveType ()Ljava/lang/Class;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lkotlinx/coroutines/Deferred;
+}
+
+public final class dev/slne/surf/api/paper/command/args/AsyncSignedMessageArgumentKt {
+	public static final fun asyncSignedMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static final fun asyncSignedMessageArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
+	public static final fun asyncSignedMessageArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
+	public static synthetic fun asyncSignedMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static synthetic fun asyncSignedMessageArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
+	public static synthetic fun asyncSignedMessageArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
+}
+
 public class dev/slne/surf/api/paper/command/args/MiniMessageArgument : dev/jorel/commandapi/arguments/CustomArgument {
 	public fun <init> (Ljava/lang/String;)V
 }
@@ -1586,12 +1603,16 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion;
 	public abstract fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
 	public abstract fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun getSignedMessage (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lkotlinx/coroutines/Deferred;
+	public abstract fun signedMessage ()Lcom/mojang/brigadier/arguments/ArgumentType;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge {
 	public fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
 	public fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge;
+	public fun getSignedMessage (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lkotlinx/coroutines/Deferred;
+	public fun signedMessage ()Lcom/mojang/brigadier/arguments/ArgumentType;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge {

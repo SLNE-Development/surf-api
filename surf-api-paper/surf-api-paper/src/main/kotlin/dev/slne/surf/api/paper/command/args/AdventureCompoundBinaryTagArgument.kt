@@ -16,7 +16,7 @@ import net.kyori.adventure.nbt.TagStringIO
 class AdventureCompoundBinaryTagArgument(nodeName: String) :
     SafeOverrideableArgument<CompoundBinaryTag, CompoundBinaryTag>(
         nodeName,
-        SurfPaperNmsCommandArgumentTypesBridge.Companion::compoundTag,
+        SurfPaperNmsCommandArgumentTypesBridge::compoundTag,
         { TagStringIO.tagStringIO().asString(it) }
     ) {
     override fun getPrimitiveType(): Class<CompoundBinaryTag> {
@@ -32,7 +32,7 @@ class AdventureCompoundBinaryTagArgument(nodeName: String) :
         key: String,
         previousArgs: CommandArguments
     ): CompoundBinaryTag {
-        return SurfPaperNmsCommandArgumentTypesBridge.Companion.getCompoundTag(ctx, key)
+        return SurfPaperNmsCommandArgumentTypesBridge.getCompoundTag(ctx, key)
     }
 }
 

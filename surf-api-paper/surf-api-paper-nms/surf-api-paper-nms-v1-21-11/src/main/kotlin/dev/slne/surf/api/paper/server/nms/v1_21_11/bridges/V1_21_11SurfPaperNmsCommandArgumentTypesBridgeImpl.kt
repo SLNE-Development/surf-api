@@ -7,14 +7,19 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommandArgumentTypesBridge
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.AdventureNBT
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
 import net.bytebuddy.dynamic.scaffold.TypeValidation
 import net.bytebuddy.implementation.InvocationHandlerAdapter
 import net.bytebuddy.implementation.bind.annotation.RuntimeType
 import net.bytebuddy.matcher.ElementMatchers
+import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.nbt.CompoundBinaryTag
+import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.arguments.CompoundTagArgument
+import net.minecraft.commands.arguments.MessageArgument
 import java.lang.reflect.InvocationHandler
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,6 +33,23 @@ class V1_21_11SurfPaperNmsCommandArgumentTypesBridgeImpl : SurfPaperNmsCommandAr
     override fun getCompoundTag(ctx: CommandContext<*>, key: String): CompoundBinaryTag {
         val nms = CompoundTagArgument.getCompoundTag(ctx, key)
         return AdventureNBT.fromNms(nms)
+    }
+
+    override fun signedMessage(): ArgumentType<*> {
+        return MessageArgument.message()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getSignedMessage(
+        ctx: CommandContext<*>,
+        key: String
+    ): Deferred<SignedMessage> {
+        val deferred = CompletableDeferred<SignedMessage>()
+        MessageArgument.resolveChatMessage(ctx as CommandContext<CommandSourceStack>, key) { nmsMessage ->
+            deferred.complete(nmsMessage.adventureView())
+        }
+
+        return deferred
     }
 
     @Suppress("UNCHECKED_CAST")
