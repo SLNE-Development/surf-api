@@ -14,6 +14,7 @@ import net.minecraft.advancements.AdvancementType
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Holder
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Display
@@ -25,6 +26,7 @@ import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.SignText
 import net.minecraft.world.phys.Vec3
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.Server
 import org.bukkit.World
 import org.bukkit.block.BlockState
@@ -76,6 +78,7 @@ fun Billboard.toNms(): Display.BillboardConstraints =
     Display.BillboardConstraints.valueOf(this.name)
 
 fun ItemStack.toNms(): NmsItemStack = CraftItemStack.asNMSCopy(this)
+fun ItemStack.unwrap(): NmsItemStack = CraftItemStack.unwrap(this)
 fun ItemDisplayTransform.toNms(): ItemDisplayContext = ItemDisplayContext.BY_ID.apply(this.ordinal)
 fun NmsItemStack.toBukkit(): ItemStack = CraftItemStack.asBukkitCopy(this)
 val ItemType.nms: Item get() = CraftItemType.bukkitToMinecraftNew(this)
@@ -148,3 +151,5 @@ fun AdvancementDisplay.Frame.toNms() = when (this) {
     GOAL -> AdvancementType.GOAL
     TASK -> AdvancementType.TASK
 }
+
+fun NamespacedKey.toIdentifier() = Identifier.fromNamespaceAndPath(namespace, key)

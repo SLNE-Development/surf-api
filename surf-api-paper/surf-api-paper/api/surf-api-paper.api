@@ -1655,10 +1655,12 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge$Companion;
+	public abstract fun getCreativeSearchItemOrderComparator ()Ljava/util/Comparator;
 	public abstract fun setDefaultMaxStackSize (Lorg/bukkit/inventory/ItemType;I)V
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge {
+	public fun getCreativeSearchItemOrderComparator ()Ljava/util/Comparator;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge;
 	public fun setDefaultMaxStackSize (Lorg/bukkit/inventory/ItemType;I)V
 }
