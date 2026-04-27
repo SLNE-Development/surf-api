@@ -17,10 +17,14 @@ import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap
 import net.minecraft.core.component.DataComponentMap
 import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.server.MinecraftServer
+import net.minecraft.world.flag.FeatureFlags
+import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.CreativeModeTabs
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStackLinkedSet
 import org.bukkit.Material
+import org.bukkit.Registry
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemType
 
@@ -39,7 +43,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
         V1_21_11Reflection.ITEM_PROXY.setComponents(nmsItem, updatedComponents)
     }
 
-    override fun getCreativeSearchItemOrderComparator(): Comparator<ItemStack> {
+    override fun getCreativeSearchItemOrderComparator(): Comparator<ItemStack?> {
         return CreativeOrderComparator
     }
 
@@ -55,7 +59,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
      * Items that are not present in the creative search tab at all receive an index of
      * [Int.MAX_VALUE] and are therefore sorted to the end.
      */
-    object CreativeOrderComparator : Comparator<ItemStack> {
+    object CreativeOrderComparator : Comparator<ItemStack?> {
         /**
          * A map from NMS [net.minecraft.world.item.ItemStack] to its position in the creative
          * search tab, keyed by both item type **and** data components so that component-variant
@@ -63,15 +67,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          *
          * Populated lazily on first access from [CreativeModeTabs.searchTab].
          */
-        private val exactIndex by lazy {
-            val ordered = CreativeModeTabs.searchTab().displayItems
-            val map = Object2IntOpenCustomHashMap(ordered.size, ItemStackLinkedSet.TYPE_AND_TAG)
-            map.defaultReturnValue(Int.MAX_VALUE)
-
-            var i = 0
-            for (item in ordered) map.put(item, i++)
-            map
-        }
+        private lateinit var exactIndex: Object2IntOpenCustomHashMap<net.minecraft.world.item.ItemStack>
 
         /**
          * A map from NMS [Item] to the position of its **first** occurrence in the creative search
@@ -83,18 +79,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          *
          * Populated lazily on first access.
          */
-        private val itemTypeIndex: Reference2IntOpenHashMap<Item> by lazy {
-            val ordered = CreativeModeTabs.searchTab().displayItems
-            val map = Reference2IntOpenHashMap<Item>(ordered.size)
-            map.defaultReturnValue(Int.MAX_VALUE)
-
-            for ((i, stack) in ordered.withIndex()) {
-                val item = stack.item
-                map.putIfAbsent(item, i)
-            }
-
-            map
-        }
+        private lateinit var itemTypeIndex: Reference2IntOpenHashMap<Item>
 
         /**
          * A map from Bukkit [Material] to the creative-tab index of that material, derived from
@@ -106,20 +91,53 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          *
          * Populated lazily on first access.
          */
-        private val materialIndex: Object2IntOpenHashMap<Material> by lazy {
-            val out = Object2IntOpenHashMap<Material>(Material.entries.size)
-            out.defaultReturnValue(Int.MAX_VALUE)
+        private lateinit var materialIndex: Object2IntOpenHashMap<Material>
 
-            for (mat in Material.entries) {
-                if (!mat.isItem) continue
 
-                val key = mat.key.toIdentifier()
-                val item = BuiltInRegistries.ITEM.getValue(key)
+        fun init() {
+            val params = CreativeModeTab.ItemDisplayParameters(
+                FeatureFlags.DEFAULT_FLAGS,
+                true,
+                MinecraftServer.getServer().registryAccess()
+            )
 
-                out.put(mat, itemTypeIndex.getInt(item))
+            for (tab in BuiltInRegistries.CREATIVE_MODE_TAB) {
+                if (tab.type != CreativeModeTab.Type.CATEGORY) continue
+                tab.buildContents(params)
+            }
+            for (tab in BuiltInRegistries.CREATIVE_MODE_TAB) {
+                if (tab.type == CreativeModeTab.Type.CATEGORY) continue
+                tab.buildContents(params)
             }
 
-            out
+            val orderedItems = CreativeModeTabs.searchTab().displayItems
+
+            this.exactIndex = Object2IntOpenCustomHashMap(orderedItems.size, ItemStackLinkedSet.TYPE_AND_TAG).apply {
+                defaultReturnValue(Int.MAX_VALUE)
+                var i = 0
+                for (item in orderedItems) put(item, i++)
+            }
+
+            this.itemTypeIndex = Reference2IntOpenHashMap<Item>(Material.entries.size).apply {
+                defaultReturnValue(Int.MAX_VALUE)
+
+                for ((i, stack) in orderedItems.withIndex()) {
+                    val item = stack.item
+                    putIfAbsent(item, i)
+                }
+            }
+
+            this.materialIndex = Object2IntOpenHashMap<Material>(Registry.ITEM.size()).apply {
+                defaultReturnValue(Int.MAX_VALUE)
+
+                for (itemType in Registry.ITEM) {
+                    val key = itemType.key.toIdentifier()
+                    val item = BuiltInRegistries.ITEM.getValue(key)
+
+                    @Suppress("DEPRECATION")
+                    put(itemType.asMaterial(), itemTypeIndex.getInt(item))
+                }
+            }
         }
 
         /**
@@ -130,7 +148,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          * @return a negative integer if [a] appears before [b] in the creative search tab,
          *   zero if their positions are equal, or a positive integer if [a] appears after [b].
          */
-        override fun compare(a: ItemStack, b: ItemStack): Int {
+        override fun compare(a: ItemStack?, b: ItemStack?): Int {
             val aIndex = indexOf(a)
             val bIndex = indexOf(b)
 
@@ -149,7 +167,9 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          * @return the zero-based position in the creative search tab, or [Int.MAX_VALUE] if the
          *   stack is not present in the tab.
          */
-        private fun indexOf(stack: ItemStack): Int {
+        private fun indexOf(stack: ItemStack?): Int {
+            if (stack == null) return Int.MAX_VALUE
+
             val type = stack.type
             val byMaterial = materialIndex.getInt(type)
 

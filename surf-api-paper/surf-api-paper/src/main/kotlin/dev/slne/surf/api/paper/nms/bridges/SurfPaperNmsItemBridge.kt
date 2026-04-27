@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Range
 interface SurfPaperNmsItemBridge {
     fun setDefaultMaxStackSize(item: ItemType, maxStackSize: @Range(from = 1, to = 100) Int)
 
-    fun getCreativeSearchItemOrderComparator(): Comparator<ItemStack>
+    fun getCreativeSearchItemOrderComparator(): Comparator<ItemStack?>
 
     companion object : SurfPaperNmsItemBridge by bridge {
         val INSTANCE get() = bridge

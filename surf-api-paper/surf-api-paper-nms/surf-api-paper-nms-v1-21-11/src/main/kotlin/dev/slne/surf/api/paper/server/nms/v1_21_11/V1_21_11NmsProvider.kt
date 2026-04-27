@@ -95,6 +95,7 @@ class V1_21_11NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
 
     override fun initialize() {
         V1_21_11Reflection.initialize()
+        V1_21_11SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.init()
     }
 
     override fun shutdown() {
