@@ -21,7 +21,7 @@ object PublicKeySerializer : KSerializer<PublicKey> {
 
     override val descriptor = buildClassSerialDescriptor("surf.api.java.crypt.PublicKey") {
         element<String>("algorithm")
-        element<ByteArray>("bytes")
+        element<ByteArray>("encoded")
     }
 
     override fun serialize(encoder: Encoder, value: PublicKey) {
