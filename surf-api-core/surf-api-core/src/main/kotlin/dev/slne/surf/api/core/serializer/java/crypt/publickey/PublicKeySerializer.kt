@@ -20,7 +20,7 @@ object PublicKeySerializer : KSerializer<PublicKey> {
         ThreadLocal.withInitial { Object2ObjectOpenHashMap(4) }
 
     override val descriptor = buildClassSerialDescriptor("surf.api.java.crypt.PublicKey") {
-        element<String>("format")
+        element<String>("algorithm")
         element<ByteArray>("bytes")
     }
 
@@ -34,32 +34,32 @@ object PublicKeySerializer : KSerializer<PublicKey> {
             ?: throw IllegalArgumentException("PublicKey of algorithm '${value.algorithm}' does not support encoding")
 
         encoder.encodeStructure(descriptor) {
-            encodeStringElement(descriptor, 0, format)
+            encodeStringElement(descriptor, 0, value.algorithm)
             encodeSerializableElement(descriptor, 1, ByteArraySerializer(), encoded)
         }
     }
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun deserialize(decoder: Decoder): PublicKey = decoder.decodeStructure(descriptor) {
-        var format: String? = null
+        var algorithm: String? = null
         var encoded: ByteArray? = null
 
         if (decodeSequentially()) {
-            format = decodeStringElement(descriptor, 0)
+            algorithm = decodeStringElement(descriptor, 0)
             encoded = decodeSerializableElement(descriptor, 1, ByteArraySerializer())
         } else while (true) {
             when (val index = decodeElementIndex(descriptor)) {
-                0 -> format = decodeStringElement(descriptor, 0)
+                0 -> algorithm = decodeStringElement(descriptor, 0)
                 1 -> encoded = decodeSerializableElement(descriptor, 1, ByteArraySerializer())
                 CompositeDecoder.DECODE_DONE -> break
                 else -> error("Unexpected index: $index")
             }
         }
 
-        requireNotNull(format) { "Missing 'format'" }
+        requireNotNull(algorithm) { "Missing 'algorithm'" }
         requireNotNull(encoded) { "Missing 'encoded'" }
 
-        val keyFactory = keyFactoryFor(format)
+        val keyFactory = keyFactoryFor(algorithm)
         val keySpec = X509EncodedKeySpec(encoded)
         keyFactory.generatePublic(keySpec)
     }
