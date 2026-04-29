@@ -10,11 +10,14 @@ import io.papermc.paper.adventure.PaperAdventure
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
 import io.papermc.paper.math.Position
+import net.kyori.adventure.chat.ChatType
 import net.minecraft.advancements.AdvancementType
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Holder
+import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Display
@@ -54,6 +57,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemType
 import org.spongepowered.math.imaginary.Quaternionf
 import org.spongepowered.math.vector.Vector3f
+import java.util.*
 import net.kyori.adventure.text.Component as AdventureComponent
 import net.minecraft.world.item.ItemStack as NmsItemStack
 import net.minecraft.world.level.block.state.BlockState as NmsBlockState
@@ -152,3 +156,13 @@ fun AdvancementDisplay.Frame.toNms() = when (this) {
 
 fun NamespacedKey.toIdentifier() = Identifier.fromNamespaceAndPath(namespace, key)
 fun GameMode.toNms() = GameType.byId(this.value)
+
+fun ChatType.Bound.toNms(sender: ServerPlayer): net.minecraft.network.chat.ChatType.Bound {
+    val chatTypeLookup = sender.level().registryAccess().lookupOrThrow(Registries.CHAT_TYPE)
+
+    return net.minecraft.network.chat.ChatType.Bound(
+        chatTypeLookup.getOrThrow(ResourceKey.create(Registries.CHAT_TYPE, PaperAdventure.asVanilla(type().key()))),
+        PaperAdventure.asVanilla(name()),
+        Optional.ofNullable(PaperAdventure.asVanilla(target()))
+    )
+}

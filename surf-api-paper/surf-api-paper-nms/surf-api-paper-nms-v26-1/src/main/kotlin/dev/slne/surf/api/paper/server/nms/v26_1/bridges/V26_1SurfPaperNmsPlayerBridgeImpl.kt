@@ -4,8 +4,14 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import io.papermc.paper.adventure.PaperAdventure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import net.kyori.adventure.chat.ChatType
+import net.kyori.adventure.chat.SignedMessage
+import net.kyori.adventure.text.Component
+import net.minecraft.network.chat.OutgoingChatMessage
+import net.minecraft.network.chat.PlayerChatMessage
 import net.minecraft.server.network.ServerGamePacketListenerImpl
 import net.minecraft.util.FutureChain
 import org.bukkit.entity.Player
@@ -47,6 +53,30 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
             chatMessageChain.append(done) { /* no-op */ }
         }
+    }
+
+    override fun sendSignedMessageWithChangedContent(
+        player: Player,
+        original: SignedMessage,
+        boundChatType: ChatType.Bound,
+        unsignedContent: Component
+    ) {
+        if (original !is PlayerChatMessage.AdventureView) {
+            if (original.isSystem) {
+                player.sendMessage(unsignedContent, boundChatType)
+            } else {
+                player.sendMessage(unsignedContent, boundChatType)
+            }
+            return
+        }
+        val nmsPlayer = player.toNms()
+
+        nmsPlayer.sendChatMessage(
+            OutgoingChatMessage.create(original.playerChatMessage()),
+            nmsPlayer.isTextFilteringEnabled,
+            boundChatType.toNms(nmsPlayer),
+            PaperAdventure.asVanilla(unsignedContent)
+        )
     }
 
     @Suppress("ObjectPrivatePropertyName")
