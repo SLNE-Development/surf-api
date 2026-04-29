@@ -11,6 +11,7 @@ import dev.slne.surf.api.core.serializer.adventure.resourcepack.info.AdventureRe
 import dev.slne.surf.api.core.serializer.adventure.sound.AdventureSoundSerializer
 import dev.slne.surf.api.core.serializer.adventure.sound.stop.AdventureSoundStopSerializer
 import dev.slne.surf.api.core.serializer.adventure.title.AdventureTitleSerializer
+import dev.slne.surf.api.core.serializer.java.crypt.publickey.PublicKeySerializer
 import dev.slne.surf.api.core.serializer.java.datetime.date.date.DateSerializer
 import dev.slne.surf.api.core.serializer.java.datetime.date.local.LocalDateSerializer
 import dev.slne.surf.api.core.serializer.java.datetime.datetime.instant.InstantSerializer
@@ -128,10 +129,15 @@ object SurfSerializerModule {
         contextual(ZoneOffsetSerializer)
     }
 
+    val javaCrypt = SerializersModule {
+        contextual(PublicKeySerializer)
+    }
+
     val all = SerializersModule {
         include(adventure)
         include(java)
         include(javaTime)
+        include(javaCrypt)
         include(spongePoweredMath)
     }
 }

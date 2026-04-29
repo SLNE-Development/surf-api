@@ -41,49 +41,29 @@ class V26_1NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
     override fun createCommonBridge(): SurfPaperNmsCommonBridge =
         V26_1SurfPaperNmsCommonBridgeImpl()
 
-    override fun createEntityBridge(): SurfPaperNmsEntityBridge =
-        V26_1SurfPaperNmsEntityBridgeImpl()
-
+    override fun createEntityBridge(): SurfPaperNmsEntityBridge = V26_1SurfPaperNmsEntityBridgeImpl()
+    override fun createPlayerBridge(): SurfPaperNmsPlayerBridge = V26_1SurfPaperNmsPlayerBridgeImpl()
     override fun createItemBridge(): SurfPaperNmsItemBridge = V26_1SurfPaperNmsItemBridgeImpl()
     override fun createNbtBridge(): SurfPaperNmsNbtBridge = V26_1SurfPaperNmsNbtBridgeImpl()
     override fun createGlowingBridge(): SurfPaperNmsGlowingBridge = V26_1SurfPaperNmsGlowingBridgeImpl
-
-    override fun createStatsBridge(): SurfPaperNmsStatsBridge =
-        V26_1SurfPaperNmsStatsBridgeImpl()
-
-    override fun createLootTableBridge(): SurfPaperNmsLootTableBridge =
-        V26_1SurfPaperNmsLootTableBridgeImpl()
-
+    override fun createStatsBridge(): SurfPaperNmsStatsBridge = V26_1SurfPaperNmsStatsBridgeImpl()
+    override fun createLootTableBridge(): SurfPaperNmsLootTableBridge = V26_1SurfPaperNmsLootTableBridgeImpl()
     override fun createCommandArgumentTypesBridge(): SurfPaperNmsCommandArgumentTypesBridge =
         V26_1SurfPaperNmsCommandArgumentTypesBridgeImpl()
 
-    override fun createPacketBridges(): SurfPaperNmsPacketBridges =
-        V26_1SurfPaperNmsPacketBridgesImpl()
+    override fun createPacketBridges(): SurfPaperNmsPacketBridges = V26_1SurfPaperNmsPacketBridgesImpl()
 
-    override fun createBlockPackets(): SurfPaperNmsBlockPackets =
-        V26_1SurfPaperNmsBlockPacketsImpl()
-
-    override fun createSpawnPackets(): SurfPaperNmsSpawnPackets =
-        V26_1SurfPaperNmsSpawnPacketsImpl()
-
-    override fun createPlayerPackets(): SurfPaperNmsPlayerPackets =
-        V26_1SurfPaperNmsPlayerPacketsImpl()
-
-    override fun createPlayerChatPackets(): SurfPaperNmsPlayerChatPackets =
-        V26_1SurfPaperNmsPlayerChatPacketsImpl()
-
-    override fun createPlayerToastPackets(): SurfPaperNmsPlayerToastPackets =
-        V26_1SurfPaperNmsPlayerToastPacketsImpl()
+    override fun createBlockPackets(): SurfPaperNmsBlockPackets = V26_1SurfPaperNmsBlockPacketsImpl()
+    override fun createSpawnPackets(): SurfPaperNmsSpawnPackets = V26_1SurfPaperNmsSpawnPacketsImpl()
+    override fun createPlayerPackets(): SurfPaperNmsPlayerPackets = V26_1SurfPaperNmsPlayerPacketsImpl()
+    override fun createPlayerChatPackets(): SurfPaperNmsPlayerChatPackets = V26_1SurfPaperNmsPlayerChatPacketsImpl()
+    override fun createPlayerToastPackets(): SurfPaperNmsPlayerToastPackets = V26_1SurfPaperNmsPlayerToastPacketsImpl()
 
     override fun createTickThreadGuard(): TickThreadGuard = V26_1TickThreadGuard()
     override fun getLibLoaderBridge(): LibLoaderBridge = V26_1LibLoaderBridgeImpl
-
     override fun getPacketBridgeHandler(): NmsPacketBridgeHandler = V26_1NmsPacketBridgeHandler
-
     override fun createPacketLoreRegistry(): PacketLoreRegistry = V26_1PacketLoreRegistry()
-    override fun createGlowingLifecycleHandler(): GlowingLifecycleHandler =
-        V26_1GlowingLifecycleHandler()
-
+    override fun createGlowingLifecycleHandler(): GlowingLifecycleHandler = V26_1GlowingLifecycleHandler()
     override fun createGlowingApi(): SurfGlowingApi = V26_1SurfGlowingApiImpl
     override fun createChannelInjector(): AbstractChannelInjector<*> = V26_1ChannelInjector
     override fun createPacketListenerApi(): InternalPacketListenerApiBridge = V26_1PacketListenerApiImpl()

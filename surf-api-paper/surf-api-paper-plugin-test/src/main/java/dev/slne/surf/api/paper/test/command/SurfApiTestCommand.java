@@ -29,7 +29,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
                 new SummonCommandTest("summoncommand"),
                 new SurfEventHandlerTest("eventhandler"),
                 new ShowItemCommand("showitem"),
-                new SortInvCommand("sortInv")
+                new SortInvCommand("sortInv"),
+                new SignedMessageArgumentTest("signedmessage")
         );
     }
 }

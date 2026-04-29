@@ -166,6 +166,23 @@ public final class dev/slne/surf/api/paper/command/args/AdventureCompoundBinaryT
 	public static synthetic fun adventureCompoundBinaryTagArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
 }
 
+public final class dev/slne/surf/api/paper/command/args/AsyncSignedMessageArgument : dev/jorel/commandapi/arguments/Argument {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getArgumentType ()Ldev/jorel/commandapi/arguments/CommandAPIArgumentType;
+	public fun getPrimitiveType ()Ljava/lang/Class;
+	public synthetic fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Ljava/lang/Object;
+	public fun parseArgument (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;Ldev/jorel/commandapi/executors/CommandArguments;)Lkotlinx/coroutines/Deferred;
+}
+
+public final class dev/slne/surf/api/paper/command/args/AsyncSignedMessageArgumentKt {
+	public static final fun asyncSignedMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static final fun asyncSignedMessageArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
+	public static final fun asyncSignedMessageArgument (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/arguments/Argument;
+	public static synthetic fun asyncSignedMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static synthetic fun asyncSignedMessageArgument$default (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandTree;
+	public static synthetic fun asyncSignedMessageArgument$default (Ldev/jorel/commandapi/arguments/Argument;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/arguments/Argument;
+}
+
 public class dev/slne/surf/api/paper/command/args/MiniMessageArgument : dev/jorel/commandapi/arguments/CustomArgument {
 	public fun <init> (Ljava/lang/String;)V
 }
@@ -1586,12 +1603,16 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion;
 	public abstract fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
 	public abstract fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun getSignedMessage (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lkotlinx/coroutines/Deferred;
+	public abstract fun signedMessage ()Lcom/mojang/brigadier/arguments/ArgumentType;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge {
 	public fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
 	public fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge;
+	public fun getSignedMessage (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lkotlinx/coroutines/Deferred;
+	public fun signedMessage ()Lcom/mojang/brigadier/arguments/ArgumentType;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge {
@@ -1604,6 +1625,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun getStateId (Lorg/bukkit/Material;)I
 	public abstract fun getStateId (Lorg/bukkit/block/data/BlockData;)I
 	public abstract fun getVelocitySecret ()Ljava/lang/String;
+	public abstract fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)V
 	public abstract fun isVelocityEnabled ()Z
 	public abstract fun nextEntityId ()I
 	public abstract fun removeCompostable (Lorg/bukkit/Material;)V
@@ -1621,6 +1643,7 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$
 	public fun getStateId (Lorg/bukkit/Material;)I
 	public fun getStateId (Lorg/bukkit/block/data/BlockData;)I
 	public fun getVelocitySecret ()Ljava/lang/String;
+	public fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)V
 	public fun isVelocityEnabled ()Z
 	public fun nextEntityId ()I
 	public fun removeCompostable (Lorg/bukkit/Material;)V
@@ -1687,6 +1710,18 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge$Com
 	public fun makeItemStackEntityInvisible (Lorg/bukkit/inventory/ItemStack;Lorg/bukkit/entity/EntityType;)Lorg/bukkit/inventory/ItemStack;
 }
 
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion;
+	public abstract fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public abstract fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;
+	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
+}
+
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$Companion;
 	public abstract fun getPlayerStatsAsJson (Lorg/bukkit/entity/Player;)Ljava/lang/String;
@@ -1697,6 +1732,39 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$C
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge;
 	public fun getPlayerStatsAsJson (Lorg/bukkit/entity/Player;)Ljava/lang/String;
 	public fun savePlayerStatsToFile (Lorg/bukkit/entity/Player;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData$Companion;
+	public fun <init> (Ljava/util/UUID;Ljava/time/Instant;Ljava/security/PublicKey;[B)V
+	public final fun component1 ()Ljava/util/UUID;
+	public final fun component2 ()Ljava/time/Instant;
+	public final fun component3 ()Ljava/security/PublicKey;
+	public final fun component4 ()[B
+	public final fun copy (Ljava/util/UUID;Ljava/time/Instant;Ljava/security/PublicKey;[B)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;Ljava/util/UUID;Ljava/time/Instant;Ljava/security/PublicKey;[BILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExpiresAt ()Ljava/time/Instant;
+	public final fun getKey ()Ljava/security/PublicKey;
+	public final fun getKeySignature ()[B
+	public final fun getSessionId ()Ljava/util/UUID;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/PacketOperation {
@@ -1910,16 +1978,20 @@ public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperN
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets$Companion;
 	public abstract fun closeInventory (I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun createNewPlayerInfoUpdate (Ljava/util/UUID;Lcom/destroystokyo/paper/profile/PlayerProfile;ZILorg/bukkit/GameMode;Lnet/kyori/adventure/text/Component;ZILdev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 	public abstract fun openInventory (ILorg/bukkit/event/inventory/InventoryType;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 	public abstract fun openSignEditor (Lio/papermc/paper/math/BlockPosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public abstract fun removePlayerInfoUpdate (Ljava/util/List;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 	public abstract fun setInventorySlot (IIILorg/bukkit/inventory/ItemStack;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets {
 	public fun closeInventory (I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun createNewPlayerInfoUpdate (Ljava/util/UUID;Lcom/destroystokyo/paper/profile/PlayerProfile;ZILorg/bukkit/GameMode;Lnet/kyori/adventure/text/Component;ZILdev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets;
 	public fun openInventory (ILorg/bukkit/event/inventory/InventoryType;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 	public fun openSignEditor (Lio/papermc/paper/math/BlockPosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public fun removePlayerInfoUpdate (Ljava/util/List;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 	public fun setInventorySlot (IIILorg/bukkit/inventory/ItemStack;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
