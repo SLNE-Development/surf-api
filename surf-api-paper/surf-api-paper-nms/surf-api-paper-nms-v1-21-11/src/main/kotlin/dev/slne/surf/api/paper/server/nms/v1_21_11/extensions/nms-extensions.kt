@@ -151,5 +151,4 @@ fun AdvancementDisplay.Frame.toNms() = when (this) {
 }
 
 fun NamespacedKey.toIdentifier() = Identifier.fromNamespaceAndPath(namespace, key)
-
 fun GameMode.toNms() = GameType.byId(this.value)

@@ -5,6 +5,7 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.player
 import com.destroystokyo.paper.profile.CraftPlayerProfile
 import com.destroystokyo.paper.profile.PlayerProfile
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.V1_21_11PacketOperationImpl
@@ -66,7 +67,7 @@ class V1_21_11SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
         displayName: Component?,
         showHat: Boolean,
         listOrder: Int,
-        chatSession: SurfPaperNmsPlayerPackets.RemoteChatSessionData?,
+        chatSession: RemoteChatSessionData?,
     ): PacketOperation = V1_21_11PacketOperationImpl.simple {
         val entries = listOf(
             ClientboundPlayerInfoUpdatePacket.Entry(

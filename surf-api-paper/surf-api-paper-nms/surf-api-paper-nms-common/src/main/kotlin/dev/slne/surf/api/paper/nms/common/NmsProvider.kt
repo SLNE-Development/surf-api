@@ -39,6 +39,7 @@ interface NmsProvider {
     fun createNmsBridge(): InternalNmsBridge
     fun createCommonBridge(): SurfPaperNmsCommonBridge
     fun createEntityBridge(): SurfPaperNmsEntityBridge
+    fun createPlayerBridge(): SurfPaperNmsPlayerBridge
     fun createItemBridge(): SurfPaperNmsItemBridge
     fun createNbtBridge(): SurfPaperNmsNbtBridge
     fun createGlowingBridge(): SurfPaperNmsGlowingBridge
