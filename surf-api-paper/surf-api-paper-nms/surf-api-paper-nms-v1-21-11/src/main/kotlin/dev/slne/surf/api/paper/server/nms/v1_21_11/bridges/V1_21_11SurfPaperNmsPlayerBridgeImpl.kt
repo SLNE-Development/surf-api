@@ -56,11 +56,15 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         init {
             val lookup = MethodHandles.lookup()
-            `serverGamePacketListenerImpl$chatMessageChain` = lookup.findVarHandle(
-                ServerGamePacketListenerImpl::class.java,
-                "chatMessageChain",
-                FutureChain::class.java
-            )
+            val privateLookupInServerGamePacketListener =
+                MethodHandles.privateLookupIn(ServerGamePacketListenerImpl::class.java, lookup)
+
+            `serverGamePacketListenerImpl$chatMessageChain` = privateLookupInServerGamePacketListener
+                .findVarHandle(
+                    ServerGamePacketListenerImpl::class.java,
+                    "chatMessageChain",
+                    FutureChain::class.java
+                )
         }
     }
 }

@@ -95,18 +95,20 @@ class V26_1SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     @Suppress("USELESS_ELVIS")
     override fun increaseNextChatIndex(player: Player) {
         val connection = player.toNms().connection ?: return
-        `serverGamePacketListernerImpl$nextChatIndex`.getAndAdd(connection, 1)
+        `serverGamePacketListenerImpl$nextChatIndex`.getAndAdd(connection, 1)
     }
 
     @Suppress("ObjectPrivatePropertyName")
     companion object {
         @JvmStatic
-        private val `serverGamePacketListernerImpl$nextChatIndex`: VarHandle
+        private val `serverGamePacketListenerImpl$nextChatIndex`: VarHandle
 
         init {
             val lookup = MethodHandles.lookup()
+            val privateLookupInServerGamePacketListener =
+                MethodHandles.privateLookupIn(ServerGamePacketListenerImpl::class.java, lookup)
 
-            `serverGamePacketListernerImpl$nextChatIndex` = lookup.findVarHandle(
+            `serverGamePacketListenerImpl$nextChatIndex` = privateLookupInServerGamePacketListener.findVarHandle(
                 ServerGamePacketListenerImpl::class.java,
                 "nextChatIndex",
                 Int::class.javaPrimitiveType
