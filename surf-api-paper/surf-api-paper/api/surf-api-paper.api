@@ -1714,12 +1714,14 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion;
 	public abstract fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
 	public abstract fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;
 	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
 	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
+	public fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
