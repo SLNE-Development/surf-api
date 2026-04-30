@@ -8904,6 +8904,15 @@ public final class dev/slne/surf/api/core/serializer/adventure/title/AdventureTi
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lnet/kyori/adventure/title/Title$Times;)V
 }
 
+public final class dev/slne/surf/api/core/serializer/java/bitset/BitSetSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/core/serializer/java/bitset/BitSetSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/util/BitSet;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/util/BitSet;)V
+}
+
 public final class dev/slne/surf/api/core/serializer/java/crypt/publickey/PublicKeySerializer : kotlinx/serialization/KSerializer {
 	public static final field INSTANCE Ldev/slne/surf/api/core/serializer/java/crypt/publickey/PublicKeySerializer;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
