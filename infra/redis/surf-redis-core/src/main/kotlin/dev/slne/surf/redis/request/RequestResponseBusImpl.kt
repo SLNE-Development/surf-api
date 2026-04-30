@@ -186,7 +186,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         val response = deserializeResponse(responseClass, envelope.responseData) ?: return
         val deferred = pendingRequests.remove(envelope.requestId)
         if (deferred == null) {
-            log.atWarning()
+            log.atFine()
                 .log("No pending request found for response with ID: ${envelope.requestId} - ignoring response.")
             return
         }
