@@ -176,4 +176,8 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             }
         }
     }
+
+    override fun getPaperRawChatType(): ChatType {
+        return ChatType.chatType(PaperAdventure.asAdventureKey(NmsReflections.getPaperRaw()))
+    }
 }

@@ -41,6 +41,8 @@ interface SurfPaperNmsPlayerBridge {
         boundChatType: ChatType.Bound
     )
 
+    fun getPaperRawChatType(): ChatType
+
     companion object : SurfPaperNmsPlayerBridge by playerBridge {
         val INSTANCE get() = playerBridge
     }
