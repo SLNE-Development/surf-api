@@ -80,7 +80,7 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     @Suppress("USELESS_ELVIS")
     override fun increaseNextChatIndex(player: Player): Int? {
         val connection = player.toNms().connection ?: return null
-        return NmsReflections.increaseAndGetNextChatIndex(connection)
+        return NmsReflections.getAndIncreaseNextChatIndex(connection)
     }
 
     override fun createPlayerChatMessageMirrorFromAdventure(
@@ -154,7 +154,7 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         synchronized(messageSignatureCache) {
             connection.send(
                 ClientboundPlayerChatPacket(
-                    NmsReflections.increaseAndGetNextChatIndex(connection),
+                    NmsReflections.getAndIncreaseNextChatIndex(connection),
                     nmsMessage.link().sender(),
                     nmsMessage.link().index(),
                     nmsMessage.signature(),

@@ -35,8 +35,8 @@ public final class NmsReflections {
         return (FutureChain) serverGamePacketListenerImpl$chatMessageChain.get(instance);
     }
 
-    public static int increaseAndGetNextChatIndex(ServerGamePacketListenerImpl instance) {
-        return (int) serverGamePacketListenerImpl$nextChatIndex.getAndAdd(instance, 1) + 1;
+    public static int getAndIncreaseNextChatIndex(ServerGamePacketListenerImpl instance) {
+        return (int) serverGamePacketListenerImpl$nextChatIndex.getAndAdd(instance, 1);
     }
 
     public static MessageSignatureCache getMessageSignatureCache(ServerGamePacketListenerImpl instance) {
