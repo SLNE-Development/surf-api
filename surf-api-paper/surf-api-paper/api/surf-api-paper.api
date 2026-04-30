@@ -1625,7 +1625,6 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun getStateId (Lorg/bukkit/Material;)I
 	public abstract fun getStateId (Lorg/bukkit/block/data/BlockData;)I
 	public abstract fun getVelocitySecret ()Ljava/lang/String;
-	public abstract fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)V
 	public abstract fun isVelocityEnabled ()Z
 	public abstract fun nextEntityId ()I
 	public abstract fun removeCompostable (Lorg/bukkit/Material;)V
@@ -1643,7 +1642,6 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$
 	public fun getStateId (Lorg/bukkit/Material;)I
 	public fun getStateId (Lorg/bukkit/block/data/BlockData;)I
 	public fun getVelocitySecret ()Ljava/lang/String;
-	public fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)V
 	public fun isVelocityEnabled ()Z
 	public fun nextEntityId ()I
 	public fun removeCompostable (Lorg/bukkit/Material;)V
@@ -1712,16 +1710,29 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge$Com
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion;
+	public abstract fun createAdventureChatMessageFromMirror (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)Lnet/kyori/adventure/chat/SignedMessage;
+	public abstract fun createPlayerChatMessageMirrorFromAdventure (Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+	public static synthetic fun createPlayerChatMessageMirrorFromAdventure$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 	public abstract fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public abstract fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
 	public abstract fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
 	public abstract fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
+	public fun createAdventureChatMessageFromMirror (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)Lnet/kyori/adventure/chat/SignedMessage;
+	public fun createPlayerChatMessageMirrorFromAdventure (Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;
 	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
 	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
+	public fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
 	public fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$DefaultImpls {
+	public static synthetic fun createPlayerChatMessageMirrorFromAdventure$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
@@ -1734,6 +1745,173 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$C
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge;
 	public fun getPlayerStatsAsJson (Lorg/bukkit/entity/Player;)Ljava/lang/String;
 	public fun savePlayerStatsToFile (Lorg/bukkit/entity/Player;)V
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$Companion;
+	public fun <init> (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;[BLdev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;Lnet/kyori/adventure/text/Component;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;)V
+	public final fun component1 ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;
+	public final fun component2 ()[B
+	public final fun component3 ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;
+	public final fun component4 ()Lnet/kyori/adventure/text/Component;
+	public final fun component5 ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;
+	public final fun copy (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;[BLdev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;Lnet/kyori/adventure/text/Component;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;[BLdev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;Lnet/kyori/adventure/text/Component;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFilterMask ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;
+	public final fun getLink ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;
+	public final fun getSignature ()[B
+	public final fun getSignedBody ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;
+	public final fun getUnsignedContent ()Lnet/kyori/adventure/text/Component;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$Companion;
+	public fun <init> (Ljava/util/BitSet;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;)V
+	public synthetic fun <init> (Ljava/util/BitSet;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/BitSet;
+	public final fun component2 ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;
+	public final fun copy (Ljava/util/BitSet;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;Ljava/util/BitSet;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMask ()Ljava/util/BitSet;
+	public final fun getType ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$Companion {
+	public final fun getFULLY_FILTERED ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;
+	public final fun getPASS_THROUGH ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE : java/lang/Enum {
+	public static final field FULLY_FILTERED Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;
+	public static final field PARTIALLY_FILTERED Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;
+	public static final field PASS_THROUGH Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;
+	public static fun values ()[Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$FilterMask$TYPE;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/time/Instant;JLdev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/time/Instant;
+	public final fun component3 ()J
+	public final fun component4 ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;
+	public final fun copy (Ljava/lang/String;Ljava/time/Instant;JLdev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;Ljava/lang/String;Ljava/time/Instant;JLdev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContent ()Ljava/lang/String;
+	public final fun getLastSeen ()Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;
+	public final fun getSalt ()J
+	public final fun getTimestamp ()Ljava/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;Ljava/util/List;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntries ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageBody$LastSeenMessages$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink$Companion;
+	public fun <init> (ILjava/util/UUID;Ljava/util/UUID;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/util/UUID;
+	public final fun component3 ()Ljava/util/UUID;
+	public final fun copy (ILjava/util/UUID;Ljava/util/UUID;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;ILjava/util/UUID;Ljava/util/UUID;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIndex ()I
+	public final fun getSender ()Ljava/util/UUID;
+	public final fun getSessionId ()Ljava/util/UUID;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror$SignedMessageLink$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData {
