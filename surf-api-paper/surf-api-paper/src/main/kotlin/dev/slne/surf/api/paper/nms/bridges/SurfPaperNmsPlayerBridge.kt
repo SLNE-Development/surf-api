@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.nms.bridges
 
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.chat.ChatType
@@ -23,6 +24,21 @@ interface SurfPaperNmsPlayerBridge {
         original: SignedMessage,
         boundChatType: ChatType.Bound,
         unsignedContent: Component
+    )
+
+    fun increaseNextChatIndex(player: Player): Int?
+
+    fun createPlayerChatMessageMirrorFromAdventure(
+        adventure: SignedMessage,
+        unsignedContent: Component? = adventure.unsignedContent()
+    ): PlayerChatMessageMirror?
+
+    fun createAdventureChatMessageFromMirror(mirror: PlayerChatMessageMirror): SignedMessage
+
+    fun sendPlayerChatMessage(
+        receiver: Player,
+        message: SignedMessage,
+        boundChatType: ChatType.Bound
     )
 
     companion object : SurfPaperNmsPlayerBridge by playerBridge {

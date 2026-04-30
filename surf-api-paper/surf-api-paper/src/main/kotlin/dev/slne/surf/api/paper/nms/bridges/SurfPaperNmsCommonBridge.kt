@@ -31,8 +31,6 @@ interface SurfPaperNmsCommonBridge {
 
     fun getServerIp(): InetSocketAddress
 
-    fun increaseNextChatIndex(player: Player)
-
     companion object : SurfPaperNmsCommonBridge by bridge {
         val INSTANCE get() = bridge
     }

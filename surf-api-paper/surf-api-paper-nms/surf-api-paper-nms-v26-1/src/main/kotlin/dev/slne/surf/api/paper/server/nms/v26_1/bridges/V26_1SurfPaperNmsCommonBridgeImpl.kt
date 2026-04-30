@@ -11,15 +11,12 @@ import io.papermc.paper.configuration.GlobalConfiguration
 import net.kyori.adventure.text.Component
 import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
 import net.minecraft.server.MinecraftServer
-import net.minecraft.server.network.ServerGamePacketListenerImpl
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.ComposterBlock
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.VarHandle
 import java.net.InetSocketAddress
 
 @NmsUseWithCaution
@@ -90,29 +87,5 @@ class V26_1SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
         return channel.channel().localAddress() as? InetSocketAddress
             ?: error("Local address is not an instance of InetSocketAddress")
-    }
-
-    @Suppress("USELESS_ELVIS")
-    override fun increaseNextChatIndex(player: Player) {
-        val connection = player.toNms().connection ?: return
-        `serverGamePacketListenerImpl$nextChatIndex`.getAndAdd(connection, 1)
-    }
-
-    @Suppress("ObjectPrivatePropertyName")
-    companion object {
-        @JvmStatic
-        private val `serverGamePacketListenerImpl$nextChatIndex`: VarHandle
-
-        init {
-            val lookup = MethodHandles.lookup()
-            val privateLookupInServerGamePacketListener =
-                MethodHandles.privateLookupIn(ServerGamePacketListenerImpl::class.java, lookup)
-
-            `serverGamePacketListenerImpl$nextChatIndex` = privateLookupInServerGamePacketListener.findVarHandle(
-                ServerGamePacketListenerImpl::class.java,
-                "nextChatIndex",
-                Int::class.javaPrimitiveType
-            )
-        }
     }
 }
