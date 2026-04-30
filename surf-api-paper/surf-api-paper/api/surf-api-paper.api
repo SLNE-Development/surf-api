@@ -1713,6 +1713,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun createAdventureChatMessageFromMirror (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)Lnet/kyori/adventure/chat/SignedMessage;
 	public abstract fun createPlayerChatMessageMirrorFromAdventure (Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 	public static synthetic fun createPlayerChatMessageMirrorFromAdventure$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+	public abstract fun getPaperRawChatType ()Lnet/kyori/adventure/chat/ChatType;
 	public abstract fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
 	public abstract fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
 	public abstract fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
@@ -1724,6 +1725,7 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$
 	public fun createAdventureChatMessageFromMirror (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)Lnet/kyori/adventure/chat/SignedMessage;
 	public fun createPlayerChatMessageMirrorFromAdventure (Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;
+	public fun getPaperRawChatType ()Lnet/kyori/adventure/chat/ChatType;
 	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
 	public fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
 	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
