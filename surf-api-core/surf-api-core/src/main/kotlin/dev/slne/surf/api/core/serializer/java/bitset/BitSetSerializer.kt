@@ -12,7 +12,7 @@ typealias SerializableBitSet = @Serializable(with = BitSetSerializer::class) Bit
 
 object BitSetSerializer : KSerializer<BitSet> {
     private val longArraySerializer = LongArraySerializer()
-    override val descriptor = SerialDescriptor("dev.slne.surf.api.BitSet", longArraySerializer.descriptor)
+    override val descriptor = SerialDescriptor("surf.api.BitSet", longArraySerializer.descriptor)
 
     override fun serialize(encoder: Encoder, value: BitSet) {
         longArraySerializer.serialize(encoder, value.toLongArray())
