@@ -107,7 +107,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     private val scriptExecutor = LuaScriptExecutor.getInstance(api, LuaScripts)
     private val stream: RStreamReactive<String, String> by lazy {
-        api.redissonReactive.getStream<String, String>(streamKey, StringCodec.INSTANCE)
+        api.redissonReactive.getStream(streamKey, StringCodec.INSTANCE)
     }
     private val versionCounter: RAtomicLongReactive by lazy {
         api.redissonReactive.getAtomicLong(versionKey)
@@ -124,9 +124,19 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
 
     private val lastVersion = AtomicLong(0L)
-    private val cursorId = AtomicReference<StreamMessageId>(StreamMessageId(0, 0))
+    private val cursorId = AtomicReference(StreamMessageId(0, 0))
 
     private val instanceId = api.clientId
+
+    // Pre-computed per-instance constants reused on every Lua script invocation. These avoid
+    // reallocating identical Strings / List<Any> wrappers on the hot path.
+    private val messageDelimiterStr: String = MESSAGE_DELIMITER.toString()
+    private val streamMaxLengthStr: String = STREAM_MAX_LENGTH.toString()
+    private val ttlMillisStr: String = ttl.inWholeMilliseconds.toString()
+    private val scriptKeys: List<Any> = listOf(idsRedisKey, streamKey, versionKey)
+    private val touchScriptKeys: List<Any> = listOf(idsRedisKey)
+    private val indicesSizeStr: String = indexes.all.size.toString()
+    private val indexNames: Array<String> = indexes.all.map { it.name }.toTypedArray()
 
     private fun <V : Any> buildNearCache(maxSize: Long) = Caffeine.newBuilder()
         .maximumSize(maxSize)
@@ -199,14 +209,24 @@ class SimpleSetRedisCacheImpl<T : Any>(
     }
 
     private fun processStreamMessage(type: String, msg: String) {
-        val parts = msg.split(MESSAGE_DELIMITER, limit = 3)
-        if (parts.size < 2) {
+        // Parse "version<NUL>origin<NUL>payload" without allocating an ArrayList per message.
+
+        val firstDelim = msg.indexOf(MESSAGE_DELIMITER)
+        if (firstDelim < 0) {
             log.atWarning().log("Malformed stream message on '$streamKey': $msg")
             return
         }
-        val versionStr = parts[0]
-        val originId = parts[1]
-        val payload = if (parts.size >= 3) parts[2] else ""
+        val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
+        val versionStr = msg.substring(0, firstDelim)
+        val originId: String
+        val payload: String
+        if (secondDelim < 0) { // no payload
+            originId = msg.substring(firstDelim + 1)
+            payload = ""
+        } else {
+            originId = msg.substring(firstDelim + 1, secondDelim)
+            payload = msg.substring(secondDelim + 1)
+        }
 
         val version = versionStr.toLongOrNull()
         if (version == null) {
@@ -255,10 +275,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
             OP_IDX -> {
                 // Payload is "<indexName><NUL><indexValue>"
-                val idxParts = payload.split(MESSAGE_DELIMITER, limit = 2)
-                if (idxParts.size == 2) {
-                    val idxName = idxParts[0]
-                    val idxValue = idxParts[1]
+                val sepIdx = payload.indexOf(MESSAGE_DELIMITER)
+                if (sepIdx >= 0) {
+                    val idxName = payload.substring(0, sepIdx)
+                    val idxValue = payload.substring(sepIdx + 1)
                     nearIndexIds.invalidate("$idxName$MESSAGE_DELIMITER$idxValue")
                     refreshGate.invalidate("$OP_IDX$MESSAGE_DELIMITER$idxName$MESSAGE_DELIMITER$idxValue")
                 }
