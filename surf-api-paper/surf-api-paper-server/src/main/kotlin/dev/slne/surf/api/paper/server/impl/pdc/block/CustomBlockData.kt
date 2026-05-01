@@ -114,10 +114,7 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
         return pdc.isEmpty
     }
 
-    override fun copyTo(
-        other: PersistentDataContainer,
-        replace: Boolean,
-    ) {
+    override fun copyTo(other: PersistentDataContainer, replace: Boolean) {
         pdc.copyTo(other, replace)
     }
 
