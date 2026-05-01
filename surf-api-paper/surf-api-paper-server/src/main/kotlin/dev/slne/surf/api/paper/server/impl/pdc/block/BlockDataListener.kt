@@ -22,9 +22,9 @@
  */
 package dev.slne.surf.api.paper.server.impl.pdc.block
 
-import dev.slne.surf.api.paper.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.api.paper.pdc.block.pdc
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
+import org.bukkit.NamespacedKey
 import org.bukkit.block.Block
 import org.bukkit.block.PistonMoveReaction
 import org.bukkit.block.data.type.Fire
@@ -35,6 +35,8 @@ import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.world.StructureGrowEvent
+import org.bukkit.persistence.PersistentDataContainer
+import org.bukkit.persistence.PersistentDataType
 
 object BlockDataListener : Listener {
     private fun remove(event: BlockEvent) {
@@ -159,24 +161,63 @@ object BlockDataListener : Listener {
         removeFromBlockList(event.blocks.map { it.block })
     }
 
-    private fun handlePiston(blocks: List<Block>, event: BlockPistonEvent) {
-        val map = Object2ObjectLinkedOpenHashMap<Block, CustomBlockPersistentDataContainer>()
+    private fun handlePiston(
+        blocks: List<Block>,
+        event: BlockPistonEvent
+    ) { // TODO: Use a more efficient data structure
+        val map = Object2ObjectLinkedOpenHashMap<Block, Map<NamespacedKey, Any>>()
         val direction = event.direction
+
         for (block in blocks) {
-            if (!BlockPdcManager.hasCustomData(block)) continue
             val pdc = block.pdc()
             if (pdc.isEmpty) continue
+
             val reaction = block.pistonMoveReaction
             if (reaction == PistonMoveReaction.BREAK) {
                 removeFromBlock(block)
                 continue
             }
+
+            val snapshot = pdc.keys.associateWith { key ->
+                when {
+                    pdc.has(key, PersistentDataType.BYTE_ARRAY) ->
+                        pdc.get(key, PersistentDataType.BYTE_ARRAY)
+
+                    pdc.has(key, PersistentDataType.STRING) ->
+                        pdc.get(key, PersistentDataType.STRING)
+
+                    pdc.has(key, PersistentDataType.BOOLEAN) ->
+                        pdc.get(key, PersistentDataType.BOOLEAN)
+
+                    pdc.has(key, PersistentDataType.INTEGER) ->
+                        pdc.get(key, PersistentDataType.INTEGER)
+
+                    pdc.has(key, PersistentDataType.TAG_CONTAINER) ->
+                        pdc.get(key, PersistentDataType.TAG_CONTAINER)
+
+                    else -> null
+                }
+            }.filterValues { it != null } as Map<NamespacedKey, Any>
+
             val destination = block.getRelative(direction)
-            map[destination] = pdc
+            map[destination] = snapshot
         }
-        for ((block, pdc) in map.reversed()) {
-            pdc.copyTo(block)
-            pdc.clear()
+
+        map.entries.toList().asReversed().forEach { (block, data) ->
+            val target = block.pdc()
+
+            target.clear()
+
+            data.forEach { (key, value) ->
+                when (value) {
+                    is ByteArray -> target.set(key, PersistentDataType.BYTE_ARRAY, value)
+                    is String -> target.set(key, PersistentDataType.STRING, value)
+                    is Int -> target.set(key, PersistentDataType.INTEGER, value)
+                    is Boolean -> target.set(key, PersistentDataType.BOOLEAN, value)
+                    is PersistentDataContainer ->
+                        target.set(key, PersistentDataType.TAG_CONTAINER, value)
+                }
+            }
         }
     }
 }
