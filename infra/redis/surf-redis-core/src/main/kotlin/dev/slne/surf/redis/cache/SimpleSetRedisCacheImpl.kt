@@ -136,7 +136,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private val scriptKeys: List<Any> = listOf(idsRedisKey, streamKey, versionKey)
     private val touchScriptKeys: List<Any> = listOf(idsRedisKey)
     private val indicesSizeStr: String = indexes.all.size.toString()
-    private val indexNames: Array<String> = indexes.all.map { it.name }.toTypedArray()
+    private val indexNames: Array<String> = indexes.all
+        .map { index ->
+            index.name.also { requireNoNul(it, "indexName") }
+        }.toTypedArray()
 
     private fun <V : Any> buildNearCache(maxSize: Long) = Caffeine.newBuilder()
         .maximumSize(maxSize)
@@ -645,28 +648,27 @@ class SimpleSetRedisCacheImpl<T : Any>(
         requireNoNul(normId, "id")
 
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(9 + indices.size)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
-
-        argv += keyPrefix
-        argv += normId
-        argv += indices.size.toString()
-        for (idx in indices) {
-            requireNoNul(idx.name, "indexName")
-            argv += idx.name
+        val argv = arrayOfNulls<Any>(9 + indices.size)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = normId
+        argv[8] = indicesSizeStr
+        for (i in indexNames.indices) {
+            argv[9 + i] = indexNames[i]
         }
 
+        @Suppress("UNCHECKED_CAST")
         val result = scriptExecutor.execute<List<Any>>(
             REMOVE_ID_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LIST,
-            listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray()
+            scriptKeys,
+            *(argv as Array<Any>)
         ).awaitSingle()
 
         val (removed, touched) = parseLuaFlagAndTouched(result)
