@@ -483,36 +483,50 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val raw = api.json.encodeToString(serializer, element)
 
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(10)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
 
-        argv += keyPrefix
-        argv += id
-        argv += raw
-        argv += indices.size.toString()
-        for (idx in indices) {
+        // Pre-extract all values so we know the total argv size upfront and can build the
+        // Array<Any> directly without intermediate ArrayList allocations.
+        var totalValues = 0
+        val perIndexValues: Array<Set<String>> = Array(indices.size) { i ->
+            val idx = indices[i]
             requireNoNul(idx.name, "indexName")
             val values = idx.extractStrings(element)
             for (v in values) requireNoNul(v, "indexValue")
-
-            argv.ensureCapacity(2 + argv.size + values.size)
-
-            argv += idx.name
-            argv += values.size.toString()
-            for (v in values) argv += v
+            totalValues += values.size
+            values
         }
 
+        // Layout: instanceId, delim, maxLen, ttl, fieldType, fieldMsg, keyPrefix, id, raw,
+        // indexCount, then for each index: name, valueCount, value1..valueN
+        val argvSize = 10 + indices.size * 2 + totalValues
+        val argv = arrayOfNulls<Any>(argvSize)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = id
+        argv[8] = raw
+        argv[9] = indicesSizeStr
+        var pos = 10
+        for (i in indices.indices) {
+            argv[pos++] = indexNames[i]
+            val values = perIndexValues[i]
+            argv[pos++] = values.size.toString()
+            for (v in values) {
+                argv[pos++] = v
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
         val result = scriptExecutor.execute<List<Any>>(
             UPSERT_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LIST,
-            listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray(),
+            scriptKeys,
+            *(argv as Array<Any>),
         ).awaitSingle()
 
         val (wasNew, touchedIndices) = parseLuaFlagAndTouched(result)
