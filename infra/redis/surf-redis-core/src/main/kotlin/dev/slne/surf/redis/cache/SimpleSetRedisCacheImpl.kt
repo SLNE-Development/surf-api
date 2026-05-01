@@ -6,7 +6,6 @@ import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.*
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.awaitSingle
@@ -696,29 +695,29 @@ class SimpleSetRedisCacheImpl<T : Any>(
         requireNoNul(queryValue, "indexValue")
 
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(10 + indices.size)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
-
-        argv += keyPrefix
-        argv += index.name
-        argv += queryValue
-        argv += indices.size.toString()
-        for (idx in indices) {
-            requireNoNul(idx.name, "indexName")
-            argv += idx.name
+        val argv = arrayOfNulls<Any>(10 + indices.size)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = index.name
+        argv[8] = queryValue
+        argv[9] = indicesSizeStr
+        for (i in indexNames.indices) {
+            argv[10 + i] = indexNames[i]
         }
 
+        @Suppress("UNCHECKED_CAST")
         val removedCount = scriptExecutor.execute<Long>(
             REMOVE_INDEX_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LONG,
             listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray()
+            scriptKeys,
+            *(argv as Array<Any>)
         ).awaitSingle()
 
         if (removedCount <= 0L) return false
@@ -729,26 +728,26 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     override suspend fun invalidateAll(): Long {
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(8 + indices.size)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
-        argv += keyPrefix
-        argv += indices.size.toString()
-        for (idx in indices) {
-            requireNoNul(idx.name, "indexName")
-            argv += idx.name
+        val argv = arrayOfNulls<Any>(8 + indices.size)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = indicesSizeStr
+        for (i in indexNames.indices) {
+            argv[8 + i] = indexNames[i]
         }
 
+        @Suppress("UNCHECKED_CAST")
         val deletedCount = scriptExecutor.execute<Long>(
             CLEAR_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LONG,
-            listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray()
+            scriptKeys,
+            *(argv as Array<Any>)
         ).awaitSingle()
 
         clearNearCacheOnly()
