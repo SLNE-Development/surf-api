@@ -158,15 +158,24 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
     }
 
     private fun processStreamMessage(type: String, msg: String) {
-        // version<NUL>origin<NUL>payload
-        val parts = msg.split(MESSAGE_DELIMITER, limit = 3)
-        if (parts.size < 2) {
+        // version<NUL>origin<NUL>payload — parse without allocating an ArrayList per message.
+        val firstDelim = msg.indexOf(MESSAGE_DELIMITER)
+        if (firstDelim < 0) {
             log.atWarning().log("Malformed stream message in cache '$namespace': $msg")
             return
         }
-        val versionStr = parts[0]
-        val originId = parts[1]
-        val payload = if (parts.size >= 3) parts[2] else ""
+        val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
+        val versionStr = msg.substring(0, firstDelim)
+        val originId: String
+        val payload: String
+
+        if (secondDelim < 0) { // payload omitted in message
+            originId = msg.substring(firstDelim + 1)
+            payload = ""
+        } else {
+            originId = msg.substring(firstDelim + 1, secondDelim)
+            payload = msg.substring(secondDelim + 1)
+        }
 
         val version = versionStr.toLongOrNull()
         if (version == null) {
