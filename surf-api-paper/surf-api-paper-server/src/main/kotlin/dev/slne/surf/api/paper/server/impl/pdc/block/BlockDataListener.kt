@@ -37,7 +37,6 @@ import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.world.StructureGrowEvent
 
 object BlockDataListener : Listener {
-
     private fun remove(event: BlockEvent) {
         removeFromBlock(event.block)
     }
