@@ -301,21 +301,20 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     private fun refreshValueTtl(id: String) {
         refreshTtl(refreshKeyVal(id)) {
-            val indices = indexes.all
-
-            val argv = ObjectArrayList<String>(4 + indices.size)
-            argv += ttl.inWholeMilliseconds.toString()
-            argv += keyPrefix
-            argv += id
-            argv += indices.size.toString()
-            for (idx in indices) {
-                argv += idx.name
+            val argv = arrayOfNulls<Any>(4 + indexNames.size)
+            argv[0] = ttlMillisStr
+            argv[1] = keyPrefix
+            argv[2] = id
+            argv[3] = indicesSizeStr
+            for (i in indexNames.indices) {
+                argv[4 + i] = indexNames[i]
             }
 
+            @Suppress("UNCHECKED_CAST")
             scriptExecutor.execute<Long>(
                 TOUCH_SCRIPT, RScript.Mode.READ_WRITE, RScript.ReturnType.LONG,
-                keys = listOf(idsRedisKey),
-                *argv.toTypedArray()
+                keys = touchScriptKeys,
+                *(argv as Array<Any>)
             ).subscribe(
                 { /* no payload needed */ },
                 { e ->
