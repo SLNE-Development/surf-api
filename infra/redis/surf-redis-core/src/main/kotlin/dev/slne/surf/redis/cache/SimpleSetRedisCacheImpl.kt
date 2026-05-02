@@ -711,7 +711,6 @@ class SimpleSetRedisCacheImpl<T : Any>(
             REMOVE_INDEX_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LONG,
-            listOf(idsRedisKey, streamKey, versionKey),
             scriptKeys,
             *(argv as Array<Any>)
         ).awaitSingle()
