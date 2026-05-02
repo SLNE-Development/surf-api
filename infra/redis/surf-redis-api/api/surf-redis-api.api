@@ -66,10 +66,8 @@ public final class dev/slne/surf/redis/RedisComponentProvider$Companion : dev/sl
 }
 
 public final class dev/slne/surf/redis/cache/RedisSetIndex {
-	public final fun extractStrings (Ljava/lang/Object;)Ljava/util/Set;
 	public final fun getName ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
-	public final fun valueString (Ljava/lang/Object;)Ljava/lang/String;
 }
 
 public abstract class dev/slne/surf/redis/cache/RedisSetIndexes {
