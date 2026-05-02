@@ -35,22 +35,21 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
         const val STREAM_FIELD_TYPE = "T"
         const val STREAM_FIELD_MSG = "M"
+
+        private const val MESSAGE_DELIMITER = '\u0000'
+        private const val MAX_STREAM_LENGTH = 10_000
     }
 
     protected val instanceId: String = api.clientId
-    protected open val msgDelimiter: String = "\u0000"
-    protected open val streamMaxLength: Int = 10_000
 
     private val lastVersion = AtomicLong(0L)
     private val bootstrapped = AtomicBoolean(false)
 
-    protected open val streamReadCount: Int = 200
-    protected open val streamPollInterval: Duration = 250.milliseconds
     protected val stream: RStreamReactive<String, String> by lazy {
-        api.redissonReactive.getStream<String, String>(streamKey, StringCodec.INSTANCE)
+        api.redissonReactive.getStream(streamKey, StringCodec.INSTANCE)
     }
 
-    private val cursorId = AtomicReference<StreamMessageId>(StreamMessageId(0, 0))
+    private val cursorId = AtomicReference(StreamMessageId(0, 0))
     private val resyncInFlight = AtomicBoolean(false)
 
     protected val namespace: String = "$structureNamespace${this.id}:"
@@ -64,6 +63,12 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         )
     }
     protected val scriptExecutor = LuaScriptExecutor.getInstance(api, scriptRegistry)
+
+    // Pre-computed per-instance constants reused on every Lua script invocation. Reduces
+    // per-op allocations of identical Strings / List<Any> wrappers on the hot path.
+    private val msgDelimiterStr: String = MESSAGE_DELIMITER.toString()
+    private val streamMaxLengthStr: String = MAX_STREAM_LENGTH.toString()
+    private val scriptKeys: List<Any> = listOf(dataKey, streamKey, versionKey)
 
     @MustBeInvokedByOverriders
     override fun init(): Mono<Void> {
@@ -84,21 +89,37 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     }
 
     private fun processStreamEvent(type: String, msg: String) {
-        val parts = msg.split(msgDelimiter, limit = 3)
-        if (parts.size < 2) {
+        // Parse "version<DELIM>origin<DELIM>payload" without allocating an ArrayList per message.
+        val firstDelim = msg.indexOf(MESSAGE_DELIMITER)
+        if (firstDelim < 0) {
             log.atWarning()
                 .log(
-                    "Malformed stream message for type %s: expected at least 2 parts but got %d: %s",
+                    "Malformed stream message for type %s: expected at least 2 parts but got 1: %s",
                     type,
-                    parts.size,
                     msg
                 )
             return
         }
+        val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
 
-        val versionPart = parts[0]
-        val origin = parts[1]
+        val versionPart = msg.substring(0, firstDelim)
+        val origin = msg.substring(firstDelim + 1)
 
+        if (secondDelim < 0) { // No payload
+            processParsedStreamEvent(type, msg, versionPart, origin, "")
+        } else {
+            val payloadPart = msg.substring(secondDelim + 1)
+            processParsedStreamEvent(type, msg, versionPart, origin, payloadPart)
+        }
+    }
+
+    private fun processParsedStreamEvent(
+        type: String,
+        msg: String,
+        versionPart: String,
+        origin: String,
+        payloadPart: String
+    ) {
         if (versionPart.isBlank()) {
             log.atWarning()
                 .log(
@@ -131,8 +152,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             return
         }
 
-        val payloadPart = if (parts.size >= 3) parts[2] else ""
-        val payload = if (payloadPart.isEmpty()) emptyList() else payloadPart.split(msgDelimiter)
+        val payload = if (payloadPart.isEmpty()) emptyList() else payloadPart.split(MESSAGE_DELIMITER)
 
         if (!applyVersion(version)) return
         if (origin == instanceId) return
@@ -153,8 +173,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             RScript.ReturnType.LONG,
             listOf(dataKey, streamKey, versionKey),
             instanceId,
-            msgDelimiter,
-            streamMaxLength,
+            MESSAGE_DELIMITER,
+            MAX_STREAM_LENGTH,
             STREAM_FIELD_TYPE,
             STREAM_FIELD_MSG,
             eventType,
@@ -198,7 +218,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     private fun startPolling(): Disposable {
         return pollOnce()
             .delayElement(
-                streamPollInterval.toJavaDuration(),
+                250.milliseconds.toJavaDuration(),
                 RedisInstance.get().streamPollScheduler
             )
             .onErrorResume { e ->
@@ -213,7 +233,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     private fun pollOnce(): Mono<Void> = Mono.defer {
         val from = cursorId.get()
         val args = StreamReadArgs.greaterThan(from)
-            .count(streamReadCount)
+            .count(200)
 
         stream.read(args)
             .filter { it.isNotEmpty() }
