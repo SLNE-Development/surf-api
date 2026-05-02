@@ -103,7 +103,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
 
         val versionPart = msg.substring(0, firstDelim)
-        val origin = msg.substring(firstDelim + 1)
+        val origin = msg.substring(firstDelim + 1, secondDelim.takeIf { it >= 0 } ?: msg.length)
 
         if (secondDelim < 0) { // No payload
             processParsedStreamEvent(type, msg, versionPart, origin, "")
