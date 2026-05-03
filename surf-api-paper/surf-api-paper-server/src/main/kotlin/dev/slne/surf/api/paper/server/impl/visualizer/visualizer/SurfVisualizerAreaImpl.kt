@@ -264,10 +264,11 @@ class SurfVisualizerAreaImpl(
         val cx = getXFromChunkKey(chunkKey)
         val cz = getZFromChunkKey(chunkKey)
 
-        val chunk = world.getChunkAtAsync(cx, cz).await()
-        val snapshot = chunk.getChunkSnapshot(true, false, false, false)
-        snapshotCache.put(chunkKey, snapshot)
-        return snapshot
+        return world.getChunkAtAsync(cx, cz).thenApply { chunk ->
+            chunk.getChunkSnapshot(true, false, false, false).also {
+                snapshotCache.put(chunkKey, it)
+            }
+        }.await()
     }
 
     fun onChunkBecameVisible(player: Player, chunk: Chunk) {
