@@ -6,7 +6,6 @@ import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.*
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.awaitSingle
@@ -107,7 +106,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     private val scriptExecutor = LuaScriptExecutor.getInstance(api, LuaScripts)
     private val stream: RStreamReactive<String, String> by lazy {
-        api.redissonReactive.getStream<String, String>(streamKey, StringCodec.INSTANCE)
+        api.redissonReactive.getStream(streamKey, StringCodec.INSTANCE)
     }
     private val versionCounter: RAtomicLongReactive by lazy {
         api.redissonReactive.getAtomicLong(versionKey)
@@ -124,9 +123,22 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
 
     private val lastVersion = AtomicLong(0L)
-    private val cursorId = AtomicReference<StreamMessageId>(StreamMessageId(0, 0))
+    private val cursorId = AtomicReference(StreamMessageId(0, 0))
 
     private val instanceId = api.clientId
+
+    // Pre-computed per-instance constants reused on every Lua script invocation. These avoid
+    // reallocating identical Strings / List<Any> wrappers on the hot path.
+    private val messageDelimiterStr: String = MESSAGE_DELIMITER.toString()
+    private val streamMaxLengthStr: String = STREAM_MAX_LENGTH.toString()
+    private val ttlMillisStr: String = ttl.inWholeMilliseconds.toString()
+    private val scriptKeys: List<Any> = listOf(idsRedisKey, streamKey, versionKey)
+    private val touchScriptKeys: List<Any> = listOf(idsRedisKey)
+    private val indicesSizeStr: String = indexes.all.size.toString()
+    private val indexNames: Array<String> = indexes.all
+        .map { index ->
+            index.name.also { requireNoNul(it, "indexName") }
+        }.toTypedArray()
 
     private fun <V : Any> buildNearCache(maxSize: Long) = Caffeine.newBuilder()
         .maximumSize(maxSize)
@@ -199,14 +211,24 @@ class SimpleSetRedisCacheImpl<T : Any>(
     }
 
     private fun processStreamMessage(type: String, msg: String) {
-        val parts = msg.split(MESSAGE_DELIMITER, limit = 3)
-        if (parts.size < 2) {
+        // Parse "version<NUL>origin<NUL>payload" without allocating an ArrayList per message.
+
+        val firstDelim = msg.indexOf(MESSAGE_DELIMITER)
+        if (firstDelim < 0) {
             log.atWarning().log("Malformed stream message on '$streamKey': $msg")
             return
         }
-        val versionStr = parts[0]
-        val originId = parts[1]
-        val payload = if (parts.size >= 3) parts[2] else ""
+        val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
+        val versionStr = msg.substring(0, firstDelim)
+        val originId: String
+        val payload: String
+        if (secondDelim < 0) { // no payload
+            originId = msg.substring(firstDelim + 1)
+            payload = ""
+        } else {
+            originId = msg.substring(firstDelim + 1, secondDelim)
+            payload = msg.substring(secondDelim + 1)
+        }
 
         val version = versionStr.toLongOrNull()
         if (version == null) {
@@ -214,20 +236,16 @@ class SimpleSetRedisCacheImpl<T : Any>(
             return
         }
 
-        val shouldInvalidate = AtomicBoolean(false)
         val oldVersion = lastVersion.getAndUpdate { currentVer ->
             when {
                 currentVer == 0L -> version
                 version <= currentVer -> currentVer
-                version == currentVer + 1 -> version
-                else -> {
-                    shouldInvalidate.set(true)
-                    version
-                }
+                else -> version
             }
         }
 
-        if (shouldInvalidate.get()) {
+        val shouldInvalidate = oldVersion != 0L && version > oldVersion + 1
+        if (shouldInvalidate) {
             log.atWarning()
                 .log("Version gap detected in cache '$namespace': last=$oldVersion, new=$version. Clearing near-cache.")
             clearNearCacheOnly()
@@ -255,10 +273,10 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
             OP_IDX -> {
                 // Payload is "<indexName><NUL><indexValue>"
-                val idxParts = payload.split(MESSAGE_DELIMITER, limit = 2)
-                if (idxParts.size == 2) {
-                    val idxName = idxParts[0]
-                    val idxValue = idxParts[1]
+                val sepIdx = payload.indexOf(MESSAGE_DELIMITER)
+                if (sepIdx >= 0) {
+                    val idxName = payload.substring(0, sepIdx)
+                    val idxValue = payload.substring(sepIdx + 1)
                     nearIndexIds.invalidate("$idxName$MESSAGE_DELIMITER$idxValue")
                     refreshGate.invalidate("$OP_IDX$MESSAGE_DELIMITER$idxName$MESSAGE_DELIMITER$idxValue")
                 }
@@ -281,21 +299,20 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     private fun refreshValueTtl(id: String) {
         refreshTtl(refreshKeyVal(id)) {
-            val indices = indexes.all
-
-            val argv = ObjectArrayList<String>(4 + indices.size)
-            argv += ttl.inWholeMilliseconds.toString()
-            argv += keyPrefix
-            argv += id
-            argv += indices.size.toString()
-            for (idx in indices) {
-                argv += idx.name
+            val argv = arrayOfNulls<Any>(4 + indexNames.size)
+            argv[0] = ttlMillisStr
+            argv[1] = keyPrefix
+            argv[2] = id
+            argv[3] = indicesSizeStr
+            for (i in indexNames.indices) {
+                argv[4 + i] = indexNames[i]
             }
 
+            @Suppress("UNCHECKED_CAST")
             scriptExecutor.execute<Long>(
                 TOUCH_SCRIPT, RScript.Mode.READ_WRITE, RScript.ReturnType.LONG,
-                keys = listOf(idsRedisKey),
-                *argv.toTypedArray()
+                keys = touchScriptKeys,
+                *(argv as Array<Any>)
             ).subscribe(
                 { /* no payload needed */ },
                 { e ->
@@ -464,36 +481,50 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val raw = api.json.encodeToString(serializer, element)
 
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(10)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
 
-        argv += keyPrefix
-        argv += id
-        argv += raw
-        argv += indices.size.toString()
-        for (idx in indices) {
+        // Pre-extract all values so we know the total argv size upfront and can build the
+        // Array<Any> directly without intermediate ArrayList allocations.
+        var totalValues = 0
+        val perIndexValues: Array<Set<String>> = Array(indices.size) { i ->
+            val idx = indices[i]
             requireNoNul(idx.name, "indexName")
             val values = idx.extractStrings(element)
             for (v in values) requireNoNul(v, "indexValue")
-
-            argv.ensureCapacity(2 + argv.size + values.size)
-
-            argv += idx.name
-            argv += values.size.toString()
-            for (v in values) argv += v
+            totalValues += values.size
+            values
         }
 
+        // Layout: instanceId, delim, maxLen, ttl, fieldType, fieldMsg, keyPrefix, id, raw,
+        // indexCount, then for each index: name, valueCount, value1..valueN
+        val argvSize = 10 + indices.size * 2 + totalValues
+        val argv = arrayOfNulls<Any>(argvSize)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = id
+        argv[8] = raw
+        argv[9] = indicesSizeStr
+        var pos = 10
+        for (i in indices.indices) {
+            argv[pos++] = indexNames[i]
+            val values = perIndexValues[i]
+            argv[pos++] = values.size.toString()
+            for (v in values) {
+                argv[pos++] = v
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
         val result = scriptExecutor.execute<List<Any>>(
             UPSERT_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LIST,
-            listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray(),
+            scriptKeys,
+            *(argv as Array<Any>),
         ).awaitSingle()
 
         val (wasNew, touchedIndices) = parseLuaFlagAndTouched(result)
@@ -612,28 +643,27 @@ class SimpleSetRedisCacheImpl<T : Any>(
         requireNoNul(normId, "id")
 
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(9 + indices.size)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
-
-        argv += keyPrefix
-        argv += normId
-        argv += indices.size.toString()
-        for (idx in indices) {
-            requireNoNul(idx.name, "indexName")
-            argv += idx.name
+        val argv = arrayOfNulls<Any>(9 + indices.size)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = normId
+        argv[8] = indicesSizeStr
+        for (i in indexNames.indices) {
+            argv[9 + i] = indexNames[i]
         }
 
+        @Suppress("UNCHECKED_CAST")
         val result = scriptExecutor.execute<List<Any>>(
             REMOVE_ID_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LIST,
-            listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray()
+            scriptKeys,
+            *(argv as Array<Any>)
         ).awaitSingle()
 
         val (removed, touched) = parseLuaFlagAndTouched(result)
@@ -661,29 +691,28 @@ class SimpleSetRedisCacheImpl<T : Any>(
         requireNoNul(queryValue, "indexValue")
 
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(10 + indices.size)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
-
-        argv += keyPrefix
-        argv += index.name
-        argv += queryValue
-        argv += indices.size.toString()
-        for (idx in indices) {
-            requireNoNul(idx.name, "indexName")
-            argv += idx.name
+        val argv = arrayOfNulls<Any>(10 + indices.size)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = index.name
+        argv[8] = queryValue
+        argv[9] = indicesSizeStr
+        for (i in indexNames.indices) {
+            argv[10 + i] = indexNames[i]
         }
 
+        @Suppress("UNCHECKED_CAST")
         val removedCount = scriptExecutor.execute<Long>(
             REMOVE_INDEX_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LONG,
-            listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray()
+            scriptKeys,
+            *(argv as Array<Any>)
         ).awaitSingle()
 
         if (removedCount <= 0L) return false
@@ -694,26 +723,26 @@ class SimpleSetRedisCacheImpl<T : Any>(
 
     override suspend fun invalidateAll(): Long {
         val indices = indexes.all
-        val argv = ObjectArrayList<String>(8 + indices.size)
-        argv += instanceId
-        argv += MESSAGE_DELIMITER.toString()
-        argv += STREAM_MAX_LENGTH.toString()
-        argv += ttl.inWholeMilliseconds.toString()
-        argv += STREAM_FIELD_TYPE
-        argv += STREAM_FIELD_MSG
-        argv += keyPrefix
-        argv += indices.size.toString()
-        for (idx in indices) {
-            requireNoNul(idx.name, "indexName")
-            argv += idx.name
+        val argv = arrayOfNulls<Any>(8 + indices.size)
+        argv[0] = instanceId
+        argv[1] = messageDelimiterStr
+        argv[2] = streamMaxLengthStr
+        argv[3] = ttlMillisStr
+        argv[4] = STREAM_FIELD_TYPE
+        argv[5] = STREAM_FIELD_MSG
+        argv[6] = keyPrefix
+        argv[7] = indicesSizeStr
+        for (i in indexNames.indices) {
+            argv[8 + i] = indexNames[i]
         }
 
+        @Suppress("UNCHECKED_CAST")
         val deletedCount = scriptExecutor.execute<Long>(
             CLEAR_SCRIPT,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LONG,
-            listOf(idsRedisKey, streamKey, versionKey),
-            *argv.toTypedArray()
+            scriptKeys,
+            *(argv as Array<Any>)
         ).awaitSingle()
 
         clearNearCacheOnly()

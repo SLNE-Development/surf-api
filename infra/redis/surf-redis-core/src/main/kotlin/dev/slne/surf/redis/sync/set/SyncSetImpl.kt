@@ -130,7 +130,8 @@ class SyncSetImpl<T : Any>(
 
         if (removedElements.isEmpty()) return false
 
-        val encoded = removedElements.map { encodeValue(it) }
+        val iter = removedElements.iterator()
+        val encoded = Array(removedElements.size) { encodeValue(iter.next()) }
 
         removeRemoteMany(encoded)
         removedElements.forEach { element ->
@@ -147,8 +148,8 @@ class SyncSetImpl<T : Any>(
         writeToRemote(REMOVE_SCRIPT, EVENT_REMOVED, encodeValue(element))
     }
 
-    private fun removeRemoteMany(encodedValues: List<String>) {
-        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues.toTypedArray())
+    private fun removeRemoteMany(encodedValues: Array<String>) {
+        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
     }
 
     private fun clearRemote() {
@@ -201,7 +202,8 @@ class SyncSetImpl<T : Any>(
     ).map { SimpleVersionedSnapshot.fromTuple(it) }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<Set<String>>) {
-        val decoded = raw.value.map(::decodeValue)
+        val rawValue = raw.value
+        val decoded = rawValue.mapTo(ObjectOpenHashSet(rawValue.size), ::decodeValue)
         lock.write {
             set.clear()
             set.addAll(decoded)

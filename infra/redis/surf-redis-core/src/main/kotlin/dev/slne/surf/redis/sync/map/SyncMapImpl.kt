@@ -103,24 +103,20 @@ class SyncMapImpl<K : Any, V : Any>(
     }
 
     override fun removeIf(predicate: (K, V) -> Boolean): Boolean {
-        val keysToRemove = lock.write {
-            val keys = ObjectArrayList<K>()
+        val keysToRemove = ObjectArrayList<K>()
+        val removedLocal = ObjectArrayList<Pair<K, V>>()
+        lock.write {
             val it = map.object2ObjectEntrySet().fastIterator()
             while (it.hasNext()) {
                 val e = it.next()
-                if (predicate(e.key, e.value)) keys.add(e.key)
+                if (predicate(e.key, e.value)) {
+                    keysToRemove.add(e.key)
+                    removedLocal.add(e.key to e.value)
+                    it.remove()
+                }
             }
-            keys
         }
         if (keysToRemove.isEmpty) return false
-
-        val removedLocal = ObjectArrayList<Pair<K, V>>(keysToRemove.size)
-        lock.write {
-            for (k in keysToRemove) {
-                val old = map.remove(k) ?: continue
-                removedLocal.add(k to old)
-            }
-        }
 
         removeManyRemote(keysToRemove)
         removedLocal.forEach { (k, v) -> notifyListeners(SyncMapChange.Removed(k, v)) }
@@ -146,7 +142,12 @@ class SyncMapImpl<K : Any, V : Any>(
     ).map { SimpleVersionedSnapshot.fromTuple(it) }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<Map<String, String>>) {
-        val decoded = raw.value.map { (k, v) -> decodeKey(k) to decodeValue(v) }.toMap()
+        val rawValue = raw.value
+        val decoded = Object2ObjectOpenHashMap<K, V>(rawValue.size)
+        for ((k, v) in rawValue) {
+            decoded[decodeKey(k)] = decodeValue(v)
+        }
+
         lock.write {
             map.clear()
             map.putAll(decoded)
@@ -164,7 +165,7 @@ class SyncMapImpl<K : Any, V : Any>(
     }
 
     private fun removeManyRemote(keys: List<K>) {
-        val encKeys = keys.map(::encodeKey).toTypedArray()
+        val encKeys = Array(keys.size) { i -> encodeKey(keys[i]) }
         writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVE, *encKeys)
     }
 

@@ -13,7 +13,7 @@ import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
 import reactor.core.publisher.Mono
-import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
@@ -62,6 +62,9 @@ class SyncListImpl<T : Any>(
 
 
     private val list = ObjectArrayList<T>()
+
+    // Counter for unique removal tombstones.
+    private val tombstoneSeq = AtomicLong(0L)
     private val remoteList by lazy {
         api.redissonReactive.getList<String>(
             dataKey,
@@ -144,8 +147,7 @@ class SyncListImpl<T : Any>(
         if (removedValues.isEmpty) return false
 
         removedValues.forEach { notifyListeners(SyncListChange.Removed(it)) }
-
-        val encodedValues = removedValues.map(::encodeValue)
+        val encodedValues = Array(removedValues.size) { i -> encodeValue(removedValues[i]) }
         removeManyRemote(encodedValues)
 
         return true
@@ -171,7 +173,8 @@ class SyncListImpl<T : Any>(
 
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<List<String>>) {
-        val elements = raw.value.map(::decodeValue)
+        val rawValue = raw.value
+        val elements = rawValue.mapTo(ObjectArrayList(rawValue.size), ::decodeValue)
         lock.write {
             list.clear()
             list.addAll(elements)
@@ -188,7 +191,7 @@ class SyncListImpl<T : Any>(
     }
 
     private fun removeAtRemote(index: Int) {
-        val tombstone = "\u0001rm@" + UUID.randomUUID().toString()
+        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
         writeToRemote(REMOVE_AT_SCRIPT, EVENT_REMOVED_AT, index.toString(), tombstone)
     }
 
@@ -196,8 +199,8 @@ class SyncListImpl<T : Any>(
         writeToRemote(SET_AT_SCRIPT, EVENT_SET_AT, index.toString(), newEncoded)
     }
 
-    private fun removeManyRemote(encodedValues: List<String>) {
-        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues.toTypedArray())
+    private fun removeManyRemote(encodedValues: Array<String>) {
+        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
     }
 
     private fun clearRemote() {
