@@ -1,4 +1,4 @@
-name: Publish to Maven & Create GitHub Release
+name: Publish
 
 on:
   push:
@@ -6,96 +6,10 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  SLNE_SNAPSHOTS_REPO_USERNAME: ${{ secrets.SLNE_SNAPSHOTS_REPO_USERNAME }}
-  SLNE_SNAPSHOTS_REPO_PASSWORD: ${{ secrets.SLNE_SNAPSHOTS_REPO_PASSWORD }}
-  SLNE_RELEASES_REPO_USERNAME: ${{ secrets.SLNE_RELEASES_REPO_USERNAME }}
-  SLNE_RELEASES_REPO_PASSWORD: ${{ secrets.SLNE_RELEASES_REPO_PASSWORD }}
-  MODULE_REGEX: "surf-redis-paper.*-all\\.jar$|surf-redis-velocity.*-all\\.jar$"
-  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-
 jobs:
-  publish:
-    runs-on: self-hosted
-    steps:
-      - name: Collect Workflow Telemetry
-        uses: catchpoint/workflow-telemetry-action@v2
-
-      - name: Checkout Repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: "graalvm"
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-        with:
-          allow-snapshot-wrappers: true
-
-      - name: Build with Gradle
-        run: ./gradlew shadowJar
-
-      - name: Check with Gradle
-        run: ./gradlew check checkLegacyAbi
-
-      - name: Publish to Maven
-        run: ./gradlew publish
-
-      - name: Extract Project Version and Snapshot Flag from Gradle
-        id: get_version
-        run: |
-          VERSION=$(./gradlew properties --no-daemon \
-            | grep '^version:' \
-            | awk '{print $2}')
-
-          if [[ "$VERSION" == *SNAPSHOT* ]]; then
-            SNAPSHOT_FLAG=true
-          else
-            SNAPSHOT_FLAG=false
-          fi
-
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "SNAPSHOT_FLAG=$SNAPSHOT_FLAG" >> $GITHUB_ENV
-
-      - name: Determine release flags
-        run: |
-          CURRENT_BRANCH=${GITHUB_REF#refs/heads/}
-          # prerelease only for snapshots
-          if [ "${SNAPSHOT_FLAG}" = "true" ]; then
-            echo "PRERELEASE=true" >> $GITHUB_ENV
-          else
-            echo "PRERELEASE=false" >> $GITHUB_ENV
-          fi
-          # make_latest false for snapshots or non-default branches
-          if [ "${SNAPSHOT_FLAG}" = "true" ] || [ "${CURRENT_BRANCH}" != "${DEFAULT_BRANCH}" ]; then
-            echo "MAKE_LATEST=false" >> $GITHUB_ENV
-          else
-            echo "MAKE_LATEST=true" >> $GITHUB_ENV
-          fi
-
-      - name: Find and filter JAR files
-        id: find_jars
-        run: |
-          echo "JAR_FILES<<EOF" >> $GITHUB_ENV
-          find . -path "**/build/libs/*.jar" \
-            | grep -E "${{ env.MODULE_REGEX }}" \
-            >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.VERSION }}
-          name: Release ${{ env.VERSION }}
-          draft: false
-          prerelease: ${{ env.PRERELEASE }}
-          make_latest: ${{ env.MAKE_LATEST }}
-          files: ${{ env.JAR_FILES }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build:
+    uses: SLNE-Development/surf-workflows/.github/workflows/build-publish-release-gradle.yml@master
+    with:
+      modules: "surf-redis-paper-*-all.jar;surf-redis-velocity-*-all.jar"
+      check-kotlin-abi: true
+    secrets: inherit
