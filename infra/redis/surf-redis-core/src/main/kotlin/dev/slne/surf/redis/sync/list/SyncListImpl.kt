@@ -191,7 +191,7 @@ class SyncListImpl<T : Any>(
     }
 
     private fun removeAtRemote(index: Int) {
-        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}"
+        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
         writeToRemote(REMOVE_AT_SCRIPT, EVENT_REMOVED_AT, index.toString(), tombstone)
     }
 
