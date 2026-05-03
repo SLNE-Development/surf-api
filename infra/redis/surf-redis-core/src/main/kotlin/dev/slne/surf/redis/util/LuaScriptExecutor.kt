@@ -11,9 +11,13 @@ import reactor.util.retry.Retry
 import java.util.concurrent.ConcurrentHashMap
 
 class LuaScriptExecutor private constructor(private val api: RedisApi, private val registry: LuaScriptRegistry) {
-    private val scriptShas = ConcurrentHashMap<String, String>()
 
+    private val scriptShas = ConcurrentHashMap<String, Mono<String>>()
     private val script by lazy { api.redissonReactive.getScript(StringCodec.INSTANCE) }
+
+    private fun getSha(id: String): Mono<String> = scriptShas.computeIfAbsent(id) {
+        script.scriptLoad(registry.get(id)).cache()
+    }
 
     fun <R : Any> execute(
         id: String,
@@ -23,16 +27,8 @@ class LuaScriptExecutor private constructor(private val api: RedisApi, private v
         vararg values: Any,
         tries: Int = 3
     ): Mono<R> {
-        val cachedSha = scriptShas[id]
-        val sha: Mono<String> = if (cachedSha != null) {
-            Mono.just(cachedSha)
-        } else {
-            script.scriptLoad(registry.get(id))
-                .doOnNext { loaded -> scriptShas[id] = loaded }
-        }
-
-        return sha
-            .flatMap { script.evalSha<R>(mode, it, returnType, keys, *values) }
+        return Mono.defer { getSha(id) }
+            .flatMap { sha -> script.evalSha<R>(mode, sha, returnType, keys, *values) }
             .doOnError(RedisNoScriptException::class.java) { scriptShas.remove(id) }
             .retryWhen(
                 Retry.max(tries.toLong())
