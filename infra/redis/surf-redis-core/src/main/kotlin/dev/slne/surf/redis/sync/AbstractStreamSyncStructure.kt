@@ -2,17 +2,12 @@ package dev.slne.surf.redis.sync
 
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
-import dev.slne.surf.redis.RedisInstance
-import dev.slne.surf.redis.util.LuaScriptExecutor
-import dev.slne.surf.redis.util.LuaScriptRegistry
-import dev.slne.surf.redis.util.RedisExpirableUtils
-import dev.slne.surf.redis.util.fetchLatestStreamId
+import dev.slne.surf.redis.util.*
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.redisson.api.RAtomicLongReactive
 import org.redisson.api.RScript
 import org.redisson.api.RStreamReactive
 import org.redisson.api.stream.StreamMessageId
-import org.redisson.api.stream.StreamReadArgs
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
@@ -20,8 +15,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.toJavaDuration
 
 abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.VersionedSnapshot>(
     api: RedisApi,
@@ -215,46 +208,28 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         }
     }
 
-    private fun startPolling(): Disposable {
-        return pollOnce()
-            .delayElement(
-                250.milliseconds.toJavaDuration(),
-                RedisInstance.get().streamPollScheduler
-            )
-            .onErrorResume { e ->
-                log.atWarning().withCause(e).log("Stream poll failed for '$id' ($streamKey)")
-                requestResync()
-                Mono.empty()
-            }
-            .repeat()
-            .subscribe()
-    }
-
-    private fun pollOnce(): Mono<Void> = Mono.defer {
-        val from = cursorId.get()
-        val args = StreamReadArgs.greaterThan(from)
-            .count(200)
-
-        stream.read(args)
-            .filter { it.isNotEmpty() }
-            .flatMap { batch ->
-                for ((messageId, fields) in batch) {
-                    val type = fields[STREAM_FIELD_TYPE] ?: continue
-                    val msg = fields[STREAM_FIELD_MSG] ?: continue
-                    try {
-                        processStreamEvent(type, msg)
-                        cursorId.set(messageId)
-                    } catch (t: Throwable) {
-                        log.atWarning().withCause(t)
-                            .log("Error handling stream event for '$id' ($streamKey)")
-                        requestResync()
-                    }
+    private fun startPolling(): Disposable = stream.pollContinuously(cursorId) {
+        onSuccess { batch ->
+            for ((messageId, fields) in batch) {
+                val type = fields[STREAM_FIELD_TYPE] ?: continue
+                val msg = fields[STREAM_FIELD_MSG] ?: continue
+                try {
+                    processStreamEvent(type, msg)
+                    cursorId.set(messageId)
+                } catch (t: Throwable) {
+                    log.atWarning()
+                        .withCause(t)
+                        .log("Error handling stream event for '$id' ($streamKey)")
+                    requestResync()
                 }
-
-                Mono.empty()
             }
-    }
+        }
 
+        onFailure { e ->
+            log.atWarning().withCause(e).log("Stream poll failed for '$id' ($streamKey)")
+            requestResync()
+        }
+    }
 
     protected fun requestResync() {
         if (!resyncInFlight.compareAndSet(false, true)) return
