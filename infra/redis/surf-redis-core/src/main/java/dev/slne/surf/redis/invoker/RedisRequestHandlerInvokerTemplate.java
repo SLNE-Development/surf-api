@@ -48,7 +48,7 @@ public final class RedisRequestHandlerInvokerTemplate implements RedisRequestHan
 
         if (IS_SUSPEND) {
             try {
-                HANDLE.invoke(context, $completion);
+                return HANDLE.invoke(context, $completion);
             } catch (Throwable t) {
                 HiddenInvokerUtil.sneakyThrow(t);
             }
