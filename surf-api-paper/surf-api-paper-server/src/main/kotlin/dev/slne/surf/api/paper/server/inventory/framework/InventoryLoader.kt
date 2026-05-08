@@ -5,6 +5,7 @@ import me.devnatan.inventoryframework.ViewFrame
 
 object InventoryLoader {
     init {
+        McVersionRemapper.remap()
         InventoryViewRemapper.remap()
         CloseContextRemapper.remap()
     }
