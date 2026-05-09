@@ -14,6 +14,7 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 import xyz.jpenilla.runpaper.task.RunServer
 
 internal class PaperPluginSurfPlugin :
@@ -30,6 +31,10 @@ internal class PaperPluginSurfPlugin :
         val generateLoaderTask = generateLibrariesLoaderTask(
             extension.mainClass.get().substringBeforeLast('.')
         )
+
+        if (extension.installSurfNpc.get()) {
+            dependencies.add(COMPILE_ONLY, "dev.slne.surf.npc:surf-npc-api:+")
+        }
 
         configure<PaperPluginDescription> {
             authors = extension.authors.get()
@@ -61,6 +66,10 @@ internal class PaperPluginSurfPlugin :
 
                 if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
                     registerRequired("surf-redis-paper")
+                }
+
+                if (extension.installSurfNpc.get()) {
+                    registerRequired("surf-npc-paper")
                 }
 
                 extension.serverDependencies.orNull?.execute(this)

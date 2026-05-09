@@ -21,6 +21,8 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
     internal val foliaSupported = objects.property<Boolean>().convention(true)
     internal val generateLibraryLoader = objects.property<Boolean>().convention(false)
 
+    internal val installSurfNpc = objects.property<Boolean>().convention(false)
+
     fun mainClass(mainClass: String) {
         this.mainClass.set(mainClass)
         this.mainClass.finalizeValue()
@@ -54,6 +56,11 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
     fun generateLibraryLoader(generateLibraryLoader: Boolean) {
         this.generateLibraryLoader.set(generateLibraryLoader)
         this.generateLibraryLoader.finalizeValue()
+    }
+
+    fun withSurfNpc() {
+        installSurfNpc.set(true)
+        installSurfNpc.finalizeValue()
     }
 
     override fun validate() {
