@@ -4,7 +4,7 @@ paper-api = "26.1+"
 canvas-api = "1.21.11-R0.1-SNAPSHOT"
 
 # Kolin
-kotlinVersion = "2.3.20"
+kotlinVersion = "2.3.21"
 kotlinxCoroutines = "1.10.2"
 kotlinx-serialization = "1.11.0"
 
