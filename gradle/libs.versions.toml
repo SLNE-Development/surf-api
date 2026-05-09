@@ -115,6 +115,7 @@ adventure-nbt = { module = "net.kyori:adventure-nbt", version.ref = "adventure-a
 
 # Velocity
 velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api" }
+velocity-proxy-ctd = { module = "com.velocityctd:velocity-proxy", version.ref = "velocity-api"}
 
 # PAPI
 placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }
