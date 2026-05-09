@@ -19,6 +19,7 @@ dependencies {
     api(libs.aide.reflection)
     runtimeOnly(libs.flogger.slf4j.backend)
     kapt(libs.velocity.api)
+    compileOnly(libs.velocity.proxy.ctd)
 }
 
 tasks {

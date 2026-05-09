@@ -3,44 +3,48 @@ package dev.slne.surf.api.velocity.server
 import com.google.common.reflect.TypeToken
 import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.EventTask
-import dev.slne.surf.api.velocity.server.reflection.VelocityReflection
-import java.util.function.BiConsumer
+import com.velocitypowered.proxy.event.VelocityEventManager
+import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
+import dev.slne.surf.api.shared.api.util.InternalInvokerApi
+import dev.slne.surf.api.velocity.server.reflection.VelocityEventManagerReflection
+import java.lang.invoke.MethodHandles
 import java.util.function.BiFunction
-import java.util.function.Function
-import java.util.function.Predicate
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
-import kotlin.reflect.jvm.kotlinFunction
 import com.velocitypowered.api.event.Continuation as EventContinuation
+
 
 class SuspendingEventHandler(private val eventManager: EventManager) {
 
-    @Suppress("RedundantSamConstructor")
     fun register() {
-        VelocityReflection.EVENT_MANAGER_PROXY.registerHandlerAdapter(
-            eventManager,
+        registerValidationAdapter()
+    }
+
+    @OptIn(InternalInvokerApi::class)
+    private fun registerValidationAdapter() {
+        require(eventManager is VelocityEventManager) { "Only VelocityEventManager is supported" }
+
+        val handler = VelocityEventManagerReflection.createCustomHandlerAdapter(
             "surf_api_suspending_event_handler",
-            Predicate { method -> method.kotlinFunction?.isSuspend == true },
-            BiConsumer { method, errors ->
-                val function = method.kotlinFunction!!
-                // parameters includes receiver, but excludes continuation
-                if (function.parameters.size != 2) {
-                    errors += "Expected 1 parameter, but got ${function.parameters.size - 1}. You only need the event parameter."
-                }
-                if (function.returnType.classifier != Unit::class) {
-                    errors += "Expected return type of Unit, but got ${function.returnType}."
+            HiddenInvokerUtil::isSuspendFunction,
+            { method, errors ->
+                if (method.parameterCount != 2) {
+                    errors += "Expected exactly one event parameter, got ${method.parameterCount - 1}."
                 }
             },
             object : TypeToken<suspend (Any, Any) -> Unit>() {},
-            Function { function ->
+            { function ->
                 BiFunction { instance, event ->
                     suspendingEventTask {
                         function(instance, event)
                     }
                 }
-            }
+            },
+            lookup
         )
+
+        VelocityEventManagerReflection.getHandlerAdapters(eventManager).add(handler)
     }
 
     private fun suspendingEventTask(handler: suspend () -> Unit) =
@@ -48,4 +52,8 @@ class SuspendingEventHandler(private val eventManager: EventManager) {
 
     private fun EventContinuation.asCoroutineContinuation(): Continuation<Unit> =
         Continuation(EmptyCoroutineContext) { if (it.isFailure) resumeWithException(it.exceptionOrNull()) else resume() }
+
+    companion object {
+        private val lookup = MethodHandles.lookup();
+    }
 }
