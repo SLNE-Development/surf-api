@@ -28,6 +28,7 @@ import org.spongepowered.math.vector.Vector3d
 import org.spongepowered.math.vector.Vector3i
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
 
 /**
  * Creates a [NamespacedKey] using the calling plugin and the given name.
@@ -139,6 +140,12 @@ val Location.chunkZ get() = blockZ shr 4
  */
 val Location.chunkKey get() = Chunk.getChunkKey(this)
 
+/**
+ * Converts this [Location] to a Sponge [Vector3d].
+ *
+ * @receiver The source location.
+ * @return A [Vector3d] with the same x, y, and z coordinates.
+ */
 fun Location.toVector3d(): Vector3d {
     return Vector3d(
         this.x,
@@ -155,6 +162,12 @@ fun Location.toVector3d(): Vector3d {
  */
 fun Iterable<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
 
+/**
+ * Converts an iterable of UUIDs to a list of [OfflinePlayer] instances.
+ *
+ * @receiver The collection of UUIDs.
+ * @return A list of matching [OfflinePlayer] instances.
+ */
 fun Iterable<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it) }
 
 /**
@@ -165,6 +178,12 @@ fun Iterable<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it)
  */
 fun Sequence<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
 
+/**
+ * Converts a sequence of UUIDs to a sequence of [OfflinePlayer] instances.
+ *
+ * @receiver The sequence of UUIDs.
+ * @return A sequence of matching [OfflinePlayer] instances.
+ */
 fun Sequence<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it) }
 
 /**
@@ -178,6 +197,15 @@ fun Player.isChunkVisible(location: Location): Boolean {
     return this.world == location.world && this.isChunkSent(Chunk.getChunkKey(location))
 }
 
+/**
+ * Checks whether the player can currently see the specified chunk in a world.
+ *
+ * @receiver The player to check visibility for.
+ * @param world The world the chunk belongs to.
+ * @param chunkX The chunk x-coordinate.
+ * @param chunkZ The chunk z-coordinate.
+ * @return `true` if the chunk is sent to the player in the same world, otherwise `false`.
+ */
 fun Player.isChunkVisible(world: World, chunkX: Int, chunkZ: Int): Boolean {
     if (this.world != world) return false
     return this.isChunkSent(Chunk.getChunkKey(chunkX, chunkZ))
@@ -193,14 +221,33 @@ private fun getCallingSuspendingPlugin() = getCallingPlugin(2) as? SuspendingPlu
     ?: error("Cannot determine plugin")
 
 
+/**
+ * Extracts the x-coordinate from a packed chunk key.
+ *
+ * @param key The packed chunk key from [Chunk.getChunkKey].
+ * @return The unpacked chunk x-coordinate.
+ */
 fun getXFromChunkKey(key: Long): Int {
     return (key and 0xFFFF_FFFFL).toInt()
 }
 
+/**
+ * Extracts the z-coordinate from a packed chunk key.
+ *
+ * @param key The packed chunk key from [Chunk.getChunkKey].
+ * @return The unpacked chunk z-coordinate.
+ */
 fun getZFromChunkKey(key: Long): Int {
     return (key ushr 32).toInt()
 }
 
+/**
+ * Resolves the highest block Y value for absolute block coordinates within this snapshot.
+ *
+ * @param blockX The absolute block x-coordinate.
+ * @param blockZ The absolute block z-coordinate.
+ * @return The highest Y value at the given block coordinates.
+ */
 fun ChunkSnapshot.getHighestBlockYAtBlockCoordinates(
     blockX: Int,
     blockZ: Int,
@@ -208,6 +255,15 @@ fun ChunkSnapshot.getHighestBlockYAtBlockCoordinates(
     return getHighestBlockYAt(blockX and 15, blockZ and 15)
 }
 
+/**
+ * Computes the highest solid block Y value for each input x/z point.
+ *
+ * Chunks are loaded asynchronously and sampled via chunk snapshots to avoid repeated world access.
+ *
+ * @receiver The collection of x/y/z vectors; only x and z are used as input coordinates.
+ * @param world The world to query.
+ * @return A list of vectors containing the original x/z and the computed highest y value.
+ */
 suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<Vector3i> {
     val chunkKeys = LongOpenHashSet(size / 4 + 1)
     for (point in this) {
@@ -251,6 +307,13 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
     return result
 }
 
+/**
+ * Asynchronously resolves a block at the given [BlockPosition], ensuring the target chunk is loaded.
+ *
+ * @receiver The world to resolve the block in.
+ * @param pos The absolute block position.
+ * @return The resolved [Block] instance.
+ */
 suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
     val chunkX = pos.blockX() shr 4
     val chunkZ = pos.blockZ() shr 4
@@ -266,17 +329,81 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
     }
 }
 
+/**
+ * Runs an action once the chunk at the given [Location] is loaded asynchronously.
+ * The [action] is executed on the owning tick thread of the target chunk.
+ *
+ * @receiver The world that owns the chunk.
+ * @param location A location inside the target chunk.
+ * @param action The action executed with the loaded [Chunk].
+ * @return The result produced by [action].
+ */
+suspend fun <R> World.doInChunkAsync(
+    location: Location,
+    action: (Chunk) -> R
+): R = doInChunkAsync(location.chunkX, location.chunkZ, action)
 
+/**
+ * Runs an action once the chunk at the given chunk coordinates is loaded asynchronously.
+ * The [action] is executed on the owning tick thread of the target chunk.
+ *
+ * @receiver The world that owns the chunk.
+ * @param chunkX The chunk x-coordinate.
+ * @param chunkZ The chunk z-coordinate.
+ * @param action The action executed with the loaded [Chunk].
+ * @return The result produced by [action].
+ */
+suspend fun <R> World.doInChunkAsync(
+    chunkX: Int,
+    chunkZ: Int,
+    action: (Chunk) -> R
+): R {
+    val deferred = CompletableDeferred<R>()
+    getChunkAtAsync(chunkX, chunkZ, Consumer { chunk ->
+        try {
+            deferred.complete(action(chunk))
+        } catch (e: Exception) {
+            deferred.completeExceptionally(e)
+        }
+    })
+    return deferred.await()
+}
+
+/**
+ * Resolves the LuckPerms user for this online player.
+ *
+ * @receiver The online player.
+ * @return The corresponding LuckPerms user.
+ * @throws IllegalStateException If no user is currently available.
+ */
 fun Player.getLuckPermsUser() = LuckPermsAccess.getUser(this.uniqueId)
     ?: error("LuckPerms user not found for online player ${this.name}")
 
+/**
+ * Resolves the LuckPerms user for this online player if available.
+ *
+ * @receiver The online player.
+ * @return The corresponding LuckPerms user or `null`.
+ */
 fun Player.getLuckPermsUserOrNull() = LuckPermsAccess.getUser(this.uniqueId)
 
+/**
+ * Resolves or loads the LuckPerms user for this offline player.
+ *
+ * @receiver The offline player.
+ * @return The loaded LuckPerms user.
+ */
 suspend fun OfflinePlayer.getLuckPermsUser() = withContext(Dispatchers.IO) {
     LuckPermsAccess.getUser(this@getLuckPermsUser.uniqueId)
         ?: LuckPermsAccess.loadUser(this@getLuckPermsUser.uniqueId)
 }
 
+/**
+ * Builds a MiniMessage component containing the player's prefix and name.
+ *
+ * @receiver The online player.
+ * @return The rendered name component.
+ */
 fun Player.getPrefixedName() =
     miniMessage.deserialize("${this.getLuckPermsUserOrNull()?.prefix ?: ""}${this.name}")
 

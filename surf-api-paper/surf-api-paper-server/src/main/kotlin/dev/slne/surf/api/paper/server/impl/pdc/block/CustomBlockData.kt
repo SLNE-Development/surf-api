@@ -31,9 +31,12 @@ import org.bukkit.block.Block
 import org.bukkit.persistence.PersistentDataAdapterContext
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
+import java.lang.ref.WeakReference
 
 class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
-    override val chunk: Chunk = block.chunk
+    private val chunkRef = WeakReference(block.chunk)
+    override val chunk: Chunk get() = chunkRef.get() ?: error("Chunk reference is no longer valid!")
+
     private val key = getKey(block)
     private val pdc = getPersistentDataContainer()
 
@@ -59,7 +62,9 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
     }
 
     override fun copyTo(block: Block) {
-        copyTo(block.pdc(), true)
+        val other = block.pdc() as CustomBlockData
+        copyTo(other.pdc, true)
+        other.save()
     }
 
     override fun <P : Any, C : Any> set(
@@ -132,7 +137,11 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
 
     companion object {
         fun getKey(block: Block): NamespacedKey {
-            return namespacedKey("x${block.x and 15}y${block.y}z${block.z and 15}")
+            return getKey(block.x, block.y, block.z)
+        }
+
+        fun getKey(blockX: Int, blockY: Int, blockZ: Int): NamespacedKey {
+            return namespacedKey("x${blockX and 15}y${blockY}z${blockZ and 15}")
         }
     }
 }
