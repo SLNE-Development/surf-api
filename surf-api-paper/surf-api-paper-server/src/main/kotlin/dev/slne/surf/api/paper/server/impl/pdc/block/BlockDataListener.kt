@@ -181,6 +181,7 @@ object BlockDataListener : Listener {
         }
 
         for ((block, pdc) in map.object2ObjectEntrySet().toList().reversed()) {
+            block.pdc().clear()
             pdc.copyTo(block)
             pdc.clear()
         }
