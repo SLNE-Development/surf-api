@@ -2570,6 +2570,8 @@ public final class dev/slne/surf/api/paper/time/TimeSkipResult : java/lang/Enum 
 public final class dev/slne/surf/api/paper/util/UtilBukkit {
 	public static final fun computeHighestYBlock (Ljava/util/Collection;Lorg/bukkit/World;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun distanceSqt (Lorg/bukkit/Location;Lorg/bukkit/Location;)D
+	public static final fun doInChunkAsync (Lorg/bukkit/World;IILkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun doInChunkAsync (Lorg/bukkit/World;Lorg/bukkit/Location;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun forEachPlayer (Lkotlin/jvm/functions/Function1;)V
 	public static final fun forEachPlayerInRegion (Lcom/github/shynixn/mccoroutine/folia/SuspendingPlugin;Lkotlin/jvm/functions/Function2;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun forEachPlayerInRegion (Lkotlin/jvm/functions/Function2;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
