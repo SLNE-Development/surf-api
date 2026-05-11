@@ -2,20 +2,49 @@ package dev.slne.surf.api.paper.server.nms.v26_1.bridges
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
+import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
+import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.NmsReflections
 import io.papermc.paper.adventure.PaperAdventure
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.chat.ChatType
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import net.minecraft.core.NonNullList
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtIo
 import net.minecraft.network.chat.*
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket
+import net.minecraft.server.MinecraftServer
+import net.minecraft.server.players.NameAndId
+import net.minecraft.util.ProblemReporter
+import net.minecraft.util.ProblemReporter.ScopedCollector
+import net.minecraft.util.Util
+import net.minecraft.world.ItemStackWithSlot
+import net.minecraft.world.entity.EntityEquipment
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.npc.InventoryCarrier
+import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.level.storage.TagValueInput
+import net.minecraft.world.level.storage.TagValueOutput
+import net.minecraft.world.level.storage.ValueInput
+import net.minecraft.world.level.storage.ValueOutput
+import org.bukkit.OfflinePlayer
+import org.bukkit.craftbukkit.CraftEquipmentSlot
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.createTempFile
+import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
 class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
@@ -179,5 +208,130 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     override fun getPaperRawChatType(): ChatType {
         return ChatType.chatType(PaperAdventure.asAdventureKey(NmsReflections.getPaperRaw()))
+    }
+
+    override suspend fun editOfflineInventory(
+        player: OfflinePlayer,
+        edit: (PlayerInventoryEdit) -> Unit
+    ) {
+        require(!player.isOnline) { "Player must be offline" }
+
+        val server = MinecraftServer.getServer()
+        val nameAndId = NameAndId(player.uniqueId, player.name ?: "#Unknown")
+        val rootPathElement = ProblemReporter.PathElement { "OfflinePlayer Inventory[$nameAndId]" }
+        val currentTag = loadPlayerTag(server, nameAndId)
+        val inventoryEdit = buildInventoryEdit(server, rootPathElement, currentTag)
+
+        edit(inventoryEdit)
+        saveInventoryEdit(server, rootPathElement, currentTag, nameAndId, inventoryEdit)
+    }
+
+    private suspend fun loadPlayerTag(server: MinecraftServer, nameAndId: NameAndId): CompoundTag {
+        val dataStorage = server.playerDataStorage
+        return withContext(Dispatchers.IO) {
+            dataStorage.load(nameAndId).getOrNull() ?: CompoundTag()
+        }
+    }
+
+    private fun buildInventoryEdit(
+        server: MinecraftServer,
+        root: ProblemReporter.PathElement,
+        currentTag: CompoundTag
+    ): PlayerInventoryEdit = ScopedCollector(root, OFFLINE_INVENTORY_EDIT_LOGGER).use { reporter ->
+        val input = TagValueInput.create(reporter, server.registryAccess(), currentTag)
+        val items = loadItems(input.listOrEmpty(InventoryCarrier.TAG_INVENTORY, ItemStackWithSlot.CODEC))
+        val nmsEquipment = input.read(LivingEntity.TAG_EQUIPMENT, EntityEquipment.CODEC).getOrNull()
+            ?: EntityEquipment()
+
+        PlayerInventoryEdit(items, EntityEquipmentMirror(nmsEquipment))
+    }
+
+    private suspend fun saveInventoryEdit(
+        server: MinecraftServer,
+        root: ProblemReporter.PathElement,
+        currentTag: CompoundTag,
+        nameAndId: NameAndId,
+        inventoryEdit: PlayerInventoryEdit
+    ) {
+        ScopedCollector(root, OFFLINE_INVENTORY_EDIT_LOGGER).use { reporter ->
+            val output = TagValueOutput.createWrappingWithContext(reporter, server.registryAccess(), currentTag)
+            saveItems(
+                inventoryEdit.items,
+                output.list(InventoryCarrier.TAG_INVENTORY, ItemStackWithSlot.CODEC)
+            )
+
+            val nmsEquipment = (inventoryEdit.equipment as EntityEquipmentMirror).equipment
+            if (!nmsEquipment.isEmpty) {
+                output.store(LivingEntity.TAG_EQUIPMENT, EntityEquipment.CODEC, nmsEquipment)
+            } else {
+                output.discard(LivingEntity.TAG_EQUIPMENT)
+            }
+
+            writePlayerTag(server, nameAndId, output.buildResult())
+        }
+    }
+
+    private suspend fun writePlayerTag(
+        server: MinecraftServer,
+        nameAndId: NameAndId,
+        rootTag: CompoundTag
+    ) {
+        try {
+            val playerDirPath = server.playerDataStorage.playerDir.toPath()
+            val playerId = nameAndId.id.toString()
+            val tmp = createTempFile(playerDirPath, "$playerId-", ".dat")
+
+            withContext(Dispatchers.IO) {
+                NbtIo.writeCompressed(rootTag, tmp)
+                Util.safeReplaceFile(
+                    playerDirPath.resolve("$playerId.dat"),
+                    tmp,
+                    playerDirPath.resolve("${playerId}.dat_old")
+                )
+            }
+        } catch (e: Exception) {
+            OFFLINE_INVENTORY_EDIT_LOGGER.error("Failed to save offline player inventory", e)
+        }
+    }
+
+    private fun loadItems(input: ValueInput.TypedInputList<ItemStackWithSlot>): MutableList<ItemStack> {
+        val items = NonNullList.withSize(Inventory.INVENTORY_SIZE, ItemStack.empty())
+
+        for (item in input) {
+            if (item.isValidInContainer(items.size)) {
+                items[item.slot()] = item.stack().asBukkitMirror()
+            }
+        }
+
+        return items
+    }
+
+    private fun saveItems(items: List<ItemStack>, output: ValueOutput.TypedOutputList<ItemStackWithSlot>) {
+        for ((index, stack) in items.withIndex()) {
+            if (!stack.isEmpty) {
+                output.add(ItemStackWithSlot(index, stack.toNms()))
+            }
+        }
+    }
+
+    private class EntityEquipmentMirror(val equipment: EntityEquipment) : DummyEntityEquipment() {
+        override fun setItem(slot: EquipmentSlot, item: ItemStack?) {
+            val nmsSlot = CraftEquipmentSlot.getNMS(slot)
+            val nmsStack = CraftItemStack.asNMSCopy(item)
+            equipment.set(nmsSlot, nmsStack)
+        }
+
+        override fun getItem(slot: EquipmentSlot): ItemStack {
+            val nmsSlot = CraftEquipmentSlot.getNMS(slot)
+            return equipment.get(nmsSlot).asBukkitMirror()
+        }
+
+        override fun clear() {
+            equipment.clear()
+        }
+    }
+
+    companion object {
+        private val OFFLINE_INVENTORY_EDIT_LOGGER = ComponentLogger.logger("OfflinePlayer Inventory Edit")
     }
 }
