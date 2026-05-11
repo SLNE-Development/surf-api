@@ -1713,6 +1713,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun createAdventureChatMessageFromMirror (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)Lnet/kyori/adventure/chat/SignedMessage;
 	public abstract fun createPlayerChatMessageMirrorFromAdventure (Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 	public static synthetic fun createPlayerChatMessageMirrorFromAdventure$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+	public abstract fun editOfflineInventory (Lorg/bukkit/OfflinePlayer;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getPaperRawChatType ()Lnet/kyori/adventure/chat/ChatType;
 	public abstract fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
 	public abstract fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
@@ -1724,6 +1725,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
 	public fun createAdventureChatMessageFromMirror (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)Lnet/kyori/adventure/chat/SignedMessage;
 	public fun createPlayerChatMessageMirrorFromAdventure (Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+	public fun editOfflineInventory (Lorg/bukkit/OfflinePlayer;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;
 	public fun getPaperRawChatType ()Lnet/kyori/adventure/chat/ChatType;
 	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
@@ -1735,6 +1737,19 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$DefaultImpls {
 	public static synthetic fun createPlayerChatMessageMirrorFromAdventure$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$PlayerInventoryEdit {
+	public fun <init> (Ljava/util/List;Lorg/bukkit/inventory/EntityEquipment;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lorg/bukkit/inventory/EntityEquipment;
+	public final fun copy (Ljava/util/List;Lorg/bukkit/inventory/EntityEquipment;)Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$PlayerInventoryEdit;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$PlayerInventoryEdit;Ljava/util/List;Lorg/bukkit/inventory/EntityEquipment;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$PlayerInventoryEdit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEquipment ()Lorg/bukkit/inventory/EntityEquipment;
+	public final fun getItems ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
