@@ -2,6 +2,7 @@
 
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
+import com.destroystokyo.paper.profile.PlayerProfile
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.arguments.AsyncPlayerProfileArgument
 import dev.jorel.commandapi.kotlindsl.argument
@@ -11,14 +12,11 @@ import dev.jorel.commandapi.kotlindsl.subcommand
 import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
 import dev.slne.surf.api.paper.command.executors.playerExecutorSuspend
 import dev.slne.surf.api.paper.command.util.awaitAsyncPlayerProfile
-import dev.slne.surf.api.paper.command.util.idOrThrow
-import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.surfapi.bukkit.test.command.args.EquipmentSlotArgument
 import org.bukkit.command.CommandSender
 import org.bukkit.inventory.EquipmentSlot
-import java.util.*
 
 class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
     init {
@@ -33,7 +31,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
         integerArgument("slot", 0, 35)
 
         playerExecutorSuspend { sender, args ->
-            val target = args.awaitAsyncPlayerProfile("player").idOrThrow()
+            val target = args.awaitAsyncPlayerProfile("player")
             val slot: Int by args
             val item = sender.inventory.itemInMainHand.clone()
 
@@ -46,7 +44,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
                 edit.items[slot] = item
             }) return@playerExecutorSuspend
 
-            sender.sendMessage("Set slot $slot of $target to ${item.type.key.asString()} x${item.amount}.")
+            sender.sendMessage("Set slot $slot of ${target.name} to ${item.type.key.asString()} x${item.amount}.")
         }
     }
 
@@ -55,7 +53,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
         argument(EquipmentSlotArgument("slot"))
 
         playerExecutorSuspend { sender, args ->
-            val target = args.awaitAsyncPlayerProfile("player").idOrThrow()
+            val target = args.awaitAsyncPlayerProfile("player")
             val slot: EquipmentSlot by args
             val item = sender.inventory.itemInMainHand.clone()
 
@@ -68,7 +66,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
                 edit.equipment.setItem(slot, item)
             }) return@playerExecutorSuspend
 
-            sender.sendMessage("Set equipment slot ${slot.name} of $target to ${item.type.key.asString()} x${item.amount}.")
+            sender.sendMessage("Set equipment slot ${slot.name} of ${target.name} to ${item.type.key.asString()} x${item.amount}.")
         }
     }
 
@@ -76,7 +74,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
         argument(AsyncPlayerProfileArgument("player"))
 
         anyExecutorSuspend { sender, args ->
-            val target = args.awaitAsyncPlayerProfile("player").idOrThrow()
+            val target = args.awaitAsyncPlayerProfile("player")
             var inventoryItems = emptyList<String>()
             var equipmentItems = emptyList<String>()
 
@@ -91,7 +89,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
                     .map { (slot, item) -> "${slot.name}=${item.type.key.asString()} x${item.amount}" }
             }) return@anyExecutorSuspend
 
-            sender.sendMessage("Offline inventory summary for ${target}:")
+            sender.sendMessage("Offline inventory summary for ${target.name}:")
             sender.sendMessage("Inventory: ${inventoryItems.ifEmpty { listOf("empty") }.joinToString()}")
             sender.sendMessage("Equipment: ${equipmentItems.ifEmpty { listOf("empty") }.joinToString()}")
         }
@@ -101,24 +99,24 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
         argument(AsyncPlayerProfileArgument("player"))
 
         anyExecutorSuspend { sender, args ->
-            val target = args.awaitAsyncPlayerProfile("player").idOrThrow()
+            val target = args.awaitAsyncPlayerProfile("player")
 
             if (!runEdit(sender, target) { edit ->
                 edit.items.clear()
                 edit.equipment.clear()
             }) return@anyExecutorSuspend
 
-            sender.sendMessage("Cleared offline inventory and equipment of ${target}.")
+            sender.sendMessage("Cleared offline inventory and equipment of ${target.name}.")
         }
     }
 
     private suspend fun runEdit(
         sender: CommandSender,
-        target: UUID,
+        target: PlayerProfile,
         edit: (SurfPaperNmsPlayerBridge.PlayerInventoryEdit) -> Unit
     ): Boolean {
         return runCatching {
-            SurfPaperNmsPlayerBridge.editOfflineInventory(server.getOfflinePlayer(target), edit)
+            SurfPaperNmsPlayerBridge.editOfflineInventory(target, edit)
         }.onFailure { error ->
             sender.sendMessage("editOfflineInventory failed: ${error::class.simpleName}: ${error.message}")
         }.isSuccess

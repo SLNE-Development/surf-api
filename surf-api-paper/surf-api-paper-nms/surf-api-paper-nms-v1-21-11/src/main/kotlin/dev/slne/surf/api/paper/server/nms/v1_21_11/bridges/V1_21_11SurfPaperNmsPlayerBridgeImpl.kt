@@ -1,5 +1,9 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
+import com.destroystokyo.paper.profile.CraftPlayerProfile
+import com.destroystokyo.paper.profile.PlayerProfile
+import dev.slne.surf.api.paper.command.util.idOrThrow
+import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
@@ -36,7 +40,6 @@ import net.minecraft.world.level.storage.TagValueInput
 import net.minecraft.world.level.storage.TagValueOutput
 import net.minecraft.world.level.storage.ValueInput
 import net.minecraft.world.level.storage.ValueOutput
-import org.bukkit.OfflinePlayer
 import org.bukkit.craftbukkit.CraftEquipmentSlot
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
@@ -212,13 +215,15 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     override suspend fun editOfflineInventory(
-        player: OfflinePlayer,
+        profile: PlayerProfile,
         edit: (PlayerInventoryEdit) -> Unit
     ) {
-        require(!player.isOnline) { "Player must be offline" }
+        val uuid = profile.idOrThrow()
+        require(server.getPlayer(uuid) == null) { "Player must be offline" }
+        require(profile is CraftPlayerProfile) { "Only CraftPlayerProfile (paper) is supported" }
 
         val server = MinecraftServer.getServer()
-        val nameAndId = NameAndId(player.uniqueId, player.name ?: "#Unknown")
+        val nameAndId = NameAndId(profile.gameProfileUnsafe)
         val rootPathElement = ProblemReporter.PathElement { "OfflinePlayer Inventory[$nameAndId]" }
         val currentTag = loadPlayerTag(server, nameAndId)
         val inventoryEdit = buildInventoryEdit(server, rootPathElement, currentTag)

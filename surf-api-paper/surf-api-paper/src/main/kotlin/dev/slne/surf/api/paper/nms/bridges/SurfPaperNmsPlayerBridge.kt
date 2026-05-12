@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.nms.bridges
 
+import com.destroystokyo.paper.profile.PlayerProfile
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.Companion.editOfflineInventory
@@ -9,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.chat.ChatType
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
-import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EntityEquipment
 import org.bukkit.inventory.ItemStack
@@ -51,16 +51,16 @@ interface SurfPaperNmsPlayerBridge {
      * Loads an offline player's inventory and equipment, exposes them for mutation, and persists
      * the modified state back to disk.
      *
-     * The [player] must be offline when this function is called.
+     * The player of the [profile] must be offline when this function is called.
      *
      * Warning: behavior is undefined, unsafe, and not supported if the player joins while this
      * operation is running.
      *
-     * @param player the offline player whose persisted inventory data should be edited
+     * @param profile the offline player profile whose persisted inventory data should be edited
      * @param edit callback that receives a mutable [PlayerInventoryEdit] snapshot
      */
     suspend fun editOfflineInventory(
-        player: OfflinePlayer,
+        profile: PlayerProfile,
         edit: (PlayerInventoryEdit) -> Unit
     )
 
