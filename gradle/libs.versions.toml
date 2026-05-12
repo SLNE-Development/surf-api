@@ -9,7 +9,7 @@ kotlinxCoroutines = "1.10.2"
 kotlinx-serialization = "1.11.0"
 
 # Packet Events
-packetevents = "2.11.2"
+packetevents = "2.12.1"
 packetevents-plugin = "2.12.1"
 
 # Command API
@@ -115,7 +115,7 @@ adventure-nbt = { module = "net.kyori:adventure-nbt", version.ref = "adventure-a
 
 # Velocity
 velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api" }
-velocity-proxy-ctd = { module = "com.velocityctd:velocity-proxy", version.ref = "velocity-api"}
+velocity-proxy-ctd = { module = "com.velocityctd:velocity-proxy", version.ref = "velocity-api" }
 
 # PAPI
 placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }
