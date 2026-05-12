@@ -296,6 +296,7 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             }
         } catch (e: Exception) {
             OFFLINE_INVENTORY_EDIT_LOGGER.error("Failed to save offline player inventory", e)
+            throw e
         }
     }
 
