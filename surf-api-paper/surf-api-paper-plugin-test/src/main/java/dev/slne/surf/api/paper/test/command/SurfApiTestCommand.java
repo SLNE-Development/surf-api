@@ -31,7 +31,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
                 new ShowItemCommand("showitem"),
                 new SortInvCommand("sortInv"),
                 new SignedMessageArgumentTest("signedmessage"),
-                new BlockPdcContainerTest("blockpdc")
+                new BlockPdcContainerTest("blockpdc"),
+                new OfflineInventoryEditTest("editOfflineInventory")
         );
     }
 }
