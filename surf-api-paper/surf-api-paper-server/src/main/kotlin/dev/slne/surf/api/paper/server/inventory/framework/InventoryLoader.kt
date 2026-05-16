@@ -4,11 +4,12 @@ import dev.slne.surf.api.paper.server.plugin
 import me.devnatan.inventoryframework.ViewFrame
 
 object InventoryLoader {
-    init {
-        McVersionRemapper.remap()
-        InventoryViewRemapper.remap()
-        CloseContextRemapper.remap()
-    }
+    // Currently not needed due to fork
+//    init {
+//        McVersionRemapper.remap()
+//        InventoryViewRemapper.remap()
+//        CloseContextRemapper.remap()
+//    }
 
     lateinit var viewFrame: ViewFrame
 

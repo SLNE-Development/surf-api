@@ -39,8 +39,6 @@ dependencies {
     paperLibrary(libs.okhttp)
     paperLibrary(libs.fastutil)
     paperLibrary(libs.reflection.remapper)
-    paperLibrary(libs.configurate.yaml)
-    paperLibrary(libs.configurate.jackson)
     paperLibrary(libs.more.persistent.data.types)
     paperLibrary(libs.flogger)
     paperLibrary(libs.flogger.slf4j.backend)

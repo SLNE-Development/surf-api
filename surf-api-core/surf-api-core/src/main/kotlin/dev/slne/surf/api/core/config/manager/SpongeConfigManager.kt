@@ -8,18 +8,28 @@ import dev.slne.surf.api.core.config.migration.ConfigMigration
 import dev.slne.surf.api.core.config.migration.ConfigMigrationBuilder
 import dev.slne.surf.api.core.config.serializer.surfSpongeConfigSerializers
 import dev.slne.surf.api.core.util.logger
+import io.leangen.geantyref.GenericTypeReflector
+import org.spongepowered.configurate.CommentedConfigurationNodeIntermediary
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.ScopedConfigurationNode
 import org.spongepowered.configurate.jackson.JacksonConfigurationLoader
+import org.spongepowered.configurate.kotlin.dataClassFieldDiscoverer
 import org.spongepowered.configurate.loader.AbstractConfigurationLoader
 import org.spongepowered.configurate.loader.ConfigurationLoader
+import org.spongepowered.configurate.objectmapping.ObjectMapper
+import org.spongepowered.configurate.objectmapping.meta.Constraint
+import org.spongepowered.configurate.objectmapping.meta.NodeResolver
 import org.spongepowered.configurate.serialize.SerializationException
+import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.Serial
 import java.io.UncheckedIOException
 import java.nio.file.Path
+import java.text.MessageFormat
+import java.util.*
+import java.util.regex.Pattern
 
 /**
  * Manages configurations using Sponge's Configurate library, including loading, saving, and reloading configurations.
@@ -186,7 +196,7 @@ class SpongeConfigManager<C> private constructor(
             migrations: ConfigMigrationBuilder = ConfigMigrationBuilder()
         ): SpongeConfigManager<C> = buildConfigManager(
             "https://yamlchecker.com/",
-            YamlConfigurationLoader.builder().nodeStyle(NodeStyle.BLOCK),
+            YamlConfigurationLoader.builder().nodeStyle(NodeStyle.BLOCK).commentsEnabled(true),
             configClass,
             configFolder,
             configFileName,
@@ -229,8 +239,16 @@ class SpongeConfigManager<C> private constructor(
         ): SpongeConfigManager<C> {
             val loader = builder.path(configFolder.resolve(configFileName))
                 .defaultOptions {
-                    it.serializers(surfSpongeConfigSerializers.buildSerializersModule())
-                        .shouldCopyDefaults(true)
+                    it.serializers { serializers ->
+                        surfSpongeConfigSerializers.buildSerializersModule().accept(serializers)
+
+                        try {
+                            OldSpongeReflections.OLD_CONFIG_SERIALIZABLE_ANNOTATION // If this throws an exception, there are no non-relocated annotations, no need to register — most likely the standalone version
+                            serializers.registerBackwardsCompatibleSerializers()
+                        } catch (_: Throwable) {
+                            // no non-relocated annotations, no need to register
+                        }
+                    }.shouldCopyDefaults(true)
                 }
                 .build()
 
@@ -267,6 +285,75 @@ class SpongeConfigManager<C> private constructor(
                     .log("Failed to load config")
                 throw LoadConfigException(e)
             }
+        }
+
+        private fun TypeSerializerCollection.Builder.registerBackwardsCompatibleSerializers() {
+            register(
+                { type ->
+                    GenericTypeReflector.annotate(type)
+                        .isAnnotationPresent(OldSpongeReflections.OLD_CONFIG_SERIALIZABLE_ANNOTATION)
+                },
+                ObjectMapper.factoryBuilder()
+                    .addDiscoverer(dataClassFieldDiscoverer())
+                    .addProcessor(OldSpongeReflections.OLD_COMMENT_ANNOTATION) { data, _ ->
+                        { _, destination ->
+                            if (destination is CommentedConfigurationNodeIntermediary<*>) {
+                                if (OldSpongeReflections.isCommentOverride(data)) {
+                                    destination.comment(OldSpongeReflections.getCommentValue(data))
+                                } else {
+                                    destination.commentIfAbsent(OldSpongeReflections.getCommentValue(data))
+                                }
+                            }
+                        }
+                    }
+                    .addConstraint(
+                        OldSpongeReflections.OLD_MATCHES_ANNOTATION,
+                        String::class.java
+                    ) { data, _ ->
+                        val value = OldSpongeReflections.getMatchesValue(data)
+                        val flags = OldSpongeReflections.getMatchesFlags(data)
+                        val failureMessage = OldSpongeReflections.getMatchesFailureMessage(data)
+
+                        val test = Pattern.compile(value, flags)
+                        val format = MessageFormat(failureMessage, Locale.getDefault())
+
+                        Constraint { toValidate ->
+                            if (toValidate != null) {
+                                val match = test.matcher(toValidate)
+                                if (!match.matches()) {
+                                    throw SerializationException(format.format(arrayOf(toValidate, value)))
+                                }
+                            }
+                        }
+                    }
+                    .addConstraint(OldSpongeReflections.OLD_REQUIRED_ANNOTATION, Constraint.required())
+                    .addNodeResolver(fun(name, element): NodeResolver? {
+                        if (element.isAnnotationPresent(OldSpongeReflections.OLD_SETTING_ANNOTATION)) {
+                            val annotation =
+                                element.getAnnotation(OldSpongeReflections.OLD_SETTING_ANNOTATION)
+                            val key = OldSpongeReflections.getSettingValue(annotation)
+                            if (key.isNotEmpty()) {
+                                return { node -> node.node(key) }
+                            }
+                        }
+
+                        return null
+                    })
+                    .addNodeResolver(fun(name, element): NodeResolver? {
+                        if (element.isAnnotationPresent(OldSpongeReflections.OLD_SETTING_ANNOTATION)) {
+                            val annotation =
+                                element.getAnnotation(OldSpongeReflections.OLD_SETTING_ANNOTATION)
+                            val nodeFromParent = OldSpongeReflections.isSettingNodeFromParent(annotation)
+                            if (nodeFromParent) {
+                                return { node -> node }
+                            }
+                        }
+
+                        return null
+                    })
+                    .build()
+                    .asTypeSerializer()
+            )
         }
     }
 }
