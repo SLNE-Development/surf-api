@@ -243,7 +243,7 @@ class SpongeConfigManager<C> private constructor(
                         surfSpongeConfigSerializers.buildSerializersModule().accept(serializers)
 
                         try {
-                            OldSpongeReflections.OLD_CONFIG_SERIALIZABLE_ANNOTATION
+                            OldSpongeReflections.OLD_CONFIG_SERIALIZABLE_ANNOTATION // If this throws an exception, there are no none relocated annotations, no need to register — most likely the standalone version
                             serializers.registerBackwardsCompatibleSerializers()
                         } catch (_: Exception) {
                             // no none relocated annotations, no need to register
