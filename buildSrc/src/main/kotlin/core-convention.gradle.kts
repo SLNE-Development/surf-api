@@ -72,6 +72,7 @@ tasks {
 
         val relocationPrefix: String by project
         relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt")
+        relocate("org.spongepowered.configurate", "$relocationPrefix.configurate")
     }
 
     javadoc {

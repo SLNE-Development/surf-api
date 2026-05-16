@@ -24,8 +24,6 @@ dependencies {
     api(libs.commons.text)
     api(libs.okhttp)
     api(libs.fastutil)
-    api(libs.configurate.yaml)
-    api(libs.configurate.jackson)
     api(libs.flogger)
     api(libs.commons.math4.core)
     api(libs.commons.math3)
