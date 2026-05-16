@@ -21,15 +21,14 @@ import org.spongepowered.configurate.objectmapping.ObjectMapper
 import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.objectmapping.meta.NodeResolver
 import org.spongepowered.configurate.serialize.SerializationException
+import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import org.spongepowered.configurate.yaml.NodeStyle
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.Serial
 import java.io.UncheckedIOException
-import java.lang.reflect.Type
 import java.nio.file.Path
 import java.text.MessageFormat
 import java.util.*
-import java.util.function.Predicate
 import java.util.regex.Pattern
 
 /**
@@ -243,75 +242,12 @@ class SpongeConfigManager<C> private constructor(
                     it.serializers { serializers ->
                         surfSpongeConfigSerializers.buildSerializersModule().accept(serializers)
 
-                        // Backwards compatibility before sponge relocation
-                        val predicate = Predicate<Type> { type ->
-                            GenericTypeReflector.annotate(type)
-                                .isAnnotationPresent(OldSpongeReflections.OLD_CONFIG_SERIALIZABLE_ANNOTATION)
+                        try {
+                            OldSpongeReflections.OLD_CONFIG_SERIALIZABLE_ANNOTATION
+                            serializers.registerBackwardsCompatibleSerializers()
+                        } catch (_: Exception) {
+                            // no none relocated annotations, no need to register
                         }
-
-                        serializers.register(
-                            predicate,
-                            ObjectMapper.factoryBuilder()
-                                .addDiscoverer(dataClassFieldDiscoverer())
-                                .addProcessor(OldSpongeReflections.OLD_COMMENT_ANNOTATION) { data, _ ->
-                                    { _, destination ->
-                                        if (destination is CommentedConfigurationNodeIntermediary<*>) {
-                                            if (OldSpongeReflections.isCommentOverride(data)) {
-                                                destination.comment(OldSpongeReflections.getCommentValue(data))
-                                            } else {
-                                                destination.commentIfAbsent(OldSpongeReflections.getCommentValue(data))
-                                            }
-                                        }
-                                    }
-                                }
-                                .addConstraint(
-                                    OldSpongeReflections.OLD_MATCHES_ANNOTATION,
-                                    String::class.java
-                                ) { data, _ ->
-                                    val value = OldSpongeReflections.getMatchesValue(data)
-                                    val flags = OldSpongeReflections.getMatchesFlags(data)
-                                    val failureMessage = OldSpongeReflections.getMatchesFailureMessage(data)
-
-                                    val test = Pattern.compile(value, flags)
-                                    val format = MessageFormat(failureMessage, Locale.getDefault())
-
-                                    Constraint { toValidate ->
-                                        if (toValidate != null) {
-                                            val match = test.matcher(toValidate)
-                                            if (!match.matches()) {
-                                                throw SerializationException(format.format(arrayOf(toValidate, value)))
-                                            }
-                                        }
-                                    }
-                                }
-                                .addConstraint(OldSpongeReflections.OLD_REQUIRED_ANNOTATION, Constraint.required())
-                                .addNodeResolver(fun(name, element): NodeResolver? {
-                                    if (element.isAnnotationPresent(OldSpongeReflections.OLD_SETTING_ANNOTATION)) {
-                                        val annotation =
-                                            element.getAnnotation(OldSpongeReflections.OLD_SETTING_ANNOTATION)
-                                        val key = OldSpongeReflections.getSettingValue(annotation)
-                                        if (key.isNotEmpty()) {
-                                            return { node -> node.node(key) }
-                                        }
-                                    }
-
-                                    return null
-                                })
-                                .addNodeResolver(fun(name, element): NodeResolver? {
-                                    if (element.isAnnotationPresent(OldSpongeReflections.OLD_SETTING_ANNOTATION)) {
-                                        val annotation =
-                                            element.getAnnotation(OldSpongeReflections.OLD_SETTING_ANNOTATION)
-                                        val nodeFromParent = OldSpongeReflections.isSettingNodeFromParent(annotation)
-                                        if (nodeFromParent) {
-                                            return { node -> node }
-                                        }
-                                    }
-
-                                    return null
-                                })
-                                .build()
-                                .asTypeSerializer()
-                        )
                     }.shouldCopyDefaults(true)
                 }
                 .build()
@@ -349,6 +285,75 @@ class SpongeConfigManager<C> private constructor(
                     .log("Failed to load config")
                 throw LoadConfigException(e)
             }
+        }
+
+        private fun TypeSerializerCollection.Builder.registerBackwardsCompatibleSerializers() {
+            register(
+                { type ->
+                    GenericTypeReflector.annotate(type)
+                        .isAnnotationPresent(OldSpongeReflections.OLD_CONFIG_SERIALIZABLE_ANNOTATION)
+                },
+                ObjectMapper.factoryBuilder()
+                    .addDiscoverer(dataClassFieldDiscoverer())
+                    .addProcessor(OldSpongeReflections.OLD_COMMENT_ANNOTATION) { data, _ ->
+                        { _, destination ->
+                            if (destination is CommentedConfigurationNodeIntermediary<*>) {
+                                if (OldSpongeReflections.isCommentOverride(data)) {
+                                    destination.comment(OldSpongeReflections.getCommentValue(data))
+                                } else {
+                                    destination.commentIfAbsent(OldSpongeReflections.getCommentValue(data))
+                                }
+                            }
+                        }
+                    }
+                    .addConstraint(
+                        OldSpongeReflections.OLD_MATCHES_ANNOTATION,
+                        String::class.java
+                    ) { data, _ ->
+                        val value = OldSpongeReflections.getMatchesValue(data)
+                        val flags = OldSpongeReflections.getMatchesFlags(data)
+                        val failureMessage = OldSpongeReflections.getMatchesFailureMessage(data)
+
+                        val test = Pattern.compile(value, flags)
+                        val format = MessageFormat(failureMessage, Locale.getDefault())
+
+                        Constraint { toValidate ->
+                            if (toValidate != null) {
+                                val match = test.matcher(toValidate)
+                                if (!match.matches()) {
+                                    throw SerializationException(format.format(arrayOf(toValidate, value)))
+                                }
+                            }
+                        }
+                    }
+                    .addConstraint(OldSpongeReflections.OLD_REQUIRED_ANNOTATION, Constraint.required())
+                    .addNodeResolver(fun(name, element): NodeResolver? {
+                        if (element.isAnnotationPresent(OldSpongeReflections.OLD_SETTING_ANNOTATION)) {
+                            val annotation =
+                                element.getAnnotation(OldSpongeReflections.OLD_SETTING_ANNOTATION)
+                            val key = OldSpongeReflections.getSettingValue(annotation)
+                            if (key.isNotEmpty()) {
+                                return { node -> node.node(key) }
+                            }
+                        }
+
+                        return null
+                    })
+                    .addNodeResolver(fun(name, element): NodeResolver? {
+                        if (element.isAnnotationPresent(OldSpongeReflections.OLD_SETTING_ANNOTATION)) {
+                            val annotation =
+                                element.getAnnotation(OldSpongeReflections.OLD_SETTING_ANNOTATION)
+                            val nodeFromParent = OldSpongeReflections.isSettingNodeFromParent(annotation)
+                            if (nodeFromParent) {
+                                return { node -> node }
+                            }
+                        }
+
+                        return null
+                    })
+                    .build()
+                    .asTypeSerializer()
+            )
         }
     }
 }
