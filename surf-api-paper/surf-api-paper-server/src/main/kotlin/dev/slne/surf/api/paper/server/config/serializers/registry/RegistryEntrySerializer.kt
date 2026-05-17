@@ -49,8 +49,8 @@ abstract class RegistryEntrySerializer<T, R : Keyed> : ScalarSerializer.Annotate
 
     override fun serialize(type: AnnotatedType, item: T, typeSupported: Predicate<Class<*>>): Any {
         val key = this.convertToResourceKey(item)
-        return if (this.omitMinecraftNamespace && key.key().namespace() == Key.MINECRAFT_NAMESPACE) {
-            key.key().value()
+        return if (this.omitMinecraftNamespace && key.namespace() == Key.MINECRAFT_NAMESPACE) {
+            key.value()
         } else {
             key.asString()
         }
