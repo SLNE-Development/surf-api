@@ -207,12 +207,90 @@ public final class dev/slne/surf/api/core/config/SurfConfigApiKt {
 public abstract interface annotation class dev/slne/surf/api/core/config/YamlConfigFileNamePattern : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/Contains : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/Contains$Companion;
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/Contains$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/Directory : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/Directory$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/Directory$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/DisallowValues : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/DisallowValues$Companion;
+	public abstract fun values ()[Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/DisallowValues$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/EndsWith : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/EndsWith$Companion;
+	public abstract fun suffix ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/EndsWith$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/ExistingFile : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/ExistingFile$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/ExistingFile$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MaxDuration : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MaxDuration$Companion;
+	public abstract fun seconds ()J
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MaxDuration$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MaxLength : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MaxLength$Companion;
+	public abstract fun max ()I
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MaxLength$Companion {
+}
+
 public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MaxNumber : java/lang/annotation/Annotation {
 	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MaxNumber$Companion;
 	public abstract fun max ()D
 }
 
 public final class dev/slne/surf/api/core/config/constraints/MaxNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MaxSize : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MaxSize$Companion;
+	public abstract fun max ()I
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MaxSize$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MinDuration : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MinDuration$Companion;
+	public abstract fun seconds ()J
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MinDuration$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MinLength : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MinLength$Companion;
+	public abstract fun min ()I
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MinLength$Companion {
 }
 
 public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MinNumber : java/lang/annotation/Annotation {
@@ -223,11 +301,86 @@ public abstract interface annotation class dev/slne/surf/api/core/config/constra
 public final class dev/slne/surf/api/core/config/constraints/MinNumber$Companion {
 }
 
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MinSize : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MinSize$Companion;
+	public abstract fun min ()I
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MinSize$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/Namespace : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/Namespace$Companion;
+	public abstract fun namespace ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/Namespace$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/NegativeNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/NegativeNumber$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/NegativeNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/NoDuplicates : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/NoDuplicates$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/NoDuplicates$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/NotBlank : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/NotBlank$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/NotBlank$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/NotEmpty : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/NotEmpty$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/NotEmpty$Companion {
+}
+
 public abstract interface annotation class dev/slne/surf/api/core/config/constraints/PositiveNumber : java/lang/annotation/Annotation {
 	public static final field Companion Ldev/slne/surf/api/core/config/constraints/PositiveNumber$Companion;
 }
 
 public final class dev/slne/surf/api/core/config/constraints/PositiveNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/Range : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/Range$Companion;
+	public abstract fun max ()D
+	public abstract fun min ()D
+}
+
+public final class dev/slne/surf/api/core/config/constraints/Range$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/StartsWith : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/StartsWith$Companion;
+	public abstract fun prefix ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/StartsWith$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/Trimmed : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/Trimmed$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/Trimmed$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/WritablePath : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/WritablePath$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/WritablePath$Companion {
 }
 
 public final class dev/slne/surf/api/core/config/manager/LoadConfigException : java/lang/RuntimeException {
@@ -310,6 +463,7 @@ public abstract class dev/slne/surf/api/core/config/serializer/SpongeConfigSeria
 	public final fun getClassSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
 	public final fun getTypeTokenSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
 	public final fun registerClassSerializer (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
+	protected fun registerDefaults (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;)V
 	public final fun registerTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
 	public final fun unregisterSerializer (Ljava/lang/Class;)V
 	public final fun unregisterTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;)V
@@ -380,6 +534,28 @@ public final class dev/slne/surf/api/core/config/type/BooleanOrDefault {
 }
 
 public final class dev/slne/surf/api/core/config/type/BooleanOrDefault$Companion {
+}
+
+public final class dev/slne/surf/api/core/config/type/ConfigDuration {
+	public static final field Companion Ldev/slne/surf/api/core/config/type/ConfigDuration$Companion;
+	public synthetic fun <init> (JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun asDuration-UwyO8pc ()J
+	public final fun component1-UwyO8pc ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy-VtjQ1oo (JLjava/lang/String;)Ldev/slne/surf/api/core/config/type/ConfigDuration;
+	public static synthetic fun copy-VtjQ1oo$default (Ldev/slne/surf/api/core/config/type/ConfigDuration;JLjava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/core/config/type/ConfigDuration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public final fun getValue-UwyO8pc ()J
+	public fun hashCode ()I
+	public final fun inWholeSeconds ()J
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/type/ConfigDuration$Companion {
+	public final fun format-LRDsOJo (J)Ljava/lang/String;
+	public final fun parse (Ljava/lang/String;)Ldev/slne/surf/api/core/config/type/ConfigDuration;
 }
 
 public final class dev/slne/surf/api/core/config/type/DurationOrDisabled {
