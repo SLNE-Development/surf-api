@@ -4,6 +4,15 @@ import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
+/**
+ * Specifies a maximum size constraint for collections, maps, arrays, or strings.
+ *
+ * This annotation enforces that the size or length of the annotated value does not exceed
+ * the specified maximum. If the validation fails, a `SerializationException` is thrown
+ * with a descriptive error message.
+ *
+ * @property max The maximum allowed size or length for the annotated value.
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class MaxSize(val max: Int) {

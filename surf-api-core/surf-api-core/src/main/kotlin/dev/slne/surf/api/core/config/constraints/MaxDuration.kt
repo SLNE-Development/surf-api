@@ -5,6 +5,15 @@ import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
+/**
+ * Annotation for constraining a `ConfigDuration`'s value to a maximum duration.
+ *
+ * This annotation ensures that the duration value of the annotated field does not exceed
+ * the specified number of seconds. If the validation fails, a `SerializationException`
+ * is thrown with a descriptive error message.
+ *
+ * @property seconds The maximum duration in seconds that the annotated field can have.
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class MaxDuration(val seconds: Long) {

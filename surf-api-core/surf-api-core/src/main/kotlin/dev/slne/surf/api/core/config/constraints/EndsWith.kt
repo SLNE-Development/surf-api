@@ -4,6 +4,14 @@ import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
+/**
+ * Validates that a string config value ends with a specified suffix.
+ *
+ * This annotation ensures that the annotated string ends with the provided suffix.
+ * If the validation fails, a `SerializationException` is thrown with a descriptive error message.
+ *
+ * @property suffix The suffix that the string value must end with.
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class EndsWith(val suffix: String) {

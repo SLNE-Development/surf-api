@@ -5,6 +5,15 @@ import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
+/**
+ * Specifies a minimum duration constraint for configuration values annotated with this annotation.
+ *
+ * This annotation ensures that durations provided in the configuration meet or exceed
+ * the specified minimum value in seconds. If the validation fails, a `SerializationException`
+ * is thrown with a descriptive error message.
+ *
+ * @property seconds The minimum allowed duration in seconds.
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class MinDuration(val seconds: Long) {

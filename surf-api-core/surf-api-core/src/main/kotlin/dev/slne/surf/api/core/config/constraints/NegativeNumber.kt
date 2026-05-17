@@ -4,6 +4,12 @@ import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
+/**
+ * Ensures that a numeric config value is strictly negative.
+ *
+ * This annotation validates that the annotated numeric value is less than zero. If the
+ * validation fails, a `SerializationException` is thrown with a descriptive error message.
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class NegativeNumber {

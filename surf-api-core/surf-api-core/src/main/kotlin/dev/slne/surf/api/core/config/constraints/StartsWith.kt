@@ -4,6 +4,14 @@ import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
+/**
+ * Validates that a string config value starts with a specified prefix.
+ *
+ * This annotation ensures that the annotated string begins with the provided prefix.
+ * If the validation fails, a `SerializationException` is thrown with a descriptive error message.
+ *
+ * @property prefix The prefix that the string value must start with.
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class StartsWith(val prefix: String) {

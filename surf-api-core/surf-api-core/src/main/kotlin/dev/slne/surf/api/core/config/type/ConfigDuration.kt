@@ -9,6 +9,14 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+/**
+ * Encapsulates a configuration value representing a duration, with functionality for parsing,
+ * formatting, and serialization.
+ *
+ * @property value The parsed duration value as a [Duration].
+ * @property rawValue The original raw input that was used to construct this [ConfigDuration].
+ *                    This is stored for serialization purposes.
+ */
 data class ConfigDuration(
     val value: Duration,
     val rawValue: String = format(value)
