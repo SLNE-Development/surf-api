@@ -207,6 +207,29 @@ public final class dev/slne/surf/api/core/config/SurfConfigApiKt {
 public abstract interface annotation class dev/slne/surf/api/core/config/YamlConfigFileNamePattern : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MaxNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MaxNumber$Companion;
+	public abstract fun max ()D
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MaxNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/MinNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/MinNumber$Companion;
+	public abstract fun min ()D
+}
+
+public final class dev/slne/surf/api/core/config/constraints/MinNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/constraints/PositiveNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/core/config/constraints/PositiveNumber$Companion;
+}
+
+public final class dev/slne/surf/api/core/config/constraints/PositiveNumber$Companion {
+}
+
 public final class dev/slne/surf/api/core/config/manager/LoadConfigException : java/lang/RuntimeException {
 	public static final field Companion Ldev/slne/surf/api/core/config/manager/LoadConfigException$Companion;
 	public fun <init> (Ljava/lang/String;)V
@@ -292,12 +315,11 @@ public abstract class dev/slne/surf/api/core/config/serializer/SpongeConfigSeria
 	public final fun unregisterTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;)V
 }
 
-public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializers$ComponentSerializer : org/spongepowered/configurate/serialize/TypeSerializer {
+public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializers$ComponentSerializer : org/spongepowered/configurate/serialize/ScalarSerializer$Annotated {
 	public fun <init> ()V
-	public synthetic fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
-	public fun deserialize (Ljava/lang/reflect/Type;Lorg/spongepowered/configurate/ConfigurationNode;)Lnet/kyori/adventure/text/Component;
-	public synthetic fun serialize (Ljava/lang/reflect/Type;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
-	public fun serialize (Ljava/lang/reflect/Type;Lnet/kyori/adventure/text/Component;Lorg/spongepowered/configurate/ConfigurationNode;)V
+	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lnet/kyori/adventure/text/Component;
+	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializers$LinkedListSerializer : org/spongepowered/configurate/serialize/AbstractListChildSerializer {
@@ -314,6 +336,176 @@ public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializ
 
 public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializersKt {
 	public static final fun getSurfSpongeConfigSerializers ()Ldev/slne/surf/api/core/config/serializer/SpongeConfigSerializers;
+}
+
+public abstract class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer : org/spongepowered/configurate/serialize/TypeSerializer$Annotated {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	protected abstract fun createBaseMapType (Ljava/lang/reflect/ParameterizedType;)Ljava/lang/reflect/Type;
+	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
+	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/util/Map;
+	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
+	public fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/util/Map;Lorg/spongepowered/configurate/ConfigurationNode;)V
+}
+
+public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$PrimitiveToSomething : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/reflect/Type;)V
+}
+
+public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$SomethingToPrimitive : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/reflect/Type;)V
+}
+
+public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$SomethingToSomething : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/serializer/collection/map/ThrowExceptions : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/serializer/collection/map/WriteKeyBack : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/core/config/type/BooleanOrDefault {
+	public static final field Companion Ldev/slne/surf/api/core/config/type/BooleanOrDefault$Companion;
+	public static final field FALSE Ldev/slne/surf/api/core/config/type/BooleanOrDefault;
+	public static final field TRUE Ldev/slne/surf/api/core/config/type/BooleanOrDefault;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/core/config/type/BooleanOrDefault;
+	public synthetic fun <init> (Ljava/lang/Boolean;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Boolean;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public final fun or (Z)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/type/BooleanOrDefault$Companion {
+}
+
+public final class dev/slne/surf/api/core/config/type/DurationOrDisabled {
+	public static final field Companion Ldev/slne/surf/api/core/config/type/DurationOrDisabled$Companion;
+	public static final field DISABLED Ldev/slne/surf/api/core/config/type/DurationOrDisabled;
+	public synthetic fun <init> (Lkotlin/time/Duration;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-FghU774 ()Lkotlin/time/Duration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue-FghU774 ()Lkotlin/time/Duration;
+	public fun hashCode ()I
+	public final fun isDisabled ()Z
+	public final fun or-wmV0flA (J)J
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/type/DurationOrDisabled$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/core/config/type/number/BelowZeroToEmpty : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/api/core/config/type/number/DoubleOr {
+	public fun doubleValue ()D
+	public abstract fun getValue ()Ljava/lang/Double;
+	public abstract fun or (D)D
+}
+
+public final class dev/slne/surf/api/core/config/type/number/DoubleOr$Default : dev/slne/surf/api/core/config/type/number/DoubleOr {
+	public static final field Companion Ldev/slne/surf/api/core/config/type/number/DoubleOr$Default$Companion;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/core/config/type/number/DoubleOr$Default;
+	public fun <init> (Ljava/lang/Double;)V
+	public final fun component1 ()Ljava/lang/Double;
+	public final fun copy (Ljava/lang/Double;)Ldev/slne/surf/api/core/config/type/number/DoubleOr$Default;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/core/config/type/number/DoubleOr$Default;Ljava/lang/Double;ILjava/lang/Object;)Ldev/slne/surf/api/core/config/type/number/DoubleOr$Default;
+	public fun doubleValue ()D
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Double;
+	public fun hashCode ()I
+	public fun or (D)D
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/type/number/DoubleOr$Default$Companion {
+}
+
+public final class dev/slne/surf/api/core/config/type/number/DoubleOr$DefaultImpls {
+	public static fun doubleValue (Ldev/slne/surf/api/core/config/type/number/DoubleOr;)D
+}
+
+public final class dev/slne/surf/api/core/config/type/number/DoubleOr$Disabled : dev/slne/surf/api/core/config/type/number/DoubleOr {
+	public static final field Companion Ldev/slne/surf/api/core/config/type/number/DoubleOr$Disabled$Companion;
+	public static final field DISABLED Ldev/slne/surf/api/core/config/type/number/DoubleOr$Disabled;
+	public fun <init> (Ljava/lang/Double;)V
+	public final fun component1 ()Ljava/lang/Double;
+	public final fun copy (Ljava/lang/Double;)Ldev/slne/surf/api/core/config/type/number/DoubleOr$Disabled;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/core/config/type/number/DoubleOr$Disabled;Ljava/lang/Double;ILjava/lang/Object;)Ldev/slne/surf/api/core/config/type/number/DoubleOr$Disabled;
+	public fun doubleValue ()D
+	public final fun enabled ()Z
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Double;
+	public fun hashCode ()I
+	public fun or (D)D
+	public final fun test (Lkotlin/jvm/functions/Function1;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/type/number/DoubleOr$Disabled$Companion {
+}
+
+public final class dev/slne/surf/api/core/config/type/number/DoubleOr$Disabled$Serializer : org/spongepowered/configurate/serialize/ScalarSerializer$Annotated {
+	public static final field INSTANCE Ldev/slne/surf/api/core/config/type/number/DoubleOr$Disabled$Serializer;
+	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ldev/slne/surf/api/core/config/type/number/DoubleOr$Disabled;
+	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/api/core/config/type/number/IntOr {
+	public abstract fun getValue ()Ljava/lang/Integer;
+	public fun intValue ()I
+	public fun isDefined ()Z
+	public abstract fun or (I)I
+}
+
+public final class dev/slne/surf/api/core/config/type/number/IntOr$Default : dev/slne/surf/api/core/config/type/number/IntOr {
+	public static final field Companion Ldev/slne/surf/api/core/config/type/number/IntOr$Default$Companion;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/core/config/type/number/IntOr$Default;
+	public fun <init> (Ljava/lang/Integer;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;)Ldev/slne/surf/api/core/config/type/number/IntOr$Default;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/core/config/type/number/IntOr$Default;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/slne/surf/api/core/config/type/number/IntOr$Default;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun intValue ()I
+	public fun isDefined ()Z
+	public fun or (I)I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/type/number/IntOr$Default$Companion {
+}
+
+public final class dev/slne/surf/api/core/config/type/number/IntOr$DefaultImpls {
+	public static fun intValue (Ldev/slne/surf/api/core/config/type/number/IntOr;)I
+	public static fun isDefined (Ldev/slne/surf/api/core/config/type/number/IntOr;)Z
+}
+
+public final class dev/slne/surf/api/core/config/type/number/IntOr$Disabled : dev/slne/surf/api/core/config/type/number/IntOr {
+	public static final field Companion Ldev/slne/surf/api/core/config/type/number/IntOr$Disabled$Companion;
+	public static final field DISABLED Ldev/slne/surf/api/core/config/type/number/IntOr$Disabled;
+	public fun <init> (Ljava/lang/Integer;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;)Ldev/slne/surf/api/core/config/type/number/IntOr$Disabled;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/core/config/type/number/IntOr$Disabled;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/slne/surf/api/core/config/type/number/IntOr$Disabled;
+	public final fun enabled ()Z
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun intValue ()I
+	public fun isDefined ()Z
+	public fun or (I)I
+	public final fun test (Lkotlin/jvm/functions/Function1;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/config/type/number/IntOr$Disabled$Companion {
 }
 
 public abstract class dev/slne/surf/api/core/event/SurfAsyncEvent : dev/slne/surf/api/core/event/SurfEvent {
