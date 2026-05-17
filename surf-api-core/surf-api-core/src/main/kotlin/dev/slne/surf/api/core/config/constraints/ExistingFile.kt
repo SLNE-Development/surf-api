@@ -46,7 +46,7 @@ internal fun Any?.asPathOrNull(): Path? {
         null -> null
         is Path -> this
         is File -> toPath()
-        is String -> Path.of(this)
+        is String -> runCatching { Path.of(this) }.getOrNull()
         else -> null
     }
 }
