@@ -37,9 +37,6 @@ class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
 
         builder.register(NamespacedKeySerializer)
         builder.register(MaterialSerializer)
-//        builder.register(Vector::class.java, VectorSerializer)
-        builder.register(Location::class.java, LocationSerializer)
-
 
         if (!PaperInstance.isBootstrapping()) {
             builder.register(ItemStackSerializer)

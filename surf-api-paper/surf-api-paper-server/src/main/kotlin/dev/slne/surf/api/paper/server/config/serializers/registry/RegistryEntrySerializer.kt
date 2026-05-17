@@ -14,7 +14,7 @@ import java.util.function.Predicate
 
 abstract class RegistryEntrySerializer<T, R : Keyed> : ScalarSerializer.Annotated<T> {
 
-    private val registryKey: RegistryKey<R>
+    protected val registryKey: RegistryKey<R>
     private val omitMinecraftNamespace: Boolean
 
     protected constructor(

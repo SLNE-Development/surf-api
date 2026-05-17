@@ -16,6 +16,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
+import org.bukkit.GameRule
+import org.bukkit.GameRules
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.ItemType
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import java.io.File
 import java.net.URI
@@ -148,6 +154,15 @@ data class ModernSerializerTestConfig(
         put(1, "one")
         put(2, "two")
     },
+
+    // paper
+    val stack: ItemStack = ItemType.BOOK.createItemStack(),
+
+    val location: Location = Location(plugin.server.worlds.first(), 0.0, 0.0, 0.0),
+
+    val itemType: ItemType = ItemType.STONE,
+    val material: Material = Material.STONE,
+    val selectedGameRules: List<GameRule<*>> = listOf(GameRules.ADVANCE_TIME, GameRules.MAX_BLOCK_MODIFICATIONS),
 ) {
     companion object : SpongeYmlConfigClass<ModernSerializerTestConfig>(
         ModernSerializerTestConfig::class.java,

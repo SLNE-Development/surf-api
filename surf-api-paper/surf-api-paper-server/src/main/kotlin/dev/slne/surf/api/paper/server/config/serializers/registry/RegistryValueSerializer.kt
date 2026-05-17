@@ -21,7 +21,7 @@ class RegistryValueSerializer<T : Keyed> : RegistryEntrySerializer<T, T> {
 
     override fun convertFromResourceKey(key: Key): T {
         val value = registry().get(key)
-            ?: throw SerializationException("Missing value in ${registry()} with string key: ${key.asString()}")
+            ?: throw SerializationException("Missing value in $registryKey with string key: ${key.asString()}")
 
         return value
     }
