@@ -10,7 +10,6 @@ import org.spongepowered.configurate.serialize.TypeSerializer
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import java.lang.reflect.AnnotatedParameterizedType
 import java.lang.reflect.AnnotatedType
-import java.lang.reflect.Type
 
 /**
  * Fault-tolerant Configurate serializer for maps.
@@ -81,7 +80,7 @@ internal class MapSerializer(
 
         for ((rawKey, valueNode) in node.childrenMap()) {
             val deserializedKey = deserializePart(
-                keyType.type,
+                keyType,
                 keySerializer,
                 "key",
                 keyNode.set(rawKey),
@@ -89,7 +88,7 @@ internal class MapSerializer(
             )
 
             val deserializedValue = deserializePart(
-                valueType.type,
+                valueType,
                 valueSerializer,
                 "value",
                 valueNode,
@@ -102,7 +101,7 @@ internal class MapSerializer(
 
             if (writeKeyBack) {
                 val shouldKeep = serializePart(
-                    keyType.type,
+                    keyType,
                     keySerializer,
                     deserializedKey,
                     "key",
@@ -177,14 +176,14 @@ internal class MapSerializer(
         val keyNode = BasicConfigurationNode.root(node.options())
 
         for ((key, value) in obj) {
-            if (!serializePart(keyType.type, keySerializer, key, "key", keyNode, node.path())) {
+            if (!serializePart(keyType, keySerializer, key, "key", keyNode, node.path())) {
                 continue
             }
 
             val keyObj = requireNotNull(keyNode.raw()) { "Key must not be null!" }
             val child = node.node(keyObj)
 
-            serializePart(valueType.type, valueSerializer, value, "value", child, child.path())
+            serializePart(valueType, valueSerializer, value, "value", child, child.path())
 
             unvisitedKeys -= keyObj
         }
@@ -208,7 +207,7 @@ internal class MapSerializer(
     }
 
     private fun deserializePart(
-        type: Type,
+        type: AnnotatedType,
         serializer: TypeSerializer<*>,
         mapPart: String,
         node: ConfigurationNode,
@@ -232,7 +231,7 @@ internal class MapSerializer(
 
     @Suppress("UNCHECKED_CAST")
     private fun serializePart(
-        type: Type,
+        type: AnnotatedType,
         serializer: TypeSerializer<*>,
         obj: Any?,
         mapPart: String,

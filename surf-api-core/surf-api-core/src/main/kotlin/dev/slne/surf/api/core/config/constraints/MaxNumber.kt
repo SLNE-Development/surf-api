@@ -1,6 +1,7 @@
 package dev.slne.surf.api.core.config.constraints
 
 import org.spongepowered.configurate.objectmapping.meta.Constraint
+import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
 /**
@@ -30,7 +31,7 @@ annotation class MaxNumber(val max: Double) {
         internal object Factory : Constraint.Factory<MaxNumber, Number?> {
             override fun make(data: MaxNumber, type: Type): Constraint<Number?> = { number ->
                 if (number != null && number.toDouble() > data.max) {
-                    throw IllegalArgumentException("Number is too big: $number, expected <= ${data.max}")
+                    throw SerializationException(type, "Number is too big: $number, expected <= ${data.max}")
                 }
             }
         }

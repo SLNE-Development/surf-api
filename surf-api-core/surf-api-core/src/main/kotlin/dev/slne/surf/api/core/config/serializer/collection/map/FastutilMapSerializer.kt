@@ -40,7 +40,7 @@ abstract class FastutilMapSerializer<M : Map<*, *>>(
      * fastutil map implementation.
      */
     override fun deserialize(type: AnnotatedType, node: ConfigurationNode): M {
-        val mapType = createAnnotatedMapType(type as AnnotatedParameterizedType)
+        val mapType = createAnnotatedMapType(type)
         val map = node.get(mapType) as? Map<Any, Any> ?: emptyMap()
 
         return factory(map)
@@ -57,19 +57,27 @@ abstract class FastutilMapSerializer<M : Map<*, *>>(
             return
         }
 
-        node.set(createAnnotatedMapType(type as AnnotatedParameterizedType), obj)
+        node.set(createAnnotatedMapType(type), obj)
     }
 
 
-    private fun createAnnotatedMapType(type: AnnotatedParameterizedType): AnnotatedType {
-        val baseType = createBaseMapType(type.type as ParameterizedType)
-        return GenericTypeReflector.annotate(baseType, type.annotations)
+    private fun createAnnotatedMapType(type: AnnotatedType): AnnotatedType {
+        val paramType = type as? AnnotatedParameterizedType
+        val baseType = createBaseMapType(paramType)
+        return if (paramType != null) {
+            GenericTypeReflector.annotate(baseType, paramType.annotations)
+        } else {
+            GenericTypeReflector.annotate(baseType)
+        }
     }
 
     /**
      * Creates the regular boxed [Map] type that Configurate should use internally.
+     *
+     * @param type The parameterized type, or `null` for non-generic fastutil maps
+     *             (e.g. `Int2IntMap`) where both types are known primitives.
      */
-    protected abstract fun createBaseMapType(type: ParameterizedType): Type
+    protected abstract fun createBaseMapType(type: AnnotatedParameterizedType?): Type
 
     /**
      * Serializer variant for maps with a regular object-like key and a primitive value.
@@ -86,10 +94,13 @@ abstract class FastutilMapSerializer<M : Map<*, *>>(
         /**
          * Creates a `Map<K, BoxedPrimitive>` type.
          */
-        override fun createBaseMapType(type: ParameterizedType): Type {
+        override fun createBaseMapType(type: AnnotatedParameterizedType?): Type {
+            requireNotNull(type) {
+                "SomethingToPrimitive requires a parameterized type with a key type argument"
+            }
             return TypeFactory.parameterizedClass(
                 Map::class.java,
-                type.actualTypeArguments[0],
+                (type.type as ParameterizedType).actualTypeArguments[0],
                 GenericTypeReflector.box(primitiveType)
             )
         }
@@ -110,11 +121,14 @@ abstract class FastutilMapSerializer<M : Map<*, *>>(
         /**
          * Creates a `Map<BoxedPrimitive, V>` type.
          */
-        override fun createBaseMapType(type: ParameterizedType): Type {
+        override fun createBaseMapType(type: AnnotatedParameterizedType?): Type {
+            requireNotNull(type) {
+                "PrimitiveToSomething requires a parameterized type with a value type argument"
+            }
             return TypeFactory.parameterizedClass(
                 Map::class.java,
                 GenericTypeReflector.box(primitiveType),
-                type.actualTypeArguments[0]
+                (type.type as ParameterizedType).actualTypeArguments[0]
             )
         }
     }
@@ -133,11 +147,44 @@ abstract class FastutilMapSerializer<M : Map<*, *>>(
         /**
          * Creates a `Map<K, V>` type.
          */
-        override fun createBaseMapType(type: ParameterizedType): Type {
+        override fun createBaseMapType(type: AnnotatedParameterizedType?): Type {
+            requireNotNull(type) {
+                "SomethingToSomething requires a parameterized type with key and value type arguments"
+            }
+            val typeArgs = (type.type as ParameterizedType).actualTypeArguments
             return TypeFactory.parameterizedClass(
                 Map::class.java,
-                type.actualTypeArguments[0],
-                type.actualTypeArguments[1]
+                typeArgs[0],
+                typeArgs[1]
+            )
+        }
+    }
+
+    /**
+     * Serializer variant for maps where both key and value are fixed primitive types.
+     *
+     * Use this for non-generic fastutil maps such as `Int2IntMap`, `Long2LongMap`,
+     * `Int2LongMap`, etc., which have no type parameters.
+     *
+     * Example fastutil types:
+     * - `Int2IntMap`
+     * - `Long2LongMap`
+     * - `Int2LongMap`
+     */
+    class PrimitiveToPrimitive<M : Map<*, *>>(
+        factory: (Map<Any, Any>) -> M,
+        private val keyPrimitiveType: Type,
+        private val valuePrimitiveType: Type
+    ) : FastutilMapSerializer<M>(factory) {
+
+        /**
+         * Creates a `Map<BoxedKeyPrimitive, BoxedValuePrimitive>` type.
+         */
+        override fun createBaseMapType(type: AnnotatedParameterizedType?): Type {
+            return TypeFactory.parameterizedClass(
+                Map::class.java,
+                GenericTypeReflector.box(keyPrimitiveType),
+                GenericTypeReflector.box(valuePrimitiveType)
             )
         }
     }

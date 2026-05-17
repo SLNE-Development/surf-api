@@ -1,6 +1,7 @@
 package dev.slne.surf.api.core.config.constraints
 
 import org.spongepowered.configurate.objectmapping.meta.Constraint
+import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
 
 /**
@@ -30,7 +31,7 @@ annotation class MinNumber(val min: Double) {
         internal object Factory : Constraint.Factory<MinNumber, Number?> {
             override fun make(data: MinNumber, type: Type): Constraint<Number?> = { number ->
                 if (number != null && number.toDouble() < data.min) {
-                    throw IllegalArgumentException("Number is too small: $number, expected >= ${data.min}")
+                    throw SerializationException(type, "Number is too small: $number, expected >= ${data.min}")
                 }
             }
         }
