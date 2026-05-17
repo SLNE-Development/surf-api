@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.test.command;
 
-import dev.jorel.commandapi.*;
+import dev.jorel.commandapi.CommandAPICommand;
 import dev.slne.surf.api.paper.test.command.subcommands.*;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.*;
 
@@ -32,7 +32,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
                 new SortInvCommand("sortInv"),
                 new SignedMessageArgumentTest("signedmessage"),
                 new BlockPdcContainerTest("blockpdc"),
-                new OfflineInventoryEditTest("editOfflineInventory")
+                new OfflineInventoryEditTest("editOfflineInventory"),
+                new ModernSerializerTestConfigCommand("modernSerializerTestConfig")
         );
     }
 }

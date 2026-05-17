@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.config.serializer.SpongeConfigSerializers
 import dev.slne.surf.api.paper.server.PaperInstance
 import dev.slne.surf.api.paper.server.config.serializers.registry.RegistryValueSerializer
+import io.leangen.geantyref.TypeToken
 import io.papermc.paper.datacomponent.DataComponentType
 import io.papermc.paper.dialog.Dialog
 import io.papermc.paper.entity.poi.PoiType
@@ -59,7 +60,7 @@ class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
             builder.register(RegistryValueSerializer(Fluid::class.java, RegistryKey.FLUID, true))
             builder.register(RegistryValueSerializer(Sound::class.java, RegistryKey.SOUND_EVENT, true))
             builder.register(RegistryValueSerializer(DataComponentType::class.java, RegistryKey.DATA_COMPONENT_TYPE, true))
-            builder.register(RegistryValueSerializer(GameRule::class.java, RegistryKey.GAME_RULE, true))
+            builder.register(RegistryValueSerializer(object : TypeToken<GameRule<*>>() {}, RegistryKey.GAME_RULE, true))
             builder.register(RegistryValueSerializer(Biome::class.java, RegistryKey.BIOME, true))
             builder.register(RegistryValueSerializer(Structure::class.java, RegistryKey.STRUCTURE, true))
             builder.register(RegistryValueSerializer(TrimMaterial::class.java, RegistryKey.TRIM_MATERIAL, true))

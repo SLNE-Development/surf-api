@@ -4,6 +4,7 @@ import dev.slne.surf.api.core.config.constraints.*
 import dev.slne.surf.api.core.config.serializer.collection.map.FastutilMapSerializer
 import dev.slne.surf.api.core.config.serializer.collection.map.MapSerializer
 import dev.slne.surf.api.core.config.type.BooleanOrDefault
+import dev.slne.surf.api.core.config.type.ConfigDuration
 import dev.slne.surf.api.core.config.type.DurationOrDisabled
 import dev.slne.surf.api.core.config.type.number.DoubleOr
 import dev.slne.surf.api.core.config.type.number.IntOr
@@ -84,14 +85,13 @@ abstract class SpongeConfigSerializers {
         builder.register(ComponentSerializer())
         builder.register(EnumValueSerializer)
         builder.register(KeySerializer)
-        builder.register(DurationSerializer)
+        builder.register(ConfigDuration.Serializer)
         builder.register(BooleanOrDefault.Serializer)
         builder.register(DurationOrDisabled.Serializer)
         builder.register(IntOr.Default.Serializer)
         builder.register(IntOr.Disabled.Serializer)
         builder.register(DoubleOr.Default.Serializer)
         builder.register(DoubleOr.Disabled.Serializer)
-        builder.register(MapSerializer.TYPE, MapSerializer(false))
         builder.register(UuidSerializer)
         builder.register(RegexSerializer)
         builder.register(PatternSerializer)
@@ -103,15 +103,15 @@ abstract class SpongeConfigSerializers {
 
         //region fastutil maps
         // @formatter:off
-        builder.register(object : TypeToken<Reference2BooleanMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2BooleanMap<Any>>({ Reference2BooleanOpenHashMap(it as Map<out Any, Boolean>) }, java.lang.Boolean.TYPE))
-        builder.register(object : TypeToken<Reference2ByteMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2ByteMap<Any>>({ Reference2ByteOpenHashMap(it as Map<out Any, Byte>) }, java.lang.Byte.TYPE))
-        builder.register(object : TypeToken<Reference2CharMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2CharMap<Any>>({ Reference2CharOpenHashMap(it as Map<out Any, Char>) }, java.lang.Character.TYPE))
-        builder.register(object : TypeToken<Reference2DoubleMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2DoubleMap<Any>>({ Reference2DoubleOpenHashMap(it as Map<out Any, Double>) }, java.lang.Double.TYPE))
-        builder.register(object : TypeToken<Reference2FloatMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2FloatMap<Any>>({ Reference2FloatOpenHashMap(it as Map<out Any, Float>) }, java.lang.Float.TYPE))
-        builder.register(object : TypeToken<Reference2IntMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2IntMap<Any>>({ Reference2IntOpenHashMap(it as Map<out Any, Int>) }, Integer.TYPE))
-        builder.register(object : TypeToken<Reference2LongMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2LongMap<Any>>({ Reference2LongOpenHashMap(it as Map<out Any, Long>) }, java.lang.Long.TYPE))
-        builder.register(object : TypeToken<Reference2ShortMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2ShortMap<Any>>({ Reference2ShortOpenHashMap(it as Map<out Any, Short>) }, java.lang.Short.TYPE))
-        builder.register(object : TypeToken<Reference2ObjectMap<Any, Any>>() {}, FastutilMapSerializer.SomethingToSomething<Reference2ObjectMap<Any, Any>>({ Reference2ObjectOpenHashMap(it) }))
+        builder.register(object : TypeToken<Reference2BooleanMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2BooleanMap<*>>({ Reference2BooleanOpenHashMap(it as Map<*, Boolean>) }, java.lang.Boolean.TYPE))
+        builder.register(object : TypeToken<Reference2ByteMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2ByteMap<*>>({ Reference2ByteOpenHashMap(it as Map<*, Byte>) }, java.lang.Byte.TYPE))
+        builder.register(object : TypeToken<Reference2CharMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2CharMap<*>>({ Reference2CharOpenHashMap(it as Map<*, Char>) }, java.lang.Character.TYPE))
+        builder.register(object : TypeToken<Reference2DoubleMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2DoubleMap<*>>({ Reference2DoubleOpenHashMap(it as Map<*, Double>) }, java.lang.Double.TYPE))
+        builder.register(object : TypeToken<Reference2FloatMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2FloatMap<*>>({ Reference2FloatOpenHashMap(it as Map<*, Float>) }, java.lang.Float.TYPE))
+        builder.register(object : TypeToken<Reference2IntMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2IntMap<*>>({ Reference2IntOpenHashMap(it as Map<*, Int>) }, Integer.TYPE))
+        builder.register(object : TypeToken<Reference2LongMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2LongMap<*>>({ Reference2LongOpenHashMap(it as Map<*, Long>) }, java.lang.Long.TYPE))
+        builder.register(object : TypeToken<Reference2ShortMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Reference2ShortMap<*>>({ Reference2ShortOpenHashMap(it as Map<*, Short>) }, java.lang.Short.TYPE))
+        builder.register(object : TypeToken<Reference2ObjectMap<*, *>>() {}, FastutilMapSerializer.SomethingToSomething<Reference2ObjectMap<*, *>>({ Reference2ObjectOpenHashMap(it) }))
         builder.register(object : TypeToken<Int2BooleanMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2BooleanMap>({ Int2BooleanOpenHashMap(it as Map<Int, Boolean>) }, Integer.TYPE))
         builder.register(object : TypeToken<Int2ByteMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2ByteMap>({ Int2ByteOpenHashMap(it as Map<Int, Byte>) }, Integer.TYPE))
         builder.register(object : TypeToken<Int2CharMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2CharMap>({ Int2CharOpenHashMap(it as Map<Int, Char>) }, Integer.TYPE))
@@ -119,8 +119,8 @@ abstract class SpongeConfigSerializers {
         builder.register(object : TypeToken<Int2FloatMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2FloatMap>({ Int2FloatOpenHashMap(it as Map<Int, Float>) }, Integer.TYPE))
         builder.register(object : TypeToken<Int2IntMap>() {}, FastutilMapSerializer.SomethingToSomething<Int2IntMap>({ Int2IntOpenHashMap(it as Map<Int, Int>) }))
         builder.register(object : TypeToken<Int2LongMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2LongMap>({ Int2LongOpenHashMap(it as Map<Int, Long>) }, Integer.TYPE))
-        builder.register(object : TypeToken<Int2ObjectMap<Any>>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2ObjectMap<Any>>({ Int2ObjectOpenHashMap(it as Map<Int, Any>) }, Integer.TYPE))
-        builder.register(object : TypeToken<Int2ReferenceMap<Any>>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2ReferenceMap<Any>>({ Int2ReferenceOpenHashMap(it as Map<Int, Any>) }, Integer.TYPE))
+        builder.register(object : TypeToken<Int2ObjectMap<*>>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2ObjectMap<*>>({ Int2ObjectOpenHashMap(it as Map<Int, *>) }, Integer.TYPE))
+        builder.register(object : TypeToken<Int2ReferenceMap<*>>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2ReferenceMap<*>>({ Int2ReferenceOpenHashMap(it as Map<Int, *>) }, Integer.TYPE))
         builder.register(object : TypeToken<Int2ShortMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Int2ShortMap>({ Int2ShortOpenHashMap(it as Map<Int, Short>) }, Integer.TYPE))
         builder.register(object : TypeToken<Long2BooleanMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2BooleanMap>({ Long2BooleanOpenHashMap(it as Map<Long, Boolean>) }, java.lang.Long.TYPE))
         builder.register(object : TypeToken<Long2ByteMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2ByteMap>({ Long2ByteOpenHashMap(it as Map<Long, Byte>) }, java.lang.Long.TYPE))
@@ -129,21 +129,24 @@ abstract class SpongeConfigSerializers {
         builder.register(object : TypeToken<Long2FloatMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2FloatMap>({ Long2FloatOpenHashMap(it as Map<Long, Float>) }, java.lang.Long.TYPE))
         builder.register(object : TypeToken<Long2IntMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2IntMap>({ Long2IntOpenHashMap(it as Map<Long, Int>) }, java.lang.Long.TYPE))
         builder.register(object : TypeToken<Long2LongMap>() {}, FastutilMapSerializer.SomethingToSomething<Long2LongMap>({ Long2LongOpenHashMap(it as Map<Long, Long>) }))
-        builder.register(object : TypeToken<Long2ObjectMap<Any>>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2ObjectMap<Any>>({ Long2ObjectOpenHashMap(it as Map<Long, Any>) }, java.lang.Long.TYPE))
-        builder.register(object : TypeToken<Long2ReferenceMap<Any>>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2ReferenceMap<Any>>({ Long2ReferenceOpenHashMap(it as Map<Long, Any>) }, java.lang.Long.TYPE))
+        builder.register(object : TypeToken<Long2ObjectMap<*>>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2ObjectMap<*>>({ Long2ObjectOpenHashMap(it as Map<Long, *>) }, java.lang.Long.TYPE))
+        builder.register(object : TypeToken<Long2ReferenceMap<*>>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2ReferenceMap<*>>({ Long2ReferenceOpenHashMap(it as Map<Long, *>) }, java.lang.Long.TYPE))
         builder.register(object : TypeToken<Long2ShortMap>() {}, FastutilMapSerializer.PrimitiveToSomething<Long2ShortMap>({ Long2ShortOpenHashMap(it as Map<Long, Short>) }, java.lang.Long.TYPE))
-        builder.register(object : TypeToken<Object2BooleanMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2BooleanMap<Any>>({ Object2BooleanOpenHashMap(it as Map<out Any, Boolean>) }, java.lang.Boolean.TYPE))
-        builder.register(object : TypeToken<Object2ByteMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2ByteMap<Any>>({ Object2ByteOpenHashMap(it as Map<out Any, Byte>) }, java.lang.Byte.TYPE))
-        builder.register(object : TypeToken<Object2CharMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2CharMap<Any>>({ Object2CharOpenHashMap(it as Map<out Any, Char>) }, java.lang.Character.TYPE))
-        builder.register(object : TypeToken<Object2DoubleMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2DoubleMap<Any>>({ Object2DoubleOpenHashMap(it as Map<out Any, Double>) }, java.lang.Double.TYPE))
-        builder.register(object : TypeToken<Object2FloatMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2FloatMap<Any>>({ Object2FloatOpenHashMap(it as Map<out Any, Float>) }, java.lang.Float.TYPE))
-        builder.register(object : TypeToken<Object2IntMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2IntMap<Any>>({ Object2IntOpenHashMap(it as Map<out Any, Int>) }, Integer.TYPE))
-        builder.register(object : TypeToken<Object2LongMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2LongMap<Any>>({ Object2LongOpenHashMap(it as Map<out Any, Long>) }, java.lang.Long.TYPE))
-        builder.register(object : TypeToken<Object2ObjectMap<Any, Any>>() {}, FastutilMapSerializer.SomethingToSomething<Object2ObjectMap<Any, Any>>({ Object2ObjectOpenHashMap(it) }))
-        builder.register(object : TypeToken<Object2ReferenceMap<Any, Any>>() {}, FastutilMapSerializer.SomethingToSomething<Object2ReferenceMap<Any, Any>>({ Object2ReferenceOpenHashMap(it) }))
-        builder.register(object : TypeToken<Object2ShortMap<Any>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2ShortMap<Any>>({ Object2ShortOpenHashMap(it as Map<out Any, Short>) }, java.lang.Short.TYPE))
+        builder.register(object : TypeToken<Object2BooleanMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2BooleanMap<*>>({ Object2BooleanOpenHashMap(it as Map<*, Boolean>) }, java.lang.Boolean.TYPE))
+        builder.register(object : TypeToken<Object2ByteMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2ByteMap<*>>({ Object2ByteOpenHashMap(it as Map<*, Byte>) }, java.lang.Byte.TYPE))
+        builder.register(object : TypeToken<Object2CharMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2CharMap<*>>({ Object2CharOpenHashMap(it as Map<*, Char>) }, java.lang.Character.TYPE))
+        builder.register(object : TypeToken<Object2DoubleMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2DoubleMap<*>>({ Object2DoubleOpenHashMap(it as Map<*, Double>) }, java.lang.Double.TYPE))
+        builder.register(object : TypeToken<Object2FloatMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2FloatMap<*>>({ Object2FloatOpenHashMap(it as Map<*, Float>) }, java.lang.Float.TYPE))
+        builder.register(object : TypeToken<Object2IntMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2IntMap<*>>({ Object2IntOpenHashMap(it as Map<*, Int>) }, Integer.TYPE))
+        builder.register(object : TypeToken<Object2LongMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2LongMap<*>>({ Object2LongOpenHashMap(it as Map<*, Long>) }, java.lang.Long.TYPE))
+        builder.register(object : TypeToken<Object2ObjectMap<*, *>>() {}, FastutilMapSerializer.SomethingToSomething<Object2ObjectMap<*, *>>({ Object2ObjectOpenHashMap(it) }))
+        builder.register(object : TypeToken<Object2ReferenceMap<*, *>>() {}, FastutilMapSerializer.SomethingToSomething<Object2ReferenceMap<*, *>>({ Object2ReferenceOpenHashMap(it) }))
+        builder.register(object : TypeToken<Object2ShortMap<*>>() {}, FastutilMapSerializer.SomethingToPrimitive<Object2ShortMap<*>>({ Object2ShortOpenHashMap(it as Map<*, Short>) }, java.lang.Short.TYPE))
         // @formatter:on
         //endregion
+
+        // register after fastutil specific serializers have been registered
+        builder.register(MapSerializer.TYPE, MapSerializer(false))
 
         builder.registerAnnotatedObjects(
             ObjectMapper.factoryBuilder()

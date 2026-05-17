@@ -1,6 +1,5 @@
 package dev.slne.surf.api.core.config.type
 
-import dev.slne.surf.api.core.config.serializer.DurationSerializer
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
@@ -67,7 +66,7 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
 
                 return try {
                     DurationOrDisabled(
-                        DurationSerializer.deserialize(type, obj)
+                        ConfigDuration.Serializer.deserialize(type, obj).asDuration()
                     )
                 } catch (e: Exception) {
                     throw SerializationException(
@@ -89,7 +88,7 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
             item: DurationOrDisabled,
             typeSupported: Predicate<Class<*>>
         ): Any {
-            return item.value?.let { DurationSerializer.serialize(type, it, typeSupported) } ?: DISABLED_VALUE
+            return item.value?.let { ConfigDuration.Serializer.serialize(type, ConfigDuration(it), typeSupported) } ?: DISABLED_VALUE
         }
     }
 }

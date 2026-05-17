@@ -5,14 +5,12 @@ import com.destroystokyo.paper.event.server.ServerTickStartEvent
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import dev.jorel.commandapi.CommandAPI
 import dev.slne.surf.api.core.component.surfComponentApi
-import dev.slne.surf.api.core.config.SurfConfigApi
 import dev.slne.surf.api.paper.event.listen
 import dev.slne.surf.api.paper.inventory.framework.register
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 import dev.slne.surf.api.paper.test.command.SurfApiTestCommand
 import dev.slne.surf.api.paper.test.command.subcommands.reflection.Reflection
-import dev.slne.surf.api.paper.test.config.TestConfig2
 import dev.slne.surf.api.paper.test.listener.ChatListener
 import dev.slne.surf.surfapi.bukkit.test.command.dialog.dialogTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
@@ -34,7 +32,7 @@ class PaperPluginMain : SuspendingJavaPlugin() {
         TestInventoryView.register()
         testInventoryViewDsl.register()
 
-        SurfConfigApi.createSpongeYmlConfig(TestConfig2::class.java, dataPath, "test-config-2.yml")
+//        SurfConfigApi.createSpongeYmlConfig(TestConfig2::class.java, dataPath, "test-config-2.yml")
     }
 
     override suspend fun onEnableAsync() {
