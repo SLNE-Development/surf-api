@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.test.config;
 
+import dev.slne.surf.api.core.config.type.BooleanOrDefault;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Matches;
@@ -12,6 +13,8 @@ public class TestConfig2 {
     @Comment("Config for various connections")
     @Setting("connection")
     public ConnectionConfig connectionConfig = new ConnectionConfig();
+
+    public BooleanOrDefault testBooleanOrDefault = BooleanOrDefault.USE_DEFAULT;
 
     @ConfigSerializable
     public static class ConnectionConfig {
