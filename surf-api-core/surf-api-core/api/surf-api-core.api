@@ -494,11 +494,15 @@ public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializ
 
 public abstract class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer : org/spongepowered/configurate/serialize/TypeSerializer$Annotated {
 	public fun <init> (Lkotlin/jvm/functions/Function1;)V
-	protected abstract fun createBaseMapType (Ljava/lang/reflect/ParameterizedType;)Ljava/lang/reflect/Type;
+	protected abstract fun createBaseMapType (Ljava/lang/reflect/AnnotatedParameterizedType;)Ljava/lang/reflect/Type;
 	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
 	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/util/Map;
 	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
 	public fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/util/Map;Lorg/spongepowered/configurate/ConfigurationNode;)V
+}
+
+public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$PrimitiveToPrimitive : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/reflect/Type;Ljava/lang/reflect/Type;)V
 }
 
 public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$PrimitiveToSomething : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
