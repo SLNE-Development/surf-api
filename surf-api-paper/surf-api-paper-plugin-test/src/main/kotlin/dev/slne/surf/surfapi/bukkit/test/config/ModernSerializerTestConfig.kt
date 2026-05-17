@@ -11,6 +11,8 @@ import dev.slne.surf.api.core.config.type.number.BelowZeroToEmpty
 import dev.slne.surf.api.core.config.type.number.DoubleOr
 import dev.slne.surf.api.core.config.type.number.IntOr
 import dev.slne.surf.surfapi.bukkit.test.plugin
+import it.unimi.dsi.fastutil.ints.Int2IntMap
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.kyori.adventure.key.Key
@@ -153,6 +155,11 @@ data class ModernSerializerTestConfig(
     val fastutilMap: Int2ObjectMap<String> = Int2ObjectOpenHashMap<String>().apply {
         put(1, "one")
         put(2, "two")
+    },
+
+    val fastUtilInt2Int: Int2IntMap = Int2IntOpenHashMap().apply {
+        put(1, 1)
+        put(2, 2)
     },
 
     // paper
