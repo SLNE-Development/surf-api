@@ -7,11 +7,11 @@ import kotlin.io.path.exists
 import kotlin.io.path.isWritable
 
 /**
- * Validates that a configuration value represents a writable path.
+ * Validates that a configuration value represents a writable path when the path exists.
  *
  * This annotation ensures that the annotated value refers to a file system path
- * that exists and is writable. If the validation fails, a `SerializationException`
- * will be thrown with a descriptive error message.
+ * that is writable if it already exists. If the validation fails for an existing path,
+ * a `SerializationException` will be thrown with a descriptive error message.
  *
  * Supported value types include:
  * - `Path`: Directly represents a file system path.
