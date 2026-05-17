@@ -1,8 +1,6 @@
 package dev.slne.surf.api.core.config.serializer
 
-import dev.slne.surf.api.core.config.constraints.MaxNumber
-import dev.slne.surf.api.core.config.constraints.MinNumber
-import dev.slne.surf.api.core.config.constraints.PositiveNumber
+import dev.slne.surf.api.core.config.constraints.*
 import dev.slne.surf.api.core.config.serializer.collection.map.FastutilMapSerializer
 import dev.slne.surf.api.core.config.serializer.collection.map.MapSerializer
 import dev.slne.surf.api.core.config.type.BooleanOrDefault
@@ -18,6 +16,7 @@ import it.unimi.dsi.fastutil.ints.*
 import it.unimi.dsi.fastutil.longs.*
 import it.unimi.dsi.fastutil.objects.*
 import net.kyori.adventure.text.Component
+import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.spongepowered.configurate.kotlin.dataClassFieldDiscoverer
 import org.spongepowered.configurate.kotlin.extensions.addConstraint
 import org.spongepowered.configurate.objectmapping.ObjectMapper
@@ -65,6 +64,10 @@ abstract class SpongeConfigSerializers {
         _typeTokenSerializers.remove(typeToken)
     }
 
+    @MustBeInvokedByOverriders
+    protected open fun registerDefaults(builder: TypeSerializerCollection.Builder) {
+    }
+
     /**
      * Registers custom serializers with the provided builder.
      */
@@ -89,6 +92,14 @@ abstract class SpongeConfigSerializers {
         builder.register(DoubleOr.Default.Serializer)
         builder.register(DoubleOr.Disabled.Serializer)
         builder.register(MapSerializer.TYPE, MapSerializer(false))
+        builder.register(UuidSerializer)
+        builder.register(RegexSerializer)
+        builder.register(PatternSerializer)
+        builder.register(UriSerializer)
+        builder.register(UrlSerializer)
+        builder.register(PathSerializer)
+        builder.register(FileSerializer)
+        builder.register(TextColorSerializer)
 
         //region fastutil maps
         // @formatter:off
@@ -138,10 +149,32 @@ abstract class SpongeConfigSerializers {
             ObjectMapper.factoryBuilder()
                 .addDiscoverer(dataClassFieldDiscoverer())
                 .addConstraint(PositiveNumber.Companion.Factory)
+                .addConstraint(NegativeNumber.Companion.Factory)
                 .addConstraint(MinNumber.Companion.Factory)
                 .addConstraint(MaxNumber.Companion.Factory)
+                .addConstraint(NotBlank.Companion.Factory)
+                .addConstraint(Trimmed.Companion.Factory)
+                .addConstraint(MaxLength.Companion.Factory)
+                .addConstraint(MinLength.Companion.Factory)
+                .addConstraint(StartsWith.Companion.Factory)
+                .addConstraint(EndsWith.Companion.Factory)
+                .addConstraint(Contains.Companion.Factory)
+                .addConstraint(Range.Companion.Factory)
+                .addConstraint(MinSize.Companion.Factory)
+                .addConstraint(MaxSize.Companion.Factory)
+                .addConstraint(NotEmpty.Companion.Factory)
+                .addConstraint(NoDuplicates.Companion.Factory)
+                .addConstraint(MinDuration.Companion.Factory)
+                .addConstraint(MaxDuration.Companion.Factory)
+                .addConstraint(DisallowValues.Companion.Factory)
+                .addConstraint(Namespace.Companion.Factory)
+                .addConstraint(ExistingFile.Companion.Factory)
+                .addConstraint(Directory.Companion.Factory)
+                .addConstraint(WritablePath.Companion.Factory)
                 .build()
         )
+
+        registerDefaults(builder)
     }
 
     /**
