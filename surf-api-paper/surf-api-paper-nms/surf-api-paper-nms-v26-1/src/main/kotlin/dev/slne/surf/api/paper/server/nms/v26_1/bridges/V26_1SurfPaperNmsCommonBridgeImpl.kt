@@ -6,7 +6,7 @@ import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNmsBlock
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNmsItem
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
+import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
 import io.papermc.paper.configuration.GlobalConfiguration
 import net.kyori.adventure.text.Component
 import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
@@ -80,10 +80,8 @@ class V26_1SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     }
 
     override fun getServerIp(): InetSocketAddress {
-        val channels =
-            V26_1Reflection.SERVER_CONNECTION_LISTENER_PROXY.getChannels(MinecraftServer.getServer().connection)
-        val channel =
-            channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
+        val channels = V26_1NmsReflections.getConnectionChannelFutures(MinecraftServer.getServer().connection)
+        val channel = channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
 
         return channel.channel().localAddress() as? InetSocketAddress
             ?: error("Local address is not an instance of InetSocketAddress")

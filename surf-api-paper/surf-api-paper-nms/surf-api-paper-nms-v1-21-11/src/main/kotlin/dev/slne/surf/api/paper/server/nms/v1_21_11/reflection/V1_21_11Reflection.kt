@@ -4,6 +4,7 @@ import dev.slne.surf.api.paper.util.reflectionProxy
 import xyz.jpenilla.reflectionremapper.ReflectionRemapper
 import xyz.jpenilla.reflectionremapper.proxy.ReflectionProxyFactory
 
+@Suppress("ClassName")
 object V1_21_11Reflection {
     lateinit var ITEM_PROXY: V1_21_11ItemProxy
         private set

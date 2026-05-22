@@ -1,4 +1,4 @@
-package dev.slne.surf.api.paper.server.nms.v1_21_11.reflection
+package dev.slne.surf.api.paper.server.nms.v26_1.reflection
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -21,8 +21,7 @@ import java.util.*
 
 @Suppress("ClassName")
 @GenerateReflection
-interface V1_21_11NmsReflections {
-
+interface V26_1NmsReflections {
     @ReflectedField("chatMessageChain")
     fun getChatMessageChain(instance: ServerGamePacketListenerImpl): FutureChain
 
@@ -86,5 +85,5 @@ interface V1_21_11NmsReflections {
     )
     fun getServerStatsCounterGson(): Gson
 
-    companion object : V1_21_11NmsReflections by generatedReflectionAccessor()
+    companion object : V26_1NmsReflections by generatedReflectionAccessor()
 }

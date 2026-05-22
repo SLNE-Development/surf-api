@@ -8,7 +8,7 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1SurfGlowingApiImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1Reflection
+import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
 import glm_.or
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
@@ -67,7 +67,7 @@ object V26_1GlowingPacketListener : PacketListener {
         var flagsFound = false
         var edited = false
         val newItems = mutableObjectListOf<DataValue<*>>(incoming.size + 1)
-        val dataFlagsShared = V26_1Reflection.ENTITY_PROXY.getDataFlagsSharedId()
+        val dataFlagsShared = V26_1NmsReflections.getEntityDataFlagsSharedId()
         val dataFlagsSharedId = dataFlagsShared.id
 
         for (dataValue in incoming) {

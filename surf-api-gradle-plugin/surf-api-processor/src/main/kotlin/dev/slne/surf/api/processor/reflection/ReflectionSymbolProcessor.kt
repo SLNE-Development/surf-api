@@ -193,7 +193,7 @@ class ReflectionSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbo
 
             val mode = try {
                 VarHandle.AccessMode.valueOf(modeString)
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 throw ReflectionProcessorException("Invalid VarHandle mode: $modeString")
             }
 
@@ -389,7 +389,6 @@ class ReflectionSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbo
         val declaration = type.declaration as? KSClassDeclaration ?: return null
         val qualifiedName = declaration.qualifiedName?.asString() ?: return null
 
-        println("typeArg: $qualifiedName")
         if (qualifiedName == ClassNames.UNSPECIFIED_REFLECTION_TARGET) {
             return null
         }
