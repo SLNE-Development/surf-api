@@ -12,7 +12,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.block.BlockGlowingData
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.block.BlockPlayerData
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.entity.EntityGlowingData
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.entity.EntityPlayerData
-import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
+import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import dev.slne.surf.api.paper.util.isChunkVisible
 import io.papermc.paper.adventure.PaperAdventure
 import net.kyori.adventure.text.format.NamedTextColor
@@ -28,7 +28,7 @@ object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
     private val entityPlayerData = ConcurrentHashMap<UUID, EntityPlayerData>()
     private val blockPlayerData = ConcurrentHashMap<UUID, BlockPlayerData>()
 
-    val glowingFlag = 1 shl V1_21_11Reflection.ENTITY_PROXY.getFlagGlowing()
+    val glowingFlag = 1 shl V1_21_11NmsReflections.getEntityFlagGlowing()
 
     override fun makeGlowing(
         target: Entity,

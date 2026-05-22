@@ -7,7 +7,7 @@ import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPacke
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.V1_21_11SurfPaperNmsGlowingBridgeImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.V1_21_11PacketOperationImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.V1_21_11SurfGlowingApiImpl
-import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
+import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import glm_.shl
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
@@ -74,6 +74,6 @@ class BlockGlowingData(
     }
 
     companion object {
-        val invisibleFlag = 1.toByte() shl V1_21_11Reflection.ENTITY_PROXY.getFlagInvisible()
+        val invisibleFlag = 1.toByte() shl V1_21_11NmsReflections.getEntityFlagInvisible()
     }
 }

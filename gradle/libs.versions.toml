@@ -80,6 +80,7 @@ kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-co
 kotlinxCoroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinxCoroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
+kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler", version.ref = "kotlinVersion" }
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlin-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
 kotlin-serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
@@ -115,7 +116,7 @@ adventure-nbt = { module = "net.kyori:adventure-nbt", version.ref = "adventure-a
 
 # Velocity
 velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api" }
-velocity-proxy-ctd = { module = "com.velocityctd:velocity-proxy", version.ref = "velocity-api"}
+velocity-proxy-ctd = { module = "com.velocityctd:velocity-proxy", version.ref = "velocity-api" }
 
 # PAPI
 placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }

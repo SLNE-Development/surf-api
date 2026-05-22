@@ -2,10 +2,7 @@ package dev.slne.surf.api.processor.util
 
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
-import com.google.devtools.ksp.symbol.ClassKind
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSAnnotation
-import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.*
 
 object AnnotationUtils {
     private const val MAX_RECURSION_DEPTH = 25
@@ -147,6 +144,31 @@ fun KSAnnotated.findAllAnnotationsRecursive(annotationFqName: String): List<KSAn
 
 fun KSAnnotation.getArgumentValue(name: String): Any? {
     return arguments.find { it.name?.asString() == name }?.value
+}
+
+fun KSAnnotation.stringArg(name: String, default: String = ""): String {
+    return getArgumentValue(name) as? String ?: default
+}
+
+fun KSAnnotation.booleanArg(name: String, default: Boolean): Boolean {
+    return getArgumentValue(name) as? Boolean ?: default
+}
+
+fun KSAnnotation.intArg(name: String, default: Int): Int {
+    return (getArgumentValue(name) as? Number)?.toInt() ?: default
+}
+
+fun KSAnnotation.longArg(name: String, default: Long): Long {
+    return (getArgumentValue(name) as? Number)?.toLong() ?: default
+}
+
+fun KSAnnotation.enumArg(name: String, default: String): String {
+    val value = getArgumentValue(name) ?: return default
+
+    return when (value) {
+        is KSName -> value.getShortName()
+        else -> value.toString().substringAfterLast('.')
+    }
 }
 
 inline fun <reified T> KSAnnotation.getArgumentValueAs(name: String): T? {
