@@ -178,6 +178,115 @@ public abstract interface annotation class dev/slne/surf/api/shared/api/componen
 public abstract interface annotation class dev/slne/surf/api/shared/api/component/types/Service : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantBooleanArgument : java/lang/annotation/Annotation {
+	public abstract fun value ()Z
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantBooleanArgument$Container : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ldev/slne/surf/api/shared/api/reflection/ConstantBooleanArgument;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantIntArgument : java/lang/annotation/Annotation {
+	public abstract fun value ()I
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantIntArgument$Container : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ldev/slne/surf/api/shared/api/reflection/ConstantIntArgument;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantLongArgument : java/lang/annotation/Annotation {
+	public abstract fun value ()J
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantLongArgument$Container : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ldev/slne/surf/api/shared/api/reflection/ConstantLongArgument;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantStringArgument : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ConstantStringArgument$Container : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ldev/slne/surf/api/shared/api/reflection/ConstantStringArgument;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/GenerateReflection : java/lang/annotation/Annotation {
+	public abstract fun className ()Ljava/lang/String;
+	public abstract fun packageName ()Ljava/lang/String;
+	public abstract fun singleton ()Z
+	public abstract fun target ()Ljava/lang/Class;
+	public abstract fun targetName ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/shared/api/reflection/GeneratedReflectionAccessorKt {
+	public static final fun generatedReflectionAccessor (Ljava/lang/Class;)Ljava/lang/Object;
+	public static final fun generatedReflectionAccessor (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/shared/api/reflection/GeneratedReflectionAccessors : java/lang/ClassValue {
+	public static final field INSTANCE Ldev/slne/surf/api/shared/api/reflection/GeneratedReflectionAccessors;
+	public final fun getTyped (Ljava/lang/Class;)Ljava/lang/Object;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ReflectedConstructor : java/lang/annotation/Annotation {
+	public abstract fun descriptor ()Ljava/lang/String;
+	public abstract fun invocation ()Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+	public abstract fun target ()Ljava/lang/Class;
+	public abstract fun targetName ()Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ReflectedField : java/lang/annotation/Annotation {
+	public abstract fun access ()Ldev/slne/surf/api/shared/api/reflection/ReflectedFieldAccess;
+	public abstract fun isStatic ()Z
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun target ()Ljava/lang/Class;
+	public abstract fun targetName ()Ljava/lang/String;
+	public abstract fun type ()Ljava/lang/Class;
+	public abstract fun typeDescriptor ()Ljava/lang/String;
+	public abstract fun typeName ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/shared/api/reflection/ReflectedFieldAccess : java/lang/Enum {
+	public static final field GET Ldev/slne/surf/api/shared/api/reflection/ReflectedFieldAccess;
+	public static final field SET Ldev/slne/surf/api/shared/api/reflection/ReflectedFieldAccess;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/shared/api/reflection/ReflectedFieldAccess;
+	public static fun values ()[Ldev/slne/surf/api/shared/api/reflection/ReflectedFieldAccess;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ReflectedMethod : java/lang/annotation/Annotation {
+	public abstract fun descriptor ()Ljava/lang/String;
+	public abstract fun invocation ()Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+	public abstract fun isStatic ()Z
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun target ()Ljava/lang/Class;
+	public abstract fun targetName ()Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/shared/api/reflection/ReflectedVarHandle : java/lang/annotation/Annotation {
+	public abstract fun invocation ()Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+	public abstract fun isStatic ()Z
+	public abstract fun mode ()Ljava/lang/invoke/VarHandle$AccessMode;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun target ()Ljava/lang/Class;
+	public abstract fun targetName ()Ljava/lang/String;
+	public abstract fun type ()Ljava/lang/Class;
+	public abstract fun typeDescriptor ()Ljava/lang/String;
+	public abstract fun typeName ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode : java/lang/Enum {
+	public static final field AS_TYPE_EXACT Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+	public static final field EXACT Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+	public static final field INVOKE Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+	public static fun values ()[Ldev/slne/surf/api/shared/api/reflection/ReflectionInvocationMode;
+}
+
+public final class dev/slne/surf/api/shared/api/reflection/UnspecifiedReflectionTarget {
+}
+
 public abstract interface annotation class dev/slne/surf/api/shared/api/util/InternalInvokerApi : java/lang/annotation/Annotation {
 }
 

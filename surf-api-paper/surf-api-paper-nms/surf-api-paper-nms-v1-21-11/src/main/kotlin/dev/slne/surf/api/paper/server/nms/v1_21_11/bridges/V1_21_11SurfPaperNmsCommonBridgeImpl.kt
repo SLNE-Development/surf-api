@@ -6,7 +6,7 @@ import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNmsBlock
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNmsItem
-import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
+import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import io.papermc.paper.configuration.GlobalConfiguration
 import net.kyori.adventure.text.Component
 import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
@@ -79,8 +79,7 @@ class V1_21_11SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     }
 
     override fun getServerIp(): InetSocketAddress {
-        val channels =
-            V1_21_11Reflection.SERVER_CONNECTION_LISTENER_PROXY.getChannels(MinecraftServer.getServer().connection)
+        val channels = V1_21_11NmsReflections.getConnectionChannelFutures(MinecraftServer.getServer().connection)
         val channel =
             channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
 

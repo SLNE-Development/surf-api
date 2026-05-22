@@ -7,7 +7,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.V1_21_11Packe
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.V1_21_11TeamData
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.listener.V1_21_11GlowingPacketListener
-import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
+import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket
 import net.minecraft.network.syncher.SynchedEntityData.DataValue
@@ -40,7 +40,7 @@ object V1_21_11SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
 
     fun setEntityFlags(entityId: Int, flags: Byte, ignorePacket: Boolean = false): PacketOperation =
         V1_21_11PacketOperationImpl.simple {
-            val dataAccessor = V1_21_11Reflection.ENTITY_PROXY.getDataFlagsSharedId()
+            val dataAccessor = V1_21_11NmsReflections.getEntityDataFlagsSharedId()
             val data = DataValue(dataAccessor.id(), dataAccessor.serializer, flags)
             ClientboundSetEntityDataPacket(entityId, listOf(data)).also {
                 if (ignorePacket) {
@@ -50,7 +50,7 @@ object V1_21_11SurfPaperNmsGlowingBridgeImpl : SurfPaperNmsGlowingBridge {
         }
 
     override fun getCurrentFlags(entity: Entity): Byte {
-        val dataAccessor = V1_21_11Reflection.ENTITY_PROXY.getDataFlagsSharedId()
+        val dataAccessor = V1_21_11NmsReflections.getEntityDataFlagsSharedId()
         return entity.toNms().entityData.get(dataAccessor)
     }
 }
