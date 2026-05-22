@@ -13,9 +13,14 @@ import com.palantir.javapoet.TypeName
 import com.palantir.javapoet.WildcardTypeName
 import dev.slne.surf.api.processor.ClassNames
 import dev.slne.surf.api.processor.ShortClassNames
+import dev.slne.surf.api.processor.ShortClassNames.CONSTANT_BOOLEAN_ARGUMENT
+import dev.slne.surf.api.processor.ShortClassNames.CONSTANT_INT_ARGUMENT
+import dev.slne.surf.api.processor.ShortClassNames.CONSTANT_LONG_ARGUMENT
+import dev.slne.surf.api.processor.ShortClassNames.CONSTANT_STRING_ARGUMENT
 import dev.slne.surf.api.processor.reflection.emitter.ReflectionJavaEmitter
 import dev.slne.surf.api.processor.reflection.exception.ReflectionProcessorException
 import dev.slne.surf.api.processor.reflection.model.*
+import dev.slne.surf.api.processor.reflection.model.ConstantArgument.*
 import dev.slne.surf.api.processor.util.*
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -342,21 +347,14 @@ class ReflectionSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbo
     private fun KSFunctionDeclaration.constantArguments(): List<ConstantArgument> {
         val result = mutableListOf<ConstantArgument>()
 
-        annotations
-            .filter { it.shortName.asString() == ShortClassNames.CONSTANT_INT_ARGUMENT }
-            .forEach { result += ConstantArgument.IntValue(it.intArg("value", 0)) }
-
-        annotations
-            .filter { it.shortName.asString() == ShortClassNames.CONSTANT_LONG_ARGUMENT }
-            .forEach { result += ConstantArgument.LongValue(it.longArg("value", 0L)) }
-
-        annotations
-            .filter { it.shortName.asString() == ShortClassNames.CONSTANT_BOOLEAN_ARGUMENT }
-            .forEach { result += ConstantArgument.BooleanValue(it.booleanArg("value", false)) }
-
-        annotations
-            .filter { it.shortName.asString() == ShortClassNames.CONSTANT_STRING_ARGUMENT }
-            .forEach { result += ConstantArgument.StringValue(it.stringArg("value")) }
+        for (annotation in annotations) {
+            when (annotation.shortName.asString()) {
+                CONSTANT_INT_ARGUMENT -> result += IntValue(annotation.intArg("value", 0))
+                CONSTANT_LONG_ARGUMENT -> result += LongValue(annotation.longArg("value", 0L))
+                CONSTANT_BOOLEAN_ARGUMENT -> result += BooleanValue(annotation.booleanArg("value", false))
+                CONSTANT_STRING_ARGUMENT -> result += StringValue(annotation.stringArg("value"))
+            }
+        }
 
         return result
     }
