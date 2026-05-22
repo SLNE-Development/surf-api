@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
  * Returns the generated reflection implementation for [T].
  *
  * This function is intended for companion-object delegation inside interfaces annotated with
- * [GenerateReflection]&#58;  *
+ * [GenerateReflection]&#58;
  * ```kotlin
  * @GenerateReflection
  * interface ExampleReflection {
