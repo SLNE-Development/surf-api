@@ -5,7 +5,7 @@ import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.jorel.commandapi.kotlindsl.subcommand
 import dev.slne.surf.api.core.messages.adventure.sendText
-import dev.slne.surf.api.paper.event.common.PlayerAfkStateChangeEvent
+import dev.slne.surf.api.paper.event.playtime.AfkStateChangeEvent
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.listener.PlayerAfkStateChangeEventListener
 
 class SurfSyncEventHandlerTest(name: String) : CommandAPICommand(name) {
@@ -34,7 +34,7 @@ class SurfSyncEventHandlerTest(name: String) : CommandAPICommand(name) {
         subcommand("dispatch") {
             playerExecutor { sender, _ ->
                 val playerUuid = sender.uniqueId
-                val event = PlayerAfkStateChangeEvent(playerUuid, fromState = false, toState = true)
+                val event = AfkStateChangeEvent(playerUuid, fromState = false, toState = true)
                 event.call()
                 sender.sendText {
                     appendInfoPrefix()
