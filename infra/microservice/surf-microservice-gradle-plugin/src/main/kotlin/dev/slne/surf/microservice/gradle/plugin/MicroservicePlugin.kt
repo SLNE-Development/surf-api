@@ -4,8 +4,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.dependencies
-import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
-import org.jetbrains.kotlin.gradle.utils.RUNTIME_ONLY
 
 @Suppress("unused")
 abstract class MicroservicePlugin : Plugin<Project> {
@@ -19,8 +17,8 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 val projectModification = moduleDependency.moduleProjectModification
 
                 dependencies {
-                    add(COMPILE_ONLY, "dev.slne.surf.microservice:${apiModule}:+")
-                    add(RUNTIME_ONLY, "dev.slne.surf.microservice:${runtimeModule}:+")
+                    "compileOnlyApi"("dev.slne.surf.microservice:${apiModule}:+")
+                    "runtimeOnly"("dev.slne.surf.microservice:${runtimeModule}:+")
                 }
 
                 projectModification()
@@ -39,7 +37,7 @@ abstract class MicroservicePlugin : Plugin<Project> {
                     }
 
                     if (applyServerRuntimeDependency) {
-                        add(RUNTIME_ONLY, "dev.slne.surf.rabbitmq:surf-rabbitmq-server:+")
+                        "runtimeOnly"("dev.slne.surf.rabbitmq:surf-rabbitmq-server:+")
                     }
                 }
             }
