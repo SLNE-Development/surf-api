@@ -10,6 +10,6 @@ jobs:
   build:
     uses: SLNE-Development/surf-workflows/.github/workflows/build-publish-release-gradle.yml@master
     with:
-      modules: "surf-redis-paper-*-all.jar;surf-redis-velocity-*-all.jar"
+      modules: "surf-redis-paper-*-all.jar;surf-redis-velocity-*-all.jar;surf-redis-standalone-*-all.jar"
       check-kotlin-abi: true
     secrets: inherit
