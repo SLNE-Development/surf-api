@@ -29,10 +29,14 @@ abstract class MicroservicePlugin : Plugin<Project> {
             extension.rabbitSettings.orNull?.let { rabbitSettings ->
                 val moduleName = rabbitSettings.rabbitModule.module
                 val applyServerRuntimeDependency = rabbitSettings.applyRabbitServerRuntimeDependency
+                val applyKspProcessor = rabbitSettings.applyRabbitKspProcessor
 
                 dependencies {
                     "compileOnlyApi"("dev.slne.surf.rabbitmq:surf-rabbitmq-$moduleName:+")
-                    "ksp"("dev.slne.surf.rabbitmq:surf-rabbitmq-ksp:+") // ksp is provided by surf-api
+
+                    if (applyKspProcessor) {
+                        "ksp"("dev.slne.surf.rabbitmq:surf-rabbitmq-ksp:+") // ksp is provided by surf-api
+                    }
 
                     if (applyServerRuntimeDependency) {
                         add(RUNTIME_ONLY, "dev.slne.surf.rabbitmq:surf-rabbitmq-server:+")
