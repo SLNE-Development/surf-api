@@ -17,8 +17,8 @@ enum class SurfMicroserviceModule(
         apiModule = "surf-microservice-api-microservice",
         runtimeModule = "surf-microservice-microservice",
         moduleProjectModification = {
-            tasks.withType<ShadowJar>().configureEach { shadowJar ->
-                shadowJar.mainClass.set("dev.slne.surf.microservice.runtime.microservice.MicroserviceLauncherKt")
+            tasks.withType<ShadowJar>().configureEach {
+                mainClass.set("dev.slne.surf.microservice.runtime.microservice.MicroserviceLauncherKt")
             }
         }
     ),
