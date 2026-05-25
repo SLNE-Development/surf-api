@@ -1,13 +1,10 @@
-import java.nio.file.Files
-
 plugins {
     id("dev.slne.surf.api.gradle.core")
+    id("com.github.gmazzo.buildconfig") version "6.0.9"
 
     idea
     `kotlin-dsl`
 }
-
-val mcVersion: String by project
 
 dependencies {
     implementation("dev.slne.surf.api:surf-api-gradle-plugin:+")
@@ -33,40 +30,10 @@ gradlePlugin {
     }
 }
 
-val constantsOutputDirectory: Provider<Directory> =
-    layout.buildDirectory.dir("generated/dev/slne/surf/microservice/gradle/generated")
-
-val generateConstants by tasks.registering {
-    val outputFile = constantsOutputDirectory.map { it.file("Constants.kt") }
-
-    inputs.property("mcVersion", mcVersion)
-    inputs.property("version", rootProject.findProperty("version") as String)
-
-    outputs.dir(constantsOutputDirectory)
-
-    doLast {
-        val content = """
-            |package dev.slne.surf.microservice.gradle.generated
-            |
-            |internal object Constants {
-            |    const val MINECRAFT_VERSION = "$mcVersion"
-            |    const val SURF_MICROSERVICE_VERSION = "+"
-            |    const val SURF_MICROSERVICE_FULL_VERSION = "${rootProject.findProperty("version") as String}"
-            |}
-        """.trimMargin()
-
-        Files.createDirectories(constantsOutputDirectory.get().asFile.toPath())
-
-        outputFile.get().asFile.writeText(content)
-    }
-}
-
-sourceSets.main {
-    kotlin.srcDirs(generateConstants.map { it.outputs })
-}
-
-idea {
-    module {
-        generatedSourceDirs.add(constantsOutputDirectory.get().asFile)
+buildConfig {
+    forClass("dev.slne.surf.microservice.gradle.generated", "Constants") {
+        buildConfigField("MINECRAFT_VERSION", providers.gradleProperty("mcVersion"))
+        buildConfigField("SURF_MICROSERVICE_VERSION", "+")
+        buildConfigField("SURF_MICROSERVICE_FULL_VERSION", providers.gradleProperty("version"))
     }
 }

@@ -1,10 +1,13 @@
 package dev.slne.surf.microservice.gradle.plugin
 
-import dev.slne.surf.microservice.gradle.generated.Constants
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.dependencies
+import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
+import org.jetbrains.kotlin.gradle.utils.RUNTIME_ONLY
 
+@Suppress("unused")
 abstract class MicroservicePlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         val extension = extensions.create<MicroserviceExtension>("surfMicroservice")
@@ -15,33 +18,25 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 val runtimeModule = moduleDependency.runtimeModule
                 val projectModification = moduleDependency.moduleProjectModification
 
-                dependencies.add(
-                    "compileOnlyApi",
-                    "dev.slne.surf.microservice:${apiModule}:+"
-                )
+                dependencies {
+                    add(COMPILE_ONLY, "dev.slne.surf.microservice:${apiModule}:+")
+                    add(RUNTIME_ONLY, "dev.slne.surf.microservice:${runtimeModule}:+")
+                }
 
-                dependencies.add(
-                    "runtimeOnly",
-                    "dev.slne.surf.microservice:${runtimeModule}:+"
-                )
-
-                projectModification(this)
+                projectModification()
             }
 
             extension.rabbitSettings.orNull?.let { rabbitSettings ->
                 val moduleName = rabbitSettings.rabbitModule.module
                 val applyServerRuntimeDependency = rabbitSettings.applyRabbitServerRuntimeDependency
 
-                dependencies.add(
-                    "compileOnlyApi",
-                    "dev.slne.surf.rabbitmq:surf-rabbitmq-$moduleName:+"
-                )
+                dependencies {
+                    "compileOnlyApi"("dev.slne.surf.rabbitmq:surf-rabbitmq-$moduleName:+")
+                    "ksp"("dev.slne.surf.rabbitmq:surf-rabbitmq-ksp:+") // ksp is provided by surf-api
 
-                if (applyServerRuntimeDependency) {
-                    dependencies.add(
-                        "runtimeOnly",
-                        "dev.slne.surf.rabbitmq:surf-rabbitmq-server:+"
-                    )
+                    if (applyServerRuntimeDependency) {
+                        add(RUNTIME_ONLY, "dev.slne.surf.rabbitmq:surf-rabbitmq-server:+")
+                    }
                 }
             }
         }

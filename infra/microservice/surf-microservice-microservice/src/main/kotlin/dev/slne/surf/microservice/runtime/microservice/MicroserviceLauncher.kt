@@ -40,11 +40,7 @@ object MicroserviceLauncher {
 
         log.atInfo().log("Microservice started successfully. Type 'exit' or 'quit' to shut down.")
 
-        coroutineScope {
-            launch {
-                awaitCancellation()
-            }.join()
-        }
+        awaitCancellation()
     }
 
     @InternalMicroserviceApi
