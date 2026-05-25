@@ -1,7 +1,7 @@
 package dev.slne.surf.microservice.gradle.plugin.rabbit
 
 enum class RabbitModule(
-    val module: String
+    internal val module: String
 ) {
     CLIENT_API("client-api"),
     COMMON_API("common-api"),

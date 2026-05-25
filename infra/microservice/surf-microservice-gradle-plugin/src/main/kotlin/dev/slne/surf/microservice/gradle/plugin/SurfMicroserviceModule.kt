@@ -2,11 +2,12 @@ package dev.slne.surf.microservice.gradle.plugin
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.withType
 
 enum class SurfMicroserviceModule(
-    val apiModule: String,
-    val runtimeModule: String,
-    val moduleProjectModification: (Project) -> Unit = {}
+    internal val apiModule: String,
+    internal val runtimeModule: String,
+    internal val moduleProjectModification: Project.() -> Unit = {}
 ) {
     COMMON(
         apiModule = "surf-microservice-api-common",
@@ -15,15 +16,9 @@ enum class SurfMicroserviceModule(
     MICROSERVICE(
         apiModule = "surf-microservice-api-microservice",
         runtimeModule = "surf-microservice-microservice",
-        moduleProjectModification = { project ->
-            project.tasks.named("shadowJar", ShadowJar::class.java) {
-                manifest {
-                    attributes(
-                        mapOf(
-                            "Main-Class" to "dev.slne.surf.microservice.runtime.microservice.MicroserviceLauncherKt"
-                        )
-                    )
-                }
+        moduleProjectModification = {
+            tasks.withType<ShadowJar>().configureEach { shadowJar ->
+                shadowJar.mainClass.set("dev.slne.surf.microservice.runtime.microservice.MicroserviceLauncherKt")
             }
         }
     ),

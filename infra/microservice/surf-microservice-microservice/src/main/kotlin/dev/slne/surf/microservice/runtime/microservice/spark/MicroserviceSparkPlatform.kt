@@ -20,6 +20,6 @@ object MicroserviceSparkPlatform : PlatformInfo {
     }
 
     override fun getMinecraftVersion(): String {
-        return "1.21.11"
+        return "26.1"
     }
 }

@@ -11,12 +11,14 @@ abstract class MicroserviceExtension(objects: ObjectFactory) {
 
     fun withRabbitModule(
         rabbitModule: RabbitModule,
-        applyRabbitServerRuntimeDependency: Boolean = false
+        applyRabbitServerRuntimeDependency: Boolean = false,
+        applyRabbitKspProcessor: Boolean = true
     ) {
         this.rabbitSettings.set(
             RabbitModuleSettings(
                 rabbitModule,
-                applyRabbitServerRuntimeDependency
+                applyRabbitServerRuntimeDependency,
+                applyRabbitKspProcessor
             )
         )
 
