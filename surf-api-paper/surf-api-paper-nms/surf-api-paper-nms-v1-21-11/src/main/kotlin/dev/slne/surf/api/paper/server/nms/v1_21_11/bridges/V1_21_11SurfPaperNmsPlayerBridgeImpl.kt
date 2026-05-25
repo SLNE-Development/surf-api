@@ -45,6 +45,7 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
+import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.createTempFile
@@ -230,6 +231,10 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         edit(inventoryEdit)
         saveInventoryEdit(server, rootPathElement, currentTag, nameAndId, inventoryEdit)
+    }
+
+    override fun getPlayerDataDir(): File {
+        return MinecraftServer.getServer().playerDataStorage.playerDir
     }
 
     private suspend fun loadPlayerTag(server: MinecraftServer, nameAndId: NameAndId): CompoundTag {
