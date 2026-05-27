@@ -151,7 +151,10 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
         suspend fun refreshForSender(sender: Player) {
             withContext(scope().coroutineContext.minusKey(Job)) {
                 try {
-                    cached.put(sender.uniqueId, requirement(sender))
+                    val isRequirementMet = requirement(sender)
+                    if (sender.isConnected) { // check if this player instance is still connected
+                        cached.put(sender.uniqueId, isRequirementMet)
+                    }
                 } catch (e: Throwable) {
                     if (e is CancellationException) throw e
                     log.atWarning()
