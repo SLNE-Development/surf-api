@@ -27,6 +27,7 @@ import org.bukkit.inventory.meta.trim.TrimPattern
 import org.bukkit.map.MapCursor
 import org.bukkit.potion.PotionEffectType
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
+import kotlin.reflect.KClass
 
 @Suppress("UnstableApiUsage")
 @AutoService(SpongeConfigSerializers::class)
@@ -43,44 +44,44 @@ class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
 
             //region Registry serializer
             //@formatter:off
-            builder.register(RegistryValueSerializer(GameEvent::class.java, RegistryKey.GAME_EVENT, true))
-            builder.register(RegistryValueSerializer(StructureType::class.java, RegistryKey.STRUCTURE_TYPE, true))
-            builder.register(RegistryValueSerializer(PotionEffectType::class.java, RegistryKey.MOB_EFFECT, true))
-            builder.register(RegistryValueSerializer(BlockType::class.java, RegistryKey.BLOCK, true))
-            builder.register(RegistryValueSerializer(ItemType::class.java, RegistryKey.ITEM, true))
-            builder.register(RegistryValueSerializer(Villager.Profession::class.java, RegistryKey.VILLAGER_PROFESSION, true))
-            builder.register(RegistryValueSerializer(PoiType::class.java, RegistryKey.POINT_OF_INTEREST_TYPE, true))
-            builder.register(RegistryValueSerializer(Villager.Type::class.java, RegistryKey.VILLAGER_TYPE, true))
-            builder.register(RegistryValueSerializer(MapCursor.Type::class.java, RegistryKey.MAP_DECORATION_TYPE, true))
-            builder.register(RegistryValueSerializer(MenuType::class.java, RegistryKey.MENU, true))
-            builder.register(RegistryValueSerializer(Attribute::class.java, RegistryKey.ATTRIBUTE, true))
-            builder.register(RegistryValueSerializer(Fluid::class.java, RegistryKey.FLUID, true))
-            builder.register(RegistryValueSerializer(Sound::class.java, RegistryKey.SOUND_EVENT, true))
-            builder.register(RegistryValueSerializer(DataComponentType::class.java, RegistryKey.DATA_COMPONENT_TYPE, true))
+            builder.registerSafeRegistry({ GameEvent::class }, { RegistryKey.GAME_EVENT })
+            builder.registerSafeRegistry({ StructureType::class }, { RegistryKey.STRUCTURE_TYPE })
+            builder.registerSafeRegistry({ PotionEffectType::class }, { RegistryKey.MOB_EFFECT })
+            builder.registerSafeRegistry({ BlockType::class }, { RegistryKey.BLOCK })
+            builder.registerSafeRegistry({ ItemType::class }, { RegistryKey.ITEM })
+            builder.registerSafeRegistry({ Villager.Profession::class }, { RegistryKey.VILLAGER_PROFESSION })
+            builder.registerSafeRegistry({ PoiType::class }, { RegistryKey.POINT_OF_INTEREST_TYPE })
+            builder.registerSafeRegistry({ Villager.Type::class }, { RegistryKey.VILLAGER_TYPE })
+            builder.registerSafeRegistry({ MapCursor.Type::class }, { RegistryKey.MAP_DECORATION_TYPE })
+            builder.registerSafeRegistry({ MenuType::class }, { RegistryKey.MENU })
+            builder.registerSafeRegistry({ Attribute::class }, { RegistryKey.ATTRIBUTE })
+            builder.registerSafeRegistry({ Fluid::class }, { RegistryKey.FLUID })
+            builder.registerSafeRegistry({ Sound::class }, { RegistryKey.SOUND_EVENT })
+            builder.registerSafeRegistry({ DataComponentType::class }, { RegistryKey.DATA_COMPONENT_TYPE })
+            builder.registerSafeRegistry({ Biome::class }, { RegistryKey.BIOME })
+            builder.registerSafeRegistry({ Structure::class }, { RegistryKey.STRUCTURE })
+            builder.registerSafeRegistry({ TrimMaterial::class }, { RegistryKey.TRIM_MATERIAL })
+            builder.registerSafeRegistry({ TrimPattern::class }, { RegistryKey.TRIM_PATTERN })
+            builder.registerSafeRegistry({ DamageType::class }, { RegistryKey.DAMAGE_TYPE })
+            builder.registerSafeRegistry({ Wolf.Variant::class }, { RegistryKey.WOLF_VARIANT })
+            builder.registerSafeRegistry({ Wolf.SoundVariant::class }, { RegistryKey.WOLF_SOUND_VARIANT })
+            builder.registerSafeRegistry({ Enchantment::class }, { RegistryKey.ENCHANTMENT })
+            builder.registerSafeRegistry({ JukeboxSong::class }, { RegistryKey.JUKEBOX_SONG })
+            builder.registerSafeRegistry({ PatternType::class }, { RegistryKey.BANNER_PATTERN })
+            builder.registerSafeRegistry({ Art::class }, { RegistryKey.PAINTING_VARIANT })
+            builder.registerSafeRegistry({ MusicInstrument::class }, { RegistryKey.INSTRUMENT })
+            builder.registerSafeRegistry({ Cat.Type::class }, { RegistryKey.CAT_VARIANT })
+            builder.registerSafeRegistry({ Cat.SoundVariant::class }, { RegistryKey.CAT_SOUND_VARIANT })
+            builder.registerSafeRegistry({ Frog.Variant::class }, { RegistryKey.FROG_VARIANT })
+            builder.registerSafeRegistry({ Chicken.Variant::class }, { RegistryKey.CHICKEN_VARIANT })
+            builder.registerSafeRegistry({ Chicken.SoundVariant::class }, { RegistryKey.CHICKEN_SOUND_VARIANT })
+            builder.registerSafeRegistry({ Cow.Variant::class }, { RegistryKey.COW_VARIANT })
+            builder.registerSafeRegistry({ Cow.SoundVariant::class }, { RegistryKey.COW_SOUND_VARIANT })
+            builder.registerSafeRegistry({ Pig.Variant::class }, { RegistryKey.PIG_VARIANT })
+            builder.registerSafeRegistry({ Pig.SoundVariant::class }, { RegistryKey.PIG_SOUND_VARIANT })
+            builder.registerSafeRegistry({ ZombieNautilus.Variant::class }, { RegistryKey.ZOMBIE_NAUTILUS_VARIANT })
+            builder.registerSafeRegistry({ Dialog::class }, { RegistryKey.DIALOG })
             builder.register(RegistryValueSerializer(object : TypeToken<GameRule<*>>() {}, RegistryKey.GAME_RULE, true))
-            builder.register(RegistryValueSerializer(Biome::class.java, RegistryKey.BIOME, true))
-            builder.register(RegistryValueSerializer(Structure::class.java, RegistryKey.STRUCTURE, true))
-            builder.register(RegistryValueSerializer(TrimMaterial::class.java, RegistryKey.TRIM_MATERIAL, true))
-            builder.register(RegistryValueSerializer(TrimPattern::class.java, RegistryKey.TRIM_PATTERN, true))
-            builder.register(RegistryValueSerializer(DamageType::class.java, RegistryKey.DAMAGE_TYPE, true))
-            builder.register(RegistryValueSerializer(Wolf.Variant::class.java, RegistryKey.WOLF_VARIANT, true))
-            builder.register(RegistryValueSerializer(Wolf.SoundVariant::class.java, RegistryKey.WOLF_SOUND_VARIANT, true))
-            builder.register(RegistryValueSerializer(Enchantment::class.java, RegistryKey.ENCHANTMENT, true))
-            builder.register(RegistryValueSerializer(JukeboxSong::class.java, RegistryKey.JUKEBOX_SONG, true))
-            builder.register(RegistryValueSerializer(PatternType::class.java, RegistryKey.BANNER_PATTERN, true))
-            builder.register(RegistryValueSerializer(Art::class.java, RegistryKey.PAINTING_VARIANT, true))
-            builder.register(RegistryValueSerializer(MusicInstrument::class.java, RegistryKey.INSTRUMENT, true))
-            builder.register(RegistryValueSerializer(Cat.Type::class.java, RegistryKey.CAT_VARIANT, true))
-            builder.register(RegistryValueSerializer(Cat.SoundVariant::class.java, RegistryKey.CAT_SOUND_VARIANT, true))
-            builder.register(RegistryValueSerializer(Frog.Variant::class.java, RegistryKey.FROG_VARIANT, true))
-            builder.register(RegistryValueSerializer(Chicken.Variant::class.java, RegistryKey.CHICKEN_VARIANT, true))
-            builder.register(RegistryValueSerializer(Chicken.SoundVariant::class.java, RegistryKey.CHICKEN_SOUND_VARIANT, true))
-            builder.register(RegistryValueSerializer(Cow.Variant::class.java, RegistryKey.COW_VARIANT, true))
-            builder.register(RegistryValueSerializer(Cow.SoundVariant::class.java, RegistryKey.COW_SOUND_VARIANT, true))
-            builder.register(RegistryValueSerializer(Pig.Variant::class.java, RegistryKey.PIG_VARIANT, true))
-            builder.register(RegistryValueSerializer(Pig.SoundVariant::class.java, RegistryKey.PIG_SOUND_VARIANT, true))
-            builder.register(RegistryValueSerializer(ZombieNautilus.Variant::class.java, RegistryKey.ZOMBIE_NAUTILUS_VARIANT, true))
-            builder.register(RegistryValueSerializer(Dialog::class.java, RegistryKey.DIALOG, true))
             //@formatter:on
             //endregion
         }
@@ -90,5 +91,16 @@ class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
             { type -> type is Class<*> && ConfigurationSerializable::class.java.isAssignableFrom(type) },
             BukkitConfigurationSerializableSerializer
         )
+    }
+
+    private fun <T : Keyed> TypeSerializerCollection.Builder.registerSafeRegistry(
+        type: () -> KClass<T>,
+        registryKey: () -> RegistryKey<T>,
+        omitMinecraftNamespace: Boolean = true
+    ) {
+        try {
+            register(RegistryValueSerializer(type().java, registryKey(), omitMinecraftNamespace))
+        } catch (_: Throwable) {
+        }
     }
 }
