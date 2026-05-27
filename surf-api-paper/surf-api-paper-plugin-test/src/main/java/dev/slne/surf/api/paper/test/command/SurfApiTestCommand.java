@@ -33,7 +33,8 @@ public class SurfApiTestCommand extends CommandAPICommand {
                 new SignedMessageArgumentTest("signedmessage"),
                 new BlockPdcContainerTest("blockpdc"),
                 new OfflineInventoryEditTest("editOfflineInventory"),
-                new ModernSerializerTestConfigCommand("modernSerializerTestConfig")
+                new ModernSerializerTestConfigCommand("modernSerializerTestConfig"),
+                new SuspendRequirementTestCommand("suspendRequirement")
         );
     }
 }

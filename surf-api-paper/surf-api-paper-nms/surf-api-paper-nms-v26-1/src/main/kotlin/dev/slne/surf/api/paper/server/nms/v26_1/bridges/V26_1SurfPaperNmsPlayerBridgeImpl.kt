@@ -36,15 +36,14 @@ import net.minecraft.world.entity.EntityEquipment
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.npc.InventoryCarrier
 import net.minecraft.world.entity.player.Inventory
-import net.minecraft.world.level.storage.TagValueInput
-import net.minecraft.world.level.storage.TagValueOutput
-import net.minecraft.world.level.storage.ValueInput
-import net.minecraft.world.level.storage.ValueOutput
+import net.minecraft.world.level.storage.*
 import org.bukkit.craftbukkit.CraftEquipmentSlot
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
+import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.createTempFile
 import kotlin.jvm.optionals.getOrNull
@@ -229,6 +228,14 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         edit(inventoryEdit)
         saveInventoryEdit(server, rootPathElement, currentTag, nameAndId, inventoryEdit)
+    }
+
+    override fun getPlayerDataDir(): File {
+        return MinecraftServer.getServer().playerDataStorage.playerDir
+    }
+
+    override fun getStatsDataPath(): Path {
+        return MinecraftServer.getServer().getWorldPath(LevelResource.PLAYER_STATS_DIR)
     }
 
     private suspend fun loadPlayerTag(server: MinecraftServer, nameAndId: NameAndId): CompoundTag {

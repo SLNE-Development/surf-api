@@ -227,6 +227,20 @@ public final class dev/slne/surf/api/paper/command/executors/SuspendCommandExecu
 	public static final fun sendSyntaxMessageOrRethrow (Lorg/bukkit/command/CommandSender;Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public final class dev/slne/surf/api/paper/command/requirement/SuspendCommandRequirementsKt {
+	public static final fun withSuspendPlayerRequirement (Ldev/jorel/commandapi/ExecutableCommand;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function3;)V
+	public static synthetic fun withSuspendPlayerRequirement$default (Ldev/jorel/commandapi/ExecutableCommand;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/command/requirement/SuspendRequirementService {
+	public static final field Companion Ldev/slne/surf/api/paper/command/requirement/SuspendRequirementService$Companion;
+	public abstract fun withSuspendRequirement (Ldev/jorel/commandapi/ExecutableCommand;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Z)V
+}
+
+public final class dev/slne/surf/api/paper/command/requirement/SuspendRequirementService$Companion {
+	public final fun getInstance ()Ldev/slne/surf/api/paper/command/requirement/SuspendRequirementService;
+}
+
 public final class dev/slne/surf/api/paper/command/util/AsyncPlayerProfileArgumentUtilsKt {
 	public static final fun awaitAsyncPlayerProfile (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun awaitAsyncPlayerProfileOptional (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -1715,7 +1729,9 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public static synthetic fun createPlayerChatMessageMirrorFromAdventure$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 	public abstract fun editOfflineInventory (Lcom/destroystokyo/paper/profile/PlayerProfile;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getPaperRawChatType ()Lnet/kyori/adventure/chat/ChatType;
+	public abstract fun getPlayerDataDir ()Ljava/io/File;
 	public abstract fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public abstract fun getStatsDataPath ()Ljava/nio/file/Path;
 	public abstract fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
 	public abstract fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
 	public abstract fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
@@ -1728,7 +1744,9 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$
 	public fun editOfflineInventory (Lcom/destroystokyo/paper/profile/PlayerProfile;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;
 	public fun getPaperRawChatType ()Lnet/kyori/adventure/chat/ChatType;
+	public fun getPlayerDataDir ()Ljava/io/File;
 	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
+	public fun getStatsDataPath ()Ljava/nio/file/Path;
 	public fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
 	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
 	public fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V

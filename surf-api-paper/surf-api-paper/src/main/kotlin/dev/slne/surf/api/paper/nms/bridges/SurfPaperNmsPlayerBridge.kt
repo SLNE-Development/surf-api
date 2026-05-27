@@ -14,6 +14,8 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.EntityEquipment
 import org.bukkit.inventory.ItemStack
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
+import java.nio.file.Path
 
 @NmsUseWithCaution
 @ApiStatus.NonExtendable
@@ -75,6 +77,20 @@ interface SurfPaperNmsPlayerBridge {
         val items: MutableList<ItemStack>,
         val equipment: EntityEquipment
     )
+
+    /**
+     * Retrieves the directory where player data is stored.
+     *
+     * @return a [File] representing the directory used for storing player data
+     */
+    fun getPlayerDataDir(): File
+
+    /**
+     * Retrieves the file system path used for storing statistical data.
+     *
+     * @return a [Path] object representing the location where statistical data is stored
+     */
+    fun getStatsDataPath(): Path
 
     companion object : SurfPaperNmsPlayerBridge by playerBridge {
         val INSTANCE get() = playerBridge

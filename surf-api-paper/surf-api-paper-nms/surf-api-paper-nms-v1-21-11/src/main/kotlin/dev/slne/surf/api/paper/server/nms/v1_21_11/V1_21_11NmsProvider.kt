@@ -22,6 +22,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.player.V1_21_
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.V1_21_11GlowingLifecycleHandler
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.V1_21_11SurfGlowingApiImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.listener.V1_21_11ChannelInjector
+import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.listener.V1_21_11CommandSendPacketBlockerListenerImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.listener.V1_21_11GlowingPacketListener
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLoreListener
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLoreRegistry
@@ -30,6 +31,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.region.V1_21_11TickThreadGuar
 import dev.slne.surf.api.shared.internal.nms.NmsProviderMarker
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
 import org.bukkit.plugin.java.JavaPlugin
+import java.util.*
 
 @Suppress("ClassName")
 @OptIn(NmsUseWithCaution::class)
@@ -88,6 +90,10 @@ class V1_21_11NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
     override fun createGlowingApi(): SurfGlowingApi = V1_21_11SurfGlowingApiImpl
     override fun createChannelInjector(): AbstractChannelInjector<*> = V1_21_11ChannelInjector
     override fun createPacketListenerApi(): InternalPacketListenerApiBridge = V1_21_11PacketListenerApiImpl()
+
+    override fun createCommandSendPacketBlockerListener(blockedPlayers: Set<UUID>): CommandSendPacketBlockerListener {
+        return V1_21_11CommandSendPacketBlockerListenerImpl(blockedPlayers)
+    }
 
     override fun createPacketListeners(): List<PacketListener> = listOf(
         V1_21_11PacketLoreListener,

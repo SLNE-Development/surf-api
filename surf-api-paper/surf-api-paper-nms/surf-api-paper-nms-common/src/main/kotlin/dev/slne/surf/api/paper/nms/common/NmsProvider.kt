@@ -18,6 +18,7 @@ import dev.slne.surf.api.shared.internal.nms.NmsVersion
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.net.URI
+import java.util.*
 import java.util.jar.JarFile
 
 /**
@@ -83,6 +84,8 @@ interface NmsProvider {
 
     fun createChannelInjector(): AbstractChannelInjector<*>
     fun createPacketListenerApi(): InternalPacketListenerApiBridge
+
+    fun createCommandSendPacketBlockerListener(blockedPlayers: Set<UUID>): CommandSendPacketBlockerListener
 
     /**
      * Creates version-specific packet listeners (e.g. lore handler, glowing handler).
