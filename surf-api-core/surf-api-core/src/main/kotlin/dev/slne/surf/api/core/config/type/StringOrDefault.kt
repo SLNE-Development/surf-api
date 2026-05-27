@@ -23,16 +23,14 @@ import java.util.function.Predicate
  * - Contains helper methods and a constant (`USE_DEFAULT`) for working with default behavior.
  */
 @ConsistentCopyVisibility
-data class StringOrDefault private constructor(val value: String) {
+data class StringOrDefault private constructor(val value: String?) {
 
-    infix fun or(default: String): String {
-        return if (value == DEFAULT_MARKER) default else value
-    }
+    infix fun or(default: String): String = value ?: default
 
     companion object {
         private const val DEFAULT_MARKER = "__default__"
 
-        val USE_DEFAULT = StringOrDefault(DEFAULT_MARKER)
+        val USE_DEFAULT = StringOrDefault(null)
 
         fun of(value: String) = StringOrDefault(value)
     }
@@ -42,9 +40,9 @@ data class StringOrDefault private constructor(val value: String) {
             type: AnnotatedType?,
             obj: Any?
         ): StringOrDefault? {
-            val value = obj.toString()
+            val value = obj?.toString()
 
-            return if (value == DEFAULT_MARKER) {
+            return if (value == null || value == DEFAULT_MARKER) {
                 USE_DEFAULT
             } else {
                 StringOrDefault(value)
@@ -53,10 +51,10 @@ data class StringOrDefault private constructor(val value: String) {
 
         override fun serialize(
             type: AnnotatedType?,
-            item: StringOrDefault,
+            item: StringOrDefault?,
             typeSupported: Predicate<Class<*>?>?
         ): Any {
-            return item.value
+            return item?.value ?: DEFAULT_MARKER
         }
     }
 }
