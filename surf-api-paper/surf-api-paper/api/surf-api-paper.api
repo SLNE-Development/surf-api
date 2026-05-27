@@ -227,6 +227,20 @@ public final class dev/slne/surf/api/paper/command/executors/SuspendCommandExecu
 	public static final fun sendSyntaxMessageOrRethrow (Lorg/bukkit/command/CommandSender;Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public final class dev/slne/surf/api/paper/command/requirement/SuspendCommandRequirementsKt {
+	public static final fun withSuspendPlayerRequirement (Ldev/jorel/commandapi/ExecutableCommand;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function3;)V
+	public static synthetic fun withSuspendPlayerRequirement$default (Ldev/jorel/commandapi/ExecutableCommand;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/command/requirement/SuspendRequirementService {
+	public static final field Companion Ldev/slne/surf/api/paper/command/requirement/SuspendRequirementService$Companion;
+	public abstract fun withSuspendRequirement (Ldev/jorel/commandapi/ExecutableCommand;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Z)V
+}
+
+public final class dev/slne/surf/api/paper/command/requirement/SuspendRequirementService$Companion {
+	public final fun getInstance ()Ldev/slne/surf/api/paper/command/requirement/SuspendRequirementService;
+}
+
 public final class dev/slne/surf/api/paper/command/util/AsyncPlayerProfileArgumentUtilsKt {
 	public static final fun awaitAsyncPlayerProfile (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun awaitAsyncPlayerProfileOptional (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
