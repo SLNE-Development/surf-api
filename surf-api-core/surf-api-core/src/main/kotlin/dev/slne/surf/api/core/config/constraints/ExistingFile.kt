@@ -1,5 +1,6 @@
 package dev.slne.surf.api.core.config.constraints
 
+import dev.slne.surf.api.core.config.type.StringOrDefault
 import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.io.File
@@ -41,12 +42,13 @@ annotation class ExistingFile {
     }
 }
 
-internal fun Any?.asPathOrNull(): Path? {
+internal tailrec fun Any?.asPathOrNull(): Path? {
     return when (this) {
         null -> null
         is Path -> this
         is File -> toPath()
         is String -> runCatching { Path.of(this) }.getOrNull()
+        is StringOrDefault -> value?.asPathOrNull()
         else -> null
     }
 }

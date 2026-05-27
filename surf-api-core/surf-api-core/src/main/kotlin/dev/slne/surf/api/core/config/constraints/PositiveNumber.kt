@@ -1,5 +1,7 @@
 package dev.slne.surf.api.core.config.constraints
 
+import dev.slne.surf.api.core.config.type.number.DoubleOr
+import dev.slne.surf.api.core.config.type.number.IntOr
 import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
@@ -29,7 +31,27 @@ annotation class PositiveNumber {
          */
         internal object Factory : Constraint.Factory<PositiveNumber, Number?> {
             override fun make(data: PositiveNumber, type: Type): Constraint<Number?> = { number ->
-                if (number != null && number.toDouble() <= 0) {
+                if (number != null && number.toDouble() <= 0.0) {
+                    throw SerializationException("Number is not positive: $number, expected > 0")
+                }
+            }
+        }
+
+        internal object FactoryIntOr : Constraint.Factory<PositiveNumber, IntOr?> {
+            override fun make(data: PositiveNumber, type: Type): Constraint<IntOr?> = { intOr ->
+                val number = intOr?.value
+
+                if (number != null && number <= 0) {
+                    throw SerializationException("Number is not positive: $number, expected > 0")
+                }
+            }
+        }
+
+        internal object FactoryDoubleOr : Constraint.Factory<PositiveNumber, DoubleOr?> {
+            override fun make(data: PositiveNumber, type: Type): Constraint<DoubleOr?> = { doubleOr ->
+                val number = doubleOr?.value
+
+                if (number != null && number <= 0.0) {
                     throw SerializationException("Number is not positive: $number, expected > 0")
                 }
             }
