@@ -508,7 +508,7 @@ object CommonComponents {
         appendNewline()
         primary("COMMUNITY SERVER")
         appendNewline(2)
-        error(reason)
+        error(reason.uppercase())
         appendNewline(3)
         append(details).color(SPACER)
 
