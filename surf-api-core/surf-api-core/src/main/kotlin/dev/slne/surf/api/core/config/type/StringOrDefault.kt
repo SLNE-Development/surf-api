@@ -34,6 +34,7 @@ data class StringOrDefault private constructor(val value: String?) {
     companion object {
         private const val DEFAULT_MARKER = "__default__"
 
+        @JvmField
         val USE_DEFAULT = StringOrDefault(null)
 
         fun of(value: String) = StringOrDefault(value)
