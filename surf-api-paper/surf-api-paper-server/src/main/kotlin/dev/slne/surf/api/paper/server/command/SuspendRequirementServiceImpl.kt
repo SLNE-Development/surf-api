@@ -113,9 +113,9 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
 
                 if (ready.remove(uuid)) {
                     blockedCommandPackets.remove(uuid)
-                    triggerRefreshForSender(event.player)
                 } else {
                     blockedCommandPackets.add(uuid)
+                    triggerRefreshForSender(event.player)
                 }
             }
         }
