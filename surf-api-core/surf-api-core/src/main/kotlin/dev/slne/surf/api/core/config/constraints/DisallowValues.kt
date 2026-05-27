@@ -18,7 +18,7 @@ annotation class DisallowValues(vararg val values: String) {
     companion object {
         internal object Factory : Constraint.Factory<DisallowValues, Any?> {
             override fun make(data: DisallowValues, type: Type): Constraint<Any?> = { value ->
-                if (value != null && data.values.any { it.equals(value.toStringOrDefaultAware(), ignoreCase = true) }) {
+                if (value != null && data.values.any { it.equals(value.toString(), ignoreCase = true) }) {
                     throw SerializationException("Value '$value' is not allowed")
                 }
             }
