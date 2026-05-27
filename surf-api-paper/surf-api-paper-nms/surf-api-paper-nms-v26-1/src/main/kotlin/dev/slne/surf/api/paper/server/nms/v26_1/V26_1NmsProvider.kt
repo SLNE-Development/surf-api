@@ -22,6 +22,7 @@ import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.player.V26_1Surf
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1GlowingLifecycleHandler
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1SurfGlowingApiImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.packet.listener.V26_1ChannelInjector
+import dev.slne.surf.api.paper.server.nms.v26_1.packet.listener.V26_1CommandSendPacketBlockerListenerImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.packet.listener.V26_1GlowingPacketListener
 import dev.slne.surf.api.paper.server.nms.v26_1.packet.lore.V26_1PacketLoreListener
 import dev.slne.surf.api.paper.server.nms.v26_1.packet.lore.V26_1PacketLoreRegistry
@@ -30,6 +31,7 @@ import dev.slne.surf.api.paper.server.nms.v26_1.region.V26_1TickThreadGuard
 import dev.slne.surf.api.shared.internal.nms.NmsProviderMarker
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
 import org.bukkit.plugin.java.JavaPlugin
+import java.util.*
 
 @Suppress("ClassName")
 @OptIn(NmsUseWithCaution::class)
@@ -67,6 +69,10 @@ class V26_1NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
     override fun createGlowingApi(): SurfGlowingApi = V26_1SurfGlowingApiImpl
     override fun createChannelInjector(): AbstractChannelInjector<*> = V26_1ChannelInjector
     override fun createPacketListenerApi(): InternalPacketListenerApiBridge = V26_1PacketListenerApiImpl()
+
+    override fun createCommandSendPacketBlockerListener(blockedPlayer: Set<UUID>): CommandSendPacketBlockerListener {
+        return V26_1CommandSendPacketBlockerListenerImpl(blockedPlayer)
+    }
 
     override fun createPacketListeners(): List<PacketListener> = listOf(
         V26_1PacketLoreListener,

@@ -9,6 +9,7 @@ import dev.slne.surf.api.paper.nms.common.AbstractChannelInjector
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
+import dev.slne.surf.api.paper.server.command.SuspendRequirementServiceImpl
 import dev.slne.surf.api.paper.server.packet.lore.PluginDisablePacketLoreListener
 import dev.slne.surf.api.paper.server.plugin
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
@@ -34,6 +35,8 @@ object PacketApiLoader {
         for (listener in versionPacketListeners) {
             SurfPaperPacketListenerApi.registerListeners(listener)
         }
+
+        SurfPaperPacketListenerApi.registerListeners(SuspendRequirementServiceImpl.get().createCommandSendPacketBlockerListener())
 
         AbstractChannelInjector.instance.register()
         PluginDisablePacketLoreListener.register()
