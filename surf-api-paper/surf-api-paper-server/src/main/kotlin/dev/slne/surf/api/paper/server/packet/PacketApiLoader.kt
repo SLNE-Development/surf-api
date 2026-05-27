@@ -36,7 +36,7 @@ object PacketApiLoader {
             SurfPaperPacketListenerApi.registerListeners(listener)
         }
 
-        SurfPaperPacketListenerApi.registerListeners(SuspendRequirementServiceImpl.get().createCommandSendPacketBlockerListener())
+        SurfPaperPacketListenerApi.registerListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
 
         AbstractChannelInjector.instance.register()
         PluginDisablePacketLoreListener.register()

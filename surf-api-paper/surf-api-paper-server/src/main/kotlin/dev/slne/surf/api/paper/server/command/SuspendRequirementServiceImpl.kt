@@ -45,8 +45,11 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
     private val listener = EventListener()
 
     @OptIn(NmsUseWithCaution::class)
-    fun createCommandSendPacketBlockerListener(): CommandSendPacketBlockerListener {
-        return NmsProvider.current.createCommandSendPacketBlockerListener(blockedCommandPackets)
+    private val commandSendPacketBlockerListener =
+        NmsProvider.current.createCommandSendPacketBlockerListener(blockedCommandPackets)
+
+    fun getCommandSendPacketBlockerListener(): CommandSendPacketBlockerListener {
+        return commandSendPacketBlockerListener
     }
 
     fun getEventListener(): Listener {
@@ -125,6 +128,7 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
         fun onConnectionClosed(event: PlayerConnectionCloseEvent) {
             blockedCommandPackets.remove(event.playerUniqueId)
             ready.remove(event.playerUniqueId)
+            commandSendPacketBlockerListener.removeReceivedCommandPacket(event.playerUniqueId)
         }
     }
 

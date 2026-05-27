@@ -9,8 +9,8 @@ import org.bukkit.entity.Player
 
 fun <Impl : ExecutableCommand<Impl, CommandSender>> ExecutableCommand<Impl, CommandSender>.withSuspendPlayerRequirement(
     scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
-    requirement: suspend CoroutineScope.(Player) -> Boolean,
-    allowIfNonPlayer: Boolean = false
+    allowIfNonPlayer: Boolean = false,
+    requirement: suspend CoroutineScope.(Player) -> Boolean
 ) {
     SuspendRequirementService.instance.apply {
         withSuspendRequirement(scope, requirement, allowIfNonPlayer)
