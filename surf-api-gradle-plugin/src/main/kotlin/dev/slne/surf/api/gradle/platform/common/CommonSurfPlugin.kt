@@ -38,6 +38,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private val relocations = mutableMapOf<String, String>()
     private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
 
+    init {
+        "org.spongepowered.configurate" relocatesTo "configurate"
+    }
+
     protected abstract val extensionClass: Class<E>
 
     override fun apply(target: Project) = with(target) {
