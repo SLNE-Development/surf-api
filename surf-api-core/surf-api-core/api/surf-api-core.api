@@ -580,6 +580,7 @@ public final class dev/slne/surf/api/core/config/type/DurationOrDisabled$Compani
 
 public final class dev/slne/surf/api/core/config/type/StringOrDefault {
 	public static final field Companion Ldev/slne/surf/api/core/config/type/StringOrDefault$Companion;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/core/config/type/StringOrDefault;
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public fun equals (Ljava/lang/Object;)Z
@@ -590,7 +591,6 @@ public final class dev/slne/surf/api/core/config/type/StringOrDefault {
 }
 
 public final class dev/slne/surf/api/core/config/type/StringOrDefault$Companion {
-	public final fun getUSE_DEFAULT ()Ldev/slne/surf/api/core/config/type/StringOrDefault;
 	public final fun of (Ljava/lang/String;)Ldev/slne/surf/api/core/config/type/StringOrDefault;
 }
 
