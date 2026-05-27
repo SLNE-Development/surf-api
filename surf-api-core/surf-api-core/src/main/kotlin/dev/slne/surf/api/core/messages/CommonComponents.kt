@@ -7,10 +7,8 @@ import dev.slne.surf.api.core.messages.Colors.Companion.SPACER
 import dev.slne.surf.api.core.messages.Colors.Companion.VARIABLE_KEY
 import dev.slne.surf.api.core.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.api.core.messages.CommonComponents.MAP_SEPARATOR
-import dev.slne.surf.api.core.messages.adventure.appendNewline
-import dev.slne.surf.api.core.messages.adventure.appendText
-import dev.slne.surf.api.core.messages.adventure.clickOpensUrl
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.core.messages.adventure.*
+import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.core.util.mutableObjectListOf
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
@@ -468,6 +466,66 @@ object CommonComponents {
         if (issue) append(ISSUE_FOOTER)
         else append(RETRY_LATER_FOOTER)
     }
+
+    /**
+     * Builds a structured disconnect message with a specific reason, details, and optional footers.
+     *
+     * @param reason The reason for the disconnection (will be displayed in uppercase).
+     * @param details Block to render the detailed message content.
+     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
+     * @param retryLater Whether to include a retry later footer.
+     * @param onlyDiscordLink Whether to include only the Discord link in the footer without additional information.
+     *
+     * **Output Example (issue = true, retryLater = false, onlyDiscordLink = false):**
+     *
+     * ```
+     * <empty>
+     * <empty>
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <reason> (in error color)
+     * <empty>
+     * <empty>
+     * <details content> (in spacer color)
+     * <empty>
+     * Bitte versuche es später erneut.
+     * Sollte das Problem weiterhin bestehen,
+     * kontaktiere den Support in unserem Discord.
+     * <empty>
+     * discord.gg/castcrafter (clickable)
+     *  ```
+     */
+    fun buildDisconnectComponent(
+        reason: String,
+        details: SurfComponentBuilder.() -> Unit,
+        issue: Boolean = false,
+        retryLater: Boolean = false,
+        onlyDiscordLink: Boolean = true,
+    ) = buildText {
+        appendNewline(2)
+        primary("CASTCRAFTER")
+        appendNewline()
+        primary("COMMUNITY SERVER")
+        appendNewline(2)
+        error(reason)
+        appendNewline(3)
+        append(details).color(SPACER)
+
+        if (issue) {
+            append(ISSUE_FOOTER)
+        }
+
+        if (retryLater) {
+            append(RETRY_LATER_FOOTER)
+        }
+
+        if (onlyDiscordLink) {
+            appendNewline(2)
+            primary("discord.gg/castcrafter")
+        }
+    }
+
 
     /**
      * Formats a collection into a comma-separated list component.
