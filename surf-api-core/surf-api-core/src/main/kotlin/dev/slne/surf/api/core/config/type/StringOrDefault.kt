@@ -27,6 +27,10 @@ data class StringOrDefault private constructor(val value: String?) {
 
     infix fun or(default: String): String = value ?: default
 
+    override fun toString(): String {
+        return value ?: DEFAULT_MARKER
+    }
+
     companion object {
         private const val DEFAULT_MARKER = "__default__"
 
