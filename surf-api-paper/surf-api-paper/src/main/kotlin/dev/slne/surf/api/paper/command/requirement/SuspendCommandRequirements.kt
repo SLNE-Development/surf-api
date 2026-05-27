@@ -26,7 +26,7 @@ import org.bukkit.entity.Player
  * execution should also be checked explicitly inside the command executor.
  *
  * @param scope the coroutine scope provider used to refresh the requirement
- * @param allowIfNonPlayer whether non-player command senders should be allowed
+ * @param allowIfNonPlayer whether non-player command senders should bypass this player-only requirement
  * @param requirement the suspendable predicate used to refresh the cached requirement
  * result for a player
  */
