@@ -128,7 +128,7 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
         fun onConnectionClosed(event: PlayerConnectionCloseEvent) {
             blockedCommandPackets.remove(event.playerUniqueId)
             ready.remove(event.playerUniqueId)
-            commandSendPacketBlockerListener.removeReceivedCommandPacket(event.playerUniqueId)
+            commandSendPacketBlockerListener.removeReceivedFirstCommandPacket(event.playerUniqueId)
             requirements.asMap().values.forEach { it.invalidate(event.playerUniqueId) }
         }
     }

@@ -43,7 +43,7 @@ class V1_21_11CommandSendPacketBlockerListenerImpl(blockedPlayers: Set<UUID>) :
         player: ServerPlayer
     ): ClientboundCommandsPacket? {
         if (blockedPlayers.contains(player.uuid)) {
-            return if (receivedCommandPacket.add(player.uuid)) {
+            return if (receivedFirstCommandPacket.add(player.uuid)) {
                 ClientboundCommandsPacket(loadingCommandsDispatcher.root, commandNodeInspector)
             } else {
                 null
