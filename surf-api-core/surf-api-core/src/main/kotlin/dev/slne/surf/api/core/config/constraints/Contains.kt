@@ -1,5 +1,6 @@
 package dev.slne.surf.api.core.config.constraints
 
+import dev.slne.surf.api.core.config.type.StringOrDefault
 import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
@@ -18,6 +19,15 @@ annotation class Contains(val value: String) {
     companion object {
         internal object Factory : Constraint.Factory<Contains, String?> {
             override fun make(data: Contains, type: Type): Constraint<String?> = { value ->
+                if (value != null && !value.contains(data.value)) {
+                    throw SerializationException("String must contain '${data.value}'")
+                }
+            }
+        }
+
+        internal object FactoryStringOrDefault : Constraint.Factory<Contains, StringOrDefault?> {
+            override fun make(data: Contains, type: Type): Constraint<StringOrDefault?> = { valueOrDefault ->
+                val value = valueOrDefault?.value
                 if (value != null && !value.contains(data.value)) {
                     throw SerializationException("String must contain '${data.value}'")
                 }

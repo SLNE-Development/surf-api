@@ -1,5 +1,6 @@
 package dev.slne.surf.api.core.config.constraints
 
+import dev.slne.surf.api.core.config.type.StringOrDefault
 import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
@@ -18,6 +19,16 @@ annotation class StartsWith(val prefix: String) {
     companion object {
         internal object Factory : Constraint.Factory<StartsWith, String?> {
             override fun make(data: StartsWith, type: Type): Constraint<String?> = { value ->
+                if (value != null && !value.startsWith(data.prefix)) {
+                    throw SerializationException("String must start with '${data.prefix}'")
+                }
+            }
+        }
+
+        internal object FactoryStringOrDefault : Constraint.Factory<StartsWith, StringOrDefault?> {
+            override fun make(data: StartsWith, type: Type): Constraint<StringOrDefault?> = { stringOrDefault ->
+                val value = stringOrDefault?.value
+
                 if (value != null && !value.startsWith(data.prefix)) {
                     throw SerializationException("String must start with '${data.prefix}'")
                 }

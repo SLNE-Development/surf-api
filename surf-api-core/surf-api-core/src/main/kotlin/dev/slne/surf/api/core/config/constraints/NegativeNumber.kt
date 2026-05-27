@@ -1,5 +1,7 @@
 package dev.slne.surf.api.core.config.constraints
 
+import dev.slne.surf.api.core.config.type.number.DoubleOr
+import dev.slne.surf.api.core.config.type.number.IntOr
 import org.spongepowered.configurate.objectmapping.meta.Constraint
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.Type
@@ -17,6 +19,26 @@ annotation class NegativeNumber {
         internal object Factory : Constraint.Factory<NegativeNumber, Number?> {
             override fun make(data: NegativeNumber, type: Type): Constraint<Number?> = { value ->
                 if (value != null && value.toDouble() >= 0.0) {
+                    throw SerializationException("Number must be negative: $value, expected < 0")
+                }
+            }
+        }
+
+        internal object FactoryIntOr : Constraint.Factory<NegativeNumber, IntOr?> {
+            override fun make(data: NegativeNumber, type: Type): Constraint<IntOr?> = { intOr ->
+                val value = intOr?.value
+
+                if (value != null && value >= 0) {
+                    throw SerializationException("Number must be negative: $value, expected < 0")
+                }
+            }
+        }
+
+        internal object FactoryDoubleOr : Constraint.Factory<NegativeNumber, DoubleOr?> {
+            override fun make(data: NegativeNumber, type: Type): Constraint<DoubleOr?> = { doubleOr ->
+                val value = doubleOr?.value
+
+                if (value != null && value >= 0.0) {
                     throw SerializationException("Number must be negative: $value, expected < 0")
                 }
             }
