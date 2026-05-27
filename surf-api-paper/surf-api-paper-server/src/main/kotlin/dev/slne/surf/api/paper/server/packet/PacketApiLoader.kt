@@ -52,6 +52,8 @@ object PacketApiLoader {
         }
         versionPacketListeners = emptyList()
 
+        SurfPaperPacketListenerApi.unregisterListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
+
         PluginDisablePacketLoreListener.unregister()
         AbstractChannelInjector.instance.unregister()
         provider.shutdown()
