@@ -129,6 +129,7 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
             blockedCommandPackets.remove(event.playerUniqueId)
             ready.remove(event.playerUniqueId)
             commandSendPacketBlockerListener.removeReceivedCommandPacket(event.playerUniqueId)
+            requirements.asMap().values.forEach { it.invalidate(event.playerUniqueId) }
         }
     }
 
@@ -137,11 +138,14 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
         val requirement: suspend CoroutineScope.(Player) -> Boolean
     ) {
         private val cached = Caffeine.newBuilder()
-            .weakKeys()
             .build<UUID, Boolean>()
 
         fun testCached(sender: Player): Boolean {
             return cached.getIfPresent(sender.uniqueId) ?: false
+        }
+
+        fun invalidate(uuid: UUID) {
+            cached.invalidate(uuid)
         }
 
         suspend fun refreshForSender(sender: Player) {
