@@ -91,8 +91,8 @@ class V1_21_11NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
     override fun createChannelInjector(): AbstractChannelInjector<*> = V1_21_11ChannelInjector
     override fun createPacketListenerApi(): InternalPacketListenerApiBridge = V1_21_11PacketListenerApiImpl()
 
-    override fun createCommandSendPacketBlockerListener(blockedPlayer: Set<UUID>): CommandSendPacketBlockerListener {
-        return V1_21_11CommandSendPacketBlockerListenerImpl(blockedPlayer)
+    override fun createCommandSendPacketBlockerListener(blockedPlayers: Set<UUID>): CommandSendPacketBlockerListener {
+        return V1_21_11CommandSendPacketBlockerListenerImpl(blockedPlayers)
     }
 
     override fun createPacketListeners(): List<PacketListener> = listOf(

@@ -16,8 +16,8 @@ import java.util.*
 
 @Suppress("ClassName")
 @OptIn(NmsUseWithCaution::class)
-class V26_1CommandSendPacketBlockerListenerImpl(blockedPlayer: Set<UUID>) :
-    CommandSendPacketBlockerListener(blockedPlayer) {
+class V26_1CommandSendPacketBlockerListenerImpl(blockedPlayers: Set<UUID>) :
+    CommandSendPacketBlockerListener(blockedPlayers) {
 
     private val loadingCommandsDispatcher = CommandDispatcher<CommandSourceStack>()
     private val commandNodeInspector = object : ClientboundCommandsPacket.NodeInspector<CommandSourceStack> {
@@ -43,7 +43,7 @@ class V26_1CommandSendPacketBlockerListenerImpl(blockedPlayer: Set<UUID>) :
         packet: ClientboundCommandsPacket,
         player: ServerPlayer
     ): ClientboundCommandsPacket? {
-        if (blockedPlayer.contains(player.uuid)) {
+        if (blockedPlayers.contains(player.uuid)) {
             return if (receivedCommandPacket.add(player.uuid)) {
                 ClientboundCommandsPacket(loadingCommandsDispatcher.root, commandNodeInspector)
             } else {

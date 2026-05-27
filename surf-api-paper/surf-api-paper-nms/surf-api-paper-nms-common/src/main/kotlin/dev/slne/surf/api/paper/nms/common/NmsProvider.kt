@@ -85,7 +85,7 @@ interface NmsProvider {
     fun createChannelInjector(): AbstractChannelInjector<*>
     fun createPacketListenerApi(): InternalPacketListenerApiBridge
 
-    fun createCommandSendPacketBlockerListener(blockedPlayer: Set<UUID>): CommandSendPacketBlockerListener
+    fun createCommandSendPacketBlockerListener(blockedPlayers: Set<UUID>): CommandSendPacketBlockerListener
 
     /**
      * Creates version-specific packet listeners (e.g. lore handler, glowing handler).

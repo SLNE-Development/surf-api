@@ -6,8 +6,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @OptIn(NmsUseWithCaution::class)
-abstract class CommandSendPacketBlockerListener(protected val blockedPlayer: Set<UUID>) : PacketListener {
-    protected val receivedCommandPacket: MutableSet<UUID> = ConcurrentHashMap.newKeySet<UUID>()
+abstract class CommandSendPacketBlockerListener(protected val blockedPlayers: Set<UUID>) : PacketListener {
+    protected val receivedCommandPacket: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
 
     fun removeReceivedCommandPacket(uuid: UUID) {
         receivedCommandPacket.remove(uuid)
