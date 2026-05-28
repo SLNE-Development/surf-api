@@ -1,7 +1,9 @@
 plugins {
     id("dev.slne.surf.api.gradle.core")
+    id("com.github.gmazzo.buildconfig") version "6.0.9"
 }
 
+@Suppress("AvoidDuplicateDependencies") // different classifiers
 dependencies {
     api(projects.surfRedisApi)
     api(platform(libs.netty.bom))
@@ -39,5 +41,11 @@ dependencies {
     }
     runtimeOnly("io.netty:netty-transport-native-kqueue") {
         artifact { classifier = "osx-aarch_64" }
+    }
+}
+
+buildConfig {
+    forClass("dev.slne.surf.redis", "RedisConstants") {
+        buildConfigField("REDISSON_VERSION", libs.versions.redisson)
     }
 }

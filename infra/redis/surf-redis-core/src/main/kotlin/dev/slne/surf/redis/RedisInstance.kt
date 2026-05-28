@@ -4,13 +4,6 @@ import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.redis.config.RedisConfig
 import io.netty.channel.MultiThreadIoEventLoopGroup
-import io.netty.channel.epoll.Epoll
-import io.netty.channel.epoll.EpollIoHandler
-import io.netty.channel.kqueue.KQueue
-import io.netty.channel.kqueue.KQueueIoHandler
-import io.netty.channel.nio.NioIoHandler
-import io.netty.channel.uring.IoUring
-import io.netty.channel.uring.IoUringIoHandler
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
 import java.io.InputStream
@@ -27,13 +20,6 @@ abstract class RedisInstance {
         val contextClassLoader = Thread.currentThread().contextClassLoader
         try {
             Thread.currentThread().contextClassLoader = this.javaClass.classLoader
-            val ioHandlerFactory = when {
-                IoUring.isAvailable() -> IoUringIoHandler.newFactory()
-                Epoll.isAvailable() -> EpollIoHandler.newFactory()
-                KQueue.isAvailable() -> KQueueIoHandler.newFactory()
-                else -> NioIoHandler.newFactory()
-            }
-
             val nettyThreadFactory = Thread.ofPlatform()
                 .name("redisson-netty-thread-", 0)
                 .uncaughtExceptionHandler { thread, throwable ->
@@ -60,14 +46,11 @@ abstract class RedisInstance {
                 }
                 .factory()
 
-            eventLoopGroup = MultiThreadIoEventLoopGroup(16, nettyThreadFactory, ioHandlerFactory)
+            eventLoopGroup =
+                MultiThreadIoEventLoopGroup(16, nettyThreadFactory, TransportInfo.instance.ioHandlerFactory)
             redissonExecutorService = Executors.newThreadPerTaskExecutor(redissonThreadFactory)
         } finally {
             Thread.currentThread().contextClassLoader = contextClassLoader
-        }
-
-        if (IoUring.isAvailable()) {
-            IoUringRedissonPatcher.patch(javaClass.classLoader)
         }
     }
 
@@ -84,15 +67,12 @@ abstract class RedisInstance {
     abstract val dataPath: Path
 
     fun load() {
-        val networkingString = when {
-            IoUring.isAvailable() -> "IoUring"
-            Epoll.isAvailable() -> "Epoll"
-            KQueue.isAvailable() -> "KQueue"
-            else -> "NIO"
-        }
-
         log.atInfo()
-            .log("Enabling Redis networking using %s transport", networkingString)
+            .log(
+                "Enabling Redis networking using %s transport with Redisson %s",
+                TransportInfo.instance.transportString,
+                RedisConstants.REDISSON_VERSION
+            )
         RedisConfig.init()
     }
 
