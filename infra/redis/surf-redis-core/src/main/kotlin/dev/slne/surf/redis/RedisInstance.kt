@@ -68,7 +68,11 @@ abstract class RedisInstance {
 
     fun load() {
         log.atInfo()
-            .log("Enabling Redis networking using %s transport", TransportInfo.instance.transportString)
+            .log(
+                "Enabling Redis networking using %s transport with Redisson %s",
+                TransportInfo.instance.transportString,
+                RedisConstants.REDISSON_VERSION
+            )
         RedisConfig.init()
     }
 
