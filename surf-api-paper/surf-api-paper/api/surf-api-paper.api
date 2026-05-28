@@ -1670,10 +1670,12 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion;
+	public abstract fun clearBrainMemories (Lorg/bukkit/entity/LivingEntity;)V
 	public abstract fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
+	public fun clearBrainMemories (Lorg/bukkit/entity/LivingEntity;)V
 	public fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge;
 }

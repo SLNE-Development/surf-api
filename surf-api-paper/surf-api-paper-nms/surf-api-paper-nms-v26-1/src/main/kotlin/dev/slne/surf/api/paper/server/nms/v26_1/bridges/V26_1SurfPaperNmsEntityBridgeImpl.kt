@@ -16,6 +16,7 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.commands.SummonCommand
 import org.bukkit.World
 import org.bukkit.entity.EntityType
+import org.bukkit.entity.LivingEntity
 
 @NmsUseWithCaution
 @Suppress("ClassName")
@@ -50,5 +51,12 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         } catch (e: CommandSyntaxException) {
             throw WrapperCommandSyntaxException(e)
         }
+    }
+
+    override fun clearBrainMemories(entity: LivingEntity) {
+        val nms = entity.toNms()
+        val brain = nms.brain
+
+        brain.clearMemories()
     }
 }

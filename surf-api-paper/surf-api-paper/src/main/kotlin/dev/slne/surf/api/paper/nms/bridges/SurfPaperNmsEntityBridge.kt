@@ -9,12 +9,15 @@ import io.papermc.paper.math.FinePosition
 import net.kyori.adventure.nbt.CompoundBinaryTag
 import org.bukkit.World
 import org.bukkit.entity.EntityType
+import org.bukkit.entity.LivingEntity
 
 @NmsUseWithCaution
 interface SurfPaperNmsEntityBridge {
 
     @Throws(WrapperCommandSyntaxException::class)
     fun createEntityByNbt(world: World, type: EntityType, pos: FinePosition, tag: CompoundBinaryTag)
+
+    fun clearBrainMemories(entity: LivingEntity)
 
     companion object : SurfPaperNmsEntityBridge by bridge {
         val INSTANCE get() = bridge
