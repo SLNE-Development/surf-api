@@ -1,6 +1,6 @@
 [versions]
-redisson = "4.3.1"
-netty = "4.2.12.Final"
+redisson = "4.4.0"
+netty = "4.2.13.Final"
 
 [libraries]
 redisson = { group = "org.redisson", name = "redisson", version.ref = "redisson" }

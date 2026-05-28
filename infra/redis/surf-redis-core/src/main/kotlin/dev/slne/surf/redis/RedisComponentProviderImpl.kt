@@ -16,14 +16,10 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.set.SyncSetImpl
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
-import io.netty.channel.epoll.Epoll
-import io.netty.channel.kqueue.KQueue
-import io.netty.channel.uring.IoUring
 import kotlinx.serialization.KSerializer
 import org.redisson.config.Config
 import org.redisson.config.EqualJitterDelay
 import org.redisson.config.Protocol
-import org.redisson.config.TransportMode
 import java.util.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -32,12 +28,6 @@ import kotlin.time.toJavaDuration
 
 @AutoService(RedisComponentProvider::class)
 class RedisComponentProviderImpl : RedisComponentProvider {
-    private val redissonTransportMode = when {
-        IoUring.isAvailable() -> TransportMode.IO_URING
-        Epoll.isAvailable() -> TransportMode.EPOLL
-        KQueue.isAvailable() -> TransportMode.KQUEUE
-        else -> TransportMode.NIO
-    }
 
     override val eventLoopGroup get() = RedisInstance.instance.eventLoopGroup
     override val redissonExecutorService get() = RedisInstance.instance.redissonExecutorService
@@ -47,10 +37,12 @@ class RedisComponentProviderImpl : RedisComponentProvider {
         .joinToString("")
 
     override fun createRedissonConfig(details: RedissonConfigDetails): Config {
+        val redisURI = details.redisURI
+
         val config = Config()
-            .setPassword(details.redisURI.password)
+            .setPassword(redisURI.password)
             .setExecutor(redissonExecutorService)
-            .setTransportMode(redissonTransportMode)
+            .setTransportMode(TransportInfo.instance.redissonTransportMode)
             .setEventLoopGroup(eventLoopGroup)
             .setTcpKeepAlive(true)
             .setTcpUserTimeout(10.seconds.inWholeMilliseconds.toInt())
@@ -69,7 +61,7 @@ class RedisComponentProviderImpl : RedisComponentProvider {
                     .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
                     .setRetryAttempts(10)
                     .setRetryDelay(EqualJitterDelay(200.milliseconds.toJavaDuration(), 1.seconds.toJavaDuration()))
-                    .setAddress(details.redisURI.toString())
+                    .setAddress(redisURI.scheme + "://" + redisURI.host + ":" + redisURI.port)
             }
 
         return config
