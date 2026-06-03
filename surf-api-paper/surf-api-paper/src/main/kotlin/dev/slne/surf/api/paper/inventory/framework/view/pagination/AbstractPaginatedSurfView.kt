@@ -1,8 +1,5 @@
 package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
-import com.github.shynixn.mccoroutine.folia.launch
-import com.github.shynixn.mccoroutine.folia.ticks
 import dev.slne.surf.api.core.util.prepend
 import dev.slne.surf.api.paper.inventory.framework.view.AbstractSurfView
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.ViewContainerModificationContext
@@ -10,7 +7,6 @@ import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.addChild
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.blockCell
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.removeChildrenOfType
 import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings
-import kotlinx.coroutines.delay
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder
 import me.devnatan.inventoryframework.component.Pagination
@@ -190,7 +186,13 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         val pagination = paginationState.get(render) ?: return
         val paginationButtonRow = settings.paginationButtonRow
 
-        render.watchState(pagination.id, InitialPaginationStateWatcher())
+        if (pagination.isStatic) {
+            render.player.scheduler.run(JavaPlugin.getProvidingPlugin(javaClass), {
+                updatePaginationGlyph(render)
+            }, null)
+        } else {
+            render.watchState(pagination.id, InitialPaginationStateWatcher())
+        }
 
         render.slot(PaginationButton.LEFT.clickSlot(paginationButtonRow))
             .withItem(ItemStack.empty())
@@ -217,6 +219,11 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
 
     final override fun onViewUpdate(update: Context) {
+        val pagination = paginationState.get(update)
+        if (pagination != null) {
+            pagination.switchTo(pagination.currentPageIndex()) // trigger pagination state update to refresh dynamic elements
+        }
+
         onPaginatedUpdate(update)
     }
 
@@ -244,11 +251,9 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             if (!initialHandled.compareAndSet(false, true)) return
             if (host !is Context) return
 
-            val plugin = JavaPlugin.getProvidingPlugin(javaClass)
-            plugin.launch(plugin.entityDispatcher(host.player)) {
-                delay(1.ticks)
+            host.player.scheduler.run(JavaPlugin.getProvidingPlugin(javaClass), {
                 updatePaginationGlyph(host)
-            }
+            }, null)
         }
     }
 
