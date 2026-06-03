@@ -217,6 +217,9 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
 
     final override fun onViewUpdate(update: Context) {
+        val pagination = paginationState.get(update)
+        pagination.switchTo(pagination.currentPage()) // trigger pagination state update to refresh dynamic elements
+
         onPaginatedUpdate(update)
     }
 
