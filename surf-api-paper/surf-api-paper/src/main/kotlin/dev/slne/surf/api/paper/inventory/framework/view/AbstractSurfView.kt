@@ -9,12 +9,10 @@ import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.addChild
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.backHint
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings
-import dev.slne.surf.api.paper.inventory.framework.viewFrame
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.ViewType
 import me.devnatan.inventoryframework.context.*
-import org.bukkit.plugin.java.JavaPlugin
 
 /**
  * Abstract base class for all Surf inventory views built on top of the inventory framework.
@@ -145,7 +143,7 @@ abstract class AbstractSurfView(
                 ViewContainerTitleComponent(
                     title = defaultHeader,
                     font = settings.font,
-                    charSpacing = ViewContainerTitleComponent.Companion.CHAR_SPACING,
+                    charSpacing = ViewContainerTitleComponent.CHAR_SPACING,
                     textAlignment = settings.headerTextAlignment
                 )
             )
@@ -183,8 +181,20 @@ abstract class AbstractSurfView(
     }
 
     final override fun onOpen(open: OpenContext) {
+        recordHistory(open)
         applyContainerDefaults(open)
         onViewOpen(open)
+    }
+
+    private fun recordHistory(open: OpenContext) {
+        val player = open.player
+        val entry = ViewNavigationHistory.NavEntry(javaClass, open.initialData)
+
+        when {
+            ViewNavigationHistory.consumeBackNavigation(player) -> Unit
+            open.viewer.isSwitching -> ViewNavigationHistory.pushForward(player, entry)
+            else -> ViewNavigationHistory.reset(player, entry)
+        }
     }
 
     final override fun onFirstRender(render: RenderContext) {
@@ -201,6 +211,10 @@ abstract class AbstractSurfView(
     }
 
     final override fun onClose(close: CloseContext) {
+        val player = close.player
+        if (!close.viewer.isSwitching && !ViewNavigationHistory.isPending(player.uniqueId)) {
+            ViewNavigationHistory.clear(player)
+        }
         onViewClose(close)
     }
 
@@ -209,27 +223,16 @@ abstract class AbstractSurfView(
     }
 
     private fun handleOutsideClick(click: SlotClickContext) {
-        val viewer = click.viewer
-        val previousContext = viewer.previousContext
+        val player = click.player
+        val target = ViewNavigationHistory.popToPrevious(player)
 
-        if (previousContext == null) {
+        if (target == null) {
+            ViewNavigationHistory.clear(player)
             click.closeForPlayer()
-        } else {
-            val previousView = previousContext.root
-            if (previousView !is View) {
-                click.closeForPlayer()
-                return
-            }
-
-            val player = click.player
-            val previousState = viewer.previousContext.initialData
-
-            viewer.previousContext = null
-            click.closeForPlayer()
-
-            player.scheduler.run(JavaPlugin.getProvidingPlugin(javaClass), {
-                viewFrame.open(previousView.javaClass, player, previousState)
-            }, null)
+            return
         }
+
+        ViewNavigationHistory.markBackNavigation(player)
+        click.openForPlayer(target.viewClass, target.data)
     }
 }
