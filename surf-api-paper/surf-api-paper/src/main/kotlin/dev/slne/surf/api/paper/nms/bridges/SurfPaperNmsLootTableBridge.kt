@@ -17,6 +17,12 @@ interface SurfPaperNmsLootTableBridge {
         causedByPlayer: Boolean,
     ): Collection<ItemStack>
 
+    fun rollLootTable(
+        entity: LivingEntity,
+        damageSource: DamageSource,
+        causedByPlayer: Boolean,
+    ): Collection<ItemStack>
+
     companion object : SurfPaperNmsLootTableBridge by bridge {
         val INSTANCE get() = bridge
     }

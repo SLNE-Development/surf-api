@@ -1703,11 +1703,13 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge$Co
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge$Companion;
 	public abstract fun getDifferentLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Lorg/bukkit/entity/EntityType;Z)Ljava/util/Collection;
+	public abstract fun rollLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Z)Ljava/util/Collection;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge {
 	public fun getDifferentLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Lorg/bukkit/entity/EntityType;Z)Ljava/util/Collection;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge;
+	public fun rollLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Z)Ljava/util/Collection;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge {
