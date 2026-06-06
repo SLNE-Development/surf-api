@@ -52,4 +52,36 @@ class V1_21_11SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
         return lootTable.getRandomItems(lootParams, nmsEntity.lootTableSeed)
             .mapTo(mutableObjectListOf()) { it.toBukkit() }
     }
+
+    override fun rollLootTable(
+        entity: LivingEntity,
+        damageSource: DamageSource,
+        causedByPlayer: Boolean
+    ): Collection<ItemStack> {
+        val nmsEntity = entity.toNms()
+        val lootTableKey = nmsEntity.lootTable.getOrNull() ?: return emptyObjectList()
+        val lootTable = MinecraftServer.getServer().reloadableRegistries().getLootTable(lootTableKey)
+        val nmsDamageSource = damageSource.toNms()
+
+        val paramBuilder = LootParams.Builder(nmsEntity.level() as ServerLevel)
+            .withParameter(LootContextParams.THIS_ENTITY, nmsEntity)
+            .withParameter(LootContextParams.ORIGIN, nmsEntity.position())
+            .withParameter(LootContextParams.DAMAGE_SOURCE, nmsDamageSource)
+            .withOptionalParameter(LootContextParams.ATTACKING_ENTITY, nmsDamageSource.entity)
+            .withOptionalParameter(
+                LootContextParams.DIRECT_ATTACKING_ENTITY,
+                nmsDamageSource.directEntity
+            )
+
+        val lastHurtByPlayer = nmsEntity.getLastHurtByPlayer()
+        if (causedByPlayer && lastHurtByPlayer != null) {
+            paramBuilder.withParameter(LootContextParams.LAST_DAMAGE_PLAYER, lastHurtByPlayer)
+                .withLuck(lastHurtByPlayer.luck)
+        }
+
+        val lootParams = paramBuilder.create(LootContextParamSets.ENTITY)
+
+        return lootTable.getRandomItems(lootParams, nmsEntity.lootTableSeed)
+            .mapTo(mutableObjectListOf()) { it.toBukkit() }
+    }
 }
