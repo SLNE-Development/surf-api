@@ -150,6 +150,7 @@ public abstract class dev/slne/surf/api/core/config/SpongeConfigClass {
 	public abstract fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
 	protected final fun getMigrationBuilder ()Ldev/slne/surf/api/core/config/migration/ConfigMigrationBuilder;
 	public final fun init ()V
+	public abstract fun isInitialized ()Z
 	protected final fun migration (ILdev/slne/surf/api/core/config/migration/ConfigMigration;)V
 	protected final fun migration (ILkotlin/jvm/functions/Function1;)V
 	public final fun reloadFromFile ()Ljava/lang/Object;
@@ -159,12 +160,14 @@ public abstract class dev/slne/surf/api/core/config/SpongeConfigClass {
 
 public abstract class dev/slne/surf/api/core/config/SpongeJsonConfigClass : dev/slne/surf/api/core/config/SpongeConfigClass {
 	public fun <init> (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)V
-	public fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun isInitialized ()Z
 }
 
 public abstract class dev/slne/surf/api/core/config/SpongeYmlConfigClass : dev/slne/surf/api/core/config/SpongeConfigClass {
 	public fun <init> (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)V
-	public fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun isInitialized ()Z
 }
 
 public abstract interface class dev/slne/surf/api/core/config/SurfConfigApi {

@@ -33,18 +33,24 @@ abstract class SpongeYmlConfigClass<C>(
     configClass: Class<C>, configFolder: Path, fileName: String
 ) : SpongeConfigClass<C>(configClass, configFolder, fileName) {
 
-    /**
-     * YAML-backed configuration manager for this config type.
-     *
-     * The manager is created using [SurfConfigApi.createSpongeYmlConfigManager]
-     * with [configClass], [configFolder], [fileName] and [migrationBuilder].
-     */
-    override val manager by lazy {
+    private val managerLazy = lazy {
         surfConfigApi.createSpongeYmlConfigManager(
             configClass,
             configFolder,
             fileName,
             migrationBuilder
         )
+    }
+
+    /**
+     * YAML-backed configuration manager for this config type.
+     *
+     * The manager is created using [SurfConfigApi.createSpongeYmlConfigManager]
+     * with [configClass], [configFolder], [fileName] and [migrationBuilder].
+     */
+    final override val manager by managerLazy
+
+    final override fun isInitialized(): Boolean {
+        return managerLazy.isInitialized()
     }
 }

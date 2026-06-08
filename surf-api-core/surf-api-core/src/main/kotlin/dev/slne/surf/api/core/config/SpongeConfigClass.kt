@@ -79,6 +79,11 @@ sealed class SpongeConfigClass<C>(
     abstract val manager: SpongeConfigManager<C>
 
     /**
+     * Whether the config has been initialized and loaded from disk.
+     */
+    abstract fun isInitialized(): Boolean
+
+    /**
      * Registers a migration for the given target [version].
      *
      * Migrations are applied in version order. For existing configs without a
