@@ -71,7 +71,9 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         val relocationPrefix: String by project
-        relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt")
+        relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt") {
+            exclude("net.kyori.adventure.nbt.api.**")
+        }
         relocate("org.spongepowered.configurate", "$relocationPrefix.configurate")
     }
 

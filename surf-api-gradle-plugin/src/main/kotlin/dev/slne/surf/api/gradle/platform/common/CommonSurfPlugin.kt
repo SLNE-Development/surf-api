@@ -35,7 +35,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         "com.google.devtools.ksp"
     )
 
-    private val relocations = mutableMapOf<String, String>()
+    private val relocations = mutableListOf<Relocation>()
     private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
 
     init {
@@ -70,7 +70,15 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     protected infix fun String.relocatesTo(to: String) {
-        relocations[this] = to
+        relocations += Relocation(this, to)
+    }
+
+    protected fun relocatePackage(
+        from: String,
+        to: String,
+        excludes: List<String> = emptyList(),
+    ) {
+        relocations += Relocation(from, to, excludes)
     }
 
     fun addRelocationsForDependency(
@@ -116,8 +124,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     private fun Project.configure() {
         tasks.withType<ShadowJar> {
-            relocations.forEach { (from, to) ->
-                relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
+            relocations.forEach { relocation ->
+                relocate(
+                    relocation.from,
+                    "${Constants.RELOCATION_PREFIX}.${relocation.to}"
+                ) {
+                    relocation.excludes.forEach { exclude(it) }
+                }
             }
         }
 
@@ -285,4 +298,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     protected open fun Project.afterEvaluated0(extension: E) {
     }
+
+    private data class Relocation(
+        val from: String,
+        val to: String,
+        val excludes: List<String> = emptyList(),
+    )
 }
