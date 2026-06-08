@@ -8902,6 +8902,9 @@ public final class dev/slne/surf/api/core/nbt/InternalNbtBridge$Companion : dev/
 }
 
 public final class dev/slne/surf/api/core/nbt/Nbt_extensionKt {
+	public static final fun asTagHolder (Lnet/kyori/adventure/nbt/BinaryTag;)Lnet/kyori/adventure/nbt/api/BinaryTagHolder;
+	public static final fun decodeCompoundTag (Lnet/kyori/adventure/nbt/api/BinaryTagHolder;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static final fun decodeTag (Lnet/kyori/adventure/nbt/api/BinaryTagHolder;)Lnet/kyori/adventure/nbt/BinaryTag;
 	public static final fun isCollectionTag (Lnet/kyori/adventure/nbt/BinaryTag;)Z
 	public static final fun tagIterator (Lnet/kyori/adventure/nbt/ByteArrayBinaryTag;)Ljava/util/Iterator;
 	public static final fun tagIterator (Lnet/kyori/adventure/nbt/IntArrayBinaryTag;)Ljava/util/Iterator;

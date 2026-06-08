@@ -10,7 +10,11 @@ internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
     init {
         "com.mojang.serialization" relocatesTo "mojang.serialization"
         "com.mojang.datafixers" relocatesTo "mojang.datafixers"
-        "net.kyori.adventure.nbt" relocatesTo "kyori.nbt"
+        relocatePackage(
+            from = "net.kyori.adventure.nbt",
+            to = "kyori.nbt",
+            excludes = listOf("net.kyori.adventure.nbt.api.**")
+        )
     }
 
     final override fun Project.afterEvaluated0(extension: E) {
