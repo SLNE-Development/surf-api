@@ -8,6 +8,7 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
+import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
@@ -61,6 +62,17 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             key = profilePublicKey.key(),
             keySignature = profilePublicKey.keySignature()
         )
+    }
+
+    override fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot {
+        TODO("Not yet implemented")
+    }
+
+    override fun applyChatSessionSnapshot(
+        player: Player,
+        snapshot: PlayerChatSessionSnapshot
+    ) {
+        TODO("Not yet implemented")
     }
 
     override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {

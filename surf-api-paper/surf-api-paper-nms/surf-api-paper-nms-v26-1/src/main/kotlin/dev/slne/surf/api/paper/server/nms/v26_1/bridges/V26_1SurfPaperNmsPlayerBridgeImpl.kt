@@ -7,7 +7,9 @@ import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
+import dev.slne.surf.api.paper.nms.bridges.data.chat.LastSeenMessagesValidatorMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
+import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
@@ -26,6 +28,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtIo
 import net.minecraft.network.chat.*
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket
+import net.minecraft.network.protocol.game.ServerboundChatSessionUpdatePacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.players.NameAndId
 import net.minecraft.util.ProblemReporter
@@ -36,6 +39,7 @@ import net.minecraft.world.entity.EntityEquipment
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.npc.InventoryCarrier
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.entity.player.ProfilePublicKey
 import net.minecraft.world.level.storage.*
 import org.bukkit.craftbukkit.CraftEquipmentSlot
 import org.bukkit.craftbukkit.inventory.CraftItemStack
@@ -44,6 +48,7 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.createTempFile
 import kotlin.jvm.optionals.getOrNull
@@ -60,6 +65,97 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             key = profilePublicKey.key(),
             keySignature = profilePublicKey.keySignature()
         )
+    }
+
+    override fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection
+
+        @Suppress("RedundantRequireNotNullCall")
+        requireNotNull(connection) { "Player connection is not available" }
+
+        val nextChatIndex = V26_1NmsReflections.getNextChatIndex(nmsPlayer.connection)
+        val chatSession = nmsPlayer.chatSession
+        val chatSessionData = chatSession?.asData()
+        val lastSeenMessages = V26_1NmsReflections.getLastSeenMessages(connection)
+        val messageSignatureCache = V26_1NmsReflections.getMessageSignatureCache(connection)
+
+        val messageSignatureCacheEntries =
+            V26_1NmsReflections.getEntriesFromMessageSignatureCache(messageSignatureCache)
+        val messageSignatureCacheEntriesApi = Array(messageSignatureCacheEntries.size) { index ->
+            messageSignatureCacheEntries[index]?.bytes()
+        }
+
+        return PlayerChatSessionSnapshot(
+            nextChatIndex = nextChatIndex,
+            chatSession = if (chatSessionData != null) RemoteChatSessionData(
+                sessionId = chatSessionData.sessionId(),
+                expiresAt = chatSessionData.profilePublicKey().expiresAt(),
+                key = chatSessionData.profilePublicKey().key(),
+                keySignature = chatSessionData.profilePublicKey().keySignature()
+            ) else null,
+            lastSeenMessages = LastSeenMessagesValidatorMirror(
+                V26_1NmsReflections.getLastSeenCountFromMessageValidator(lastSeenMessages),
+                V26_1NmsReflections.getTrackedMessagesFromMessageValidator(lastSeenMessages)
+                    .map { LastSeenMessagesValidatorMirror.LastSeenTrackedEntry(it.signature().bytes(), it.pending()) },
+                V26_1NmsReflections.getLastPendingMessageFromMessageValidator(lastSeenMessages)?.bytes
+            ),
+            messageSignatureCache = messageSignatureCacheEntriesApi
+        )
+    }
+
+    override fun applyChatSessionSnapshot(player: Player, snapshot: PlayerChatSessionSnapshot) {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+
+        val lastSeenMessages = V26_1NmsReflections.getLastSeenMessages(connection)
+        val messageSignatureCache = V26_1NmsReflections.getMessageSignatureCache(connection)
+        val sessionData = snapshot.chatSession
+
+        synchronized(messageSignatureCache) {
+            V26_1NmsReflections.setNextChatIndex(connection, snapshot.nextChatIndex)
+
+            synchronized(lastSeenMessages) {
+                val messages = V26_1NmsReflections.getTrackedMessagesFromMessageValidator(lastSeenMessages)
+
+                for (entry in snapshot.lastSeenMessages.trackedMessages) {
+                    val signature = entry.signature
+                    val pending = entry.pending
+                    messages.add(LastSeenTrackedEntry(MessageSignature(signature), pending))
+                }
+
+                V26_1NmsReflections.setLastPendingMessageFromMessageValidator(
+                    lastSeenMessages,
+                    snapshot.lastSeenMessages.lastPendingMessage?.let(::MessageSignature)
+                )
+            }
+
+            if (sessionData != null) {
+                MinecraftServer.getServer().packetProcessor()
+                    .scheduleIfPossible(
+                        connection,
+                        ServerboundChatSessionUpdatePacket(
+                            RemoteChatSession.Data(
+                                sessionData.sessionId,
+                                ProfilePublicKey.Data(
+                                    sessionData.expiresAt,
+                                    sessionData.key,
+                                    sessionData.keySignature
+                                )
+                            )
+                        )
+                    )
+            }
+
+            val messageSignatureCacheQueue = ArrayDeque<MessageSignature>()
+            for (signatureBytes in snapshot.messageSignatureCache) {
+                if (signatureBytes != null) {
+                    messageSignatureCacheQueue.add(MessageSignature(signatureBytes))
+                }
+            }
+
+            V26_1NmsReflections.pushMessageSignatureCache(messageSignatureCache, messageSignatureCacheQueue)
+        }
     }
 
     override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {
