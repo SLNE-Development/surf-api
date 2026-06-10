@@ -15,6 +15,7 @@ import net.minecraft.stats.ServerStatsCounter
 import net.minecraft.util.FutureChain
 import net.minecraft.world.entity.Entity
 import java.lang.invoke.VarHandle
+import java.time.Instant
 import java.util.*
 
 @Suppress("ClassName")
@@ -49,7 +50,7 @@ interface V26_1NmsReflections {
     fun getLastSeenCountFromMessageValidator(validator: LastSeenMessagesValidator): Int
 
     @ReflectedField("trackedMessages")
-    fun getTrackedMessagesFromMessageValidator(validator: LastSeenMessagesValidator): ObjectList<LastSeenTrackedEntry>
+    fun getTrackedMessagesFromMessageValidator(validator: LastSeenMessagesValidator): ObjectList<LastSeenTrackedEntry?>
 
     @ReflectedField("lastPendingMessage")
     fun getLastPendingMessageFromMessageValidator(validator: LastSeenMessagesValidator): MessageSignature?
@@ -106,6 +107,54 @@ interface V26_1NmsReflections {
         target = ServerStatsCounter::class
     )
     fun getServerStatsCounterGson(): Gson
+
+    @ReflectedField("signedMessageDecoder")
+    fun getSignedMessageDecoder(instance: ServerGamePacketListenerImpl): SignedMessageChain.Decoder
+
+    @ReflectedField("signedMessageDecoder", access = ReflectedFieldAccess.SET)
+    fun setSignedMessageDecoder(
+        instance: ServerGamePacketListenerImpl,
+        decoder: SignedMessageChain.Decoder
+    )
+
+    @ReflectedField("nextLink")
+    fun getNextLinkFromSignedMessageChain(chain: SignedMessageChain): SignedMessageLink?
+
+    @ReflectedField("nextLink", access = ReflectedFieldAccess.SET)
+    fun setNextLinkFromSignedMessageChain(
+        chain: SignedMessageChain,
+        nextLink: SignedMessageLink?
+    )
+
+    @ReflectedField("lastTimeStamp")
+    fun getLastTimeStampFromSignedMessageChain(chain: SignedMessageChain): Instant
+
+    @ReflectedField("lastTimeStamp", access = ReflectedFieldAccess.SET)
+    fun setLastTimeStampFromSignedMessageChain(
+        chain: SignedMessageChain,
+        lastTimeStamp: Instant
+    )
+
+    @ReflectedMethod("resetPlayerChatState")
+    fun resetPlayerChatState(
+        instance: ServerGamePacketListenerImpl,
+        chatSession: RemoteChatSession
+    )
+
+    @ReflectedField("chatSession")
+    fun getRemoteChatSession(instance: ServerGamePacketListenerImpl): RemoteChatSession?
+
+    @ReflectedField("chatSession", access = ReflectedFieldAccess.SET)
+    fun setRemoteChatSession(
+        instance: ServerGamePacketListenerImpl,
+        chatSession: RemoteChatSession?
+    )
+
+    @ReflectedField("hasLoggedExpiry", access = ReflectedFieldAccess.SET)
+    fun setHasLoggedExpiry(
+        instance: ServerGamePacketListenerImpl,
+        value: Boolean
+    )
 
     companion object : V26_1NmsReflections by generatedReflectionAccessor()
 }

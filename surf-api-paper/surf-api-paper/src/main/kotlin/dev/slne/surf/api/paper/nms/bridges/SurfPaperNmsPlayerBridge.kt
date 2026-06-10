@@ -27,6 +27,8 @@ interface SurfPaperNmsPlayerBridge {
     fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot
     fun applyChatSessionSnapshot(player: Player, snapshot: PlayerChatSessionSnapshot)
 
+    fun debugChatSessionState(player: Player, label: String)
+
     fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit)
 
     fun sendSignedMessageWithChangedContent(

@@ -75,6 +75,10 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         TODO("Not yet implemented")
     }
 
+    override fun debugChatSessionState(player: Player, label: String) {
+        TODO("Not yet implemented")
+    }
+
     override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection

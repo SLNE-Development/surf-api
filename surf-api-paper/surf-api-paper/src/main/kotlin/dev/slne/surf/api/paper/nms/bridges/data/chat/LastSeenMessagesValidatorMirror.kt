@@ -1,15 +1,18 @@
 package dev.slne.surf.api.paper.nms.bridges.data.chat
 
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import kotlinx.serialization.Serializable
 
 @Serializable
+@NmsUseWithCaution
 data class LastSeenMessagesValidatorMirror(
     val lastSeenCount: Int,
-    val trackedMessages: List<LastSeenTrackedEntry>,
+    val trackedMessages: List<LastSeenTrackedEntry?>,
     val lastPendingMessage: ByteArray? = null,
 ) {
 
     @Serializable
+    @NmsUseWithCaution
     data class LastSeenTrackedEntry(
         val signature: ByteArray,
         val pending: Boolean
