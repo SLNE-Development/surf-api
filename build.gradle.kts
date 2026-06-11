@@ -8,7 +8,7 @@ plugins {
 
 nmsGenerator {
     referenceVersion = NmsVersion.V1_21_11
-    targetVersion    = NmsVersion.V26_1
+    targetVersion = NmsVersion.V26_1
 }
 
 
@@ -16,6 +16,7 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://repo.jsinco.dev/releases/")
     }
 
     configurations.all {
