@@ -7,8 +7,7 @@ import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
-import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
-import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
+import dev.slne.surf.api.paper.nms.bridges.data.chat.*
 import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
@@ -36,6 +35,7 @@ import net.minecraft.world.entity.EntityEquipment
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.npc.InventoryCarrier
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.entity.player.ProfilePublicKey
 import net.minecraft.world.level.storage.*
 import org.bukkit.craftbukkit.CraftEquipmentSlot
 import org.bukkit.craftbukkit.inventory.CraftItemStack
@@ -44,22 +44,55 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.createTempFile
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
+
+    @Suppress("USELESS_ELVIS")
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {
-        val session = player.toNms().chatSession?.asData() ?: return null
+        val connection = player.toNms().connection ?: return null
+        val session = V26_1NmsReflections.getRemoteChatSession(connection) ?: return null
         val profilePublicKey = session.profilePublicKey()
 
         return RemoteChatSessionData(
             sessionId = session.sessionId(),
-            expiresAt = profilePublicKey.expiresAt(),
-            key = profilePublicKey.key(),
-            keySignature = profilePublicKey.keySignature()
+            expiresAt = profilePublicKey.data().expiresAt(),
+            key = profilePublicKey.data().key(),
+            keySignature = profilePublicKey.data().keySignature()
         )
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun resetPlayerChatState(player: Player, chatSession: RemoteChatSessionData) {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+
+        val newChatSessionData = RemoteChatSession.Data(
+            chatSession.sessionId,
+            ProfilePublicKey.Data(
+                chatSession.expiresAt,
+                chatSession.key,
+                chatSession.keySignature
+            )
+        )
+
+        val signatureValidator = MinecraftServer.getServer().services().profileKeySignatureValidator()
+        if (signatureValidator == null) {
+            CHAT_LOGGER.warn("Ignoring chat session from {} due to missing Services public key", player.name)
+            return
+        }
+
+        val newChatSession = newChatSessionData.validate(
+            nmsPlayer.gameProfile,
+            signatureValidator
+        )
+
+        V26_1NmsReflections.resetPlayerChatState(connection, newChatSession,)
     }
 
     override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {
@@ -346,5 +379,6 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     companion object {
         private val OFFLINE_INVENTORY_EDIT_LOGGER = ComponentLogger.logger("OfflinePlayer Inventory Edit")
+        private val CHAT_LOGGER = ComponentLogger.logger("SurfPaperNmsPlayerBridge Chat")
     }
 }

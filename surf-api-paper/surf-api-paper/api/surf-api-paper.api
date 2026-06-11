@@ -1735,6 +1735,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
 	public abstract fun getStatsDataPath ()Ljava/nio/file/Path;
 	public abstract fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
+	public abstract fun resetPlayerChatState (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)V
 	public abstract fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
 	public abstract fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
 	public abstract fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
@@ -1750,6 +1751,7 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$
 	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
 	public fun getStatsDataPath ()Ljava/nio/file/Path;
 	public fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
+	public fun resetPlayerChatState (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)V
 	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
 	public fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
 	public fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V

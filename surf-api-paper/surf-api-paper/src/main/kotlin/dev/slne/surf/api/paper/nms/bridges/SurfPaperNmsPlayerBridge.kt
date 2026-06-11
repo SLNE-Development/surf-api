@@ -23,6 +23,8 @@ interface SurfPaperNmsPlayerBridge {
 
     fun getRemoteChatSessionData(player: Player): RemoteChatSessionData?
 
+    fun resetPlayerChatState(player: Player, chatSession: RemoteChatSessionData)
+
     fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit)
 
     fun sendSignedMessageWithChangedContent(

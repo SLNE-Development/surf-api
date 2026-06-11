@@ -11035,6 +11035,10 @@ public abstract interface class dev/slne/surf/api/core/util/ToByteFunction {
 	public abstract fun applyAsByte (Ljava/lang/Object;)B
 }
 
+public final class dev/slne/surf/api/core/util/Var_handle_utilKt {
+	public static final fun setIfGreater (Ljava/lang/invoke/VarHandle;Ljava/lang/Object;I)Z
+}
+
 public abstract interface class dev/slne/surf/api/core/util/blockstate/BlockStateFactory {
 	public static final field Companion Ldev/slne/surf/api/core/util/blockstate/BlockStateFactory$Companion;
 	public static fun builder (Lcom/github/retrooper/packetevents/protocol/world/states/WrappedBlockState;)Ldev/slne/surf/api/core/util/blockstate/BlockStateFactory$Builder;
