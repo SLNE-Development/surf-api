@@ -25,10 +25,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtIo
 import net.minecraft.network.chat.*
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.server.MinecraftServer
-import net.minecraft.server.level.ServerPlayer
-import net.minecraft.server.network.ServerGamePacketListenerImpl
 import net.minecraft.server.players.NameAndId
 import net.minecraft.util.ProblemReporter
 import net.minecraft.util.ProblemReporter.ScopedCollector
@@ -53,66 +50,10 @@ import kotlin.io.path.createTempFile
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
-
-    private fun chatDebug(message: () -> String) {
-        CHAT_TRANSFER_LOGGER.info("[chat-xfer] {}", message())
-    }
-
-    private fun ByteArray?.shortSig(): String {
-        if (this == null) return "null"
-
-        return take(6).joinToString("") {
-            "%02x".format(it.toInt() and 0xff)
-        }
-    }
-
-    private fun LastSeenMessagesValidator.debugSummary(): String {
-        val tracked =
-            V26_1NmsReflections.getTrackedMessagesFromMessageValidator(this)
-
-        val nonNull =
-            tracked.count { it != null }
-
-        val pending =
-            tracked.count { it?.pending() == true }
-
-        val lastPending =
-            V26_1NmsReflections.getLastPendingMessageFromMessageValidator(this)
-
-        return "lastSeenCount=${V26_1NmsReflections.getLastSeenCountFromMessageValidator(this)} " +
-                "trackedSize=${tracked.size} trackedNonNull=$nonNull trackedPending=$pending " +
-                "lastPending=${lastPending?.bytes?.shortSig()}"
-    }
-
-    private fun MessageSignatureCache.debugSummary(): String {
-        val entries =
-            V26_1NmsReflections.getEntriesFromMessageSignatureCache(this)
-
-        val nonNull =
-            entries.count { it != null }
-
-        return "cacheSize=${entries.size} cacheNonNull=$nonNull first=${entries.firstOrNull()?.bytes()?.shortSig()}"
-    }
-
-    private fun ServerGamePacketListenerImpl.debugRemoteSessionId(): UUID? {
-        return V26_1NmsReflections.getRemoteChatSession(this)?.sessionId()
-    }
-
-    private fun ServerGamePacketListenerImpl.debugDecoderLink(): SignedMessageLink? {
-        val decoder =
-            V26_1NmsReflections.getSignedMessageDecoder(this)
-
-        val chain =
-            decoder.signedMessageChainOrNull()
-
-        return chain?.let {
-            V26_1NmsReflections.getNextLinkFromSignedMessageChain(it)
-        }
-    }
-
-
+    @Suppress("USELESS_ELVIS")
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {
         val connection = player.toNms().connection ?: return null
         val session = V26_1NmsReflections.getRemoteChatSession(connection) ?: return null
@@ -126,459 +67,32 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         )
     }
 
-    override fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot {
-        val nmsPlayer = player.toNms()
-        val connection = requireNotNull(nmsPlayer.connection) {
-            "Player connection is not available"
-        }
-
-        val lastSeenMessages = V26_1NmsReflections.getLastSeenMessages(connection)
-        val messageSignatureCache = V26_1NmsReflections.getMessageSignatureCache(connection)
-
-        synchronized(messageSignatureCache) {
-            synchronized(lastSeenMessages) {
-                val nextChatIndex = V26_1NmsReflections.getNextChatIndex(connection)
-                val chatSessionData = V26_1NmsReflections.getRemoteChatSession(connection)?.asData()
-
-                val cacheEntries =
-                    V26_1NmsReflections.getEntriesFromMessageSignatureCache(messageSignatureCache)
-
-                val decoder = V26_1NmsReflections.getSignedMessageDecoder(connection)
-                val signedMessageChain = decoder.signedMessageChainOrNull()
-                val nextLink = signedMessageChain?.let {
-                    V26_1NmsReflections.getNextLinkFromSignedMessageChain(it)
-                }
-
-                val incomingChatChain = if (signedMessageChain != null && nextLink != null) {
-                    IncomingChatChainMirror(
-                        nextLinkIndex = nextLink.index(),
-                        lastTimeStamp = V26_1NmsReflections.getLastTimeStampFromSignedMessageChain(signedMessageChain)
-                    )
-                } else {
-                    null
-                }
-
-                chatDebug {
-                    "CREATE_SNAPSHOT uuid=${player.uniqueId} name=${player.name} " +
-                            "connectionSession=${V26_1NmsReflections.getRemoteChatSession(connection)?.sessionId()} " +
-                            "playerSession=${nmsPlayer.chatSession?.asData()?.sessionId()} " +
-                            "nextChatIndex=$nextChatIndex " +
-                            "decoderNextIndex=${nextLink?.index()} decoderNextSession=${nextLink?.sessionId()} " +
-                            "incomingNextLink=${incomingChatChain?.nextLinkIndex} " +
-                            "lastSeen=${lastSeenMessages.debugSummary()} " +
-                            "cache=${messageSignatureCache.debugSummary()}"
-                }
-
-                return PlayerChatSessionSnapshot(
-                    nextChatIndex = nextChatIndex,
-                    chatSession = chatSessionData?.let {
-                        RemoteChatSessionData(
-                            sessionId = it.sessionId(),
-                            expiresAt = it.profilePublicKey().expiresAt(),
-                            key = it.profilePublicKey().key(),
-                            keySignature = it.profilePublicKey().keySignature()
-                        )
-                    },
-                    lastSeenMessages = LastSeenMessagesValidatorMirror(
-                        V26_1NmsReflections.getLastSeenCountFromMessageValidator(lastSeenMessages),
-                        V26_1NmsReflections.getTrackedMessagesFromMessageValidator(lastSeenMessages)
-                            .map { entry ->
-                                entry?.let {
-                                    LastSeenMessagesValidatorMirror.LastSeenTrackedEntry(
-                                        it.signature().bytes(),
-                                        it.pending()
-                                    )
-                                }
-                            },
-                        V26_1NmsReflections
-                            .getLastPendingMessageFromMessageValidator(lastSeenMessages)
-                            ?.bytes
-                    ),
-                    messageSignatureCache = Array(cacheEntries.size) { index ->
-                        cacheEntries[index]?.bytes()
-                    },
-                    incomingChatChain = incomingChatChain
-                )
-            }
-        }
-    }
-
-    override fun applyChatSessionSnapshot(player: Player, snapshot: PlayerChatSessionSnapshot) {
+    @Suppress("USELESS_ELVIS")
+    override fun resetPlayerChatState(player: Player, chatSession: RemoteChatSessionData) {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection ?: return
 
-        val sessionData = snapshot.chatSession
-        if (sessionData == null) {
-            chatDebug {
-                "APPLY_SKIP uuid=${player.uniqueId} name=${player.name} reason=no_snapshot_session"
-            }
+        val newChatSessionData = RemoteChatSession.Data(
+            chatSession.sessionId,
+            ProfilePublicKey.Data(
+                chatSession.expiresAt,
+                chatSession.key,
+                chatSession.keySignature
+            )
+        )
+
+        val signatureValidator = MinecraftServer.getServer().services().profileKeySignatureValidator()
+        if (signatureValidator == null) {
+            CHAT_LOGGER.warn("Ignoring chat session from {} due to missing Services public key", player.name)
             return
         }
 
-        val currentRemoteChatSession = V26_1NmsReflections.getRemoteChatSession(connection)
-
-        chatDebug {
-            "APPLY_START uuid=${player.uniqueId} name=${player.name} " +
-                    "snapshotSession=${sessionData.sessionId} " +
-                    "currentConnectionSession=${currentRemoteChatSession?.sessionId()} " +
-                    "currentPlayerSession=${nmsPlayer.chatSession?.asData()?.sessionId()} " +
-                    "snapshotNextChatIndex=${snapshot.nextChatIndex} " +
-                    "snapshotIncomingNextLink=${snapshot.incomingChatChain?.nextLinkIndex}"
-        }
-
-        val remoteChatSession = when {
-            currentRemoteChatSession != null &&
-                    currentRemoteChatSession.sessionId() == sessionData.sessionId -> {
-                chatDebug {
-                    "APPLY_SESSION_USE_CURRENT_MATCH uuid=${player.uniqueId} name=${player.name} " +
-                            "session=${currentRemoteChatSession.sessionId()}"
-                }
-
-                nmsPlayer.setChatSession(currentRemoteChatSession)
-
-                MinecraftServer.getServer().playerList.broadcastAll(
-                    ClientboundPlayerInfoUpdatePacket(
-                        EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT),
-                        listOf(nmsPlayer)
-                    ),
-                    nmsPlayer
-                )
-
-                currentRemoteChatSession
-            }
-
-            currentRemoteChatSession != null -> {
-                chatDebug {
-                    "APPLY_SKIP uuid=${player.uniqueId} name=${player.name} reason=session_mismatch " +
-                            "currentSession=${currentRemoteChatSession.sessionId()} " +
-                            "snapshotSession=${sessionData.sessionId}"
-                }
-
-                // Extrem wichtig:
-                // Bei neuer Vanilla-Session den alten Snapshot komplett verwerfen.
-                // Kein lastSeen, kein cache, kein nextChatIndex, kein decoder patch.
-                return
-            }
-
-            else -> {
-                val profileKeyValidator =
-                    MinecraftServer.getServer().services().profileKeySignatureValidator()
-                        ?: run {
-                            chatDebug {
-                                "APPLY_SKIP uuid=${player.uniqueId} name=${player.name} reason=no_profile_key_validator"
-                            }
-                            return
-                        }
-
-                val remoteChatSessionData = RemoteChatSession.Data(
-                    sessionData.sessionId,
-                    ProfilePublicKey.Data(
-                        sessionData.expiresAt,
-                        sessionData.key,
-                        sessionData.keySignature
-                    )
-                )
-
-                val createdRemoteChatSession = remoteChatSessionData.validate(
-                    nmsPlayer.gameProfile,
-                    profileKeyValidator
-                )
-
-                V26_1NmsReflections.setRemoteChatSession(
-                    connection,
-                    createdRemoteChatSession
-                )
-
-                V26_1NmsReflections.setHasLoggedExpiry(
-                    connection,
-                    false
-                )
-
-                V26_1NmsReflections.setSignedMessageDecoder(
-                    connection,
-                    createdRemoteChatSession.createMessageDecoder(player.uniqueId)
-                )
-
-                nmsPlayer.setChatSession(createdRemoteChatSession)
-
-                MinecraftServer.getServer().playerList.broadcastAll(
-                    ClientboundPlayerInfoUpdatePacket(
-                        EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT),
-                        listOf(nmsPlayer)
-                    ),
-                    nmsPlayer
-                )
-
-                chatDebug {
-                    "APPLY_SESSION_CREATED uuid=${player.uniqueId} name=${player.name} " +
-                            "session=${createdRemoteChatSession.sessionId()} " +
-                            "decoderIndex=${connection.debugDecoderLink()?.index()} " +
-                            "decoderSession=${connection.debugDecoderLink()?.sessionId()}"
-                }
-
-                createdRemoteChatSession
-            }
-        }
-
-        val lastSeenMessages =
-            V26_1NmsReflections.getLastSeenMessages(connection)
-
-        val messageSignatureCache =
-            V26_1NmsReflections.getMessageSignatureCache(connection)
-
-        synchronized(messageSignatureCache) {
-            synchronized(lastSeenMessages) {
-                V26_1NmsReflections.setNextChatIndex(
-                    connection,
-                    snapshot.nextChatIndex
-                )
-
-                val messages =
-                    V26_1NmsReflections.getTrackedMessagesFromMessageValidator(lastSeenMessages)
-
-                messages.clear()
-
-                for (entry in snapshot.lastSeenMessages.trackedMessages) {
-                    if (entry == null) {
-                        messages.add(null)
-                    } else {
-                        messages.add(
-                            LastSeenTrackedEntry(
-                                MessageSignature(entry.signature),
-
-                                // Erstmal so lassen, weil das den
-                                // "previously acknowledged" Fehler verhindert.
-                                true
-                            )
-                        )
-                    }
-                }
-
-                V26_1NmsReflections.setLastPendingMessageFromMessageValidator(
-                    lastSeenMessages,
-                    snapshot.lastSeenMessages.lastPendingMessage?.let(::MessageSignature)
-                )
-
-                chatDebug {
-                    "APPLY_LAST_SEEN_DONE uuid=${player.uniqueId} name=${player.name} " +
-                            "afterLastSeen=${lastSeenMessages.debugSummary()}"
-                }
-            }
-
-            val incomingChatChain = snapshot.incomingChatChain
-
-            if (incomingChatChain != null) {
-                val decoder =
-                    V26_1NmsReflections.getSignedMessageDecoder(connection)
-
-                val signedMessageChain =
-                    decoder.signedMessageChainOrNull()
-
-                if (signedMessageChain != null) {
-                    val beforeLink =
-                        V26_1NmsReflections.getNextLinkFromSignedMessageChain(signedMessageChain)
-
-                    chatDebug {
-                        "APPLY_CHAIN_PATCH_START uuid=${player.uniqueId} name=${player.name} " +
-                                "beforeIndex=${beforeLink?.index()} beforeSession=${beforeLink?.sessionId()} " +
-                                "targetIndex=${incomingChatChain.nextLinkIndex} " +
-                                "targetSession=${remoteChatSession.sessionId()}"
-                    }
-
-                    V26_1NmsReflections.setNextLinkFromSignedMessageChain(
-                        signedMessageChain,
-                        SignedMessageLink(
-                            incomingChatChain.nextLinkIndex,
-                            player.uniqueId,
-                            remoteChatSession.sessionId()
-                        )
-                    )
-
-                    V26_1NmsReflections.setLastTimeStampFromSignedMessageChain(
-                        signedMessageChain,
-                        incomingChatChain.lastTimeStamp
-                    )
-
-                    val afterLink =
-                        V26_1NmsReflections.getNextLinkFromSignedMessageChain(signedMessageChain)
-
-                    chatDebug {
-                        "APPLY_CHAIN_PATCH_DONE uuid=${player.uniqueId} name=${player.name} " +
-                                "afterIndex=${afterLink?.index()} afterSession=${afterLink?.sessionId()} " +
-                                "lastTimeStamp=${incomingChatChain.lastTimeStamp}"
-                    }
-                } else {
-                    chatDebug {
-                        "APPLY_CHAIN_PATCH_SKIP uuid=${player.uniqueId} name=${player.name} reason=no_signed_message_chain"
-                    }
-                }
-            } else {
-                chatDebug {
-                    "APPLY_CHAIN_PATCH_SKIP uuid=${player.uniqueId} name=${player.name} reason=no_incoming_chain"
-                }
-            }
-
-            val messageSignatureCacheQueue = ArrayDeque<MessageSignature>()
-
-            for (signatureBytes in snapshot.messageSignatureCache.reversed()) {
-                if (signatureBytes != null) {
-                    messageSignatureCacheQueue.add(MessageSignature(signatureBytes))
-                }
-            }
-
-            chatDebug {
-                "APPLY_CACHE_PUSH_START uuid=${player.uniqueId} name=${player.name} " +
-                        "queueSize=${messageSignatureCacheQueue.size} " +
-                        "beforeCache=${messageSignatureCache.debugSummary()}"
-            }
-
-            V26_1NmsReflections.pushMessageSignatureCache(
-                messageSignatureCache,
-                messageSignatureCacheQueue
-            )
-
-            chatDebug {
-                "APPLY_CACHE_PUSH_DONE uuid=${player.uniqueId} name=${player.name} " +
-                        "afterCache=${messageSignatureCache.debugSummary()} " +
-                        "finalDecoderIndex=${connection.debugDecoderLink()?.index()} " +
-                        "finalDecoderSession=${connection.debugDecoderLink()?.sessionId()} " +
-                        "finalConnectionSession=${connection.debugRemoteSessionId()}"
-            }
-        }
-    }
-
-    override fun debugChatSessionState(player: Player, label: String) {
-        val nmsPlayer = player.toNms()
-        val connection = nmsPlayer.connection ?: return
-
-        val lastSeenMessages =
-            V26_1NmsReflections.getLastSeenMessages(connection)
-
-        val messageSignatureCache =
-            V26_1NmsReflections.getMessageSignatureCache(connection)
-
-        val decoderLink =
-            connection.debugDecoderLink()
-
-        chatDebug {
-            "STATE label=$label uuid=${player.uniqueId} name=${player.name} " +
-                    "connectionSession=${connection.debugRemoteSessionId()} " +
-                    "playerSession=${nmsPlayer.chatSession?.asData()?.sessionId()} " +
-                    "decoderIndex=${decoderLink?.index()} " +
-                    "decoderSession=${decoderLink?.sessionId()} " +
-                    "nextChatIndex=${V26_1NmsReflections.getNextChatIndex(connection)} " +
-                    "lastSeen=${lastSeenMessages.debugSummary()} " +
-                    "cache=${messageSignatureCache.debugSummary()}"
-        }
-    }
-
-    private fun restoreOrGetRemoteChatSession(
-        nmsPlayer: ServerPlayer,
-        connection: ServerGamePacketListenerImpl,
-        player: Player,
-        sessionData: RemoteChatSessionData?
-    ): RemoteChatSession? {
-        val currentRemoteChatSession =
-            V26_1NmsReflections.getRemoteChatSession(connection)
-
-        chatDebug {
-            "RESTORE_REMOTE_SESSION_START uuid=${player.uniqueId} name=${player.name} " +
-                    "currentConnectionSession=${currentRemoteChatSession?.sessionId()} " +
-                    "currentPlayerSession=${nmsPlayer.chatSession?.asData()?.sessionId()} " +
-                    "snapshotSession=${sessionData?.sessionId}"
-        }
-
-        if (currentRemoteChatSession != null) {
-            nmsPlayer.setChatSession(currentRemoteChatSession)
-
-            MinecraftServer.getServer().playerList.broadcastAll(
-                ClientboundPlayerInfoUpdatePacket(
-                    EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT),
-                    listOf(nmsPlayer)
-                ),
-                nmsPlayer
-            )
-
-            chatDebug {
-                "RESTORE_REMOTE_SESSION_USE_CURRENT uuid=${player.uniqueId} name=${player.name} " +
-                        "session=${currentRemoteChatSession.sessionId()}"
-            }
-
-            return currentRemoteChatSession
-        }
-
-        if (sessionData == null) {
-            chatDebug {
-                "RESTORE_REMOTE_SESSION_SKIP uuid=${player.uniqueId} name=${player.name} reason=no_snapshot_session"
-            }
-
-            return null
-        }
-
-        val profileKeyValidator =
-            MinecraftServer.getServer().services().profileKeySignatureValidator()
-                ?: run {
-                    chatDebug {
-                        "RESTORE_REMOTE_SESSION_SKIP uuid=${player.uniqueId} name=${player.name} reason=no_profile_key_validator"
-                    }
-
-                    return null
-                }
-
-        val remoteChatSessionData = RemoteChatSession.Data(
-            sessionData.sessionId,
-            ProfilePublicKey.Data(
-                sessionData.expiresAt,
-                sessionData.key,
-                sessionData.keySignature
-            )
-        )
-
-        val remoteChatSession = remoteChatSessionData.validate(
+        val newChatSession = newChatSessionData.validate(
             nmsPlayer.gameProfile,
-            profileKeyValidator
+            signatureValidator
         )
 
-        V26_1NmsReflections.setRemoteChatSession(
-            connection,
-            remoteChatSession
-        )
-
-        V26_1NmsReflections.setHasLoggedExpiry(
-            connection,
-            false
-        )
-
-        V26_1NmsReflections.setSignedMessageDecoder(
-            connection,
-            remoteChatSession.createMessageDecoder(player.uniqueId)
-        )
-
-        nmsPlayer.setChatSession(remoteChatSession)
-
-        MinecraftServer.getServer().playerList.broadcastAll(
-            ClientboundPlayerInfoUpdatePacket(
-                EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT),
-                listOf(nmsPlayer)
-            ),
-            nmsPlayer
-        )
-
-        chatDebug {
-            "RESTORE_REMOTE_SESSION_CREATED uuid=${player.uniqueId} name=${player.name} " +
-                    "session=${remoteChatSession.sessionId()} decoderIndex=${connection.debugDecoderLink()?.index()} " +
-                    "decoderSession=${connection.debugDecoderLink()?.sessionId()}"
-        }
-
-        return remoteChatSession
-    }
-
-    private fun SignedMessageChain.Decoder.signedMessageChainOrNull(): SignedMessageChain? {
-        return runCatching {
-            val field = javaClass.getDeclaredField("this$0")
-            field.isAccessible = true
-            field.get(this) as? SignedMessageChain
-        }.getOrNull()
+        V26_1NmsReflections.resetPlayerChatState(connection, newChatSession,)
     }
 
     override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {
@@ -865,6 +379,6 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     companion object {
         private val OFFLINE_INVENTORY_EDIT_LOGGER = ComponentLogger.logger("OfflinePlayer Inventory Edit")
-        private val CHAT_TRANSFER_LOGGER = ComponentLogger.logger("ChatSessionTransfer")
+        private val CHAT_LOGGER = ComponentLogger.logger("SurfPaperNmsPlayerBridge Chat")
     }
 }

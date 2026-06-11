@@ -8,6 +8,6 @@ import java.time.Instant
 @NmsUseWithCaution
 @Serializable
 data class IncomingChatChainMirror(
-    val nextLinkIndex: Int,
+    val nextLinkIndex: Int?,
     val lastTimeStamp: @Contextual Instant,
 )
