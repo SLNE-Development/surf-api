@@ -16,7 +16,6 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/")
-        maven("https://repo.jsinco.dev/releases/")
     }
 
     configurations.all {
