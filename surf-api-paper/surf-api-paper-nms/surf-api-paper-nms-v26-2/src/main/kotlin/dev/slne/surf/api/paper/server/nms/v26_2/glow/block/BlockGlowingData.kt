@@ -4,9 +4,10 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPackets
-import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1SurfGlowingApiImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
+import dev.slne.surf.api.paper.server.nms.v26_2.bridges.V26_2SurfPaperNmsGlowingBridgeImpl
 import dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets.V26_2PacketOperationImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.glow.V26_2SurfGlowingApiImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.reflection.V26_2NmsReflections
 import glm_.shl
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
@@ -22,7 +23,7 @@ class BlockGlowingData(
     var color: NamedTextColor,
 ) {
 
-    private val entityId: Int by lazy { SurfPaperNmsCommonBridge.nextEntityId() }
+    private val entityId: Int by lazy { SurfPaperNmsCommonBridge.nextEntityId(location.world) }
     private val uuid: UUID by lazy { UUID.randomUUID() }
     private var initialized = false
 
@@ -53,7 +54,7 @@ class BlockGlowingData(
 
     fun updateColor() {
         val player = playerData.player ?: return
-        V26_1SurfGlowingApiImpl.makeGlowing(
+        V26_2SurfGlowingApiImpl.makeGlowing(
             entityId,
             uuid.toString(),
             player,
@@ -64,7 +65,7 @@ class BlockGlowingData(
 
     fun remove() {
         playerData.player?.let { SurfPaperNmsSpawnPackets.despawn(entityId).execute(it) }
-        V26_1SurfGlowingApiImpl.removeGlowing(entityId, playerData.uuid)
+        V26_2SurfGlowingApiImpl.removeGlowing(entityId, playerData.uuid)
     }
 
     private fun initialize() {
@@ -74,6 +75,6 @@ class BlockGlowingData(
     }
 
     companion object {
-        val invisibleFlag = 1.toByte() shl V26_1NmsReflections.getEntityFlagInvisible()
+        val invisibleFlag = 1.toByte() shl V26_2NmsReflections.getEntityFlagInvisible()
     }
 }

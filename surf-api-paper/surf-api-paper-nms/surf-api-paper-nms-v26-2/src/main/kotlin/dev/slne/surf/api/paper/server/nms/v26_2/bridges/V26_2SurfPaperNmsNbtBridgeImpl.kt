@@ -3,8 +3,8 @@ package dev.slne.surf.api.paper.server.nms.v26_2.bridges
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsNbtBridge
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toBukkit
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toBukkit
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import net.minecraft.core.component.DataComponentPatch
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag

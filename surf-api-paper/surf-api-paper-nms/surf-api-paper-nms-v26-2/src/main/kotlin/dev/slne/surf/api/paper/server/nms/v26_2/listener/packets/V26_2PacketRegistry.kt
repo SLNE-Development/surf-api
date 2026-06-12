@@ -3,12 +3,12 @@ package dev.slne.surf.api.paper.server.nms.v26_2.listener.packets
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.api.paper.nms.listener.packets.serverbound.NmsServerboundPacket
-import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.clientbound.V26_1ClientboundDisconnectPacketImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.clientbound.V26_1ClientboundSystemChatPacketImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26_1CommandSuggestionPacketImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26_1RenameItemPacketImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26_1ServerboundCustomPayloadPacketImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26_1SignUpdatePacketImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.listener.packets.clientbound.V26_2ClientboundDisconnectPacketImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.listener.packets.clientbound.V26_2ClientboundSystemChatPacketImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.listener.packets.serverbound.V26_2CommandSuggestionPacketImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.listener.packets.serverbound.V26_2RenameItemPacketImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.listener.packets.serverbound.V26_2ServerboundCustomPayloadPacketImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.listener.packets.serverbound.V26_2SignUpdatePacketImpl
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.common.ClientCommonPacketListener
@@ -32,14 +32,14 @@ object V26_2PacketRegistry {
     init {
         // @formatter:off
         // Serverbound packets
-        registerServerboundPacket(ServerboundSignUpdatePacket::class) { V26_1SignUpdatePacketImpl(it) }
-        registerServerboundPacket(ServerboundRenameItemPacket::class) { V26_1RenameItemPacketImpl(it) }
-        registerServerboundPacket(ServerboundCommandSuggestionPacket::class) { V26_1CommandSuggestionPacketImpl(it) }
-        registerServerboundPacket(ServerboundCustomPayloadPacket::class) { V26_1ServerboundCustomPayloadPacketImpl(it) }
+        registerServerboundPacket(ServerboundSignUpdatePacket::class) { V26_2SignUpdatePacketImpl(it) }
+        registerServerboundPacket(ServerboundRenameItemPacket::class) { V26_2RenameItemPacketImpl(it) }
+        registerServerboundPacket(ServerboundCommandSuggestionPacket::class) { V26_2CommandSuggestionPacketImpl(it) }
+        registerServerboundPacket(ServerboundCustomPayloadPacket::class) { V26_2ServerboundCustomPayloadPacketImpl(it) }
 
         // Clientbound packets
-        registerClientboundPacket(ClientboundDisconnectPacket::class) { V26_1ClientboundDisconnectPacketImpl(it) }
-        registerClientboundPacket(ClientboundSystemChatPacket::class) { V26_1ClientboundSystemChatPacketImpl(it) }
+        registerClientboundPacket(ClientboundDisconnectPacket::class) { V26_2ClientboundDisconnectPacketImpl(it) }
+        registerClientboundPacket(ClientboundSystemChatPacket::class) { V26_2ClientboundSystemChatPacketImpl(it) }
         // @formatter:on
     }
 

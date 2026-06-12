@@ -8,8 +8,8 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
-import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.V26_1PacketOperationImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets.V26_2PacketOperationImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import io.papermc.paper.adventure.PaperAdventure
 import io.papermc.paper.math.BlockPosition
 import net.kyori.adventure.text.Component
@@ -28,7 +28,7 @@ class V26_2SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
     override fun openSignEditor(
         position: BlockPosition,
         frontSide: Boolean,
-    ) = V26_1PacketOperationImpl.simple {
+    ) = V26_2PacketOperationImpl.simple {
         ClientboundOpenSignEditorPacket(
             position.toNms(),
             frontSide
@@ -39,7 +39,7 @@ class V26_2SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
         syncId: Int,
         type: InventoryType,
         title: Component,
-    ) = V26_1PacketOperationImpl.simple {
+    ) = V26_2PacketOperationImpl.simple {
         ClientboundOpenScreenPacket(
             syncId,
             type.toNms(),
@@ -52,7 +52,7 @@ class V26_2SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
         revision: Int,
         slot: Int,
         item: ItemStack,
-    ) = V26_1PacketOperationImpl.simple {
+    ) = V26_2PacketOperationImpl.simple {
         ClientboundContainerSetSlotPacket(
             syncId,
             revision,
@@ -62,7 +62,7 @@ class V26_2SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
     }
 
     override fun closeInventory(syncId: Int) =
-        V26_1PacketOperationImpl.simple { ClientboundContainerClosePacket(syncId) }
+        V26_2PacketOperationImpl.simple { ClientboundContainerClosePacket(syncId) }
 
     override fun createNewPlayerInfoUpdate(
         profileId: UUID,
@@ -74,7 +74,7 @@ class V26_2SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
         showHat: Boolean,
         listOrder: Int,
         chatSession: RemoteChatSessionData?
-    ): PacketOperation = V26_1PacketOperationImpl.simple {
+    ): PacketOperation = V26_2PacketOperationImpl.simple {
         val entries = listOf(
             ClientboundPlayerInfoUpdatePacket.Entry(
                 profileId,
@@ -105,7 +105,7 @@ class V26_2SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
     }
 
     override fun removePlayerInfoUpdate(profileIds: List<UUID>): PacketOperation =
-        V26_1PacketOperationImpl.simple {
+        V26_2PacketOperationImpl.simple {
             ClientboundPlayerInfoRemovePacket(profileIds)
         }
 

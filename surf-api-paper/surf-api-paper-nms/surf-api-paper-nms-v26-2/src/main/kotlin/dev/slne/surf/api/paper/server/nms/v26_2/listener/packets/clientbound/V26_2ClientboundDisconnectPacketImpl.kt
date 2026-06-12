@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v26_2.listener.packets.clientbound
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.listener.packets.clientbound.DisconnectPacket
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toBukkit
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toBukkit
 import net.minecraft.network.protocol.common.ClientCommonPacketListener
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket
 

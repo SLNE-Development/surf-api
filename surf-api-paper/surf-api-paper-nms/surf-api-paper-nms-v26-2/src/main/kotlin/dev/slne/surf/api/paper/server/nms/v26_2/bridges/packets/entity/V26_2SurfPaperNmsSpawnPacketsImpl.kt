@@ -5,8 +5,8 @@ import com.mojang.math.Transformation
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.*
-import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.V26_1PacketOperationImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets.V26_2PacketOperationImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
 import it.unimi.dsi.fastutil.ints.IntList
@@ -17,9 +17,9 @@ import net.minecraft.network.protocol.game.*
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.entity.Display
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.EntityTypes
 import net.minecraft.world.entity.PositionMoveRotation
-import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.entity.BlockEntityTypes
 import net.minecraft.world.level.block.entity.SignText
 import net.minecraft.world.phys.Vec3
 import org.bukkit.entity.TextDisplay.TextAlignment
@@ -33,19 +33,22 @@ class V26_2SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
     private val log = logger()
 
     override fun despawn(entityIds: IntList) =
-        V26_1PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(entityIds) }
+        V26_2PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(entityIds) }
 
     override fun despawn(vararg entityId: Int) =
-        V26_1PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(*entityId) }
+        V26_2PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(*entityId) }
 
 
     override fun spawnItemDisplay(
         entityId: Int,
         position: FinePosition,
         settings: ItemDisplaySettings,
-    ) = V26_1PacketOperationImpl.complex { player, packets ->
+    ) = V26_2PacketOperationImpl.complex { player, packets ->
         val serverPlayer = player.toNms()
-        val display = Display.ItemDisplay(EntityType.ITEM_DISPLAY, serverPlayer.level()).apply {
+        val display = Display.ItemDisplay(
+            EntityTypes.ITEM_DISPLAY,
+            serverPlayer.level()
+        ).apply {
             id = entityId
 
             setPosition(position)
@@ -64,9 +67,9 @@ class V26_2SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
         entityId: Int,
         position: FinePosition,
         settings: TextDisplaySettings,
-    ) = V26_1PacketOperationImpl.complex { player, packets ->
+    ) = V26_2PacketOperationImpl.complex { player, packets ->
         val serverPlayer = player.toNms()
-        val display = Display.TextDisplay(EntityType.TEXT_DISPLAY, serverPlayer.level()).apply {
+        val display = Display.TextDisplay(EntityTypes.TEXT_DISPLAY, serverPlayer.level()).apply {
             id = entityId
 
             setPosition(position)
@@ -106,12 +109,12 @@ class V26_2SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
         entityId: Int,
         position: BlockPosition,
         settings: SignBlockUpdateSettings,
-    ) = V26_1PacketOperationImpl.complex { player, packets ->
+    ) = V26_2PacketOperationImpl.complex { player, packets ->
         val nbt = CompoundTag()
         val registryLookup = MinecraftServer.getServer().registryAccess()
         writeUpdateSignToTag(nbt, registryLookup, settings.frontText, settings.backText)
 
-        packets.add(ClientboundBlockEntityDataPacket(position.toNms(), BlockEntityType.SIGN, nbt))
+        packets.add(ClientboundBlockEntityDataPacket(position.toNms(), BlockEntityTypes.SIGN, nbt))
         packets
     }
 
@@ -119,9 +122,9 @@ class V26_2SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
         entityId: Int,
         position: FinePosition,
         settings: BlockDisplaySettings,
-    ) = V26_1PacketOperationImpl.complex { player, packets ->
+    ) = V26_2PacketOperationImpl.complex { player, packets ->
         val serverPlayer = player.toNms()
-        val display = Display.BlockDisplay(EntityType.BLOCK_DISPLAY, serverPlayer.level()).apply {
+        val display = Display.BlockDisplay(EntityTypes.BLOCK_DISPLAY, serverPlayer.level()).apply {
             id = entityId
 
             setPosition(position)
@@ -141,7 +144,7 @@ class V26_2SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
         pitch: Float,
         deltaMovement: FinePosition?,
         onGround: Boolean,
-    ) = V26_1PacketOperationImpl.simple {
+    ) = V26_2PacketOperationImpl.simple {
         ClientboundTeleportEntityPacket.teleport(
             entityId,
             PositionMoveRotation(position.toNms(), deltaMovement?.toNms() ?: Vec3.ZERO, yaw, pitch),

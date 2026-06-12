@@ -3,8 +3,8 @@ package dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets.player
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.toast.Toast
-import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.V26_1PacketOperationImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets.V26_2PacketOperationImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import net.minecraft.advancements.Advancement
 import net.minecraft.advancements.AdvancementProgress
 import net.minecraft.advancements.AdvancementRequirements
@@ -17,7 +17,7 @@ import java.util.*
 @NmsUseWithCaution
 @Suppress("ClassName")
 class V26_2SurfPaperNmsPlayerToastPacketsImpl : SurfPaperNmsPlayerToastPackets {
-    override fun showToast(toast: Toast) = V26_1PacketOperationImpl.complex { _, packets ->
+    override fun showToast(toast: Toast) = V26_2PacketOperationImpl.complex { _, packets ->
         val id = Identifier.fromNamespaceAndPath("surfapi", "toast_${UUID.randomUUID()}")
 
         packets.add(showPacket(id, toast))

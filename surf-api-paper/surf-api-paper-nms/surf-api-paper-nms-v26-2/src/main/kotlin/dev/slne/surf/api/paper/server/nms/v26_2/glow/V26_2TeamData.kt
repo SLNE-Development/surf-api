@@ -1,20 +1,20 @@
 package dev.slne.surf.api.paper.server.nms.v26_2.glow
 
-import net.minecraft.ChatFormatting
 import net.minecraft.world.scores.PlayerTeam
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.scores.Team
+import net.minecraft.world.scores.TeamColor
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("ClassName")
-class V26_2TeamData(color: ChatFormatting) {
+class V26_2TeamData(color: TeamColor) {
     private val scoreboard = Scoreboard()
-    val teamId = "glow-${uid()}${color.char}"
+    val teamId = "glow-${uid()}${color.name}"
     val team = PlayerTeam(scoreboard, teamId).apply {
         collisionRule = Team.CollisionRule.NEVER
-        this.color = color
+        this.color = Optional.of(color)
     }
 
     private val seenBy = ConcurrentHashMap.newKeySet<UUID>()
@@ -27,12 +27,12 @@ class V26_2TeamData(color: ChatFormatting) {
         private val lastUid = AtomicInteger()
         fun uid(): Int = lastUid.getAndIncrement()
 
-        private val teams = EnumMap<ChatFormatting, V26_2TeamData>(ChatFormatting::class.java)
+        private val teams = EnumMap<TeamColor, V26_2TeamData>(TeamColor::class.java)
 
-        fun getByColor(color: ChatFormatting): V26_2TeamData =
+        fun getByColor(color: TeamColor): V26_2TeamData =
             teams.computeIfAbsent(color) { V26_2TeamData(color) }
 
-        fun getByColorOrNull(color: ChatFormatting): V26_2TeamData? = teams[color]
+        fun getByColorOrNull(color: TeamColor): V26_2TeamData? = teams[color]
 
         fun removeFromAll(uuid: UUID) {
             teams.values.forEach { it.removeSeen(uuid) }

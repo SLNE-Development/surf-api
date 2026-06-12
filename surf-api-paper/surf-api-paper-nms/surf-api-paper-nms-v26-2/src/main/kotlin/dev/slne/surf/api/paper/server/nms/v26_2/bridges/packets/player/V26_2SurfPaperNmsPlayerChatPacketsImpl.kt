@@ -4,7 +4,8 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.player.LastSeenMessagesPacked
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChatPackets
-import dev.slne.surf.api.paper.server.nms.v26_1.bridges.packets.V26_1PacketOperationImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets.V26_2PacketOperationImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
 import net.minecraft.network.chat.ChatType
@@ -31,7 +32,7 @@ class V26_2SurfPaperNmsPlayerChatPacketsImpl : SurfPaperNmsPlayerChatPackets {
         content: String,
         unsignedContent: Component?,
         lastSeen: LastSeenMessagesPacked,
-    ): PacketOperation = V26_1PacketOperationImpl.simple { player ->
+    ): PacketOperation = V26_2PacketOperationImpl.simple { player ->
         val messageSignature = signature?.let { NmsMessageSignature(it.bytes()) }
         val signedBody = SignedMessageBody.Packed(content, timestamp, salt, lastSeen.toNms())
 

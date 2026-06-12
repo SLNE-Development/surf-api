@@ -4,8 +4,8 @@ import dev.slne.surf.api.core.util.emptyObjectList
 import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsLootTableBridge
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toBukkit
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toBukkit
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.storage.loot.LootParams

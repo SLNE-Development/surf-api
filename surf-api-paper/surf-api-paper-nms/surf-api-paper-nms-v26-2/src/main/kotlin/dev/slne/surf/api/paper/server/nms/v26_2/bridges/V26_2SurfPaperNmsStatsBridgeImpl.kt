@@ -2,8 +2,8 @@ package dev.slne.surf.api.paper.server.nms.v26_2.bridges
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsStatsBridge
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.reflection.V26_2NmsReflections
 import org.bukkit.entity.Player
 
 @NmsUseWithCaution
@@ -11,8 +11,8 @@ import org.bukkit.entity.Player
 class V26_2SurfPaperNmsStatsBridgeImpl : SurfPaperNmsStatsBridge {
 
     override fun getPlayerStatsAsJson(player: Player): String {
-        val gson = V26_1NmsReflections.getServerStatsCounterGson()
-        val jsonElement = V26_1NmsReflections.convertServerStatsCounterToJson(player.toNms().stats)
+        val gson = V26_2NmsReflections.getServerStatsCounterGson()
+        val jsonElement = V26_2NmsReflections.convertServerStatsCounterToJson(player.toNms().stats)
         return gson.toJson(jsonElement)
     }
 

@@ -2,9 +2,9 @@ package dev.slne.surf.api.paper.server.nms.v26_2.bridges
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsItemBridge
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.nms
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toIdentifier
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.unwrap
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.nms
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toIdentifier
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.unwrap
 import dev.slne.surf.api.paper.server.nms.v26_2.bridges.V26_2SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.exactIndex
 import dev.slne.surf.api.paper.server.nms.v26_2.bridges.V26_2SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.indexOf
 import dev.slne.surf.api.paper.server.nms.v26_2.bridges.V26_2SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.itemTypeIndex

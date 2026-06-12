@@ -7,8 +7,8 @@ import dev.slne.surf.api.core.util.toMutableObjectList
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
-import dev.slne.surf.api.paper.server.nms.v26_1.glow.V26_1SurfGlowingApiImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
+import dev.slne.surf.api.paper.server.nms.v26_2.glow.V26_2SurfGlowingApiImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.reflection.V26_2NmsReflections
 import glm_.or
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
@@ -61,13 +61,13 @@ object V26_2GlowingPacketListener : PacketListener {
             return packet
         }
 
-        val playerData = V26_1SurfGlowingApiImpl.getEntityPlayerData(player) ?: return packet
+        val playerData = V26_2SurfGlowingApiImpl.getEntityPlayerData(player) ?: return packet
         val glowingData = playerData.entities[packet.id] ?: return packet
         val incoming = packet.packedItems
         var flagsFound = false
         var edited = false
         val newItems = mutableObjectListOf<DataValue<*>>(incoming.size + 1)
-        val dataFlagsShared = V26_1NmsReflections.getEntityDataFlagsSharedId()
+        val dataFlagsShared = V26_2NmsReflections.getEntityDataFlagsSharedId()
         val dataFlagsSharedId = dataFlagsShared.id
 
         for (dataValue in incoming) {
@@ -75,7 +75,7 @@ object V26_2GlowingPacketListener : PacketListener {
                 flagsFound = true
                 val current = dataValue.value as Byte
                 glowingData.otherFlags = current
-                val withGlow: Byte = current or V26_1SurfGlowingApiImpl.glowingFlag
+                val withGlow: Byte = current or V26_2SurfGlowingApiImpl.glowingFlag
 
                 if (withGlow != current) {
                     edited = true
@@ -89,7 +89,7 @@ object V26_2GlowingPacketListener : PacketListener {
         }
 
         if (!edited && !flagsFound) {
-            val withGlow = glowingData.otherFlags or V26_1SurfGlowingApiImpl.glowingFlag
+            val withGlow = glowingData.otherFlags or V26_2SurfGlowingApiImpl.glowingFlag
             if (withGlow != 0.toByte()) {
                 edited = true
                 newItems.add(DataValue(dataFlagsSharedId, dataFlagsShared.serializer, withGlow))

@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets
 
 import com.google.common.flogger.FluentLogger
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
@@ -41,7 +41,7 @@ class V26_2PacketOperationImpl : PacketOperation {
     }
 
     override fun add(operation: PacketOperation): V26_2PacketOperationImpl {
-        require(operation is V26_2PacketOperationImpl) { "operation must be an instance of V26_1PacketOperationImpl" }
+        require(operation is V26_2PacketOperationImpl) { "operation must be an instance of V26_2PacketOperationImpl" }
 
         this.operation = this.operation.andThen(operation.operation)
         return this

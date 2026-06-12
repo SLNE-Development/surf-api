@@ -9,8 +9,8 @@ import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
 import dev.slne.surf.api.paper.nms.bridges.data.chat.*
 import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.reflection.V26_2NmsReflections
 import io.papermc.paper.adventure.PaperAdventure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +56,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     @Suppress("USELESS_ELVIS")
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {
         val connection = player.toNms().connection ?: return null
-        val session = V26_1NmsReflections.getRemoteChatSession(connection) ?: return null
+        val session = V26_2NmsReflections.getRemoteChatSession(connection) ?: return null
         val profilePublicKey = session.profilePublicKey()
 
         return RemoteChatSessionData(
@@ -96,7 +96,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             signatureValidator
         )
 
-        V26_1NmsReflections.resetPlayerChatState(connection, newChatSession)
+        V26_2NmsReflections.resetPlayerChatState(connection, newChatSession)
     }
 
     override fun runOnChatMessageChain(
@@ -106,7 +106,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     ) {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection
-        val chatMessageChain = V26_1NmsReflections.getChatMessageChain(connection)
+        val chatMessageChain = V26_2NmsReflections.getChatMessageChain(connection)
         val done = CompletableFuture<Unit>()
 
         synchronized(chatMessageChain) {
@@ -152,7 +152,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     @Suppress("USELESS_ELVIS")
     override fun increaseNextChatIndex(player: Player): Int? {
         val connection = player.toNms().connection ?: return null
-        return V26_1NmsReflections.getAndIncreaseNextChatIndex(connection)
+        return V26_2NmsReflections.getAndIncreaseNextChatIndex(connection)
     }
 
     override fun createPlayerChatMessageMirrorFromAdventure(
@@ -183,7 +183,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         val filterMask = when (val mask = nms.filterMask()) {
             FilterMask.FULLY_FILTERED -> PlayerChatMessageMirror.FilterMask.FULLY_FILTERED
             FilterMask.PASS_THROUGH -> PlayerChatMessageMirror.FilterMask.PASS_THROUGH
-            else -> PlayerChatMessageMirror.FilterMask(V26_1NmsReflections.getFilterMask(mask))
+            else -> PlayerChatMessageMirror.FilterMask(V26_2NmsReflections.getFilterMask(mask))
         }
 
         return PlayerChatMessageMirror(
@@ -208,7 +208,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         val filterMask = when (mirror.filterMask) {
             PlayerChatMessageMirror.FilterMask.FULLY_FILTERED -> FilterMask.FULLY_FILTERED
             PlayerChatMessageMirror.FilterMask.PASS_THROUGH -> FilterMask.PASS_THROUGH
-            else -> V26_1NmsReflections.createFilterMask(mirror.filterMask.mask)
+            else -> V26_2NmsReflections.createFilterMask(mirror.filterMask.mask)
         }
 
         return PlayerChatMessage(
@@ -230,12 +230,12 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         val nmsMessage = message.playerChatMessage()
         val nmsPlayer = receiver.toNms()
         val connection = nmsPlayer.connection ?: return
-        val messageSignatureCache = V26_1NmsReflections.getMessageSignatureCache(connection)
+        val messageSignatureCache = V26_2NmsReflections.getMessageSignatureCache(connection)
 
         synchronized(messageSignatureCache) {
             connection.send(
                 ClientboundPlayerChatPacket(
-                    V26_1NmsReflections.getAndIncreaseNextChatIndex(connection),
+                    V26_2NmsReflections.getAndIncreaseNextChatIndex(connection),
                     nmsMessage.link().sender(),
                     nmsMessage.link().index(),
                     nmsMessage.signature(),
@@ -249,7 +249,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             val signature = nmsMessage.signature()
             if (signature != null) {
                 messageSignatureCache.push(nmsMessage.signedBody(), signature)
-                val lastSeenMessages = V26_1NmsReflections.getLastSeenMessages(connection)
+                val lastSeenMessages = V26_2NmsReflections.getLastSeenMessages(connection)
 
                 synchronized(lastSeenMessages) {
                     lastSeenMessages.addPending(signature)
@@ -259,7 +259,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     override fun getPaperRawChatType(): ChatType {
-        return ChatType.chatType(PaperAdventure.asAdventureKey(V26_1NmsReflections.getPaperRawChatTypeKey()))
+        return ChatType.chatType(PaperAdventure.asAdventureKey(V26_2NmsReflections.getPaperRawChatTypeKey()))
     }
 
     override suspend fun editOfflineInventory(

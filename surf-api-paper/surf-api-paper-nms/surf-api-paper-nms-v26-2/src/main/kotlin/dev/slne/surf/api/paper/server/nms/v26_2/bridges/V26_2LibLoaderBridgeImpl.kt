@@ -7,6 +7,8 @@ import dev.slne.surf.api.core.reflection.SurfReflection
 import dev.slne.surf.api.core.reflection.createProxy
 import dev.slne.surf.api.core.util.setFinalField
 import dev.slne.surf.api.paper.nms.common.LibLoaderBridge
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.commodore
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.craftServer
 import io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader
 import org.bukkit.craftbukkit.util.ApiVersion
 import java.net.URLClassLoader
@@ -15,7 +17,7 @@ import java.net.URLClassLoader
 object V26_2LibLoaderBridgeImpl : LibLoaderBridge {
 
     override fun getActiveCompatibilities(): MutableSet<String> {
-        return _root_ide_package_.dev.slne.surf.api.paper.server.nms.v26_2.extensions.craftServer.activeCompatibilities
+        return craftServer.activeCompatibilities
     }
 
     override fun convertWithCommodore(
@@ -24,7 +26,7 @@ object V26_2LibLoaderBridgeImpl : LibLoaderBridge {
         pluginVersion: String,
         activeCompatibilities: MutableSet<String>
     ): ByteArray {
-        return _root_ide_package_.dev.slne.surf.api.paper.server.nms.v26_2.extensions.commodore.convert(
+        return commodore.convert(
             b,
             pluginName,
             ApiVersion.getOrCreateVersion(pluginVersion),

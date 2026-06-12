@@ -7,12 +7,12 @@ import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.common.NmsProvider
-import dev.slne.surf.api.paper.server.nms.v26_1.bridges.V26_1SurfPaperNmsGlowingBridgeImpl
-import dev.slne.surf.api.paper.server.nms.v26_1.glow.block.BlockGlowingData
-import dev.slne.surf.api.paper.server.nms.v26_1.glow.block.BlockPlayerData
-import dev.slne.surf.api.paper.server.nms.v26_1.glow.entity.EntityGlowingData
-import dev.slne.surf.api.paper.server.nms.v26_1.glow.entity.EntityPlayerData
-import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
+import dev.slne.surf.api.paper.server.nms.v26_2.bridges.V26_2SurfPaperNmsGlowingBridgeImpl
+import dev.slne.surf.api.paper.server.nms.v26_2.glow.block.BlockGlowingData
+import dev.slne.surf.api.paper.server.nms.v26_2.glow.block.BlockPlayerData
+import dev.slne.surf.api.paper.server.nms.v26_2.glow.entity.EntityGlowingData
+import dev.slne.surf.api.paper.server.nms.v26_2.glow.entity.EntityPlayerData
+import dev.slne.surf.api.paper.server.nms.v26_2.reflection.V26_2NmsReflections
 import dev.slne.surf.api.paper.util.isChunkVisible
 import io.papermc.paper.adventure.PaperAdventure
 import net.kyori.adventure.text.format.NamedTextColor
@@ -29,7 +29,7 @@ object V26_2SurfGlowingApiImpl : SurfGlowingApi {
     private val entityPlayerData = ConcurrentHashMap<UUID, EntityPlayerData>()
     private val blockPlayerData = ConcurrentHashMap<UUID, BlockPlayerData>()
 
-    val glowingFlag = 1 shl V26_1NmsReflections.getEntityFlagGlowing()
+    val glowingFlag = 1 shl V26_2NmsReflections.getEntityFlagGlowing()
 
     override fun makeGlowing(
         target: Entity,
@@ -41,7 +41,7 @@ object V26_2SurfGlowingApiImpl : SurfGlowingApi {
             teamIdFor(target),
             viewer,
             color,
-            V26_1SurfPaperNmsGlowingBridgeImpl.getCurrentFlags(target)
+            V26_2SurfPaperNmsGlowingBridgeImpl.getCurrentFlags(target)
         )
     }
 

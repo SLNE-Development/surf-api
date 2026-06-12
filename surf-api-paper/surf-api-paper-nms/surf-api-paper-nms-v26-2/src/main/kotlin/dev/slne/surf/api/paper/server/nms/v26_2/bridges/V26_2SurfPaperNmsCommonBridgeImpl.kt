@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.ComposterBlock
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.World
 import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
 import java.net.InetSocketAddress
@@ -25,8 +26,11 @@ class V26_2SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     @Suppress("DEPRECATION")
     override fun nextEntityId(): Int {
-        return Bukkit.getUnsafe().nextEntityId()
+        return Bukkit.getUnsafe().nextEntityId(Bukkit.getWorlds().first())
     }
+
+    @Suppress("DEPRECATION")
+    override fun nextEntityId(world: World) = Bukkit.getUnsafe().nextEntityId(world)
 
     override fun getStateId(material: Material): Int {
         return Block.getId(material.toNmsBlock().defaultBlockState())

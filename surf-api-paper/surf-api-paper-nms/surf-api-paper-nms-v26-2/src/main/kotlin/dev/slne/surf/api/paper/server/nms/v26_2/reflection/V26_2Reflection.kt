@@ -7,7 +7,7 @@ object V26_2Reflection {
         /*
         val remapper = ReflectionRemapper.forReobfMappingsInPaperJar()
         val proxyFactory =
-            ReflectionProxyFactory.create(remapper, V26_1Reflection::class.java.classLoader)
+            ReflectionProxyFactory.create(remapper, V26_2Reflection::class.java.classLoader)
 
         // gc the remapper
         System.gc()

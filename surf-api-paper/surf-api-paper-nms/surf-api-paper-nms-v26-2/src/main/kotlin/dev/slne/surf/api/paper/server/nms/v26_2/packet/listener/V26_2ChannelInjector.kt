@@ -6,7 +6,7 @@ import dev.slne.surf.api.core.reflection.SurfReflection
 import dev.slne.surf.api.core.reflection.createProxy
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.nms.common.AbstractChannelInjector
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
+import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import io.netty.channel.Channel
 import io.papermc.paper.connection.PaperPlayerLoginConnection
 import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl

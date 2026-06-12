@@ -35,9 +35,9 @@ import java.util.*
 
 @Suppress("ClassName")
 @OptIn(NmsUseWithCaution::class)
-@NmsProviderMarker(NmsVersion.V26_1)
+@NmsProviderMarker(NmsVersion.V26_2)
 class V26_2NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
-    override val version: NmsVersion = NmsVersion.V26_1
+    override val version: NmsVersion = NmsVersion.V26_2
 
     override fun createNmsBridge() =
         V26_2SurfPaperNmsBridgeImpl()
