@@ -23,7 +23,7 @@ import java.util.*
 class SurfVisualizerSingleLocationImpl(
     location: Location
 ) : AbstractSurfVisualizerImpl(), SurfVisualizerSingleLocation {
-    private val entityId = SurfPaperNmsCommonBridge.nextEntityId()
+    private val entityId = SurfPaperNmsCommonBridge.nextEntityId(location.world)
 
     override var location: Location = location
         set(value) {

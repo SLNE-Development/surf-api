@@ -228,7 +228,7 @@ class SurfVisualizerMultipleLocationsImpl(
         settings: BlockDisplaySettings,
     ) {
         ensureNotClosed()
-        val id = SurfPaperNmsCommonBridge.nextEntityId()
+        val id = SurfPaperNmsCommonBridge.nextEntityId(world)
         val point = VisualPoint(visualLocation, settings)
         put(id, point)
 
@@ -263,7 +263,7 @@ class SurfVisualizerMultipleLocationsImpl(
 
         val toSpawn = mutableInt2ObjectMapOf<VisualPoint>()
         for ((loc, setting) in locations) {
-            val id = SurfPaperNmsCommonBridge.nextEntityId()
+            val id = SurfPaperNmsCommonBridge.nextEntityId(world)
             val point = VisualPoint(loc, setting)
             put(id, point)
             toSpawn[id] = point
