@@ -1,6 +1,6 @@
 [versions]
 # Paper
-paper-api = "26.1+"
+paper-api = "26.2+"
 canvas-api = "26.1+"
 
 # Kolin

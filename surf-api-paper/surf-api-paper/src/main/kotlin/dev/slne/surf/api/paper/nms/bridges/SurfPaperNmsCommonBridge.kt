@@ -12,6 +12,8 @@ import java.net.InetSocketAddress
 interface SurfPaperNmsCommonBridge {
     @Deprecated("Use nextEntityId(world: World)")
     fun nextEntityId(): Int
+
+    @Suppress("DEPRECATION")
     fun nextEntityId(world: World): Int = nextEntityId()
 
     fun getStateId(material: Material): Int
