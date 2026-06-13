@@ -1641,6 +1641,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun getVelocitySecret ()Ljava/lang/String;
 	public abstract fun isVelocityEnabled ()Z
 	public abstract fun nextEntityId ()I
+	public fun nextEntityId (Lorg/bukkit/World;)I
 	public abstract fun removeCompostable (Lorg/bukkit/Material;)V
 	public abstract fun setOnlineMode (Z)V
 	public abstract fun setVelocityEnabled (Z)V
@@ -1658,6 +1659,7 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$
 	public fun getVelocitySecret ()Ljava/lang/String;
 	public fun isVelocityEnabled ()Z
 	public fun nextEntityId ()I
+	public fun nextEntityId (Lorg/bukkit/World;)I
 	public fun removeCompostable (Lorg/bukkit/Material;)V
 	public fun setOnlineMode (Z)V
 	public fun setVelocityEnabled (Z)V
@@ -1666,6 +1668,7 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$DefaultImpls {
 	public static synthetic fun clearDialogs$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)V
+	public static fun nextEntityId (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge;Lorg/bukkit/World;)I
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
