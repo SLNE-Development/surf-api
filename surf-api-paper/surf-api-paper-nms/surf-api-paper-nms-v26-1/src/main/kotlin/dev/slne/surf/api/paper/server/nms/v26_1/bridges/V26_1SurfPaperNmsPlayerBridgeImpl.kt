@@ -69,6 +69,13 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     @Suppress("USELESS_ELVIS")
+    override fun <T> withMessageSignatureCacheLock(player: Player, block: () -> T): T? {
+        val connection = player.toNms().connection ?: return null
+        val cache = V26_1NmsReflections.getMessageSignatureCache(connection)
+        return synchronized(cache) { block() }
+    }
+
+    @Suppress("USELESS_ELVIS")
     override fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot? {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection ?: return null

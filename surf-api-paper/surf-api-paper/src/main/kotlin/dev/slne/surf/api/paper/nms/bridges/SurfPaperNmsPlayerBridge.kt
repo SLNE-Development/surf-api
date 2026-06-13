@@ -27,6 +27,8 @@ interface SurfPaperNmsPlayerBridge {
     fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot?
     fun applyChatSessionSnapshot(player: Player, snapshot: PlayerChatSessionSnapshot)
 
+    fun <T> withMessageSignatureCacheLock(player: Player, block: () -> T): T?
+
     fun resetPlayerChatState(player: Player, chatSession: RemoteChatSessionData)
 
     fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit)

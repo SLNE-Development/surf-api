@@ -66,14 +66,18 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     override fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot? {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("1.21.11")
     }
 
     override fun applyChatSessionSnapshot(
         player: Player,
         snapshot: PlayerChatSessionSnapshot
     ) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("1.21.11")
+    }
+
+    override fun <T> withMessageSignatureCacheLock(player: Player, block: () -> T): T? {
+        throw UnsupportedOperationException("1.21.11")
     }
 
     @Suppress("USELESS_ELVIS")

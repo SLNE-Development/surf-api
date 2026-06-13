@@ -9,11 +9,13 @@ import it.unimi.dsi.fastutil.objects.ObjectList
 import net.minecraft.network.chat.*
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.resources.ResourceKey
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.server.network.ServerConnectionListener
 import net.minecraft.server.network.ServerGamePacketListenerImpl
 import net.minecraft.stats.ServerStatsCounter
 import net.minecraft.util.FutureChain
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.player.ChatVisiblity
 import java.lang.invoke.VarHandle
 import java.time.Instant
 import java.util.*
@@ -155,6 +157,12 @@ interface V26_1NmsReflections {
         instance: ServerGamePacketListenerImpl,
         value: Boolean
     )
+
+    @ReflectedVarHandle(
+        name = "chatVisibility",
+        mode = VarHandle.AccessMode.GET_AND_SET
+    )
+    fun getAndSetChatVisibility(player: ServerPlayer, visibility: ChatVisiblity): ChatVisiblity
 
     companion object : V26_1NmsReflections by generatedReflectionAccessor()
 }
