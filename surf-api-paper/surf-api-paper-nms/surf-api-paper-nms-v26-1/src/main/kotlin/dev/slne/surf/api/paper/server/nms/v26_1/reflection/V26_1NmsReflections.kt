@@ -5,6 +5,7 @@ import com.google.gson.JsonElement
 import dev.slne.surf.api.shared.api.reflection.*
 import io.netty.channel.ChannelFuture
 import io.papermc.paper.adventure.ChatProcessor
+import it.unimi.dsi.fastutil.objects.ObjectList
 import net.minecraft.network.chat.*
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.resources.ResourceKey
@@ -14,6 +15,7 @@ import net.minecraft.stats.ServerStatsCounter
 import net.minecraft.util.FutureChain
 import net.minecraft.world.entity.Entity
 import java.lang.invoke.VarHandle
+import java.time.Instant
 import java.util.*
 
 @Suppress("ClassName")
@@ -29,11 +31,35 @@ interface V26_1NmsReflections {
     @ConstantIntArgument(1)
     fun getAndIncreaseNextChatIndex(instance: ServerGamePacketListenerImpl): Int
 
+    @ReflectedField("nextChatIndex")
+    fun getNextChatIndex(instance: ServerGamePacketListenerImpl): Int
+
+    @ReflectedField("nextChatIndex", access = ReflectedFieldAccess.SET)
+    fun setNextChatIndex(instance: ServerGamePacketListenerImpl, index: Int)
+
     @ReflectedField("messageSignatureCache")
     fun getMessageSignatureCache(instance: ServerGamePacketListenerImpl): MessageSignatureCache
 
+    @ReflectedMethod("push")
+    fun pushMessageSignatureCache(instance: MessageSignatureCache, deque: ArrayDeque<MessageSignature>)
+
     @ReflectedField(name = "lastSeenMessages")
     fun getLastSeenMessages(instance: ServerGamePacketListenerImpl): LastSeenMessagesValidator
+
+    @ReflectedField("lastSeenCount")
+    fun getLastSeenCountFromMessageValidator(validator: LastSeenMessagesValidator): Int
+
+    @ReflectedField("trackedMessages")
+    fun getTrackedMessagesFromMessageValidator(validator: LastSeenMessagesValidator): ObjectList<LastSeenTrackedEntry?>
+
+    @ReflectedField("lastPendingMessage")
+    fun getLastPendingMessageFromMessageValidator(validator: LastSeenMessagesValidator): MessageSignature?
+
+    @ReflectedField("lastPendingMessage", access = ReflectedFieldAccess.SET)
+    fun setLastPendingMessageFromMessageValidator(validator: LastSeenMessagesValidator, message: MessageSignature?)
+
+    @ReflectedField("entries")
+    fun getEntriesFromMessageSignatureCache(cache: MessageSignatureCache): Array<MessageSignature?>
 
     @ReflectedConstructor
     fun createFilterMask(bitSet: BitSet): FilterMask
@@ -82,6 +108,33 @@ interface V26_1NmsReflections {
     )
     fun getServerStatsCounterGson(): Gson
 
+    @ReflectedField("signedMessageDecoder")
+    fun getSignedMessageDecoder(instance: ServerGamePacketListenerImpl): SignedMessageChain.Decoder
+
+    @ReflectedField("signedMessageDecoder", access = ReflectedFieldAccess.SET)
+    fun setSignedMessageDecoder(
+        instance: ServerGamePacketListenerImpl,
+        decoder: SignedMessageChain.Decoder
+    )
+
+    @ReflectedField("nextLink")
+    fun getNextLinkFromSignedMessageChain(chain: SignedMessageChain): SignedMessageLink?
+
+    @ReflectedField("nextLink", access = ReflectedFieldAccess.SET)
+    fun setNextLinkFromSignedMessageChain(
+        chain: SignedMessageChain,
+        nextLink: SignedMessageLink?
+    )
+
+    @ReflectedField("lastTimeStamp")
+    fun getLastTimeStampFromSignedMessageChain(chain: SignedMessageChain): Instant
+
+    @ReflectedField("lastTimeStamp", access = ReflectedFieldAccess.SET)
+    fun setLastTimeStampFromSignedMessageChain(
+        chain: SignedMessageChain,
+        lastTimeStamp: Instant
+    )
+
     @ReflectedMethod("resetPlayerChatState")
     fun resetPlayerChatState(
         instance: ServerGamePacketListenerImpl,
@@ -90,6 +143,18 @@ interface V26_1NmsReflections {
 
     @ReflectedField("chatSession")
     fun getRemoteChatSession(instance: ServerGamePacketListenerImpl): RemoteChatSession?
+
+    @ReflectedField("chatSession", access = ReflectedFieldAccess.SET)
+    fun setRemoteChatSession(
+        instance: ServerGamePacketListenerImpl,
+        chatSession: RemoteChatSession?
+    )
+
+    @ReflectedField("hasLoggedExpiry", access = ReflectedFieldAccess.SET)
+    fun setHasLoggedExpiry(
+        instance: ServerGamePacketListenerImpl,
+        value: Boolean
+    )
 
     companion object : V26_1NmsReflections by generatedReflectionAccessor()
 }
