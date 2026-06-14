@@ -17,6 +17,8 @@ interface TickThreadGuard {
     fun ensureTickThread(world: World, box: BoundingBox, reason: String)
     fun ensureTickThread(world: World, blockX: Double, blockZ: Double, reason: String)
 
+    fun ensureGlobalTickThread(reason: String)
+
     companion object : TickThreadGuard by tickThreadGuard {
         val INSTANCE get() = tickThreadGuard
     }
