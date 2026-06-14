@@ -2583,6 +2583,7 @@ public abstract class dev/slne/surf/api/paper/permission/PermissionRegistry {
 
 public abstract interface class dev/slne/surf/api/paper/region/TickThreadGuard {
 	public static final field Companion Ldev/slne/surf/api/paper/region/TickThreadGuard$Companion;
+	public abstract fun ensureGlobalTickThread (Ljava/lang/String;)V
 	public abstract fun ensureTickThread (Lorg/bukkit/World;DDLjava/lang/String;)V
 	public abstract fun ensureTickThread (Lorg/bukkit/World;IILjava/lang/String;)V
 	public abstract fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;ILjava/lang/String;)V
@@ -2592,6 +2593,7 @@ public abstract interface class dev/slne/surf/api/paper/region/TickThreadGuard {
 }
 
 public final class dev/slne/surf/api/paper/region/TickThreadGuard$Companion : dev/slne/surf/api/paper/region/TickThreadGuard {
+	public fun ensureGlobalTickThread (Ljava/lang/String;)V
 	public fun ensureTickThread (Lorg/bukkit/World;DDLjava/lang/String;)V
 	public fun ensureTickThread (Lorg/bukkit/World;IILjava/lang/String;)V
 	public fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;ILjava/lang/String;)V
