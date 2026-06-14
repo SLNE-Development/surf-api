@@ -8,6 +8,7 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
+import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
@@ -36,6 +37,7 @@ import net.minecraft.world.entity.EntityEquipment
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.npc.InventoryCarrier
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.entity.player.ProfilePublicKey
 import net.minecraft.world.level.storage.*
 import org.bukkit.craftbukkit.CraftEquipmentSlot
 import org.bukkit.craftbukkit.inventory.CraftItemStack
@@ -61,6 +63,50 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             key = profilePublicKey.key(),
             keySignature = profilePublicKey.keySignature()
         )
+    }
+
+    override fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot? {
+        throw UnsupportedOperationException("1.21.11")
+    }
+
+    override fun applyChatSessionSnapshot(
+        player: Player,
+        snapshot: PlayerChatSessionSnapshot
+    ) {
+        throw UnsupportedOperationException("1.21.11")
+    }
+
+    override fun <T> withMessageSignatureCacheLock(player: Player, block: () -> T): T? {
+        throw UnsupportedOperationException("1.21.11")
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun resetPlayerChatState(player: Player, chatSession: RemoteChatSessionData) {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+
+        val newChatSessionData = RemoteChatSession.Data(
+            chatSession.sessionId,
+            ProfilePublicKey.Data(
+                chatSession.expiresAt,
+                chatSession.key,
+                chatSession.keySignature
+            )
+        )
+
+
+        val signatureValidator = MinecraftServer.getServer().services().profileKeySignatureValidator()
+        if (signatureValidator == null) {
+            CHAT_LOGGER.warn("Ignoring chat session from {} due to missing Services public key", player.name)
+            return
+        }
+
+        val newChatSession = newChatSessionData.validate(
+            nmsPlayer.gameProfile,
+            signatureValidator
+        )
+
+        V1_21_11NmsReflections.resetPlayerChatState(connection, newChatSession)
     }
 
     override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {
@@ -347,5 +393,6 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     companion object {
         private val OFFLINE_INVENTORY_EDIT_LOGGER = ComponentLogger.logger("OfflinePlayer Inventory Edit")
+        private val CHAT_LOGGER = ComponentLogger.logger("SurfPaperNmsPlayerBridge Chat")
     }
 }

@@ -1,6 +1,7 @@
 package dev.slne.surf.api.paper.server.nms.v26_1.region
 
 import ca.spottedleaf.moonrise.common.util.TickThread
+import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import dev.slne.surf.api.paper.util.chunkX
@@ -16,6 +17,8 @@ import org.bukkit.util.BoundingBox
 class V26_1TickThreadGuard : TickThreadGuard {
 
     override fun ensureTickThread(world: World, pos: Position, reason: String) {
+        TickThread.ensureTickThread("")
+
         TickThread.ensureTickThread(world.toNms(), pos.chunkX, pos.chunkZ, reason)
     }
 
@@ -61,5 +64,11 @@ class V26_1TickThreadGuard : TickThreadGuard {
         reason: String
     ) {
         TickThread.ensureTickThread(world.toNms(), blockX, blockZ, reason)
+    }
+
+    override fun ensureGlobalTickThread(reason: String) {
+        if (!server.isGlobalTickThread) {
+            throw IllegalStateException("Not on global tick thread: $reason")
+        }
     }
 }
