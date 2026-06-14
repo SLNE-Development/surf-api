@@ -14,6 +14,7 @@ dependencies {
     api(libs.scoreboard.library.api)
     api(libs.commandapi.bukkit.kotlin)
     compileOnlyApi(libs.mccoroutine.folia.api)
+    api(libs.biomes.api)
 }
 
 description = "surf-api-paper"

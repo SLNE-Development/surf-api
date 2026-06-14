@@ -104,6 +104,7 @@ tasks {
         mergeServiceFiles()
         val relocationPrefix: String by project
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
+        relocate("me.outspending.biomesapi", "$relocationPrefix.outspending.biomesapi")
     }
 }
 
