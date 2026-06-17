@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalAbiValidation::class)
+
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
@@ -6,8 +8,5 @@ plugins {
 }
 
 extensions.configure<KotlinJvmProjectExtension> {
-    @OptIn(ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled.set(true)
-    }
+    abiValidation()
 }

@@ -7,9 +7,7 @@ plugins {
 }
 
 kotlin {
-    abiValidation {
-        enabled = true
-    }
+    abiValidation()
 }
 
 dependencies {

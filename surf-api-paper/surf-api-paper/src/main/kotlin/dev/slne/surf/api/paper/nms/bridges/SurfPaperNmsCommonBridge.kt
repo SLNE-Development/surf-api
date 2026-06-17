@@ -3,6 +3,7 @@ package dev.slne.surf.api.paper.nms.bridges
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import org.bukkit.Material
+import org.bukkit.World
 import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
 import java.net.InetSocketAddress
@@ -10,6 +11,8 @@ import java.net.InetSocketAddress
 @NmsUseWithCaution
 interface SurfPaperNmsCommonBridge {
     fun nextEntityId(): Int
+
+    fun nextEntityId(world: World): Int
 
     fun getStateId(material: Material): Int
     fun getStateId(blockData: BlockData): Int
