@@ -22,6 +22,9 @@ import java.nio.file.Path
 @ApiStatus.NonExtendable
 interface SurfPaperNmsPlayerBridge {
 
+    fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean = true)
+    fun removeAllTrackedPlayers(player: Player, swallowExceptions: Boolean = true)
+
     fun getRemoteChatSessionData(player: Player): RemoteChatSessionData?
 
     fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot?
