@@ -7691,6 +7691,8 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/SurfComp
 	public abstract fun build ()Lnet/kyori/adventure/text/TextComponent;
 	public static fun builder ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun children ()Ljava/util/List;
+	public fun clickCallback (Lnet/kyori/adventure/text/event/ClickCallback;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickCallbackWithOptions (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun clickCopiesToClipboard (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun clickEvent (Lnet/kyori/adventure/text/event/ClickEvent;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun clickOpensUrl (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7793,6 +7795,8 @@ public final class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder$
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickCallback (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/text/event/ClickCallback;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickCallbackWithOptions (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun clickCopiesToClipboard (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun clickOpensUrl (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun clickRunsCommand (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;

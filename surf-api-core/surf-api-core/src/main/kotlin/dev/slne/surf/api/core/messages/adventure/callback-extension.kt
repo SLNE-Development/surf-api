@@ -24,7 +24,7 @@ inline fun <reified T : Audience, C : Component, B : ComponentBuilder<C, B>> Com
 
 @OptIn(ExperimentalTypeInference::class)
 inline fun <reified T : Audience, C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallbackTypedWithOptions(
-    @BuilderInference builder: ClickCallbackWithOptionsBuilder<T>.() -> Unit
+    builder: ClickCallbackWithOptionsBuilder<T>.() -> Unit
 ) = clickEvent(ClickCallbackWithOptionsBuilder(T::class.java).apply(builder).build())
 
 fun ClickCallback.Options.Builder.lifetime(duration: Duration) = lifetime(duration.toJavaDuration())

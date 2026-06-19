@@ -8,8 +8,11 @@ import dev.slne.surf.api.core.messages.Colors.Companion.VARIABLE_VALUE
 import dev.slne.surf.api.core.messages.CommonComponents.DISCONNECT_HEADER
 import dev.slne.surf.api.core.messages.CommonComponents.DISCORD_LINK
 import dev.slne.surf.api.core.messages.CommonComponents.TIME_SEPARATOR
+import dev.slne.surf.api.core.messages.adventure.ClickCallbackWithOptionsBuilder
+import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.*
+import net.kyori.adventure.text.event.ClickCallback
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.event.HoverEventSource
 import net.kyori.adventure.text.format.Style
@@ -165,7 +168,14 @@ interface SurfComponentBuilder : ComponentBuilderColors, ComponentLike {
     fun applicableApply(applicable: ComponentBuilderApplicable): SurfComponentBuilder
     fun apply(consumer: Consumer<in ComponentBuilder<*, *>>): SurfComponentBuilder
     fun applyDeep(action: Consumer<in ComponentBuilder<*, *>>): SurfComponentBuilder
+
     fun clickEvent(event: ClickEvent<*>?): SurfComponentBuilder
+
+    fun clickCallback(callback: ClickCallback<Audience>) = clickEvent(ClickEvent.callback(callback))
+    fun clickCallbackWithOptions(
+        builder: ClickCallbackWithOptionsBuilder<Audience>.() -> Unit,
+    ) = clickEvent(ClickCallbackWithOptionsBuilder(Audience::class.java).apply(builder).build())
+
     fun color(color: TextColor?): SurfComponentBuilder
     fun colorIfAbsent(color: TextColor?): SurfComponentBuilder
     fun decorate(decoration: TextDecoration): SurfComponentBuilder
@@ -203,3 +213,11 @@ interface SurfComponentBuilder : ComponentBuilderColors, ComponentLike {
     fun shadowColor(argb: ARGBLike?): SurfComponentBuilder
     fun shadowColorIfAbsent(argb: ARGBLike?): SurfComponentBuilder
 }
+
+inline fun <reified T : Audience> SurfComponentBuilder.clickCallbackTypedWithOptions(
+    builder: ClickCallbackWithOptionsBuilder<T>.() -> Unit
+) = clickEvent(ClickCallbackWithOptionsBuilder(T::class.java).apply(builder).build())
+
+inline fun <reified T : Audience> SurfComponentBuilder.clickCallbackTyped(
+    callback: ClickCallback<T>,
+) = clickEvent(ClickEvent.callback(ClickCallback.widen(callback, T::class.java)))
