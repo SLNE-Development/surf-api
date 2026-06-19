@@ -5,8 +5,6 @@ import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.core.util.synchronize
 import net.kyori.adventure.nbt.*
-import net.kyori.examination.ExaminableProperty
-import net.kyori.examination.string.StringExaminer
 import java.util.function.Consumer
 import java.util.stream.Stream
 
@@ -22,7 +20,6 @@ class FastCompoundBinaryTagImpl(synchronize: Boolean) : FastCompoundBinaryTag {
 
     override fun contains(key: String, type: BinaryTagType<*>): Boolean {
         val tag = tags[key] ?: return false
-
         return type.test(tag.type())
     }
 
@@ -91,7 +88,6 @@ class FastCompoundBinaryTagImpl(synchronize: Boolean) : FastCompoundBinaryTag {
 
     override fun getByteArray(key: String, defaultValue: ByteArray?): ByteArray? {
         val tag = tags[key] as? ByteArrayBinaryTag ?: return defaultValue
-
         return tag.value()
     }
 
@@ -137,21 +133,15 @@ class FastCompoundBinaryTagImpl(synchronize: Boolean) : FastCompoundBinaryTag {
 
     override fun stream(): Stream<Map.Entry<String, BinaryTag>> = tags.entries.stream()
 
-    override fun examinableProperties(): Stream<ExaminableProperty> = Stream.of(
-        ExaminableProperty.of("tags", tags)
-    )
-
     override fun iterator() = tags.object2ObjectEntrySet().iterator()
 
     override fun forEach(action: Consumer<in MutableMap.MutableEntry<String, out BinaryTag>>) {
         tags.object2ObjectEntrySet().forEach(action)
     }
 
-    override fun examinableName(): String {
-        return type().toString()
+    override fun asBinaryTag(): CompoundBinaryTag {
+        return CompoundBinaryTag.from(tags)
     }
 
-    override fun toString(): String {
-        return examine(StringExaminer.simpleEscaping())
-    }
+    override fun toString(): String = "FastCompoundBinaryTag{tags=$tags}"
 }

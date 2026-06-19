@@ -7160,16 +7160,22 @@ public final class dev/slne/surf/api/core/messages/CommonComponents {
 	public final fun formatTime-gRj5Bb8 (JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/Component;
 	public static synthetic fun formatTime-gRj5Bb8$default (Ldev/slne/surf/api/core/messages/CommonComponents;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Lnet/kyori/adventure/text/Component;
 	public final synthetic fun getEM_DASH ()Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
+	public static synthetic fun renderDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderKickDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderKickDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
+	public static synthetic fun renderKickDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderKickDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderKickDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Lnet/kyori/adventure/text/TextComponent$Builder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 }
@@ -7646,21 +7652,15 @@ public final class dev/slne/surf/api/core/messages/builder/ComponentBuilderColor
 	public static fun yellow (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 }
 
-public abstract interface class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder : dev/slne/surf/api/core/messages/builder/ComponentBuilderColors, net/kyori/adventure/text/TextComponent$Builder {
+public abstract interface class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder : dev/slne/surf/api/core/messages/builder/ComponentBuilderColors, net/kyori/adventure/text/ComponentLike {
 	public static final field Companion Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder$Companion;
 	public abstract fun append (Ljava/lang/Iterable;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun append (Ljava/lang/Iterable;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public fun append (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun append (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun append (Lnet/kyori/adventure/text/Component;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun append (Lnet/kyori/adventure/text/ComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun append (Lnet/kyori/adventure/text/ComponentBuilder;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun append (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun append (Lnet/kyori/adventure/text/ComponentLike;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun append ([Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun append ([Lnet/kyori/adventure/text/Component;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun append ([Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun append ([Lnet/kyori/adventure/text/ComponentLike;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public fun appendAsync (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun appendCollection (Ljava/lang/Iterable;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun appendCollectionNewLine (Ljava/lang/Iterable;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7675,87 +7675,54 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/SurfComp
 	public fun appendMap (Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendMap$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun appendNewline ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun appendNewline ()Lnet/kyori/adventure/text/ComponentBuilder;
+	public fun appendNewline (I)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun appendNewline (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun appendNewlineAsync (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun appendSpace ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun appendSpace ()Lnet/kyori/adventure/text/ComponentBuilder;
+	public fun appendText (Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendText (Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun appendTime-gRj5Bb8 (JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendTime-gRj5Bb8$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun applicableApply (Lnet/kyori/adventure/text/ComponentBuilderApplicable;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun applicableApply (Lnet/kyori/adventure/text/ComponentBuilderApplicable;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun apply (Ljava/util/function/Consumer;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun apply (Ljava/util/function/Consumer;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun applyDeep (Ljava/util/function/Consumer;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun applyDeep (Ljava/util/function/Consumer;)Lnet/kyori/adventure/text/ComponentBuilder;
+	public abstract fun build ()Lnet/kyori/adventure/text/TextComponent;
 	public static fun builder ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public abstract fun children ()Ljava/util/List;
+	public fun clickCopiesToClipboard (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun clickEvent (Lnet/kyori/adventure/text/event/ClickEvent;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun clickEvent (Lnet/kyori/adventure/text/event/ClickEvent;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun clickEvent (Lnet/kyori/adventure/text/event/ClickEvent;)Lnet/kyori/adventure/text/format/StyleSetter;
+	public fun clickOpensUrl (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickRunsCommand (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickSuggestsCommand (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun color (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun color (Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun color (Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun colorIfAbsent (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun colorIfAbsent (Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun colorIfAbsent (Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/format/StyleSetter;
+	public abstract fun content ()Ljava/lang/String;
 	public abstract fun content (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun content (Ljava/lang/String;)Lnet/kyori/adventure/text/TextComponent$Builder;
 	public abstract fun decorate (Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun decorate (Lnet/kyori/adventure/text/format/TextDecoration;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun decorate (Lnet/kyori/adventure/text/format/TextDecoration;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun decorate ([Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun decorate ([Lnet/kyori/adventure/text/format/TextDecoration;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun decorate ([Lnet/kyori/adventure/text/format/TextDecoration;)Lnet/kyori/adventure/text/format/MutableStyleSetter;
-	public synthetic fun decorate ([Lnet/kyori/adventure/text/format/TextDecoration;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun decoration (Lnet/kyori/adventure/text/format/TextDecoration;Lnet/kyori/adventure/text/format/TextDecoration$State;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun decoration (Lnet/kyori/adventure/text/format/TextDecoration;Lnet/kyori/adventure/text/format/TextDecoration$State;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun decoration (Lnet/kyori/adventure/text/format/TextDecoration;Lnet/kyori/adventure/text/format/TextDecoration$State;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun decoration (Lnet/kyori/adventure/text/format/TextDecoration;Z)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun decoration (Lnet/kyori/adventure/text/format/TextDecoration;Z)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun decoration (Lnet/kyori/adventure/text/format/TextDecoration;Z)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun decorationIfAbsent (Lnet/kyori/adventure/text/format/TextDecoration;Lnet/kyori/adventure/text/format/TextDecoration$State;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun decorationIfAbsent (Lnet/kyori/adventure/text/format/TextDecoration;Lnet/kyori/adventure/text/format/TextDecoration$State;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun decorationIfAbsent (Lnet/kyori/adventure/text/format/TextDecoration;Lnet/kyori/adventure/text/format/TextDecoration$State;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun decorations (Ljava/util/Map;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun decorations (Ljava/util/Map;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun decorations (Ljava/util/Map;)Lnet/kyori/adventure/text/format/MutableStyleSetter;
-	public synthetic fun decorations (Ljava/util/Map;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun decorations (Ljava/util/Set;Z)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun decorations (Ljava/util/Set;Z)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun decorations (Ljava/util/Set;Z)Lnet/kyori/adventure/text/format/MutableStyleSetter;
-	public synthetic fun decorations (Ljava/util/Set;Z)Lnet/kyori/adventure/text/format/StyleSetter;
 	public fun ellipsis (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun ellipsis$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun font (Lnet/kyori/adventure/key/Key;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun font (Lnet/kyori/adventure/key/Key;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun font (Lnet/kyori/adventure/key/Key;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun hoverEvent (Lnet/kyori/adventure/text/event/HoverEventSource;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun hoverEvent (Lnet/kyori/adventure/text/event/HoverEventSource;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun hoverEvent (Lnet/kyori/adventure/text/event/HoverEventSource;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun insertion (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun insertion (Ljava/lang/String;)Lnet/kyori/adventure/text/ComponentBuilder;
-	public synthetic fun insertion (Ljava/lang/String;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun mapChildren (Ljava/util/function/Function;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun mapChildren (Ljava/util/function/Function;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun mapChildrenDeep (Ljava/util/function/Function;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun mapChildrenDeep (Ljava/util/function/Function;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun mergeStyle (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun mergeStyle (Lnet/kyori/adventure/text/Component;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun mergeStyle (Lnet/kyori/adventure/text/Component;Ljava/util/Set;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun mergeStyle (Lnet/kyori/adventure/text/Component;Ljava/util/Set;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun mergeStyle (Lnet/kyori/adventure/text/Component;[Lnet/kyori/adventure/text/format/Style$Merge;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun mergeStyle (Lnet/kyori/adventure/text/Component;[Lnet/kyori/adventure/text/format/Style$Merge;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public fun note (Ljava/lang/Object;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun resetStyle ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun resetStyle ()Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun shadowColor (Lnet/kyori/adventure/util/ARGBLike;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun shadowColor (Lnet/kyori/adventure/util/ARGBLike;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun shadowColorIfAbsent (Lnet/kyori/adventure/util/ARGBLike;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun shadowColorIfAbsent (Lnet/kyori/adventure/util/ARGBLike;)Lnet/kyori/adventure/text/format/StyleSetter;
 	public abstract fun style (Ljava/util/function/Consumer;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun style (Ljava/util/function/Consumer;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public abstract fun style (Lnet/kyori/adventure/text/format/Style;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
-	public synthetic fun style (Lnet/kyori/adventure/text/format/Style;)Lnet/kyori/adventure/text/ComponentBuilder;
 	public fun text (CLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun text (Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun text (Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7803,9 +7770,14 @@ public final class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder$
 	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
 	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun appendNewline (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewline (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewlineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendSuccessPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendText (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendText (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendTime-gRj5Bb8 (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendTime-gRj5Bb8$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendWarningPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7821,6 +7793,10 @@ public final class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder$
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickCopiesToClipboard (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickOpensUrl (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickRunsCommand (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickSuggestsCommand (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;CLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -8919,12 +8895,66 @@ public final class dev/slne/surf/api/core/nbt/CollectionBinaryTagKt {
 	public static final fun asCollectionOrNull (Lnet/kyori/adventure/nbt/BinaryTag;)Lnet/kyori/adventure/nbt/BinaryTag;
 }
 
-public abstract interface class dev/slne/surf/api/core/nbt/FastCompoundBinaryTag : net/kyori/adventure/nbt/CompoundBinaryTag {
+public abstract interface class dev/slne/surf/api/core/nbt/FastCompoundBinaryTag : net/kyori/adventure/nbt/BinaryTagLike {
+	public synthetic fun asBinaryTag ()Lnet/kyori/adventure/nbt/BinaryTag;
+	public abstract fun asBinaryTag ()Lnet/kyori/adventure/nbt/CompoundBinaryTag;
 	public abstract fun clear ()V
+	public abstract fun contains (Ljava/lang/String;)Z
+	public abstract fun contains (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;)Z
+	public abstract fun forEach (Ljava/util/function/Consumer;)V
+	public abstract fun get (Ljava/lang/String;)Lnet/kyori/adventure/nbt/BinaryTag;
+	public abstract fun getByte (Ljava/lang/String;B)B
+	public static synthetic fun getByte$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;BILjava/lang/Object;)B
+	public abstract fun getByteArray (Ljava/lang/String;)[B
+	public abstract fun getByteArray (Ljava/lang/String;[B)[B
+	public abstract fun getCompound (Ljava/lang/String;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static synthetic fun getCompound$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/CompoundBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun getDouble (Ljava/lang/String;D)D
+	public static synthetic fun getDouble$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;DILjava/lang/Object;)D
+	public abstract fun getFloat (Ljava/lang/String;F)F
+	public static synthetic fun getFloat$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;FILjava/lang/Object;)F
+	public abstract fun getInt (Ljava/lang/String;I)I
+	public static synthetic fun getInt$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;IILjava/lang/Object;)I
+	public abstract fun getIntArray (Ljava/lang/String;)[I
+	public abstract fun getIntArray (Ljava/lang/String;[I)[I
+	public abstract fun getList (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun getList (Ljava/lang/String;Lnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun getLong (Ljava/lang/String;J)J
+	public static synthetic fun getLong$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;JILjava/lang/Object;)J
+	public abstract fun getLongArray (Ljava/lang/String;)[J
+	public abstract fun getLongArray (Ljava/lang/String;[J)[J
+	public abstract fun getShort (Ljava/lang/String;S)S
+	public static synthetic fun getShort$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;SILjava/lang/Object;)S
+	public abstract fun getString (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun getString$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public abstract fun isEmpty ()Z
 	public abstract fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
-	public synthetic fun iterator ()Ljava/util/Iterator;
 	public abstract fun keySet ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public synthetic fun keySet ()Ljava/util/Set;
+	public abstract fun put (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTag;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun put (Ljava/util/Map;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun put (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun remove (Ljava/lang/String;Ljava/util/function/Consumer;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public static synthetic fun remove$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/util/function/Consumer;ILjava/lang/Object;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun size ()I
+	public abstract fun stream ()Ljava/util/stream/Stream;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+}
+
+public final class dev/slne/surf/api/core/nbt/FastCompoundBinaryTag$DefaultImpls {
+	public static synthetic fun getByte$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;BILjava/lang/Object;)B
+	public static synthetic fun getCompound$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/CompoundBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static synthetic fun getDouble$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;DILjava/lang/Object;)D
+	public static synthetic fun getFloat$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;FILjava/lang/Object;)F
+	public static synthetic fun getInt$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;IILjava/lang/Object;)I
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getLong$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;JILjava/lang/Object;)J
+	public static synthetic fun getShort$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;SILjava/lang/Object;)S
+	public static synthetic fun getString$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static synthetic fun remove$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/util/function/Consumer;ILjava/lang/Object;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public static fun type (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;)Lnet/kyori/adventure/nbt/BinaryTagType;
 }
 
 public final class dev/slne/surf/api/core/nbt/FastCompoundBinaryTagKt {

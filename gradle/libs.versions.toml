@@ -23,7 +23,7 @@ luckpermsplugin-bukkit = "v5.5.17-bukkit" # "luckpermsplugin" is written without
 scoreboard-library = "2.7.4"
 
 # Adventure
-adventure-api = "4.26.1"
+adventure-api = "5.1.1"
 
 # Velocity
 velocity-api = "3.5.0-SNAPSHOT"
@@ -35,6 +35,8 @@ placeholder-api = "2.12.2"
 mccoroutine = "2.22.2"
 
 # Miscellaneous Libraries
+asm = "9.8"
+slf4j = "2.0.1"
 guava = "33.6.0-jre"
 caffeine = "3.2.4"
 caffeine-courotines = "3.0.4"
@@ -128,6 +130,8 @@ mccoroutine-velocity-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-ve
 mccoroutine-velocity-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
 
 # Miscellaneous Libraries
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 caffeine-courotines = { module = "com.sksamuel.aedile:aedile-core", version.ref = "caffeine-courotines" }
