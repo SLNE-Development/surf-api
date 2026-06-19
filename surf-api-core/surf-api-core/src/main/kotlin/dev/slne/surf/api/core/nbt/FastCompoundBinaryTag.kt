@@ -3,49 +3,69 @@ package dev.slne.surf.api.core.nbt
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import it.unimi.dsi.fastutil.objects.ObjectIterator
 import it.unimi.dsi.fastutil.objects.ObjectSet
-import net.kyori.adventure.nbt.BinaryTag
-import net.kyori.adventure.nbt.CompoundBinaryTag
+import net.kyori.adventure.nbt.*
 import org.jetbrains.annotations.UnmodifiableView
+import java.util.function.Consumer
+import java.util.stream.Stream
 
 /**
- * A mutable, high-performance implementation of CompoundBinaryTag backed by fastutil collections.
+ * A mutable, high-performance replacement for CompoundBinaryTag backed by fastutil collections.
  *
- * This interface extends CompoundBinaryTag with additional mutation capabilities and optimized
- * iteration through fastutil's specialized collection types.
- *
- * **Important:** This implementation violates the immutability principle of CompoundBinaryTag.
- * All operations (put, remove, etc.) mutate the tag directly, unlike the standard CompoundBinaryTag
- * which is immutable and returns a new tag for each operation.
+ * This interface mirrors the CompoundBinaryTag API but cannot extend it since CompoundBinaryTag
+ * became sealed in Adventure 5.1.1. All operations (put, remove, etc.) mutate the tag directly,
+ * unlike the standard CompoundBinaryTag which is immutable.
  */
-@Suppress("NonExtendableApiUsage")
-interface FastCompoundBinaryTag : CompoundBinaryTag {
+interface FastCompoundBinaryTag : BinaryTagLike {
 
-    /**
-     * Removes all key-value mappings from this compound tag.
-     */
+    fun type(): BinaryTagType<CompoundBinaryTag> = BinaryTagTypes.COMPOUND
+
+    fun contains(key: String): Boolean
+    fun contains(key: String, type: BinaryTagType<*>): Boolean
+
+    fun keySet(): @UnmodifiableView ObjectSet<String>
+
+    fun get(key: String): BinaryTag?
+    fun size(): Int
+    fun isEmpty(): Boolean
+
+    fun put(key: String, tag: BinaryTag): FastCompoundBinaryTag
+    fun put(tag: CompoundBinaryTag): FastCompoundBinaryTag
+    fun put(tags: Map<String, BinaryTag>): FastCompoundBinaryTag
+    fun remove(key: String, removed: Consumer<in BinaryTag>? = null): FastCompoundBinaryTag
+
     fun clear()
 
+    fun getByte(key: String, defaultValue: Byte = 0): Byte
+    fun getShort(key: String, defaultValue: Short = 0): Short
+    fun getInt(key: String, defaultValue: Int = 0): Int
+    fun getLong(key: String, defaultValue: Long = 0L): Long
+    fun getFloat(key: String, defaultValue: Float = 0f): Float
+    fun getDouble(key: String, defaultValue: Double = 0.0): Double
+    fun getByteArray(key: String): ByteArray
+    fun getByteArray(key: String, defaultValue: ByteArray?): ByteArray?
+    fun getString(key: String, defaultValue: String? = null): String?
+    fun getList(key: String, defaultValue: ListBinaryTag? = null): ListBinaryTag?
+    fun getList(
+        key: String,
+        expectedType: BinaryTagType<out BinaryTag>,
+        defaultValue: ListBinaryTag? = null,
+    ): ListBinaryTag?
 
-    /**
-     * Returns an optimized set view of the keys contained in this compound tag.
-     *
-     * @return An ObjectSet providing efficient key iteration
-     */
-    override fun keySet(): @UnmodifiableView ObjectSet<String>
+    fun getCompound(key: String, defaultValue: CompoundBinaryTag? = null): CompoundBinaryTag?
+    fun getIntArray(key: String): IntArray
+    fun getIntArray(key: String, defaultValue: IntArray?): IntArray?
+    fun getLongArray(key: String): LongArray
+    fun getLongArray(key: String, defaultValue: LongArray?): LongArray?
 
-    /**
-     * Returns an optimized iterator over the entries in this compound tag.
-     *
-     * @return An ObjectIterator for efficient entry traversal
-     */
-    override fun iterator(): ObjectIterator<Object2ObjectMap.Entry<String, BinaryTag>>
+    fun stream(): Stream<Map.Entry<String, BinaryTag>>
+    fun iterator(): ObjectIterator<Object2ObjectMap.Entry<String, BinaryTag>>
+    fun forEach(action: Consumer<in MutableMap.MutableEntry<String, out BinaryTag>>)
+
+    override fun asBinaryTag(): CompoundBinaryTag
 }
 
 /**
  * Wraps this CompoundBinaryTag in a mutable FastCompoundBinaryTag for improved performance.
- *
- * The returned tag is mutable and all operations modify the tag directly, unlike the immutable
- * CompoundBinaryTag interface.
  *
  * @param synchronize If true, wraps the underlying map with synchronization for thread-safe access
  * @return A mutable FastCompoundBinaryTag backed by fastutil collections

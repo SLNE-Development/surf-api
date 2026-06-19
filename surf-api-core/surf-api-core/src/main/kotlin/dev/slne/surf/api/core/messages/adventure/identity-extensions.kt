@@ -17,7 +17,7 @@ import java.util.*
  * val myPointer = pointer<String>(myKey)
  * ```
  */
-inline fun <reified V> pointer(key: Key) = Pointer.pointer(V::class.java, key)
+inline fun <reified V : Any> pointer(key: Key) = Pointer.pointer(V::class.java, key)
 
 /**
  * Creates an [Identity] instance using the provided [UUID].

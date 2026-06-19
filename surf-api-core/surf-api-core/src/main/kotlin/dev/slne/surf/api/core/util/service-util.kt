@@ -12,5 +12,9 @@ import java.util.*
  * @return the service instance of type [T]
  * @throws ServiceConfigurationError if the service of type [T] is not available
  */
-inline fun <reified T> requiredService(): T = Services.serviceWithFallback(T::class.java)
-    .orElseThrow { ServiceConfigurationError("Service ${T::class.java.name} not available") }
+inline fun <reified T : Any> requiredService(): T = Services.serviceWithFallback<T>(
+    ServiceLoader.load(
+        T::class.java,
+        getCallerClass()?.classLoader ?: T::class.java.classLoader
+    ), T::class.java
+).orElseThrow { ServiceConfigurationError("Service ${T::class.java.name} not available") }
