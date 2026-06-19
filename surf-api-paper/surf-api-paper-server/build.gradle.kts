@@ -1,3 +1,4 @@
+import dev.slne.surf.api.gradle.SurfComponentBuilderBridgePatcher
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 
@@ -108,6 +109,16 @@ tasks.generatePaperPluginDescription {
 
 configurations.all {
     exclude(group = "org.spigotmc", module = "spigot-api")
+}
+
+tasks.withType<Jar>().configureEach {
+    doLast {
+        val output = archiveFile.get().asFile
+
+        if (name == "shadowJar" || output.name.endsWith("-all.jar")) {
+            SurfComponentBuilderBridgePatcher.patchJar(output.toPath())
+        }
+    }
 }
 
 /**
