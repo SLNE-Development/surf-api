@@ -21,7 +21,10 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
     override fun content(content: String) = withDelegate { content(content) }
     override fun content() = delegate.content()
     override fun children(): List<Component> = delegate.children()
-    override fun build() = delegate.build()
+    override fun build(): TextComponent {
+        // Adventure 4 backward compatibility. #build() would return BuildableComponent instead of TextComponent in adventure 4
+        return delegate.asComponent() as TextComponent
+    }
 
     override fun append(builder: ComponentBuilder<*, *>) = withDelegate { append(builder) }
     override fun append(component: Component) = withDelegate { append(component) }

@@ -1,5 +1,6 @@
 package dev.slne.surf.api.core.util
 
+import net.kyori.adventure.internal.properties.AdventureProperties
 import net.kyori.adventure.util.Services
 import java.util.*
 
@@ -12,9 +13,41 @@ import java.util.*
  * @return the service instance of type [T]
  * @throws ServiceConfigurationError if the service of type [T] is not available
  */
-inline fun <reified T : Any> requiredService(): T = Services.serviceWithFallback<T>(
+inline fun <reified T : Any> requiredService(): T = ServiceUtil.serviceWithFallback<T>(
     ServiceLoader.load(
         T::class.java,
         getCallerClass()?.classLoader ?: T::class.java.classLoader
     ), T::class.java
-).orElseThrow { ServiceConfigurationError("Service ${T::class.java.name} not available") }
+) ?: throw ServiceConfigurationError("Service ${T::class.java.name} not available")
+
+object ServiceUtil {
+    @Suppress("UnstableApiUsage")
+    private val SERVICE_LOAD_FAILURES_ARE_FATAL = AdventureProperties.SERVICE_LOAD_FAILURES_ARE_FATAL.value() == true
+
+    @PublishedApi
+    internal fun <T> serviceWithFallback(loader: ServiceLoader<T>, type: Class<T>): T? {
+        val iterator = loader.iterator()
+        var firstFallback: T? = null
+
+        while (iterator.hasNext()) {
+            try {
+                val next = iterator.next()
+                if (next is Services.Fallback) {
+                    if (firstFallback == null) {
+                        firstFallback = next
+                    }
+                } else {
+                    return next
+                }
+            } catch (t: Throwable) {
+                if (SERVICE_LOAD_FAILURES_ARE_FATAL) {
+                    throw ServiceConfigurationError("Failed to load service $type", t)
+                } else {
+                    continue
+                }
+            }
+        }
+
+        return firstFallback
+    }
+}

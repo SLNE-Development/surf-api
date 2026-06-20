@@ -11057,6 +11057,11 @@ public final class dev/slne/surf/api/core/util/SerializableErrorKt {
 	public static final fun toSerializableError (Ljava/lang/Throwable;)Ldev/slne/surf/api/core/util/SerializableError;
 }
 
+public final class dev/slne/surf/api/core/util/ServiceUtil {
+	public static final field INSTANCE Ldev/slne/surf/api/core/util/ServiceUtil;
+	public final fun serviceWithFallback (Ljava/util/ServiceLoader;Ljava/lang/Class;)Ljava/lang/Object;
+}
+
 public abstract class dev/slne/surf/api/core/util/SurfTypeParameterMatcher {
 	public static final field Companion Ldev/slne/surf/api/core/util/SurfTypeParameterMatcher$Companion;
 	public fun <init> ()V
