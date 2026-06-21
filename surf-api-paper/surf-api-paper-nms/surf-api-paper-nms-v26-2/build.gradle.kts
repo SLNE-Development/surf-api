@@ -13,7 +13,7 @@ dependencies {
     api(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsCommon)
     api(projects.surfApiCore.surfApiCoreServer)
 
-    paperweight.paperDevBundle("26.2+")
+    paperweight.paperDevBundle("26.2.build.+")
 
     compileOnly(libs.placeholder.api)
     compileOnly(libs.reflection.remapper)

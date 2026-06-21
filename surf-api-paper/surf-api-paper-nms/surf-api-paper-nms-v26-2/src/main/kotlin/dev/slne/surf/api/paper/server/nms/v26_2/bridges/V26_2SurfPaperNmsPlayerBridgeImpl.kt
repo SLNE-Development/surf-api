@@ -486,7 +486,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     override fun getPlayerDataDir(): File {
-        return MinecraftServer.getServer().playerDataStorage.playerDir
+        return MinecraftServer.getServer().playerList.playerIo.playerDir
     }
 
     override fun getStatsDataPath(): Path {
@@ -494,7 +494,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     private suspend fun loadPlayerTag(server: MinecraftServer, nameAndId: NameAndId): CompoundTag {
-        val dataStorage = server.playerDataStorage
+        val dataStorage = server.playerList.playerIo
         return withContext(Dispatchers.IO) {
             dataStorage.load(nameAndId).getOrNull() ?: CompoundTag()
         }
@@ -544,7 +544,7 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         rootTag: CompoundTag
     ) {
         try {
-            val playerDirPath = server.playerDataStorage.playerDir.toPath()
+            val playerDirPath = server.playerList.playerIo.playerDir.toPath()
             val playerId = nameAndId.id.toString()
             val tmp = createTempFile(playerDirPath, "$playerId-", ".dat")
 
