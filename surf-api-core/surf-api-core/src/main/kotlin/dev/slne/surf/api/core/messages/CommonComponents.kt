@@ -27,7 +27,7 @@ import kotlin.time.Duration
  */
 @PublishedApi
 internal inline fun buildText0(block: TextComponent.Builder.() -> Unit): TextComponent {
-    return Component.text().apply(block).build()
+    return Component.text().apply(block).asComponent() as TextComponent // Adventure 4 backwards compatibility
 }
 
 /**
