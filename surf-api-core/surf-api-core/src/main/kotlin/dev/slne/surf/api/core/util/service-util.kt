@@ -16,7 +16,7 @@ import java.util.*
 inline fun <reified T : Any> requiredService(): T = ServiceUtil.serviceWithFallback<T>(
     ServiceLoader.load(
         T::class.java,
-        getCallerClass()?.classLoader ?: T::class.java.classLoader
+        getCallerClass(-1)?.classLoader ?: T::class.java.classLoader
     ), T::class.java
 ) ?: throw ServiceConfigurationError("Service ${T::class.java.name} not available")
 
@@ -25,7 +25,7 @@ object ServiceUtil {
     private val SERVICE_LOAD_FAILURES_ARE_FATAL = AdventureProperties.SERVICE_LOAD_FAILURES_ARE_FATAL.value() == true
 
     @PublishedApi
-    internal fun <T> serviceWithFallback(loader: ServiceLoader<T>, type: Class<T>): T? {
+    internal fun <T : Any> serviceWithFallback(loader: ServiceLoader<T>, type: Class<T>): T? {
         val iterator = loader.iterator()
         var firstFallback: T? = null
 
