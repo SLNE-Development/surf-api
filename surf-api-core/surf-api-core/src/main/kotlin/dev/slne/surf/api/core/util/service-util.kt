@@ -13,19 +13,22 @@ import java.util.*
  * @return the service instance of type [T]
  * @throws ServiceConfigurationError if the service of type [T] is not available
  */
-inline fun <reified T : Any> requiredService(): T = ServiceUtil.serviceWithFallback<T>(
-    ServiceLoader.load(
-        T::class.java,
-        getCallerClass(-1)?.classLoader ?: T::class.java.classLoader
-    ), T::class.java
-) ?: throw ServiceConfigurationError("Service ${T::class.java.name} not available")
+inline fun <reified T : Any> requiredService(): T = ServiceUtil.serviceWithFallback(T::class.java)
+    ?: throw ServiceConfigurationError("Service ${T::class.java.name} not available")
 
 object ServiceUtil {
     @Suppress("UnstableApiUsage")
     private val SERVICE_LOAD_FAILURES_ARE_FATAL = AdventureProperties.SERVICE_LOAD_FAILURES_ARE_FATAL.value() == true
 
+    @Deprecated("Binary compatibility", ReplaceWith("serviceWithFallback(loader, type)"), DeprecationLevel.HIDDEN)
     @PublishedApi
     internal fun <T : Any> serviceWithFallback(loader: ServiceLoader<T>, type: Class<T>): T? {
+        return serviceWithFallback(type)
+    }
+
+    @PublishedApi
+    internal fun <T : Any> serviceWithFallback(type: Class<T>): T? {
+        val loader = ServiceLoader.load(type, type.classLoader)
         val iterator = loader.iterator()
         var firstFallback: T? = null
 
