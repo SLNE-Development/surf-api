@@ -54,13 +54,18 @@ import kotlin.jvm.optionals.getOrNull
 @Suppress("ClassName")
 class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
+    @Suppress("USELESS_ELVIS")
     override fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean) {
         val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+        val level = nmsPlayer.level()
 
-        val distance = player.viewDistance.toDouble()
-        player.getNearbyEntities(distance, distance, distance).forEach { entity ->
+        val trackers = level.chunkSource.chunkMap.entityMap.values.toTypedArray()
+        for (tracker in trackers) {
             try {
-                entity.toNms().`moonrise$getTrackedEntity`().serverEntity.removePairing(nmsPlayer)
+                if (tracker.seenBy.contains(connection)) {
+                    tracker.serverEntity.removePairing(nmsPlayer)
+                }
             } catch (e: Throwable) {
                 if (!swallowExceptions) {
                     throw e
