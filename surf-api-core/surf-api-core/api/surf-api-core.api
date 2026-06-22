@@ -11059,7 +11059,8 @@ public final class dev/slne/surf/api/core/util/SerializableErrorKt {
 
 public final class dev/slne/surf/api/core/util/ServiceUtil {
 	public static final field INSTANCE Ldev/slne/surf/api/core/util/ServiceUtil;
-	public final fun serviceWithFallback (Ljava/util/ServiceLoader;Ljava/lang/Class;)Ljava/lang/Object;
+	public final fun serviceWithFallback (Ljava/lang/Class;)Ljava/lang/Object;
+	public final synthetic fun serviceWithFallback (Ljava/util/ServiceLoader;Ljava/lang/Class;)Ljava/lang/Object;
 }
 
 public abstract class dev/slne/surf/api/core/util/SurfTypeParameterMatcher {
