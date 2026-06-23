@@ -20,7 +20,7 @@ luckperms = "5.4"
 luckpermsplugin-bukkit = "v5.5.17-bukkit" # "luckpermsplugin" is written without a separating "-" between "luckperms" and "plugin", because Gradle interprets the version catalog key as a hierarchical alias and would split it into a nested accessor (libs.luckperms.plugin.bukkit), which conflicts with the existing libs.luckperms alias for the API dependency.
 
 # Scoreboard Library
-scoreboard-library = "2.7.4"
+scoreboard-library = "2.8.0"
 
 # Adventure
 adventure-api = "5.1.1"
