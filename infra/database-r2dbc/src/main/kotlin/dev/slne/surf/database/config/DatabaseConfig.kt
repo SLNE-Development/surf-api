@@ -13,8 +13,11 @@ data class DatabaseConfig(
     val pool: PoolConfig = PoolConfig()
 ) {
     companion object {
-        fun create(path: Path): DatabaseConfig {
-            return surfConfigApi.createSpongeYmlConfig<DatabaseConfig>(path, "database.yml")
+        fun create(
+            path: Path,
+            configName: String = "database.yml"
+        ): DatabaseConfig {
+            return surfConfigApi.createSpongeYmlConfig<DatabaseConfig>(path, configName)
         }
     }
 }

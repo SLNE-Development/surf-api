@@ -6,9 +6,9 @@ public final class dev/slne/surf/database/DatabaseApi {
 
 public final class dev/slne/surf/database/DatabaseApi$Companion {
 	public final fun create (Lio/r2dbc/spi/ConnectionFactory;Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/database/DatabaseApi;
-	public final fun create (Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/database/DatabaseApi;
+	public final fun create (Ljava/nio/file/Path;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/database/DatabaseApi;
 	public static synthetic fun create$default (Ldev/slne/surf/database/DatabaseApi$Companion;Lio/r2dbc/spi/ConnectionFactory;Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/database/DatabaseApi;
-	public static synthetic fun create$default (Ldev/slne/surf/database/DatabaseApi$Companion;Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/database/DatabaseApi;
+	public static synthetic fun create$default (Ldev/slne/surf/database/DatabaseApi$Companion;Ljava/nio/file/Path;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/database/DatabaseApi;
 }
 
 public abstract interface annotation class dev/slne/surf/database/TestOnlyDatabaseApi : java/lang/annotation/Annotation {
@@ -163,7 +163,8 @@ public final class dev/slne/surf/database/config/DatabaseConfig {
 }
 
 public final class dev/slne/surf/database/config/DatabaseConfig$Companion {
-	public final fun create (Ljava/nio/file/Path;)Ldev/slne/surf/database/config/DatabaseConfig;
+	public final fun create (Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/database/config/DatabaseConfig;
+	public static synthetic fun create$default (Ldev/slne/surf/database/config/DatabaseConfig$Companion;Ljava/nio/file/Path;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/database/config/DatabaseConfig;
 }
 
 public final class dev/slne/surf/database/config/DatabaseType : java/lang/Enum {

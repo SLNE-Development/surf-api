@@ -45,10 +45,11 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
         @OptIn(TestOnlyDatabaseApi::class)
         fun create(
             pluginPath: Path,
+            fileName: String = "database.yml",
             poolName: String = generatePoolName(),
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
-            val config = DatabaseConfig.create(pluginPath)
+            val config = DatabaseConfig.create(pluginPath, fileName)
             val databaseType = config.credentials.databaseType
 
             val connectionFactory: ConnectionFactory = when (databaseType) {
