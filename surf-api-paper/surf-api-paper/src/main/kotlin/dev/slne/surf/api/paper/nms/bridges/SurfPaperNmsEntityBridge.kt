@@ -116,7 +116,7 @@ interface SurfPaperNmsEntityBridge {
      *
      * Must be called on the owning region/entity tick thread, with every entity already in-world.
      *
-     * @return true if [vehicle] ended up with at least one passenger
+     * @return true only if every entity in [orderedPassengers] ended up directly riding [vehicle]
      */
     fun mountPassengersInOrder(vehicle: Entity, orderedPassengers: List<Entity>): Boolean
 

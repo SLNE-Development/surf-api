@@ -211,6 +211,7 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
 
     override fun mountPassengersInOrder(vehicle: Entity, orderedPassengers: List<Entity>): Boolean {
         val nmsVehicle = vehicle.toNms()
+        val nmsPassengers = orderedPassengers.map { it.toNms() }
 
         // Clear the current passenger list first so the order is fully controlled by us.
         for (passenger in nmsVehicle.passengers.toList()) {
@@ -218,11 +219,15 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         }
 
         // Re-mount in order; the server appends each passenger, so the resulting order matches.
-        for (passenger in orderedPassengers) {
-            passenger.toNms().startRiding(nmsVehicle, true, false)
+        for (passenger in nmsPassengers) {
+            if (passenger.vehicle !== null && passenger.vehicle !== nmsVehicle) {
+                passenger.stopRiding()
+            }
+            passenger.startRiding(nmsVehicle, true, false)
+            if (passenger.vehicle !== nmsVehicle) return false
         }
 
-        return nmsVehicle.passengers.isNotEmpty()
+        return nmsPassengers.isNotEmpty() && nmsVehicle.passengers.containsAll(nmsPassengers)
     }
 
     private fun readVehicleTreeNbt(nbt: ByteArray): VehicleTreeNbt? {
