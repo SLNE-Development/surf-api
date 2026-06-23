@@ -11,6 +11,7 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.IsolationLevel
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import org.jetbrains.exposed.v1.core.vendors.DatabaseDialect
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
@@ -115,8 +116,14 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
             val logger = ComponentLogger.logger(caller)
             val logLevel = config.logLevel
 
+            val dialect = when (databaseType) {
+                DatabaseType.MARIADB -> MariaDBDialect()
+                DatabaseType.POSTGRESQL -> PostgreSQLDialect()
+            }
+
             return create(
                 connectionFactory = pool,
+                dialect = dialect,
                 logger = logger,
                 logLevel = logLevel,
                 configCustomizer = configCustomizer
@@ -131,21 +138,19 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
          * [create(Path, String, R2dbcDatabaseConfig.Builder.() -> Unit)] for normal usage.
          *
          * @param connectionFactory The factory to connect with (e.g., testcontainers, in-memory, custom pool).
+         * @param dialect The database dialect to use (e.g., MariaDB, Postgres).
+         * @param logger Optional logger for Exposed's SQL logging (defaults to a logger named "DatabaseApi").
+         * @param logLevel Optional log level for Exposed's SQL logging (
          * @param configCustomizer Optional customization hook for Exposed's [R2dbcDatabaseConfig].
          */
         @TestOnlyDatabaseApi
         fun create(
             connectionFactory: ConnectionFactory,
+            dialect: DatabaseDialect,
             logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
             logLevel: Level = Level.DEBUG,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
-            val dialect = when (connectionFactory) {
-                is MariadbConnectionFactory -> MariaDBDialect()
-                is PostgresqlConnectionFactory -> PostgreSQLDialect()
-                else -> throw IllegalArgumentException("Unsupported ConnectionFactory type: ${connectionFactory::class.java.name}")
-            }
-
             val database = R2dbcDatabase.connect(connectionFactory, R2dbcDatabaseConfig {
                 explicitDialect = dialect
                 sqlLogger = ComponentSqlLogger(logger, logLevel)
