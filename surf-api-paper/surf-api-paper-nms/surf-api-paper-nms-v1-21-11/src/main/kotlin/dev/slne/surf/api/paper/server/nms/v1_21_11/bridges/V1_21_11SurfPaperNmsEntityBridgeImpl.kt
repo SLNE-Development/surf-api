@@ -22,9 +22,11 @@ import net.minecraft.nbt.NbtIo
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.commands.SummonCommand
 import net.minecraft.util.ProblemReporter
+import net.minecraft.world.entity.Entity as NmsEntity
 import net.minecraft.world.entity.EntityProcessor
 import net.minecraft.world.entity.EntitySpawnReason
 import net.minecraft.world.entity.EntityType as NmsEntityType
+import net.minecraft.world.entity.animal.camel.Camel
 import net.minecraft.world.level.storage.TagValueOutput
 import org.bukkit.World
 import org.bukkit.entity.Entity
@@ -121,6 +123,7 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
                 if (level.addWithUUID(entity, CreatureSpawnEvent.SpawnReason.MOUNT)) entity else null
             }
         ) ?: return false
+        standUpCamels(root)
 
         val directVehicle = if (root.uuid == directVehicleUuid) {
             root
@@ -130,6 +133,62 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
 
         nmsPlayer.startRiding(directVehicle, true, false)
         return nmsPlayer.isPassenger
+    }
+
+    override fun spawnVehicleTree(
+        world: World,
+        nbt: ByteArray,
+        x: Double,
+        y: Double,
+        z: Double,
+        yaw: Float,
+        pitch: Float,
+    ): Boolean {
+        val level = world.toNms()
+
+        val tag = NbtIo.readCompressed(ByteArrayInputStream(nbt), NbtAccounter.unlimitedHeap())
+        tag.put("Pos", doubleList(x, y, z))
+        tag.put("Rotation", floatList(yaw, pitch))
+
+        val root = NmsEntityType.loadEntityRecursive(
+            tag,
+            level,
+            EntitySpawnReason.LOAD,
+            EntityProcessor { entity ->
+                if (level.addWithUUID(entity, CreatureSpawnEvent.SpawnReason.MOUNT)) entity else null
+            }
+        ) ?: return false
+        standUpCamels(root)
+        return true
+    }
+
+    override fun mountPassengersInOrder(vehicle: Entity, orderedPassengers: List<Entity>): Boolean {
+        val nmsVehicle = vehicle.toNms()
+
+        // Clear the current passenger list first so the order is fully controlled by us.
+        for (passenger in nmsVehicle.passengers.toList()) {
+            passenger.stopRiding()
+        }
+
+        // Re-mount in order; the server appends each passenger, so the resulting order matches.
+        for (passenger in orderedPassengers) {
+            passenger.toNms().startRiding(nmsVehicle, true, false)
+        }
+
+        return nmsVehicle.passengers.isNotEmpty()
+    }
+
+    /**
+     * Camels encode their (sitting) pose as an absolute game-time tick. After migrating to a shard
+     * with a different game time that tick lies in the past/future, leaving the camel stuck in a
+     * sit/stand transition (rendered lying down). Re-stand any migrated camel so its pose tick is
+     * rebased onto this shard's game time.
+     */
+    private fun standUpCamels(root: NmsEntity) {
+        if (root is Camel) runCatching { root.standUpInstantly() }
+        for (passenger in root.indirectPassengers) {
+            if (passenger is Camel) runCatching { passenger.standUpInstantly() }
+        }
     }
 
     private fun doubleList(x: Double, y: Double, z: Double) = ListTag().apply {

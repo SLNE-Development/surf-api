@@ -65,6 +65,44 @@ interface SurfPaperNmsEntityBridge {
         pitch: Float,
     ): Boolean
 
+    /**
+     * Recreates a vehicle tree previously captured with [captureVehicleNbt] in [world] at the given
+     * coordinates / rotation **without mounting anyone**.
+     *
+     * This is the spawn-only counterpart of [restoreVehicleAndMount], used when several player
+     * passengers are migrated as a group: the vehicle must already exist (spawned exactly once)
+     * before the players are mounted in their original order with [mountPassengersInOrder]. The
+     * tree keeps its original entity UUIDs (add-with-uuid rejects duplicates), so calling this
+     * twice for the same group is a no-op for the second call.
+     *
+     * Must be called on the owning region/entity tick thread.
+     *
+     * @return true if the root entity was spawned (or already present), false on failure
+     */
+    fun spawnVehicleTree(
+        world: World,
+        nbt: ByteArray,
+        x: Double,
+        y: Double,
+        z: Double,
+        yaw: Float,
+        pitch: Float,
+    ): Boolean
+
+    /**
+     * Rebuilds [vehicle]'s passenger list to exactly [orderedPassengers], in that order.
+     *
+     * All current passengers are dismounted first, then each entity in [orderedPassengers] is
+     * force-mounted in turn. Because the server appends each new passenger, the resulting passenger
+     * order matches the list, which for boats decides the controlling passenger (index 0). This is
+     * how the original driver and seating order are restored after a multi-passenger migration.
+     *
+     * Must be called on the owning region/entity tick thread, with every entity already in-world.
+     *
+     * @return true if [vehicle] ended up with at least one passenger
+     */
+    fun mountPassengersInOrder(vehicle: Entity, orderedPassengers: List<Entity>): Boolean
+
     companion object : SurfPaperNmsEntityBridge by bridge {
         val INSTANCE get() = bridge
     }
