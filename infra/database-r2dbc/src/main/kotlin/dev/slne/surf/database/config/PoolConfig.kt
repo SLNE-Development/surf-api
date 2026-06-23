@@ -5,7 +5,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @ConfigSerializable
-internal data class PoolConfig(
+data class PoolConfig(
     val sizing: Sizing = Sizing(),
     val timeouts: Timeouts = Timeouts()
 ) {

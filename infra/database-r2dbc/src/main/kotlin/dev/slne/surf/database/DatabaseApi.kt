@@ -2,13 +2,17 @@ package dev.slne.surf.database
 
 import dev.slne.surf.api.core.util.getCallerClass
 import dev.slne.surf.database.config.DatabaseConfig
+import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.logger.ComponentSqlLogger
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
+import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.IsolationLevel
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
+import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
@@ -45,23 +49,50 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
             val config = DatabaseConfig.create(pluginPath)
-            val configuration = MariadbConnectionConfiguration.builder()
-                .host(config.credentials.host)
-                .port(config.credentials.port)
-                .username(config.credentials.username)
-                .password(config.credentials.password)
-                .database(config.credentials.database)
-                .loopResources(
-                    LoopResources.create(
-                        "mariadb-r2dbc-event-loop-$poolName",
-                        1,
-                        4,
-                        true
-                    )
-                )
-                .build()
+            val databaseType = config.credentials.databaseType
 
-            val connectionFactory = MariadbConnectionFactory.from(configuration)
+            val connectionFactory: ConnectionFactory = when (databaseType) {
+                DatabaseType.MARIADB -> {
+                    val configuration = MariadbConnectionConfiguration.builder()
+                        .host(config.credentials.host)
+                        .port(config.credentials.port)
+                        .username(config.credentials.username)
+                        .password(config.credentials.password)
+                        .database(config.credentials.database)
+                        .loopResources(
+                            LoopResources.create(
+                                "mariadb-r2dbc-event-loop-$poolName",
+                                1,
+                                4,
+                                true
+                            )
+                        )
+                        .build()
+
+                    MariadbConnectionFactory.from(configuration)
+                }
+
+                DatabaseType.POSTGRESQL -> {
+                    val configuration = PostgresqlConnectionConfiguration.builder()
+                        .host(config.credentials.host)
+                        .port(config.credentials.port)
+                        .username(config.credentials.username)
+                        .password(config.credentials.password)
+                        .database(config.credentials.database)
+                        .loopResources(
+                            LoopResources.create(
+                                "postgresql-r2dbc-event-loop-$poolName",
+                                1,
+                                4,
+                                true
+                            )
+                        )
+                        .build()
+
+                    PostgresqlConnectionFactory(configuration)
+                }
+            }
+
             val poolConfig = ConnectionPoolConfiguration.builder()
                 .connectionFactory(connectionFactory)
                 .acquireRetry(1)
@@ -83,7 +114,12 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
             val logger = ComponentLogger.logger(caller)
             val logLevel = config.logLevel
 
-            return create(pool, logger, logLevel, configCustomizer)
+            return create(
+                connectionFactory = pool,
+                logger = logger,
+                logLevel = logLevel,
+                configCustomizer = configCustomizer
+            )
         }
 
         /**
@@ -103,8 +139,14 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
             logLevel: Level = Level.DEBUG,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
+            val dialect = when (connectionFactory) {
+                is MariadbConnectionFactory -> MariaDBDialect()
+                is PostgresqlConnectionFactory -> PostgreSQLDialect()
+                else -> throw IllegalArgumentException("Unsupported ConnectionFactory type: ${connectionFactory::class.java.name}")
+            }
+
             val database = R2dbcDatabase.connect(connectionFactory, R2dbcDatabaseConfig {
-                explicitDialect = MariaDBDialect()
+                explicitDialect = dialect
                 sqlLogger = ComponentSqlLogger(logger, logLevel)
                 defaultR2dbcIsolationLevel = IsolationLevel.READ_UNCOMMITTED
                 configCustomizer()

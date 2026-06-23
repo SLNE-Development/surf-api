@@ -121,6 +121,112 @@ public final class dev/slne/surf/database/columns/time/ZonedDateTimeColumnTypeKt
 	public static final fun zonedDateTime (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
 }
 
+public final class dev/slne/surf/database/config/ConnectionDetails {
+	public fun <init> ()V
+	public fun <init> (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/slne/surf/database/config/DatabaseType;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/database/config/ConnectionDetails;
+	public static synthetic fun copy$default (Ldev/slne/surf/database/config/ConnectionDetails;Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/database/config/ConnectionDetails;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDatabase ()Ljava/lang/String;
+	public final fun getDatabaseType ()Ldev/slne/surf/database/config/DatabaseType;
+	public final fun getHost ()Ljava/lang/String;
+	public final fun getPassword ()Ljava/lang/String;
+	public final fun getPort ()I
+	public final fun getUsername ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/database/config/DatabaseConfig {
+	public static final field Companion Ldev/slne/surf/database/config/DatabaseConfig$Companion;
+	public fun <init> ()V
+	public fun <init> (Lorg/slf4j/event/Level;Ldev/slne/surf/database/config/ConnectionDetails;Ldev/slne/surf/database/config/PoolConfig;)V
+	public synthetic fun <init> (Lorg/slf4j/event/Level;Ldev/slne/surf/database/config/ConnectionDetails;Ldev/slne/surf/database/config/PoolConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lorg/slf4j/event/Level;
+	public final fun component2 ()Ldev/slne/surf/database/config/ConnectionDetails;
+	public final fun component3 ()Ldev/slne/surf/database/config/PoolConfig;
+	public final fun copy (Lorg/slf4j/event/Level;Ldev/slne/surf/database/config/ConnectionDetails;Ldev/slne/surf/database/config/PoolConfig;)Ldev/slne/surf/database/config/DatabaseConfig;
+	public static synthetic fun copy$default (Ldev/slne/surf/database/config/DatabaseConfig;Lorg/slf4j/event/Level;Ldev/slne/surf/database/config/ConnectionDetails;Ldev/slne/surf/database/config/PoolConfig;ILjava/lang/Object;)Ldev/slne/surf/database/config/DatabaseConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCredentials ()Ldev/slne/surf/database/config/ConnectionDetails;
+	public final fun getLogLevel ()Lorg/slf4j/event/Level;
+	public final fun getPool ()Ldev/slne/surf/database/config/PoolConfig;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/database/config/DatabaseConfig$Companion {
+	public final fun create (Ljava/nio/file/Path;)Ldev/slne/surf/database/config/DatabaseConfig;
+}
+
+public final class dev/slne/surf/database/config/DatabaseType : java/lang/Enum {
+	public static final field MARIADB Ldev/slne/surf/database/config/DatabaseType;
+	public static final field POSTGRESQL Ldev/slne/surf/database/config/DatabaseType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/database/config/DatabaseType;
+	public static fun values ()[Ldev/slne/surf/database/config/DatabaseType;
+}
+
+public final class dev/slne/surf/database/config/PoolConfig {
+	public fun <init> ()V
+	public fun <init> (Ldev/slne/surf/database/config/PoolConfig$Sizing;Ldev/slne/surf/database/config/PoolConfig$Timeouts;)V
+	public synthetic fun <init> (Ldev/slne/surf/database/config/PoolConfig$Sizing;Ldev/slne/surf/database/config/PoolConfig$Timeouts;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/slne/surf/database/config/PoolConfig$Sizing;
+	public final fun component2 ()Ldev/slne/surf/database/config/PoolConfig$Timeouts;
+	public final fun copy (Ldev/slne/surf/database/config/PoolConfig$Sizing;Ldev/slne/surf/database/config/PoolConfig$Timeouts;)Ldev/slne/surf/database/config/PoolConfig;
+	public static synthetic fun copy$default (Ldev/slne/surf/database/config/PoolConfig;Ldev/slne/surf/database/config/PoolConfig$Sizing;Ldev/slne/surf/database/config/PoolConfig$Timeouts;ILjava/lang/Object;)Ldev/slne/surf/database/config/PoolConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSizing ()Ldev/slne/surf/database/config/PoolConfig$Sizing;
+	public final fun getTimeouts ()Ldev/slne/surf/database/config/PoolConfig$Timeouts;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/database/config/PoolConfig$Sizing {
+	public fun <init> ()V
+	public fun <init> (III)V
+	public synthetic fun <init> (IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (III)Ldev/slne/surf/database/config/PoolConfig$Sizing;
+	public static synthetic fun copy$default (Ldev/slne/surf/database/config/PoolConfig$Sizing;IIIILjava/lang/Object;)Ldev/slne/surf/database/config/PoolConfig$Sizing;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInitialSize ()I
+	public final fun getMaxSize ()I
+	public final fun getMinIdle ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/database/config/PoolConfig$Timeouts {
+	public fun <init> ()V
+	public fun <init> (JJJJJ)V
+	public synthetic fun <init> (JJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()J
+	public final fun copy (JJJJJ)Ldev/slne/surf/database/config/PoolConfig$Timeouts;
+	public static synthetic fun copy$default (Ldev/slne/surf/database/config/PoolConfig$Timeouts;JJJJJILjava/lang/Object;)Ldev/slne/surf/database/config/PoolConfig$Timeouts;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxAcquireTimeMillis ()J
+	public final fun getMaxCreateConnectionTimeMillis ()J
+	public final fun getMaxIdleTimeMillis ()J
+	public final fun getMaxLifeTimeMillis ()J
+	public final fun getMaxValidationTimeMillis ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/slne/surf/database/logger/ComponentSqlLogger : org/jetbrains/exposed/v1/core/SqlLogger {
 	public fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
