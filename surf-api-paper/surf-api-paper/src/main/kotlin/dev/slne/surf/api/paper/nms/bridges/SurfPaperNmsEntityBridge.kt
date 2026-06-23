@@ -11,7 +11,7 @@ import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
-import java.util.UUID
+import java.util.*
 
 @NmsUseWithCaution
 interface SurfPaperNmsEntityBridge {
@@ -41,8 +41,9 @@ interface SurfPaperNmsEntityBridge {
 
     /**
      * Ensures that a vehicle tree previously captured with [captureVehicleNbt] exists in
-     * [player]'s current world at the given coordinates / rotation, then force-mounts [player]
-     * onto the entity identified by [directVehicleUuid].
+     * [player]'s current world. When spawning is required, the root is spawned at the provided
+     * coordinates / rotation, then [player] is force-mounted onto the entity identified by
+     * [directVehicleUuid].
      *
      * The tree uses its original entity UUIDs. If the root UUID is already present, the existing
      * root tree is reused as an idempotent retry only when it contains all UUIDs captured in the
@@ -76,8 +77,9 @@ interface SurfPaperNmsEntityBridge {
     ): Boolean
 
     /**
-     * Ensures that a vehicle tree previously captured with [captureVehicleNbt] exists in [world]
-     * at the given coordinates / rotation **without mounting anyone**.
+     * Ensures that a vehicle tree previously captured with [captureVehicleNbt] exists in [world].
+     * When spawning is required, the root is spawned at the provided coordinates / rotation
+     * **without mounting anyone**.
      *
      * This is the spawn-only counterpart of [restoreVehicleAndMount], used when several player
      * passengers are migrated as a group: the vehicle must already exist (spawned exactly once)
