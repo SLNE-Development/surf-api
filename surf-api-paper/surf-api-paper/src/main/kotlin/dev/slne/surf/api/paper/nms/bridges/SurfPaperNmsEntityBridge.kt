@@ -40,19 +40,29 @@ interface SurfPaperNmsEntityBridge {
     fun captureVehicleNbt(rootVehicle: Entity): ByteArray
 
     /**
-     * Recreates a vehicle tree previously captured with [captureVehicleNbt] in [player]'s current
-     * world at the given coordinates / rotation, then force-mounts [player] onto the entity
-     * identified by [directVehicleUuid].
+     * Ensures that a vehicle tree previously captured with [captureVehicleNbt] exists in
+     * [player]'s current world at the given coordinates / rotation, then force-mounts [player]
+     * onto the entity identified by [directVehicleUuid].
      *
-     * The tree is recreated with its original entity UUIDs using add-with-uuid semantics, so a
-     * duplicate (an entity whose UUID is already present in the world) is rejected instead of
-     * being spawned a second time. The root position is overridden with [x]/[y]/[z] so the
-     * vehicle (and therefore the mounted player) appears at a safe, caller-chosen location rather
-     * than the captured crossing point.
+     * The tree uses its original entity UUIDs. If the root UUID is already present, the existing
+     * root tree is reused as an idempotent retry only when it contains all UUIDs captured in the
+     * NBT. If the root is absent but any other captured UUID already exists in the target world,
+     * the restore fails to avoid partial duplicate/collision states. Newly spawned trees are
+     * removed again if a later restore step fails.
+     *
+     * The [directVehicleUuid] is strict: it must identify the root or a passenger contained in the
+     * captured vehicle tree. A missing direct vehicle is an error, returns false, and never falls
+     * back to mounting on the root.
+     *
+     * When spawning is needed, the root position is overridden with [x]/[y]/[z] so the vehicle
+     * (and therefore the mounted player) appears at a safe, caller-chosen location rather than the
+     * captured crossing point.
      *
      * Must be called on the owning region/entity tick thread, after [player] is already in-world.
      *
-     * @return true if [player] ended up mounted on the recreated vehicle, false otherwise
+     * @return true if the vehicle tree exists, [directVehicleUuid] was found strictly, and [player]
+     *         ended up mounted on that exact entity; false for invalid NBT, UUID collisions,
+     *         partial trees, missing direct vehicle, spawn failure or mount failure
      */
     fun restoreVehicleAndMount(
         player: Player,
@@ -66,18 +76,23 @@ interface SurfPaperNmsEntityBridge {
     ): Boolean
 
     /**
-     * Recreates a vehicle tree previously captured with [captureVehicleNbt] in [world] at the given
-     * coordinates / rotation **without mounting anyone**.
+     * Ensures that a vehicle tree previously captured with [captureVehicleNbt] exists in [world]
+     * at the given coordinates / rotation **without mounting anyone**.
      *
      * This is the spawn-only counterpart of [restoreVehicleAndMount], used when several player
      * passengers are migrated as a group: the vehicle must already exist (spawned exactly once)
-     * before the players are mounted in their original order with [mountPassengersInOrder]. The
-     * tree keeps its original entity UUIDs (add-with-uuid rejects duplicates), so calling this
-     * twice for the same group is a no-op for the second call.
+     * before the players are mounted in their original order with [mountPassengersInOrder].
+     *
+     * The tree keeps its original entity UUIDs and is idempotent for retries: if the captured root
+     * UUID is already present, the call succeeds only when the existing root tree contains every
+     * UUID captured in the NBT. If the root is absent but any other captured UUID already exists,
+     * the call fails to avoid partial duplicate/collision states.
      *
      * Must be called on the owning region/entity tick thread.
      *
-     * @return true if the root entity was spawned (or already present), false on failure
+     * @return true if the complete captured vehicle tree is present after the call, whether it was
+     *         newly spawned or already present; false for invalid NBT, UUID collisions, partial
+     *         trees or spawn failure
      */
     fun spawnVehicleTree(
         world: World,

@@ -13,6 +13,7 @@ import dev.slne.surf.api.paper.util.chunkZ
 import io.papermc.paper.math.FinePosition
 import net.kyori.adventure.nbt.CompoundBinaryTag
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.DoubleTag
 import net.minecraft.nbt.FloatTag
@@ -21,6 +22,7 @@ import net.minecraft.nbt.NbtAccounter
 import net.minecraft.nbt.NbtIo
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.commands.SummonCommand
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.ProblemReporter
 import net.minecraft.world.entity.Entity as NmsEntity
 import net.minecraft.world.entity.EntityProcessor
@@ -108,31 +110,58 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         val nmsPlayer = player.toNms()
         val level = nmsPlayer.level()
 
-        val tag = NbtIo.readCompressed(ByteArrayInputStream(nbt), NbtAccounter.unlimitedHeap())
-        // Override the captured crossing position with the safe target position so the vehicle (and
-        // therefore the mounted player) does not re-appear on the border.
-        tag.put("Pos", doubleList(x, y, z))
-        tag.put("Rotation", floatList(yaw, pitch))
+        var spawnedRoot: NmsEntity? = null
+        return try {
+            val vehicleNbt = readVehicleTreeNbt(nbt) ?: return false
+            if (directVehicleUuid !in vehicleNbt.entityUuids) return false
 
-        val root = NmsEntityType.loadEntityRecursive(
-            tag,
-            level,
-            EntitySpawnReason.LOAD,
-            EntityProcessor { entity ->
-                // add-with-uuid rejects entities whose uuid is already present -> built-in dedup.
-                if (level.addWithUUID(entity, CreatureSpawnEvent.SpawnReason.MOUNT)) entity else null
+            val existingRoot = getEntityByUuid(level, vehicleNbt.rootUuid)
+            val root = if (existingRoot != null) {
+                if (!vehicleTreeContainsAll(existingRoot, vehicleNbt.entityUuids)) return false
+                existingRoot
+            } else {
+                if (hasPartialUuidCollision(level, vehicleNbt.entityUuids, vehicleNbt.rootUuid)) return false
+
+                applyTargetTransform(vehicleNbt.tag, x, y, z, yaw, pitch)
+                val spawned = spawnVehicleTreeFromTag(level, vehicleNbt.tag) ?: return false
+                spawnedRoot = spawned
+                standUpCamels(spawned)
+
+                if (!vehicleTreeContainsAll(spawned, vehicleNbt.entityUuids)) {
+                    discardVehicleTree(spawned)
+                    spawnedRoot = null
+                    return false
+                }
+
+                spawned
             }
-        ) ?: return false
-        standUpCamels(root)
 
-        val directVehicle = if (root.uuid == directVehicleUuid) {
-            root
-        } else {
-            root.indirectPassengers.firstOrNull { it.uuid == directVehicleUuid } ?: root
+            standUpCamels(root)
+            val directVehicle = findEntityInTree(root, directVehicleUuid)
+            if (directVehicle == null) {
+                spawnedRoot?.let(::discardVehicleTree)
+                spawnedRoot = null
+                return false
+            }
+
+            if (nmsPlayer.vehicle !== directVehicle) {
+                if (nmsPlayer.isPassenger) {
+                    nmsPlayer.stopRiding()
+                }
+                nmsPlayer.startRiding(directVehicle, true, false)
+            }
+
+            val mounted = nmsPlayer.vehicle === directVehicle
+            if (!mounted) {
+                spawnedRoot?.let(::discardVehicleTree)
+                spawnedRoot = null
+            }
+
+            mounted
+        } catch (_: Exception) {
+            spawnedRoot?.let(::discardVehicleTree)
+            false
         }
-
-        nmsPlayer.startRiding(directVehicle, true, false)
-        return nmsPlayer.isPassenger
     }
 
     override fun spawnVehicleTree(
@@ -146,20 +175,37 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
     ): Boolean {
         val level = world.toNms()
 
-        val tag = NbtIo.readCompressed(ByteArrayInputStream(nbt), NbtAccounter.unlimitedHeap())
-        tag.put("Pos", doubleList(x, y, z))
-        tag.put("Rotation", floatList(yaw, pitch))
+        var spawnedRoot: NmsEntity? = null
+        return try {
+            val vehicleNbt = readVehicleTreeNbt(nbt) ?: return false
 
-        val root = NmsEntityType.loadEntityRecursive(
-            tag,
-            level,
-            EntitySpawnReason.LOAD,
-            EntityProcessor { entity ->
-                if (level.addWithUUID(entity, CreatureSpawnEvent.SpawnReason.MOUNT)) entity else null
+            val existingRoot = getEntityByUuid(level, vehicleNbt.rootUuid)
+            if (existingRoot != null) {
+                val complete = vehicleTreeContainsAll(existingRoot, vehicleNbt.entityUuids)
+                if (complete) {
+                    standUpCamels(existingRoot)
+                }
+                return complete
             }
-        ) ?: return false
-        standUpCamels(root)
-        return true
+
+            if (hasPartialUuidCollision(level, vehicleNbt.entityUuids, vehicleNbt.rootUuid)) return false
+
+            applyTargetTransform(vehicleNbt.tag, x, y, z, yaw, pitch)
+            val root = spawnVehicleTreeFromTag(level, vehicleNbt.tag) ?: return false
+            spawnedRoot = root
+            standUpCamels(root)
+
+            val complete = vehicleTreeContainsAll(root, vehicleNbt.entityUuids)
+            if (!complete) {
+                discardVehicleTree(root)
+                spawnedRoot = null
+            }
+
+            complete
+        } catch (_: Exception) {
+            spawnedRoot?.let(::discardVehicleTree)
+            false
+        }
     }
 
     override fun mountPassengersInOrder(vehicle: Entity, orderedPassengers: List<Entity>): Boolean {
@@ -176,6 +222,114 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         }
 
         return nmsVehicle.passengers.isNotEmpty()
+    }
+
+    private fun readVehicleTreeNbt(nbt: ByteArray): VehicleTreeNbt? {
+        val tag = try {
+            NbtIo.readCompressed(ByteArrayInputStream(nbt), NbtAccounter.unlimitedHeap())
+        } catch (_: Exception) {
+            return null
+        }
+
+        val entityUuids = LinkedHashSet<UUID>()
+        if (!collectVehicleUuids(tag, entityUuids)) return null
+
+        return VehicleTreeNbt(
+            tag = tag,
+            rootUuid = entityUuids.firstOrNull() ?: return null,
+            entityUuids = entityUuids,
+        )
+    }
+
+    private fun collectVehicleUuids(tag: CompoundTag, entityUuids: MutableSet<UUID>): Boolean {
+        val uuid = tag.entityUuidOrNull() ?: return false
+        if (!entityUuids.add(uuid)) return false
+
+        val passengers = tag.getList(NmsEntity.TAG_PASSENGERS).orElse(null)
+        if (passengers == null) {
+            return !tag.contains(NmsEntity.TAG_PASSENGERS)
+        }
+
+        for (i in 0 until passengers.size) {
+            val passengerTag = passengers.getCompound(i).orElse(null) ?: return false
+            if (!collectVehicleUuids(passengerTag, entityUuids)) return false
+        }
+
+        return true
+    }
+
+    private fun CompoundTag.entityUuidOrNull(): UUID? {
+        val uuid = getIntArray(NmsEntity.TAG_UUID).orElse(null) ?: return null
+        if (uuid.size != 4) return null
+
+        return UUIDUtil.uuidFromIntArray(uuid)
+    }
+
+    private fun getEntityByUuid(level: ServerLevel, uuid: UUID): NmsEntity? {
+        return level.entities.get(uuid)
+    }
+
+    private fun hasPartialUuidCollision(
+        level: ServerLevel,
+        entityUuids: Set<UUID>,
+        rootUuid: UUID,
+    ): Boolean {
+        for (uuid in entityUuids) {
+            if (uuid == rootUuid) continue
+            if (getEntityByUuid(level, uuid) != null) return true
+        }
+
+        return false
+    }
+
+    private fun vehicleTreeContainsAll(root: NmsEntity, entityUuids: Set<UUID>): Boolean {
+        val existingUuids = LinkedHashSet<UUID>()
+        existingUuids.add(root.uuid)
+        for (passenger in root.indirectPassengers) {
+            existingUuids.add(passenger.uuid)
+        }
+
+        return existingUuids.containsAll(entityUuids)
+    }
+
+    private fun findEntityInTree(root: NmsEntity, uuid: UUID): NmsEntity? {
+        if (root.uuid == uuid) return root
+        return root.indirectPassengers.firstOrNull { it.uuid == uuid }
+    }
+
+    private fun applyTargetTransform(
+        tag: CompoundTag,
+        x: Double,
+        y: Double,
+        z: Double,
+        yaw: Float,
+        pitch: Float,
+    ) {
+        // Override the captured crossing position with the safe target position so the vehicle
+        // does not re-appear on the border.
+        tag.put(NmsEntity.TAG_POS, doubleList(x, y, z))
+        tag.put(NmsEntity.TAG_ROTATION, floatList(yaw, pitch))
+    }
+
+    private fun spawnVehicleTreeFromTag(level: ServerLevel, tag: CompoundTag): NmsEntity? {
+        return NmsEntityType.loadEntityRecursive(
+            tag,
+            level,
+            EntitySpawnReason.LOAD,
+            EntityProcessor { entity ->
+                if (level.addWithUUID(entity, CreatureSpawnEvent.SpawnReason.MOUNT)) entity else null
+            }
+        )
+    }
+
+    private fun discardVehicleTree(root: NmsEntity) {
+        val entities = ArrayList<NmsEntity>()
+        entities.add(root)
+        entities.addAll(root.indirectPassengers)
+
+        for (entity in entities.asReversed()) {
+            entity.discard()
+        }
     }
 
     /**
@@ -205,4 +359,10 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
     companion object {
         private val VEHICLE_LOGGER = ComponentLogger.logger("SurfPaperNmsEntityBridge Vehicle")
     }
+
+    private data class VehicleTreeNbt(
+        val tag: CompoundTag,
+        val rootUuid: UUID,
+        val entityUuids: Set<UUID>,
+    )
 }

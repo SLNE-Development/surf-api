@@ -151,7 +151,11 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         val nmsEntity = entity.toNms()
         if (nmsEntity === nmsViewer) return false
 
-        val tracker = nmsViewer.level().chunkSource.chunkMap.entityMap.get(nmsEntity.id) ?: return false
+        val viewerLevel = nmsViewer.level()
+        val entityLevel = nmsEntity.level()
+        if (entityLevel !== viewerLevel) return false
+
+        val tracker = viewerLevel.chunkSource.chunkMap.entityMap.get(nmsEntity.id) ?: return false
         return try {
             if (!tracker.seenBy.contains(connection)) {
                 tracker.seenBy.add(connection)

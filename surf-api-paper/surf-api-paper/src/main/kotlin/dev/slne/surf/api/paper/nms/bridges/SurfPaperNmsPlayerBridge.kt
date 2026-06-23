@@ -64,6 +64,10 @@ interface SurfPaperNmsPlayerBridge {
      * individual entity whose id drifted after a seamless server move (which otherwise breaks
      * interaction packets that reference the network id).
      *
+     * [viewer] and [entity] must be in the same world/NMS level. Cross-world calls return false
+     * before consulting the viewer level's tracker map, because numeric entity ids can collide
+     * between levels.
+     *
      * Must be called on the owning region/entity tick thread.
      *
      * @param viewer the player that should receive the refreshed entity
