@@ -9908,11 +9908,17 @@ public final class dev/slne/surf/api/core/util/Caffeine_utilKt {
 }
 
 public final class dev/slne/surf/api/core/util/Coroutine_utilKt {
-	public static final fun runAtFixedRate-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static final fun runAtFixedRate-FbhrOv8 (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runAtFixedRate-FbhrOv8$default (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final synthetic fun runAtFixedRate-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
 	public static synthetic fun runAtFixedRate-vLdBGDU$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final fun runUntil-G6guFE4 (Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runUntil-G6guFE4$default (Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun runUntil-jKevqZI (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
 	public static synthetic fun runUntil-jKevqZI$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
-	public static final fun runWithFixedDelay-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static final fun runWithFixedDelay-FbhrOv8 (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runWithFixedDelay-FbhrOv8$default (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final synthetic fun runWithFixedDelay-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
 	public static synthetic fun runWithFixedDelay-vLdBGDU$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 }
 
