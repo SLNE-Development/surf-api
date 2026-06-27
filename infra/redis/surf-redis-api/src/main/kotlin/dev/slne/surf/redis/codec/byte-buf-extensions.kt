@@ -12,6 +12,7 @@ import java.time.Instant
 import java.util.BitSet
 import java.util.EnumSet
 import java.util.UUID
+import kotlin.enums.enumEntries
 
 fun ByteBuf.writeVarInt(value: Int) {
     RedisVarInt.write(this, value)
@@ -325,7 +326,7 @@ fun ByteBuf.writeEnum(value: Enum<*>) {
 
 inline fun <reified E : Enum<E>> ByteBuf.readEnum(): E {
     val ordinal = readVarInt()
-    val values = enumValues<E>()
+    val values = enumEntries<E>()
 
     checkDecoding(ordinal in values.indices) {
         "Invalid enum ordinal for ${E::class.simpleName}: $ordinal"
@@ -335,7 +336,7 @@ inline fun <reified E : Enum<E>> ByteBuf.readEnum(): E {
 }
 
 inline fun <reified E : Enum<E>> ByteBuf.writeEnumSet(set: Set<E>) {
-    val values = enumValues<E>()
+    val values = enumEntries<E>()
     val bitSet = BitSet(values.size)
 
     for (i in values.indices) {
@@ -346,7 +347,7 @@ inline fun <reified E : Enum<E>> ByteBuf.writeEnumSet(set: Set<E>) {
 }
 
 inline fun <reified E : Enum<E>> ByteBuf.readEnumSet(): EnumSet<E> {
-    val values = enumValues<E>()
+    val values = enumEntries<E>()
     val bitSet = readFixedBitSet(values.size)
     val result = EnumSet.noneOf(E::class.java)
 
