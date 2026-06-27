@@ -14,6 +14,7 @@ import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import io.papermc.paper.adventure.PaperAdventure
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,7 +35,6 @@ import net.minecraft.util.ProblemReporter
 import net.minecraft.util.ProblemReporter.ScopedCollector
 import net.minecraft.util.Util
 import net.minecraft.world.ItemStackWithSlot
-import net.minecraft.world.entity.Entity as NmsEntity
 import net.minecraft.world.entity.EntityEquipment
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.npc.InventoryCarrier
@@ -43,7 +43,6 @@ import net.minecraft.world.entity.player.ProfilePublicKey
 import net.minecraft.world.level.storage.*
 import org.bukkit.craftbukkit.CraftEquipmentSlot
 import org.bukkit.craftbukkit.inventory.CraftItemStack
-import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -101,27 +100,18 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         val root = nmsPlayer.rootVehicle
         if (root === nmsPlayer && nmsPlayer.passengers.isEmpty()) {
-            // Player is neither riding anything nor carrying passengers -> nothing to reconcile.
             return 0
         }
 
-        // The whole connected vehicle tree, in a stable order (root first).
-        val chain = LinkedHashSet<NmsEntity>()
-        chain.add(root)
-        for (passenger in root.indirectPassengers) {
-            chain.add(passenger)
-        }
+        val chain = ObjectLinkedOpenHashSet(root.passengersAndSelf.iterator())
+        chain.addFirst(root)
 
-        // Pass 1: re-pair every entity of the tree (except the player itself) so the client gets a
-        // clean copy carrying the server's current network id, metadata, equipment and links.
         var resynced = 0
         for (entity in chain) {
             if (entity === nmsPlayer) continue
             val tracker = chunkMap.entityMap.get(entity.id) ?: continue
             try {
-                if (!tracker.seenBy.contains(connection)) {
-                    tracker.seenBy.add(connection)
-                }
+                tracker.seenBy.add(connection)
                 tracker.serverEntity.removePairing(nmsPlayer)
                 tracker.serverEntity.addPairing(nmsPlayer)
                 resynced++
@@ -130,8 +120,6 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             }
         }
 
-        // Pass 2: re-assert every passenger link now that all involved entities are guaranteed to
-        // exist on the client. This re-mounts the player and resolves stacked vehicles in order.
         for (entity in chain) {
             if (entity.passengers.isEmpty()) continue
             try {
@@ -142,31 +130,6 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         }
 
         return resynced
-    }
-
-    @Suppress("USELESS_ELVIS")
-    override fun resyncEntityForViewer(viewer: Player, entity: Entity, swallowExceptions: Boolean): Boolean {
-        val nmsViewer = viewer.toNms()
-        val connection = nmsViewer.connection ?: return false
-        val nmsEntity = entity.toNms()
-        if (nmsEntity === nmsViewer) return false
-
-        val viewerLevel = nmsViewer.level()
-        val entityLevel = nmsEntity.level()
-        if (entityLevel !== viewerLevel) return false
-
-        val tracker = viewerLevel.chunkSource.chunkMap.entityMap.get(nmsEntity.id) ?: return false
-        return try {
-            if (!tracker.seenBy.contains(connection)) {
-                tracker.seenBy.add(connection)
-            }
-            tracker.serverEntity.removePairing(nmsViewer)
-            tracker.serverEntity.addPairing(nmsViewer)
-            true
-        } catch (e: Throwable) {
-            if (!swallowExceptions) throw e
-            false
-        }
     }
 
     @Suppress("USELESS_ELVIS")

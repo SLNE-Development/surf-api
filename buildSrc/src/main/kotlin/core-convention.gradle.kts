@@ -61,14 +61,15 @@ configurations {
     }
 }
 
-tasks.withType<org.gradle.jvm.tasks.Jar> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
+    if (this !is com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }
 
 tasks {
     shadowJar {
         mergeServiceFiles()
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         val relocationPrefix: String by project
         relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt") {
@@ -78,8 +79,10 @@ tasks {
     }
 
     javadoc {
+        isFailOnError = false
         val options = options as StandardJavadocDocletOptions
         options.use()
         options.tags("apiNote:a:API Note:")
+        options.addStringOption("Xdoclint:none", "-quiet")
     }
 }
