@@ -14,6 +14,7 @@ import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import io.papermc.paper.adventure.PaperAdventure
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,6 +28,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtIo
 import net.minecraft.network.chat.*
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.players.NameAndId
 import net.minecraft.util.ProblemReporter
@@ -88,6 +90,53 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
                 }
             }
         }
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun resyncVehicleState(player: Player, swallowExceptions: Boolean): Int {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return 0
+        val chunkMap = nmsPlayer.level().chunkSource.chunkMap
+
+        val root = nmsPlayer.rootVehicle
+        if (root === nmsPlayer && nmsPlayer.passengers.isEmpty()) {
+            return 0
+        }
+
+        val chain = ObjectLinkedOpenHashSet(root.passengersAndSelf.iterator())
+        chain.addFirst(root)
+
+        var resynced = 0
+        for (entity in chain) {
+            if (entity === nmsPlayer) continue
+            val tracker = chunkMap.entityMap.get(entity.id) ?: continue
+            try {
+                tracker.seenBy.add(connection)
+                tracker.serverEntity.removePairing(nmsPlayer)
+                tracker.serverEntity.addPairing(nmsPlayer)
+                resynced++
+            } catch (e: Throwable) {
+                if (!swallowExceptions) throw e
+            }
+        }
+
+        for (entity in chain) {
+            if (entity.passengers.isEmpty()) continue
+            try {
+                connection.send(ClientboundSetPassengersPacket(entity))
+            } catch (e: Throwable) {
+                if (!swallowExceptions) throw e
+            }
+        }
+
+        return resynced
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun resyncPlayerState(player: Player) {
+        val nmsPlayer = player.toNms()
+        nmsPlayer.connection ?: return
+        nmsPlayer.onUpdateAbilities()
     }
 
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {

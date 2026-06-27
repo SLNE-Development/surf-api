@@ -21,6 +21,18 @@ interface SurfPaperNmsEntityBridge {
 
     fun getById(world: World, id: Int): Entity?
 
+    fun captureVehicleNbt(rootVehicle: Entity): ByteArray
+
+    fun restoreVehicle(
+        world: World,
+        nbt: ByteArray,
+        x: Double,
+        y: Double,
+        z: Double,
+        yaw: Float,
+        pitch: Float,
+    ): Entity?
+
     companion object : SurfPaperNmsEntityBridge by bridge {
         val INSTANCE get() = bridge
     }

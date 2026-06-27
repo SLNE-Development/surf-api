@@ -1671,15 +1671,19 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion;
+	public abstract fun captureVehicleNbt (Lorg/bukkit/entity/Entity;)[B
 	public abstract fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
 	public abstract fun getById (Lorg/bukkit/World;I)Lorg/bukkit/entity/Entity;
+	public abstract fun restoreVehicle (Lorg/bukkit/World;[BDDDFF)Lorg/bukkit/entity/Entity;
 	public abstract fun setId (Lorg/bukkit/entity/Entity;I)V
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
+	public fun captureVehicleNbt (Lorg/bukkit/entity/Entity;)[B
 	public fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
 	public fun getById (Lorg/bukkit/World;I)Lorg/bukkit/entity/Entity;
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge;
+	public fun restoreVehicle (Lorg/bukkit/World;[BDDDFF)Lorg/bukkit/entity/Entity;
 	public fun setId (Lorg/bukkit/entity/Entity;I)V
 }
 
@@ -1747,6 +1751,9 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun removeAllTrackedPlayers (Lorg/bukkit/entity/Player;Z)V
 	public static synthetic fun removeAllTrackedPlayers$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)V
 	public abstract fun resetPlayerChatState (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)V
+	public abstract fun resyncPlayerState (Lorg/bukkit/entity/Player;)V
+	public abstract fun resyncVehicleState (Lorg/bukkit/entity/Player;Z)I
+	public static synthetic fun resyncVehicleState$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)I
 	public abstract fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
 	public abstract fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
 	public abstract fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
@@ -1768,6 +1775,8 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$
 	public fun removeAllTrackedEntities (Lorg/bukkit/entity/Player;Z)V
 	public fun removeAllTrackedPlayers (Lorg/bukkit/entity/Player;Z)V
 	public fun resetPlayerChatState (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)V
+	public fun resyncPlayerState (Lorg/bukkit/entity/Player;)V
+	public fun resyncVehicleState (Lorg/bukkit/entity/Player;Z)I
 	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
 	public fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
 	public fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
@@ -1778,6 +1787,7 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$
 	public static synthetic fun createPlayerChatMessageMirrorFromAdventure$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
 	public static synthetic fun removeAllTrackedEntities$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)V
 	public static synthetic fun removeAllTrackedPlayers$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)V
+	public static synthetic fun resyncVehicleState$default (Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;Lorg/bukkit/entity/Player;ZILjava/lang/Object;)I
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$PlayerInventoryEdit {

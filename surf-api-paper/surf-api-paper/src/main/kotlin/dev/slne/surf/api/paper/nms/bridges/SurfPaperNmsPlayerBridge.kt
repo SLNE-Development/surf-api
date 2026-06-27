@@ -25,6 +25,9 @@ interface SurfPaperNmsPlayerBridge {
     fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean = true)
     fun removeAllTrackedPlayers(player: Player, swallowExceptions: Boolean = true)
 
+    fun resyncVehicleState(player: Player, swallowExceptions: Boolean = true): Int
+    fun resyncPlayerState(player: Player)
+
     fun getRemoteChatSessionData(player: Player): RemoteChatSessionData?
 
     fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot?
