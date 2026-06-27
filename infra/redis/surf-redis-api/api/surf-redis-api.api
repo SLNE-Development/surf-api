@@ -126,6 +126,8 @@ public final class dev/slne/surf/redis/cache/SimpleSetRedisCache$DefaultImpls {
 
 public abstract class dev/slne/surf/redis/codec/AbstractCodec : org/redisson/client/codec/BaseCodec {
 	public fun <init> ()V
+	public final fun decode (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public final fun encode (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
 	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
 	public fun getValueEncoder ()Lorg/redisson/client/protocol/Encoder;
 	protected abstract fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
