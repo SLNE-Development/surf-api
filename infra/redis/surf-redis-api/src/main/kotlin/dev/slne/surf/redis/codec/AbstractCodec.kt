@@ -28,14 +28,22 @@ abstract class AbstractCodec<T : Any> : BaseCodec() {
         }
     }
 
-    override fun getValueEncoder(): Encoder? {
+    override fun getValueEncoder(): Encoder {
         return encoder
     }
 
-    override fun getValueDecoder(): Decoder<in Any>? {
+    override fun getValueDecoder(): Decoder<in Any> {
         return decoder
     }
 
     protected abstract fun write(buf: ByteBuf, value: T)
     protected abstract fun read(buf: ByteBuf): T
+
+    fun encode(buf: ByteBuf, value: T) {
+        write(buf, value)
+    }
+
+    fun decode(buf: ByteBuf): T {
+        return read(buf)
+    }
 }
