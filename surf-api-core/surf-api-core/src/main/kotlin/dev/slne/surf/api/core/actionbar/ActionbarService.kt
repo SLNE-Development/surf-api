@@ -63,6 +63,13 @@ object ActionbarService {
         return id
     }
 
+    fun cancel(jobId: UUID) {
+        actionbars.forEach { (_, jobs) ->
+            jobs[jobId]?.cancel()
+            jobs.remove(jobId)
+        }
+    }
+
     fun cancelAll() {
         actionbars.forEach { (_, jobs) ->
             jobs.values.forEach { it.cancel() }
