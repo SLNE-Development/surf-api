@@ -21,7 +21,9 @@ object ActionbarService {
         duration: Duration,
         interval: Duration,
         fadeOut: Boolean,
-        supplier: () -> Component
+        supplier: () -> Component,
+        onCount: (() -> Unit)? = null,
+        onFinish: (() -> Unit)? = null
     ): UUID {
         val id = UUID.randomUUID()
         val audienceUuid = audience.uuid()
@@ -36,8 +38,11 @@ object ActionbarService {
 
                 while (end == null || !end.hasPassedNow()) {
                     audience.sendActionBar(supplier())
+                    onCount?.invoke()
                     delay(interval)
                 }
+
+                onFinish?.invoke()
 
                 if (!fadeOut) {
                     audience.sendActionBar(Component.empty())
@@ -45,6 +50,7 @@ object ActionbarService {
             } finally {
                 actionbars[audienceUuid]?.let { jobs ->
                     jobs.remove(id)
+                    onFinish?.invoke()
 
                     if (jobs.isEmpty()) {
                         actionbars.remove(audienceUuid)
