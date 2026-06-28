@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package dev.slne.surf.redis.codec
 
 import io.netty.buffer.ByteBuf
