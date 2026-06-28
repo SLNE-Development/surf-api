@@ -10,11 +10,12 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Sends an actionbar to the audience for a specified duration.
  *
- * The audience must have an accessable UUID (see [uuidOrNull]). If the audience does not have a UUID, an error will be thrown.
+ * The audience must have an accessible UUID (see [uuidOrNull]). If the audience does not have a UUID, an error will be thrown.
  *
  * @param scope The CoroutineScope in which the actionbar will be sent.
  * @param duration The duration for which the actionbar will be displayed.
  * @param interval The interval at which the actionbar will be updated. Defaults to 1 second.
+ * @param fadeOut When true, lets the actionbar disappear naturally after the last update; when false, clears it immediately when finished.
  * @param text A lambda that builds the text component to be displayed in the actionbar.
  * @param onCount An optional callback that is invoked each time the actionbar is sent.
  * @param onFinish An optional callback that is invoked when the actionbar display is finished.
@@ -41,11 +42,12 @@ fun Audience.sendActionbar(
 /**
  * Sends an actionbar to the audience for a specified duration.
  *
- * The audience must have an accessable UUID (see [uuidOrNull]). If the audience does not have a UUID, an error will be thrown.
+ * The audience must have an accessible UUID (see [uuidOrNull]). If the audience does not have a UUID, an error will be thrown.
  *
  * @param scope The CoroutineScope in which the actionbar will be sent.
  * @param duration The duration for which the actionbar will be displayed.
  * @param interval The interval at which the actionbar will be updated. Defaults to 1 second.
+ * @param fadeOut When true, lets the actionbar disappear naturally after the last update; when false, clears it immediately when finished.
  * @param text A lambda that builds the text component to be displayed in the actionbar.
  */
 fun Audience.sendActionbar(
