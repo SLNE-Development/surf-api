@@ -208,22 +208,20 @@ public final class dev/slne/surf/redis/codec/RedisUtf8String {
 }
 
 public final class dev/slne/surf/redis/codec/RedisVarInt {
-	public static final field INSTANCE Ldev/slne/surf/redis/codec/RedisVarInt;
 	public static final field MAX_VARINT_SIZE I
-	public static final fun getByteSize (I)I
-	public static final fun hasContinuationBit (B)Z
-	public static final fun read (Lio/netty/buffer/ByteBuf;)I
-	public static final fun write (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
-	public static final fun writeSlow (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+	public static fun getByteSize (I)I
+	public static fun hasContinuationBit (B)Z
+	public static fun read (Lio/netty/buffer/ByteBuf;)I
+	public static fun write (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+	public static fun writeSlow (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
 }
 
 public final class dev/slne/surf/redis/codec/RedisVarLong {
-	public static final field INSTANCE Ldev/slne/surf/redis/codec/RedisVarLong;
 	public static final field MAX_VARLONG_SIZE I
-	public static final fun getByteSize (J)I
-	public static final fun hasContinuationBit (B)Z
-	public static final fun read (Lio/netty/buffer/ByteBuf;)J
-	public static final fun write (Lio/netty/buffer/ByteBuf;J)Lio/netty/buffer/ByteBuf;
+	public static fun getByteSize (J)I
+	public static fun hasContinuationBit (B)Z
+	public static fun read (Lio/netty/buffer/ByteBuf;)J
+	public static fun write (Lio/netty/buffer/ByteBuf;J)Lio/netty/buffer/ByteBuf;
 }
 
 public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/StringCodec {
