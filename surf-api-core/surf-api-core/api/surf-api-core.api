@@ -11,6 +11,19 @@ public final class dev/slne/surf/api/core/SurfApiCore$Companion : dev/slne/surf/
 	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
+public final class dev/slne/surf/api/core/actionbar/ActionbarService {
+	public static final field INSTANCE Ldev/slne/surf/api/core/actionbar/ActionbarService;
+	public final fun cancel (Ljava/util/UUID;)V
+	public final fun cancelAll ()V
+}
+
+public final class dev/slne/surf/api/core/actionbar/Actionbar_utilKt {
+	public static final fun sendActionbar-A1NDRPo (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;)Ljava/util/UUID;
+	public static synthetic fun sendActionbar-A1NDRPo$default (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/util/UUID;
+	public static final fun sendActionbar-yR0oWTA (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Ljava/util/UUID;
+	public static synthetic fun sendActionbar-yR0oWTA$default (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/util/UUID;
+}
+
 public final class dev/slne/surf/api/core/algorithms/ConvexHull2D {
 	public static final field INSTANCE Ldev/slne/surf/api/core/algorithms/ConvexHull2D;
 	public final fun ccw (Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;)Z
