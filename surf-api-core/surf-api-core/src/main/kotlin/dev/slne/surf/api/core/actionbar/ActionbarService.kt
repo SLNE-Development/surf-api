@@ -42,8 +42,6 @@ object ActionbarService {
                     delay(interval)
                 }
 
-                onFinish?.invoke()
-
                 if (!fadeOut) {
                     audience.sendActionBar(Component.empty())
                 }
