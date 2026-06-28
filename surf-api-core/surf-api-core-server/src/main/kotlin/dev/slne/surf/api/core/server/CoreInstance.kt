@@ -1,5 +1,6 @@
 package dev.slne.surf.api.core.server
 
+import dev.slne.surf.api.core.actionbar.ActionbarService
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.server.listener.CoreListenerManager
 import dev.slne.surf.api.core.server.util.PlayerSkinFetcher
@@ -27,6 +28,7 @@ abstract class CoreInstance {
     @MustBeInvokedByOverriders
     open suspend fun onDisable() {
         CoreListenerManager.unregisterListeners()
+        ActionbarService.cancelAll()
     }
 
     private fun initObjects() {
