@@ -11,6 +11,38 @@ public final class dev/slne/surf/api/core/SurfApiCore$Companion : dev/slne/surf/
 	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
+public final class dev/slne/surf/api/core/actionbar/ActionBarFinishReason : java/lang/Enum {
+	public static final field AUTO_CANCELLED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static final field CANCELLED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static final field COMPLETED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static final field FAILED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static fun values ()[Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+}
+
+public abstract interface class dev/slne/surf/api/core/actionbar/ActionBarService {
+	public static final field Companion Ldev/slne/surf/api/core/actionbar/ActionBarService$Companion;
+	public abstract fun sendActionBar-FragotA (Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static synthetic fun sendActionBar-FragotA$default (Ldev/slne/surf/api/core/actionbar/ActionBarService;Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
+public final class dev/slne/surf/api/core/actionbar/ActionBarService$Companion : dev/slne/surf/api/core/actionbar/ActionBarService {
+	public final fun getInstance ()Ldev/slne/surf/api/core/actionbar/ActionBarService;
+	public fun sendActionBar-FragotA (Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+}
+
+public final class dev/slne/surf/api/core/actionbar/ActionBarService$DefaultImpls {
+	public static synthetic fun sendActionBar-FragotA$default (Ldev/slne/surf/api/core/actionbar/ActionBarService;Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
+public final class dev/slne/surf/api/core/actionbar/ActionBarServiceKt {
+	public static final fun sendActionBar-DIOjvaQ (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static synthetic fun sendActionBar-DIOjvaQ$default (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final fun sendActionBar-FragotA (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static synthetic fun sendActionBar-FragotA$default (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
 public final class dev/slne/surf/api/core/algorithms/ConvexHull2D {
 	public static final field INSTANCE Ldev/slne/surf/api/core/algorithms/ConvexHull2D;
 	public final fun ccw (Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;)Z
