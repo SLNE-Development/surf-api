@@ -7,10 +7,7 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
-import com.palantir.javapoet.ClassName
-import com.palantir.javapoet.ParameterizedTypeName
-import com.palantir.javapoet.TypeName
-import com.palantir.javapoet.WildcardTypeName
+import com.palantir.javapoet.*
 import dev.slne.surf.api.processor.ClassNames
 import dev.slne.surf.api.processor.ShortClassNames
 import dev.slne.surf.api.processor.ShortClassNames.CONSTANT_BOOLEAN_ARGUMENT
@@ -411,6 +408,79 @@ class ReflectionSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbo
             "kotlin.Float" -> if (isNullable) boxed("java.lang.Float", javaNullability) else JavaType.Float
             "kotlin.Double" -> if (isNullable) boxed("java.lang.Double", javaNullability) else JavaType.Double
             "kotlin.Char" -> if (isNullable) boxed("java.lang.Character", javaNullability) else JavaType.Char
+
+            "kotlin.Array" -> {
+                val componentType = arguments.firstOrNull()
+                    ?.type
+                    ?.resolve()
+                    ?.toJavaType()
+                    ?: JavaType.Object
+
+                val arrayType = ArrayTypeName.of(componentType.className.box())
+
+                JavaType(
+                    sourceName = "${componentType.sourceName}[]",
+                    className = arrayType,
+                    erasedClassName = ArrayTypeName.of(componentType.erasedClassName.box()),
+                    nullability = javaNullability,
+                )
+            }
+
+            "kotlin.BooleanArray" -> JavaType(
+                sourceName = "boolean[]",
+                className = ArrayTypeName.of(TypeName.BOOLEAN),
+                erasedClassName = ArrayTypeName.of(TypeName.BOOLEAN),
+                nullability = javaNullability,
+            )
+
+            "kotlin.ByteArray" -> JavaType(
+                sourceName = "byte[]",
+                className = ArrayTypeName.of(TypeName.BYTE),
+                erasedClassName = ArrayTypeName.of(TypeName.BYTE),
+                nullability = javaNullability,
+            )
+
+            "kotlin.ShortArray" -> JavaType(
+                sourceName = "short[]",
+                className = ArrayTypeName.of(TypeName.SHORT),
+                erasedClassName = ArrayTypeName.of(TypeName.SHORT),
+                nullability = javaNullability,
+            )
+
+            "kotlin.IntArray" -> JavaType(
+                sourceName = "int[]",
+                className = ArrayTypeName.of(TypeName.INT),
+                erasedClassName = ArrayTypeName.of(TypeName.INT),
+                nullability = javaNullability,
+            )
+
+            "kotlin.LongArray" -> JavaType(
+                sourceName = "long[]",
+                className = ArrayTypeName.of(TypeName.LONG),
+                erasedClassName = ArrayTypeName.of(TypeName.LONG),
+                nullability = javaNullability,
+            )
+
+            "kotlin.FloatArray" -> JavaType(
+                sourceName = "float[]",
+                className = ArrayTypeName.of(TypeName.FLOAT),
+                erasedClassName = ArrayTypeName.of(TypeName.FLOAT),
+                nullability = javaNullability,
+            )
+
+            "kotlin.DoubleArray" -> JavaType(
+                sourceName = "double[]",
+                className = ArrayTypeName.of(TypeName.DOUBLE),
+                erasedClassName = ArrayTypeName.of(TypeName.DOUBLE),
+                nullability = javaNullability,
+            )
+
+            "kotlin.CharArray" -> JavaType(
+                sourceName = "char[]",
+                className = ArrayTypeName.of(TypeName.CHAR),
+                erasedClassName = ArrayTypeName.of(TypeName.CHAR),
+                nullability = javaNullability,
+            )
 
             else -> {
                 val javaClassId = JavaToKotlinClassMap.mapKotlinToJava(FqNameUnsafe(qualifiedName))

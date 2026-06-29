@@ -1,9 +1,42 @@
 package dev.slne.surf.api.core.nbt
 
 import net.kyori.adventure.nbt.*
+import net.kyori.adventure.nbt.api.BinaryTagHolder
+import net.kyori.adventure.util.Codec
+import java.io.IOException
 import java.util.*
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
+
+private val binaryTagHolderCodec = object : Codec<BinaryTag, String, IOException, IOException> {
+    private val tagStringIO = TagStringIO.builder()
+        .acceptLegacy(false)
+        .build()
+
+    override fun decode(encoded: String): BinaryTag {
+        return tagStringIO.asTag(encoded)
+    }
+
+    override fun encode(decoded: BinaryTag): String {
+        return tagStringIO.asString(decoded)
+    }
+}
+
+fun BinaryTag.asTagHolder(): BinaryTagHolder {
+    return BinaryTagHolder.encode(this, binaryTagHolderCodec)
+}
+
+fun BinaryTagHolder.decodeTag(): BinaryTag {
+    return get(binaryTagHolderCodec)
+}
+
+fun BinaryTagHolder.decodeCompoundTag(): CompoundBinaryTag {
+    val decoded = get(binaryTagHolderCodec)
+    if (decoded !is CompoundBinaryTag) {
+        error("Expected a CompoundBinaryTag, but got ${decoded::class.simpleName}")
+    }
+    return decoded
+}
 
 fun BinaryTag.isCollectionTag() =
     this is ListBinaryTag || this is ByteArrayBinaryTag || this is LongArrayBinaryTag || this is IntArrayBinaryTag

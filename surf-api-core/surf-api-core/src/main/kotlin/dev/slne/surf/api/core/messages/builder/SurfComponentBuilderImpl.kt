@@ -19,10 +19,17 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
     }
 
     override fun content(content: String) = withDelegate { content(content) }
+    override fun content() = delegate.content()
+    override fun children(): List<Component> = delegate.children()
+    override fun build(): TextComponent {
+        // Adventure 4 backward compatibility. #build() would return BuildableComponent instead of TextComponent in adventure 4
+        return delegate.asComponent() as TextComponent
+    }
+
     override fun append(builder: ComponentBuilder<*, *>) = withDelegate { append(builder) }
     override fun append(component: Component) = withDelegate { append(component) }
     override fun append(component: ComponentLike) = withDelegate { append(component) }
-    override fun append(components: Iterable<ComponentLike?>) = withDelegate { append(components) }
+    override fun append(components: Iterable<out ComponentLike>) = withDelegate { append(components) }
     override fun append(vararg components: Component) = withDelegate { append(*components) }
     override fun append(vararg components: ComponentLike) = withDelegate { append(*components) }
     override fun appendNewline() = withDelegate { appendNewline() }
@@ -36,7 +43,7 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
     override fun applyDeep(action: Consumer<in ComponentBuilder<*, *>>) =
         withDelegate { applyDeep(action) }
 
-    override fun clickEvent(event: ClickEvent?) = withDelegate { clickEvent(event) }
+    override fun clickEvent(event: ClickEvent<*>?) = withDelegate { clickEvent(event) }
     override fun color(color: TextColor?) = withDelegate { color(color) }
     override fun colorIfAbsent(color: TextColor?) = withDelegate { colorIfAbsent(color) }
     override fun decorate(decoration: TextDecoration) = withDelegate { decorate(decoration) }
@@ -58,30 +65,33 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
         state: TextDecoration.State,
     ) = withDelegate { decorationIfAbsent(decoration, state) }
 
-    override fun decorations(decorations: Map<TextDecoration?, TextDecoration.State?>) =
-        withDelegate { decorations(decorations) }
+    override fun decorations(decorations: Map<TextDecoration, TextDecoration.State>): SurfComponentBuilderImpl {
+        delegate.decorations(decorations)
+        return this
+    }
 
     override fun decorations(
-        decorations: Set<TextDecoration?>,
+        decorations: Set<TextDecoration>,
         flag: Boolean,
-    ) = withDelegate { decorations(decorations, flag) }
+    ): SurfComponentBuilderImpl {
+        delegate.decorations(decorations, flag)
+        return this
+    }
 
     override fun font(font: Key?) = withDelegate { font(font) }
     override fun hoverEvent(source: HoverEventSource<*>?) = withDelegate { hoverEvent(source) }
     override fun insertion(insertion: String?) = withDelegate { insertion(insertion) }
 
-    @Suppress("DEPRECATION")
-    override fun mapChildren(function: Function<BuildableComponent<*, *>?, out BuildableComponent<*, *>?>) =
+    override fun mapChildren(function: Function<Component, out Component>) =
         withDelegate { mapChildren(function) }
 
-    @Suppress("DEPRECATION")
-    override fun mapChildrenDeep(function: Function<BuildableComponent<*, *>?, out BuildableComponent<*, *>?>) =
+    override fun mapChildrenDeep(function: Function<Component, out Component>) =
         withDelegate { mapChildrenDeep(function) }
 
     override fun mergeStyle(that: Component) = withDelegate { mergeStyle(that) }
     override fun mergeStyle(
         that: Component,
-        merges: Set<Style.Merge?>,
+        merges: Set<Style.Merge>,
     ) = withDelegate { mergeStyle(that, merges) }
 
     override fun mergeStyle(
@@ -90,11 +100,12 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
     ) = withDelegate { mergeStyle(that, *merges) }
 
     override fun resetStyle() = withDelegate { resetStyle() }
-    override fun style(consumer: Consumer<Style.Builder?>) = withDelegate { style(consumer) }
+    override fun style(consumer: Consumer<Style.Builder>) = withDelegate { style(consumer) }
     override fun style(style: Style) = withDelegate { style(style) }
     override fun shadowColor(argb: ARGBLike?) = withDelegate { shadowColor(argb) }
     override fun shadowColorIfAbsent(argb: ARGBLike?) = withDelegate { shadowColorIfAbsent(argb) }
-    override fun content() = delegate.content()
-    override fun children() = delegate.children()
-    override fun build() = delegate.build()
+
+    override fun asComponent(): Component {
+        return build()
+    }
 }

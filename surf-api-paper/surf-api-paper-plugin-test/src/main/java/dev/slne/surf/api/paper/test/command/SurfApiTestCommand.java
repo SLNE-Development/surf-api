@@ -30,6 +30,7 @@ public class SurfApiTestCommand extends CommandAPICommand {
                 new SurfEventHandlerTest("eventhandler"),
                 new ShowItemCommand("showitem"),
                 new SortInvCommand("sortInv"),
+                new StableActionbarTestCommand("stableActionbarTest"),
                 new SignedMessageArgumentTest("signedmessage"),
                 new BlockPdcContainerTest("blockpdc"),
                 new OfflineInventoryEditTest("editOfflineInventory"),

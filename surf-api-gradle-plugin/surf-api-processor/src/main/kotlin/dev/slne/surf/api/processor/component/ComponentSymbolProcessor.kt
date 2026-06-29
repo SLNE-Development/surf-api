@@ -28,7 +28,7 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
 
     @OptIn(KspExperimental::class)
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val moduleName = resolver.getModuleName().asString()
+        val moduleName = resolver.getModuleName().asString().split(":").last()
         val deferred = mutableListOf<KSAnnotated>()
 
         processComponents(resolver, moduleName, deferred)

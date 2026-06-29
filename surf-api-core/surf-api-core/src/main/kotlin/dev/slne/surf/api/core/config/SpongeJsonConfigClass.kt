@@ -33,18 +33,24 @@ abstract class SpongeJsonConfigClass<C>(
     configClass: Class<C>, configFolder: Path, fileName: String
 ) : SpongeConfigClass<C>(configClass, configFolder, fileName) {
 
-    /**
-     * JSON-backed configuration manager for this config type.
-     *
-     * The manager is created using [SurfConfigApi.createSpongeJsonConfigManager]
-     * with [configClass], [configFolder], [fileName] and [migrationBuilder].
-     */
-    override val manager by lazy {
+    private val managerLazy = lazy {
         surfConfigApi.createSpongeJsonConfigManager(
             configClass,
             configFolder,
             fileName,
             migrationBuilder
         )
+    }
+
+    /**
+     * JSON-backed configuration manager for this config type.
+     *
+     * The manager is created using [SurfConfigApi.createSpongeJsonConfigManager]
+     * with [configClass], [configFolder], [fileName] and [migrationBuilder].
+     */
+    final override val manager by managerLazy
+
+    final override fun isInitialized(): Boolean {
+        return managerLazy.isInitialized()
     }
 }

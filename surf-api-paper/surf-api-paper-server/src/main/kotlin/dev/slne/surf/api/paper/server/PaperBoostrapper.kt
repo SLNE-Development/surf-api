@@ -7,8 +7,10 @@ import kotlinx.coroutines.runBlocking
 
 @Suppress("unused", "UnstableApiUsage")
 class PaperBoostrapper : PluginBootstrap {
-    override fun bootstrap(bootstrapContext: BootstrapContext) = runBlocking {
-        PaperInstance.bootstrap()
+    override fun bootstrap(bootstrapContext: BootstrapContext) {
+        runBlocking {
+            PaperInstance.bootstrap()
+        }
     }
 
     override fun createPlugin(context: PluginProviderContext) = PaperMain()

@@ -23,7 +23,7 @@ class DialogActionBuilder {
 
     private var action: DialogAction? = null
 
-    fun staticAction(clickEvent: ClickEvent) {
+    fun staticAction(clickEvent: ClickEvent<*>) {
         action = DialogAction.staticAction(clickEvent)
     }
 

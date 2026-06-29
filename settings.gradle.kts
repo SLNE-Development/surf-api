@@ -21,6 +21,7 @@ include(":surf-api-paper:surf-api-paper")
 include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-common")
 include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v1-21-11")
 include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-1")
+include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-2")
 include(":surf-api-paper:surf-api-paper-server")
 
 include(":surf-api-velocity:surf-api-velocity")

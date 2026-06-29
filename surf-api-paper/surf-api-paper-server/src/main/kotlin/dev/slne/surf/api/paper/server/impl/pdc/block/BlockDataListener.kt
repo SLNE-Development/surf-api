@@ -22,6 +22,7 @@
  */
 package dev.slne.surf.api.paper.server.impl.pdc.block
 
+import com.destroystokyo.paper.event.block.BlockDestroyEvent
 import dev.slne.surf.api.paper.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.api.paper.pdc.block.pdc
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
@@ -71,6 +72,12 @@ object BlockDataListener : Listener {
         if (!BlockPdcManager.isDirty(event.block)) {
             remove(event)
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    fun onBlockDestroy(event: BlockDestroyEvent) {
+        if (event.isCancelled) return
+        remove(event)
     }
 
     @EventHandler(

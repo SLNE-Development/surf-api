@@ -11,6 +11,38 @@ public final class dev/slne/surf/api/core/SurfApiCore$Companion : dev/slne/surf/
 	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
+public final class dev/slne/surf/api/core/actionbar/ActionBarFinishReason : java/lang/Enum {
+	public static final field AUTO_CANCELLED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static final field CANCELLED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static final field COMPLETED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static final field FAILED Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+	public static fun values ()[Ldev/slne/surf/api/core/actionbar/ActionBarFinishReason;
+}
+
+public abstract interface class dev/slne/surf/api/core/actionbar/ActionBarService {
+	public static final field Companion Ldev/slne/surf/api/core/actionbar/ActionBarService$Companion;
+	public abstract fun sendActionBar-FragotA (Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static synthetic fun sendActionBar-FragotA$default (Ldev/slne/surf/api/core/actionbar/ActionBarService;Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
+public final class dev/slne/surf/api/core/actionbar/ActionBarService$Companion : dev/slne/surf/api/core/actionbar/ActionBarService {
+	public final fun getInstance ()Ldev/slne/surf/api/core/actionbar/ActionBarService;
+	public fun sendActionBar-FragotA (Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+}
+
+public final class dev/slne/surf/api/core/actionbar/ActionBarService$DefaultImpls {
+	public static synthetic fun sendActionBar-FragotA$default (Ldev/slne/surf/api/core/actionbar/ActionBarService;Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
+public final class dev/slne/surf/api/core/actionbar/ActionBarServiceKt {
+	public static final fun sendActionBar-DIOjvaQ (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static synthetic fun sendActionBar-DIOjvaQ$default (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final fun sendActionBar-FragotA (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static synthetic fun sendActionBar-FragotA$default (Lnet/kyori/adventure/audience/Audience;Lkotlinx/coroutines/CoroutineScope;JJZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+}
+
 public final class dev/slne/surf/api/core/algorithms/ConvexHull2D {
 	public static final field INSTANCE Ldev/slne/surf/api/core/algorithms/ConvexHull2D;
 	public final fun ccw (Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;)Z
@@ -145,26 +177,23 @@ public abstract class dev/slne/surf/api/core/config/SpongeConfigClass {
 	public final fun edit (ZLkotlin/jvm/functions/Function1;)V
 	public static synthetic fun edit$default (Ldev/slne/surf/api/core/config/SpongeConfigClass;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun getConfig ()Ljava/lang/Object;
-	protected final fun getConfigFolder ()Ljava/nio/file/Path;
-	protected final fun getFileName ()Ljava/lang/String;
 	public abstract fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
-	protected final fun getMigrationBuilder ()Ldev/slne/surf/api/core/config/migration/ConfigMigrationBuilder;
 	public final fun init ()V
-	protected final fun migration (ILdev/slne/surf/api/core/config/migration/ConfigMigration;)V
-	protected final fun migration (ILkotlin/jvm/functions/Function1;)V
+	public abstract fun isInitialized ()Z
 	public final fun reloadFromFile ()Ljava/lang/Object;
 	public final fun save ()V
-	protected final fun versionKey ([Ljava/lang/Object;)V
 }
 
 public abstract class dev/slne/surf/api/core/config/SpongeJsonConfigClass : dev/slne/surf/api/core/config/SpongeConfigClass {
 	public fun <init> (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)V
-	public fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun isInitialized ()Z
 }
 
 public abstract class dev/slne/surf/api/core/config/SpongeYmlConfigClass : dev/slne/surf/api/core/config/SpongeConfigClass {
 	public fun <init> (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)V
-	public fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun getManager ()Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+	public final fun isInitialized ()Z
 }
 
 public abstract interface class dev/slne/surf/api/core/config/SurfConfigApi {
@@ -403,7 +432,6 @@ public final class dev/slne/surf/api/core/config/manager/SerializationConfigExce
 public final class dev/slne/surf/api/core/config/manager/SpongeConfigManager {
 	public static final field Companion Ldev/slne/surf/api/core/config/manager/SpongeConfigManager$Companion;
 	public field config Ljava/lang/Object;
-	public synthetic fun <init> (Ljava/lang/Class;Ljava/lang/Object;Lorg/spongepowered/configurate/loader/ConfigurationLoader;Lorg/spongepowered/configurate/ConfigurationNode;Ldev/slne/surf/api/core/config/migration/ConfigMigrationBuilder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun addMigration (ILdev/slne/surf/api/core/config/migration/ConfigMigration;)Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
 	public final fun addMigration (ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
 	public final fun edit (ZLkotlin/jvm/functions/Function1;)V
@@ -528,7 +556,6 @@ public final class dev/slne/surf/api/core/config/type/BooleanOrDefault {
 	public static final field FALSE Ldev/slne/surf/api/core/config/type/BooleanOrDefault;
 	public static final field TRUE Ldev/slne/surf/api/core/config/type/BooleanOrDefault;
 	public static final field USE_DEFAULT Ldev/slne/surf/api/core/config/type/BooleanOrDefault;
-	public synthetic fun <init> (Ljava/lang/Boolean;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Boolean;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getValue ()Ljava/lang/Boolean;
@@ -565,7 +592,6 @@ public final class dev/slne/surf/api/core/config/type/ConfigDuration$Companion {
 public final class dev/slne/surf/api/core/config/type/DurationOrDisabled {
 	public static final field Companion Ldev/slne/surf/api/core/config/type/DurationOrDisabled$Companion;
 	public static final field DISABLED Ldev/slne/surf/api/core/config/type/DurationOrDisabled;
-	public synthetic fun <init> (Lkotlin/time/Duration;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-FghU774 ()Lkotlin/time/Duration;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getValue-FghU774 ()Lkotlin/time/Duration;
@@ -580,7 +606,7 @@ public final class dev/slne/surf/api/core/config/type/DurationOrDisabled$Compani
 
 public final class dev/slne/surf/api/core/config/type/StringOrDefault {
 	public static final field Companion Ldev/slne/surf/api/core/config/type/StringOrDefault$Companion;
-	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final field USE_DEFAULT Ldev/slne/surf/api/core/config/type/StringOrDefault;
 	public final fun component1 ()Ljava/lang/String;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getValue ()Ljava/lang/String;
@@ -590,7 +616,6 @@ public final class dev/slne/surf/api/core/config/type/StringOrDefault {
 }
 
 public final class dev/slne/surf/api/core/config/type/StringOrDefault$Companion {
-	public final fun getUSE_DEFAULT ()Ldev/slne/surf/api/core/config/type/StringOrDefault;
 	public final fun of (Ljava/lang/String;)Ldev/slne/surf/api/core/config/type/StringOrDefault;
 }
 
@@ -7167,16 +7192,22 @@ public final class dev/slne/surf/api/core/messages/CommonComponents {
 	public final fun formatTime-gRj5Bb8 (JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/Component;
 	public static synthetic fun formatTime-gRj5Bb8$default (Ldev/slne/surf/api/core/messages/CommonComponents;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Lnet/kyori/adventure/text/Component;
 	public final synthetic fun getEM_DASH ()Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
+	public static synthetic fun renderDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Lnet/kyori/adventure/text/TextComponent$Builder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderKickDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
+	public final fun renderKickDisconnectMessage (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/text/TextComponent;
 	public final fun renderKickDisconnectMessage (Lnet/kyori/adventure/text/TextComponent$Builder;Lkotlin/jvm/functions/Function1;Z)Lnet/kyori/adventure/text/TextComponent;
+	public static synthetic fun renderKickDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderKickDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 	public static synthetic fun renderKickDisconnectMessage$default (Ldev/slne/surf/api/core/messages/CommonComponents;Lnet/kyori/adventure/text/TextComponent$Builder;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/text/TextComponent;
 }
@@ -7653,7 +7684,7 @@ public final class dev/slne/surf/api/core/messages/builder/ComponentBuilderColor
 	public static fun yellow (Ldev/slne/surf/api/core/messages/builder/ComponentBuilderColors;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 }
 
-public abstract interface class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder : dev/slne/surf/api/core/messages/builder/ComponentBuilderColors, net/kyori/adventure/text/TextComponent$Builder {
+public abstract interface class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder : dev/slne/surf/api/core/messages/builder/ComponentBuilderColors, net/kyori/adventure/text/ComponentLike {
 	public static final field Companion Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder$Companion;
 	public abstract fun append (Ljava/lang/Iterable;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun append (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7676,18 +7707,32 @@ public abstract interface class dev/slne/surf/api/core/messages/builder/SurfComp
 	public fun appendMap (Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendMap$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun appendNewline ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendNewline (I)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun appendNewline (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun appendNewlineAsync (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun appendSpace ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendText (Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun appendText (Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public fun appendTime-gRj5Bb8 (JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendTime-gRj5Bb8$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun applicableApply (Lnet/kyori/adventure/text/ComponentBuilderApplicable;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun apply (Ljava/util/function/Consumer;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun applyDeep (Ljava/util/function/Consumer;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public abstract fun build ()Lnet/kyori/adventure/text/TextComponent;
 	public static fun builder ()Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public abstract fun children ()Ljava/util/List;
+	public fun clickCallback (Lnet/kyori/adventure/text/event/ClickCallback;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickCallbackWithOptions (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickCopiesToClipboard (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun clickEvent (Lnet/kyori/adventure/text/event/ClickEvent;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickOpensUrl (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickRunsCommand (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public fun clickSuggestsCommand (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun color (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun colorIfAbsent (Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public abstract fun content ()Ljava/lang/String;
 	public abstract fun content (Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun decorate (Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public abstract fun decorate ([Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7759,9 +7804,14 @@ public final class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder$
 	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)V
 	public static fun appendNewWarningPrefixedLine (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewWarningPrefixedLineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun appendNewline (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;I)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewline (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendNewlineAsync (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun appendSuccessPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendText (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun appendText (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static synthetic fun appendText$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendTime-gRj5Bb8 (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendTime-gRj5Bb8$default (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;JZZLnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;ILjava/lang/Object;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun appendWarningPrefix (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -7777,6 +7827,12 @@ public final class dev/slne/surf/api/core/messages/builder/SurfComponentBuilder$
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun blue (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickCallback (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lnet/kyori/adventure/text/event/ClickCallback;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickCallbackWithOptions (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickCopiesToClipboard (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickOpensUrl (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickRunsCommand (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
+	public static fun clickSuggestsCommand (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;CLnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/Number;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
 	public static fun coloredComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/format/TextColor;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;
@@ -8875,10 +8931,66 @@ public final class dev/slne/surf/api/core/nbt/CollectionBinaryTagKt {
 	public static final fun asCollectionOrNull (Lnet/kyori/adventure/nbt/BinaryTag;)Lnet/kyori/adventure/nbt/BinaryTag;
 }
 
-public abstract interface class dev/slne/surf/api/core/nbt/FastCompoundBinaryTag : net/kyori/adventure/nbt/CompoundBinaryTag {
+public abstract interface class dev/slne/surf/api/core/nbt/FastCompoundBinaryTag : net/kyori/adventure/nbt/BinaryTagLike {
+	public synthetic fun asBinaryTag ()Lnet/kyori/adventure/nbt/BinaryTag;
+	public abstract fun asBinaryTag ()Lnet/kyori/adventure/nbt/CompoundBinaryTag;
 	public abstract fun clear ()V
+	public abstract fun contains (Ljava/lang/String;)Z
+	public abstract fun contains (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;)Z
+	public abstract fun forEach (Ljava/util/function/Consumer;)V
+	public abstract fun get (Ljava/lang/String;)Lnet/kyori/adventure/nbt/BinaryTag;
+	public abstract fun getByte (Ljava/lang/String;B)B
+	public static synthetic fun getByte$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;BILjava/lang/Object;)B
+	public abstract fun getByteArray (Ljava/lang/String;)[B
+	public abstract fun getByteArray (Ljava/lang/String;[B)[B
+	public abstract fun getCompound (Ljava/lang/String;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static synthetic fun getCompound$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/CompoundBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public abstract fun getDouble (Ljava/lang/String;D)D
+	public static synthetic fun getDouble$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;DILjava/lang/Object;)D
+	public abstract fun getFloat (Ljava/lang/String;F)F
+	public static synthetic fun getFloat$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;FILjava/lang/Object;)F
+	public abstract fun getInt (Ljava/lang/String;I)I
+	public static synthetic fun getInt$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;IILjava/lang/Object;)I
+	public abstract fun getIntArray (Ljava/lang/String;)[I
+	public abstract fun getIntArray (Ljava/lang/String;[I)[I
+	public abstract fun getList (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun getList (Ljava/lang/String;Lnet/kyori/adventure/nbt/ListBinaryTag;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public abstract fun getLong (Ljava/lang/String;J)J
+	public static synthetic fun getLong$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;JILjava/lang/Object;)J
+	public abstract fun getLongArray (Ljava/lang/String;)[J
+	public abstract fun getLongArray (Ljava/lang/String;[J)[J
+	public abstract fun getShort (Ljava/lang/String;S)S
+	public static synthetic fun getShort$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;SILjava/lang/Object;)S
+	public abstract fun getString (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun getString$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public abstract fun isEmpty ()Z
 	public abstract fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
 	public abstract fun keySet ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+	public abstract fun put (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTag;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun put (Ljava/util/Map;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun put (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun remove (Ljava/lang/String;Ljava/util/function/Consumer;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public static synthetic fun remove$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/util/function/Consumer;ILjava/lang/Object;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public abstract fun size ()I
+	public abstract fun stream ()Ljava/util/stream/Stream;
+	public fun type ()Lnet/kyori/adventure/nbt/BinaryTagType;
+}
+
+public final class dev/slne/surf/api/core/nbt/FastCompoundBinaryTag$DefaultImpls {
+	public static synthetic fun getByte$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;BILjava/lang/Object;)B
+	public static synthetic fun getCompound$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/CompoundBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static synthetic fun getDouble$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;DILjava/lang/Object;)D
+	public static synthetic fun getFloat$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;FILjava/lang/Object;)F
+	public static synthetic fun getInt$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;IILjava/lang/Object;)I
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTagType;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getList$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Lnet/kyori/adventure/nbt/ListBinaryTag;ILjava/lang/Object;)Lnet/kyori/adventure/nbt/ListBinaryTag;
+	public static synthetic fun getLong$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;JILjava/lang/Object;)J
+	public static synthetic fun getShort$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;SILjava/lang/Object;)S
+	public static synthetic fun getString$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static synthetic fun remove$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/util/function/Consumer;ILjava/lang/Object;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
+	public static fun type (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;)Lnet/kyori/adventure/nbt/BinaryTagType;
 }
 
 public final class dev/slne/surf/api/core/nbt/FastCompoundBinaryTagKt {
@@ -8899,6 +9011,9 @@ public final class dev/slne/surf/api/core/nbt/InternalNbtBridge$Companion : dev/
 }
 
 public final class dev/slne/surf/api/core/nbt/Nbt_extensionKt {
+	public static final fun asTagHolder (Lnet/kyori/adventure/nbt/BinaryTag;)Lnet/kyori/adventure/nbt/api/BinaryTagHolder;
+	public static final fun decodeCompoundTag (Lnet/kyori/adventure/nbt/api/BinaryTagHolder;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static final fun decodeTag (Lnet/kyori/adventure/nbt/api/BinaryTagHolder;)Lnet/kyori/adventure/nbt/BinaryTag;
 	public static final fun isCollectionTag (Lnet/kyori/adventure/nbt/BinaryTag;)Z
 	public static final fun tagIterator (Lnet/kyori/adventure/nbt/ByteArrayBinaryTag;)Ljava/util/Iterator;
 	public static final fun tagIterator (Lnet/kyori/adventure/nbt/IntArrayBinaryTag;)Ljava/util/Iterator;
@@ -9825,11 +9940,17 @@ public final class dev/slne/surf/api/core/util/Caffeine_utilKt {
 }
 
 public final class dev/slne/surf/api/core/util/Coroutine_utilKt {
-	public static final fun runAtFixedRate-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static final fun runAtFixedRate-FbhrOv8 (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runAtFixedRate-FbhrOv8$default (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final synthetic fun runAtFixedRate-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
 	public static synthetic fun runAtFixedRate-vLdBGDU$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final fun runUntil-G6guFE4 (Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runUntil-G6guFE4$default (Lkotlinx/coroutines/CoroutineScope;JJZLkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun runUntil-jKevqZI (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
 	public static synthetic fun runUntil-jKevqZI$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
-	public static final fun runWithFixedDelay-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static final fun runWithFixedDelay-FbhrOv8 (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+	public static synthetic fun runWithFixedDelay-FbhrOv8$default (Lkotlinx/coroutines/CoroutineScope;JJZLjava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
+	public static final synthetic fun runWithFixedDelay-vLdBGDU (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
 	public static synthetic fun runWithFixedDelay-vLdBGDU$default (Lkotlinx/coroutines/CoroutineScope;JJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 }
 
@@ -10974,6 +11095,12 @@ public final class dev/slne/surf/api/core/util/SerializableErrorKt {
 	public static final fun toSerializableError (Ljava/lang/Throwable;)Ldev/slne/surf/api/core/util/SerializableError;
 }
 
+public final class dev/slne/surf/api/core/util/ServiceUtil {
+	public static final field INSTANCE Ldev/slne/surf/api/core/util/ServiceUtil;
+	public final fun serviceWithFallback (Ljava/lang/Class;)Ljava/lang/Object;
+	public final synthetic fun serviceWithFallback (Ljava/util/ServiceLoader;Ljava/lang/Class;)Ljava/lang/Object;
+}
+
 public abstract class dev/slne/surf/api/core/util/SurfTypeParameterMatcher {
 	public static final field Companion Ldev/slne/surf/api/core/util/SurfTypeParameterMatcher$Companion;
 	public fun <init> ()V
@@ -11027,6 +11154,10 @@ public final class dev/slne/surf/api/core/util/SurfUtil {
 
 public abstract interface class dev/slne/surf/api/core/util/ToByteFunction {
 	public abstract fun applyAsByte (Ljava/lang/Object;)B
+}
+
+public final class dev/slne/surf/api/core/util/Var_handle_utilKt {
+	public static final fun setIfGreater (Ljava/lang/invoke/VarHandle;Ljava/lang/Object;I)Z
 }
 
 public abstract interface class dev/slne/surf/api/core/util/blockstate/BlockStateFactory {

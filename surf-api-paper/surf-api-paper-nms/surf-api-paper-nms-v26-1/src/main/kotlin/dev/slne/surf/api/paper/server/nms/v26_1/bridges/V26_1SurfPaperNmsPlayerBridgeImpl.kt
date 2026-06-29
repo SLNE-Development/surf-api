@@ -7,12 +7,12 @@ import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInventoryEdit
-import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
-import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
+import dev.slne.surf.api.paper.nms.bridges.data.chat.*
 import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
 import io.papermc.paper.adventure.PaperAdventure
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,6 +26,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtIo
 import net.minecraft.network.chat.*
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.players.NameAndId
 import net.minecraft.util.ProblemReporter
@@ -36,6 +38,7 @@ import net.minecraft.world.entity.EntityEquipment
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.npc.InventoryCarrier
 import net.minecraft.world.entity.player.Inventory
+import net.minecraft.world.entity.player.ProfilePublicKey
 import net.minecraft.world.level.storage.*
 import org.bukkit.craftbukkit.CraftEquipmentSlot
 import org.bukkit.craftbukkit.inventory.CraftItemStack
@@ -44,22 +47,328 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.createTempFile
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@Suppress("ClassName")
 class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
+
+    @Suppress("USELESS_ELVIS")
+    override fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean) {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+        val level = nmsPlayer.level()
+
+        val trackers = level.chunkSource.chunkMap.entityMap.values.toTypedArray()
+        for (tracker in trackers) {
+            try {
+                if (tracker.seenBy.contains(connection)) {
+                    tracker.serverEntity.removePairing(nmsPlayer)
+                }
+            } catch (e: Throwable) {
+                if (!swallowExceptions) {
+                    throw e
+                }
+            }
+        }
+    }
+
+    override fun removeAllTrackedPlayers(player: Player, swallowExceptions: Boolean) {
+        val nmsPlayer = player.toNms()
+        val trackedEntity = nmsPlayer.`moonrise$getTrackedEntity`()
+
+        for (otherPlayer in MinecraftServer.getServer().playerList.players) {
+            if (otherPlayer.uuid == nmsPlayer.uuid) continue
+            try {
+                trackedEntity.serverEntity.removePairing(otherPlayer)
+            } catch (e: Throwable) {
+                if (!swallowExceptions) {
+                    throw e
+                }
+            }
+        }
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun resyncVehicleState(player: Player, swallowExceptions: Boolean): Int {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return 0
+        val chunkMap = nmsPlayer.level().chunkSource.chunkMap
+
+        val root = nmsPlayer.rootVehicle
+        if (root === nmsPlayer && nmsPlayer.passengers.isEmpty()) {
+            return 0
+        }
+
+        val chain = ObjectLinkedOpenHashSet(root.passengersAndSelf.iterator())
+        chain.addFirst(root)
+
+        var resynced = 0
+        for (entity in chain) {
+            if (entity === nmsPlayer) continue
+            val tracker = chunkMap.entityMap.get(entity.id) ?: continue
+            try {
+                tracker.seenBy.add(connection)
+                tracker.serverEntity.removePairing(nmsPlayer)
+                tracker.serverEntity.addPairing(nmsPlayer)
+                resynced++
+            } catch (e: Throwable) {
+                if (!swallowExceptions) throw e
+            }
+        }
+
+        for (entity in chain) {
+            if (entity.passengers.isEmpty()) continue
+            try {
+                connection.send(ClientboundSetPassengersPacket(entity))
+            } catch (e: Throwable) {
+                if (!swallowExceptions) throw e
+            }
+        }
+
+        return resynced
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun resyncPlayerState(player: Player) {
+        val nmsPlayer = player.toNms()
+        nmsPlayer.connection ?: return
+        nmsPlayer.onUpdateAbilities()
+    }
+
+    @Suppress("USELESS_ELVIS")
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {
-        val session = player.toNms().chatSession?.asData() ?: return null
+        val connection = player.toNms().connection ?: return null
+        val session = V26_1NmsReflections.getRemoteChatSession(connection) ?: return null
         val profilePublicKey = session.profilePublicKey()
 
         return RemoteChatSessionData(
             sessionId = session.sessionId(),
-            expiresAt = profilePublicKey.expiresAt(),
-            key = profilePublicKey.key(),
-            keySignature = profilePublicKey.keySignature()
+            expiresAt = profilePublicKey.data().expiresAt(),
+            key = profilePublicKey.data().key(),
+            keySignature = profilePublicKey.data().keySignature()
         )
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun <T> withMessageSignatureCacheLock(player: Player, block: () -> T): T? {
+        val connection = player.toNms().connection ?: return null
+        val cache = V26_1NmsReflections.getMessageSignatureCache(connection)
+        return synchronized(cache) { block() }
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot? {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return null
+
+        val lastSeenMessages = V26_1NmsReflections.getLastSeenMessages(connection)
+        val messageSignatureCache = V26_1NmsReflections.getMessageSignatureCache(connection)
+
+        return synchronized(lastSeenMessages) {
+            synchronized(messageSignatureCache) {
+                val nextChatIndex = V26_1NmsReflections.getNextChatIndex(connection)
+                val chatSession = V26_1NmsReflections.getRemoteChatSession(connection) ?: return null
+
+                val lastSeenMessagesMirror = LastSeenMessagesValidatorMirror(
+                    lastSeenCount = V26_1NmsReflections.getLastSeenCountFromMessageValidator(lastSeenMessages),
+                    trackedMessages = V26_1NmsReflections.getTrackedMessagesFromMessageValidator(lastSeenMessages)
+                        .map { entry ->
+                            entry?.let {
+                                LastSeenMessagesValidatorMirror.LastSeenTrackedEntry(
+                                    it.signature().bytes(),
+                                    it.pending()
+                                )
+                            }
+                        },
+                    lastPendingMessage = V26_1NmsReflections.getLastPendingMessageFromMessageValidator(lastSeenMessages)
+                        ?.bytes()
+                )
+
+                val messageSignatureCacheEntries =
+                    V26_1NmsReflections.getEntriesFromMessageSignatureCache(messageSignatureCache)
+                val messageSignatureCacheMirror = Array(messageSignatureCacheEntries.size) { i ->
+                    messageSignatureCacheEntries[i]?.bytes()
+                }
+
+                val chatSessionData = chatSession.asData()
+                val chatSessionMirror = RemoteChatSessionData(
+                    chatSessionData.sessionId,
+                    chatSessionData.profilePublicKey.expiresAt,
+                    chatSessionData.profilePublicKey.key,
+                    chatSessionData.profilePublicKey.keySignature
+                )
+
+                val messageDecoder = V26_1NmsReflections.getSignedMessageDecoder(connection)
+                val signedMessageChain = messageDecoder.signedMessageChain()
+
+                val chatChainMirror = IncomingChatChainMirror(
+                    nextLinkIndex = V26_1NmsReflections.getNextLinkFromSignedMessageChain(signedMessageChain)?.index,
+                    lastTimeStamp = V26_1NmsReflections.getLastTimeStampFromSignedMessageChain(signedMessageChain)
+                )
+
+                PlayerChatSessionSnapshot(
+                    nextChatIndex = nextChatIndex,
+                    chatSession = chatSessionMirror,
+                    lastSeenMessages = lastSeenMessagesMirror,
+                    messageSignatureCache = messageSignatureCacheMirror,
+                    incomingChatChain = chatChainMirror
+                )
+            }
+        }
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun applyChatSessionSnapshot(player: Player, snapshot: PlayerChatSessionSnapshot) {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+        val chatSessionMirror = snapshot.chatSession ?: return
+
+        val profileKeySignatureValidator = MinecraftServer.getServer().services().profileKeySignatureValidator()
+        if (profileKeySignatureValidator == null) {
+            CHAT_LOGGER.warn(
+                "Ignoring chat session from {} due to missing Services public key",
+                nmsPlayer.gameProfile.name
+            )
+            return
+        }
+
+        val newChatSession = RemoteChatSession.Data(
+            chatSessionMirror.sessionId,
+            ProfilePublicKey.Data(
+                chatSessionMirror.expiresAt,
+                chatSessionMirror.key,
+                chatSessionMirror.keySignature
+            )
+        )
+
+        val chatSession = newChatSession.validate(nmsPlayer.gameProfile, profileKeySignatureValidator)
+
+        val lastSeenMessages = V26_1NmsReflections.getLastSeenMessages(connection)
+        val messageSignatureCache = V26_1NmsReflections.getMessageSignatureCache(connection)
+
+        synchronized(lastSeenMessages) {
+            synchronized(messageSignatureCache) {
+                V26_1NmsReflections.setNextChatIndex(connection, snapshot.nextChatIndex)
+
+                val lastSeenCount = V26_1NmsReflections.getLastSeenCountFromMessageValidator(lastSeenMessages)
+                val trackedMessages = V26_1NmsReflections.getTrackedMessagesFromMessageValidator(lastSeenMessages)
+
+                val lastSeenMessagesMirror = snapshot.lastSeenMessages
+                val lastSeenCountMirror = lastSeenMessagesMirror.lastSeenCount
+                val trackedMessagesMirror = lastSeenMessagesMirror.trackedMessages
+                val lastPendingMessageMirror = lastSeenMessagesMirror.lastPendingMessage
+
+                if (lastSeenCount != lastSeenCountMirror) {
+                    CHAT_LOGGER.warn(
+                        "Chat session from {} has lastSeenCount mismatch: expected={}, actual={}",
+                        nmsPlayer.gameProfile.name, lastSeenCountMirror, lastSeenCount
+                    )
+                }
+
+                trackedMessages.clear()
+                for (entry in trackedMessagesMirror) {
+                    if (entry == null) {
+                        trackedMessages.add(null)
+                    } else {
+                        trackedMessages.add(
+                            LastSeenTrackedEntry(MessageSignature(entry.signature), entry.pending)
+                        )
+                    }
+                }
+
+                val lastPendingMessage = lastPendingMessageMirror?.let { MessageSignature(it) }
+                V26_1NmsReflections.setLastPendingMessageFromMessageValidator(lastSeenMessages, lastPendingMessage)
+
+                val messageSignatureCacheEntries =
+                    V26_1NmsReflections.getEntriesFromMessageSignatureCache(messageSignatureCache)
+                val messageSignatureCacheMirror = snapshot.messageSignatureCache
+
+                if (messageSignatureCacheEntries.size != messageSignatureCacheMirror.size) {
+                    CHAT_LOGGER.warn(
+                        "Chat session from {} has messageSignatureCache size mismatch: expected={}, actual={}",
+                        nmsPlayer.gameProfile.name, messageSignatureCacheMirror.size, messageSignatureCacheEntries.size
+                    )
+                }
+
+                for (i in messageSignatureCacheEntries.indices) {
+                    messageSignatureCacheEntries[i] =
+                        if (i >= messageSignatureCacheMirror.size) null
+                        else messageSignatureCacheMirror[i]?.let { MessageSignature(it) }
+                }
+            }
+        }
+
+        V26_1NmsReflections.setRemoteChatSession(connection, chatSession)
+        V26_1NmsReflections.setHasLoggedExpiry(connection, false)
+
+        val messageChain = SignedMessageChain(nmsPlayer.uuid, chatSession.sessionId)
+        V26_1NmsReflections.setLastTimeStampFromSignedMessageChain(
+            messageChain,
+            snapshot.incomingChatChain.lastTimeStamp
+        )
+        V26_1NmsReflections.setNextLinkFromSignedMessageChain(
+            messageChain,
+            snapshot.incomingChatChain.nextLinkIndex?.let { index ->
+                SignedMessageLink(index, nmsPlayer.uuid, chatSession.sessionId)
+            }
+        )
+
+        val signedMessageDecoder = messageChain.decoder(chatSession.profilePublicKey)
+        V26_1NmsReflections.setSignedMessageDecoder(connection, signedMessageDecoder)
+
+        val chatChain = V26_1NmsReflections.getChatMessageChain(connection)
+        chatChain.append {
+            nmsPlayer.setChatSession(chatSession)
+            MinecraftServer.getServer().playerList.broadcastAll(
+                ClientboundPlayerInfoUpdatePacket(
+                    EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT),
+                    listOf(nmsPlayer)
+                ),
+                nmsPlayer
+            )
+        }
+    }
+
+    private fun SignedMessageChain.Decoder.signedMessageChain(): SignedMessageChain {
+        try {
+            val field = javaClass.getDeclaredField("this$0")
+            field.trySetAccessible()
+            return field.get(this) as SignedMessageChain
+        } catch (e: Throwable) {
+            throw RuntimeException("Failed to access signedMessageChain from decoder $this", e)
+        }
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun resetPlayerChatState(player: Player, chatSession: RemoteChatSessionData) {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+
+        val newChatSessionData = RemoteChatSession.Data(
+            chatSession.sessionId,
+            ProfilePublicKey.Data(
+                chatSession.expiresAt,
+                chatSession.key,
+                chatSession.keySignature
+            )
+        )
+
+        val signatureValidator = MinecraftServer.getServer().services().profileKeySignatureValidator()
+        if (signatureValidator == null) {
+            CHAT_LOGGER.warn("Ignoring chat session from {} due to missing Services public key", player.name)
+            return
+        }
+
+        val newChatSession = newChatSessionData.validate(
+            nmsPlayer.gameProfile,
+            signatureValidator
+        )
+
+        V26_1NmsReflections.resetPlayerChatState(connection, newChatSession)
     }
 
     override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {
@@ -346,5 +655,6 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     companion object {
         private val OFFLINE_INVENTORY_EDIT_LOGGER = ComponentLogger.logger("OfflinePlayer Inventory Edit")
+        private val CHAT_LOGGER = ComponentLogger.logger("SurfPaperNmsPlayerBridge Chat")
     }
 }

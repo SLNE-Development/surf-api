@@ -14,7 +14,6 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.utils.API
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
@@ -35,8 +34,12 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         "com.google.devtools.ksp"
     )
 
-    private val relocations = mutableMapOf<String, String>()
+    private val relocations = mutableListOf<Relocation>()
     private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
+
+    init {
+        "org.spongepowered.configurate" relocatesTo "configurate"
+    }
 
     protected abstract val extensionClass: Class<E>
 
@@ -66,7 +69,15 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     protected infix fun String.relocatesTo(to: String) {
-        relocations[this] = to
+        relocations += Relocation(this, to)
+    }
+
+    protected fun relocatePackage(
+        from: String,
+        to: String,
+        excludes: List<String> = emptyList(),
+    ) {
+        relocations += Relocation(from, to, excludes)
     }
 
     fun addRelocationsForDependency(
@@ -112,8 +123,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     private fun Project.configure() {
         tasks.withType<ShadowJar> {
-            relocations.forEach { (from, to) ->
-                relocate(from, "${Constants.RELOCATION_PREFIX}.$to")
+            relocations.forEach { relocation ->
+                relocate(
+                    relocation.from,
+                    "${Constants.RELOCATION_PREFIX}.${relocation.to}"
+                ) {
+                    relocation.excludes.forEach { exclude(it) }
+                }
             }
         }
 
@@ -262,9 +278,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         if (extension.withApiValidation.get()) {
             configure<KotlinJvmProjectExtension> {
                 @OptIn(ExperimentalAbiValidation::class)
-                configure<AbiValidationExtension> {
-                    enabled.set(true)
-                }
+                abiValidation()
             }
         }
 
@@ -281,4 +295,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     protected open fun Project.afterEvaluated0(extension: E) {
     }
+
+    private data class Relocation(
+        val from: String,
+        val to: String,
+        val excludes: List<String> = emptyList(),
+    )
 }

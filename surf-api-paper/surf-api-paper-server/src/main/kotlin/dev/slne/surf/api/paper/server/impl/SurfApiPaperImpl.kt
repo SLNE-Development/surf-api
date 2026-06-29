@@ -14,8 +14,10 @@ import dev.slne.surf.api.paper.time.SkipOperations
 import dev.slne.surf.api.paper.time.TimeSkipResult
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import net.kyori.adventure.audience.Audience
 import org.bukkit.Bukkit
 import org.bukkit.World
+import org.bukkit.entity.Player
 import java.util.*
 
 @AutoService(SurfApiCore::class)
@@ -45,6 +47,9 @@ class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
     }
 
     override fun getPlayer(playerUuid: UUID) = Bukkit.getPlayer(playerUuid)
+    override fun isPlayer(audience: Audience): Boolean {
+        return audience is Player
+    }
 
     val dataFolder get() = plugin.dataPath
 

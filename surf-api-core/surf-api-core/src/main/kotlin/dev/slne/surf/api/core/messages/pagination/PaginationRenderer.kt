@@ -47,7 +47,7 @@ interface SuspendPaginationRenderer {
         previousPage: PageButton,
         nextPage: PageButton,
         lastPage: PageButton,
-        changePageEvent: suspend CoroutineScope.(Int) -> ClickEvent?,
+        changePageEvent: suspend CoroutineScope.(Int) -> ClickEvent<*>?,
     ): Component = buildText {
         if (page == 1 && pages == 1) {
             append(renderFooterSingle(width))
@@ -91,13 +91,13 @@ interface SuspendPaginationRenderer {
 
     suspend fun CoroutineScope.renderPreviousPageButton(
         button: PageButton,
-        clickEvent: ClickEvent?,
+        clickEvent: ClickEvent<*>?,
         enabled: Boolean,
     ): Component = PaginationRenderer.DEFAULT.renderPreviousPageButton(button, clickEvent, enabled)
 
     suspend fun CoroutineScope.renderNextPageButton(
         button: PageButton,
-        clickEvent: ClickEvent?,
+        clickEvent: ClickEvent<*>?,
         enabled: Boolean,
     ): Component = PaginationRenderer.DEFAULT.renderNextPageButton(button, clickEvent, enabled)
 
@@ -155,7 +155,7 @@ interface PaginationRenderer {
         previousPage: PageButton,
         nextPage: PageButton,
         lastPage: PageButton,
-        changePageEvent: (Int) -> ClickEvent?,
+        changePageEvent: (Int) -> ClickEvent<*>?,
     ): Component = buildText {
         if (page == 1 && pages == 1) {
             append(renderFooterSingle(width))
@@ -180,7 +180,7 @@ interface PaginationRenderer {
 
     fun renderPreviousPageButton(
         button: PageButton,
-        clickEvent: ClickEvent?,
+        clickEvent: ClickEvent<*>?,
         enabled: Boolean,
     ): Component = buildText {
         appendSpace()
@@ -194,7 +194,7 @@ interface PaginationRenderer {
 
     fun renderNextPageButton(
         button: PageButton,
-        clickEvent: ClickEvent?,
+        clickEvent: ClickEvent<*>?,
         enabled: Boolean,
     ): Component = buildText {
         appendSpace()

@@ -5,10 +5,7 @@ import com.google.gson.JsonElement
 import dev.slne.surf.api.shared.api.reflection.*
 import io.netty.channel.ChannelFuture
 import io.papermc.paper.adventure.ChatProcessor
-import net.minecraft.network.chat.ChatType
-import net.minecraft.network.chat.FilterMask
-import net.minecraft.network.chat.LastSeenMessagesValidator
-import net.minecraft.network.chat.MessageSignatureCache
+import net.minecraft.network.chat.*
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.network.ServerConnectionListener
@@ -85,6 +82,12 @@ interface V1_21_11NmsReflections {
         target = ServerStatsCounter::class
     )
     fun getServerStatsCounterGson(): Gson
+
+    @ReflectedMethod("resetPlayerChatState")
+    fun resetPlayerChatState(
+        instance: ServerGamePacketListenerImpl,
+        chatSession: RemoteChatSession
+    )
 
     companion object : V1_21_11NmsReflections by generatedReflectionAccessor()
 }

@@ -5,6 +5,7 @@ import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.Companion.editOfflineInventory
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
+import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.chat.ChatType
@@ -21,7 +22,20 @@ import java.nio.file.Path
 @ApiStatus.NonExtendable
 interface SurfPaperNmsPlayerBridge {
 
+    fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean = true)
+    fun removeAllTrackedPlayers(player: Player, swallowExceptions: Boolean = true)
+
+    fun resyncVehicleState(player: Player, swallowExceptions: Boolean = true): Int
+    fun resyncPlayerState(player: Player)
+
     fun getRemoteChatSessionData(player: Player): RemoteChatSessionData?
+
+    fun createChatSessionSnapshot(player: Player): PlayerChatSessionSnapshot?
+    fun applyChatSessionSnapshot(player: Player, snapshot: PlayerChatSessionSnapshot)
+
+    fun <T> withMessageSignatureCacheLock(player: Player, block: () -> T): T?
+
+    fun resetPlayerChatState(player: Player, chatSession: RemoteChatSessionData)
 
     fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit)
 
