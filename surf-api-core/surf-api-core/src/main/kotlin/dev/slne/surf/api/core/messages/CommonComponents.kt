@@ -11,6 +11,7 @@ import dev.slne.surf.api.core.messages.adventure.appendNewline
 import dev.slne.surf.api.core.messages.adventure.appendText
 import dev.slne.surf.api.core.messages.adventure.clickOpensUrl
 import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.core.util.mutableObjectListOf
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
@@ -26,7 +27,7 @@ import kotlin.time.Duration
  */
 @PublishedApi
 internal inline fun buildText0(block: TextComponent.Builder.() -> Unit): TextComponent {
-    return Component.text().apply(block).build()
+    return Component.text().apply(block).asComponent() as TextComponent // Adventure 4 backwards compatibility
 }
 
 /**
@@ -203,6 +204,32 @@ object CommonComponents {
         }
 
         return builder.build()
+    }
+
+    inline fun renderKickDisconnectMessage(
+        builder: SurfComponentBuilder,
+        messageRenderer: SurfComponentBuilder.() -> Unit,
+        footerRenderer: SurfComponentBuilder.() -> Unit = { },
+    ): TextComponent {
+        with(builder) {
+            append(DISCONNECT_HEADER)
+            appendText("DU WURDEST VOM SERVER GEWORFEN", ERROR)
+            appendNewline(3)
+            messageRenderer()
+            appendNewline(3)
+            footerRenderer()
+        }
+
+        return builder.build()
+    }
+
+    inline fun renderKickDisconnectMessage(
+        builder: SurfComponentBuilder,
+        messageRenderer: SurfComponentBuilder.() -> Unit,
+        issue: Boolean,
+    ) = renderKickDisconnectMessage(builder, messageRenderer) {
+        if (issue) append(ISSUE_FOOTER)
+        else append(RETRY_LATER_FOOTER)
     }
 
     /**
@@ -397,6 +424,24 @@ object CommonComponents {
         return builder.build()
     }
 
+    inline fun renderDisconnectMessage(
+        builder: SurfComponentBuilder,
+        disconnectReason: @NoLowercase String,
+        suggestHelp: SurfComponentBuilder.() -> Unit,
+        footerRenderer: SurfComponentBuilder.() -> Unit = { },
+    ): TextComponent {
+        with(builder) {
+            append(DISCONNECT_HEADER)
+            appendText(disconnectReason.uppercase(), ERROR)
+            appendNewline(3)
+            suggestHelp()
+            appendNewline(3)
+            footerRenderer()
+        }
+
+        return builder.build()
+    }
+
     /**
      * Renders a structured disconnection message with an automatic issue or retry footer.
      *
@@ -463,6 +508,16 @@ object CommonComponents {
         builder: B,
         disconnectReason: @NoLowercase String,
         suggestHelp: B.() -> Unit,
+        issue: Boolean,
+    ) = renderDisconnectMessage(builder, disconnectReason, suggestHelp) {
+        if (issue) append(ISSUE_FOOTER)
+        else append(RETRY_LATER_FOOTER)
+    }
+
+    inline fun renderDisconnectMessage(
+        builder: SurfComponentBuilder,
+        disconnectReason: @NoLowercase String,
+        suggestHelp: SurfComponentBuilder.() -> Unit,
         issue: Boolean,
     ) = renderDisconnectMessage(builder, disconnectReason, suggestHelp) {
         if (issue) append(ISSUE_FOOTER)

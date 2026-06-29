@@ -1,5 +1,6 @@
 package dev.slne.surf.api.core.util
 
+import net.kyori.adventure.internal.properties.AdventureProperties
 import net.kyori.adventure.util.Services
 import java.util.*
 
@@ -12,5 +13,44 @@ import java.util.*
  * @return the service instance of type [T]
  * @throws ServiceConfigurationError if the service of type [T] is not available
  */
-inline fun <reified T> requiredService(): T = Services.serviceWithFallback(T::class.java)
-    .orElseThrow { ServiceConfigurationError("Service ${T::class.java.name} not available") }
+inline fun <reified T : Any> requiredService(): T = ServiceUtil.serviceWithFallback(T::class.java)
+    ?: throw ServiceConfigurationError("Service ${T::class.java.name} not available")
+
+object ServiceUtil {
+    @Suppress("UnstableApiUsage")
+    private val SERVICE_LOAD_FAILURES_ARE_FATAL = AdventureProperties.SERVICE_LOAD_FAILURES_ARE_FATAL.value() == true
+
+    @Deprecated("Binary compatibility", ReplaceWith("serviceWithFallback(loader, type)"), DeprecationLevel.HIDDEN)
+    @PublishedApi
+    internal fun <T : Any> serviceWithFallback(loader: ServiceLoader<T>, type: Class<T>): T? {
+        return serviceWithFallback(type)
+    }
+
+    @PublishedApi
+    internal fun <T : Any> serviceWithFallback(type: Class<T>): T? {
+        val loader = ServiceLoader.load(type, type.classLoader)
+        val iterator = loader.iterator()
+        var firstFallback: T? = null
+
+        while (iterator.hasNext()) {
+            try {
+                val next = iterator.next()
+                if (next is Services.Fallback) {
+                    if (firstFallback == null) {
+                        firstFallback = next
+                    }
+                } else {
+                    return next
+                }
+            } catch (t: Throwable) {
+                if (SERVICE_LOAD_FAILURES_ARE_FATAL) {
+                    throw ServiceConfigurationError("Failed to load service $type", t)
+                } else {
+                    continue
+                }
+            }
+        }
+
+        return firstFallback
+    }
+}

@@ -21,41 +21,38 @@ dependencies {
     api(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsCommon)
     compileOnly(libs.paper.api)
 
-//    paperweight.paperDevBundle(libs.paper.api.get().version)
-
     runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV12111)
     runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV261)
+    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV262)
 
     compileOnly(libs.placeholder.api)
 
-    // -------------------- Paper Libraries -------------------- //
-    paperLibrary(libs.guava)
-    paperLibrary(libs.caffeine)
-    paperLibrary(libs.gson)
-    paperLibrary(libs.commons.lang3)
-    paperLibrary(libs.commons.text)
-    paperLibrary(libs.dazzleconf)
-    paperLibrary(libs.spongepowered.math)
-    paperLibrary(libs.okhttp)
-    paperLibrary(libs.fastutil)
-    paperLibrary(libs.reflection.remapper)
-    paperLibrary(libs.more.persistent.data.types)
-    paperLibrary(libs.flogger)
-    paperLibrary(libs.flogger.slf4j.backend)
-    paperLibrary(libs.commons.math4.core)
-    paperLibrary(libs.commons.math3)
-    paperLibrary(libs.aide.reflection)
+    implementation(libs.guava)
+    implementation(libs.caffeine)
+    implementation(libs.gson)
+    implementation(libs.commons.lang3)
+    implementation(libs.commons.text)
+    implementation(libs.dazzleconf)
+    implementation(libs.spongepowered.math)
+    implementation(libs.okhttp)
+    implementation(libs.fastutil)
+    implementation(libs.reflection.remapper)
+    implementation(libs.more.persistent.data.types)
+    implementation(libs.flogger)
+    implementation(libs.flogger.slf4j.backend)
+    implementation(libs.commons.math4.core)
+    implementation(libs.commons.math3)
+    implementation(libs.aide.reflection)
     api(libs.mccoroutine.folia.api)
     api(libs.mccoroutine.folia.core)
     runtimeOnly(libs.scoreboard.library.implementation)
-    paperLibrary(libs.scoreboard.library.api)
+    implementation(libs.scoreboard.library.api)
 }
-
 
 paper {
     name = "surf-paper-api"
     provides = listOf("SurfPaperAPI")
-    apiVersion = "26.1.1"
+    apiVersion = "26.2"
     description = "Surf API for Paper"
     website = "https://slne.dev"
     authors = listOf("twisti", "SLNE Development Team")
@@ -63,9 +60,7 @@ paper {
 
     // Bootstrap
     bootstrapper = "dev.slne.surf.api.paper.server.PaperBoostrapper"
-    loader = "dev.slne.surf.api.paper.server.PaperLoader"
     hasOpenClassloader = false
-    generateLibrariesJson = true
 
     // Other
     foliaSupported = true

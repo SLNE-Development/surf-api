@@ -1,16 +1,16 @@
 [versions]
 # Paper
-paper-api = "26.1+"
-canvas-api = "26.1+"
+paper-api = "26.2+"
+canvas-api = "26.2+"
 
 # Kolin
-kotlinVersion = "2.3.21"
+kotlinVersion = "2.4.0"
 kotlinxCoroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
 
 # Packet Events
-packetevents = "2.12.1"
-packetevents-plugin = "2.12.1"
+packetevents = "2.13.0"
+packetevents-plugin = "2.13.0"
 
 # Command API
 commandapi = "11.2.0"
@@ -20,10 +20,10 @@ luckperms = "5.4"
 luckpermsplugin-bukkit = "v5.5.17-bukkit" # "luckpermsplugin" is written without a separating "-" between "luckperms" and "plugin", because Gradle interprets the version catalog key as a hierarchical alias and would split it into a nested accessor (libs.luckperms.plugin.bukkit), which conflicts with the existing libs.luckperms alias for the API dependency.
 
 # Scoreboard Library
-scoreboard-library = "2.7.4"
+scoreboard-library = "2.8.0"
 
 # Adventure
-adventure-api = "4.26.1"
+adventure-api = "5.1.1"
 
 # Velocity
 velocity-api = "3.5.0-SNAPSHOT"
@@ -35,6 +35,8 @@ placeholder-api = "2.12.2"
 mccoroutine = "2.22.2"
 
 # Miscellaneous Libraries
+asm = "9.8"
+slf4j = "2.0.1"
 guava = "33.6.0-jre"
 caffeine = "3.2.4"
 caffeine-courotines = "3.0.4"
@@ -60,7 +62,7 @@ auto-service = "1.1.1"
 auto-service-ksp = "1.2.0"
 ktor = "3.4.3"
 glm = "0.9.9.1-15"
-ksp-version = "2.3.7"
+ksp-version = "2.3.9"
 reactor-netty = "1.3.5"
 bytebuddy = "1.18.8"
 
@@ -128,6 +130,8 @@ mccoroutine-velocity-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-ve
 mccoroutine-velocity-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
 
 # Miscellaneous Libraries
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 caffeine-courotines = { module = "com.sksamuel.aedile:aedile-core", version.ref = "caffeine-courotines" }

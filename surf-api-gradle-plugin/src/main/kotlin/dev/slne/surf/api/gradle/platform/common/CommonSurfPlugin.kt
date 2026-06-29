@@ -14,7 +14,6 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.utils.API
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
@@ -279,9 +278,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         if (extension.withApiValidation.get()) {
             configure<KotlinJvmProjectExtension> {
                 @OptIn(ExperimentalAbiValidation::class)
-                configure<AbiValidationExtension> {
-                    enabled.set(true)
-                }
+                abiValidation()
             }
         }
 

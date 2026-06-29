@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
+import ca.spottedleaf.moonrise.common.PlatformHooks
 import ca.spottedleaf.moonrise.common.util.TickThread
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
@@ -12,11 +13,30 @@ import dev.slne.surf.api.paper.util.chunkX
 import dev.slne.surf.api.paper.util.chunkZ
 import io.papermc.paper.math.FinePosition
 import net.kyori.adventure.nbt.CompoundBinaryTag
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import net.minecraft.SharedConstants
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtAccounter
+import net.minecraft.nbt.NbtIo
+import net.minecraft.nbt.NbtUtils
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.commands.SummonCommand
+import net.minecraft.util.ProblemReporter
+import net.minecraft.util.datafix.fixes.References
+import net.minecraft.world.entity.EntitySpawnReason
+import net.minecraft.world.entity.Pose.CODEC
+import net.minecraft.world.level.storage.TagValueInput
+import net.minecraft.world.level.storage.TagValueOutput
 import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.util.*
+import kotlin.jvm.optionals.getOrNull
+import net.minecraft.world.entity.Entity as NmsEntity
+import net.minecraft.world.entity.EntityType as NmsEntityType
 
 @NmsUseWithCaution
 class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
@@ -59,4 +79,126 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
     override fun getById(world: World, id: Int): Entity? {
         return world.toNms().getEntity(id)?.bukkitEntity
     }
+
+    override fun captureVehicleNbt(rootVehicle: Entity): ByteArray {
+        val nmsEntity = rootVehicle.toNms()
+        TickThread.ensureTickThread(nmsEntity, "Cannot capture vehicle NBT asynchronously")
+
+        return ProblemReporter.ScopedCollector(VEHICLE_LOGGER).use { reporter ->
+            val output = TagValueOutput.createWithContext(reporter, nmsEntity.registryAccess())
+            nmsEntity.save(output)
+
+            val additions = output.child("surf-api-addtions")
+            nmsEntity.passengersAndSelf
+                .filter { it.type.canSerialize() }
+                .forEach { entity ->
+                    val tag = additions.child(entity.uuid.toString())
+
+                    tag.store("Pose", CODEC, entity.pose)
+
+                    val living = entity.asLivingEntity()
+                    if (living != null) {
+                        tag.putInt("ArrowCount", living.arrowCount)
+                        tag.putInt("Stingers", living.stingerCount)
+                    }
+                }
+
+            serializeNbtToBytes(output.buildResult())
+        }
+    }
+
+    override fun restoreVehicle(
+        world: World,
+        nbt: ByteArray,
+        x: Double,
+        y: Double,
+        z: Double,
+        yaw: Float,
+        pitch: Float
+    ): Entity? {
+        val level = world.toNms()
+        TickThread.ensureTickThread(level, x, z, "Cannot restore vehicle asynchronously")
+
+        var tag = deserializeNbtFromBytes(nbt)
+        val dataVersion = NbtUtils.getDataVersion(tag, 0)
+        tag = PlatformHooks.get().convertNBT(
+            References.ENTITY,
+            MinecraftServer.getServer().fixerUpper,
+            tag,
+            dataVersion,
+            SharedConstants.getCurrentVersion().dataVersion().version
+        )
+
+        val entity = ProblemReporter.ScopedCollector(VEHICLE_LOGGER).use { reporter ->
+            val input = TagValueInput.create(reporter, level.registryAccess(), tag)
+            val additions = input.child("surf-api-addtions").map { additionsInput ->
+                require(additionsInput is TagValueInput)
+                additionsInput.input.keySet()
+                    .mapNotNull(fun(uuidStr: String): Pair<UUID, (NmsEntity) -> Unit>? {
+                        val uuid = runCatching { UUID.fromString(uuidStr) }.getOrNull() ?: return null
+                        val addition = additionsInput.child(uuidStr).getOrNull() ?: return null
+
+                        val pose = addition.read("Pose", CODEC).getOrNull()
+                        val arrowCount = addition.getInt("ArrowCount").getOrNull()
+                        val stingerCount = addition.getInt("Stingers").getOrNull()
+
+                        return uuid to { entity ->
+                            if (pose != null) entity.pose = pose
+                            if (arrowCount != null) entity.asLivingEntity()?.arrowCount = arrowCount
+                            if (stingerCount != null) entity.asLivingEntity()?.stingerCount = stingerCount
+                        }
+                    })
+                    .toMap()
+            }.getOrNull().orEmpty()
+
+            NmsEntityType.loadEntityRecursive(
+                input,
+                level,
+                EntitySpawnReason.LOAD
+            ) { entity ->
+                additions[entity.uuid]?.invoke(entity)
+                entity
+            }
+        } ?: return null
+
+        entity.snapTo(x, y, z, yaw, pitch)
+
+        if (!level.tryAddFreshEntityWithPassengers(entity)) {
+            return null
+        }
+
+        return entity.bukkitEntity
+    }
+
+    private fun deserializeNbtFromBytes(data: ByteArray): CompoundTag {
+        val compound: CompoundTag
+        try {
+            compound = NbtIo.readCompressed(ByteArrayInputStream(data), NbtAccounter.unlimitedHeap())
+        } catch (ex: IOException) {
+            throw RuntimeException(ex)
+        }
+
+        return compound
+    }
+
+    private fun serializeNbtToBytes(compound: CompoundTag): ByteArray {
+        val baos = ByteArrayOutputStream()
+        try {
+            NbtIo.writeCompressed(compound, baos)
+        } catch (ex: IOException) {
+            throw RuntimeException(ex)
+        }
+
+        return baos.toByteArray()
+    }
+
+    companion object {
+        private val VEHICLE_LOGGER = ComponentLogger.logger("SurfPaperNmsEntityBridge Vehicle")
+    }
+
+    private data class VehicleTreeNbt(
+        val tag: CompoundTag,
+        val rootUuid: UUID,
+        val entityUuids: Set<UUID>,
+    )
 }

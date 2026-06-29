@@ -7,14 +7,13 @@ plugins {
 }
 
 kotlin {
-    abiValidation {
-        enabled = true
-    }
+    abiValidation()
 }
 
 dependencies {
     compileOnlyApi(libs.adventure.api)
     compileOnlyApi(libs.adventure.text.logger.slf4j)
+    compileOnlyApi(libs.slf4j)
     compileOnlyApi(libs.adventure.text.minimessage)
     compileOnlyApi(libs.adventure.serializer.gson)
     compileOnlyApi(libs.adventure.serializer.legacy)

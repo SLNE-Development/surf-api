@@ -7,8 +7,8 @@ plugins {
 }
 
 nmsGenerator {
-    referenceVersion = NmsVersion.V1_21_11
-    targetVersion    = NmsVersion.V26_1
+    referenceVersion = NmsVersion.V26_1
+    targetVersion = NmsVersion.V26_2
 }
 
 

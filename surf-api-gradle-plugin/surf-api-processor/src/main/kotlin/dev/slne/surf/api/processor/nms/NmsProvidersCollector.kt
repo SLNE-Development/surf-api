@@ -45,7 +45,7 @@ class NmsProvidersCollector(environment: SymbolProcessorEnvironment) : SymbolPro
             return NmsProviderMeta(version, nmsProviderClass.toBinaryName())
         }).toList()
 
-        val module = resolver.getModuleName().asString()
+        val module = resolver.getModuleName().asString().split(":").last()
         nmsProviders.computeIfAbsent(module) { mutableListOf() }.addAll(metas)
 
         return emptyList()
