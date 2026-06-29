@@ -9,8 +9,8 @@ kotlinxCoroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
 
 # Packet Events
-packetevents = "2.12.2"
-packetevents-plugin = "2.12.2"
+packetevents = "2.13.0"
+packetevents-plugin = "2.13.0"
 
 # Command API
 commandapi = "11.2.0"
