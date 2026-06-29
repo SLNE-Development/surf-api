@@ -307,7 +307,7 @@ fun CoroutineScope.runUntil(
 fun CoroutineScope.runUntil(
     delay: Duration,
     initialDelay: Duration = Duration.ZERO,
-    catchExceptions: Boolean,
+    catchExceptions: Boolean = true,
     predicate: suspend () -> Boolean,
     taskName: String? = null,
     block: suspend CoroutineScope.() -> Unit,
