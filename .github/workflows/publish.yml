@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_dispatch' || startsWith(github.ref, 'refs/heads/version/')
     uses: SLNE-Development/surf-workflows/.github/workflows/build-publish-release-gradle.yml@master
     with:
       modules: "surf-api-paper-server-*-all.jar;surf-api-velocity-server-*-all.jar;surf-api-standalone-server-*-all.jar"
