@@ -22,11 +22,11 @@ open class CommandExceptionBuilder(
     private val cursor: Int
 ) {
     /**
-     * Builds the command exception message with the default prefix ([Colors.PREFIX]).
+     * Builds the command exception message with the default prefix ([Colors.ERROR_PREFIX]).
      *
      * @return The built message
      */
-    open fun build(): Component = build(Colors.PREFIX)
+    open fun build(): Component = build(Colors.ERROR_PREFIX)
 
     /**
      * Builds the command exception message with the given prefix.
