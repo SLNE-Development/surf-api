@@ -23,7 +23,7 @@ luckpermsplugin-bukkit = "v5.5.17-bukkit" # "luckpermsplugin" is written without
 scoreboard-library = "2.8.0"
 
 # Adventure
-adventure-api = "5.1.1"
+adventure-api = "5.2.0"
 
 # Velocity
 velocity-api = "3.5.0-SNAPSHOT"
