@@ -774,6 +774,59 @@ public final class dev/slne/surf/api/paper/event/common/PlayerAfkStateChangeEven
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/slne/surf/api/paper/event/common/connection/PlayerJoinMessageEvent : dev/slne/surf/api/core/event/SurfSyncEvent, dev/slne/surf/api/core/event/SurfCancellableEvent {
+	public fun <init> (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;)V
+	public fun cancel ()V
+	public final fun component1 ()Lorg/bukkit/entity/Player;
+	public final fun component2 ()Lnet/kyori/adventure/text/Component;
+	public final fun copy (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/event/common/connection/PlayerJoinMessageEvent;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/event/common/connection/PlayerJoinMessageEvent;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/event/common/connection/PlayerJoinMessageEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Lnet/kyori/adventure/text/Component;
+	public final fun getPlayer ()Lorg/bukkit/entity/Player;
+	public fun hashCode ()I
+	public fun isCancelled ()Z
+	public fun setCancelled (Z)V
+	public final fun setMessage (Lnet/kyori/adventure/text/Component;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/event/common/connection/PlayerQuitMessageEvent : dev/slne/surf/api/core/event/SurfSyncEvent, dev/slne/surf/api/core/event/SurfCancellableEvent {
+	public fun <init> (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;)V
+	public fun cancel ()V
+	public final fun component1 ()Lorg/bukkit/entity/Player;
+	public final fun component2 ()Lnet/kyori/adventure/text/Component;
+	public final fun copy (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/event/common/connection/PlayerQuitMessageEvent;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/event/common/connection/PlayerQuitMessageEvent;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/event/common/connection/PlayerQuitMessageEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Lnet/kyori/adventure/text/Component;
+	public final fun getPlayer ()Lorg/bukkit/entity/Player;
+	public fun hashCode ()I
+	public fun isCancelled ()Z
+	public fun setCancelled (Z)V
+	public final fun setMessage (Lnet/kyori/adventure/text/Component;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/event/common/death/PlayerDeathMessageEvent : dev/slne/surf/api/core/event/SurfSyncEvent, dev/slne/surf/api/core/event/SurfCancellableEvent {
+	public fun <init> (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;Lorg/bukkit/event/entity/EntityDamageEvent$DamageCause;)V
+	public fun cancel ()V
+	public final fun component1 ()Lorg/bukkit/entity/Player;
+	public final fun component2 ()Lnet/kyori/adventure/text/Component;
+	public final fun component3 ()Lorg/bukkit/event/entity/EntityDamageEvent$DamageCause;
+	public final fun copy (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;Lorg/bukkit/event/entity/EntityDamageEvent$DamageCause;)Ldev/slne/surf/api/paper/event/common/death/PlayerDeathMessageEvent;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/event/common/death/PlayerDeathMessageEvent;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;Lorg/bukkit/event/entity/EntityDamageEvent$DamageCause;ILjava/lang/Object;)Ldev/slne/surf/api/paper/event/common/death/PlayerDeathMessageEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLastDamageCause ()Lorg/bukkit/event/entity/EntityDamageEvent$DamageCause;
+	public final fun getMessage ()Lnet/kyori/adventure/text/Component;
+	public final fun getPlayer ()Lorg/bukkit/entity/Player;
+	public fun hashCode ()I
+	public fun isCancelled ()Z
+	public fun setCancelled (Z)V
+	public final fun setMessage (Lnet/kyori/adventure/text/Component;)V
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/slne/surf/api/paper/extensions/Org_bukkit_ServerExtensionsKt {
 	public static final fun getServer ()Lorg/bukkit/Server;
 }
