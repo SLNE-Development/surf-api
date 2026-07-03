@@ -10,6 +10,7 @@ import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
 import dev.slne.surf.api.core.server.CoreInstance
+import dev.slne.surf.api.velocity.api.metrics.Metrics
 import dev.slne.surf.api.velocity.server.generated.BuildConfig
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
@@ -30,7 +31,10 @@ class VelocityMain @Inject constructor(
     val pluginContainer: PluginContainer,
     @param:DataDirectory val dataDirectory: Path,
     val executorService: ExecutorService,
+    private val metricsFactory: Metrics.Factory
 ) : CoreInstance() {
+
+    lateinit var bstats: Metrics
 
     init {
         instance = this
@@ -45,11 +49,16 @@ class VelocityMain @Inject constructor(
 
     @Subscribe
     suspend fun onProxyInitialization(unused: ProxyInitializeEvent) {
+        bstats = metricsFactory.make(this, 29466)
         onEnable()
     }
 
     @Subscribe
     suspend fun onProxyShutdown(unused: ProxyShutdownEvent) {
+        if (::bstats.isInitialized) {
+            bstats.shutdown()
+        }
+
         onDisable()
     }
 
