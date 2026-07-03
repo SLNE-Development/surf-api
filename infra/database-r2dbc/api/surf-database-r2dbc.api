@@ -1,7 +1,12 @@
 public final class dev/slne/surf/database/DatabaseApi {
 	public static final field Companion Ldev/slne/surf/database/DatabaseApi$Companion;
+	public field schema Lorg/jetbrains/exposed/v1/core/Schema;
+	public final fun createSchema (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getDatabase ()Lorg/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;
+	public final fun getSchema ()Lorg/jetbrains/exposed/v1/core/Schema;
+	public final fun setSchema (Lorg/jetbrains/exposed/v1/core/Schema;)V
 	public final fun shutdown ()V
+	public final fun useSchema (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/database/DatabaseApi$Companion {
@@ -235,11 +240,16 @@ public final class dev/slne/surf/database/logger/ComponentSqlLogger : org/jetbra
 }
 
 public class dev/slne/surf/database/table/AuditableLongIdTable : org/jetbrains/exposed/v1/core/dao/id/ULongIdTable {
+	public static final field Companion Ldev/slne/surf/database/table/AuditableLongIdTable$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createStatement ()Ljava/util/List;
 	public final fun getCreatedAt ()Lorg/jetbrains/exposed/v1/core/Column;
 	public final fun getUpdatedAt ()Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public final class dev/slne/surf/database/table/AuditableLongIdTable$Companion {
 }
 
 public final class dev/slne/surf/database/utils/ExposedR2dbcExceptionUtilsKt {
