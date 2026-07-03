@@ -11,15 +11,12 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.IsolationLevel
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
-import org.jetbrains.exposed.v1.core.Schema
 import org.jetbrains.exposed.v1.core.vendors.DatabaseDialect
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
-import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
-import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.mariadb.r2dbc.MariadbConnectionConfiguration
 import org.mariadb.r2dbc.MariadbConnectionFactory
 import org.slf4j.event.Level
@@ -34,34 +31,6 @@ import java.time.Duration.ofMillis
  * on-disk [DatabaseConfig]. A lower-level overload exists mainly for tests.
  */
 class DatabaseApi internal constructor(val database: R2dbcDatabase) {
-    lateinit var schema: Schema
-
-    /**
-     * Creates a new schema in the database and sets it as the current schema for this connection.
-     *
-     * This is a no-op if the schema has already been created for the current transaction.
-     */
-    suspend fun createSchema(name: String) {
-        schema = Schema(name)
-
-        suspendTransaction {
-            SchemaUtils.createSchema(schema)
-        }
-    }
-
-    /**
-     * Sets the current schema for this database connection.
-     *
-     * This is a no-op if the schema has already been set for the current transaction.
-     */
-    suspend fun useSchema() {
-        if (!::schema.isInitialized) {
-            error("Schema has not been created yet. Call createSchema(name) first.")
-        }
-
-        SchemaUtils.setSchema(schema)
-    }
-
     companion object {
         /**
          * Creates a [DatabaseApi] using the [DatabaseConfig] located in/relative to [pluginPath].
@@ -111,6 +80,7 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
                         .username(config.credentials.username)
                         .password(config.credentials.password)
                         .database(config.credentials.database)
+                        .schema(config.credentials.schema)
                         .loopResources(
                             LoopResources.create(
                                 "postgresql-r2dbc-event-loop-$poolName",

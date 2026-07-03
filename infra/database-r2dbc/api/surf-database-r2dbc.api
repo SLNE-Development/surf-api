@@ -1,12 +1,7 @@
 public final class dev/slne/surf/database/DatabaseApi {
 	public static final field Companion Ldev/slne/surf/database/DatabaseApi$Companion;
-	public field schema Lorg/jetbrains/exposed/v1/core/Schema;
-	public final fun createSchema (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getDatabase ()Lorg/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;
-	public final fun getSchema ()Lorg/jetbrains/exposed/v1/core/Schema;
-	public final fun setSchema (Lorg/jetbrains/exposed/v1/core/Schema;)V
 	public final fun shutdown ()V
-	public final fun useSchema (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/database/DatabaseApi$Companion {
@@ -128,22 +123,24 @@ public final class dev/slne/surf/database/columns/time/ZonedDateTimeColumnTypeKt
 
 public final class dev/slne/surf/database/config/ConnectionDetails {
 	public fun <init> ()V
-	public fun <init> (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/slne/surf/database/config/DatabaseType;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()I
-	public final fun component4 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()I
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Ljava/lang/String;
-	public final fun copy (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/database/config/ConnectionDetails;
-	public static synthetic fun copy$default (Ldev/slne/surf/database/config/ConnectionDetails;Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/database/config/ConnectionDetails;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/database/config/ConnectionDetails;
+	public static synthetic fun copy$default (Ldev/slne/surf/database/config/ConnectionDetails;Ldev/slne/surf/database/config/DatabaseType;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/database/config/ConnectionDetails;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDatabase ()Ljava/lang/String;
 	public final fun getDatabaseType ()Ldev/slne/surf/database/config/DatabaseType;
 	public final fun getHost ()Ljava/lang/String;
 	public final fun getPassword ()Ljava/lang/String;
 	public final fun getPort ()I
+	public final fun getSchema ()Ljava/lang/String;
 	public final fun getUsername ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;

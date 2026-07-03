@@ -1,10 +1,13 @@
 package dev.slne.surf.database.config
 
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
+import org.spongepowered.configurate.objectmapping.meta.Comment
 
 @ConfigSerializable
 data class ConnectionDetails(
     val databaseType: DatabaseType = DatabaseType.MARIADB,
+    @Comment("The schema to use for the database connection. Only relevant for PostgreSQL.")
+    val schema: String = "public",
     val host: String = "localhost",
     val port: Int = 3306,
     val database: String = "database",
