@@ -9,9 +9,9 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
 
 open class AuditableLongIdTable(name: String = "") : ULongIdTable(name) {
     val createdAt = offsetDateTime("created_at")
-        .defaultExpression(CurrentOffsetDateTime())
+        .defaultExpression(CurrentOffsetDateTime.WithoutUpdate)
     val updatedAt = offsetDateTime("updated_at")
-        .defaultExpression(CurrentOffsetDateTime(true))
+        .defaultExpression(CurrentOffsetDateTime.WithUpdate)
 
     /**
      * Appends the PostgreSQL trigger that keeps [updatedAt] in sync on every `UPDATE`.

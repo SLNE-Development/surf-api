@@ -24,4 +24,10 @@ fun Table.offsetDateTime(name: String): Column<OffsetDateTime> =
     registerColumn(name, OffsetDateTimeColumnType())
 
 class CurrentOffsetDateTime(includeUpdate: Boolean = false) :
-    CurrentTimestampBase<OffsetDateTime>(OffsetDateTimeColumnType.INSTANCE, includeUpdate)
+    CurrentTimestampBase<OffsetDateTime>(OffsetDateTimeColumnType.INSTANCE, includeUpdate) {
+
+    companion object {
+        val WithUpdate = CurrentOffsetDateTime(true)
+        val WithoutUpdate = CurrentOffsetDateTime(false)
+    }
+}
