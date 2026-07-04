@@ -27,7 +27,9 @@ import net.minecraft.core.NonNullList
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtIo
 import net.minecraft.network.chat.*
+import net.minecraft.network.protocol.game.ClientboundGameEventPacket
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.players.NameAndId
@@ -135,8 +137,25 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     @Suppress("USELESS_ELVIS")
     override fun resyncPlayerState(player: Player) {
         val nmsPlayer = player.toNms()
-        nmsPlayer.connection ?: return
+        val connection = nmsPlayer.connection ?: return
+        val gameMode = nmsPlayer.gameMode.gameModeForPlayer
+
+        connection.send(
+            ClientboundPlayerInfoUpdatePacket(
+                ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
+                nmsPlayer
+            )
+        )
+
+        connection.send(
+            ClientboundGameEventPacket(
+                ClientboundGameEventPacket.CHANGE_GAME_MODE,
+                gameMode.id.toFloat()
+            )
+        )
+
         nmsPlayer.onUpdateAbilities()
+        nmsPlayer.refreshEntityData(nmsPlayer)
     }
 
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {
