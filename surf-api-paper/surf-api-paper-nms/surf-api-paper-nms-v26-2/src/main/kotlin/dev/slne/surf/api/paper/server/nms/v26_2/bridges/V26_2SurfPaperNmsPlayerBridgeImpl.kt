@@ -105,7 +105,6 @@ class V26_2SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         }
 
         val chain = ObjectLinkedOpenHashSet(root.passengersAndSelf.iterator())
-        chain.addFirst(root)
 
         var resynced = 0
         for (entity in chain) {
