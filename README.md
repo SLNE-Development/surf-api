@@ -6,9 +6,9 @@ Velocity, and Standalone platforms.
 
 [![Latest Release](https://img.shields.io/github/v/release/SLNE-Development/surf-api?label=release)](https://github.com/SLNE-Development/surf-api/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.3.20-7F52FF?logo=kotlin)](https://kotlinlang.org/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin)](https://kotlinlang.org/)
 [![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)](https://openjdk.org/)
-[![Docs](https://img.shields.io/badge/docs-slne.dev-informational)](https://docs.slne.dev/surf-api)
+[![Docs](https://img.shields.io/badge/docs-slne.dev-informational?logo=readthedocs)](https://docs.slne.dev/surf-api)
 
 ---
 
