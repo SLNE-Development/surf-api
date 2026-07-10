@@ -32,7 +32,7 @@ velocity-api = "3.5.0-SNAPSHOT"
 placeholder-api = "2.12.2"
 
 # McCoroutine
-mccoroutine = "2.22.2"
+mccoroutine = "2.23.0"
 
 # Miscellaneous Libraries
 asm = "9.8"
