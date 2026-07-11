@@ -1,0 +1,32 @@
+// ObjectList Extensions
+inline fun <T> mutableObjectListOf(vararg elements: T) = ObjectArrayList<T>(elements)
+inline fun <T> mutableObjectListOf() = ObjectArrayList<T>()
+inline fun <T> mutableObjectListOf(capacity: Int) = ObjectArrayList<T>(capacity)
+inline fun <T> mutableObjectListOf(iterable: Iterable<T>) = when (iterable) {
+    is Collection -> ObjectArrayList(iterable)
+    else -> ObjectArrayList<T>(iterable.iterator())
+}
+
+inline fun <T> mutableObjectListOfNotNull(vararg elements: T?) =
+    elements.filterNotNullTo(ObjectArrayList())
+inline fun <T> mutableObjectListOfNotNull(iterable: Iterable<T?>) =
+    iterable.filterNotNullTo(ObjectArrayList())
+inline fun <T> objectListOf(vararg elements: T): @Unmodifiable ObjectList<T> = ObjectList.of(*elements)
+inline fun <T> objectListOf() = emptyObjectList<T>()
+inline fun <T> objectListOfNotNull(element: T?): @Unmodifiable ObjectList<T> =
+    if (element != null) ObjectList.of(element) else emptyObjectList()
+inline fun <T> objectListOfNotNull(vararg elements: T?): @Unmodifiable ObjectList<T> =
+    elements.filterNotNullTo(ObjectArrayList()).freeze()
+inline fun <T> objectListOfNotNull(iterable: Iterable<T?>): @Unmodifiable ObjectList<T> =
+    iterable.filterNotNullTo(ObjectArrayList()).freeze()
+inline fun <T> emptyObjectList(): @Unmodifiable ObjectList<T> = ObjectList.of()
+inline fun <T> ObjectList<T>.synchronize(): ObjectList<T> = ObjectLists.synchronize(this)
+inline fun <T> ObjectList<T>.freeze(): @UnmodifiableView ObjectList<T> = ObjectLists.unmodifiable(this)
+inline fun <T> Sequence<T>.toMutableObjectList() = ObjectArrayList<T>(iterator())
+inline fun <T> Sequence<T>.toObjectList() = toMutableObjectList().freeze()
+inline fun <T> Iterable<T>.toObjectList() =
+    this as? ObjectList<T> ?: ObjectArrayList<T>(iterator()).freeze()
+inline fun <T> Iterable<T>.toMutableObjectList() =
+    this as? ObjectArrayList<T> ?: ObjectArrayList<T>(iterator())
+inline fun <T> Array<out T>.toObjectList(): @Unmodifiable ObjectList<T> = ObjectList.of(*this)
+inline fun <T> Array<out T>.toMutableObjectList() = ObjectArrayList(this)

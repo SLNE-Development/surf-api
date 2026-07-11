@@ -26,7 +26,9 @@ import com.destroystokyo.paper.event.block.BlockDestroyEvent
 import dev.slne.surf.api.paper.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.api.paper.pdc.block.pdc
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import org.bukkit.block.Block
+import org.bukkit.block.BlockState
 import org.bukkit.block.PistonMoveReaction
 import org.bukkit.block.data.type.Fire
 import org.bukkit.event.EventHandler
@@ -51,6 +53,12 @@ object BlockDataListener : Listener {
     private fun removeFromBlockList(blocks: List<Block>) {
         for (block in blocks) {
             removeFromBlock(block)
+        }
+    }
+
+    private fun removeFromBlockStates(blocks: List<BlockState>) {
+        for (state in blocks) {
+            removeFromBlock(state.block)
         }
     }
 
@@ -154,7 +162,7 @@ object BlockDataListener : Listener {
     )
     fun onStructureGrow(event: StructureGrowEvent) {
         if (event.isCancelled) return
-        removeFromBlockList(event.blocks.map { it.block })
+        removeFromBlockStates(event.blocks)
     }
 
     @EventHandler(
@@ -163,7 +171,7 @@ object BlockDataListener : Listener {
     )
     fun onBlockFertilize(event: BlockFertilizeEvent) {
         if (event.isCancelled) return
-        removeFromBlockList(event.blocks.map { it.block })
+        removeFromBlockStates(event.blocks)
     }
 
     private fun handlePiston(
@@ -187,7 +195,9 @@ object BlockDataListener : Listener {
             map[destination] = pdc
         }
 
-        for ((block, pdc) in map.object2ObjectEntrySet().toList().reversed()) {
+        val movements = ObjectArrayList(map.object2ObjectEntrySet())
+        for (index in movements.lastIndex downTo 0) {
+            val (block, pdc) = movements[index]
             block.pdc().clear()
             pdc.copyTo(block)
             pdc.clear()

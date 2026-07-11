@@ -14,12 +14,11 @@ import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.paper.SurfApiPaper
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.Position
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import org.bukkit.*
 import org.bukkit.block.Block
 import org.bukkit.entity.Player
@@ -27,7 +26,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.spongepowered.math.vector.Vector3d
 import org.spongepowered.math.vector.Vector3i
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
 /**
@@ -271,28 +270,39 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
         chunkKeys.add(key)
     }
 
-    val snapshots = ConcurrentHashMap<Long, ChunkSnapshot>(chunkKeys.size)
+    val keys = chunkKeys.toLongArray()
+    val snapshotsByIndex = arrayOfNulls<ChunkSnapshot>(keys.size)
+    val nextIndex = AtomicInteger()
+    val plugin = JavaPlugin.getProvidingPlugin(SurfApiPaper::class.java)
     coroutineScope {
-        val semaphore =
-            Semaphore(16) // Limit concurrent chunk loads to prevent overwhelming the server
-        val iterator = chunkKeys.iterator()
-        while (iterator.hasNext()) {
-            val key = iterator.nextLong()
+        repeat(minOf(16, keys.size)) {
             launch {
-                semaphore.withPermit {
+                while (true) {
+                    val index = nextIndex.getAndIncrement()
+                    if (index >= keys.size) break
+                    val key = keys[index]
                     val chunk = world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
                         .await()
 
                     withContext(
-                        JavaPlugin.getProvidingPlugin(SurfApiPaper::class.java)
-                            .regionDispatcher(world, chunk.x, chunk.z)
+                        plugin.regionDispatcher(world, chunk.x, chunk.z)
                     ) {
-                        val snapshot = chunk
-                            .getChunkSnapshot(true, false, false, false)
-                        snapshots[key] = snapshot
+                        snapshotsByIndex[index] = chunk.getChunkSnapshot(
+                            /* includeMaxBlockY = */ true,
+                            /* includeBiome = */ false,
+                            /* includeBiomeTempRain = */ false,
+                            /* includeLightData = */ false
+                        )
                     }
                 }
             }
+        }
+    }
+
+    val snapshots = Long2ObjectOpenHashMap<ChunkSnapshot>(keys.size)
+    for (index in keys.indices) {
+        snapshots[keys[index]] = requireNotNull(snapshotsByIndex[index]) {
+            "ChunkSnapshot for key ${keys[index]} not found"
         }
     }
 
@@ -362,8 +372,8 @@ suspend fun <R> World.doInChunkAsync(
     getChunkAtAsync(chunkX, chunkZ, Consumer { chunk ->
         try {
             deferred.complete(action(chunk))
-        } catch (e: Exception) {
-            deferred.completeExceptionally(e)
+        } catch (throwable: Throwable) {
+            deferred.completeExceptionally(throwable)
         }
     })
     return deferred.await()

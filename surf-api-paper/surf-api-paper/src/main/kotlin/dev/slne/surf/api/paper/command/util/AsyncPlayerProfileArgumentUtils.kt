@@ -13,7 +13,7 @@ suspend fun CommandArguments.awaitAsyncPlayerProfileOptional(
 
     try {
         val profiles = future.await()
-        return profiles.first()
+        return profiles.firstOrNull()
     } catch (e: RuntimeException) {
         throw e.cause ?: e
     }

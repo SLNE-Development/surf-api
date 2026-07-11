@@ -11,6 +11,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -131,7 +132,9 @@ object PlayerLookupService {
      * @param username Minecraft username.
      * @return UUID associated with the username or null if not found.
      */
-    suspend fun getUuid(username: String): UUID? = when (val result = nameToUuid.get(username)) {
+    suspend fun getUuid(username: String): UUID? = when (
+        val result = nameToUuid.get(username.lowercase(Locale.ROOT))
+    ) {
         is LookupResult.Found -> result.value
         is LookupResult.NotFound, is LookupResult.RateLimited, is LookupResult.Failed -> null
     }
@@ -175,6 +178,8 @@ object PlayerLookupService {
             }
 
             return handleLookupError(mineToolsStatus)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             log.atWarning()
                 .withCause(e)
@@ -203,6 +208,8 @@ object PlayerLookupService {
             }
 
             return handleLookupError(mineToolsStatus)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             log.atWarning()
                 .withCause(e)
@@ -227,14 +234,18 @@ object PlayerLookupService {
         suspend fun getUsername(uuid: UUID): Pair<HttpStatusCode, String?> {
             val response = client.get("$BASE_URL/user/profile/${UUIDSerializer.fromUUID(uuid)}")
             val status = response.status
-            val name = runCatching { response.body<MojangResponse>().name }.getOrNull()
+            val name = if (status.isSuccess()) {
+                runCatching { response.body<MojangResponse>().name }.getOrNull()
+            } else null
             return status to name
         }
 
         suspend fun getUuid(username: String): Pair<HttpStatusCode, UUID?> {
             val response = client.get("$BASE_URL/users/profiles/minecraft/$username")
             val status = response.status
-            val uuid = runCatching { response.body<MojangResponse>().id }.getOrNull()
+            val uuid = if (status.isSuccess()) {
+                runCatching { response.body<MojangResponse>().id }.getOrNull()
+            } else null
             return status to uuid
         }
     }
@@ -246,14 +257,18 @@ object PlayerLookupService {
             val response =
                 client.get("$BASE_URL/minecraft/profile/lookup/${UUIDSerializer.fromUUID(uuid)}")
             val status = response.status
-            val name = runCatching { response.body<MojangResponse>().name }.getOrNull()
+            val name = if (status.isSuccess()) {
+                runCatching { response.body<MojangResponse>().name }.getOrNull()
+            } else null
             return status to name
         }
 
         suspend fun getUuid(username: String): Pair<HttpStatusCode, UUID?> {
             val response = client.get("$BASE_URL/minecraft/profile/lookup/name/$username")
             val status = response.status
-            val uuid = runCatching { response.body<MojangResponse>().id }.getOrNull()
+            val uuid = if (status.isSuccess()) {
+                runCatching { response.body<MojangResponse>().id }.getOrNull()
+            } else null
             return status to uuid
         }
     }
@@ -264,14 +279,18 @@ object PlayerLookupService {
         suspend fun getUsername(uuid: UUID): Pair<HttpStatusCode, String?> {
             val response = client.get("$BASE_URL/uuid/${UUIDSerializer.fromUUID(uuid)}")
             val status = response.status
-            val name = runCatching { response.body<MinetoolsResponse>().name }.getOrNull()
+            val name = if (status.isSuccess()) {
+                runCatching { response.body<MinetoolsResponse>().name }.getOrNull()
+            } else null
             return status to name
         }
 
         suspend fun getUuid(username: String): Pair<HttpStatusCode, UUID?> {
             val response = client.get("$BASE_URL/uuid/$username")
             val status = response.status
-            val uuid = runCatching { response.body<MinetoolsResponse>().id }.getOrNull()
+            val uuid = if (status.isSuccess()) {
+                runCatching { response.body<MinetoolsResponse>().id }.getOrNull()
+            } else null
             return status to uuid
         }
     }

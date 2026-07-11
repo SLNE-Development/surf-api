@@ -67,11 +67,17 @@ class AdvancementGenerator(
         .joinToString("") { it.replaceFirstChar { c -> c.uppercase() } }
 
     private fun String.segment(): String = lowercase()
-        .replace(Regex("[^a-z0-9]+"), "_")
+        .replace(NON_SEGMENT_CHARACTERS, "_")
         .trim('_')
 
-    private fun String.upperSnake(): String = replace(Regex("([a-z])([A-Z])"), "$1_$2")
-        .replace(Regex("[^A-Za-z0-9]+"), "_")
+    private fun String.upperSnake(): String = replace(CAMEL_CASE_BOUNDARY, "$1_$2")
+        .replace(NON_IDENTIFIER_CHARACTERS, "_")
         .trim('_')
         .uppercase()
+
+    private companion object {
+        val NON_SEGMENT_CHARACTERS = Regex("[^a-z0-9]+")
+        val CAMEL_CASE_BOUNDARY = Regex("([a-z])([A-Z])")
+        val NON_IDENTIFIER_CHARACTERS = Regex("[^A-Za-z0-9]+")
+    }
 }

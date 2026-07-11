@@ -52,8 +52,6 @@ object AdventureNBT {
                 }
                 tag
             }
-
-            else -> throw IllegalArgumentException("Unsupported tag type: ${adventure::class}")
         }
 
         accounter.popDepth()

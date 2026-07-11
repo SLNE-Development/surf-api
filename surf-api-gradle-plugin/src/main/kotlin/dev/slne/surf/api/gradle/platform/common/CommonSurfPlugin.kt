@@ -135,18 +135,19 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         tasks.withType<ShadowJar>().configureEach {
             val depsProvider = project.provider {
-                val deps = project.configurations
-                    .asSequence()
+                val artifactNames = mutableSetOf<String>()
+                val projectPaths = mutableSetOf<String>()
+
+                project.configurations.asSequence()
                     .filter { it.isCanBeResolved }
-                    .flatMap { cfg -> cfg.incoming.resolutionResult.allDependencies.asSequence() }
-                    .toList()
-
-                val artifactNames = deps.map { it.requested.displayName }.toSet()
-
-                val projectPaths = deps.mapNotNull { dep ->
-                    (dep as? ResolvedDependencyResult)?.selected?.id
-                        ?.let { id -> if (id is ProjectComponentIdentifier) id.projectPath else null }
-                }.toSet()
+                    .flatMap { it.incoming.resolutionResult.allDependencies.asSequence() }
+                    .forEach { dependency ->
+                        artifactNames += dependency.requested.displayName
+                        val id = (dependency as? ResolvedDependencyResult)?.selected?.id
+                        if (id is ProjectComponentIdentifier) {
+                            projectPaths += id.projectPath
+                        }
+                    }
 
                 Pair(artifactNames, projectPaths)
             }
@@ -211,7 +212,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
-            freeCompilerArgs.addAll(listOf("-Xjsr305=strict", "-Xcontext-parameters"))
+            freeCompilerArgs.add("-Xjsr305=strict")
         }
     }
 

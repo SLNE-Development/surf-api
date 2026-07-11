@@ -162,7 +162,8 @@ abstract class AbstractSurfView(
      *
      * This function runs in the scope of a [ViewContainerModificationContext].
      */
-    context(_: ViewContainerModificationContext)
+    context(modificationContext: ViewContainerModificationContext)
+    @Suppress("UNUSED_PARAMETER")
     protected open fun containerDefaults() {
     }
 

@@ -18,4 +18,8 @@ data class CursorState(
     val history: List<String?> = emptyList(),
     val limit: Int = 10,
     val search: String? = null
-) : DialogState
+) : DialogState {
+    init {
+        require(limit > 0) { "limit must be > 0, but was $limit" }
+    }
+}

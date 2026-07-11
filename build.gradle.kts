@@ -32,8 +32,9 @@ subprojects {
     afterEvaluate {
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
-                optIn.add("dev.slne.surf.api.shared.api.util.InternalSurfApi")
-                freeCompilerArgs.add("-Xcontext-parameters")
+                if (project.path != ":surf-api-gradle-plugin") {
+                    optIn.add("dev.slne.surf.api.shared.api.util.InternalSurfApi")
+                }
             }
         }
     }

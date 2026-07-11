@@ -21,8 +21,11 @@ sealed class NmsTransformation {
         val oldFqn: String,
         val newFqn: String,
     ) : NmsTransformation() {
-        val oldSimpleName: String get() = oldFqn.substringAfterLast('.')
-        val newSimpleName: String get() = newFqn.substringAfterLast('.')
+        val oldSimpleName: String = oldFqn.substringAfterLast('.')
+        val newSimpleName: String = newFqn.substringAfterLast('.')
+        val simpleNamePattern: Regex? = if (oldSimpleName != newSimpleName) {
+            Regex("\\b${Regex.escape(oldSimpleName)}\\b")
+        } else null
     }
 
     /**
@@ -67,4 +70,3 @@ sealed class NmsTransformation {
      */
     data class ExcludeFile(val filePattern: String) : NmsTransformation()
 }
-

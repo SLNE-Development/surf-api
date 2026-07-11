@@ -39,7 +39,6 @@ object NbtOps : DynamicOps<BinaryTag> {
         is CompoundBinaryTag -> convertMap(outOps, input)
         is IntArrayBinaryTag -> outOps.createIntList(input.stream())
         is LongArrayBinaryTag -> outOps.createLongList(input.stream())
-        else -> throw MatchException("Unknown tag type: ${input::class.java}", null)
     }
 
     override fun getNumberValue(input: BinaryTag): DataResult<Number> {
@@ -260,8 +259,8 @@ object NbtOps : DynamicOps<BinaryTag> {
     }
 
     override fun createByteList(input: ByteBuffer): BinaryTag {
-        val buffer = input.duplicate().clear()
-        val bytes = ByteArray(input.capacity())
+        val buffer = input.duplicate()
+        val bytes = ByteArray(buffer.remaining())
         buffer.get(bytes)
         return ByteArrayBinaryTag.byteArrayBinaryTag(*bytes)
     }
@@ -290,10 +289,11 @@ object NbtOps : DynamicOps<BinaryTag> {
         return LongArrayBinaryTag.longArrayBinaryTag(*input.toArray())
     }
 
-    override fun createList(input: Stream<BinaryTag>): BinaryTag =
-        ListBinaryTag.heterogeneousListBinaryTag()
-            .add(input.toList())
-            .build()
+    override fun createList(input: Stream<BinaryTag>): BinaryTag {
+        val builder = ListBinaryTag.heterogeneousListBinaryTag()
+        input.forEach(builder::add)
+        return builder.build()
+    }
 
     override fun remove(
         input: BinaryTag,

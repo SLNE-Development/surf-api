@@ -47,21 +47,32 @@ class TransformingSet2ObjectSet<O, M>(
     override fun add(element: M): Boolean = transformFrom(element)?.let(fromSet::add) == true
     override fun remove(element: M) = transformFrom(element)?.let(fromSet::remove) == true
 
-    override fun addAll(elements: Collection<M>) =
-        fromSet.addAll(elements.mapNotNull(::transformFrom))
+    override fun addAll(elements: Collection<M>): Boolean {
+        var modified = false
+        for (element in elements) {
+            val transformed = transformFrom(element) ?: continue
+            modified = fromSet.add(transformed) || modified
+        }
+        return modified
+    }
 
-    override fun removeAll(elements: Collection<M>) =
-        fromSet.removeAll(elements.mapNotNull(::transformFrom).toSet())
+    override fun removeAll(elements: Collection<M>): Boolean {
+        var modified = false
+        for (element in elements) {
+            val transformed = transformFrom(element) ?: continue
+            modified = fromSet.remove(transformed) || modified
+        }
+        return modified
+    }
 
     override fun retainAll(elements: Collection<M>) =
-        fromSet.retainAll(elements.mapNotNull(::transformFrom).toSet())
+        fromSet.retainAll(elements.mapNotNullTo(HashSet(elements.size), ::transformFrom))
 
     override fun clear() = fromSet.clear()
-    override val size: Int get() = fromSet.size
-    override fun isEmpty() = fromSet.isEmpty()
-    override fun contains(element: M) = fromSet.contains(transformFrom(element))
-    override fun containsAll(elements: Collection<M>) =
-        fromSet.containsAll(elements.mapNotNull(::transformFrom))
+    override val size: Int get() = fromSet.count { transformTo(it) != null }
+    override fun isEmpty() = fromSet.none { transformTo(it) != null }
+    override fun contains(element: M) = transformFrom(element)?.let(fromSet::contains) == true
+    override fun containsAll(elements: Collection<M>) = elements.all(::contains)
 
     private fun transformFrom(element: M) = if (element != null) fromTransformer(element) else null
     private fun transformTo(element: O) = if (element != null) toTransformer(element) else null

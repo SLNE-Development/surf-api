@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.shynixn.mccoroutine.folia.scope
 import dev.slne.surf.api.core.algorithms.convexHull2D
 import dev.slne.surf.api.core.math.VoxelLineTracer
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.core.util.mutableLongSetOf
 import dev.slne.surf.api.core.util.toObjectSet
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
@@ -44,6 +45,7 @@ class SurfVisualizerAreaImpl(
     ),
 ) : SurfVisualizer by delegate, SurfVisualizerArea {
 
+    private val log = logger()
     private val corners = ConcurrentHashMap.newKeySet<Vector3d>(initialEdges.size)
     override val cornerLocations get() = corners.toObjectSet()
     private val computationChannel = Channel<Unit>(Channel.CONFLATED)
@@ -58,6 +60,7 @@ class SurfVisualizerAreaImpl(
         blockData = SurfVisualizer.DEFAULT_BLOCK_TYPE.createBlockData()
     }
         set(value) {
+            ensureNotClosed()
             field = value
             launchRecompute()
         }
@@ -83,6 +86,8 @@ class SurfVisualizerAreaImpl(
      */
     @Volatile
     private var pendingSettings: BlockDisplaySettings? = null
+    @Volatile
+    private var pendingVersion: Long = 0
 
     init {
         corners.addAll(initialEdges)
@@ -92,23 +97,27 @@ class SurfVisualizerAreaImpl(
     }
 
     override fun settings(consumer: BlockDisplaySettings.() -> Unit) {
+        ensureNotClosed()
         settings.consumer()
         launchRecompute()
     }
 
     override fun addCornerLocation(location: Vector3d) {
+        ensureNotClosed()
         if (corners.add(location)) {
             launchRecompute()
         }
     }
 
     override fun removeCornerLocation(location: Vector3d) {
+        ensureNotClosed()
         if (corners.remove(location)) {
             launchRecompute()
         }
     }
 
     override fun clearCornerLocations() {
+        ensureNotClosed()
         if (corners.isNotEmpty()) {
             corners.clear()
             launchRecompute()
@@ -116,6 +125,7 @@ class SurfVisualizerAreaImpl(
     }
 
     override fun setCornerLocations(locations: Collection<Vector3d>) {
+        ensureNotClosed()
         if (corners != locations) {
             corners.clear()
             corners.addAll(locations)
@@ -131,13 +141,26 @@ class SurfVisualizerAreaImpl(
         workerJob?.cancel("Visualizer recompute cancelled.")
         workerJob = scope.launch {
             computationChannel.consumeEach {
-                recompute()
+                try {
+                    recompute()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    log.atSevere()
+                        .withCause(e)
+                        .log("Failed to recompute visualizer area")
+                }
             }
         }
+        // A previous worker may have consumed the last conflated signal before it was
+        // cancelled by stopVisualizing(). Always recompute the latest state on restart.
+        launchRecompute()
     }
 
     private suspend fun recompute() {
         if (delegate.isClosed()) return
+        val version = pendingVersion + 1
+        pendingVersion = version
         val cornersSnapshot = ObjectLinkedOpenHashSet(corners)
         val settingsSnapshot = settings.clone()
 
@@ -157,9 +180,10 @@ class SurfVisualizerAreaImpl(
         val edgePoints = ObjectLinkedOpenHashSet<Vector3d>()
 
         for (i in hull.indices) {
-            edgePoints += VoxelLineTracer.trace(
+            VoxelLineTracer.traceTo(
                 hull[i],
-                hull[(i + 1) % hull.size]
+                hull[(i + 1) % hull.size],
+                edgePoints,
             )
         }
 
@@ -171,6 +195,7 @@ class SurfVisualizerAreaImpl(
             if (placeDelay.isPositive()) {
                 for ((i, point) in edgePoints.withIndex()) {
                     currentCoroutineContext().ensureActive()
+                    if (version != pendingVersion) return
                     delegate.addVisualLocation(point, settingsSnapshot)
                     if (i < edgePoints.size - 1) {
                         delay(placeDelay)
@@ -198,7 +223,7 @@ class SurfVisualizerAreaImpl(
 
         // Immediately resolve chunks that any viewer can already see
         if (delegate.isVisualizing() && delegate.hasViewers()) {
-            resolveVisibleChunks(settingsSnapshot)
+            resolveVisibleChunks(settingsSnapshot, version)
         }
     }
 
@@ -206,18 +231,28 @@ class SurfVisualizerAreaImpl(
      * Resolves pending chunks that are currently visible to at least one viewer.
      * Called after recompute and after startVisualizing.
      */
-    private suspend fun resolveVisibleChunks(settingsSnapshot: BlockDisplaySettings) {
-        val world = delegate.world
+    private suspend fun resolveVisibleChunks(
+        settingsSnapshot: BlockDisplaySettings,
+        version: Long,
+    ) {
+        val world = delegate.getWorldIfPresent() ?: return
 
-        // Collect chunk keys that any viewer can see
-        val visibleKeys = mutableLongSetOf()
+        val viewers = ArrayList<Player>(delegate.viewerUuids.size)
         for (viewerUuid in delegate.viewerUuids) {
-            val player = Bukkit.getPlayer(viewerUuid) ?: continue
-            for (chunkKey in pendingByChunk.keys) {
-                val cx = getXFromChunkKey(chunkKey)
-                val cz = getZFromChunkKey(chunkKey)
+            Bukkit.getPlayer(viewerUuid)?.let(viewers::add)
+        }
+        if (viewers.isEmpty()) return
+
+        // Collect chunk keys that any viewer can see. Chunk coordinates are decoded once,
+        // and the viewer scan stops at the first match.
+        val visibleKeys = mutableLongSetOf()
+        for (chunkKey in pendingByChunk.keys) {
+            val cx = getXFromChunkKey(chunkKey)
+            val cz = getZFromChunkKey(chunkKey)
+            for (player in viewers) {
                 if (player.isChunkVisible(world, cx, cz)) {
                     visibleKeys.add(chunkKey)
+                    break
                 }
             }
         }
@@ -226,34 +261,51 @@ class SurfVisualizerAreaImpl(
         while (iterator.hasNext()) {
             val chunkKey = iterator.nextLong()
             currentCoroutineContext().ensureActive()
-            resolveChunk(chunkKey, settingsSnapshot)
+            if (version != pendingVersion) return
+            resolveChunk(chunkKey, settingsSnapshot, version)
         }
     }
 
-    private suspend fun resolveChunk(chunkKey: Long, settingsSnapshot: BlockDisplaySettings) {
-        val points = pendingByChunk.remove(chunkKey) ?: return
+    private suspend fun resolveChunk(
+        chunkKey: Long,
+        settingsSnapshot: BlockDisplaySettings,
+        version: Long,
+    ) {
         val world = delegate.getWorldIfPresent() ?: return
+        val points = pendingByChunk.remove(chunkKey) ?: return
 
-        val snapshot = getOrLoadSnapshot(chunkKey, world) ?: return
+        val snapshot = try {
+            getOrLoadSnapshot(chunkKey, world) ?: return
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (version == pendingVersion) {
+                pendingByChunk.putIfAbsent(chunkKey, points)
+            }
+            throw e
+        }
+        if (version != pendingVersion) return
 
-        val resolvedPoints = points.map { point ->
+        val resolvedPoints = ArrayList<Vector3d>(points.size)
+        for (point in points) {
             val y = snapshot.getHighestBlockYAtBlockCoordinates(
                 NumberConversions.floor(point.x()),
                 NumberConversions.floor(point.z())
             )
-            Vector3d(point.x(), (y + 1).toDouble(), point.z()) to settingsSnapshot
+            resolvedPoints += Vector3d(point.x(), (y + 1).toDouble(), point.z())
         }
 
         if (placeDelay.isPositive()) {
-            for ((i, pair) in resolvedPoints.withIndex()) {
+            for ((i, point) in resolvedPoints.withIndex()) {
                 currentCoroutineContext().ensureActive()
-                delegate.addVisualLocation(pair.first, pair.second)
+                if (version != pendingVersion) return
+                delegate.addVisualLocation(point, settingsSnapshot)
                 if (i < resolvedPoints.size - 1) {
                     delay(placeDelay)
                 }
             }
         } else {
-            delegate.addVisualLocations(resolvedPoints)
+            delegate.addVisualLocations(resolvedPoints, settingsSnapshot)
         }
     }
 
@@ -271,11 +323,13 @@ class SurfVisualizerAreaImpl(
         }.await()
     }
 
-    fun onChunkBecameVisible(player: Player, chunk: Chunk) {
+    fun onChunkBecameVisible(chunk: Chunk) {
         if (!useHighestYBlock) return
         if (!delegate.isVisualizing()) return
         if (delegate.isClosed()) return
 
+        val settingsSnapshot = pendingSettings ?: return
+        val version = pendingVersion
         val chunkKey = chunk.chunkKey
         val points = pendingByChunk.remove(chunkKey) ?: return
 
@@ -283,30 +337,25 @@ class SurfVisualizerAreaImpl(
         val snapshot = chunk.getChunkSnapshot(true, false, false, false)
         snapshotCache.put(chunkKey, snapshot)
 
-        val settingsSnapshot = pendingSettings?.clone() ?: return
-
-        val resolvedPoints = points.map { point ->
+        val resolvedPoints = ArrayList<Vector3d>(points.size)
+        for (point in points) {
             val y = snapshot.getHighestBlockYAtBlockCoordinates(
                 NumberConversions.floor(point.x()),
                 NumberConversions.floor(point.z())
             )
-            Vector3d(point.x(), (y + 1).toDouble(), point.z()) to settingsSnapshot
+            resolvedPoints += Vector3d(point.x(), (y + 1).toDouble(), point.z())
         }
+        if (version != pendingVersion) return
 
         // Add to delegate — this will also spawn for the player since
         // delegate.isVisualizing() is true and the player is a viewer
-        delegate.addVisualLocations(resolvedPoints)
+        delegate.addVisualLocations(resolvedPoints, settingsSnapshot)
     }
 
     override fun startVisualizing(): Boolean {
-        startRecompute()
         val result = delegate.startVisualizing()
-        if (result && useHighestYBlock && pendingByChunk.isNotEmpty()) {
-            val settingsSnapshot = pendingSettings ?: return true
-            scope.launch {
-                resolveVisibleChunks(settingsSnapshot)
-            }
-        }
+        if (!result) return false
+        startRecompute()
         return result
     }
 
@@ -322,6 +371,10 @@ class SurfVisualizerAreaImpl(
         snapshotCache.invalidateAll()
         pendingSettings = null
         delegate.close()
+    }
+
+    private fun ensureNotClosed() {
+        check(!delegate.isClosed()) { "Visualizer is already closed!" }
     }
 
     override fun equals(other: Any?): Boolean {

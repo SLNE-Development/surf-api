@@ -94,7 +94,17 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
             }
         }
 
+        if (!sender.isConnected) {
+            blockedCommandPackets.remove(sender.uniqueId)
+            ready.remove(sender.uniqueId)
+            return
+        }
         ready.add(sender.uniqueId)
+        if (!sender.isConnected) {
+            blockedCommandPackets.remove(sender.uniqueId)
+            ready.remove(sender.uniqueId)
+            return
+        }
         sender.updateCommands()
     }
 

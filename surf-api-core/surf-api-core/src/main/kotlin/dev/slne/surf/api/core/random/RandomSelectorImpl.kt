@@ -1,39 +1,68 @@
 package dev.slne.surf.api.core.random
 
 import dev.slne.surf.api.core.util.mutableObjectListOf
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList
 import kotlinx.coroutines.flow.Flow
-import org.apache.commons.math3.distribution.EnumeratedDistribution
 import org.apache.commons.math3.random.Well19937c
-import org.apache.commons.math3.util.Pair
 import java.util.random.RandomGenerator
 
 internal class RandomSelectorImpl<E>(
     randomGenerator: org.apache.commons.math3.random.RandomGenerator?,
-    elements: List<Object2DoubleMap.Entry<E>>
+    elements: Iterable<E>,
+    weighter: Weighter<E>,
 ) : RandomSelector<E> {
-    private val distribution: EnumeratedDistribution<E>
     private val random = randomGenerator ?: Well19937c()
+    private val values: Array<Any?>
+    private val cumulativeWeights: DoubleArray
+    private val totalWeight: Double
 
     init {
-        require(elements.isNotEmpty()) { "RandomSelector must have at least one element." }
+        var capacity = (elements as? Collection<*>)?.size ?: 10
+        if (capacity == 0) {
+            throw IllegalArgumentException("RandomSelector must have at least one element.")
+        }
+        capacity = capacity.coerceAtLeast(1)
 
-        val pmf = elements.map { Pair.create(it.key, it.doubleValue) }
-        distribution = EnumeratedDistribution(random, pmf)
+        var collectedValues = arrayOfNulls<Any?>(capacity)
+        var weights = DoubleArray(capacity)
+        var size = 0
+        var maxWeight = 0.0
+        for (element in elements) {
+            val weight = weighter(element)
+            require(weight > 0.0) { "Weight must be greater than 0, got $weight for element $element." }
+            require(weight.isFinite()) { "Weight must be finite, got $weight for element $element." }
+
+            if (size == collectedValues.size) {
+                val newSize = size + (size shr 1) + 1
+                collectedValues = collectedValues.copyOf(newSize)
+                weights = weights.copyOf(newSize)
+            }
+            collectedValues[size] = element
+            weights[size] = weight
+            size++
+            if (weight > maxWeight) maxWeight = weight
+        }
+        require(size > 0) { "RandomSelector must have at least one element." }
+
+        values = if (size == collectedValues.size) collectedValues else collectedValues.copyOf(size)
+
+        cumulativeWeights = DoubleArray(size)
+        var cumulativeWeight = 0.0
+        for (index in 0 until size) {
+            // Scaling prevents a finite set of individually finite weights from overflowing.
+            cumulativeWeight += weights[index] / maxWeight
+            cumulativeWeights[index] = cumulativeWeight
+        }
+        totalWeight = cumulativeWeight
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun pick(randomGenerator: RandomGenerator): E {
-        // Create temporary distribution with provided generator for backward compatibility
-        val tempDistribution = EnumeratedDistribution(
-            Jdk2ApacheRandomGenerator(randomGenerator),
-            distribution.pmf
-        )
-        return tempDistribution.sample()
+        return sample(randomGenerator.nextDouble())
     }
 
     override fun pick(): E {
-        return distribution.sample()
+        return sample(random.nextDouble())
     }
 
     override fun pickOrNull(successRate: Double): E? {
@@ -50,13 +79,8 @@ internal class RandomSelectorImpl<E>(
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun flow(randomGenerator: RandomGenerator): Flow<E> = kotlinx.coroutines.flow.flow {
-        // Create temporary distribution with provided generator for backward compatibility
-        val tempDistribution = EnumeratedDistribution(
-            Jdk2ApacheRandomGenerator(randomGenerator),
-            distribution.pmf
-        )
         while (true) {
-            emit(tempDistribution.sample())
+            emit(sample(randomGenerator.nextDouble()))
         }
     }
 
@@ -72,7 +96,7 @@ internal class RandomSelectorImpl<E>(
         }
 
         while (true) {
-            emit(pickOrNull(successRate))
+            emit(if (random.nextDouble() < successRate) pick() else null)
         }
     }
 
@@ -85,9 +109,27 @@ internal class RandomSelectorImpl<E>(
             "Success rate must be between 0.0 and 1.0, got $successRate."
         }
 
-        return generateSequence {
-            pickOrNull(successRate)
+        return sequence {
+            while (true) {
+                yield(if (random.nextDouble() < successRate) pick() else null)
+            }
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun sample(unitSample: Double): E {
+        val target = unitSample * totalWeight
+        var low = 0
+        var high = cumulativeWeights.lastIndex
+        while (low < high) {
+            val middle = (low + high) ushr 1
+            if (target < cumulativeWeights[middle]) {
+                high = middle
+            } else {
+                low = middle + 1
+            }
+        }
+        return values[low] as E
     }
 
     companion object {
@@ -95,8 +137,7 @@ internal class RandomSelectorImpl<E>(
             iterable: Iterable<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator?
         ): RandomSelectorImpl<E> {
-            val elements = iterable.map { Object2DoubleMap.entry(it, 1.0) }
-            return RandomSelectorImpl(randomGenerator, elements)
+            return RandomSelectorImpl(randomGenerator, iterable) { 1.0 }
         }
 
         fun <E> fromWeightedIterable(
@@ -104,14 +145,7 @@ internal class RandomSelectorImpl<E>(
             weighter: Weighter<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator?
         ): RandomSelectorImpl<E> {
-            val elements = iterable.map { element ->
-                val weight = weighter(element)
-                require(weight > 0) { "Weight must be greater than 0, got $weight for element $element." }
-                require(weight.isFinite()) { "Weight must be finite, got $weight for element $element." }
-                Object2DoubleMap.entry(element, weight)
-            }
-
-            return RandomSelectorImpl(randomGenerator, elements)
+            return RandomSelectorImpl(randomGenerator, iterable, weighter)
         }
 
         suspend fun <E> fromFlow(
@@ -119,16 +153,19 @@ internal class RandomSelectorImpl<E>(
             weighter: Weighter<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator?
         ): RandomSelectorImpl<E> {
-            val elements = mutableObjectListOf<Object2DoubleMap.Entry<E>>()
+            val elements = mutableObjectListOf<E>()
+            val weights = DoubleArrayList()
 
             flow.collect { element ->
                 val weight = weighter(element)
                 require(weight > 0) { "Weight must be greater than 0, got $weight for element $element." }
                 require(weight.isFinite()) { "Weight must be finite, got $weight for element $element." }
-                elements.add(Object2DoubleMap.entry(element, weight))
+                elements.add(element)
+                weights.add(weight)
             }
 
-            return RandomSelectorImpl(randomGenerator, elements)
+            var index = 0
+            return RandomSelectorImpl(randomGenerator, elements) { weights.getDouble(index++) }
         }
 
         fun <E> fromInfinityFlow(
@@ -179,21 +216,34 @@ internal class FlowRandomSelectorImpl<E>(
         generator: org.apache.commons.math3.random.RandomGenerator
     ): Flow<E> = kotlinx.coroutines.flow.flow {
         var selectedElement: E? = null
-        var totalWeight = 0.0
+        var hasSelectedElement = false
+        var maxWeight = 0.0
+        var normalizedTotalWeight = 0.0
 
         flow.collect { element ->
             val weight = weighter(element)
             require(weight > 0.0) { "Weight must be greater than 0, got $weight." }
             require(weight.isFinite()) { "Weight must be finite, got $weight." }
 
-            totalWeight += weight
-            val threshold = weight / totalWeight
+            if (weight > maxWeight) {
+                if (maxWeight > 0.0) {
+                    normalizedTotalWeight *= maxWeight / weight
+                }
+                maxWeight = weight
+            }
+            val normalizedWeight = weight / maxWeight
+            normalizedTotalWeight += normalizedWeight
+            val threshold = normalizedWeight / normalizedTotalWeight
 
             if (generator.nextDouble() < threshold) {
                 selectedElement = element
+                hasSelectedElement = true
             }
 
-            emit(selectedElement!!)
+            if (hasSelectedElement) {
+                @Suppress("UNCHECKED_CAST")
+                emit(selectedElement as E)
+            }
         }
     }
 }

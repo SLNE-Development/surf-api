@@ -12,16 +12,20 @@ class PAPIPlaceholderHolderImpl(override val expansion: PapiExpansion) : Placeho
     override fun persist() = true
 
     override fun onRequest(player: OfflinePlayer, params: String): String? {
-        val parsedParams = params.split("_")
-
-        if (parsedParams.isEmpty()) {
+        if (params.isEmpty()) {
             return expansion.parseWithNoParams(player)
         }
 
-        val placeholder = parsedParams.first()
+        val separator = params.indexOf('_')
+        val placeholder = if (separator < 0) params else params.substring(0, separator)
         val papiPlaceholder = expansion.placeholders[placeholder] ?: return null
+        val arguments = if (separator < 0) {
+            emptyList()
+        } else {
+            params.substring(separator + 1).split('_')
+        }
 
-        return papiPlaceholder.parse(player, parsedParams.drop(1))
+        return papiPlaceholder.parse(player, arguments)
     }
 
     override fun registerHolder() {

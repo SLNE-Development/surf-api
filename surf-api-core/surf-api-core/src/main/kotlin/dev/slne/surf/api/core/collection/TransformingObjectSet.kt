@@ -27,9 +27,36 @@ class TransformingObjectSet<O, M>(
      */
     override fun iterator() = object : ObjectIterator<M> {
         private val iterator = fromSet.iterator()
+        private var nextValue: M? = null
+        private var nextComputed = false
+
         override fun remove() = iterator.remove()
-        override fun next(): M? = toTransformer(iterator.next())
-        override fun hasNext() = iterator.hasNext()
+
+        override fun next(): M {
+            if (!hasNext()) throw NoSuchElementException()
+            nextComputed = false
+            val result = nextValue
+            nextValue = null
+            @Suppress("UNCHECKED_CAST")
+            return result as M
+        }
+
+        override fun hasNext(): Boolean {
+            if (nextComputed) return nextValue != null
+
+            while (iterator.hasNext()) {
+                val transformed = transformTo(iterator.next())
+                if (transformed != null) {
+                    nextValue = transformed
+                    nextComputed = true
+                    return true
+                }
+            }
+
+            nextValue = null
+            nextComputed = true
+            return false
+        }
     }
 
     /**
@@ -38,7 +65,7 @@ class TransformingObjectSet<O, M>(
      * @param element The element of type `M` to add.
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
-    override fun add(element: M?) = fromSet.add(transformFrom(element))
+    override fun add(element: M?) = transformFrom(element)?.let(fromSet::add) == true
 
     /**
      * Removes a transformed element from the underlying set.
@@ -46,7 +73,7 @@ class TransformingObjectSet<O, M>(
      * @param element The element of type `M` to remove.
      * @return `true` if the element was removed, `false` otherwise.
      */
-    override fun remove(element: M) = fromSet.remove(transformFrom(element))
+    override fun remove(element: M) = transformFrom(element)?.let(fromSet::remove) == true
 
     /**
      * Adds all transformed elements from the given collection to the underlying set.
@@ -54,8 +81,14 @@ class TransformingObjectSet<O, M>(
      * @param elements A collection of elements of type `M`.
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
-    override fun addAll(elements: Collection<M?>) =
-        fromSet.addAll(elements.mapNotNull(::transformFrom))
+    override fun addAll(elements: Collection<M?>): Boolean {
+        var modified = false
+        for (element in elements) {
+            val transformed = transformFrom(element) ?: continue
+            modified = fromSet.add(transformed) || modified
+        }
+        return modified
+    }
 
     /**
      * Removes all transformed elements in the given collection from the underlying set.
@@ -63,8 +96,14 @@ class TransformingObjectSet<O, M>(
      * @param elements A collection of elements of type `M`.
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
-    override fun removeAll(elements: Collection<M?>) =
-        fromSet.removeAll(elements.mapNotNull(::transformFrom))
+    override fun removeAll(elements: Collection<M?>): Boolean {
+        var modified = false
+        for (element in elements) {
+            val transformed = transformFrom(element) ?: continue
+            modified = fromSet.remove(transformed) || modified
+        }
+        return modified
+    }
 
     /**
      * Retains only the transformed elements in the given collection in the underlying set.
@@ -73,7 +112,7 @@ class TransformingObjectSet<O, M>(
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
     override fun retainAll(elements: Collection<M?>) =
-        fromSet.retainAll(elements.mapNotNull(::transformFrom))
+        fromSet.retainAll(elements.mapNotNullTo(HashSet(elements.size), ::transformFrom))
 
     /**
      * Removes all elements from the underlying set.
@@ -83,16 +122,16 @@ class TransformingObjectSet<O, M>(
     /**
      * Returns the number of elements in the transformed set.
      *
-     * @return The size of the underlying set.
+     * @return The number of underlying elements that can be transformed.
      */
-    override val size: Int get() = fromSet.size
+    override val size: Int get() = fromSet.count { transformTo(it) != null }
 
     /**
      * Checks if the transformed set is empty.
      *
-     * @return `true` if the underlying set is empty, `false` otherwise.
+     * @return `true` if the transformed view has no visible elements, `false` otherwise.
      */
-    override fun isEmpty() = fromSet.isEmpty()
+    override fun isEmpty() = fromSet.none { transformTo(it) != null }
 
     /**
      * Checks if the transformed set contains the specified element.
@@ -100,7 +139,7 @@ class TransformingObjectSet<O, M>(
      * @param element The element of type `M` to check.
      * @return `true` if the element is in the transformed set, `false` otherwise.
      */
-    override fun contains(element: M?) = fromSet.contains(transformFrom(element))
+    override fun contains(element: M?) = transformFrom(element)?.let(fromSet::contains) == true
 
     /**
      * Checks if the transformed set contains all elements in the specified collection.
@@ -108,8 +147,7 @@ class TransformingObjectSet<O, M>(
      * @param elements A collection of elements of type `M`.
      * @return `true` if all elements are in the transformed set, `false` otherwise.
      */
-    override fun containsAll(elements: Collection<M?>) =
-        fromSet.containsAll(elements.mapNotNull(::transformFrom))
+    override fun containsAll(elements: Collection<M?>) = elements.all(::contains)
 
     /**
      * Transforms an element of type `M` to type `O` using the provided [fromTransformer].

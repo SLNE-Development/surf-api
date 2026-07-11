@@ -115,7 +115,9 @@ class V26_1SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
             this.exactIndex = Object2IntOpenCustomHashMap(orderedItems.size, ItemStackLinkedSet.TYPE_AND_TAG).apply {
                 defaultReturnValue(Int.MAX_VALUE)
                 var i = 0
-                for (item in orderedItems) put(item, i++)
+                for (item in orderedItems) {
+                    putIfAbsent(item, i++)
+                }
             }
 
             this.itemTypeIndex = Reference2IntOpenHashMap<Item>(Material.entries.size).apply {

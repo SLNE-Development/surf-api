@@ -27,7 +27,7 @@ class V26_1TeamData(color: ChatFormatting) {
         private val lastUid = AtomicInteger()
         fun uid(): Int = lastUid.getAndIncrement()
 
-        private val teams = EnumMap<ChatFormatting, V26_1TeamData>(ChatFormatting::class.java)
+        private val teams = ConcurrentHashMap<ChatFormatting, V26_1TeamData>()
 
         fun getByColor(color: ChatFormatting): V26_1TeamData =
             teams.computeIfAbsent(color) { V26_1TeamData(color) }

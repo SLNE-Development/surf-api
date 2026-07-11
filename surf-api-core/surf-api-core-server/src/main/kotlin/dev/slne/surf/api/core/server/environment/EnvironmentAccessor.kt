@@ -43,7 +43,8 @@ object EnvironmentAccessor {
                     parseDotenv(file)
                 } catch (e: Exception) {
                     log.atFine()
-                        .log("Failed to read .env file: %s", file.absolutePath, e)
+                        .withCause(e)
+                        .log("Failed to read .env file: %s", file.absolutePath)
                     emptyObject2ObjectMap()
                 }
             } else {
@@ -58,25 +59,28 @@ object EnvironmentAccessor {
     private fun parseDotenv(file: File): Object2ObjectMap<String, String> {
         val result = Object2ObjectLinkedOpenHashMap<String, String>()
 
-        file.readLines(Charsets.UTF_8).forEach { rawLine ->
-            val line = rawLine.trim()
-            if (line.isEmpty() || line.startsWith("#")) return@forEach
+        file.useLines(Charsets.UTF_8) { lines ->
+            lines.forEach { rawLine ->
+                val line = rawLine.trim()
+                if (line.isEmpty() || line.startsWith("#")) return@forEach
 
-            val idx = line.indexOf('=')
-            if (idx <= 0) return@forEach
+                val idx = line.indexOf('=')
+                if (idx <= 0) return@forEach
 
-            val key = line.substring(0, idx).trim()
-            var value = line.substring(idx + 1).trim()
+                val key = line.substring(0, idx).trim()
+                var value = line.substring(idx + 1).trim()
 
-            if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith(
-                    "'"
-                ))
-            ) {
-                value = value.substring(1, value.length - 1)
-            }
+                val isQuoted = value.length >= 2 && (
+                        (value.startsWith('"') && value.endsWith('"')) ||
+                                (value.startsWith('\'') && value.endsWith('\''))
+                        )
+                if (isQuoted) {
+                    value = value.substring(1, value.length - 1)
+                }
 
-            if (key.isNotEmpty()) {
-                result[key] = value
+                if (key.isNotEmpty()) {
+                    result[key] = value
+                }
             }
         }
 

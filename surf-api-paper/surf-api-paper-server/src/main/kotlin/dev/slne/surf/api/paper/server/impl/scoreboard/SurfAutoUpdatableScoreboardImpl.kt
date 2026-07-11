@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
 import com.github.shynixn.mccoroutine.folia.launch
-import com.github.shynixn.mccoroutine.folia.ticks
+import com.github.shynixn.mccoroutine.folia.ticksDuration
 import dev.slne.surf.api.paper.scoreboard.SurfAutoUpdatableScoreboard
 import dev.slne.surf.api.paper.server.plugin
 import kotlinx.coroutines.Job
@@ -21,19 +21,21 @@ open class SurfAutoUpdatableScoreboardImpl(
     override fun enable() {
         super.enable()
 
-        this.updater = launchUpdater()
+        updater?.cancel()
+        updater = launchUpdater()
     }
 
     override fun disable() {
-        super.disable()
+        updater?.cancel()
+        updater = null
 
-        updater!!.cancel()
+        super.disable()
     }
 
     private fun launchUpdater() = plugin.launch {
         while (true) {
             update()
-            delay(5.ticks)
+            delay(5.ticksDuration)
         }
     }
 }

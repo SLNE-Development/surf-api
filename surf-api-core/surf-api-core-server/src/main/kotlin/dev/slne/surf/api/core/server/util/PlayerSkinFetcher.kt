@@ -9,6 +9,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.coroutines.executeAsync
+import java.io.IOException
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
@@ -28,19 +29,24 @@ object PlayerSkinFetcher {
             .build()
 
         client.newCall(request).executeAsync().use { response ->
-            val responseString = response.body.string()
-            val jsonObject = JsonParser.parseString(responseString).getAsJsonObject()
-            val properties = jsonObject.get("properties").getAsJsonArray()
-            return properties.asSequence()
-                .map { it.getAsJsonObject() }
-                .map {
-                    TextureProperty(
-                        it.get("name").asString,
-                        it.get("value").asString,
-                        it.get("signature")?.asString
+            if (!response.isSuccessful) {
+                throw IOException("Mojang session server returned HTTP ${response.code} for $uuid")
+            }
+
+            val jsonObject = JsonParser.parseReader(response.body.charStream()).asJsonObject
+            val properties = jsonObject.getAsJsonArray("properties")
+            return buildList(properties.size()) {
+                for (property in properties) {
+                    val json = property.asJsonObject
+                    add(
+                        TextureProperty(
+                            json.get("name").asString,
+                            json.get("value").asString,
+                            json.get("signature")?.asString
+                        )
                     )
                 }
-                .toList()
+            }
         }
     }
 }

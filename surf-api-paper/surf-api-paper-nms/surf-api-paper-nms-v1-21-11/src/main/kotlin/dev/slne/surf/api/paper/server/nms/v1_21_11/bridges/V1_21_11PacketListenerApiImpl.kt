@@ -93,11 +93,12 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
         }
 
         val methodHandle = createNormalizedInvokerHandle(listener, method, privateLookupIn)
-        val listeners =
-            listenerMethods.computeIfAbsent(packetParameterType) { CopyOnWriteArraySet() }
         val invoker = createInvoker(methodHandle, method.returnType)
-
-        listeners.add(ListenerMethod(listener, invoker))
+        listenerMethods.compute(packetParameterType) { _, existing ->
+            (existing ?: CopyOnWriteArraySet()).apply {
+                add(ListenerMethod(listener, invoker))
+            }
+        }
     }
 
     private fun createNormalizedInvokerHandle(
@@ -159,11 +160,16 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
 
 
     override fun unregisterListeners(listener: PacketListener) {
-        for (methods in clientboundListenerMethods.values) {
-            methods.removeIf { it.listener == listener }
-        }
-        for (methods in serverboundListenerMethods.values) {
-            methods.removeIf { it.listener == listener }
+        removeListener(clientboundListenerMethods, listener)
+        removeListener(serverboundListenerMethods, listener)
+    }
+
+    private fun removeListener(methodsByPacket: ListenerMethodsMap, listener: PacketListener) {
+        for (packetType in methodsByPacket.keys) {
+            methodsByPacket.computeIfPresent(packetType) { _, methods ->
+                methods.removeIf { it.listener == listener }
+                methods.takeUnless { it.isEmpty() }
+            }
         }
     }
 

@@ -68,7 +68,11 @@ data class PaginationImpl<T>(
     }
 
     companion object {
-        fun pages(pageSize: Int, count: Int): Int = (count + pageSize - 1) / pageSize
+        fun pages(pageSize: Int, count: Int): Int {
+            require(pageSize > 0) { "pageSize must be greater than 0" }
+            require(count >= 0) { "count must not be negative" }
+            return if (count == 0) 0 else ((count - 1) / pageSize) + 1
+        }
 
         inline fun <T> forEachPageEntry(
             content: Collection<T>,
@@ -77,18 +81,18 @@ data class PaginationImpl<T>(
             consumer: (T, Int) -> Unit,
         ) {
             val size = content.size
-            val start = pageSize * (page - 1)
-            val end = pageSize * page
+            val start = (pageSize.toLong() * (page - 1L)).toInt()
+            val end = minOf(size.toLong(), start.toLong() + pageSize).toInt()
 
             if (content is List<T> && content is RandomAccess) {
-                for (i in start until end.coerceAtMost(size)) {
+                for (i in start until end) {
                     consumer(content[i], i)
                 }
             } else {
                 val iterator = content.iterator()
                 // Skip previous pages
                 repeat(start) { iterator.next() }
-                for (i in start until end.coerceAtMost(size)) {
+                for (i in start until end) {
                     consumer(iterator.next(), i)
                 }
             }

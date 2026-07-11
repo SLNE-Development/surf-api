@@ -38,7 +38,9 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
     }
 
     override fun finish() {
-        val allModules = (components.keys + postProcessors.keys).toSet()
+        val allModules = LinkedHashSet<String>(components.size + postProcessors.size)
+        allModules.addAll(components.keys)
+        allModules.addAll(postProcessors.keys)
 
         if (allModules.isEmpty()) {
             return
@@ -77,15 +79,12 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
         moduleName: String,
         deferred: MutableList<KSAnnotated>
     ) {
-        val processedComponents = findComponents(resolver)
-            .mapNotNull { component ->
-                processComponent(component, deferred)
-            }
-            .toList()
-
-        if (processedComponents.isNotEmpty()) {
-            val moduleComponents = components.getOrPut(moduleName) { mutableSetOf() }
-            moduleComponents.addAll(processedComponents)
+        val moduleComponents = components.getOrPut(moduleName) { mutableSetOf() }
+        for (component in findComponents(resolver)) {
+            processComponent(component, deferred)?.let(moduleComponents::add)
+        }
+        if (moduleComponents.isEmpty()) {
+            components.remove(moduleName)
         }
     }
 
@@ -181,15 +180,18 @@ class ComponentSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbol
                 classDecl.qualifiedName?.asString() != ClassNames.COMPONENT_POST_PROCESSOR
             }
             .filter { it.classKind == ClassKind.CLASS || it.classKind == ClassKind.OBJECT }
-            .toList()
 
-        val postProcessorMetas = postProcessorClasses.map { postProcessorClass ->
-            PluginComponentMeta.PostProcessor(
-                className = postProcessorClass.toBinaryName(),
+        val modulePostProcessors = postProcessors.getOrPut(moduleName) { mutableSetOf() }
+        for (postProcessorClass in postProcessorClasses) {
+            modulePostProcessors.add(
+                PluginComponentMeta.PostProcessor(
+                    className = postProcessorClass.toBinaryName(),
+                )
             )
         }
-
-        postProcessors.getOrPut(moduleName) { mutableSetOf() }.addAll(postProcessorMetas)
+        if (modulePostProcessors.isEmpty()) {
+            postProcessors.remove(moduleName)
+        }
     }
 
     private fun collectKSTypeAnnotationClassNames(

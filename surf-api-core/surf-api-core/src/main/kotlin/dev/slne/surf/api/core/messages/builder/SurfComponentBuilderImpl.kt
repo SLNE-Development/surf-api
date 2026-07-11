@@ -29,7 +29,7 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
     override fun append(builder: ComponentBuilder<*, *>) = withDelegate { append(builder) }
     override fun append(component: Component) = withDelegate { append(component) }
     override fun append(component: ComponentLike) = withDelegate { append(component) }
-    override fun append(components: Iterable<out ComponentLike>) = withDelegate { append(components) }
+    override fun append(components: Iterable<ComponentLike>) = withDelegate { append(components) }
     override fun append(vararg components: Component) = withDelegate { append(*components) }
     override fun append(vararg components: ComponentLike) = withDelegate { append(*components) }
     override fun appendNewline() = withDelegate { appendNewline() }

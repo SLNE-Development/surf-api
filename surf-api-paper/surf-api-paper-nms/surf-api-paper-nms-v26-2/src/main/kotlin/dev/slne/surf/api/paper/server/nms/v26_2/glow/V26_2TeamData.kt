@@ -27,7 +27,7 @@ class V26_2TeamData(color: TeamColor) {
         private val lastUid = AtomicInteger()
         fun uid(): Int = lastUid.getAndIncrement()
 
-        private val teams = EnumMap<TeamColor, V26_2TeamData>(TeamColor::class.java)
+        private val teams = ConcurrentHashMap<TeamColor, V26_2TeamData>()
 
         fun getByColor(color: TeamColor): V26_2TeamData =
             teams.computeIfAbsent(color) { V26_2TeamData(color) }

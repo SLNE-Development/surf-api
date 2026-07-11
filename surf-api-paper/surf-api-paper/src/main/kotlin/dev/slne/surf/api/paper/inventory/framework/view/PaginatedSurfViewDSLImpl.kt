@@ -64,9 +64,9 @@ abstract class PaginatedSurfViewDSLImpl @PublishedApi internal constructor(
         ctx.onClose?.invoke(ref, close)
     }
 
-    context(modificationCtx: ViewContainerModificationContext)
+    context(modificationContext: ViewContainerModificationContext)
     override fun applyContainerDefaults() {
-        ctx.containerDefaults?.invoke(modificationCtx, ref)
+        ctx.containerDefaults?.invoke(modificationContext, ref)
     }
 
     internal fun modifyContainer0(

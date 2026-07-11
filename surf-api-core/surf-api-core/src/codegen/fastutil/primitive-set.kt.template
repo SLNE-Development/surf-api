@@ -1,0 +1,61 @@
+// {{NAME}}Set Extensions
+inline fun mutable{{NAME}}SetOf(vararg elements: {{NAME}}): {{NAME}}Set = {{NAME}}OpenHashSet(elements)
+inline fun mutable{{NAME}}SetOfNotNull(vararg elements: {{NAME}}?) =
+    elements.filterNotNullTo({{NAME}}OpenHashSet())
+
+inline fun mutable{{NAME}}SetOf(): {{NAME}}Set = {{NAME}}OpenHashSet()
+inline fun mutable{{NAME}}SetOf(capacity: Int): {{NAME}}Set = {{NAME}}OpenHashSet(capacity)
+inline fun mutable{{NAME}}SetOf(iterable: Iterable<{{NAME}}>): {{NAME}}Set = when (iterable) {
+    is Collection -> {{NAME}}OpenHashSet(iterable)
+    else -> {{NAME}}OpenHashSet(iterable.iterator())
+}
+
+inline fun {{LOWER_NAME}}SetOf(vararg elements: {{NAME}}): {{NAME}}Set = when (elements.size) {
+    0 -> empty{{NAME}}Set()
+    1 -> {{NAME}}Sets.singleton(elements[0])
+    else -> mutable{{NAME}}SetOf(*elements).freeze()
+}
+
+inline fun {{LOWER_NAME}}SetOfNotNull(vararg elements: {{NAME}}?): {{NAME}}Set = when (elements.size) {
+    0 -> empty{{NAME}}Set()
+    1 -> elements[0]?.let { {{NAME}}Sets.singleton(it) } ?: empty{{NAME}}Set()
+    else -> mutable{{NAME}}SetOfNotNull(*elements).freeze()
+}
+
+inline fun {{LOWER_NAME}}SetOf(iterable: Iterable<{{NAME}}>): {{NAME}}Set =
+    mutable{{NAME}}SetOf(iterable).freeze()
+inline fun {{LOWER_NAME}}SetOf(): {{NAME}}Set = empty{{NAME}}Set()
+inline fun empty{{NAME}}Set(): @Unmodifiable {{NAME}}Set = {{NAME}}Sets.emptySet()
+inline fun {{NAME}}Set.synchronize(): {{NAME}}Set = {{NAME}}Sets.synchronize(this)
+inline fun {{NAME}}Set.freeze(): @UnmodifiableView {{NAME}}Set =
+    this as? {{NAME}}Sets.UnmodifiableSet ?: {{NAME}}Sets.unmodifiable(this)
+
+inline fun Sequence<{{NAME}}>.toMutable{{NAME}}Set(): {{NAME}}Set = {{NAME}}OpenHashSet(iterator())
+inline fun Sequence<{{NAME}}>.to{{NAME}}Set(): {{NAME}}Set {
+    val it = iterator()
+    if (!it.hasNext()) return empty{{NAME}}Set()
+    val first = it.next()
+    if (!it.hasNext()) return {{LOWER_NAME}}SetOf(first)
+    val set = mutable{{NAME}}SetOf()
+    set.add(first)
+    while (it.hasNext()) set.add(it.next())
+    return set.freeze()
+}
+
+inline fun Array<{{NAME}}>.to{{NAME}}Set() = {{LOWER_NAME}}SetOf(*{{ARRAY_CONVERSION}})
+inline fun Array<{{NAME}}>.toMutable{{NAME}}Set() = mutable{{NAME}}SetOf(*{{ARRAY_CONVERSION}})
+inline fun {{ARRAY_TYPE}}.to{{NAME}}Set(): @Unmodifiable {{NAME}}Set = when (size) {
+    0 -> empty{{NAME}}Set()
+    1 -> {{NAME}}Sets.singleton(this[0])
+    else -> {{NAME}}OpenHashSet(this).freeze()
+}
+inline fun {{ARRAY_TYPE}}.toMutable{{NAME}}Set(): {{NAME}}Set = {{NAME}}OpenHashSet(this)
+inline fun Iterable<{{NAME}}>.to{{NAME}}Set() =
+    (this as? {{NAME}}Set)?.freeze() ?: {{LOWER_NAME}}SetOf(this)
+inline fun Iterable<{{NAME}}>.toMutable{{NAME}}Set() =
+    (this as? {{NAME}}Set)?.toMutable{{NAME}}Set() ?: mutable{{NAME}}SetOf(this)
+
+inline fun Collection<{{NAME}}>.to{{NAME}}Set() =
+    (this as? {{NAME}}Set)?.freeze() ?: {{LOWER_NAME}}SetOf(this)
+inline fun {{NAME}}Set.toMutable{{NAME}}Set() =
+    this as? {{NAME}}OpenHashSet ?: {{NAME}}OpenHashSet(this)

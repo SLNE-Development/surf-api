@@ -43,6 +43,7 @@ interface SurfApiPaper : SurfApiCore {
      * @param timeToAdd the amount of time to add
      * @param duration  the duration of the time skip operation
      * @return a Result object representing the result of the time skip operation
+     * @throws IllegalArgumentException if [duration] is not positive
      */
     suspend fun skipTimeSmoothly(world: World, timeToAdd: Long, duration: Long): TimeSkipResult
 
@@ -76,6 +77,7 @@ interface SurfApiPaper : SurfApiCore {
      * @param duration  the duration of the time skip operation
      * @return a map containing the results of the time skip operation for each world, where the key
      * is the world and the value is the result of the operation
+     * @throws IllegalArgumentException if [duration] is not positive
      */
     suspend fun skipTimeSmoothly(
         timeToAdd: Long,

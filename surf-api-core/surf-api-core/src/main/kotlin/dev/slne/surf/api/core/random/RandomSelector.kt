@@ -525,3 +525,21 @@ interface RandomSelector<E> {
             RandomSelectorImpl.fromFlow(flow, weighter, randomGenerator)
     }
 }
+
+/**
+ * Selects [count] independent values from this selector.
+ *
+ * The selector is sampled with replacement, matching repeated calls to [RandomSelector.pick].
+ */
+fun <E> RandomSelector<E>.pickMany(count: Int): List<E> {
+    require(count >= 0) { "count must not be negative, got $count" }
+    return List(count) { pick() }
+}
+
+/**
+ * Selects [count] independent nullable values using [successRate] for each attempt.
+ */
+fun <E> RandomSelector<E>.pickManyOrNull(count: Int, successRate: Double): List<E?> {
+    require(count >= 0) { "count must not be negative, got $count" }
+    return List(count) { pickOrNull(successRate) }
+}

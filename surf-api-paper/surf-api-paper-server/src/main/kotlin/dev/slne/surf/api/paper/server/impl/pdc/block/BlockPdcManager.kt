@@ -26,16 +26,17 @@ package dev.slne.surf.api.paper.server.impl.pdc.block
 
 import com.github.shynixn.mccoroutine.folia.globalRegionDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
-import com.github.shynixn.mccoroutine.folia.ticks
+import com.github.shynixn.mccoroutine.folia.ticksDuration
 import dev.slne.surf.api.paper.server.plugin
-import io.papermc.paper.math.BlockPosition
 import kotlinx.coroutines.delay
 import org.bukkit.block.Block
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 object BlockPdcManager {
-    private val dirtyBlocks = ConcurrentHashMap.newKeySet<Pair<UUID, BlockPosition>>()
+    private val dirtyBlocks = ConcurrentHashMap.newKeySet<DirtyBlockKey>()
+    private val cleanupScheduled = AtomicBoolean()
 
     fun isDirty(block: Block): Boolean {
         val entry = getEntry(block)
@@ -45,20 +46,32 @@ object BlockPdcManager {
     fun markDirty(block: CustomBlockData) {
         val entry = getEntry(block.block)
         dirtyBlocks.add(entry)
+        scheduleCleanup()
+    }
 
+    private fun scheduleCleanup() {
+        if (!cleanupScheduled.compareAndSet(false, true)) return
         plugin.launch(plugin.globalRegionDispatcher) {
-            delay(1.ticks)
-            dirtyBlocks.remove(entry)
+            delay(1.ticksDuration)
+            dirtyBlocks.clear()
+            cleanupScheduled.set(false)
+            if (dirtyBlocks.isNotEmpty()) {
+                scheduleCleanup()
+            }
         }
     }
 
-    private fun getEntry(block: Block): Pair<UUID, BlockPosition> {
-        val uuid = block.world.uid
-        val position = block.location.toBlock()
-        return uuid to position
-    }
+    private fun getEntry(block: Block) =
+        DirtyBlockKey(block.world.uid, block.x, block.y, block.z)
 
     fun hasCustomData(block: Block): Boolean {
         return block.chunk.persistentDataContainer.has(CustomBlockData.getKey(block))
     }
+
+    private data class DirtyBlockKey(
+        val worldId: UUID,
+        val x: Int,
+        val y: Int,
+        val z: Int,
+    )
 }

@@ -2,7 +2,6 @@ package dev.slne.surf.api.core.algorithms
 
 import dev.slne.surf.api.core.util.emptyObjectList
 import dev.slne.surf.api.core.util.mutableObjectListOf
-import dev.slne.surf.api.core.util.toMutableObjectList
 import it.unimi.dsi.fastutil.objects.ObjectList
 import org.spongepowered.math.vector.Vector2d
 import org.spongepowered.math.vector.Vector3d
@@ -17,18 +16,36 @@ object ConvexHull2D {
     //  val sorted = list.sortedWith(compareBy<Vec2> { it.x }.thenBy { it.z }).toMutableObjectList()
     fun <V : Vectord> compute(points: Array<V>): ObjectList<V> {
         if (points.isEmpty()) return emptyObjectList()
-        val points = points.sortedWith(Comparator<V> { a, b ->
+        if (points.size == 1) return mutableObjectListOf(points[0])
+
+        val sortedPoints = points.copyOf()
+        sortedPoints.sortWith(Comparator<V> { a, b ->
             val x = a.x().compareTo(b.x())
             if (x == 0) {
                 a.z().compareTo(b.z())
             } else {
                 x
             }
-        }).toMutableObjectList()
-        val hull = mutableObjectListOf<V>()
+        })
+
+        var uniqueSize = 0
+        for (point in sortedPoints) {
+            if (uniqueSize == 0) {
+                sortedPoints[uniqueSize++] = point
+                continue
+            }
+            val previous = sortedPoints[uniqueSize - 1]
+            if (previous.x() != point.x() || previous.z() != point.z()) {
+                sortedPoints[uniqueSize++] = point
+            }
+        }
+        if (uniqueSize == 1) return mutableObjectListOf(sortedPoints[0])
+
+        val hull = mutableObjectListOf<V>(uniqueSize)
 
         // lower hull
-        for (point in points) {
+        for (i in 0 until uniqueSize) {
+            val point = sortedPoints[i]
             while (hull.size >= 2 && !ccw(hull[hull.size - 2], hull.last(), point)) {
                 hull.removeLast()
             }
@@ -37,8 +54,8 @@ object ConvexHull2D {
 
         // upper hull
         val lowerSize = hull.size + 1
-        for (i in points.size - 2 downTo 0) {
-            val point = points[i]
+        for (i in uniqueSize - 2 downTo 0) {
+            val point = sortedPoints[i]
             while (hull.size >= lowerSize && !ccw(hull[hull.size - 2], hull.last(), point)) {
                 hull.removeLast()
             }
@@ -70,4 +87,9 @@ object ConvexHull2D {
 }
 
 fun <V : Vectord> Array<V>.convexHull2D() = ConvexHull2D.compute(this)
-inline fun <reified V : Vectord> Iterable<V>.convexHull2D() = toList().toTypedArray().convexHull2D()
+inline fun <reified V : Vectord> Iterable<V>.convexHull2D() =
+    if (this is Collection<V>) {
+        toTypedArray().convexHull2D()
+    } else {
+        toList().toTypedArray().convexHull2D()
+    }

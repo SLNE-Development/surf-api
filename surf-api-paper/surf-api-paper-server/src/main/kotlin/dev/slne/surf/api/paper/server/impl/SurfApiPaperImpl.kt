@@ -13,12 +13,14 @@ import dev.slne.surf.api.paper.server.time.TimeHandler
 import dev.slne.surf.api.paper.time.SkipOperations
 import dev.slne.surf.api.paper.time.TimeSkipResult
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import net.kyori.adventure.audience.Audience
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 import java.util.*
+import kotlin.math.absoluteValue
 
 @AutoService(SurfApiCore::class)
 class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
@@ -54,7 +56,7 @@ class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
     val dataFolder get() = plugin.dataPath
 
     override suspend fun skipTimeSmoothly(world: World, timeToAdd: Long) =
-        skipTimeSmoothly(world, timeToAdd, timeToAdd / TimeHandler.DEFAULT_SKIP_AMOUNT)
+        skipTimeSmoothly(world, timeToAdd, defaultSkipDuration(timeToAdd))
 
 
     override suspend fun skipTimeSmoothly(
@@ -68,38 +70,32 @@ class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
         skipOperation: SkipOperations.SkipOperation,
     ): TimeSkipResult {
         val timeToAdd = skipOperation.timeToAdd(world)
-        return skipTimeSmoothly(world, timeToAdd, timeToAdd / TimeHandler.DEFAULT_SKIP_AMOUNT)
+        return skipTimeSmoothly(world, timeToAdd, defaultSkipDuration(timeToAdd))
     }
 
-    override suspend fun skipTimeSmoothly(timeToAdd: Long) = coroutineScope {
-        val worlds = Bukkit.getWorlds()
-        worlds.associateWithTo(mutableObject2ObjectMapOf(worlds.size)) {
-            async {
-                skipTimeSmoothly(it, timeToAdd)
-            }
-        }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
-    }
+    override suspend fun skipTimeSmoothly(timeToAdd: Long) =
+        skipAllWorlds { skipTimeSmoothly(it, timeToAdd) }
 
     override suspend fun skipTimeSmoothly(
         timeToAdd: Long,
         duration: Long,
-    ) = coroutineScope {
-        val worlds = Bukkit.getWorlds()
-        worlds.associateWithTo(mutableObject2ObjectMapOf(worlds.size)) {
-            async {
-                skipTimeSmoothly(it, timeToAdd, duration)
-            }
-        }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
-    }
+    ) = skipAllWorlds { skipTimeSmoothly(it, timeToAdd, duration) }
 
     override suspend fun skipTimeSmoothly(
         skipOperation: SkipOperations.SkipOperation,
-    ) = coroutineScope {
+    ) = skipAllWorlds { skipTimeSmoothly(it, skipOperation) }
+
+    private suspend inline fun skipAllWorlds(
+        crossinline operation: suspend (World) -> TimeSkipResult,
+    ): Map<World, TimeSkipResult> = coroutineScope {
         val worlds = Bukkit.getWorlds()
-        worlds.associateWithTo(mutableObject2ObjectMapOf(worlds.size)) {
+        worlds.map { world ->
             async {
-                skipTimeSmoothly(it, skipOperation)
+                world to operation(world)
             }
-        }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
+        }.awaitAll().toMap(mutableObject2ObjectMapOf(worlds.size))
     }
+
+    private fun defaultSkipDuration(timeToAdd: Long): Long =
+        (timeToAdd / TimeHandler.DEFAULT_SKIP_AMOUNT).absoluteValue.coerceAtLeast(1L)
 }

@@ -3,6 +3,28 @@ plugins {
     `api-validation`
 }
 
+val generatedFastutilSources = layout.buildDirectory.dir("generated/sources/fastutil/main/kotlin")
+val generateFastutilExtensions by tasks.registering(GenerateFastutilExtensions::class) {
+    description = "Generates fastutil extension functions for primitive collections."
+    group = "codegen"
+    templateDirectory.set(layout.projectDirectory.dir("src/codegen/fastutil"))
+    outputDirectory.set(generatedFastutilSources)
+}
+
+kotlin {
+    sourceSets.named("main") {
+        kotlin.srcDir(generateFastutilExtensions)
+    }
+}
+
+tasks.named("compileKotlin") {
+    dependsOn(generateFastutilExtensions)
+}
+
+tasks.named("sourcesJar") {
+    dependsOn(generateFastutilExtensions)
+}
+
 dependencies {
     api(projects.surfApiShared.surfApiSharedPublic)
     api(libs.adventure.nbt)
@@ -38,6 +60,12 @@ dependencies {
     api(libs.bundles.ktor.client)
 
     api(libs.datafixerupper) { isTransitive = false }
+
+    testImplementation(kotlin("test"))
+    testRuntimeOnly(libs.fastutil)
+    testRuntimeOnly(libs.commons.math3)
+    testRuntimeOnly(libs.spongepowered.math)
+    testRuntimeOnly(libs.adventure.api)
 }
 
 tasks {

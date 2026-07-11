@@ -39,7 +39,7 @@ class NoopPacketEvents : PacketEventsAPI<Any>() {
     }
 
     override fun getPlugin(): Any? {
-        throw UnsupportedOperationException("Not implemented")
+        return null
     }
 
     override fun getServerManager(): ServerManager {
@@ -81,21 +81,21 @@ private object PlayerManagerHolder : PlayerManagerAbstract() {
     }
 
     override fun getChannel(player: Any): Any? {
-        throw UnsupportedOperationException("Not implemented")
+        return null
     }
 }
 
 private object NettyManagerHolder : NettyManager {
     override fun getChannelOperator(): ChannelOperator? {
-        TODO("Not implemented")
+        return null
     }
 
     override fun getByteBufOperator(): ByteBufOperator? {
-        TODO("Not implemented")
+        return null
     }
 
     override fun getByteBufAllocationOperator(): ByteBufAllocationOperator? {
-        TODO("Not implemented")
+        return null
     }
 }
 
@@ -113,7 +113,7 @@ private object ChannelInjectorHolder : ChannelInjector {
     }
 
     override fun isPlayerSet(p0: Any?): Boolean {
-        return TODO("Provide the return value")
+        return false
     }
 
     override fun isProxy(): Boolean {

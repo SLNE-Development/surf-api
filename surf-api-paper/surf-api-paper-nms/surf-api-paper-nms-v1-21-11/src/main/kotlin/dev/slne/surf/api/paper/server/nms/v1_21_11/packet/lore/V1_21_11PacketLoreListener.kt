@@ -68,36 +68,32 @@ object V1_21_11PacketLoreListener : PacketListener {
         if (!hasAnyHandlers()) return event
 
         val sourceItems = event.items
-        val updatedItems = ObjectArrayList<ItemStack>(sourceItems.size)
-
-        var changed = false
+        var updatedItems: ObjectArrayList<ItemStack>? = null
 
         for (i in sourceItems.indices) {
             val original = sourceItems[i]
             val updated = makeUpdatedItemStack(original)
 
-            if (updated !== original) {
-                changed = true
+            if (updated !== original && updatedItems == null) {
+                updatedItems = ObjectArrayList(sourceItems.size)
+                for (prefixIndex in 0 until i) {
+                    updatedItems.add(sourceItems[prefixIndex])
+                }
             }
-
-            updatedItems.add(updated)
+            updatedItems?.add(updated)
         }
 
         val originalCarried = event.carriedItem()
         val updatedCarried = makeUpdatedItemStack(originalCarried)
 
-        if (updatedCarried !== originalCarried) {
-            changed = true
-        }
-
-        if (!changed) {
+        if (updatedItems == null && updatedCarried === originalCarried) {
             return event
         }
 
         return ClientboundContainerSetContentPacket(
             event.containerId(),
             event.stateId(),
-            updatedItems,
+            updatedItems ?: sourceItems,
             updatedCarried
         )
     }
@@ -341,17 +337,22 @@ object V1_21_11PacketLoreListener : PacketListener {
          * smaller priority values run earlier and larger values run later — across both
          * keyed and global handlers.
          */
-        val combined = ObjectArrayList<PriorityHandler>(matchingKeyedHandlers.size + globalSnapshot.size)
-        combined.addAll(matchingKeyedHandlers)
-        for (i in globalSnapshot.indices) {
-            combined.add(globalSnapshot[i])
-        }
-        if (combined.size > 1) {
-            combined.sortWith(priorityComparator)
-        }
-
-        for (i in combined.indices) {
-            combined[i].handler.handleLore(mutableLore, pdc, bukkitStack)
+        if (matchingKeyedHandlers.isEmpty()) {
+            for (handler in globalSnapshot) {
+                handler.handler.handleLore(mutableLore, pdc, bukkitStack)
+            }
+        } else {
+            val combined = ObjectArrayList<PriorityHandler>(matchingKeyedHandlers.size + globalSnapshot.size)
+            combined.addAll(matchingKeyedHandlers)
+            for (handler in globalSnapshot) {
+                combined.add(handler)
+            }
+            if (combined.size > 1) {
+                combined.sortWith(priorityComparator)
+            }
+            for (handler in combined) {
+                handler.handler.handleLore(mutableLore, pdc, bukkitStack)
+            }
         }
 
         val updatedLines = ObjectArrayList<MinecraftComponent>(mutableLore.size)

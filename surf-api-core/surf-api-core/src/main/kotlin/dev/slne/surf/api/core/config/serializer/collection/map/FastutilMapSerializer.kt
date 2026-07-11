@@ -39,6 +39,7 @@ abstract class FastutilMapSerializer<M : Map<*, *>>(
      * Deserializes the node as a regular boxed [Map] and converts it into the target
      * fastutil map implementation.
      */
+    @Suppress("UNCHECKED_CAST")
     override fun deserialize(type: AnnotatedType, node: ConfigurationNode): M {
         val mapType = createAnnotatedMapType(type)
         val map = node.get(mapType) as? Map<Any, Any> ?: emptyMap()

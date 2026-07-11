@@ -26,18 +26,25 @@ class SurfEventBusImpl : SurfEventBus {
 
     companion object {
         private val log = logger()
+        private val handlerComparator =
+            compareBy<SurfEventHandlerEntry> { it.priority.ordinal }.thenBy { it.order }
     }
 
     private val handlers =
         ConcurrentHashMap<Class<out SurfEvent>, ConcurrentHashMap<SurfEventPriority, CopyOnWriteArrayList<SurfEventHandlerEntry>>>()
 
-    private val dispatchCache = ConcurrentHashMap<Class<out SurfEvent>, Array<SurfEventHandlerEntry>>()
+    private val dispatchCache = ConcurrentHashMap<Class<out SurfEvent>, DispatchCacheEntry>()
     private val emptyHandlers = emptyArray<SurfEventHandlerEntry>()
 
     private val nextOrder = AtomicLong()
+    private val handlerVersion = AtomicLong()
+    private val handlerMethodsCache = object : ClassValue<List<HandlerMethod>>() {
+        override fun computeValue(type: Class<*>): List<HandlerMethod> =
+            collectHandlerMethodsUncached(type)
+    }
 
     override fun registerListeners(listener: Any) {
-        val handlerMethods = collectHandlerMethods(listener.javaClass)
+        val handlerMethods = handlerMethodsCache.get(listener.javaClass)
         require(handlerMethods.isNotEmpty()) {
             "No @SurfEventHandler methods found on ${listener.javaClass.name}"
         }
@@ -47,13 +54,24 @@ class SurfEventBusImpl : SurfEventBus {
     }
 
     override fun unregisterListeners(listener: Any) {
-        for ((_, byPriority) in handlers) {
-            for ((_, list) in byPriority) {
-                list.removeAll { it.token === listener }
+        for (eventType in handlers.keys) {
+            var changed = false
+            handlers.computeIfPresent(eventType) { _, byPriority ->
+                for (priority in byPriority.keys) {
+                    byPriority.computeIfPresent(priority) { _, list ->
+                        if (list.removeIf { it.token === listener }) {
+                            changed = true
+                        }
+                        list.takeUnless { it.isEmpty() }
+                    }
+                }
+                byPriority.takeUnless { it.isEmpty() }
+            }
+            if (changed) {
+                handlerVersion.incrementAndGet()
+                invalidateDispatchCacheFor(eventType)
             }
         }
-
-        dispatchCache.clear()
     }
 
     override fun <T : SurfSyncEvent> registerHandler(
@@ -123,9 +141,10 @@ class SurfEventBusImpl : SurfEventBus {
     override suspend fun callAsync(event: SurfAsyncEvent): SurfAsyncEvent {
         val matching = collectMatching(event.javaClass) ?: return event
         val cancellable = event as? SurfCancellableEvent
+        val coroutineContext = currentCoroutineContext()
 
         for (handler in matching) {
-            currentCoroutineContext().ensureActive()
+            coroutineContext.ensureActive()
 
             if (handler.skipWhenCancelled && cancellable?.isCancelled == true) continue
 
@@ -137,7 +156,7 @@ class SurfEventBusImpl : SurfEventBus {
                 // abort event dispatch for later listeners. However, if the calling coroutine
                 // context is actually cancelled, ensureActive() rethrows and we stop dispatching.
                 if (t is CancellationException) {
-                    currentCoroutineContext().ensureActive()
+                    coroutineContext.ensureActive()
                     log.atWarning()
                         .withCause(t)
                         .log(
@@ -162,17 +181,31 @@ class SurfEventBusImpl : SurfEventBus {
     }
 
     private fun addHandler(eventType: Class<out SurfEvent>, handler: SurfEventHandlerEntry) {
-        handlers
-            .computeIfAbsent(eventType) { ConcurrentHashMap() }
-            .computeIfAbsent(handler.priority) { CopyOnWriteArrayList() }
-            .add(handler)
+        handlers.compute(eventType) { _, existingByPriority ->
+            val byPriority = existingByPriority ?: ConcurrentHashMap()
+            byPriority.compute(handler.priority) { _, existingHandlers ->
+                (existingHandlers ?: CopyOnWriteArrayList()).apply { add(handler) }
+            }
+            byPriority
+        }
 
-        dispatchCache.clear()
+        handlerVersion.incrementAndGet()
+        invalidateDispatchCacheFor(eventType)
     }
 
     private fun collectMatching(concreteType: Class<out SurfEvent>): Array<SurfEventHandlerEntry>? {
-        val handlers = dispatchCache.computeIfAbsent(concreteType, ::buildMatchingHandlers)
-        return handlers.takeIf { it.isNotEmpty() }
+        while (true) {
+            val version = handlerVersion.get()
+            val cached = dispatchCache[concreteType]
+            if (cached != null && cached.version == version) {
+                return cached.handlers.takeIf { it.isNotEmpty() }
+            }
+
+            val matching = buildMatchingHandlers(concreteType)
+            if (version != handlerVersion.get()) continue
+            dispatchCache[concreteType] = DispatchCacheEntry(version, matching)
+            return matching.takeIf { it.isNotEmpty() }
+        }
     }
 
     private fun buildMatchingHandlers(
@@ -192,10 +225,7 @@ class SurfEventBusImpl : SurfEventBus {
 
         if (result.isEmpty) return emptyHandlers
 
-        result.sortWith(
-            compareBy<SurfEventHandlerEntry> { it.priority.ordinal }
-                .thenBy { it.order }
-        )
+        result.sortWith(handlerComparator)
 
         return result.toTypedArray()
     }
@@ -260,7 +290,7 @@ class SurfEventBusImpl : SurfEventBus {
      * superclasses) and returns the ones annotated with [SurfEventHandler],
      * after validating their signature.
      */
-    private fun collectHandlerMethods(type: Class<*>): List<HandlerMethod> {
+    private fun collectHandlerMethodsUncached(type: Class<*>): List<HandlerMethod> {
         val out = ObjectArrayList<HandlerMethod>()
         var current: Class<*>? = type
         while (current != null && current != Any::class.java) {
@@ -273,6 +303,14 @@ class SurfEventBusImpl : SurfEventBus {
             current = current.superclass
         }
         return out
+    }
+
+    private fun invalidateDispatchCacheFor(registeredType: Class<out SurfEvent>) {
+        for (concreteType in dispatchCache.keys) {
+            if (registeredType.isAssignableFrom(concreteType)) {
+                dispatchCache.remove(concreteType)
+            }
+        }
     }
 
     private fun validateAndExtractEventType(method: Method): Class<out SurfEvent> {
@@ -316,5 +354,10 @@ class SurfEventBusImpl : SurfEventBus {
         val method: Method,
         val annotation: SurfEventHandler,
         val eventType: Class<out SurfEvent>,
+    )
+
+    private data class DispatchCacheEntry(
+        val version: Long,
+        val handlers: Array<SurfEventHandlerEntry>,
     )
 }

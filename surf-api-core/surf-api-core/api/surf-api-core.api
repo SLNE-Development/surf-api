@@ -774,6 +774,10 @@ public final class dev/slne/surf/api/core/event/SurfEventBus$DefaultImpls {
 	public static synthetic fun registerHandler$default (Ldev/slne/surf/api/core/event/SurfEventBus;Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public final class dev/slne/surf/api/core/event/SurfEventBusKt {
+	public static final fun unregister (Ldev/slne/surf/api/core/event/SurfEventBus;Ljava/lang/Object;)V
+}
+
 public abstract interface annotation class dev/slne/surf/api/core/event/SurfEventHandler : java/lang/annotation/Annotation {
 	public abstract fun ignoreCancelled ()Z
 	public abstract fun priority ()Ldev/slne/surf/api/core/event/SurfEventPriority;
@@ -7128,6 +7132,7 @@ public final class dev/slne/surf/api/core/luckperms/LuckPermsAccessKt {
 public final class dev/slne/surf/api/core/math/VoxelLineTracer {
 	public static final field INSTANCE Ldev/slne/surf/api/core/math/VoxelLineTracer;
 	public final fun trace (Lorg/spongepowered/math/vector/Vector3d;Lorg/spongepowered/math/vector/Vector3d;)Lkotlin/sequences/Sequence;
+	public final fun traceTo (Lorg/spongepowered/math/vector/Vector3d;Lorg/spongepowered/math/vector/Vector3d;Ljava/util/Collection;)Ljava/util/Collection;
 }
 
 public abstract interface annotation class dev/slne/surf/api/core/messages/BundlePath : java/lang/annotation/Annotation {
@@ -9080,6 +9085,11 @@ public final class dev/slne/surf/api/core/random/RandomSelector$Companion {
 	public static synthetic fun fromWeightedIterable$default (Ldev/slne/surf/api/core/random/RandomSelector$Companion;Ljava/lang/Iterable;Ljava/util/random/RandomGenerator;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/core/random/RandomSelector;
 }
 
+public final class dev/slne/surf/api/core/random/RandomSelectorKt {
+	public static final fun pickMany (Ldev/slne/surf/api/core/random/RandomSelector;I)Ljava/util/List;
+	public static final fun pickManyOrNull (Ldev/slne/surf/api/core/random/RandomSelector;ID)Ljava/util/List;
+}
+
 public abstract interface class dev/slne/surf/api/core/random/Weighted {
 	public abstract fun getWeight ()D
 }
@@ -10788,6 +10798,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toBooleanSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
 	public static final fun toBooleanSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
 	public static final fun toBooleanSet ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
+	public static final fun toBooleanSet ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
 	public static final fun toByteList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteList;
 	public static final fun toByteList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteList;
 	public static final fun toByteList ([B)Lit/unimi/dsi/fastutil/bytes/ByteList;
@@ -10795,6 +10806,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toByteSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
 	public static final fun toByteSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
 	public static final fun toByteSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
+	public static final fun toByteSet ([B)Lit/unimi/dsi/fastutil/bytes/ByteSet;
 	public static final fun toByteSet ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
 	public static final fun toCharList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharList;
 	public static final fun toCharList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharList;
@@ -10803,13 +10815,16 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toCharSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharSet;
 	public static final fun toCharSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/chars/CharSet;
 	public static final fun toCharSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharSet;
+	public static final fun toCharSet ([C)Lit/unimi/dsi/fastutil/chars/CharSet;
 	public static final fun toCharSet ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharSet;
 	public static final fun toDoubleList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
 	public static final fun toDoubleList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
+	public static final fun toDoubleList ([D)Lit/unimi/dsi/fastutil/doubles/DoubleList;
 	public static final fun toDoubleList ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
 	public static final fun toDoubleSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
 	public static final fun toDoubleSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
 	public static final fun toDoubleSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
+	public static final fun toDoubleSet ([D)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
 	public static final fun toDoubleSet ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
 	public static final fun toFloatList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatList;
 	public static final fun toFloatList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatList;
@@ -10818,6 +10833,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toFloatSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatSet;
 	public static final fun toFloatSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/floats/FloatSet;
 	public static final fun toFloatSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatSet;
+	public static final fun toFloatSet ([F)Lit/unimi/dsi/fastutil/floats/FloatSet;
 	public static final fun toFloatSet ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatSet;
 	public static final fun toIntList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntList;
 	public static final fun toIntList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntList;
@@ -10826,6 +10842,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toIntSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntSet;
 	public static final fun toIntSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/ints/IntSet;
 	public static final fun toIntSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntSet;
+	public static final fun toIntSet ([I)Lit/unimi/dsi/fastutil/ints/IntSet;
 	public static final fun toIntSet ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntSet;
 	public static final fun toLongList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongList;
 	public static final fun toLongList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongList;
@@ -10834,6 +10851,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toLongSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongSet;
 	public static final fun toLongSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/longs/LongSet;
 	public static final fun toLongSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongSet;
+	public static final fun toLongSet ([J)Lit/unimi/dsi/fastutil/longs/LongSet;
 	public static final fun toLongSet ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongSet;
 	public static final fun toMutableBooleanList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
 	public static final fun toMutableBooleanList ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
@@ -10842,12 +10860,14 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toMutableBooleanSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
 	public static final fun toMutableBooleanSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
 	public static final fun toMutableBooleanSet ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
+	public static final fun toMutableBooleanSet ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
 	public static final fun toMutableByteList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
 	public static final fun toMutableByteList ([B)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
 	public static final fun toMutableByteList ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
 	public static final fun toMutableByteSet (Lit/unimi/dsi/fastutil/bytes/ByteSet;)Lit/unimi/dsi/fastutil/bytes/ByteOpenHashSet;
 	public static final fun toMutableByteSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
 	public static final fun toMutableByteSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
+	public static final fun toMutableByteSet ([B)Lit/unimi/dsi/fastutil/bytes/ByteSet;
 	public static final fun toMutableByteSet ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
 	public static final fun toMutableCharList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharArrayList;
 	public static final fun toMutableCharList ([C)Lit/unimi/dsi/fastutil/chars/CharArrayList;
@@ -10855,12 +10875,15 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toMutableCharSet (Lit/unimi/dsi/fastutil/chars/CharSet;)Lit/unimi/dsi/fastutil/chars/CharOpenHashSet;
 	public static final fun toMutableCharSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharSet;
 	public static final fun toMutableCharSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharSet;
+	public static final fun toMutableCharSet ([C)Lit/unimi/dsi/fastutil/chars/CharSet;
 	public static final fun toMutableCharSet ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharSet;
 	public static final fun toMutableDoubleList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
+	public static final fun toMutableDoubleList ([D)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
 	public static final fun toMutableDoubleList ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
 	public static final fun toMutableDoubleSet (Lit/unimi/dsi/fastutil/doubles/DoubleSet;)Lit/unimi/dsi/fastutil/doubles/DoubleOpenHashSet;
 	public static final fun toMutableDoubleSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
 	public static final fun toMutableDoubleSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
+	public static final fun toMutableDoubleSet ([D)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
 	public static final fun toMutableDoubleSet ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
 	public static final fun toMutableFloatList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
 	public static final fun toMutableFloatList ([F)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
@@ -10868,6 +10891,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toMutableFloatSet (Lit/unimi/dsi/fastutil/floats/FloatSet;)Lit/unimi/dsi/fastutil/floats/FloatOpenHashSet;
 	public static final fun toMutableFloatSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatSet;
 	public static final fun toMutableFloatSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatSet;
+	public static final fun toMutableFloatSet ([F)Lit/unimi/dsi/fastutil/floats/FloatSet;
 	public static final fun toMutableFloatSet ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatSet;
 	public static final fun toMutableIntList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntArrayList;
 	public static final fun toMutableIntList ([I)Lit/unimi/dsi/fastutil/ints/IntArrayList;
@@ -10875,6 +10899,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toMutableIntSet (Lit/unimi/dsi/fastutil/ints/IntSet;)Lit/unimi/dsi/fastutil/ints/IntOpenHashSet;
 	public static final fun toMutableIntSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntSet;
 	public static final fun toMutableIntSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntSet;
+	public static final fun toMutableIntSet ([I)Lit/unimi/dsi/fastutil/ints/IntSet;
 	public static final fun toMutableIntSet ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntSet;
 	public static final fun toMutableLongList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongArrayList;
 	public static final fun toMutableLongList ([J)Lit/unimi/dsi/fastutil/longs/LongArrayList;
@@ -10882,6 +10907,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toMutableLongSet (Lit/unimi/dsi/fastutil/longs/LongSet;)Lit/unimi/dsi/fastutil/longs/LongOpenHashSet;
 	public static final fun toMutableLongSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongSet;
 	public static final fun toMutableLongSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongSet;
+	public static final fun toMutableLongSet ([J)Lit/unimi/dsi/fastutil/longs/LongSet;
 	public static final fun toMutableLongSet ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongSet;
 	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
 	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
@@ -10969,6 +10995,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toMutableShortSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toMutableShortSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toMutableShortSet ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
+	public static final fun toMutableShortSet ([S)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
 	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
 	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
@@ -11056,6 +11083,7 @@ public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
 	public static final fun toShortSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toShortSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 	public static final fun toShortSet ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
+	public static final fun toShortSet ([S)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 }
 
 public final class dev/slne/surf/api/core/util/SerializableError {

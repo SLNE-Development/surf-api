@@ -23,7 +23,7 @@ class GeneratedKeyType(
         get() {
             val typeBuilder = keyHolderType()
 
-            for ((keyPath, _) in registry.entries.toSortedMap(Formatting.ALPHABETIC_KEY_ORDER)) {
+            for (keyPath in registry.entries.keys.sortedWith(Formatting.ALPHABETIC_KEY_ORDER)) {
                 val fieldName = Formatting.formatKeyAsField(keyPath.removePrefix("minecraft:"))
                 val fieldBuilder =
                     FieldSpec.builder(Key::class.java, fieldName, PUBLIC, STATIC, FINAL)

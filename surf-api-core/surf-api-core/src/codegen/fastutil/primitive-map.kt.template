@@ -1,0 +1,23 @@
+// {{KEY_NAME}}2{{VALUE_NAME}}Map Extensions
+inline fun mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf(vararg pairs: Pair<{{KEY_NAME}}, {{VALUE_NAME}}>) =
+    {{KEY_NAME}}2{{VALUE_NAME}}OpenHashMap(pairs.size).apply { putAll(pairs) }
+inline fun mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf() = {{KEY_NAME}}2{{VALUE_NAME}}OpenHashMap()
+inline fun mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf(capacity: Int) =
+    {{KEY_NAME}}2{{VALUE_NAME}}OpenHashMap(capacity)
+inline fun {{KEY_LOWER_NAME}}2{{VALUE_NAME}}MapOf(vararg pairs: Pair<{{KEY_NAME}}, {{VALUE_NAME}}>) =
+    mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf(*pairs).freeze()
+inline fun {{KEY_LOWER_NAME}}2{{VALUE_NAME}}MapOf() = empty{{KEY_NAME}}2{{VALUE_NAME}}Map()
+inline fun empty{{KEY_NAME}}2{{VALUE_NAME}}Map(): @Unmodifiable {{KEY_NAME}}2{{VALUE_NAME}}Map =
+    {{KEY_NAME}}2{{VALUE_NAME}}Maps.EMPTY_MAP
+inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.synchronize(): {{KEY_NAME}}2{{VALUE_NAME}}Map =
+    {{KEY_NAME}}2{{VALUE_NAME}}Maps.synchronize(this)
+inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.freeze(): @UnmodifiableView {{KEY_NAME}}2{{VALUE_NAME}}Map =
+    {{KEY_NAME}}2{{VALUE_NAME}}Maps.unmodifiable(this)
+inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.toMutableObjectList(): ObjectList<Pair<{{KEY_NAME}}, {{VALUE_NAME}}>> {
+    if (isEmpty()) return emptyObjectList()
+    val list = ObjectArrayList<Pair<{{KEY_NAME}}, {{VALUE_NAME}}>>(size)
+    forEach { key, value -> list.add(key to value) }
+    return list
+}
+inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.toObjectList(): ObjectList<Pair<{{KEY_NAME}}, {{VALUE_NAME}}>> =
+    toMutableObjectList().freeze()

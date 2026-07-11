@@ -1,11 +1,19 @@
 package dev.slne.surf.api.shared.api.annotation
 
-import java.util.*
+import java.util.HashSet
+import java.util.concurrent.ConcurrentHashMap
 
 object AnnotationUtils {
 
-    private val cache = Collections.synchronizedMap(WeakHashMap<Class<*>, MutableMap<Class<out Annotation>, Any?>>())
+    @Volatile
+    private var cache = newCache()
     private val NULL_SENTINEL = Any()
+
+    private fun newCache() =
+        object : ClassValue<ConcurrentHashMap<Class<out Annotation>, Any>>() {
+            override fun computeValue(type: Class<*>): ConcurrentHashMap<Class<out Annotation>, Any> =
+                ConcurrentHashMap()
+        }
 
     /**
      * Finds a single annotation of [annotationType] on [clazz], searching in this order:
@@ -39,13 +47,11 @@ object AnnotationUtils {
     }
 
     private fun <A : Annotation> getCached(clazz: Class<*>, annotationType: Class<A>): Any? {
-        val perClass = cache[clazz] ?: return null
-        return perClass[annotationType]
+        return cache.get(clazz)[annotationType]
     }
 
     private fun putCached(clazz: Class<*>, annotationType: Class<out Annotation>, value: Any) {
-        val perClass = cache.getOrPut(clazz) { HashMap() }
-        perClass[annotationType] = value
+        cache.get(clazz).putIfAbsent(annotationType, value)
     }
 
     private fun <A : Annotation> findAnnotationInternal(
@@ -111,6 +117,6 @@ object AnnotationUtils {
     }
 
     fun clearCache() {
-        cache.clear()
+        cache = newCache()
     }
 }

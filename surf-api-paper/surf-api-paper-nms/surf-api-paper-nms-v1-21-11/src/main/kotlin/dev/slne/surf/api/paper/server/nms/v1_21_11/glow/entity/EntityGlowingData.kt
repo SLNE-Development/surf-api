@@ -39,14 +39,12 @@ data class EntityGlowingData(
         val teamData = V1_21_11TeamData.getByColorOrNull(color) ?: return V1_21_11PacketOperationImpl.empty()
 
         val operation = PacketOperation.start()
-        if (teamData.removeSeen(playerData.uuid)) {
-            operation.add(
-                V1_21_11SurfPaperNmsGlowingBridgeImpl.removeEntityFromTeam(
-                    teamData,
-                    teamId
-                )
+        operation.add(
+            V1_21_11SurfPaperNmsGlowingBridgeImpl.removeEntityFromTeam(
+                teamData,
+                teamId
             )
-        }
+        )
 
         return operation
     }

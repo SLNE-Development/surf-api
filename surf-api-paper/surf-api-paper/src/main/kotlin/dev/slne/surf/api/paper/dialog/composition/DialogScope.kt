@@ -20,9 +20,10 @@ class DialogScope<S : DialogState>(
         block: suspend CoroutineScope.() -> T
     ): T {
         val key = keys.toList()
-        val cached = store.recall<T>(key)
-
-        if (cached != null) return cached
+        if (store.hasRemembered(key)) {
+            @Suppress("UNCHECKED_CAST")
+            return store.recall<T>(key) as T
+        }
 
         val value = block(scope)
 

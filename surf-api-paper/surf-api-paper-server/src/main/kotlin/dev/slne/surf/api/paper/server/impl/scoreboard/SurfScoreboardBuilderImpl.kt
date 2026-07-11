@@ -90,7 +90,9 @@ class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBu
             }
 
             // Animation from right to left
-            frames.addAll(frames.reversed())
+            for (index in frames.lastIndex downTo 0) {
+                frames.add(frames[index])
+            }
 
             return CollectionSidebarAnimation(frames)
         }

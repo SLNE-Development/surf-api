@@ -5,7 +5,8 @@ import org.bukkit.inventory.EntityEquipment
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 
-abstract class DummyEntityEquipment: EntityEquipment {
+@Suppress("OVERRIDE_DEPRECATION")
+abstract class DummyEntityEquipment : EntityEquipment {
     override fun setItem(slot: EquipmentSlot, item: ItemStack?) {
         throw NotImplementedError()
     }

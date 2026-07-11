@@ -76,7 +76,7 @@ internal class MapSerializer(
 
         val writeKeyBack = keyType.isAnnotationPresent(WriteKeyBack::class.java)
         val keyNode = BasicConfigurationNode.root(node.options())
-        val keysToClear = mutableSetOf<Any>()
+        val keysToClear = if (writeKeyBack) mutableSetOf<Any>() else null
 
         for ((rawKey, valueNode) in node.childrenMap()) {
             val deserializedKey = deserializePart(
@@ -112,7 +112,7 @@ internal class MapSerializer(
                 val writtenKey = requireNotNull(keyNode.raw()) { "Key must not be null!" }
 
                 if (shouldKeep && rawKey != writtenKey) {
-                    keysToClear += rawKey
+                    keysToClear?.add(rawKey)
                 }
             }
 
@@ -121,7 +121,7 @@ internal class MapSerializer(
 
 
         if (writeKeyBack) {
-            for (keyToClear in keysToClear) {
+            for (keyToClear in keysToClear.orEmpty()) {
                 node.node(keyToClear).raw(null)
             }
         }
@@ -168,9 +168,11 @@ internal class MapSerializer(
 
         val unvisitedKeys = if (node.empty()) {
             node.raw(emptyMap<Any, Any>())
-            mutableSetOf()
-        } else {
+            if (clearInvalids) mutableSetOf() else null
+        } else if (clearInvalids) {
             node.childrenMap().keys.toMutableSet()
+        } else {
+            null
         }
 
         val keyNode = BasicConfigurationNode.root(node.options())
@@ -185,11 +187,11 @@ internal class MapSerializer(
 
             serializePart(valueType, valueSerializer, value, "value", child, child.path())
 
-            unvisitedKeys -= keyObj
+            unvisitedKeys?.remove(keyObj)
         }
 
         if (clearInvalids) {
-            for (unusedChild in unvisitedKeys) {
+            for (unusedChild in unvisitedKeys.orEmpty()) {
                 node.removeChild(unusedChild)
             }
         }

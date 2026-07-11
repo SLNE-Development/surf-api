@@ -5,7 +5,9 @@ import dev.slne.surf.api.gen.data.AdvancementRegistry
 import dev.slne.surf.api.gen.data.Registries
 import dev.slne.surf.api.gen.generator.Generators
 import dev.slne.surf.api.gen.generator.SourceGenerator
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import java.nio.file.FileSystemNotFoundException
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -22,20 +24,24 @@ fun main() {
     }
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 private fun generate() {
     val json = Json {
         ignoreUnknownKeys = true
     }
 
-    val registryFile = Main::class.java.getResourceAsStream("/registries/registries.json")!!
-    val registries = json.decodeFromString<Registries>(registryFile.readAllBytes().decodeToString())
+    val registries = requireNotNull(
+        Main::class.java.getResourceAsStream("/registries/registries.json")
+    ) { "Missing bundled registry resource: /registries/registries.json" }.use {
+        json.decodeFromStream<Registries>(it)
+    }
 
     val advancementRoot = resourceDirPath("/registries/advancement", Main::class.java)
     val advancementRegistry = loadAdvancements(advancementRoot)
 
     val generators = Generators(registries, advancementRegistry)
 
-    val root = Path("../surf-api-core/surf-api-core-api/src/main")
+    val root = Path("../surf-api-core/surf-api-core/src/main")
     val java = root / "java"
     val kotlin = root / "kotlin"
 

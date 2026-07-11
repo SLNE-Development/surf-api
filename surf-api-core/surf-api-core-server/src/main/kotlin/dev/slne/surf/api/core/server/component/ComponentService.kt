@@ -98,10 +98,18 @@ abstract class ComponentService {
 
         val sortedComponentMetas = ComponentSorting.topologicalSort(meta.components)
         val loadedComponents = mutableObjectListOf<ComponentEntry>()
+        val loadedComponentClassNames = mutableObjectSetOf<String>()
         for (meta in sortedComponentMetas) {
-            val component = instantiateComponentIfValid(owner, loadedComponents, meta, classLoader)
+            val component = instantiateComponentIfValid(
+                owner,
+                loadedComponents,
+                loadedComponentClassNames,
+                meta,
+                classLoader
+            )
             if (component != null) {
                 loadedComponents.add(component)
+                loadedComponentClassNames.add(meta.className)
             }
         }
 
@@ -146,25 +154,26 @@ abstract class ComponentService {
             return components
         }
 
-        val context = ComponentContext(
-            owner = owner,
-            allComponents = components.map { it.component }
-        )
+        val allComponents = mutableObjectListOf<SurfComponent>(components.size)
+        for (entry in components) {
+            allComponents.add(entry.component)
+        }
+        val context = ComponentContext(owner = owner, allComponents = allComponents)
 
-        return components.map { entry ->
-            var processedComponent = entry
+        val processed = mutableObjectListOf<ComponentEntry>(components.size)
+        for (entry in components) {
+            var processedComponent = entry.component
             for (processor in postProcessors) {
-                processedComponent = ComponentEntry(
-                    processor.postProcessAfterInitialization(
-                        processedComponent.component,
-                        processedComponent.component::class.qualifiedName
-                            ?: processedComponent.component::class.java.name,
-                        context
-                    ), entry.priority
+                val componentClass = processedComponent::class
+                processedComponent = processor.postProcessAfterInitialization(
+                    processedComponent,
+                    componentClass.qualifiedName ?: componentClass.java.name,
+                    context
                 )
             }
-            processedComponent
+            processed.add(ComponentEntry(processedComponent, entry.priority))
         }
+        return processed
     }
 
     suspend fun invokePostProcessorsBeforeDestruction(owner: Any) {
@@ -180,10 +189,11 @@ abstract class ComponentService {
             allComponents = components
         )
 
-        // Invoke in reverse priority order
-        val reversedProcessors = postProcessors.reversed()
-        for (component in components.reversed()) {
-            for (processor in reversedProcessors) {
+        // Invoke in reverse priority order without materializing reversed copies.
+        for (componentIndex in components.lastIndex downTo 0) {
+            val component = components[componentIndex]
+            for (processorIndex in postProcessors.lastIndex downTo 0) {
+                val processor = postProcessors[processorIndex]
                 processor.postProcessBeforeDestruction(
                     component,
                     component::class.qualifiedName ?: component::class.java.name,
@@ -196,6 +206,7 @@ abstract class ComponentService {
     private suspend fun instantiateComponentIfValid(
         owner: Any,
         loadedComponents: List<ComponentEntry>,
+        loadedComponentClassNames: Set<String>,
         componentMeta: PluginComponentMeta.Component,
         classLoader: ClassLoader
     ): ComponentEntry? {
@@ -225,12 +236,7 @@ abstract class ComponentService {
         }
 
         for (componentDependency in componentMeta.componentDependencies) {
-            val isLoaded = loadedComponents.any { (component) ->
-                val kClass = component::class
-                val className = kClass.qualifiedName ?: kClass.java.name
-                className == componentDependency
-            }
-            if (!isLoaded) {
+            if (componentDependency !in loadedComponentClassNames) {
                 missingDependencies.computeIfAbsent("Component") { mutableObjectSetOf() }
                     .add(componentDependency)
             }
@@ -313,17 +319,13 @@ abstract class ComponentService {
         logger: ComponentLogger
     ): Boolean {
         for (missingComponent in componentMeta.conditionalOnMissingComponents) {
+            val missingComponentClass = try {
+                Class.forName(missingComponent, false, classLoader)
+            } catch (_: ClassNotFoundException) {
+                continue
+            }
             val isLoaded = loadedComponents.any { (component) ->
-                val loadedComponentClass = component.javaClass
-                val missingComponentClass = try {
-                    Class.forName(missingComponent, false, classLoader)
-                } catch (_: ClassNotFoundException) {
-                    null
-                }
-
-                missingComponentClass != null && missingComponentClass.isAssignableFrom(
-                    loadedComponentClass
-                )
+                missingComponentClass.isInstance(component)
             }
             if (isLoaded) {
                 logger.debug(
@@ -441,12 +443,23 @@ abstract class ComponentService {
     }
 
     suspend fun getAllComponents(): List<SurfComponent> {
-        return componentsCache.asMap().values.flatten().map { it.component }
+        val result = mutableObjectListOf<SurfComponent>()
+        for (entries in componentsCache.asMap().values) {
+            for (entry in entries) {
+                result.add(entry.component)
+            }
+        }
+        return result
     }
 
     fun getAllComponentsLoaded(): List<SurfComponent> {
-        return componentsCache.underlying().asMap().values.flatMap { it.getNow(emptyList()) }
-            .map { it.component }
+        val result = mutableObjectListOf<SurfComponent>()
+        for (future in componentsCache.underlying().asMap().values) {
+            for (entry in future.getNow(emptyList())) {
+                result.add(entry.component)
+            }
+        }
+        return result
     }
 
     abstract fun getClassloader(owner: Any): ClassLoader

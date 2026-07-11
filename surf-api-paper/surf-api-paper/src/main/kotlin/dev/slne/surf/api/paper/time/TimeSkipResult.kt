@@ -30,12 +30,18 @@ enum class TimeSkipResult(
     ALREADY_SKIPPING(false);
 
     /**
+     * Whether this result represents a successful time skip.
+     */
+    val isSuccess: Boolean
+        get() = success
+
+    /**
      * Converts the TimeSkipResult to a boolean value.
      *
      * @return true if the TimeSkipResult represents a successful time skip operation, false
      * otherwise.
      */
     fun toBoolean(): Boolean {
-        return success
+        return isSuccess
     }
 }

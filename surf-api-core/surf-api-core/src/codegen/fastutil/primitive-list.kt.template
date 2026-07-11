@@ -1,0 +1,33 @@
+// {{NAME}}List Extensions
+inline fun mutable{{NAME}}ListOf(vararg elements: {{NAME}}) = {{NAME}}ArrayList(elements)
+inline fun mutable{{NAME}}ListOf() = {{NAME}}ArrayList()
+inline fun mutable{{NAME}}ListOf(capacity: Int) = {{NAME}}ArrayList(capacity)
+inline fun mutable{{NAME}}ListOf(iterable: Iterable<{{NAME}}>) = when (iterable) {
+    is Collection -> {{NAME}}ArrayList(iterable)
+    else -> {{NAME}}ArrayList(iterable.iterator())
+}
+inline fun mutable{{NAME}}ListOfNotNull(vararg elements: {{NAME}}?) =
+    elements.filterNotNullTo({{NAME}}ArrayList())
+inline fun mutable{{NAME}}ListOfNotNull(iterable: Iterable<{{NAME}}?>) =
+    iterable.filterNotNullTo({{NAME}}ArrayList())
+inline fun {{LOWER_NAME}}ListOf(vararg elements: {{NAME}}): @Unmodifiable {{NAME}}List =
+    {{NAME}}List.of(*elements)
+inline fun {{LOWER_NAME}}ListOf() = empty{{NAME}}List()
+inline fun {{LOWER_NAME}}ListOfNotNull(element: {{NAME}}?): @Unmodifiable {{NAME}}List =
+    if (element != null) {{NAME}}List.of(element) else empty{{NAME}}List()
+inline fun {{LOWER_NAME}}ListOfNotNull(vararg elements: {{NAME}}?): @Unmodifiable {{NAME}}List =
+    elements.filterNotNullTo({{NAME}}ArrayList()).freeze()
+inline fun {{LOWER_NAME}}ListOfNotNull(iterable: Iterable<{{NAME}}?>): @Unmodifiable {{NAME}}List =
+    iterable.filterNotNullTo({{NAME}}ArrayList()).freeze()
+inline fun empty{{NAME}}List(): @Unmodifiable {{NAME}}List = {{NAME}}List.of()
+inline fun {{NAME}}List.synchronize(): {{NAME}}List = {{NAME}}Lists.synchronize(this)
+inline fun {{NAME}}List.freeze(): @UnmodifiableView {{NAME}}List = {{NAME}}Lists.unmodifiable(this)
+inline fun Sequence<{{NAME}}>.toMutable{{NAME}}List() = {{NAME}}ArrayList(iterator())
+inline fun Sequence<{{NAME}}>.to{{NAME}}List() = toMutable{{NAME}}List().freeze()
+inline fun Iterable<{{NAME}}>.to{{NAME}}List() =
+    this as? {{NAME}}List ?: {{NAME}}ArrayList(iterator()).freeze()
+inline fun Array<{{NAME}}>.to{{NAME}}List(): @Unmodifiable {{NAME}}List =
+    {{NAME}}List.of(*{{ARRAY_CONVERSION}})
+inline fun Array<{{NAME}}>.toMutable{{NAME}}List() = {{NAME}}ArrayList({{ARRAY_CONVERSION}})
+inline fun {{ARRAY_TYPE}}.to{{NAME}}List(): @Unmodifiable {{NAME}}List = {{NAME}}List.of(*this)
+inline fun {{ARRAY_TYPE}}.toMutable{{NAME}}List() = {{NAME}}ArrayList(this)

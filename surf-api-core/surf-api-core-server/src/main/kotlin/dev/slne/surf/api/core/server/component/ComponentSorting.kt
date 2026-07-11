@@ -1,14 +1,11 @@
 package dev.slne.surf.api.core.server.component
 
-import com.google.common.collect.Maps
-import com.google.common.graph.Graph
-import com.google.common.graph.GraphBuilder
 import dev.slne.surf.api.core.util.mutableObjectListOf
+import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.shared.internal.hook.PluginComponentMeta
 import java.util.*
 
 
-@Suppress("UnstableApiUsage")
 object ComponentSorting {
     fun topologicalSort(
         componentsMeta: List<PluginComponentMeta.Component>,
@@ -17,44 +14,26 @@ object ComponentSorting {
             first.priority.compareTo(second.priority)
         }
 
-        val graph = GraphBuilder.directed()
-            .allowsSelfLoops(false)
-            .expectedNodeCount(sorted.size)
-            .build<PluginComponentMeta.Component>()
-
-        val candidateMap = Maps.uniqueIndex(sorted, PluginComponentMeta.Component::className)
-
+        val candidateMap = mutableObject2ObjectMapOf<String, PluginComponentMeta.Component>(sorted.size)
         for (candidate in sorted) {
-            graph.addNode(candidate)
-
-            for (dependency in candidate.componentDependencies) {
-                val depCandidate = candidateMap[dependency]
-                if (depCandidate != null) {
-                    graph.putEdge(candidate, depCandidate)
-                }
-            }
-
-            for (missingComponent in candidate.conditionalOnMissingComponents) {
-                val missingCandidate = candidateMap[missingComponent]
-                if (missingCandidate != null) {
-                    graph.putEdge(candidate, missingCandidate)
-                }
+            require(candidateMap.put(candidate.className, candidate) == null) {
+                "Duplicate component class name: ${candidate.className}"
             }
         }
 
         val sortedComponents = mutableObjectListOf<PluginComponentMeta.Component>()
         val marks = mutableMapOf<PluginComponentMeta.Component, Mark>()
 
-        for (node in graph.nodes()) {
-            visitNode(graph, node, marks, sortedComponents, ArrayDeque())
+        for (node in sorted) {
+            visitNode(node, candidateMap, marks, sortedComponents, ArrayDeque())
         }
 
         return sortedComponents
     }
 
     private fun visitNode(
-        dependencyGraph: Graph<PluginComponentMeta.Component>,
         current: PluginComponentMeta.Component,
+        candidates: Map<String, PluginComponentMeta.Component>,
         visited: MutableMap<PluginComponentMeta.Component, Mark>,
         sorted: MutableList<PluginComponentMeta.Component>,
         currentDependencyScanStack: Deque<PluginComponentMeta.Component>
@@ -72,8 +51,13 @@ object ComponentSorting {
 
         currentDependencyScanStack.addLast(current)
         visited[current] = Mark.VISITING
-        for (edge in dependencyGraph.successors(current)) {
-            visitNode(dependencyGraph, edge, visited, sorted, currentDependencyScanStack)
+        for (dependencyName in current.componentDependencies) {
+            val dependency = candidates[dependencyName] ?: continue
+            visitNode(dependency, candidates, visited, sorted, currentDependencyScanStack)
+        }
+        for (dependencyName in current.conditionalOnMissingComponents) {
+            val dependency = candidates[dependencyName] ?: continue
+            visitNode(dependency, candidates, visited, sorted, currentDependencyScanStack)
         }
 
         visited[current] = Mark.VISITED

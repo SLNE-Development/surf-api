@@ -396,13 +396,16 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         synchronized(chatMessageChain) {
             chatMessageChain.append {
-                scope.launch {
+                val job = scope.launch {
                     try {
                         block()
-                        done.complete(Unit)
                     } catch (e: Throwable) {
                         done.completeExceptionally(e)
                     }
+                }
+                job.invokeOnCompletion { throwable ->
+                    if (throwable == null) done.complete(Unit)
+                    else done.completeExceptionally(throwable)
                 }
             }
 

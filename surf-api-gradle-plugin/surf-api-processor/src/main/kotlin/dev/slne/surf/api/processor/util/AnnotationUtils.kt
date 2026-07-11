@@ -56,10 +56,19 @@ object AnnotationUtils {
         val found = findAllByDistance(annotated, annotationFqName)
         if (found.isEmpty()) return null
 
-        val bestDistance = found.minOf { it.distance }
-        val bestLevel = found
-            .filter { it.distance == bestDistance }
-            .map { it.annotation }
+        var bestDistance = Int.MAX_VALUE
+        val bestLevel = mutableListOf<KSAnnotation>()
+        for ((annotation, distance) in found) {
+            when {
+                distance < bestDistance -> {
+                    bestDistance = distance
+                    bestLevel.clear()
+                    bestLevel.add(annotation)
+                }
+
+                distance == bestDistance -> bestLevel.add(annotation)
+            }
+        }
 
         return tieBreaker(bestLevel)
     }

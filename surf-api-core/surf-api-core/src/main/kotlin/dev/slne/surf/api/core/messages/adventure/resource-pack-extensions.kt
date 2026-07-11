@@ -117,7 +117,7 @@ inline fun resourcePackRequest(block: @ResourcePackDsl ResourcePackRequest.Build
  */
 fun addingResourcePackRequest(vararg infos: ResourcePackInfo): ResourcePackRequest {
     require(infos.isNotEmpty()) { "At least one ResourcePackInfo must be provided" }
-    return ResourcePackRequest.addingRequest(infos[0], *infos.drop(1).toTypedArray())
+    return ResourcePackRequest.addingRequest(infos[0], *infos.copyOfRange(1, infos.size))
 }
 
 /**

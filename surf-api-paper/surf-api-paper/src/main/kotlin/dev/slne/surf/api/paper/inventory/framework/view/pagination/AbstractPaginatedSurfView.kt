@@ -137,7 +137,8 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * This override is `final` — subclasses should override [applyContainerDefaults] instead.
      */
-    context(_: ViewContainerModificationContext)
+    context(modificationContext: ViewContainerModificationContext)
+    @Suppress("UNUSED_PARAMETER")
     final override fun containerDefaults() {
         val paginationContentRows = settings.paginationViewRows.paginationContentRows
 
@@ -157,7 +158,8 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * Called from [containerDefaults] after the block cells are placed.
      */
-    context(_: ViewContainerModificationContext)
+    context(modificationContext: ViewContainerModificationContext)
+    @Suppress("UNUSED_PARAMETER")
     protected open fun applyContainerDefaults() {
     }
 
@@ -168,14 +170,10 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     }
 
     private fun createLayout(): Array<String> {
-        val layout = arrayOfNulls<String>(settings.rows.rows)
-        layout[0] = EMPTY_ROW
-        repeat(settings.rows.rows - 2) { i ->
-            layout[i + 1] = paginationRow
+        val rows = settings.rows.rows
+        return Array(rows) { index ->
+            if (index == 0 || index == rows - 1) EMPTY_ROW else paginationRow
         }
-        layout[layout.lastIndex] = EMPTY_ROW
-
-        return layout.requireNoNulls()
     }
 
     final override fun onViewOpen(open: OpenContext) {

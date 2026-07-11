@@ -35,6 +35,7 @@ class AsyncSignedMessageArgument(nodeName: String) : Argument<Deferred<SignedMes
     nodeName,
     SurfPaperNmsCommandArgumentTypesBridge::signedMessage,
 ) {
+    @Suppress("UNCHECKED_CAST")
     override fun getPrimitiveType(): Class<Deferred<SignedMessage>> {
         return Deferred::class.java as Class<Deferred<SignedMessage>>
     }

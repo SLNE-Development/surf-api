@@ -92,7 +92,8 @@ object PropertyService {
                     .load()
             } catch (e: Exception) {
                 log.atWarning()
-                    .log("Failed to load properties file: %s", propertiesPath.toAbsolutePath(), e)
+                    .withCause(e)
+                    .log("Failed to load properties file: %s", propertiesPath.toAbsolutePath())
                 CommentedConfigurationNode.root()
             }
         }

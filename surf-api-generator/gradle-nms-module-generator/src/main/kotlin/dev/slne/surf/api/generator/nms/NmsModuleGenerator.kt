@@ -64,7 +64,9 @@ class NmsModuleGenerator(
 
     private fun prepareTargetDirectory() {
         if (targetSourceRoot.exists()) {
-            targetSourceRoot.toFile().deleteRecursively()
+            check(targetSourceRoot.toFile().deleteRecursively()) {
+                "Failed to delete existing target source root: $targetSourceRoot"
+            }
         }
         targetSourceRoot.createDirectories()
     }
@@ -77,7 +79,6 @@ class NmsModuleGenerator(
         val sourceFiles = referenceSourceRoot.toFile()
             .walk()
             .filter { it.isFile && it.extension == "kt" }
-            .toList()
 
         var count = 0
         for (file in sourceFiles) {
@@ -132,9 +133,10 @@ class NmsModuleGenerator(
                 "import ${transformation.oldFqn}",
                 "import ${transformation.newFqn}",
             )
-            if (transformation.oldSimpleName != transformation.newSimpleName) {
+            val simpleNamePattern = transformation.simpleNamePattern
+            if (simpleNamePattern != null) {
                 result = result.replace(
-                    Regex("\\b${Regex.escape(transformation.oldSimpleName)}\\b"),
+                    simpleNamePattern,
                     transformation.newSimpleName,
                 )
             }
@@ -228,7 +230,5 @@ class NmsModuleGenerator(
         const val NMS_PROVIDER_SERVICE = "dev.slne.surf.api.paper.nms.common.NmsProvider"
     }
 }
-
-
 
 

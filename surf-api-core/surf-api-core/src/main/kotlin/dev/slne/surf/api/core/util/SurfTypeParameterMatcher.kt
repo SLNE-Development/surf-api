@@ -58,7 +58,10 @@ abstract class SurfTypeParameterMatcher {
          * The outer map is concurrent, and each inner map is synchronized during creation.
          */
         private val findCache =
-            ConcurrentHashMap<Class<*>, ConcurrentHashMap<String, SurfTypeParameterMatcher>>()
+            object : ClassValue<ConcurrentHashMap<Class<*>, ConcurrentHashMap<String, SurfTypeParameterMatcher>>>() {
+                override fun computeValue(type: Class<*>): ConcurrentHashMap<Class<*>, ConcurrentHashMap<String, SurfTypeParameterMatcher>> =
+                    ConcurrentHashMap()
+            }
 
         /**
          * A no-operation matcher that always returns `true`, used for [Object] type parameters.
@@ -155,8 +158,10 @@ abstract class SurfTypeParameterMatcher {
             typeParamName: String
         ): SurfTypeParameterMatcher {
             val thisClass = any.javaClass
-            val innerMap = findCache.computeIfAbsent(thisClass) { ConcurrentHashMap() }
-            return innerMap.computeIfAbsent(typeParamName) {
+            val byParameterizedType = findCache.get(thisClass)
+            val byParameterName =
+                byParameterizedType.computeIfAbsent(parametrizedType) { ConcurrentHashMap() }
+            return byParameterName.computeIfAbsent(typeParamName) {
                 get(find0(any, parametrizedType, typeParamName))
             }
         }

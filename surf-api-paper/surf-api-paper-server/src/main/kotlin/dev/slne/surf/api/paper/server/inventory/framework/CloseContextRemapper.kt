@@ -33,6 +33,9 @@ object CloseContextRemapper {
     private const val INVENTORY_CLOSE_EVENT_INTERNAL =
         "org/bukkit/event/inventory/InventoryCloseEvent"
     private const val OBJECT_INTERNAL = "java/lang/Object"
+    private const val INVENTORY_CLOSE_EVENT_DESCRIPTOR =
+        "L$INVENTORY_CLOSE_EVENT_INTERNAL;"
+    private const val OBJECT_DESCRIPTOR = "L$OBJECT_INTERNAL;"
 
     private const val CLOSE_CONTEXT_INTERNAL =
         "dev/slne/surf/api/libs/devnatan/inventoryframework/context/CloseContext"
@@ -232,8 +235,6 @@ object CloseContextRemapper {
      * Replaces all occurrences of `InventoryCloseEvent` with `Object` in a type descriptor.
      */
     private fun remapDescriptor(descriptor: String): String {
-        val closeEventDescriptor = Type.getObjectType(INVENTORY_CLOSE_EVENT_INTERNAL).descriptor
-        val objectDescriptor = Type.getObjectType(OBJECT_INTERNAL).descriptor
-        return descriptor.replace(closeEventDescriptor, objectDescriptor)
+        return descriptor.replace(INVENTORY_CLOSE_EVENT_DESCRIPTOR, OBJECT_DESCRIPTOR)
     }
 }

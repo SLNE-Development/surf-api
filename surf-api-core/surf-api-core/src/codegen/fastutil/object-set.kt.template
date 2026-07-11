@@ -1,0 +1,52 @@
+// ObjectSet Extensions
+inline fun <T> mutableObjectSetOf(vararg elements: T) = ObjectOpenHashSet(elements)
+inline fun <T> mutableObjectSetOfNotNull(vararg elements: T?) =
+    elements.filterNotNullTo(ObjectOpenHashSet())
+
+inline fun <T> mutableObjectSetOf() = ObjectOpenHashSet<T>()
+inline fun <T> mutableObjectSetOf(capacity: Int) = ObjectOpenHashSet<T>(capacity)
+inline fun <T> mutableObjectSetOf(iterable: Iterable<T>) = when (iterable) {
+    is Collection -> ObjectOpenHashSet(iterable)
+    else -> ObjectOpenHashSet<T>(iterable.iterator())
+}
+
+inline fun <T> objectSetOf(vararg elements: T): ObjectSet<T> = when (elements.size) {
+    0 -> emptyObjectSet<T>()
+    1 -> ObjectSets.singleton(elements[0])
+    else -> mutableObjectSetOf<T>(*elements).freeze()
+}
+
+inline fun <T> objectSetOfNotNull(vararg elements: T?): ObjectSet<T> = when (elements.size) {
+    0 -> emptyObjectSet<T>()
+    1 -> elements[0]?.let { ObjectSets.singleton(it) } ?: emptyObjectSet()
+    else -> mutableObjectSetOfNotNull(*elements).freeze()
+}
+
+inline fun <T> objectSetOf(collection: Iterable<T>) = mutableObjectSetOf<T>(collection).freeze()
+inline fun <T> objectSetOf() = emptyObjectSet<T>()
+inline fun <T> emptyObjectSet(): @Unmodifiable ObjectSet<T> = ObjectSets.emptySet()
+inline fun <T> ObjectSet<T>.synchronize(): ObjectSet<T> = ObjectSets.synchronize(this)
+inline fun <T> ObjectSet<T>.freeze(): @UnmodifiableView ObjectSet<T> =
+    this as? ObjectSets.UnmodifiableSet ?: ObjectSets.unmodifiable(this)
+
+inline fun <T> Sequence<T>.toMutableObjectSet(): ObjectSet<T> = ObjectOpenHashSet(iterator())
+inline fun <T> Sequence<T>.toObjectSet(): ObjectSet<T> {
+    val it = iterator()
+    if (!it.hasNext()) return emptyObjectSet()
+    val first = it.next()
+    if (!it.hasNext()) return objectSetOf(first)
+    val set = mutableObjectSetOf<T>()
+    set.add(first)
+    while (it.hasNext()) set.add(it.next())
+    return set.freeze()
+}
+
+inline fun <T> Array<out T>.toObjectSet() = objectSetOf(*this)
+inline fun <T> Array<out T>.toMutableObjectSet() = mutableObjectSetOf(*this)
+inline fun <T> Iterable<T>.toObjectSet() = (this as? ObjectSet<T>)?.freeze() ?: objectSetOf(this)
+inline fun <T> Iterable<T>.toMutableObjectSet() =
+    (this as? ObjectSet<T>)?.toMutableObjectSet() ?: mutableObjectSetOf(this)
+
+inline fun <T> Collection<T>.toObjectSet() = (this as? ObjectSet<T>)?.freeze() ?: objectSetOf(this)
+inline fun <T> ObjectSet<T>.toMutableObjectSet() =
+    this as? ObjectOpenHashSet<T> ?: ObjectOpenHashSet(this)

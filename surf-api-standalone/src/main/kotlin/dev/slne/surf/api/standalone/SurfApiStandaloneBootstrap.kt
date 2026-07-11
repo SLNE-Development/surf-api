@@ -26,7 +26,7 @@ object SurfApiStandaloneBootstrap {
     }
 
     suspend fun shutdown() {
-        if (shutdown.getAndSet(true)) {
+        if (!shutdown.compareAndSet(false, true)) {
             return
         }
 

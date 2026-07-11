@@ -1,8 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view.util
 
-import dev.slne.surf.api.core.util.freeze
-import glm_.func.common.abs
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import kotlin.math.abs
 
 /**
  * Produces the minimal string of shift-glyph characters that sum to the given [amount].
@@ -57,13 +55,19 @@ value class GlyphShift(val amount: Int) {
 
         val sign = if (amount < 0) -1 else 1
 
-        return buildString {
-            var remaining = amount.abs
+        val magnitude = abs(amount.toLong())
+        val estimatedGlyphCount =
+            (magnitude / ShiftGlyph.MAX_GLYPH_AMOUNT +
+                    (magnitude % ShiftGlyph.MAX_GLYPH_AMOUNT).countOneBits().toLong()).toInt()
+
+        return buildString(estimatedGlyphCount) {
+            var remaining = magnitude
             while (remaining > 0) {
                 val largest = remaining.takeHighestOneBit()
-                val glyphAmount = largest.coerceAtMost(ShiftGlyph.MAX_GLYPH_AMOUNT)
-                val glyph = ShiftGlyph.fromAmount(glyphAmount * sign)
-                    ?: error("Could not find glyph for amount ${glyphAmount * sign}")
+                val glyphAmount = largest.coerceAtMost(ShiftGlyph.MAX_GLYPH_AMOUNT.toLong()).toInt()
+                val signedGlyphAmount = glyphAmount * sign
+                val glyph = ShiftGlyph.fromAmount(signedGlyphAmount)
+                    ?: error("Could not find glyph for amount $signedGlyphAmount")
 
                 append(glyph.glyph)
                 remaining -= glyphAmount
@@ -105,17 +109,15 @@ value class GlyphShift(val amount: Int) {
         PLUS_FIVE_TWELVE('', 512);
 
         init {
-            val abs = amount.abs
-            require(abs > 0 && abs and (abs - 1) == 0) { "Glyph amount must be a power of two, was $amount" }
+            val magnitude = abs(amount)
+            require(magnitude > 0 && magnitude and (magnitude - 1) == 0) {
+                "Glyph amount must be a power of two, was $amount"
+            }
         }
 
         companion object {
             /** The largest absolute pixel shift a single glyph can represent. */
             const val MAX_GLYPH_AMOUNT = 512
-
-            /** lookup table mapping from [amount] to [ShiftGlyph]. */
-            private val index =
-                entries.associateByTo(Int2ObjectOpenHashMap()) { it.amount }.freeze()
 
             /**
              * Returns the [ShiftGlyph] whose [ShiftGlyph.amount] equals [amount],
@@ -124,7 +126,15 @@ value class GlyphShift(val amount: Int) {
              * @param amount the exact pixel shift to look up
              * @return the matching glyph, or `null`
              */
-            fun fromAmount(amount: Int): ShiftGlyph? = index[amount]
+            fun fromAmount(amount: Int): ShiftGlyph? {
+                val magnitude = abs(amount)
+                if (magnitude == 0 || magnitude > MAX_GLYPH_AMOUNT ||
+                    magnitude and (magnitude - 1) != 0
+                ) return null
+
+                val powerIndex = magnitude.countTrailingZeroBits()
+                return entries[if (amount < 0) powerIndex else 10 + powerIndex]
+            }
         }
     }
 }

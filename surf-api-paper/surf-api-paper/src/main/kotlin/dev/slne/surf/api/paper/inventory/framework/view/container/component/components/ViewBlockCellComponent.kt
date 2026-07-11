@@ -2,9 +2,7 @@ package dev.slne.surf.api.paper.inventory.framework.view.container.component.com
 
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.paper.inventory.framework.view.container.component.ViewContainerComponent
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 /**
  * A [ViewContainerComponent] that renders a single inventory cell block overlay at the given
@@ -79,15 +77,13 @@ class ViewBlockCellComponent(
         SIX('ꐶ', 6);
 
         companion object {
-            private val index = entries.associateByTo(Int2ObjectOpenHashMap(6)) { it.row }.freeze()
-
             /**
              * Returns the [BlockRow] for the given one-based [row] number, or `null` if not found.
              *
              * @param row the one-based row number (1–6)
              * @return the matching [BlockRow], or `null`
              */
-            fun fromRow(row: Int): BlockRow? = index[row]
+            fun fromRow(row: Int): BlockRow? = entries.getOrNull(row - 1)
         }
     }
 }

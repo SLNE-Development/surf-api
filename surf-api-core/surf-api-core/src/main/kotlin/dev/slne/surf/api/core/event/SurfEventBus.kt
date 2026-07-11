@@ -168,3 +168,11 @@ inline fun <reified T : SurfAsyncEvent> SurfEventBus.onAsync(
 ): Any = registerAsyncHandler(T::class.java, priority, ignoreCancelled) { event ->
     handler(event)
 }
+
+/**
+ * Unregisters a listener instance or registration token returned by [on] or [onAsync].
+ *
+ * This is a naming-focused alias for [SurfEventBus.unregisterListeners] that reads naturally
+ * when the argument is a lambda registration token rather than a listener object.
+ */
+fun SurfEventBus.unregister(token: Any) = unregisterListeners(token)

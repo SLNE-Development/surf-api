@@ -2816,6 +2816,7 @@ public final class dev/slne/surf/api/paper/time/TimeSkipResult : java/lang/Enum 
 	public static final field FAILED Ldev/slne/surf/api/paper/time/TimeSkipResult;
 	public static final field SUCCESS Ldev/slne/surf/api/paper/time/TimeSkipResult;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun isSuccess ()Z
 	public final fun toBoolean ()Z
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/time/TimeSkipResult;
 	public static fun values ()[Ldev/slne/surf/api/paper/time/TimeSkipResult;

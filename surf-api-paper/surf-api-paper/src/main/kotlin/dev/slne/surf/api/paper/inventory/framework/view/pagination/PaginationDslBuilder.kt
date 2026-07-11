@@ -130,7 +130,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
         provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) {
         sourceType = PaginationSourceType.ComputedAsync { context ->
-            scope.future { provider(context) }.thenApply { it }
+            scope.future { provider(context) }
         }
     }
 
@@ -157,7 +157,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
         provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
     ) {
         sourceType = PaginationSourceType.LazyAsync { context ->
-            scope.future { provider(context) }.thenApply { it }
+            scope.future { provider(context) }
         }
     }
 

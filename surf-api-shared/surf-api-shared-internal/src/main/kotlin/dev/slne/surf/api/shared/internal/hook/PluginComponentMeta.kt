@@ -61,23 +61,33 @@ data class PluginComponentMeta(
     fun mergeWith(other: PluginComponentMeta): PluginComponentMeta {
         val mergedComponents = ArrayList<Component>(this.components.size + other.components.size)
         mergedComponents.addAll(this.components)
-        for (component in other.components) {
-            if (!mergedComponents.any { it.className == component.className }) {
-                mergedComponents.add(component)
-            } else {
-                throw IllegalStateException("Duplicate component className found during merge: ${component.className}")
+        val componentNames = HashSet<String>(this.components.size + other.components.size)
+        for (component in this.components) {
+            check(componentNames.add(component.className)) {
+                "Duplicate component className found during merge: ${component.className}"
             }
+        }
+        for (component in other.components) {
+            check(componentNames.add(component.className)) {
+                "Duplicate component className found during merge: ${component.className}"
+            }
+            mergedComponents.add(component)
         }
 
         val mergedPostProcessors =
             ArrayList<PostProcessor>(this.postProcessors.size + other.postProcessors.size)
         mergedPostProcessors.addAll(this.postProcessors)
-        for (postProcessor in other.postProcessors) {
-            if (!mergedPostProcessors.any { it.className == postProcessor.className }) {
-                mergedPostProcessors.add(postProcessor)
-            } else {
-                throw IllegalStateException("Duplicate post processor className found during merge: ${postProcessor.className}")
+        val postProcessorNames = HashSet<String>(this.postProcessors.size + other.postProcessors.size)
+        for (postProcessor in this.postProcessors) {
+            check(postProcessorNames.add(postProcessor.className)) {
+                "Duplicate post processor className found during merge: ${postProcessor.className}"
             }
+        }
+        for (postProcessor in other.postProcessors) {
+            check(postProcessorNames.add(postProcessor.className)) {
+                "Duplicate post processor className found during merge: ${postProcessor.className}"
+            }
+            mergedPostProcessors.add(postProcessor)
         }
 
         return PluginComponentMeta(mergedComponents, mergedPostProcessors)

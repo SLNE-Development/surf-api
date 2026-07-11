@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets
 
-import com.google.common.flogger.FluentLogger
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import net.minecraft.network.protocol.Packet
@@ -10,22 +9,23 @@ import org.bukkit.entity.Player
 import java.util.*
 
 class V1_21_11PacketOperationImpl : PacketOperation {
-    private var operation: Operation
+    private val operations: ArrayList<Operation>
 
     private constructor(operation: Operation) {
-        this.operation = operation
+        operations = arrayListOf(operation)
     }
 
     private constructor() {
-        this.operation = Operation.empty()
+        operations = ArrayList()
     }
 
     override fun execute(player: Player) {
         val connection = player.toNms().connection
-        val packets = operation.apply(
-            player,
-            LinkedList<Packet<in ClientGamePacketListener>>()
-        )
+        var packets: MutableList<Packet<in ClientGamePacketListener>> =
+            ArrayList(operations.size.coerceAtLeast(4))
+        for (operation in operations) {
+            packets = operation.apply(player, packets)
+        }
 
         if (packets.isEmpty()) {
             return
@@ -42,52 +42,22 @@ class V1_21_11PacketOperationImpl : PacketOperation {
     override fun add(operation: PacketOperation): V1_21_11PacketOperationImpl {
         require(operation is V1_21_11PacketOperationImpl) { "operation must be an instance of V1_21_11PacketOperationImpl" }
 
-        this.operation = this.operation.andThen(operation.operation)
+        operations.addAll(operation.operations)
         return this
     }
 
     override fun isEmpty(): Boolean {
-        val operation = operation
-        return operation is EmptyOperation && operation.empty
+        return operations.isEmpty()
     }
 
     fun interface Operation {
         fun apply(
             player: Player,
-            packets: LinkedList<Packet<in ClientGamePacketListener>>,
-        ): LinkedList<Packet<in ClientGamePacketListener>>
-
-        fun andThen(after: Operation): Operation {
-            return Operation { player, packets ->
-                after.apply(player, apply(player, packets))
-            }
-        }
-
-        companion object {
-            fun empty() = EmptyOperation()
-        }
-    }
-
-    class EmptyOperation : Operation {
-        var empty: Boolean = true
-            private set
-
-        override fun apply(
-            player: Player,
-            packets: LinkedList<Packet<in ClientGamePacketListener>>,
-        ): LinkedList<Packet<in ClientGamePacketListener>> {
-            return packets
-        }
-
-        override fun andThen(after: Operation): Operation {
-            empty = false
-            return super.andThen(after)
-        }
+            packets: MutableList<Packet<in ClientGamePacketListener>>,
+        ): MutableList<Packet<in ClientGamePacketListener>>
     }
 
     companion object {
-        private val logger: FluentLogger = FluentLogger.forEnclosingClass()
-
         @JvmStatic
         fun empty(): V1_21_11PacketOperationImpl {
             return V1_21_11PacketOperationImpl()

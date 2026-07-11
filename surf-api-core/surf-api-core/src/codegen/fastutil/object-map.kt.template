@@ -1,0 +1,52 @@
+// Object2ObjectMap Extensions
+inline fun <K, V> mutableObject2ObjectMapOf(vararg pairs: Pair<K, V>) =
+    Object2ObjectOpenHashMap<K, V>(pairs.size).apply { putAll(pairs) }
+inline fun <K, V> mutableObject2ObjectMapOf() = Object2ObjectOpenHashMap<K, V>()
+inline fun <K, V> mutableObject2ObjectMapOf(capacity: Int) = Object2ObjectOpenHashMap<K, V>(capacity)
+inline fun <K, V> object2ObjectMapOf(vararg pairs: Pair<K, V>) =
+    mutableObject2ObjectMapOf(*pairs).freeze()
+inline fun <K, V> object2ObjectMapOf() = emptyObject2ObjectMap<K, V>()
+inline fun <K, V> emptyObject2ObjectMap(): @Unmodifiable Object2ObjectMap<K, V> =
+    Object2ObjectMaps.emptyMap()
+inline fun <K, V> Object2ObjectMap<K, V>.synchronize(): Object2ObjectMap<K, V> =
+    Object2ObjectMaps.synchronize(this)
+inline fun <K, V> Object2ObjectMap<K, V>.freeze(): @UnmodifiableView Object2ObjectMap<K, V> =
+    Object2ObjectMaps.unmodifiable(this)
+
+inline fun <K, V> mutableObject2MultiObjectsMapOf(vararg pairs: Pair<K, ObjectSet<V>>) =
+    Object2ObjectOpenHashMap<K, ObjectSet<V>>(pairs.size).apply { putAll(pairs) }
+inline fun <K, V> mutableObject2MultiObjectsMapOf() = Object2ObjectOpenHashMap<K, ObjectSet<V>>()
+inline fun <K, V> object2MultiObjectsMapOf(vararg pairs: Pair<K, ObjectSet<V>>) =
+    mutableObject2MultiObjectsMapOf(*pairs).freeze()
+inline fun <K, V> object2MultiObjectsMapOf() = emptyObject2MultiObjectsMap<K, V>()
+inline fun <K, V> emptyObject2MultiObjectsMap(): @Unmodifiable Object2MultiObjectsMap<K, V> =
+    Object2ObjectMaps.emptyMap()
+typealias Object2MultiObjectsMap<K, V> = Object2ObjectMap<K, ObjectSet<V>>
+
+inline fun <K, V> Object2MultiObjectsMap<K, V>.add(key: K, value: V) {
+    val set = get(key) ?: mutableObjectSetOf<V>().also { put(key, it) }
+    set.add(value)
+}
+inline fun <K, V> Object2MultiObjectsMap<K, V>.addAll(key: K, values: Iterable<V>) {
+    val set = get(key) ?: mutableObjectSetOf<V>().also { put(key, it) }
+    set.addAll(values)
+}
+inline fun <K, V> Object2MultiObjectsMap<K, V>.remove(key: K, value: V) {
+    val set = get(key) ?: return
+    set.remove(value)
+    if (set.isEmpty()) remove(key)
+}
+inline fun <K, V> Object2MultiObjectsMap<K, V>.removeAll(key: K, values: Iterable<V>) {
+    val set = get(key) ?: return
+    set.removeAll(values)
+    if (set.isEmpty()) remove(key)
+}
+inline fun <K, V> Object2MultiObjectsMap<K, V>.removeAll(key: K) { remove(key) }
+inline fun <K, V> Object2ObjectMap<out K, V>.toMutableObjectList(): ObjectList<Pair<K, V>> {
+    if (isEmpty()) return emptyObjectList()
+    val list = ObjectArrayList<Pair<K, V>>(size)
+    forEach { k, v -> list.add(k to v) }
+    return list
+}
+inline fun <K, V> Object2ObjectMap<out K, V>.toObjectList(): ObjectList<Pair<K, V>> =
+    toMutableObjectList().freeze()

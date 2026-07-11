@@ -29,6 +29,7 @@ abstract class CoreInstance {
         CoreListenerManager.unregisterListeners()
     }
 
+    @Suppress("UNUSED_EXPRESSION")
     private fun initObjects() {
         PlayerSkinFetcher
         Colors

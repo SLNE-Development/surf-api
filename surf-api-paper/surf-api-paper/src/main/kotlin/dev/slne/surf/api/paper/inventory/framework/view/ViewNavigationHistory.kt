@@ -25,9 +25,14 @@ internal object ViewNavigationHistory {
     fun consumeBackNavigation(player: Player) = backNav.remove(player.uniqueId)
 
     fun popToPrevious(player: Player): NavEntry? {
-        val deque = paths[player.uniqueId] ?: return null
+        val uuid = player.uniqueId
+        val deque = paths[uuid] ?: return null
         deque.removeLastOrNull()
-        return deque.lastOrNull()
+        return deque.lastOrNull().also {
+            if (it == null) {
+                paths.remove(uuid, deque)
+            }
+        }
     }
 
     fun isPending(uuid: UUID): Boolean = backNav.contains(uuid)

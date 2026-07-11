@@ -107,7 +107,7 @@ class FastCompoundBinaryTagImpl(synchronize: Boolean) : FastCompoundBinaryTag {
         defaultValue: ListBinaryTag?,
     ): ListBinaryTag? {
         val tag = tags[key] as? ListBinaryTag ?: return defaultValue
-        return if (expectedType.test(tag.type())) tag else defaultValue
+        return if (expectedType.test(tag.elementType())) tag else defaultValue
     }
 
     override fun getCompound(key: String, defaultValue: CompoundBinaryTag?): CompoundBinaryTag? {

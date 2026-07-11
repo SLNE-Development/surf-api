@@ -24,7 +24,7 @@ package dev.slne.surf.api.paper.server.impl.pdc.block
 
 import dev.slne.surf.api.paper.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.api.paper.pdc.block.pdc
-import dev.slne.surf.api.paper.util.namespacedKey
+import dev.slne.surf.api.paper.server.plugin
 import org.bukkit.Chunk
 import org.bukkit.NamespacedKey
 import org.bukkit.block.Block
@@ -83,6 +83,7 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
 
     override fun readFromBytes(bytes: ByteArray, clear: Boolean) {
         pdc.readFromBytes(bytes, clear)
+        save()
     }
 
     override fun <P : Any, C : Any> has(
@@ -141,7 +142,7 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
         }
 
         fun getKey(blockX: Int, blockY: Int, blockZ: Int): NamespacedKey {
-            return namespacedKey("x${blockX and 15}y${blockY}z${blockZ and 15}")
+            return NamespacedKey(plugin, "x${blockX and 15}y${blockY}z${blockZ and 15}")
         }
     }
 }

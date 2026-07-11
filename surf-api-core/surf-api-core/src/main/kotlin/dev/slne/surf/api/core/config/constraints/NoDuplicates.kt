@@ -26,15 +26,18 @@ annotation class NoDuplicates {
     companion object {
         internal object Factory : Constraint.Factory<NoDuplicates, Any?> {
             override fun make(data: NoDuplicates, type: Type): Constraint<Any?> = Constraint { value ->
-                val elements = when (value) {
+                val elements: Iterator<*> = when (value) {
                     null -> return@Constraint
-                    is Iterable<*> -> value.toList()
-                    is Array<*> -> value.toList()
+                    is Iterable<*> -> value.iterator()
+                    is Array<*> -> value.iterator()
                     else -> return@Constraint
                 }
 
-                if (elements.size != elements.toSet().size) {
-                    throw SerializationException("Collection must not contain duplicate values")
+                val seen = HashSet<Any?>()
+                while (elements.hasNext()) {
+                    if (!seen.add(elements.next())) {
+                        throw SerializationException("Collection must not contain duplicate values")
+                    }
                 }
             }
         }

@@ -7,12 +7,15 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.translation.GlobalTranslator
 import net.kyori.adventure.translation.TranslationStore
+import net.kyori.adventure.translation.Translator
 import org.jetbrains.annotations.NonNls
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Supplier
 import kotlin.io.path.*
+
+private val AVAILABLE_BUNDLE_LOCALES = Locale.getAvailableLocales()
 
 /**
  * A class for managing and loading message bundles used for translations in a plugin environment.
@@ -84,31 +87,36 @@ class SurfMessageBundle @JvmOverloads constructor(
     val dataFolder: Path,
     val classLoader: ClassLoader = bundleClazz.classLoader,
 ) {
-    private val bundlesResourceDirectory = pathToBundle.substringBeforeLast('.', "")
-    private val bundleFolder = dataFolder / bundlesResourceDirectory
+    private val bundlePath = dataFolder.resolve(pathToBundle.replace('.', '/'))
+    private val bundleFolder = requireNotNull(bundlePath.parent) {
+        "Bundle path must have a parent: $pathToBundle"
+    }
+    private var registeredStore: Translator? = null
 
     /**
      * Loads and updates resource bundles from both the classpath and the data folder.
      * This method ensures that missing resource bundles and keys are added to the data folder,
      * and all bundles are registered with the global translator.
      */
+    @Synchronized
     fun load() {
+        bundleFolder.createDirectories()
+
         // get all resource bundles that are bundled with the plugin
-        val bundledResourceBundles =
-            getBundledBundles(bundlesResourceDirectory, classLoader)
+        val bundledResourceBundles = getBundledBundles(pathToBundle, classLoader)
 
         // get all resource bundles that are in the plugin's data folder
-        val dataFolderResourceBundles = getBundles(bundlesResourceDirectory, Locale.getDefault())
+        val dataFolderResourceBundles = getBundles(pathToBundle)
 
         // update the resource bundles
         // Step 1: Copy all bundled resource bundles that aren't in the data folder
-        copyMissingBundles(dataFolderResourceBundles, dataFolderResourceBundles)
+        copyMissingBundles(bundledResourceBundles, dataFolderResourceBundles)
 
         // Step 2: Add all missing keys to the data folder resource and update them
         updateResourceBundles(bundledResourceBundles, dataFolderResourceBundles)
 
         // Step 3: Add all resource bundles to the translator
-        addBundlesToTranslator(pathToBundle, dataFolderResourceBundles)
+        addBundlesToTranslator(pathToBundle, getBundles(pathToBundle))
     }
 
     /**
@@ -160,7 +168,10 @@ class SurfMessageBundle @JvmOverloads constructor(
             store.registerAll(bundle.locale, bundle, true)
         }
 
-        GlobalTranslator.translator().addSource(store)
+        val globalTranslator = GlobalTranslator.translator()
+        registeredStore?.let(globalTranslator::removeSource)
+        globalTranslator.addSource(store)
+        registeredStore = store
     }
 
     /**
@@ -187,10 +198,15 @@ class SurfMessageBundle @JvmOverloads constructor(
         from: ResourceBundle,
         to: ResourceBundle,
     ) {
-        val fromKeys = from.keys.asSequence().toSet()
         val toKeys = to.keys.asSequence().toSet()
-
-        val missingKeys = fromKeys - toKeys
+        val missingKeys = mutableObjectListOf<String>()
+        val fromKeys = from.keys
+        while (fromKeys.hasMoreElements()) {
+            val key = fromKeys.nextElement()
+            if (key !in toKeys) {
+                missingKeys.add(key)
+            }
+        }
         if (missingKeys.isEmpty()) return
 
         val properties = Properties()
@@ -202,8 +218,8 @@ class SurfMessageBundle @JvmOverloads constructor(
             properties[key] = from.getString(key)
         }
 
-        val fileName = to.getBundleName()
-        val target = dataFolder / "$fileName.properties"
+        val target = bundleFile(to)
+        target.parent.createDirectories()
         target.outputStream().use { properties.store(it, null) }
     }
 
@@ -217,10 +233,11 @@ class SurfMessageBundle @JvmOverloads constructor(
         bundledResourceBundles: List<ResourceBundle>,
         dataFolderResourceBundles: MutableList<ResourceBundle>,
     ) {
-        val dataFolderBundleNames = dataFolderResourceBundles.map { it.getBundleName() }
+        val dataFolderBundleNames = dataFolderResourceBundles
+            .mapTo(HashSet(dataFolderResourceBundles.size)) { it.getBundleName() }
 
         for (bundle in bundledResourceBundles) {
-            if (bundle.getBundleName() in dataFolderBundleNames) continue
+            if (!dataFolderBundleNames.add(bundle.getBundleName())) continue
             copyBundleToDataFolder(bundle)
             dataFolderResourceBundles.add(bundle)
         }
@@ -232,9 +249,8 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param bundle The resource bundle to be copied.
      */
     private fun copyBundleToDataFolder(bundle: ResourceBundle) {
-        val bundleName = bundle.getBundleName()
-        val fileName = "$bundleName.properties"
-        val target = dataFolder / fileName
+        val target = bundleFile(bundle)
+        target.parent.createDirectories()
 
         val properties = Properties()
         for (key in bundle.keys.asSequence()) {
@@ -251,22 +267,25 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param defaultLocale The default locale to be used if none is specified in the file names.
      * @return A list of resource bundles found in the data folder.
      */
-    private fun getBundles(prefix: String, defaultLocale: Locale) =
-        URLClassLoader(arrayOf(dataFolder.toUri().toURL())).use { classLoader ->
-            dataFolder.walk(PathWalkOption.FOLLOW_LINKS)
-                .filter { it.name.startsWith(prefix) }
-                .mapNotNullTo(mutableObjectListOf()) {
-                    val fileName = it.name
-                    val local = fileName.getLocale(defaultLocale)
+    private fun getBundles(baseName: String): MutableList<ResourceBundle> {
+        if (bundleFolder.notExists()) return mutableObjectListOf()
+
+        val filePrefix = bundlePath.name
+        return URLClassLoader(arrayOf(dataFolder.toUri().toURL())).use { dataClassLoader ->
+            bundleFolder.listDirectoryEntries("$filePrefix*.properties")
+                .asSequence()
+                .filter { path ->
+                    val stem = path.name.removeSuffix(".properties")
+                    stem == filePrefix || stem.startsWith("${filePrefix}_")
+                }
+                .mapNotNullTo(mutableObjectListOf()) { path ->
+                    val locale = path.name.toBundleLocale(filePrefix)
                     runCatching {
-                        ResourceBundle.getBundle(
-                            fileName.substringBeforeLast('.'),
-                            local,
-                            classLoader
-                        )
+                        ResourceBundle.getBundle(baseName, locale, dataClassLoader)
                     }.getOrNull()
                 }
         }
+    }
 
 
     /**
@@ -276,18 +295,29 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param classLoader The class loader to use for resource loading.
      * @return A list of bundled resource bundles.
      */
-    private fun getBundledBundles(baseName: String, classLoader: ClassLoader) =
-        Locale.getAvailableLocales().asSequence()
-            .filter { isResourceBundleAvailable(baseName, it, classLoader) }
-            .mapNotNull {
-                runCatching {
-                    ResourceBundle.getBundle(
-                        baseName,
-                        it,
-                        classLoader,
-                    )
-                }.getOrNull()
-            }.toCollection(mutableObjectListOf())
+    private fun getBundledBundles(
+        baseName: String,
+        classLoader: ClassLoader,
+    ): MutableList<ResourceBundle> {
+        val result = mutableObjectListOf<ResourceBundle>()
+
+        fun addIfAvailable(locale: Locale) {
+            if (!isResourceBundleAvailable(baseName, locale, classLoader)) return
+            try {
+                result.add(ResourceBundle.getBundle(baseName, locale, classLoader))
+            } catch (_: MissingResourceException) {
+                // The availability check and actual load may observe different classloader state.
+            }
+        }
+
+        addIfAvailable(Locale.ROOT)
+        for (locale in AVAILABLE_BUNDLE_LOCALES) {
+            if (locale != Locale.ROOT) {
+                addIfAvailable(locale)
+            }
+        }
+        return result
+    }
 
     /**
      * Checks if a resource bundle is available for the given base name and locale.
@@ -312,15 +342,19 @@ class SurfMessageBundle @JvmOverloads constructor(
         }
     }
 
-    private fun String.getLocale(defaultLocal: Locale): Locale {
-        val name = substringAfterLast('.')
-        val parts = name.split('_')
+    private fun String.toBundleLocale(filePrefix: String): Locale {
+        val localeSuffix = removeSuffix(".properties")
+            .removePrefix(filePrefix)
+            .removePrefix("_")
+        if (localeSuffix.isEmpty()) return Locale.ROOT
+
+        val parts = localeSuffix.split('_')
 
         return when (parts.size) {
             1 -> Locale.of(parts[0])
             2 -> Locale.of(parts[0], parts[1])
             3 -> Locale.of(parts[0], parts[1], parts[2])
-            else -> defaultLocal
+            else -> Locale.ROOT
         }
     }
 
@@ -330,6 +364,8 @@ class SurfMessageBundle @JvmOverloads constructor(
         }
 
         return buildString {
+            append(this@toBundleName)
+
             val language = locale.language
             val country = locale.country
             val variant = locale.variant
@@ -351,7 +387,17 @@ class SurfMessageBundle @JvmOverloads constructor(
         }
     }
 
-    private fun ResourceBundle.getBundleName() = "${baseBundleName}_$locale"
+    private fun ResourceBundle.getBundleName() = buildString {
+        append(baseBundleName)
+        if (locale != Locale.ROOT) {
+            append('_')
+            append(locale)
+        }
+    }
+
+    private fun bundleFile(bundle: ResourceBundle): Path =
+        dataFolder.resolve(bundle.getBundleName().replace('.', '/') + ".properties")
 
     private fun String.toResourceName(suffix: String) = replace('.', '/') + ".$suffix"
+
 }

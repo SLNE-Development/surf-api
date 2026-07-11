@@ -25,9 +25,10 @@ class V26_2SurfPaperNmsBridgeImpl : InternalNmsBridge {
 
     override fun registerServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
         val packetClass = listener.packetClass
-        val added =
-            serverboundPacketListeners.computeIfAbsent(packetClass) { CopyOnWriteArraySet() }
-                .add(listener)
+        var added = false
+        serverboundPacketListeners.compute(packetClass) { _, existing ->
+            (existing ?: CopyOnWriteArraySet()).apply { added = add(listener) }
+        }
 
         if (!added) {
             log.atWarning()
@@ -37,7 +38,11 @@ class V26_2SurfPaperNmsBridgeImpl : InternalNmsBridge {
     }
 
     override fun unregisterServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
-        val removed = serverboundPacketListeners[listener.packetClass]?.remove(listener) == true
+        var removed = false
+        serverboundPacketListeners.computeIfPresent(listener.packetClass) { _, listeners ->
+            removed = listeners.remove(listener)
+            listeners.takeUnless { it.isEmpty() }
+        }
 
         if (!removed) {
             log.atWarning()
@@ -48,9 +53,10 @@ class V26_2SurfPaperNmsBridgeImpl : InternalNmsBridge {
 
     override fun registerClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
         val packetClass = listener.packetClass
-        val added =
-            clientboundPacketListeners.computeIfAbsent(packetClass) { CopyOnWriteArraySet() }
-                .add(listener)
+        var added = false
+        clientboundPacketListeners.compute(packetClass) { _, existing ->
+            (existing ?: CopyOnWriteArraySet()).apply { added = add(listener) }
+        }
 
         if (!added) {
             log.atWarning()
@@ -60,7 +66,11 @@ class V26_2SurfPaperNmsBridgeImpl : InternalNmsBridge {
     }
 
     override fun unregisterClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
-        val removed = clientboundPacketListeners[listener.packetClass]?.remove(listener) == true
+        var removed = false
+        clientboundPacketListeners.computeIfPresent(listener.packetClass) { _, listeners ->
+            removed = listeners.remove(listener)
+            listeners.takeUnless { it.isEmpty() }
+        }
 
         if (!removed) {
             log.atWarning()

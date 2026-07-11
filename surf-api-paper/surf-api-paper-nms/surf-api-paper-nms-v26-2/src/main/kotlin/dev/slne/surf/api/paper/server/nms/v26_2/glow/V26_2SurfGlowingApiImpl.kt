@@ -96,7 +96,7 @@ object V26_2SurfGlowingApiImpl : SurfGlowingApi {
         location.checkFinite()
         val blockLocation = location.toBlockLocation()
         val uuid = viewer.uniqueId
-        val playerData = blockPlayerData.getOrPut(uuid) { BlockPlayerData(uuid) }
+        val playerData = blockPlayerData.computeIfAbsent(uuid) { BlockPlayerData(uuid) }
         val blockData = playerData.blocks[blockLocation]
 
         if (blockData == null) {
@@ -134,6 +134,9 @@ object V26_2SurfGlowingApiImpl : SurfGlowingApi {
         val glowingData = playerData.entities.remove(targetId) ?: return
         val operation = glowingData.sendGlowingFlag(enabled = false) + glowingData.removeFromTeam()
         operation.execute(viewer)
+        if (playerData.entities.isEmpty()) {
+            entityPlayerData.remove(viewer.uniqueId, playerData)
+        }
     }
 
     override fun removeGlowing(block: Block, viewer: Player) {

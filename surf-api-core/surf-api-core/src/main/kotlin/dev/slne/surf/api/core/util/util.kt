@@ -30,7 +30,6 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.reflect.KProperty
-import kotlin.streams.asSequence
 
 /**
  * Lazily initialized secure random instance.
@@ -96,7 +95,9 @@ fun getCallerClass() = getCallerClass(0)
  * @return The caller's class at the specified depth, or null if unavailable.
  */
 fun getCallerClass(depth: Int) =
-    STACK_WALK_INSTANCE.walk { it.asSequence().drop(3 + depth).firstOrNull()?.declaringClass }
+    STACK_WALK_INSTANCE.walk { frames ->
+        frames.skip((3 + depth).toLong()).findFirst().orElse(null)?.declaringClass
+    }
 
 /**
  * Verifies that the immediate caller is the expected class.
@@ -495,11 +496,14 @@ private fun processFinalField(field: Field, putOperation: (Unsafe, Long) -> Unit
 fun <T : Enum<T>> byStringIdMap(
     enumClass: Class<T>,
     idMapper: (T) -> String,
-): Object2ObjectMap<String, T> = Object2ObjectMaps.unmodifiable(
-    Object2ObjectOpenHashMap(
-        enumClass.enumConstants.associateBy(idMapper)
-    )
-)
+): Object2ObjectMap<String, T> {
+    val values = enumClass.enumConstants
+    val result = Object2ObjectOpenHashMap<String, T>(values.size)
+    for (value in values) {
+        result[idMapper(value)] = value
+    }
+    return Object2ObjectMaps.unmodifiable(result)
+}
 
 /**
  * Creates an unmodifiable map from enum constants to their integer IDs.
@@ -526,11 +530,11 @@ fun <T> byIdMap(
     idMapper: ToIntFunction<T>,
     values: Array<T>,
 ): Int2ObjectMap<T> {
-    return Int2ObjectMaps.unmodifiable(
-        Int2ObjectOpenHashMap(
-            values.associateBy({ idMapper.applyAsInt(it) }, { it })
-        )
-    )
+    val result = Int2ObjectOpenHashMap<T>(values.size)
+    for (value in values) {
+        result[idMapper.applyAsInt(value)] = value
+    }
+    return Int2ObjectMaps.unmodifiable(result)
 }
 
 /**
@@ -544,11 +548,11 @@ fun <T> byIdMap(
     idMapper: (T) -> Int,
     values: Array<T>,
 ): Int2ObjectMap<T> {
-    return Int2ObjectMaps.unmodifiable(
-        Int2ObjectOpenHashMap(
-            values.associateBy(idMapper)
-        )
-    )
+    val result = Int2ObjectOpenHashMap<T>(values.size)
+    for (value in values) {
+        result[idMapper(value)] = value
+    }
+    return Int2ObjectMaps.unmodifiable(result)
 }
 
 /**
@@ -562,11 +566,11 @@ fun <T> byByteIdMap(
     values: Array<T>,
     idMapper: (T) -> Byte,
 ): Byte2ObjectMap<T> {
-    return Byte2ObjectMaps.unmodifiable(
-        Byte2ObjectOpenHashMap(
-            values.associateBy(idMapper)
-        )
-    )
+    val result = Byte2ObjectOpenHashMap<T>(values.size)
+    for (value in values) {
+        result[idMapper(value)] = value
+    }
+    return Byte2ObjectMaps.unmodifiable(result)
 }
 
 /**
@@ -578,11 +582,12 @@ fun <T> byByteIdMap(
 inline fun <reified T : Enum<T>> byEnumMap(
     valueMapper: (T) -> Any,
 ): Object2ObjectMap<T, Any> {
-    return Object2ObjectMaps.unmodifiable(
-        Object2ObjectOpenHashMap(
-            T::class.java.enumConstants.associateWith(valueMapper)
-        )
-    )
+    val values = T::class.java.enumConstants
+    val result = Object2ObjectOpenHashMap<T, Any>(values.size)
+    for (value in values) {
+        result[value] = valueMapper(value)
+    }
+    return Object2ObjectMaps.unmodifiable(result)
 }
 
 /**
@@ -648,6 +653,7 @@ operator fun <T> SoftReference<T>.getValue(thisRef: Any?, property: KProperty<*>
  * @return List of transformed elements in the original order.
  */
 suspend inline fun <E, R> Iterable<E>.mapAsync(crossinline transform: suspend (E) -> R): List<R> {
+    if (this is Collection<*> && isEmpty()) return emptyList()
     return coroutineScope {
         map { element ->
             async {

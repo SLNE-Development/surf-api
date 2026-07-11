@@ -34,8 +34,9 @@ interface SuspendPaginationRenderer {
         contentIndex: Int,
         renderer: SuspendPaginationRowRenderer<T>,
     ): Collection<Component> = renderer.run {
+        val prefix = text(" ".repeat(indent))
         renderRow(value, contentIndex)
-            .map { text(" ".repeat(indent)).append(it) }
+            .map { prefix.append(it) }
     }
 
     suspend fun CoroutineScope.renderFooter(
@@ -143,8 +144,10 @@ interface PaginationRenderer {
         value: T,
         contentIndex: Int,
         renderer: PaginationRowRenderer<T>,
-    ): Collection<Component> = renderer.renderRow(value, contentIndex)
-        .map { text(" ".repeat(indent)).append(it) }
+    ): Collection<Component> {
+        val prefix = text(" ".repeat(indent))
+        return renderer.renderRow(value, contentIndex).map { prefix.append(it) }
+    }
 
     fun renderFooter(
         width: Int,

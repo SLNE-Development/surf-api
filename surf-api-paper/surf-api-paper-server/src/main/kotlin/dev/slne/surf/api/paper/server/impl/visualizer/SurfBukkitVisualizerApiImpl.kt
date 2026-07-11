@@ -62,48 +62,56 @@ class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
         return areaVisualizers.getIfPresent(uid) ?: visualizers.getIfPresent(uid)
     }
 
-    private fun getActiveVisualizers(player: Player): List<AbstractSurfVisualizerImpl> {
-        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
-        return visualizerUuids.mapNotNull { uid ->
-            visualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
-        }
-    }
-
-    private fun getActiveAreaVisualizers(player: Player): List<SurfVisualizerAreaImpl> {
-        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
-        return visualizerUuids.mapNotNull { uid ->
-            areaVisualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
-        }
-    }
-
     fun onViewerAdded(visualizerUid: UUID, playerUid: UUID) {
         playerToVisualizers.computeIfAbsent(playerUid) { ConcurrentHashMap.newKeySet() }
             .add(visualizerUid)
     }
 
     fun onViewerRemoved(visualizerUid: UUID, playerUid: UUID) {
-        playerToVisualizers[playerUid]?.remove(visualizerUid)
+        playerToVisualizers.computeIfPresent(playerUid) { _, visualizerUids ->
+            visualizerUids.remove(visualizerUid)
+            visualizerUids.takeUnless { it.isEmpty() }
+        }
     }
 
     fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
-        val activeAreas = getActiveAreaVisualizers(player)
-        activeAreas.forEach { it.onChunkBecameVisible(player, chunk) }
+        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return
 
-        val active = getActiveVisualizers(player)
-        active.forEach { it.onPlayerReceiveChunk(player, chunk) }
+        // Area visualizers must resolve their pending height points before their delegate
+        // processes the same chunk.
+        for (uid in visualizerUuids) {
+            val area = areaVisualizers.getIfPresent(uid) ?: continue
+            if (!area.isClosed() && area.isVisualizing()) {
+                area.onChunkBecameVisible(chunk)
+            }
+        }
+
+        for (uid in visualizerUuids) {
+            val visualizer = visualizers.getIfPresent(uid) ?: continue
+            if (!visualizer.isClosed() && visualizer.isVisualizing()) {
+                visualizer.onPlayerReceiveChunk(player, chunk)
+            }
+        }
     }
 
     fun processChunkUnloadForPlayer(player: Player, chunk: Chunk) {
-        val active = getActiveVisualizers(player)
-        active.forEach { it.onPlayerUnloadChunk(player, chunk) }
+        val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return
+        for (uid in visualizerUuids) {
+            val visualizer = visualizers.getIfPresent(uid) ?: continue
+            if (!visualizer.isClosed() && visualizer.isVisualizing()) {
+                visualizer.onPlayerUnloadChunk(player, chunk)
+            }
+        }
     }
 
     fun processPlayerQuit(player: Player) {
-        playerToVisualizers.remove(player.uniqueId)
+        val visualizerUuids = playerToVisualizers.remove(player.uniqueId) ?: return
 
-        for (active in visualizers.asMap().values) {
-            if (active.isClosed()) continue
-            active.removeViewer(player)
+        for (uid in visualizerUuids) {
+            val visualizer = visualizers.getIfPresent(uid) ?: continue
+            if (!visualizer.isClosed()) {
+                visualizer.removeViewer(player)
+            }
         }
     }
 
