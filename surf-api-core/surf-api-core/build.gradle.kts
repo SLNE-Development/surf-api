@@ -1,6 +1,9 @@
+import org.gradle.api.internal.artifacts.dsl.dependencies.DependenciesExtensionModule.module
+
 plugins {
     `core-convention`
     `api-validation`
+    idea
 }
 
 val generatedFastutilSources = layout.buildDirectory.dir("generated/sources/fastutil/main/kotlin")
@@ -23,6 +26,12 @@ tasks.named("compileKotlin") {
 
 tasks.named("sourcesJar") {
     dependsOn(generateFastutilExtensions)
+}
+
+idea {
+    module {
+        generatedSourceDirs.add(generatedFastutilSources.get().asFile)
+    }
 }
 
 dependencies {
