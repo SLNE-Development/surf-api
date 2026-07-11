@@ -1,36 +1,50 @@
 // {{NAME}}Set Extensions
+/** Creates a mutable fastutil {{NAME}} set containing [elements]. */
 inline fun mutable{{NAME}}SetOf(vararg elements: {{NAME}}): {{NAME}}Set = {{NAME}}OpenHashSet(elements)
+/** Creates a mutable fastutil {{NAME}} set containing the non-null [elements]. */
 inline fun mutable{{NAME}}SetOfNotNull(vararg elements: {{NAME}}?) =
     elements.filterNotNullTo({{NAME}}OpenHashSet())
 
+/** Creates an empty mutable fastutil {{NAME}} set. */
 inline fun mutable{{NAME}}SetOf(): {{NAME}}Set = {{NAME}}OpenHashSet()
+/** Creates an empty mutable fastutil {{NAME}} set with the expected [capacity]. */
 inline fun mutable{{NAME}}SetOf(capacity: Int): {{NAME}}Set = {{NAME}}OpenHashSet(capacity)
+/** Copies [iterable] into a mutable fastutil {{NAME}} set. */
 inline fun mutable{{NAME}}SetOf(iterable: Iterable<{{NAME}}>): {{NAME}}Set = when (iterable) {
     is Collection -> {{NAME}}OpenHashSet(iterable)
     else -> {{NAME}}OpenHashSet(iterable.iterator())
 }
 
+/** Creates an unmodifiable fastutil {{NAME}} set containing [elements]. */
 inline fun {{LOWER_NAME}}SetOf(vararg elements: {{NAME}}): {{NAME}}Set = when (elements.size) {
     0 -> empty{{NAME}}Set()
     1 -> {{NAME}}Sets.singleton(elements[0])
     else -> mutable{{NAME}}SetOf(*elements).freeze()
 }
 
+/** Creates an unmodifiable fastutil {{NAME}} set containing the non-null [elements]. */
 inline fun {{LOWER_NAME}}SetOfNotNull(vararg elements: {{NAME}}?): {{NAME}}Set = when (elements.size) {
     0 -> empty{{NAME}}Set()
     1 -> elements[0]?.let { {{NAME}}Sets.singleton(it) } ?: empty{{NAME}}Set()
     else -> mutable{{NAME}}SetOfNotNull(*elements).freeze()
 }
 
+/** Copies [iterable] into an unmodifiable fastutil {{NAME}} set. */
 inline fun {{LOWER_NAME}}SetOf(iterable: Iterable<{{NAME}}>): {{NAME}}Set =
     mutable{{NAME}}SetOf(iterable).freeze()
+/** Returns the shared empty unmodifiable fastutil {{NAME}} set. */
 inline fun {{LOWER_NAME}}SetOf(): {{NAME}}Set = empty{{NAME}}Set()
+/** Returns the shared empty unmodifiable fastutil {{NAME}} set. */
 inline fun empty{{NAME}}Set(): @Unmodifiable {{NAME}}Set = {{NAME}}Sets.emptySet()
+/** Wraps this set in fastutil's synchronized view. */
 inline fun {{NAME}}Set.synchronize(): {{NAME}}Set = {{NAME}}Sets.synchronize(this)
+/** Returns an unmodifiable view of this set. */
 inline fun {{NAME}}Set.freeze(): @UnmodifiableView {{NAME}}Set =
     this as? {{NAME}}Sets.UnmodifiableSet ?: {{NAME}}Sets.unmodifiable(this)
 
+/** Collects this sequence into a mutable fastutil {{NAME}} set. */
 inline fun Sequence<{{NAME}}>.toMutable{{NAME}}Set(): {{NAME}}Set = {{NAME}}OpenHashSet(iterator())
+/** Collects this sequence into an unmodifiable fastutil {{NAME}} set. */
 inline fun Sequence<{{NAME}}>.to{{NAME}}Set(): {{NAME}}Set {
     val it = iterator()
     if (!it.hasNext()) return empty{{NAME}}Set()
@@ -42,20 +56,28 @@ inline fun Sequence<{{NAME}}>.to{{NAME}}Set(): {{NAME}}Set {
     return set.freeze()
 }
 
+/** Converts this boxed array to an unmodifiable fastutil {{NAME}} set. */
 inline fun Array<{{NAME}}>.to{{NAME}}Set() = {{LOWER_NAME}}SetOf(*{{ARRAY_CONVERSION}})
+/** Copies this boxed array into a mutable fastutil {{NAME}} set. */
 inline fun Array<{{NAME}}>.toMutable{{NAME}}Set() = mutable{{NAME}}SetOf(*{{ARRAY_CONVERSION}})
+/** Converts this primitive array to an unmodifiable fastutil {{NAME}} set. */
 inline fun {{ARRAY_TYPE}}.to{{NAME}}Set(): @Unmodifiable {{NAME}}Set = when (size) {
     0 -> empty{{NAME}}Set()
     1 -> {{NAME}}Sets.singleton(this[0])
     else -> {{NAME}}OpenHashSet(this).freeze()
 }
+/** Copies this primitive array into a mutable fastutil {{NAME}} set. */
 inline fun {{ARRAY_TYPE}}.toMutable{{NAME}}Set(): {{NAME}}Set = {{NAME}}OpenHashSet(this)
+/** Converts this iterable to an unmodifiable fastutil {{NAME}} set. */
 inline fun Iterable<{{NAME}}>.to{{NAME}}Set() =
     (this as? {{NAME}}Set)?.freeze() ?: {{LOWER_NAME}}SetOf(this)
+/** Copies this iterable into a mutable fastutil {{NAME}} set. */
 inline fun Iterable<{{NAME}}>.toMutable{{NAME}}Set() =
     (this as? {{NAME}}Set)?.toMutable{{NAME}}Set() ?: mutable{{NAME}}SetOf(this)
 
+/** Converts this collection to an unmodifiable fastutil {{NAME}} set. */
 inline fun Collection<{{NAME}}>.to{{NAME}}Set() =
     (this as? {{NAME}}Set)?.freeze() ?: {{LOWER_NAME}}SetOf(this)
+/** Returns this mutable open hash set or copies this set into one. */
 inline fun {{NAME}}Set.toMutable{{NAME}}Set() =
     this as? {{NAME}}OpenHashSet ?: {{NAME}}OpenHashSet(this)

@@ -1,23 +1,33 @@
 // {{KEY_NAME}}2{{VALUE_NAME}}Map Extensions
+/** Creates a mutable fastutil {{KEY_NAME}}-to-{{VALUE_NAME}} map containing [pairs]. */
 inline fun mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf(vararg pairs: Pair<{{KEY_NAME}}, {{VALUE_NAME}}>) =
     {{KEY_NAME}}2{{VALUE_NAME}}OpenHashMap(pairs.size).apply { putAll(pairs) }
+/** Creates an empty mutable fastutil {{KEY_NAME}}-to-{{VALUE_NAME}} map. */
 inline fun mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf() = {{KEY_NAME}}2{{VALUE_NAME}}OpenHashMap()
+/** Creates an empty mutable fastutil {{KEY_NAME}}-to-{{VALUE_NAME}} map with the expected [capacity]. */
 inline fun mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf(capacity: Int) =
     {{KEY_NAME}}2{{VALUE_NAME}}OpenHashMap(capacity)
+/** Creates an unmodifiable fastutil {{KEY_NAME}}-to-{{VALUE_NAME}} map containing [pairs]. */
 inline fun {{KEY_LOWER_NAME}}2{{VALUE_NAME}}MapOf(vararg pairs: Pair<{{KEY_NAME}}, {{VALUE_NAME}}>) =
     mutable{{KEY_NAME}}2{{VALUE_NAME}}MapOf(*pairs).freeze()
+/** Returns the shared empty unmodifiable fastutil {{KEY_NAME}}-to-{{VALUE_NAME}} map. */
 inline fun {{KEY_LOWER_NAME}}2{{VALUE_NAME}}MapOf() = empty{{KEY_NAME}}2{{VALUE_NAME}}Map()
+/** Returns the shared empty unmodifiable fastutil {{KEY_NAME}}-to-{{VALUE_NAME}} map. */
 inline fun empty{{KEY_NAME}}2{{VALUE_NAME}}Map(): @Unmodifiable {{KEY_NAME}}2{{VALUE_NAME}}Map =
     {{KEY_NAME}}2{{VALUE_NAME}}Maps.EMPTY_MAP
+/** Wraps this map in fastutil's synchronized view. */
 inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.synchronize(): {{KEY_NAME}}2{{VALUE_NAME}}Map =
     {{KEY_NAME}}2{{VALUE_NAME}}Maps.synchronize(this)
+/** Returns an unmodifiable view of this map. */
 inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.freeze(): @UnmodifiableView {{KEY_NAME}}2{{VALUE_NAME}}Map =
     {{KEY_NAME}}2{{VALUE_NAME}}Maps.unmodifiable(this)
+/** Copies this map's entries into a mutable fastutil object list of key-value pairs. */
 inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.toMutableObjectList(): ObjectList<Pair<{{KEY_NAME}}, {{VALUE_NAME}}>> {
     if (isEmpty()) return emptyObjectList()
     val list = ObjectArrayList<Pair<{{KEY_NAME}}, {{VALUE_NAME}}>>(size)
     forEach { key, value -> list.add(key to value) }
     return list
 }
+/** Copies this map's entries into an unmodifiable fastutil object list of key-value pairs. */
 inline fun {{KEY_NAME}}2{{VALUE_NAME}}Map.toObjectList(): ObjectList<Pair<{{KEY_NAME}}, {{VALUE_NAME}}>> =
     toMutableObjectList().freeze()

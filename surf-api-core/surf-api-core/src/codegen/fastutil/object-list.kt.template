@@ -1,25 +1,45 @@
 // ObjectList Extensions
+/** Creates a mutable fastutil object list containing [elements]. */
 inline fun <T> mutableObjectListOf(vararg elements: T) = ObjectArrayList<T>(elements)
+/** Creates an empty mutable fastutil object list. */
 inline fun <T> mutableObjectListOf() = ObjectArrayList<T>()
+/** Creates an empty mutable fastutil object list with the expected [capacity]. */
 inline fun <T> mutableObjectListOf(capacity: Int) = ObjectArrayList<T>(capacity)
+/** Copies [iterable] into a mutable fastutil object list. */
 inline fun <T> mutableObjectListOf(iterable: Iterable<T>) = when (iterable) {
     is Collection -> ObjectArrayList(iterable)
     else -> ObjectArrayList<T>(iterable.iterator())
 }
 
+/** Creates a mutable fastutil object list containing the non-null [elements]. */
 inline fun <T> mutableObjectListOfNotNull(vararg elements: T?) = elements.filterNotNullTo(ObjectArrayList())
+/** Copies the non-null elements of [iterable] into a mutable fastutil object list. */
 inline fun <T> mutableObjectListOfNotNull(iterable: Iterable<T?>) = iterable.filterNotNullTo(ObjectArrayList())
+/** Creates an unmodifiable fastutil object list containing [elements]. */
 inline fun <T> objectListOf(vararg elements: T): @Unmodifiable ObjectList<T> = ObjectList.of(*elements)
+/** Returns the shared empty unmodifiable fastutil object list. */
 inline fun <T> objectListOf() = emptyObjectList<T>()
+/** Returns an empty or singleton unmodifiable list for [element]. */
 inline fun <T> objectListOfNotNull(element: T?): @Unmodifiable ObjectList<T> = if (element != null) ObjectList.of(element) else emptyObjectList()
+/** Creates an unmodifiable fastutil object list containing the non-null [elements]. */
 inline fun <T> objectListOfNotNull(vararg elements: T?): @Unmodifiable ObjectList<T> = elements.filterNotNullTo(ObjectArrayList()).freeze()
+/** Copies the non-null elements of [iterable] into an unmodifiable fastutil object list. */
 inline fun <T> objectListOfNotNull(iterable: Iterable<T?>): @Unmodifiable ObjectList<T> = iterable.filterNotNullTo(ObjectArrayList()).freeze()
+/** Returns the shared empty unmodifiable fastutil object list. */
 inline fun <T> emptyObjectList(): @Unmodifiable ObjectList<T> = ObjectList.of()
+/** Wraps this list in fastutil's synchronized view. */
 inline fun <T> ObjectList<T>.synchronize(): ObjectList<T> = ObjectLists.synchronize(this)
+/** Returns an unmodifiable view of this list. */
 inline fun <T> ObjectList<T>.freeze(): @UnmodifiableView ObjectList<T> = ObjectLists.unmodifiable(this)
+/** Collects this sequence into a mutable fastutil object list. */
 inline fun <T> Sequence<T>.toMutableObjectList() = ObjectArrayList<T>(iterator())
+/** Collects this sequence into an unmodifiable fastutil object list. */
 inline fun <T> Sequence<T>.toObjectList() = toMutableObjectList().freeze()
+/** Converts this iterable to an unmodifiable fastutil object list. */
 inline fun <T> Iterable<T>.toObjectList() = this as? ObjectList<T> ?: ObjectArrayList<T>(iterator()).freeze()
+/** Returns this mutable array list or copies this iterable into one. */
 inline fun <T> Iterable<T>.toMutableObjectList() = this as? ObjectArrayList<T> ?: ObjectArrayList<T>(iterator())
+/** Converts this array to an unmodifiable fastutil object list. */
 inline fun <T> Array<out T>.toObjectList(): @Unmodifiable ObjectList<T> = ObjectList.of(*this)
+/** Copies this array into a mutable fastutil object list. */
 inline fun <T> Array<out T>.toMutableObjectList() = ObjectArrayList(this)

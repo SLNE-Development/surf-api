@@ -1,33 +1,54 @@
 // {{NAME}}List Extensions
+/** Creates a mutable fastutil {{NAME}} list containing [elements]. */
 inline fun mutable{{NAME}}ListOf(vararg elements: {{NAME}}) = {{NAME}}ArrayList(elements)
+/** Creates an empty mutable fastutil {{NAME}} list. */
 inline fun mutable{{NAME}}ListOf() = {{NAME}}ArrayList()
+/** Creates an empty mutable fastutil {{NAME}} list with the expected [capacity]. */
 inline fun mutable{{NAME}}ListOf(capacity: Int) = {{NAME}}ArrayList(capacity)
+/** Copies [iterable] into a mutable fastutil {{NAME}} list. */
 inline fun mutable{{NAME}}ListOf(iterable: Iterable<{{NAME}}>) = when (iterable) {
     is Collection -> {{NAME}}ArrayList(iterable)
     else -> {{NAME}}ArrayList(iterable.iterator())
 }
+/** Creates a mutable fastutil {{NAME}} list containing the non-null [elements]. */
 inline fun mutable{{NAME}}ListOfNotNull(vararg elements: {{NAME}}?) =
     elements.filterNotNullTo({{NAME}}ArrayList())
+/** Copies the non-null elements of [iterable] into a mutable fastutil {{NAME}} list. */
 inline fun mutable{{NAME}}ListOfNotNull(iterable: Iterable<{{NAME}}?>) =
     iterable.filterNotNullTo({{NAME}}ArrayList())
+/** Creates an unmodifiable fastutil {{NAME}} list containing [elements]. */
 inline fun {{LOWER_NAME}}ListOf(vararg elements: {{NAME}}): @Unmodifiable {{NAME}}List =
     {{NAME}}List.of(*elements)
+/** Returns the shared empty unmodifiable fastutil {{NAME}} list. */
 inline fun {{LOWER_NAME}}ListOf() = empty{{NAME}}List()
+/** Returns an empty or singleton unmodifiable list for [element]. */
 inline fun {{LOWER_NAME}}ListOfNotNull(element: {{NAME}}?): @Unmodifiable {{NAME}}List =
     if (element != null) {{NAME}}List.of(element) else empty{{NAME}}List()
+/** Creates an unmodifiable fastutil {{NAME}} list containing the non-null [elements]. */
 inline fun {{LOWER_NAME}}ListOfNotNull(vararg elements: {{NAME}}?): @Unmodifiable {{NAME}}List =
     elements.filterNotNullTo({{NAME}}ArrayList()).freeze()
+/** Copies the non-null elements of [iterable] into an unmodifiable fastutil {{NAME}} list. */
 inline fun {{LOWER_NAME}}ListOfNotNull(iterable: Iterable<{{NAME}}?>): @Unmodifiable {{NAME}}List =
     iterable.filterNotNullTo({{NAME}}ArrayList()).freeze()
+/** Returns the shared empty unmodifiable fastutil {{NAME}} list. */
 inline fun empty{{NAME}}List(): @Unmodifiable {{NAME}}List = {{NAME}}List.of()
+/** Wraps this list in fastutil's synchronized view. */
 inline fun {{NAME}}List.synchronize(): {{NAME}}List = {{NAME}}Lists.synchronize(this)
+/** Returns an unmodifiable view of this list. */
 inline fun {{NAME}}List.freeze(): @UnmodifiableView {{NAME}}List = {{NAME}}Lists.unmodifiable(this)
+/** Collects this sequence into a mutable fastutil {{NAME}} list. */
 inline fun Sequence<{{NAME}}>.toMutable{{NAME}}List() = {{NAME}}ArrayList(iterator())
+/** Collects this sequence into an unmodifiable fastutil {{NAME}} list. */
 inline fun Sequence<{{NAME}}>.to{{NAME}}List() = toMutable{{NAME}}List().freeze()
+/** Converts this iterable to an unmodifiable fastutil {{NAME}} list. */
 inline fun Iterable<{{NAME}}>.to{{NAME}}List() =
     this as? {{NAME}}List ?: {{NAME}}ArrayList(iterator()).freeze()
+/** Converts this boxed array to an unmodifiable fastutil {{NAME}} list. */
 inline fun Array<{{NAME}}>.to{{NAME}}List(): @Unmodifiable {{NAME}}List =
     {{NAME}}List.of(*{{ARRAY_CONVERSION}})
+/** Copies this boxed array into a mutable fastutil {{NAME}} list. */
 inline fun Array<{{NAME}}>.toMutable{{NAME}}List() = {{NAME}}ArrayList({{ARRAY_CONVERSION}})
+/** Converts this primitive array to an unmodifiable fastutil {{NAME}} list. */
 inline fun {{ARRAY_TYPE}}.to{{NAME}}List(): @Unmodifiable {{NAME}}List = {{NAME}}List.of(*this)
+/** Copies this primitive array into a mutable fastutil {{NAME}} list. */
 inline fun {{ARRAY_TYPE}}.toMutable{{NAME}}List() = {{NAME}}ArrayList(this)

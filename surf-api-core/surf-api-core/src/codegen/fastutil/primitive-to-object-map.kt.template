@@ -1,22 +1,32 @@
 // {{NAME}}2ObjectMap Extensions
+/** Creates a mutable fastutil {{NAME}}-to-object map containing [pairs]. */
 inline fun <V> mutable{{NAME}}2ObjectMapOf(vararg pairs: Pair<{{NAME}}, V>) =
     {{NAME}}2ObjectOpenHashMap<V>(pairs.size).apply { putAll(pairs) }
+/** Creates an empty mutable fastutil {{NAME}}-to-object map. */
 inline fun <V> mutable{{NAME}}2ObjectMapOf() = {{NAME}}2ObjectOpenHashMap<V>()
+/** Creates an empty mutable fastutil {{NAME}}-to-object map with the expected [capacity]. */
 inline fun <V> mutable{{NAME}}2ObjectMapOf(capacity: Int) = {{NAME}}2ObjectOpenHashMap<V>(capacity)
+/** Creates an unmodifiable fastutil {{NAME}}-to-object map containing [pairs]. */
 inline fun <V> {{LOWER_NAME}}2ObjectMapOf(vararg pairs: Pair<{{NAME}}, V>) =
     mutable{{NAME}}2ObjectMapOf(*pairs).freeze()
+/** Returns the shared empty unmodifiable fastutil {{NAME}}-to-object map. */
 inline fun <V> {{LOWER_NAME}}2ObjectMapOf() = empty{{NAME}}2ObjectMap<V>()
+/** Returns the shared empty unmodifiable fastutil {{NAME}}-to-object map. */
 inline fun <V> empty{{NAME}}2ObjectMap(): @Unmodifiable {{NAME}}2ObjectMap<V> =
     {{NAME}}2ObjectMaps.emptyMap()
+/** Wraps this map in fastutil's synchronized view. */
 inline fun <V> {{NAME}}2ObjectMap<V>.synchronize(): {{NAME}}2ObjectMap<V> =
     {{NAME}}2ObjectMaps.synchronize(this)
+/** Returns an unmodifiable view of this map. */
 inline fun <V> {{NAME}}2ObjectMap<V>.freeze(): @UnmodifiableView {{NAME}}2ObjectMap<V> =
     {{NAME}}2ObjectMaps.unmodifiable(this)
+/** Copies this map's entries into a mutable fastutil object list of key-value pairs. */
 inline fun <V> {{NAME}}2ObjectMap<V>.toMutableObjectList(): ObjectList<Pair<{{NAME}}, V>> {
     if (isEmpty()) return emptyObjectList()
     val list = ObjectArrayList<Pair<{{NAME}}, V>>(size)
     forEach { key, value -> list.add(key to value) }
     return list
 }
+/** Copies this map's entries into an unmodifiable fastutil object list of key-value pairs. */
 inline fun <V> {{NAME}}2ObjectMap<V>.toObjectList(): ObjectList<Pair<{{NAME}}, V>> =
     toMutableObjectList().freeze()

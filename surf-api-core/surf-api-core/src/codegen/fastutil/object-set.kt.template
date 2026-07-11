@@ -1,35 +1,49 @@
 // ObjectSet Extensions
+/** Creates a mutable fastutil object set containing [elements]. */
 inline fun <T> mutableObjectSetOf(vararg elements: T) = ObjectOpenHashSet(elements)
+/** Creates a mutable fastutil object set containing the non-null [elements]. */
 inline fun <T> mutableObjectSetOfNotNull(vararg elements: T?) =
     elements.filterNotNullTo(ObjectOpenHashSet())
 
+/** Creates an empty mutable fastutil object set. */
 inline fun <T> mutableObjectSetOf() = ObjectOpenHashSet<T>()
+/** Creates an empty mutable fastutil object set with the expected [capacity]. */
 inline fun <T> mutableObjectSetOf(capacity: Int) = ObjectOpenHashSet<T>(capacity)
+/** Copies [iterable] into a mutable fastutil object set. */
 inline fun <T> mutableObjectSetOf(iterable: Iterable<T>) = when (iterable) {
     is Collection -> ObjectOpenHashSet(iterable)
     else -> ObjectOpenHashSet<T>(iterable.iterator())
 }
 
+/** Creates an unmodifiable fastutil object set containing [elements]. */
 inline fun <T> objectSetOf(vararg elements: T): ObjectSet<T> = when (elements.size) {
     0 -> emptyObjectSet<T>()
     1 -> ObjectSets.singleton(elements[0])
     else -> mutableObjectSetOf<T>(*elements).freeze()
 }
 
+/** Creates an unmodifiable fastutil object set containing the non-null [elements]. */
 inline fun <T> objectSetOfNotNull(vararg elements: T?): ObjectSet<T> = when (elements.size) {
     0 -> emptyObjectSet<T>()
     1 -> elements[0]?.let { ObjectSets.singleton(it) } ?: emptyObjectSet()
     else -> mutableObjectSetOfNotNull(*elements).freeze()
 }
 
+/** Copies [collection] into an unmodifiable fastutil object set. */
 inline fun <T> objectSetOf(collection: Iterable<T>) = mutableObjectSetOf<T>(collection).freeze()
+/** Returns the shared empty unmodifiable fastutil object set. */
 inline fun <T> objectSetOf() = emptyObjectSet<T>()
+/** Returns the shared empty unmodifiable fastutil object set. */
 inline fun <T> emptyObjectSet(): @Unmodifiable ObjectSet<T> = ObjectSets.emptySet()
+/** Wraps this set in fastutil's synchronized view. */
 inline fun <T> ObjectSet<T>.synchronize(): ObjectSet<T> = ObjectSets.synchronize(this)
+/** Returns an unmodifiable view of this set. */
 inline fun <T> ObjectSet<T>.freeze(): @UnmodifiableView ObjectSet<T> =
     this as? ObjectSets.UnmodifiableSet ?: ObjectSets.unmodifiable(this)
 
+/** Collects this sequence into a mutable fastutil object set. */
 inline fun <T> Sequence<T>.toMutableObjectSet(): ObjectSet<T> = ObjectOpenHashSet(iterator())
+/** Collects this sequence into an unmodifiable fastutil object set. */
 inline fun <T> Sequence<T>.toObjectSet(): ObjectSet<T> {
     val it = iterator()
     if (!it.hasNext()) return emptyObjectSet()
@@ -41,12 +55,18 @@ inline fun <T> Sequence<T>.toObjectSet(): ObjectSet<T> {
     return set.freeze()
 }
 
+/** Converts this array to an unmodifiable fastutil object set. */
 inline fun <T> Array<out T>.toObjectSet() = objectSetOf(*this)
+/** Copies this array into a mutable fastutil object set. */
 inline fun <T> Array<out T>.toMutableObjectSet() = mutableObjectSetOf(*this)
+/** Converts this iterable to an unmodifiable fastutil object set. */
 inline fun <T> Iterable<T>.toObjectSet() = (this as? ObjectSet<T>)?.freeze() ?: objectSetOf(this)
+/** Copies this iterable into a mutable fastutil object set. */
 inline fun <T> Iterable<T>.toMutableObjectSet() =
     (this as? ObjectSet<T>)?.toMutableObjectSet() ?: mutableObjectSetOf(this)
 
+/** Converts this collection to an unmodifiable fastutil object set. */
 inline fun <T> Collection<T>.toObjectSet() = (this as? ObjectSet<T>)?.freeze() ?: objectSetOf(this)
+/** Returns this mutable open hash set or copies this set into one. */
 inline fun <T> ObjectSet<T>.toMutableObjectSet() =
     this as? ObjectOpenHashSet<T> ?: ObjectOpenHashSet(this)

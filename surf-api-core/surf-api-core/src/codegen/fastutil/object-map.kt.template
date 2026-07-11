@@ -1,52 +1,73 @@
 // Object2ObjectMap Extensions
+/** Creates a mutable fastutil object-to-object map containing [pairs]. */
 inline fun <K, V> mutableObject2ObjectMapOf(vararg pairs: Pair<K, V>) =
     Object2ObjectOpenHashMap<K, V>(pairs.size).apply { putAll(pairs) }
+/** Creates an empty mutable fastutil object-to-object map. */
 inline fun <K, V> mutableObject2ObjectMapOf() = Object2ObjectOpenHashMap<K, V>()
+/** Creates an empty mutable fastutil object-to-object map with the expected [capacity]. */
 inline fun <K, V> mutableObject2ObjectMapOf(capacity: Int) = Object2ObjectOpenHashMap<K, V>(capacity)
+/** Creates an unmodifiable fastutil object-to-object map containing [pairs]. */
 inline fun <K, V> object2ObjectMapOf(vararg pairs: Pair<K, V>) =
     mutableObject2ObjectMapOf(*pairs).freeze()
+/** Returns the shared empty unmodifiable fastutil object-to-object map. */
 inline fun <K, V> object2ObjectMapOf() = emptyObject2ObjectMap<K, V>()
+/** Returns the shared empty unmodifiable fastutil object-to-object map. */
 inline fun <K, V> emptyObject2ObjectMap(): @Unmodifiable Object2ObjectMap<K, V> =
     Object2ObjectMaps.emptyMap()
+/** Wraps this map in fastutil's synchronized view. */
 inline fun <K, V> Object2ObjectMap<K, V>.synchronize(): Object2ObjectMap<K, V> =
     Object2ObjectMaps.synchronize(this)
+/** Returns an unmodifiable view of this map. */
 inline fun <K, V> Object2ObjectMap<K, V>.freeze(): @UnmodifiableView Object2ObjectMap<K, V> =
     Object2ObjectMaps.unmodifiable(this)
 
+/** Creates a mutable object multimap containing [pairs]. */
 inline fun <K, V> mutableObject2MultiObjectsMapOf(vararg pairs: Pair<K, ObjectSet<V>>) =
     Object2ObjectOpenHashMap<K, ObjectSet<V>>(pairs.size).apply { putAll(pairs) }
+/** Creates an empty mutable object multimap. */
 inline fun <K, V> mutableObject2MultiObjectsMapOf() = Object2ObjectOpenHashMap<K, ObjectSet<V>>()
+/** Creates an unmodifiable object multimap containing [pairs]. */
 inline fun <K, V> object2MultiObjectsMapOf(vararg pairs: Pair<K, ObjectSet<V>>) =
     mutableObject2MultiObjectsMapOf(*pairs).freeze()
+/** Returns the shared empty unmodifiable object multimap. */
 inline fun <K, V> object2MultiObjectsMapOf() = emptyObject2MultiObjectsMap<K, V>()
+/** Returns the shared empty unmodifiable object multimap. */
 inline fun <K, V> emptyObject2MultiObjectsMap(): @Unmodifiable Object2MultiObjectsMap<K, V> =
     Object2ObjectMaps.emptyMap()
+/** A fastutil object map whose values are fastutil object sets. */
 typealias Object2MultiObjectsMap<K, V> = Object2ObjectMap<K, ObjectSet<V>>
 
+/** Adds [value] to the set stored for [key], creating the set when necessary. */
 inline fun <K, V> Object2MultiObjectsMap<K, V>.add(key: K, value: V) {
     val set = get(key) ?: mutableObjectSetOf<V>().also { put(key, it) }
     set.add(value)
 }
+/** Adds all [values] to the set stored for [key], creating the set when necessary. */
 inline fun <K, V> Object2MultiObjectsMap<K, V>.addAll(key: K, values: Iterable<V>) {
     val set = get(key) ?: mutableObjectSetOf<V>().also { put(key, it) }
     set.addAll(values)
 }
+/** Removes [value] from [key] and removes the key when its set becomes empty. */
 inline fun <K, V> Object2MultiObjectsMap<K, V>.remove(key: K, value: V) {
     val set = get(key) ?: return
     set.remove(value)
     if (set.isEmpty()) remove(key)
 }
+/** Removes all [values] from [key] and removes the key when its set becomes empty. */
 inline fun <K, V> Object2MultiObjectsMap<K, V>.removeAll(key: K, values: Iterable<V>) {
     val set = get(key) ?: return
     set.removeAll(values)
     if (set.isEmpty()) remove(key)
 }
+/** Removes [key] and all values associated with it. */
 inline fun <K, V> Object2MultiObjectsMap<K, V>.removeAll(key: K) { remove(key) }
+/** Copies this map's entries into a mutable fastutil object list of key-value pairs. */
 inline fun <K, V> Object2ObjectMap<out K, V>.toMutableObjectList(): ObjectList<Pair<K, V>> {
     if (isEmpty()) return emptyObjectList()
     val list = ObjectArrayList<Pair<K, V>>(size)
     forEach { k, v -> list.add(k to v) }
     return list
 }
+/** Copies this map's entries into an unmodifiable fastutil object list of key-value pairs. */
 inline fun <K, V> Object2ObjectMap<out K, V>.toObjectList(): ObjectList<Pair<K, V>> =
     toMutableObjectList().freeze()

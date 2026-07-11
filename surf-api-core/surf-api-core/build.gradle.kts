@@ -72,6 +72,9 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testRuntimeOnly(libs.fastutil)
+    testRuntimeOnly(libs.flogger)
+    testRuntimeOnly(libs.flogger.slf4j.backend)
+    testRuntimeOnly(libs.commons.lang3)
     testRuntimeOnly(libs.commons.math3)
     testRuntimeOnly(libs.spongepowered.math)
     testRuntimeOnly(libs.adventure.api)
