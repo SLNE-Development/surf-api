@@ -5,9 +5,9 @@ import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
+import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -15,10 +15,10 @@ import reactor.core.publisher.Mono
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 
-class SyncValueImpl<T : Any>(
+class SyncValueImpl<T : Any> internal constructor(
     api: RedisApi,
     id: String,
-    private val serializer: KSerializer<T>,
+    private val valueCodec: SyncValueCodec<T>,
     private val defaultValue: T,
     ttl: Duration
 ) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(
@@ -26,9 +26,9 @@ class SyncValueImpl<T : Any>(
     id,
     ttl,
     Registry,
-    NAMESPACE
-),
-    SyncValue<T> {
+    NAMESPACE,
+    valueCodec.descriptor
+), SyncValue<T> {
 
     companion object {
         private val log = logger()
@@ -87,7 +87,7 @@ class SyncValueImpl<T : Any>(
     }
 
     private fun onSetEvent(data: StreamEventData) {
-        val encoded = data.payload[0]
+        val encoded = data.payload(0)
         val decoded = decodeValue(encoded)
 
         val old = value.getAndSet(decoded)
@@ -112,6 +112,6 @@ class SyncValueImpl<T : Any>(
         super.overrideFromRemote(raw)
     }
 
-    private fun decodeValue(value: String): T = api.json.decodeFromString(serializer, value)
-    private fun encodeValue(value: T): String = api.json.encodeToString(serializer, value)
+    private fun decodeValue(value: String): T = valueCodec.decode(value)
+    private fun encodeValue(value: T): String = valueCodec.encode(value)
 }

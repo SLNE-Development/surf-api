@@ -9,6 +9,7 @@ import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
+import dev.slne.surf.redis.codec.RedisCodecException
 import dev.slne.surf.redis.invoker.RedisEventInvokerTemplate
 import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.util.KotlinSerializerCache
@@ -23,14 +24,14 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import org.redisson.client.codec.StringCodec
-import reactor.core.Disposable
 import reactor.core.publisher.Mono
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
 @Suppress("UnstableApiUsage")
 @OptIn(InternalInvokerApi::class)
-class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
+class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCodecRegistrar {
 
     /**
      * Registered event handlers indexed by exact event type.
@@ -63,9 +64,18 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
      * Cache for event serializers, resolved once per event class.
      */
     private val serializerCache = KotlinSerializerCache<RedisEvent>(api.json.serializersModule)
+    private val codecRegistry = EventCodecRegistry()
+    private val missingCodecDiagnostics = ConcurrentHashMap.newKeySet<String>()
 
     private val topic by lazy { api.redissonReactive.getTopic(REDIS_CHANNEL, StringCodec.INSTANCE) }
-    private lateinit var subscription: Disposable
+    private val customRedisCodec by lazy {
+        CustomEventPacketCodec.redisCodec(codecRegistry::codecForEventId)
+    }
+    private val customTopic by lazy {
+        api.redissonReactive.getTopic(CustomEventPacketCodec.CHANNEL, customRedisCodec)
+    }
+    private var topicListenerId: Int? = null
+    private var customTopicListenerId: Int? = null
 
     companion object {
         private val log = logger()
@@ -78,23 +88,27 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         )
     }
 
-    override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
-
-    /**
-     * Sets up the Redis Pub/Sub subscription and installs the message listener.
-     *
-     * Incoming messages are dispatched to handler coroutines on `Dispatchers.Default`.
-     */
-    private fun setupSubscription() {
-        val listenerId =
-            topic.addListener(String::class.java) { _, msg -> handleIncomingMessage(msg) }.block()
-        subscription = {
-            topic.removeListener(listenerId).block()
+    override fun init(): Mono<Void> = Mono.zip(
+        topic.addListener(String::class.java) { _, msg -> handleIncomingMessage(msg) },
+        customTopic.addListener(CustomEventPacketCodec.DecodeResult::class.java) { _, result ->
+            handleIncomingCustomMessage(result)
         }
-    }
+    ).doOnNext { ids ->
+        topicListenerId = ids.t1
+        customTopicListenerId = ids.t2
+    }.then()
 
     override fun close() {
-        subscription.dispose()
+        topicListenerId?.let { topic.removeListener(it).block() }
+        customTopicListenerId?.let { customTopic.removeListener(it).block() }
+        topicListenerId = null
+        customTopicListenerId = null
+        missingCodecDiagnostics.clear()
+        registrationLock.write {
+            eventHandlers.clear()
+            eventTypeRegistry.clear()
+        }
+        codecRegistry.clear()
     }
 
     /**
@@ -122,25 +136,29 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
         }
 
         val event = deserializeEvent(eventClass, envelope.eventData) ?: return
-        val handlers = eventHandlers[eventClass]
-        if (handlers.isNullOrEmpty()) return
-
-        for (invoker in handlers) {
-            api.redisListenerScope.launch {
-                try {
-                    invoker.invoke(event)
-                } catch (e: Throwable) {
-                    if (e is CancellationException) throw e
-                    log.atSevere()
-                        .withCause(e)
-                        .log("Error handling event ${event::class.simpleName}: ${e.message}")
-                }
-            }
-        }
+        dispatchEvent(eventClass, event)
     }
 
     override fun publish(event: RedisEvent): Deferred<Long> {
+        check(api.isConnected()) { "Cannot publish a Redis event before RedisApi is connected" }
         RedisComponentProvider.injectOriginId(event)
+
+        val customCodec = codecRegistry.codecForPublishing(event.javaClass)
+        if (customCodec != null) {
+            return customTopic
+                .publish(CustomEventPacketCodec.outbound(event, customCodec))
+                .onErrorResume(RedisCodecException::class.java) { failure ->
+                    log.atWarning()
+                        .withCause(failure)
+                        .log(
+                            "Unable to encode custom Redis event '%s' with codec '%s'",
+                            customCodec.eventType.name,
+                            customCodec.codec.codecId
+                        )
+                    Mono.just(0L)
+                }
+                .asDeferred()
+        }
 
         val eventData = serializeEvent(event) ?: return CompletableDeferred(0L)
         val envelope = EventEnvelope.forEvent(event, eventData)
@@ -192,15 +210,100 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus {
                 @Suppress("UNCHECKED_CAST")
                 firstParamType as Class<out RedisEvent>
 
-                registrationLock.write {
-                    eventTypeRegistry[firstParamType.name] = firstParamType
-                }
+                codecRegistry.registerDiscovered(firstParamType)
 
                 val invoker = INVOKER_FACTORY.create(listener, method, firstParamType)
 
                 registrationLock.write {
+                    eventTypeRegistry[firstParamType.name] = firstParamType
                     eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
                         .add(invoker)
+                }
+            }
+        }
+    }
+
+    override fun <E : RedisEvent> registerEventCodec(
+        eventType: Class<E>,
+        codec: RedisEventCodec<E>
+    ) = codecRegistry.registerExplicit(eventType, codec)
+
+    override fun registerEventType(eventType: Class<out RedisEvent>) {
+        codecRegistry.registerDiscovered(eventType)
+    }
+
+    override fun freezeEventCodecs() {
+        codecRegistry.freeze()
+    }
+
+    private fun handleIncomingCustomMessage(result: CustomEventPacketCodec.DecodeResult) {
+        try {
+            when (result) {
+                is CustomEventPacketCodec.DecodeResult.MissingCodec -> {
+                    if (!missingCodecDiagnostics.add("missing:${result.eventId}:${result.codecVersion}")) return
+                    log.atWarning()
+                        .withStackTrace(StackSize.SMALL)
+                        .log(
+                            "No codec is registered for custom Redis event ID '%s' version %s; ignoring this event type",
+                            result.eventId,
+                            result.codecVersion
+                        )
+                }
+
+                is CustomEventPacketCodec.DecodeResult.VersionMismatch -> {
+                    val registration = result.registration
+                    if (!missingCodecDiagnostics.add(
+                            "version:${registration.eventId}:${result.receivedVersion}"
+                        )
+                    ) return
+                    log.atWarning()
+                        .withStackTrace(StackSize.SMALL)
+                        .log(
+                            "Codec version mismatch for custom Redis event '%s': registered=%s, received=%s",
+                            registration.eventId,
+                            registration.version,
+                            result.receivedVersion
+                        )
+                }
+
+                is CustomEventPacketCodec.DecodeResult.Event -> {
+                    RedisComponentProvider.injectEventMetadata(
+                        result.event,
+                        result.timestamp,
+                        result.originId
+                    )
+                    dispatchEvent(result.registration.eventType, result.event)
+                }
+
+                is CustomEventPacketCodec.DecodeResult.Failure -> {
+                    log.atWarning()
+                        .withCause(result.exception)
+                        .log(
+                            "Unable to decode custom Redis event packet: %s",
+                            result.exception.message
+                        )
+                }
+            }
+        } catch (e: Exception) {
+            log.atWarning()
+                .withCause(e)
+                .log("Unable to decode custom Redis event packet: %s", e.message)
+        }
+    }
+
+    private fun dispatchEvent(eventClass: Class<out RedisEvent>, event: RedisEvent) {
+        val handlers = eventHandlers[eventClass]
+        if (handlers.isNullOrEmpty()) return
+
+        for (invoker in handlers) {
+            api.redisListenerScope.launch {
+                try {
+                    invoker.invoke(event)
+                } catch (e: Throwable) {
+                    if (e is CancellationException) throw e
+                    log.atSevere()
+                        .withCause(e)
+                        .log("Error handling event ${event.javaClass.simpleName}: ${e.message}")
                 }
             }
         }

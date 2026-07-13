@@ -27,6 +27,8 @@ dependencies {
         exclude("org.reactivestreams")
         exclude("io.projectreactor", "reactor-core")
     }
+
+    testImplementation(kotlin("test-junit5"))
 }
 
 publishing {

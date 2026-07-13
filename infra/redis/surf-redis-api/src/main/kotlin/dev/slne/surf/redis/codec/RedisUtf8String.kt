@@ -12,8 +12,8 @@ object RedisUtf8String {
         val maxEncodedLength = ByteBufUtil.utf8MaxBytes(maxLength)
         val bufferLength = input.readVarInt()
 
-        checkDecoding(bufferLength <= maxEncodedLength) { "The received encoded string buffer length is longer than maximum allowed ($bufferLength > $maxEncodedLength)" }
         checkDecoding(bufferLength >= 0) { "The received encoded string buffer length is less than zero" }
+        checkDecoding(bufferLength <= maxEncodedLength) { "The received encoded string buffer length is longer than maximum allowed ($bufferLength > $maxEncodedLength)" }
 
         val availableBytes = input.readableBytes()
 
@@ -32,19 +32,12 @@ object RedisUtf8String {
     fun write(output: ByteBuf, value: CharSequence, maxLength: Int = MAX_STRING_LENGTH) {
         checkEncoding(value.length <= maxLength) { "String too big (was ${value.length} characters, max $maxLength)" }
 
-        val maxEncodedValueLength = ByteBufUtil.utf8MaxBytes(value)
-        val tmp = output.alloc().buffer(maxEncodedValueLength)
+        val bytesWritten = ByteBufUtil.utf8Bytes(value)
+        val maxAllowedEncodedLength = ByteBufUtil.utf8MaxBytes(maxLength)
 
-        try {
-            val bytesWritten = ByteBufUtil.writeUtf8(tmp, value)
-            val maxAllowedEncodedLength = ByteBufUtil.utf8MaxBytes(maxLength)
+        checkEncoding(bytesWritten <= maxAllowedEncodedLength) { "String too big (was $bytesWritten bytes encoded, max $maxAllowedEncodedLength)" }
 
-            checkEncoding(bytesWritten <= maxAllowedEncodedLength) { "String too big (was $bytesWritten bytes encoded, max $maxAllowedEncodedLength)" }
-
-            output.writeVarInt(bytesWritten)
-            output.writeBytes(tmp)
-        } finally {
-            tmp.release()
-        }
+        output.writeVarInt(bytesWritten)
+        ByteBufUtil.reserveAndWriteUtf8(output, value, bytesWritten)
     }
 }

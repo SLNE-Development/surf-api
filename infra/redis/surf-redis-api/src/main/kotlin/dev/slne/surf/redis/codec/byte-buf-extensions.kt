@@ -16,6 +16,15 @@ import java.util.EnumSet
 import java.util.UUID
 import kotlin.enums.enumEntries
 
+private val MAX_CONTAINER_ELEMENTS = java.lang.Long.getLong("surf.redis.max-container-elements", 1_000_000)
+
+private fun checkContainerSize(type: String, size: Int) {
+    checkDecoding(size >= 0) { "$type size must not be negative: $size" }
+    checkDecoding(size <= MAX_CONTAINER_ELEMENTS) {
+        "$type size exceeds safety limit: $size > $MAX_CONTAINER_ELEMENTS"
+    }
+}
+
 fun ByteBuf.writeVarInt(value: Int) {
     RedisVarInt.write(this, value)
 }
@@ -61,7 +70,7 @@ fun <T> ByteBuf.writeCollection(collection: Collection<T>, writer: (ByteBuf, T) 
 
 fun <T, C : MutableCollection<T>> ByteBuf.readCollection(creator: (Int) -> C, reader: (ByteBuf) -> T): C {
     val size = readVarInt()
-    checkDecoding(size >= 0) { "Collection size must not be negative: $size" }
+    checkContainerSize("Collection", size)
 
     val collection = creator(size)
     repeat(size) {
@@ -79,7 +88,7 @@ fun <T> ByteBuf.writeArray(array: Array<T>, writer: (ByteBuf, T) -> Unit) {
 
 fun <T> ByteBuf.readArray(type: Class<T>, reader: (ByteBuf) -> T): Array<T> {
     val length = readVarInt()
-    checkDecoding(length >= 0) { "Array length must not be negative: $length" }
+    checkContainerSize("Array", length)
 
     @Suppress("UNCHECKED_CAST")
     val array = java.lang.reflect.Array.newInstance(type, length) as Array<T>
@@ -97,7 +106,7 @@ inline fun <reified T> ByteBuf.readArray(noinline reader: (ByteBuf) -> T): Array
 
 private fun ByteBuf.readPrimitiveArrayLength(type: String): Int {
     val length = readVarInt()
-    checkDecoding(length >= 0) { "$type length must not be negative: $length" }
+    checkContainerSize(type, length)
     return length
 }
 
@@ -293,7 +302,7 @@ fun <K, V, M : MutableMap<K, V>> ByteBuf.readMap(
     valueReader: (ByteBuf) -> V
 ): M {
     val size = readVarInt()
-    checkDecoding(size >= 0) { "Map size must not be negative: $size" }
+    checkContainerSize("Map", size)
 
     val map = creator(size)
 
@@ -381,6 +390,10 @@ fun ByteBuf.writeFixedBitSet(bitSet: BitSet, size: Int) {
 }
 
 fun ByteBuf.readFixedBitSet(size: Int): BitSet {
+    checkDecoding(size >= 0) { "BitSet size must not be negative: $size" }
+    checkDecoding(size <= MAX_CONTAINER_ELEMENTS * Byte.SIZE_BITS) {
+        "BitSet size exceeds safety limit: $size"
+    }
     val byteSize = (size + Byte.SIZE_BITS - 1) / Byte.SIZE_BITS
     val bytes = ByteArray(byteSize)
     readBytes(bytes)
@@ -389,7 +402,7 @@ fun ByteBuf.readFixedBitSet(size: Int): BitSet {
 
 fun ByteBuf.readWithCount(reader: (ByteBuf) -> Unit) {
     val count = readVarInt()
-    checkDecoding(count >= 0) { "Count must not be negative: $count" }
+    checkContainerSize("Count", count)
 
     repeat(count) {
         reader(this)
@@ -414,7 +427,7 @@ fun ByteBuf.writeVarIntList(list: IntList) {
 
 fun ByteBuf.readVarIntList(): IntArrayList {
     val size = readVarInt()
-    checkDecoding(size >= 0) { "IntList size must not be negative: $size" }
+    checkContainerSize("IntList", size)
 
     val list = IntArrayList(size)
 

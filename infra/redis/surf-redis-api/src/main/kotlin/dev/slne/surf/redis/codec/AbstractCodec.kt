@@ -6,7 +6,13 @@ import org.redisson.client.codec.BaseCodec
 import org.redisson.client.protocol.Decoder
 import org.redisson.client.protocol.Encoder
 
-abstract class AbstractCodec<T : Any> : BaseCodec() {
+/**
+ * Convenience base class that can be used both as a surf-redis [RedisCodec] and as a Redisson
+ * codec. Subclasses only implement [write] and [read].
+ *
+ * Subclasses must never retain or release buffers passed to [write] or [read].
+ */
+abstract class AbstractCodec<T : Any> : BaseCodec(), RedisCodec<T> {
     private val encoder = Encoder { obj ->
         val buf = Unpooled.buffer()
         try {
@@ -19,14 +25,7 @@ abstract class AbstractCodec<T : Any> : BaseCodec() {
         buf
     }
 
-    private val decoder = Decoder<Any> { buf, _ ->
-        try {
-            read(buf)
-        } catch (t: Throwable) {
-            buf.release()
-            throw t
-        }
-    }
+    private val decoder = Decoder<Any> { buf, _ -> read(buf) }
 
     override fun getValueEncoder(): Encoder {
         return encoder
@@ -39,11 +38,11 @@ abstract class AbstractCodec<T : Any> : BaseCodec() {
     protected abstract fun write(buf: ByteBuf, value: T)
     protected abstract fun read(buf: ByteBuf): T
 
-    fun encode(buf: ByteBuf, value: T) {
-        write(buf, value)
+    final override fun encode(buffer: ByteBuf, value: T) {
+        write(buffer, value)
     }
 
-    fun decode(buf: ByteBuf): T {
-        return read(buf)
+    final override fun decode(buffer: ByteBuf): T {
+        return read(buffer)
     }
 }

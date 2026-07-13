@@ -9,8 +9,9 @@ import kotlinx.serialization.Serializable
  * All events that are published through the Redis event bus must extend this class.
  * Events are serialized and propagated to other Redis-connected clients.
  *
- * Implementations are expected to be simple data holders and must be
- * [kotlinx.serialization.Serializable].
+ * Implementations are expected to be simple data holders. Events using the default JSON transport
+ * must be [kotlinx.serialization.Serializable]. Events with a registered [RedisEventCodec] may use
+ * that codec instead and are sent on the isolated binary event channel.
  */
 @Serializable
 abstract class RedisEvent {
@@ -19,7 +20,8 @@ abstract class RedisEvent {
      *
      * This value is set locally at construction time.
      */
-    val timestamp: Long = System.currentTimeMillis()
+    var timestamp: Long = System.currentTimeMillis()
+        internal set
 
     /**
      * Identifier of the client that originally published this event.

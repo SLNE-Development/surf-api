@@ -20,7 +20,6 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
-import reactor.core.Disposable
 import reactor.core.publisher.Mono
 import java.lang.reflect.ParameterizedType
 import java.util.*
@@ -69,8 +68,8 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         )
     }
 
-    private lateinit var requestDisposable: Disposable
-    private lateinit var responseDisposable: Disposable
+    private var requestListenerId: Int? = null
+    private var responseListenerId: Int? = null
 
     companion object {
         private val log = logger()
@@ -89,28 +88,13 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      *
      * This method is blocking and should only be called during startup.
      */
-    override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
-
-    /**
-     * Installs the Redis Pub/Sub listener and subscribes to request/response channels.
-     *
-     * Incoming messages are dispatched to handler coroutines on `Dispatchers.Default`.
-     */
-    private fun setupSubscription() {
-        val requestId =
-            requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) }
-                .block()
-        val responseId =
-            responseTopic.addListener(String::class.java) { _, msg -> handleIncomingResponse(msg) }
-                .block()
-
-        requestDisposable = {
-            requestTopic.removeListener(requestId).block()
-        }
-        responseDisposable = {
-            responseTopic.removeListener(responseId).block()
-        }
-    }
+    override fun init(): Mono<Void> = Mono.zip(
+        requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) },
+        responseTopic.addListener(String::class.java) { _, msg -> handleIncomingResponse(msg) }
+    ).doOnNext { ids ->
+        requestListenerId = ids.t1
+        responseListenerId = ids.t2
+    }.then()
 
     /**
      * Handles an incoming request message.
@@ -210,19 +194,16 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         val envelope = RequestEnvelope.forRequest(request, requestId, requestData)
         val message = api.json.encodeToString(envelope)
 
-        requestTopic.publish(message).awaitSingle()
-
         try {
+            requestTopic.publish(message).awaitSingle()
             return withTimeout(timeoutMs.milliseconds) {
                 val response = deferred.await()
                 responseType.cast(response)
             }
         } catch (_: TimeoutCancellationException) {
-            pendingRequests.remove(requestId)
             throw RequestTimeoutException("Request timed out after ${timeoutMs}ms: ${request::class.simpleName}")
-        } catch (e: Exception) {
-            pendingRequests.remove(requestId)
-            throw e
+        } finally {
+            pendingRequests.remove(requestId, deferred)
         }
     }
 
@@ -306,13 +287,11 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             @Suppress("UNCHECKED_CAST")
             requestType as Class<out RedisRequest>
 
-            registrationLock.write {
-                requestTypeRegistry[requestType.name] = requestType
-            }
-
             val invoker = INVOKER_FACTORY.create(handler, method, requestType)
-            val current =
-                registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
+            val current = registrationLock.write {
+                requestTypeRegistry[requestType.name] = requestType
+                requestHandlers.putIfAbsent(requestType, invoker)
+            }
 
             if (current != null) {
                 log.atWarning()
@@ -442,17 +421,22 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      * Cancels all pending requests and clears internal state.
      */
     override fun close() {
-        requestDisposable.dispose()
-        responseDisposable.dispose()
+        requestListenerId?.let { requestTopic.removeListener(it).block() }
+        responseListenerId?.let { responseTopic.removeListener(it).block() }
+        requestListenerId = null
+        responseListenerId = null
 
         pendingRequests.values.forEach { deferred ->
             deferred.cancel("RequestResponseBus closed")
         }
         pendingRequests.clear()
 
-        requestHandlers.clear()
-        requestTypeRegistry.clear()
+        registrationLock.write {
+            requestHandlers.clear()
+            requestTypeRegistry.clear()
+        }
         responseTypeRegistry.clear()
+
     }
 
     /**

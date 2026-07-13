@@ -2,6 +2,7 @@ package dev.slne.surf.redis
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.redis.cache.*
+import dev.slne.surf.redis.codec.RedisCodec
 import dev.slne.surf.redis.config.RedisConfig
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.event.RedisEventBusImpl
@@ -16,6 +17,8 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.set.SyncSetImpl
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
+import dev.slne.surf.redis.sync.BinarySyncValueCodec
+import dev.slne.surf.redis.sync.JsonSyncValueCodec
 import kotlinx.serialization.KSerializer
 import org.redisson.config.Config
 import org.redisson.config.EqualJitterDelay
@@ -106,7 +109,16 @@ class RedisComponentProviderImpl : RedisComponentProvider {
         ttl: Duration,
         api: RedisApi
     ): SyncList<E> {
-        return SyncListImpl(api, id, ttl, elementSerializer)
+        return SyncListImpl(api, id, ttl, JsonSyncValueCodec(api, elementSerializer))
+    }
+
+    override fun <E : Any> createSyncList(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncList<E> {
+        return SyncListImpl(api, id, ttl, BinarySyncValueCodec(codec, "SyncList '$id' element"))
     }
 
     override fun <E : Any> createSyncSet(
@@ -115,7 +127,16 @@ class RedisComponentProviderImpl : RedisComponentProvider {
         ttl: Duration,
         api: RedisApi
     ): SyncSet<E> {
-        return SyncSetImpl(api, id, ttl, elementSerializer)
+        return SyncSetImpl(api, id, ttl, JsonSyncValueCodec(api, elementSerializer))
+    }
+
+    override fun <E : Any> createSyncSet(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncSet<E> {
+        return SyncSetImpl(api, id, ttl, BinarySyncValueCodec(codec, "SyncSet '$id' element"))
     }
 
     override fun <T : Any> createSyncValue(
@@ -125,7 +146,17 @@ class RedisComponentProviderImpl : RedisComponentProvider {
         ttl: Duration,
         api: RedisApi
     ): SyncValue<T> {
-        return SyncValueImpl(api, id, serializer, defaultValue, ttl)
+        return SyncValueImpl(api, id, JsonSyncValueCodec(api, serializer), defaultValue, ttl)
+    }
+
+    override fun <T : Any> createSyncValue(
+        id: String,
+        codec: RedisCodec<T>,
+        defaultValue: T,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncValue<T> {
+        return SyncValueImpl(api, id, BinarySyncValueCodec(codec, "SyncValue '$id' value"), defaultValue, ttl)
     }
 
     override fun <K : Any, V : Any> createSyncMap(
@@ -135,6 +166,28 @@ class RedisComponentProviderImpl : RedisComponentProvider {
         ttl: Duration,
         api: RedisApi
     ): SyncMap<K, V> {
-        return SyncMapImpl(api, id, ttl, keySerializer, valueSerializer)
+        return SyncMapImpl(
+            api,
+            id,
+            ttl,
+            JsonSyncValueCodec(api, keySerializer),
+            JsonSyncValueCodec(api, valueSerializer)
+        )
+    }
+
+    override fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keyCodec: RedisCodec<K>,
+        valueCodec: RedisCodec<V>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncMap<K, V> {
+        return SyncMapImpl(
+            api,
+            id,
+            ttl,
+            BinarySyncValueCodec(keyCodec, "SyncMap '$id' key"),
+            BinarySyncValueCodec(valueCodec, "SyncMap '$id' value")
+        )
     }
 }

@@ -5,10 +5,10 @@ import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
+import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -17,17 +17,18 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
 
-class SyncSetImpl<T : Any>(
+class SyncSetImpl<T : Any> internal constructor(
     api: RedisApi,
     id: String,
     ttl: Duration,
-    private val elementSerializer: KSerializer<T>
+    private val elementCodec: SyncValueCodec<T>
 ) : AbstractStreamSyncStructure<SyncSetChange, SimpleVersionedSnapshot<Set<String>>>(
     api,
     id,
     ttl,
     Scripts,
-    NAMESPACE
+    NAMESPACE,
+    elementCodec.descriptor
 ),
     SyncSet<T> {
 
@@ -149,7 +150,7 @@ class SyncSetImpl<T : Any>(
     }
 
     private fun removeRemoteMany(encodedValues: Array<String>) {
-        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
+        writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
     }
 
     private fun clearRemote() {
@@ -164,7 +165,7 @@ class SyncSetImpl<T : Any>(
     }
 
     private fun onAddedEvent(data: StreamEventData) {
-        val encoded = data.payload[0]
+        val encoded = data.payload(0)
         val decoded = decodeValue(encoded)
 
         val added = lock.write { set.add(decoded) }
@@ -174,7 +175,7 @@ class SyncSetImpl<T : Any>(
     }
 
     private fun onDeletedEvent(data: StreamEventData) {
-        val encoded = data.payload[0]
+        val encoded = data.payload(0)
         val decoded = decodeValue(encoded)
 
         val removed = lock.write { set.remove(decoded) }
@@ -211,6 +212,6 @@ class SyncSetImpl<T : Any>(
         super.overrideFromRemote(raw)
     }
 
-    private fun encodeValue(value: T) = api.json.encodeToString(elementSerializer, value)
-    private fun decodeValue(value: String) = api.json.decodeFromString(elementSerializer, value)
+    private fun encodeValue(value: T) = elementCodec.encode(value)
+    private fun decodeValue(value: String) = elementCodec.decode(value)
 }
