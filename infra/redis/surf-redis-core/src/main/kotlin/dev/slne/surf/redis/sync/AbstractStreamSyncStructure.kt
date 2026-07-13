@@ -104,8 +104,13 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             return
         }
         val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
+        if (secondDelim < 0) {
+            throw IllegalArgumentException(
+                "Malformed stream message for type '$type': missing payload delimiter in message: $msg"
+            )
+        }
 
-        val origin = msg.substring(firstDelim + 1, secondDelim.takeIf { it >= 0 } ?: msg.length)
+        val origin = msg.substring(firstDelim + 1, secondDelim)
         val version = parseVersion(msg, firstDelim)
 
         if (version == null) {
@@ -128,7 +133,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             return
         }
 
-        val payload = if (secondDelim < 0) "" else msg.substring(secondDelim + 1)
+        val payload = msg.substring(secondDelim + 1)
 
         if (!applyVersion(version)) return
         if (origin == instanceId) return
