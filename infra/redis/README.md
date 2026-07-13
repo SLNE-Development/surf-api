@@ -164,43 +164,36 @@ suspend fun onJoin(event: PlayerJoinedEvent) {
 
 ### Event wire formats and custom codecs
 
-Existing events continue to use the unchanged JSON envelope on `surf-redis:events`. No migration is
-required for existing users, and external panels can keep consuming that channel as JSON. An event
+Existing events continue to use the unchanged JSON envelope on `surf-redis:events`. An event
 uses the binary path only when a `RedisEventCodec` is registered for its concrete class.
 
 Custom-coded events are published exclusively on `surf-redis:events:binary`. Its compact envelope
 contains a protocol version, stable event ID, codec version, timestamp, origin ID, and codec payload.
-Binary payloads never appear on the JSON channel, so JSON-only consumers remain safe in mixed
-deployments.
-
-Old and new clients remain interoperable for every JSON event combination (old publisher/new
-subscriber and new publisher/old subscriber included). Old clients do not subscribe to the binary
-channel, so custom events are delivered only among updated clients that register a compatible
-codec. Default JSON synchronized structures keep their existing Redis keys and representation;
-custom-coded structures require updated clients with matching codec identities.
+Binary payloads never appear on the JSON channel.
 
 The simplest convention is a codec implemented by the event companion object. It is discovered
 once when a listener registers the event type and then cached:
 
 ```kotlin
 class PlayerLevelChanged(
-    val playerId: UUID,
+    val playerUuid: UUID,
     val level: Int
 ) : RedisEvent() {
     companion object : RedisEventCodec<PlayerLevelChanged> {
-        override val codecId = "example:player-level"
-        override val version = 1
-        override val eventId = "example:player-level-changed"
+        override val codecId = "example:player-level" // optional
+        override val version = 1 // optional    
+        override val eventId = "example:player-level-changed" // optional
 
         override fun encode(buffer: ByteBuf, value: PlayerLevelChanged) {
-            buffer.writeUuid(value.playerId)
+            buffer.writeUuid(value.playerUuid)
             buffer.writeVarInt(value.level)
         }
 
-        override fun decode(buffer: ByteBuf) = PlayerLevelChanged(
-            playerId = buffer.readUuid(),
-            level = buffer.readVarInt()
-        )
+        override fun decode(buffer: ByteBuf) {
+            val playerUuid = buffer.readUuid()
+            val level = buffer.readVarInt()
+            return PlayerLevelChanged(playerUuid, level)
+        }
     }
 }
 ```
@@ -388,8 +381,8 @@ binary representation and are never converted through JSON.
 data class PlayerState(val name: String, val score: Int)
 
 object PlayerStateCodec : RedisCodec<PlayerState> {
-    override val codecId = "example:player-state"
-    override val version = 1
+    override val codecId = "example:player-state" // optional
+    override val version = 1 // optional
 
     override fun encode(buffer: ByteBuf, value: PlayerState) {
         buffer.writeString(value.name, maxLength = 64)
@@ -426,7 +419,7 @@ The same `codec = ...` overload is available for `SyncSet` and `SyncValue` (with
 `codecId` and `version` identify a structure's wire format. Clients using the same structure ID must
 use matching identities. Surf Redis stores short-lived codec metadata beside custom-coded structures
 and fails connection on a detected mismatch. It also refuses to attach a custom codec to existing
-data with no codec metadata, because that data may use the legacy JSON representation.
+data with no codec metadata, because that data may use the JSON representation.
 
 Codec failures identify both codec and structure context. Payload and collection sizes have safety
 limits to prevent uncontrolled allocation from malformed data. Structure codecs follow the same
