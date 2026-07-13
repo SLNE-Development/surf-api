@@ -10,22 +10,14 @@ import io.netty.buffer.Unpooled
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNamingStrategy
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.encodeToJsonElement
-import org.openjdk.jmh.annotations.Benchmark
-import org.openjdk.jmh.annotations.Level
-import org.openjdk.jmh.annotations.Param
-import org.openjdk.jmh.annotations.Scope
-import org.openjdk.jmh.annotations.Setup
-import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import org.redisson.client.codec.Codec
 import org.redisson.client.codec.StringCodec
-import java.util.Locale
+import java.util.*
 
 /**
  * Compares the complete legacy JSON event wire format with the custom binary event packet.
@@ -340,10 +332,10 @@ object EventWireSizeReport {
             }
             println(
                 "$payloadBytes\t${state.jsonWireBytes}\t${state.binaryWireBytes}\t" +
-                    "%.3f".format(
-                        Locale.ROOT,
-                        state.jsonWireBytes.toDouble() / state.binaryWireBytes,
-                    ),
+                        "%.3f".format(
+                            Locale.ROOT,
+                            state.jsonWireBytes.toDouble() / state.binaryWireBytes,
+                        ),
             )
         }
     }

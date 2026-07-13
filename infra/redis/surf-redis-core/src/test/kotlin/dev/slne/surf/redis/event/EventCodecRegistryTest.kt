@@ -1,12 +1,7 @@
 package dev.slne.surf.redis.event
 
 import io.netty.buffer.ByteBuf
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class EventCodecRegistryTest {
     @Test

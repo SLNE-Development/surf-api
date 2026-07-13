@@ -4,13 +4,7 @@ import dev.slne.surf.redis.codec.RedisCodecException
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import org.redisson.client.codec.Codec
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertIs
-import kotlin.test.assertNotEquals
-import kotlin.test.assertNotSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class CustomEventPacketCodecTest {
     @Test

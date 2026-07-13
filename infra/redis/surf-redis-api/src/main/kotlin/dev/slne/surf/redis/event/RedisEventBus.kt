@@ -2,7 +2,6 @@ package dev.slne.surf.redis.event
 
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.Initializable
-import dev.slne.surf.redis.util.InternalRedisAPI
 import kotlinx.coroutines.Deferred
 import java.io.Closeable
 

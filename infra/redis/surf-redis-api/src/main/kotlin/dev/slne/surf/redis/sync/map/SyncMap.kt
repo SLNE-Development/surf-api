@@ -1,8 +1,6 @@
 package dev.slne.surf.redis.sync.map
 
-import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.SyncStructure
-import dev.slne.surf.redis.sync.map.SyncMap.Companion.DEFAULT_TTL
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlin.time.Duration.Companion.minutes
 
@@ -70,12 +68,12 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
      *
      * @return the previous value associated with [key], or `null` if there was no mapping
      */
-   fun put(key: K, value: V): V?
+    fun put(key: K, value: V): V?
 
     /**
      * Convenience operator for [put].
      */
-   operator fun set(key: K, value: V): V? = put(key, value)
+    operator fun set(key: K, value: V): V? = put(key, value)
 
     /**
      * Removes the mapping for [key] from the local map and propagates the change through Redis.

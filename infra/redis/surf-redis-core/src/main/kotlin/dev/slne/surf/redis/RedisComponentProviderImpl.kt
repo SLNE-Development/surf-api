@@ -9,6 +9,8 @@ import dev.slne.surf.redis.event.RedisEventBusImpl
 import dev.slne.surf.redis.internal.RedissonConfigDetails
 import dev.slne.surf.redis.request.RequestResponseBus
 import dev.slne.surf.redis.request.RequestResponseBusImpl
+import dev.slne.surf.redis.sync.BinarySyncValueCodec
+import dev.slne.surf.redis.sync.JsonSyncValueCodec
 import dev.slne.surf.redis.sync.list.SyncList
 import dev.slne.surf.redis.sync.list.SyncListImpl
 import dev.slne.surf.redis.sync.map.SyncMap
@@ -17,8 +19,6 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.set.SyncSetImpl
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.sync.value.SyncValueImpl
-import dev.slne.surf.redis.sync.BinarySyncValueCodec
-import dev.slne.surf.redis.sync.JsonSyncValueCodec
 import kotlinx.serialization.KSerializer
 import org.redisson.config.Config
 import org.redisson.config.EqualJitterDelay

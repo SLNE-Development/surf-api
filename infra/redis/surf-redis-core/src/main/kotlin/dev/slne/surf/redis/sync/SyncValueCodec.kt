@@ -6,7 +6,7 @@ import dev.slne.surf.redis.codec.RedisCodecException
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import kotlinx.serialization.KSerializer
-import java.util.Base64
+import java.util.*
 
 internal interface SyncValueCodec<T : Any> {
     val descriptor: String?

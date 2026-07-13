@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.companionObjectInstance
 
 internal class EventCodecRegistry {
     typealias ByClass = Object2ObjectMap<Class<out RedisEvent>, EventCodecRegistration>

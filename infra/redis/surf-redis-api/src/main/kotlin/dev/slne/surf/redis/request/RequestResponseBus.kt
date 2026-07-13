@@ -2,7 +2,6 @@ package dev.slne.surf.redis.request
 
 import dev.slne.surf.redis.request.RequestResponseBus.Companion.DEFAULT_TIMEOUT_MS
 import dev.slne.surf.redis.util.Initializable
-import dev.slne.surf.redis.util.InternalRedisAPI
 import java.io.Closeable
 
 /**
