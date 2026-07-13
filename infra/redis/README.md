@@ -189,11 +189,10 @@ class PlayerLevelChanged(
             buffer.writeVarInt(value.level)
         }
 
-        override fun decode(buffer: ByteBuf) {
-            val playerUuid = buffer.readUuid()
-            val level = buffer.readVarInt()
-            return PlayerLevelChanged(playerUuid, level)
-        }
+        override fun decode(buffer: ByteBuf) = PlayerLevelChanged(
+            playerUuid = buffer.readUuid(),
+            level = buffer.readVarInt(),
+        )
     }
 }
 ```

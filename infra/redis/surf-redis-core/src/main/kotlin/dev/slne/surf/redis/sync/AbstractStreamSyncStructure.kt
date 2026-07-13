@@ -54,10 +54,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected val streamKey: String = "${namespace}stream"
     private val codecKey: String = "${namespace}codec"
 
-    private val codecBucket: RBucketReactive<String>? by lazy {
-        codecDescriptor?.let {
-            api.redissonReactive.getBucket(codecKey, StringCodec.INSTANCE)
-        }
+    private val codecBucket: RBucketReactive<String> by lazy {
+        api.redissonReactive.getBucket(codecKey, StringCodec.INSTANCE)
     }
 
     protected val versionCounter: RAtomicLongReactive by lazy {
@@ -86,7 +84,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                         ttl,
                         stream,
                         versionCounter,
-                        *codecBucket?.let { arrayOf(it) }.orEmpty()
+                        *codecDescriptor?.let { arrayOf(codecBucket) }.orEmpty()
                     )
                 )
             }
@@ -150,25 +148,41 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     }
 
     private fun validateCodecConfiguration(): Mono<Void> {
-        val descriptor = codecDescriptor ?: return Mono.empty()
-        val bucket = codecBucket ?: return Mono.empty()
-        return bucket.get()
-            .flatMap { actual -> validateCodecDescriptor(descriptor, actual) }
+        val expected = codecDescriptor
+        return codecBucket.get()
+            .flatMap { actual ->
+                if (expected == null) {
+                    Mono.error<Void>(
+                        IllegalStateException(
+                            "Cannot use JSON encoding for synchronized structure '$id': " +
+                                    "existing Redis data uses codec '$actual'"
+                        )
+                    ).thenReturn(true)
+                } else {
+                    validateCodecDescriptor(expected, actual).thenReturn(true)
+                }
+            }
             .switchIfEmpty(
-                api.redissonReactive.keys.countExists(dataKey)
-                    .flatMap { existingDataKeys ->
-                        if (existingDataKeys > 0L) {
-                            Mono.error(
-                                IllegalStateException(
-                                    "Cannot enable custom codec '$descriptor' for synchronized structure '$id': " +
-                                            "existing Redis data has no codec metadata"
+                if (expected == null) {
+                    Mono.just(true)
+                } else {
+                    api.redissonReactive.keys.countExists(dataKey)
+                        .flatMap { existingDataKeys ->
+                            if (existingDataKeys > 0L) {
+                                Mono.error(
+                                    IllegalStateException(
+                                        "Cannot enable custom codec '$expected' for synchronized structure '$id': " +
+                                                "existing Redis data has no codec metadata"
+                                    )
                                 )
-                            )
-                        } else {
-                            registerCodecDescriptor(bucket, descriptor)
+                            } else {
+                                registerCodecDescriptor(codecBucket, expected)
+                            }
                         }
-                    }
+                        .thenReturn(true)
+                }
             )
+            .then()
     }
 
     private fun registerCodecDescriptor(
