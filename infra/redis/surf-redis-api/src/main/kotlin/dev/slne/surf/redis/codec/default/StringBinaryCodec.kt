@@ -5,7 +5,7 @@ import dev.slne.surf.redis.codec.readString
 import dev.slne.surf.redis.codec.writeString
 import io.netty.buffer.ByteBuf
 
-object StringBinaryCodec: AbstractCodec<String>() {
+object StringBinaryCodec : AbstractCodec<String>() {
 
     override fun write(buf: ByteBuf, value: String) {
         buf.writeString(value)

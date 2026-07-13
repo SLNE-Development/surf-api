@@ -5,7 +5,7 @@ import dev.slne.surf.redis.codec.readVarLong
 import dev.slne.surf.redis.codec.writeVarLong
 import io.netty.buffer.ByteBuf
 
-object VarLongBinaryCodec: AbstractCodec<Long>() {
+object VarLongBinaryCodec : AbstractCodec<Long>() {
 
     override fun write(buf: ByteBuf, value: Long) {
         buf.writeVarLong(value)
