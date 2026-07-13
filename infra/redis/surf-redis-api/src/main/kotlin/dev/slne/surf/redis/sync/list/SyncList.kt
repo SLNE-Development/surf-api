@@ -1,6 +1,5 @@
 package dev.slne.surf.redis.sync.list
 
-import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.SyncStructure
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlin.time.Duration.Companion.minutes

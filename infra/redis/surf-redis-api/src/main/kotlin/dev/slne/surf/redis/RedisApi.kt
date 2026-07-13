@@ -10,8 +10,11 @@ import dev.slne.surf.redis.RedisApi.Companion.create
 import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache
+import dev.slne.surf.redis.codec.RedisCodec
 import dev.slne.surf.redis.credentials.RedisCredentialsProvider
 import dev.slne.surf.redis.event.RedisEvent
+import dev.slne.surf.redis.event.RedisEventCodec
+import dev.slne.surf.redis.event.RedisEventCodecRegistrar
 import dev.slne.surf.redis.internal.RedissonConfigDetails
 import dev.slne.surf.redis.request.*
 import dev.slne.surf.redis.sync.SyncStructure
@@ -21,7 +24,6 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.Initializable
 import dev.slne.surf.redis.util.InternalRedisAPI
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -179,8 +181,6 @@ class RedisApi private constructor(
      */
     val clientId get() = RedisComponentProvider.clientId
 
-
-    private val syncStructures = ObjectArrayList<SyncStructure<*>>()
     private val syncStructureScope = CoroutineScope(
         Dispatchers.Default
                 + SupervisorJob()
@@ -222,7 +222,12 @@ class RedisApi private constructor(
 
     private val initializables = Caffeine.newBuilder().weakKeys().build<Initializable, Unit>()
     private val disposables = Caffeine.newBuilder().weakKeys().build<Disposable, Unit>()
+
+    @Volatile
     private var frozen = false
+
+    @Volatile
+    private var disconnected = false
 
     init {
         initializables.put(eventBus, Unit)
@@ -343,7 +348,9 @@ class RedisApi private constructor(
     /**
      * Initializes the Redis clients and starts all registered features.
      *
-     * This method is blocking and must only be called once.
+     * This method is blocking and must only be called once. A disconnected instance cannot be
+     * reconnected because its managed structures and coroutine scopes have been disposed; create a
+     * new [RedisApi] for a later connection lifecycle.
      * The API must be [freeze]d before connecting to ensure registrations are complete.
      *
      * During connection:
@@ -359,6 +366,9 @@ class RedisApi private constructor(
     fun connect(): RedisApi = apply {
         require(isFrozen()) { "Redis client must be frozen before connecting" }
         require(!isConnected()) { "Redis client already initialized" }
+        require(!disconnected) {
+            "RedisApi cannot reconnect after disconnect; create and configure a new RedisApi instance"
+        }
 
         log.atInfo()
             .log("Connecting to Redis...")
@@ -366,22 +376,34 @@ class RedisApi private constructor(
         redisson = Redisson.create(config)
         redissonReactive = redisson.reactive()
 
-        fetchRedisOs()
+        try {
+            fetchRedisOs()
 
-        val initializables = this.initializables.asMap().keys
-        if (initializables.isEmpty()) {
-            log.atInfo()
-                .log("No initializable Redis components registered; skipping initialization step.")
-        } else {
-            Mono.`when`(
-                initializables.map { initializable ->
-                    initialize(initializable)
-                }
-            ).doOnError { throwable ->
-                log.atSevere()
-                    .withCause(throwable)
-                    .log("RedisApi.connect() failed because one or more components could not be initialized.")
-            }.block()
+            val initializables = this.initializables.asMap().keys
+            if (initializables.isEmpty()) {
+                log.atInfo()
+                    .log("No initializable Redis components registered; skipping initialization step.")
+            } else {
+                Mono.`when`(
+                    initializables.map { initializable ->
+                        initialize(initializable)
+                    }
+                ).doOnError { throwable ->
+                    log.atSevere()
+                        .withCause(throwable)
+                        .log("RedisApi.connect() failed because one or more components could not be initialized.")
+                }.block()
+            }
+        } catch (failure: Throwable) {
+            try {
+                disposeManagedResources()
+            } catch (cleanupFailure: Throwable) {
+                failure.addSuppressed(cleanupFailure)
+            } finally {
+                redisson.shutdown()
+                disconnected = true
+            }
+            throw failure
         }
     }
 
@@ -439,6 +461,7 @@ class RedisApi private constructor(
     fun freeze() {
         require(!isFrozen()) { "Redis client already frozen" }
 
+        (eventBus as RedisEventCodecRegistrar).freezeEventCodecs()
         frozen = true
     }
 
@@ -450,7 +473,8 @@ class RedisApi private constructor(
     /**
      * Shuts down the Redis clients and disposes all resources created by this API.
      *
-     * This method is safe to call multiple times; if not connected it has no effect.
+     * This method is safe to call multiple times; if not connected it has no effect. Disconnect is
+     * terminal for this instance.
      *
      * On disconnect:
      * - request/response and event buses are closed
@@ -463,16 +487,35 @@ class RedisApi private constructor(
     fun disconnect() {
         if (!isConnected()) return
 
+        try {
+            disposeManagedResources()
+        } finally {
+            redisson.shutdown()
+            disconnected = true
+        }
+    }
+
+    private fun disposeManagedResources() {
+        var cleanupFailure: Throwable? = null
+        fun cleanup(action: () -> Unit) {
+            try {
+                action()
+            } catch (failure: Throwable) {
+                val current = cleanupFailure
+                if (current == null) cleanupFailure = failure else current.addSuppressed(failure)
+            }
+        }
+
         val disposables = this.disposables.asMap().keys
-        disposables.forEach { it.dispose() }
+        disposables.forEach { disposable -> cleanup(disposable::dispose) }
         disposables.clear()
 
-        syncStructureScope.cancel("RedisApi disconnected")
-        redisListenerScope.cancel("RedisApi disconnected")
-        requestResponseBus.close()
-        eventBus.close()
+        cleanup { syncStructureScope.cancel("RedisApi disconnected") }
+        cleanup { redisListenerScope.cancel("RedisApi disconnected") }
+        cleanup(requestResponseBus::close)
+        cleanup(eventBus::close)
 
-        redisson.shutdown()
+        cleanupFailure?.let { throw it }
     }
 
     /**
@@ -514,6 +557,44 @@ class RedisApi private constructor(
      * @see dev.slne.surf.redis.event.OnRedisEvent
      */
     fun subscribeToEvents(listener: Any) = eventBus.registerListener(listener)
+
+    /**
+     * Explicitly registers [codec] for [eventType].
+     *
+     * Registration must happen before [freeze]. Explicit registration is useful when the event
+     * companion object does not implement [RedisEventCodec]. It takes precedence over a codec that
+     * was discovered from the companion object. Duplicate registrations and event-ID collisions
+     * fail immediately.
+     */
+    fun <E : RedisEvent> registerEventCodec(
+        eventType: Class<E>,
+        codec: RedisEventCodec<E>
+    ) {
+        require(!isFrozen()) { "Cannot register an event codec after RedisApi has been frozen" }
+        (eventBus as RedisEventCodecRegistrar).registerEventCodec(eventType, codec)
+    }
+
+    /**
+     * Reified convenience overload for [registerEventCodec].
+     */
+    inline fun <reified E : RedisEvent> registerEventCodec(codec: RedisEventCodec<E>) {
+        registerEventCodec(E::class.java, codec)
+    }
+
+    /**
+     * Registers an event type and discovers a companion-object codec, if present.
+     *
+     * Listener registration already performs this step automatically. Use this method for
+     * publish-only event types so discovery and validation happen during startup rather than on
+     * the first publish.
+     */
+    fun registerEventType(eventType: Class<out RedisEvent>) {
+        require(!isFrozen()) { "Cannot register an event type after RedisApi has been frozen" }
+        (eventBus as RedisEventCodecRegistrar).registerEventType(eventType)
+    }
+
+    /** Reified convenience overload for [registerEventType]. */
+    inline fun <reified E : RedisEvent> registerEventType() = registerEventType(E::class.java)
 
     /**
      * Sends a [RedisRequest] and awaits a [RedisResponse] of type [T].
@@ -582,6 +663,20 @@ class RedisApi private constructor(
     }
 
     /**
+     * Creates a [SyncList] whose elements are encoded directly with [codec].
+     *
+     * Every client using the same [id] must use a codec with the same stable ID and version.
+     * Incompatible configurations are rejected during [connect].
+     */
+    fun <E : Any> createSyncList(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration = SyncList.DEFAULT_TTL
+    ) = createSyncStructure {
+        RedisComponentProvider.createSyncList(id, codec, ttl, this)
+    }
+
+    /**
      * Creates a new [SyncSet] instance identified by [id].
      *
      * Must be called before [freeze].
@@ -602,6 +697,18 @@ class RedisApi private constructor(
         ttl: Duration = SyncSet.DEFAULT_TTL
     ) = createSyncStructure {
         RedisComponentProvider.createSyncSet(id, elementSerializer, ttl, this)
+    }
+
+    /**
+     * Creates a [SyncSet] whose elements are encoded directly with [codec].
+     * Incompatible codec identities for the same [id] fail during [connect].
+     */
+    fun <E : Any> createSyncSet(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration = SyncSet.DEFAULT_TTL
+    ) = createSyncStructure {
+        RedisComponentProvider.createSyncSet(id, codec, ttl, this)
     }
 
     /**
@@ -635,6 +742,19 @@ class RedisApi private constructor(
     }
 
     /**
+     * Creates a [SyncValue] encoded directly with [codec]. The codec is used for the initial
+     * snapshot, updates, stream replication, resynchronization, and reconnect reloads.
+     */
+    fun <T : Any> createSyncValue(
+        id: String,
+        codec: RedisCodec<T>,
+        defaultValue: T,
+        ttl: Duration = SyncValue.DEFAULT_TTL
+    ) = createSyncStructure {
+        RedisComponentProvider.createSyncValue(id, codec, defaultValue, ttl, this)
+    }
+
+    /**
      * Creates a new [SyncMap] instance identified by [id].
      *
      * Must be called before [freeze].
@@ -664,6 +784,21 @@ class RedisApi private constructor(
         ttl: Duration = SyncMap.DEFAULT_TTL
     ) = createSyncStructure {
         RedisComponentProvider.createSyncMap(id, keySerializer, valueSerializer, ttl, this)
+    }
+
+    /**
+     * Creates a [SyncMap] with independently encoded keys and values.
+     *
+     * Both codecs are used throughout snapshots, Redis hashes, stream changes, resynchronization,
+     * and reconnect reloads. Every client using the same [id] must use matching codec identities.
+     */
+    fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keyCodec: RedisCodec<K>,
+        valueCodec: RedisCodec<V>,
+        ttl: Duration = SyncMap.DEFAULT_TTL
+    ) = createSyncStructure {
+        RedisComponentProvider.createSyncMap(id, keyCodec, valueCodec, ttl, this)
     }
 
     /**

@@ -5,11 +5,11 @@ import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
+import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import kotlinx.serialization.KSerializer
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -18,18 +18,19 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
 
-class SyncMapImpl<K : Any, V : Any>(
+class SyncMapImpl<K : Any, V : Any> internal constructor(
     api: RedisApi,
     id: String,
     ttl: Duration,
-    private val keySerializer: KSerializer<K>,
-    private val valueSerializer: KSerializer<V>,
+    private val keyCodec: SyncValueCodec<K>,
+    private val valueCodec: SyncValueCodec<V>,
 ) : AbstractStreamSyncStructure<SyncMapChange<K, V>, SimpleVersionedSnapshot<Map<String, String>>>(
     api,
     id,
     ttl,
     Registry,
-    NAMESPACE
+    NAMESPACE,
+    CodecDescriptor.of(keyCodec, valueCodec)
 ), SyncMap<K, V> {
 
     companion object {
@@ -166,7 +167,7 @@ class SyncMapImpl<K : Any, V : Any>(
 
     private fun removeManyRemote(keys: List<K>) {
         val encKeys = Array(keys.size) { i -> encodeKey(keys[i]) }
-        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVE, *encKeys)
+        writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVE, *encKeys)
     }
 
     private fun clearRemote() {
@@ -181,9 +182,9 @@ class SyncMapImpl<K : Any, V : Any>(
     }
 
     private fun onPutEvent(data: StreamEventData) {
-        val encodedKey = data.payload[0]
-        val encodedVal = data.payload[1]
-        val encodedOldVal = data.payload.getOrNull(2)
+        val encodedKey = data.payload(0)
+        val encodedVal = data.payload(1)
+        val encodedOldVal = data.payloadOrNull(2)
 
         val decodedKey = decodeKey(encodedKey)
         val decodedVal = decodeValue(encodedVal)
@@ -210,8 +211,8 @@ class SyncMapImpl<K : Any, V : Any>(
     }
 
     private fun onRemoveEvent(data: StreamEventData) {
-        val encodedKey = data.payload[0]
-        val encodedOldVal = data.payload[1]
+        val encodedKey = data.payload(0)
+        val encodedOldVal = data.payload(1)
 
         val decodedKey = decodeKey(encodedKey)
         val decodedOldVal = decodeValue(encodedOldVal)
@@ -237,8 +238,20 @@ class SyncMapImpl<K : Any, V : Any>(
         if (had) notifyListeners(SyncMapChange.Cleared())
     }
 
-    private fun encodeKey(key: K): String = api.json.encodeToString(keySerializer, key)
-    private fun decodeKey(raw: String): K = api.json.decodeFromString(keySerializer, raw)
-    private fun encodeValue(value: V): String = api.json.encodeToString(valueSerializer, value)
-    private fun decodeValue(raw: String): V = api.json.decodeFromString(valueSerializer, raw)
+    private fun encodeKey(key: K): String = keyCodec.encode(key)
+    private fun decodeKey(raw: String): K = keyCodec.decode(raw)
+    private fun encodeValue(value: V): String = valueCodec.encode(value)
+    private fun decodeValue(raw: String): V = valueCodec.decode(raw)
+
+    private object CodecDescriptor {
+        fun of(
+            keyCodec: SyncValueCodec<*>,
+            valueCodec: SyncValueCodec<*>
+        ): String? {
+            val key = keyCodec.descriptor
+            val value = valueCodec.descriptor
+            if (key == null && value == null) return null
+            return "map:${key ?: "json"}:${value ?: "json"}"
+        }
+    }
 }

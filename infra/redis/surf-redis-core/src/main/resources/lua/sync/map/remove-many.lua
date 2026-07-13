@@ -11,6 +11,9 @@ local fieldType  = ARGV[4]
 local fieldMsg   = ARGV[5]
 local eventType  = ARGV[6]
 
+local firstVersion = 0
+local lastVersion = 0
+
 for i = 7, #ARGV do
     local key = ARGV[i]
 
@@ -21,6 +24,10 @@ for i = 7, #ARGV do
 
         -- Increment version
         local ver = redis.call('INCR', versionKey)
+        if firstVersion == 0 then
+            firstVersion = ver
+        end
+        lastVersion = ver
 
         -- Create and add message to stream
         local payload = key .. delim .. old
@@ -29,4 +36,5 @@ for i = 7, #ARGV do
     end
 end
 
-return 0
+-- Return the contiguous version range so the originating client can advance without a full resync.
+return {firstVersion, lastVersion}

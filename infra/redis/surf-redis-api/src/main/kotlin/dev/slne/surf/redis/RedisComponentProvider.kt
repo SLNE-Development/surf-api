@@ -4,6 +4,7 @@ import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache
+import dev.slne.surf.redis.codec.RedisCodec
 import dev.slne.surf.redis.event.RedisEvent
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.internal.RedissonConfigDetails
@@ -58,6 +59,13 @@ interface RedisComponentProvider {
         api: RedisApi
     ): SyncList<E>
 
+    fun <E : Any> createSyncList(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncList<E>
+
     fun <E : Any> createSyncSet(
         id: String,
         elementSerializer: KSerializer<E>,
@@ -65,9 +73,24 @@ interface RedisComponentProvider {
         api: RedisApi
     ): SyncSet<E>
 
+    fun <E : Any> createSyncSet(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncSet<E>
+
     fun <T : Any> createSyncValue(
         id: String,
         serializer: KSerializer<T>,
+        defaultValue: T,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncValue<T>
+
+    fun <T : Any> createSyncValue(
+        id: String,
+        codec: RedisCodec<T>,
         defaultValue: T,
         ttl: Duration,
         api: RedisApi
@@ -81,8 +104,21 @@ interface RedisComponentProvider {
         api: RedisApi
     ): SyncMap<K, V>
 
+    fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keyCodec: RedisCodec<K>,
+        valueCodec: RedisCodec<V>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncMap<K, V>
+
     fun injectOriginId(event: RedisEvent) {
         event.originId = clientId
+    }
+
+    fun injectEventMetadata(event: RedisEvent, timestamp: Long, originId: String?) {
+        event.timestamp = timestamp
+        event.originId = originId
     }
 
     fun injectOriginId(request: RedisRequest) {
