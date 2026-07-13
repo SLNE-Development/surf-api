@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import java.nio.charset.StandardCharsets
+import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.companionObjectInstance
 
 internal class EventCodecRegistry {
@@ -178,9 +179,20 @@ internal class EventCodecRegistry {
     }
 
     private fun discoverCompanionCodec(type: Class<*>): RedisEventCodec<out RedisEvent>? {
-        val companion = runCatching {
-            type.kotlin.companionObjectInstance
-        }.getOrNull() ?: return null
+        val companionClass = type.kotlin.companionObject ?: return null
+
+        val companion = try {
+            companionClass.objectInstance
+        } catch (exception: Exception) {
+            throw IllegalStateException(
+                "Could not access companion object '${companionClass.qualifiedName}' " +
+                        "of class '${type.name}'",
+                exception
+            )
+        } ?: throw IllegalStateException(
+            "Companion object '${companionClass.qualifiedName}' of class '${type.name}' " +
+                    "has no accessible instance"
+        )
 
         if (companion is RedisEventCodec<*>) return companion
         check(companion !is RedisCodec<*>) { "Companion object for event '${type.name}' implements RedisCodec but not RedisEventCodec" }
@@ -257,7 +269,8 @@ internal data class EventCodecRegistration(
     fun recordPacketSize(actualSize: Int) {
         val previous = measuredPacketSizeEstimate
         if (previous == 0) {
-            measuredPacketSizeEstimate = actualSize.coerceIn(1, CustomEventPacketCodec.MAX_PACKET_SIZE)
+            measuredPacketSizeEstimate =
+                actualSize.coerceIn(1, CustomEventPacketCodec.MAX_PACKET_SIZE)
             return
         }
         val delta = actualSize - previous
