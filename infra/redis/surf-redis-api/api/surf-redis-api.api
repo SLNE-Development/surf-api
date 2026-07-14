@@ -215,6 +215,17 @@ public final class dev/slne/surf/redis/codec/Codec_extensionKt {
 	public static final fun checkEncoding (ZLkotlin/jvm/functions/Function0;)V
 }
 
+public final class dev/slne/surf/redis/codec/JsonKotlinCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field Companion Ldev/slne/surf/redis/codec/JsonKotlinCodec$Companion;
+	public final fun getJson ()Lkotlinx/serialization/json/Json;
+}
+
+public final class dev/slne/surf/redis/codec/JsonKotlinCodec$Companion {
+	public final fun getDEFAULT_SERIALIZERS ()Lkotlinx/serialization/modules/SerializersModule;
+	public final fun of (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/codec/JsonKotlinCodec;
+	public static synthetic fun of$default (Ldev/slne/surf/redis/codec/JsonKotlinCodec$Companion;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/codec/JsonKotlinCodec;
+}
+
 public abstract interface class dev/slne/surf/redis/codec/RedisCodec {
 	public abstract fun decode (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
 	public abstract fun encode (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
@@ -270,6 +281,48 @@ public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/Str
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/nio/charset/Charset;)V
 	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
+}
+
+public final class dev/slne/surf/redis/codec/default/DoubleBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/DoubleBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/IntBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/IntBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/LongBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/LongBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/StringBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/StringBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/UUIDBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/UUIDBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/VarIntBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/VarIntBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/VarLongBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/VarLongBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
 }
 
 public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion : dev/slne/surf/redis/credentials/RedisCredentialsProvider {
