@@ -4,6 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.api.gradle.generated.Constants
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.core.CoreSurfExtension
+import dev.slne.surf.api.gradle.testing.configureSurfTestingConventions
 import dev.slne.surf.api.gradle.util.slnePublic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -29,9 +30,11 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         "org.jetbrains.kotlin.jvm",
         "org.jetbrains.kotlin.plugin.spring",
         "org.jetbrains.kotlin.plugin.jpa",
+        "org.jetbrains.kotlin.plugin.allopen",
         "org.jetbrains.kotlin.plugin.serialization",
         "com.gradleup.shadow",
-        "com.google.devtools.ksp"
+        "com.google.devtools.ksp",
+        "org.jetbrains.kotlinx.benchmark"
     )
 
     private val relocations = mutableListOf<Relocation>()
@@ -206,6 +209,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
         configureAutoService()
         configureKotlin()
+        configureSurfTestingConventions()
         configure0()
     }
 

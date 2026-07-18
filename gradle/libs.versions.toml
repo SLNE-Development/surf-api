@@ -8,6 +8,12 @@ kotlinVersion = "2.4.0"
 kotlinxCoroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
 
+# Testing and benchmarking
+junit = "6.1.1"
+mockk = "1.14.11"
+lincheck = "3.6"
+kotlinx-benchmark = "0.4.17"
+
 # Packet Events
 packetevents = "2.13.0"
 packetevents-plugin = "2.13.0"
@@ -81,7 +87,9 @@ canvas-api = { module = "io.canvasmc.canvas:canvas-api", version.ref = "canvas-a
 kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinxCoroutines" }
+kotlinxCoroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
+kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlinVersion" }
 kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler", version.ref = "kotlinVersion" }
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlin-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
@@ -170,6 +178,13 @@ reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core", ve
 reactor-netty-http = { module = "io.projectreactor.netty:reactor-netty-http", version.ref = "reactor-netty" }
 bytebuddy = { module = "net.bytebuddy:byte-buddy", version.ref = "bytebuddy" }
 
+# Testing and benchmarking
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+lincheck = { module = "org.jetbrains.lincheck:lincheck", version.ref = "lincheck" }
+kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinx-benchmark" }
+
 # Plugin dependencies
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinVersion" }
 kotlin-all-open = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlinVersion" }
@@ -182,6 +197,7 @@ ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.re
 plugin-yml-paper-gradle-plugin = { module = "de.eldoria.plugin-yml.paper:de.eldoria.plugin-yml.paper.gradle.plugin", version.ref = "plugin-yml-paper" }
 run-paper-gradle-plugin = { module = "xyz.jpenilla.run-paper:xyz.jpenilla.run-paper.gradle.plugin", version.ref = "run-paper-gradle-plugin" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
+kotlinx-benchmark-gradle-plugin = { module = "org.jetbrains.kotlinx.benchmark:org.jetbrains.kotlinx.benchmark.gradle.plugin", version.ref = "kotlinx-benchmark" }
 
 [plugins]
 plugin-yml-paper = { id = "de.eldoria.plugin-yml.paper", version.ref = "plugin-yml-paper" }

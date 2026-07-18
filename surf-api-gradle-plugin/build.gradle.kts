@@ -37,7 +37,8 @@ val pluginDependencies = listOf(
     libs.shadow.gradle.plugin,
     libs.run.paper.gradle.plugin,
     libs.plugin.yml.paper.gradle.plugin,
-    libs.ksp.gradle.plugin
+    libs.ksp.gradle.plugin,
+    libs.kotlinx.benchmark.gradle.plugin
 )
 
 dependencies {
@@ -46,6 +47,11 @@ dependencies {
 
     implementation("com.palantir.javapoet:javapoet:0.14.0")
     implementation(libs.bundles.kotlin.serialization)
+
+    testImplementation(gradleTestKit())
+    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 gradlePlugin {
@@ -108,6 +114,13 @@ val generateConstants by tasks.registering {
     inputs.property("libs.canvas.api", libs.canvas.api.get().toString())
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
+    inputs.property("libs.kotlin.test.junit5", libs.kotlin.test.junit5.get().toString())
+    inputs.property("libs.kotlinx.coroutines.test", libs.kotlinxCoroutines.test.get().toString())
+    inputs.property("libs.junit.jupiter", libs.junit.jupiter.get().toString())
+    inputs.property("libs.junit.platform.launcher", libs.junit.platform.launcher.get().toString())
+    inputs.property("libs.mockk", libs.mockk.get().toString())
+    inputs.property("libs.lincheck", libs.lincheck.get().toString())
+    inputs.property("libs.kotlinx.benchmark.runtime", libs.kotlinx.benchmark.runtime.get().toString())
     inputs.property("libs.versions.commandapi", libs.versions.commandapi.get())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
     inputs.property("libs.versions.luckperms", libs.versions.luckperms.get())
@@ -135,6 +148,13 @@ val generateConstants by tasks.registering {
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
             |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
             |    const val AUTO_SERVICE = "${generator.group}:${generator.name}:${generator.version}"
+            |    const val KOTLIN_TEST_JUNIT5 = "${libs.kotlin.test.junit5.get()}"
+            |    const val COROUTINES_TEST = "${libs.kotlinxCoroutines.test.get()}"
+            |    const val JUNIT_JUPITER = "${libs.junit.jupiter.get()}"
+            |    const val JUNIT_PLATFORM_LAUNCHER = "${libs.junit.platform.launcher.get()}"
+            |    const val MOCKK = "${libs.mockk.get()}"
+            |    const val LINCHECK = "${libs.lincheck.get()}"
+            |    const val KOTLINX_BENCHMARK_RUNTIME = "${libs.kotlinx.benchmark.runtime.get()}"
             |
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"
@@ -171,4 +191,8 @@ java {
 
 tasks.withType<org.gradle.jvm.tasks.Jar> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
