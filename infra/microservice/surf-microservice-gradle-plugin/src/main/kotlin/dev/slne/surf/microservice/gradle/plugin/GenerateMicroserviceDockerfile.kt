@@ -33,7 +33,7 @@ abstract class GenerateMicroserviceDockerfile : DefaultTask() {
     @get:Input
     abstract val runnableTaskName: Property<String>
 
-    /** Runnable JAR path relative to the consuming project directory. */
+    /** Runnable JAR path relative to the root project's Docker build context. */
     @get:Input
     abstract val runnableArtifactPath: Property<String>
 

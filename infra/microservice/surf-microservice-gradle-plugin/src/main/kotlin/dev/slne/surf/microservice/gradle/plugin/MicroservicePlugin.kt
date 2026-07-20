@@ -20,7 +20,7 @@ abstract class MicroservicePlugin : Plugin<Project> {
         val runnableArtifactPathProvider = objects.property(String::class.java).convention(
             "build/libs/${name}-${version}-all.jar"
         )
-        val projectDirectory = layout.projectDirectory.asFile
+        val dockerBuildContextDirectory = rootProject.layout.projectDirectory.asFile
         val generateDockerfile = tasks.register<GenerateMicroserviceDockerfile>("generateMicroserviceDockerfile") {
             group = "distribution"
             description = "Generates a dependency-aware Dockerfile for a runnable Surf microservice."
@@ -66,7 +66,7 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 val runnableArchive = tasks.named<AbstractArchiveTask>("shadowJar")
                 runnableArtifactPathProvider.set(
                     runnableArchive.flatMap { it.archiveFile }.map { archive ->
-                        archive.asFile.relativeTo(projectDirectory).invariantSeparatorsPath
+                        archive.asFile.relativeTo(dockerBuildContextDirectory).invariantSeparatorsPath
                     }
                 )
             }

@@ -10,7 +10,7 @@ Run:
 ./gradlew generateMicroserviceDockerfile
 ```
 
-The typed task is registered lazily in the `distribution` group. By default it writes `Dockerfile` in the consuming project root, uses the existing `shadowJar` task in the container build stage, derives Eclipse Temurin JDK/JRE images from the configured Java toolchain, and runs the application as a non-root user. Additional JVM flags can be supplied with `JAVA_OPTS`.
+The typed task is registered lazily in the `distribution` group. By default it writes `Dockerfile` in the consuming project root, uses the existing `shadowJar` task in the container build stage, derives Eclipse Temurin JDK/JRE images from the configured Java toolchain, and runs the application as a non-root user. The generated artifact path is relative to the root project, which is the Docker build context; for a subproject such as `surf-clan-microservice`, the generated `COPY` source therefore includes that subproject directory. Additional JVM flags can be supplied with `JAVA_OPTS`.
 
 The output can be configured through the existing extension:
 
