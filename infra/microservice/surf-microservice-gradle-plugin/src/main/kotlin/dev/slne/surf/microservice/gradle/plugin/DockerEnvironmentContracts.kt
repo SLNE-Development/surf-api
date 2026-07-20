@@ -6,7 +6,7 @@ internal data class EnvironmentVariableDescriptor(
     val secret: Boolean = false,
 )
 
-internal object DockerEnvironmentContracts {*
+internal object DockerEnvironmentContracts {
     const val RABBITMQ_GROUP = "dev.slne.surf.rabbitmq"
     const val DATABASE_GROUP = "dev.slne.surf"
     const val DATABASE_MODULE = "surf-database-r2dbc"
