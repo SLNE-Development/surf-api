@@ -15,9 +15,11 @@ internal data class DatabaseConfig(
     companion object {
         fun create(
             path: Path,
-            configName: String = "database.yml"
+            configName: String = "database.yml",
+            environment: DatabaseEnvironmentVariableLookup = DatabaseEnvironmentVariableLookup(System::getenv),
         ): DatabaseConfig {
             return surfConfigApi.createSpongeYmlConfig<DatabaseConfig>(path, configName)
+                .withEnvironmentOverrides(environment)
         }
     }
 }

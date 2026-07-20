@@ -1,8 +1,10 @@
 # surf-database-r2dbc
 
-`surf-database-r2dbc` is an R2DBC provider for **JetBrains Exposed**, enabling non-blocking database operations in JVM applications.
+`surf-database-r2dbc` is an R2DBC provider for **JetBrains Exposed**, enabling non-blocking database
+operations in JVM applications.
 
 It provides:
+
 - Integration of Exposed DSL with R2DBC
 - Non-blocking, reactive database operations
 - Kotlin coroutines support
@@ -18,11 +20,14 @@ The library is built on top of **JetBrains Exposed**, **R2DBC**, and **Kotlin co
 ### DatabaseApi
 
 `DatabaseApi` is the central entry point for database operations.  
-It manages the R2DBC connection pool and exposes the underlying Exposed [R2dbcDatabase](https://www.jetbrains.com/help/exposed/working-with-database.html#r2dbc).
+It manages the R2DBC connection pool and exposes the underlying
+Exposed [R2dbcDatabase](https://www.jetbrains.com/help/exposed/working-with-database.html#r2dbc).
 
-A typical application creates **exactly one** `DatabaseApi` instance and shares it across the system.
+A typical application creates **exactly one** `DatabaseApi` instance and shares it across the
+system.
 
 Lifecycle:
+
 1. Create the API from a plugin path (loads configuration)
 2. Initialize tables
 3. Execute queries using Exposed
@@ -39,7 +44,8 @@ databaseApi.database
 
 ## Service Pattern (recommended)
 
-In most applications, `DatabaseApi` is wrapped inside a service that manages its lifecycle and provides a global access point.
+In most applications, `DatabaseApi` is wrapped inside a service that manages its lifecycle and
+provides a global access point.
 
 ```kotlin
 abstract class DatabaseService {
@@ -89,7 +95,8 @@ class MyDatabaseService : DatabaseService() {
 
 ### Database Config File
 
-The `DatabaseApi.create(pluginPath)` method loads configuration from a `database.yml` file located relative to the provided path.
+The `DatabaseApi.create(pluginPath)` method loads configuration from a `database.yml` file located
+relative to the provided path.
 
 Example `database.yml`:
 
@@ -106,7 +113,7 @@ pool:
     initialSize: 5
     minIdle: 5
     maxSize: 20
-  
+
   timeouts:
     maxAcquireTimeMillis: 30000
     maxCreateConnectionTimeMillis: 10000
@@ -116,6 +123,67 @@ pool:
 
 logLevel: DEBUG
 ```
+
+### Runtime environment variables
+
+`DatabaseApi.create(pluginPath)` first loads `database.yml`, then applies environment-variable
+overrides before it creates the connection factory and pool:
+
+`environment > database.yml > built-in default`
+
+A missing variable preserves its YAML/default value. A present but malformed value fails startup and
+identifies the variable. Database types and log levels are parsed case-insensitively. Pool timeout
+values retain the existing millisecond semantics, including `-1` where R2DBC Pool uses it to disable
+a timeout.
+
+| Environment variable                                   | YAML option                                   | Built-in default                                   |
+|--------------------------------------------------------|-----------------------------------------------|----------------------------------------------------|
+| `SURF_DATABASE_LOG_LEVEL`                              | `logLevel`                                    | `DEBUG`                                            |
+| `SURF_DATABASE_TYPE`                                   | `credentials.databaseType`                    | `MARIADB`                                          |
+| `SURF_DATABASE_SCHEMA`                                 | `credentials.schema`                          | `public` (PostgreSQL only)                         |
+| `SURF_DATABASE_HOST`                                   | `credentials.host`                            | `localhost`                                        |
+| `SURF_DATABASE_PORT`                                   | `credentials.port`                            | `3306`; valid range `1..65535`                     |
+| `SURF_DATABASE_NAME`                                   | `credentials.database`                        | `database`                                         |
+| `SURF_DATABASE_USERNAME`                               | `credentials.username`                        | `root`                                             |
+| `SURF_DATABASE_PASSWORD`                               | `credentials.password`                        | existing YAML/default value; configure as a secret |
+| `SURF_DATABASE_POOL_INITIAL_SIZE`                      | `pool.sizing.initialSize`                     | `10`                                               |
+| `SURF_DATABASE_POOL_MIN_IDLE`                          | `pool.sizing.minIdle`                         | `0`                                                |
+| `SURF_DATABASE_POOL_MAX_SIZE`                          | `pool.sizing.maxSize`                         | `10`                                               |
+| `SURF_DATABASE_POOL_MAX_ACQUIRE_TIME_MILLIS`           | `pool.timeouts.maxAcquireTimeMillis`          | `10000`                                            |
+| `SURF_DATABASE_POOL_MAX_CREATE_CONNECTION_TIME_MILLIS` | `pool.timeouts.maxCreateConnectionTimeMillis` | `30000`                                            |
+| `SURF_DATABASE_POOL_MAX_VALIDATION_TIME_MILLIS`        | `pool.timeouts.maxValidationTimeMillis`       | `-1`                                               |
+| `SURF_DATABASE_POOL_MAX_IDLE_TIME_MILLIS`              | `pool.timeouts.maxIdleTimeMillis`             | `60000`                                            |
+| `SURF_DATABASE_POOL_MAX_LIFE_TIME_MILLIS`              | `pool.timeouts.maxLifeTimeMillis`             | `1800000`                                          |
+
+MariaDB example:
+
+```dotenv
+SURF_DATABASE_TYPE=mariadb
+SURF_DATABASE_HOST=mariadb.internal
+SURF_DATABASE_PORT=3306
+SURF_DATABASE_NAME=surf
+SURF_DATABASE_USERNAME=surf-service
+SURF_DATABASE_PASSWORD=
+SURF_DATABASE_POOL_MAX_SIZE=20
+```
+
+PostgreSQL example:
+
+```dotenv
+SURF_DATABASE_TYPE=postgresql
+SURF_DATABASE_SCHEMA=application
+SURF_DATABASE_HOST=postgres.internal
+SURF_DATABASE_PORT=5432
+SURF_DATABASE_NAME=surf
+SURF_DATABASE_USERNAME=surf-service
+SURF_DATABASE_PASSWORD=
+SURF_DATABASE_POOL_MAX_SIZE=20
+```
+
+For Coolify, add these variables to the application service and point the host at the external
+database service. Mark `SURF_DATABASE_PASSWORD` as a secret. Do not commit real database credentials
+to `database.yml`, Dockerfiles, `.env` files, or source control. The application image does not
+install or run the database server.
 
 ### Pool Name
 
@@ -134,15 +202,17 @@ If not specified, a pool name is auto-generated based on the caller class.
 
 ## Database Operations
 
-`surf-database-r2dbc` is a **provider**, not a query API. All database operations are performed using **JetBrains Exposed**.
+`surf-database-r2dbc` is a **provider**, not a query API. All database operations are performed
+using **JetBrains Exposed**.
 
 Refer to the official Exposed documentation:
+
 - [Exposed Documentation](https://www.jetbrains.com/help/exposed/dsl-crud-operations.html)
 
 ### Example: Simple Query
 
 ```kotlin
-suspend fun findUserById(id: UUID): User? = suspendTransaction { 
+suspend fun findUserById(id: UUID): User? = suspendTransaction {
     UsersTable
         .select { UsersTable.id eq id }
         .singleOrNull()
@@ -154,13 +224,15 @@ suspend fun findUserById(id: UUID): User? = suspendTransaction {
 
 ## Testing
 
-For tests, you can bypass configuration loading and provide a [ConnectionFactory](https://r2dbc.io/spec/1.0.0.RELEASE/api/io/r2dbc/spi/ConnectionFactory.html) directly:
+For tests, you can bypass configuration loading and provide
+a [ConnectionFactory](https://r2dbc.io/spec/1.0.0.RELEASE/api/io/r2dbc/spi/ConnectionFactory.html)
+directly:
 
 ```kotlin
 @OptIn(TestOnlyDatabaseApi::class)
 val databaseApi = DatabaseApi.create(
-    connectionFactory = myTestConnectionFactory
-)
+        connectionFactory = myTestConnectionFactory
+    )
 ```
 
 This is useful with **Testcontainers** or in-memory databases.
@@ -210,12 +282,10 @@ class DatabaseTest {
 
 ## Supported Databases
 
-Currently, the library is configured for **MariaDB** via R2DBC.
-
-The underlying R2DBC architecture supports other databases, but the default connection factory is `MariadbConnectionFactory`. To support other databases, you can:
-
-1. Use the `@TestOnlyDatabaseApi` overload with a custom [ConnectionFactory](https://r2dbc.io/spec/1.0.0.RELEASE/api/io/r2dbc/spi/ConnectionFactory.html)
-2. Extend the library to support additional R2DBC drivers
+The configuration-based entry point supports **MariaDB** and **PostgreSQL** through their R2DBC
+drivers. Set `credentials.databaseType` or `SURF_DATABASE_TYPE` to select the driver.
+`credentials.schema` and `SURF_DATABASE_SCHEMA` apply only to PostgreSQL and are safely ignored for
+MariaDB.
 
 ---
 
@@ -230,7 +300,7 @@ Guaranteed:
 
 Not guaranteed:
 
-* Support for non-MariaDB databases without custom setup
+* Support for databases other than MariaDB and PostgreSQL without custom setup
 * Automatic schema migrations
 * Cross-database transactions
 
@@ -254,7 +324,8 @@ Failing to do so may leave connections open and cause resource leaks.
 
 ### 2. Creating `DatabaseApi` after table initialization
 
-Table initialization requires a database connection. Always create `DatabaseApi` **before** calling `initializeTables()`:
+Table initialization requires a database connection. Always create `DatabaseApi` **before** calling
+`initializeTables()`:
 
 ```kotlin
 // BAD
@@ -272,7 +343,8 @@ suspend fun connect() {
 }
 ```
 
-Or better: initialize `databaseApi` as a class property, then call `initializeTables()` in `connect()`.
+Or better: initialize `databaseApi` as a class property, then call `initializeTables()` in
+`connect()`.
 
 ---
 
@@ -324,7 +396,8 @@ protected open suspend fun initializeTables() {
 
 The connection pool has a maximum size defined in `database.yml`.
 
-If all connections are in use, new transactions will wait up to `maxAcquireTimeMillis` before failing.
+If all connections are in use, new transactions will wait up to `maxAcquireTimeMillis` before
+failing.
 
 Monitor connection usage and adjust pool sizing if needed:
 

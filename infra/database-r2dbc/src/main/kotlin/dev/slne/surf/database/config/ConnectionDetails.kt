@@ -13,4 +13,9 @@ internal data class ConnectionDetails(
     val database: String = "database",
     val username: String = "root",
     val password: String = "1234"
-)
+) {
+    override fun toString(): String {
+        return "ConnectionDetails(databaseType=$databaseType, schema=$schema, host=$host, port=$port, " +
+                "database=$database, username=$username, password=<redacted>)"
+    }
+}

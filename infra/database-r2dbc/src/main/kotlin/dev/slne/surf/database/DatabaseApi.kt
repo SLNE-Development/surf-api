@@ -35,8 +35,8 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
         /**
          * Creates a [DatabaseApi] using the [DatabaseConfig] located in/relative to [pluginPath].
          *
-         * This is the intended production entry point: it reads credentials/pool settings from the config and creates a
-         * pooled [ConnectionFactory].
+         * This is the intended production entry point: it reads credentials/pool settings from the config, applies
+         * supported `SURF_DATABASE_*` environment-variable overrides, and creates a pooled [ConnectionFactory].
          *
          * @param pluginPath Base path used to locate the database config.
          * @param poolName Optional pool name (defaults to a generated name based on the caller).
