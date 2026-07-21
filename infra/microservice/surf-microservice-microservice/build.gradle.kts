@@ -14,3 +14,4 @@ dependencies {
     }
     runtimeOnly(libs.bundles.log4j)
 }
+
