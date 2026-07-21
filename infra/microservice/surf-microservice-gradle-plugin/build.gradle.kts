@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation("dev.slne.surf.api:surf-api-gradle-plugin:+")
+    implementation("com.bmuschko.docker-remote-api:com.bmuschko.docker-remote-api.gradle.plugin:10.0.0")
 }
 
 gradlePlugin {

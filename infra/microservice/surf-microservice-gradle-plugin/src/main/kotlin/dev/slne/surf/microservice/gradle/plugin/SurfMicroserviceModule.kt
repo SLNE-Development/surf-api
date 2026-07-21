@@ -1,37 +1,31 @@
 package dev.slne.surf.microservice.gradle.plugin
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.api.Project
-import org.gradle.kotlin.dsl.withType
-
 enum class SurfMicroserviceModule(
-    internal val apiModule: String,
-    internal val runtimeModule: String,
-    internal val moduleProjectModification: Project.() -> Unit = {}
+    internal val apiArtifactId: String,
+    internal val runtimeArtifactId: String,
 ) {
     COMMON(
-        apiModule = "surf-microservice-api-common",
-        runtimeModule = "surf-microservice-core"
+        apiArtifactId = "surf-microservice-api-common",
+        runtimeArtifactId = "surf-microservice-core",
     ),
+
     MICROSERVICE(
-        apiModule = "surf-microservice-api-microservice",
-        runtimeModule = "surf-microservice-microservice",
-        moduleProjectModification = {
-            tasks.withType<ShadowJar>().configureEach {
-                mainClass.set("dev.slne.surf.microservice.runtime.microservice.MicroserviceLauncherKt")
-            }
-        }
+        apiArtifactId = "surf-microservice-api-microservice",
+        runtimeArtifactId = "surf-microservice-microservice",
     ),
+
     CLIENT_COMMON(
-        apiModule = "surf-microservice-api-client-common",
-        runtimeModule = "surf-microservice-client-common"
+        apiArtifactId = "surf-microservice-api-client-common",
+        runtimeArtifactId = "surf-microservice-client-common",
     ),
+
     CLIENT_PAPER(
-        apiModule = "surf-microservice-api-client-paper",
-        runtimeModule = "surf-microservice-client-paper"
+        apiArtifactId = "surf-microservice-api-client-paper",
+        runtimeArtifactId = "surf-microservice-client-paper",
     ),
+
     CLIENT_VELOCITY(
-        apiModule = "surf-microservice-api-client-velocity",
-        runtimeModule = "surf-microservice-client-velocity"
-    );
+        apiArtifactId = "surf-microservice-api-client-velocity",
+        runtimeArtifactId = "surf-microservice-client-velocity",
+    ),
 }
