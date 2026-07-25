@@ -78,4 +78,11 @@ abstract class MicroserviceDockerExtension @Inject constructor(objects: ObjectFa
 
     /** Java development-kit image used by the Gradle build stage. */
     val builderImage: Property<String> = objects.property<String>()
+
+    /**
+     * Go toolchain image used to compile the native `microservicectl` executable.
+     *
+     * The image is used only during the Docker build and is not included in the final runtime image.
+     */
+    val commandClientBuilderImage: Property<String> = objects.property<String>()
 }
