@@ -1,17 +1,14 @@
 package dev.slne.surf.microservice.runtime.microservice.command
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.messages.DefaultFontInfo
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommand
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandContext
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandManager
-import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandManager.Companion.findCommand
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandResult
 import dev.slne.surf.microservice.runtime.microservice.command.commands.exitCommand
+import dev.slne.surf.microservice.runtime.microservice.command.commands.healthCommand
 import dev.slne.surf.microservice.runtime.microservice.command.commands.sparkCommand
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -24,6 +21,7 @@ class MicroserviceCommandManagerImpl : MicroserviceCommandManager {
 
     fun initDefaultCommands() {
         exitCommand()
+        healthCommand()
         sparkCommand()
     }
 
@@ -74,6 +72,8 @@ class MicroserviceCommandManagerImpl : MicroserviceCommandManager {
             MicroserviceCommandResult.Success
         } catch (exception: CancellationException) {
             throw exception
+        } catch (exception: MicroserviceCommandFailureException) {
+            MicroserviceCommandResult.Failure(exception.message ?: "Command failed.")
         } catch (exception: Exception) {
             val reason = exception.message ?: exception.javaClass.simpleName
             val message = "Command '${command.name}' failed: $reason"
