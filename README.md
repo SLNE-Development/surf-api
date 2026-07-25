@@ -64,6 +64,42 @@ surf-api
 > projects. `-server` modules contain implementations that are shaded into the final JAR and never
 > exposed as a public API dependency.
 
+## Environment Variables
+
+`surf-api-core` provides small, type-safe environment-variable access without a separate schema or
+lookup phase. Direct reads resolve immediately:
+
+```kotlin
+val DATABASE_HOST: String = env.required("DATABASE_HOST")
+val DATABASE_PORT: Int = env.int("DATABASE_PORT", default = 5432) {
+    requireIn(1..65535)
+}
+val INSTANCE_ID: UUID? = env.optionalUuid("INSTANCE_ID")
+```
+
+Property delegates resolve lazily on first access, infer the variable name exactly from the property,
+and cache the parsed value thread-safely:
+
+```kotlin
+object ServiceEnvironment {
+    val DATABASE_HOST by env.requiredNonBlank()
+    val DATABASE_PORT by env.int(default = 5432) {
+        requireIn(1..65535)
+    }
+    val DATABASE_PASSWORD by env.requiredSecret()
+    val DEBUG by env.boolean(default = false)
+}
+```
+
+Use `env.required().named("DATABASE_HOST")` for an explicitly named delegate. Required values are
+non-null, optional values are nullable, and defaulted values are non-null. Missing required values,
+conversion failures, and validation failures throw dedicated exceptions containing the variable
+name. Mark values as sensitive, or use `requiredSecret`, to keep raw values and parser causes out of
+error details. Required strings preserve present blank values; `requiredNonBlank` rejects them.
+Built-in converters cover strings, numeric types, strict booleans, UUIDs, enums, and Kotlin
+durations. Custom converters can be passed directly, for example
+`env.required("ID", UUID::fromString)`.
+
 ---
 
 ## Key Concepts
