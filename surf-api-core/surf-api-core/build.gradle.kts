@@ -38,15 +38,9 @@ dependencies {
     api(libs.bundles.ktor.client)
 
     api(libs.datafixerupper) { isTransitive = false }
-
-    testImplementation(kotlin("test-junit5"))
 }
 
 tasks {
-    test {
-        useJUnitPlatform()
-    }
-
     shadowJar {
         val relocationPrefix: String by project
         relocate("com.mojang.serialization", "$relocationPrefix.mojang.serialization")
