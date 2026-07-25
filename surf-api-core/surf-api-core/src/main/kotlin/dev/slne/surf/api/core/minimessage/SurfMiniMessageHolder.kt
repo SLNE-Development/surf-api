@@ -1,8 +1,12 @@
 package dev.slne.surf.api.core.minimessage
 
+import dev.slne.surf.api.core.font.toSmallCaps
 import dev.slne.surf.api.core.messages.Colors
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.minimessage.MiniMessage
+import net.kyori.adventure.text.minimessage.tag.Modifying
 import net.kyori.adventure.text.minimessage.tag.Tag
 
 /**
@@ -45,6 +49,7 @@ object SurfMiniMessageHolder {
                 "primary" to Colors.PRIMARY,
                 "secondary" to Colors.SECONDARY,
                 "info" to Colors.INFO,
+                "note" to Colors.NOTE,
                 "success" to Colors.SUCCESS,
                 "warning" to Colors.WARNING,
                 "error" to Colors.ERROR,
@@ -72,6 +77,8 @@ object SurfMiniMessageHolder {
 
                     Tag.selfClosingInserting(prefix)
                 }
+
+            tagBuilder.tag("small") { _, _ -> SmallCapsTag() }
         }
         .build()
 
@@ -89,6 +96,16 @@ object SurfMiniMessageHolder {
      * @return The MiniMessage parser with custom Surf API tags
      */
     fun miniMessage() = minimessage
+
+    private class SmallCapsTag : Modifying {
+        override fun apply(current: Component, depth: Int): Component {
+            if (current is TextComponent) {
+                return current.content(current.content().toSmallCaps())
+                    .children(emptyList())
+            }
+            return current.children(emptyList())
+        }
+    }
 }
 
 /**
