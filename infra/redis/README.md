@@ -14,6 +14,52 @@ The library is built on top of **Redisson**, **Reactor**, and **Kotlin coroutine
 
 ---
 
+## Configuration
+
+Connection settings come from `config.yml` in the data directory and can be overridden by
+environment variables. The same four keys listed below are the ones available in `config.yml`.
+
+### Environment variables
+
+Each variable overrides the matching `config.yml` key. Precedence is
+**environment variable → `config.yml` → built-in default**.
+
+| Variable                 | Type                  | `config.yml` key | Default                             |
+|--------------------------|-----------------------|------------------|-------------------------------------|
+| `SURF_REDIS_HOST`        | string                | `host`           | `localhost`                         |
+| `SURF_REDIS_PORT`        | int, `0`–`65535`      | `port`           | `6379`                              |
+| `SURF_REDIS_PASSWORD`    | string (secret)       | `password`       | none (no authentication)            |
+| `SURF_REDIS_CLIENT_NAME` | string                | `clientName`     | `surf-redis-client-<random UUID>`   |
+
+```bash
+export SURF_REDIS_HOST=redis.internal
+export SURF_REDIS_PORT=6380
+export SURF_REDIS_PASSWORD='super-secret'
+export SURF_REDIS_CLIENT_NAME=lobby-01
+```
+
+`SURF_REDIS_CLIENT_NAME` is a **prefix**, not the final client name. The consuming plugin's name is
+appended, so `lobby-01` becomes `lobby-01-<pluginName>` on the Redis connection.
+
+### Resolution behavior
+
+**Set-but-empty is not the same as unset.** A variable only falls back to `config.yml` when it is
+*missing* from the environment. A variable that is present but empty wins the override with an empty
+value — `SURF_REDIS_HOST=""` produces an empty host, not `localhost`, and an empty
+`SURF_REDIS_CLIENT_NAME` produces a client name of just `-<pluginName>`. `SURF_REDIS_PASSWORD` is the
+only exception: an empty password is treated as no authentication. To fall back to `config.yml`,
+**unset the variable** instead of blanking it.
+
+**Values are read once.** Only the process environment (`System.getenv`) is consulted — no `.env`
+file and no JVM system properties. `config.yml` and the environment are snapshotted together on
+first access, so changing the environment afterwards has no effect.
+
+**Invalid values fail on first use.** A non-numeric or out-of-range `SURF_REDIS_PORT` throws when the
+configuration is first accessed — during connection setup, not at plugin load. The error names the
+offending variable; the raw value of `SURF_REDIS_PASSWORD` is redacted from failure messages.
+
+---
+
 ## Concepts
 
 ### RedisApi
