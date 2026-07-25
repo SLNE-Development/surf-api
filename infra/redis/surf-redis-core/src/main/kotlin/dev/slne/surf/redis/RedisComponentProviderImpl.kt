@@ -3,7 +3,7 @@ package dev.slne.surf.redis
 import com.google.auto.service.AutoService
 import dev.slne.surf.redis.cache.*
 import dev.slne.surf.redis.codec.RedisCodec
-import dev.slne.surf.redis.config.RedisConfig
+import dev.slne.surf.redis.config.redisConfig
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.event.RedisEventBusImpl
 import dev.slne.surf.redis.internal.RedissonConfigDetails
@@ -59,7 +59,7 @@ class RedisComponentProviderImpl : RedisComponentProvider {
                 useSingleServer()
                     .setConnectionMinimumIdleSize(2)
                     .setConnectionPoolSize(8)
-                    .setClientName(RedisConfig.getConfig().clientName + "-" + details.pluginName)
+                    .setClientName(redisConfig.clientName + "-" + details.pluginName)
                     .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
                     .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
                     .setRetryAttempts(10)
