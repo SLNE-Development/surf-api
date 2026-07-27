@@ -16,6 +16,8 @@ dependencies {
     implementation(libs.bundles.exposed)
     implementation(libs.r2dbc.pool)
     implementation(libs.bundles.databaseDriver)
+
+    compileOnly(libs.surf.microservice)
 }
 
 configurations.runtimeClasspath {

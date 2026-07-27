@@ -3,6 +3,7 @@ package dev.slne.surf.database
 import dev.slne.surf.api.core.util.getCallerClass
 import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.config.DatabaseType
+import dev.slne.surf.database.health.DatabaseHealthRegistry
 import dev.slne.surf.database.logger.ComponentSqlLogger
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
@@ -23,6 +24,7 @@ import org.slf4j.event.Level
 import reactor.netty.resources.LoopResources
 import java.nio.file.Path
 import java.time.Duration.ofMillis
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Small wrapper around an [R2dbcDatabase] instance.
@@ -30,8 +32,20 @@ import java.time.Duration.ofMillis
  * Use [create(Path, String, R2dbcDatabaseConfig.Builder.() -> Unit)] in production to build the connection pool from the
  * on-disk [DatabaseConfig]. A lower-level overload exists mainly for tests.
  */
-class DatabaseApi internal constructor(val database: R2dbcDatabase) {
+class DatabaseApi internal constructor(
+    val database: R2dbcDatabase,
+    healthCheckName: String
+) {
+    init {
+        DatabaseHealthRegistry.register(
+            databaseApi = this,
+            name = healthCheckName
+        )
+    }
+
     companion object {
+        private val manualDatabaseSequence = AtomicLong()
+
         /**
          * Creates a [DatabaseApi] using the [DatabaseConfig] located in/relative to [pluginPath].
          *
@@ -42,7 +56,6 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
          * @param poolName Optional pool name (defaults to a generated name based on the caller).
          * @param configCustomizer Optional customization hook for Exposed's [R2dbcDatabaseConfig].
          */
-        @OptIn(TestOnlyDatabaseApi::class)
         fun create(
             pluginPath: Path,
             fileName: String = "database.yml",
@@ -121,11 +134,12 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
                 DatabaseType.POSTGRESQL -> PostgreSQLDialect()
             }
 
-            return create(
+            return createDatabase(
                 connectionFactory = pool,
                 dialect = dialect,
                 logger = logger,
                 logLevel = logLevel,
+                healthCheckName = poolName,
                 configCustomizer = configCustomizer
             )
         }
@@ -151,20 +165,49 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
             logLevel: Level = Level.DEBUG,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
-            val database = R2dbcDatabase.connect(connectionFactory, R2dbcDatabaseConfig {
-                explicitDialect = dialect
-                sqlLogger = ComponentSqlLogger(logger, logLevel)
-                defaultR2dbcIsolationLevel = IsolationLevel.READ_UNCOMMITTED
-                configCustomizer()
-            })
+            return createDatabase(
+                connectionFactory = connectionFactory,
+                dialect = dialect,
+                logger = logger,
+                logLevel = logLevel,
+                healthCheckName = nextManualHealthCheckName(),
+                configCustomizer = configCustomizer
+            )
+        }
 
-            return DatabaseApi(database)
+        private fun createDatabase(
+            connectionFactory: ConnectionFactory,
+            dialect: DatabaseDialect,
+            logger: ComponentLogger,
+            logLevel: Level,
+            healthCheckName: String,
+            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit
+        ): DatabaseApi {
+            val database = R2dbcDatabase.connect(
+                connectionFactory,
+                R2dbcDatabaseConfig {
+                    explicitDialect = dialect
+                    sqlLogger = ComponentSqlLogger(logger, logLevel)
+                    defaultR2dbcIsolationLevel = IsolationLevel.READ_UNCOMMITTED
+
+                    configCustomizer()
+                }
+            )
+
+            return DatabaseApi(
+                database = database,
+                healthCheckName = healthCheckName
+            )
         }
 
         private fun generatePoolName(): String {
             val caller = getCallerClass(1)
             val callerName = caller?.simpleName ?: "unknown"
             return "j2bdc-pool-$callerName"
+        }
+
+        private fun nextManualHealthCheckName(): String {
+            return "database-${manualDatabaseSequence.incrementAndGet()}"
         }
     }
 
@@ -174,7 +217,11 @@ class DatabaseApi internal constructor(val database: R2dbcDatabase) {
      * Call this during plugin/application shutdown to ensure connections are released.
      */
     fun shutdown() {
-        TransactionManager.closeAndUnregister(database)
+        try {
+            TransactionManager.closeAndUnregister(database)
+        } finally {
+            DatabaseHealthRegistry.unregister(this)
+        }
     }
 }
 
