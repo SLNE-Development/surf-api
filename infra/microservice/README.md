@@ -29,4 +29,4 @@ surfMicroservice {
 
 The default `overwrite = false` protects manually maintained Dockerfiles. A file carrying the generated marker can be regenerated safely; replacing any other existing file requires explicitly setting `overwrite = true`.
 
-At task execution, the plugin inspects the resolved `runtimeClasspath` component graph. RabbitMQ environment documentation is emitted only when a resolved component belongs to `dev.slne.surf.rabbitmq`. Database documentation is emitted only for `dev.slne.surf:surf-database-r2dbc`, including when either dependency is transitive. Values and credentials are never generated into the Dockerfile—configure them as Coolify runtime variables/secrets.
+The generated Dockerfile only sets `JAVA_OPTS` and the command socket path. Service configuration such as RabbitMQ or database settings is neither documented nor generated into it—configure those as Coolify runtime variables/secrets.

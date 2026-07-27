@@ -7,7 +7,6 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.Sync
 import org.gradle.kotlin.dsl.*
@@ -34,10 +33,6 @@ abstract class MicroservicePlugin : Plugin<Project> {
         val extension = extensions.create<MicroserviceExtension>("surfMicroservice")
 
         configureDockerConventions(extension)
-
-        val runtimeDependencies = objects
-            .setProperty<String>()
-            .convention(emptySet())
 
         val commandClientSourceFile = layout.buildDirectory.file(COMMAND_CLIENT_SOURCE_OUTPUT_PATH)
 
@@ -110,29 +105,12 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 baseImage = extension.docker.baseImage,
                 runnableTaskPath = runnableTaskPath,
                 runnableArtifactPath = runnableArtifactPath,
-                commandClientSourcePath = commandClientSourcePath,
-                runtimeDependencies = runtimeDependencies
+                commandClientSourcePath = commandClientSourcePath
             )
         }
 
         pluginManager.withPlugin("java") {
             configureJavaDockerConventions(extension)
-
-            runtimeDependencies.set(
-                configurations
-                    .named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
-                    .map { configuration ->
-                        configuration
-                            .incoming
-                            .resolutionResult
-                            .allComponents
-                            .mapNotNullTo(sortedSetOf()) { component ->
-                                component.moduleVersion?.let { module ->
-                                    "${module.group}:${module.name}"
-                                }
-                            }
-                    }
-            )
         }
 
         afterEvaluate {

@@ -35,8 +35,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
     baseImage: Provider<String>,
     runnableTaskPath: Provider<String>,
     runnableArtifactPath: Provider<String>,
-    commandClientSourcePath: Provider<String>,
-    runtimeDependencies: Provider<Set<String>>
+    commandClientSourcePath: Provider<String>
 ) {
     val dockerfileTask = this
 
@@ -55,8 +54,11 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
         protectExistingDockerfile(destination, overwrite.get(), dockerfileTask.path)
     }
 
-    instruction("# syntax=docker/dockerfile:1")
+    comment("syntax=docker/dockerfile:1")
     instruction(GENERATED_MARKER)
+    comment("Manual changes are lost the next time this file is generated.\n")
+
+    comment("Stage 1: build the runnable application JAR with Gradle.")
 
     from(
         builderImage.map { image ->
@@ -74,6 +76,8 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
             "chmod +x gradlew && ./gradlew $task --no-daemon"
         }
     )
+
+    section("Stage 2: compile the native $COMMAND_CLIENT_EXECUTABLE command client.")
 
     from(
         commandClientBuilderImage.map { image ->
@@ -96,19 +100,20 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
         }
     )
 
+    // language="Shell Script"
     runCommand(
-        buildString {
-            append("mkdir -p /out")
-            append(" && ")
-            append("CGO_ENABLED=0 ")
-            append("go build ")
-            append("-buildvcs=false ")
-            append("-trimpath ")
-            append("-ldflags='-s -w' ")
-            append("-o $COMMAND_CLIENT_OUTPUT_FILE ")
-            append(COMMAND_CLIENT_SOURCE_FILE)
-        }
+        """
+        mkdir -p /out \
+            && CGO_ENABLED=0 go build \
+                -buildvcs=false \
+                -trimpath \
+                -ldflags='-s -w' \
+                -o $COMMAND_CLIENT_OUTPUT_FILE \
+                $COMMAND_CLIENT_SOURCE_FILE
+        """.trimIndent()
     )
+
+    section("Stage 3: assemble the runtime image.")
 
     from(
         baseImage.map { image ->
@@ -116,11 +121,22 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
         }
     )
 
-    runCommand(buildString {
-        append("groupadd --system --gid $APPLICATION_GID $APPLICATION_GROUP")
-        append(" && ")
-        append("useradd --system --uid $APPLICATION_UID --gid $APPLICATION_GROUP --home-dir /app --create-home $APPLICATION_USER")
-    })
+    section("Run the application as an unprivileged user that owns /app.")
+
+    // language="Shell Script"
+    runCommand(
+        """
+        groupadd --system --gid $APPLICATION_GID $APPLICATION_GROUP \
+            && useradd --system \
+                --uid $APPLICATION_UID \
+                --gid $APPLICATION_GROUP \
+                --home-dir /app \
+                --create-home \
+                $APPLICATION_USER
+        """.trimIndent()
+    )
+
+    section("Install the application JAR and the command client.")
 
     workingDir("/app")
 
@@ -142,26 +158,37 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
                 COMMAND_CLIENT_INSTALL_PATH
     )
 
+    section(
+        "Additional JVM flags. The entrypoint always applies:",
+        "  $DEFAULT_JVM_OPTIONS"
+    )
+
     instruction("ENV JAVA_OPTS=\"\"")
+
+    section("Unix socket used by $COMMAND_CLIENT_EXECUTABLE to reach the running application.")
+
     environmentVariable(COMMAND_SOCKET_ENVIRONMENT_VARIABLE, COMMAND_SOCKET_PATH)
 
-    DockerEnvironmentContract.entries.forEach { contract ->
-        instruction(
-            runtimeDependencies.map { dependencies ->
-                if (contract.isRequiredBy(dependencies)) {
-                    "#\n${contract.renderDocumentation()}"
-                } else {
-                    ""
-                }
-            }
-        )
-    }
+    section("Start the application; arguments passed to the container are forwarded to it.")
 
     user(APPLICATION_USER)
 
     instruction(
         $$"""ENTRYPOINT ["sh", "-c", "exec java $$DEFAULT_JVM_OPTIONS $JAVA_OPTS -jar /app/$$DOCKER_APPLICATION_JAR_NAME \"$@\"", "--"]"""
     )
+}
+
+private fun Dockerfile.section(vararg lines: String) {
+    instruction(
+        lines.joinToString(
+            separator = "\n# ",
+            prefix = "\n# ",
+        )
+    )
+}
+
+private fun Dockerfile.comment(comment: String) {
+    instructions.add(Dockerfile.CommentInstruction(comment))
 }
 
 internal fun File.relativeToDockerContext(
