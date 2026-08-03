@@ -35,6 +35,8 @@ include("surf-api-shared")
 include("surf-api-shared:surf-api-shared-public")
 include("surf-api-shared:surf-api-shared-internal")
 
+include("surf-api-minestom")
+
 val ci = System.getenv("CI")?.toBoolean() ?: false
 
 if (!ci) {

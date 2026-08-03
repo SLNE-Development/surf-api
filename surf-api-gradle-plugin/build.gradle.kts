@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.0.8")
+    append("2.1.0")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -80,6 +80,11 @@ gradlePlugin {
         create("velocity") {
             id = "dev.slne.surf.api.gradle.velocity"
             implementationClass = "dev.slne.surf.api.gradle.platform.velocity.VelocitySurfPlugin"
+        }
+
+        create("minestom") {
+            id = "dev.slne.surf.api.gradle.minestom"
+            implementationClass = "dev.slne.surf.api.gradle.platform.minestom.MinestomSurfPlugin"
         }
     }
 
