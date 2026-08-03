@@ -77,6 +77,9 @@ dokka = "2.2.0"
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 canvas-api = { module = "io.canvasmc.canvas:canvas-api", version.ref = "canvas-api" }
 
+# Minestom
+surf-minestom-lobby-api = { module = "dev.slne.minestom.lobby:surf-minestom-lobby-api", version = "+" }
+
 # Kotlin
 kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinxCoroutines" }
