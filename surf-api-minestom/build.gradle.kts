@@ -30,3 +30,10 @@ description = "surf-api-minestom"
 
 private fun <T : ModuleDependency> T.exclude(provider: Provider<MinimalExternalModuleDependency>) =
     provider.get().module.apply { exclude(group, name) }
+
+tasks {
+    shadowJar {
+        val relocationPrefix: String by project
+        relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
+    }
+}

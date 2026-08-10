@@ -212,6 +212,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
             freeCompilerArgs.addAll(listOf("-Xjsr305=strict", "-Xcontext-parameters"))
+            javaParameters = true
         }
     }
 
