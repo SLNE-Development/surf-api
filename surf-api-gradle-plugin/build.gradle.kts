@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.1.1")
+    append("2.1.2")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -85,6 +85,12 @@ gradlePlugin {
         create("minestom") {
             id = "dev.slne.surf.api.gradle.minestom"
             implementationClass = "dev.slne.surf.api.gradle.platform.minestom.MinestomSurfPlugin"
+        }
+
+        create("minestom-relocations") {
+            id = "dev.slne.surf.api.gradle.minestom-relocations"
+            implementationClass =
+                "dev.slne.surf.api.gradle.platform.minestom.MinestomRelocationsPlugin"
         }
     }
 
