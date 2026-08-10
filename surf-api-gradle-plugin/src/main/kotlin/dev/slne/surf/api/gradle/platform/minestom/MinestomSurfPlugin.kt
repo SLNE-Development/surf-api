@@ -7,5 +7,11 @@ internal class MinestomSurfPlugin : AbstractCoreSurfPlugin<MinestomSurfExtension
     platformName = "minestom",
     platform = SurfApiPlatform.MINESTOM,
 ) {
+    init {
+        "it.unimi.dsi.fastutil" relocatesTo "fastutil"
+    }
+
     override val extensionClass = MinestomSurfExtension::class.java
+
+
 }
