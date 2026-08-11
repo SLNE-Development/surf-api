@@ -21,4 +21,8 @@ open class CoreSurfExtension @Inject constructor(objects: ObjectFactory) :
     fun withCoreVelocity() {
         coreModule.set(SurfCoreModules.VELOCITY)
     }
+
+    fun withCoreMinestom() {
+        coreModule.set(SurfCoreModules.MINESTOM)
+    }
 }
