@@ -2,10 +2,15 @@ package dev.slne.surf.api.core.messages.pagination
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import net.kyori.adventure.text.event.ClickCallback
 import net.kyori.adventure.text.event.ClickEvent
 
 fun interface PaginationClickEventProvider<T> {
-    fun getCallback(targetPage: Int, pagination: Pagination<T>, content: Collection<T>): ClickEvent<*>
+    fun getCallback(
+        targetPage: Int,
+        pagination: Pagination<T>,
+        content: Collection<T>
+    ): ClickEvent<*>
 
     companion object {
         private object DEFAULT : PaginationClickEventProvider<Any> {
@@ -38,11 +43,16 @@ fun interface SuspendPaginationClickEventProvider<T> {
                 targetPage: Int,
                 pagination: SuspendPagination<Any>,
                 content: Collection<Any>
-            ): ClickEvent<*> = ClickEvent.callback { clicker ->
-                launch {
-                    clicker.sendMessage(pagination.renderComponent(content, targetPage))
-                }
-            }
+            ): ClickEvent<*> = ClickEvent.callback(
+                { clicker ->
+                    launch {
+                        clicker.sendMessage(pagination.renderComponent(content, targetPage))
+                    }
+                }, ClickCallback.Options.builder()
+                    .lifetime(ClickCallback.DEFAULT_LIFETIME)
+                    .uses(ClickCallback.UNLIMITED_USES)
+                    .build()
+            )
         }
 
         fun <T> default(): SuspendPaginationClickEventProvider<T> {
