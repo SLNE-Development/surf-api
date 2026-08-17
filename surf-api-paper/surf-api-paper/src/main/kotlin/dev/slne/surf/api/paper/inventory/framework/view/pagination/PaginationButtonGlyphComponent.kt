@@ -1,9 +1,9 @@
 package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
+import dev.slne.surf.api.core.inventory.framework.internal.PaginationButtonGlyphs
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.paper.inventory.framework.view.container.component.ViewContainerComponent
-import dev.slne.surf.api.paper.inventory.framework.view.pagination.PaginationButtonGlyphComponent.Companion.getByPaginationState
 import me.devnatan.inventoryframework.component.Pagination
 
 /**
@@ -16,7 +16,8 @@ import me.devnatan.inventoryframework.component.Pagination
  * - [DisabledRight] — only the left (previous) button is available
  * - [Enabled] — both buttons are available
  *
- * Each subclass contains a per-row glyph lookup. The correct glyph character is selected based
+ * Each subclass delegates its per-row glyph lookup to the shared [PaginationButtonGlyphs] table.
+ * The correct glyph character is selected based
  * on the [row] (1-based) in which the buttons appear. The component has a fixed positional shift
  * of 38 pixels and a texture width of 88 pixels.
  *
@@ -58,54 +59,22 @@ internal sealed class PaginationButtonGlyphComponent(private val row: Int) :
 
     /** Both navigation buttons are disabled (no previous and no next page). */
     class Disabled(row: Int) : PaginationButtonGlyphComponent(row) {
-        override fun glyph(rows: Int): Char = when (rows) {
-            1 -> 'ꐕ'
-            2 -> 'ꐙ'
-            3 -> 'ꐝ'
-            4 -> 'ꐡ'
-            5 -> 'ꐥ'
-            6 -> 'ꐩ'
-            else -> error("Invalid row: $rows")
-        }
+        override fun glyph(rows: Int): Char = PaginationButtonGlyphs.DISABLED.glyph(rows)
     }
 
     /** The right (next) button is disabled; only the left (previous) button is active. */
     class DisabledRight(row: Int) : PaginationButtonGlyphComponent(row) {
-        override fun glyph(rows: Int): Char = when (rows) {
-            1 -> 'ꐖ'
-            2 -> 'ꐚ'
-            3 -> 'ꐞ'
-            4 -> 'ꐢ'
-            5 -> 'ꐦ'
-            6 -> 'ꐪ'
-            else -> error("Invalid row: $rows")
-        }
+        override fun glyph(rows: Int): Char = PaginationButtonGlyphs.DISABLED_RIGHT.glyph(rows)
     }
 
     /** The left (previous) button is disabled; only the right (next) button is active. */
     class DisabledLeft(row: Int) : PaginationButtonGlyphComponent(row) {
-        override fun glyph(rows: Int): Char = when (rows) {
-            1 -> 'ꐗ'
-            2 -> 'ꐛ'
-            3 -> 'ꐟ'
-            4 -> 'ꐣ'
-            5 -> 'ꐧ'
-            6 -> 'ꐫ'
-            else -> error("Invalid row: $rows")
-        }
+        override fun glyph(rows: Int): Char = PaginationButtonGlyphs.DISABLED_LEFT.glyph(rows)
     }
 
     /** Both navigation buttons are active (there are previous and next pages). */
     class Enabled(row: Int) : PaginationButtonGlyphComponent(row) {
-        override fun glyph(rows: Int): Char = when (rows) {
-            1 -> 'ꐘ'
-            2 -> 'ꐜ'
-            3 -> 'ꐠ'
-            4 -> 'ꐤ'
-            5 -> 'ꐨ'
-            6 -> 'ꐬ'
-            else -> error("Invalid row: $rows")
-        }
+        override fun glyph(rows: Int): Char = PaginationButtonGlyphs.ENABLED.glyph(rows)
     }
 
     companion object {

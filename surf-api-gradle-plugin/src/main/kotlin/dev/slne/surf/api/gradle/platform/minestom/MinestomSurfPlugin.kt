@@ -9,6 +9,7 @@ internal class MinestomSurfPlugin : AbstractCoreSurfPlugin<MinestomSurfExtension
 ) {
     init {
         "it.unimi.dsi.fastutil" relocatesTo "fastutil"
+        "me.devnatan.inventoryframework" relocatesTo "devnatan.inventoryframework"
     }
 
     override val extensionClass = MinestomSurfExtension::class.java

@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings.align
 
-import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment.Companion.calculateTextWidth
+import dev.slne.surf.api.core.inventory.framework.internal.TextAlignmentMath
 
 /**
  * Defines the horizontal alignment of title text within the inventory header container area.
@@ -20,7 +20,7 @@ enum class TextAlignment {
      */
     LEFT {
         override fun calculateShift(text: String, options: TextAlignmentOptions): Int =
-            options.leftShift + options.padding
+            TextAlignmentMath.leftAlignedShift(options.leftShift, options.padding)
     },
 
     /**
@@ -30,11 +30,14 @@ enum class TextAlignment {
         override fun calculateShift(
             text: String,
             options: TextAlignmentOptions
-        ): Int {
-            val usableWidth = options.containerWidth - (options.padding * 2)
-            val freeSpace = usableWidth - calculateTextWidth(text, options)
-            return options.leftShift + freeSpace + 1 + options.padding
-        }
+        ): Int = TextAlignmentMath.rightAlignedShift(
+            text,
+            options.leftShift,
+            options.padding,
+            options.containerWidth,
+            options.charSize,
+            options.charSpacing
+        )
     },
 
     /**
@@ -44,11 +47,14 @@ enum class TextAlignment {
         override fun calculateShift(
             text: String,
             options: TextAlignmentOptions
-        ): Int {
-            val usableWidth = options.containerWidth - (options.padding * 2)
-            val freeSpace = usableWidth - calculateTextWidth(text, options)
-            return options.leftShift + (freeSpace / 2) + 1 + options.padding
-        }
+        ): Int = TextAlignmentMath.centerAlignedShift(
+            text,
+            options.leftShift,
+            options.padding,
+            options.containerWidth,
+            options.charSize,
+            options.charSpacing
+        )
     };
 
     /**
@@ -72,11 +78,7 @@ enum class TextAlignment {
          * @param options the character size and spacing options
          * @return the total pixel width of the text
          */
-        fun calculateTextWidth(text: String, options: TextAlignmentOptions): Int {
-            if (text.isEmpty()) return 0
-            val n = text.length
-
-            return (n * options.charSize) + ((n - 1) * options.charSpacing)
-        }
+        fun calculateTextWidth(text: String, options: TextAlignmentOptions): Int =
+            TextAlignmentMath.textWidth(text, options.charSize, options.charSpacing)
     }
 }

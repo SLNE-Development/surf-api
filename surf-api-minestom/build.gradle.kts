@@ -22,6 +22,7 @@ dependencies {
     api(libs.flogger)
     api(libs.commons.math4.core)
     api(libs.commons.math3)
+    api(libs.inventory.framework.platform.minestom)
     implementation(libs.packetevents.netty.common)
     runtimeOnly(libs.flogger.slf4j.backend)
 }
@@ -35,5 +36,6 @@ tasks {
     shadowJar {
         val relocationPrefix: String by project
         relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
+        relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
     }
 }

@@ -156,6 +156,7 @@ configurate-kotlin = { module = "dev.slne.forks.configurate:configurate-extra-ko
 more-persistent-data-types = { module = "com.jeff-media:MorePersistentDataTypes", version.ref = "more-persistent-data-types" }
 inventory-framework-platform-paper = { module = "dev.slne.forks.inventoryframework:inventory-framework-platform-paper", version.ref = "inventory-framework" }
 inventory-framework-platform-bukkit = { module = "dev.slne.forks.inventoryframework:inventory-framework-platform-bukkit", version.ref = "inventory-framework" }
+inventory-framework-platform-minestom = { module = "dev.slne.forks.inventoryframework:inventory-framework-platform-minestom", version.ref = "inventory-framework" }
 flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
 flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
 aide-reflection = { module = "tech.hiddenproject:aide-reflection", version.ref = "aide-reflection" }

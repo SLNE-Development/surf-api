@@ -1,0 +1,784 @@
+public final class dev/slne/surf/api/minestom/builder/ItemDsl {
+	public fun <init> (Lnet/minestom/server/item/Material;I)V
+	public synthetic fun <init> (Lnet/minestom/server/item/Material;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun amount (I)V
+	public final fun build ()Lnet/minestom/server/item/ItemStack;
+	public final fun displayName (Lkotlin/jvm/functions/Function1;)V
+	public final fun displayName (Lnet/kyori/adventure/text/Component;)V
+	public final fun getBuilder ()Lnet/minestom/server/item/ItemStack$Builder;
+	public final fun itemModel (Ljava/lang/String;)V
+	public final fun itemModel (Lnet/kyori/adventure/key/Key;)V
+	public final fun lore (Lkotlin/jvm/functions/Function1;)V
+	public final fun lore ([Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/minestom/builder/ItemDslKt {
+	public static final fun buildItem (Lnet/minestom/server/item/Material;ILkotlin/jvm/functions/Function1;)Lnet/minestom/server/item/ItemStack;
+	public static synthetic fun buildItem$default (Lnet/minestom/server/item/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/item/ItemStack;
+}
+
+public abstract interface annotation class dev/slne/surf/api/minestom/builder/ItemDslMarker : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/minestom/impl/inventory/framework/MinestomInventoryLoader : dev/slne/minestom/lobby/api/event/EventRegistrar {
+	public static final field Companion Ldev/slne/surf/api/minestom/impl/inventory/framework/MinestomInventoryLoader$Companion;
+	public fun <init> ()V
+	public final fun disable ()V
+	public final fun enable ()V
+	public final fun getViewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
+	public fun register (Lnet/minestom/server/event/EventNode;)V
+}
+
+public final class dev/slne/surf/api/minestom/impl/inventory/framework/MinestomInventoryLoader$Companion {
+	public final fun getInstance ()Ldev/slne/surf/api/minestom/impl/inventory/framework/MinestomInventoryLoader;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/InventoryFrameworkExtensions {
+	public static final fun getOutlineItem (Lme/devnatan/inventoryframework/View;)Lnet/minestom/server/item/ItemStack;
+	public static final fun modifyConfig (Lme/devnatan/inventoryframework/context/OpenContext;Lkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/ViewConfigBuilder;
+	public static final fun open (Lme/devnatan/inventoryframework/View;Ljava/util/Collection;)V
+	public static final fun open (Lme/devnatan/inventoryframework/View;Ljava/util/Collection;Ljava/lang/Object;)V
+	public static final fun open (Lme/devnatan/inventoryframework/View;Lnet/minestom/server/entity/Player;)V
+	public static final fun open (Lme/devnatan/inventoryframework/View;Lnet/minestom/server/entity/Player;Ljava/lang/Object;)V
+	public static final fun register (Lme/devnatan/inventoryframework/View;)V
+	public static final fun titleBuilder (Lme/devnatan/inventoryframework/ViewConfigBuilder;Lkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/ViewConfigBuilder;
+	public static final fun unregister (Lme/devnatan/inventoryframework/View;)V
+}
+
+public abstract interface class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor {
+	public static final field Companion Ldev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor$Companion;
+	public abstract fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor$Companion : dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor;
+	public fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessorKt {
+	public static final fun getViewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/ClickContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFSlotClickContext;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/CloseContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFCloseContext;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/IFConfinedContextDSLKt {
+	public static final fun openForPlayer (Lme/devnatan/inventoryframework/context/IFConfinedContext;Lme/devnatan/inventoryframework/RootView;)V
+	public static final fun openForPlayer (Lme/devnatan/inventoryframework/context/IFConfinedContext;Lme/devnatan/inventoryframework/RootView;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/IFContextDSLKt {
+	public static final fun openForEveryone (Lme/devnatan/inventoryframework/context/IFContext;Lme/devnatan/inventoryframework/RootView;)V
+	public static final fun openForEveryone (Lme/devnatan/inventoryframework/context/IFContext;Lme/devnatan/inventoryframework/RootView;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/LayoutBuilder {
+	public fun <init> ()V
+	public final fun border (C)V
+	public final fun build ()[Ljava/lang/String;
+	public final fun empty ()V
+	public final fun fill (C)V
+	public final fun getRows ()Ljava/util/List;
+	public final fun row (Ljava/lang/String;)V
+	public final fun unaryPlus (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/MinestomItemComponentBuilderDSLKt {
+	public static final fun onItemClick (Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun onItemRender (Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun onItemUpdate (Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun renderWith (Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;Lnet/minestom/server/item/Material;ILkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;
+	public static synthetic fun renderWith$default (Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;Lnet/minestom/server/item/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;
+	public static final fun withItem (Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;Lnet/minestom/server/item/Material;ILkotlin/jvm/functions/Function1;)Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;
+	public static synthetic fun withItem$default (Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;Lnet/minestom/server/item/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lme/devnatan/inventoryframework/component/MinestomItemComponentBuilder;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/OpenContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFOpenContext;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/RenderContextDSLKt {
+	public static final fun availableSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun firstSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun lastSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun layoutSlot (Lme/devnatan/inventoryframework/context/RenderContext;CLkotlin/jvm/functions/Function1;)V
+	public static final fun resultSlot (Lme/devnatan/inventoryframework/context/RenderContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun slot (Lme/devnatan/inventoryframework/context/RenderContext;IILkotlin/jvm/functions/Function1;)V
+	public static final fun slot (Lme/devnatan/inventoryframework/context/RenderContext;ILkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/dsl/ViewConfigBuilderDSLKt {
+	public static final fun layout (Lme/devnatan/inventoryframework/ViewConfigBuilder;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView : me/devnatan/inventoryframework/View {
+	public fun <init> (Ljava/lang/String;)V
+	protected fun containerDefaults (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	public fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	protected final fun modifyContainer (Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun onClick (Lme/devnatan/inventoryframework/context/IFSlotClickContext;)V
+	public final fun onClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	public final fun onClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	public synthetic fun onClose (Lme/devnatan/inventoryframework/context/IFCloseContext;)V
+	public synthetic fun onFirstRender (Lme/devnatan/inventoryframework/context/IFRenderContext;)V
+	public final fun onFirstRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	public final fun onInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	public synthetic fun onOpen (Lme/devnatan/inventoryframework/context/IFOpenContext;)V
+	public final fun onOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	public final fun onUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+	public synthetic fun onUpdate (Lme/devnatan/inventoryframework/context/IFContext;)V
+	protected fun onViewClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onViewClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onViewInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onViewOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onViewRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onViewUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext {
+	public fun <init> ()V
+	public final fun getContainerDefaults ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnClick ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnClose ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnFirstRender ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnInit ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnOpen ()Lkotlin/jvm/functions/Function2;
+	public final fun getOnUpdate ()Lkotlin/jvm/functions/Function2;
+	public final fun getStateRegistry ()Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateRegistry;
+	public final fun setContainerDefaults (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnClick (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnClose (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnFirstRender (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnInit (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnOpen (Lkotlin/jvm/functions/Function2;)V
+	public final fun setOnUpdate (Lkotlin/jvm/functions/Function2;)V
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef {
+	public field view Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView;
+	public fun <init> ()V
+	public final fun getRegisteredView ()Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView;
+	public final fun getView ()Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView;
+	public final fun setView (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView;)V
+}
+
+public abstract interface annotation class dev/slne/surf/api/minestom/inventory/framework/view/InventoryFrameworkDSL : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewContext : dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext {
+	public fun <init> ()V
+	public final fun getLayoutTarget ()Ljava/lang/Character;
+	public final fun getPaginationStateBuilder ()Lkotlin/jvm/functions/Function1;
+	public final fun getRegisteredLayoutTarget ()C
+	public final fun getRegisteredPaginationStateBuilder ()Lkotlin/jvm/functions/Function1;
+	public final fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public final fun setLayoutTarget (Ljava/lang/Character;)V
+	public final fun setPaginationStateBuilder (Lkotlin/jvm/functions/Function1;)V
+	public final fun setSettings (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;)V
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewDSLImpl : dev/slne/surf/api/minestom/inventory/framework/view/pagination/AbstractPaginatedSurfView {
+	public fun <init> (Ljava/lang/String;Ldev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewContext;Ldev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewRef;)V
+	protected fun applyContainerDefaults (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	protected fun createPagination ()Lme/devnatan/inventoryframework/component/PaginationStateBuilder;
+	protected fun getLayoutTarget ()C
+	public fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public synthetic fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	protected fun onPaginatedClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onPaginatedClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onPaginatedInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onPaginatedOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onPaginatedRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onPaginatedUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewRef : dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef {
+	public fun <init> ()V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewBuilderKt {
+	public static final fun paginatedSurfView (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/AbstractPaginatedSurfView;
+	public static final fun surfView (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewContext : dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext {
+	public fun <init> ()V
+	public final fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	public final fun setSettings (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;)V
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewDSLImpl : dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView {
+	public fun <init> (Ljava/lang/String;Ldev/slne/surf/api/minestom/inventory/framework/view/SurfViewContext;Ldev/slne/surf/api/minestom/inventory/framework/view/SurfViewRef;)V
+	protected fun containerDefaults (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	public fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	protected fun onViewClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onViewClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onViewInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onViewOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onViewRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onViewUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewLifecycleDslKt {
+	public static final fun containerDefaults (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun layoutTarget (Ldev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewContext;C)V
+	public static final fun modifyContainer (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef;Lme/devnatan/inventoryframework/context/Context;Lkotlin/jvm/functions/Function1;)V
+	public static final fun onClick (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onClose (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onFirstRender (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onInit (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onOpen (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun onUpdate (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function2;)V
+	public static final fun settings (Ldev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewContext;Lkotlin/jvm/functions/Function1;)V
+	public static final fun settings (Ldev/slne/surf/api/minestom/inventory/framework/view/SurfViewContext;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewRef : dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef {
+	public fun <init> ()V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewRefKt {
+	public static final fun getView (Ldev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewRef;)Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/AbstractPaginatedSurfView;
+	public static final fun getView (Ldev/slne/surf/api/minestom/inventory/framework/view/SurfViewRef;)Ldev/slne/surf/api/minestom/inventory/framework/view/SurfViewDSLImpl;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/container/ViewContainer {
+	public fun <init> ()V
+	public final fun addChild (Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public final fun getChildren ()Ljava/util/List;
+	public final fun hasComponentOfType (Ljava/lang/Class;)Z
+	public final fun removeChild (Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public final fun removeChildrenOfType (Ljava/lang/Class;)V
+	public final fun render ()Lnet/kyori/adventure/text/TextComponent;
+}
+
+public abstract interface class dev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent {
+	public abstract fun equals (Ljava/lang/Object;)Z
+	public abstract fun getPositionalShift ()I
+	public abstract fun getTextureWidth ()I
+	public abstract fun hashCode ()I
+	public abstract fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewBlockCellComponent : dev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent {
+	public fun <init> (II)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColumn ()I
+	public fun getPositionalShift ()I
+	public final fun getRow ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewContainerBackHintComponent : dev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewContainerBackHintComponent;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPositionalShift ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewContainerTitleComponent : dev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent {
+	public static final field CHAR_SIZE I
+	public static final field CHAR_SPACING I
+	public static final field CONTAINER_WIDTH I
+	public static final field Companion Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewContainerTitleComponent$Companion;
+	public static final field LEFT_SHIFT I
+	public static final field PADDING I
+	public fun <init> (Ljava/lang/String;Lnet/kyori/adventure/key/Key;ILdev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPositionalShift ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewContainerTitleComponent$Companion {
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerDSLKt {
+	public static final fun addChild (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public static final fun backHint (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	public static final fun blockCell (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;II)V
+	public static final fun blockColumn (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;)V
+	public static final fun blockColumn (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[I)V
+	public static synthetic fun blockColumn$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILjava/lang/Object;)V
+	public static final fun blockRow (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;)V
+	public static final fun blockRow (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[I)V
+	public static synthetic fun blockRow$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILjava/lang/Object;)V
+	public static final fun hasComponentOfType (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ljava/lang/Class;)Z
+	public static final fun header (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef;Ljava/lang/String;)V
+	public static final fun removeChild (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public static final fun removeChildrenOfType (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ljava/lang/Class;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContainer ()Ldev/slne/surf/api/minestom/inventory/framework/view/container/ViewContainer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIcon {
+	public fun <init> (Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;)V
+	public final fun build (Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/item/ItemStack;
+	public final fun getColor ()Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+	public final fun getIcon ()Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public final fun getItemModel ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor : java/lang/Enum {
+	public static final field BLUE Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+	public static final field GREEN Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+	public static final field RED Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+	public static final field WHITE Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+	public static final field YELLOW Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+	public static fun values ()[Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconKt {
+	public static final fun viewIcon (Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/item/ItemStack;
+	public static synthetic fun viewIcon$default (Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconColor;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/item/ItemStack;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType : java/lang/Enum {
+	public static final field ARROW_DOWN Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_LEFT Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_NEXT Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_PREVIOUS Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_RIGHT Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_UP Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field BELL Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field CHECK Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field CIRCLE Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field COG Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field CROSS Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field EQUALS Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field EXCLAMATION_MARK Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field HOME Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field MENU Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field MINUS Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field PLUS Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION_MARK Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field RELOAD Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field SEARCH Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static final field USERS Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+	public static fun values ()[Ldev/slne/surf/api/minestom/inventory/framework/view/icon/ViewIconType;
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/pagination/AbstractPaginatedSurfView : dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView {
+	public static final field Companion Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/AbstractPaginatedSurfView$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	protected fun applyContainerDefaults (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	protected final fun containerDefaults (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
+	protected abstract fun createPagination ()Lme/devnatan/inventoryframework/component/PaginationStateBuilder;
+	protected abstract fun getLayoutTarget ()C
+	public fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public synthetic fun getSettings ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	protected fun onPaginatedClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected fun onPaginatedClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected fun onPaginatedInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected fun onPaginatedOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected fun onPaginatedRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected fun onPaginatedUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+	protected final fun onViewClick (Lme/devnatan/inventoryframework/context/SlotClickContext;)V
+	protected final fun onViewClose (Lme/devnatan/inventoryframework/context/CloseContext;)V
+	protected final fun onViewInit (Lme/devnatan/inventoryframework/ViewConfigBuilder;)V
+	protected final fun onViewOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
+	protected final fun onViewRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
+	protected final fun onViewUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/AbstractPaginatedSurfView$Companion {
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationDslBuilder {
+	public fun <init> ()V
+	public final fun applyTo (Lme/devnatan/inventoryframework/component/PaginationStateBuilder;)V
+	public final fun asyncSource (Lkotlin/jvm/functions/Function1;)V
+	public final fun computedSource (Lkotlin/jvm/functions/Function1;)V
+	public final fun elementFactory (Lkotlin/jvm/functions/Function4;)V
+	public final fun getElementFactory ()Lme/devnatan/inventoryframework/component/PaginationValueConsumer;
+	public final fun getOrientation ()Lme/devnatan/inventoryframework/component/Pagination$Orientation;
+	public final fun getPageSwitchHandler ()Ljava/util/function/BiConsumer;
+	public final fun getSimpleItemFactory ()Ljava/util/function/BiConsumer;
+	public final fun getSourceType ()Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType;
+	public final fun horizontal ()V
+	public final fun itemFactory (Lkotlin/jvm/functions/Function2;)V
+	public final fun lazyAsyncSource (Lkotlin/jvm/functions/Function1;)V
+	public final fun lazySource (Lkotlin/jvm/functions/Function1;)V
+	public final fun lazySuspendSource (Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function3;)V
+	public final fun onPageSwitch (Lkotlin/jvm/functions/Function2;)V
+	public final fun orientation (Lme/devnatan/inventoryframework/component/Pagination$Orientation;)V
+	public final fun setElementFactory (Lme/devnatan/inventoryframework/component/PaginationValueConsumer;)V
+	public final fun setOrientation (Lme/devnatan/inventoryframework/component/Pagination$Orientation;)V
+	public final fun setPageSwitchHandler (Ljava/util/function/BiConsumer;)V
+	public final fun setSimpleItemFactory (Ljava/util/function/BiConsumer;)V
+	public final fun setSourceType (Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType;)V
+	public final fun source (Ljava/lang/Iterable;)V
+	public final fun source (Lkotlin/jvm/functions/Function0;)V
+	public final fun suspendSource (Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function3;)V
+	public final fun vertical ()V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationDslKt {
+	public static final fun pagination (Ldev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewContext;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType {
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType$Computed : dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType$ComputedAsync : dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType$Lazy : dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType$LazyAsync : dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType$Static : dev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationSourceType {
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public final fun getProvider ()Lkotlin/jvm/functions/Function0;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings : dev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings {
+	public fun <init> ()V
+	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;)V
+	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lnet/kyori/adventure/key/Key;
+	public final fun component2 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public final fun component9 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCancelOnClick ()Z
+	public fun getCancelOnDrag ()Z
+	public fun getCancelOnDrop ()Z
+	public fun getCancelOnPickup ()Z
+	public fun getFont ()Lnet/kyori/adventure/key/Key;
+	public fun getHeaderTextAlignment ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public fun getNavigateBackOnOutsideClick ()Z
+	public final fun getPaginationButtonPosition ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun getPaginationViewRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public fun getRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition : java/lang/Enum {
+	public static final field BOTTOM Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+	public static final field TOP Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+	public static fun values ()[Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows : java/lang/Enum {
+	public static final field FOUR Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public static final field ONE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public static final field THREE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public static final field TWO Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public final fun getActualRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getPaginationContentRows ()Lkotlin/ranges/IntRange;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public static fun values ()[Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings : dev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings {
+	public fun <init> ()V
+	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;)V
+	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lnet/kyori/adventure/key/Key;
+	public final fun component2 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCancelOnClick ()Z
+	public fun getCancelOnDrag ()Z
+	public fun getCancelOnDrop ()Z
+	public fun getCancelOnPickup ()Z
+	public fun getFont ()Lnet/kyori/adventure/key/Key;
+	public fun getHeaderTextAlignment ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public fun getNavigateBackOnOutsideClick ()Z
+	public fun getRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings {
+	public abstract fun getCancelOnClick ()Z
+	public abstract fun getCancelOnDrag ()Z
+	public abstract fun getCancelOnDrop ()Z
+	public abstract fun getCancelOnPickup ()Z
+	public abstract fun getFont ()Lnet/kyori/adventure/key/Key;
+	public abstract fun getHeaderTextAlignment ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public abstract fun getNavigateBackOnOutsideClick ()Z
+	public abstract fun getRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettingsDefaults {
+	public static final field DEFAULT_CANCEL_ON_CLICK Z
+	public static final field DEFAULT_CANCEL_ON_DRAG Z
+	public static final field DEFAULT_CANCEL_ON_DROP Z
+	public static final field DEFAULT_CANCEL_ON_PICKUP Z
+	public static final field DEFAULT_NAVIGATE_BACK_ON_CLOSE Z
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettingsDefaults;
+	public final fun getDEFAULT_HEADER_ALIGNMENT ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public final fun getDEFAULT_HEADER_FONT ()Lnet/kyori/adventure/key/Key;
+	public final fun getDEFAULT_MENU_FONT ()Lnet/kyori/adventure/key/Key;
+	public final fun getDEFAULT_PAGINATION_BUTTON_POSITION ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun getDEFAULT_PAGINATION_VIEW_ROWS ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public final fun getDEFAULT_VIEW_ROWS ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows : java/lang/Enum {
+	public static final field Companion Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows$Companion;
+	public static final field FIVE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static final field FOUR Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static final field ONE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static final field SIX Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static final field THREE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static final field TWO Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getGlyph ()C
+	public final fun getRows ()I
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public static fun values ()[Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows$Companion {
+	public final fun byRows (I)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public final fun byRowsOrNull (I)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+}
+
+public abstract interface annotation class dev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows$Companion$Rows : java/lang/annotation/Annotation {
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment : java/lang/Enum {
+	public static final field CENTER Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public static final field Companion Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment$Companion;
+	public static final field LEFT Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public static final field RIGHT Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public abstract fun calculateShift (Ljava/lang/String;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignmentOptions;)I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public static fun values ()[Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment$Companion {
+	public final fun calculateTextWidth (Ljava/lang/String;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignmentOptions;)I
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignmentOptions {
+	public fun <init> (IIIII)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun copy (IIIII)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignmentOptions;IIIIIILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharSize ()I
+	public final fun getCharSpacing ()I
+	public final fun getContainerWidth ()I
+	public final fun getLeftShift ()I
+	public final fun getPadding ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/builder/PaginatedViewSettingsBuilder : dev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder {
+	public fun <init> ()V
+	public fun build ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public synthetic fun build ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	public final fun getPaginationButtonPosition ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
+	public final fun getPaginationViewRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
+	public final fun paginationButtonPosition (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;)V
+	public final fun paginationButtonsAtBottom ()V
+	public final fun paginationButtonsAtTop ()V
+	public final fun paginationViewRows (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/builder/PaginatedViewSettingsBuilderKt {
+	public static final fun paginatedViewSettings (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SimpleViewSettingsBuilder : dev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder {
+	public fun <init> ()V
+	public fun build ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
+	public synthetic fun build ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	public final fun getRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public final fun rows (I)V
+	public final fun rows (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SimpleViewSettingsBuilderKt {
+	public static final fun simpleViewSettings (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
+}
+
+public abstract class dev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder {
+	public abstract fun build ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
+	public final fun cancelAllInteractions ()V
+	public final fun cancelOnClick (Z)V
+	public static synthetic fun cancelOnClick$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun cancelOnDrag (Z)V
+	public static synthetic fun cancelOnDrag$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun cancelOnDrop (Z)V
+	public static synthetic fun cancelOnDrop$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun cancelOnPickup (Z)V
+	public static synthetic fun cancelOnPickup$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+	public final fun font (Lnet/kyori/adventure/key/Key;)V
+	public final fun getCancelOnClick ()Z
+	public final fun getCancelOnDrag ()Z
+	public final fun getCancelOnDrop ()Z
+	public final fun getCancelOnPickup ()Z
+	public final fun getFont ()Lnet/kyori/adventure/key/Key;
+	public final fun getHeaderTextAlignment ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
+	public final fun getNavigateBackOnOutsideClick ()Z
+	public final fun headerTextAlignment (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;)V
+	public final fun navigateBackOnOutsideClick (Z)V
+	public static synthetic fun navigateBackOnOutsideClick$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/builder/SurfViewSettingsBuilder;ZILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$Computed : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Function;)V
+	public final fun getComputation ()Ljava/util/function/Function;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$ComputedSupplier : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Supplier;)V
+	public final fun getComputation ()Ljava/util/function/Supplier;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$Immutable : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun getInitialValue ()Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$Initial : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getKey ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$Lazy : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Function;)V
+	public final fun getComputation ()Ljava/util/function/Function;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$LazySupplier : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/util/function/Supplier;)V
+	public final fun getComputation ()Ljava/util/function/Supplier;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$Mutable : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun getInitialValue ()Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState$MutableInt : dev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState {
+	public fun <init> (I)V
+	public final fun getInitialValue ()I
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/StateDslKt {
+	public static final fun computedState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function0;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun computedState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun initialState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun initialState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun lazyState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function0;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun lazyState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun mutableState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;I)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun mutableState (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+	public static final fun state (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle {
+	public fun <init> (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateRegistry;I)V
+	public final fun getIndex ()I
+	public final fun getRegistry ()Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateRegistry;
+	public final fun resolve ()Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/StateHandleKt {
+	public static final fun decrement (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)I
+	public static final fun get (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)I
+	public static final fun get (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)Ljava/lang/Object;
+	public static final fun getMutableState (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)Ljava/lang/Object;
+	public static final fun increment (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;)I
+	public static final fun set (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;I)V
+	public static final fun set (Ldev/slne/surf/api/minestom/inventory/framework/view/state/StateHandle;Lme/devnatan/inventoryframework/context/Context;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/state/StateRegistry {
+	public fun <init> ()V
+	public final fun get (I)Ljava/lang/Object;
+	public final fun getDeferredStates ()Ljava/util/List;
+	public final fun getNextIndex ()I
+	public final fun getResolvedStates ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public final fun register (Ldev/slne/surf/api/minestom/inventory/framework/view/state/DeferredState;)I
+	public final fun setNextIndex (I)V
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/util/GlyphShift {
+	public static final synthetic fun box-impl (I)Ldev/slne/surf/api/minestom/inventory/framework/view/util/GlyphShift;
+	public static fun constructor-impl (I)I
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (ILjava/lang/Object;)Z
+	public static final fun equals-impl0 (II)Z
+	public final fun getAmount ()I
+	public fun hashCode ()I
+	public static fun hashCode-impl (I)I
+	public static final fun renderGlyphs-impl (I)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (I)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()I
+}
+
+public final class dev/slne/surf/api/minestom/inventory/framework/view/util/GlyphShiftKt {
+	public static final fun shift (I)Ljava/lang/String;
+}
+

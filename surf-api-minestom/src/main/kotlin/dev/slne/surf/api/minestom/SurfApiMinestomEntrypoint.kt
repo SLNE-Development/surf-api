@@ -9,16 +9,18 @@ import dev.slne.surf.api.core.server.packet.NoopPacketEvents
 import dev.slne.surf.api.minestom.impl.SurfMinestomInstance
 
 @Singleton
-internal class SurfApiMinestomEntrypoint @Inject constructor() : MinestomPluginEntrypoint {
+internal class SurfApiMinestomEntrypoint @Inject constructor(
+    private val instance: SurfMinestomInstance
+) : MinestomPluginEntrypoint {
     override suspend fun start() {
         preparePacketEvents()
-        SurfMinestomInstance.bootstrap()
-        SurfMinestomInstance.onLoad()
-        SurfMinestomInstance.onEnable()
+        instance.bootstrap()
+        instance.onLoad()
+        instance.onEnable()
     }
 
     override suspend fun stop() {
-        SurfMinestomInstance.onDisable()
+        instance.onDisable()
     }
 
     private fun preparePacketEvents() {

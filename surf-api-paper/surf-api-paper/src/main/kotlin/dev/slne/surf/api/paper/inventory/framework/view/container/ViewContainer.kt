@@ -1,9 +1,9 @@
 package dev.slne.surf.api.paper.inventory.framework.view.container
 
+import dev.slne.surf.api.core.inventory.framework.internal.appendShiftedComponent
 import dev.slne.surf.api.core.messages.adventure.buildText
 import dev.slne.surf.api.paper.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
-import dev.slne.surf.api.paper.inventory.framework.view.util.shift
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -52,22 +52,13 @@ internal class ViewContainer {
 
     fun render() = buildText {
         for (component in children) {
-            append(component.render())
+            append {
+                appendShiftedComponent(component.positionalShift, component.textureWidth) {
+                    with(component) { renderComponent() }
+                }
+            }
         }
 
         font(SurfViewSettingsDefaults.DEFAULT_MENU_FONT)
-    }
-
-    private fun ViewContainerComponent.render() = buildText {
-        if (positionalShift != 0) {
-            append { text(shift(positionalShift)) }
-        }
-
-        append { renderComponent() }
-
-        val resetShift = -(textureWidth + positionalShift)
-        if (resetShift != 0) {
-            append { text(shift(resetShift)) }
-        }
     }
 }

@@ -24,6 +24,7 @@ internal class MinestomRelocationsPlugin : Plugin<Project> {
                     exclude("net.kyori.adventure.nbt.api.**")
                 }
                 relocate("it.unimi.dsi.fastutil", "$prefix.fastutil")
+                relocate("me.devnatan.inventoryframework", "$prefix.devnatan.inventoryframework")
             }
         }
     }

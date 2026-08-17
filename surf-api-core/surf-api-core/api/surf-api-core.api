@@ -7233,6 +7233,35 @@ public final class dev/slne/surf/api/core/generated/VanillaAdvancementKeys$Story
 	public static final field UPGRADE_TOOLS Lnet/kyori/adventure/key/Key;
 }
 
+public abstract class dev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs : java/lang/Enum {
+	public static final field DISABLED Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
+	public static final field DISABLED_LEFT Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
+	public static final field DISABLED_RIGHT Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
+	public static final field ENABLED Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public abstract fun glyph (I)C
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
+	public static fun values ()[Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
+}
+
+public final class dev/slne/surf/api/core/inventory/framework/internal/ShiftGlyphs {
+	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/ShiftGlyphs;
+	public final fun renderShift (I)Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath {
+	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;
+	public final fun centerAlignedShift (Ljava/lang/String;IIIII)I
+	public final fun leftAlignedShift (II)I
+	public final fun rightAlignedShift (Ljava/lang/String;IIIII)I
+	public final fun textWidth (Ljava/lang/String;II)I
+}
+
+public final class dev/slne/surf/api/core/inventory/framework/internal/ViewContainerRenderingKt {
+	public static final fun appendShiftedComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILkotlin/jvm/functions/Function1;)V
+	public static final fun formatViewTitle (Ljava/lang/String;IZ)Ljava/lang/String;
+}
+
 public final class dev/slne/surf/api/core/invoker/HiddenInvokerUtil {
 	public static fun canAccess (Ljava/lang/Class;Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandles$Lookup;)Z
 	public static fun canAccess (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandles$Lookup;)Z
