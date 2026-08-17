@@ -31,6 +31,8 @@ class StateRegistry @PublishedApi internal constructor() {
     @PublishedApi
     internal var nextIndex = 0
 
+    private var resolved = false
+
     /**
      * Registers a [deferred] state and returns its allocated index.
      *
@@ -58,6 +60,9 @@ class StateRegistry @PublishedApi internal constructor() {
 
     @Suppress("UNCHECKED_CAST")
     internal fun resolveStates(view: View) {
+        check(!resolved) { "States have already been resolved" }
+        resolved = true
+
         for (deferred in deferredStates) {
             val resolved: Any = when (deferred) {
                 is DeferredState.Immutable<*> -> view.state(deferred.initialValue)

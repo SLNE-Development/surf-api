@@ -1,23 +1,18 @@
 package dev.slne.surf.api.paper.inventory.framework.view.container.component.components
 
+import dev.slne.surf.api.core.inventory.framework.internal.formatViewTitle
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.paper.inventory.framework.view.container.component.ViewContainerComponent
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.CHAR_SIZE
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.CHAR_SPACING
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.CONTAINER_WIDTH
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.LEFT_SHIFT
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerTitleComponent.Companion.PADDING
 import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
 import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignmentOptions
-import dev.slne.surf.api.paper.inventory.framework.view.util.shift
 import net.kyori.adventure.key.Key
 
 /**
  * A [ViewContainerComponent] that renders the inventory title text using a custom font.
  *
  * The title string is converted to uppercase and inter-character spacing glyphs are inserted
- * between each letter using [shift]. The horizontal position is calculated from the
+ * between each letter using [formatViewTitle]. The horizontal position is calculated from the
  * [textAlignment] so that the text is positioned correctly within the background texture.
  *
  * The component uses constants from its companion object to define the geometry of the
@@ -39,18 +34,8 @@ class ViewContainerTitleComponent(
     charSpacing: Int,
     textAlignment: TextAlignment
 ) : ViewContainerComponent {
-    private val formattedTitle: String
-
-    init {
-        val shifted = title.map { it.uppercase() }
-            .joinToString(shift(charSpacing))
-
-        formattedTitle = if (textAlignment == TextAlignment.RIGHT) {
-            shifted
-        } else {
-            shifted.prependIndent(shift(charSpacing))
-        }
-    }
+    private val formattedTitle: String =
+        formatViewTitle(title, charSpacing, textAlignment == TextAlignment.RIGHT)
 
     private val alignmentOptions = TextAlignmentOptions(
         leftShift = LEFT_SHIFT,
