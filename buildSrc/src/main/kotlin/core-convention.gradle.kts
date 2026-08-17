@@ -9,6 +9,7 @@ plugins {
     `java-library`
     id("publish-convention")
     id("java-toolchain-convention")
+    id("test-convention")
 
     kotlin("jvm")
     kotlin("plugin.serialization")

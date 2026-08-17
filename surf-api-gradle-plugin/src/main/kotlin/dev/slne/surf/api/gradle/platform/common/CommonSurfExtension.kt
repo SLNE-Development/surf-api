@@ -1,7 +1,10 @@
 package dev.slne.surf.api.gradle.platform.common
 
 import dev.slne.surf.api.gradle.SurfCoreModules
+import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingExtension
+import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
+import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.property
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 
@@ -20,6 +23,12 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
     internal val surfDatabaseR2dbcVersion = objects.property<String>()
     internal val surfDatabaseR2dbcRelocation = objects.property<String>()
     internal val withApiValidation = objects.property<Boolean>().convention(false)
+
+    val testing: SurfTestingExtension = objects.newInstance<SurfTestingExtension>()
+
+    fun testing(action: Action<SurfTestingExtension>) {
+        action.execute(testing)
+    }
 
     fun withApiValidation() {
         withApiValidation.set(true)

@@ -66,6 +66,14 @@ ksp-version = "2.3.9"
 reactor-netty = "1.3.5"
 bytebuddy = "1.18.8"
 
+# Testing
+junit = "5.14.4"
+junit-platform-launcher = "1.14.4"
+mockk = "1.14.11"
+lincheck = "3.7"
+mockbukkit = "4.116.1"
+minestom-testing = "2026.08.16-26.2"
+
 # Plugin versions
 maven-repo-auth = "3.0.4"
 shadow-gradle-plugin = "9.4.1"
@@ -173,6 +181,16 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core", version.ref = "reactor-netty" }
 reactor-netty-http = { module = "io.projectreactor.netty:reactor-netty-http", version.ref = "reactor-netty" }
 bytebuddy = { module = "net.bytebuddy:byte-buddy", version.ref = "bytebuddy" }
+
+# Testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform-launcher" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+lincheck = { module = "org.jetbrains.lincheck:lincheck", version.ref = "lincheck" }
+# Artifact name tracks the Minecraft version this branch targets (mcVersion=26.2 in gradle.properties)
+mockbukkit = { module = "org.mockbukkit.mockbukkit:mockbukkit-v26.2", version.ref = "mockbukkit" }
+minestom-testing = { module = "net.minestom:testing", version.ref = "minestom-testing" }
+kotlinxCoroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 # Plugin dependencies
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinVersion" }

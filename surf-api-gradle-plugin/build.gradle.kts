@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.1.4")
+    append("2.2.0")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -130,6 +130,16 @@ val generateConstants by tasks.registering {
         "version",
         rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
     )
+    inputs.property("libs.versions.junit", libs.versions.junit.asProvider().get())
+    inputs.property(
+        "libs.versions.junit.platform.launcher",
+        libs.versions.junit.platform.launcher.get()
+    )
+    inputs.property("libs.versions.mockk", libs.versions.mockk.get())
+    inputs.property("libs.versions.lincheck", libs.versions.lincheck.get())
+    inputs.property("libs.versions.mockbukkit", libs.versions.mockbukkit.get())
+    inputs.property("libs.versions.minestom.testing", libs.versions.minestom.testing.get())
+    inputs.property("libs.versions.kotlinxCoroutines", libs.versions.kotlinxCoroutines.get())
     outputs.dir(constantsOutputDir)
 
     doLast {
@@ -155,6 +165,14 @@ val generateConstants by tasks.registering {
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
             |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"
+            |
+            |    const val TEST_JUNIT_VERSION = "${libs.versions.junit.asProvider().get()}"
+            |    const val TEST_JUNIT_PLATFORM_LAUNCHER_VERSION = "${libs.versions.junit.platform.launcher.get()}"
+            |    const val TEST_MOCKK_VERSION = "${libs.versions.mockk.get()}"
+            |    const val TEST_LINCHECK_VERSION = "${libs.versions.lincheck.get()}"
+            |    const val TEST_MOCKBUKKIT_VERSION = "${libs.versions.mockbukkit.get()}"
+            |    const val TEST_MINESTOM_TESTING_VERSION = "${libs.versions.minestom.testing.get()}"
+            |    const val TEST_COROUTINES_VERSION = "${libs.versions.kotlinxCoroutines.get()}"
             |
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}

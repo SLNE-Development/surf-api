@@ -3,6 +3,7 @@ package dev.slne.surf.api.gradle.platform.common
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.api.gradle.generated.Constants
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
+import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.platform.core.CoreSurfExtension
 import dev.slne.surf.api.gradle.util.slnePublic
 import org.gradle.api.Plugin
@@ -137,7 +138,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             val depsProvider = project.provider {
                 val deps = project.configurations
                     .asSequence()
-                    .filter { it.isCanBeResolved }
+                    .filter { it.isCanBeResolved && !it.name.startsWith("test") }
                     .flatMap { cfg -> cfg.incoming.resolutionResult.allDependencies.asSequence() }
                     .toList()
 
@@ -225,19 +226,25 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     private fun Project.afterEvaluated(extension: E) {
+        val testingEnabled = extension.testing.enabled.get()
+
         if (extension.addSurfApiToClasspath.get()) {
             dependencies {
                 val scope = extension.surfApiScope.orNull ?: platform.scope
                 add(scope, platform.dependency)
+                if (testingEnabled && (scope == COMPILE_ONLY || scope == "compileOnlyApi")) {
+                    add(SurfTestingConfigurer.TEST_IMPLEMENTATION, platform.dependency)
+                }
             }
         }
 
         extension.coreModule.orNull?.let {
             dependencies {
-                add(
-                    COMPILE_ONLY,
-                    "dev.slne.surf.core:${it.module}:+"
-                )
+                val notation = "dev.slne.surf.core:${it.module}:+"
+                add(COMPILE_ONLY, notation)
+                if (testingEnabled) {
+                    add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
+                }
             }
         }
 
@@ -253,10 +260,11 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 }
             } else {
                 dependencies {
-                    add(
-                        COMPILE_ONLY,
-                        "dev.slne.surf.redis:surf-redis-api:+"
-                    )
+                    val notation = "dev.slne.surf.redis:surf-redis-api:+"
+                    add(COMPILE_ONLY, notation)
+                    if (testingEnabled) {
+                        add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
+                    }
                 }
             }
         }
@@ -283,6 +291,11 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             }
         }
 
+        if (testingEnabled) {
+            SurfTestingConfigurer.configure(this, extension.testing)
+            platformTestDependencies(extension)
+        }
+
         afterEvaluated0(extension)
     }
 
@@ -295,6 +308,9 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     protected open fun Project.afterEvaluated0(extension: E) {
+    }
+
+    protected open fun Project.platformTestDependencies(extension: E) {
     }
 
     private data class Relocation(

@@ -25,6 +25,8 @@ dependencies {
     api(libs.inventory.framework.platform.minestom)
     implementation(libs.packetevents.netty.common)
     runtimeOnly(libs.flogger.slf4j.backend)
+
+    testImplementation(libs.minestom.testing)
 }
 
 description = "surf-api-minestom"

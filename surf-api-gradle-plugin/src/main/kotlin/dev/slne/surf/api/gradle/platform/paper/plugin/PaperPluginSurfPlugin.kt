@@ -2,6 +2,7 @@ package dev.slne.surf.api.gradle.platform.paper.plugin
 
 import dev.slne.surf.api.gradle.generated.Constants
 import dev.slne.surf.api.gradle.generators.LibrariesLoaderGenerator.generateLibrariesLoaderTask
+import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.platform.paper.AbstractPaperSurfPlugin
 import dev.slne.surf.api.gradle.util.registerRequired
 import net.minecrell.pluginyml.GeneratePluginDescription
@@ -33,7 +34,11 @@ internal class PaperPluginSurfPlugin :
         )
 
         if (extension.installSurfNpc.get()) {
-            dependencies.add(COMPILE_ONLY, "dev.slne.surf.npc:surf-npc-api:+")
+            val notation = "dev.slne.surf.npc:surf-npc-api:+"
+            dependencies.add(COMPILE_ONLY, notation)
+            if (extension.testing.enabled.get()) {
+                dependencies.add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
+            }
         }
 
         configure<PaperPluginDescription> {
