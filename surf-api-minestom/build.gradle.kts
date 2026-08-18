@@ -35,6 +35,10 @@ private fun <T : ModuleDependency> T.exclude(provider: Provider<MinimalExternalM
     provider.get().module.apply { exclude(group, name) }
 
 tasks {
+    test {
+        systemProperty("minestom.inside-test", "true")
+    }
+
     shadowJar {
         val relocationPrefix: String by project
         relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
