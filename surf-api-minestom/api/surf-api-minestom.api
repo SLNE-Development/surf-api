@@ -20,6 +20,351 @@ public final class dev/slne/surf/api/minestom/builder/ItemDslKt {
 public abstract interface annotation class dev/slne/surf/api/minestom/builder/ItemDslMarker : java/lang/annotation/Annotation {
 }
 
+public class dev/slne/surf/api/minestom/command/args/MiniMessageArgument : dev/slne/minestom/lobby/api/command/commandapi/argument/CustomArgument {
+	public fun <init> (Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/slne/surf/api/minestom/command/args/MiniMessageArgumentKt {
+	public static final fun miniMessageArgument (Ldev/slne/minestom/lobby/api/command/commandapi/CommandAPICommand;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/minestom/lobby/api/command/commandapi/CommandAPICommand;
+	public static final fun miniMessageArgument (Ldev/slne/minestom/lobby/api/command/commandapi/CommandTree;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/minestom/lobby/api/command/commandapi/CommandTree;
+	public static final fun miniMessageArgument (Ldev/slne/minestom/lobby/api/command/commandapi/argument/Argument;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/minestom/lobby/api/command/commandapi/argument/Argument;
+	public static synthetic fun miniMessageArgument$default (Ldev/slne/minestom/lobby/api/command/commandapi/CommandAPICommand;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/minestom/lobby/api/command/commandapi/CommandAPICommand;
+	public static synthetic fun miniMessageArgument$default (Ldev/slne/minestom/lobby/api/command/commandapi/CommandTree;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/minestom/lobby/api/command/commandapi/CommandTree;
+	public static synthetic fun miniMessageArgument$default (Ldev/slne/minestom/lobby/api/command/commandapi/argument/Argument;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/minestom/lobby/api/command/commandapi/argument/Argument;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/CommonDialogsKt {
+	public static final fun noticeDialog (Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/Dialog;
+	public static final fun noticeDialog (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)Lnet/minestom/server/dialog/Dialog;
+	public static synthetic fun noticeDialog$default (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)Lnet/minestom/server/dialog/Dialog;
+	public static final fun noticeDialogWithBuilder (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/Dialog;
+	public static synthetic fun noticeDialogWithBuilder$default (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/dialog/Dialog;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/DialogBuilderKt {
+	public static final fun base (Ldev/slne/surf/api/minestom/dialog/builder/DialogEntryBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static final fun dialog (Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/Dialog;
+	public static final fun type (Ldev/slne/surf/api/minestom/dialog/builder/DialogEntryBuilder;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder {
+	public fun <init> ()V
+	public final fun action (Lnet/minestom/server/dialog/DialogAction;)V
+	public final fun callback (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun callback$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun changePage (I)V
+	public final fun commandTemplate (Ljava/lang/String;)V
+	public final fun copyToClipboard (Ljava/lang/String;)V
+	public final fun customClick (Lnet/kyori/adventure/key/Key;Lkotlin/jvm/functions/Function1;)V
+	public final fun customClick (Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/BinaryTag;)V
+	public static synthetic fun customClick$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/BinaryTag;ILjava/lang/Object;)V
+	public final fun dynamicCustomClick (Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
+	public static synthetic fun dynamicCustomClick$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/CompoundBinaryTag;ILjava/lang/Object;)V
+	public final fun openUrl (Ljava/lang/String;)V
+	public final fun openUrl (Ljava/net/URL;)V
+	public final fun playerCallback (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun playerCallback$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun runCommand (Ljava/lang/String;)V
+	public final fun showDialog (Lkotlin/jvm/functions/Function1;)V
+	public final fun showDialog (Lnet/minestom/server/dialog/Dialog;)V
+	public final fun suggestCommand (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogActionBuilderKt {
+	public static final fun dialogAction (Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogAction;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogActionButtonBuilder {
+	public fun <init> ()V
+	public final fun action (Lkotlin/jvm/functions/Function1;)V
+	public final fun action (Lnet/minestom/server/dialog/DialogAction;)V
+	public final fun getAction ()Lnet/minestom/server/dialog/DialogAction;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun getTooltip ()Lnet/kyori/adventure/text/Component;
+	public final fun getWidth ()I
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public final fun setAction (Lnet/minestom/server/dialog/DialogAction;)V
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+	public final fun setTooltip (Lnet/kyori/adventure/text/Component;)V
+	public final fun setWidth (I)V
+	public final fun tooltip (Lkotlin/jvm/functions/Function1;)V
+	public final fun tooltip (Lnet/kyori/adventure/text/Component;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogActionButtonBuilderKt {
+	public static final fun actionButton (Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogActionButton;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogBaseBuilder {
+	public fun <init> ()V
+	public final fun afterAction (Lnet/minestom/server/dialog/DialogAfterAction;)V
+	public final fun body (Lkotlin/jvm/functions/Function1;)V
+	public final fun canCloseWithEscape (Z)V
+	public final fun externalTitle (Lkotlin/jvm/functions/Function1;)V
+	public final fun externalTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun getAfterAction ()Lnet/minestom/server/dialog/DialogAfterAction;
+	public final fun getCanCloseWithEscape ()Z
+	public final fun getExternalTitle ()Lnet/kyori/adventure/text/Component;
+	public final fun getPause ()Z
+	public final fun getTitle ()Lnet/kyori/adventure/text/Component;
+	public final fun input (Lkotlin/jvm/functions/Function1;)V
+	public final fun pause (Z)V
+	public final fun preventClosingWithEscape (Z)V
+	public static synthetic fun preventClosingWithEscape$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogBaseBuilder;ZILjava/lang/Object;)V
+	public final fun setAfterAction (Lnet/minestom/server/dialog/DialogAfterAction;)V
+	public final fun setCanCloseWithEscape (Z)V
+	public final fun setExternalTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun setPause (Z)V
+	public final fun setTitle (Lnet/kyori/adventure/text/Component;)V
+	public final fun title (Lkotlin/jvm/functions/Function1;)V
+	public final fun title (Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogBaseBuilderKt {
+	public static final fun dialogBase (Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogMetadata;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder {
+	public fun <init> ()V
+	public final fun item (Lkotlin/jvm/functions/Function1;)V
+	public final fun plain (Lkotlin/jvm/functions/Function1;)V
+	public final fun plainMessage (Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public final fun plainMessage (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)V
+	public final fun plainMessage (Lnet/minestom/server/dialog/DialogBody$PlainMessage;)V
+	public static synthetic fun plainMessage$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun plainMessage$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder {
+	public fun <init> ()V
+	public final fun description (Lkotlin/jvm/functions/Function1;)V
+	public final fun description (Lnet/minestom/server/dialog/DialogBody$PlainMessage;)V
+	public final fun getDescription ()Lnet/minestom/server/dialog/DialogBody$PlainMessage;
+	public final fun getHeight ()I
+	public final fun getItem ()Lnet/minestom/server/item/ItemStack;
+	public final fun getShowDecorations ()Z
+	public final fun getShowTooltip ()Z
+	public final fun getWidth ()I
+	public final fun height (I)V
+	public final fun item (Lnet/minestom/server/item/ItemStack;)V
+	public final fun item (Lnet/minestom/server/item/Material;I)V
+	public static synthetic fun item$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Lnet/minestom/server/item/Material;IILjava/lang/Object;)V
+	public final fun setDescription (Lnet/minestom/server/dialog/DialogBody$PlainMessage;)V
+	public final fun setHeight (I)V
+	public final fun setItem (Lnet/minestom/server/item/ItemStack;)V
+	public final fun setShowDecorations (Z)V
+	public final fun setShowTooltip (Z)V
+	public final fun setWidth (I)V
+	public final fun showDecorations (Z)V
+	public final fun showTooltip (Z)V
+	public final fun simpleDescription (Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public final fun simpleDescription (Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)V
+	public static synthetic fun simpleDescription$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun simpleDescription$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder$ItemDialogMessageBuilder;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilder$PlainDialogMessageBuilder {
+	public fun <init> ()V
+	public final fun getMessage ()Lnet/kyori/adventure/text/Component;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public final fun message (Lkotlin/jvm/functions/Function1;)V
+	public final fun message (Lnet/kyori/adventure/text/Component;)V
+	public final fun setMessage (Lnet/kyori/adventure/text/Component;)V
+	public final fun setWidth (Ljava/lang/Integer;)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogBodyBuilderKt {
+	public static final fun dialogBody (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogEntryBuilder {
+	public fun <init> ()V
+	public final fun base (Ldev/slne/surf/api/minestom/dialog/builder/DialogBaseBuilder;)V
+	public final fun type (Ldev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder {
+	public fun <init> ()V
+	public final fun boolean (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun input (Lnet/minestom/server/dialog/DialogInput;)V
+	public final fun numberRange (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun singleOption (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun text (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$BooleanInputBuilder : dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$InputBuilder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getInitial ()Z
+	public final fun getOnFalse ()Ljava/lang/String;
+	public final fun getOnTrue ()Ljava/lang/String;
+	public final fun initial (Z)V
+	public final fun onFalse (Ljava/lang/String;)V
+	public final fun onTrue (Ljava/lang/String;)V
+	public final fun setInitial (Z)V
+	public final fun setOnFalse (Ljava/lang/String;)V
+	public final fun setOnTrue (Ljava/lang/String;)V
+}
+
+public abstract class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$InputBuilder {
+	public fun <init> (Ljava/lang/String;)V
+	protected final fun getKey ()Ljava/lang/String;
+	public final fun getLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	protected final fun requireLabel ()Lnet/kyori/adventure/text/Component;
+	public final fun setLabel (Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$NumberRangeInputBuilder : dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$InputBuilder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getEnd ()Ljava/lang/Float;
+	public final fun getInitial ()Ljava/lang/Float;
+	public final fun getLabelFormat ()Ljava/lang/String;
+	public final fun getStart ()Ljava/lang/Float;
+	public final fun getStep ()Ljava/lang/Float;
+	public final fun getWidth ()I
+	public final fun initial (F)V
+	public final fun labelFormat (Ljava/lang/String;)V
+	public final fun range (FF)V
+	public final fun setEnd (Ljava/lang/Float;)V
+	public final fun setInitial (Ljava/lang/Float;)V
+	public final fun setLabelFormat (Ljava/lang/String;)V
+	public final fun setStart (Ljava/lang/Float;)V
+	public final fun setStep (Ljava/lang/Float;)V
+	public final fun setWidth (I)V
+	public final fun step (F)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$SingleOptionInputBuilder : dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$InputBuilder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getLabelVisible ()Z
+	public final fun getWidth ()I
+	public final fun labelVisible (Z)V
+	public final fun option (Ljava/lang/String;Lnet/kyori/adventure/text/Component;Z)V
+	public final fun option (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun option$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$SingleOptionInputBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)V
+	public static synthetic fun option$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$SingleOptionInputBuilder;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun setLabelVisible (Z)V
+	public final fun setWidth (I)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$TextInputBuilder : dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$InputBuilder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getInitial ()Ljava/lang/String;
+	public final fun getLabelVisible ()Z
+	public final fun getMaxLength ()I
+	public final fun getWidth ()I
+	public final fun initial (Ljava/lang/String;)V
+	public final fun labelVisible (Z)V
+	public final fun maxLength (I)V
+	public final fun multiline (Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public static synthetic fun multiline$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder$TextInputBuilder;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public final fun setInitial (Ljava/lang/String;)V
+	public final fun setLabelVisible (Z)V
+	public final fun setMaxLength (I)V
+	public final fun setWidth (I)V
+	public final fun width (I)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilderKt {
+	public static final fun dialogInput (Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder {
+	public fun <init> ()V
+	public final fun confirmation (Lkotlin/jvm/functions/Function1;)V
+	public final fun confirmation (Lnet/minestom/server/dialog/DialogActionButton;Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun multiAction (Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public final fun multiAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun multiAction ([Lnet/minestom/server/dialog/DialogActionButton;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun multiAction$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder;Ljava/util/List;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun multiAction$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder;[Lnet/minestom/server/dialog/DialogActionButton;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun notice ()V
+	public final fun notice (Lkotlin/jvm/functions/Function1;)V
+	public final fun notice (Lnet/minestom/server/dialog/DialogActionButton;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$DialogConfirmationTypeBuilder {
+	public fun <init> ()V
+	public final fun getNo ()Lnet/minestom/server/dialog/DialogActionButton;
+	public final fun getYes ()Lnet/minestom/server/dialog/DialogActionButton;
+	public final fun no (Lkotlin/jvm/functions/Function1;)V
+	public final fun no (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun setNo (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun setYes (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun yes (Lkotlin/jvm/functions/Function1;)V
+	public final fun yes (Lnet/minestom/server/dialog/DialogActionButton;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$DialogMultiActionTypeBuilder {
+	public fun <init> ()V
+	public final fun action (Lkotlin/jvm/functions/Function1;)V
+	public final fun action (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun columns (I)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun exitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun getColumns ()I
+	public final fun getExitAction ()Lnet/minestom/server/dialog/DialogActionButton;
+	public final fun setColumns (I)V
+	public final fun setExitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/callback/DialogCallbackContext {
+	public fun <init> (Lnet/minestom/server/entity/Player;Lnet/kyori/adventure/nbt/BinaryTag;)V
+	public final fun component1 ()Lnet/minestom/server/entity/Player;
+	public final fun component2 ()Lnet/kyori/adventure/nbt/BinaryTag;
+	public final fun copy (Lnet/minestom/server/entity/Player;Lnet/kyori/adventure/nbt/BinaryTag;)Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackContext;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackContext;Lnet/minestom/server/entity/Player;Lnet/kyori/adventure/nbt/BinaryTag;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackContext;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lnet/kyori/adventure/nbt/BinaryTag;
+	public final fun getPlayer ()Lnet/minestom/server/entity/Player;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/callback/DialogCallbackListener : dev/slne/minestom/lobby/api/event/EventRegistrar {
+	public fun <init> ()V
+	public fun register (Lnet/minestom/server/event/EventNode;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions {
+	public static final field Companion Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions$Companion;
+	public static final field ONE_USE I
+	public static final field UNLIMITED_USES I
+	public synthetic fun <init> (IJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2-UwyO8pc ()J
+	public final fun copy-HG0u8IE (IJ)Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;
+	public static synthetic fun copy-HG0u8IE$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;IJILjava/lang/Object;)Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLifetime-UwyO8pc ()J
+	public final fun getUses ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions$Companion {
+	public final fun getDEFAULT ()Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;
+	public final fun getDEFAULT_LIFETIME-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/api/minestom/dialog/callback/DialogCallbacks {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;
+	public final fun action (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogAction;
+	public static synthetic fun action$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/dialog/DialogAction;
+	public final fun register (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/key/Key;
+	public static synthetic fun register$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/key/Key;
+	public final fun unregister (Lnet/kyori/adventure/key/Key;)Z
+}
+
 public final class dev/slne/surf/api/minestom/impl/inventory/framework/MinestomInventoryLoader : dev/slne/minestom/lobby/api/event/EventRegistrar {
 	public static final field Companion Ldev/slne/surf/api/minestom/impl/inventory/framework/MinestomInventoryLoader$Companion;
 	public fun <init> ()V
