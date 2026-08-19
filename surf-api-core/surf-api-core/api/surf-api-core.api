@@ -7244,6 +7244,19 @@ public abstract class dev/slne/surf/api/core/inventory/framework/internal/Pagina
 	public static fun values ()[Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
 }
 
+public final class dev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle {
+	public fun <init> (Ljava/lang/String;I)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun copy (Ljava/lang/String;I)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;Ljava/lang/String;IILjava/lang/Object;)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getText ()Ljava/lang/String;
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/slne/surf/api/core/inventory/framework/internal/ShiftGlyphs {
 	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/ShiftGlyphs;
 	public final fun renderShift (I)Ljava/lang/String;
@@ -7251,15 +7264,30 @@ public final class dev/slne/surf/api/core/inventory/framework/internal/ShiftGlyp
 
 public final class dev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath {
 	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;
-	public final fun centerAlignedShift (Ljava/lang/String;IIIII)I
+	public final fun centerAlignedShift (IIII)I
+	public final fun charWidth (IILit/unimi/dsi/fastutil/ints/Int2IntMap;)I
+	public static synthetic fun charWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;IILit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
 	public final fun leftAlignedShift (II)I
-	public final fun rightAlignedShift (Ljava/lang/String;IIIII)I
-	public final fun textWidth (Ljava/lang/String;II)I
+	public final fun rightAlignedShift (IIII)I
+	public final fun textWidth (Ljava/lang/String;IILit/unimi/dsi/fastutil/ints/Int2IntMap;)I
+	public static synthetic fun textWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;Ljava/lang/String;IILit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
+}
+
+public final class dev/slne/surf/api/core/inventory/framework/internal/ViewButtonSession {
+	public fun <init> (Ljava/util/List;Ljava/lang/Object;)V
+	public final fun advance (I)Z
+	public final fun getCurrent ()Ljava/lang/Object;
+	public final fun getCurrentIndex ()I
+	public final fun getHasChanged ()Z
+	public final fun getInitial ()Ljava/lang/Object;
+	public final fun getStates ()Ljava/util/List;
+	public final fun select (Ljava/lang/Object;)Z
 }
 
 public final class dev/slne/surf/api/core/inventory/framework/internal/ViewContainerRenderingKt {
 	public static final fun appendShiftedComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILkotlin/jvm/functions/Function1;)V
-	public static final fun formatViewTitle (Ljava/lang/String;IZ)Ljava/lang/String;
+	public static final fun renderViewTitle (Ljava/lang/String;IIZLit/unimi/dsi/fastutil/ints/Int2IntMap;)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
+	public static synthetic fun renderViewTitle$default (Ljava/lang/String;IIZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
 }
 
 public final class dev/slne/surf/api/core/invoker/HiddenInvokerUtil {
