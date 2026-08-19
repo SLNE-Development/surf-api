@@ -2,6 +2,7 @@ package dev.slne.surf.api.minestom.dialog.callback
 
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.nbt.BinaryTag
+import net.kyori.adventure.nbt.CompoundBinaryTag
 import net.minestom.server.dialog.DialogAction
 import net.minestom.server.entity.Player
 import org.jetbrains.annotations.ApiStatus
@@ -36,6 +37,18 @@ object DialogCallbacks {
         options: DialogCallbackOptions = DialogCallbackOptions.DEFAULT,
         callback: (DialogCallbackContext) -> Unit,
     ): DialogAction = DialogAction.Custom(register(options, callback), null)
+
+    /**
+     * Registers [callback] and returns the custom action that runs it with the values the dialog
+     * collected.
+     *
+     * Unlike [action], the client reports the dialog's input values back, merged with [additions].
+     */
+    fun dynamicAction(
+        options: DialogCallbackOptions = DialogCallbackOptions.DEFAULT,
+        additions: CompoundBinaryTag? = null,
+        callback: (DialogCallbackContext) -> Unit,
+    ): DialogAction = DialogAction.DynamicCustom(register(options, callback), additions)
 
     /**
      * Forgets the callback [key] was handed out for.

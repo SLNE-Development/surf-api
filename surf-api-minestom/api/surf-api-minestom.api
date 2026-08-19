@@ -56,9 +56,13 @@ public final class dev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder
 	public final fun changePage (I)V
 	public final fun commandTemplate (Ljava/lang/String;)V
 	public final fun copyToClipboard (Ljava/lang/String;)V
+	public final fun customClick (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function2;)V
 	public final fun customClick (Lnet/kyori/adventure/key/Key;Lkotlin/jvm/functions/Function1;)V
 	public final fun customClick (Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/BinaryTag;)V
+	public static synthetic fun customClick$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun customClick$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/BinaryTag;ILjava/lang/Object;)V
+	public final fun customPlayerClick (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun customPlayerClick$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public final fun dynamicCustomClick (Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
 	public static synthetic fun dynamicCustomClick$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogActionBuilder;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/CompoundBinaryTag;ILjava/lang/Object;)V
 	public final fun openUrl (Ljava/lang/String;)V
@@ -193,6 +197,7 @@ public final class dev/slne/surf/api/minestom/dialog/builder/DialogInputBuilder 
 	public final fun boolean (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun input (Lnet/minestom/server/dialog/DialogInput;)V
 	public final fun numberRange (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun numberRange (Ljava/lang/String;Lkotlin/ranges/ClosedRange;Lkotlin/jvm/functions/Function1;)V
 	public final fun singleOption (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun text (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 }
@@ -281,6 +286,11 @@ public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder {
 	public fun <init> ()V
 	public final fun confirmation (Lkotlin/jvm/functions/Function1;)V
 	public final fun confirmation (Lnet/minestom/server/dialog/DialogActionButton;Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun dialogList (Ljava/util/Collection;Lkotlin/jvm/functions/Function1;)V
+	public final fun dialogList (Lkotlin/jvm/functions/Function1;)V
+	public final fun dialogList ([Lnet/minestom/server/dialog/Dialog;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun dialogList$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder;Ljava/util/Collection;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun dialogList$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder;[Lnet/minestom/server/dialog/Dialog;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun multiAction (Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
 	public final fun multiAction (Lkotlin/jvm/functions/Function1;)V
 	public final fun multiAction ([Lnet/minestom/server/dialog/DialogActionButton;Lkotlin/jvm/functions/Function1;)V
@@ -289,6 +299,8 @@ public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder {
 	public final fun notice ()V
 	public final fun notice (Lkotlin/jvm/functions/Function1;)V
 	public final fun notice (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun serverLinks (Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun serverLinks$default (Ldev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$DialogConfirmationTypeBuilder {
@@ -303,6 +315,23 @@ public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$D
 	public final fun yes (Lnet/minestom/server/dialog/DialogActionButton;)V
 }
 
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$DialogListTypeBuilder {
+	public fun <init> ()V
+	public final fun addAll (Ljava/lang/Iterable;)V
+	public final fun addAll ([Lnet/minestom/server/dialog/Dialog;)V
+	public final fun buttonWidth (I)V
+	public final fun columns (I)V
+	public final fun dialog (Lnet/minestom/server/dialog/Dialog;)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun exitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun getButtonWidth ()I
+	public final fun getColumns ()I
+	public final fun getExitAction ()Lnet/minestom/server/dialog/DialogActionButton;
+	public final fun setButtonWidth (I)V
+	public final fun setColumns (I)V
+	public final fun setExitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
+}
+
 public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$DialogMultiActionTypeBuilder {
 	public fun <init> ()V
 	public final fun action (Lkotlin/jvm/functions/Function1;)V
@@ -312,6 +341,20 @@ public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$D
 	public final fun exitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
 	public final fun getColumns ()I
 	public final fun getExitAction ()Lnet/minestom/server/dialog/DialogActionButton;
+	public final fun setColumns (I)V
+	public final fun setExitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
+}
+
+public final class dev/slne/surf/api/minestom/dialog/builder/DialogTypeBuilder$ServerLinksTypeBuilder {
+	public fun <init> ()V
+	public final fun buttonWidth (I)V
+	public final fun columns (I)V
+	public final fun exitAction (Lkotlin/jvm/functions/Function1;)V
+	public final fun exitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
+	public final fun getButtonWidth ()I
+	public final fun getColumns ()I
+	public final fun getExitAction ()Lnet/minestom/server/dialog/DialogActionButton;
+	public final fun setButtonWidth (I)V
 	public final fun setColumns (I)V
 	public final fun setExitAction (Lnet/minestom/server/dialog/DialogActionButton;)V
 }
@@ -360,9 +403,34 @@ public final class dev/slne/surf/api/minestom/dialog/callback/DialogCallbacks {
 	public static final field INSTANCE Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;
 	public final fun action (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogAction;
 	public static synthetic fun action$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/dialog/DialogAction;
+	public final fun dynamicAction (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogAction;
+	public static synthetic fun dynamicAction$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/dialog/DialogAction;
 	public final fun register (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/key/Key;
 	public static synthetic fun register$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/kyori/adventure/key/Key;
 	public final fun unregister (Lnet/kyori/adventure/key/Key;)Z
+}
+
+public final class dev/slne/surf/api/minestom/dialog/callback/DialogResponseView {
+	public static final field Companion Ldev/slne/surf/api/minestom/dialog/callback/DialogResponseView$Companion;
+	public static final synthetic fun box-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ldev/slne/surf/api/minestom/dialog/callback/DialogResponseView;
+	public static fun constructor-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Z
+	public static final fun getBoolean-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/lang/String;)Ljava/lang/Boolean;
+	public static final fun getFloat-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/lang/String;)Ljava/lang/Float;
+	public final fun getPayload ()Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public static final fun getText-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Ljava/lang/String;)Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+}
+
+public final class dev/slne/surf/api/minestom/dialog/callback/DialogResponseView$Companion {
+	public final fun getEMPTY-v2-CkQY ()Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+	public final fun of-VLTPHq8 (Lnet/kyori/adventure/nbt/BinaryTag;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
 }
 
 public final class dev/slne/surf/api/minestom/impl/inventory/framework/MinestomInventoryLoader : dev/slne/minestom/lobby/api/event/EventRegistrar {

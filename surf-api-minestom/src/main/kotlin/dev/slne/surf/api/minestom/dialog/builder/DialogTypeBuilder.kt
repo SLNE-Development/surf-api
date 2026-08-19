@@ -1,9 +1,11 @@
 package dev.slne.surf.api.minestom.dialog.builder
 
 import dev.slne.surf.api.core.util.mutableObjectListOf
+import dev.slne.surf.api.core.util.mutableObjectSetOf
 import net.minestom.server.dialog.Dialog
 import net.minestom.server.dialog.DialogActionButton
 import net.minestom.server.dialog.DialogMetadata
+import net.minestom.server.registry.HolderSet
 import org.jetbrains.annotations.Range
 
 /**
@@ -26,6 +28,49 @@ class DialogTypeBuilder {
 
     fun notice(block: DialogActionButtonBuilder.() -> Unit) {
         notice(actionButton(block))
+    }
+
+    /**
+     * Offers one entry per dialog, each opening the dialog it stands for.
+     *
+     * ```
+     * type {
+     *     dialogList(homes) {
+     *         columns(3)
+     *         buttonWidth(200)
+     *         exitAction { label { spacer("Back") } }
+     *     }
+     * }
+     * ```
+     */
+    fun dialogList(block: DialogListTypeBuilder.() -> Unit) {
+        val builder = DialogListTypeBuilder().apply(block)
+        factory = { metadata -> builder.build(metadata) }
+    }
+
+    fun dialogList(
+        dialogs: Collection<Dialog>,
+        block: DialogListTypeBuilder.() -> Unit = {},
+    ) {
+        dialogList {
+            addAll(dialogs)
+            block()
+        }
+    }
+
+    fun dialogList(
+        vararg dialogs: Dialog,
+        block: DialogListTypeBuilder.() -> Unit = {},
+    ) {
+        dialogList(dialogs.toList(), block)
+    }
+
+    /**
+     * Offers one entry per link this server announced to the client.
+     */
+    fun serverLinks(block: ServerLinksTypeBuilder.() -> Unit = {}) {
+        val builder = ServerLinksTypeBuilder().apply(block)
+        factory = { metadata -> builder.build(metadata) }
     }
 
     fun confirmation(yes: DialogActionButton, no: DialogActionButton) {
@@ -63,6 +108,80 @@ class DialogTypeBuilder {
         val factory = factory
         require(factory != null) { "Dialog type must be built" }
         return factory(metadata)
+    }
+
+    /**
+     * Collects the dialogs a dialog list offers and how they are laid out.
+     */
+    class DialogListTypeBuilder {
+        private val dialogs = mutableObjectSetOf<Dialog>()
+        var exitAction: DialogActionButton? = null
+        var columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int = DEFAULT_COLUMNS
+        var buttonWidth: @Range(from = 1, to = 1024) Int = DEFAULT_BUTTON_WIDTH
+
+        fun dialog(dialog: Dialog) {
+            dialogs.add(dialog)
+        }
+
+        fun addAll(vararg dialogs: Dialog) {
+            this.dialogs.addAll(dialogs)
+        }
+
+        fun addAll(dialogs: Iterable<Dialog>) {
+            this.dialogs.addAll(dialogs)
+        }
+
+        fun exitAction(exitAction: DialogActionButton) {
+            this.exitAction = exitAction
+        }
+
+        fun exitAction(block: DialogActionButtonBuilder.() -> Unit) {
+            exitAction = actionButton(block)
+        }
+
+        fun columns(columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int) {
+            this.columns = columns
+        }
+
+        fun buttonWidth(buttonWidth: @Range(from = 1, to = 1024) Int) {
+            this.buttonWidth = buttonWidth
+        }
+
+        internal fun build(metadata: DialogMetadata): Dialog = Dialog.DialogList(
+            metadata,
+            HolderSet.Direct(dialogs.toList()),
+            exitAction,
+            columns,
+            buttonWidth
+        )
+    }
+
+    /**
+     * Collects how the links a server links dialog offers are laid out.
+     */
+    class ServerLinksTypeBuilder {
+        var exitAction: DialogActionButton? = null
+        var columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int = DEFAULT_COLUMNS
+        var buttonWidth: @Range(from = 1, to = 1024) Int = DEFAULT_BUTTON_WIDTH
+
+        fun exitAction(exitAction: DialogActionButton) {
+            this.exitAction = exitAction
+        }
+
+        fun exitAction(block: DialogActionButtonBuilder.() -> Unit) {
+            exitAction = actionButton(block)
+        }
+
+        fun columns(columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int) {
+            this.columns = columns
+        }
+
+        fun buttonWidth(buttonWidth: @Range(from = 1, to = 1024) Int) {
+            this.buttonWidth = buttonWidth
+        }
+
+        internal fun build(metadata: DialogMetadata): Dialog =
+            Dialog.ServerLinks(metadata, exitAction, columns, buttonWidth)
     }
 
     class DialogConfirmationTypeBuilder {
@@ -125,9 +244,10 @@ class DialogTypeBuilder {
 
             return Dialog.MultiAction(metadata, actions, exitAction, columns)
         }
+    }
 
-        private companion object {
-            const val DEFAULT_COLUMNS = 2
-        }
+    private companion object {
+        const val DEFAULT_COLUMNS = 2
+        const val DEFAULT_BUTTON_WIDTH = 150
     }
 }
