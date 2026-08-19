@@ -17,8 +17,6 @@ import org.bukkit.util.BoundingBox
 class V26_1TickThreadGuard : TickThreadGuard {
 
     override fun ensureTickThread(world: World, pos: Position, reason: String) {
-        TickThread.ensureTickThread("")
-
         TickThread.ensureTickThread(world.toNms(), pos.chunkX, pos.chunkZ, reason)
     }
 

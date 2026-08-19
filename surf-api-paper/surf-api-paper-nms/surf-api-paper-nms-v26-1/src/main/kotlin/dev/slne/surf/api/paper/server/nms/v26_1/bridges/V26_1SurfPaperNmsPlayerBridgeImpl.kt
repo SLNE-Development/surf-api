@@ -54,6 +54,37 @@ import kotlin.jvm.optionals.getOrNull
 @Suppress("ClassName")
 class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
+    override fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean) {
+        val nmsPlayer = player.toNms()
+
+        val distance = player.viewDistance.toDouble()
+        player.getNearbyEntities(distance, distance, distance).forEach { entity ->
+            try {
+                entity.toNms().`moonrise$getTrackedEntity`().serverEntity.removePairing(nmsPlayer)
+            } catch (e: Throwable) {
+                if (!swallowExceptions) {
+                    throw e
+                }
+            }
+        }
+    }
+
+    override fun removeAllTrackedPlayers(player: Player, swallowExceptions: Boolean) {
+        val nmsPlayer = player.toNms()
+        val trackedEntity = nmsPlayer.`moonrise$getTrackedEntity`()
+
+        for (otherPlayer in MinecraftServer.getServer().playerList.players) {
+            if (otherPlayer.uuid == nmsPlayer.uuid) continue
+            try {
+                trackedEntity.serverEntity.removePairing(otherPlayer)
+            } catch (e: Throwable) {
+                if (!swallowExceptions) {
+                    throw e
+                }
+            }
+        }
+    }
+
     @Suppress("USELESS_ELVIS")
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {
         val connection = player.toNms().connection ?: return null

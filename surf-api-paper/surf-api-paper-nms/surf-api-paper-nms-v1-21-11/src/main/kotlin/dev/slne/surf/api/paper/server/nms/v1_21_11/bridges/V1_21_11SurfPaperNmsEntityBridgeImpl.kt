@@ -15,6 +15,7 @@ import net.kyori.adventure.nbt.CompoundBinaryTag
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.commands.SummonCommand
 import org.bukkit.World
+import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 
 @NmsUseWithCaution
@@ -49,5 +50,13 @@ class V1_21_11SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         } catch (e: CommandSyntaxException) {
             throw WrapperCommandSyntaxException(e)
         }
+    }
+
+    override fun setId(entity: Entity, id: Int) {
+        entity.toNms().id = id
+    }
+
+    override fun getById(world: World, id: Int): Entity? {
+        return world.toNms().getEntity(id)?.bukkitEntity
     }
 }
