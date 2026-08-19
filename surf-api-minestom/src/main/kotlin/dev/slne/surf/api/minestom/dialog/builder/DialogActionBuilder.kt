@@ -3,6 +3,7 @@ package dev.slne.surf.api.minestom.dialog.builder
 import dev.slne.surf.api.minestom.dialog.callback.DialogCallbackContext
 import dev.slne.surf.api.minestom.dialog.callback.DialogCallbackOptions
 import dev.slne.surf.api.minestom.dialog.callback.DialogCallbacks
+import dev.slne.surf.api.minestom.dialog.callback.DialogResponseView
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.nbt.BinaryTag
 import net.kyori.adventure.nbt.CompoundBinaryTag
@@ -94,6 +95,45 @@ class DialogActionBuilder {
         callback: (Player) -> Unit,
     ) {
         callback(options) { context -> callback(context.player) }
+    }
+
+    /**
+     * Runs [callback] with the values the dialog collected once the button is pressed.
+     *
+     * The client reports its input values back, merged with [additions].
+     */
+    fun customClick(
+        options: DialogCallbackOptions = DialogCallbackOptions.DEFAULT,
+        additions: CompoundBinaryTag? = null,
+        callback: (DialogResponseView, DialogCallbackContext) -> Unit,
+    ) {
+        action(
+            DialogCallbacks.dynamicAction(options, additions) { context ->
+                callback(DialogResponseView.of(context.payload), context)
+            }
+        )
+    }
+
+    /**
+     * Runs [callback] with the values the dialog collected and the pressing player once the button
+     * is pressed.
+     *
+     * ```
+     * action {
+     *     customPlayerClick { response, player ->
+     *         player.sendMessage(response.getText("message") ?: "")
+     *     }
+     * }
+     * ```
+     */
+    fun customPlayerClick(
+        options: DialogCallbackOptions = DialogCallbackOptions.DEFAULT,
+        additions: CompoundBinaryTag? = null,
+        callback: (response: DialogResponseView, player: Player) -> Unit,
+    ) {
+        customClick(options, additions) { response, context ->
+            callback(response, context.player)
+        }
     }
 
     internal fun build(): DialogAction {

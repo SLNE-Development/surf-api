@@ -32,6 +32,27 @@ class DialogInputBuilder {
         input(NumberRangeInputBuilder(key).apply(block).build())
     }
 
+    /**
+     * Adds a number range control spanning [range].
+     *
+     * ```
+     * numberRange("strength", 1.0..200.0) {
+     *     label { info("Strength") }
+     *     step(1f)
+     * }
+     * ```
+     */
+    fun <N> numberRange(
+        key: String,
+        range: ClosedRange<N>,
+        block: NumberRangeInputBuilder.() -> Unit,
+    ) where N : Number, N : Comparable<N> {
+        numberRange(key) {
+            range(range.start.toFloat(), range.endInclusive.toFloat())
+            block()
+        }
+    }
+
     fun singleOption(key: String, block: SingleOptionInputBuilder.() -> Unit) {
         input(SingleOptionInputBuilder(key).apply(block).build())
     }
