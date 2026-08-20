@@ -159,19 +159,19 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     }
 
     /**
-     * Applies the paginated container defaults: blocks all border cells and all cells outside
-     * the pagination content rows, then calls [applyContainerDefaults] for subclass customisation.
+     * Applies the paginated container defaults: blocks all border cells and the button row, then
+     * calls [applyContainerDefaults] for subclass customisation.
      *
      * This override is `final` — subclasses should override [applyContainerDefaults] instead.
      */
     context(_: ViewContainerModificationContext)
     final override fun containerDefaults() {
-        val paginationContentRows = settings.paginationViewRows.paginationContentRows
+        val paginationContentRows = settings.paginationContentRows
 
         for (y in 1..settings.rows.rows) {
             for (x in 0 until 9) {
                 if (y in paginationContentRows && x in 1..7) continue
-                blockCell(x, y)
+                blockCell(x, y, settings.headerGeometry)
             }
         }
 
@@ -204,15 +204,16 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         config.layout(*createLayout())
     }
 
+    /**
+     * Builds the layout: the button row stays empty, every other row is filled with
+     * [layoutTarget] slots, so the pagination content starts in the very first row.
+     */
     private fun createLayout(): Array<String> {
-        val layout = arrayOfNulls<String>(settings.rows.rows)
-        layout[0] = EMPTY_ROW
-        repeat(settings.rows.rows - 2) { i ->
-            layout[i + 1] = paginationRow
-        }
-        layout[layout.lastIndex] = EMPTY_ROW
+        val buttonRow = settings.paginationButtonRow
 
-        return layout.requireNoNulls()
+        return Array(settings.rows.rows) { index ->
+            if (index + 1 == buttonRow) EMPTY_ROW else paginationRow
+        }
     }
 
     final override fun onViewOpen(open: OpenContext) {

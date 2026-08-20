@@ -731,6 +731,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/container
 
 public final class dev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewBlockCellComponent : dev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent {
 	public static final field Companion Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewBlockCellComponent$Companion;
+	public synthetic fun <init> (II)V
 	public fun <init> (IILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
 	public synthetic fun <init> (IILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
@@ -782,18 +783,26 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/container
 
 public final class dev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerDSLKt {
 	public static final fun addChild (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent;)V
+	public static final synthetic fun backHint (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
 	public static final fun blockAllSlots (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
 	public static final fun blockAllSlots (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;Lit/unimi/dsi/fastutil/ints/IntCollection;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
 	public static synthetic fun blockAllSlots$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)V
 	public static synthetic fun blockAllSlots$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;Lit/unimi/dsi/fastutil/ints/IntCollection;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)V
+	public static final synthetic fun blockCell (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;II)V
 	public static final fun blockCell (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;IILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
 	public static synthetic fun blockCell$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;IILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)V
+	public static final synthetic fun blockColumn (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;)V
 	public static final fun blockColumn (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
+	public static final synthetic fun blockColumn (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[I)V
 	public static final fun blockColumn (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[IILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
 	public static synthetic fun blockColumn$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)V
+	public static synthetic fun blockColumn$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILjava/lang/Object;)V
 	public static synthetic fun blockColumn$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[IILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)V
+	public static final synthetic fun blockRow (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;)V
 	public static final fun blockRow (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
+	public static final synthetic fun blockRow (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[I)V
 	public static final fun blockRow (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[ILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
+	public static synthetic fun blockRow$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;ILjava/lang/Object;)V
 	public static synthetic fun blockRow$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILit/unimi/dsi/fastutil/ints/IntCollection;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)V
 	public static synthetic fun blockRow$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;I[ILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)V
 	public static final fun blockSlot (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;ILdev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;)V
@@ -802,6 +811,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/container
 	public static final fun clearRowTexts (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;)V
 	public static final fun hasComponentOfType (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ljava/lang/Class;)Z
 	public static final fun header (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lkotlin/jvm/functions/Function1;)V
+	public static final synthetic fun header (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef;Ljava/lang/String;)V
 	public static final fun header (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef;Ljava/lang/String;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;)V
 	public static final fun header (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef;Lnet/kyori/adventure/text/Component;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;)V
 	public static synthetic fun header$default (Ldev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerModificationContext;Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewRef;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
@@ -985,8 +995,8 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/paginatio
 
 public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings : dev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings {
 	public fun <init> ()V
-	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;)V
-	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;)V
+	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lnet/kyori/adventure/key/Key;
 	public final fun component10 ()Z
 	public final fun component11 ()Z
@@ -995,6 +1005,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public final fun component14 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public final fun component15 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
 	public final fun component16 ()Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;
+	public final fun component17 ()Lnet/kyori/adventure/sound/Sound;
 	public final fun component2 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;
 	public final fun component3 ()Lnet/kyori/adventure/text/format/TextColor;
 	public final fun component4 ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;
@@ -1003,8 +1014,8 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public final fun component7 ()Z
 	public final fun component8 ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
 	public final fun component9 ()Z
-	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getBackgroundGlyph ()Z
 	public fun getCancelOnClick ()Z
@@ -1019,6 +1030,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public fun getNavigateBackOnOutsideClick ()Z
 	public final fun getPaginationButtonPosition ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
 	public final fun getPaginationPageIndicator ()Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;
+	public final fun getPaginationSwitchSound ()Lnet/kyori/adventure/sound/Sound;
 	public final fun getPaginationViewRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public fun getRowFontMetrics ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;
 	public fun getRowFonts ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
@@ -1037,13 +1049,15 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 }
 
 public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows : java/lang/Enum {
+	public static final field FIVE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public static final field FOUR Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public static final field ONE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public static final field THREE Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public static final field TWO Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public final fun getActualRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewRows;
+	public final fun getContentRows ()I
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public final fun getPaginationContentRows ()Lkotlin/ranges/IntRange;
+	public final synthetic fun getPaginationContentRows ()Lkotlin/ranges/IntRange;
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public static fun values ()[Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 }
@@ -1127,6 +1141,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public final fun getDEFAULT_MENU_FONT ()Lnet/kyori/adventure/key/Key;
 	public final fun getDEFAULT_PAGINATION_BUTTON_POSITION ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
 	public final fun getDEFAULT_PAGINATION_PAGE_INDICATOR ()Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;
+	public final fun getDEFAULT_PAGINATION_SWITCH_SOUND ()Lnet/kyori/adventure/sound/Sound;
 	public final fun getDEFAULT_PAGINATION_VIEW_ROWS ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public final fun getDEFAULT_ROW_FONTS ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
 	public final fun getDEFAULT_ROW_FONT_METRICS ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/ViewFontMetrics;
@@ -1279,12 +1294,15 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public synthetic fun build ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SurfViewSettings;
 	public final fun getPaginationButtonPosition ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;
 	public final fun getPaginationPageIndicator ()Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;
+	public final fun getPaginationSwitchSound ()Lnet/kyori/adventure/sound/Sound;
 	public final fun getPaginationViewRows ()Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;
 	public final fun noPaginationPageIndicator ()V
+	public final fun noPaginationSwitchSound ()V
 	public final fun paginationButtonPosition (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationButtonPosition;)V
 	public final fun paginationButtonsAtBottom ()V
 	public final fun paginationButtonsAtTop ()V
 	public final fun paginationPageIndicator (Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/PaginationPageIndicator;)V
+	public final fun paginationSwitchSound (Lnet/kyori/adventure/sound/Sound;)V
 	public final fun paginationViewRows (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginationViewRows;)V
 }
 

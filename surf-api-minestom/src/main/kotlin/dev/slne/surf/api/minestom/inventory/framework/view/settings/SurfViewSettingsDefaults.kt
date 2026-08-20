@@ -115,8 +115,8 @@ object SurfViewSettingsDefaults {
     /** Default number of rows for simple views: [ViewRows.FIVE]. */
     val DEFAULT_VIEW_ROWS = ViewRows.FIVE
 
-    /** Default [PaginationViewRows] for paginated views: [PaginationViewRows.FOUR]. */
-    val DEFAULT_PAGINATION_VIEW_ROWS = PaginationViewRows.FOUR
+    /** Default [PaginationViewRows] for paginated views: [PaginationViewRows.FIVE]. */
+    val DEFAULT_PAGINATION_VIEW_ROWS = PaginationViewRows.FIVE
 
     /** Default [PaginationButtonPosition] for paginated views: [PaginationButtonPosition.BOTTOM]. */
     val DEFAULT_PAGINATION_BUTTON_POSITION = PaginationButtonPosition.BOTTOM

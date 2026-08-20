@@ -39,6 +39,14 @@ class ViewBlockCellComponent(
     geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
 ) : ViewContainerComponent {
 
+    /** @suppress binary compatibility, blocks the cell with the default geometry */
+    @Deprecated(
+        "Binary compatibility",
+        ReplaceWith("ViewBlockCellComponent(column, row)"),
+        DeprecationLevel.HIDDEN
+    )
+    constructor(column: Int, row: Int) : this(column, row, ViewHeaderGeometry.DEFAULT)
+
     init {
         require(column in 0 until ViewSlotGeometry.COLUMNS) {
             "Column must be in 0..${ViewSlotGeometry.COLUMNS - 1}, was $column"

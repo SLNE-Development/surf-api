@@ -67,4 +67,15 @@ data class PaginatedViewSettings(
         } else {
             1
         }
+
+    /**
+     * The one-based rows the pagination engine fills: every row except [paginationButtonRow], so
+     * the content starts right at the top edge of the inventory.
+     */
+    internal val paginationContentRows: IntRange =
+        if (paginationButtonPosition == PaginationButtonPosition.BOTTOM) {
+            1 until rows.rows
+        } else {
+            2..rows.rows
+        }
 }

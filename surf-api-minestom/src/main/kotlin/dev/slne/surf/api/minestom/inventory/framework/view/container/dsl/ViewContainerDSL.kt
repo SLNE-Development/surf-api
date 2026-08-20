@@ -599,3 +599,101 @@ context(context: ViewContainerModificationContext)
 fun unblockAllSlots() {
     removeChildrenOfType<ViewBlockCellComponent>()
 }
+
+// -------------------------------------------------------------------------------------------------
+// Binary compatibility
+//
+// The container DSL gained a `geometry` parameter - and `blockColumn` additionally a `rows`
+// parameter - which changed the JVM signatures of the functions below, so plugins compiled against
+// an older surf-api fail with a `NoSuchMethodError` at runtime. The shims keep the old signatures
+// alive and delegate to the current functions with the parameters those callers never passed.
+//
+// They are hidden from Kotlin callers, so new code always resolves to the functions above. Remove
+// them once every consumer has been rebuilt against this version.
+// -------------------------------------------------------------------------------------------------
+
+/** @suppress */
+@Deprecated("Binary compatibility", ReplaceWith("blockCell(column, row)"), DeprecationLevel.HIDDEN)
+context(context: ViewContainerModificationContext)
+fun blockCell(column: Int, @ViewRows.Companion.Rows row: Int) {
+    blockCell(column, row, SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY)
+}
+
+/** @suppress */
+@Deprecated(
+    "Binary compatibility",
+    ReplaceWith("blockRow(row, exemptColumns)"),
+    DeprecationLevel.HIDDEN
+)
+context(context: ViewContainerModificationContext)
+fun blockRow(@ViewRows.Companion.Rows row: Int, exemptColumns: IntArray) {
+    blockRow(row, exemptColumns, SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY)
+}
+
+/** @suppress */
+@Deprecated(
+    "Binary compatibility",
+    ReplaceWith("blockRow(row, exemptColumns)"),
+    DeprecationLevel.HIDDEN
+)
+context(context: ViewContainerModificationContext)
+fun blockRow(
+    @ViewRows.Companion.Rows row: Int,
+    exemptColumns: IntCollection = IntLists.EMPTY_LIST,
+) {
+    blockRow(row, exemptColumns, SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY)
+}
+
+/** @suppress */
+@Deprecated(
+    "Binary compatibility",
+    ReplaceWith("blockColumn(column, exemptRows)"),
+    DeprecationLevel.HIDDEN
+)
+context(context: ViewContainerModificationContext)
+fun blockColumn(column: Int, exemptRows: IntArray) {
+    blockColumn(
+        column = column,
+        exemptRows = exemptRows,
+        rows = ViewSlotGeometry.MAX_ROWS,
+        geometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY
+    )
+}
+
+/** @suppress */
+@Deprecated(
+    "Binary compatibility",
+    ReplaceWith("blockColumn(column, exemptRows)"),
+    DeprecationLevel.HIDDEN
+)
+context(context: ViewContainerModificationContext)
+fun blockColumn(column: Int, exemptRows: IntCollection = IntLists.EMPTY_LIST) {
+    blockColumn(
+        column = column,
+        exemptRows = exemptRows,
+        rows = ViewSlotGeometry.MAX_ROWS,
+        geometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY
+    )
+}
+
+/** @suppress */
+@Deprecated("Binary compatibility", ReplaceWith("header(header)"), DeprecationLevel.HIDDEN)
+context(context: ViewContainerModificationContext, ref: AbstractSurfViewRef)
+fun header(header: String) {
+    header(header, null)
+}
+
+/**
+ * No-op that keeps plugins compiled against the removed back-hint component loading.
+ *
+ * The navigation arrow the old `ViewContainerBackHintComponent` drew is part of the inventory
+ * texture now; whether an outside click navigates back is decided solely by
+ * [navigateBackOnOutsideClick][dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettings.navigateBackOnOutsideClick].
+ *
+ * @suppress
+ */
+@Deprecated("The back hint is part of the inventory texture now", level = DeprecationLevel.HIDDEN)
+context(context: ViewContainerModificationContext)
+fun backHint() {
+    // nothing to render anymore
+}

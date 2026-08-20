@@ -3,29 +3,48 @@ package dev.slne.surf.api.minestom.inventory.framework.view.settings
 /**
  * Defines the number of pagination content rows and the total inventory size for a paginated view.
  *
- * The total inventory has two additional rows compared to the content rows: one top row and one
- * bottom row. The top and bottom rows are used for the inventory border/buttons, while the
- * content rows are populated by the pagination engine.
+ * The total inventory has exactly one row more than the content rows: the row that carries the
+ * navigation buttons, which sits above or below the content depending on
+ * [PaginatedViewSettings.paginationButtonPosition]. Every other row is filled by the pagination
+ * engine - the topmost one included, so no row is left empty just to keep the buttons apart from
+ * the content.
  *
- * - [ONE] — 1 content row, 3 total rows ([ViewRows.THREE])
- * - [TWO] — 2 content rows, 4 total rows ([ViewRows.FOUR])
- * - [THREE] — 3 content rows, 5 total rows ([ViewRows.FIVE])
- * - [FOUR] — 4 content rows, 6 total rows ([ViewRows.SIX])
+ * - [ONE] - 1 content row, 2 total rows ([ViewRows.TWO])
+ * - [TWO] - 2 content rows, 3 total rows ([ViewRows.THREE])
+ * - [THREE] - 3 content rows, 4 total rows ([ViewRows.FOUR])
+ * - [FOUR] - 4 content rows, 5 total rows ([ViewRows.FIVE])
+ * - [FIVE] - 5 content rows, 6 total rows ([ViewRows.SIX])
  *
- * @property actualRows the total [ViewRows] value (including top and bottom rows)
- * @property paginationContentRows the range of 1-based row indices used for pagination content
+ * @property actualRows the total [ViewRows] value: the content rows plus the button row
  * @see PaginatedViewSettings
  */
-enum class PaginationViewRows(val actualRows: ViewRows, val paginationContentRows: IntRange) {
-    /** 1 content row; 3 total inventory rows. */
-    ONE(ViewRows.THREE, 2..2),
+enum class PaginationViewRows(val actualRows: ViewRows) {
+    /** 1 content row; 2 total inventory rows. */
+    ONE(ViewRows.TWO),
 
-    /** 2 content rows; 4 total inventory rows. */
-    TWO(ViewRows.FOUR, 2..3),
+    /** 2 content rows; 3 total inventory rows. */
+    TWO(ViewRows.THREE),
 
-    /** 3 content rows; 5 total inventory rows. */
-    THREE(ViewRows.FIVE, 2..4),
+    /** 3 content rows; 4 total inventory rows. */
+    THREE(ViewRows.FOUR),
 
-    /** 4 content rows; 6 total inventory rows. */
-    FOUR(ViewRows.SIX, 2..5);
+    /** 4 content rows; 5 total inventory rows. */
+    FOUR(ViewRows.FIVE),
+
+    /** 5 content rows; 6 total inventory rows. */
+    FIVE(ViewRows.SIX);
+
+    /**
+     * How many rows the pagination engine fills: one less than [actualRows], because a single row
+     * is reserved for the navigation buttons.
+     */
+    val contentRows: Int = actualRows.rows - 1
+
+    /** @suppress */
+    @Deprecated(
+        "The content rows depend on the button position now, use PaginatedViewSettings instead",
+        level = DeprecationLevel.HIDDEN
+    )
+    val paginationContentRows: IntRange
+        get() = 1..contentRows
 }
