@@ -135,8 +135,11 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             geometry = geometry
         )
 
+        val totalPages = pagination.lastPage().coerceAtLeast(1)
+        val currentPage = pagination.currentPage().coerceIn(1, totalPages)
+
         val pageText = settings.paginationPageIndicator
-            ?.render(pagination.currentPage(), pagination.lastPage())
+            ?.render(currentPage, totalPages)
 
         modifyContainer(context) {
             removeChildrenOfType<PaginationButtonGlyphComponent>()
@@ -266,7 +269,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
     final override fun onViewUpdate(update: Context) {
         val pagination = paginationState.get(update)
-        if (pagination != null) {
+        if (pagination != null && pagination.hasPage(pagination.currentPageIndex())) {
             pagination.switchTo(pagination.currentPageIndex()) // trigger pagination state update to refresh dynamic elements
         }
 

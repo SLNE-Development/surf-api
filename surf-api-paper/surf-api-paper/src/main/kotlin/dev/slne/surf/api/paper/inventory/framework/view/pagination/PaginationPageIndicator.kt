@@ -30,8 +30,9 @@ fun interface PaginationPageIndicator {
     /**
      * Returns the component to render as the page counter, or `null` to render nothing.
      *
-     * @param currentPage the one-based number of the page currently shown
-     * @param totalPages the total number of pages
+     * @param currentPage the one-based number of the page currently shown, never below `1`
+     * @param totalPages the total number of pages, never below `1` - a pagination without any
+     *   content is reported as page `1` of `1`
      */
     fun render(currentPage: Int, totalPages: Int): Component?
 
