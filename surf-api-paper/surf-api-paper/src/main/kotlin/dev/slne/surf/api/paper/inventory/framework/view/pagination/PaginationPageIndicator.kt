@@ -1,6 +1,8 @@
 package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
+import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.paper.inventory.framework.view.pagination.PaginationPageIndicator.Companion.Default
 import net.kyori.adventure.text.Component
 
 /**
@@ -36,7 +38,7 @@ fun interface PaginationPageIndicator {
     companion object {
         /** Renders the counter as `current/total`, e.g. `2/7`. */
         val Default = PaginationPageIndicator { currentPage, totalPages ->
-            text("$currentPage/$totalPages")
+            text("$currentPage/$totalPages", Colors.WHITE)
         }
     }
 }

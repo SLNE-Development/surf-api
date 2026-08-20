@@ -96,21 +96,46 @@ internal sealed class PaginationButtonGlyphComponent(
     companion object {
         /**
          * Pixels the button overlay glyph advances the render cursor by, measured off the glyph
-         * sheet of the pack: an 88x11 cell scaled to a height of 10 renders 80 pixels wide, and the
-         * font renderer adds one.
+         * sheet of the pack: `menu/pagination/buttons.png` is 88x48, i.e. four 88x12 bands, and
+         * rendering a band one-to-one (`height: 12`) advances its 88 pixels plus the one the font
+         * renderer adds.
          *
          * This has to match what the glyph really advances - the container resets the cursor by
          * `-(textureWidth + positionalShift)` after every component, so a wrong value shifts every
          * component rendered afterwards.
          */
-        const val TEXTURE_WIDTH = 81
+        const val TEXTURE_WIDTH = 89
 
         /**
-         * Pixels the overlay texture keeps free on its left, measured between the left edge of the
-         * left button slot and the first drawn pixel of the texture. The texture of the pack starts
-         * at its first pixel, so it aligns with the slot grid directly.
+         * Pixels the overlay is moved relative to the left edge of the left button slot, tuned
+         * against the texture of the pack in-game.
+         *
+         * Note that the texture cannot line up with both buttons at once: the centres of its two
+         * arrows are 73 pixels apart (ink columns 0-14 and 73-87 of the 88 pixel bar), while the
+         * slot grid puts the two button slots 72 pixels apart. Whatever this offset is, one arrow
+         * ends up a pixel off its slot centre - move the right arrow one pixel left in
+         * `menu/pagination/buttons.png` to fix that at the source.
          */
         const val GLYPH_INSET = 0
+
+        /**
+         * Pixel offset of the free area between the two arrows, measured from the left edge of the
+         * bar: the arrows of `menu/pagination/buttons.png` occupy its first and last 15 pixels.
+         */
+        const val COUNTER_AREA_OFFSET = 15
+
+        /** Width in pixels of the free area between the two arrows. */
+        const val COUNTER_AREA_WIDTH = 58
+
+        /**
+         * Returns the pixel offset of the free area between the two arrows, relative to the title
+         * origin - where the page counter of a paginated view belongs.
+         *
+         * @param geometry the header geometry describing the slot grid the bar is placed on
+         */
+        fun counterAreaShift(geometry: ViewHeaderGeometry): Int =
+            geometry.columnShift(PaginationButton.LEFT.column) + GLYPH_INSET + COUNTER_AREA_OFFSET
+
 
         /**
          * Returns the appropriate [PaginationButtonGlyphComponent] for the given [pagination] state.

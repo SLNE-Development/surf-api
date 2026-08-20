@@ -22,24 +22,18 @@ val testPaginatedViewDsl = paginatedSurfView("Test Pagination") {
     settings {
         paginationViewRows(PaginationViewRows.THREE)
         paginationButtonsAtBottom()
-
-        // Der Seitenzähler zwischen den beiden Buttons. Ohne diesen Block steht dort "1/4".
-        paginationPageIndicator { current, total ->
-            text("Seite $current von $total", Colors.GRAY)
-        }
     }
 
     layoutTarget('I')
 
     containerDefaults {
-        header { text("Test ", Colors.GOLD); text("Pagination", Colors.GRAY) }
+        header { darkSpacer("Paginated Inventory Test") }
 
-        // Row-Text in einer Rahmen-Reihe, rechts über den letzten drei Spalten.
         rowText(
             1,
             text("${testPaginationEntries.size} Einträge", Colors.GRAY),
             TextAlignment.RIGHT,
-            columns = 6..8
+            columns = 5..8
         )
     }
 

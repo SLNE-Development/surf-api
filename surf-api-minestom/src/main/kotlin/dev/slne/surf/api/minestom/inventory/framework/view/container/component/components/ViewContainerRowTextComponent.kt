@@ -51,7 +51,7 @@ import net.kyori.adventure.text.format.TextColor
  * @param defaultColor the colour applied to parts of [text] that do not set one
  * @param metrics the [ViewFontMetrics] of [font]
  */
-open class ViewContainerRowTextComponent(
+class ViewContainerRowTextComponent(
     val row: Int,
     val text: Component,
     private val font: Key,
