@@ -125,3 +125,4 @@ modules.xml
 **/run/*
 logs/
 .claude
+CLAUDE.local.md

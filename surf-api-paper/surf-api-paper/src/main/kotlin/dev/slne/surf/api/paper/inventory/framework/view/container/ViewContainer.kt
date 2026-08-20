@@ -48,6 +48,10 @@ internal class ViewContainer {
         _children.removeIf { type.isInstance(it) }
     }
 
+    fun removeChildren(predicate: (ViewContainerComponent) -> Boolean) {
+        _children.removeIf(predicate)
+    }
+
     inline fun <reified T : ViewContainerComponent> removeChildrenOfType() {
         removeChildrenOfType(T::class.java)
     }

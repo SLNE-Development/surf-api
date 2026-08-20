@@ -15,6 +15,7 @@ import dev.slne.surf.api.paper.test.listener.ChatListener
 import dev.slne.surf.surfapi.bukkit.test.command.dialog.dialogTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testInventoryViewDsl
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testPaginatedViewDsl
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.config.MyPluginConfig
 import net.minecraft.server.MinecraftServer
@@ -31,6 +32,7 @@ class PaperPluginMain : SuspendingJavaPlugin() {
         SurfPaperPacketListenerApi.registerListeners(ChatListener())
         TestInventoryView.register()
         testInventoryViewDsl.register()
+        testPaginatedViewDsl.register()
 
 //        SurfConfigApi.createSpongeYmlConfig(TestConfig2::class.java, dataPath, "test-config-2.yml")
     }

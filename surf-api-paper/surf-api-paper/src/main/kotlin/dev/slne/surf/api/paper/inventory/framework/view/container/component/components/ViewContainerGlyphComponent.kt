@@ -9,15 +9,16 @@ import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewRows
  * A [ViewContainerComponent] that renders the inventory background glyph for the given [rows].
  *
  * Each [ViewRows] value has a corresponding special-font character that renders the correct
- * background texture for that row count. The glyph is positioned with a fixed negative shift
- * of 48 pixels (moving the cursor to the left edge of the texture area) and has a texture
- * width of 223 pixels.
+ * background texture for that row count. The glyph is positioned with a fixed negative shift of 48
+ * pixels (moving the cursor to the left edge of the texture area) and advances the cursor by 222
+ * pixels - the advance measured off the glyph sheet, which has to match exactly or every component
+ * rendered afterwards is shifted.
  *
  * @property rows the [ViewRows] value whose glyph character should be rendered
  */
 internal class ViewContainerGlyphComponent(val rows: ViewRows) : ViewContainerComponent {
     override val positionalShift = -48
-    override val textureWidth = 223
+    override val textureWidth = 222
 
     override fun SurfComponentBuilder.renderComponent() {
         text(rows.glyph)

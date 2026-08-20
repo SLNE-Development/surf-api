@@ -30,6 +30,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - Left/right navigation buttons in the designated button row.
  * - A [PaginationButtonGlyphComponent] overlay that reflects the current pagination state
  *   (both-disabled, left-disabled, right-disabled, or both-enabled).
+ * - A [PaginationPageIndicatorComponent] between the two buttons showing the current page and the
+ *   page count, as rendered by
+ *   [paginationPageIndicator][dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings.paginationPageIndicator].
  *
  * The initial pagination glyph is updated asynchronously one tick after the pagination state
  * first resolves (via [InitialPaginationStateWatcher]) to work around Folia scheduling constraints.
@@ -54,7 +57,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             .layoutTarget(layoutTarget)
             .apply {
                 onPageSwitch(pageSwitchHandler.prepend { context, _ ->
-                    updatePaginationGlyph(context)
+                    updatePaginationOverlay(context)
                 })
             }.build()
     }
@@ -118,16 +121,41 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     protected open fun onPaginatedUpdate(update: Context) = Unit
 
 
-    private fun updatePaginationGlyph(context: Context) {
+    /**
+     * Re-renders the pagination overlay in the header: the navigation button glyph for the current
+     * state, plus the page counter between the two buttons.
+     */
+    private fun updatePaginationOverlay(context: Context) {
         val pagination = paginationState.get(context) ?: return
+        val row = settings.paginationButtonRow
+        val geometry = settings.headerGeometry
+
         val buttonGlyph = PaginationButtonGlyphComponent.getByPaginationState(
-            row = settings.paginationButtonRow,
-            pagination = pagination
+            row = row,
+            pagination = pagination,
+            geometry = geometry
         )
+
+        val pageText = settings.paginationPageIndicator
+            ?.render(pagination.currentPage(), pagination.lastPage())
 
         modifyContainer(context) {
             removeChildrenOfType<PaginationButtonGlyphComponent>()
             addChild(buttonGlyph)
+
+            removeChildrenOfType<PaginationPageIndicatorComponent>()
+            if (pageText != null) {
+                addChild(
+                    PaginationPageIndicatorComponent(
+                        row = row,
+                        text = pageText,
+                        font = settings.rowFont(row),
+                        geometry = geometry,
+                        defaultColor = settings.headerTextColor,
+                        metrics = settings.rowFontMetrics
+                    )
+                )
+            }
         }
     }
 
@@ -188,7 +216,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
         if (pagination.isStatic) {
             render.player.scheduler.run(JavaPlugin.getProvidingPlugin(javaClass), {
-                updatePaginationGlyph(render)
+                updatePaginationOverlay(render)
             }, null)
         } else {
             render.watchState(pagination.id, InitialPaginationStateWatcher())
@@ -252,7 +280,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             if (host !is Context) return
 
             host.player.scheduler.run(JavaPlugin.getProvidingPlugin(javaClass), {
-                updatePaginationGlyph(host)
+                updatePaginationOverlay(host)
             }, null)
         }
     }

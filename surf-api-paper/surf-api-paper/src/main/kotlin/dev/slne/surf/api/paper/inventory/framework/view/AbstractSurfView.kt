@@ -6,7 +6,6 @@ import dev.slne.surf.api.paper.inventory.framework.view.container.component.comp
 import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerTitleComponent
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.ViewContainerModificationContext
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.addChild
-import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.backHint
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings
 import me.devnatan.inventoryframework.View
@@ -24,8 +23,8 @@ import me.devnatan.inventoryframework.context.*
  * and settings (cancel behaviours, row count, type) are always applied before delegating
  * to the subclass hooks.
  *
- * The view's title is composed from a [ViewContainer] that holds a glyph background component
- * and an aligned title text component. The container can be modified at any time via
+ * The view's title is composed from a [ViewContainer] that holds the header components: the
+ * aligned title text plus whatever the view adds on top of it. The container can be modified at any time via
  * [modifyContainer].
  *
  * You can directly create a subclass or use the dsl functions ([surfView] or [paginatedSurfView]) instead.
@@ -138,19 +137,20 @@ abstract class AbstractSurfView(
 
     private fun applyContainerDefaults(context: Context) {
         modifyContainer(context) {
-            addChild(ViewContainerGlyphComponent(settings.rows))
+            if (settings.backgroundGlyph) {
+                addChild(ViewContainerGlyphComponent(settings.rows))
+            }
+
             addChild(
                 ViewContainerTitleComponent(
                     title = defaultHeader,
                     font = settings.font,
-                    charSpacing = ViewContainerTitleComponent.CHAR_SPACING,
-                    textAlignment = settings.headerTextAlignment
+                    textAlignment = settings.headerTextAlignment,
+                    geometry = settings.headerGeometry,
+                    defaultColor = settings.headerTextColor,
+                    metrics = settings.headerFontMetrics
                 )
             )
-
-            if (settings.navigateBackOnOutsideClick) {
-                backHint()
-            }
 
             containerDefaults()
         }

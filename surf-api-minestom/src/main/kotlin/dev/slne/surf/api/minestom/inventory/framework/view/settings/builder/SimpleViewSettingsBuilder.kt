@@ -61,6 +61,12 @@ class SimpleViewSettingsBuilder @PublishedApi internal constructor() : SurfViewS
     override fun build(): SimpleViewSettings = SimpleViewSettings(
         font = font,
         headerTextAlignment = headerTextAlignment,
+        headerTextColor = headerTextColor,
+        headerFontMetrics = headerFontMetrics,
+        rowFontMetrics = rowFontMetrics,
+        headerGeometry = headerGeometry,
+        backgroundGlyph = backgroundGlyph,
+        rowFonts = rowFonts,
         cancelOnClick = cancelOnClick,
         cancelOnDrag = cancelOnDrag,
         cancelOnDrop = cancelOnDrop,

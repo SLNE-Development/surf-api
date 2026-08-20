@@ -1,6 +1,7 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings.builder
 
 import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.minestom.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedViewSettings
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginationButtonPosition
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginationViewRows
@@ -68,6 +69,35 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         this.paginationButtonPosition = position
     }
 
+    /**
+     * Renders the page counter between the navigation buttons, or `null` to render none.
+     * Defaults to [SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR], which renders
+     * `current/total`.
+     */
+    var paginationPageIndicator: PaginationPageIndicator? =
+        SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR
+        private set
+
+    /**
+     * Sets the [PaginationPageIndicator] that renders the page counter.
+     *
+     * ```kotlin
+     * settings {
+     *     paginationPageIndicator { current, total -> text("Seite $current von $total") }
+     * }
+     * ```
+     *
+     * @param indicator renders the counter, or `null` to render none
+     */
+    fun paginationPageIndicator(indicator: PaginationPageIndicator?) {
+        this.paginationPageIndicator = indicator
+    }
+
+    /** Renders no page counter between the navigation buttons. */
+    fun noPaginationPageIndicator() {
+        paginationPageIndicator(null)
+    }
+
     /** Shorthand for `paginationButtonPosition(PaginationButtonPosition.BOTTOM)`. */
     fun paginationButtonsAtBottom() {
         paginationButtonPosition(PaginationButtonPosition.BOTTOM)
@@ -82,6 +112,12 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
     override fun build(): PaginatedViewSettings = PaginatedViewSettings(
         font = font,
         headerTextAlignment = headerTextAlignment,
+        headerTextColor = headerTextColor,
+        headerFontMetrics = headerFontMetrics,
+        rowFontMetrics = rowFontMetrics,
+        headerGeometry = headerGeometry,
+        backgroundGlyph = backgroundGlyph,
+        rowFonts = rowFonts,
         cancelOnClick = cancelOnClick,
         cancelOnDrag = cancelOnDrag,
         cancelOnDrop = cancelOnDrop,
@@ -89,6 +125,7 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         navigateBackOnOutsideClick = navigateBackOnOutsideClick,
         paginationViewRows = paginationViewRows,
         paginationButtonPosition = paginationButtonPosition,
+        paginationPageIndicator = paginationPageIndicator,
     )
 }
 
