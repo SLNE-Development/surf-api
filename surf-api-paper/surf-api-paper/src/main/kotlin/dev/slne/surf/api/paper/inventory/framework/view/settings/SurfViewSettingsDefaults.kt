@@ -8,6 +8,7 @@ import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlign
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.kyori.adventure.key.Key
+import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.format.TextColor
 
 /**
@@ -123,6 +124,17 @@ object SurfViewSettingsDefaults {
      * which renders `current/total` between the navigation buttons.
      */
     val DEFAULT_PAGINATION_PAGE_INDICATOR: PaginationPageIndicator = PaginationPageIndicator.Default
+
+    /**
+     * Default [Sound] played to the viewer when a paginated view switches to another page:
+     * `minecraft:item.book.page_turn`, the sound the client plays when a book page is turned.
+     */
+    val DEFAULT_PAGINATION_SWITCH_SOUND: Sound = Sound.sound(
+        key("minecraft", "item.book.page_turn"),
+        Sound.Source.PLAYER,
+        1f,
+        1f
+    )
 
     /**
      * Returns the default font that renders header text on the one-based slot [row]:

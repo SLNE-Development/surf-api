@@ -188,6 +188,16 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     protected open fun applyContainerDefaults() {
     }
 
+    /**
+     * Plays the configured
+     * [paginationSwitchSound][dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedViewSettings.paginationSwitchSound]
+     * to the viewer that just navigated to another page. Does nothing if no sound is configured.
+     */
+    private fun playPageSwitchSound(click: SlotClickContext) {
+        val sound = settings.paginationSwitchSound ?: return
+        click.player.playSound(sound)
+    }
+
     final override fun onViewInit(config: ViewConfigBuilder) {
         paginationState // initialize pagination state
         onPaginatedInit(config)
@@ -225,13 +235,21 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             .withItem(ItemStack.AIR)
             .updateOnStateChange(paginationState)
             .displayIf(pagination::canBack)
-            .onClick(pagination::back)
+            .onClick { click: SlotClickContext ->
+                if (!pagination.canBack()) return@onClick
+                pagination.back()
+                playPageSwitchSound(click)
+            }
 
         render.slot(PaginationButton.RIGHT.clickSlot(paginationButtonRow))
             .withItem(ItemStack.AIR)
             .updateOnStateChange(paginationState)
             .displayIf(pagination::canAdvance)
-            .onClick(pagination::advance)
+            .onClick { click: SlotClickContext ->
+                if (!pagination.canAdvance()) return@onClick
+                pagination.advance()
+                playPageSwitchSound(click)
+            }
 
         onPaginatedRender(render)
     }

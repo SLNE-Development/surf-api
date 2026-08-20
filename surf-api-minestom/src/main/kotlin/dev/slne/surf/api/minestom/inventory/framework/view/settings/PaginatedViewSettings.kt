@@ -4,6 +4,7 @@ import dev.slne.surf.api.minestom.inventory.framework.view.pagination.Pagination
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.align.TextAlignment
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import net.kyori.adventure.key.Key
+import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.format.TextColor
 
 /**
@@ -34,6 +35,8 @@ import net.kyori.adventure.text.format.TextColor
  * @property paginationButtonPosition the [PaginationButtonPosition] for navigation buttons
  * @property paginationPageIndicator renders the page counter between the navigation buttons, or
  *   `null` to render none
+ * @property paginationSwitchSound the [Sound] played to the viewer when a navigation button
+ *   switches to another page, or `null` to play none
  * @see SurfViewSettings
  * @see PaginationViewRows
  * @see PaginationButtonPosition
@@ -55,6 +58,7 @@ data class PaginatedViewSettings(
     val paginationViewRows: PaginationViewRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_VIEW_ROWS,
     val paginationButtonPosition: PaginationButtonPosition = SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION,
     val paginationPageIndicator: PaginationPageIndicator? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR,
+    val paginationSwitchSound: Sound? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND,
 ) : SurfViewSettings {
     override val rows: ViewRows = paginationViewRows.actualRows
     internal val paginationButtonRow =

@@ -6,6 +6,7 @@ import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedVie
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginationButtonPosition
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginationViewRows
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
+import net.kyori.adventure.sound.Sound
 
 /**
  * DSL builder for [PaginatedViewSettings].
@@ -98,6 +99,29 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         paginationPageIndicator(null)
     }
 
+    /**
+     * The [Sound] played to the viewer when a navigation button switches to another page, or `null`
+     * to play none. Defaults to [SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND], the
+     * vanilla book page-turn sound.
+     */
+    var paginationSwitchSound: Sound? =
+        SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND
+        private set
+
+    /**
+     * Sets the [Sound] played when a navigation button switches to another page.
+     *
+     * @param sound the sound to play, or `null` to play none
+     */
+    fun paginationSwitchSound(sound: Sound?) {
+        this.paginationSwitchSound = sound
+    }
+
+    /** Plays no sound when a navigation button switches to another page. */
+    fun noPaginationSwitchSound() {
+        paginationSwitchSound(null)
+    }
+
     /** Shorthand for `paginationButtonPosition(PaginationButtonPosition.BOTTOM)`. */
     fun paginationButtonsAtBottom() {
         paginationButtonPosition(PaginationButtonPosition.BOTTOM)
@@ -126,6 +150,7 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         paginationViewRows = paginationViewRows,
         paginationButtonPosition = paginationButtonPosition,
         paginationPageIndicator = paginationPageIndicator,
+        paginationSwitchSound = paginationSwitchSound,
     )
 }
 

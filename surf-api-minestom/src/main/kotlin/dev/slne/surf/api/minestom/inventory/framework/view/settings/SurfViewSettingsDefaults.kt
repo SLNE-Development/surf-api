@@ -4,10 +4,13 @@ import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.core.messages.adventure.key
 import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.minestom.inventory.framework.view.pagination.PaginationPageIndicator
+import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults.DEFAULT_HEADER_FONT
+import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults.rowFont
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.align.TextAlignment
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.kyori.adventure.key.Key
+import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.format.TextColor
 
 /**
@@ -123,6 +126,17 @@ object SurfViewSettingsDefaults {
      * which renders `current/total` between the navigation buttons.
      */
     val DEFAULT_PAGINATION_PAGE_INDICATOR: PaginationPageIndicator = PaginationPageIndicator.Default
+
+    /**
+     * Default [Sound] played to the viewer when a paginated view switches to another page:
+     * `minecraft:item.book.page_turn`, the sound the client plays when a book page is turned.
+     */
+    val DEFAULT_PAGINATION_SWITCH_SOUND: Sound = Sound.sound(
+        key("minecraft", "item.book.page_turn"),
+        Sound.Source.UI,
+        1f,
+        1f
+    )
 
     /**
      * Returns the default font that renders header text on the one-based slot [row]:
