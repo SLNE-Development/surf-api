@@ -16,6 +16,9 @@ internal class SurfApiMinestomEntrypoint @Inject constructor(
         preparePacketEvents()
         instance.bootstrap()
         instance.onLoad()
+    }
+
+    override suspend fun afterStart() {
         instance.onEnable()
     }
 
