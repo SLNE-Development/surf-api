@@ -4,6 +4,7 @@ import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.minestom.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedViewSettings
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginationButtonPosition
+import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginationEmptyRows
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginationViewRows
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
 import net.kyori.adventure.sound.Sound
@@ -13,6 +14,7 @@ import net.kyori.adventure.sound.Sound
  *
  * Extends [SurfViewSettingsBuilder] with pagination-specific properties:
  * - [paginationViewRows] — controls the number of visible item rows and total inventory height
+ * - [paginationEmptyRows] — controls how many rows stay empty next to the pagination content
  * - [paginationButtonPosition] — controls whether the prev/next buttons are at the top or bottom
  *
  * Create instances via [paginatedViewSettings] or the `settings { }` DSL function in a
@@ -51,6 +53,40 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
      */
     fun paginationViewRows(rows: PaginationViewRows) {
         this.paginationViewRows = rows
+    }
+
+    /**
+     * The [PaginationEmptyRows] controlling how many rows stay empty at the inventory edge opposite
+     * the navigation buttons. They are taken out of the content rows, so the inventory height stays
+     * the one of [paginationViewRows].
+     * Defaults to [SurfViewSettingsDefaults.DEFAULT_PAGINATION_EMPTY_ROWS].
+     */
+    var paginationEmptyRows: PaginationEmptyRows =
+        SurfViewSettingsDefaults.DEFAULT_PAGINATION_EMPTY_ROWS
+        private set
+
+    /**
+     * Sets the [PaginationEmptyRows].
+     *
+     * @param emptyRows the desired [PaginationEmptyRows]
+     */
+    fun paginationEmptyRows(emptyRows: PaginationEmptyRows) {
+        this.paginationEmptyRows = emptyRows
+    }
+
+    /**
+     * Sets the number of rows that stay empty next to the pagination content.
+     *
+     * @param emptyRows the number of empty rows (0..3)
+     * @throws IllegalArgumentException if [emptyRows] is not in the range 0..3
+     */
+    fun paginationEmptyRows(emptyRows: Int) {
+        paginationEmptyRows(PaginationEmptyRows.byRows(emptyRows))
+    }
+
+    /** Shorthand for `paginationEmptyRows(PaginationEmptyRows.NONE)`. */
+    fun noPaginationEmptyRows() {
+        paginationEmptyRows(PaginationEmptyRows.NONE)
     }
 
     /**
@@ -148,6 +184,7 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         cancelOnPickup = cancelOnPickup,
         navigateBackOnOutsideClick = navigateBackOnOutsideClick,
         paginationViewRows = paginationViewRows,
+        paginationEmptyRows = paginationEmptyRows,
         paginationButtonPosition = paginationButtonPosition,
         paginationPageIndicator = paginationPageIndicator,
         paginationSwitchSound = paginationSwitchSound,

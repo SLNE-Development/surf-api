@@ -118,6 +118,12 @@ object SurfViewSettingsDefaults {
     /** Default [PaginationViewRows] for paginated views: [PaginationViewRows.FIVE]. */
     val DEFAULT_PAGINATION_VIEW_ROWS = PaginationViewRows.FIVE
 
+    /**
+     * Default [PaginationEmptyRows] for paginated views: [PaginationEmptyRows.NONE], so the
+     * pagination content fills every row except the navigation button row.
+     */
+    val DEFAULT_PAGINATION_EMPTY_ROWS = PaginationEmptyRows.NONE
+
     /** Default [PaginationButtonPosition] for paginated views: [PaginationButtonPosition.BOTTOM]. */
     val DEFAULT_PAGINATION_BUTTON_POSITION = PaginationButtonPosition.BOTTOM
 

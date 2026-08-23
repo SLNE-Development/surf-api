@@ -9,6 +9,7 @@ import dev.slne.surf.api.paper.inventory.framework.view.layoutTarget
 import dev.slne.surf.api.paper.inventory.framework.view.paginatedSurfView
 import dev.slne.surf.api.paper.inventory.framework.view.pagination.pagination
 import dev.slne.surf.api.paper.inventory.framework.view.settings
+import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginationEmptyRows
 import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginationViewRows
 import org.bukkit.inventory.ItemType
 
@@ -18,13 +19,14 @@ private val testPaginationEntries = List(40) { index -> "Eintrag ${index + 1}" }
 val testPaginatedViewDsl = paginatedSurfView("Test Pagination") {
     settings {
         paginationViewRows(PaginationViewRows.THREE)
+        paginationEmptyRows(PaginationEmptyRows.ONE)
         paginationButtonsAtBottom()
     }
 
     layoutTarget('I')
 
     containerDefaults {
-        // Jede Zeile außer der Button-Zeile trägt jetzt Items, daher kein rowText über den Slots.
+        // Die oberste Zeile bleibt leer (paginationEmptyRows), darunter die Items, unten die Buttons.
         header { darkSpacer("Paginated Inventory Test (${testPaginationEntries.size} Einträge)") }
     }
 

@@ -12,6 +12,7 @@ import net.kyori.adventure.text.format.TextColor
  *
  * Extends [SurfViewSettings] with pagination-specific configuration:
  * - The number of visible content rows and the total inventory rows via [paginationViewRows]
+ * - The number of rows left empty next to the content via [paginationEmptyRows]
  * - The position (top or bottom) of the previous/next navigation buttons via [paginationButtonPosition]
  *
  * Create instances via the DSL builder [paginatedViewSettings] or through the
@@ -32,6 +33,8 @@ import net.kyori.adventure.text.format.TextColor
  * @property cancelOnPickup whether item-pickup events should be cancelled by default
  * @property navigateBackOnOutsideClick whether an outside click navigates to the parent view
  * @property paginationViewRows the [PaginationViewRows] controlling the number of content rows
+ * @property paginationEmptyRows the [PaginationEmptyRows] left empty at the inventory edge opposite
+ *   the navigation buttons; taken out of the content rows, not added to the inventory height
  * @property paginationButtonPosition the [PaginationButtonPosition] for navigation buttons
  * @property paginationPageIndicator renders the page counter between the navigation buttons, or
  *   `null` to render none
@@ -39,6 +42,7 @@ import net.kyori.adventure.text.format.TextColor
  *   switches to another page, or `null` to play none
  * @see SurfViewSettings
  * @see PaginationViewRows
+ * @see PaginationEmptyRows
  * @see PaginationButtonPosition
  */
 data class PaginatedViewSettings(
@@ -56,6 +60,7 @@ data class PaginatedViewSettings(
     override val cancelOnPickup: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_PICKUP,
     override val navigateBackOnOutsideClick: Boolean = SurfViewSettingsDefaults.DEFAULT_NAVIGATE_BACK_ON_CLOSE,
     val paginationViewRows: PaginationViewRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_VIEW_ROWS,
+    val paginationEmptyRows: PaginationEmptyRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_EMPTY_ROWS,
     val paginationButtonPosition: PaginationButtonPosition = SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION,
     val paginationPageIndicator: PaginationPageIndicator? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR,
     val paginationSwitchSound: Sound? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND,
@@ -69,13 +74,24 @@ data class PaginatedViewSettings(
         }
 
     /**
-     * The one-based rows the pagination engine fills: every row except [paginationButtonRow], so
-     * the content starts right at the top edge of the inventory.
+     * The one-based rows the pagination engine fills: every row except [paginationButtonRow] and
+     * the [paginationEmptyRows] rows kept free at the opposite inventory edge.
      */
     internal val paginationContentRows: IntRange =
         if (paginationButtonPosition == PaginationButtonPosition.BOTTOM) {
-            1 until rows.rows
+            (1 + paginationEmptyRows.rows) until rows.rows
         } else {
-            2..rows.rows
+            2..(rows.rows - paginationEmptyRows.rows)
         }
+
+    /** How many rows the pagination engine actually fills with content. */
+    val paginationContentRowCount: Int = rows.rows - 1 - paginationEmptyRows.rows
+
+    init {
+        require(paginationContentRowCount >= 1) {
+            "$paginationViewRows leaves ${paginationViewRows.contentRows} content row(s) in a " +
+                    "${rows.rows}-row inventory, which cannot hold $paginationEmptyRows empty " +
+                    "row(s) as well - use fewer empty rows or more pagination rows"
+        }
+    }
 }

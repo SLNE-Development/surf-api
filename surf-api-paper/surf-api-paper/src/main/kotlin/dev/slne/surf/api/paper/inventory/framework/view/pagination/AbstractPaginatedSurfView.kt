@@ -163,8 +163,8 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     }
 
     /**
-     * Applies the paginated container defaults: blocks all border cells and the button row, then
-     * calls [applyContainerDefaults] for subclass customisation.
+     * Applies the paginated container defaults: blocks all border cells, the button row and every
+     * empty row, then calls [applyContainerDefaults] for subclass customisation.
      *
      * This override is `final` — subclasses should override [applyContainerDefaults] instead.
      */
@@ -209,14 +209,17 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     }
 
     /**
-     * Builds the layout: the button row stays empty, every other row is filled with
-     * [layoutTarget] slots, so the pagination content starts in the very first row.
+     * Builds the layout: only the
+     * [paginationContentRows][dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings.paginationContentRows]
+     * are filled with [layoutTarget] slots. The button row and the
+     * [paginationEmptyRows][dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings.paginationEmptyRows]
+     * rows at the opposite inventory edge stay empty.
      */
     private fun createLayout(): Array<String> {
-        val buttonRow = settings.paginationButtonRow
+        val contentRows = settings.paginationContentRows
 
         return Array(settings.rows.rows) { index ->
-            if (index + 1 == buttonRow) EMPTY_ROW else paginationRow
+            if (index + 1 in contentRows) paginationRow else EMPTY_ROW
         }
     }
 
