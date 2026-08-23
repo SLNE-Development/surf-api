@@ -16,7 +16,7 @@ packetevents-plugin = "2.13.0"
 commandapi = "11.2.0"
 
 # LuckPerms
-luckperms = "5.4"
+luckperms = "5.5"
 luckpermsplugin-bukkit = "v5.5.17-bukkit" # "luckpermsplugin" is written without a separating "-" between "luckperms" and "plugin", because Gradle interprets the version catalog key as a hierarchical alias and would split it into a nested accessor (libs.luckperms.plugin.bukkit), which conflicts with the existing libs.luckperms alias for the API dependency.
 
 # Scoreboard Library
