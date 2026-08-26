@@ -3,7 +3,6 @@ package dev.slne.surf.api.paper.nms.bridges
 import com.destroystokyo.paper.profile.PlayerProfile
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.Companion.editOfflineInventory
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
@@ -24,6 +23,9 @@ interface SurfPaperNmsPlayerBridge {
 
     fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean = true)
     fun removeAllTrackedPlayers(player: Player, swallowExceptions: Boolean = true)
+
+    fun restoreAllTrackedEntities(player: Player, swallowExceptions: Boolean = true)
+    fun restoreAllTrackedPlayers(player: Player, swallowExceptions: Boolean = true)
 
     fun resyncVehicleState(player: Player, swallowExceptions: Boolean = true): Int
     fun resyncPlayerState(player: Player)
