@@ -50,7 +50,6 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.createTempFile
 import kotlin.jvm.optionals.getOrNull
@@ -86,6 +85,45 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             if (otherPlayer.uuid == nmsPlayer.uuid) continue
             try {
                 trackedEntity.serverEntity.removePairing(otherPlayer)
+            } catch (e: Throwable) {
+                if (!swallowExceptions) {
+                    throw e
+                }
+            }
+        }
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun restoreAllTrackedEntities(player: Player, swallowExceptions: Boolean) {
+        val nmsPlayer = player.toNms()
+        val connection = nmsPlayer.connection ?: return
+        val level = nmsPlayer.level()
+
+        val trackers = level.chunkSource.chunkMap.entityMap.values.toTypedArray()
+        for (tracker in trackers) {
+            try {
+                if (tracker.seenBy.remove(connection)) {
+                    tracker.serverEntity.removePairing(nmsPlayer)
+                }
+            } catch (e: Throwable) {
+                if (!swallowExceptions) {
+                    throw e
+                }
+            }
+        }
+    }
+
+    @Suppress("USELESS_ELVIS")
+    override fun restoreAllTrackedPlayers(player: Player, swallowExceptions: Boolean) {
+        val nmsPlayer = player.toNms()
+        val trackedEntity = nmsPlayer.`moonrise$getTrackedEntity`() ?: return
+
+        for (otherPlayer in MinecraftServer.getServer().playerList.players) {
+            if (otherPlayer.uuid == nmsPlayer.uuid) continue
+            try {
+                if (trackedEntity.seenBy.remove(otherPlayer.connection)) {
+                    trackedEntity.serverEntity.removePairing(otherPlayer)
+                }
             } catch (e: Throwable) {
                 if (!swallowExceptions) {
                     throw e
