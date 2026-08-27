@@ -48,6 +48,7 @@ import org.redisson.misc.RedisURI
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 
 /**
@@ -159,6 +160,7 @@ class RedisApi private constructor(
      *
      * This is populated during [connect]. It may remain `null` if no special handling is required.
      */
+    @Volatile
     var redisOsType: BaseEventCodec.OSType? = null
         private set
 
@@ -228,6 +230,8 @@ class RedisApi private constructor(
 
     @Volatile
     private var disconnected = false
+
+    private val disconnecting = AtomicBoolean(false)
 
     init {
         initializables.put(eventBus, Unit)
@@ -486,6 +490,7 @@ class RedisApi private constructor(
     @Blocking
     fun disconnect() {
         if (!isConnected()) return
+        if (!disconnecting.compareAndSet(false, true)) return
 
         try {
             disposeManagedResources()

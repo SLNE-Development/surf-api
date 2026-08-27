@@ -32,6 +32,15 @@ internal class EventCodecRegistry {
         }
     }
 
+    private val onDemandRegistrations = object : ClassValue<EventCodecRegistration?>() {
+        override fun computeValue(type: Class<*>): EventCodecRegistration? {
+            val codec = discoveredCodecs.get(type) ?: return null
+
+            @Suppress("UNCHECKED_CAST")
+            return registrationUnchecked(type as Class<out RedisEvent>, codec, explicit = false)
+        }
+    }
+
     @Synchronized
     fun <E : RedisEvent> registerExplicit(eventType: Class<E>, codec: RedisEventCodec<E>) {
         check(!frozen) { "Cannot register an event codec after RedisApi has been frozen" }
@@ -101,8 +110,7 @@ internal class EventCodecRegistry {
 
         if (registered != null) return registered
 
-        val discovered = discoveredCodecs.get(eventType) ?: return null
-        val registration = registrationUnchecked(eventType, discovered, explicit = false)
+        val registration = onDemandRegistrations.get(eventType) ?: return null
         val collision = if (frozen) {
             frozenById[registration.eventId]
         } else synchronized(this) {
@@ -136,7 +144,10 @@ internal class EventCodecRegistry {
 
     @Synchronized
     fun clear() {
-        for (eventType in registrationsByClass.keys) discoveredCodecs.remove(eventType)
+        for (eventType in registrationsByClass.keys) {
+            discoveredCodecs.remove(eventType)
+            onDemandRegistrations.remove(eventType)
+        }
         registrationsByClass.clear()
         registrationsById.clear()
         frozenByClass = emptyObject2ObjectMap()

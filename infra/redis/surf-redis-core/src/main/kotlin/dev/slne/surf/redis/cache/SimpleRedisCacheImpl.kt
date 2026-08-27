@@ -111,8 +111,8 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
     private val scriptKeys: List<Any> = listOf(idsKey, streamKey, versionKey)
     private val touchScriptKeys: List<Any> = listOf(idsKey)
 
-    private fun redisKey(key: K): String = "$keyPrefix$VALUE_KEY_INFIX${keyToString(key)}"
     private fun localKey(key: K): String = keyToString(key)
+    private fun redisKeyOf(localKey: String): String = "$keyPrefix$VALUE_KEY_INFIX$localKey"
 
     override fun init(): Mono<Void> {
         if (isDisposed) return Mono.error(IllegalStateException("Cache '$namespace' is disposed"))
@@ -228,27 +228,27 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
 
     override suspend fun getCached(key: K): V? {
         val localKey = localKey(key)
-        val redisKey = redisKey(key)
 
         when (val entry = nearCache.getIfPresent(localKey)) {
             is CacheEntry.Value -> {
-                refreshTtl(localKey, redisKey)
+                refreshTtl(localKey)
                 return entry.value
             }
 
             CacheEntry.Null -> {
-                refreshTtl(localKey, redisKey)
+                refreshTtl(localKey)
                 return null
             }
 
             null -> Unit // miss
         }
 
-        val bucket = api.redissonReactive.getBucket<String>(redisKey, StringCodec)
+        val bucket = api.redissonReactive.getBucket<String>(redisKeyOf(localKey), StringCodec)
         val raw = bucket.get().awaitSingleOrNull() ?: return null
 
-        bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
-        refreshTtl(localKey, redisKey)
+        if (!refreshTtl(localKey)) {
+            bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+        }
 
         val entry = if (raw == NULL_MARKER) {
             CacheEntry.Null
@@ -306,13 +306,13 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
 
 
-        val redisKey = redisKey(key)
-        val bucket = api.redissonReactive.getBucket<String>(redisKey, StringCodec)
+        val bucket = api.redissonReactive.getBucket<String>(redisKeyOf(localKey), StringCodec)
         val raw = bucket.get().awaitSingleOrNull()
 
         if (raw != null) {
-            bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
-            refreshTtl(localKey, redisKey)
+            if (!refreshTtl(localKey)) {
+                bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+            }
             return if (raw == NULL_MARKER) {
                 nearCache.put(localKey, CacheEntry.Null)
                 null
@@ -402,9 +402,13 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         return deleted
     }
 
-    private fun refreshTtl(localKey: String, redisKey: String) {
+    /**
+     * @return `true` if the TTL refresh script was dispatched, `false` if the refresh gate
+     *         suppressed it
+     */
+    private fun refreshTtl(localKey: String): Boolean {
         val shouldRefresh = refreshGate.asMap().putIfAbsent(localKey, Unit) == null
-        if (!shouldRefresh) return
+        if (!shouldRefresh) return false
 
         scriptExecutor.execute<Long>(
             TOUCH_SCRIPT,
@@ -419,9 +423,11 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             { e ->
                 log.atWarning()
                     .withCause(e)
-                    .log("Failed to refresh TTL for key $redisKey in cache '$namespace'")
+                    .log("Failed to refresh TTL for key ${redisKeyOf(localKey)} in cache '$namespace'")
             }
         )
+
+        return true
     }
 
     private fun clearNearCacheOnly() {

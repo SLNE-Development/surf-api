@@ -23,3 +23,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+# ProjectAtlas runtime state
+/.projectatlas/*
+!/.projectatlas/config.toml
+!/.projectatlas/projectatlas-nonsource-files.toon

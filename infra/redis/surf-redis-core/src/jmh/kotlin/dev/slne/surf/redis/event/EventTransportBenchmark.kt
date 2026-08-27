@@ -35,6 +35,16 @@ open class EventTransportBenchmark {
     open fun binaryEncode(state: EventTransportBenchmarkState, blackhole: Blackhole): Int =
         state.encodeBinary(blackhole)
 
+    /** Legacy JSON envelope encoding: event -> JsonElement tree -> envelope -> string. */
+    @Benchmark
+    open fun jsonEnvelopeViaTree(state: EventTransportBenchmarkState, blackhole: Blackhole): Int =
+        state.encodeJsonEnvelopeViaTree(blackhole)
+
+    /** Current JSON envelope encoding: single streaming pass via [EventEnvelopeSerializers]. */
+    @Benchmark
+    open fun jsonEnvelopeStreaming(state: EventTransportBenchmarkState, blackhole: Blackhole): Int =
+        state.encodeJsonEnvelopeStreaming(blackhole)
+
     @Benchmark
     open fun jsonDecode(state: EventTransportBenchmarkState): BenchmarkEvent = state.decodeJson()
 
@@ -62,6 +72,7 @@ open class EventTransportBenchmarkState {
     private lateinit var binaryPacket: ByteArray
     private lateinit var registration: EventCodecRegistration
     private lateinit var binaryCodec: Codec
+    private lateinit var streamingEnvelopeSerializer: KSerializer<RedisEvent>
 
     private val json = Json {
         namingStrategy = JsonNamingStrategy.SnakeCase
@@ -102,8 +113,15 @@ open class EventTransportBenchmarkState {
             registration.takeIf { it.eventId == eventId }
         }
 
+        streamingEnvelopeSerializer = EventEnvelopeSerializers(json.serializersModule)
+            .get(BenchmarkEvent::class.java)!!
+
         jsonPacket = encodeJsonWireBytes()
         binaryPacket = encodeBinaryWireBytes()
+
+        check(json.encodeToString(streamingEnvelopeSerializer, event) == encodeJsonMessage()) {
+            "Streaming envelope encoding diverged from the legacy tree encoding"
+        }
 
         check(decodeJson() == event) { "JSON benchmark fixture does not round-trip" }
         check(decodeBinary() == event) { "Binary benchmark fixture does not round-trip" }
@@ -129,6 +147,19 @@ open class EventTransportBenchmarkState {
         } finally {
             wire.release()
         }
+    }
+
+    /** Envelope encoding only, without the Redis StringCodec wrapping. */
+    fun encodeJsonEnvelopeViaTree(blackhole: Blackhole): Int {
+        val message = encodeJsonMessage()
+        blackhole.consume(message)
+        return message.length
+    }
+
+    fun encodeJsonEnvelopeStreaming(blackhole: Blackhole): Int {
+        val message = json.encodeToString(streamingEnvelopeSerializer, event)
+        blackhole.consume(message)
+        return message.length
     }
 
     fun decodeJson(): BenchmarkEvent {

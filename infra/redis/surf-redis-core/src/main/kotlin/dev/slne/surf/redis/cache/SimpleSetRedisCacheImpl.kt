@@ -54,6 +54,7 @@ class SimpleSetRedisCacheImpl<T : Any>(
         private const val NULL_MARKER = "__NULL__"
         private const val LOCAL_IDS_CACHE_KEY = "__ids__"
         private const val MAX_CONCURRENT_REDIS_OPS = 64
+        private const val ID_FAN_OUT_CHUNK = 1000
         private const val MESSAGE_DELIMITER = '\u0000'
         private const val STREAM_MAX_LENGTH = 10_000
 
@@ -289,6 +290,25 @@ class SimpleSetRedisCacheImpl<T : Any>(
         }
     }
 
+    /**
+     * Runs [action] for every id, at most [ID_FAN_OUT_CHUNK] coroutines in flight at a time.
+     */
+    private suspend inline fun forEachIdChunked(
+        ids: Set<String>,
+        crossinline action: suspend (String) -> Unit
+    ) {
+        val iterator = ids.iterator()
+        while (iterator.hasNext()) {
+            coroutineScope {
+                var remaining = ID_FAN_OUT_CHUNK
+                while (remaining-- > 0 && iterator.hasNext()) {
+                    val id = iterator.next()
+                    launch { action(id) }
+                }
+            }
+        }
+    }
+
     private fun indexCacheKey(indexName: String, indexValue: String): String =
         "$indexName$MESSAGE_DELIMITER$indexValue"
 
@@ -297,8 +317,12 @@ class SimpleSetRedisCacheImpl<T : Any>(
     private fun refreshKeyIdx(indexName: String, indexValue: String): String =
         "$OP_IDX$MESSAGE_DELIMITER$indexName$MESSAGE_DELIMITER$indexValue"
 
-    private fun refreshValueTtl(id: String) {
-        refreshTtl(refreshKeyVal(id)) {
+    /**
+     * @return `true` if the TTL refresh script was dispatched, `false` if the refresh gate
+     *         suppressed it
+     */
+    private fun refreshValueTtl(id: String): Boolean {
+        return refreshTtl(refreshKeyVal(id)) {
             val argv = arrayOfNulls<Any>(4 + indexNames.size)
             argv[0] = ttlMillisStr
             argv[1] = keyPrefix
@@ -345,10 +369,12 @@ class SimpleSetRedisCacheImpl<T : Any>(
         }
     }
 
-    private fun refreshTtl(gateKey: String, action: () -> Unit) {
+    /** @return `true` if [action] ran, `false` if the refresh gate suppressed it */
+    private fun refreshTtl(gateKey: String, action: () -> Unit): Boolean {
         val inserted = refreshGate.asMap().putIfAbsent(gateKey, Unit) == null
-        if (!inserted) return
+        if (!inserted) return false
         action()
+        return true
     }
 
     override suspend fun getCachedById(id: String): T? {
@@ -377,8 +403,9 @@ class SimpleSetRedisCacheImpl<T : Any>(
             return null
         }
 
-        bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
-        refreshValueTtl(normId)
+        if (!refreshValueTtl(normId)) {
+            bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
+        }
 
         val obj = if (raw == NULL_MARKER) null else api.json.decodeFromString(serializer, raw)
 
@@ -435,26 +462,20 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val changed = AtomicBoolean(false)
         val semaphore = Semaphore(MAX_CONCURRENT_REDIS_OPS)
 
-        loadedIds.chunked(1000).forEach { chunk ->
-            coroutineScope {
-                for (id in chunk) {
-                    launch {
-                        semaphore.withPermit {
-                            val element = getCachedById(id)
-                            if (element == null) {
-                                indexSet.remove(id).awaitSingleOrNull()
-                                changed.set(true)
-                            } else {
-                                val actual = index.extractStrings(element)
-                                if (queryValue !in actual) {
-                                    indexSet.remove(id).awaitSingleOrNull()
-                                    changed.set(true)
-                                } else {
-                                    filteredIds.add(id)
-                                    result.add(element)
-                                }
-                            }
-                        }
+        forEachIdChunked(loadedIds) { id ->
+            semaphore.withPermit {
+                val element = getCachedById(id)
+                if (element == null) {
+                    indexSet.remove(id).awaitSingleOrNull()
+                    changed.set(true)
+                } else {
+                    val matches = index.extractStringsSequence(element).any { it == queryValue }
+                    if (!matches) {
+                        indexSet.remove(id).awaitSingleOrNull()
+                        changed.set(true)
+                    } else {
+                        filteredIds.add(id)
+                        result.add(element)
                     }
                 }
             }
@@ -546,24 +567,17 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val result = ConcurrentHashMap.newKeySet<T>()
         val semaphore = Semaphore(MAX_CONCURRENT_REDIS_OPS)
 
-        ids.chunked(1000).forEach { chunk ->
-            coroutineScope {
-                for (id in chunk) {
-                    launch {
-                        semaphore.withPermit {
-                            val value = getCachedById(id)
-                            if (value == null) {
-                                idsRedis.remove(id).awaitSingleOrNull() // stale
-                                nearIds.invalidate(LOCAL_IDS_CACHE_KEY)
-                            } else if (condition(value)) {
-                                result.add(value)
-                            }
-                        }
-                    }
+        forEachIdChunked(ids) { id ->
+            semaphore.withPermit {
+                val value = getCachedById(id)
+                if (value == null) {
+                    idsRedis.remove(id).awaitSingleOrNull() // stale
+                    nearIds.invalidate(LOCAL_IDS_CACHE_KEY)
+                } else if (condition(value)) {
+                    result.add(value)
                 }
             }
         }
-
 
         return result
     }
@@ -618,18 +632,12 @@ class SimpleSetRedisCacheImpl<T : Any>(
         val removedAny = AtomicBoolean(false)
         val semaphore = Semaphore(MAX_CONCURRENT_REDIS_OPS)
 
-        ids.chunked(1000).forEach { chunk ->
-            coroutineScope {
-                for (id in chunk) {
-                    launch {
-                        semaphore.withPermit {
-                            val value = getCachedById(id)
-                            if (value != null && predicate(value)) {
-                                removedAny.set(true)
-                                removeById(id)
-                            }
-                        }
-                    }
+        forEachIdChunked(ids) { id ->
+            semaphore.withPermit {
+                val value = getCachedById(id)
+                if (value != null && predicate(value)) {
+                    removedAny.set(true)
+                    removeById(id)
                 }
             }
         }

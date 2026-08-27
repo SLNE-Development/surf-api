@@ -5,6 +5,7 @@ package dev.slne.surf.redis.event
 import com.google.common.flogger.StackSize
 import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
 import dev.slne.surf.api.core.invoker.InvokerFactory
+import dev.slne.surf.api.core.util.emptyObject2ObjectMap
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.redis.RedisApi
@@ -14,6 +15,7 @@ import dev.slne.surf.redis.invoker.RedisEventInvokerTemplate
 import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CancellationException
@@ -50,20 +52,29 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
      */
     private val eventTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisEvent>>()
 
+    @Volatile
+    private var handlerSnapshot: Object2ObjectMap<Class<out RedisEvent>, Array<RedisEventInvoker>> =
+        emptyObject2ObjectMap()
+
+    @Volatile
+    private var typeSnapshot: Object2ObjectMap<String, Class<out RedisEvent>> =
+        emptyObject2ObjectMap()
+
     /**
-     * Read-write lock guarding mutations to [eventHandlers] and [eventTypeRegistry]
-     * during handler registration.
-     *
-     * After the owning [RedisApi] is frozen, no further registration is allowed and
-     * event dispatching operates as a read-only path, so this lock is not contended
-     * during normal operation.
+     * Guards mutations to [eventHandlers] and [eventTypeRegistry] during handler registration and
+     * the snapshot rebuild that publishes them.
      */
     private val registrationLock = ReentrantReadWriteLock()
 
     /**
-     * Cache for event serializers, resolved once per event class.
+     * Cache for event serializers, resolved once per event class. Used by the inbound path.
      */
     private val serializerCache = KotlinSerializerCache<RedisEvent>(api.json.serializersModule)
+
+    /**
+     * Cache for outbound envelope serializers, resolved once per event class.
+     */
+    private val envelopeSerializers = EventEnvelopeSerializers(serializerCache)
     private val codecRegistry = EventCodecRegistry()
     private val missingCodecDiagnostics = ConcurrentHashMap.newKeySet<String>()
 
@@ -74,12 +85,18 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
     private val customTopic by lazy {
         api.redissonReactive.getTopic(CustomEventPacketCodec.CHANNEL, customRedisCodec)
     }
+
+    @Volatile
     private var topicListenerId: Int? = null
+
+    @Volatile
     private var customTopicListenerId: Int? = null
 
     companion object {
         private val log = logger()
         private const val REDIS_CHANNEL = "surf-redis:events"
+
+        private val EMPTY_INVOKERS = emptyArray<RedisEventInvoker>()
 
         private val INVOKER_FACTORY = InvokerFactory(
             /* templateClass = */ RedisEventInvokerTemplate::class.java,
@@ -107,8 +124,22 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
         registrationLock.write {
             eventHandlers.clear()
             eventTypeRegistry.clear()
+            rebuildSnapshots()
         }
         codecRegistry.clear()
+    }
+
+    @Suppress("JavaMapForEach")
+    private fun rebuildSnapshots() {
+        require(registrationLock.isWriteLockedByCurrentThread) { "Must hold registrationLock write lock" }
+
+        val handlers = Object2ObjectOpenHashMap<Class<out RedisEvent>, Array<RedisEventInvoker>>(eventHandlers.size)
+        eventHandlers.forEach { type, invokers ->
+            handlers[type] = invokers.toArray(EMPTY_INVOKERS)
+        }
+
+        handlerSnapshot = handlers
+        typeSnapshot = Object2ObjectOpenHashMap(eventTypeRegistry)
     }
 
     /**
@@ -127,7 +158,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
             return
         }
 
-        val eventClass = eventTypeRegistry[envelope.eventClass]
+        val eventClass = typeSnapshot[envelope.eventClass]
 
         if (eventClass == null) {
             log.atFine()
@@ -160,10 +191,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
                 .asDeferred()
         }
 
-        val eventData = serializeEvent(event) ?: return CompletableDeferred(0L)
-        val envelope = EventEnvelope.forEvent(event, eventData)
-
-        val message = api.json.encodeToString(envelope)
+        val message = serializeEnvelope(event) ?: return CompletableDeferred(0L)
 
         return topic.publish(message).asDeferred()
     }
@@ -218,6 +246,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
                     eventTypeRegistry[firstParamType.name] = firstParamType
                     eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
                         .add(invoker)
+                    rebuildSnapshots()
                 }
             }
         }
@@ -292,8 +321,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
     }
 
     private fun dispatchEvent(eventClass: Class<out RedisEvent>, event: RedisEvent) {
-        val handlers = eventHandlers[eventClass]
-        if (handlers.isNullOrEmpty()) return
+        val handlers = handlerSnapshot[eventClass] ?: return
 
         for (invoker in handlers) {
             api.redisListenerScope.launch {
@@ -310,12 +338,12 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
     }
 
     /**
-     * Serializes the given event to JSON.
+     * Serializes the given event, wrapped in its wire envelope, to a JSON string.
      *
-     * @return the serialized event, or `null` if no serializer is available
+     * @return the serialized envelope, or `null` if no serializer is available
      */
-    private fun serializeEvent(event: RedisEvent): JsonElement? {
-        val serializer = serializerCache.get(event.javaClass)
+    private fun serializeEnvelope(event: RedisEvent): String? {
+        val serializer = envelopeSerializers.get(event.javaClass)
 
         if (serializer == null) {
             log.atWarning()
@@ -324,7 +352,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
         }
 
         try {
-            return api.json.encodeToJsonElement(serializer, event)
+            return api.json.encodeToString(serializer, event)
         } catch (e: SerializationException) {
             log.atWarning()
                 .withCause(e)
@@ -368,15 +396,5 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
     private data class EventEnvelope(
         val eventClass: String,
         val eventData: JsonElement
-    ) {
-        companion object {
-            fun forEvent(event: RedisEvent, data: JsonElement): EventEnvelope {
-                return EventEnvelope(
-                    eventClass = event.javaClass.name,
-                    eventData = data
-                )
-            }
-
-        }
-    }
+    )
 }

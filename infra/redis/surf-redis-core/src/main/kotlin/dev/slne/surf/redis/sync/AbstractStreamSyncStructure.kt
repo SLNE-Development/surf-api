@@ -13,7 +13,6 @@ import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
@@ -38,8 +37,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     protected val instanceId: String = api.clientId
 
-    private val lastVersion = AtomicLong(0L)
-    private val bootstrapped = AtomicBoolean(false)
+    private val versions = StreamVersionTracker()
 
     protected val stream: RStreamReactive<String, String> by lazy {
         api.redissonReactive.getStream(streamKey, StringCodec.INSTANCE)
@@ -296,38 +294,16 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     }
 
     private fun applyVersionRange(first: Long, last: Long) {
-        if (!bootstrapped.get()) {
+        if (versions.applyRange(first, last) == StreamVersionTracker.Outcome.RESYNC) {
             requestResync()
-            return
-        }
-        if (first <= 0L || last < first) {
-            requestResync()
-            return
-        }
-
-        val current = lastVersion.get()
-        when {
-            last <= current -> Unit
-            first == current + 1L -> lastVersion.set(last)
-            else -> requestResync()
         }
     }
 
     protected fun applyVersion(ver: Long): Boolean {
-        if (!bootstrapped.get()) {
-            requestResync()
-            return false
-        }
-
-        val current = lastVersion.get()
-        return when {
-            ver <= current -> false
-            ver == current + 1 -> {
-                lastVersion.set(ver)
-                true
-            }
-
-            else -> {
+        return when (versions.apply(ver)) {
+            StreamVersionTracker.Outcome.APPLIED -> true
+            StreamVersionTracker.Outcome.SKIPPED -> false
+            StreamVersionTracker.Outcome.RESYNC -> {
                 requestResync()
                 false
             }
@@ -367,8 +343,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     @MustBeInvokedByOverriders
     override fun overrideFromRemote(raw: R) {
-        lastVersion.set(raw.version)
-        bootstrapped.set(true)
+        versions.bootstrap(raw.version)
     }
 
     protected data class StreamEventData(
