@@ -21,13 +21,16 @@ allprojects {
 }
 
 val nettyRelocationBase = "dev.slne.surf.redis.shaded."
+val libsRelocationBase = "dev.slne.surf.redis.libs."
 val mangledPrefix: String = nettyRelocationBase
     .replace("_", "_1")
     .replace(".", "_")
 
+extra["libsRelocationBase"] = libsRelocationBase
+
 subprojects {
     tasks.withType<ShadowJar>().configureEach {
-        val base = "dev.slne.surf.redis.libs."
+        val base = libsRelocationBase
 
         relocate("io.netty", nettyRelocationBase + "io.netty")
 
@@ -101,6 +104,14 @@ subprojects {
         configure<KotlinJvmExtension> {
             compilerOptions {
                 optIn.add("dev.slne.surf.redis.util.InternalRedisAPI")
+            }
+        }
+
+        if (extensions.findByType<PublishingExtension>()?.publications?.findByName("shadow") != null) {
+            tasks.withType<AbstractPublishToMaven>().configureEach {
+                onlyIf("only the shadow publication owns these coordinates") {
+                    publication.name != "pluginMaven"
+                }
             }
         }
     }
