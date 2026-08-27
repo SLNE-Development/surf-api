@@ -15,6 +15,7 @@ internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(
 
     init {
         "me.devnatan.inventoryframework" relocatesTo "devnatan.inventoryframework"
+        "dev.wyck" relocatesTo "dev.wyck"
     }
 
     override fun Project.configure0() {

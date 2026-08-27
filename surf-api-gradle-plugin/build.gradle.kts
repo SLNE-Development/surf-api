@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.2.0")
+    append("2.2.1")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -44,7 +44,7 @@ dependencies {
     compileOnly(gradleApi())
     pluginDependencies.forEach { dep -> api(dep) }
 
-    implementation("com.palantir.javapoet:javapoet:0.14.0")
+    implementation("com.palantir.javapoet:javapoet:0.19.0")
     implementation(libs.bundles.kotlin.serialization)
 }
 
