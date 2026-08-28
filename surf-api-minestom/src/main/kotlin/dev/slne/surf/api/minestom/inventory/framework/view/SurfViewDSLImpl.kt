@@ -57,6 +57,11 @@ abstract class SurfViewDSLImpl @PublishedApi internal constructor(
 
     override fun onViewClose(close: CloseContext) {
         ctx.onClose?.invoke(ref, close)
+
+        // Stateful buttons persist on close, so skip them when the view refused to close.
+        if (close.isCancelled) return
+
+        ctx.fireButtonCloseHandlers(close)
     }
 
     context(modificationCtx: ViewContainerModificationContext)

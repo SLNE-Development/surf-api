@@ -53,6 +53,32 @@ abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @Published
     @PublishedApi
     internal var containerDefaults: (context (ViewContainerModificationContext, ViewRef) () -> Unit)? =
         null
+
+    private val buttonCloseHandlers = mutableListOf<(CloseContext) -> Unit>()
+
+    /**
+     * Registers a close hook for a stateful button declared in this view's DSL block.
+     *
+     * Called by the button factories in
+     * [ViewButtonDsl][dev.slne.surf.api.minestom.inventory.framework.view.button.statefulButton]; the
+     * hooks are fired by [fireButtonCloseHandlers].
+     */
+    internal fun registerButtonCloseHandler(handler: (CloseContext) -> Unit) {
+        buttonCloseHandlers.add(handler)
+    }
+
+    /**
+     * Fires the close hooks of every stateful button declared in this view's DSL block, so that
+     * buttons whose state differs from the one they started out with can persist it.
+     *
+     * Invoked by the view implementations after the view's own `onClose` callback ran and only if
+     * that callback did not cancel the close.
+     */
+    internal fun fireButtonCloseHandlers(close: CloseContext) {
+        for (handler in buttonCloseHandlers) {
+            handler(close)
+        }
+    }
 }
 
 /**

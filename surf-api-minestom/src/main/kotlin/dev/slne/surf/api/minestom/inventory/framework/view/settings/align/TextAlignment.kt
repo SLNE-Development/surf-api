@@ -8,8 +8,9 @@ import dev.slne.surf.api.core.inventory.framework.internal.TextAlignmentMath
  * Each entry implements [calculateShift] to return the pixel offset that positions the text
  * at the correct horizontal position given the container geometry described by [TextAlignmentOptions].
  *
- * The companion object provides [calculateTextWidth] which computes the total pixel width of a
- * text string based on the character size and spacing configured in [TextAlignmentOptions].
+ * Alignment is driven by the **rendered** pixel width of the title rather than by its character
+ * count, so uppercasing, per-character width overrides and the leading spacing glyph are all
+ * accounted for. Use [calculateTextWidth] to measure a string that is rendered verbatim.
  *
  * @see TextAlignmentOptions
  * @see dev.slne.surf.api.minestom.api.inventory.framework.view.settings.SurfViewSettings.headerTextAlignment
@@ -19,7 +20,7 @@ enum class TextAlignment {
      * Aligns the title to the left edge of the container area (plus [TextAlignmentOptions.padding]).
      */
     LEFT {
-        override fun calculateShift(text: String, options: TextAlignmentOptions): Int =
+        override fun calculateShift(textWidth: Int, options: TextAlignmentOptions): Int =
             TextAlignmentMath.leftAlignedShift(options.leftShift, options.padding)
     },
 
@@ -28,15 +29,13 @@ enum class TextAlignment {
      */
     RIGHT {
         override fun calculateShift(
-            text: String,
+            textWidth: Int,
             options: TextAlignmentOptions
         ): Int = TextAlignmentMath.rightAlignedShift(
-            text,
+            textWidth,
             options.leftShift,
             options.padding,
-            options.containerWidth,
-            options.charSize,
-            options.charSpacing
+            options.containerWidth
         )
     },
 
@@ -45,40 +44,47 @@ enum class TextAlignment {
      */
     CENTER {
         override fun calculateShift(
-            text: String,
+            textWidth: Int,
             options: TextAlignmentOptions
         ): Int = TextAlignmentMath.centerAlignedShift(
-            text,
+            textWidth,
             options.leftShift,
             options.padding,
-            options.containerWidth,
-            options.charSize,
-            options.charSpacing
+            options.containerWidth
         )
     };
 
     /**
-     * Calculates the pixel shift (offset from the left edge) required to place [text] at this alignment
-     * within the container described by [options].
+     * Calculates the pixel shift (offset from the left edge) required to place a text run of
+     * [textWidth] pixels at this alignment within the container described by [options].
      *
-     * @param text the title string whose width is taken into account
+     * @param textWidth the rendered pixel width of the title, as measured by [calculateTextWidth]
      * @param options the container geometry options
      * @return the pixel shift value to apply before rendering the text
      */
-    abstract fun calculateShift(text: String, options: TextAlignmentOptions): Int
+    abstract fun calculateShift(textWidth: Int, options: TextAlignmentOptions): Int
 
     companion object {
         /**
          * Computes the total rendered pixel width of [text] given [options].
          *
-         * Uses the formula: `text.length * charSize + (text.length - 1) * charSpacing`.
-         * Returns `0` for an empty string.
+         * Sums the per-glyph widths from [TextAlignmentOptions.charWidths] (falling back to
+         * [TextAlignmentOptions.charSize]) and adds [TextAlignmentOptions.charSpacing] between
+         * adjacent glyphs. Measured per Unicode code point. Returns `0` for an empty string.
+         *
+         * [text] must be the string as it is actually rendered — measuring a string that is
+         * transformed before rendering (for example uppercased) yields the wrong width.
          *
          * @param text the string to measure
          * @param options the character size and spacing options
          * @return the total pixel width of the text
          */
         fun calculateTextWidth(text: String, options: TextAlignmentOptions): Int =
-            TextAlignmentMath.textWidth(text, options.charSize, options.charSpacing)
+            TextAlignmentMath.textWidth(
+                text,
+                options.charSize,
+                options.charSpacing,
+                options.charWidths
+            )
     }
 }

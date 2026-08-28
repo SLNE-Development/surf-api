@@ -13,7 +13,9 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Components are stored in a [CopyOnWriteArrayList] to allow concurrent iteration and
  * modification. Duplicate components (by [equals]/[hashCode]) are silently ignored on
  * [addChild]. The [render] method builds the final Adventure [Component][net.kyori.adventure.text.Component]
- * by iterating each child and applying its positional shift glyphs around its visual.
+ * by iterating each child and applying its positional shift glyphs around its visual. Children with
+ * [ViewContainerComponent.hasExactWidth] `false` are rendered last so their inexact cursor reset
+ * cannot displace any other component.
  *
  * This class is `@PublishedApi internal` — it is not part of the public API. Use
  * [ViewContainerModificationContext] and the DSL helpers in `ViewContainerDSL.kt` instead.
@@ -51,7 +53,12 @@ internal class ViewContainer {
     }
 
     fun render() = buildText {
-        for (component in children) {
+        // Components that only estimate their textureWidth leave the cursor slightly off the
+        // container origin, so render them after every exact one instead of letting the following
+        // components inherit that drift. partition() keeps the relative insertion order of both.
+        val (exact, estimated) = children.partition { it.hasExactWidth }
+
+        for (component in exact + estimated) {
             append {
                 appendShiftedComponent(component.positionalShift, component.textureWidth) {
                     with(component) { renderComponent() }

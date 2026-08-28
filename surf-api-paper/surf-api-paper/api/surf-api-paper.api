@@ -1117,6 +1117,53 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/SurfViewRefK
 	public static final fun getView (Ldev/slne/surf/api/paper/inventory/framework/view/SurfViewRef;)Ldev/slne/surf/api/paper/inventory/framework/view/SurfViewDSLImpl;
 }
 
+public final class dev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonBuilder {
+	public final fun onChange (Lkotlin/jvm/functions/Function3;)V
+	public final fun onCloseChanged (Lkotlin/jvm/functions/Function3;)V
+	public final fun reverseOnRightClick (Z)V
+	public static synthetic fun reverseOnRightClick$default (Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonBuilder;ZILjava/lang/Object;)V
+	public final fun state (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun state$default (Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonBuilder;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonDslKt {
+	public static final fun computedStatefulButton (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;
+	public static final fun computedToggleButton (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;
+	public static final fun computedTripleButton (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;
+	public static final fun statefulButton (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;
+	public static final fun toggleButton (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;ZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;
+	public static synthetic fun toggleButton$default (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;
+	public static final fun tripleButton (Ldev/slne/surf/api/paper/inventory/framework/view/AbstractSurfViewContext;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle {
+	public final fun get (Lme/devnatan/inventoryframework/context/Context;)Ljava/lang/Object;
+	public final fun hasChanged (Lme/devnatan/inventoryframework/context/Context;)Z
+	public final fun initial (Lme/devnatan/inventoryframework/context/Context;)Ljava/lang/Object;
+	public final fun set (Lme/devnatan/inventoryframework/context/Context;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandleKt {
+	public static final fun button (Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonHandle;)Lme/devnatan/inventoryframework/component/BukkitItemComponentBuilder;
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonStateScope {
+	public final fun getValue ()Ljava/lang/Object;
+	public final fun item (Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;)V
+	public final fun item (Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;)V
+	public static synthetic fun item$default (Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonStateScope;Lorg/bukkit/Material;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun item$default (Ldev/slne/surf/api/paper/inventory/framework/view/button/ViewButtonStateScope;Lorg/bukkit/inventory/ItemType;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun onEnter (Lkotlin/jvm/functions/Function2;)V
+	public final fun renderItem (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/inventory/framework/view/button/ViewToggleButtonBuilder {
+	public final fun onCloseChanged (Lkotlin/jvm/functions/Function3;)V
+	public final fun onToggle (Lkotlin/jvm/functions/Function2;)V
+	public final fun whenOff (Lkotlin/jvm/functions/Function1;)V
+	public final fun whenOn (Lkotlin/jvm/functions/Function1;)V
+}
+
 public final class dev/slne/surf/api/paper/inventory/framework/view/container/ViewContainer {
 	public fun <init> ()V
 	public final fun addChild (Ldev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent;)V
@@ -1129,16 +1176,22 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/container/Vi
 
 public abstract interface class dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent {
 	public abstract fun equals (Ljava/lang/Object;)Z
+	public fun getHasExactWidth ()Z
 	public abstract fun getPositionalShift ()I
 	public abstract fun getTextureWidth ()I
 	public abstract fun hashCode ()I
 	public abstract fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
 }
 
+public final class dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent$DefaultImpls {
+	public static fun getHasExactWidth (Ldev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent;)Z
+}
+
 public final class dev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewBlockCellComponent : dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent {
 	public fun <init> (II)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColumn ()I
+	public fun getHasExactWidth ()Z
 	public fun getPositionalShift ()I
 	public final fun getRow ()I
 	public fun getTextureWidth ()I
@@ -1149,6 +1202,7 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/container/co
 public final class dev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerBackHintComponent : dev/slne/surf/api/paper/inventory/framework/view/container/component/ViewContainerComponent {
 	public static final field INSTANCE Ldev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerBackHintComponent;
 	public fun equals (Ljava/lang/Object;)Z
+	public fun getHasExactWidth ()Z
 	public fun getPositionalShift ()I
 	public fun getTextureWidth ()I
 	public fun hashCode ()I
@@ -1163,8 +1217,10 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/container/co
 	public static final field Companion Ldev/slne/surf/api/paper/inventory/framework/view/container/component/components/ViewContainerTitleComponent$Companion;
 	public static final field LEFT_SHIFT I
 	public static final field PADDING I
-	public fun <init> (Ljava/lang/String;Lnet/kyori/adventure/key/Key;ILdev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;)V
+	public fun <init> (Ljava/lang/String;Lnet/kyori/adventure/key/Key;ILdev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lit/unimi/dsi/fastutil/ints/Int2IntMap;)V
+	public synthetic fun <init> (Ljava/lang/String;Lnet/kyori/adventure/key/Key;ILdev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lit/unimi/dsi/fastutil/ints/Int2IntMap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public fun getHasExactWidth ()Z
 	public fun getPositionalShift ()I
 	public fun getTextureWidth ()I
 	public fun hashCode ()I
@@ -1471,7 +1527,7 @@ public abstract class dev/slne/surf/api/paper/inventory/framework/view/settings/
 	public static final field Companion Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment$Companion;
 	public static final field LEFT Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
 	public static final field RIGHT Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
-	public abstract fun calculateShift (Ljava/lang/String;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;)I
+	public abstract fun calculateShift (ILdev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;)I
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
 	public static fun values ()[Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;
@@ -1482,17 +1538,20 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/settings/ali
 }
 
 public final class dev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions {
-	public fun <init> (IIIII)V
+	public fun <init> (IIIIILit/unimi/dsi/fastutil/ints/Int2IntMap;)V
+	public synthetic fun <init> (IIIIILit/unimi/dsi/fastutil/ints/Int2IntMap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()I
 	public final fun component5 ()I
-	public final fun copy (IIIII)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;IIIIIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public final fun component6 ()Lit/unimi/dsi/fastutil/ints/Int2IntMap;
+	public final fun copy (IIIIILit/unimi/dsi/fastutil/ints/Int2IntMap;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;IIIIILit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignmentOptions;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCharSize ()I
 	public final fun getCharSpacing ()I
+	public final fun getCharWidths ()Lit/unimi/dsi/fastutil/ints/Int2IntMap;
 	public final fun getContainerWidth ()I
 	public final fun getLeftShift ()I
 	public final fun getPadding ()I
