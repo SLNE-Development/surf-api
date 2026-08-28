@@ -44,6 +44,7 @@ class V26_1NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
         V26_1SurfPaperNmsCommonBridgeImpl()
 
     override fun createEntityBridge(): SurfPaperNmsEntityBridge = V26_1SurfPaperNmsEntityBridgeImpl()
+    override fun createPortalBridge(): SurfPaperNmsPortalBridge = V26_1SurfPaperNmsPortalBridgeImpl()
     override fun createPlayerBridge(): SurfPaperNmsPlayerBridge = V26_1SurfPaperNmsPlayerBridgeImpl()
     override fun createItemBridge(): SurfPaperNmsItemBridge = V26_1SurfPaperNmsItemBridgeImpl()
     override fun createNbtBridge(): SurfPaperNmsNbtBridge = V26_1SurfPaperNmsNbtBridgeImpl()

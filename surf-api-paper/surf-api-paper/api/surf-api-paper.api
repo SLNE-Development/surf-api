@@ -1931,6 +1931,18 @@ public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge {
+	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge$Companion;
+	public abstract fun createNetherPortal (Lorg/bukkit/World;IIIZI)Lorg/bukkit/Location;
+	public abstract fun findNearestNetherPortal (Lorg/bukkit/World;IIIIIIII)Lorg/bukkit/Location;
+}
+
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge {
+	public fun createNetherPortal (Lorg/bukkit/World;IIIZI)Lorg/bukkit/Location;
+	public fun findNearestNetherPortal (Lorg/bukkit/World;IIIIIIII)Lorg/bukkit/Location;
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge;
+}
+
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
 	public static final field Companion Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$Companion;
 	public abstract fun getPlayerStatsAsJson (Lorg/bukkit/entity/Player;)Ljava/lang/String;
