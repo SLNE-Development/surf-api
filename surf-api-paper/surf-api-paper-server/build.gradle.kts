@@ -99,6 +99,7 @@ tasks {
         mergeServiceFiles()
         val relocationPrefix: String by project
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
+        relocate("dev.wyck", "$relocationPrefix.dev.wyck")
     }
 }
 

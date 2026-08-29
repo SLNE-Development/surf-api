@@ -1,7 +1,7 @@
 plugins {
     `core-convention`
     kotlin("kapt")
-    id("com.github.gmazzo.buildconfig") version "6.0.9"
+    id("com.github.gmazzo.buildconfig") version "6.0.10"
 }
 
 dependencies {

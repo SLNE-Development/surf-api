@@ -125,4 +125,9 @@ modules.xml
 **/run/*
 logs/
 .claude
-CLAUDE.local.md
+
+
+# ProjectAtlas runtime state
+/.projectatlas/*
+!/.projectatlas/config.toml
+!/.projectatlas/projectatlas-nonsource-files.toon
