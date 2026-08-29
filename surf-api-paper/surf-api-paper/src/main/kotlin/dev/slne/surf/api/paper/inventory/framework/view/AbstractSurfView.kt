@@ -6,12 +6,15 @@ import dev.slne.surf.api.paper.inventory.framework.view.container.component.comp
 import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerTitleComponent
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.ViewContainerModificationContext
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.addChild
+import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.removeChildrenOfType
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings
+import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.ViewType
 import me.devnatan.inventoryframework.context.*
+import net.kyori.adventure.text.Component
 
 /**
  * Abstract base class for all Surf inventory views built on top of the inventory framework.
@@ -26,6 +29,11 @@ import me.devnatan.inventoryframework.context.*
  * The view's title is composed from a [ViewContainer] that holds the header components: the
  * aligned title text plus whatever the view adds on top of it. The container can be modified at any time via
  * [modifyContainer].
+ *
+ * A title set on the view's config instead - `onInit { title(...) }`, or `modifyConfig { title(...) }`
+ * inside [onViewOpen] - is adopted as the container's header rather than replacing the rendered
+ * container, so the header texture, the alignment and every other header element survive it. From
+ * any other context use [updateHeader], which does the same.
  *
  * You can directly create a subclass or use the dsl functions ([surfView] or [paginatedSurfView]) instead.
  *
@@ -135,25 +143,119 @@ abstract class AbstractSurfView(
         }
     }
 
-    private fun applyContainerDefaults(context: Context) {
+    /**
+     * Replaces the header text of the view, keeping every other container component - the
+     * background glyph, row texts, the pagination overlay - in place.
+     *
+     * This is the API to change a view's title with: setting the title directly on the view's
+     * config (`modifyConfig { title(...) }`) would replace the whole rendered container, dropping
+     * the header texture along with the alignment shift, which leaves the text unaligned and every
+     * other header element gone.
+     *
+     * ```kotlin
+     * override fun onViewClick(click: SlotClickContext) {
+     *     updateHeader(click, text("Seite 2", Colors.GOLD))
+     * }
+     * ```
+     *
+     * @param context the context used to propagate the title change to viewers
+     * @param header the title component to render
+     * @param alignment horizontal alignment of the title; defaults to the alignment the current
+     *   title is rendered with, or to [SurfViewSettings.headerTextAlignment] if there is none
+     */
+    protected fun updateHeader(
+        context: Context,
+        header: Component,
+        alignment: TextAlignment? = null,
+    ) = modifyContainer(context) { applyHeader(header, alignment) }
+
+    /**
+     * Replaces the header text of the view with the plain, white string [header].
+     *
+     * @param context the context used to propagate the title change to viewers
+     * @param header the plain-text title to render
+     * @param alignment horizontal alignment of the title; defaults to the alignment the current
+     *   title is rendered with, or to [SurfViewSettings.headerTextAlignment] if there is none
+     * @see updateHeader
+     */
+    protected fun updateHeader(
+        context: Context,
+        header: String,
+        alignment: TextAlignment? = null,
+    ) = updateHeader(context, Component.text(header), alignment)
+
+    /**
+     * Swaps the container's [ViewContainerTitleComponent] for one rendering [header].
+     *
+     * Only the title component is replaced, so every other component the container holds survives
+     * the title change. When [alignment] is `null` the alignment of the title currently rendered is
+     * kept, falling back to [SurfViewSettings.headerTextAlignment] if the container has no title
+     * yet.
+     */
+    context(ctx: ViewContainerModificationContext)
+    internal fun applyHeader(header: Component, alignment: TextAlignment? = null) {
+        val currentAlignment = ctx.container.children
+            .filterIsInstance<ViewContainerTitleComponent>()
+            .firstOrNull()
+            ?.textAlignment
+
+        removeChildrenOfType<ViewContainerTitleComponent>()
+
+        addChild(
+            ViewContainerTitleComponent(
+                title = header,
+                font = settings.font,
+                textAlignment = alignment ?: currentAlignment ?: settings.headerTextAlignment,
+                geometry = settings.headerGeometry,
+                defaultColor = settings.headerTextColor,
+                metrics = settings.headerFontMetrics
+            )
+        )
+    }
+
+    private fun applyContainerDefaults(context: OpenContext) {
+        // A title set on the config before the container exists - via `onInit { title(...) }` or by
+        // whoever opened the view - is the header the view was asked to show, so it wins over the
+        // one the view was constructed with.
+        val header = context.configuredTitle() ?: Component.text(defaultHeader)
+
         modifyContainer(context) {
             if (settings.backgroundGlyph) {
                 addChild(ViewContainerGlyphComponent(settings.rows))
             }
 
-            addChild(
-                ViewContainerTitleComponent(
-                    title = defaultHeader,
-                    font = settings.font,
-                    textAlignment = settings.headerTextAlignment,
-                    geometry = settings.headerGeometry,
-                    defaultColor = settings.headerTextColor,
-                    metrics = settings.headerFontMetrics
-                )
-            )
+            applyHeader(header)
 
             containerDefaults()
         }
+    }
+
+    /**
+     * Adopts a title that was set on the config from outside the container - `modifyConfig
+     * { title(...) }` inside [onViewOpen] being the usual case - as the container's header.
+     *
+     * Without this, that title would replace the rendered container as a whole: the header texture,
+     * the alignment shift and every row text would be gone, and the raw text would sit wherever the
+     * client happens to draw an inventory title.
+     */
+    private fun adoptExternalHeader(open: OpenContext) {
+        val container = containerState.get(open)
+        val header = open.configuredTitle() ?: return
+
+        // The container itself put its own render on the config, that one is not external.
+        if (header == container.lastRenderedTitle) return
+
+        modifyContainer(open) { applyHeader(header) }
+    }
+
+    /**
+     * Returns the title currently set on this context's config as a [Component], or `null` if no
+     * title is set. Non-component titles (e.g. plain strings) are wrapped as-is.
+     */
+    private fun OpenContext.configuredTitle(): Component? = when (val title = config.title) {
+        null -> null
+        is Component -> title
+        else -> Component.text(title.toString())
     }
 
     /**
@@ -184,6 +286,7 @@ abstract class AbstractSurfView(
         recordHistory(open)
         applyContainerDefaults(open)
         onViewOpen(open)
+        adoptExternalHeader(open)
     }
 
     private fun recordHistory(open: OpenContext) {

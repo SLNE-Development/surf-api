@@ -4,6 +4,7 @@ import dev.slne.surf.api.core.inventory.framework.internal.appendShiftedComponen
 import dev.slne.surf.api.core.messages.adventure.buildText
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
+import net.kyori.adventure.text.Component
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -27,6 +28,17 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class ViewContainer {
     val children: List<ViewContainerComponent>
         field = CopyOnWriteArrayList<ViewContainerComponent>()
+
+    /**
+     * The title [net.kyori.adventure.text.Component] the last [render] call produced, or `null`
+     * while the container has never been rendered.
+     *
+     * Kept so that a title arriving from outside the container - e.g. one set through
+     * `modifyConfig { title(...) }` - can be told apart from the one the container itself put on
+     * the view's config.
+     */
+    var lastRenderedTitle: Component? = null
+        private set
 
     fun addChild(component: ViewContainerComponent) {
         children.addIfAbsent(component)
@@ -56,7 +68,7 @@ internal class ViewContainer {
         removeChildrenOfType(T::class.java)
     }
 
-    fun render() = buildText {
+    fun render(): Component = buildText {
         // Components that only estimate their textureWidth leave the cursor slightly off the
         // container origin, so render them after every exact one instead of letting the following
         // components inherit that drift. partition() keeps the relative insertion order of both.
@@ -71,5 +83,5 @@ internal class ViewContainer {
         }
 
         font(SurfViewSettingsDefaults.DEFAULT_MENU_FONT)
-    }
+    }.also { lastRenderedTitle = it }
 }

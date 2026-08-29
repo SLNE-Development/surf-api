@@ -7,7 +7,6 @@ import dev.slne.surf.api.minestom.inventory.framework.view.AbstractSurfViewRef
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.components.ViewBlockCellComponent
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.components.ViewContainerRowTextComponent
-import dev.slne.surf.api.minestom.inventory.framework.view.container.component.components.ViewContainerTitleComponent
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewHeaderGeometry
@@ -96,27 +95,17 @@ inline fun <reified T : ViewContainerComponent> removeChildrenOfType() {
  * ```
  *
  * @param header the title component to render
- * @param alignment horizontal alignment of the title; defaults to the view's
+ * @param alignment horizontal alignment of the title; defaults to the alignment the title
+ *   currently rendered uses, or to the view's
  *   [headerTextAlignment][dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettings.headerTextAlignment]
+ *   if the container has no title yet
  */
 context(context: ViewContainerModificationContext, ref: AbstractSurfViewRef)
 fun header(
     header: Component,
     alignment: TextAlignment? = null,
 ) {
-    removeChildrenOfType<ViewContainerTitleComponent>()
-
-    val settings = ref.getRegisteredView().settings
-    addChild(
-        ViewContainerTitleComponent(
-            title = header,
-            font = settings.font,
-            textAlignment = alignment ?: settings.headerTextAlignment,
-            geometry = settings.headerGeometry,
-            defaultColor = settings.headerTextColor,
-            metrics = settings.headerFontMetrics
-        )
-    )
+    ref.getRegisteredView().applyHeader(header, alignment)
 }
 
 /**
@@ -129,8 +118,10 @@ fun header(
  * ```
  *
  * @param header the plain-text title to render
- * @param alignment horizontal alignment of the title; defaults to the view's
+ * @param alignment horizontal alignment of the title; defaults to the alignment the title
+ *   currently rendered uses, or to the view's
  *   [headerTextAlignment][dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettings.headerTextAlignment]
+ *   if the container has no title yet
  */
 context(context: ViewContainerModificationContext, ref: AbstractSurfViewRef)
 fun header(
@@ -152,8 +143,10 @@ fun header(
  * }
  * ```
  *
- * @param alignment horizontal alignment of the title; defaults to the view's
+ * @param alignment horizontal alignment of the title; defaults to the alignment the title
+ *   currently rendered uses, or to the view's
  *   [headerTextAlignment][dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettings.headerTextAlignment]
+ *   if the container has no title yet
  * @param block builds the title component
  */
 context(context: ViewContainerModificationContext, ref: AbstractSurfViewRef)
