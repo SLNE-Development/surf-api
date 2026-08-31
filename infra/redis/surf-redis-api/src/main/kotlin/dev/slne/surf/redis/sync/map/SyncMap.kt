@@ -71,6 +71,13 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     fun put(key: K, value: V): V?
 
     /**
+     * Associates [value] with [key] locally and waits until the mutation has been committed to Redis.
+     *
+     * This does not wait for other Redis-connected nodes to apply the corresponding stream event.
+     */
+    suspend fun putAndAwait(key: K, value: V): V?
+
+    /**
      * Convenience operator for [put].
      */
     operator fun set(key: K, value: V): V? = put(key, value)
@@ -83,6 +90,13 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     fun remove(key: K): V?
 
     /**
+     * Removes [key] locally and waits until the mutation has been committed to Redis.
+     *
+     * @return the previously associated local value, or `null` if there was no local mapping
+     */
+    suspend fun removeAndAwait(key: K): V?
+
+    /**
      * Removes all entries that match [predicate] and propagates the change through Redis.
      *
      * The propagation strategy is implementation-defined. Callers should assume that other nodes
@@ -93,9 +107,48 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     fun removeIf(predicate: (K, V) -> Boolean): Boolean
 
     /**
+     * Removes all locally matching entries and waits until the batched Redis mutation has completed.
+     */
+    suspend fun removeIfAndAwait(predicate: (K, V) -> Boolean): Boolean
+
+    /**
      * Clears the local map and propagates the change through Redis.
      *
      * If the local map is already empty, this method is a no-op.
      */
     fun clear()
+
+    /**
+     * Clears the local map and waits until the clear has been committed to Redis.
+     */
+    suspend fun clearAndAwait()
+
+    /**
+     * Replaces [expectedValue] with [newValue] only if Redis still contains exactly [expectedValue]
+     * for [key].
+     *
+     * @return `true` if the Redis value matched and was replaced
+     */
+    suspend fun replaceIfEqualsAndAwait(
+        key: K,
+        expectedValue: V,
+        newValue: V,
+    ): Boolean
+
+    /**
+     * Removes [key] only if Redis still contains exactly [expectedValue].
+     *
+     * @return `true` if the Redis value matched and was removed
+     */
+    suspend fun removeIfEqualsAndAwait(
+        key: K,
+        expectedValue: V,
+    ): Boolean
+
+    /**
+     * Reads [key] directly from Redis, bypassing the eventually consistent local view.
+     *
+     * Use this for correctness-critical reads where observing the latest committed Redis state matters.
+     */
+    suspend fun getRemote(key: K): V?
 }

@@ -60,6 +60,11 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     fun add(element: T)
 
     /**
+     * Appends [element] locally and waits until the mutation has been committed to Redis.
+     */
+    suspend fun addAndAwait(element: T)
+
+    /**
      * Convenience operator for [add].
      */
     operator fun plusAssign(element: T) = add(element)
@@ -70,6 +75,13 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      * @return `true` if an element was removed locally, `false` otherwise
      */
     fun remove(element: T): Boolean
+
+    /**
+     * Removes one occurrence of [element] locally and waits until the mutation has been committed to Redis.
+     *
+     * @return `true` if an element was removed locally, `false` otherwise
+     */
+    suspend fun removeAndAwait(element: T): Boolean
 
     /**
      * Convenience operator for [remove].
@@ -86,11 +98,25 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     operator fun set(index: Int, element: T): T
 
     /**
+     * Replaces the element at [index] locally and waits until the mutation has been committed to Redis.
+     *
+     * @return the previous element at [index]
+     */
+    suspend fun setAndAwait(index: Int, element: T): T
+
+    /**
      * Removes the element at [index] and propagates the change through Redis.
      *
      * @return the removed element
      */
     fun removeAt(index: Int): T
+
+    /**
+     * Removes the element at [index] locally and waits until the mutation has been committed to Redis.
+     *
+     * @return the removed element
+     */
+    suspend fun removeAtAndAwait(index: Int): T
 
     /**
      * Removes all elements that match [predicate] and propagates the change through Redis.
@@ -103,9 +129,19 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     fun removeIf(predicate: (T) -> Boolean): Boolean
 
     /**
+     * Removes all locally matching elements and waits until the batched Redis mutation has completed.
+     */
+    suspend fun removeIfAndAwait(predicate: (T) -> Boolean): Boolean
+
+    /**
      * Clears the local list and propagates the change through Redis.
      *
      * If the local list is already empty, this method is a no-op.
      */
     fun clear()
+
+    /**
+     * Clears the local list and waits until the clear has been committed to Redis.
+     */
+    suspend fun clearAndAwait()
 }

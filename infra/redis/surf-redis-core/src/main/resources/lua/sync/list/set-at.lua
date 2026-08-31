@@ -1,9 +1,7 @@
--- Keys
 local dataKey    = KEYS[1]
 local streamKey  = KEYS[2]
 local versionKey = KEYS[3]
 
--- Args
 local originId   = ARGV[1]
 local delim      = ARGV[2]
 local maxLen     = tonumber(ARGV[3])
@@ -12,20 +10,36 @@ local fieldMsg   = ARGV[5]
 local eventType  = ARGV[6]
 
 local idx        = tonumber(ARGV[7])
-local newValue   = ARGV[8]
+local expected   = ARGV[8]
+local newValue   = ARGV[9]
 
--- Validate index
-local old        = redis.call('LINDEX', dataKey, idx)
-if old == false then
+local current    = redis.call('LINDEX', dataKey, idx)
+
+if current == false or current ~= expected then
     return -1
 end
 
--- Set new value at index, increment version, add message to stream
 redis.call('LSET', dataKey, idx, newValue)
-local ver = redis.call('INCR', versionKey)
 
-local payload = tostring(idx) .. delim .. tostring(old) .. delim .. tostring(newValue)
-local msg = tostring(ver) .. delim .. originId .. delim .. payload
-redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*', fieldType, eventType, fieldMsg, msg)
+local version = redis.call('INCR', versionKey)
 
-return ver
+local payload =
+    tostring(idx) .. delim ..
+    current .. delim ..
+    newValue
+
+local message =
+    tostring(version) .. delim ..
+    originId .. delim ..
+    payload
+
+redis.call(
+    'XADD',
+    streamKey,
+    'MAXLEN', '~', maxLen,
+    '*',
+    fieldType, eventType,
+    fieldMsg, message
+)
+
+return version

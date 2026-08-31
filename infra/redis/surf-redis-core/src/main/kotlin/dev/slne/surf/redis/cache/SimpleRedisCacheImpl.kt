@@ -14,10 +14,12 @@ import org.redisson.api.RScript
 import org.redisson.api.RStreamReactive
 import org.redisson.api.stream.StreamMessageId
 import reactor.core.Disposable
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 import org.redisson.client.codec.StringCodec.INSTANCE as StringCodec
@@ -130,7 +132,11 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         clearNearCacheOnly()
     }
 
-    private fun startPolling() = stream.pollContinuously(cursorId) {
+    private fun startPolling() = stream.pollContinuously(
+        cursorId = cursorId,
+        wakeups = Flux.never(),
+        pollInterval = 250.milliseconds,
+    ) {
         onSuccess { batch ->
             for ((messageId, fields) in batch) {
                 val type = fields[STREAM_FIELD_TYPE] ?: continue

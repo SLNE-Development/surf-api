@@ -9,6 +9,7 @@ import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.coroutines.reactor.awaitSingle
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -44,6 +45,7 @@ class SyncSetImpl<T : Any> internal constructor(
         private const val REMOVE_SCRIPT = "remove"
         private const val REMOVE_MANY_SCRIPT = "remove-many"
         private const val CLEAR_SCRIPT = "clear"
+        private const val SNAPSHOT_SCRIPT = "snapshot"
 
         private object Scripts : LuaScriptRegistry("lua/sync/set") {
             init {
@@ -51,6 +53,7 @@ class SyncSetImpl<T : Any> internal constructor(
                 load(REMOVE_SCRIPT)
                 load(REMOVE_MANY_SCRIPT)
                 load(CLEAR_SCRIPT)
+                load(SNAPSHOT_SCRIPT)
             }
         }
     }
@@ -141,6 +144,106 @@ class SyncSetImpl<T : Any> internal constructor(
         return true
     }
 
+    override suspend fun addAndAwait(element: T): Boolean {
+        val added = lock.write {
+            set.add(element)
+        }
+
+        if (!added) {
+            return false
+        }
+
+        notifyListeners(SyncSetChange.Added(element))
+
+        writeToRemoteAwait(
+            ADD_SCRIPT,
+            EVENT_ADDED,
+            encodeValue(element),
+        ).awaitSingle()
+
+        return true
+    }
+
+    override suspend fun removeAndAwait(element: T): Boolean {
+        val removed = lock.write {
+            set.remove(element)
+        }
+
+        if (!removed) {
+            return false
+        }
+
+        notifyListeners(SyncSetChange.Removed(element))
+
+        writeToRemoteAwait(
+            REMOVE_SCRIPT,
+            EVENT_REMOVED,
+            encodeValue(element),
+        ).awaitSingle()
+
+        return true
+    }
+
+    override suspend fun removeIfAndAwait(
+        predicate: (T) -> Boolean,
+    ): Boolean {
+        val removedElements = lock.write {
+            val removed = ObjectOpenHashSet<T>()
+            val iterator = set.iterator()
+
+            while (iterator.hasNext()) {
+                val element = iterator.next()
+
+                if (predicate(element)) {
+                    iterator.remove()
+                    removed.add(element)
+                }
+            }
+
+            removed
+        }
+
+        if (removedElements.isEmpty()) {
+            return false
+        }
+
+        for (element in removedElements) {
+            notifyListeners(SyncSetChange.Removed(element))
+        }
+
+        val iterator = removedElements.iterator()
+        val encoded = Array(removedElements.size) {
+            encodeValue(iterator.next())
+        }
+
+        writeBatchToRemoteAwait(
+            REMOVE_MANY_SCRIPT,
+            EVENT_REMOVED,
+            *encoded,
+        ).awaitSingle()
+
+        return true
+    }
+
+    override suspend fun clearAndAwait() {
+        val hadElements = lock.write {
+            val had = set.isNotEmpty()
+            set.clear()
+            had
+        }
+
+        if (!hadElements) {
+            return
+        }
+
+        notifyListeners(SyncSetChange.Cleared)
+
+        writeToRemoteAwait(
+            CLEAR_SCRIPT,
+            EVENT_CLEARED,
+        ).awaitSingle()
+    }
+
     private fun addRemote(element: T) {
         writeToRemote(ADD_SCRIPT, EVENT_ADDED, encodeValue(element))
     }
@@ -197,10 +300,23 @@ class SyncSetImpl<T : Any> internal constructor(
         }
     }
 
-    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<Set<String>>> = Mono.zip(
-        remoteSet.readAll(),
-        versionCounter.get().onErrorReturn(0)
-    ).map { SimpleVersionedSnapshot.fromTuple(it) }
+    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<Set<String>>> {
+        return readAtomicSnapshot(SNAPSHOT_SCRIPT)
+            .map { raw ->
+                require(raw.isNotEmpty()) {
+                    "Empty snapshot result for SyncSet '$id'"
+                }
+
+                val version = raw.last().toString().toLong()
+                val values = ObjectOpenHashSet<String>(raw.size - 1)
+
+                for (index in 0 until raw.lastIndex) {
+                    values.add(raw[index].toString())
+                }
+
+                SimpleVersionedSnapshot(values, version)
+            }
+    }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<Set<String>>) {
         val rawValue = raw.value

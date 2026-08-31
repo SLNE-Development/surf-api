@@ -12,6 +12,7 @@ import org.redisson.api.stream.StreamMessageId
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
+import reactor.util.retry.Retry
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
@@ -69,9 +70,13 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     private val streamMaxLengthStr: String = MAX_STREAM_LENGTH.toString()
     private val scriptKeys: List<Any> = listOf(dataKey, streamKey, versionKey)
 
+    private val wakeupBus = SyncStreamWakeupBus.getInstance(api)
+    private val wakeupSink = wakeupBus.register(streamKey)
+
     @MustBeInvokedByOverriders
     override fun init(): Mono<Void> {
-        return validateCodecConfiguration()
+        return wakeupBus.init()
+            .then(validateCodecConfiguration())
             .then(stream.fetchLatestStreamId())
             .doOnNext { cursorId.set(it) }
             .then(super.init())
@@ -225,7 +230,24 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         eventType: String,
         vararg values: String
     ) {
-        scriptExecutor.execute<Long>(
+        executeWrite(script, eventType, *values)
+            .subscribe({}, {})
+    }
+
+    protected fun writeToRemoteAwait(
+        script: String,
+        eventType: String,
+        vararg values: String,
+    ): Mono<Long> {
+        return executeWrite(script, eventType, *values)
+    }
+
+    private fun executeWrite(
+        script: String,
+        eventType: String,
+        vararg values: String,
+    ): Mono<Long> {
+        return scriptExecutor.execute<Long>(
             script,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LONG,
@@ -236,33 +258,52 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             STREAM_FIELD_TYPE,
             STREAM_FIELD_MSG,
             eventType,
-            *values
-        ).subscribe(
-            { newVersion ->
-                when (newVersion) {
-                    -1L -> requestResync()
-                    0L -> Unit
-                    else -> applyVersion(newVersion)
+            *values,
+        ).doOnNext { newVersion ->
+            when {
+                newVersion < 0L -> {
+                    requestResync()
                 }
-            },
-            { e ->
-                log.atWarning().withCause(e)
-                    .log("Error executing Lua script '$script' for '$id' ($streamKey)")
+
+                newVersion == 0L -> Unit
+
+                else -> {
+                    applyVersion(newVersion)
+                    wakeupBus.publish(streamKey)
+                }
             }
-        )
+        }.doOnError { throwable ->
+            log.atWarning()
+                .withCause(throwable)
+                .log("Error executing Lua script '$script' for '$id' ($streamKey)")
+
+            requestResync()
+        }
     }
 
-    /**
-     * Executes a Lua mutation that emits multiple contiguous stream versions and returns
-     * `{firstVersion, lastVersion}`. Knowing the range avoids a false version-gap resync on the
-     * originating client while still detecting unrelated interleaved updates.
-     */
     protected fun writeBatchToRemote(
         script: String,
         eventType: String,
-        vararg values: String
+        vararg values: String,
     ) {
-        scriptExecutor.execute<List<Any>>(
+        executeBatchWrite(script, eventType, *values)
+            .subscribe({}, {})
+    }
+
+    protected fun writeBatchToRemoteAwait(
+        script: String,
+        eventType: String,
+        vararg values: String,
+    ): Mono<VersionRange> {
+        return executeBatchWrite(script, eventType, *values)
+    }
+
+    private fun executeBatchWrite(
+        script: String,
+        eventType: String,
+        vararg values: String,
+    ): Mono<VersionRange> {
+        return scriptExecutor.execute<List<Any>>(
             script,
             RScript.Mode.READ_WRITE,
             RScript.ReturnType.LIST,
@@ -273,17 +314,38 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             STREAM_FIELD_TYPE,
             STREAM_FIELD_MSG,
             eventType,
-            *values
-        ).subscribe(
-            { range ->
-                val first = range.getOrNull(0).asLongOrZero()
-                val last = range.getOrNull(1).asLongOrZero()
-                if (first != 0L || last != 0L) applyVersionRange(first, last)
-            },
-            { e ->
-                log.atWarning().withCause(e)
-                    .log("Error executing batched Lua script '$script' for '$id' ($streamKey)")
+            *values,
+        )
+            .map { raw ->
+                VersionRange(
+                    first = raw.getOrNull(0).asLongOrZero(),
+                    last = raw.getOrNull(1).asLongOrZero(),
+                )
             }
+            .doOnNext { range ->
+                if (range.first != 0L || range.last != 0L) {
+                    applyVersionRange(range.first, range.last)
+
+                    if (range.last > 0L) {
+                        wakeupBus.publish(streamKey)
+                    }
+                }
+            }
+            .doOnError { throwable ->
+                log.atWarning()
+                    .withCause(throwable)
+                    .log("Error executing batched Lua script '$script' for '$id' ($streamKey)")
+
+                requestResync()
+            }
+    }
+
+    protected fun readAtomicSnapshot(script: String): Mono<List<Any>> {
+        return scriptExecutor.execute(
+            script,
+            RScript.Mode.READ_WRITE,
+            RScript.ReturnType.LIST,
+            listOf(dataKey, versionKey),
         )
     }
 
@@ -310,14 +372,27 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         }
     }
 
-    private fun startPolling(): Disposable = stream.pollContinuously(cursorId) {
+    private fun startPolling(): Disposable = stream.pollContinuously(
+        cursorId = cursorId,
+        wakeups = wakeupSink.asFlux(),
+        shouldPoll = { !resyncInFlight.get() },
+    ) {
         onSuccess { batch ->
             for ((messageId, fields) in batch) {
+                if (resyncInFlight.get()) {
+                    break
+                }
+
                 val type = fields[STREAM_FIELD_TYPE] ?: continue
                 val msg = fields[STREAM_FIELD_MSG] ?: continue
+
                 try {
                     processStreamEvent(type, msg)
                     cursorId.set(messageId)
+
+                    if (resyncInFlight.get()) {
+                        break
+                    }
                 } catch (t: Throwable) {
                     log.atWarning()
                         .withCause(t)
@@ -336,9 +411,29 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected fun requestResync() {
         if (!resyncInFlight.compareAndSet(false, true)) return
 
-        loadFromRemote()
-            .doFinally { resyncInFlight.set(false) }
+        val disposable = loadFromRemote()
+            .retryWhen(
+                Retry.backoff(
+                    Long.MAX_VALUE,
+                    java.time.Duration.ofMillis(100),
+                )
+                    .maxBackoff(java.time.Duration.ofSeconds(5))
+            )
+            .doFinally {
+                resyncInFlight.set(false)
+
+                if (!isDisposed) {
+                    wakeupSink.tryEmitNext(Unit)
+                }
+            }
             .subscribe()
+
+        trackDisposable(disposable)
+    }
+
+    override fun dispose0() {
+        wakeupBus.unregister(streamKey, wakeupSink)
+        super.dispose0()
     }
 
     @MustBeInvokedByOverriders
@@ -369,4 +464,9 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             null
         }
     }
+
+    protected data class VersionRange(
+        val first: Long,
+        val last: Long,
+    )
 }

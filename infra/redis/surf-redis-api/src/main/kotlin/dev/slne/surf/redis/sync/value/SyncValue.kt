@@ -47,6 +47,13 @@ interface SyncValue<T : Any> : SyncStructure<SyncValueChange> {
     fun set(newValue: T)
 
     /**
+     * Updates the local value and waits until the update has been committed to Redis.
+     *
+     * This does not wait for other nodes to apply the corresponding stream event.
+     */
+    suspend fun setAndAwait(newValue: T)
+
+    /**
      * Exposes this [SyncValue] as a Kotlin property delegate.
      *
      * Reads (`getValue`) are forwarded to [get], writes (`setValue`) are forwarded to [set].

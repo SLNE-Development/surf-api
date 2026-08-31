@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Expiry
 import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
+import dev.slne.surf.redis.cache.SimpleSetRedisCacheImpl.Companion.ID_FAN_OUT_CHUNK
 import dev.slne.surf.redis.util.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ import org.redisson.api.RStreamReactive
 import org.redisson.api.stream.StreamMessageId
 import org.redisson.client.codec.StringCodec
 import reactor.core.Disposable
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -178,7 +180,11 @@ class SimpleSetRedisCacheImpl<T : Any>(
         clearNearCacheOnly()
     }
 
-    private fun startPolling() = stream.pollContinuously(cursorId) {
+    private fun startPolling() = stream.pollContinuously(
+        cursorId = cursorId,
+        wakeups = Flux.never(),
+        pollInterval = 250.milliseconds,
+    ) {
         onSuccess { batch ->
             for ((messageId, fields) in batch) {
                 val type = fields[STREAM_FIELD_TYPE] ?: continue
