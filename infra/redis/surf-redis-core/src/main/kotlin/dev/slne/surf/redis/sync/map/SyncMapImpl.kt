@@ -282,12 +282,15 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         expectedValue: V,
         newValue: V,
     ): Boolean {
+        val encodedExpected = encodeValue(expectedValue)
+        val encodedNew = encodeValue(newValue)
+
         val version = writeToRemoteAwait(
             REPLACE_IF_EQUALS_SCRIPT,
             EVENT_PUT,
             encodeKey(key),
-            encodeValue(expectedValue),
-            encodeValue(newValue),
+            encodedExpected,
+            encodedNew,
         ).awaitSingle()
 
         if (version == 0L) {
@@ -298,13 +301,18 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         var resync = false
 
         lock.write {
-            when (map[key]) {
-                expectedValue -> {
+            val current = map[key]
+            when {
+                current == null -> {
+                    resync = true
+                }
+
+                encodeValue(current) == encodedExpected -> {
                     map[key] = newValue
                     notify = true
                 }
 
-                newValue -> Unit
+                encodeValue(current) == encodedNew -> Unit
 
                 else -> {
                     resync = true
@@ -333,11 +341,13 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         key: K,
         expectedValue: V,
     ): Boolean {
+        val encodedExpected = encodeValue(expectedValue)
+
         val version = writeToRemoteAwait(
             REMOVE_IF_EQUALS_SCRIPT,
             EVENT_REMOVE,
             encodeKey(key),
-            encodeValue(expectedValue),
+            encodedExpected,
         ).awaitSingle()
 
         if (version == 0L) {
@@ -348,13 +358,15 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         var resync = false
 
         lock.write {
-            when (map[key]) {
-                expectedValue -> {
+            val current = map[key]
+
+            when {
+                current == null -> Unit
+
+                encodeValue(current) == encodedExpected -> {
                     map.remove(key)
                     notify = true
                 }
-
-                null -> Unit
 
                 else -> {
                     resync = true
@@ -429,17 +441,22 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         val ok = lock.write {
             val cur = map[decodedKey]
 
-            // Updates map entry if preconditions are satisfied
-            if (decodedOldVal == null) {
-                if (cur != null) return@write false
-                map[decodedKey] = decodedVal
-                true
+            if (encodedOldVal == null) {
+                if (cur != null) {
+                    return@write false
+                }
             } else {
-                if (cur == null) return@write false
-                if (cur != decodedOldVal) return@write false
-                map[decodedKey] = decodedVal
-                true
+                if (cur == null) {
+                    return@write false
+                }
+
+                if (encodeValue(cur) != encodedOldVal) {
+                    return@write false
+                }
             }
+
+            map[decodedKey] = decodedVal
+            true
         }
 
         if (!ok) return requestResync()
@@ -454,8 +471,13 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         val decodedOldVal = decodeValue(encodedOldVal)
 
         val ok = lock.write {
-            val cur = map[decodedKey] ?: return@write false
-            if (cur != decodedOldVal) return@write false
+            val current = map[decodedKey]
+                ?: return@write false
+
+            if (encodeValue(current) != encodedOldVal) {
+                return@write false
+            }
+
             map.remove(decodedKey)
             true
         }
