@@ -332,6 +332,7 @@ class RedisApi private constructor(
 
         @OptIn(ExperimentalSerializationApi::class)
         private fun createJson(serializerModule: SerializersModule) = Json {
+            ignoreUnknownKeys = true
             namingStrategy = JsonNamingStrategy.SnakeCase
             encodeDefaults = true
             serializersModule = SerializersModule {
