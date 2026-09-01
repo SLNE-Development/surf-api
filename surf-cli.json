@@ -1,0 +1,100 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SLNE-Development/surf-cli/master/schema/surf-cli.schema.json",
+  "schemaVersion": 1,
+  "name": "surf-api",
+  "group": "dev.slne.surf.api",
+  "description": "Multi-platform plugin API framework with modular service discovery, lifecycle-managed components, and NMS bridge abstractions for multiple server platforms.",
+  "archetype": "multi-module-plugin",
+  "maintainers": [],
+  "lifecycle": "active",
+  "tags": [
+    "api",
+    "kotlin",
+    "nms",
+    "packet",
+    "packets",
+    "paper",
+    "papermc",
+    "utility",
+    "velocity"
+  ],
+  "modules": [
+    {
+      "id": "surf-api-core",
+      "kind": "core"
+    },
+    {
+      "id": "surf-api-core-server",
+      "kind": "server"
+    },
+    {
+      "id": "surf-api-paper",
+      "kind": "paper"
+    },
+    {
+      "id": "surf-api-paper-nms-common",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-paper-nms-v1-21-11",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-paper-nms-v26-1",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-paper-nms-v26-2",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-paper-server",
+      "kind": "server"
+    },
+    {
+      "id": "surf-api-velocity",
+      "kind": "velocity"
+    },
+    {
+      "id": "surf-api-velocity-server",
+      "kind": "server"
+    },
+    {
+      "id": "surf-api-standalone",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-gradle-plugin",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-processor",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-shared",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-shared-public",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-shared-internal",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-minestom",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-paper-plugin-test",
+      "kind": "other"
+    },
+    {
+      "id": "surf-api-generator",
+      "kind": "other"
+    }
+  ],
+  "dependencies": {}
+}
