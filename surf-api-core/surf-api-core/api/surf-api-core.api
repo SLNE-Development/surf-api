@@ -7233,6 +7233,33 @@ public final class dev/slne/surf/api/core/generated/VanillaAdvancementKeys$Story
 	public static final field UPGRADE_TOOLS Lnet/kyori/adventure/key/Key;
 }
 
+public final class dev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths {
+	public static final field BOLD_EXTRA_ADVANCE I
+	public static final field DEFAULT_ADVANCE I
+	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;
+	public static final field SPACE_ADVANCE I
+	public final fun charWidth (IZLit/unimi/dsi/fastutil/ints/Int2IntMap;)I
+	public static synthetic fun charWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;IZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
+	public final fun componentWidth (Lnet/kyori/adventure/text/Component;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;)I
+	public static synthetic fun componentWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;Lnet/kyori/adventure/text/Component;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
+	public final fun getAdvances ()Lit/unimi/dsi/fastutil/ints/Int2IntMap;
+	public final fun textWidth (Ljava/lang/String;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;)I
+	public static synthetic fun textWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;Ljava/lang/String;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
+}
+
+public final class dev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText {
+	public fun <init> (Lnet/kyori/adventure/text/Component;I)V
+	public final fun component1 ()Lnet/kyori/adventure/text/Component;
+	public final fun component2 ()I
+	public final fun copy (Lnet/kyori/adventure/text/Component;I)Ldev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText;Lnet/kyori/adventure/text/Component;IILjava/lang/Object;)Ldev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponent ()Lnet/kyori/adventure/text/Component;
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract class dev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs : java/lang/Enum {
 	public static final field DISABLED Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
 	public static final field DISABLED_LEFT Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
@@ -7242,19 +7269,6 @@ public abstract class dev/slne/surf/api/core/inventory/framework/internal/Pagina
 	public abstract fun glyph (I)C
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
 	public static fun values ()[Ldev/slne/surf/api/core/inventory/framework/internal/PaginationButtonGlyphs;
-}
-
-public final class dev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle {
-	public fun <init> (Ljava/lang/String;I)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()I
-	public final fun copy (Ljava/lang/String;I)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;Ljava/lang/String;IILjava/lang/Object;)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getText ()Ljava/lang/String;
-	public final fun getWidth ()I
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/slne/surf/api/core/inventory/framework/internal/ShiftGlyphs {
@@ -7286,8 +7300,28 @@ public final class dev/slne/surf/api/core/inventory/framework/internal/ViewButto
 
 public final class dev/slne/surf/api/core/inventory/framework/internal/ViewContainerRenderingKt {
 	public static final fun appendShiftedComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;IILkotlin/jvm/functions/Function1;)V
-	public static final fun renderViewTitle (Ljava/lang/String;IIZLit/unimi/dsi/fastutil/ints/Int2IntMap;)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
-	public static synthetic fun renderViewTitle$default (Ljava/lang/String;IIZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)Ldev/slne/surf/api/core/inventory/framework/internal/RenderedViewTitle;
+}
+
+public final class dev/slne/surf/api/core/inventory/framework/internal/ViewSlotGeometry {
+	public static final field COLUMNS I
+	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/ViewSlotGeometry;
+	public static final field MAX_ROWS I
+	public static final field SLOT_SIZE I
+	public final fun columnOf (II)I
+	public static synthetic fun columnOf$default (Ldev/slne/surf/api/core/inventory/framework/internal/ViewSlotGeometry;IIILjava/lang/Object;)I
+	public final fun columnShift (III)I
+	public static synthetic fun columnShift$default (Ldev/slne/surf/api/core/inventory/framework/internal/ViewSlotGeometry;IIIILjava/lang/Object;)I
+	public final fun rowOf (II)I
+	public static synthetic fun rowOf$default (Ldev/slne/surf/api/core/inventory/framework/internal/ViewSlotGeometry;IIILjava/lang/Object;)I
+	public final fun slotOf (III)I
+	public static synthetic fun slotOf$default (Ldev/slne/surf/api/core/inventory/framework/internal/ViewSlotGeometry;IIIILjava/lang/Object;)I
+	public final fun spanWidth (II)I
+	public static synthetic fun spanWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/ViewSlotGeometry;IIILjava/lang/Object;)I
+}
+
+public final class dev/slne/surf/api/core/inventory/framework/internal/ViewTextLayoutKt {
+	public static final fun layoutViewText (Lnet/kyori/adventure/text/Component;IZLjava/lang/Integer;ZLkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText;
+	public static synthetic fun layoutViewText$default (Lnet/kyori/adventure/text/Component;IZLjava/lang/Integer;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ldev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText;
 }
 
 public final class dev/slne/surf/api/core/invoker/HiddenInvokerUtil {
