@@ -1,8 +1,8 @@
 package dev.slne.surf.api.minestom.dialog.callback
 
 import com.google.inject.Singleton
-import dev.slne.minestom.lobby.api.event.EventRegistrar
-import dev.slne.minestom.lobby.api.extension.addListener
+import dev.slne.surf.api.minestom.event.EventRegistrar
+import dev.slne.surf.api.minestom.extension.addListener
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
 import net.minestom.server.event.player.PlayerCustomClickEvent

@@ -10,7 +10,10 @@ dependencies {
     }
 
     implementation(projects.surfApiCore.surfApiCoreServer)
-    compileOnlyApi(libs.surf.minestom.lobby.api)
+
+    compileOnlyApi(libs.minestom)
+    compileOnlyApi(libs.mojang.brigadier)
+    compileOnly(libs.guice)
 
     api(libs.guava)
     api(libs.dazzleconf)

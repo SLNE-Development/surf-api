@@ -1,12 +1,12 @@
 package dev.slne.surf.api.minestom.command.args
 
-import dev.slne.minestom.lobby.api.command.commandapi.CommandAPI
-import dev.slne.minestom.lobby.api.command.commandapi.CommandAPICommand
-import dev.slne.minestom.lobby.api.command.commandapi.CommandTree
-import dev.slne.minestom.lobby.api.command.commandapi.argument.Argument
-import dev.slne.minestom.lobby.api.command.commandapi.argument.CustomArgument
-import dev.slne.minestom.lobby.api.command.commandapi.argument.GreedyStringArgument
-import dev.slne.minestom.lobby.api.command.commandapi.argument.TextArgument
+import dev.slne.surf.api.minestom.command.commandapi.CommandAPI
+import dev.slne.surf.api.minestom.command.commandapi.CommandAPICommand
+import dev.slne.surf.api.minestom.command.commandapi.CommandTree
+import dev.slne.surf.api.minestom.command.commandapi.argument.Argument
+import dev.slne.surf.api.minestom.command.commandapi.argument.CustomArgument
+import dev.slne.surf.api.minestom.command.commandapi.argument.GreedyStringArgument
+import dev.slne.surf.api.minestom.command.commandapi.argument.TextArgument
 import dev.slne.surf.api.core.command.builder.CommandExceptionBuilder
 import dev.slne.surf.api.core.minimessage.miniMessage
 import net.kyori.adventure.text.Component
