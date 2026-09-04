@@ -1,8 +1,8 @@
 package dev.slne.surf.api.minestom.impl.inventory.framework
 
 import com.google.inject.Singleton
-import dev.slne.minestom.lobby.api.event.EventRegistrar
-import dev.slne.minestom.lobby.api.extension.addListener
+import dev.slne.surf.api.minestom.event.EventRegistrar
+import dev.slne.surf.api.minestom.extension.addListener
 import dev.slne.surf.api.minestom.inventory.framework.view.ViewNavigationHistory
 import me.devnatan.inventoryframework.ViewFrame
 import net.minestom.server.event.Event

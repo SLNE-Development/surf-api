@@ -3,7 +3,7 @@ package dev.slne.surf.api.minestom
 import com.github.retrooper.packetevents.PacketEvents
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import dev.slne.minestom.lobby.api.plugin.MinestomPluginEntrypoint
+import dev.slne.surf.api.minestom.plugin.MinestomPluginEntrypoint
 import dev.slne.surf.api.core.extensions.packetEvents
 import dev.slne.surf.api.core.server.packet.NoopPacketEvents
 import dev.slne.surf.api.minestom.impl.SurfMinestomInstance

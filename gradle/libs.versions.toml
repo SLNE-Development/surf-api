@@ -15,6 +15,11 @@ packetevents-plugin = "2.13.0"
 # Command API
 commandapi = "12.0.0"
 
+# Minestom
+minestom = "2026.08.16-26.2"
+mojang-brigadier = "1.3.10" # matches the version minestom ships with
+guice = "7.0.0"
+
 # LuckPerms
 luckperms = "5.5"
 luckpermsplugin-bukkit = "v5.5.71-bukkit" # "luckpermsplugin" is written without a separating "-" between "luckperms" and "plugin", because Gradle interprets the version catalog key as a hierarchical alias and would split it into a nested accessor (libs.luckperms.plugin.bukkit), which conflicts with the existing libs.luckperms alias for the API dependency.
@@ -87,7 +92,9 @@ paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 canvas-api = { module = "io.canvasmc.canvas:canvas-api", version.ref = "canvas-api" }
 
 # Minestom
-surf-minestom-lobby-api = { module = "dev.slne.minestom.lobby:surf-minestom-lobby-api", version = "+" }
+minestom = { module = "net.minestom:minestom", version.ref = "minestom" }
+mojang-brigadier = { module = "com.mojang:brigadier", version.ref = "mojang-brigadier" }
+guice = { module = "com.google.inject:guice", version.ref = "guice" }
 
 # Kotlin
 kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
