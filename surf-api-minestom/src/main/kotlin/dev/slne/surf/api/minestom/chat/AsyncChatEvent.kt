@@ -1,14 +1,14 @@
 package dev.slne.surf.api.minestom.chat
 
 import dev.slne.surf.api.minestom.event.SuspendingEventNode
-import dev.slne.surf.api.minestom.player.SurfPlayer
+import dev.slne.surf.api.minestom.player.SurfMinestomPlayer
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Fired when a [SurfPlayer] sends a chat message.
+ * Fired when a [SurfMinestomPlayer] sends a chat message.
  *
  * Listeners run off the tick thread on
  * a virtual thread, so they may suspend *and* they may block
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 class AsyncChatEvent @ApiStatus.Internal constructor(
 
-    val player: SurfPlayer,
+    val player: SurfMinestomPlayer,
 
     /**
      * The [Audience]s that this chat message will be displayed to.

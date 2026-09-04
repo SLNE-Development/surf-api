@@ -9,42 +9,43 @@ import java.util.*
 /**
  * @see ConnectionManager.getOnlinePlayers
  */
-val ConnectionManager.onlineSurfPlayers: Collection<SurfPlayer>
-    get() = onlinePlayers as Collection<SurfPlayer>
+val ConnectionManager.onlineSurfMinestomPlayers: Collection<SurfMinestomPlayer>
+    get() = onlinePlayers as Collection<SurfMinestomPlayer>
 
 /**
  * @see ConnectionManager.getConfigPlayers
  */
-val ConnectionManager.configSurfPlayers: Collection<SurfPlayer>
-    get() = configPlayers as Collection<SurfPlayer>
+val ConnectionManager.configSurfMinestomPlayers: Collection<SurfMinestomPlayer>
+    get() = configPlayers as Collection<SurfMinestomPlayer>
 
 /**
  * @see ConnectionManager.getPlayer
  */
 fun ConnectionManager.getSurfPlayer(
     connection: PlayerConnection,
-): SurfPlayer? = getPlayer(connection) as? SurfPlayer
+): SurfMinestomPlayer? = getPlayer(connection) as? SurfMinestomPlayer
 
 /**
  * @see ConnectionManager.getOnlinePlayerByUsername
  */
 fun ConnectionManager.getOnlineSurfPlayerByUsername(
     username: String,
-): SurfPlayer? = getOnlinePlayerByUsername(username) as? SurfPlayer
+): SurfMinestomPlayer? = getOnlinePlayerByUsername(username) as? SurfMinestomPlayer
 
 /**
  * @see ConnectionManager.getOnlinePlayerByUuid
  */
 fun ConnectionManager.getOnlineSurfPlayerByUuid(
     uuid: UUID,
-): SurfPlayer? = getOnlinePlayerByUuid(uuid) as? SurfPlayer
+): SurfMinestomPlayer? = getOnlinePlayerByUuid(uuid) as? SurfMinestomPlayer
 
-fun ConnectionManager.getSurfPlayer(uuid: UUID): SurfPlayer? = getOnlineSurfPlayerByUuid(uuid)
+fun ConnectionManager.getSurfPlayer(uuid: UUID): SurfMinestomPlayer? =
+    getOnlineSurfPlayerByUuid(uuid)
 
 /**
  * @see ConnectionManager.findOnlinePlayer
  */
 fun ConnectionManager.findOnlineSurfPlayer(
     username: String,
-): SurfPlayer? = findOnlinePlayer(username) as? SurfPlayer
+): SurfMinestomPlayer? = findOnlinePlayer(username) as? SurfMinestomPlayer
 

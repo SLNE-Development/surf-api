@@ -13,7 +13,7 @@ dependencies {
 
     compileOnlyApi(libs.minestom)
     compileOnlyApi(libs.mojang.brigadier)
-    compileOnly(libs.guice)
+    compileOnlyApi(libs.guice)
 
     api(libs.guava)
     api(libs.dazzleconf)

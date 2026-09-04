@@ -6,12 +6,12 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 @OptIn(ExperimentalContracts::class)
-fun Player.requireSurfPlayer(): SurfPlayer {
+fun Player.requireSurfPlayer(): SurfMinestomPlayer {
     contract {
-        returns() implies (this@requireSurfPlayer is SurfPlayer)
+        returns() implies (this@requireSurfPlayer is SurfMinestomPlayer)
     }
 
-    require(this is SurfPlayer) { "Player ${this.username} is not a SurfPlayer" }
+    require(this is SurfMinestomPlayer) { "Player ${this.username} is not a SurfPlayer" }
     return this
 }
 

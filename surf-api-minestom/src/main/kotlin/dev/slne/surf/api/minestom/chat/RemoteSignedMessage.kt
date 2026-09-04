@@ -3,7 +3,7 @@ package dev.slne.surf.api.minestom.chat
 import net.kyori.adventure.text.Component
 import net.minestom.server.crypto.MessageSignature
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 /**
  * A signed chat message in a form that survives leaving this server.
@@ -12,8 +12,8 @@ import java.util.UUID
  * sender can still show the message as signed. A message from a sender without a chat session has no
  * [signature], a nil [sessionId] and is shown as unsigned.
  *
- * @see dev.slne.surf.api.minestom.player.SurfPlayer.captureSignedMessage
- * @see dev.slne.surf.api.minestom.player.SurfPlayer.sendRemoteSignedMessage
+ * @see dev.slne.surf.api.minestom.player.SurfMinestomPlayer.captureSignedMessage
+ * @see dev.slne.surf.api.minestom.player.SurfMinestomPlayer.sendRemoteSignedMessage
  */
 data class RemoteSignedMessage(
     val sender: UUID,

@@ -10,7 +10,7 @@ import net.minestom.server.network.player.GameProfile
 import net.minestom.server.network.player.PlayerConnection
 import org.jetbrains.annotations.ApiStatus
 
-abstract class SurfPlayer @ApiStatus.Internal protected constructor(
+abstract class SurfMinestomPlayer @ApiStatus.Internal protected constructor(
     playerConnection: PlayerConnection,
     gameProfile: GameProfile,
 ) : Player(playerConnection, gameProfile) {
