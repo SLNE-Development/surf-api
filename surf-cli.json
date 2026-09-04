@@ -4,96 +4,85 @@
   "name": "surf-api",
   "group": "dev.slne.surf.api",
   "description": "Multi-platform plugin API framework with modular service discovery, lifecycle-managed components, and NMS bridge abstractions for multiple server platforms.",
-  "archetype": "multi-module-plugin",
+  "archetype": "library",
   "maintainers": [],
   "lifecycle": "active",
-  "tags": [
-    "api",
-    "kotlin",
-    "nms",
-    "packet",
-    "packets",
-    "paper",
-    "papermc",
-    "utility",
-    "velocity"
-  ],
   "modules": [
     {
       "id": "surf-api-core",
-      "kind": "core"
+      "kind": "api"
     },
     {
       "id": "surf-api-core-server",
-      "kind": "server"
+      "kind": "api"
     },
     {
       "id": "surf-api-paper",
-      "kind": "paper"
+      "kind": "api"
     },
     {
       "id": "surf-api-paper-nms-common",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-paper-nms-v1-21-11",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-paper-nms-v26-1",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-paper-nms-v26-2",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-paper-server",
-      "kind": "server"
+      "kind": "api"
     },
     {
       "id": "surf-api-velocity",
-      "kind": "velocity"
+      "kind": "api"
     },
     {
       "id": "surf-api-velocity-server",
-      "kind": "server"
+      "kind": "api"
     },
     {
       "id": "surf-api-standalone",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-gradle-plugin",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-processor",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-shared",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-shared-public",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-shared-internal",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-minestom",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-paper-plugin-test",
-      "kind": "other"
+      "kind": "api"
     },
     {
       "id": "surf-api-generator",
-      "kind": "other"
+      "kind": "api"
     }
   ],
   "dependencies": {}
