@@ -3,6 +3,7 @@ package dev.slne.surf.redis
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.redis.config.RedisConfig
+import dev.slne.surf.redis.internal.SharedRedissonClientRegistry
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
@@ -80,6 +81,7 @@ abstract class RedisInstance {
         log.atInfo()
             .log("Disabling Redis networking")
 
+        shutdownSharedRedissonClients()
         streamPollScheduler.dispose()
         ttlRefreshScheduler.dispose()
         eventLoopGroup.shutdownGracefully().syncUninterruptibly()
@@ -88,6 +90,26 @@ abstract class RedisInstance {
         if (!redissonExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
             redissonExecutorService.shutdownNow()
         }
+    }
+
+    private fun shutdownSharedRedissonClients() {
+        val leaked = try {
+            SharedRedissonClientRegistry.instance.shutdownAll()
+        } catch (failure: Throwable) {
+            log.atWarning()
+                .withCause(failure)
+                .log("Failed to shut down shared Redisson clients while disabling Redis networking")
+            return
+        }
+
+        if (leaked.isEmpty()) return
+        log.atWarning()
+            .log(
+                "%d shared Redisson client(s) were still in use while disabling Redis networking; " +
+                        "their owners never called RedisApi.disconnect(): %s",
+                leaked.size,
+                leaked
+            )
     }
 
     fun getResourceAsStream(name: String): InputStream? = javaClass.getResourceAsStream(name)

@@ -8,6 +8,7 @@ import dev.slne.surf.redis.codec.RedisCodec
 import dev.slne.surf.redis.event.RedisEvent
 import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.internal.RedissonConfigDetails
+import dev.slne.surf.redis.internal.RedissonConnectionKey
 import dev.slne.surf.redis.request.RedisRequest
 import dev.slne.surf.redis.request.RequestResponseBus
 import dev.slne.surf.redis.sync.list.SyncList
@@ -30,6 +31,10 @@ interface RedisComponentProvider {
     val clientId: String
 
     fun createRedissonConfig(details: RedissonConfigDetails): Config
+
+    fun createRedissonConnectionKey(details: RedissonConfigDetails): RedissonConnectionKey =
+        RedissonConnectionKey.of(details.redisURI)
+
     fun tryExtractPluginNameFromClass(clazz: Class<*>): String
 
     fun <K : Any, V : Any> createSimpleCache(
@@ -125,6 +130,7 @@ interface RedisComponentProvider {
         request.originId = clientId
     }
 
+    @InternalRedisAPI
     companion object : RedisComponentProvider by provider {
         val INSTANCE get() = provider
     }

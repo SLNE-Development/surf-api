@@ -38,15 +38,16 @@ export SURF_REDIS_PASSWORD='super-secret'
 export SURF_REDIS_CLIENT_NAME=lobby-01
 ```
 
-`SURF_REDIS_CLIENT_NAME` is a **prefix**, not the final client name. The consuming plugin's name is
-appended, so `lobby-01` becomes `lobby-01-<pluginName>` on the Redis connection.
+`SURF_REDIS_CLIENT_NAME` is used as-is as the Redis client name (`CLIENT SETNAME`). All plugins in the
+process that connect with the same host, port and credentials share one Redisson connection pool, so
+the name identifies the server process rather than an individual plugin.
 
 ### Resolution behavior
 
 **Set-but-empty is not the same as unset.** A variable only falls back to `config.yml` when it is
 *missing* from the environment. A variable that is present but empty wins the override with an empty
 value — `SURF_REDIS_HOST=""` produces an empty host, not `localhost`, and an empty
-`SURF_REDIS_CLIENT_NAME` produces a client name of just `-<pluginName>`. `SURF_REDIS_PASSWORD` is the
+`SURF_REDIS_CLIENT_NAME` produces an empty client name. `SURF_REDIS_PASSWORD` is the
 only exception: an empty password is treated as no authentication. To fall back to `config.yml`,
 **unset the variable** instead of blanking it.
 
@@ -65,9 +66,29 @@ offending variable; the raw value of `SURF_REDIS_PASSWORD` is redacted from fail
 ### RedisApi
 
 `RedisApi` is the central entry point.  
-It owns the Redis clients and manages the lifecycle of all Redis-backed components.
+It manages the lifecycle of all Redis-backed components and holds a share of the underlying Redisson
+client.
 
 A typical application creates **exactly one** `RedisApi` instance and shares it across the system.
+
+### Connection sharing
+
+Every `RedisApi` in the same process whose connection settings are equivalent — same host, port,
+TLS/Unix-socket transport and credentials — shares **one** physical Redisson client and connection
+pool. Ten plugins on one server therefore use a single pool instead of ten. Connections that differ in
+any of these settings stay isolated.
+
+Only the connection is shared. Each `RedisApi` keeps its own event bus, request/response bus, sync
+structures, caches, event codec registrations and coroutine scopes. Connecting or disconnecting one
+instance does not affect another:
+
+* the first instance to connect creates the shared client, later ones join it
+* `disconnect()` releases the instance's share; the client is shut down once the last instance using
+  it has disconnected
+* a connection failure leaves nothing behind, and an instance whose components fail to initialize
+  releases its share again
+* clients that are still held when the surf-redis platform plugin is disabled are shut down and their
+  owners logged as a warning
 
 Lifecycle:
 1. Create the API

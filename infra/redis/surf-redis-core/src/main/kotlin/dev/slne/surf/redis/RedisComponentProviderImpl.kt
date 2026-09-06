@@ -59,7 +59,7 @@ class RedisComponentProviderImpl : RedisComponentProvider {
                 useSingleServer()
                     .setConnectionMinimumIdleSize(2)
                     .setConnectionPoolSize(8)
-                    .setClientName(redisConfig.clientName + "-" + details.pluginName)
+                    .setClientName(redisConfig.clientName)
                     .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
                     .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
                     .setRetryAttempts(10)

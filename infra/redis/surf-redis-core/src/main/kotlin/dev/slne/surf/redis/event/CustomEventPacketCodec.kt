@@ -3,7 +3,9 @@ package dev.slne.surf.redis.event
 import dev.slne.surf.redis.codec.*
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.Unpooled
 import org.redisson.client.codec.BaseCodec
+import org.redisson.client.codec.Codec
 import org.redisson.client.protocol.Decoder
 import org.redisson.client.protocol.Encoder
 
@@ -24,9 +26,7 @@ internal object CustomEventPacketCodec {
     fun outbound(event: RedisEvent, registration: EventCodecRegistration) =
         OutboundPacket(event, registration)
 
-    fun redisCodec(
-        resolver: (String) -> EventCodecRegistration?
-    ) = object : BaseCodec() {
+    val redisCodec: Codec = object : BaseCodec() {
         private val encoder = Encoder { value ->
             val packet = value as? OutboundPacket
                 ?: throw RedisCodecException(
@@ -36,9 +36,9 @@ internal object CustomEventPacketCodec {
         }
         private val decoder = Decoder<Any> { buffer, _ ->
             try {
-                decode(buffer, resolver)
+                decodeHeader(buffer)
             } catch (failure: RedisCodecException) {
-                DecodeResult.Failure(failure)
+                InboundMessage.Malformed(failure)
             }
         }
 
@@ -82,10 +82,7 @@ internal object CustomEventPacketCodec {
         }
     }
 
-    private fun decode(
-        buffer: ByteBuf,
-        resolver: (String) -> EventCodecRegistration?
-    ): DecodeResult {
+    private fun decodeHeader(buffer: ByteBuf): InboundMessage.Packet {
         val packetSize = buffer.readableBytes()
         if (packetSize > MAX_PACKET_SIZE) {
             throw RedisCodecException(
@@ -108,37 +105,64 @@ internal object CustomEventPacketCodec {
             val codecVersion = buffer.readVarInt()
             val timestamp = buffer.readLong()
             val originId = buffer.readNullable { it.readString(MAX_ORIGIN_ID_BYTES) }
-            val registration = resolver(eventId)
-                ?: return DecodeResult.MissingCodec(eventId, codecVersion)
+            val payload = ByteArray(buffer.readableBytes())
+            buffer.readBytes(payload)
 
-            if (registration.version != codecVersion) {
-                return DecodeResult.VersionMismatch(registration, codecVersion)
-            }
-
-            val event = try {
-                registration.codec.decode(buffer)
-            } catch (e: Exception) {
-                throw RedisCodecException(
-                    "Codec '${registration.codec.codecId}' failed to decode event '${registration.eventType.name}'",
-                    e
-                )
-            }
-            if (!registration.eventType.isInstance(event)) {
-                throw RedisCodecException(
-                    "Codec '${registration.codec.codecId}' decoded '${event.javaClass.name}' for event '${registration.eventType.name}'"
-                )
-            }
-            if (buffer.isReadable) {
-                throw RedisCodecException(
-                    "Codec '${registration.codec.codecId}' left ${buffer.readableBytes()} unread bytes for event '${registration.eventType.name}'"
-                )
-            }
-            return DecodeResult.Event(registration, event, timestamp, originId)
+            return InboundMessage.Packet(eventId, codecVersion, timestamp, originId, payload)
         } catch (e: RedisCodecException) {
             throw e
         } catch (e: Exception) {
             throw RedisCodecException("Malformed custom Redis event packet", e)
         }
+    }
+
+    sealed interface InboundMessage {
+        class Packet internal constructor(
+            val eventId: String,
+            val codecVersion: Int,
+            val timestamp: Long,
+            val originId: String?,
+            private val payload: ByteArray,
+        ) : InboundMessage {
+
+            fun decode(resolver: (String) -> EventCodecRegistration?): DecodeResult {
+                val registration = resolver(eventId)
+                    ?: return DecodeResult.MissingCodec(eventId, codecVersion)
+
+                if (registration.version != codecVersion) {
+                    return DecodeResult.VersionMismatch(registration, codecVersion)
+                }
+
+                val buffer = Unpooled.wrappedBuffer(payload).asReadOnly()
+                try {
+                    val event = try {
+                        registration.codec.decode(buffer)
+                    } catch (e: Exception) {
+                        throw RedisCodecException(
+                            "Codec '${registration.codec.codecId}' failed to decode event '${registration.eventType.name}'",
+                            e
+                        )
+                    }
+                    if (!registration.eventType.isInstance(event)) {
+                        throw RedisCodecException(
+                            "Codec '${registration.codec.codecId}' decoded '${event.javaClass.name}' for event '${registration.eventType.name}'"
+                        )
+                    }
+                    if (buffer.isReadable) {
+                        throw RedisCodecException(
+                            "Codec '${registration.codec.codecId}' left ${buffer.readableBytes()} unread bytes for event '${registration.eventType.name}'"
+                        )
+                    }
+                    return DecodeResult.Event(registration, event, timestamp, originId)
+                } catch (failure: RedisCodecException) {
+                    return DecodeResult.Failure(failure)
+                } finally {
+                    buffer.release()
+                }
+            }
+        }
+
+        data class Malformed(val exception: RedisCodecException) : InboundMessage
     }
 
     sealed interface DecodeResult {

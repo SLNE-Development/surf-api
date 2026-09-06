@@ -109,9 +109,7 @@ open class EventTransportBenchmarkState {
             version = BenchmarkEventCodec.version,
             explicit = true,
         )
-        binaryCodec = CustomEventPacketCodec.redisCodec { eventId ->
-            registration.takeIf { it.eventId == eventId }
-        }
+        binaryCodec = CustomEventPacketCodec.redisCodec
 
         streamingEnvelopeSerializer = EventEnvelopeSerializers(json.serializersModule)
             .get(BenchmarkEvent::class.java)!!
@@ -175,7 +173,7 @@ open class EventTransportBenchmarkState {
     fun decodeBinary(): BenchmarkEvent {
         val wire = Unpooled.wrappedBuffer(binaryPacket)
         val result = try {
-            binaryCodec.valueDecoder.decode(wire, null) as CustomEventPacketCodec.DecodeResult
+            binaryCodec.valueDecoder.decode(wire, null) as CustomEventPacketCodec.InboundMessage
         } finally {
             wire.release()
         }
@@ -197,7 +195,7 @@ open class EventTransportBenchmarkState {
             CustomEventPacketCodec.outbound(event, registration)
         )
         val result = try {
-            binaryCodec.valueDecoder.decode(wire, null) as CustomEventPacketCodec.DecodeResult
+            binaryCodec.valueDecoder.decode(wire, null) as CustomEventPacketCodec.InboundMessage
         } finally {
             wire.release()
         }
@@ -237,7 +235,9 @@ open class EventTransportBenchmarkState {
         }
     }
 
-    private fun decodedEvent(result: CustomEventPacketCodec.DecodeResult): BenchmarkEvent {
+    private fun decodedEvent(message: CustomEventPacketCodec.InboundMessage): BenchmarkEvent {
+        val packet = message as CustomEventPacketCodec.InboundMessage.Packet
+        val result = packet.decode { eventId -> registration.takeIf { it.eventId == eventId } }
         return (result as CustomEventPacketCodec.DecodeResult.Event).event as BenchmarkEvent
     }
 }
@@ -292,9 +292,7 @@ open class VariableEventPacketBenchmarkState {
             version = BenchmarkEventCodec.version,
             explicit = true,
         )
-        binaryCodec = CustomEventPacketCodec.redisCodec { eventId ->
-            registration.takeIf { it.eventId == eventId }
-        }
+        binaryCodec = CustomEventPacketCodec.redisCodec
     }
 
     fun encodeNext(blackhole: Blackhole): Int {

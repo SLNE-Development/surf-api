@@ -79,11 +79,8 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
     private val missingCodecDiagnostics = ConcurrentHashMap.newKeySet<String>()
 
     private val topic by lazy { api.redissonReactive.getTopic(REDIS_CHANNEL, StringCodec.INSTANCE) }
-    private val customRedisCodec by lazy {
-        CustomEventPacketCodec.redisCodec(codecRegistry::codecForEventId)
-    }
     private val customTopic by lazy {
-        api.redissonReactive.getTopic(CustomEventPacketCodec.CHANNEL, customRedisCodec)
+        api.redissonReactive.getTopic(CustomEventPacketCodec.CHANNEL, CustomEventPacketCodec.redisCodec)
     }
 
     @Volatile
@@ -107,8 +104,8 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
 
     override fun init(): Mono<Void> = Mono.zip(
         topic.addListener(String::class.java) { _, msg -> handleIncomingMessage(msg) },
-        customTopic.addListener(CustomEventPacketCodec.DecodeResult::class.java) { _, result ->
-            handleIncomingCustomMessage(result)
+        customTopic.addListener(CustomEventPacketCodec.InboundMessage::class.java) { _, message ->
+            handleIncomingCustomMessage(message)
         }
     ).doOnNext { ids ->
         topicListenerId = ids.t1
@@ -265,8 +262,16 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
         codecRegistry.freeze()
     }
 
-    private fun handleIncomingCustomMessage(result: CustomEventPacketCodec.DecodeResult) {
+    private fun handleIncomingCustomMessage(message: CustomEventPacketCodec.InboundMessage) {
         try {
+            val result = when (message) {
+                is CustomEventPacketCodec.InboundMessage.Malformed ->
+                    CustomEventPacketCodec.DecodeResult.Failure(message.exception)
+
+                is CustomEventPacketCodec.InboundMessage.Packet ->
+                    message.decode(codecRegistry::codecForEventId)
+            }
+
             when (result) {
                 is CustomEventPacketCodec.DecodeResult.MissingCodec -> {
                     if (!missingCodecDiagnostics.add("missing:${result.eventId}:${result.codecVersion}")) return
