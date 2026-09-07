@@ -1,0 +1,89 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SLNE-Development/surf-cli/master/schema/surf-cli.schema.json",
+  "schemaVersion": 1,
+  "name": "surf-api",
+  "group": "dev.slne.surf.api",
+  "description": "Multi-platform plugin API framework with modular service discovery, lifecycle-managed components, and NMS bridge abstractions for multiple server platforms.",
+  "archetype": "library",
+  "maintainers": [],
+  "lifecycle": "active",
+  "modules": [
+    {
+      "id": "surf-api-core",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-core-server",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-paper",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-paper-nms-common",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-paper-nms-v1-21-11",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-paper-nms-v26-1",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-paper-nms-v26-2",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-paper-server",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-velocity",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-velocity-server",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-standalone",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-gradle-plugin",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-processor",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-shared",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-shared-public",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-shared-internal",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-paper-plugin-test",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-generator",
+      "kind": "api"
+    }
+  ],
+  "dependencies": {}
+}
