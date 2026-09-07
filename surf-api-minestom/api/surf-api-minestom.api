@@ -594,6 +594,10 @@ public abstract class dev/slne/surf/api/minestom/inventory/framework/view/Abstra
 	protected fun onViewOpen (Lme/devnatan/inventoryframework/context/OpenContext;)V
 	protected fun onViewRender (Lme/devnatan/inventoryframework/context/RenderContext;)V
 	protected fun onViewUpdate (Lme/devnatan/inventoryframework/context/Context;)V
+	protected final fun updateHeader (Lme/devnatan/inventoryframework/context/Context;Ljava/lang/String;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;)V
+	protected final fun updateHeader (Lme/devnatan/inventoryframework/context/Context;Lnet/kyori/adventure/text/Component;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;)V
+	public static synthetic fun updateHeader$default (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView;Lme/devnatan/inventoryframework/context/Context;Ljava/lang/String;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ILjava/lang/Object;)V
+	public static synthetic fun updateHeader$default (Ldev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfView;Lme/devnatan/inventoryframework/context/Context;Lnet/kyori/adventure/text/Component;Ldev/slne/surf/api/minestom/inventory/framework/view/settings/align/TextAlignment;ILjava/lang/Object;)V
 }
 
 public abstract class dev/slne/surf/api/minestom/inventory/framework/view/AbstractSurfViewContext {
@@ -752,11 +756,12 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/container
 	public fun <init> ()V
 	public final fun addChild (Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent;)V
 	public final fun getChildren ()Ljava/util/List;
+	public final fun getLastRenderedTitle ()Lnet/kyori/adventure/text/Component;
 	public final fun hasComponentOfType (Ljava/lang/Class;)Z
 	public final fun removeChild (Ldev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent;)V
 	public final fun removeChildren (Lkotlin/jvm/functions/Function1;)V
 	public final fun removeChildrenOfType (Ljava/lang/Class;)V
-	public final fun render ()Lnet/kyori/adventure/text/TextComponent;
+	public final fun render ()Lnet/kyori/adventure/text/Component;
 }
 
 public abstract interface class dev/slne/surf/api/minestom/inventory/framework/view/container/component/ViewContainerComponent {
