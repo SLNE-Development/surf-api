@@ -6,6 +6,9 @@ plugins {
 dependencies {
     api(projects.surfApiShared.surfApiSharedPublic)
     api(libs.adventure.nbt)
+    // Exposed transitively by surf-api-shared-public as well; declared here so the test convention
+    // (testImplementation extendsFrom compileOnlyApi) puts Adventure on the test classpath.
+    compileOnlyApi(libs.adventure.api)
     compileOnlyApi(libs.luckperms)
     compileOnlyApi(libs.packetevents.api)
     compileOnlyApi(libs.dazzleconf)

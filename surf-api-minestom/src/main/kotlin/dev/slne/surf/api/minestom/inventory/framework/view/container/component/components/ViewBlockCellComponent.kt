@@ -1,31 +1,63 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.container.component.components
 
+import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewHeaderGeometry
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 /**
  * A [ViewContainerComponent] that renders a single inventory cell block overlay at the given
  * [column] and [row] position.
  *
- * Each instance renders a 18×18 pixel glyph (plus 1 pixel spacing = 19 pixels wide) that
- * visually "blocks" a specific cell in the inventory header texture. The glyph character is
- * looked up from [BlockRow] based on the [row] parameter.
+ * Each instance renders one slot-sized glyph (plus 1 pixel spacing) that visually "blocks" a cell
+ * of the inventory. The horizontal position is computed from [ViewHeaderGeometry]; the row cannot
+ * be — a glyph's vertical position is baked into the `ascent` of its font provider in the resource
+ * pack — so the glyph character itself is picked per [row] from [BlockRow].
  *
- * Typically used via the DSL helper [dev.slne.surf.api.minestom.api.inventory.framework.view.container.dsl.blockCell]
- * or [dev.slne.surf.api.minestom.api.inventory.framework.view.container.dsl.blockRow].
+ * Blocking a cell is **purely cosmetic**: it draws a texture into the inventory title and touches
+ * neither the slot's contents nor its click handling, so items can still be placed into and taken
+ * out of a blocked slot exactly as before (subject to the view's usual
+ * [cancelOnClick][dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettings.cancelOnClick]
+ * settings).
+ *
+ * Typically used via the DSL helpers
+ * [blockCell][dev.slne.surf.api.minestom.inventory.framework.view.container.dsl.blockCell],
+ * [blockSlot][dev.slne.surf.api.minestom.inventory.framework.view.container.dsl.blockSlot],
+ * [blockRow][dev.slne.surf.api.minestom.inventory.framework.view.container.dsl.blockRow] or
+ * [blockAllSlots][dev.slne.surf.api.minestom.inventory.framework.view.container.dsl.blockAllSlots].
  *
  * @property column the zero-based column index (0–8) of the cell to block
  * @property row the one-based row index (1–6) of the cell to block
+ * @param geometry the header [ViewHeaderGeometry] describing the slot grid
  */
 class ViewBlockCellComponent(
     val column: Int,
-    val row: Int
+    val row: Int,
+    geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
 ) : ViewContainerComponent {
-    override val textureWidth = 18 + 1 // 1 pixel for spacing
-    override val positionalShift = 1 + column * (textureWidth - 1)
+
+    /** @suppress binary compatibility, blocks the cell with the default geometry */
+    @Deprecated(
+        "Binary compatibility",
+        ReplaceWith("ViewBlockCellComponent(column, row)"),
+        DeprecationLevel.HIDDEN
+    )
+    constructor(column: Int, row: Int) : this(column, row, ViewHeaderGeometry.DEFAULT)
+
+    init {
+        require(column in 0 until ViewSlotGeometry.COLUMNS) {
+            "Column must be in 0..${ViewSlotGeometry.COLUMNS - 1}, was $column"
+        }
+        require(row in 1..ViewSlotGeometry.MAX_ROWS) {
+            "Row must be in 1..${ViewSlotGeometry.MAX_ROWS}, was $row"
+        }
+    }
+
+    override val textureWidth = geometry.slotSize + 1 // 1 pixel for spacing
+    override val positionalShift = geometry.slotGlyphShift(column)
 
     override fun SurfComponentBuilder.renderComponent() {
         val blockRow = BlockRow.fromRow(row) ?: return
@@ -49,9 +81,30 @@ class ViewBlockCellComponent(
         return result
     }
 
+    companion object {
+        /**
+         * Returns the component that blocks the cell at the zero-based [slot] index, counted
+         * left-to-right and then top-to-bottom just like the inventory's own slot numbering.
+         *
+         * @param slot the zero-based slot index (0–53)
+         * @param geometry the header [ViewHeaderGeometry] describing the slot grid
+         */
+        fun forSlot(
+            slot: Int,
+            geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
+        ): ViewBlockCellComponent = ViewBlockCellComponent(
+            column = ViewSlotGeometry.columnOf(slot),
+            row = ViewSlotGeometry.rowOf(slot),
+            geometry = geometry
+        )
+    }
+
 
     /**
      * Maps a row number to its corresponding block-cell glyph character.
+     *
+     * One glyph per row: the textures are identical, but each one is declared with the `ascent`
+     * that drops it onto its row, which is the only way to position a header texture vertically.
      *
      * @property glyph the Unicode character in the resource-pack font that draws the cell overlay
      * @property row the one-based inventory row this glyph corresponds to (1–6)

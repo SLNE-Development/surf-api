@@ -126,6 +126,7 @@ modules.xml
 logs/
 .claude
 
+
 # ProjectAtlas runtime state
 /.projectatlas/*
 !/.projectatlas/config.toml

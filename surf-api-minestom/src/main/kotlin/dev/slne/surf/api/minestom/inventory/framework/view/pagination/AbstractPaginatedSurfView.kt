@@ -29,6 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - Left/right navigation buttons in the designated button row.
  * - A [PaginationButtonGlyphComponent] overlay that reflects the current pagination state
  *   (both-disabled, left-disabled, right-disabled, or both-enabled).
+ * - A [PaginationPageIndicatorComponent] between the two buttons showing the current page and the
+ *   page count, as rendered by
+ *   [paginationPageIndicator][dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedViewSettings.paginationPageIndicator].
  *
  * The initial pagination glyph is updated asynchronously one tick after the pagination state
  * first resolves (via [InitialPaginationStateWatcher]) to work around scheduling constraints.
@@ -53,7 +56,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             .layoutTarget(layoutTarget)
             .apply {
                 onPageSwitch(pageSwitchHandler.prepend { context, _ ->
-                    updatePaginationGlyph(context)
+                    updatePaginationOverlay(context)
                 })
             }.build()
     }
@@ -117,33 +120,61 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     protected open fun onPaginatedUpdate(update: Context) = Unit
 
 
-    private fun updatePaginationGlyph(context: Context) {
+    /**
+     * Re-renders the pagination overlay in the header: the navigation button glyph for the current
+     * state, plus the page counter between the two buttons.
+     */
+    private fun updatePaginationOverlay(context: Context) {
         val pagination = paginationState.get(context) ?: return
+        val row = settings.paginationButtonRow
+        val geometry = settings.headerGeometry
+
         val buttonGlyph = PaginationButtonGlyphComponent.getByPaginationState(
-            row = settings.paginationButtonRow,
-            pagination = pagination
+            row = row,
+            pagination = pagination,
+            geometry = geometry
         )
+
+        val totalPages = pagination.lastPage().coerceAtLeast(1)
+        val currentPage = pagination.currentPage().coerceIn(1, totalPages)
+
+        val pageText = settings.paginationPageIndicator
+            ?.render(currentPage, totalPages)
 
         modifyContainer(context) {
             removeChildrenOfType<PaginationButtonGlyphComponent>()
             addChild(buttonGlyph)
+
+            removeChildrenOfType<PaginationPageIndicatorComponent>()
+            if (pageText != null) {
+                addChild(
+                    PaginationPageIndicatorComponent(
+                        row = row,
+                        text = pageText,
+                        font = settings.rowFont(row),
+                        geometry = geometry,
+                        defaultColor = settings.headerTextColor,
+                        metrics = settings.rowFontMetrics
+                    )
+                )
+            }
         }
     }
 
     /**
-     * Applies the paginated container defaults: blocks all border cells and all cells outside
-     * the pagination content rows, then calls [applyContainerDefaults] for subclass customisation.
+     * Applies the paginated container defaults: blocks all border cells, the button row and every
+     * empty row, then calls [applyContainerDefaults] for subclass customisation.
      *
      * This override is `final` — subclasses should override [applyContainerDefaults] instead.
      */
     context(_: ViewContainerModificationContext)
     final override fun containerDefaults() {
-        val paginationContentRows = settings.paginationViewRows.paginationContentRows
+        val paginationContentRows = settings.paginationContentRows
 
         for (y in 1..settings.rows.rows) {
             for (x in 0 until 9) {
                 if (y in paginationContentRows && x in 1..7) continue
-                blockCell(x, y)
+                blockCell(x, y, settings.headerGeometry)
             }
         }
 
@@ -160,21 +191,35 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
     protected open fun applyContainerDefaults() {
     }
 
+    /**
+     * Plays the configured
+     * [paginationSwitchSound][dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedViewSettings.paginationSwitchSound]
+     * to the viewer that just navigated to another page. Does nothing if no sound is configured.
+     */
+    private fun playPageSwitchSound(click: SlotClickContext) {
+        val sound = settings.paginationSwitchSound ?: return
+        click.player.playSound(sound)
+    }
+
     final override fun onViewInit(config: ViewConfigBuilder) {
         paginationState // initialize pagination state
         onPaginatedInit(config)
         config.layout(*createLayout())
     }
 
+    /**
+     * Builds the layout: only the
+     * [paginationContentRows][dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedViewSettings.paginationContentRows]
+     * are filled with [layoutTarget] slots. The button row and the
+     * [paginationEmptyRows][dev.slne.surf.api.minestom.inventory.framework.view.settings.PaginatedViewSettings.paginationEmptyRows]
+     * rows at the opposite inventory edge stay empty.
+     */
     private fun createLayout(): Array<String> {
-        val layout = arrayOfNulls<String>(settings.rows.rows)
-        layout[0] = EMPTY_ROW
-        repeat(settings.rows.rows - 2) { i ->
-            layout[i + 1] = paginationRow
-        }
-        layout[layout.lastIndex] = EMPTY_ROW
+        val contentRows = settings.paginationContentRows
 
-        return layout.requireNoNulls()
+        return Array(settings.rows.rows) { index ->
+            if (index + 1 in contentRows) paginationRow else EMPTY_ROW
+        }
     }
 
     final override fun onViewOpen(open: OpenContext) {
@@ -187,7 +232,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
         if (pagination.isStatic) {
             nextTick {
-                updatePaginationGlyph(render)
+                updatePaginationOverlay(render)
             }
         } else {
             render.watchState(pagination.id, InitialPaginationStateWatcher())
@@ -197,13 +242,21 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             .withItem(ItemStack.AIR)
             .updateOnStateChange(paginationState)
             .displayIf(pagination::canBack)
-            .onClick(pagination::back)
+            .onClick { click: SlotClickContext ->
+                if (!pagination.canBack()) return@onClick
+                pagination.back()
+                playPageSwitchSound(click)
+            }
 
         render.slot(PaginationButton.RIGHT.clickSlot(paginationButtonRow))
             .withItem(ItemStack.AIR)
             .updateOnStateChange(paginationState)
             .displayIf(pagination::canAdvance)
-            .onClick(pagination::advance)
+            .onClick { click: SlotClickContext ->
+                if (!pagination.canAdvance()) return@onClick
+                pagination.advance()
+                playPageSwitchSound(click)
+            }
 
         onPaginatedRender(render)
     }
@@ -219,7 +272,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
     final override fun onViewUpdate(update: Context) {
         val pagination = paginationState.get(update)
-        if (pagination != null) {
+        if (pagination != null && pagination.hasPage(pagination.currentPageIndex())) {
             pagination.switchTo(pagination.currentPageIndex()) // trigger pagination state update to refresh dynamic elements
         }
 
@@ -251,7 +304,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             if (host !is Context) return
 
             nextTick {
-                updatePaginationGlyph(host)
+                updatePaginationOverlay(host)
             }
         }
     }

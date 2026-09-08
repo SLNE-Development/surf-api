@@ -92,7 +92,7 @@ object TextAlignmentMath {
         val usableWidth = containerWidth - (padding * 2)
         val freeSpace = usableWidth - textWidth
 
-        return leftShift + freeSpace + 1 + padding
+        return leftShift + freeSpace + padding
     }
 
     /**
@@ -100,7 +100,8 @@ object TextAlignmentMath {
      *
      * The free space is halved with [Math.floorDiv] so that a title wider than the container (which
      * yields a negative free space) overflows evenly instead of being biased to one side by
-     * truncation towards zero.
+     * truncation towards zero. An odd free space leaves the extra pixel on the right, the way the
+     * client centres text itself.
      *
      * @param textWidth the rendered pixel width of the text, as returned by [textWidth]
      * @param leftShift the base pixel offset of the container area
@@ -116,6 +117,6 @@ object TextAlignmentMath {
         val usableWidth = containerWidth - (padding * 2)
         val freeSpace = usableWidth - textWidth
 
-        return leftShift + Math.floorDiv(freeSpace, 2) + 1 + padding
+        return leftShift + Math.floorDiv(freeSpace, 2) + padding
     }
 }
