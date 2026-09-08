@@ -1,18 +1,25 @@
 public final class dev/slne/surf/redis/RedisApi {
 	public static final field Companion Ldev/slne/surf/redis/RedisApi$Companion;
-	public synthetic fun <init> (Lorg/redisson/config/Config;Lkotlinx/serialization/json/Json;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun connect ()Ldev/slne/surf/redis/RedisApi;
 	public final fun createSimpleCache-exY8QGI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;)Ldev/slne/surf/redis/cache/SimpleRedisCache;
 	public static synthetic fun createSimpleCache-exY8QGI$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/redis/cache/SimpleRedisCache;
 	public final fun createSimpleSetRedisCache-1Y68eR8 (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;Ldev/slne/surf/redis/cache/RedisSetIndexes;)Ldev/slne/surf/redis/cache/SimpleSetRedisCache;
 	public static synthetic fun createSimpleSetRedisCache-1Y68eR8$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;Ldev/slne/surf/redis/cache/RedisSetIndexes;ILjava/lang/Object;)Ldev/slne/surf/redis/cache/SimpleSetRedisCache;
+	public final fun createSyncList-SxA4cEA (Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;J)Ldev/slne/surf/redis/sync/list/SyncList;
 	public final fun createSyncList-SxA4cEA (Ljava/lang/String;Lkotlinx/serialization/KSerializer;J)Ldev/slne/surf/redis/sync/list/SyncList;
+	public static synthetic fun createSyncList-SxA4cEA$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncList;
 	public static synthetic fun createSyncList-SxA4cEA$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/serialization/KSerializer;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/list/SyncList;
+	public final fun createSyncMap-Wn2Vu4Y (Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;Ldev/slne/surf/redis/codec/RedisCodec;J)Ldev/slne/surf/redis/sync/map/SyncMap;
 	public final fun createSyncMap-Wn2Vu4Y (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;J)Ldev/slne/surf/redis/sync/map/SyncMap;
+	public static synthetic fun createSyncMap-Wn2Vu4Y$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;Ldev/slne/surf/redis/codec/RedisCodec;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/map/SyncMap;
 	public static synthetic fun createSyncMap-Wn2Vu4Y$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/map/SyncMap;
+	public final fun createSyncSet-SxA4cEA (Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;J)Ldev/slne/surf/redis/sync/set/SyncSet;
 	public final fun createSyncSet-SxA4cEA (Ljava/lang/String;Lkotlinx/serialization/KSerializer;J)Ldev/slne/surf/redis/sync/set/SyncSet;
+	public static synthetic fun createSyncSet-SxA4cEA$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/set/SyncSet;
 	public static synthetic fun createSyncSet-SxA4cEA$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/serialization/KSerializer;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/set/SyncSet;
+	public final fun createSyncValue-Wn2Vu4Y (Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;Ljava/lang/Object;J)Ldev/slne/surf/redis/sync/value/SyncValue;
 	public final fun createSyncValue-Wn2Vu4Y (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/Object;J)Ldev/slne/surf/redis/sync/value/SyncValue;
+	public static synthetic fun createSyncValue-Wn2Vu4Y$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Ldev/slne/surf/redis/codec/RedisCodec;Ljava/lang/Object;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/value/SyncValue;
 	public static synthetic fun createSyncValue-Wn2Vu4Y$default (Ldev/slne/surf/redis/RedisApi;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/Object;JILjava/lang/Object;)Ldev/slne/surf/redis/sync/value/SyncValue;
 	public final fun disconnect ()V
 	public final fun freeze ()V
@@ -28,6 +35,8 @@ public final class dev/slne/surf/redis/RedisApi {
 	public final fun isConnected ()Z
 	public final fun isFrozen ()Z
 	public final fun publishEvent (Ldev/slne/surf/redis/event/RedisEvent;)Lkotlinx/coroutines/Deferred;
+	public final fun registerEventCodec (Ljava/lang/Class;Ldev/slne/surf/redis/event/RedisEventCodec;)V
+	public final fun registerEventType (Ljava/lang/Class;)V
 	public final fun registerRequestHandler (Ljava/lang/Object;)V
 	public final fun sendRequest (Ldev/slne/surf/redis/request/RedisRequest;Ljava/lang/Class;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun sendRequest$default (Ldev/slne/surf/redis/RedisApi;Ldev/slne/surf/redis/request/RedisRequest;Ljava/lang/Class;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
@@ -44,25 +53,6 @@ public final class dev/slne/surf/redis/RedisApi$Companion {
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Ljava/nio/file/Path;Ljava/nio/file/Path;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Lorg/redisson/misc/RedisURI;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
-}
-
-public final class dev/slne/surf/redis/RedisComponentProvider$Companion : dev/slne/surf/redis/RedisComponentProvider {
-	public fun createEventBus (Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/event/RedisEventBus;
-	public fun createRedissonConfig (Ldev/slne/surf/redis/internal/RedissonConfigDetails;)Lorg/redisson/config/Config;
-	public fun createRequestResponseBus (Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/request/RequestResponseBus;
-	public fun createSimpleCache-1Y68eR8 (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/cache/SimpleRedisCache;
-	public fun createSimpleSetRedisCache-WPi__2c (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLkotlin/jvm/functions/Function1;Ldev/slne/surf/redis/cache/RedisSetIndexes;Ldev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/cache/SimpleSetRedisCache;
-	public fun createSyncList-exY8QGI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/list/SyncList;
-	public fun createSyncMap-zkXUZaI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/map/SyncMap;
-	public fun createSyncSet-exY8QGI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/set/SyncSet;
-	public fun createSyncValue-zkXUZaI (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/Object;JLdev/slne/surf/redis/RedisApi;)Ldev/slne/surf/redis/sync/value/SyncValue;
-	public fun getClientId ()Ljava/lang/String;
-	public fun getEventLoopGroup ()Lio/netty/channel/MultiThreadIoEventLoopGroup;
-	public final fun getINSTANCE ()Ldev/slne/surf/redis/RedisComponentProvider;
-	public fun getRedissonExecutorService ()Ljava/util/concurrent/ExecutorService;
-	public fun injectOriginId (Ldev/slne/surf/redis/event/RedisEvent;)V
-	public fun injectOriginId (Ldev/slne/surf/redis/request/RedisRequest;)V
-	public fun tryExtractPluginNameFromClass (Ljava/lang/Class;)Ljava/lang/String;
 }
 
 public final class dev/slne/surf/redis/cache/RedisSetIndex {
@@ -125,6 +115,141 @@ public final class dev/slne/surf/redis/cache/SimpleSetRedisCache$DefaultImpls {
 	public static fun findFirstByIndexCached (Ldev/slne/surf/redis/cache/SimpleSetRedisCache;Ldev/slne/surf/redis/cache/RedisSetIndex;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract class dev/slne/surf/redis/codec/AbstractCodec : org/redisson/client/codec/BaseCodec, dev/slne/surf/redis/codec/RedisCodec {
+	public fun <init> ()V
+	public final fun decode (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public final fun encode (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+	public fun getCodecId ()Ljava/lang/String;
+	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
+	public fun getValueEncoder ()Lorg/redisson/client/protocol/Encoder;
+	public fun getVersion ()I
+	protected abstract fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	protected abstract fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/Byte_buf_extensionsKt {
+	public static final fun readArray (Lio/netty/buffer/ByteBuf;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;)[Ljava/lang/Object;
+	public static final fun readBitSet (Lio/netty/buffer/ByteBuf;)Ljava/util/BitSet;
+	public static final fun readBooleanArray (Lio/netty/buffer/ByteBuf;)[Z
+	public static final fun readById (Lio/netty/buffer/ByteBuf;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun readByteArray (Lio/netty/buffer/ByteBuf;)[B
+	public static final fun readCharArray (Lio/netty/buffer/ByteBuf;)[C
+	public static final fun readCollection (Lio/netty/buffer/ByteBuf;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/util/Collection;
+	public static final fun readComponent (Lio/netty/buffer/ByteBuf;)Lnet/kyori/adventure/text/Component;
+	public static final fun readDoubleArray (Lio/netty/buffer/ByteBuf;)[D
+	public static final fun readFixedBitSet (Lio/netty/buffer/ByteBuf;I)Ljava/util/BitSet;
+	public static final fun readFloatArray (Lio/netty/buffer/ByteBuf;)[F
+	public static final fun readInstant (Lio/netty/buffer/ByteBuf;)Ljava/time/Instant;
+	public static final fun readIntArray (Lio/netty/buffer/ByteBuf;)[I
+	public static final fun readKey (Lio/netty/buffer/ByteBuf;)Lnet/kyori/adventure/key/Key;
+	public static final fun readList (Lio/netty/buffer/ByteBuf;Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public static final fun readLongArray (Lio/netty/buffer/ByteBuf;)[J
+	public static final fun readMap (Lio/netty/buffer/ByteBuf;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
+	public static final fun readMap (Lio/netty/buffer/ByteBuf;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ljava/util/Map;
+	public static final fun readNullable (Lio/netty/buffer/ByteBuf;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun readShortArray (Lio/netty/buffer/ByteBuf;)[S
+	public static final fun readString (Lio/netty/buffer/ByteBuf;I)Ljava/lang/String;
+	public static synthetic fun readString$default (Lio/netty/buffer/ByteBuf;IILjava/lang/Object;)Ljava/lang/String;
+	public static final fun readUuid (Lio/netty/buffer/ByteBuf;)Ljava/util/UUID;
+	public static final fun readVarInt (Lio/netty/buffer/ByteBuf;)I
+	public static final fun readVarIntArray (Lio/netty/buffer/ByteBuf;)[I
+	public static final fun readVarIntList (Lio/netty/buffer/ByteBuf;)Lit/unimi/dsi/fastutil/ints/IntArrayList;
+	public static final fun readVarLong (Lio/netty/buffer/ByteBuf;)J
+	public static final fun readWithCount (Lio/netty/buffer/ByteBuf;Lkotlin/jvm/functions/Function1;)V
+	public static final fun writeArray (Lio/netty/buffer/ByteBuf;[Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
+	public static final fun writeBitSet (Lio/netty/buffer/ByteBuf;Ljava/util/BitSet;)V
+	public static final fun writeBooleanArray (Lio/netty/buffer/ByteBuf;[Z)V
+	public static final fun writeById (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public static final fun writeByteArray (Lio/netty/buffer/ByteBuf;[B)V
+	public static final fun writeCharArray (Lio/netty/buffer/ByteBuf;[C)V
+	public static final fun writeCollection (Lio/netty/buffer/ByteBuf;Ljava/util/Collection;Lkotlin/jvm/functions/Function2;)V
+	public static final fun writeComponent (Lio/netty/buffer/ByteBuf;Lnet/kyori/adventure/text/Component;)V
+	public static final fun writeDoubleArray (Lio/netty/buffer/ByteBuf;[D)V
+	public static final fun writeEnum (Lio/netty/buffer/ByteBuf;Ljava/lang/Enum;)V
+	public static final fun writeFixedBitSet (Lio/netty/buffer/ByteBuf;Ljava/util/BitSet;I)V
+	public static final fun writeFloatArray (Lio/netty/buffer/ByteBuf;[F)V
+	public static final fun writeInstant (Lio/netty/buffer/ByteBuf;Ljava/time/Instant;)V
+	public static final fun writeIntArray (Lio/netty/buffer/ByteBuf;[I)V
+	public static final fun writeKey (Lio/netty/buffer/ByteBuf;Lnet/kyori/adventure/key/Key;)V
+	public static final fun writeLongArray (Lio/netty/buffer/ByteBuf;[J)V
+	public static final fun writeMap (Lio/netty/buffer/ByteBuf;Ljava/util/Map;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public static final fun writeNullable (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
+	public static final fun writeShortArray (Lio/netty/buffer/ByteBuf;[S)V
+	public static final fun writeString (Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;I)V
+	public static synthetic fun writeString$default (Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;IILjava/lang/Object;)V
+	public static final fun writeUuid (Lio/netty/buffer/ByteBuf;Ljava/util/UUID;)V
+	public static final fun writeVarInt (Lio/netty/buffer/ByteBuf;I)V
+	public static final fun writeVarIntArray (Lio/netty/buffer/ByteBuf;[I)V
+	public static final fun writeVarIntList (Lio/netty/buffer/ByteBuf;Lit/unimi/dsi/fastutil/ints/IntList;)V
+	public static final fun writeVarLong (Lio/netty/buffer/ByteBuf;J)V
+}
+
+public final class dev/slne/surf/redis/codec/Codec_extensionKt {
+	public static final fun checkDecoding (Z)V
+	public static final fun checkDecoding (ZLkotlin/jvm/functions/Function0;)V
+	public static final fun checkEncoding (Z)V
+	public static final fun checkEncoding (ZLkotlin/jvm/functions/Function0;)V
+}
+
+public final class dev/slne/surf/redis/codec/JsonKotlinCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field Companion Ldev/slne/surf/redis/codec/JsonKotlinCodec$Companion;
+	public final fun getJson ()Lkotlinx/serialization/json/Json;
+}
+
+public final class dev/slne/surf/redis/codec/JsonKotlinCodec$Companion {
+	public final fun getDEFAULT_SERIALIZERS ()Lkotlinx/serialization/modules/SerializersModule;
+	public final fun of (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/codec/JsonKotlinCodec;
+	public static synthetic fun of$default (Ldev/slne/surf/redis/codec/JsonKotlinCodec$Companion;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/codec/JsonKotlinCodec;
+}
+
+public abstract interface class dev/slne/surf/redis/codec/RedisCodec {
+	public abstract fun decode (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public abstract fun encode (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+	public fun getCodecId ()Ljava/lang/String;
+	public fun getVersion ()I
+}
+
+public final class dev/slne/surf/redis/codec/RedisCodec$DefaultImpls {
+	public static fun getCodecId (Ldev/slne/surf/redis/codec/RedisCodec;)Ljava/lang/String;
+	public static fun getVersion (Ldev/slne/surf/redis/codec/RedisCodec;)I
+}
+
+public final class dev/slne/surf/redis/codec/RedisCodecException : java/lang/RuntimeException {
+	public static final field Companion Ldev/slne/surf/redis/codec/RedisCodecException$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/slne/surf/redis/codec/RedisCodecException$Companion {
+}
+
+public final class dev/slne/surf/redis/codec/RedisUtf8String {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/RedisUtf8String;
+	public static final field MAX_STRING_LENGTH I
+	public static final fun read (Lio/netty/buffer/ByteBuf;I)Ljava/lang/String;
+	public static synthetic fun read$default (Lio/netty/buffer/ByteBuf;IILjava/lang/Object;)Ljava/lang/String;
+	public static final fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;I)V
+	public static synthetic fun write$default (Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;IILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/RedisVarInt {
+	public static final field MAX_VARINT_SIZE I
+	public static fun getByteSize (I)I
+	public static fun hasContinuationBit (B)Z
+	public static fun read (Lio/netty/buffer/ByteBuf;)I
+	public static fun write (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+	public static fun writeSlow (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+}
+
+public final class dev/slne/surf/redis/codec/RedisVarLong {
+	public static final field MAX_VARLONG_SIZE I
+	public static fun getByteSize (J)I
+	public static fun hasContinuationBit (B)Z
+	public static fun read (Lio/netty/buffer/ByteBuf;)J
+	public static fun write (Lio/netty/buffer/ByteBuf;J)Lio/netty/buffer/ByteBuf;
+}
+
 public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/StringCodec {
 	public static final field INSTANCE Ldev/slne/surf/redis/codec/UUIDCodec;
 	public fun <init> ()V
@@ -132,6 +257,48 @@ public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/Str
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/nio/charset/Charset;)V
 	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
+}
+
+public final class dev/slne/surf/redis/codec/default/DoubleBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/DoubleBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/IntBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/IntBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/LongBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/LongBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/StringBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/StringBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/UUIDBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/UUIDBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/VarIntBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/VarIntBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/redis/codec/default/VarLongBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/default/VarLongBinaryCodec;
+	public synthetic fun read (Lio/netty/buffer/ByteBuf;)Ljava/lang/Object;
+	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
 }
 
 public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion : dev/slne/surf/redis/credentials/RedisCredentialsProvider {
@@ -159,6 +326,16 @@ public final class dev/slne/surf/redis/event/RedisEvent$Companion {
 public abstract interface class dev/slne/surf/redis/event/RedisEventBus : dev/slne/surf/redis/util/Initializable, java/io/Closeable {
 	public abstract fun publish (Ldev/slne/surf/redis/event/RedisEvent;)Lkotlinx/coroutines/Deferred;
 	public abstract fun registerListener (Ljava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/redis/event/RedisEventCodec : dev/slne/surf/redis/codec/RedisCodec {
+	public fun getEventId ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/redis/event/RedisEventCodec$DefaultImpls {
+	public static fun getCodecId (Ldev/slne/surf/redis/event/RedisEventCodec;)Ljava/lang/String;
+	public static fun getEventId (Ldev/slne/surf/redis/event/RedisEventCodec;)Ljava/lang/String;
+	public static fun getVersion (Ldev/slne/surf/redis/event/RedisEventCodec;)I
 }
 
 public abstract interface annotation class dev/slne/surf/redis/request/HandleRedisRequest : java/lang/annotation/Annotation {
@@ -231,15 +408,21 @@ public abstract interface class dev/slne/surf/redis/sync/SyncStructure : dev/sln
 public abstract interface class dev/slne/surf/redis/sync/list/SyncList : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/list/SyncList$Companion;
 	public abstract fun add (Ljava/lang/Object;)V
+	public abstract fun addAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun clear ()V
+	public abstract fun clearAndAwait (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun contains (Ljava/lang/Object;)Z
 	public abstract fun get (I)Ljava/lang/Object;
 	public fun minusAssign (Ljava/lang/Object;)V
 	public fun plusAssign (Ljava/lang/Object;)V
 	public abstract fun remove (Ljava/lang/Object;)Z
+	public abstract fun removeAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeAt (I)Ljava/lang/Object;
+	public abstract fun removeAtAndAwait (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
+	public abstract fun removeIfAndAwait (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun set (ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun setAndAwait (ILjava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun size ()I
 	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
 }
@@ -326,13 +509,20 @@ public final class dev/slne/surf/redis/sync/list/SyncListChange$Updated : dev/sl
 public abstract interface class dev/slne/surf/redis/sync/map/SyncMap : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/map/SyncMap$Companion;
 	public abstract fun clear ()V
+	public abstract fun clearAndAwait (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun contains (Ljava/lang/Object;)Z
 	public abstract fun containsKey (Ljava/lang/Object;)Z
 	public abstract fun get (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun isEmpty ()Z
 	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun putAndAwait (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun remove (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun removeAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function2;)Z
+	public abstract fun removeIfAndAwait (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeIfEqualsAndAwait (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun replaceIfEqualsAndAwait (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun set (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun size ()I
 	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
@@ -385,12 +575,16 @@ public final class dev/slne/surf/redis/sync/map/SyncMapChange$Removed : dev/slne
 public abstract interface class dev/slne/surf/redis/sync/set/SyncSet : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/set/SyncSet$Companion;
 	public abstract fun add (Ljava/lang/Object;)Z
+	public abstract fun addAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun clear ()V
+	public abstract fun clearAndAwait (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun contains (Ljava/lang/Object;)Z
 	public fun minusAssign (Ljava/lang/Object;)V
 	public fun plusAssign (Ljava/lang/Object;)V
 	public abstract fun remove (Ljava/lang/Object;)Z
+	public abstract fun removeAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
+	public abstract fun removeIfAndAwait (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun size ()I
 	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
 }
@@ -441,6 +635,7 @@ public abstract interface class dev/slne/surf/redis/sync/value/SyncValue : dev/s
 	public fun asProperty ()Lkotlin/properties/ReadWriteProperty;
 	public abstract fun get ()Ljava/lang/Object;
 	public abstract fun set (Ljava/lang/Object;)V
+	public abstract fun setAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/redis/sync/value/SyncValue$Companion {

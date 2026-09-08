@@ -21,24 +21,28 @@ allprojects {
 }
 
 val nettyRelocationBase = "dev.slne.surf.redis.shaded."
+val libsRelocationBase = "dev.slne.surf.redis.libs."
 val mangledPrefix: String = nettyRelocationBase
     .replace("_", "_1")
     .replace(".", "_")
 
+val shadedPackages = mapOf(
+    "io.netty" to nettyRelocationBase + "io.netty",
+    "com.esotericsoftware" to libsRelocationBase + "kryo",
+    "io.reactivex" to libsRelocationBase + "reactivex",
+    "javax.cache" to libsRelocationBase + "javax.cache",
+    "jodd" to libsRelocationBase + "jodd",
+    "net.bytebuddy" to libsRelocationBase + "bytebuddy",
+    "org.objenesis" to libsRelocationBase + "objenesis",
+    "org.redisson" to libsRelocationBase + "redisson",
+    "org.yaml" to libsRelocationBase + "yaml",
+)
+
+extra["shadedPackages"] = shadedPackages
+
 subprojects {
     tasks.withType<ShadowJar>().configureEach {
-        val base = "dev.slne.surf.redis.libs."
-
-        relocate("io.netty", nettyRelocationBase + "io.netty")
-
-        relocate("com.esotericsoftware", base + "kryo")
-        relocate("io.reactivex", base + "reactivex")
-        relocate("javax.cache", base + "javax.cache")
-        relocate("jodd", base + "jodd")
-        relocate("net.bytebuddy", base + "bytebuddy")
-        relocate("org.objenesis", base + "objenesis")
-        relocate("org.redisson", base + "redisson")
-        relocate("org.yaml", base + "yaml")
+        shadedPackages.forEach { (from, to) -> relocate(from, to) }
     }
 
     tasks.withType<ShadowJar>().configureEach {
@@ -101,6 +105,14 @@ subprojects {
         configure<KotlinJvmExtension> {
             compilerOptions {
                 optIn.add("dev.slne.surf.redis.util.InternalRedisAPI")
+            }
+        }
+
+        if (extensions.findByType<PublishingExtension>()?.publications?.findByName("shadow") != null) {
+            tasks.withType<AbstractPublishToMaven>().configureEach {
+                onlyIf("only the shadow publication owns these coordinates") {
+                    publication.name != "pluginMaven"
+                }
             }
         }
     }

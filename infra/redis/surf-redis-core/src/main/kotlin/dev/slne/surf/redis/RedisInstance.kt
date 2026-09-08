@@ -3,14 +3,8 @@ package dev.slne.surf.redis
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.redis.config.RedisConfig
+import dev.slne.surf.redis.internal.SharedRedissonClientRegistry
 import io.netty.channel.MultiThreadIoEventLoopGroup
-import io.netty.channel.epoll.Epoll
-import io.netty.channel.epoll.EpollIoHandler
-import io.netty.channel.kqueue.KQueue
-import io.netty.channel.kqueue.KQueueIoHandler
-import io.netty.channel.nio.NioIoHandler
-import io.netty.channel.uring.IoUring
-import io.netty.channel.uring.IoUringIoHandler
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
 import java.io.InputStream
@@ -27,13 +21,6 @@ abstract class RedisInstance {
         val contextClassLoader = Thread.currentThread().contextClassLoader
         try {
             Thread.currentThread().contextClassLoader = this.javaClass.classLoader
-            val ioHandlerFactory = when {
-                IoUring.isAvailable() -> IoUringIoHandler.newFactory()
-                Epoll.isAvailable() -> EpollIoHandler.newFactory()
-                KQueue.isAvailable() -> KQueueIoHandler.newFactory()
-                else -> NioIoHandler.newFactory()
-            }
-
             val nettyThreadFactory = Thread.ofPlatform()
                 .name("redisson-netty-thread-", 0)
                 .uncaughtExceptionHandler { thread, throwable ->
@@ -60,14 +47,11 @@ abstract class RedisInstance {
                 }
                 .factory()
 
-            eventLoopGroup = MultiThreadIoEventLoopGroup(16, nettyThreadFactory, ioHandlerFactory)
+            eventLoopGroup =
+                MultiThreadIoEventLoopGroup(16, nettyThreadFactory, TransportInfo.instance.ioHandlerFactory)
             redissonExecutorService = Executors.newThreadPerTaskExecutor(redissonThreadFactory)
         } finally {
             Thread.currentThread().contextClassLoader = contextClassLoader
-        }
-
-        if (IoUring.isAvailable()) {
-            IoUringRedissonPatcher.patch(javaClass.classLoader)
         }
     }
 
@@ -84,15 +68,12 @@ abstract class RedisInstance {
     abstract val dataPath: Path
 
     fun load() {
-        val networkingString = when {
-            IoUring.isAvailable() -> "IoUring"
-            Epoll.isAvailable() -> "Epoll"
-            KQueue.isAvailable() -> "KQueue"
-            else -> "NIO"
-        }
-
         log.atInfo()
-            .log("Enabling Redis networking using %s transport", networkingString)
+            .log(
+                "Enabling Redis networking using %s transport with Redisson %s",
+                TransportInfo.instance.transportString,
+                RedisConstants.REDISSON_VERSION
+            )
         RedisConfig.init()
     }
 
@@ -100,6 +81,7 @@ abstract class RedisInstance {
         log.atInfo()
             .log("Disabling Redis networking")
 
+        shutdownSharedRedissonClients()
         streamPollScheduler.dispose()
         ttlRefreshScheduler.dispose()
         eventLoopGroup.shutdownGracefully().syncUninterruptibly()
@@ -108,6 +90,26 @@ abstract class RedisInstance {
         if (!redissonExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
             redissonExecutorService.shutdownNow()
         }
+    }
+
+    private fun shutdownSharedRedissonClients() {
+        val leaked = try {
+            SharedRedissonClientRegistry.instance.shutdownAll()
+        } catch (failure: Throwable) {
+            log.atWarning()
+                .withCause(failure)
+                .log("Failed to shut down shared Redisson clients while disabling Redis networking")
+            return
+        }
+
+        if (leaked.isEmpty()) return
+        log.atWarning()
+            .log(
+                "%d shared Redisson client(s) were still in use while disabling Redis networking; " +
+                        "their owners never called RedisApi.disconnect(): %s",
+                leaked.size,
+                leaked
+            )
     }
 
     fun getResourceAsStream(name: String): InputStream? = javaClass.getResourceAsStream(name)

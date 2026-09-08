@@ -434,7 +434,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
                 )
         }
 
-        suspend fun <R: Any> execute(
+        suspend fun <R : Any> execute(
             script: RScriptReactive,
             mode: RScript.Mode,
             lua: SimpleSetRedisCacheLuaScripts,

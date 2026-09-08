@@ -19,22 +19,21 @@ object RedisExpirableUtils {
         if (ttl == Duration.ZERO || ttl.isNegative()) return Disposables.disposed()
         val delay = Math.clamp(ttl.inWholeSeconds - 2, 1L, 15L)
         val objectNames = objects.joinToString(", ") { it.name }
+        val javaTtl = ttl.toJavaDuration()
+        val refresh = Mono.`when`(objects.map { it.expire(javaTtl) }).then()
+        val interval = Mono.delay(
+            java.time.Duration.ofSeconds(delay),
+            RedisInstance.get().ttlRefreshScheduler
+        )
 
-        return Mono.defer {
-            Mono.`when`(objects.map { it.expire(ttl.toJavaDuration()) }).then()
-        }
+        return refresh
             .onErrorResume { e ->
                 log.atWarning()
                     .withCause(e)
                     .log("Failed to refresh TTL for Redis expirable objects: $objectNames")
                 Mono.empty()
             }
-            .then(
-                Mono.delay(
-                    java.time.Duration.ofSeconds(delay),
-                    RedisInstance.get().ttlRefreshScheduler
-                )
-            )
+            .then(interval)
             .repeat()
             .subscribe()
     }

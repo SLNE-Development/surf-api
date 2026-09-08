@@ -14,6 +14,8 @@ local eventType  = ARGV[6]
 
 -- Remove each value from list, creating message for each removal
 local removedCount = 0
+local firstVersion = 0
+local lastVersion = 0
 for i = 7, #ARGV do
     local toRemove = ARGV[i]
     local removed  = redis.call('LREM', dataKey, 1, toRemove)
@@ -22,10 +24,15 @@ for i = 7, #ARGV do
         removedCount = removedCount + 1
 
         local ver = redis.call('INCR', versionKey)
+        if firstVersion == 0 then
+            firstVersion = ver
+        end
+        lastVersion = ver
         local payload = tostring(toRemove)
         local msg = tostring(ver) .. delim .. originId .. delim .. payload
         redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*', fieldType, eventType, fieldMsg, msg)
     end
 end
 
-return 0
+-- Return the contiguous version range so the originating client can advance without a full resync.
+return {firstVersion, lastVersion}

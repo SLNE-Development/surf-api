@@ -2,7 +2,6 @@ package dev.slne.surf.redis.event
 
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.Initializable
-import dev.slne.surf.redis.util.InternalRedisAPI
 import kotlinx.coroutines.Deferred
 import java.io.Closeable
 
@@ -10,8 +9,9 @@ import java.io.Closeable
  * Redis-backed event bus based on Redis Pub/Sub.
  *
  * The event bus is responsible for:
- * - publishing [RedisEvent] instances to Redis (JSON-serialized)
- * - subscribing to the configured Redis event channel
+ * - publishing default [RedisEvent] instances to the JSON channel
+ * - publishing events with a [RedisEventCodec] to an isolated binary channel
+ * - subscribing to both event channels
  * - dispatching received events to locally registered handler methods
  *
  * Handler methods are discovered via [OnRedisEvent].
@@ -38,9 +38,13 @@ interface RedisEventBus : Closeable, Initializable {
      * Publishes [event] to Redis asynchronously.
      *
      * The returned [Deferred] completes with the number of subscribers that received the message.
-     * If the event could not be serialized, the deferred completes with `0`.
+     * If the event could not be encoded, the deferred completes with `0`.
      *
-     * @return a [Deferred] with the number of receiving subscribers, or `0` if serialization failed.
+     * The owning [RedisApi] must already be connected. JSON events retain their existing envelope
+     * and channel; custom-coded events are never published there.
+     *
+     * @return a [Deferred] with the number of receiving subscribers, or `0` if encoding failed.
+     * @throws IllegalStateException if the owning API is not connected
      */
     fun publish(event: RedisEvent): Deferred<Long>
 

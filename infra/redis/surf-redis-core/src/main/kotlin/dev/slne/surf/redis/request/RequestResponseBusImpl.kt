@@ -6,6 +6,7 @@ import com.google.common.flogger.StackSize
 import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
 import dev.slne.surf.api.core.invoker.InvokerFactory
 import dev.slne.surf.api.core.serializer.java.uuid.SerializableUUID
+import dev.slne.surf.api.core.util.emptyObject2ObjectMap
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.redis.RedisApi
@@ -14,13 +15,13 @@ import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.invoker.RedisRequestHandlerInvokerTemplate
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
-import reactor.core.Disposable
 import reactor.core.publisher.Mono
 import java.lang.reflect.ParameterizedType
 import java.util.*
@@ -50,12 +51,13 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
     private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
     private val responseTypeRegistry = ConcurrentHashMap<String, Class<out RedisResponse>>()
 
+    @Volatile
+    private var handlerSnapshot: Object2ObjectMap<String, RequestRegistration> =
+        emptyObject2ObjectMap()
+
     /**
-     * Read-write lock guarding mutations to [requestHandlers] during handler registration.
-     *
-     * After the owning [RedisApi] is frozen, no further registration is allowed and
-     * request dispatching operates as a read-only path, so this lock is not contended
-     * during normal operation.
+     * Guards mutations to [requestHandlers] / [requestTypeRegistry] and the snapshot rebuild that
+     * publishes them. Only the exclusive side is ever taken.
      */
     private val registrationLock = ReentrantReadWriteLock()
 
@@ -69,8 +71,11 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         )
     }
 
-    private lateinit var requestDisposable: Disposable
-    private lateinit var responseDisposable: Disposable
+    @Volatile
+    private var requestListenerId: Int? = null
+
+    @Volatile
+    private var responseListenerId: Int? = null
 
     companion object {
         private val log = logger()
@@ -89,28 +94,13 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      *
      * This method is blocking and should only be called during startup.
      */
-    override fun init(): Mono<Void> = Mono.fromRunnable { setupSubscription() }
-
-    /**
-     * Installs the Redis Pub/Sub listener and subscribes to request/response channels.
-     *
-     * Incoming messages are dispatched to handler coroutines on `Dispatchers.Default`.
-     */
-    private fun setupSubscription() {
-        val requestId =
-            requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) }
-                .block()
-        val responseId =
-            responseTopic.addListener(String::class.java) { _, msg -> handleIncomingResponse(msg) }
-                .block()
-
-        requestDisposable = {
-            requestTopic.removeListener(requestId).block()
-        }
-        responseDisposable = {
-            responseTopic.removeListener(responseId).block()
-        }
-    }
+    override fun init(): Mono<Void> = Mono.zip(
+        requestTopic.addListener(String::class.java) { _, msg -> handleIncomingRequest(msg) },
+        responseTopic.addListener(String::class.java) { _, msg -> handleIncomingResponse(msg) }
+    ).doOnNext { ids ->
+        requestListenerId = ids.t1
+        responseListenerId = ids.t2
+    }.then()
 
     /**
      * Handles an incoming request message.
@@ -129,27 +119,27 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             return
         }
 
-        val requestClass = requestTypeRegistry[envelope.requestClass]
+        val registration = handlerSnapshot[envelope.requestClass]
 
-        if (requestClass == null) {
+        if (registration == null) {
             log.atFine()
                 .log("No registered request class for name: ${envelope.requestClass} - ignoring request.")
             return
         }
 
-        val request = deserializeRequest(requestClass, envelope.requestData) ?: return
-        val handler = requestHandlers[requestClass] ?: return
+        val request = deserializeRequest(registration.requestType, envelope.requestData) ?: return
+        val requestId = envelope.requestId
         val context = RequestContext(
             request = request,
             respondCallback = { response ->
-                sendResponse(envelope.requestId, response)
+                sendResponse(requestId, response)
             },
             coroutineScope = api.redisListenerScope
         )
 
         api.redisListenerScope.launch {
             try {
-                handler.invoke(context)
+                registration.handler.invoke(context)
             } catch (e: Throwable) {
                 if (e is CancellationException) throw e
                 log.atWarning()
@@ -175,6 +165,14 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             return
         }
 
+        val requestId = envelope.requestId
+        val deferred = pendingRequests[requestId]
+        if (deferred == null) {
+            log.atFine()
+                .log("No pending request found for response with ID: $requestId - ignoring response.")
+            return
+        }
+
         val responseClass = responseTypeRegistry[envelope.responseClass]
 
         if (responseClass == null) {
@@ -184,12 +182,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         }
 
         val response = deserializeResponse(responseClass, envelope.responseData) ?: return
-        val deferred = pendingRequests.remove(envelope.requestId)
-        if (deferred == null) {
-            log.atFine()
-                .log("No pending request found for response with ID: ${envelope.requestId} - ignoring response.")
-            return
-        }
+        if (!pendingRequests.remove(requestId, deferred)) return
 
         deferred.complete(response)
     }
@@ -205,24 +198,24 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
         val deferred = CompletableDeferred<RedisResponse>()
 
         pendingRequests[requestId] = deferred
-        responseTypeRegistry[responseType.name] = responseType
+        val responseTypeName = responseType.name
+        if (responseTypeRegistry[responseTypeName] !== responseType) {
+            responseTypeRegistry[responseTypeName] = responseType
+        }
 
         val envelope = RequestEnvelope.forRequest(request, requestId, requestData)
         val message = api.json.encodeToString(envelope)
 
-        requestTopic.publish(message).awaitSingle()
-
         try {
+            requestTopic.publish(message).awaitSingle()
             return withTimeout(timeoutMs.milliseconds) {
                 val response = deferred.await()
                 responseType.cast(response)
             }
         } catch (_: TimeoutCancellationException) {
-            pendingRequests.remove(requestId)
             throw RequestTimeoutException("Request timed out after ${timeoutMs}ms: ${request::class.simpleName}")
-        } catch (e: Exception) {
-            pendingRequests.remove(requestId)
-            throw e
+        } finally {
+            pendingRequests.remove(requestId, deferred)
         }
     }
 
@@ -306,13 +299,13 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
             @Suppress("UNCHECKED_CAST")
             requestType as Class<out RedisRequest>
 
-            registrationLock.write {
-                requestTypeRegistry[requestType.name] = requestType
-            }
-
             val invoker = INVOKER_FACTORY.create(handler, method, requestType)
-            val current =
-                registrationLock.write { requestHandlers.putIfAbsent(requestType, invoker) }
+            val current = registrationLock.write {
+                requestTypeRegistry[requestType.name] = requestType
+                val previous = requestHandlers.putIfAbsent(requestType, invoker)
+                rebuildSnapshot()
+                previous
+            }
 
             if (current != null) {
                 log.atWarning()
@@ -442,18 +435,44 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      * Cancels all pending requests and clears internal state.
      */
     override fun close() {
-        requestDisposable.dispose()
-        responseDisposable.dispose()
+        requestListenerId?.let { requestTopic.removeListener(it).block() }
+        responseListenerId?.let { responseTopic.removeListener(it).block() }
+        requestListenerId = null
+        responseListenerId = null
 
         pendingRequests.values.forEach { deferred ->
             deferred.cancel("RequestResponseBus closed")
         }
         pendingRequests.clear()
 
-        requestHandlers.clear()
-        requestTypeRegistry.clear()
+        registrationLock.write {
+            requestHandlers.clear()
+            requestTypeRegistry.clear()
+            rebuildSnapshot()
+        }
         responseTypeRegistry.clear()
+
     }
+
+    @Suppress("JavaMapForEach")
+    private fun rebuildSnapshot() {
+        require(registrationLock.isWriteLockedByCurrentThread) { "rebuildSnapshot must be called from within a write lock" }
+
+        val snapshot = Object2ObjectOpenHashMap<String, RequestRegistration>(requestTypeRegistry.size)
+        requestTypeRegistry.forEach { key, type ->
+            val handler = requestHandlers[type]
+            if (handler != null) {
+                snapshot[key] = RequestRegistration(type, handler)
+            }
+        }
+
+        handlerSnapshot = snapshot
+    }
+
+    private class RequestRegistration(
+        @JvmField val requestType: Class<out RedisRequest>,
+        @JvmField val handler: RedisRequestHandlerInvoker
+    )
 
     /**
      * Wire format for request messages published to Redis.

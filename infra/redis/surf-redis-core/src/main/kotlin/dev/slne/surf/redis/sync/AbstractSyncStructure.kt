@@ -34,7 +34,11 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     override fun init(): Mono<Void> {
         return registerListeners()
             .then(loadFromRemote())
-            .then()
+            .doOnError { throwable ->
+                log.atSevere()
+                    .withCause(throwable)
+                    .log("Failed to initialize synchronized structure '$id'")
+            }
     }
 
     private fun registerListeners(): Mono<Void> = Flux.merge(registerListeners0())
@@ -85,17 +89,12 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
     }
 
     protected fun loadFromRemote(): Mono<Void> = loadFromRemote0()
-        .onErrorResume {
-            log.atWarning()
-                .withCause(it)
-                .log("Failed to load remote state for $id")
-            Mono.empty()
-        }
-        .doOnSuccess { raw ->
-            if (raw != null) {
-                overrideFromRemote(raw)
-            }
-        }
+        .switchIfEmpty(
+            Mono.error(
+                IllegalStateException("Remote snapshot for synchronized structure '$id' returned no result")
+            )
+        )
+        .doOnNext(::overrideFromRemote)
         .then()
 
     protected abstract fun loadFromRemote0(): Mono<R>

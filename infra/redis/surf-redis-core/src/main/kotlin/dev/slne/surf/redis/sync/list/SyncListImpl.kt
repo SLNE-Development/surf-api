@@ -5,10 +5,11 @@ import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
+import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import kotlinx.serialization.KSerializer
+import kotlinx.coroutines.reactor.awaitSingle
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -18,17 +19,18 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
 
-class SyncListImpl<T : Any>(
+class SyncListImpl<T : Any> internal constructor(
     api: RedisApi,
     id: String,
     ttl: Duration,
-    private val elementSerializer: KSerializer<T>
+    private val elementCodec: SyncValueCodec<T>
 ) : AbstractStreamSyncStructure<SyncListChange<T>, SimpleVersionedSnapshot<List<String>>>(
     api,
     id,
     ttl,
     Scripts,
-    NAMESPACE
+    NAMESPACE,
+    elementCodec.descriptor
 ), SyncList<T> {
 
     companion object {
@@ -47,6 +49,7 @@ class SyncListImpl<T : Any>(
         private const val SET_AT_SCRIPT = "set-at"
         private const val REMOVE_MANY_SCRIPT = "remove-many"
         private const val CLEAR_SCRIPT = "clear"
+        private const val SNAPSHOT_SCRIPT = "snapshot"
 
         private object Scripts : LuaScriptRegistry("lua/sync/list") {
             init {
@@ -56,6 +59,7 @@ class SyncListImpl<T : Any>(
                 load(SET_AT_SCRIPT)
                 load(REMOVE_MANY_SCRIPT)
                 load(CLEAR_SCRIPT)
+                load(SNAPSHOT_SCRIPT)
             }
         }
     }
@@ -113,46 +117,102 @@ class SyncListImpl<T : Any>(
     }
 
     override fun removeAt(index: Int): T {
-        val old = lock.write { list.removeAt(index) }
+        val old = lock.write {
+            list.removeAt(index)
+        }
 
         notifyListeners(SyncListChange.RemovedAt(index, old))
-        removeAtRemote(index)
+
+        removeAtRemote(
+            index,
+            encodeValue(old),
+        )
 
         return old
     }
 
+    private fun removeAtRemote(
+        index: Int,
+        expectedEncoded: String,
+    ) {
+        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
+
+        writeToRemote(
+            REMOVE_AT_SCRIPT,
+            EVENT_REMOVED_AT,
+            index.toString(),
+            expectedEncoded,
+            tombstone,
+        )
+    }
+
     override fun set(index: Int, element: T): T {
-        val old = lock.write { list.set(index, element) }
+        val old = lock.write {
+            list.set(index, element)
+        }
 
         notifyListeners(SyncListChange.Updated(index, element, old))
-        setAtRemote(index, encodeValue(element))
+
+        setAtRemote(
+            index,
+            encodeValue(old),
+            encodeValue(element),
+        )
 
         return old
+    }
+
+    private fun setAtRemote(
+        index: Int,
+        expectedEncoded: String,
+        newEncoded: String,
+    ) {
+        writeToRemote(
+            SET_AT_SCRIPT,
+            EVENT_SET_AT,
+            index.toString(),
+            expectedEncoded,
+            newEncoded,
+        )
     }
 
     override fun removeIf(predicate: (T) -> Boolean): Boolean {
         val removedValues = lock.write {
             val removed = ObjectArrayList<T>()
-            val it = list.iterator()
-            while (it.hasNext()) {
-                val v = it.next()
-                if (predicate(v)) {
-                    it.remove()
-                    removed.add(v)
+            val iterator = list.iterator()
+
+            while (iterator.hasNext()) {
+                val value = iterator.next()
+
+                if (predicate(value)) {
+                    iterator.remove()
+                    removed.add(value)
                 }
             }
+
             removed
         }
 
-        if (removedValues.isEmpty) return false
+        if (removedValues.isEmpty) {
+            return false
+        }
 
-        removedValues.forEach { notifyListeners(SyncListChange.Removed(it)) }
-        val encodedValues = Array(removedValues.size) { i -> encodeValue(removedValues[i]) }
-        removeManyRemote(encodedValues)
+        for (value in removedValues) {
+            notifyListeners(SyncListChange.Removed(value))
+        }
+
+        val encodedValues = Array(removedValues.size) { index ->
+            encodeValue(removedValues[index])
+        }
+
+        writeBatchToRemote(
+            REMOVE_MANY_SCRIPT,
+            EVENT_REMOVED,
+            *encodedValues,
+        )
 
         return true
     }
-
 
     override fun clear() {
         val had = lock.write {
@@ -166,11 +226,169 @@ class SyncListImpl<T : Any>(
         clearRemote()
     }
 
-    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<List<String>>> = Mono.zip(
-        remoteList.readAll(),
-        versionCounter.get().onErrorReturn(0L)
-    ).map { SimpleVersionedSnapshot.fromTuple(it) }
+    override suspend fun removeAtAndAwait(index: Int): T {
+        val old = lock.write {
+            list.removeAt(index)
+        }
 
+        notifyListeners(SyncListChange.RemovedAt(index, old))
+
+        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
+
+        val version = writeToRemoteAwait(
+            REMOVE_AT_SCRIPT,
+            EVENT_REMOVED_AT,
+            index.toString(),
+            encodeValue(old),
+            tombstone,
+        ).awaitSingle()
+
+        if (version < 0L) {
+            throw ConcurrentModificationException(
+                "Remote SyncList '$id' no longer matched local state at index $index"
+            )
+        }
+
+        return old
+    }
+
+    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<List<String>>> {
+        return readAtomicSnapshot(SNAPSHOT_SCRIPT)
+            .map { raw ->
+                require(raw.isNotEmpty()) {
+                    "Empty snapshot result for SyncList '$id'"
+                }
+
+                val version = raw.last().toString().toLong()
+                val values = ObjectArrayList<String>(raw.size - 1)
+
+                for (index in 0 until raw.lastIndex) {
+                    values.add(raw[index].toString())
+                }
+
+                SimpleVersionedSnapshot(values, version)
+            }
+    }
+
+    override suspend fun setAndAwait(
+        index: Int,
+        element: T,
+    ): T {
+        val old = lock.write {
+            list.set(index, element)
+        }
+
+        notifyListeners(SyncListChange.Updated(index, element, old))
+
+        val version = writeToRemoteAwait(
+            SET_AT_SCRIPT,
+            EVENT_SET_AT,
+            index.toString(),
+            encodeValue(old),
+            encodeValue(element),
+        ).awaitSingle()
+
+        if (version < 0L) {
+            throw ConcurrentModificationException(
+                "Remote SyncList '$id' no longer matched local state at index $index"
+            )
+        }
+
+        return old
+    }
+
+    override suspend fun addAndAwait(element: T) {
+        val encoded = encodeValue(element)
+
+        lock.write {
+            list.add(element)
+        }
+
+        notifyListeners(SyncListChange.Appended(element))
+
+        writeToRemoteAwait(
+            APPEND_SCRIPT,
+            EVENT_ADDED,
+            encoded,
+        ).awaitSingle()
+    }
+
+    override suspend fun removeAndAwait(element: T): Boolean {
+        val removed = lock.write {
+            list.remove(element)
+        }
+
+        if (!removed) {
+            return false
+        }
+
+        notifyListeners(SyncListChange.Removed(element))
+
+        writeToRemoteAwait(
+            REMOVE_FIRST_SCRIPT,
+            EVENT_REMOVED,
+            encodeValue(element),
+        ).awaitSingle()
+
+        return true
+    }
+
+    override suspend fun clearAndAwait() {
+        val hadElements = lock.write {
+            val had = list.isNotEmpty()
+            list.clear()
+            had
+        }
+
+        if (!hadElements) {
+            return
+        }
+
+        notifyListeners(SyncListChange.Cleared())
+
+        writeToRemoteAwait(
+            CLEAR_SCRIPT,
+            EVENT_CLEARED,
+        ).awaitSingle()
+    }
+
+    override suspend fun removeIfAndAwait(predicate: (T) -> Boolean): Boolean {
+        val removedValues = lock.write {
+            val removed = ObjectArrayList<T>()
+            val iterator = list.iterator()
+
+            while (iterator.hasNext()) {
+                val value = iterator.next()
+
+                if (predicate(value)) {
+                    iterator.remove()
+                    removed.add(value)
+                }
+            }
+
+            removed
+        }
+
+        if (removedValues.isEmpty) {
+            return false
+        }
+
+        for (value in removedValues) {
+            notifyListeners(SyncListChange.Removed(value))
+        }
+
+        val encodedValues = Array(removedValues.size) { index ->
+            encodeValue(removedValues[index])
+        }
+
+        writeBatchToRemoteAwait(
+            REMOVE_MANY_SCRIPT,
+            EVENT_REMOVED,
+            *encodedValues,
+        ).awaitSingle()
+
+        return true
+    }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<List<String>>) {
         val rawValue = raw.value
@@ -200,7 +418,7 @@ class SyncListImpl<T : Any>(
     }
 
     private fun removeManyRemote(encodedValues: Array<String>) {
-        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
+        writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
     }
 
     private fun clearRemote() {
@@ -217,8 +435,8 @@ class SyncListImpl<T : Any>(
     }
 
     private fun onAdded(data: StreamEventData) {
-        val idx = data.payload[0].toIntOrNull() ?: return
-        val encoded = data.payload[1]
+        val idx = data.payload(0).toIntOrNull() ?: return
+        val encoded = data.payload(1)
 
         val element = decodeValue(encoded)
         val ok = lock.write {
@@ -232,7 +450,7 @@ class SyncListImpl<T : Any>(
     }
 
     private fun onRemoved(data: StreamEventData) {
-        val encoded = data.payload[0]
+        val encoded = data.payload(0)
 
         val element = decodeValue(encoded)
         val removed = lock.write { list.remove(element) }
@@ -242,8 +460,8 @@ class SyncListImpl<T : Any>(
     }
 
     private fun onRemovedAt(data: StreamEventData) {
-        val idx = data.payload[0].toIntOrNull() ?: return
-        val oldEncoded = data.payload[1]
+        val idx = data.payload(0).toIntOrNull() ?: return
+        val oldEncoded = data.payload(1)
 
         val old = decodeValue(oldEncoded)
         val ok = lock.write {
@@ -255,13 +473,13 @@ class SyncListImpl<T : Any>(
         }
 
         if (!ok) return requestResync()
-        notifyListeners(SyncListChange.Removed(old))
+        notifyListeners(SyncListChange.RemovedAt(idx, old))
     }
 
     private fun onSetAt(data: StreamEventData) {
-        val idx = data.payload[0].toIntOrNull() ?: return
-        val oldEnc = data.payload[1]
-        val newEnc = data.payload[2]
+        val idx = data.payload(0).toIntOrNull() ?: return
+        val oldEnc = data.payload(1)
+        val newEnc = data.payload(2)
 
         val newVal = decodeValue(newEnc)
         val oldVal = decodeValue(oldEnc)
@@ -291,6 +509,6 @@ class SyncListImpl<T : Any>(
         }
     }
 
-    private fun encodeValue(value: T) = api.json.encodeToString(elementSerializer, value)
-    private fun decodeValue(value: String) = api.json.decodeFromString(elementSerializer, value)
+    private fun encodeValue(value: T) = elementCodec.encode(value)
+    private fun decodeValue(value: String) = elementCodec.decode(value)
 }

@@ -14,14 +14,81 @@ The library is built on top of **Redisson**, **Reactor**, and **Kotlin coroutine
 
 ---
 
+## Configuration
+
+Connection settings come from `config.yml` in the data directory and can be overridden by
+environment variables. The same four keys listed below are the ones available in `config.yml`.
+
+### Environment variables
+
+Each variable overrides the matching `config.yml` key. Precedence is
+**environment variable → `config.yml` → built-in default**.
+
+| Variable                 | Type                  | `config.yml` key | Default                             |
+|--------------------------|-----------------------|------------------|-------------------------------------|
+| `SURF_REDIS_HOST`        | string                | `host`           | `localhost`                         |
+| `SURF_REDIS_PORT`        | int, `0`–`65535`      | `port`           | `6379`                              |
+| `SURF_REDIS_PASSWORD`    | string (secret)       | `password`       | none (no authentication)            |
+| `SURF_REDIS_CLIENT_NAME` | string                | `clientName`     | `surf-redis-client-<random UUID>`   |
+
+```bash
+export SURF_REDIS_HOST=redis.internal
+export SURF_REDIS_PORT=6380
+export SURF_REDIS_PASSWORD='super-secret'
+export SURF_REDIS_CLIENT_NAME=lobby-01
+```
+
+`SURF_REDIS_CLIENT_NAME` is used as-is as the Redis client name (`CLIENT SETNAME`). All plugins in the
+process that connect with the same host, port and credentials share one Redisson connection pool, so
+the name identifies the server process rather than an individual plugin.
+
+### Resolution behavior
+
+**Set-but-empty is not the same as unset.** A variable only falls back to `config.yml` when it is
+*missing* from the environment. A variable that is present but empty wins the override with an empty
+value — `SURF_REDIS_HOST=""` produces an empty host, not `localhost`, and an empty
+`SURF_REDIS_CLIENT_NAME` produces an empty client name. `SURF_REDIS_PASSWORD` is the
+only exception: an empty password is treated as no authentication. To fall back to `config.yml`,
+**unset the variable** instead of blanking it.
+
+**Values are read once.** Only the process environment (`System.getenv`) is consulted — no `.env`
+file and no JVM system properties. `config.yml` and the environment are snapshotted together on
+first access, so changing the environment afterwards has no effect.
+
+**Invalid values fail on first use.** A non-numeric or out-of-range `SURF_REDIS_PORT` throws when the
+configuration is first accessed — during connection setup, not at plugin load. The error names the
+offending variable; the raw value of `SURF_REDIS_PASSWORD` is redacted from failure messages.
+
+---
+
 ## Concepts
 
 ### RedisApi
 
 `RedisApi` is the central entry point.  
-It owns the Redis clients and manages the lifecycle of all Redis-backed components.
+It manages the lifecycle of all Redis-backed components and holds a share of the underlying Redisson
+client.
 
 A typical application creates **exactly one** `RedisApi` instance and shares it across the system.
+
+### Connection sharing
+
+Every `RedisApi` in the same process whose connection settings are equivalent — same host, port,
+TLS/Unix-socket transport and credentials — shares **one** physical Redisson client and connection
+pool. Ten plugins on one server therefore use a single pool instead of ten. Connections that differ in
+any of these settings stay isolated.
+
+Only the connection is shared. Each `RedisApi` keeps its own event bus, request/response bus, sync
+structures, caches, event codec registrations and coroutine scopes. Connecting or disconnecting one
+instance does not affect another:
+
+* the first instance to connect creates the shared client, later ones join it
+* `disconnect()` releases the instance's share; the client is shut down once the last instance using
+  it has disconnected
+* a connection failure leaves nothing behind, and an instance whose components fail to initialize
+  releases its share again
+* clients that are still held when the surf-redis platform plugin is disabled are shut down and their
+  owners logged as a warning
 
 Lifecycle:
 1. Create the API
@@ -37,7 +104,7 @@ redisApi.subscribeToEvents(SomeListener())
 redisApi.registerRequestHandler(SomeRequestHandler())
 
 redisApi.freezeAndConnect()
-````
+```
 
 ---
 
@@ -161,6 +228,65 @@ suspend fun onJoin(event: PlayerJoinedEvent) {
     }
 }
 ```
+
+### Event wire formats and custom codecs
+
+Existing events continue to use the unchanged JSON envelope on `surf-redis:events`. An event
+uses the binary path only when a `RedisEventCodec` is registered for its concrete class.
+
+Custom-coded events are published exclusively on `surf-redis:events:binary`. Its compact envelope
+contains a protocol version, stable event ID, codec version, timestamp, origin ID, and codec payload.
+Binary payloads never appear on the JSON channel.
+
+The simplest convention is a codec implemented by the event companion object. It is discovered
+once when a listener registers the event type and then cached:
+
+```kotlin
+class PlayerLevelChanged(
+    val playerUuid: UUID,
+    val level: Int
+) : RedisEvent() {
+    companion object : RedisEventCodec<PlayerLevelChanged> {
+        override val codecId = "example:player-level" // optional
+        override val version = 1 // optional    
+        override val eventId = "example:player-level-changed" // optional
+
+        override fun encode(buffer: ByteBuf, value: PlayerLevelChanged) {
+            buffer.writeUuid(value.playerUuid)
+            buffer.writeVarInt(value.level)
+        }
+
+        override fun decode(buffer: ByteBuf) = PlayerLevelChanged(
+            playerUuid = buffer.readUuid(),
+            level = buffer.readVarInt(),
+        )
+    }
+}
+```
+
+`eventId` defaults to the event's fully qualified class name for a companion codec. Override it if
+the class may be renamed. For a publish-only type, call
+`redisApi.registerEventType<PlayerLevelChanged>()` before `freeze()` so discovery and validation
+happen during startup. Listener registration performs that step automatically.
+
+Codecs can also be registered explicitly before `freeze()`:
+
+```kotlin
+redisApi.registerEventCodec(PlayerLevelChanged::class.java, playerLevelCodec)
+// or: redisApi.registerEventCodec<PlayerLevelChanged>(playerLevelCodec)
+```
+
+Explicit registration takes precedence over an automatically discovered codec. Duplicate explicit
+registrations, invalid IDs or versions, and event-ID collisions fail immediately. IDs must be stable
+across processes; registration-order IDs are not supported.
+
+If a receiver lacks an event ID or matching codec version, it logs that combination once and ignores
+only those packets. Other JSON and binary events continue normally. Publishing before `connect()`
+and registering after `freeze()` are rejected.
+
+Codec instances may be invoked concurrently and must be thread-safe. They read and write a
+caller-owned `ByteBuf` and must never retain, release, or store it. Event timestamp and origin
+metadata are carried by the envelope and should not be duplicated by the codec.
 
 ---
 
@@ -310,6 +436,66 @@ val playerScores =
 playerScores[playerId] = 42
 ```
 
+### Custom codecs for synchronized structures
+
+Every synchronized structure has an overload accepting a `RedisCodec`; maps accept independent key
+and value codecs. The codec is used for snapshots, Redis storage, stream changes, local replication,
+resynchronization, defaults, and reloads. Values go directly through the codec into a delimiter-safe
+binary representation and are never converted through JSON.
+
+```kotlin
+data class PlayerState(val name: String, val score: Int)
+
+object PlayerStateCodec : RedisCodec<PlayerState> {
+    override val codecId = "example:player-state" // optional
+    override val version = 1 // optional
+
+    override fun encode(buffer: ByteBuf, value: PlayerState) {
+        buffer.writeString(value.name, maxLength = 64)
+        buffer.writeVarInt(value.score)
+    }
+
+    override fun decode(buffer: ByteBuf) = PlayerState(
+        name = buffer.readString(maxLength = 64),
+        score = buffer.readVarInt()
+    )
+}
+
+object UUIDBinaryCodec : RedisCodec<UUID> {
+    override val codecId = "example:uuid-128"
+    override fun encode(buffer: ByteBuf, value: UUID) = buffer.writeUuid(value)
+    override fun decode(buffer: ByteBuf): UUID = buffer.readUuid()
+}
+
+val states = redisApi.createSyncMap(
+    id = RedisService.namespaced("player-states"),
+    keyCodec = UUIDBinaryCodec,
+    valueCodec = PlayerStateCodec
+)
+
+val queue = redisApi.createSyncList(
+    id = RedisService.namespaced("player-queue"),
+    codec = UUIDBinaryCodec
+)
+```
+
+The same `codec = ...` overload is available for `SyncSet` and `SyncValue` (with
+`defaultValue = ...`). Create all structures and register all event codecs before `freeze()`.
+
+`codecId` and `version` identify a structure's wire format. Clients using the same structure ID must
+use matching identities. Surf Redis stores short-lived codec metadata beside custom-coded structures
+and fails connection on a detected mismatch. It also refuses to attach a custom codec to existing
+data with no codec metadata, because that data may use the JSON representation.
+
+Codec failures identify both codec and structure context. Payload and collection sizes have safety
+limits to prevent uncontrolled allocation from malformed data. Structure codecs follow the same
+thread-safety and caller-owned buffer rules as event codecs.
+
+> [!IMPORTANT]
+> Switching an existing synchronized structure from JSON to a custom codec is a data migration, not
+> an in-place configuration change. Use a new structure ID or deliberately remove/migrate the old
+> Redis keys while every client is stopped.
+
 ---
 
 ## Listeners
@@ -397,6 +583,37 @@ near-direct-call performance at runtime.
 > This is an implementation detail. The public API for registering handlers
 > (`@OnRedisEvent`, `@HandleRedisRequest`) remains unchanged.
 
+### Performance benchmarks
+
+The codec benchmarks use JMH so warmup, JVM forks, dead-code elimination, and measurement timing
+are handled independently from correctness tests. They compare the complete legacy JSON event
+wire format with the custom binary event packet for 0, 32, 256, 1,024, 4,096, 16,384, and 65,536
+bytes of application payload.
+
+```bash
+# Full run: 3 warmup iterations, 5 measured iterations, and 2 JVM forks
+./gradlew :surf-redis-core:codecBenchmark
+
+# Short harness/fixture validation using every operation and payload size
+./gradlew :surf-redis-core:jmh -PbenchmarkSmoke
+
+# Exact encoded packet sizes without benchmark timing noise
+./gradlew :surf-redis-core:eventWireSizeReport
+```
+
+Separate JMH cases cover JSON and binary encode, decode, and full round trips. The GC profiler also
+reports allocation rate and bytes allocated per operation. Machine-readable results are written to
+`surf-redis-core/build/results/jmh/results.json`. Compare results only from the same machine, JDK,
+JVM flags, and system load.
+
+Selected codec-registry concurrency scenarios use JetBrains Lincheck model checking. They cover
+registration, event-ID collisions, freezing, and frozen lookups and run automatically as part of
+`check`; they can also be run directly:
+
+```bash
+./gradlew :surf-redis-core:lincheckTest
+```
+
 ---
 
 ## Guarantees & Non-Guarantees
@@ -434,7 +651,7 @@ class SomeService {
     private val counter =
         redisApi.createSyncValue("counter", 0) // <-- may run too late
 }
-````
+```
 
 If `SomeService` is initialized **after** `RedisApi.freeze()` has already been called,
 sync structure creation will fail or behave incorrectly.

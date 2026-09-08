@@ -45,9 +45,11 @@ class LuaScriptExecutor private constructor(private val api: RedisApi, private v
          */
         private val byApi = Caffeine.newBuilder()
             .weakKeys()
+            .weakValues()
             .build<RedisApi, LoadingCache<LuaScriptRegistry, LuaScriptExecutor>> { api ->
                 Caffeine.newBuilder()
                     .weakKeys()
+                    .weakValues()
                     .build { registry ->
                         LuaScriptExecutor(api, registry)
                     }

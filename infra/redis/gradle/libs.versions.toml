@@ -1,7 +1,9 @@
 [versions]
-redisson = "4.3.1"
-netty = "4.2.12.Final"
+redisson = "4.7.0"
+netty = "4.2.17.Final" # https://github.com/redisson/redisson/blob/master/pom.xml#L195
+lincheck = "3.7"
 
 [libraries]
 redisson = { group = "org.redisson", name = "redisson", version.ref = "redisson" }
 netty-bom = { group = "io.netty", name = "netty-bom", version.ref = "netty" }
+lincheck = { group = "org.jetbrains.lincheck", name = "lincheck", version.ref = "lincheck" }

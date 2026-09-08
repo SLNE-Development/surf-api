@@ -55,6 +55,13 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
     fun add(element: T): Boolean
 
     /**
+     * Adds [element] locally and waits until the mutation has been committed to Redis.
+     *
+     * This does not wait for other Redis-connected nodes to apply the corresponding stream event.
+     */
+    suspend fun addAndAwait(element: T): Boolean
+
+    /**
      * Convenience operator for [add].
      */
     operator fun plusAssign(element: T) {
@@ -67,6 +74,13 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
      * @return `true` if the element was removed locally, `false` if it was not present
      */
     fun remove(element: T): Boolean
+
+    /**
+     * Removes [element] locally and waits until the mutation has been committed to Redis.
+     *
+     * This does not wait for other Redis-connected nodes to apply the corresponding stream event.
+     */
+    suspend fun removeAndAwait(element: T): Boolean
 
     /**
      * Convenience operator for [remove].
@@ -86,9 +100,19 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
     fun removeIf(predicate: (T) -> Boolean): Boolean
 
     /**
+     * Removes all locally matching elements and waits until the batched Redis mutation has completed.
+     */
+    suspend fun removeIfAndAwait(predicate: (T) -> Boolean): Boolean
+
+    /**
      * Clears the local set and propagates the change through Redis.
      *
      * If the local set is already empty, this method is a no-op.
      */
     fun clear()
+
+    /**
+     * Clears the local set and waits until the clear has been committed to Redis.
+     */
+    suspend fun clearAndAwait()
 }

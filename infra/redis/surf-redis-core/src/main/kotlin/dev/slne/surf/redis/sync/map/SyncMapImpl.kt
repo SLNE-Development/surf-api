@@ -5,11 +5,13 @@ import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
+import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import kotlinx.serialization.KSerializer
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -18,18 +20,19 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.Duration
 
-class SyncMapImpl<K : Any, V : Any>(
+class SyncMapImpl<K : Any, V : Any> internal constructor(
     api: RedisApi,
     id: String,
     ttl: Duration,
-    private val keySerializer: KSerializer<K>,
-    private val valueSerializer: KSerializer<V>,
+    private val keyCodec: SyncValueCodec<K>,
+    private val valueCodec: SyncValueCodec<V>,
 ) : AbstractStreamSyncStructure<SyncMapChange<K, V>, SimpleVersionedSnapshot<Map<String, String>>>(
     api,
     id,
     ttl,
     Registry,
-    NAMESPACE
+    NAMESPACE,
+    CodecDescriptor.of(keyCodec, valueCodec)
 ), SyncMap<K, V> {
 
     companion object {
@@ -44,6 +47,9 @@ class SyncMapImpl<K : Any, V : Any>(
         private const val REMOVE_SCRIPT = "remove"
         private const val REMOVE_MANY_SCRIPT = "remove-many"
         private const val CLEAR_SCRIPT = "clear"
+        private const val SNAPSHOT_SCRIPT = "snapshot"
+        private const val REPLACE_IF_EQUALS_SCRIPT = "replace-if-equals"
+        private const val REMOVE_IF_EQUALS_SCRIPT = "remove-if-equals"
 
         private object Registry : LuaScriptRegistry("lua/sync/map") {
             init {
@@ -51,6 +57,10 @@ class SyncMapImpl<K : Any, V : Any>(
                 load(REMOVE_SCRIPT)
                 load(REMOVE_MANY_SCRIPT)
                 load(CLEAR_SCRIPT)
+
+                load(SNAPSHOT_SCRIPT)
+                load(REPLACE_IF_EQUALS_SCRIPT)
+                load(REMOVE_IF_EQUALS_SCRIPT)
             }
         }
     }
@@ -85,10 +95,12 @@ class SyncMapImpl<K : Any, V : Any>(
     override fun isEmpty() = lock.read { map.isEmpty() }
 
     override fun put(key: K, value: V): V? {
-        val previous = lock.write { map.put(key, value) }
+        val previous = lock.write {
+            map.put(key, value)
+        }
 
-        putRemote(key, value)
         notifyListeners(SyncMapChange.Put(key, value, previous))
+        putRemote(key, value)
 
         return previous
     }
@@ -136,10 +148,247 @@ class SyncMapImpl<K : Any, V : Any>(
         notifyListeners(SyncMapChange.Cleared())
     }
 
-    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<Map<String, String>>> = Mono.zip(
-        remoteMap.readAllMap(),
-        versionCounter.get().onErrorReturn(0L)
-    ).map { SimpleVersionedSnapshot.fromTuple(it) }
+    override fun loadFromRemote0(): Mono<SimpleVersionedSnapshot<Map<String, String>>> {
+        return readAtomicSnapshot(SNAPSHOT_SCRIPT)
+            .map { raw ->
+                require(raw.isNotEmpty()) {
+                    "Empty snapshot result for SyncMap '$id'"
+                }
+
+                val payloadSize = raw.size - 1
+
+                require(payloadSize % 2 == 0) {
+                    "Malformed map snapshot for '$id': expected key/value pairs"
+                }
+
+                val version = raw.last().toString().toLong()
+                val values = Object2ObjectOpenHashMap<String, String>(payloadSize / 2)
+
+                var index = 0
+                while (index < payloadSize) {
+                    values[raw[index].toString()] = raw[index + 1].toString()
+                    index += 2
+                }
+
+                SimpleVersionedSnapshot(values, version)
+            }
+    }
+
+    override suspend fun getRemote(key: K): V? {
+        return remoteMap.get(encodeKey(key))
+            .awaitSingleOrNull()
+            ?.let(::decodeValue)
+    }
+
+    override suspend fun putAndAwait(key: K, value: V): V? {
+        val previous = lock.write {
+            map.put(key, value)
+        }
+
+        notifyListeners(SyncMapChange.Put(key, value, previous))
+
+        putRemoteAwait(key, value).awaitSingle()
+
+        return previous
+    }
+
+    private fun putRemoteAwait(key: K, value: V): Mono<Long> {
+        return writeToRemoteAwait(
+            PUT_SCRIPT,
+            EVENT_PUT,
+            encodeKey(key),
+            encodeValue(value),
+        )
+    }
+
+    override suspend fun removeAndAwait(key: K): V? {
+        val old = lock.write {
+            map.remove(key)
+        } ?: return null
+
+        notifyListeners(SyncMapChange.Removed(key, old))
+
+        writeToRemoteAwait(
+            REMOVE_SCRIPT,
+            EVENT_REMOVE,
+            encodeKey(key),
+        ).awaitSingle()
+
+        return old
+    }
+
+    override suspend fun removeIfAndAwait(
+        predicate: (K, V) -> Boolean,
+    ): Boolean {
+        val keysToRemove = ObjectArrayList<K>()
+        val removedLocal = ObjectArrayList<Pair<K, V>>()
+
+        lock.write {
+            val iterator = map.object2ObjectEntrySet().fastIterator()
+
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+
+                if (predicate(entry.key, entry.value)) {
+                    keysToRemove.add(entry.key)
+                    removedLocal.add(entry.key to entry.value)
+                    iterator.remove()
+                }
+            }
+        }
+
+        if (keysToRemove.isEmpty) {
+            return false
+        }
+
+        for ((key, value) in removedLocal) {
+            notifyListeners(SyncMapChange.Removed(key, value))
+        }
+
+        val encodedKeys = Array(keysToRemove.size) { index ->
+            encodeKey(keysToRemove[index])
+        }
+
+        writeBatchToRemoteAwait(
+            REMOVE_MANY_SCRIPT,
+            EVENT_REMOVE,
+            *encodedKeys,
+        ).awaitSingle()
+
+        return true
+    }
+
+    override suspend fun clearAndAwait() {
+        val hadEntries = lock.write {
+            val had = map.isNotEmpty()
+            map.clear()
+            had
+        }
+
+        if (!hadEntries) {
+            return
+        }
+
+        notifyListeners(SyncMapChange.Cleared())
+
+        writeToRemoteAwait(
+            CLEAR_SCRIPT,
+            EVENT_CLEAR,
+        ).awaitSingle()
+    }
+
+    override suspend fun replaceIfEqualsAndAwait(
+        key: K,
+        expectedValue: V,
+        newValue: V,
+    ): Boolean {
+        val encodedExpected = encodeValue(expectedValue)
+        val encodedNew = encodeValue(newValue)
+
+        val version = writeToRemoteAwait(
+            REPLACE_IF_EQUALS_SCRIPT,
+            EVENT_PUT,
+            encodeKey(key),
+            encodedExpected,
+            encodedNew,
+        ).awaitSingle()
+
+        if (version == 0L) {
+            return false
+        }
+
+        var notify = false
+        var resync = false
+
+        lock.write {
+            val current = map[key]
+            when {
+                current == null -> {
+                    resync = true
+                }
+
+                encodeValue(current) == encodedExpected -> {
+                    map[key] = newValue
+                    notify = true
+                }
+
+                encodeValue(current) == encodedNew -> Unit
+
+                else -> {
+                    resync = true
+                }
+            }
+        }
+
+        if (notify) {
+            notifyListeners(
+                SyncMapChange.Put(
+                    key,
+                    newValue,
+                    expectedValue,
+                )
+            )
+        }
+
+        if (resync) {
+            requestResync()
+        }
+
+        return true
+    }
+
+    override suspend fun removeIfEqualsAndAwait(
+        key: K,
+        expectedValue: V,
+    ): Boolean {
+        val encodedExpected = encodeValue(expectedValue)
+
+        val version = writeToRemoteAwait(
+            REMOVE_IF_EQUALS_SCRIPT,
+            EVENT_REMOVE,
+            encodeKey(key),
+            encodedExpected,
+        ).awaitSingle()
+
+        if (version == 0L) {
+            return false
+        }
+
+        var notify = false
+        var resync = false
+
+        lock.write {
+            val current = map[key]
+
+            when {
+                current == null -> Unit
+
+                encodeValue(current) == encodedExpected -> {
+                    map.remove(key)
+                    notify = true
+                }
+
+                else -> {
+                    resync = true
+                }
+            }
+        }
+
+        if (notify) {
+            notifyListeners(
+                SyncMapChange.Removed(
+                    key,
+                    expectedValue,
+                )
+            )
+        }
+
+        if (resync) {
+            requestResync()
+        }
+
+        return true
+    }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<Map<String, String>>) {
         val rawValue = raw.value
@@ -166,7 +415,7 @@ class SyncMapImpl<K : Any, V : Any>(
 
     private fun removeManyRemote(keys: List<K>) {
         val encKeys = Array(keys.size) { i -> encodeKey(keys[i]) }
-        writeToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVE, *encKeys)
+        writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVE, *encKeys)
     }
 
     private fun clearRemote() {
@@ -181,9 +430,9 @@ class SyncMapImpl<K : Any, V : Any>(
     }
 
     private fun onPutEvent(data: StreamEventData) {
-        val encodedKey = data.payload[0]
-        val encodedVal = data.payload[1]
-        val encodedOldVal = data.payload.getOrNull(2)
+        val encodedKey = data.payload(0)
+        val encodedVal = data.payload(1)
+        val encodedOldVal = data.payloadOrNull(2)
 
         val decodedKey = decodeKey(encodedKey)
         val decodedVal = decodeValue(encodedVal)
@@ -192,17 +441,22 @@ class SyncMapImpl<K : Any, V : Any>(
         val ok = lock.write {
             val cur = map[decodedKey]
 
-            // Updates map entry if preconditions are satisfied
-            if (decodedOldVal == null) {
-                if (cur != null) return@write false
-                map[decodedKey] = decodedVal
-                true
+            if (encodedOldVal == null) {
+                if (cur != null) {
+                    return@write false
+                }
             } else {
-                if (cur == null) return@write false
-                if (cur != decodedOldVal) return@write false
-                map[decodedKey] = decodedVal
-                true
+                if (cur == null) {
+                    return@write false
+                }
+
+                if (encodeValue(cur) != encodedOldVal) {
+                    return@write false
+                }
             }
+
+            map[decodedKey] = decodedVal
+            true
         }
 
         if (!ok) return requestResync()
@@ -210,15 +464,20 @@ class SyncMapImpl<K : Any, V : Any>(
     }
 
     private fun onRemoveEvent(data: StreamEventData) {
-        val encodedKey = data.payload[0]
-        val encodedOldVal = data.payload[1]
+        val encodedKey = data.payload(0)
+        val encodedOldVal = data.payload(1)
 
         val decodedKey = decodeKey(encodedKey)
         val decodedOldVal = decodeValue(encodedOldVal)
 
         val ok = lock.write {
-            val cur = map[decodedKey] ?: return@write false
-            if (cur != decodedOldVal) return@write false
+            val current = map[decodedKey]
+                ?: return@write false
+
+            if (encodeValue(current) != encodedOldVal) {
+                return@write false
+            }
+
             map.remove(decodedKey)
             true
         }
@@ -237,8 +496,20 @@ class SyncMapImpl<K : Any, V : Any>(
         if (had) notifyListeners(SyncMapChange.Cleared())
     }
 
-    private fun encodeKey(key: K): String = api.json.encodeToString(keySerializer, key)
-    private fun decodeKey(raw: String): K = api.json.decodeFromString(keySerializer, raw)
-    private fun encodeValue(value: V): String = api.json.encodeToString(valueSerializer, value)
-    private fun decodeValue(raw: String): V = api.json.decodeFromString(valueSerializer, raw)
+    private fun encodeKey(key: K): String = keyCodec.encode(key)
+    private fun decodeKey(raw: String): K = keyCodec.decode(raw)
+    private fun encodeValue(value: V): String = valueCodec.encode(value)
+    private fun decodeValue(raw: String): V = valueCodec.decode(raw)
+
+    private object CodecDescriptor {
+        fun of(
+            keyCodec: SyncValueCodec<*>,
+            valueCodec: SyncValueCodec<*>
+        ): String? {
+            val key = keyCodec.descriptor
+            val value = valueCodec.descriptor
+            if (key == null && value == null) return null
+            return "map:${key ?: "json"}:${value ?: "json"}"
+        }
+    }
 }
