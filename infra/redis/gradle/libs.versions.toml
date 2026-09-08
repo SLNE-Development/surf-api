@@ -1,7 +1,7 @@
 [versions]
 redisson = "4.7.0"
 netty = "4.2.17.Final" # https://github.com/redisson/redisson/blob/master/pom.xml#L195
-lincheck = "3.6"
+lincheck = "3.7"
 
 [libraries]
 redisson = { group = "org.redisson", name = "redisson", version.ref = "redisson" }
