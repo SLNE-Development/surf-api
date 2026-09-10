@@ -29,15 +29,16 @@ import net.kyori.adventure.text.format.TextColor
  * @see SurfViewSettings
  * @see SimpleViewSettingsBuilder
  */
+@OptIn(ExperimentalVersionOverloading::class)
 data class SimpleViewSettings(
     override val font: Key = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT,
     override val headerTextAlignment: TextAlignment = SurfViewSettingsDefaults.DEFAULT_HEADER_ALIGNMENT,
-    override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
-    override val headerFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
-    override val rowFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
-    override val headerGeometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
-    override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
-    override val rowFonts: Int2ObjectMap<Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
+    @IntroducedAt("3.43.0") override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
+    @IntroducedAt("3.43.0") override val headerFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
+    @IntroducedAt("3.43.0") override val rowFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
+    @IntroducedAt("3.43.0") override val headerGeometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
+    @IntroducedAt("3.43.0") override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
+    @IntroducedAt("3.43.0") override val rowFonts: Int2ObjectMap<Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
     override val cancelOnClick: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_CLICK,
     override val cancelOnDrag: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DRAG,
     override val cancelOnDrop: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DROP,

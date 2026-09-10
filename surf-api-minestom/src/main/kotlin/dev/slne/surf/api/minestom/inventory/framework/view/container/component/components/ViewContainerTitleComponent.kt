@@ -1,12 +1,15 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.container.component.components
 
 import dev.slne.surf.api.core.inventory.framework.internal.layoutViewText
+import dev.slne.surf.api.core.messages.adventure.text
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewHeaderGeometry
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.align.TextAlignment
+import it.unimi.dsi.fastutil.ints.Int2IntMap
+import it.unimi.dsi.fastutil.ints.Int2IntMaps
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -102,4 +105,23 @@ class ViewContainerTitleComponent(
         result = 31 * result + textAlignment.hashCode()
         return result
     }
+
+    @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        title: String,
+        font: Key,
+        charSpacing: Int,
+        textAlignment: TextAlignment,
+        charWidths: Int2IntMap = Int2IntMaps.EMPTY_MAP,
+    ) : this(
+        title = text(title),
+        font = font,
+        textAlignment = textAlignment,
+        metrics = ViewFontMetrics(
+            charSize = ViewFontMetrics.MENU_CHAR_SIZE,
+            charSpacing = charSpacing,
+            uppercase = true,
+            charWidths = charWidths
+        )
+    )
 }

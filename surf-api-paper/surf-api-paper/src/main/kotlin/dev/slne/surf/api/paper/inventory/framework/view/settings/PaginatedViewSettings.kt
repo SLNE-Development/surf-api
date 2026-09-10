@@ -45,25 +45,26 @@ import net.kyori.adventure.text.format.TextColor
  * @see PaginationEmptyRows
  * @see PaginationButtonPosition
  */
+@OptIn(ExperimentalVersionOverloading::class)
 data class PaginatedViewSettings(
     override val font: Key = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT,
     override val headerTextAlignment: TextAlignment = SurfViewSettingsDefaults.DEFAULT_HEADER_ALIGNMENT,
-    override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
-    override val headerFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
-    override val rowFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
-    override val headerGeometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
-    override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
-    override val rowFonts: Int2ObjectMap<Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
+    @IntroducedAt("3.43.0") override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
+    @IntroducedAt("3.43.0") override val headerFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
+    @IntroducedAt("3.43.0") override val rowFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
+    @IntroducedAt("3.43.0") override val headerGeometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
+    @IntroducedAt("3.43.0") override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
+    @IntroducedAt("3.43.0") override val rowFonts: Int2ObjectMap<Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
     override val cancelOnClick: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_CLICK,
     override val cancelOnDrag: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DRAG,
     override val cancelOnDrop: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DROP,
     override val cancelOnPickup: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_PICKUP,
     override val navigateBackOnOutsideClick: Boolean = SurfViewSettingsDefaults.DEFAULT_NAVIGATE_BACK_ON_CLOSE,
     val paginationViewRows: PaginationViewRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_VIEW_ROWS,
-    val paginationEmptyRows: PaginationEmptyRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_EMPTY_ROWS,
+    @IntroducedAt("3.43.0") val paginationEmptyRows: PaginationEmptyRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_EMPTY_ROWS,
     val paginationButtonPosition: PaginationButtonPosition = SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION,
-    val paginationPageIndicator: PaginationPageIndicator? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR,
-    val paginationSwitchSound: Sound? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND,
+    @IntroducedAt("3.43.0") val paginationPageIndicator: PaginationPageIndicator? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR,
+    @IntroducedAt("3.43.0") val paginationSwitchSound: Sound? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND,
 ) : SurfViewSettings {
     override val rows: ViewRows = paginationViewRows.actualRows
     internal val paginationButtonRow =
