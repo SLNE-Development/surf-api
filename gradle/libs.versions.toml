@@ -36,7 +36,7 @@ mccoroutine = "2.23.1"
 
 # Miscellaneous Libraries
 asm = "9.10.1"
-slf4j = "2.0.17"
+slf4j = "2.0.19"
 guava = "33.7.1-jre"
 caffeine = "3.2.4"
 caffeine-courotines = "3.0.4"
