@@ -21,7 +21,8 @@ val User.suffix: String
     get() = this.cachedData.metaData.suffix ?: ""
 
 val User.weight
-    get() = LuckPermsAccess.luckperms.groupManager.getGroup(this.primaryGroup)?.weight ?: 0
+    get() = LuckPermsAccess.luckperms.groupManager.getGroup(this.primaryGroup)?.weight?.getOrNull()
+        ?: 0
 
 inline fun <reified T : Any> User.getMeta(key: String): T? {
     val value = this.resolveInheritedNodes(NodeType.META, this.queryOptions)
@@ -40,7 +41,11 @@ inline fun <reified T : Any> User.getMeta(key: String, default: T): T {
 }
 
 
+fun OptionalInt.getOrNull() = if (this.isPresent) this.asInt else null
+
+
 fun Audience.getLuckPermsUser(): User = this.getLuckPermsUserOrNull()
     ?: error("Audience does not have a valid UUID or LuckPerms user could not be found.")
 
-fun Audience.getLuckPermsUserOrNull(): User? = this.uuidOrNull()?.let { LuckPermsAccess.getUser(it) }
+fun Audience.getLuckPermsUserOrNull(): User? =
+    this.uuidOrNull()?.let { LuckPermsAccess.getUser(it) }
