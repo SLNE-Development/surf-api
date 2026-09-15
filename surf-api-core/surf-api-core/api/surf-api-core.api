@@ -7376,7 +7376,7 @@ public final class dev/slne/surf/api/core/luckperms/LuckPermsAccessKt {
 	public static final fun getLuckPermsUserOrNull (Lnet/kyori/adventure/audience/Audience;)Lnet/luckperms/api/model/user/User;
 	public static final fun getPrefix (Lnet/luckperms/api/model/user/User;)Ljava/lang/String;
 	public static final fun getSuffix (Lnet/luckperms/api/model/user/User;)Ljava/lang/String;
-	public static final fun getWeight (Lnet/luckperms/api/model/user/User;)Ljava/lang/Object;
+	public static final fun getWeight (Lnet/luckperms/api/model/user/User;)I
 }
 
 public final class dev/slne/surf/api/core/math/VoxelLineTracer {
