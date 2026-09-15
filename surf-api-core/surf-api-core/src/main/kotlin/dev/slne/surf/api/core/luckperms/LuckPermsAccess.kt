@@ -41,7 +41,7 @@ inline fun <reified T : Any> User.getMeta(key: String, default: T): T {
 }
 
 
-fun OptionalInt.getOrNull() = if (this.isPresent) this.asInt else null
+private fun OptionalInt.getOrNull(): Int? = if (isPresent) asInt else null
 
 
 fun Audience.getLuckPermsUser(): User = this.getLuckPermsUserOrNull()
