@@ -1,6 +1,6 @@
 [versions]
 # Paper
-paper-api = "26.2+"
+paper-api = "26.3.build.+"
 canvas-api = "26.2+"
 
 # Kolin

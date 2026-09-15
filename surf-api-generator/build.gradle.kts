@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalPathApi::class)
-
 import io.papermc.paperweight.util.Hash
 import io.papermc.paperweight.util.HashingAlgorithm
 import io.papermc.paperweight.util.fromJson
@@ -8,7 +6,10 @@ import org.gradle.kotlin.dsl.support.serviceOf
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
+import kotlin.io.path.moveTo
+import kotlin.io.path.walk
 
 plugins {
     `core-convention`
@@ -27,8 +28,10 @@ dependencies {
 
 val mcManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 
-val downloadRegistriesTask by tasks.register("downloadRegistries") {
+val downloadRegistriesTask = tasks.register("downloadRegistries") {
     group = "generation"
+    description = "Downloads Minecraft registries and generates reports and data files for the specified Minecraft version."
+
     val mcVersion = project.findProperty("mcVersion") as String
     val tmp = temporaryDir.toPath()
 

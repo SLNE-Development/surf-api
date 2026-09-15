@@ -2,13 +2,13 @@ import dev.slne.surf.api.generator.nms.NmsVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.22" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.23" apply false
     id("dev.slne.surf.api.generator.nms-module-generator")
 }
 
 nmsGenerator {
-    referenceVersion = NmsVersion.V26_1
-    targetVersion = NmsVersion.V26_2
+    referenceVersion = NmsVersion.V26_2
+    targetVersion = NmsVersion.V26_3
 }
 
 

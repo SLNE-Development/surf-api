@@ -109,7 +109,9 @@ gradlePlugin {
 
 val constantsOutputDir =
     layout.buildDirectory.dir("generated/dev/slne/surf/api/gradle/generated")
-val generateConstants by tasks.registering {
+val generateConstants = tasks.register("generateConstants") {
+    description = "Generates the Constants.kt file with build information."
+
     val outputFile = constantsOutputDir.map { it.file("Constants.kt") }
 
     inputs.property("relocationPrefix", relocationPrefix)

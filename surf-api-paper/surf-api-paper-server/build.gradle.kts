@@ -24,6 +24,7 @@ dependencies {
     runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV12111)
     runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV261)
     runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV262)
+    runtimeOnly(projects.surfApiPaper.surfApiPaperNms.surfApiPaperNmsV263)
 
     compileOnly(libs.placeholder.api)
 
@@ -52,7 +53,7 @@ dependencies {
 paper {
     name = "surf-paper-api"
     provides = listOf("SurfPaperAPI")
-    apiVersion = "26.2"
+    apiVersion = "26.3"
     description = "Surf API for Paper"
     website = "https://slne.dev"
     authors = listOf("twisti", "SLNE Development Team")
