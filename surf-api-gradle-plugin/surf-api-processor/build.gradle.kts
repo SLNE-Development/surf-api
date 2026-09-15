@@ -22,7 +22,7 @@ dependencies {
     api(projects.surfApiShared.surfApiSharedInternal)
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    implementation("com.squareup:kotlinpoet:2.3.0")
+    implementation("com.squareup:kotlinpoet:2.4.0")
     implementation("com.palantir.javapoet:javapoet:0.19.0")
     implementation(libs.kotlin.compiler)
 }
