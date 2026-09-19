@@ -10,6 +10,7 @@ import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -50,6 +51,9 @@ class SyncListImpl<T : Any> internal constructor(
         private const val REMOVE_MANY_SCRIPT = "remove-many"
         private const val CLEAR_SCRIPT = "clear"
         private const val SNAPSHOT_SCRIPT = "snapshot"
+        private const val APPEND_REMOTE_SCRIPT = "append-remote"
+        private const val SET_AT_REMOTE_SCRIPT = "set-at-remote"
+        private const val REMOVE_AT_REMOTE_SCRIPT = "remove-at-remote"
 
         private object Scripts : LuaScriptRegistry("lua/sync/list") {
             init {
@@ -60,6 +64,9 @@ class SyncListImpl<T : Any> internal constructor(
                 load(REMOVE_MANY_SCRIPT)
                 load(CLEAR_SCRIPT)
                 load(SNAPSHOT_SCRIPT)
+                load(APPEND_REMOTE_SCRIPT)
+                load(SET_AT_REMOTE_SCRIPT)
+                load(REMOVE_AT_REMOTE_SCRIPT)
             }
         }
     }
@@ -123,7 +130,7 @@ class SyncListImpl<T : Any> internal constructor(
 
         notifyListeners(SyncListChange.RemovedAt(index, old))
 
-        removeAtRemote(
+        removeAtRemoteAsync(
             index,
             encodeValue(old),
         )
@@ -131,20 +138,20 @@ class SyncListImpl<T : Any> internal constructor(
         return old
     }
 
-    private fun removeAtRemote(
+    private fun removeAtRemoteAsync(
         index: Int,
         expectedEncoded: String,
     ) {
-        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
-
         writeToRemote(
             REMOVE_AT_SCRIPT,
             EVENT_REMOVED_AT,
             index.toString(),
             expectedEncoded,
-            tombstone,
+            newTombstone(),
         )
     }
+
+    private fun newTombstone(): String = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
 
     override fun set(index: Int, element: T): T {
         val old = lock.write {
@@ -223,7 +230,7 @@ class SyncListImpl<T : Any> internal constructor(
         if (!had) return
 
         notifyListeners(SyncListChange.Cleared())
-        clearRemote()
+        clearRemoteAsync()
     }
 
     override suspend fun removeAtAndAwait(index: Int): T {
@@ -233,14 +240,12 @@ class SyncListImpl<T : Any> internal constructor(
 
         notifyListeners(SyncListChange.RemovedAt(index, old))
 
-        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
-
         val version = writeToRemoteAwait(
             REMOVE_AT_SCRIPT,
             EVENT_REMOVED_AT,
             index.toString(),
             encodeValue(old),
-            tombstone,
+            newTombstone(),
         ).awaitSingle()
 
         if (version < 0L) {
@@ -400,6 +405,74 @@ class SyncListImpl<T : Any> internal constructor(
         super.overrideFromRemote(raw)
     }
 
+    override suspend fun getRemote(index: Int): T? {
+        requireNonNegative(index)
+        return remoteList.get(index).awaitSingleOrNull()?.let(::decodeValue)
+    }
+
+    override suspend fun containsRemote(element: T): Boolean {
+        return remoteList.contains(encodeValue(element)).awaitSingle()
+    }
+
+    override suspend fun sizeRemote(): Int {
+        return remoteList.size().awaitSingle()
+    }
+
+    override suspend fun snapshotRemote(): ObjectArrayList<T> {
+        val raw = pullRemoteSnapshot().awaitSingle().value
+        return raw.mapTo(ObjectArrayList(raw.size), ::decodeValue)
+    }
+
+    override suspend fun addRemote(element: T) {
+        writeToRemoteWithPayloadAwait(
+            APPEND_REMOTE_SCRIPT,
+            EVENT_ADDED,
+            encodeValue(element),
+        ).awaitSingle()
+    }
+
+    override suspend fun setRemote(index: Int, element: T): T? {
+        requireNonNegative(index)
+        val result = writeToRemoteWithPayloadAwait(
+            SET_AT_REMOTE_SCRIPT,
+            EVENT_SET_AT,
+            index.toString(),
+            encodeValue(element),
+        ).awaitSingle()
+
+        return result.event?.payload(1)?.let(::decodeValue)
+    }
+
+    override suspend fun removeRemote(element: T): Boolean {
+        val encoded = encodeValue(element)
+        return writeToRemoteAndApplyAwait(
+            REMOVE_FIRST_SCRIPT,
+            EVENT_REMOVED,
+            encoded,
+            payload = encoded,
+        )
+    }
+
+    override suspend fun removeAtRemote(index: Int): T? {
+        requireNonNegative(index)
+        val result = writeToRemoteWithPayloadAwait(
+            REMOVE_AT_REMOTE_SCRIPT,
+            EVENT_REMOVED_AT,
+            index.toString(),
+            newTombstone(),
+        ).awaitSingle()
+
+        return result.event?.payload(1)?.let(::decodeValue)
+    }
+
+    override suspend fun clearRemote() {
+        writeToRemoteAndApplyAwait(CLEAR_SCRIPT, EVENT_CLEARED, payload = "")
+    }
+
+    private fun requireNonNegative(index: Int) {
+        require(index >= 0) { "Index must not be negative: $index" }
+    }
+
     private fun appendRemote(encoded: String) {
         writeToRemote(APPEND_SCRIPT, EVENT_ADDED, encoded)
     }
@@ -408,20 +481,11 @@ class SyncListImpl<T : Any> internal constructor(
         writeToRemote(REMOVE_FIRST_SCRIPT, EVENT_REMOVED, encoded)
     }
 
-    private fun removeAtRemote(index: Int) {
-        val tombstone = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
-        writeToRemote(REMOVE_AT_SCRIPT, EVENT_REMOVED_AT, index.toString(), tombstone)
-    }
-
-    private fun setAtRemote(index: Int, newEncoded: String) {
-        writeToRemote(SET_AT_SCRIPT, EVENT_SET_AT, index.toString(), newEncoded)
-    }
-
     private fun removeManyRemote(encodedValues: Array<String>) {
         writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
     }
 
-    private fun clearRemote() {
+    private fun clearRemoteAsync() {
         writeToRemote(CLEAR_SCRIPT, EVENT_CLEARED)
     }
 

@@ -409,22 +409,31 @@ public abstract interface class dev/slne/surf/redis/sync/list/SyncList : dev/sln
 	public static final field Companion Ldev/slne/surf/redis/sync/list/SyncList$Companion;
 	public abstract fun add (Ljava/lang/Object;)V
 	public abstract fun addAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun addRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun clear ()V
 	public abstract fun clearAndAwait (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun clearRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun contains (Ljava/lang/Object;)Z
+	public abstract fun containsRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun get (I)Ljava/lang/Object;
+	public abstract fun getRemote (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun minusAssign (Ljava/lang/Object;)V
 	public fun plusAssign (Ljava/lang/Object;)V
 	public abstract fun remove (Ljava/lang/Object;)Z
 	public abstract fun removeAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeAt (I)Ljava/lang/Object;
 	public abstract fun removeAtAndAwait (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeAtRemote (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
 	public abstract fun removeIfAndAwait (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun set (ILjava/lang/Object;)Ljava/lang/Object;
 	public abstract fun setAndAwait (ILjava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun setRemote (ILjava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun size ()I
+	public abstract fun sizeRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public abstract fun snapshotRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/redis/sync/list/SyncList$Companion {
@@ -510,22 +519,30 @@ public abstract interface class dev/slne/surf/redis/sync/map/SyncMap : dev/slne/
 	public static final field Companion Ldev/slne/surf/redis/sync/map/SyncMap$Companion;
 	public abstract fun clear ()V
 	public abstract fun clearAndAwait (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun clearRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun computeRemote (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun contains (Ljava/lang/Object;)Z
 	public abstract fun containsKey (Ljava/lang/Object;)Z
+	public abstract fun containsKeyRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun get (Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun getRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun isEmpty ()Z
 	public abstract fun put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun putAndAwait (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun putIfAbsentRemote (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun putRemote (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun remove (Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun removeAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function2;)Z
 	public abstract fun removeIfAndAwait (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeIfEqualsAndAwait (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun replaceIfEqualsAndAwait (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun set (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun size ()I
+	public abstract fun sizeRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
+	public abstract fun snapshotRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/redis/sync/map/SyncMap$Companion {
@@ -576,17 +593,23 @@ public abstract interface class dev/slne/surf/redis/sync/set/SyncSet : dev/slne/
 	public static final field Companion Ldev/slne/surf/redis/sync/set/SyncSet$Companion;
 	public abstract fun add (Ljava/lang/Object;)Z
 	public abstract fun addAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun addRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun clear ()V
 	public abstract fun clearAndAwait (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun clearRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun contains (Ljava/lang/Object;)Z
+	public abstract fun containsRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun minusAssign (Ljava/lang/Object;)V
 	public fun plusAssign (Ljava/lang/Object;)V
 	public abstract fun remove (Ljava/lang/Object;)Z
 	public abstract fun removeAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun removeIf (Lkotlin/jvm/functions/Function1;)Z
 	public abstract fun removeIfAndAwait (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun size ()I
+	public abstract fun sizeRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun snapshot ()Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
+	public abstract fun snapshotRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/redis/sync/set/SyncSet$Companion {
@@ -633,9 +656,14 @@ public final class dev/slne/surf/redis/sync/set/SyncSetChange$Removed : dev/slne
 public abstract interface class dev/slne/surf/redis/sync/value/SyncValue : dev/slne/surf/redis/sync/SyncStructure {
 	public static final field Companion Ldev/slne/surf/redis/sync/value/SyncValue$Companion;
 	public fun asProperty ()Lkotlin/properties/ReadWriteProperty;
+	public abstract fun compareAndSetRemote (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun get ()Ljava/lang/Object;
+	public abstract fun getAndSetRemote (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getAndUpdateRemote (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getRemote (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun set (Ljava/lang/Object;)V
 	public abstract fun setAndAwait (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateAndGetRemote (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/redis/sync/value/SyncValue$Companion {

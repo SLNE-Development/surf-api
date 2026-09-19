@@ -19,6 +19,13 @@ import kotlin.time.Duration.Companion.minutes
  * - [add], [remove], [removeAt], [set], [removeIf] and [clear] mutate the local view and propagate
  *   changes via Redis.
  *
+ * ## Remote access
+ * The `*Remote` methods bypass the eventually consistent local view and operate on the committed
+ * Redis state. Point reads leave the local view untouched.
+ * [snapshotRemote] refreshes the local view when Redis is ahead of it. Mutations are applied
+ * atomically in Redis first and report what Redis observed; the local view is updated afterward
+ * and listeners are notified as for any other change.
+ *
  * ## Listeners
  * Listeners registered via [SyncStructure.addListener] receive [SyncListChange] events for changes.
  * The thread used for listener invocation is implementation-defined.
@@ -144,4 +151,62 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      * Clears the local list and waits until the clear has been committed to Redis.
      */
     suspend fun clearAndAwait()
+
+    /**
+     * Returns the element at [index] from Redis, bypassing the local view.
+     *
+     * @return the element, or `null` if [index] is out of range in Redis
+     */
+    suspend fun getRemote(index: Int): T?
+
+    /**
+     * Checks whether [element] is present in Redis, bypassing the local view.
+     */
+    suspend fun containsRemote(element: T): Boolean
+
+    /**
+     * Returns the element count in Redis, bypassing the local view.
+     */
+    suspend fun sizeRemote(): Int
+
+    /**
+     * Returns a copy of the committed Redis contents.
+     *
+     * When the remote state is ahead of the local view, the local view is replaced by the result.
+     */
+    suspend fun snapshotRemote(): ObjectArrayList<T>
+
+    /**
+     * Appends [element] to the Redis list and waits until the mutation has been committed.
+     */
+    suspend fun addRemote(element: T)
+
+    /**
+     * Replaces the element at [index] in Redis and returns the element Redis held before.
+     *
+     * @return the previous Redis element, or `null` if [index] is out of range in Redis
+     */
+    suspend fun setRemote(index: Int, element: T): T?
+
+    /**
+     * Removes one occurrence of [element] from the Redis list and waits until the mutation has been
+     * committed.
+     *
+     * @return `true` if Redis contained [element], `false` otherwise
+     */
+    suspend fun removeRemote(element: T): Boolean
+
+    /**
+     * Removes the element at [index] from Redis and returns it.
+     *
+     * @return the removed Redis element, or `null` if [index] is out of range in Redis
+     */
+    suspend fun removeAtRemote(index: Int): T?
+
+    /**
+     * Clears the Redis list regardless of the local view and waits until the clear has been committed.
+     *
+     * Unlike [clearAndAwait], this is not skipped when the local view is already empty.
+     */
+    suspend fun clearRemote()
 }

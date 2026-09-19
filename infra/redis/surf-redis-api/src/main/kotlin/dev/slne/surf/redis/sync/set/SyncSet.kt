@@ -18,6 +18,13 @@ import kotlin.time.Duration.Companion.minutes
  * - [contains], [size], [add], [remove], [removeIf] and [clear] operate on the local view and
  *   propagate changes via Redis.
  *
+ * ## Remote access
+ * The `*Remote` methods bypass the eventually consistent local view and operate on the committed
+ * Redis state. Point reads leave the local view untouched.
+ * [snapshotRemote] refreshes the local view when Redis is ahead of it. Mutations are applied atomically in Redis
+ * first and report what Redis observed; the local view is updated afterwards and listeners are notified as
+ * for any other change.
+ *
  * ## Listeners
  * Listeners registered via [SyncStructure.addListener] receive [SyncSetChange] events for changes.
  * The thread used for listener invocation is implementation-defined.
@@ -115,4 +122,42 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
      * Clears the local set and waits until the clear has been committed to Redis.
      */
     suspend fun clearAndAwait()
+
+    /**
+     * Checks whether [element] is present in Redis, bypassing the local view.
+     */
+    suspend fun containsRemote(element: T): Boolean
+
+    /**
+     * Returns the element count in Redis, bypassing the local view.
+     */
+    suspend fun sizeRemote(): Int
+
+    /**
+     * Returns a copy of the committed Redis contents.
+     *
+     * When the remote state is ahead of the local view, the local view is replaced by the result.
+     */
+    suspend fun snapshotRemote(): ObjectOpenHashSet<T>
+
+    /**
+     * Adds [element] to the Redis set and waits until the mutation has been committed.
+     *
+     * @return `true` if Redis did not contain [element] before, `false` otherwise
+     */
+    suspend fun addRemote(element: T): Boolean
+
+    /**
+     * Removes [element] from the Redis set and waits until the mutation has been committed.
+     *
+     * @return `true` if Redis contained [element], `false` otherwise
+     */
+    suspend fun removeRemote(element: T): Boolean
+
+    /**
+     * Clears the Redis set regardless of the local view and waits until the clear has been committed.
+     *
+     * Unlike [clearAndAwait], this is not skipped when the local view is already empty.
+     */
+    suspend fun clearRemote()
 }

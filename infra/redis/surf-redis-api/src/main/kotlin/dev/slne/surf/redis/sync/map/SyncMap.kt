@@ -18,6 +18,12 @@ import kotlin.time.Duration.Companion.minutes
  * - [get], [containsKey], [size], [isEmpty] operate on the local view.
  * - [put], [remove], [removeIf] and [clear] mutate the local view and propagate changes via Redis.
  *
+ * ## Remote access
+ * The `*Remote` methods bypass the eventually consistent local view and operate on the committed
+ * Redis state. Point reads leave the local view untouched.
+ * [snapshotRemote] refreshes the local view when Redis is ahead of it. Mutations are applied atomically in Redis
+ * first and report what Redis observed; the local view is updated afterwards
+ *
  * ## Listeners
  * Listeners registered via [SyncStructure.addListener] receive [SyncMapChange] events for changes.
  * The thread used for listener invocation is implementation-defined.
@@ -151,4 +157,61 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
      * Use this for correctness-critical reads where observing the latest committed Redis state matters.
      */
     suspend fun getRemote(key: K): V?
+
+    /**
+     * Checks whether [key] is present in Redis, bypassing the local view.
+     */
+    suspend fun containsKeyRemote(key: K): Boolean
+
+    /**
+     * Returns the entry count in Redis, bypassing the local view.
+     */
+    suspend fun sizeRemote(): Int
+
+    /**
+     * Returns a copy of the committed Redis contents.
+     *
+     * When the remote state is ahead of the local view, the local view is replaced by the result.
+     */
+    suspend fun snapshotRemote(): Object2ObjectOpenHashMap<K, V>
+
+    /**
+     * Associates [value] with [key] in Redis and returns the value Redis held before.
+     *
+     * @return the previous Redis value, or `null` if there was no mapping
+     */
+    suspend fun putRemote(key: K, value: V): V?
+
+    /**
+     * Associates [value] with [key] in Redis only if Redis holds no mapping for [key].
+     *
+     * @return the existing Redis value if the mapping was not changed, or `null` if [value] was stored
+     */
+    suspend fun putIfAbsentRemote(key: K, value: V): V?
+
+    /**
+     * Removes the mapping for [key] from Redis and returns the value Redis held.
+     *
+     * @return the removed Redis value, or `null` if there was no mapping
+     */
+    suspend fun removeRemote(key: K): V?
+
+    /**
+     * Clears the Redis map regardless of the local view and waits until the clear has been committed.
+     *
+     * Unlike [clearAndAwait], this is not skipped when the local view is already empty.
+     */
+    suspend fun clearRemote()
+
+    /**
+     * Atomically recomputes the mapping for [key] from the committed Redis value.
+     *
+     * [remapping] receives the current Redis value (or `null`) and returns the new value; `null`
+     * removes the mapping. Implemented as a compare-and-set loop that retries without bound while
+     * other nodes modify the key concurrently. [remapping] must be side-effect free and may be
+     * invoked more than once.
+     *
+     * @return the new value associated with [key], or `null` if the mapping was removed or absent
+     */
+    suspend fun computeRemote(key: K, remapping: (K, V?) -> V?): V?
 }

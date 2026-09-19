@@ -88,14 +88,19 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
         }
     }
 
-    protected fun loadFromRemote(): Mono<Void> = loadFromRemote0()
+    protected fun loadFromRemote(): Mono<Void> = loadRemoteSnapshot()
+        .doOnNext(::overrideFromRemote)
+        .then()
+
+    /**
+     * Reads the current remote snapshot without applying it locally.
+     */
+    protected fun loadRemoteSnapshot(): Mono<R> = loadFromRemote0()
         .switchIfEmpty(
             Mono.error(
                 IllegalStateException("Remote snapshot for synchronized structure '$id' returned no result")
             )
         )
-        .doOnNext(::overrideFromRemote)
-        .then()
 
     protected abstract fun loadFromRemote0(): Mono<R>
     protected abstract fun overrideFromRemote(raw: R)

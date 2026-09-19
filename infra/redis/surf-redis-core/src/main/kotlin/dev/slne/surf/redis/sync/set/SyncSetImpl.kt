@@ -90,7 +90,7 @@ class SyncSetImpl<T : Any> internal constructor(
         val added = lock.write { set.add(element) }
         if (!added) return false
 
-        addRemote(element)
+        addRemoteAsync(element)
         notifyListeners(SyncSetChange.Added(element))
 
         return true
@@ -100,7 +100,7 @@ class SyncSetImpl<T : Any> internal constructor(
         val removed = lock.write { set.remove(element) }
         if (!removed) return false
 
-        removeRemote(element)
+        removeRemoteAsync(element)
         notifyListeners(SyncSetChange.Removed(element))
         return true
     }
@@ -113,7 +113,7 @@ class SyncSetImpl<T : Any> internal constructor(
         }
         if (!hadElements) return
 
-        clearRemote()
+        clearRemoteAsync()
         notifyListeners(SyncSetChange.Cleared)
     }
 
@@ -244,11 +244,35 @@ class SyncSetImpl<T : Any> internal constructor(
         ).awaitSingle()
     }
 
-    private fun addRemote(element: T) {
+    override suspend fun containsRemote(element: T): Boolean =
+        remoteSet.contains(encodeValue(element)).awaitSingle()
+
+    override suspend fun sizeRemote(): Int = remoteSet.size().awaitSingle()
+
+    override suspend fun snapshotRemote(): ObjectOpenHashSet<T> {
+        val raw = pullRemoteSnapshot().awaitSingle().value
+        return raw.mapTo(ObjectOpenHashSet(raw.size), ::decodeValue)
+    }
+
+    override suspend fun addRemote(element: T): Boolean {
+        val encoded = encodeValue(element)
+        return writeToRemoteAndApplyAwait(ADD_SCRIPT, EVENT_ADDED, encoded, payload = encoded)
+    }
+
+    override suspend fun removeRemote(element: T): Boolean {
+        val encoded = encodeValue(element)
+        return writeToRemoteAndApplyAwait(REMOVE_SCRIPT, EVENT_REMOVED, encoded, payload = encoded)
+    }
+
+    override suspend fun clearRemote() {
+        writeToRemoteAndApplyAwait(CLEAR_SCRIPT, EVENT_CLEARED, payload = "")
+    }
+
+    private fun addRemoteAsync(element: T) {
         writeToRemote(ADD_SCRIPT, EVENT_ADDED, encodeValue(element))
     }
 
-    private fun removeRemote(element: T) {
+    private fun removeRemoteAsync(element: T) {
         writeToRemote(REMOVE_SCRIPT, EVENT_REMOVED, encodeValue(element))
     }
 
@@ -256,7 +280,7 @@ class SyncSetImpl<T : Any> internal constructor(
         writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
     }
 
-    private fun clearRemote() {
+    private fun clearRemoteAsync() {
         writeToRemote(CLEAR_SCRIPT, EVENT_CLEARED)
     }
 

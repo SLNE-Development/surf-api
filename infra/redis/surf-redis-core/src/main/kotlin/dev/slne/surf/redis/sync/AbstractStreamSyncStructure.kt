@@ -3,6 +3,12 @@ package dev.slne.surf.redis.sync
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.*
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import it.unimi.dsi.fastutil.objects.ObjectArrays
+import it.unimi.dsi.fastutil.objects.ObjectIterators
+import it.unimi.dsi.fastutil.objects.ObjectList
+import it.unimi.dsi.fastutil.objects.ObjectLists
+import kotlinx.coroutines.reactor.awaitSingle
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.redisson.api.RAtomicLongReactive
 import org.redisson.api.RBucketReactive
@@ -259,27 +265,136 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             STREAM_FIELD_MSG,
             eventType,
             *values,
-        ).doOnNext { newVersion ->
-            when {
-                newVersion < 0L -> {
-                    requestResync()
-                }
+        ).doOnNext(::handleWriteVersion)
+            .resyncOnScriptError(script)
+    }
 
-                newVersion == 0L -> Unit
-
-                else -> {
-                    applyVersion(newVersion)
-                    wakeupBus.publish(streamKey)
-                }
-            }
-        }.doOnError { throwable ->
+    private fun <T : Any> Mono<T>.resyncOnScriptError(script: String): Mono<T> =
+        doOnError { throwable ->
             log.atWarning()
                 .withCause(throwable)
                 .log("Error executing Lua script '$script' for '$id' ($streamKey)")
 
             requestResync()
         }
+
+    private fun handleWriteVersion(newVersion: Long) {
+        when {
+            newVersion < 0L -> requestResync()
+            newVersion == 0L -> Unit
+            else -> {
+                applyVersion(newVersion)
+                wakeupBus.publish(streamKey)
+            }
+        }
     }
+
+    /**
+     * Executes a mutation script that returns `{version, payload, extra...}` and applies the
+     * appended event to the local view.
+     */
+    protected fun writeToRemoteWithPayloadAwait(
+        script: String,
+        eventType: String,
+        vararg values: String,
+    ): Mono<RemoteWriteResult> {
+        return scriptExecutor.execute<List<Any>>(
+            script,
+            RScript.Mode.READ_WRITE,
+            RScript.ReturnType.LIST,
+            scriptKeys,
+            instanceId,
+            msgDelimiterStr,
+            streamMaxLengthStr,
+            STREAM_FIELD_TYPE,
+            STREAM_FIELD_MSG,
+            eventType,
+            *values,
+        )
+            .map(::parseRemoteWriteResult)
+            .doOnNext { result ->
+                handleWriteVersion(result.version)
+                result.event?.let { applyOwnEvent(eventType, it) }
+            }
+            .resyncOnScriptError(script)
+    }
+
+    private fun parseRemoteWriteResult(raw: List<Any>): RemoteWriteResult {
+        val version = raw.getOrNull(0).asLongOrZero()
+        val event = if (version > 0L) {
+            StreamEventData(version, instanceId, raw.getOrNull(1)?.toString().orEmpty())
+        } else {
+            null
+        }
+
+        val extra: List<String> = when (raw.size) {
+            1, 2 -> ObjectLists.emptyList()
+            3 -> ObjectLists.singleton(raw[2].toString())
+
+            else -> {
+                val size = raw.size
+                val result = ObjectArrayList<String>(size - 2)
+
+                if (raw is RandomAccess) {
+                    for (index in 2 until size) {
+                        result.add(raw[index].toString())
+                    }
+                } else {
+                    val iterator = raw.listIterator(2)
+                    while (iterator.hasNext()) {
+                        result.add(iterator.next().toString())
+                    }
+                }
+
+                result
+            }
+        }
+
+        return RemoteWriteResult(version, event, extra)
+    }
+
+    /**
+     * Executes a mutation script that returns the new version and applies [payload] to the local
+     * view as this node's own event.
+     *
+     * @return `true` if the script mutated Redis
+     */
+    protected suspend fun writeToRemoteAndApplyAwait(
+        script: String,
+        eventType: String,
+        vararg values: String,
+        payload: String,
+    ): Boolean {
+        val version = executeWrite(script, eventType, *values).awaitSingle()
+        if (version <= 0L) return false
+
+        applyOwnEvent(eventType, StreamEventData(version, instanceId, payload))
+        return true
+    }
+
+    protected fun joinPayload(vararg parts: String): String = parts.joinToString(msgDelimiterStr)
+
+    private fun applyOwnEvent(eventType: String, event: StreamEventData) {
+        try {
+            onStreamEvent(eventType, event)
+        } catch (t: Throwable) {
+            log.atWarning()
+                .withCause(t)
+                .log("Error applying own remote mutation '$eventType' for '$id' ($streamKey)")
+            requestResync()
+        }
+    }
+
+    /**
+     * Reads the remote snapshot and replaces the local view when the snapshot is ahead of the
+     * locally applied stream version.
+     */
+    protected fun pullRemoteSnapshot(): Mono<R> = loadRemoteSnapshot()
+        .doOnNext { snapshot ->
+            if (snapshot.version > versions.current) {
+                overrideFromRemote(snapshot)
+            }
+        }
 
     protected fun writeBatchToRemote(
         script: String,
@@ -469,4 +584,18 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         val first: Long,
         val last: Long,
     )
+
+    /**
+     * Result of a direct remote mutation executed through [writeToRemoteWithPayloadAwait].
+     *
+     * [event] is the stream event the script appended, or `null` when nothing was written.
+     * [extra] holds script-specific trailing results that are not part of the stream payload.
+     */
+    protected class RemoteWriteResult(
+        val version: Long,
+        val event: StreamEventData?,
+        val extra: List<String>,
+    ) {
+        val applied: Boolean get() = event != null
+    }
 }

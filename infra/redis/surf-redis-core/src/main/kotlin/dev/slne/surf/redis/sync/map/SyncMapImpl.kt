@@ -50,6 +50,9 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         private const val SNAPSHOT_SCRIPT = "snapshot"
         private const val REPLACE_IF_EQUALS_SCRIPT = "replace-if-equals"
         private const val REMOVE_IF_EQUALS_SCRIPT = "remove-if-equals"
+        private const val PUT_REMOTE_SCRIPT = "put-remote"
+        private const val PUT_IF_ABSENT_SCRIPT = "put-if-absent"
+        private const val REMOVE_REMOTE_SCRIPT = "remove-remote"
 
         private object Registry : LuaScriptRegistry("lua/sync/map") {
             init {
@@ -61,6 +64,9 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
                 load(SNAPSHOT_SCRIPT)
                 load(REPLACE_IF_EQUALS_SCRIPT)
                 load(REMOVE_IF_EQUALS_SCRIPT)
+                load(PUT_REMOTE_SCRIPT)
+                load(PUT_IF_ABSENT_SCRIPT)
+                load(REMOVE_REMOTE_SCRIPT)
             }
         }
     }
@@ -100,7 +106,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         }
 
         notifyListeners(SyncMapChange.Put(key, value, previous))
-        putRemote(key, value)
+        putRemoteAsync(key, value)
 
         return previous
     }
@@ -108,7 +114,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
     override fun remove(key: K): V? {
         val old = lock.write { map.remove(key) } ?: return null
 
-        removeRemote(key)
+        removeRemoteAsync(key)
         notifyListeners(SyncMapChange.Removed(key, old))
 
         return old
@@ -144,7 +150,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         }
         if (!had) return
 
-        clearRemote()
+        clearRemoteAsync()
         notifyListeners(SyncMapChange.Cleared())
     }
 
@@ -281,114 +287,114 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         key: K,
         expectedValue: V,
         newValue: V,
-    ): Boolean {
-        val encodedExpected = encodeValue(expectedValue)
-        val encodedNew = encodeValue(newValue)
-
-        val version = writeToRemoteAwait(
-            REPLACE_IF_EQUALS_SCRIPT,
-            EVENT_PUT,
-            encodeKey(key),
-            encodedExpected,
-            encodedNew,
-        ).awaitSingle()
-
-        if (version == 0L) {
-            return false
-        }
-
-        var notify = false
-        var resync = false
-
-        lock.write {
-            val current = map[key]
-            when {
-                current == null -> {
-                    resync = true
-                }
-
-                encodeValue(current) == encodedExpected -> {
-                    map[key] = newValue
-                    notify = true
-                }
-
-                encodeValue(current) == encodedNew -> Unit
-
-                else -> {
-                    resync = true
-                }
-            }
-        }
-
-        if (notify) {
-            notifyListeners(
-                SyncMapChange.Put(
-                    key,
-                    newValue,
-                    expectedValue,
-                )
-            )
-        }
-
-        if (resync) {
-            requestResync()
-        }
-
-        return true
-    }
+    ): Boolean = replaceIfEqualsRemoteEncoded(
+        encodeKey(key),
+        encodeValue(expectedValue),
+        encodeValue(newValue),
+    )
 
     override suspend fun removeIfEqualsAndAwait(
         key: K,
         expectedValue: V,
-    ): Boolean {
-        val encodedExpected = encodeValue(expectedValue)
+    ): Boolean = removeIfEqualsRemoteEncoded(encodeKey(key), encodeValue(expectedValue))
 
-        val version = writeToRemoteAwait(
-            REMOVE_IF_EQUALS_SCRIPT,
-            EVENT_REMOVE,
+    override suspend fun containsKeyRemote(key: K): Boolean {
+        return remoteMap.containsKey(encodeKey(key)).awaitSingle()
+    }
+
+    override suspend fun sizeRemote(): Int = remoteMap.size().awaitSingle()
+
+    override suspend fun snapshotRemote(): Object2ObjectOpenHashMap<K, V> {
+        val raw = pullRemoteSnapshot().awaitSingle().value
+        val decoded = Object2ObjectOpenHashMap<K, V>(raw.size)
+        for ((k, v) in raw) {
+            decoded[decodeKey(k)] = decodeValue(v)
+        }
+        return decoded
+    }
+
+    override suspend fun putRemote(key: K, value: V): V? {
+        val result = writeToRemoteWithPayloadAwait(
+            PUT_REMOTE_SCRIPT,
+            EVENT_PUT,
             encodeKey(key),
-            encodedExpected,
+            encodeValue(value),
         ).awaitSingle()
 
-        if (version == 0L) {
-            return false
-        }
-
-        var notify = false
-        var resync = false
-
-        lock.write {
-            val current = map[key]
-
-            when {
-                current == null -> Unit
-
-                encodeValue(current) == encodedExpected -> {
-                    map.remove(key)
-                    notify = true
-                }
-
-                else -> {
-                    resync = true
-                }
-            }
-        }
-
-        if (notify) {
-            notifyListeners(
-                SyncMapChange.Removed(
-                    key,
-                    expectedValue,
-                )
-            )
-        }
-
-        if (resync) {
-            requestResync()
-        }
-
-        return true
+        val event = result.event ?: return value
+        return event.payloadOrNull(2)?.let(::decodeValue)
     }
+
+    override suspend fun putIfAbsentRemote(key: K, value: V): V? {
+        val result = writeToRemoteWithPayloadAwait(
+            PUT_IF_ABSENT_SCRIPT,
+            EVENT_PUT,
+            encodeKey(key),
+            encodeValue(value),
+        ).awaitSingle()
+
+        if (result.applied) return null
+
+        val existing = result.extra.getOrNull(0)
+            ?: error("Malformed put-if-absent result for SyncMap '$id': missing existing value")
+        return decodeValue(existing)
+    }
+
+    override suspend fun removeRemote(key: K): V? {
+        val result = writeToRemoteWithPayloadAwait(
+            REMOVE_REMOTE_SCRIPT,
+            EVENT_REMOVE,
+            encodeKey(key),
+        ).awaitSingle()
+
+        return result.event?.payload(1)?.let(::decodeValue)
+    }
+
+    override suspend fun clearRemote() {
+        writeToRemoteAndApplyAwait(CLEAR_SCRIPT, EVENT_CLEAR, payload = "")
+    }
+
+    override suspend fun computeRemote(key: K, remapping: (K, V?) -> V?): V? {
+        val encodedKey = encodeKey(key)
+
+        while (true) {
+            val encodedCurrent = remoteMap.get(encodedKey).awaitSingleOrNull()
+            val current = encodedCurrent?.let(::decodeValue)
+            val next = remapping(key, current)
+
+            val done = when {
+                encodedCurrent == null -> next == null || putIfAbsentRemote(key, next) == null
+                next == null -> removeIfEqualsRemoteEncoded(encodedKey, encodedCurrent)
+                else -> replaceIfEqualsRemoteEncoded(encodedKey, encodedCurrent, encodeValue(next))
+            }
+
+            if (done) return next
+        }
+    }
+
+    private suspend fun replaceIfEqualsRemoteEncoded(
+        encodedKey: String,
+        encodedExpected: String,
+        encodedNew: String,
+    ): Boolean = writeToRemoteAndApplyAwait(
+        REPLACE_IF_EQUALS_SCRIPT,
+        EVENT_PUT,
+        encodedKey,
+        encodedExpected,
+        encodedNew,
+        payload = joinPayload(encodedKey, encodedNew, encodedExpected),
+    )
+
+    private suspend fun removeIfEqualsRemoteEncoded(
+        encodedKey: String,
+        encodedExpected: String,
+    ): Boolean = writeToRemoteAndApplyAwait(
+        REMOVE_IF_EQUALS_SCRIPT,
+        EVENT_REMOVE,
+        encodedKey,
+        encodedExpected,
+        payload = joinPayload(encodedKey, encodedExpected),
+    )
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<Map<String, String>>) {
         val rawValue = raw.value
@@ -405,11 +411,11 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         super.overrideFromRemote(raw)
     }
 
-    private fun putRemote(key: K, value: V) {
+    private fun putRemoteAsync(key: K, value: V) {
         writeToRemote(PUT_SCRIPT, EVENT_PUT, encodeKey(key), encodeValue(value))
     }
 
-    private fun removeRemote(key: K) {
+    private fun removeRemoteAsync(key: K) {
         writeToRemote(REMOVE_SCRIPT, EVENT_REMOVE, encodeKey(key))
     }
 
@@ -418,7 +424,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVE, *encKeys)
     }
 
-    private fun clearRemote() {
+    private fun clearRemoteAsync() {
         writeToRemote(CLEAR_SCRIPT, EVENT_CLEAR)
     }
 
