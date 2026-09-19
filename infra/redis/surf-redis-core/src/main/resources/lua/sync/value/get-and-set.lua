@@ -23,9 +23,9 @@ local payload = newValue
 local msg = tostring(ver) .. delim .. originId .. delim .. payload
 redis.call('XADD', streamKey, 'MAXLEN', '~', maxLen, '*', fieldType, eventType, fieldMsg, msg)
 
--- Extra results: presence flag and previous value
+-- Extra result: the previous value when the key was present
 if old == false then
-    return { ver, payload, '0', '' }
+    return { ver, payload }
 end
 
-return { ver, payload, '1', old }
+return { ver, payload, old }

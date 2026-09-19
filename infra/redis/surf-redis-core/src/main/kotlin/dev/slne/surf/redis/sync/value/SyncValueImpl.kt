@@ -9,6 +9,7 @@ import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
 import org.redisson.client.codec.StringCodec
@@ -59,7 +60,7 @@ class SyncValueImpl<T : Any> internal constructor(
         )
     }
     private val value = AtomicReference(defaultValue)
-    private val encodedDefault by lazy { encodeValue(defaultValue) }
+    private val encodedDefault = encodeValue(defaultValue)
 
     override fun init(): Mono<Void> {
         return super.init()
@@ -78,13 +79,13 @@ class SyncValueImpl<T : Any> internal constructor(
 
     override fun get(): T = value.get()
 
-    override suspend fun getRemote(): T = decodeOrDefault(readRemoteEncoded())
+    override suspend fun getRemote(): T = decodeOrDefault(pullRemoteSnapshot().awaitSingle().value)
 
     override fun set(newValue: T) {
         val old = value.getAndSet(newValue)
 
         notifyListeners(SyncValueChange.Updated(newValue, old))
-        setRemoteAsync(newValue)
+        writeToRemote(SET_SCRIPT, EVENT_SET, encodeValue(newValue))
     }
 
     override suspend fun setAndAwait(newValue: T) {
@@ -112,10 +113,9 @@ class SyncValueImpl<T : Any> internal constructor(
             GET_AND_SET_SCRIPT,
             EVENT_SET,
             encodeValue(newValue),
-        ).awaitSingle()
+        )
 
-        val hadPreviousValue = result.extra.getOrNull(0) == "1"
-        return if (hadPreviousValue) decodeValue(result.extra[1]) else defaultValue
+        return decodeOrDefault(result.extra)
     }
 
     override suspend fun updateAndGetRemote(transform: (T) -> T): T =
@@ -126,7 +126,7 @@ class SyncValueImpl<T : Any> internal constructor(
 
     private suspend fun updateRemote(transform: (T) -> T): RemoteUpdate<T> {
         while (true) {
-            val encodedCurrent = readRemoteEncoded()
+            val encodedCurrent = bucket.get().awaitSingleOrNull()
             val current = decodeOrDefault(encodedCurrent)
             val next = transform(current)
 
@@ -139,25 +139,15 @@ class SyncValueImpl<T : Any> internal constructor(
     private suspend fun compareAndSetRemoteEncoded(
         encodedExpected: String,
         encodedNew: String,
-    ): Boolean {
-        val absentMatches = encodedExpected == encodedDefault
-
-        return writeToRemoteWithPayloadAwait(
-            COMPARE_AND_SET_SCRIPT,
-            EVENT_SET,
-            encodedExpected,
-            encodedNew,
-            if (absentMatches) "1" else "0",
-        ).awaitSingle().applied
-    }
-    
-    private suspend fun readRemoteEncoded(): String? = pullRemoteSnapshot().awaitSingle().value
+    ): Boolean = writeToRemoteWithPayloadAwait(
+        COMPARE_AND_SET_SCRIPT,
+        EVENT_SET,
+        encodedExpected,
+        encodedNew,
+        encodedDefault,
+    ).event != null
 
     private fun decodeOrDefault(encoded: String?): T = encoded?.let(::decodeValue) ?: defaultValue
-
-    private fun setRemoteAsync(value: T) {
-        writeToRemote(SET_SCRIPT, EVENT_SET, encodeValue(value))
-    }
 
     override fun onStreamEvent(type: String, data: StreamEventData) = when (type) {
         EVENT_SET -> onSetEvent(data)
@@ -203,15 +193,7 @@ class SyncValueImpl<T : Any> internal constructor(
     }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<String?>) {
-        val snapshotValue = raw.value
-        if (snapshotValue == null) {
-            value.set(defaultValue)
-            super.overrideFromRemote(raw)
-            return
-        }
-
-        val decoded = decodeValue(snapshotValue)
-        value.set(decoded)
+        value.set(decodeOrDefault(raw.value))
         super.overrideFromRemote(raw)
     }
 

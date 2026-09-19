@@ -21,9 +21,9 @@ import kotlin.time.Duration.Companion.minutes
  * ## Remote access
  * The `*Remote` methods bypass the eventually consistent local view and operate on the committed
  * Redis state. Point reads leave the local view untouched.
- * [snapshotRemote] refreshes the local view when Redis is ahead of it. Mutations are applied atomically in Redis
- * first and report what Redis observed; the local view is updated afterwards and listeners are notified as
- * for any other change.
+ * [snapshotRemote] refreshes the local view when Redis is ahead of it. Mutations are applied
+ * atomically in Redis first and report what Redis observed; the local view is updated afterward
+ * and listeners are notified as for any other change.
  *
  * ## Listeners
  * Listeners registered via [SyncStructure.addListener] receive [SyncSetChange] events for changes.

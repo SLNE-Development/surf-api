@@ -108,7 +108,7 @@ class SyncListImpl<T : Any> internal constructor(
         lock.write { list.add(element) }
 
         notifyListeners(SyncListChange.Appended(element))
-        appendRemote(encoded)
+        writeToRemote(APPEND_SCRIPT, EVENT_ADDED, encoded)
     }
 
     override fun remove(element: T): Boolean {
@@ -118,7 +118,7 @@ class SyncListImpl<T : Any> internal constructor(
         val encoded = encodeValue(element)
 
         notifyListeners(SyncListChange.Removed(element))
-        removeFirstRemote(encoded)
+        writeToRemote(REMOVE_FIRST_SCRIPT, EVENT_REMOVED, encoded)
 
         return true
     }
@@ -130,25 +130,15 @@ class SyncListImpl<T : Any> internal constructor(
 
         notifyListeners(SyncListChange.RemovedAt(index, old))
 
-        removeAtRemoteAsync(
-            index,
-            encodeValue(old),
-        )
-
-        return old
-    }
-
-    private fun removeAtRemoteAsync(
-        index: Int,
-        expectedEncoded: String,
-    ) {
         writeToRemote(
             REMOVE_AT_SCRIPT,
             EVENT_REMOVED_AT,
             index.toString(),
-            expectedEncoded,
+            encodeValue(old),
             newTombstone(),
         )
+
+        return old
     }
 
     private fun newTombstone(): String = "\u0001rm@${tombstoneSeq.getAndIncrement()}-$instanceId"
@@ -160,27 +150,15 @@ class SyncListImpl<T : Any> internal constructor(
 
         notifyListeners(SyncListChange.Updated(index, element, old))
 
-        setAtRemote(
-            index,
+        writeToRemote(
+            SET_AT_SCRIPT,
+            EVENT_SET_AT,
+            index.toString(),
             encodeValue(old),
             encodeValue(element),
         )
 
         return old
-    }
-
-    private fun setAtRemote(
-        index: Int,
-        expectedEncoded: String,
-        newEncoded: String,
-    ) {
-        writeToRemote(
-            SET_AT_SCRIPT,
-            EVENT_SET_AT,
-            index.toString(),
-            expectedEncoded,
-            newEncoded,
-        )
     }
 
     override fun removeIf(predicate: (T) -> Boolean): Boolean {
@@ -230,7 +208,7 @@ class SyncListImpl<T : Any> internal constructor(
         if (!had) return
 
         notifyListeners(SyncListChange.Cleared())
-        clearRemoteAsync()
+        writeToRemote(CLEAR_SCRIPT, EVENT_CLEARED)
     }
 
     override suspend fun removeAtAndAwait(index: Int): T {
@@ -396,13 +374,16 @@ class SyncListImpl<T : Any> internal constructor(
     }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<List<String>>) {
-        val rawValue = raw.value
-        val elements = rawValue.mapTo(ObjectArrayList(rawValue.size), ::decodeValue)
+        val elements = decodeSnapshot(raw.value)
         lock.write {
             list.clear()
             list.addAll(elements)
         }
         super.overrideFromRemote(raw)
+    }
+
+    private fun decodeSnapshot(raw: List<String>): ObjectArrayList<T> {
+        return raw.mapTo(ObjectArrayList(raw.size), ::decodeValue)
     }
 
     override suspend fun getRemote(index: Int): T? {
@@ -419,16 +400,11 @@ class SyncListImpl<T : Any> internal constructor(
     }
 
     override suspend fun snapshotRemote(): ObjectArrayList<T> {
-        val raw = pullRemoteSnapshot().awaitSingle().value
-        return raw.mapTo(ObjectArrayList(raw.size), ::decodeValue)
+        return decodeSnapshot(pullRemoteSnapshot().awaitSingle().value)
     }
 
     override suspend fun addRemote(element: T) {
-        writeToRemoteWithPayloadAwait(
-            APPEND_REMOTE_SCRIPT,
-            EVENT_ADDED,
-            encodeValue(element),
-        ).awaitSingle()
+        writeToRemoteWithPayloadAwait(APPEND_REMOTE_SCRIPT, EVENT_ADDED, encodeValue(element))
     }
 
     override suspend fun setRemote(index: Int, element: T): T? {
@@ -438,19 +414,13 @@ class SyncListImpl<T : Any> internal constructor(
             EVENT_SET_AT,
             index.toString(),
             encodeValue(element),
-        ).awaitSingle()
+        )
 
         return result.event?.payload(1)?.let(::decodeValue)
     }
 
     override suspend fun removeRemote(element: T): Boolean {
-        val encoded = encodeValue(element)
-        return writeToRemoteAndApplyAwait(
-            REMOVE_FIRST_SCRIPT,
-            EVENT_REMOVED,
-            encoded,
-            payload = encoded,
-        )
+        return writeToRemoteAndApplyAwait(REMOVE_FIRST_SCRIPT, EVENT_REMOVED, encodeValue(element))
     }
 
     override suspend fun removeAtRemote(index: Int): T? {
@@ -460,33 +430,17 @@ class SyncListImpl<T : Any> internal constructor(
             EVENT_REMOVED_AT,
             index.toString(),
             newTombstone(),
-        ).awaitSingle()
+        )
 
         return result.event?.payload(1)?.let(::decodeValue)
     }
 
     override suspend fun clearRemote() {
-        writeToRemoteAndApplyAwait(CLEAR_SCRIPT, EVENT_CLEARED, payload = "")
+        writeToRemoteAndApplyAwait(CLEAR_SCRIPT, EVENT_CLEARED)
     }
 
     private fun requireNonNegative(index: Int) {
         require(index >= 0) { "Index must not be negative: $index" }
-    }
-
-    private fun appendRemote(encoded: String) {
-        writeToRemote(APPEND_SCRIPT, EVENT_ADDED, encoded)
-    }
-
-    private fun removeFirstRemote(encoded: String) {
-        writeToRemote(REMOVE_FIRST_SCRIPT, EVENT_REMOVED, encoded)
-    }
-
-    private fun removeManyRemote(encodedValues: Array<String>) {
-        writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
-    }
-
-    private fun clearRemoteAsync() {
-        writeToRemote(CLEAR_SCRIPT, EVENT_CLEARED)
     }
 
     override fun onStreamEvent(type: String, data: StreamEventData) = when (type) {

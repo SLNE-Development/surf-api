@@ -3,11 +3,6 @@ package dev.slne.surf.redis.sync
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.*
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectArrays
-import it.unimi.dsi.fastutil.objects.ObjectIterators
-import it.unimi.dsi.fastutil.objects.ObjectList
-import it.unimi.dsi.fastutil.objects.ObjectLists
 import kotlinx.coroutines.reactor.awaitSingle
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.redisson.api.RAtomicLongReactive
@@ -253,10 +248,21 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         eventType: String,
         vararg values: String,
     ): Mono<Long> {
-        return scriptExecutor.execute<Long>(
+        return executeScript<Long>(script, RScript.ReturnType.LONG, eventType, *values)
+            .doOnNext(::handleWriteVersion)
+            .resyncOnScriptError(script)
+    }
+
+    private fun <T : Any> executeScript(
+        script: String,
+        returnType: RScript.ReturnType,
+        eventType: String,
+        vararg values: String,
+    ): Mono<T> {
+        return scriptExecutor.execute(
             script,
             RScript.Mode.READ_WRITE,
-            RScript.ReturnType.LONG,
+            returnType,
             scriptKeys,
             instanceId,
             msgDelimiterStr,
@@ -265,8 +271,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
             STREAM_FIELD_MSG,
             eventType,
             *values,
-        ).doOnNext(::handleWriteVersion)
-            .resyncOnScriptError(script)
+        )
     }
 
     private fun <T : Any> Mono<T>.resyncOnScriptError(script: String): Mono<T> =
@@ -290,72 +295,37 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     }
 
     /**
-     * Executes a mutation script that returns `{version, payload, extra...}` and applies the
-     * appended event to the local view.
+     * Executes a mutation script that returns `{version, payload, extra?}` and applies the appended
+     * event to the local view as this node's own event.
      */
-    protected fun writeToRemoteWithPayloadAwait(
+    protected suspend fun writeToRemoteWithPayloadAwait(
         script: String,
         eventType: String,
         vararg values: String,
-    ): Mono<RemoteWriteResult> {
-        return scriptExecutor.execute<List<Any>>(
-            script,
-            RScript.Mode.READ_WRITE,
-            RScript.ReturnType.LIST,
-            scriptKeys,
-            instanceId,
-            msgDelimiterStr,
-            streamMaxLengthStr,
-            STREAM_FIELD_TYPE,
-            STREAM_FIELD_MSG,
-            eventType,
-            *values,
-        )
-            .map(::parseRemoteWriteResult)
-            .doOnNext { result ->
-                handleWriteVersion(result.version)
-                result.event?.let { applyOwnEvent(eventType, it) }
-            }
+    ): RemoteWriteResult {
+        val raw = executeScript<List<Any>>(script, RScript.ReturnType.LIST, eventType, *values)
             .resyncOnScriptError(script)
-    }
+            .awaitSingle()
 
-    private fun parseRemoteWriteResult(raw: List<Any>): RemoteWriteResult {
         val version = raw.getOrNull(0).asLongOrZero()
+        handleWriteVersion(version)
+
         val event = if (version > 0L) {
             StreamEventData(version, instanceId, raw.getOrNull(1)?.toString().orEmpty())
         } else {
             null
         }
+        if (event != null) applyOwnEvent(eventType, event)
 
-        val extra: List<String> = when (raw.size) {
-            1, 2 -> ObjectLists.emptyList()
-            3 -> ObjectLists.singleton(raw[2].toString())
-
-            else -> {
-                val size = raw.size
-                val result = ObjectArrayList<String>(size - 2)
-
-                if (raw is RandomAccess) {
-                    for (index in 2 until size) {
-                        result.add(raw[index].toString())
-                    }
-                } else {
-                    val iterator = raw.listIterator(2)
-                    while (iterator.hasNext()) {
-                        result.add(iterator.next().toString())
-                    }
-                }
-
-                result
-            }
-        }
-
-        return RemoteWriteResult(version, event, extra)
+        return RemoteWriteResult(event, raw.getOrNull(2)?.toString())
     }
 
     /**
      * Executes a mutation script that returns the new version and applies [payload] to the local
      * view as this node's own event.
+     *
+     * [payload] defaults to [values] joined with the message delimiter, which is the event payload
+     * of every script whose event carries exactly its arguments.
      *
      * @return `true` if the script mutated Redis
      */
@@ -363,7 +333,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         script: String,
         eventType: String,
         vararg values: String,
-        payload: String,
+        payload: String = values.joinToString(msgDelimiterStr),
     ): Boolean {
         val version = executeWrite(script, eventType, *values).awaitSingle()
         if (version <= 0L) return false
@@ -418,19 +388,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         eventType: String,
         vararg values: String,
     ): Mono<VersionRange> {
-        return scriptExecutor.execute<List<Any>>(
-            script,
-            RScript.Mode.READ_WRITE,
-            RScript.ReturnType.LIST,
-            scriptKeys,
-            instanceId,
-            msgDelimiterStr,
-            streamMaxLengthStr,
-            STREAM_FIELD_TYPE,
-            STREAM_FIELD_MSG,
-            eventType,
-            *values,
-        )
+        return executeScript<List<Any>>(script, RScript.ReturnType.LIST, eventType, *values)
             .map { raw ->
                 VersionRange(
                     first = raw.getOrNull(0).asLongOrZero(),
@@ -446,13 +404,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                     }
                 }
             }
-            .doOnError { throwable ->
-                log.atWarning()
-                    .withCause(throwable)
-                    .log("Error executing batched Lua script '$script' for '$id' ($streamKey)")
-
-                requestResync()
-            }
+            .resyncOnScriptError(script)
     }
 
     protected fun readAtomicSnapshot(script: String): Mono<List<Any>> {
@@ -589,13 +541,10 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
      * Result of a direct remote mutation executed through [writeToRemoteWithPayloadAwait].
      *
      * [event] is the stream event the script appended, or `null` when nothing was written.
-     * [extra] holds script-specific trailing results that are not part of the stream payload.
+     * [extra] is the script-specific third result that is not part of the stream payload, if any.
      */
     protected class RemoteWriteResult(
-        val version: Long,
         val event: StreamEventData?,
-        val extra: List<String>,
-    ) {
-        val applied: Boolean get() = event != null
-    }
+        val extra: String?,
+    )
 }
