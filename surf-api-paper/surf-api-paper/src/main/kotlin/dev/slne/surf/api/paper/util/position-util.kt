@@ -51,6 +51,14 @@ fun Position.distance(other: Position): Double {
     return sqrt(distanceSquared(other))
 }
 
+/**
+ * Calculates the squared horizontal distance between this position and [other].
+ *
+ * Only the X and Z coordinates are considered.
+ *
+ * @param other the position to measure the distance to
+ * @return the squared horizontal distance to [other]
+ */
 fun Position.horizontalDistanceSquared(other: Position): Double {
     val dx = x() - other.x()
     val dz = z() - other.z()
