@@ -2,7 +2,7 @@ import org.gradle.accessors.dm.LibrariesForLibs
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 val libs = the<LibrariesForLibs>()
-val javaVersion: String by project
+val javaVersion = project.findProperty("javaVersion") as String
 
 plugins {
     java
