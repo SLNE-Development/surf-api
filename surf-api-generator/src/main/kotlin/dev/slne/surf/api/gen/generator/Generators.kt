@@ -16,7 +16,7 @@ class Generators(registries: Registries, advancementRegistry: AdvancementRegistr
     )
 
     companion object {
-        private const val CORE_GENERATED_PACKAGE = "dev.slne.surf.surfapi.core.api.generated"
+        private const val CORE_GENERATED_PACKAGE = "dev.slne.surf.api.core.generated"
 
         private fun simpleKey(className: String, registry: GenericRegistry) =
             GeneratedKeyType(className, CORE_GENERATED_PACKAGE, registry)

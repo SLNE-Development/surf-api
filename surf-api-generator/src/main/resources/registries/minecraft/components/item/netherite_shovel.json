@@ -1,5 +1,6 @@
 {
   "components": {
+    "minecraft:attack_animation": {},
     "minecraft:attribute_modifiers": [
       {
         "type": "minecraft:attack_damage",
@@ -16,6 +17,7 @@
         "slot": "mainhand"
       }
     ],
+    "minecraft:block_transformer": "minecraft:shovel",
     "minecraft:break_sound": "minecraft:entity.item.break",
     "minecraft:damage": 0,
     "minecraft:damage_resistant": {
@@ -25,6 +27,7 @@
       "value": 15
     },
     "minecraft:enchantments": {},
+    "minecraft:interact_animation": {},
     "minecraft:item_model": "minecraft:netherite_shovel",
     "minecraft:item_name": {
       "translate": "item.minecraft.netherite_shovel"
@@ -37,7 +40,6 @@
     "minecraft:repairable": {
       "items": "#minecraft:netherite_tool_materials"
     },
-    "minecraft:swing_animation": {},
     "minecraft:tool": {
       "rules": [
         {

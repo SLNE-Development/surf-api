@@ -35,7 +35,7 @@ private fun generate() {
 
     val generators = Generators(registries, advancementRegistry)
 
-    val root = Path("../surf-api-core/surf-api-core-api/src/main")
+    val root = Path("../surf-api-core/surf-api-core/src/main")
     val java = root / "java"
     val kotlin = root / "kotlin"
 
