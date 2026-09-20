@@ -74,7 +74,7 @@ tasks {
 
 tasks {
     shadowJar {
-        val relocationPrefix: String by project
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
     }
 }

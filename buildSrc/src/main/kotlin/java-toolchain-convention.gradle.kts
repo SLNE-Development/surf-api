@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
-val javaVersion: String by project
+val javaVersion = project.findProperty("javaVersion") as String
 
 plugins {
     java

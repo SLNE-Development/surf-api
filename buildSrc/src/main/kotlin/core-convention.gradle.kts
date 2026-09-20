@@ -72,7 +72,7 @@ tasks {
     shadowJar {
         mergeServiceFiles()
 
-        val relocationPrefix: String by project
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt") {
             exclude("net.kyori.adventure.nbt.api.**")
         }

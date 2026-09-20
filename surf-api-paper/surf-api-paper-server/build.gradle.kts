@@ -98,7 +98,7 @@ paper {
 tasks {
     shadowJar {
         mergeServiceFiles()
-        val relocationPrefix: String by project
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
         relocate("dev.wyck", "$relocationPrefix.dev.wyck")
     }

@@ -1,10 +1,10 @@
 import java.nio.file.Files
 
 // region properties
-val relocationPrefix: String by project
-val mcVersion: String by project
+val relocationPrefix = project.findProperty("relocationPrefix") as String
+val mcVersion = project.findProperty("mcVersion") as String
 val groupId = findProperty("group") as String
-val javaVersion: String by project
+val javaVersion = findProperty("javaVersion") as String
 val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 // endregion
 

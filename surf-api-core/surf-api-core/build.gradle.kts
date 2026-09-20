@@ -45,7 +45,7 @@ dependencies {
 
 tasks {
     shadowJar {
-        val relocationPrefix: String by project
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("com.mojang.serialization", "$relocationPrefix.mojang.serialization")
         relocate("com.mojang.datafixers", "$relocationPrefix.mojang.datafixers")
     }
