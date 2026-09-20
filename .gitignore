@@ -131,3 +131,5 @@ logs/
 /.projectatlas/*
 !/.projectatlas/config.toml
 !/.projectatlas/projectatlas-nonsource-files.toon
+
+bin/
