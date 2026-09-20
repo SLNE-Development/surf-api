@@ -3162,6 +3162,39 @@ public final class dev/slne/surf/api/paper/time/TimeSkipResult : java/lang/Enum 
 	public static fun values ()[Ldev/slne/surf/api/paper/time/TimeSkipResult;
 }
 
+public final class dev/slne/surf/api/paper/util/Position_utilKt {
+	public static final fun asLong (Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun chebyshevDistance (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaBlockX (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaBlockY (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaBlockZ (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaX (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun deltaY (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun deltaZ (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun distance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun distanceSquared (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun distanceSquared (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun horizontalDistance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun horizontalDistanceSquared (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun horizontalDistanceSquared (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun isInside (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)Z
+	public static final fun isSameBlock (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)Z
+	public static final fun isSameChunk (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)Z
+	public static final fun isWithinCube (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;I)Z
+	public static final fun isWithinDistance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;D)Z
+	public static final fun isWithinSquare (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;I)Z
+	public static final fun manhattanDistance (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun readableString (Lio/papermc/paper/math/BlockPosition;)Ljava/lang/String;
+	public static final fun readableString (Lio/papermc/paper/math/Position;I)Ljava/lang/String;
+	public static synthetic fun readableString$default (Lio/papermc/paper/math/Position;IILjava/lang/Object;)Ljava/lang/String;
+	public static final fun toBlockPosition (J)Lio/papermc/paper/math/BlockPosition;
+	public static final fun unpackBlockX (J)I
+	public static final fun unpackBlockY (J)I
+	public static final fun unpackBlockZ (J)I
+	public static final fun verticalDistance (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun verticalDistance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+}
+
 public final class dev/slne/surf/api/paper/util/UtilBukkit {
 	public static final fun computeHighestYBlock (Ljava/util/Collection;Lorg/bukkit/World;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun distanceSqt (Lorg/bukkit/Location;Lorg/bukkit/Location;)D
