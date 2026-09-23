@@ -5,6 +5,8 @@ import org.bukkit.entity.Player
 /**
  * The SurfScoreboard interface represents a scoreboard in a surf game. This scoreboard can be
  * enabled, disabled, and updated. Viewers can be added and removed from the scoreboard.
+ *
+ * All methods are thread-safe. Viewers that disconnect are removed on the next [update].
  */
 interface SurfScoreboard {
     /**
