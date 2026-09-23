@@ -5,14 +5,13 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import dev.slne.surf.api.core.messages.Colors;
 import dev.slne.surf.api.paper.scoreboard.SurfAutoUpdatablePlayerScoreboard;
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardBuilder;
-import net.kyori.adventure.text.Component;
-import net.minecraft.util.Util;
-import org.jetbrains.annotations.Contract;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.minecraft.util.Util;
+import org.jetbrains.annotations.Contract;
 
 public class CreateScoreboard extends CommandAPICommand {
 
@@ -40,6 +39,7 @@ public class CreateScoreboard extends CommandAPICommand {
                     }
                 }))
                 .addUpdatableLine(() -> Component.text("Updatable Line: " + UUID.randomUUID()))
+                .addViewerLine(player -> Component.text("Viewer health: " + player.getHealth()))
                 .buildAutoUpdatablePlayer();
 
             scoreboard.enable();

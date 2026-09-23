@@ -3028,6 +3028,13 @@ public final class dev/slne/surf/api/paper/region/TickThreadGuard$Companion : de
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/region/TickThreadGuard;
 }
 
+public final class dev/slne/surf/api/paper/scoreboard/Scoreboard_extensionsKt {
+	public static final fun buildDynamicLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public static final fun buildSidebarComponent (Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public static final fun buildStaticLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public static final fun buildStaticLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+}
+
 public abstract interface class dev/slne/surf/api/paper/scoreboard/SurfAutoUpdatablePlayerScoreboard : dev/slne/surf/api/paper/scoreboard/SurfAutoUpdatableScoreboard {
 	public abstract fun addViewer (Lorg/bukkit/entity/Player;)V
 	public abstract fun removeViewer (Lorg/bukkit/entity/Player;)V
@@ -3067,9 +3074,16 @@ public abstract interface class dev/slne/surf/api/paper/scoreboard/SurfScoreboar
 	public abstract fun addLine (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public fun addLineSeparator ()Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public abstract fun addUpdatableLine (Ljava/util/function/Supplier;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public abstract fun addViewerComponent (Ljava/util/function/Function;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun addViewerLine (Ljava/util/function/Function;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public abstract fun build ()Ldev/slne/surf/api/paper/scoreboard/SurfScoreboard;
 	public abstract fun buildAutoUpdatable ()Ldev/slne/surf/api/paper/scoreboard/SurfAutoUpdatableScoreboard;
 	public abstract fun buildAutoUpdatablePlayer ()Ldev/slne/surf/api/paper/scoreboard/SurfAutoUpdatablePlayerScoreboard;
+	public fun buildGradientLine (Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildLine (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildUpdatableLine (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildViewerComponent (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildViewerLine (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public static fun builder (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public abstract fun maxLines (I)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 }
@@ -3082,6 +3096,12 @@ public final class dev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder$Comp
 public final class dev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder$DefaultImpls {
 	public static fun addEmptyLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public static fun addLineSeparator (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun addViewerLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Ljava/util/function/Function;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildGradientLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildUpdatableLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildViewerComponent (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildViewerLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 }
 
 public final class dev/slne/surf/api/paper/serializer/bukkit/blockdata/BlockDataSerializer : kotlinx/serialization/KSerializer {
