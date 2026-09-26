@@ -10,11 +10,13 @@ import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPacke
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChatPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
+import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.shared.internal.nms.NmsProviderConfig
 import dev.slne.surf.api.shared.internal.nms.NmsProviderMeta
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
+import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.net.URI
@@ -80,6 +82,13 @@ interface NmsProvider {
      * Creates the version-specific glowing API implementation.
      */
     fun createGlowingApi(): SurfGlowingApi
+
+    // ==================== Scoreboard ==================== //
+
+    /**
+     * Creates a packet-based sidebar for [player] and displays it immediately.
+     */
+    fun createPlayerScoreboard(player: Player): PlayerNmsScoreboard
 
     // ==================== Packet Listeners ==================== //
 

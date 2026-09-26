@@ -99,6 +99,14 @@ class V26_1PacketOperationImpl : PacketOperation {
             return V26_1PacketOperationImpl(operation)
         }
 
+        @JvmStatic
+        fun multi(operation: (player: Player, packets: LinkedList<Packet<in ClientGamePacketListener>>) -> Unit): V26_1PacketOperationImpl {
+            return V26_1PacketOperationImpl { player, packets ->
+                operation(player, packets)
+                packets
+            }
+        }
+
         fun simple(packetSupplier: (Player) -> Packet<in ClientGamePacketListener>): V26_1PacketOperationImpl {
             return V26_1PacketOperationImpl { player, packets ->
                 packets.add(packetSupplier(player))
