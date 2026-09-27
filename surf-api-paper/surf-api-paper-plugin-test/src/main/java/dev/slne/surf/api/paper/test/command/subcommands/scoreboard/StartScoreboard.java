@@ -5,6 +5,7 @@ import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;
 import dev.slne.surf.api.paper.scoreboard.SurfAutoUpdatablePlayerScoreboard;
 
+@SuppressWarnings("deprecation")
 public class StartScoreboard extends CommandAPICommand {
 
     public StartScoreboard(String commandName) {

@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
 import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf

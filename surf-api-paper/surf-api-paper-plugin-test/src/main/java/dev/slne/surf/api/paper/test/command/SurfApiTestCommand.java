@@ -1,8 +1,31 @@
 package dev.slne.surf.api.paper.test.command;
 
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.slne.surf.api.paper.test.command.subcommands.*;
-import dev.slne.surf.surfapi.bukkit.test.command.subcommands.*;
+import dev.slne.surf.api.paper.test.command.subcommands.CommandExceptionTest;
+import dev.slne.surf.api.paper.test.command.subcommands.MaxStacksizeTest;
+import dev.slne.surf.api.paper.test.command.subcommands.PacketEntityTest;
+import dev.slne.surf.api.paper.test.command.subcommands.PacketLoreTest;
+import dev.slne.surf.api.paper.test.command.subcommands.PrefixConfigTest;
+import dev.slne.surf.api.paper.test.command.subcommands.ReflectionTest;
+import dev.slne.surf.api.paper.test.command.subcommands.ScoreboardTest;
+import dev.slne.surf.api.paper.test.command.subcommands.SmoothTimeSkip;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.BlockPdcContainerTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.GlowingTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.InventoryTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ModernSerializerTestConfigCommand;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.OfflineInventoryEditTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.PaginationTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ShowItemCommand;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SidebarTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SignedMessageArgumentTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SortInvCommand;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.StableActionbarTestCommand;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SummonCommandTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SurfEventHandlerTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SuspendCommandExecutionTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.SuspendRequirementTestCommand;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.ToastTest;
+import dev.slne.surf.surfapi.bukkit.test.command.subcommands.VisualizerTest;
 
 public class SurfApiTestCommand extends CommandAPICommand {
 
@@ -14,6 +37,7 @@ public class SurfApiTestCommand extends CommandAPICommand {
         withSubcommands(
                 new PacketLoreTest("packetlore"),
                 new ScoreboardTest("scoreboard"),
+                new SidebarTest("sidebar"),
                 new SmoothTimeSkip("smoothtimeskip"),
                 new PacketEntityTest("packetentity"),
                 new ReflectionTest("reflection"),

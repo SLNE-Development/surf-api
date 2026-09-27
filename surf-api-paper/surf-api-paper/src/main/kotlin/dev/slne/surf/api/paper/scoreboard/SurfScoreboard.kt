@@ -8,6 +8,13 @@ import org.bukkit.entity.Player
  *
  * All methods are thread-safe. Viewers that disconnect are removed on the next [update].
  */
+@Deprecated(
+    "Replaced by the sidebar API (dev.slne.surf.api.paper.sidebar). " +
+        "Create a sidebar with sidebar(plugin) { ... }; it returns a SurfViewerSidebar with the same " +
+        "addViewer, removeViewer and update methods. enable() is no longer needed because a sidebar " +
+        "is active once created, and close() replaces disable().",
+    ReplaceWith("SurfViewerSidebar", "dev.slne.surf.api.paper.sidebar.SurfViewerSidebar")
+)
 interface SurfScoreboard {
     /**
      * Adds a viewer to the scoreboard.
