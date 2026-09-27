@@ -3168,6 +3168,7 @@ public final class dev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder$De
 	public static fun buildLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)V
 	public static fun buildSharedLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function2;)V
 	public static fun buildSharedLines (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildSharedTitle (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function2;)V
 	public static fun buildTitle (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function1;)V
 	public static fun buildViewerLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function3;)V
 	public static fun buildViewerLines (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function3;)V
@@ -3183,6 +3184,7 @@ public abstract interface class dev/slne/surf/api/paper/sidebar/SidebarBuilder {
 	public static synthetic fun buildLine$default (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public fun buildSharedLine (Lkotlin/jvm/functions/Function2;)V
 	public fun buildSharedLines (Lkotlin/jvm/functions/Function2;)V
+	public fun buildSharedTitle (Lkotlin/jvm/functions/Function2;)V
 	public fun buildTitle (Lkotlin/jvm/functions/Function1;)V
 	public fun buildViewerLine (Lkotlin/jvm/functions/Function3;)V
 	public fun buildViewerLines (Lkotlin/jvm/functions/Function3;)V
@@ -3199,6 +3201,7 @@ public abstract interface class dev/slne/surf/api/paper/sidebar/SidebarBuilder {
 	public abstract fun setMaxLines (I)V
 	public abstract fun sharedLine (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun sharedLines (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun sharedTitle (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun title (Lkotlin/jvm/functions/Function2;)V
 	public abstract fun title (Lnet/kyori/adventure/text/Component;)V
 }
@@ -3209,6 +3212,7 @@ public final class dev/slne/surf/api/paper/sidebar/SidebarBuilder$DefaultImpls {
 	public static synthetic fun buildLine$default (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static fun buildSharedLine (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function2;)V
 	public static fun buildSharedLines (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildSharedTitle (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function2;)V
 	public static fun buildTitle (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function1;)V
 	public static fun buildViewerLine (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function3;)V
 	public static fun buildViewerLines (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function3;)V

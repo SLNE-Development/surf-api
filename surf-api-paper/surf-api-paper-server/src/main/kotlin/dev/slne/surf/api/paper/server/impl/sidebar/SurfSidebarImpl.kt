@@ -39,7 +39,9 @@ abstract class SurfSidebarImpl(
                 }
     )
 
+    private val sharedTitle = definition.title as? SidebarTitle.Shared
     private val sharedEntries = definition.entries.filterIsInstance<SidebarEntry.Shared>()
+    private val hasSharedContent = sharedTitle != null || sharedEntries.isNotEmpty()
     private val sharedRefreshRequests = Channel<Unit>(Channel.CONFLATED)
 
     private val sharedReady = CompletableDeferred<Unit>()
@@ -48,12 +50,12 @@ abstract class SurfSidebarImpl(
         check(plugin.isEnabled) { "Plugin ${plugin.name} is not enabled" }
         SidebarRegistry.add(this)
 
-        if (sharedEntries.isEmpty()) {
+        if (!hasSharedContent) {
             sharedReady.complete(Unit)
         } else {
             scope.launch {
                 for (request in sharedRefreshRequests) {
-                    refreshSharedEntries()
+                    refreshSharedContent()
                     sharedReady.complete(Unit)
                     sessions.values.forEach { it.requestRender() }
                 }
@@ -72,33 +74,43 @@ abstract class SurfSidebarImpl(
         if (closed) return
 
         definition.animations.forEach { it.nextFrame() }
-        if (sharedEntries.isEmpty()) {
+        if (!hasSharedContent) {
             sessions.values.forEach { it.requestRender() }
         } else {
             sharedRefreshRequests.trySend(Unit)
         }
     }
 
-    private suspend fun refreshSharedEntries() {
-        for (entry in sharedEntries) {
-            val rendered = try {
-                entry.render()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                log.atWarning()
-                    .atMostEvery(10, TimeUnit.SECONDS)
-                    .withCause(e)
-                    .log("Failed to render shared sidebar line of %s", plugin.name)
-                continue
+    private suspend fun refreshSharedContent() {
+        if (sharedTitle != null) {
+            val rendered = renderShared("title") { sharedTitle.render() }
+            if (rendered != null && rendered != sharedTitle.current) {
+                sharedTitle.current = rendered
             }
+        }
 
+        for (entry in sharedEntries) {
+            val rendered = renderShared("line") { entry.render() } ?: continue
             val previous = entry.current
             entry.current = List(rendered.size) { index ->
                 val line = rendered[index]
                 val old = previous.getOrNull(index)
                 if (old != null && old == line) old else line
             }
+        }
+    }
+
+    private inline fun <T : Any> renderShared(content: String, render: () -> T): T? {
+        return try {
+            render()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log.atWarning()
+                .atMostEvery(10, TimeUnit.SECONDS)
+                .withCause(e)
+                .log("Failed to render shared sidebar %s of %s", content, plugin.name)
+            null
         }
     }
 
@@ -200,6 +212,7 @@ abstract class SurfSidebarImpl(
         private suspend fun renderTitle(): Component = when (val title = definition.title) {
             is SidebarTitle.Static -> title.title
             is SidebarTitle.Rendered -> title.render(player)
+            is SidebarTitle.Shared -> title.current
         }
 
         private suspend fun renderLines(): List<SidebarLine> {

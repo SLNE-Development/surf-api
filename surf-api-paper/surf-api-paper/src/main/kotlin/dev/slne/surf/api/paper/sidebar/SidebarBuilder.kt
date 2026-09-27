@@ -51,6 +51,13 @@ interface SidebarBuilder {
     fun title(render: suspend (viewer: Player) -> Component)
 
     /**
+     * Sets a title rendered once per update and shown to all viewers.
+     *
+     * @param render produces the title
+     */
+    fun sharedTitle(render: suspend () -> Component)
+
+    /**
      * Adds a static line to the sidebar.
      *
      * @param text the line content
@@ -144,6 +151,16 @@ interface SidebarBuilder {
      */
     fun buildViewerTitle(block: suspend SurfComponentBuilder.(viewer: Player) -> Unit) {
         title { viewer -> SurfComponentBuilder { block(viewer) } }
+    }
+
+    /**
+     * Sets a shared title built using [SurfComponentBuilder].
+     *
+     * @param block configures the title component
+     * @see sharedTitle
+     */
+    fun buildSharedTitle(block: suspend SurfComponentBuilder.() -> Unit) {
+        sharedTitle { SurfComponentBuilder { block() } }
     }
 
     /**

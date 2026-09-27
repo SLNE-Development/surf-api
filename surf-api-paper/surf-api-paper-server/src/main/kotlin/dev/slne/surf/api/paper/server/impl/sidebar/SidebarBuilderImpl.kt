@@ -18,6 +18,10 @@ import kotlin.time.toKotlinDuration
 sealed interface SidebarTitle {
     class Static(val title: Component) : SidebarTitle
     class Rendered(val render: suspend (Player) -> Component) : SidebarTitle
+    class Shared(val render: suspend () -> Component) : SidebarTitle {
+        @Volatile
+        var current: Component = Component.empty()
+    }
 }
 
 sealed interface SidebarEntry {
@@ -25,7 +29,6 @@ sealed interface SidebarEntry {
     class Line(val render: suspend (Player) -> SidebarLine) : SidebarEntry
     class Lines(val render: suspend (Player) -> List<SidebarLine>) : SidebarEntry
     class Animated(val animation: FrameAnimation) : SidebarEntry
-
     class Shared(val render: suspend () -> List<SidebarLine>) : SidebarEntry {
         @Volatile
         var current: List<SidebarLine> = emptyList()
@@ -68,6 +71,10 @@ open class SidebarBuilderImpl : SidebarBuilder {
 
     override fun title(render: suspend (viewer: Player) -> Component) {
         this.title = SidebarTitle.Rendered(render)
+    }
+
+    override fun sharedTitle(render: suspend () -> Component) {
+        this.title = SidebarTitle.Shared(render)
     }
 
     override fun line(text: Component, score: Component?) {
@@ -113,7 +120,11 @@ open class SidebarBuilderImpl : SidebarBuilder {
     companion object {
         const val MAX_LINES = PlayerNmsScoreboard.MAX_LINES
 
-        private fun gradientFrames(text: Component, firstHex: String, secondHex: String): List<Component> {
+        private fun gradientFrames(
+            text: Component,
+            firstHex: String,
+            secondHex: String,
+        ): List<Component> {
             val step = 1f / 20f
             val textPlaceholder = Placeholder.component("text", text)
             val frames = ObjectArrayList<Component>()
