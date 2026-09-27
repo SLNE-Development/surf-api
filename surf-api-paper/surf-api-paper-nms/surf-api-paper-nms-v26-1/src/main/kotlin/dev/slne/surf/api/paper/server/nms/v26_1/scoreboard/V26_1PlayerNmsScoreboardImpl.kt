@@ -20,7 +20,7 @@ import org.bukkit.entity.Player
 import java.util.*
 
 @Suppress("ClassName")
-class V26_1PlayerNmsScoreboardImpl(player: Player, title: Component) : PlayerNmsScoreboard(player, title) {
+class V26_1PlayerNmsScoreboardImpl(player: Player) : PlayerNmsScoreboard(player) {
 
     override fun createObjective(title: Component): PacketOperation {
         val objective = objective(title)

@@ -173,7 +173,7 @@ interface SidebarBuilder {
  * Collects lines for [SidebarBuilder.buildViewerLines].
  */
 @SidebarDsl
-class SidebarLinesBuilder @PublishedApi internal constructor() {
+class SidebarLinesBuilder internal constructor() {
     private val lines = ObjectArrayList<SidebarLine>()
 
     /**
@@ -225,7 +225,6 @@ class SidebarLinesBuilder @PublishedApi internal constructor() {
         line(Component.empty())
     }
 
-    @PublishedApi
     internal fun build(): List<SidebarLine> = lines
 }
 

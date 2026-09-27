@@ -23,124 +23,65 @@
  */
 package dev.slne.surf.api.paper.nms.common.scoreboard
 
-import dev.slne.surf.api.core.util.getValue
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.sidebar.SidebarLine
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
-import java.lang.ref.WeakReference
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 /**
- * Packet-based sidebar scoreboard shown to a single player.
+ * Packet-based sidebar objective of a single player.
+ *
+ * Not thread-safe: the owner serializes all calls. Nothing is sent before the first [update],
+ * which creates and displays the objective; after [delete], further calls do nothing.
  */
-abstract class PlayerNmsScoreboard(player: Player, title: Component) {
-
-    val playerUuid: UUID = player.uniqueId
-    val player: Player? by WeakReference(player)
+abstract class PlayerNmsScoreboard(protected val player: Player) {
 
     val id = "sb-" + NEXT_ID.getAndIncrement()
 
-    private val lock = Any()
-
-    @Volatile
-    var title: Component = title
-        private set
-
-    @Volatile
-    var lines: ObjectList<SidebarLine> = ObjectImmutableList.of()
-        private set
-
-    @Volatile
-    var deleted = false
-        private set
-
-    init {
-        send(createObjective(title))
-    }
-
-    fun updateTitle(title: Component) {
-        synchronized(lock) {
-            checkNotDeleted()
-            if (this.title == title) return
-            this.title = title
-
-            send(updateObjective(title))
-        }
-    }
-
-    fun updateLines(vararg lines: Component) {
-        applyLines(ObjectImmutableList(Array(lines.size) { SidebarLine(lines[it]) }))
-    }
+    private var shown = false
+    private var deleted = false
+    private var title: Component = Component.empty()
+    private var lines: List<SidebarLine> = emptyList()
 
     /**
-     * Replaces all lines. Only lines that differ from the current state are resent.
+     * Shows [title] and [lines], sending only what changed since the previous call as one bundle.
      *
-     * @throws IllegalArgumentException if there are more than [MAX_LINES] lines
+     * [lines] is retained and must neither be modified afterwards nor exceed [MAX_LINES] entries.
      */
-    fun updateLines(lines: List<SidebarLine>) {
-        applyLines(ObjectImmutableList(lines))
-    }
+    fun update(title: Component, lines: List<SidebarLine>) {
+        if (deleted) return
 
-    private fun applyLines(newLines: ObjectImmutableList<SidebarLine>) {
-        require(newLines.size <= MAX_LINES) { "Too many lines: ${newLines.size} (max $MAX_LINES)" }
-
-        synchronized(lock) {
-            checkNotDeleted()
-            replaceLines(newLines)
+        val operation = PacketOperation.start()
+        if (!shown) {
+            shown = true
+            operation.add(createObjective(title))
+        } else if (this.title != title) {
+            operation.add(updateObjective(title))
         }
-    }
+        this.title = title
 
-    /**
-     * Sets [line] to [text] and [score]. A [line] beyond the current size appends it and fills the
-     * gap with empty lines.
-     */
-    fun updateLine(line: Int, text: Component, score: Component? = null) {
-        require(line in 0 until MAX_LINES) { "Line must be in 0 until $MAX_LINES: $line" }
-
-        synchronized(lock) {
-            checkNotDeleted()
-            val current = lines
-            val newLines = Array(max(current.size, line + 1)) { index ->
-                when {
-                    index == line -> SidebarLine(text, score)
-                    index < current.size -> current[index]
-                    else -> EMPTY_LINE
-                }
+        val oldLines = this.lines
+        this.lines = lines
+        for (index in 0 until max(oldLines.size, lines.size)) {
+            val line = lines.getOrNull(index)
+            if (line == null) {
+                operation.add(resetScore(ENTRIES[index]))
+            } else if (line != oldLines.getOrNull(index)) {
+                operation.add(setScore(ENTRIES[index], MAX_LINES - index, line))
             }
-            replaceLines(ObjectImmutableList(newLines))
         }
+
+        send(operation)
     }
 
-    /**
-     * Removes [line] and shifts the lines below it up. Does nothing if [line] does not exist.
-     */
-    fun removeLine(line: Int) {
-        synchronized(lock) {
-            checkNotDeleted()
-            val current = lines
-            if (line !in current.indices) return
-
-            val newLines =
-                Array(current.size - 1) { index -> current[if (index < line) index else index + 1] }
-            replaceLines(ObjectImmutableList(newLines))
-        }
-    }
-
-    /**
-     * Removes the sidebar from the client. Subsequent calls do nothing.
-     */
+    /** Removes the objective from the client if it was shown. */
     fun delete() {
-        synchronized(lock) {
-            if (deleted) return
+        if (deleted) return
 
-            deleted = true
-            send(removeObjective())
-        }
+        deleted = true
+        if (shown) send(removeObjective())
     }
 
     protected abstract fun createObjective(title: Component): PacketOperation
@@ -149,37 +90,10 @@ abstract class PlayerNmsScoreboard(player: Player, title: Component) {
     protected abstract fun setScore(owner: String, score: Int, line: SidebarLine): PacketOperation
     protected abstract fun resetScore(owner: String): PacketOperation
 
-    private fun replaceLines(newLines: ObjectImmutableList<SidebarLine>) {
-        assert(Thread.holdsLock(lock)) { "Must be called under lock" }
-
-        val oldLines = lines
-        lines = newLines
-
-        var operation: PacketOperation? = null
-        for (index in 0 until max(oldLines.size, newLines.size)) {
-            val line = newLines.getOrNull(index)
-            val change = when {
-                line == null -> resetScore(ENTRIES[index])
-                line != oldLines.getOrNull(index) -> setScore(ENTRIES[index], MAX_LINES - index, line)
-                else -> continue
-            }
-            operation = (operation ?: PacketOperation.start()).add(change)
-        }
-
-        if (operation != null) send(operation)
-    }
-
     private fun send(operation: PacketOperation) {
-        if (operation.isEmpty()) return
-
-        val viewer = player ?: return
-        if (viewer.isConnected) {
-            operation.execute(viewer)
+        if (!operation.isEmpty() && player.isConnected) {
+            operation.execute(player)
         }
-    }
-
-    private fun checkNotDeleted() {
-        check(!deleted) { "This scoreboard is deleted" }
     }
 
     companion object {
@@ -189,8 +103,6 @@ abstract class PlayerNmsScoreboard(player: Player, title: Component) {
         const val MAX_LINES = 15
 
         private val NEXT_ID = AtomicInteger()
-        private val EMPTY_LINE = SidebarLine(Component.empty())
-
         private val ENTRIES = List(MAX_LINES) { "§" + it.toString(16) }
     }
 }

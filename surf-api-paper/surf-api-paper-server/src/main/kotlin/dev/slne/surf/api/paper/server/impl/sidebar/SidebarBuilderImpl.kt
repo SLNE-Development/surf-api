@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.impl.sidebar
 
+import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
 import dev.slne.surf.api.paper.sidebar.AutoUpdatingSidebarBuilder
 import dev.slne.surf.api.paper.sidebar.SidebarBuilder
 import dev.slne.surf.api.paper.sidebar.SidebarLine
@@ -97,7 +98,7 @@ open class SidebarBuilderImpl : SidebarBuilder {
     fun definition() = SidebarDefinition(title, entries.clone(), animations.clone(), maxLines)
 
     companion object {
-        const val MAX_LINES = 15
+        const val MAX_LINES = PlayerNmsScoreboard.MAX_LINES
 
         private fun gradientFrames(text: Component, firstHex: String, secondHex: String): List<Component> {
             val step = 1f / 20f

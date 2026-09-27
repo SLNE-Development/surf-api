@@ -1,6 +1,7 @@
 package dev.slne.surf.api.paper.server.impl.sidebar
 
 import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.core.util.runAtFixedRate
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
@@ -88,9 +89,7 @@ abstract class SurfSidebarImpl(
                 existing.close()
             }
 
-            val session = ViewerSession(player)
-            sessions[player.uniqueId] = session
-            session.start()
+            sessions[player.uniqueId] = ViewerSession(player)
         }
     }
 
@@ -99,27 +98,25 @@ abstract class SurfSidebarImpl(
     }
 
     protected fun launchUpdater(interval: Duration) {
-        scope.launch {
-            while (isActive) {
-                delay(interval)
-                update()
-            }
+        scope.runAtFixedRate(interval, initialDelay = interval, taskName = "surf-sidebar-${plugin.name}") {
+            update()
         }
     }
 
+    @OptIn(NmsUseWithCaution::class)
     private inner class ViewerSession(val player: Player) {
         private val renderRequests = Channel<Unit>(Channel.CONFLATED)
-        private lateinit var renderJob: Job
 
-        private var scoreboard: PlayerNmsScoreboard? = null
+        private val scoreboard: PlayerNmsScoreboard = NmsProvider.current.createPlayerScoreboard(player)
         private var closed = false
 
-        fun start() {
-            renderJob = scope.launch {
-                for (request in renderRequests) {
-                    render()
-                }
+        private val renderJob = scope.launch {
+            for (request in renderRequests) {
+                render()
             }
+        }
+
+        init {
             requestRender()
         }
 
@@ -149,15 +146,7 @@ abstract class SurfSidebarImpl(
             }
 
             synchronized(this) {
-                if (closed) return
-
-                val scoreboard = scoreboard
-                if (scoreboard == null) {
-                    this.scoreboard = createScoreboard(title).also { it.updateLines(lines) }
-                } else {
-                    scoreboard.updateTitle(title)
-                    scoreboard.updateLines(lines)
-                }
+                if (!closed) scoreboard.update(title, lines)
             }
         }
 
@@ -185,18 +174,12 @@ abstract class SurfSidebarImpl(
             return lines
         }
 
-        @OptIn(NmsUseWithCaution::class)
-        private fun createScoreboard(title: Component): PlayerNmsScoreboard {
-            return NmsProvider.current.createPlayerScoreboard(player, title)
-        }
-
         fun close() {
-            renderRequests.close()
-            if (::renderJob.isInitialized) renderJob.cancel()
+            renderJob.cancel()
 
             synchronized(this) {
                 closed = true
-                scoreboard?.delete()
+                scoreboard.delete()
             }
         }
     }
