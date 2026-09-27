@@ -25,6 +25,11 @@ sealed interface SidebarEntry {
     class Line(val render: suspend (Player) -> SidebarLine) : SidebarEntry
     class Lines(val render: suspend (Player) -> List<SidebarLine>) : SidebarEntry
     class Animated(val animation: FrameAnimation) : SidebarEntry
+
+    class Shared(val render: suspend () -> List<SidebarLine>) : SidebarEntry {
+        @Volatile
+        var current: List<SidebarLine> = emptyList()
+    }
 }
 
 class FrameAnimation(frames: List<Component>) {
@@ -79,6 +84,14 @@ open class SidebarBuilderImpl : SidebarBuilder {
 
     override fun lines(render: suspend (viewer: Player) -> List<SidebarLine>) {
         entries.add(SidebarEntry.Lines(render))
+    }
+
+    override fun sharedLine(render: suspend () -> Component) {
+        entries.add(SidebarEntry.Shared { listOf(SidebarLine(render())) })
+    }
+
+    override fun sharedLines(render: suspend () -> List<SidebarLine>) {
+        entries.add(SidebarEntry.Shared(render))
     }
 
     override fun animatedLine(frames: List<Component>) {

@@ -17,7 +17,9 @@ annotation class SidebarDsl
  *
  * Lines are displayed in the order in which they are added. Viewer-dependent
  * renderers are evaluated asynchronously for each viewer whenever the sidebar
- * is updated. See [SurfSidebar] for the threading contract.
+ * is updated. Shared renderers are evaluated once per update before the viewers
+ * are rendered, and all viewers receive the same result. See [SurfSidebar] for
+ * the threading contract.
  *
  * If a renderer fails, the failure is logged and the affected viewer keeps
  * their previously rendered content.
@@ -78,6 +80,21 @@ interface SidebarBuilder {
      * @param render produces the lines for the given viewer
      */
     fun lines(render: suspend (viewer: Player) -> List<SidebarLine>)
+
+    /**
+     * Adds a line rendered once per update and shown to all viewers.
+     *
+     * @param render produces the line content
+     */
+    fun sharedLine(render: suspend () -> Component)
+
+    /**
+     * Adds a dynamic collection of lines rendered once per update and shown to all viewers.
+     *
+     * @param render produces the lines
+     * @see sharedLine
+     */
+    fun sharedLines(render: suspend () -> List<SidebarLine>)
 
     /**
      * Adds an empty line to the sidebar.
@@ -155,6 +172,26 @@ interface SidebarBuilder {
      */
     fun buildViewerLines(block: suspend SidebarLinesBuilder.(viewer: Player) -> Unit) {
         lines { viewer -> SidebarLinesBuilder().apply { block(viewer) }.build() }
+    }
+
+    /**
+     * Adds a shared line whose content is built using [SurfComponentBuilder].
+     *
+     * @param text configures the line content
+     * @see sharedLine
+     */
+    fun buildSharedLine(text: suspend SurfComponentBuilder.() -> Unit) {
+        sharedLine { SurfComponentBuilder { text() } }
+    }
+
+    /**
+     * Adds a dynamic collection of shared lines collected by a [SidebarLinesBuilder].
+     *
+     * @param block collects the lines
+     * @see sharedLines
+     */
+    fun buildSharedLines(block: suspend SidebarLinesBuilder.() -> Unit) {
+        sharedLines { SidebarLinesBuilder().apply { block() }.build() }
     }
 
     /**

@@ -39,9 +39,27 @@ abstract class SurfSidebarImpl(
                 }
     )
 
+    private val sharedEntries = definition.entries.filterIsInstance<SidebarEntry.Shared>()
+    private val sharedRefreshRequests = Channel<Unit>(Channel.CONFLATED)
+
+    private val sharedReady = CompletableDeferred<Unit>()
+
     init {
         check(plugin.isEnabled) { "Plugin ${plugin.name} is not enabled" }
         SidebarRegistry.add(this)
+
+        if (sharedEntries.isEmpty()) {
+            sharedReady.complete(Unit)
+        } else {
+            scope.launch {
+                for (request in sharedRefreshRequests) {
+                    refreshSharedEntries()
+                    sharedReady.complete(Unit)
+                    sessions.values.forEach { it.requestRender() }
+                }
+            }
+            sharedRefreshRequests.trySend(Unit)
+        }
     }
 
     override val viewers: Collection<Player>
@@ -54,7 +72,34 @@ abstract class SurfSidebarImpl(
         if (closed) return
 
         definition.animations.forEach { it.nextFrame() }
-        sessions.values.forEach { it.requestRender() }
+        if (sharedEntries.isEmpty()) {
+            sessions.values.forEach { it.requestRender() }
+        } else {
+            sharedRefreshRequests.trySend(Unit)
+        }
+    }
+
+    private suspend fun refreshSharedEntries() {
+        for (entry in sharedEntries) {
+            val rendered = try {
+                entry.render()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.atWarning()
+                    .atMostEvery(10, TimeUnit.SECONDS)
+                    .withCause(e)
+                    .log("Failed to render shared sidebar line of %s", plugin.name)
+                continue
+            }
+
+            val previous = entry.current
+            entry.current = List(rendered.size) { index ->
+                val line = rendered[index]
+                val old = previous.getOrNull(index)
+                if (old != null && old == line) old else line
+            }
+        }
     }
 
     override fun close() {
@@ -130,6 +175,8 @@ abstract class SurfSidebarImpl(
                 return
             }
 
+            sharedReady.await()
+
             val title: Component
             val lines: List<SidebarLine>
             try {
@@ -166,6 +213,11 @@ abstract class SurfSidebarImpl(
                     is SidebarEntry.Line -> lines.add(entry.render(player))
                     is SidebarEntry.Animated -> lines.add(entry.animation.currentFrame)
                     is SidebarEntry.Lines -> for (line in entry.render(player)) {
+                        if (lines.size == maxLines) break
+                        lines.add(line)
+                    }
+
+                    is SidebarEntry.Shared -> for (line in entry.current) {
                         if (lines.size == maxLines) break
                         lines.add(line)
                     }
