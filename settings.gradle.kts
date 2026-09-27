@@ -44,3 +44,5 @@ if (!ci) {
     include(":surf-api-paper:surf-api-paper-plugin-test")
     include("surf-api-generator")
 }
+include("surf-api-paper:surf-api-paper-bedrock")
+include("surf-api-paper:surf-api-paper-bedrock")

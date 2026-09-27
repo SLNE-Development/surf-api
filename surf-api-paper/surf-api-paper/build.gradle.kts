@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api(projects.surfApiCore.surfApiCore)
-    compileOnly(libs.paper.api)
+    compileOnlyApi(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.commandapi.paper)
     compileOnlyApi(libs.reflection.remapper)

@@ -35,6 +35,10 @@ placeholder-api = "2.12.3"
 # McCoroutine
 mccoroutine = "2.23.1"
 
+# Bedrock
+geyser-api = "2.11.2-SNAPSHOT"
+floodgate-api = "2.2.5-SNAPSHOT"
+
 # Miscellaneous Libraries
 asm = "9.10.1"
 slf4j = "2.0.17"
@@ -141,6 +145,10 @@ mccoroutine-folia-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-folia
 mccoroutine-folia-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-folia-core", version.ref = "mccoroutine" }
 mccoroutine-velocity-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
 mccoroutine-velocity-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
+
+# Bedrock
+geyser-api = { module = "org.geysermc.geyser:api", version.ref = "geyser-api" }
+floodgate-api = { module = "org.geysermc.floodgate:api", version.ref = "floodgate-api" }
 
 # Miscellaneous Libraries
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
