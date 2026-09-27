@@ -27,7 +27,11 @@ import kotlin.math.roundToInt
  *         option(NamedTextColor.BLUE, text("Blue", NamedTextColor.BLUE), default = true)
  *     }
  *     val notify = toggle("Notifications", default = true)
+ *         .onChange { _, enabled -> player.sendMessage("Notifications: $enabled") }
+ *     val features = enumToggles<Feature>(default = { it.isEnabled(player) })
+ *         .onChange { feature, enabled -> feature.set(player, enabled) }
  *
+ *     onChanges { changes -> changes.forEach { log("${it.label}: ${it.old} -> ${it.new}") } }
  *     onSubmit { values ->
  *         saveProfile(values[name], values[age], values[mode], values[color], values[notify])
  *     }
@@ -39,15 +43,109 @@ fun customForm(block: CustomFormBuilder.() -> Unit): CustomForm =
 
 /**
  * A typed handle to a component of a [CustomForm], used to read its submitted value
- * from [CustomFormValues].
+ * from [CustomFormValues] and to listen for changes.
  *
  * @property index The index of the component inside the form (labels included).
+ * @property default The value the component has when the form is opened.
  */
-class FormField<out T> internal constructor(
+class FormField<T> internal constructor(
     val index: Int,
+    internal val text: FormText,
+    val default: T,
     private val reader: (CustomFormResponse, Int) -> T,
 ) {
+    private val changeListeners = mutableListOf<(old: T, new: T) -> Unit>()
+
+    /**
+     * Called when the player submitted the form with a value different from [default].
+     *
+     * Bedrock clients send no values when the form is closed, so changes are only
+     * detected on submit.
+     */
+    fun onChange(listener: (old: T, new: T) -> Unit): FormField<T> {
+        changeListeners += listener
+        return this
+    }
+
     internal fun read(response: CustomFormResponse): T = reader(response, index)
+
+    internal fun dispatchChange(response: CustomFormResponse, locale: Locale?): FieldChange<T>? {
+        val value = read(response)
+        if (value == default) return null
+        changeListeners.forEach { it(default, value) }
+        return FieldChange(this, text.resolve(locale), default, value)
+    }
+}
+
+/**
+ * A changed value of a [FormField].
+ *
+ * @property field The changed field.
+ * @property label The resolved text of the field.
+ * @property old The default value of the field.
+ * @property new The submitted value of the field.
+ */
+data class FieldChange<T> internal constructor(
+    val field: FormField<T>,
+    val label: String,
+    val old: T,
+    val new: T,
+)
+
+/**
+ * A group of toggles, one per value, created with [CustomFormBuilder.toggles].
+ *
+ * @property toggles The toggle field of each value.
+ */
+class ToggleGroup<T> internal constructor(val toggles: Map<T, FormField<Boolean>>) {
+    /**
+     * Returns the toggle field of the given [value].
+     */
+    operator fun get(value: T): FormField<Boolean> = toggles.getValue(value)
+
+    /**
+     * Called for every toggle of this group that the player changed.
+     */
+    fun onChange(listener: (value: T, enabled: Boolean) -> Unit): ToggleGroup<T> {
+        for ((value, field) in toggles) {
+            field.onChange { _, new -> listener(value, new) }
+        }
+        return this
+    }
+}
+
+/**
+ * DSL builder for the toggles of a [ToggleGroup].
+ *
+ * @param T The value type of a toggle.
+ */
+@BedrockFormDsl
+class ToggleGroupBuilder<T> @PublishedApi internal constructor() {
+    internal class Toggle<T>(val value: T, val text: FormText, val default: Boolean)
+
+    internal val toggles = mutableListOf<Toggle<T>>()
+
+    /**
+     * Adds a toggle.
+     *
+     * @param value The value this toggle represents.
+     * @param text The displayed text.
+     * @param default Whether this toggle is enabled by default.
+     */
+    fun toggle(value: T, text: String, default: Boolean = false) {
+        toggles += Toggle(value, FormText.Raw(text), default)
+    }
+
+    /**
+     * Adds a toggle.
+     *
+     * @param value The value this toggle represents.
+     * @param text The displayed text.
+     * @param default Whether this toggle is enabled by default.
+     */
+    fun toggle(value: T, text: Component, default: Boolean = false) {
+        toggles += Toggle(value, FormText.Rich(text), default)
+    }
 }
 
 /**
@@ -60,6 +158,18 @@ class CustomFormValues internal constructor(val response: CustomFormResponse) {
      * Returns the submitted value of the given [field].
      */
     operator fun <T> get(field: FormField<T>): T = field.read(response)
+
+    /**
+     * Returns the submitted state of every toggle of the given [group].
+     */
+    operator fun <T> get(group: ToggleGroup<T>): Map<T, Boolean> =
+        group.toggles.mapValues { (_, field) -> field.read(response) }
+
+    /**
+     * Returns the values of all enabled toggles of the given [group].
+     */
+    fun <T> enabled(group: ToggleGroup<T>): Set<T> =
+        group.toggles.filterValues { it.read(response) }.keys
 }
 
 /**
@@ -116,7 +226,9 @@ class CustomFormBuilder @PublishedApi internal constructor() :
     BedrockFormBuilder<CustomForm, CustomFormResponse, CustomForm.Builder>() {
     private var icon: FormImage? = null
     private val components = mutableListOf<CustomForm.Builder.(Locale?) -> Unit>()
+    private val fields = mutableListOf<FormField<*>>()
     private val submitHandlers = mutableListOf<(CustomFormValues) -> Unit>()
+    private val changesHandlers = mutableListOf<(List<FieldChange<*>>) -> Unit>()
 
     /**
      * Sets the icon of the form, see [formImageUrl] and [formImagePath].
@@ -136,11 +248,14 @@ class CustomFormBuilder @PublishedApi internal constructor() :
     fun iconPath(path: String) = icon(formImagePath(path))
 
     private fun <T> field(
+        text: FormText,
+        default: T,
         reader: (CustomFormResponse, Int) -> T,
         component: CustomForm.Builder.(Locale?) -> Unit,
     ): FormField<T> {
-        val field = FormField(components.size, reader)
+        val field = FormField(components.size, text, default, reader)
         components += component
+        fields += field
         return field
     }
 
@@ -184,7 +299,7 @@ class CustomFormBuilder @PublishedApi internal constructor() :
         input(FormText.Rich(text), placeholder, default)
 
     private fun input(text: FormText, placeholder: String, default: String) =
-        field({ response, index -> response.asInput(index).orEmpty() }) {
+        field(text, default, { response, index -> response.asInput(index).orEmpty() }) {
             input(text.resolve(it), placeholder, default)
         }
 
@@ -205,7 +320,9 @@ class CustomFormBuilder @PublishedApi internal constructor() :
         toggle(FormText.Rich(text), default)
 
     private fun toggle(text: FormText, default: Boolean) =
-        field({ response, index -> response.asToggle(index) }) { toggle(text.resolve(it), default) }
+        field(text, default, { response, index -> response.asToggle(index) }) {
+            toggle(text.resolve(it), default)
+        }
 
     /**
      * Adds a slider.
@@ -236,7 +353,7 @@ class CustomFormBuilder @PublishedApi internal constructor() :
         slider(FormText.Rich(text), min, max, step, default)
 
     private fun slider(text: FormText, min: Float, max: Float, step: Float, default: Float) =
-        field({ response, index -> response.asSlider(index) }) {
+        field(text, default, { response, index -> response.asSlider(index) }) {
             slider(text.resolve(it), min, max, step, default)
         }
 
@@ -267,7 +384,7 @@ class CustomFormBuilder @PublishedApi internal constructor() :
         intSlider(FormText.Rich(text), range, step, default)
 
     private fun intSlider(text: FormText, range: IntRange, step: Int, default: Int) =
-        field({ response, index -> response.asSlider(index).roundToInt() }) {
+        field(text, default, { response, index -> response.asSlider(index).roundToInt() }) {
             slider(
                 text.resolve(it),
                 range.first.toFloat(),
@@ -321,8 +438,10 @@ class CustomFormBuilder @PublishedApi internal constructor() :
     ): FormField<E> = dropdown(text, enumValues<E>().asList(), default, display)
 
     private fun <T> dropdown(text: FormText, options: FormOptionsBuilder<T>): FormField<T> {
+        require(options.options.isNotEmpty()) { "dropdown needs at least one option" }
         val values = options.options.map { it.value }
-        return field({ response, index -> values[response.asDropdown(index)] }) { locale ->
+        val default = values[options.defaultIndex]
+        return field(text, default, { response, index -> values[response.asDropdown(index)] }) { locale ->
             dropdown(
                 text.resolve(locale),
                 options.options.map { it.text.resolve(locale) },
@@ -375,8 +494,10 @@ class CustomFormBuilder @PublishedApi internal constructor() :
     ): FormField<E> = stepSlider(text, enumValues<E>().asList(), default, display)
 
     private fun <T> stepSlider(text: FormText, options: FormOptionsBuilder<T>): FormField<T> {
+        require(options.options.isNotEmpty()) { "stepSlider needs at least one option" }
         val values = options.options.map { it.value }
-        return field({ response, index -> values[response.asStepSlider(index)] }) { locale ->
+        val default = values[options.defaultIndex]
+        return field(text, default, { response, index -> values[response.asStepSlider(index)] }) { locale ->
             stepSlider(
                 text.resolve(locale),
                 options.options.map { it.text.resolve(locale) },
@@ -384,6 +505,51 @@ class CustomFormBuilder @PublishedApi internal constructor() :
             )
         }
     }
+
+    /**
+     * Adds multiple toggles at once, one per value.
+     *
+     * **Example Usage:**
+     * ```kotlin
+     * val features = toggles<Feature> {
+     *     toggle(Feature.FLY, "Fly", default = true)
+     *     toggle(Feature.GOD, "God mode")
+     * }.onChange { feature, enabled -> feature.set(player, enabled) }
+     * ```
+     *
+     * @return A group to read the state of every toggle.
+     */
+    fun <T> toggles(block: ToggleGroupBuilder<T>.() -> Unit): ToggleGroup<T> {
+        val toggles = ToggleGroupBuilder<T>().apply(block).toggles
+        return ToggleGroup(toggles.associate { it.value to toggle(it.text, it.default) })
+    }
+
+    /**
+     * Adds multiple toggles at once, one per value.
+     *
+     * @param display The displayed text of a value.
+     * @param default Whether the toggle of a value is enabled by default.
+     * @return A group to read the state of every toggle.
+     */
+    fun <T> toggles(
+        values: Iterable<T>,
+        display: (T) -> String = { it.toString() },
+        default: (T) -> Boolean = { false },
+    ): ToggleGroup<T> = toggles {
+        for (value in values) toggle(value, display(value), default(value))
+    }
+
+    /**
+     * Adds one toggle per enum constant.
+     *
+     * @param display The displayed text of a constant.
+     * @param default Whether the toggle of a constant is enabled by default.
+     * @return A group to read the state of every toggle.
+     */
+    inline fun <reified E : Enum<E>> enumToggles(
+        noinline display: (E) -> String = { it.name },
+        noinline default: (E) -> Boolean = { false },
+    ): ToggleGroup<E> = toggles(enumValues<E>().asList(), display, default)
 
     private fun <T> optionsOf(values: Iterable<T>, default: T?, display: (T) -> String) =
         FormOptionsBuilder<T>().apply {
@@ -395,6 +561,19 @@ class CustomFormBuilder @PublishedApi internal constructor() :
      */
     fun onSubmit(handler: (values: CustomFormValues) -> Unit) {
         submitHandlers += handler
+    }
+
+    /**
+     * Called when the player submitted the form, with every field whose value differs
+     * from its default. The list is empty if nothing was changed.
+     *
+     * Bedrock clients send no values when the form is closed, so changes are only
+     * detected on submit.
+     *
+     * @see FormField.onChange
+     */
+    fun onChanges(handler: (changes: List<FieldChange<*>>) -> Unit) {
+        changesHandlers += handler
     }
 
     /**
@@ -414,6 +593,9 @@ class CustomFormBuilder @PublishedApi internal constructor() :
     }
 
     override fun handleValid(response: CustomFormResponse) {
+        val changes = fields.mapNotNull { it.dispatchChange(response, locale) }
+        changesHandlers.forEach { it(changes) }
+
         val values = CustomFormValues(response)
         submitHandlers.forEach { it(values) }
     }
