@@ -7,6 +7,13 @@ import org.jetbrains.annotations.ApiStatus
  * This scoreboard extends the SurfScoreboard interface and adds the ability to automatically update
  * itself every 5 ticks (0.25 seconds). Viewers can be added and removed from the scoreboard.
  */
+@Deprecated(
+    "Replaced by autoUpdatingSidebar(plugin) { updateInterval = ...; ... } from " +
+        "dev.slne.surf.api.paper.sidebar, which returns a SurfAutoUpdatingSidebar. " +
+        "The update interval is no longer fixed to five ticks but set in the builder.",
+    ReplaceWith("SurfAutoUpdatingSidebar", "dev.slne.surf.api.paper.sidebar.SurfAutoUpdatingSidebar")
+)
+@Suppress("DEPRECATION")
 interface SurfAutoUpdatableScoreboard : SurfScoreboard {
     /**
      * Updates the scoreboard.

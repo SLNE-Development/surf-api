@@ -13,6 +13,7 @@ import net.kyori.adventure.text.Component;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.Contract;
 
+@SuppressWarnings("deprecation")
 public class CreateScoreboard extends CommandAPICommand {
 
     private static final Map<String, SurfAutoUpdatablePlayerScoreboard> SCOREBOARDS = new HashMap<>();

@@ -15,6 +15,16 @@ import java.util.function.Supplier
  * The SurfScoreboardBuilder interface provides methods to build a SurfScoreboard, a
  * SurfAutoUpdatableScoreboard, or a SurfAutoUpdatablePlayerScoreboard.
  */
+@Deprecated(
+    "Replaced by the builder block of sidebar(plugin) { ... }, autoUpdatingSidebar(plugin) { ... } " +
+        "and globalSidebar(plugin) { ... } in dev.slne.surf.api.paper.sidebar. Equivalents: " +
+        "addLine -> line(text), addUpdatableLine -> sharedLine { }, addViewerLine -> line { viewer -> }, " +
+        "addViewerComponent -> buildViewerLines { viewer -> }, addAnimatedLine -> animatedLine(frames), " +
+        "addGradientLine -> gradientLine(text, start, end), addLineSeparator -> separator(). " +
+        "Render lambdas run asynchronously and may suspend.",
+    ReplaceWith("SidebarBuilder", "dev.slne.surf.api.paper.sidebar.SidebarBuilder")
+)
+@Suppress("DEPRECATION")
 interface SurfScoreboardBuilder {
     /**
      * Sets the maximum number of lines for the scoreboard.
@@ -207,6 +217,12 @@ interface SurfScoreboardBuilder {
          * @param title the title of the scoreboard
          * @return a SurfScoreboardBuilder with the given title
          */
+        @Deprecated(
+            "Use sidebar(plugin) { title(title) } from dev.slne.surf.api.paper.sidebar instead, or " +
+                "autoUpdatingSidebar / globalSidebar for the self-updating variants. Pass your own plugin: " +
+                "the sidebar is closed automatically when that plugin is disabled.",
+            ReplaceWith("sidebar(plugin) { title(title) }", "dev.slne.surf.api.paper.sidebar.sidebar")
+        )
         @JvmStatic
         fun builder(title: Component): SurfScoreboardBuilder {
             return SurfScoreboardApi.createScoreboard(title)
