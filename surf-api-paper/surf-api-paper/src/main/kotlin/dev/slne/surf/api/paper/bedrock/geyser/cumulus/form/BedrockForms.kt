@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.bedrock.geyser.cumulus.form
 
-import org.bukkit.Bukkit
+import dev.slne.surf.api.paper.bedrock.ifBedrockAvailable
 import org.bukkit.entity.Player
 import org.geysermc.cumulus.form.CustomForm
 import org.geysermc.cumulus.form.Form
@@ -11,34 +11,31 @@ import org.geysermc.geyser.api.GeyserApi
 import java.util.*
 
 /**
- * Sends Cumulus forms to Bedrock players. Uses Floodgate if it is installed (which also works
+ * Sends Cumulus forms to Bedrock players. Requires Geyser and Floodgate to be installed,
+ * otherwise every function is a no-op. Uses Floodgate for Floodgate players (which also works
  * behind a proxy) and falls back to Geyser otherwise.
  */
 object BedrockForms {
-    private val floodgate
-        get() = if (Bukkit.getPluginManager()
-                .isPluginEnabled("floodgate")
-        ) FloodgateApi.getInstance() else null
-    private val geyser
-        get() = if (Bukkit.getPluginManager()
-                .isPluginEnabled("Geyser-Spigot")
-        ) GeyserApi.api() else null
+    private val floodgate get() = FloodgateApi.getInstance()
+    private val geyser get() = GeyserApi.api()
 
     /**
      * Returns `true` if the player with the given [uuid] is a Bedrock player.
+     * Returns `false` if Geyser or Floodgate is not installed.
      */
-    fun isBedrockPlayer(uuid: UUID): Boolean =
-        floodgate?.isFloodgatePlayer(uuid) ?: geyser?.isBedrockPlayer(uuid) ?: false
+    fun isBedrockPlayer(uuid: UUID): Boolean = ifBedrockAvailable(false) {
+        floodgate.isFloodgatePlayer(uuid) || geyser.isBedrockPlayer(uuid)
+    }
 
     /**
      * Sends the [form] to the player with the given [uuid].
      *
      * @return `true` if the form was sent, `false` if the player is not a Bedrock player
-     * or neither Floodgate nor Geyser is installed.
+     * or Geyser or Floodgate is not installed.
      */
-    fun send(uuid: UUID, form: Form): Boolean {
-        floodgate?.let { if (it.isFloodgatePlayer(uuid)) return it.sendForm(uuid, form) }
-        return geyser?.sendForm(uuid, form) ?: false
+    fun send(uuid: UUID, form: Form): Boolean = ifBedrockAvailable(false) {
+        if (floodgate.isFloodgatePlayer(uuid)) floodgate.sendForm(uuid, form)
+        else geyser.sendForm(uuid, form)
     }
 
     /**
@@ -46,18 +43,20 @@ object BedrockForms {
      *
      * @return `true` if the form was closed.
      */
-    fun close(uuid: UUID): Boolean {
-        floodgate?.let { if (it.isFloodgatePlayer(uuid)) return it.closeForm(uuid) }
-        val connection = geyser?.connectionByUuid(uuid) ?: return false
+    fun close(uuid: UUID): Boolean = ifBedrockAvailable(false) {
+        if (floodgate.isFloodgatePlayer(uuid)) return@ifBedrockAvailable floodgate.closeForm(uuid)
+        val connection = geyser.connectionByUuid(uuid) ?: return@ifBedrockAvailable false
         connection.closeForm()
-        return true
+        true
     }
 
     /**
      * Returns `true` if the player with the given [uuid] currently has a form open.
-     * Only available if Geyser is installed on this server, returns `false` otherwise.
+     * Returns `false` if Geyser or Floodgate is not installed.
      */
-    fun hasFormOpen(uuid: UUID): Boolean = geyser?.connectionByUuid(uuid)?.hasFormOpen() ?: false
+    fun hasFormOpen(uuid: UUID): Boolean = ifBedrockAvailable(false) {
+        geyser.connectionByUuid(uuid)?.hasFormOpen() ?: false
+    }
 }
 
 internal fun <B : BedrockFormBuilder<*, *, *>> B.localizedFor(player: Player): B =

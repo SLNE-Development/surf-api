@@ -114,6 +114,288 @@ public abstract interface class dev/slne/surf/api/paper/api/nms/listener/NmsServ
 	public abstract fun handleServerboundPacket (Ldev/slne/surf/api/paper/nms/listener/packets/NmsPacket;Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/packet/listener/listener/PacketListenerResult;
 }
 
+public final class dev/slne/surf/api/paper/bedrock/BedrockSupport {
+	public static final field FLOODGATE_PLUGIN_NAME Ljava/lang/String;
+	public static final field GEYSER_PLUGIN_NAME Ljava/lang/String;
+	public static final field INSTANCE Ldev/slne/surf/api/paper/bedrock/BedrockSupport;
+	public final fun isAvailable ()Z
+	public final fun isFloodgateInstalled ()Z
+	public final fun isGeyserInstalled ()Z
+	public final fun requireAvailable ()V
+}
+
+public final class dev/slne/surf/api/paper/bedrock/floodgate/Floodgate_extKt {
+	public static final fun getBukkitPlayer (Lorg/geysermc/floodgate/api/player/FloodgatePlayer;)Lorg/bukkit/entity/Player;
+	public static final fun getFloodgateApi ()Lorg/geysermc/floodgate/api/FloodgateApi;
+	public static final fun getFloodgatePlayer (Lorg/bukkit/entity/Player;)Lorg/geysermc/floodgate/api/player/FloodgatePlayer;
+	public static final fun isFloodgatePlayer (Lorg/geysermc/floodgate/api/player/FloodgatePlayer;)Z
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/Geyser_extKt {
+	public static final fun getBukkitPlayer (Lorg/geysermc/geyser/api/connection/GeyserConnection;)Lorg/bukkit/entity/Player;
+	public static final fun getGeyserApi ()Lorg/geysermc/geyser/api/GeyserApi;
+	public static final fun getGeyserConnection (Lorg/bukkit/entity/Player;)Lorg/geysermc/geyser/api/connection/GeyserConnection;
+	public static final fun getXuid (Lorg/bukkit/entity/Player;)Ljava/lang/String;
+	public static final fun isBedrockPlayer (Lorg/bukkit/entity/Player;)Z
+	public static final fun sendActionBar (Lorg/geysermc/geyser/api/connection/GeyserConnection;Lnet/kyori/adventure/text/Component;)Lkotlin/Unit;
+	public static final fun sendText (Lorg/geysermc/geyser/api/connection/GeyserConnection;Lkotlin/jvm/functions/Function1;)Lkotlin/Unit;
+}
+
+public abstract class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormBuilder {
+	public final fun build ()Lorg/geysermc/cumulus/form/Form;
+	public final fun executor (Ljava/util/concurrent/Executor;)V
+	public final fun getLocale ()Ljava/util/Locale;
+	public final fun onClose (Lkotlin/jvm/functions/Function0;)V
+	public final fun onClosedOrInvalid (Lkotlin/jvm/functions/Function1;)V
+	public final fun onInvalid (Lkotlin/jvm/functions/Function1;)V
+	public final fun onResult (Lkotlin/jvm/functions/Function2;)V
+	public final fun onValid (Lkotlin/jvm/functions/Function1;)V
+	public final fun runOn (Lorg/bukkit/entity/Player;Lorg/bukkit/plugin/Plugin;)V
+	public final fun setLocale (Ljava/util/Locale;)V
+	public final fun title (Ljava/lang/String;)V
+	public final fun title (Lkotlin/jvm/functions/Function1;)V
+	public final fun title (Lnet/kyori/adventure/text/Component;)V
+	public final fun translator (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun translator$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormBuilderKt {
+	public static final fun formImagePath (Ljava/lang/String;)Lorg/geysermc/cumulus/util/FormImage;
+	public static final fun formImageUrl (Ljava/lang/String;)Lorg/geysermc/cumulus/util/FormImage;
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormDsl : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockForms {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockForms;
+	public final fun close (Ljava/util/UUID;)Z
+	public final fun hasFormOpen (Ljava/util/UUID;)Z
+	public final fun isBedrockPlayer (Ljava/util/UUID;)Z
+	public final fun send (Ljava/util/UUID;Lorg/geysermc/cumulus/form/Form;)Z
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormsKt {
+	public static final fun closeForm (Lorg/bukkit/entity/Player;)Z
+	public static final fun hasFormOpen (Lorg/bukkit/entity/Player;)Z
+	public static final fun sendCustomForm (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function1;)Z
+	public static final fun sendForm (Lorg/bukkit/entity/Player;Lorg/geysermc/cumulus/form/Form;)Z
+	public static final fun sendModalForm (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function1;)Z
+	public static final fun sendSimpleForm (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function1;)Z
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder : dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormBuilder {
+	public fun <init> ()V
+	public synthetic fun configure (Lorg/geysermc/cumulus/form/util/FormBuilder;Ljava/util/Locale;)V
+	public final fun dropdown (Ljava/lang/String;Ljava/lang/Iterable;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun dropdown (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun dropdown (Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun dropdown$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Ljava/lang/String;Ljava/lang/Iterable;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public synthetic fun handleValid (Lorg/geysermc/cumulus/response/FormResponse;)V
+	public final fun icon (Lorg/geysermc/cumulus/util/FormImage;)V
+	public final fun iconPath (Ljava/lang/String;)V
+	public final fun iconUrl (Ljava/lang/String;)V
+	public final fun input (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun input (Lnet/kyori/adventure/text/Component;Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun input$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun input$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Lnet/kyori/adventure/text/Component;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun intSlider (Ljava/lang/String;Lkotlin/ranges/IntRange;II)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun intSlider (Lnet/kyori/adventure/text/Component;Lkotlin/ranges/IntRange;II)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun intSlider$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Ljava/lang/String;Lkotlin/ranges/IntRange;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun intSlider$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/ranges/IntRange;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun label (Ljava/lang/String;)V
+	public final fun label (Lkotlin/jvm/functions/Function1;)V
+	public final fun label (Lnet/kyori/adventure/text/Component;)V
+	public synthetic fun newBuilder ()Lorg/geysermc/cumulus/form/util/FormBuilder;
+	public final fun onChanges (Lkotlin/jvm/functions/Function1;)V
+	public final fun onSubmit (Lkotlin/jvm/functions/Function1;)V
+	public final fun result (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormResultMapper;
+	public final fun slider (Ljava/lang/String;FFFF)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun slider (Lnet/kyori/adventure/text/Component;FFFF)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun slider$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Ljava/lang/String;FFFFILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun slider$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Lnet/kyori/adventure/text/Component;FFFFILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun stepSlider (Ljava/lang/String;Ljava/lang/Iterable;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun stepSlider (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun stepSlider (Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun stepSlider$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Ljava/lang/String;Ljava/lang/Iterable;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun toggle (Ljava/lang/String;Z)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun toggle (Lnet/kyori/adventure/text/Component;Z)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun toggle$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public static synthetic fun toggle$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun toggles (Ljava/lang/Iterable;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroup;
+	public final fun toggles (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroup;
+	public static synthetic fun toggles$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilder;Ljava/lang/Iterable;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroup;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormBuilderKt {
+	public static final fun customForm (Lkotlin/jvm/functions/Function1;)Lorg/geysermc/cumulus/form/CustomForm;
+	public static final fun option (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormOptionsBuilder;Ljava/lang/String;Z)V
+	public static synthetic fun option$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormOptionsBuilder;Ljava/lang/String;ZILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormResultMapper {
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/CustomFormValues {
+	public final fun enabled (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroup;)Ljava/util/Set;
+	public final fun get (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;)Ljava/lang/Object;
+	public final fun get (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroup;)Ljava/util/Map;
+	public final fun getResponse ()Lorg/geysermc/cumulus/response/CustomFormResponse;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FieldChange {
+	public final fun component1 ()Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Object;
+	public final fun component4 ()Ljava/lang/Object;
+	public final fun copy (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FieldChange;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FieldChange;Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FieldChange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getField ()Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getNew ()Ljava/lang/Object;
+	public final fun getOld ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField {
+	public final fun getDefault ()Ljava/lang/Object;
+	public final fun getIndex ()I
+	public final fun onChange (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormOptionsBuilder {
+	public fun <init> ()V
+	public final fun option (Ljava/lang/Object;Ljava/lang/String;Z)V
+	public final fun option (Ljava/lang/Object;Lnet/kyori/adventure/text/Component;Z)V
+	public static synthetic fun option$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormOptionsBuilder;Ljava/lang/Object;Ljava/lang/String;ZILjava/lang/Object;)V
+	public static synthetic fun option$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormOptionsBuilder;Ljava/lang/Object;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult {
+	public fun getOrNull ()Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Closed : dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Closed;
+	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getOrNull ()Ljava/lang/Object;
+	public fun getOrNull ()Ljava/lang/Void;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$DefaultImpls {
+	public static fun getOrNull (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Invalid : dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult {
+	public fun <init> (ILjava/lang/String;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (ILjava/lang/String;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Invalid;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Invalid;ILjava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Invalid;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponentIndex ()I
+	public final fun getErrorMessage ()Ljava/lang/String;
+	public synthetic fun getOrNull ()Ljava/lang/Object;
+	public fun getOrNull ()Ljava/lang/Void;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$NotSent : dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$NotSent;
+	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getOrNull ()Ljava/lang/Object;
+	public fun getOrNull ()Ljava/lang/Void;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Valid : dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Valid;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Valid;Ljava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormResult$Valid;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getOrNull ()Ljava/lang/Object;
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/Form_coroutinesKt {
+	public static final fun awaitChoice (Lorg/bukkit/entity/Player;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun awaitChoice$default (Lorg/bukkit/entity/Player;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun awaitCustomForm (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitModalForm (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitSimpleForm (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ModalFormBuilder : dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormBuilder {
+	public fun <init> ()V
+	public final fun button1 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public final fun button1 (Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun button1$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ModalFormBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun button1$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ModalFormBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public final fun button2 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public final fun button2 (Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun button2$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ModalFormBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun button2$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ModalFormBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public synthetic fun configure (Lorg/geysermc/cumulus/form/util/FormBuilder;Ljava/util/Locale;)V
+	public final fun content (Ljava/lang/String;)V
+	public final fun content (Lkotlin/jvm/functions/Function1;)V
+	public final fun content (Lnet/kyori/adventure/text/Component;)V
+	public synthetic fun handleValid (Lorg/geysermc/cumulus/response/FormResponse;)V
+	public synthetic fun newBuilder ()Lorg/geysermc/cumulus/form/util/FormBuilder;
+	public final fun onResponse (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ModalFormBuilderKt {
+	public static final fun modalForm (Lkotlin/jvm/functions/Function1;)Lorg/geysermc/cumulus/form/ModalForm;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/SimpleFormBuilder : dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/BedrockFormBuilder {
+	public fun <init> ()V
+	public final fun button (Ljava/lang/String;Lorg/geysermc/cumulus/util/FormImage;Lkotlin/jvm/functions/Function0;)V
+	public final fun button (Lnet/kyori/adventure/text/Component;Lorg/geysermc/cumulus/util/FormImage;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun button$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/SimpleFormBuilder;Ljava/lang/String;Lorg/geysermc/cumulus/util/FormImage;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun button$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/SimpleFormBuilder;Lnet/kyori/adventure/text/Component;Lorg/geysermc/cumulus/util/FormImage;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public final fun buttons (Ljava/lang/Iterable;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun buttons$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/SimpleFormBuilder;Ljava/lang/Iterable;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public synthetic fun configure (Lorg/geysermc/cumulus/form/util/FormBuilder;Ljava/util/Locale;)V
+	public final fun content (Ljava/lang/String;)V
+	public final fun content (Lkotlin/jvm/functions/Function1;)V
+	public final fun content (Lnet/kyori/adventure/text/Component;)V
+	public synthetic fun handleValid (Lorg/geysermc/cumulus/response/FormResponse;)V
+	public synthetic fun newBuilder ()Lorg/geysermc/cumulus/form/util/FormBuilder;
+	public final fun onButtonClick (Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/SimpleFormBuilderKt {
+	public static final fun simpleForm (Lkotlin/jvm/functions/Function1;)Lorg/geysermc/cumulus/form/SimpleForm;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroup {
+	public final fun get (Ljava/lang/Object;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/FormField;
+	public final fun getToggles ()Ljava/util/Map;
+	public final fun onChange (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroup;
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroupBuilder {
+	public fun <init> ()V
+	public final fun toggle (Ljava/lang/Object;Ljava/lang/String;Z)V
+	public final fun toggle (Ljava/lang/Object;Lnet/kyori/adventure/text/Component;Z)V
+	public static synthetic fun toggle$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroupBuilder;Ljava/lang/Object;Ljava/lang/String;ZILjava/lang/Object;)V
+	public static synthetic fun toggle$default (Ldev/slne/surf/api/paper/bedrock/geyser/cumulus/form/ToggleGroupBuilder;Ljava/lang/Object;Lnet/kyori/adventure/text/Component;ZILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/bedrock/geyser/events/Geyser_event_extKt {
+	public static final fun register (Lorg/geysermc/geyser/api/event/EventRegistrar;)V
+}
+
 public abstract interface annotation class dev/slne/surf/api/paper/builder/ItemDsl : java/lang/annotation/Annotation {
 }
 

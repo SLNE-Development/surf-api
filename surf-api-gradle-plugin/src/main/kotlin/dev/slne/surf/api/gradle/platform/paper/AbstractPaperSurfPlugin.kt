@@ -5,6 +5,7 @@ import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.platform.core.AbstractCoreSurfPlugin
 import dev.slne.surf.api.gradle.util.canvasMaven
+import dev.slne.surf.api.gradle.util.geyserMaven
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.repositories
@@ -19,6 +20,9 @@ internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(
     }
 
     override fun Project.configure0() {
+        repositories {
+            geyserMaven()
+        }
     }
 
     final override fun Project.afterEvaluated1(extension: E) {

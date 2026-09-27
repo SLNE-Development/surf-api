@@ -3,6 +3,10 @@ plugins {
     `api-validation`
 }
 
+repositories {
+    maven("https://repo.opencollab.dev/main/") { name = "GeyserMC" }
+}
+
 dependencies {
     api(projects.surfApiCore.surfApiCore)
     compileOnlyApi(libs.paper.api)
@@ -15,6 +19,8 @@ dependencies {
     api(libs.commandapi.bukkit.kotlin)
     compileOnlyApi(libs.mccoroutine.folia.api)
     api(libs.wyck)
+    compileOnlyApi(libs.geyser.api)
+    compileOnlyApi(libs.floodgate.api)
 
     testImplementation(libs.mockbukkit)
     testImplementation(libs.paper.api)
