@@ -32,6 +32,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.region.V1_21_11TickThreadGuar
 import dev.slne.surf.api.paper.server.nms.v1_21_11.scoreboard.V1_21_11PlayerNmsScoreboardImpl
 import dev.slne.surf.api.shared.internal.nms.NmsProviderMarker
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
+import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
@@ -93,7 +94,7 @@ class V1_21_11NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
         V1_21_11GlowingLifecycleHandler()
 
     override fun createGlowingApi(): SurfGlowingApi = V1_21_11SurfGlowingApiImpl
-    override fun createPlayerScoreboard(player: Player): PlayerNmsScoreboard = V1_21_11PlayerNmsScoreboardImpl(player)
+    override fun createPlayerScoreboard(player: Player, title: Component): PlayerNmsScoreboard = V1_21_11PlayerNmsScoreboardImpl(player, title)
     override fun createChannelInjector(): AbstractChannelInjector<*> = V1_21_11ChannelInjector
     override fun createPacketListenerApi(): InternalPacketListenerApiBridge = V1_21_11PacketListenerApiImpl()
 

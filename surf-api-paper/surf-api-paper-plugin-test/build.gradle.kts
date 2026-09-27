@@ -49,7 +49,7 @@ fun RunServer.configure(folia: Boolean) {
     minecraftVersion(findProperty("mcVersion") as String)
 
     downloadPlugins {
-        hangar("CommandAPI", libs.versions.commandapi.get())
+        hangar("CommandAPI", libs.versions.commandapiplugin.get())
         modrinth("packetevents", libs.versions.packetevents.plugin.get() + "+spigot")
 
         if (!folia) {

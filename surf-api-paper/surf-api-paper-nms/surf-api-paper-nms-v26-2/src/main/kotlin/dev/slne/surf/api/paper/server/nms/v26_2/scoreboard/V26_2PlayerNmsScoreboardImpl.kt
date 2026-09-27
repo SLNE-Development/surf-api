@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v26_2.scoreboard
 
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
-import dev.slne.surf.api.paper.nms.common.scoreboard.SidebarLine
+import dev.slne.surf.api.paper.scoreboard.SidebarLine
 import dev.slne.surf.api.paper.server.nms.v26_2.bridges.packets.V26_2PacketOperationImpl
 import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import net.kyori.adventure.text.Component
@@ -20,7 +20,7 @@ import org.bukkit.entity.Player
 import java.util.*
 
 @Suppress("ClassName")
-class V26_2PlayerNmsScoreboardImpl(player: Player) : PlayerNmsScoreboard(player) {
+class V26_2PlayerNmsScoreboardImpl(player: Player, title: Component) : PlayerNmsScoreboard(player, title) {
 
     override fun createObjective(title: Component): PacketOperation {
         val objective = objective(title)

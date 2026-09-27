@@ -9,11 +9,12 @@ kotlinxCoroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
 
 # Packet Events
-packetevents = "2.13.0"
-packetevents-plugin = "2.13.0"
+packetevents = "2.14.0"
+packetevents-plugin = "2.14.0"
 
 # Command API
 commandapi = "12.0.0"
+commandapiplugin = "12.1.0"
 
 # LuckPerms
 luckperms = "5.5"

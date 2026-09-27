@@ -121,7 +121,7 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.canvas.api", libs.canvas.api.get().toString())
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
-    inputs.property("libs.versions.commandapi", libs.versions.commandapi.get())
+    inputs.property("libs.versions.commandapiplugin", libs.versions.commandapiplugin.get())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
     inputs.property("libs.versions.luckperms", libs.versions.luckperms.get())
     inputs.property(
@@ -163,7 +163,7 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val MINECRAFT_VERSION = "$mcVersion"
             |    const val SURF_API_VERSION = "+"
             |
-            |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
+            |    const val COMMAND_API_VERSION = "${libs.versions.commandapiplugin.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
             |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"

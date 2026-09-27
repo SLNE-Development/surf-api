@@ -16,6 +16,7 @@ import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.shared.internal.nms.NmsProviderConfig
 import dev.slne.surf.api.shared.internal.nms.NmsProviderMeta
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
+import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
@@ -86,9 +87,9 @@ interface NmsProvider {
     // ==================== Scoreboard ==================== //
 
     /**
-     * Creates a packet-based sidebar for [player] and displays it immediately.
+     * Creates a packet-based sidebar with [title] for [player] and displays it immediately.
      */
-    fun createPlayerScoreboard(player: Player): PlayerNmsScoreboard
+    fun createPlayerScoreboard(player: Player, title: Component): PlayerNmsScoreboard
 
     // ==================== Packet Listeners ==================== //
 

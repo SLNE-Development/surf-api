@@ -5,10 +5,15 @@ import net.megavex.scoreboardlibrary.api.objective.ScoreFormat
 import net.megavex.scoreboardlibrary.api.sidebar.component.SidebarComponent
 
 /** Builds a [SidebarComponent] from the lines added in [block]. */
+@Deprecated("Use SurfScoreboardBuilder.buildViewerLines instead", ReplaceWith("buildList(block)"))
 inline fun buildSidebarComponent(block: SidebarComponent.Builder.() -> Unit): SidebarComponent =
     SidebarComponent.builder().apply(block).build()
 
 /** Adds a static line built with [SurfComponentBuilder]. */
+@Deprecated(
+    "Use MutableList<SidebarLine>.line instead",
+    ReplaceWith("line(text = line)", "dev.slne.surf.api.paper.scoreboard.line")
+)
 inline fun SidebarComponent.Builder.buildStaticLine(
     line: SurfComponentBuilder.() -> Unit
 ): SidebarComponent.Builder = addStaticLine(SurfComponentBuilder(line))
@@ -16,12 +21,24 @@ inline fun SidebarComponent.Builder.buildStaticLine(
 /**
  * Adds a static line built with [SurfComponentBuilder] and a custom score format.
  */
+@Deprecated(
+    "Use MutableList<SidebarLine>.line instead",
+    ReplaceWith(
+        "line(score = (scoreFormat as? ScoreFormat.Fixed)?.content(), text = line)",
+        "dev.slne.surf.api.paper.scoreboard.line",
+        "net.megavex.scoreboardlibrary.api.objective.ScoreFormat"
+    )
+)
 inline fun SidebarComponent.Builder.buildStaticLine(
     scoreFormat: ScoreFormat,
     line: SurfComponentBuilder.() -> Unit
 ): SidebarComponent.Builder = addStaticLine(SurfComponentBuilder(line), scoreFormat)
 
 /** Adds a line that is rebuilt with [SurfComponentBuilder] every time the component is drawn. */
+@Deprecated(
+    "Use MutableList<SidebarLine>.line inside SurfScoreboardBuilder.buildViewerLines instead",
+    ReplaceWith("line(text = line)", "dev.slne.surf.api.paper.scoreboard.line")
+)
 fun SidebarComponent.Builder.buildDynamicLine(
     line: SurfComponentBuilder.() -> Unit
 ): SidebarComponent.Builder = addDynamicLine { SurfComponentBuilder(line) }

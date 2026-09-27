@@ -25,6 +25,7 @@ package dev.slne.surf.api.paper.nms.common.scoreboard
 
 import dev.slne.surf.api.core.util.getValue
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
+import dev.slne.surf.api.paper.scoreboard.SidebarLine
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList
 import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
@@ -37,7 +38,7 @@ import kotlin.math.max
 /**
  * Packet-based sidebar scoreboard shown to a single player.
  */
-abstract class PlayerNmsScoreboard(player: Player) {
+abstract class PlayerNmsScoreboard(player: Player, title: Component) {
 
     val playerUuid: UUID = player.uniqueId
     val player: Player? by WeakReference(player)
@@ -47,7 +48,7 @@ abstract class PlayerNmsScoreboard(player: Player) {
     private val lock = Any()
 
     @Volatile
-    var title: Component = Component.empty()
+    var title: Component = title
         private set
 
     @Volatile
@@ -192,5 +193,3 @@ abstract class PlayerNmsScoreboard(player: Player) {
         private val ENTRIES = List(MAX_LINES) { "§" + it.toString(16) }
     }
 }
-
-data class SidebarLine(val text: Component, val score: Component? = null)

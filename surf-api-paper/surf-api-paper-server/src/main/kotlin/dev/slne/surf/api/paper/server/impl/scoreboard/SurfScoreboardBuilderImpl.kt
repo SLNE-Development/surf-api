@@ -1,22 +1,23 @@
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
 import dev.slne.surf.api.core.util.mutableObjectListOf
+import dev.slne.surf.api.paper.scoreboard.SidebarLine
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardBuilder
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.megavex.scoreboardlibrary.api.sidebar.component.SidebarComponent
-import net.megavex.scoreboardlibrary.api.sidebar.component.animation.CollectionSidebarAnimation
 import net.megavex.scoreboardlibrary.api.sidebar.component.animation.SidebarAnimation
 import org.bukkit.entity.Player
 import java.util.function.Function
 import java.util.function.Supplier
 
 class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBuilder {
-    private val lines = mutableObjectListOf<ScoreboardLine>()
-    private val snapshots = mutableObjectListOf<LineSnapshot<*>>()
-    private val animations = mutableObjectListOf<SidebarAnimation<Component>>()
+    private val lines = ObjectArrayList<ScoreboardLine>()
+    private val snapshots = ObjectArrayList<LineSnapshot<*>>()
+    private val animations = ObjectArrayList<FrameAnimation>()
     private var maxLines = SurfScoreboardBuilder.DEFAULT_MAX_LINES
 
     override fun maxLines(maxLines: Int) = apply {
@@ -24,43 +25,48 @@ class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBu
         this.maxLines = maxLines
     }
 
-    override fun addLine(line: Component) = addShared(SidebarComponent.staticLine(line))
+    override fun addLine(line: Component) = addShared { it += SidebarLine(line) }
 
     override fun addUpdatableLine(line: Supplier<Component>) = apply {
         val snapshot = LineSnapshot(line::get).also { snapshots.add(it) }
-        addShared { drawable -> drawable.drawLine(snapshot.value) }
+        addShared { it += SidebarLine(snapshot.value) }
     }
 
-    override fun addViewerComponent(component: Function<Player, SidebarComponent>) = apply {
-        lines.add(ScoreboardLine.Viewer(component))
+    override fun addViewerLines(lines: Function<Player, List<SidebarLine>>) = apply {
+        this.lines.add(ScoreboardLine.Viewer(lines))
     }
 
+    @Deprecated("Use addViewerLines instead", ReplaceWith("addViewerLines(component)"))
+    override fun addViewerComponent(component: Function<Player, SidebarComponent>) =
+        addViewerLines { viewer -> buildList { component.apply(viewer).drawTo(this) } }
+
+    @Deprecated("Use addAnimatedLine(frames) instead", ReplaceWith("addAnimatedLine(frames)"))
     override fun addAnimatedLine(animation: SidebarAnimation<SidebarComponent>) =
-        addShared(SidebarComponent.animatedComponent(animation))
+        addShared { animation.currentFrame().drawTo(it) }
 
     override fun addAnimatedLine(frames: MutableList<Component>) = apply {
         check(frames.isNotEmpty()) { "frames cannot be empty" }
-        addAnimation(CollectionSidebarAnimation(frames))
+        addAnimation(FrameAnimation(frames))
     }
 
     override fun addGradientLine(text: Component, start: TextColor, end: TextColor) =
         addAnimation(createGradientAnimation(text, start.asHexString(), end.asHexString()))
 
-    private fun addAnimation(animation: SidebarAnimation<Component>) = apply {
+    private fun addAnimation(animation: FrameAnimation) = apply {
         animations.add(animation)
-        addShared(SidebarComponent.animatedLine(animation))
+        addShared { it += SidebarLine(animation.currentFrame) }
     }
 
-    private fun addShared(component: SidebarComponent) = apply {
-        lines.add(ScoreboardLine.Shared(component))
+    private fun addShared(line: ScoreboardLine.Shared) = apply {
+        lines.add(line)
     }
 
     private fun definition() = ScoreboardDefinition(
         title,
         maxLines,
-        lines.toList(),
-        snapshots.toList(),
-        animations.toList(),
+        lines.clone(),
+        snapshots.clone(),
+        animations.clone(),
     )
 
     override fun build() = SurfScoreboardImpl(definition())
@@ -71,7 +77,7 @@ class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBu
         private fun createGradientAnimation(
             component: Component,
             firstHex: String, secondHex: String
-        ): SidebarAnimation<Component> {
+        ): FrameAnimation {
             val step = 1f / 20f
             val textPlaceholder = Placeholder.component("text", component)
             val frames = mutableObjectListOf<Component>()
@@ -91,7 +97,7 @@ class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBu
             // Animation from right to left
             frames.addAll(frames.reversed())
 
-            return CollectionSidebarAnimation(frames)
+            return FrameAnimation(frames)
         }
     }
 }
