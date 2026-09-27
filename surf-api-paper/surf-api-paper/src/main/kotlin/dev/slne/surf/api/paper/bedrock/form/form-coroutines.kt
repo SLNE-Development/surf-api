@@ -1,4 +1,4 @@
-package dev.slne.surf.api.paper.bedrock.geyser.cumulus.form
+package dev.slne.surf.api.paper.bedrock.form
 
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.kyori.adventure.text.Component

@@ -1,4 +1,4 @@
-package dev.slne.surf.api.paper.bedrock.geyser.cumulus.form
+package dev.slne.surf.api.paper.bedrock.form
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.Component
@@ -125,7 +125,7 @@ sealed class BedrockFormBuilder<F : Form, R : FormResponse, B : FormBuilder<B, F
 
     /**
      * Sets the executor all handlers of this form are executed on.
-     * By default, handlers run on the thread Geyser/Floodgate delivers the response on,
+     * By default, handlers run on the thread Floodgate delivers the response on,
      * which is **not** the server thread.
      *
      * @see runOn

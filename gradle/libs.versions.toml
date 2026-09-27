@@ -36,7 +36,6 @@ placeholder-api = "2.12.3"
 mccoroutine = "2.23.1"
 
 # Bedrock
-geyser-api = "2.11.2-SNAPSHOT"
 floodgate-api = "2.2.5-SNAPSHOT"
 
 # Miscellaneous Libraries
@@ -147,7 +146,6 @@ mccoroutine-velocity-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-ve
 mccoroutine-velocity-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
 
 # Bedrock
-geyser-api = { module = "org.geysermc.geyser:api", version.ref = "geyser-api" }
 floodgate-api = { module = "org.geysermc.floodgate:api", version.ref = "floodgate-api" }
 
 # Miscellaneous Libraries

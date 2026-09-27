@@ -22,9 +22,9 @@ inline fun RepositoryHandler.canvasMaven(crossinline block: MavenArtifactReposit
         block()
     }
 
-inline fun RepositoryHandler.geyserMaven(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
+inline fun RepositoryHandler.openCollabMaven(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
     maven("https://repo.opencollab.dev/main/") {
-        name = "GeyserMC"
+        name = "OpenCollab"
         block()
     }
 
