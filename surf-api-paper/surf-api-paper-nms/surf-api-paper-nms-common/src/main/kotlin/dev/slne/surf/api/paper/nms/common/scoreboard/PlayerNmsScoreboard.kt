@@ -155,17 +155,18 @@ abstract class PlayerNmsScoreboard(player: Player, title: Component) {
         val oldLines = lines
         lines = newLines
 
-        val operation = PacketOperation.start()
+        var operation: PacketOperation? = null
         for (index in 0 until max(oldLines.size, newLines.size)) {
             val line = newLines.getOrNull(index)
-            if (line == null) {
-                operation.add(resetScore(ENTRIES[index]))
-            } else if (line != oldLines.getOrNull(index)) {
-                operation.add(setScore(ENTRIES[index], MAX_LINES - index, line))
+            val change = when {
+                line == null -> resetScore(ENTRIES[index])
+                line != oldLines.getOrNull(index) -> setScore(ENTRIES[index], MAX_LINES - index, line)
+                else -> continue
             }
+            operation = (operation ?: PacketOperation.start()).add(change)
         }
 
-        send(operation)
+        if (operation != null) send(operation)
     }
 
     private fun send(operation: PacketOperation) {

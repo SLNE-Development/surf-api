@@ -99,6 +99,9 @@ interface SurfScoreboardBuilder {
      * [addViewerLine]. The number of lines may differ between viewers and updates; lines exceeding
      * the scoreboard's maximum line count are dropped.
      *
+     * Only lines that differ from the previous update are sent. Returning the same [SidebarLine]
+     * instances for unchanged content skips the deep component comparison.
+     *
      * @param lines renders the lines for the given viewer
      * @return the SurfScoreboardBuilder instance
      */

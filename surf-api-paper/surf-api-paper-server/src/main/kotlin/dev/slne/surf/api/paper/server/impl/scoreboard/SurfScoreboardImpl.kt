@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
+import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
@@ -11,9 +12,12 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
 import kotlin.concurrent.withLock
@@ -112,7 +116,14 @@ open class SurfScoreboardImpl(definition: ScoreboardDefinition) : SurfScoreboard
     private fun refreshSharedLines() {
         lines.forEachIndexed { index, line ->
             if (line is ScoreboardLine.Shared) {
-                sharedLines[index] = ObjectArrayList<SidebarLine>().apply { line.draw(this) }
+                val drawn = ObjectArrayList<SidebarLine>().apply { line.draw(this) }
+                val previous = sharedLines[index]
+                if (previous != null) {
+                    for (i in 0 until minOf(drawn.size, previous.size)) {
+                        if (drawn[i] == previous[i]) drawn[i] = previous[i]
+                    }
+                }
+                sharedLines[index] = drawn
             }
         }
     }
@@ -170,20 +181,59 @@ open class SurfScoreboardImpl(definition: ScoreboardDefinition) : SurfScoreboard
 
         var viewerLines = arrayOfNulls<List<SidebarLine>>(lines.size)
 
+        private val pendingContent = AtomicReference<List<SidebarLine>?>()
+        private val applyScheduled = AtomicBoolean()
+        private val applyTask = Runnable { drainPendingContent() }
+
         private var scoreboard: PlayerNmsScoreboard? = null
+        private var closed = false
 
         fun show() {
-            val content = lines.indices.asSequence()
-                .flatMap { index -> sharedLines[index] ?: viewerLines[index].orEmpty() }
-                .take(maxLines)
-                .toList()
+            pendingContent.set(compose())
+            if (applyScheduled.compareAndSet(false, true)) {
+                APPLY_EXECUTOR.execute(applyTask)
+            }
+        }
 
-            val scoreboard = scoreboard ?: createScoreboard().also { scoreboard = it }
-            scoreboard.updateLines(content)
+        private fun drainPendingContent() {
+            do {
+                try {
+                    pendingContent.getAndSet(null)?.let(::apply)
+                } catch (e: Throwable) {
+                    log.atWarning().withCause(e).log("Failed to update scoreboard of %s", viewer.name)
+                } finally {
+                    applyScheduled.set(false)
+                }
+            } while (pendingContent.get() != null && applyScheduled.compareAndSet(false, true))
+        }
+
+        private fun apply(content: List<SidebarLine>) {
+            synchronized(this) {
+                if (closed) return
+
+                val scoreboard = scoreboard ?: createScoreboard().also { scoreboard = it }
+                scoreboard.updateLines(content)
+            }
+        }
+
+        private fun compose(): List<SidebarLine> {
+            val content = ObjectArrayList<SidebarLine>(maxLines)
+            for (index in lines.indices) {
+                val part = sharedLines[index] ?: viewerLines[index] ?: continue
+                for (line in part) {
+                    if (content.size == maxLines) return content
+                    content.add(line)
+                }
+            }
+            return content
         }
 
         fun close() {
-            scoreboard?.delete()
+            synchronized(this) {
+                closed = true
+                pendingContent.set(null)
+                scoreboard?.delete()
+            }
         }
 
         @OptIn(NmsUseWithCaution::class)
@@ -192,5 +242,11 @@ open class SurfScoreboardImpl(definition: ScoreboardDefinition) : SurfScoreboard
         override fun toString(): String {
             return "ViewerBoard(viewer=$viewer, scoreboard=$scoreboard, renderPending=$renderPending)"
         }
+    }
+
+    companion object {
+        private val log = logger()
+
+        private val APPLY_EXECUTOR = Dispatchers.Default.asExecutor()
     }
 }
