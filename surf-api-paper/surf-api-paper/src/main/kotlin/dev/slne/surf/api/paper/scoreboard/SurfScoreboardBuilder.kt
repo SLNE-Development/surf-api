@@ -74,13 +74,14 @@ interface SurfScoreboardBuilder {
      * Adds a line that is rendered separately for every viewer.
      *
      * [line] is invoked on the viewer's entity scheduler thread once per update, so it may safely
-     * access the viewer's state. Shared lines are still evaluated only once per update.
+     * access the viewer's state. A scoreboard containing viewer lines maintains one sidebar per
+     * viewer; shared lines are still evaluated only once per update.
      *
      * @param line renders the line for the given viewer
      * @return the SurfScoreboardBuilder instance
      */
     fun addViewerLine(line: Function<Player, Component>): SurfScoreboardBuilder {
-        return addViewerLines { viewer -> listOf(SidebarLine(line.apply(viewer))) }
+        return addViewerComponent { viewer -> SidebarComponent.staticLine(line.apply(viewer)) }
     }
 
     /**
@@ -93,52 +94,26 @@ interface SurfScoreboardBuilder {
     }
 
     /**
-     * Adds a variable number of lines that are rendered separately for every viewer.
-     *
-     * [lines] is invoked on the viewer's entity scheduler thread once per update, like
-     * [addViewerLine]. The number of lines may differ between viewers and updates; lines exceeding
-     * the scoreboard's maximum line count are dropped.
-     *
-     * Only lines that differ from the previous update are sent. Returning the same [SidebarLine]
-     * instances for unchanged content skips the deep component comparison.
-     *
-     * @param lines renders the lines for the given viewer
-     * @return the SurfScoreboardBuilder instance
-     */
-    fun addViewerLines(lines: Function<Player, List<SidebarLine>>): SurfScoreboardBuilder
-
-    /**
-     * Adds viewer lines that are collected into a list for every viewer.
-     *
-     * Lines may be added conditionally; [line] builds a line with [SurfComponentBuilder].
-     *
-     * @see addViewerLines
-     */
-    fun buildViewerLines(lines: MutableList<SidebarLine>.(viewer: Player) -> Unit): SurfScoreboardBuilder {
-        return addViewerLines { viewer -> buildList { lines(viewer) } }
-    }
-
-    /**
      * Adds a component that is created separately for every viewer and may draw a variable number
      * of lines.
      *
-     * [component] is invoked and drawn on the viewer's entity scheduler thread once per update.
-     * [net.megavex.scoreboardlibrary.api.objective.ScoreFormat.Styled] score formats are shown
-     * blank.
+     * [component] is invoked on the viewer's entity scheduler thread once per update, like
+     * [addViewerLine]. The returned component is drawn immediately afterwards on the same thread
+     * while the scoreboard is locked, so it should only draw precomputed lines.
      *
      * @param component creates the component for the given viewer
      * @return the SurfScoreboardBuilder instance
      */
-    @Deprecated("Use addViewerLines instead", ReplaceWith("addViewerLines(component)"))
     fun addViewerComponent(component: Function<Player, SidebarComponent>): SurfScoreboardBuilder
 
     /**
      * Adds a viewer component whose lines are added to a [SidebarComponent.Builder] for every viewer.
      *
+     * Lines may be added conditionally, so the number of lines can differ between viewers and updates.
+     * [buildStaticLine] builds a line with [SurfComponentBuilder].
+     *
      * @see addViewerComponent
      */
-    @Deprecated("Use buildViewerLines instead", ReplaceWith("buildViewerLines(component)"))
-    @Suppress("DEPRECATION")
     fun buildViewerComponent(
         component: SidebarComponent.Builder.(viewer: Player) -> Unit
     ): SurfScoreboardBuilder {
@@ -148,13 +123,10 @@ interface SurfScoreboardBuilder {
     /**
      * Adds an animated line to the SurfScoreboardBuilder.
      *
-     * The current frame is drawn on every update; advancing [animation] is up to the caller.
-     *
      * @param animation the animation to be added as an animated line
      * @return the SurfScoreboardBuilder with the added animated line
      * @throws NullPointerException if `animation` is null
      */
-    @Deprecated("Use addAnimatedLine(frames) instead", ReplaceWith("addAnimatedLine(frames)"))
     fun addAnimatedLine(
         animation: SidebarAnimation<SidebarComponent>
     ): SurfScoreboardBuilder

@@ -25,7 +25,7 @@ package dev.slne.surf.api.paper.nms.common.scoreboard
 
 import dev.slne.surf.api.core.util.getValue
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
-import dev.slne.surf.api.paper.scoreboard.SidebarLine
+import dev.slne.surf.api.paper.sidebar.SidebarLine
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList
 import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component

@@ -4,6 +4,7 @@ import dev.slne.surf.api.paper.event.register
 import dev.slne.surf.api.paper.server.command.SuspendRequirementServiceImpl
 import dev.slne.surf.api.paper.server.impl.glow.GlowingListener
 import dev.slne.surf.api.paper.server.impl.pdc.block.BlockDataListener
+import dev.slne.surf.api.paper.server.impl.sidebar.SidebarRegistry
 import dev.slne.surf.api.paper.server.impl.visualizer.visualizer.VisualizerListener
 import dev.slne.surf.api.paper.server.plugin
 import org.bukkit.Bukkit
@@ -16,6 +17,7 @@ object ListenerManager {
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord")
         VisualizerListener.register()
         GlowingListener.register()
+        SidebarRegistry.register()
 
         BlockDataListener.register()
 

@@ -2,9 +2,9 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.scoreboard
 
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
-import dev.slne.surf.api.paper.scoreboard.SidebarLine
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.V1_21_11PacketOperationImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
+import dev.slne.surf.api.paper.sidebar.SidebarLine
 import net.kyori.adventure.text.Component
 import net.minecraft.network.chat.numbers.BlankFormat
 import net.minecraft.network.chat.numbers.FixedFormat
