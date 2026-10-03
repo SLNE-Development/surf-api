@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api(projects.surfApiCore.surfApiCore)
-    compileOnly(libs.paper.api)
+    compileOnlyApi(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.commandapi.paper)
     compileOnlyApi(libs.reflection.remapper)
@@ -15,6 +15,7 @@ dependencies {
     api(libs.commandapi.bukkit.kotlin)
     compileOnlyApi(libs.mccoroutine.folia.api)
     api(libs.wyck)
+    compileOnlyApi(libs.floodgate.api)
 
     testImplementation(libs.mockbukkit)
     testImplementation(libs.paper.api)
