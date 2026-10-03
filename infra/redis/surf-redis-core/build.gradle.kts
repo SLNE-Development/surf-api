@@ -2,7 +2,7 @@ import me.champeau.jmh.JMHTask
 
 plugins {
     id("dev.slne.surf.api.gradle.core")
-    id("com.github.gmazzo.buildconfig") version "6.0.9"
+    id("com.github.gmazzo.buildconfig") version "6.1.2"
     id("me.champeau.jmh") version "0.7.3"
 }
 
