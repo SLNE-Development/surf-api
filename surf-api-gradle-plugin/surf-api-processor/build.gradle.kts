@@ -23,6 +23,6 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
     implementation("com.squareup:kotlinpoet:2.4.0")
-    implementation("com.palantir.javapoet:javapoet:0.19.0")
+    implementation("com.palantir.javapoet:javapoet:0.20.0")
     implementation(libs.kotlin.compiler)
 }
