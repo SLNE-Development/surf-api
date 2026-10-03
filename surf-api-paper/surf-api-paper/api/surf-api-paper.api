@@ -184,15 +184,15 @@ public final class dev/slne/surf/api/paper/command/args/AsyncSignedMessageArgume
 }
 
 public class dev/slne/surf/api/paper/command/args/MiniMessageArgument : dev/jorel/commandapi/arguments/CustomArgument {
-	public synthetic fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Z)V
 	public synthetic fun <init> (Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class dev/slne/surf/api/paper/command/args/MiniMessageArgumentKt {
-	public static final synthetic fun miniMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
+	public static final fun miniMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static final fun miniMessageArgument (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandAPICommand;
-	public static final synthetic fun miniMessageArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
+	public static final fun miniMessageArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
 	public static final fun miniMessageArgument (Ldev/jorel/commandapi/CommandTree;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;)Ldev/jorel/commandapi/CommandTree;
 	public static synthetic fun miniMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
 	public static synthetic fun miniMessageArgument$default (Ldev/jorel/commandapi/CommandAPICommand;Ljava/lang/String;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/jorel/commandapi/CommandAPICommand;
@@ -1476,7 +1476,7 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/settings/Pag
 	public fun <init> ()V
 	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;)V
+	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lnet/kyori/adventure/key/Key;
 	public final fun component10 ()Z
@@ -1497,7 +1497,7 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/settings/Pag
 	public final fun component8 ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
 	public final fun component9 ()Z
 	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
-	public final synthetic fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
+	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
 	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/paper/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
 	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginationButtonPosition;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/PaginatedViewSettings;
 	public fun equals (Ljava/lang/Object;)Z
@@ -1569,7 +1569,7 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/settings/Sim
 	public fun <init> ()V
 	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)V
+	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lnet/kyori/adventure/key/Key;
 	public final fun component10 ()Z
@@ -1586,7 +1586,7 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/settings/Sim
 	public final fun component8 ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
 	public final fun component9 ()Z
 	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
-	public final synthetic fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
+	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
 	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/paper/inventory/framework/view/settings/ViewHeaderGeometry;ZLit/unimi/dsi/fastutil/ints/Int2ObjectMap;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
 	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/paper/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/paper/inventory/framework/view/settings/ViewRows;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/framework/view/settings/SimpleViewSettings;
 	public fun equals (Ljava/lang/Object;)Z
@@ -3028,6 +3028,13 @@ public final class dev/slne/surf/api/paper/region/TickThreadGuard$Companion : de
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/region/TickThreadGuard;
 }
 
+public final class dev/slne/surf/api/paper/scoreboard/Scoreboard_extensionsKt {
+	public static final fun buildDynamicLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public static final fun buildSidebarComponent (Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent;
+	public static final fun buildStaticLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+	public static final fun buildStaticLine (Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;Lnet/megavex/scoreboardlibrary/api/objective/ScoreFormat;Lkotlin/jvm/functions/Function1;)Lnet/megavex/scoreboardlibrary/api/sidebar/component/SidebarComponent$Builder;
+}
+
 public abstract interface class dev/slne/surf/api/paper/scoreboard/SurfAutoUpdatablePlayerScoreboard : dev/slne/surf/api/paper/scoreboard/SurfAutoUpdatableScoreboard {
 	public abstract fun addViewer (Lorg/bukkit/entity/Player;)V
 	public abstract fun removeViewer (Lorg/bukkit/entity/Player;)V
@@ -3067,9 +3074,16 @@ public abstract interface class dev/slne/surf/api/paper/scoreboard/SurfScoreboar
 	public abstract fun addLine (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public fun addLineSeparator ()Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public abstract fun addUpdatableLine (Ljava/util/function/Supplier;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public abstract fun addViewerComponent (Ljava/util/function/Function;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun addViewerLine (Ljava/util/function/Function;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public abstract fun build ()Ldev/slne/surf/api/paper/scoreboard/SurfScoreboard;
 	public abstract fun buildAutoUpdatable ()Ldev/slne/surf/api/paper/scoreboard/SurfAutoUpdatableScoreboard;
 	public abstract fun buildAutoUpdatablePlayer ()Ldev/slne/surf/api/paper/scoreboard/SurfAutoUpdatablePlayerScoreboard;
+	public fun buildGradientLine (Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildLine (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildUpdatableLine (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildViewerComponent (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public fun buildViewerLine (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public static fun builder (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public abstract fun maxLines (I)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 }
@@ -3082,6 +3096,12 @@ public final class dev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder$Comp
 public final class dev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder$DefaultImpls {
 	public static fun addEmptyLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 	public static fun addLineSeparator (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun addViewerLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Ljava/util/function/Function;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildGradientLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildUpdatableLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildViewerComponent (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+	public static fun buildViewerLine (Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
 }
 
 public final class dev/slne/surf/api/paper/serializer/bukkit/blockdata/BlockDataSerializer : kotlinx/serialization/KSerializer {
@@ -3138,6 +3158,135 @@ public final class dev/slne/surf/api/paper/serializer/bukkit/player/PlayerSerial
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lorg/bukkit/entity/Player;)V
 }
 
+public abstract interface class dev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder : dev/slne/surf/api/paper/sidebar/SidebarBuilder {
+	public abstract fun getUpdateInterval-UwyO8pc ()J
+	public abstract fun setUpdateInterval-LRDsOJo (J)V
+}
+
+public final class dev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder$DefaultImpls {
+	public static fun buildGradientLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)V
+	public static fun buildLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)V
+	public static fun buildSharedLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildSharedLines (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildSharedTitle (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildTitle (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static fun buildViewerLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function3;)V
+	public static fun buildViewerLines (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function3;)V
+	public static fun buildViewerTitle (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;Lkotlin/jvm/functions/Function3;)V
+	public static fun emptyLine (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;)V
+	public static fun separator (Ldev/slne/surf/api/paper/sidebar/AutoUpdatingSidebarBuilder;)V
+}
+
+public abstract interface class dev/slne/surf/api/paper/sidebar/SidebarBuilder {
+	public abstract fun animatedLine (Ljava/util/List;)V
+	public fun buildGradientLine (Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)V
+	public fun buildLine (Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun buildLine$default (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public fun buildSharedLine (Lkotlin/jvm/functions/Function2;)V
+	public fun buildSharedLines (Lkotlin/jvm/functions/Function2;)V
+	public fun buildSharedTitle (Lkotlin/jvm/functions/Function2;)V
+	public fun buildTitle (Lkotlin/jvm/functions/Function1;)V
+	public fun buildViewerLine (Lkotlin/jvm/functions/Function3;)V
+	public fun buildViewerLines (Lkotlin/jvm/functions/Function3;)V
+	public fun buildViewerTitle (Lkotlin/jvm/functions/Function3;)V
+	public fun emptyLine ()V
+	public abstract fun getMaxLines ()I
+	public abstract fun gradientLine (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;)V
+	public abstract fun line (Lkotlin/jvm/functions/Function2;)V
+	public abstract fun line (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;)V
+	public static synthetic fun line$default (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)V
+	public abstract fun lines (Lkotlin/jvm/functions/Function2;)V
+	public abstract fun scoredLine (Lkotlin/jvm/functions/Function2;)V
+	public fun separator ()V
+	public abstract fun setMaxLines (I)V
+	public abstract fun sharedLine (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun sharedLines (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun sharedTitle (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun title (Lkotlin/jvm/functions/Function2;)V
+	public abstract fun title (Lnet/kyori/adventure/text/Component;)V
+}
+
+public final class dev/slne/surf/api/paper/sidebar/SidebarBuilder$DefaultImpls {
+	public static fun buildGradientLine (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/format/TextColor;Lnet/kyori/adventure/text/format/TextColor;Lkotlin/jvm/functions/Function1;)V
+	public static fun buildLine (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun buildLine$default (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static fun buildSharedLine (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildSharedLines (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildSharedTitle (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function2;)V
+	public static fun buildTitle (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static fun buildViewerLine (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function3;)V
+	public static fun buildViewerLines (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function3;)V
+	public static fun buildViewerTitle (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lkotlin/jvm/functions/Function3;)V
+	public static fun emptyLine (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;)V
+	public static synthetic fun line$default (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)V
+	public static fun separator (Ldev/slne/surf/api/paper/sidebar/SidebarBuilder;)V
+}
+
+public abstract interface annotation class dev/slne/surf/api/paper/sidebar/SidebarDsl : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/paper/sidebar/SidebarLine {
+	public fun <init> (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;)V
+	public synthetic fun <init> (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lnet/kyori/adventure/text/Component;
+	public final fun component2 ()Lnet/kyori/adventure/text/Component;
+	public final fun copy (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/sidebar/SidebarLine;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/sidebar/SidebarLine;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/paper/sidebar/SidebarLine;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getScore ()Lnet/kyori/adventure/text/Component;
+	public final fun getText ()Lnet/kyori/adventure/text/Component;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/sidebar/SidebarLinesBuilder {
+	public final fun buildLine (Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun buildLine$default (Ldev/slne/surf/api/paper/sidebar/SidebarLinesBuilder;Lnet/kyori/adventure/text/Component;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun buildScoredLine (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public final fun emptyLine ()V
+	public final fun line (Ldev/slne/surf/api/paper/sidebar/SidebarLine;)V
+	public final fun line (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;)V
+	public static synthetic fun line$default (Ldev/slne/surf/api/paper/sidebar/SidebarLinesBuilder;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/paper/sidebar/Sidebar_dslKt {
+	public static final fun autoUpdatingSidebar (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/sidebar/SurfAutoUpdatingSidebar;
+	public static final fun globalSidebar (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/sidebar/SurfGlobalSidebar;
+	public static final fun sidebar (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/sidebar/SurfViewerSidebar;
+}
+
+public abstract interface class dev/slne/surf/api/paper/sidebar/SurfAutoUpdatingSidebar : dev/slne/surf/api/paper/sidebar/SurfViewerSidebar {
+	public abstract fun getUpdateInterval-UwyO8pc ()J
+}
+
+public abstract interface class dev/slne/surf/api/paper/sidebar/SurfGlobalSidebar : dev/slne/surf/api/paper/sidebar/SurfSidebar {
+	public abstract fun getUpdateInterval-UwyO8pc ()J
+}
+
+public abstract interface class dev/slne/surf/api/paper/sidebar/SurfSidebar {
+	public abstract fun close ()V
+	public abstract fun getPlugin ()Lorg/bukkit/plugin/Plugin;
+	public abstract fun getViewers ()Ljava/util/Collection;
+	public abstract fun isClosed ()Z
+	public abstract fun update ()V
+}
+
+public abstract interface class dev/slne/surf/api/paper/sidebar/SurfSidebarFactory {
+	public static final field Companion Ldev/slne/surf/api/paper/sidebar/SurfSidebarFactory$Companion;
+	public abstract fun createAutoUpdatingSidebar (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/sidebar/SurfAutoUpdatingSidebar;
+	public abstract fun createGlobalSidebar (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/sidebar/SurfGlobalSidebar;
+	public abstract fun createSidebar (Lorg/bukkit/plugin/Plugin;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/sidebar/SurfViewerSidebar;
+}
+
+public final class dev/slne/surf/api/paper/sidebar/SurfSidebarFactory$Companion {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/sidebar/SurfSidebarFactory;
+}
+
+public abstract interface class dev/slne/surf/api/paper/sidebar/SurfViewerSidebar : dev/slne/surf/api/paper/sidebar/SurfSidebar {
+	public abstract fun addViewer (Lorg/bukkit/entity/Player;)V
+	public abstract fun removeViewer (Lorg/bukkit/entity/Player;)V
+}
+
 public final class dev/slne/surf/api/paper/time/SkipOperations {
 	public static final field INSTANCE Ldev/slne/surf/api/paper/time/SkipOperations;
 	public static final field NEXT_DAY Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;
@@ -3160,6 +3309,39 @@ public final class dev/slne/surf/api/paper/time/TimeSkipResult : java/lang/Enum 
 	public final fun toBoolean ()Z
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/time/TimeSkipResult;
 	public static fun values ()[Ldev/slne/surf/api/paper/time/TimeSkipResult;
+}
+
+public final class dev/slne/surf/api/paper/util/Position_utilKt {
+	public static final fun asLong (Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun chebyshevDistance (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaBlockX (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaBlockY (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaBlockZ (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun deltaX (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun deltaY (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun deltaZ (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun distance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun distanceSquared (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun distanceSquared (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun horizontalDistance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun horizontalDistanceSquared (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun horizontalDistanceSquared (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
+	public static final fun isInside (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)Z
+	public static final fun isSameBlock (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)Z
+	public static final fun isSameChunk (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)Z
+	public static final fun isWithinCube (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;I)Z
+	public static final fun isWithinDistance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;D)Z
+	public static final fun isWithinSquare (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;I)Z
+	public static final fun manhattanDistance (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun readableString (Lio/papermc/paper/math/BlockPosition;)Ljava/lang/String;
+	public static final fun readableString (Lio/papermc/paper/math/Position;I)Ljava/lang/String;
+	public static synthetic fun readableString$default (Lio/papermc/paper/math/Position;IILjava/lang/Object;)Ljava/lang/String;
+	public static final fun toBlockPosition (J)Lio/papermc/paper/math/BlockPosition;
+	public static final fun unpackBlockX (J)I
+	public static final fun unpackBlockY (J)I
+	public static final fun unpackBlockZ (J)I
+	public static final fun verticalDistance (Lio/papermc/paper/math/BlockPosition;Lio/papermc/paper/math/BlockPosition;)J
+	public static final fun verticalDistance (Lio/papermc/paper/math/Position;Lio/papermc/paper/math/Position;)D
 }
 
 public final class dev/slne/surf/api/paper/util/UtilBukkit {

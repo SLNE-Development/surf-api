@@ -10,6 +10,7 @@ import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerChat
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
 import dev.slne.surf.api.paper.nms.common.*
+import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.*
@@ -28,8 +29,10 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLor
 import dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore.V1_21_11PacketLoreRegistry
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
 import dev.slne.surf.api.paper.server.nms.v1_21_11.region.V1_21_11TickThreadGuard
+import dev.slne.surf.api.paper.server.nms.v1_21_11.scoreboard.V1_21_11PlayerNmsScoreboardImpl
 import dev.slne.surf.api.shared.internal.nms.NmsProviderMarker
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
+import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
@@ -90,6 +93,7 @@ class V1_21_11NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
         V1_21_11GlowingLifecycleHandler()
 
     override fun createGlowingApi(): SurfGlowingApi = V1_21_11SurfGlowingApiImpl
+    override fun createPlayerScoreboard(player: Player): PlayerNmsScoreboard = V1_21_11PlayerNmsScoreboardImpl(player)
     override fun createChannelInjector(): AbstractChannelInjector<*> = V1_21_11ChannelInjector
     override fun createPacketListenerApi(): InternalPacketListenerApiBridge = V1_21_11PacketListenerApiImpl()
 

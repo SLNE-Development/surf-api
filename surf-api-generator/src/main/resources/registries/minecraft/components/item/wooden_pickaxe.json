@@ -1,5 +1,6 @@
 {
   "components": {
+    "minecraft:attack_animation": {},
     "minecraft:attribute_modifiers": [
       {
         "type": "minecraft:attack_damage",
@@ -17,11 +18,16 @@
       }
     ],
     "minecraft:break_sound": "minecraft:entity.item.break",
+    "minecraft:cooking_fuel": {
+      "burn_time": "minecraft:cooking/time_wood_items_large",
+      "speed_multiplier": "minecraft:cooking/speed_default"
+    },
     "minecraft:damage": 0,
     "minecraft:enchantable": {
       "value": 15
     },
     "minecraft:enchantments": {},
+    "minecraft:interact_animation": {},
     "minecraft:item_model": "minecraft:wooden_pickaxe",
     "minecraft:item_name": {
       "translate": "item.minecraft.wooden_pickaxe"
@@ -34,7 +40,6 @@
     "minecraft:repairable": {
       "items": "#minecraft:wooden_tool_materials"
     },
-    "minecraft:swing_animation": {},
     "minecraft:tool": {
       "rules": [
         {

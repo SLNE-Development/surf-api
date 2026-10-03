@@ -1,5 +1,6 @@
 {
   "components": {
+    "minecraft:attack_animation": {},
     "minecraft:attribute_modifiers": [
       {
         "type": "minecraft:attack_damage",
@@ -16,12 +17,14 @@
         "slot": "mainhand"
       }
     ],
+    "minecraft:block_transformer": "minecraft:axe",
     "minecraft:break_sound": "minecraft:entity.item.break",
     "minecraft:damage": 0,
     "minecraft:enchantable": {
       "value": 5
     },
     "minecraft:enchantments": {},
+    "minecraft:interact_animation": {},
     "minecraft:item_model": "minecraft:stone_axe",
     "minecraft:item_name": {
       "translate": "item.minecraft.stone_axe"
@@ -34,7 +37,6 @@
     "minecraft:repairable": {
       "items": "#minecraft:stone_tool_materials"
     },
-    "minecraft:swing_animation": {},
     "minecraft:tool": {
       "rules": [
         {

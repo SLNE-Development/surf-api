@@ -7,6 +7,13 @@ import org.bukkit.entity.Player
  * includes all online players as viewers. This interface extends the SurfAutoUpdatableScoreboard
  * interface.
  */
+@Deprecated(
+    "Replaced by globalSidebar(plugin) { updateInterval = ...; ... } from " +
+        "dev.slne.surf.api.paper.sidebar, which returns a SurfGlobalSidebar that is shown to every " +
+        "online player, including players who join later.",
+    ReplaceWith("SurfGlobalSidebar", "dev.slne.surf.api.paper.sidebar.SurfGlobalSidebar")
+)
+@Suppress("DEPRECATION")
 interface SurfAutoUpdatablePlayerScoreboard : SurfAutoUpdatableScoreboard {
     /**
      * Adds a viewer to the scoreboard. In this implementation, this method does nothing and prints a

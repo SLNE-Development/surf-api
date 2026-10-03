@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
 import com.google.auto.service.AutoService

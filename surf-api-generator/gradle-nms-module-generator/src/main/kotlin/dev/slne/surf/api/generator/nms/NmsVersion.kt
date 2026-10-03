@@ -30,6 +30,11 @@ enum class NmsVersion(
         versionId = "v26_2",
         classPrefix = "V26_2",
         paperDevBundle = "26.2+",
+    ),
+    V26_3(
+        versionId = "v26_3",
+        classPrefix = "V26_3",
+        paperDevBundle = "26.3.build.+",
     );
 
     /** Relative path from the repository root to this version's Gradle module. */

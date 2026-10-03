@@ -210,7 +210,7 @@
   },
   "info": {
     "title": "Minecraft Server JSON-RPC",
-    "version": "2.0.0"
+    "version": "3.1.0"
   },
   "methods": [
     {
@@ -1383,6 +1383,42 @@
       "params": []
     },
     {
+      "description": "World upgrade started",
+      "name": "minecraft:notification/world/upgrade_started",
+      "params": []
+    },
+    {
+      "description": "World upgrade progress. Rate limited to 1 notification per second",
+      "name": "minecraft:notification/world/upgrade_progress",
+      "params": [
+        {
+          "name": "progress",
+          "required": true,
+          "schema": {
+            "type": "number"
+          }
+        }
+      ]
+    },
+    {
+      "description": "World upgrade finished",
+      "name": "minecraft:notification/world/upgrade_finished",
+      "params": []
+    },
+    {
+      "description": "World upgrade failed",
+      "name": "minecraft:notification/world/upgrade_failed",
+      "params": [
+        {
+          "name": "reason",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    {
       "description": "Player joined",
       "name": "minecraft:notification/players/joined",
       "params": [
@@ -1526,7 +1562,7 @@
       ]
     },
     {
-      "description": "Server status heartbeat",
+      "description": "Server status heartbeat, including before the server has spun up",
       "name": "minecraft:notification/server/status",
       "params": [
         {

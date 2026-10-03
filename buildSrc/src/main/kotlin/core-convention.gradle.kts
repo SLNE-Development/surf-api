@@ -2,7 +2,7 @@ import org.gradle.accessors.dm.LibrariesForLibs
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 val libs = the<LibrariesForLibs>()
-val javaVersion: String by project
+val javaVersion = project.findProperty("javaVersion") as String
 
 plugins {
     java
@@ -72,7 +72,7 @@ tasks {
     shadowJar {
         mergeServiceFiles()
 
-        val relocationPrefix: String by project
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt") {
             exclude("net.kyori.adventure.nbt.api.**")
         }

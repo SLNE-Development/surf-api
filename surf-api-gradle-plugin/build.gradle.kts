@@ -1,10 +1,10 @@
 import java.nio.file.Files
 
 // region properties
-val relocationPrefix: String by project
-val mcVersion: String by project
+val relocationPrefix = project.findProperty("relocationPrefix") as String
+val mcVersion = project.findProperty("mcVersion") as String
 val groupId = findProperty("group") as String
-val javaVersion: String by project
+val javaVersion = findProperty("javaVersion") as String
 val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 // endregion
 
@@ -13,7 +13,7 @@ plugins {
     `kotlin-dsl`
     `java-toolchain-convention`
 
-    id("com.gradle.plugin-publish") version "2.1.1"
+    id("com.gradle.plugin-publish") version "2.2.1"
     kotlin("plugin.serialization")
     idea
 }
@@ -109,7 +109,9 @@ gradlePlugin {
 
 val constantsOutputDir =
     layout.buildDirectory.dir("generated/dev/slne/surf/api/gradle/generated")
-val generateConstants by tasks.registering {
+val generateConstants = tasks.register("generateConstants") {
+    description = "Generates the Constants.kt file with build information."
+
     val outputFile = constantsOutputDir.map { it.file("Constants.kt") }
 
     inputs.property("relocationPrefix", relocationPrefix)
@@ -119,7 +121,7 @@ val generateConstants by tasks.registering {
     inputs.property("libs.canvas.api", libs.canvas.api.get().toString())
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
-    inputs.property("libs.versions.commandapi", libs.versions.commandapi.get())
+    inputs.property("libs.versions.commandapiplugin", libs.versions.commandapiplugin.get())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
     inputs.property("libs.versions.luckperms", libs.versions.luckperms.get())
     inputs.property(
@@ -161,7 +163,7 @@ val generateConstants by tasks.registering {
             |    const val MINECRAFT_VERSION = "$mcVersion"
             |    const val SURF_API_VERSION = "+"
             |
-            |    const val COMMAND_API_VERSION = "${libs.versions.commandapi.get()}"
+            |    const val COMMAND_API_VERSION = "${libs.versions.commandapiplugin.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
             |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
             |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"

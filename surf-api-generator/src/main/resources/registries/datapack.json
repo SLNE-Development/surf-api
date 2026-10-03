@@ -22,7 +22,7 @@
     "minecraft:advancement": {
       "elements": true,
       "stable": true,
-      "tags": false
+      "tags": true
     },
     "minecraft:attribute": {
       "elements": false,
@@ -54,9 +54,9 @@
       "stable": true,
       "tags": true
     },
-    "minecraft:block_type": {
-      "elements": false,
-      "stable": true,
+    "minecraft:block_transformer": {
+      "elements": true,
+      "stable": false,
       "tags": true
     },
     "minecraft:cat_sound_variant": {
@@ -95,6 +95,31 @@
       "tags": true
     },
     "minecraft:consume_effect_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:context_float_provider": {
+      "elements": true,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:context_float_provider_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:context_int_provider": {
+      "elements": true,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:context_int_provider_type": {
+      "elements": false,
+      "stable": true,
+      "tags": true
+    },
+    "minecraft:context_key_set": {
       "elements": false,
       "stable": true,
       "tags": true
@@ -140,8 +165,8 @@
       "tags": true
     },
     "minecraft:decorated_pot_pattern": {
-      "elements": false,
-      "stable": true,
+      "elements": true,
+      "stable": false,
       "tags": true
     },
     "minecraft:dialog": {
@@ -309,11 +334,6 @@
       "stable": true,
       "tags": true
     },
-    "minecraft:loot_number_provider_type": {
-      "elements": false,
-      "stable": true,
-      "tags": true
-    },
     "minecraft:loot_pool_entry_type": {
       "elements": false,
       "stable": true,
@@ -417,7 +437,7 @@
     "minecraft:recipe": {
       "elements": true,
       "stable": true,
-      "tags": false
+      "tags": true
     },
     "minecraft:recipe_book_category": {
       "elements": false,
@@ -459,6 +479,11 @@
       "stable": true,
       "tags": true
     },
+    "minecraft:slot_source": {
+      "elements": true,
+      "stable": true,
+      "tags": true
+    },
     "minecraft:slot_source_type": {
       "elements": false,
       "stable": true,
@@ -477,6 +502,11 @@
     "minecraft:stat_type": {
       "elements": false,
       "stable": true,
+      "tags": true
+    },
+    "minecraft:sulfur_cube_archetype": {
+      "elements": true,
+      "stable": false,
       "tags": true
     },
     "minecraft:test_environment": {
@@ -579,12 +609,22 @@
       "stable": true,
       "tags": true
     },
+    "minecraft:worldgen/block_state_provider": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    },
     "minecraft:worldgen/block_state_provider_type": {
       "elements": false,
       "stable": true,
       "tags": true
     },
     "minecraft:worldgen/carver": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    },
+    "minecraft:worldgen/carver_type": {
       "elements": false,
       "stable": true,
       "tags": true
@@ -592,16 +632,6 @@
     "minecraft:worldgen/chunk_generator": {
       "elements": false,
       "stable": true,
-      "tags": true
-    },
-    "minecraft:worldgen/configured_carver": {
-      "elements": true,
-      "stable": false,
-      "tags": true
-    },
-    "minecraft:worldgen/configured_feature": {
-      "elements": true,
-      "stable": false,
       "tags": true
     },
     "minecraft:worldgen/density_function": {
@@ -615,11 +645,16 @@
       "tags": true
     },
     "minecraft:worldgen/feature": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    },
+    "minecraft:worldgen/feature_size_type": {
       "elements": false,
       "stable": true,
       "tags": true
     },
-    "minecraft:worldgen/feature_size_type": {
+    "minecraft:worldgen/feature_type": {
       "elements": false,
       "stable": true,
       "tags": true
@@ -635,11 +670,21 @@
       "tags": true
     },
     "minecraft:worldgen/material_condition": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    },
+    "minecraft:worldgen/material_condition_type": {
       "elements": false,
       "stable": true,
       "tags": true
     },
     "minecraft:worldgen/material_rule": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    },
+    "minecraft:worldgen/material_rule_type": {
       "elements": false,
       "stable": true,
       "tags": true

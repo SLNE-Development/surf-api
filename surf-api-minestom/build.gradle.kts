@@ -40,7 +40,7 @@ tasks {
     }
 
     shadowJar {
-        val relocationPrefix: String by project
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
     }

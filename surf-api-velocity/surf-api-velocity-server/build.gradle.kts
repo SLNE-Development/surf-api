@@ -1,7 +1,7 @@
 plugins {
     `core-convention`
     kotlin("kapt")
-    id("com.github.gmazzo.buildconfig") version "6.0.10"
+    id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
 dependencies {
@@ -24,7 +24,7 @@ dependencies {
 
 tasks {
     shadowJar {
-        val relocationPrefix: String by project
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
     }
 }
