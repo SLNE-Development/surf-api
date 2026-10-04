@@ -76,6 +76,7 @@ ksp-version = "2.3.12"
 reactor-netty = "1.3.7"
 bytebuddy = "1.18.14"
 wyck = "3.+"
+gremlin = "0.0.9"
 
 # Testing
 junit = "6.1.3"
@@ -192,6 +193,7 @@ glm = { module = "io.github.kotlin-graphics:glm", version.ref = "glm" }
 datafixerupper = { module = "com.mojang:datafixerupper", version.ref = "datafixerupper" }
 luckperms = { module = "net.luckperms:api", version.ref = "luckperms" }
 wyck = { module = "dev.wyck:wyck", version.ref = "wyck" }
+gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
 
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
 auto-service = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-service-ksp" }
@@ -224,6 +226,7 @@ ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp-version" }
 plugin-yml-paper-gradle-plugin = { module = "de.eldoria.plugin-yml.paper:de.eldoria.plugin-yml.paper.gradle.plugin", version.ref = "plugin-yml-paper" }
 run-paper-gradle-plugin = { module = "xyz.jpenilla.run-paper:xyz.jpenilla.run-paper.gradle.plugin", version.ref = "run-paper-gradle-plugin" }
+gremlin-gradle-plugin = { module = "xyz.jpenilla.gremlin-gradle:xyz.jpenilla.gremlin-gradle.gradle.plugin", version.ref = "gremlin" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
 [plugins]

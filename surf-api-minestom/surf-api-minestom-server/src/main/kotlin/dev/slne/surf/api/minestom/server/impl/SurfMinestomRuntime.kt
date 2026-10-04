@@ -3,20 +3,20 @@ package dev.slne.surf.api.minestom.server.impl
 import com.github.retrooper.packetevents.PacketEvents
 import dev.slne.surf.api.core.extensions.packetEvents
 import dev.slne.surf.api.core.server.packet.NoopPacketEvents
-import dev.slne.surf.api.minestom.server.SurfMinestomServer
-import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
-import dev.slne.surf.api.minestom.server.SurfMinestomFeature
-import dev.slne.surf.api.minestom.server.impl.dialog.DialogCallbackListener
 import dev.slne.surf.api.minestom.extension.GlobalEventHandler
 import dev.slne.surf.api.minestom.extension.SchedulerManager
+import dev.slne.surf.api.minestom.permission.MinestomPermissions
+import dev.slne.surf.api.minestom.player.PlayerLimit
+import dev.slne.surf.api.minestom.server.SurfMinestomFeature
+import dev.slne.surf.api.minestom.server.SurfMinestomServer
+import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.impl.command.MinestomCommandAPIService
+import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.configuration.ConfigurationPhase
+import dev.slne.surf.api.minestom.server.impl.dialog.DialogCallbackListener
 import dev.slne.surf.api.minestom.server.impl.inventory.framework.MinestomInventoryLoader
 import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import dev.slne.surf.api.minestom.server.impl.player.PlayerFlightListener
-import dev.slne.surf.api.minestom.player.PlayerLimit
-import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
-import dev.slne.surf.api.minestom.permission.MinestomPermissions
 import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicReference
 internal class SurfMinestomRuntime private constructor(
     private val builder: SurfMinestomServerBuilder,
 ) : SurfMinestomServer {
-
     override val eventNode: EventNode<Event> = EventNode.all(builder.eventNodeName)
     override val features: Collection<SurfMinestomFeature> =
         builder.features.values.sortedBy(SurfMinestomFeature::loadPriority)
@@ -63,7 +62,12 @@ internal class SurfMinestomRuntime private constructor(
         PlayerEvents.install(eventNode, configurationPhase = builder.configurationPhase != null)
         commandApi.start(eventNode)
 
-        builder.configurationPhase?.let { phase -> ConfigurationPhase.install(phase.build(), eventNode) }
+        builder.configurationPhase?.let { phase ->
+            ConfigurationPhase.install(
+                phase.build(),
+                eventNode
+            )
+        }
         builder.registrars.forEach { registrar -> registrar.register(eventNode) }
 
         for (feature in features) {

@@ -37,7 +37,8 @@ val pluginDependencies = listOf(
     libs.shadow.gradle.plugin,
     libs.run.paper.gradle.plugin,
     libs.plugin.yml.paper.gradle.plugin,
-    libs.ksp.gradle.plugin
+    libs.ksp.gradle.plugin,
+    libs.gremlin.gradle.plugin,
 )
 
 dependencies {
@@ -150,6 +151,7 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.versions.kotlinxCoroutines", libs.versions.kotlinxCoroutines.get())
     inputs.property("libs.minestom.server", libs.minestom.server.get().toString())
     inputs.property("libs.versions.log4j", libs.versions.log4j.get())
+    inputs.property("libs.versions.asm", libs.versions.asm.get())
     outputs.dir(constantsOutputDir)
 
     doLast {
@@ -186,6 +188,7 @@ val generateConstants = tasks.register("generateConstants") {
             |
             |    const val MINESTOM = "${libs.minestom.server.get()}"
             |    const val LOG4J_VERSION = "${libs.versions.log4j.get()}"
+            |    const val ASM_VERSION = "${libs.versions.asm.get()}"
             |
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}

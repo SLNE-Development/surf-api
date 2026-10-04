@@ -51,7 +51,9 @@ class LuckPermsFeatureBuilder internal constructor() {
  * ```
  *
  * When the server already has an agent of its own, call
- * `LuckPermsAgent.agentmain(args, instrumentation)` from it instead.
+ * `LuckPermsAgent.agentmain(args, instrumentation)` from it instead. Servers built with
+ * `dev.slne.surf.api.gradle.minestom-server` do this through the bootstrap agent, which lists it
+ * in `Surf-Delegate-Agent-Classes`.
  */
 class LuckPermsFeature internal constructor(
     private val settings: LuckPermsFeatureBuilder,

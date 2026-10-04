@@ -38,6 +38,7 @@ include("surf-api-shared:surf-api-shared-internal")
 
 include(":surf-api-minestom:surf-api-minestom")
 include(":surf-api-minestom:surf-api-minestom-server")
+include(":surf-api-minestom:surf-api-minestom-server-bootstrap")
 include(":surf-api-minestom:surf-api-minestom-server-signed-chat")
 include(":surf-api-minestom:surf-api-minestom-server-npc")
 include(":surf-api-minestom:surf-api-minestom-server-player-visibility")

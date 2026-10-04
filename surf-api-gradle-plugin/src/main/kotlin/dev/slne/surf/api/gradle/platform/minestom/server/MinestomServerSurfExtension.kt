@@ -9,7 +9,7 @@ import javax.inject.Inject
 /**
  * An optional part of the surf Minestom server, shipped as a module of its own.
  *
- * @property agentClass the Java agent the feature needs in the server jar's manifest, if any
+ * @property agentClass the Java agent the feature needs on startup, if any
  */
 enum class MinestomServerFeature(val module: String, internal val agentClass: String? = null) {
     SIGNED_CHAT("surf-api-minestom-server-signed-chat"),
@@ -40,12 +40,23 @@ enum class MinestomServerFeature(val module: String, internal val agentClass: St
  *
  * Calling `withXxx()` only puts the feature's module on the class path; the server still installs
  * it in `surfMinestomServer { }`.
+ *
+ * The server jar only contains the project's own code: Minestom and every other library from a
+ * Maven repository are downloaded into `libraries/` when the server starts, see
+ * [downloadLibraries].
  */
 open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactory) :
     CoreSurfExtension(objects) {
 
     internal val mainClass = objects.property<String>()
     internal val features = objects.setProperty<MinestomServerFeature>()
+
+    /**
+     * Whether libraries are downloaded with gremlin when the server starts instead of being shaded
+     * into the server jar. They are fetched from the project's HTTP(S) Maven repositories, so
+     * libraries that only exist in `mavenLocal()` or need credentials have to be shaded.
+     */
+    val downloadLibraries = objects.property<Boolean>().convention(true)
 
     /** The directory `runServer` starts the server in, relative to the project. */
     val runDirectory = objects.property<String>().convention("run")
@@ -61,7 +72,7 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
 
     fun withSignedChat() = feature(MinestomServerFeature.SIGNED_CHAT)
 
-    /** Also declares the LuckPerms agent in the manifest, which it needs for its libraries. */
+    /** Also calls the LuckPerms agent on startup, which it needs for its libraries. */
     fun withLuckPerms() = feature(MinestomServerFeature.LUCKPERMS)
     fun withSpark() = feature(MinestomServerFeature.SPARK)
     fun withNpcLib() = feature(MinestomServerFeature.NPC)

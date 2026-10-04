@@ -8,6 +8,8 @@ import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.platform.core.AbstractCoreSurfPlugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaApplication
 import org.gradle.api.tasks.Exec
@@ -20,11 +22,19 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
+import org.gradle.language.jvm.tasks.ProcessResources
 import org.gradle.process.CommandLineArgumentProvider
+import xyz.jpenilla.gremlin.gradle.GremlinExtension
+import xyz.jpenilla.gremlin.gradle.WriteDependencySet
 
 /**
  * A runnable surf Minestom server: the surf api server, Minestom, the features asked for and the
- * project's own code, shaded into one executable jar.
+ * project's own code as one executable jar.
+ *
+ * Only the project's own modules and the bootstrap are shaded. Every library from a Maven
+ * repository is listed in a gremlin `dependencies.txt` instead, which the bootstrap agent
+ * downloads into `libraries/`, relocates like the shadow jar and appends to the class path
+ * before `main` runs.
  *
  * The jar applies the same relocations as `dev.slne.surf.api.gradle.minestom`, so plugins built
  * with it, whether dropped into `plugins/` or shaded into the server through a project
@@ -43,6 +53,7 @@ internal class MinestomServerSurfPlugin :
 
     override fun Project.applyPlugins0() {
         applyPlugin("org.gradle.application")
+        applyPlugin("xyz.jpenilla.gremlin-gradle")
     }
 
     override fun Project.configure0() {
@@ -59,6 +70,18 @@ internal class MinestomServerSurfPlugin :
             mergeServiceFiles()
             transform(Log4j2PluginsCacheFileTransformer::class.java)
             manifest.attributes["Multi-Release"] = "true"
+        }
+
+        extensions.configure<GremlinExtension> {
+            // The bootstrap module brings the gremlin runtime, which is shaded instead of downloaded
+            defaultGremlinRuntimeDependency.set(false)
+            // gremlin's default ASM cannot read the class files of current Java versions
+            defaultJarRelocatorDependencies.set(false)
+        }
+        dependencies {
+            add(JAR_RELOCATOR_RUNTIME, "me.lucko:jar-relocator:1.7")
+            add(JAR_RELOCATOR_RUNTIME, "org.ow2.asm:asm:${Constants.ASM_VERSION}")
+            add(JAR_RELOCATOR_RUNTIME, "org.ow2.asm:asm-commons:${Constants.ASM_VERSION}")
         }
     }
 
@@ -78,10 +101,22 @@ internal class MinestomServerSurfPlugin :
             configure<JavaApplication> { this.mainClass.set(mainClass) }
         }
 
-        val agent = features.firstNotNullOfOrNull(MinestomServerFeature::agentClass)
+        val agents = features.mapNotNull(MinestomServerFeature::agentClass)
+        val downloadLibraries = extension.downloadLibraries.get()
         tasks.named<ShadowJar>("shadowJar") {
             if (mainClass != null) manifest.attributes["Main-Class"] = mainClass
-            if (agent != null) manifest.attributes["Launcher-Agent-Class"] = agent
+            if (downloadLibraries) {
+                manifest.attributes["Launcher-Agent-Class"] = BOOTSTRAP_AGENT
+                if (agents.isNotEmpty()) manifest.attributes[DELEGATE_AGENTS_ATTRIBUTE] = agents.joinToString(",")
+            } else if (agents.isNotEmpty()) {
+                manifest.attributes["Launcher-Agent-Class"] = agents.first()
+            }
+        }
+
+        if (downloadLibraries) {
+            configureLibraryDownload(extension)
+        } else {
+            tasks.named<ProcessResources>("processResources") { exclude(DEPENDENCIES_FILE) }
         }
 
         registerRunServer(extension)
@@ -144,6 +179,45 @@ internal class MinestomServerSurfPlugin :
         }
     }
 
+    /**
+     * Lists every library from a Maven repository in the `dependencies.txt` the bootstrap
+     * downloads them from, with the shadow jar's relocations, and leaves only the project's own
+     * modules and the bootstrap in the server jar.
+     */
+    private fun Project.configureLibraryDownload(extension: MinestomServerSurfExtension) {
+        dependencies {
+            add("implementation", "dev.slne.surf.api:$BOOTSTRAP_MODULE:${Constants.SURF_API_VERSION}")
+        }
+
+        configurations.named(RUNTIME_DOWNLOAD) {
+            extendsFrom(configurations.getByName("implementation"), configurations.getByName("runtimeOnly"))
+            shouldResolveConsistentlyWith(configurations.getByName("runtimeClasspath"))
+            SHADED_MODULES.forEach { (group, module) -> exclude(mapOf("group" to group, "module" to module)) }
+        }
+
+        tasks.named<WriteDependencySet>("writeDependencies") {
+            forEachRelocation { from, to, excludes ->
+                relocate(from, to) { this.excludes.set(excludes) }
+            }
+            if (extension.withSurfRedis.get()) {
+                extension.surfRedisRelocation.orNull?.let { relocate("dev.slne.surf.redis", it) }
+            }
+            if (extension.withSurfDatabaseR2dbc.get()) {
+                extension.surfDatabaseR2dbcRelocation.orNull?.let { relocate("dev.slne.surf.database", it) }
+            }
+        }
+
+        tasks.named<ShadowJar>("shadowJar") {
+            dependencies {
+                exclude { dependency -> !dependency.isShaded() }
+            }
+        }
+    }
+
+    private fun ResolvedDependency.isShaded() =
+        moduleGroup to moduleName in SHADED_MODULES ||
+                moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
+
     /** Builds the server jar and runs it with `java -jar`, which the agent in the manifest needs. */
     private fun Project.registerRunServer(extension: MinestomServerSurfExtension) {
         val shadowJar = tasks.named<ShadowJar>("shadowJar")
@@ -169,6 +243,20 @@ internal class MinestomServerSurfPlugin :
 
     private companion object {
         const val LOG4J_CONFIG = "log4j2.xml"
+
+        const val RUNTIME_DOWNLOAD = "runtimeDownload"
+        const val JAR_RELOCATOR_RUNTIME = "jarRelocatorRuntime"
+        const val DEPENDENCIES_FILE = "dependencies.txt"
+        const val BOOTSTRAP_MODULE = "surf-api-minestom-server-bootstrap"
+        const val BOOTSTRAP_AGENT = "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
+        const val DELEGATE_AGENTS_ATTRIBUTE = "Surf-Delegate-Agent-Classes"
+
+        /** What the bootstrap needs before anything is downloaded, so it stays in the server jar. */
+        val SHADED_MODULES = setOf(
+            "dev.slne.surf.api" to BOOTSTRAP_MODULE,
+            "xyz.jpenilla" to "gremlin-runtime",
+            "org.jspecify" to "jspecify",
+        )
     }
 
     override fun Project.platformTestDependencies(extension: MinestomServerSurfExtension) {
