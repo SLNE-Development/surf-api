@@ -81,6 +81,19 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         relocations += Relocation(from, to, excludes)
     }
 
+    /** Relocates [from] below the surf relocation prefix, as `<prefix>.<to>`. */
+    internal fun applyRelocation(from: String, to: String, excludes: List<String> = emptyList()) {
+        relocations += Relocation(from, to, excludes)
+    }
+
+    /**
+     * Calls [action] for every relocation the shadow jar applies, with [to] already below the surf
+     * relocation prefix.
+     */
+    internal fun forEachRelocation(action: (from: String, to: String, excludes: List<String>) -> Unit) {
+        relocations.forEach { action(it.from, "${Constants.RELOCATION_PREFIX}.${it.to}", it.excludes) }
+    }
+
     fun addRelocationsForDependency(
         dependency: String,
         vararg relocations: Pair<String, String>,

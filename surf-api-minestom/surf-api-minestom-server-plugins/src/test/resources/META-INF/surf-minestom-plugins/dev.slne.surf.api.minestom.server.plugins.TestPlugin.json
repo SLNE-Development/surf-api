@@ -1,0 +1,9 @@
+{
+  "id": "test-plugin",
+  "main": "dev.slne.surf.api.minestom.server.plugins.TestPlugin",
+  "name": "TestPlugin",
+  "version": "1.0.0",
+  "dependencies": [
+    { "id": "absent-optional", "optional": true }
+  ]
+}

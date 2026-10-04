@@ -20,6 +20,15 @@ commandapiplugin = "12.1.0"
 luckperms = "5.5"
 luckpermsplugin-bukkit = "v5.5.71-bukkit" # "luckpermsplugin" is written without a separating "-" between "luckperms" and "plugin", because Gradle interprets the version catalog key as a hierarchical alias and would split it into a nested accessor (libs.luckperms.plugin.bukkit), which conflicts with the existing libs.luckperms alias for the API dependency.
 
+# Minestom
+minestom-server = "2026.09.12-26.2"
+minestom-brigadier = "1.3.10"
+minestom-npc = "0.1.3"
+luckpermsMinestom = "5.5+26.2-SNAPSHOT" # substituted by the vendor/LuckPerms included build
+sparkMinestom = "1.10.181-SNAPSHOT" # substituted by the vendor/spark-minestom included build
+terminal-console-appender = "1.3.0"
+log4j = "2.26.1"
+
 # Scoreboard Library
 scoreboard-library = "2.8.2"
 
@@ -67,6 +76,7 @@ ksp-version = "2.3.12"
 reactor-netty = "1.3.7"
 bytebuddy = "1.18.14"
 wyck = "3.+"
+gremlin = "0.0.9"
 
 # Testing
 junit = "6.1.3"
@@ -88,7 +98,16 @@ paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 canvas-api = { module = "io.canvasmc.canvas:canvas-api", version.ref = "canvas-api" }
 
 # Minestom
-surf-minestom-lobby-api = { module = "dev.slne.minestom.lobby:surf-minestom-lobby-api", version = "+" }
+minestom-server = { module = "net.minestom:minestom", version.ref = "minestom-server" }
+minestom-brigadier = { module = "com.mojang:brigadier", version.ref = "minestom-brigadier" }
+minestom-npc = { module = "codes.bed.minestom:npc", version.ref = "minestom-npc" }
+minestom-luckperms = { module = "club.tesseract:luckperms-minestom", version.ref = "luckpermsMinestom" }
+minestom-spark = { module = "me.lucko:spark-minestom", version.ref = "sparkMinestom" }
+minestom-spark-common = { module = "me.lucko:spark-common", version.ref = "sparkMinestom" }
+terminal-console-appender = { module = "net.minecrell:terminalconsoleappender", version.ref = "terminal-console-appender" }
+log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
 
 # Kotlin
 kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -174,6 +193,7 @@ glm = { module = "io.github.kotlin-graphics:glm", version.ref = "glm" }
 datafixerupper = { module = "com.mojang:datafixerupper", version.ref = "datafixerupper" }
 luckperms = { module = "net.luckperms:api", version.ref = "luckperms" }
 wyck = { module = "dev.wyck:wyck", version.ref = "wyck" }
+gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
 
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
 auto-service = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-service-ksp" }
@@ -206,6 +226,7 @@ ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp-version" }
 plugin-yml-paper-gradle-plugin = { module = "de.eldoria.plugin-yml.paper:de.eldoria.plugin-yml.paper.gradle.plugin", version.ref = "plugin-yml-paper" }
 run-paper-gradle-plugin = { module = "xyz.jpenilla.run-paper:xyz.jpenilla.run-paper.gradle.plugin", version.ref = "run-paper-gradle-plugin" }
+gremlin-gradle-plugin = { module = "xyz.jpenilla.gremlin-gradle:xyz.jpenilla.gremlin-gradle.gradle.plugin", version.ref = "gremlin" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
 [plugins]

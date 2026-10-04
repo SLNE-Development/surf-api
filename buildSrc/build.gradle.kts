@@ -13,4 +13,5 @@ dependencies {
     implementation(libs.kotlin.serialization)
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
     implementation(libs.asm)
+    implementation(libs.gremlin.gradle.plugin)
 }
