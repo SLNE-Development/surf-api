@@ -1,12 +1,20 @@
 import dev.slne.surf.api.gradle.util.slneReleases
-import org.gradle.api.component.AdhocComponentWithVariants
 
 plugins {
     id("dev.slne.surf.api.gradle.minestom")
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
     api(projects.surfRedisCore)
+}
+
+minestomPluginFile {
+    main = "dev.slne.surf.redis.RedisMinestomPlugin"
+    authors = listOf("red")
 }
 
 val shadowComponent = components["shadow"] as AdhocComponentWithVariants
