@@ -9,5 +9,6 @@ enum class SurfApiPlatform(val dependency: String, val scope: String = COMPILE_O
     PAPER("dev.slne.surf.api:surf-api-paper:${Constants.SURF_API_VERSION}"),
     VELOCITY("dev.slne.surf.api:surf-api-velocity:${Constants.SURF_API_VERSION}"),
     MINESTOM("dev.slne.surf.api:surf-api-minestom:${Constants.SURF_API_VERSION}"),
+    MINESTOM_SERVER("dev.slne.surf.api:surf-api-minestom-server:${Constants.SURF_API_VERSION}", "implementation"),
     STANDALONE("dev.slne.surf.api:surf-api-standalone:${Constants.SURF_API_VERSION}", API),
 }

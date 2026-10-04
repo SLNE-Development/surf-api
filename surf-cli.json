@@ -77,6 +77,38 @@
       "kind": "api"
     },
     {
+      "id": "surf-api-minestom-server",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom-server-plugins",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom-server-signed-chat",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom-server-luckperms",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom-server-spark",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom-server-npc",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom-server-player-visibility",
+      "kind": "api"
+    },
+    {
+      "id": "surf-api-minestom-server-console",
+      "kind": "api"
+    },
+    {
       "id": "surf-api-paper-plugin-test",
       "kind": "api"
     },

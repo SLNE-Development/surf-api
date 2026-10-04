@@ -1,0 +1,9 @@
+{
+  "id": "example-plugin",
+  "main": "dev.slne.surf.api.minestom.example.plugin.ExamplePlugin",
+  "name": "ExamplePlugin",
+  "version": "1.0.0",
+  "description": "Shows what a surf Minestom plugin can do",
+  "authors": ["SLNE Development"],
+  "dependencies": []
+}

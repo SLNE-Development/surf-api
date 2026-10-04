@@ -1,0 +1,17 @@
+public final class dev/slne/surf/api/minestom/server/npc/NpcFeature : dev/slne/surf/api/minestom/server/SurfMinestomFeature {
+	public static final field Companion Ldev/slne/surf/api/minestom/server/npc/NpcFeature$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getLoadPriority ()I
+	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/npc/NpcFeature$Companion {
+}
+
+public final class dev/slne/surf/api/minestom/server/npc/NpcFeatureKt {
+	public static final fun withNpcLib (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;)V
+}
+

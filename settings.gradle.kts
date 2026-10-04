@@ -36,11 +36,47 @@ include("surf-api-shared")
 include("surf-api-shared:surf-api-shared-public")
 include("surf-api-shared:surf-api-shared-internal")
 
-include("surf-api-minestom")
+include(":surf-api-minestom:surf-api-minestom")
+include(":surf-api-minestom:surf-api-minestom-server")
+include(":surf-api-minestom:surf-api-minestom-server-signed-chat")
+include(":surf-api-minestom:surf-api-minestom-server-npc")
+include(":surf-api-minestom:surf-api-minestom-server-player-visibility")
+include(":surf-api-minestom:surf-api-minestom-server-console")
+include(":surf-api-minestom:surf-api-minestom-server-spark")
+include(":surf-api-minestom:surf-api-minestom-server-plugins")
+
+includeBuild("vendor/spark-minestom") {
+    dependencySubstitution {
+        substitute(module("me.lucko:spark-minestom")).using(project(":"))
+    }
+}
+
+// vendor/LuckPerms is generated from the LuckPerms-Upstream submodule and the patches next to it,
+// so the LuckPerms feature is only built once it has been created
+val luckPermsDir = file("vendor/LuckPerms")
+if (luckPermsDir.resolve("settings.gradle").isFile) {
+    include(":surf-api-minestom:surf-api-minestom-server-luckperms")
+
+    includeBuild(luckPermsDir) {
+        dependencySubstitution {
+            substitute(module("club.tesseract:luckperms-minestom")).using(project(":minestom"))
+        }
+    }
+} else {
+    logger.warn(
+        """
+        vendor/LuckPerms is missing, so surf-api-minestom-server-luckperms is not built. Create it with:
+          git submodule update --init --recursive
+          cd vendor && ./gradlew applyPatches
+        """.trimIndent()
+    )
+}
 
 val ci = System.getenv("CI")?.toBoolean() ?: false
 
 if (!ci) {
     include(":surf-api-paper:surf-api-paper-plugin-test")
+    include(":surf-api-minestom:surf-api-minestom-example")
+    include(":surf-api-minestom:surf-api-minestom-example-plugin")
     include("surf-api-generator")
 }

@@ -81,6 +81,11 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         relocations += Relocation(from, to, excludes)
     }
 
+    /** Relocates [from] below the surf relocation prefix, as `<prefix>.<to>`. */
+    internal fun applyRelocation(from: String, to: String, excludes: List<String> = emptyList()) {
+        relocations += Relocation(from, to, excludes)
+    }
+
     fun addRelocationsForDependency(
         dependency: String,
         vararg relocations: Pair<String, String>,

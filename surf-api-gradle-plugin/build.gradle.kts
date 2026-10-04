@@ -87,6 +87,12 @@ gradlePlugin {
             implementationClass = "dev.slne.surf.api.gradle.platform.minestom.MinestomSurfPlugin"
         }
 
+        create("minestom-server") {
+            id = "dev.slne.surf.api.gradle.minestom-server"
+            implementationClass =
+                "dev.slne.surf.api.gradle.platform.minestom.server.MinestomServerSurfPlugin"
+        }
+
         create("minestom-relocations") {
             id = "dev.slne.surf.api.gradle.minestom-relocations"
             implementationClass =
@@ -142,6 +148,8 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.versions.mockbukkit", libs.versions.mockbukkit.get())
     inputs.property("libs.versions.minestom.testing", libs.versions.minestom.testing.get())
     inputs.property("libs.versions.kotlinxCoroutines", libs.versions.kotlinxCoroutines.get())
+    inputs.property("libs.minestom.server", libs.minestom.server.get().toString())
+    inputs.property("libs.versions.log4j", libs.versions.log4j.get())
     outputs.dir(constantsOutputDir)
 
     doLast {
@@ -175,6 +183,9 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val TEST_MOCKBUKKIT_VERSION = "${libs.versions.mockbukkit.get()}"
             |    const val TEST_MINESTOM_TESTING_VERSION = "${libs.versions.minestom.testing.get()}"
             |    const val TEST_COROUTINES_VERSION = "${libs.versions.kotlinxCoroutines.get()}"
+            |
+            |    const val MINESTOM = "${libs.minestom.server.get()}"
+            |    const val LOG4J_VERSION = "${libs.versions.log4j.get()}"
             |
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}

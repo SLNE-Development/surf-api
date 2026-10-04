@@ -1,0 +1,161 @@
+public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomFeature {
+	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public abstract fun getId ()Ljava/lang/String;
+	public fun getLoadPriority ()I
+	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/SurfMinestomFeature$DefaultImpls {
+	public static fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public static fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public static fun getLoadPriority (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;)I
+	public static fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+}
+
+public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomServer {
+	public static final field Companion Ldev/slne/surf/api/minestom/server/SurfMinestomServer$Companion;
+	public abstract fun feature (Ljava/lang/String;)Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;
+	public abstract fun getEventNode ()Lnet/minestom/server/event/EventNode;
+	public abstract fun getFeatures ()Ljava/util/Collection;
+	public abstract fun shutdown ()V
+}
+
+public final class dev/slne/surf/api/minestom/server/SurfMinestomServer$Companion {
+	public final fun getInstance ()Ldev/slne/surf/api/minestom/server/SurfMinestomServer;
+}
+
+public final class dev/slne/surf/api/minestom/server/SurfMinestomServerBuilder {
+	public final fun getEventNodeName ()Ljava/lang/String;
+	public final fun getMaxPlayers ()Ljava/lang/Integer;
+	public final fun install (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;)V
+	public final fun isInstalled (Ljava/lang/String;)Z
+	public final fun listeners ([Ldev/slne/surf/api/minestom/event/EventRegistrar;)V
+	public final fun permissions (Ldev/slne/surf/api/minestom/permission/PermissionProvider;)V
+	public final fun setEventNodeName (Ljava/lang/String;)V
+	public final fun setMaxPlayers (Ljava/lang/Integer;)V
+	public final fun withConfigurationPhase (Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun withConfigurationPhase$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public abstract interface annotation class dev/slne/surf/api/minestom/server/SurfMinestomServerDsl : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/minestom/server/SurfMinestomServerKt {
+	public static final fun surfMinestomServer (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/server/SurfMinestomServer;
+	public static synthetic fun surfMinestomServer$default (Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/server/SurfMinestomServer;
+}
+
+public final class dev/slne/surf/api/minestom/server/configuration/ConfigurationContext {
+	public final fun getEvent ()Lnet/minestom/server/event/player/AsyncPlayerConfigurationEvent;
+	public final fun getPlayer ()Lnet/minestom/server/entity/Player;
+	public final fun getSpawningInstance ()Lnet/minestom/server/instance/Instance;
+	public final fun isFirstConfig ()Z
+	public final fun setEvent (Lnet/minestom/server/event/player/AsyncPlayerConfigurationEvent;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/configuration/ConfigurationPhaseBuilder {
+	public final fun after-QwhMw68 (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;)V
+	public final fun awaitSettings-LRDsOJo (J)V
+	public static synthetic fun awaitSettings-LRDsOJo$default (Ldev/slne/surf/api/minestom/server/configuration/ConfigurationPhaseBuilder;JILjava/lang/Object;)V
+	public final fun before-QwhMw68 (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;)V
+	public final fun codeOfConduct (Lkotlin/jvm/functions/Function1;)V
+	public final fun first-OewgcVQ (Ljava/lang/String;Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;)V
+	public final fun getIds ()Ljava/util/List;
+	public final fun last-OewgcVQ (Ljava/lang/String;Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;)V
+	public final fun remove-U6ZxwRg (Ljava/lang/String;)V
+	public final fun replace-OewgcVQ (Ljava/lang/String;Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;)V
+}
+
+public abstract interface class dev/slne/surf/api/minestom/server/configuration/ConfigurationTask {
+	public fun install (Lnet/minestom/server/event/EventNode;)V
+	public abstract fun run (Ldev/slne/surf/api/minestom/server/configuration/ConfigurationContext;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/configuration/ConfigurationTask$DefaultImpls {
+	public static fun install (Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;Lnet/minestom/server/event/EventNode;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/configuration/ConfigurationTaskId {
+	public static final synthetic fun box-impl (Ljava/lang/String;)Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTaskId;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/minestom/server/configuration/ConfigurationTasks {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTasks;
+	public final fun getAWAIT_SETTINGS-Ok4KtHk ()Ljava/lang/String;
+	public final fun getBRAND-Ok4KtHk ()Ljava/lang/String;
+	public final fun getBrand ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun getCODE_OF_CONDUCT-Ok4KtHk ()Ljava/lang/String;
+	public final fun getCONFIGURATION_EVENT-Ok4KtHk ()Ljava/lang/String;
+	public final fun getConfigurationEvent ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun getENABLED_FEATURES-Ok4KtHk ()Ljava/lang/String;
+	public final fun getEnabledFeatures ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun getJOIN_WORLD-Ok4KtHk ()Ljava/lang/String;
+	public final fun getJoinWorld ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun getPLAYER_COUNT-Ok4KtHk ()Ljava/lang/String;
+	public final fun getPlayerCount ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun getRESOURCE_PACK-Ok4KtHk ()Ljava/lang/String;
+	public final fun getResourcePack ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun getSPAWN_LOCATION-Ok4KtHk ()Ljava/lang/String;
+	public final fun getSYNCHRONIZE_REGISTRIES-Ok4KtHk ()Ljava/lang/String;
+	public final fun getSpawnLocation ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun getSynchronizeRegistries ()Ldev/slne/surf/api/minestom/server/configuration/ConfigurationTask;
+	public final fun stopKeepAlive (Lnet/minestom/server/entity/Player;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/configuration/ConfigurationTasks$AwaitSettings : dev/slne/surf/api/minestom/server/configuration/ConfigurationTask {
+	public fun <init> ()V
+	public synthetic fun <init> (JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun install (Lnet/minestom/server/event/EventNode;)V
+	public fun run (Ldev/slne/surf/api/minestom/server/configuration/ConfigurationContext;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/configuration/ConfigurationTasks$CodeOfConduct : dev/slne/surf/api/minestom/server/configuration/ConfigurationTask {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun install (Lnet/minestom/server/event/EventNode;)V
+	public fun run (Ldev/slne/surf/api/minestom/server/configuration/ConfigurationContext;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/command/CommandAPIHook {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/command/CommandAPIHook;
+	public static final fun declare (Lnet/minestom/server/network/packet/server/play/DeclareCommandsPacket;Lnet/minestom/server/entity/Player;)Lnet/minestom/server/network/packet/server/play/DeclareCommandsPacket;
+	public static final fun execute (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)Lnet/minestom/server/command/builder/CommandResult;
+	public static final fun owns (Ljava/lang/String;)Z
+	public static final fun reportUnknown (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/command/CommandAPITranslations {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/command/CommandAPITranslations;
+	public final fun register ()V
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/command/PluginCommands {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/command/PluginCommands;
+	public final fun unregisterAll (Ldev/slne/surf/api/minestom/plugin/SurfMinestomPlugin;)I
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/command/SignedCommandArguments {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/command/SignedCommandArguments;
+	public final fun find (Ljava/lang/String;)Lnet/kyori/adventure/chat/SignedMessage;
+	public final fun getUnsignedFactory ()Lkotlin/jvm/functions/Function2;
+	public final fun resetUnsignedFactory ()V
+	public final fun setUnsignedFactory (Lkotlin/jvm/functions/Function2;)V
+	public final fun withMessages (Ljava/util/Map;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/command/SignedCommandArgumentsKt {
+	public static final fun signableCommandArguments (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)Ljava/util/Map;
+	public static final fun signaturesCoverArguments (Lnet/minestom/server/crypto/ArgumentSignatures;Ljava/util/Map;)Z
+}
+
