@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import org.jspecify.annotations.NullMarked;
@@ -23,6 +24,9 @@ import xyz.jpenilla.gremlin.runtime.DependencySet;
  * other library are listed in the {@value #DEPENDENCIES_FILE} written by gremlin at build time,
  * downloaded into {@code libraries/} on the first start and appended to the system class path
  * before {@code main} runs, so they are loaded exactly as if they had been shaded.</p>
+ *
+ * <p>The plugins the server's own code uses, listed in the {@value ServerPlugins#ATTRIBUTE}
+ * manifest attribute, are put on the system class path too, see {@link ServerPlugins}.</p>
  *
  * <p>Since a jar has only one launcher agent, the agents of the installed features (e.g. the one
  * LuckPerms loads its own libraries with) are listed in the {@value #DELEGATE_AGENTS_ATTRIBUTE}
@@ -48,8 +52,15 @@ public final class SurfMinestomBootstrap {
     /** Called by the JVM for the {@code Launcher-Agent-Class} of a jar started with {@code java -jar}. */
     public static void agentmain(final @Nullable String args, final Instrumentation instrumentation) {
         try {
+            final Attributes manifest = ownManifest();
             installLibraries(instrumentation);
-            callDelegateAgents(args, instrumentation);
+
+            final @Nullable String serverPlugins = manifest.getValue(ServerPlugins.ATTRIBUTE);
+            if (serverPlugins != null) {
+                ServerPlugins.install(serverPlugins, instrumentation, LOGGER);
+            }
+
+            callDelegateAgents(manifest.getValue(DELEGATE_AGENTS_ATTRIBUTE), args, instrumentation);
         } catch (final Throwable e) {
             // Thrown out of a launcher agent, the error is buried under the JVM's own messages
             LOGGER.error("Failed to start the server", e);
@@ -88,8 +99,11 @@ public final class SurfMinestomBootstrap {
         cache.cleanup();
     }
 
-    private static void callDelegateAgents(final @Nullable String args, final Instrumentation instrumentation) {
-        final @Nullable String agents = ownManifestAttribute(DELEGATE_AGENTS_ATTRIBUTE);
+    private static void callDelegateAgents(
+        final @Nullable String agents,
+        final @Nullable String args,
+        final Instrumentation instrumentation
+    ) {
         if (agents == null) {
             return;
         }
@@ -117,12 +131,12 @@ public final class SurfMinestomBootstrap {
         }
     }
 
-    private static @Nullable String ownManifestAttribute(final String name) {
+    private static Attributes ownManifest() {
         try {
             final Path jar = Path.of(SurfMinestomBootstrap.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             try (JarFile jarFile = new JarFile(jar.toFile())) {
                 final @Nullable Manifest manifest = jarFile.getManifest();
-                return manifest == null ? null : manifest.getMainAttributes().getValue(name);
+                return manifest == null ? new Attributes() : manifest.getMainAttributes();
             }
         } catch (final IOException | URISyntaxException e) {
             throw new IllegalStateException("Failed to read the manifest of the server jar", e);

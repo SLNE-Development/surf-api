@@ -1,7 +1,11 @@
 package dev.slne.surf.api.gradle.platform.minestom.server
 
+import dev.slne.surf.api.gradle.generators.pluginfiles.MinestomPluginFile
 import dev.slne.surf.api.gradle.platform.core.CoreSurfExtension
+import org.gradle.api.Action
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.model.ObjectFactory
+import org.gradle.kotlin.dsl.domainObjectContainer
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.setProperty
 import javax.inject.Inject
@@ -35,6 +39,10 @@ enum class MinestomServerFeature(val module: String, internal val agentClass: St
  *     withLuckPerms()
  *     withConsole()
  *     withPlugins()
+ *
+ *     pluginDependencies {
+ *         register("surf-core-minestom")
+ *     }
  * }
  * ```
  *
@@ -58,6 +66,21 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
      * shaded. Surf modules (`dev.slne.surf*`) are always shaded.
      */
     val downloadLibraries = objects.property<Boolean>().convention(true)
+
+    /**
+     * The plugins from the `plugins` directory the server's own code uses, by id.
+     *
+     * The server jar's bootstrap puts them and the plugins they depend on on the server's class
+     * path instead of giving them a class loader of their own, so the server can use their classes;
+     * add them as `compileOnly` dependencies to compile against them. The server does not start
+     * when a plugin that is not `optional` is missing.
+     */
+    val pluginDependencies: NamedDomainObjectContainer<MinestomPluginFile.Dependency> =
+        objects.domainObjectContainer(MinestomPluginFile.Dependency::class)
+
+    fun pluginDependencies(action: Action<NamedDomainObjectContainer<MinestomPluginFile.Dependency>>) {
+        action.execute(pluginDependencies)
+    }
 
     /** The directory `runServer` starts the server in, relative to the project. */
     val runDirectory = objects.property<String>().convention("run")

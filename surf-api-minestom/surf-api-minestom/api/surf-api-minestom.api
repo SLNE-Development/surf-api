@@ -3489,7 +3489,6 @@ public abstract class dev/slne/surf/api/minestom/plugin/SurfMinestomPlugin {
 	public final fun getLogger ()Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;
 	public final fun getMeta ()Ldev/slne/surf/api/minestom/plugin/PluginMeta;
 	public final fun getScope ()Lkotlinx/coroutines/CoroutineScope;
-	public final fun initialize (Ldev/slne/surf/api/minestom/plugin/SurfMinestomPlugin$Context;)V
 	public fun onDisable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun onEnable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun onLoad (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -3497,6 +3496,7 @@ public abstract class dev/slne/surf/api/minestom/plugin/SurfMinestomPlugin {
 }
 
 public final class dev/slne/surf/api/minestom/plugin/SurfMinestomPlugin$Companion {
+	public final fun constructing (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public final fun contextElement (Ldev/slne/surf/api/minestom/plugin/SurfMinestomPlugin;)Lkotlinx/coroutines/ThreadContextElement;
 	public final fun current ()Ldev/slne/surf/api/minestom/plugin/SurfMinestomPlugin;
 }

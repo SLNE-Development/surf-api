@@ -29,7 +29,9 @@ import java.nio.file.Path
  * removed once it is disabled.
  */
 abstract class SurfMinestomPlugin {
-    private var context: Context? = null
+    // Taken in the constructor so that property initializers of the plugin, including those of an
+    // `object` that run in its static initializer, can already use the context.
+    private val context: Context? = pendingContext.get()?.invoke(this)
 
     private val requireContext: Context
         get() = checkNotNull(context) { "${javaClass.name} has not been initialized by the server yet" }
@@ -57,13 +59,6 @@ abstract class SurfMinestomPlugin {
     /** Called when the plugin is disabled, at the latest when the server shuts down. */
     open suspend fun onDisable() = Unit
 
-    /** Initializes the plugin; called once by the server right after creating it. */
-    @InternalSurfApi
-    fun initialize(context: Context) {
-        check(this.context == null) { "${javaClass.name} is already initialized" }
-        this.context = context
-    }
-
     override fun toString(): String = context?.let { "${it.meta.name} ${it.meta.version}" } ?: javaClass.name
 
     /** What the server hands a plugin when creating it. */
@@ -78,6 +73,22 @@ abstract class SurfMinestomPlugin {
 
     companion object {
         private val current = ThreadLocal<SurfMinestomPlugin?>()
+        private val pendingContext = ThreadLocal<((SurfMinestomPlugin) -> Context)?>()
+
+        /**
+         * Runs [block], during which every plugin constructed on this thread gets its context from
+         * [context] right away, before its own properties are initialized.
+         */
+        @InternalSurfApi
+        fun <T> constructing(context: (SurfMinestomPlugin) -> Context, block: () -> T): T {
+            val previous = pendingContext.get()
+            pendingContext.set(context)
+            try {
+                return block()
+            } finally {
+                pendingContext.set(previous)
+            }
+        }
 
         /**
          * The plugin whose code is running on this thread, or `null` when it is not a plugin's.

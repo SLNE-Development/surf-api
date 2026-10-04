@@ -114,37 +114,44 @@ internal class PluginManagerImpl(
             }
         }
 
-        val mainClass = Class.forName(meta.main, true, classLoader ?: serverClassLoader)
-        require(SurfMinestomPlugin::class.java.isAssignableFrom(mainClass)) {
-            "${meta.main} does not extend ${SurfMinestomPlugin::class.java.name}"
-        }
-
-        val plugin = instantiate(mainClass)
-
         val logger = ComponentLogger.logger(meta.name)
         val eventNode = EventNode.all("plugin-${meta.id}")
-        val scope = CoroutineScope(
-            SupervisorJob() +
-                    Dispatchers.Default +
-                    CoroutineName("plugin-${meta.id}") +
-                    SurfMinestomPlugin.contextElement(plugin) +
-                    CoroutineExceptionHandler { _, failure ->
-                        logger.error("Unhandled exception in a coroutine of {}", meta.id, failure)
-                    }
-        )
+        var scope: CoroutineScope? = null
 
-        plugin.initialize(
+        // The context is handed to the plugin while it is constructed, so that its property
+        // initializers can use it. For an `object`, that happens while its class is initialized.
+        val plugin = SurfMinestomPlugin.constructing({ plugin ->
+            val pluginScope = CoroutineScope(
+                SupervisorJob() +
+                        Dispatchers.Default +
+                        CoroutineName("plugin-${meta.id}") +
+                        SurfMinestomPlugin.contextElement(plugin) +
+                        CoroutineExceptionHandler { _, failure ->
+                            logger.error("Unhandled exception in a coroutine of {}", meta.id, failure)
+                        }
+            )
+            check(scope == null) { "${meta.main} constructed more than one plugin" }
+            scope = pluginScope
+
             SurfMinestomPlugin.Context(
                 meta = meta,
                 eventNode = eventNode,
                 dataDirectory = directory / meta.id,
                 logger = logger,
-                scope = scope,
+                scope = pluginScope,
             )
-        )
+        }) {
+            val mainClass = Class.forName(meta.main, false, classLoader ?: serverClassLoader)
+            require(SurfMinestomPlugin::class.java.isAssignableFrom(mainClass)) {
+                "${meta.main} does not extend ${SurfMinestomPlugin::class.java.name}"
+            }
+            instantiate(mainClass)
+        }
+
+        val pluginScope = checkNotNull(scope) { "${meta.main} was not constructed by the server" }
         parentNode.addChild(eventNode)
 
-        return LoadedPlugin(plugin, classLoader, scope)
+        return LoadedPlugin(plugin, classLoader, pluginScope)
     }
 
     /** The `object` instance of [mainClass], or a new instance from its no-argument constructor. */
