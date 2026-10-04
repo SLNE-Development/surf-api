@@ -9,6 +9,7 @@ import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.platform.core.AbstractCoreSurfPlugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaApplication
@@ -31,8 +32,8 @@ import xyz.jpenilla.gremlin.gradle.WriteDependencySet
  * A runnable surf Minestom server: the surf api server, Minestom, the features asked for and the
  * project's own code as one executable jar.
  *
- * Only the project's own modules and the bootstrap are shaded. Every library from a Maven
- * repository is listed in a gremlin `dependencies.txt` instead, which the bootstrap agent
+ * Only the project's own modules, the surf modules and the bootstrap are shaded. Every other
+ * library is listed in a gremlin `dependencies.txt` instead, which the bootstrap agent
  * downloads into `libraries/`, relocates like the shadow jar and appends to the class path
  * before `main` runs.
  *
@@ -180,8 +181,8 @@ internal class MinestomServerSurfPlugin :
     }
 
     /**
-     * Lists every library from a Maven repository in the `dependencies.txt` the bootstrap
-     * downloads them from, with the shadow jar's relocations, and leaves only the project's own
+     * Lists every third-party library in the `dependencies.txt` the bootstrap downloads them
+     * from, with the shadow jar's relocations, and leaves the project's own modules, the surf
      * modules and the bootstrap in the server jar.
      */
     private fun Project.configureLibraryDownload(extension: MinestomServerSurfExtension) {
@@ -192,10 +193,15 @@ internal class MinestomServerSurfPlugin :
         configurations.named(RUNTIME_DOWNLOAD) {
             extendsFrom(configurations.getByName("implementation"), configurations.getByName("runtimeOnly"))
             shouldResolveConsistentlyWith(configurations.getByName("runtimeClasspath"))
-            SHADED_MODULES.forEach { (group, module) -> exclude(mapOf("group" to group, "module" to module)) }
         }
 
         tasks.named<WriteDependencySet>("writeDependencies") {
+            // Filtered per component, so that the libraries of shaded modules are still downloaded
+            dependencies.setFrom(configurations.named(RUNTIME_DOWNLOAD).map { configuration ->
+                configuration.incoming.artifactView {
+                    componentFilter { id -> id !is ModuleComponentIdentifier || !isShaded(id.group, id.module) }
+                }.artifacts
+            })
             forEachRelocation { from, to, excludes ->
                 relocate(from, to) { this.excludes.set(excludes) }
             }
@@ -215,8 +221,15 @@ internal class MinestomServerSurfPlugin :
     }
 
     private fun ResolvedDependency.isShaded() =
-        moduleGroup to moduleName in SHADED_MODULES ||
+        isShaded(moduleGroup, moduleName) ||
                 moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
+
+    /**
+     * The surf modules (but not the surf forks of third-party libraries, `dev.slne.forks`) stay
+     * in the server jar, as does what the bootstrap needs before anything is downloaded.
+     */
+    private fun isShaded(group: String, module: String) =
+        group == "dev.slne.surf" || group.startsWith("dev.slne.surf.") || group to module in BOOTSTRAP_MODULES
 
     /** Builds the server jar and runs it with `java -jar`, which the agent in the manifest needs. */
     private fun Project.registerRunServer(extension: MinestomServerSurfExtension) {
@@ -251,9 +264,8 @@ internal class MinestomServerSurfPlugin :
         const val BOOTSTRAP_AGENT = "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
         const val DELEGATE_AGENTS_ATTRIBUTE = "Surf-Delegate-Agent-Classes"
 
-        /** What the bootstrap needs before anything is downloaded, so it stays in the server jar. */
-        val SHADED_MODULES = setOf(
-            "dev.slne.surf.api" to BOOTSTRAP_MODULE,
+        /** What the bootstrap needs before anything is downloaded. */
+        val BOOTSTRAP_MODULES = setOf(
             "xyz.jpenilla" to "gremlin-runtime",
             "org.jspecify" to "jspecify",
         )

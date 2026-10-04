@@ -41,8 +41,8 @@ enum class MinestomServerFeature(val module: String, internal val agentClass: St
  * Calling `withXxx()` only puts the feature's module on the class path; the server still installs
  * it in `surfMinestomServer { }`.
  *
- * The server jar only contains the project's own code: Minestom and every other library from a
- * Maven repository are downloaded into `libraries/` when the server starts, see
+ * The server jar only contains the project's own code and the surf modules: Minestom and every
+ * other third-party library are downloaded into `libraries/` when the server starts, see
  * [downloadLibraries].
  */
 open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactory) :
@@ -52,9 +52,10 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
     internal val features = objects.setProperty<MinestomServerFeature>()
 
     /**
-     * Whether libraries are downloaded with gremlin when the server starts instead of being shaded
-     * into the server jar. They are fetched from the project's HTTP(S) Maven repositories, so
-     * libraries that only exist in `mavenLocal()` or need credentials have to be shaded.
+     * Whether third-party libraries are downloaded with gremlin when the server starts instead of
+     * being shaded into the server jar. They are fetched from the project's HTTP(S) Maven
+     * repositories, so libraries that only exist in `mavenLocal()` or need credentials have to be
+     * shaded. Surf modules (`dev.slne.surf*`) are always shaded.
      */
     val downloadLibraries = objects.property<Boolean>().convention(true)
 
