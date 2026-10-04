@@ -4,10 +4,6 @@ plugins {
     id("dev.slne.surf.api.gradle.minestom")
 }
 
-repositories {
-    mavenLocal()
-}
-
 dependencies {
     api(projects.surfRedisCore)
 }
