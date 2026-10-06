@@ -6,11 +6,11 @@ dependencies {
     api(projects.surfNatsApi)
     implementation(libs.jnats)
 
-    testImplementation(kotlin("test-junit5"))
+    testImplementation(libs.testcontainers.nats)
     testRuntimeOnly(libs.bundles.log4j)
+    testImplementation("dev.slne.surf.api:surf-api-standalone:+") // TODO: fix test dependencies in surf-api
 }
 
 tasks.test {
-    useJUnitPlatform()
     failOnNoDiscoveredTests = false
 }
