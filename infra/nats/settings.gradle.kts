@@ -11,3 +11,10 @@ plugins {
 }
 
 rootProject.name = "surf-nats"
+
+include("surf-nats-api")
+include("surf-nats-core")
+include("surf-nats-paper")
+include("surf-nats-velocity")
+include("surf-nats-minestom")
+include("surf-nats-standalone")
