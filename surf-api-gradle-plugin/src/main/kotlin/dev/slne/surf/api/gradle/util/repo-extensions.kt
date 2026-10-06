@@ -22,6 +22,12 @@ inline fun RepositoryHandler.canvasMaven(crossinline block: MavenArtifactReposit
         block()
     }
 
+inline fun RepositoryHandler.openCollabMaven(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
+    maven("https://repo.opencollab.dev/main/") {
+        name = "OpenCollab"
+        block()
+    }
+
 inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
     maven("https://reposilite.slne.dev/releases/") {
         name = "slne-repository-releases"
