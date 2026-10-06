@@ -5,6 +5,7 @@ import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.config.natsConfig
 import io.nats.client.*
 import org.jetbrains.annotations.Blocking
+import java.io.IOException
 import java.time.Duration
 import java.util.*
 
@@ -19,6 +20,9 @@ object NatsConnectionManager {
     @Volatile
     private var connection: Connection? = null
 
+    @Volatile
+    private var lastConnectedUrl: String? = null
+
     @Blocking
     fun connect() {
         if (connection != null) return
@@ -32,13 +36,14 @@ object NatsConnectionManager {
                 .reconnectWait(Duration.ofMillis(natsConfig.reconnectWait.toLong()))
                 .maxReconnects(-1)
                 .connectionListener { connection, events ->
+                    val url = connection.connectedUrl?.also { lastConnectedUrl = it } ?: lastConnectedUrl
                     val at = if (events == ConnectionListener.Events.DISCONNECTED) {
                         log.atWarning()
                     } else {
                         log.atInfo()
                     }
 
-                    at.log("NATS connection %s: %s", events.event, connection.connectedUrl)
+                    at.log("NATS connection %s: %s", events.event, url)
                 }
                 .errorListener(object : ErrorListener {
                     override fun errorOccurred(conn: Connection, error: String) {
@@ -47,9 +52,15 @@ object NatsConnectionManager {
                     }
 
                     override fun exceptionOccurred(conn: Connection, exp: Exception) {
-                        log.atWarning()
-                            .withCause(exp)
-                            .log("NATS exception")
+                        val ioException = exp as? IOException ?: exp.cause as? IOException
+                        if (ioException != null) {
+                            log.atWarning()
+                                .log("NATS I/O error: %s", ioException.message)
+                        } else {
+                            log.atWarning()
+                                .withCause(exp)
+                                .log("NATS exception")
+                        }
                     }
 
                     override fun slowConsumerDetected(conn: Connection, consumer: Consumer) {
