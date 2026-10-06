@@ -66,7 +66,7 @@ glm = "0.9.9.1-15"
 ksp-version = "2.3.12"
 reactor-netty = "1.3.7"
 bytebuddy = "1.18.14"
-wyck = "3.+"
+wyck = "4.0.0-e5d01de"
 
 # Testing
 junit = "6.1.3"
