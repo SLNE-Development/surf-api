@@ -4,7 +4,10 @@ import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsRegistration
 import dev.slne.surf.nats.codec.NatsCodec
+import dev.slne.surf.nats.codec.NatsHeaders
+import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.event.EventDescriptor
+import io.nats.client.Connection
 import kotlinx.coroutines.*
 import kotlinx.serialization.modules.SerializersModule
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
@@ -46,7 +49,26 @@ class NatsClientImpl(
 
     override fun publish(event: Any) {
         checkOpen()
-        TODO("Not yet implemented")
+        val descriptor = eventDescriptor(event.javaClass)
+        val data = codec.encode(descriptor.serializer, event, descriptor.format)
+        val header = NatsHeaders.base(name, descriptor.format)
+        val connection = NatsConnectionManager.connection()
+
+        checkPayloadSize(
+            descriptor,
+            data.size + header.serializedLength(),
+            connection
+        )
+
+        connection.publish(descriptor.subject, header, data)
+    }
+
+    private fun checkPayloadSize(descriptor: EventDescriptor, size: Int, connection: Connection) {
+        val max = connection.serverInfo.maxPayload
+        require(size <= max) {
+            "Event ${descriptor.type.name} is $size bytes, exceeding the NATS max payload of $max" +
+                    "bytes (subject ${descriptor.subject}). Large events are not offloaded to the object store."
+        }
     }
 
     override fun registerListener(listener: Any): NatsRegistration {
