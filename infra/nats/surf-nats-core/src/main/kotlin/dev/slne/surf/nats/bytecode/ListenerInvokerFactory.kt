@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.bytecode
 
+import dev.slne.surf.nats.InternalNatsApi
 import org.jetbrains.annotations.TestOnly
 import java.lang.classfile.ClassFile
 import java.lang.constant.ClassDesc
@@ -13,6 +14,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
 
+@InternalNatsApi
 object ListenerInvokerFactory {
 
     /**
