@@ -4,6 +4,7 @@ import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsEvent
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsCodec
+import dev.slne.surf.nats.subject.Subjects
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 
@@ -23,7 +24,7 @@ internal class EventDescriptor(
             val localSubject = annotation.subject.ifEmpty {
                 val simpleName = type.simpleName
                 require(simpleName.isNotEmpty()) { "${type.name} needs an explicit subject as it does not have a simple name" }
-                EventSubjects.kebabCase(simpleName)
+                Subjects.kebabCase(simpleName)
             }
             val subject = if (annotation.prefixed) "$clientName.$localSubject" else localSubject
 
@@ -32,7 +33,7 @@ internal class EventDescriptor(
 
             return EventDescriptor(
                 type,
-                EventSubjects.requireValidSubject(subject, type.name),
+                Subjects.requireValidSubject(subject, type.name),
                 format,
                 serializer
             )

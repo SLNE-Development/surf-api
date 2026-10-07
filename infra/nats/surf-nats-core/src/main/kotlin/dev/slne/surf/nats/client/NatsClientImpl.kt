@@ -13,6 +13,7 @@ import dev.slne.surf.nats.event.EventListenerRegistration
 import dev.slne.surf.nats.event.EventSubscriptions
 import dev.slne.surf.nats.event.ListenerMethod
 import dev.slne.surf.nats.event.ListenerMethods
+import dev.slne.surf.nats.rpc.ServiceDescriptor
 import io.nats.client.Connection
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
@@ -48,6 +49,12 @@ class NatsClientImpl(
     private val eventDescriptors = object : ClassValue<EventDescriptor>() {
         override fun computeValue(type: Class<*>): EventDescriptor {
             return EventDescriptor.of(type, name, codec)
+        }
+    }
+
+    private val serviceDescriptors = object : ClassValue<ServiceDescriptor>() {
+        override fun computeValue(type: Class<*>): ServiceDescriptor {
+            return ServiceDescriptor.of(type, this@NatsClientImpl)
         }
     }
 
@@ -127,6 +134,10 @@ class NatsClientImpl(
 
     internal fun eventDescriptor(type: Class<*>): EventDescriptor {
         return eventDescriptors.get(type)
+    }
+
+    internal fun serviceDescriptor(type: Class<*>): ServiceDescriptor {
+        return serviceDescriptors.get(type)
     }
 
     override fun close() {

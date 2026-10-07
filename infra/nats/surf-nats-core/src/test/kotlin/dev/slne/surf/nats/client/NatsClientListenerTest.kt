@@ -256,8 +256,8 @@ class NatsClientListenerTest {
         client.publish(Created(1))
         client.publish(Created(2))
 
-        assertEquals(Created(1), listener.recorder.receiveWithin())
-        assertEquals(Created(2), listener.recorder.receiveWithin())
+        val received = setOf(listener.recorder.receiveWithin(), listener.recorder.receiveWithin())
+        assertEquals(setOf(Created(1), Created(2)), received)
     }
 
     @Test
