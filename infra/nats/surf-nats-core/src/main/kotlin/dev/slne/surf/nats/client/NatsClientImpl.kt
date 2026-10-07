@@ -66,7 +66,7 @@ class NatsClientImpl(
     private fun checkPayloadSize(descriptor: EventDescriptor, size: Int, connection: Connection) {
         val max = connection.serverInfo.maxPayload
         require(size <= max) {
-            "Event ${descriptor.type.name} is $size bytes, exceeding the NATS max payload of $max" +
+            "Event ${descriptor.type.name} is $size bytes, exceeding the NATS max payload of $max " +
                     "bytes (subject ${descriptor.subject}). Large events are not offloaded to the object store."
         }
     }
