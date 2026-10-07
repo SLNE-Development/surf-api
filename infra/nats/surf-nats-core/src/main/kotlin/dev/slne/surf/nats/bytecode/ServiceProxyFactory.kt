@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.bytecode
 
+import com.google.common.primitives.Primitives
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.rpc.MethodDescriptor
 import dev.slne.surf.nats.rpc.RpcCaller
@@ -152,19 +153,8 @@ internal object ServiceProxyFactory {
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     private fun box(codeBuilder: CodeBuilder, type: Class<*>) {
         if (!type.isPrimitive) return
-        val wrapper = when (type) {
-            Int::class.javaPrimitiveType -> Integer::class.java
-            Long::class.javaPrimitiveType -> java.lang.Long::class.java
-            Double::class.javaPrimitiveType -> java.lang.Double::class.java
-            Float::class.javaPrimitiveType -> java.lang.Float::class.java
-            Boolean::class.javaPrimitiveType -> java.lang.Boolean::class.java
-            Byte::class.javaPrimitiveType -> java.lang.Byte::class.java
-            Short::class.javaPrimitiveType -> java.lang.Short::class.java
-            Char::class.javaPrimitiveType -> Character::class.java
-            else -> error("Unexpected primitive $type")
-        }
 
-        val wrapperDesc = ClassDesc.of(wrapper.name)
+        val wrapperDesc = ClassDesc.of(Primitives.wrap(type).name)
         codeBuilder.invokestatic(
             wrapperDesc,
             "valueOf",
