@@ -28,7 +28,7 @@ internal class EventDescriptor(
             val subject = if (annotation.prefixed) "$clientName.$localSubject" else localSubject
 
             val format = annotation.format
-            val serializer = codec.serializersModul(format).serializer(type)
+            val serializer = codec.serializersModule(format).serializer(type)
 
             return EventDescriptor(
                 type,

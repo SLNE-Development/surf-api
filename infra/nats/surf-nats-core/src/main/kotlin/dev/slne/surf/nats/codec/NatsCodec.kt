@@ -69,7 +69,7 @@ class NatsCodec(serializersModule: SerializersModule) {
         }
     }
 
-    fun serializersModul(format: WireFormat): SerializersModule {
+    fun serializersModule(format: WireFormat): SerializersModule {
         return when (format) {
             WireFormat.CBOR -> cborSerializersModule
             WireFormat.JSON -> jsonSerializersModule
