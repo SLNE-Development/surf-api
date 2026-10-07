@@ -1,0 +1,67 @@
+package dev.slne.surf.nats.codec
+
+import dev.slne.surf.api.core.serializer.SurfSerializerModule
+import dev.slne.surf.api.core.serializer.java.uuid.JavaUUIDSerializer
+import dev.slne.surf.api.core.serializer.java.uuid.JavaUUIDStringSerializer
+import dev.slne.surf.nats.InternalNatsApi
+import dev.slne.surf.nats.WireFormat
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
+import kotlinx.serialization.modules.overwriteWith
+
+@OptIn(ExperimentalSerializationApi::class)
+@InternalNatsApi
+class NatsCodec(serializersModule: SerializersModule) {
+
+    private val cbor = Cbor {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        this.serializersModule = SurfSerializerModule.all
+            .overwriteWith(SerializersModule {
+                contextual(JavaUUIDSerializer) // Ensure binary uuid is used
+            })
+            .overwriteWith(serializersModule)
+    }
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        namingStrategy = JsonNamingStrategy.SnakeCase
+        this.serializersModule = SurfSerializerModule.all
+            .overwriteWith(SerializersModule {
+                contextual(JavaUUIDStringSerializer) // Ensure string uuid is used
+            })
+            .overwriteWith(serializersModule)
+    }
+
+    fun <T> encode(serializer: SerializationStrategy<T>, value: T, format: WireFormat): ByteArray {
+        return when (format) {
+            WireFormat.CBOR -> cbor.encodeToByteArray(serializer, value)
+            WireFormat.JSON -> json.encodeToString(serializer, value).encodeToByteArray()
+        }
+    }
+
+    fun <T> decode(
+        deserializer: DeserializationStrategy<T>,
+        bytes: ByteArray,
+        contentType: String?
+    ): T {
+        val format = if (contentType == null) {
+            WireFormat.CBOR
+        } else {
+            WireFormat.fromContentType(contentType)
+                ?: throw IllegalArgumentException("Unsupported content type: $contentType")
+        }
+
+        return when (format) {
+            WireFormat.CBOR -> cbor.decodeFromByteArray(deserializer, bytes)
+            WireFormat.JSON -> json.decodeFromString(deserializer, bytes.decodeToString())
+        }
+    }
+}

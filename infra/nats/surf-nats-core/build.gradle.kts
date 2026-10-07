@@ -1,5 +1,6 @@
 plugins {
     id("dev.slne.surf.api.gradle.core")
+    id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
 dependencies {
@@ -14,4 +15,10 @@ dependencies {
 tasks.test {
     failOnNoDiscoveredTests = false
     systemProperty("slf4j.provider", "org.apache.logging.slf4j.SLF4JServiceProvider")
+}
+
+buildConfig {
+    forClass("dev.slne.surf.nats", "NatsConstants") {
+        buildConfigField("VERSION", provider { project.version.toString() })
+    }
 }

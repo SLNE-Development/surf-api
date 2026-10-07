@@ -4,8 +4,10 @@ import dev.slne.surf.nats.internal.NatsClientFactory
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import org.intellij.lang.annotations.Pattern
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
+@ApiStatus.NonExtendable
 interface NatsClient : AutoCloseable {
     val name: String
     val isClosed: Boolean
@@ -21,7 +23,9 @@ interface NatsClient : AutoCloseable {
     override fun close()
 
     companion object Factory {
-        @Pattern("^[a-zA-Z0-9_-]+$")
+        const val NATS_CLIENT_NAME_PATTERN = "^[a-z0-9]+(-[a-z0-9]+)*$"
+
+        @Pattern(NATS_CLIENT_NAME_PATTERN)
         @Target(AnnotationTarget.VALUE_PARAMETER)
         annotation class NatsClientName
 
