@@ -4,6 +4,7 @@ import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsRegistration
 import dev.slne.surf.nats.codec.NatsCodec
+import dev.slne.surf.nats.event.EventDescriptor
 import kotlinx.coroutines.*
 import kotlinx.serialization.modules.SerializersModule
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
@@ -33,6 +34,12 @@ class NatsClientImpl(
     private val registrations = ConcurrentHashMap.newKeySet<NatsRegistration>()
 
     val codec = NatsCodec(serializersModule)
+
+    private val eventDescriptors = object : ClassValue<EventDescriptor>() {
+        override fun computeValue(type: Class<*>): EventDescriptor {
+            return EventDescriptor.of(type, name, codec)
+        }
+    }
 
     private val closed = AtomicBoolean(false)
     override val isClosed get() = closed.get()
@@ -71,6 +78,10 @@ class NatsClientImpl(
 
     internal fun unregisterRegistration(registration: NatsRegistration) {
         registrations.remove(registration)
+    }
+
+    internal fun eventDescriptor(type: Class<*>): EventDescriptor {
+        return eventDescriptors.get(type)
     }
 
     override fun close() {

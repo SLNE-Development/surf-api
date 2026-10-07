@@ -19,25 +19,29 @@ import kotlinx.serialization.modules.overwriteWith
 @InternalNatsApi
 class NatsCodec(serializersModule: SerializersModule) {
 
+    private val cborSerializersModule = SurfSerializerModule.all
+        .overwriteWith(SerializersModule {
+            contextual(JavaUUIDSerializer) // Ensure binary uuid is used
+        })
+        .overwriteWith(serializersModule)
+
+    private val jsonSerializersModule = SurfSerializerModule.all
+        .overwriteWith(SerializersModule {
+            contextual(JavaUUIDStringSerializer) // Ensure string uuid is used
+        })
+        .overwriteWith(serializersModule)
+
     private val cbor = Cbor {
         ignoreUnknownKeys = true
         encodeDefaults = true
-        this.serializersModule = SurfSerializerModule.all
-            .overwriteWith(SerializersModule {
-                contextual(JavaUUIDSerializer) // Ensure binary uuid is used
-            })
-            .overwriteWith(serializersModule)
+        this.serializersModule = cborSerializersModule
     }
 
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
         namingStrategy = JsonNamingStrategy.SnakeCase
-        this.serializersModule = SurfSerializerModule.all
-            .overwriteWith(SerializersModule {
-                contextual(JavaUUIDStringSerializer) // Ensure string uuid is used
-            })
-            .overwriteWith(serializersModule)
+        this.serializersModule = jsonSerializersModule
     }
 
     fun <T> encode(serializer: SerializationStrategy<T>, value: T, format: WireFormat): ByteArray {
@@ -62,6 +66,13 @@ class NatsCodec(serializersModule: SerializersModule) {
         return when (format) {
             WireFormat.CBOR -> cbor.decodeFromByteArray(deserializer, bytes)
             WireFormat.JSON -> json.decodeFromString(deserializer, bytes.decodeToString())
+        }
+    }
+
+    fun serializersModul(format: WireFormat): SerializersModule {
+        return when (format) {
+            WireFormat.CBOR -> cborSerializersModule
+            WireFormat.JSON -> jsonSerializersModule
         }
     }
 }
