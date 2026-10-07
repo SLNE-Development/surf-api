@@ -12,6 +12,10 @@ object NatsHeaders {
     const val CONTENT_TYPE = "Content-Type"
     const val ORIGIN = "Surf-Origin"
     const val SENDER_VERSION = "Surf-Sender-Version"
+    const val DEADLINE = "Surf-Deadline"
+    const val ERROR = "Surf-Error"
+    const val ANSWER = "Surf-Answer"
+    const val ANSWER_NONE = "none"
 
     fun base(clientName: String, format: WireFormat): Headers {
         val headers = Headers()

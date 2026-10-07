@@ -5,14 +5,12 @@ import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsRegistration
 import dev.slne.surf.nats.bytecode.ListenerInvoker
 import dev.slne.surf.nats.bytecode.ListenerInvokerFactory
+import dev.slne.surf.nats.bytecode.ServiceProxyFactory
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
-import dev.slne.surf.nats.event.EventDescriptor
-import dev.slne.surf.nats.event.EventListenerRegistration
-import dev.slne.surf.nats.event.EventSubscriptions
-import dev.slne.surf.nats.event.ListenerMethod
-import dev.slne.surf.nats.event.ListenerMethods
+import dev.slne.surf.nats.event.*
+import dev.slne.surf.nats.rpc.RpcCallerImpl
 import dev.slne.surf.nats.rpc.ServiceDescriptor
 import io.nats.client.Connection
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
@@ -55,6 +53,16 @@ class NatsClientImpl(
     private val serviceDescriptors = object : ClassValue<ServiceDescriptor>() {
         override fun computeValue(type: Class<*>): ServiceDescriptor {
             return ServiceDescriptor.of(type, this@NatsClientImpl)
+        }
+    }
+
+    private val serviceProxies = object : ClassValue<Any>() {
+        override fun computeValue(type: Class<*>): Any {
+            val descriptor = serviceDescriptor(type)
+            return ServiceProxyFactory.create(
+                descriptor,
+                RpcCallerImpl(this@NatsClientImpl, descriptor)
+            )
         }
     }
 
@@ -114,9 +122,10 @@ class NatsClientImpl(
         TODO("Not yet implemented")
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <S : Any> service(type: KClass<S>): S {
         checkOpen()
-        TODO("Not yet implemented")
+        return serviceProxies.get(type.java) as S
     }
 
     internal fun registerRegistration(registration: NatsRegistration) {

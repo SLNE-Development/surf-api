@@ -35,6 +35,7 @@ object NatsConnectionManager {
                 .connectionName(natsConfig.connectionName ?: "surf-nats-${instanceIdString}")
                 .reconnectWait(Duration.ofMillis(natsConfig.reconnectWait.toLong()))
                 .maxReconnects(-1)
+                .reportNoResponders()
                 .connectionListener { connection, events ->
                     val url = connection.connectedUrl?.also { lastConnectedUrl = it } ?: lastConnectedUrl
                     val at = if (events == ConnectionListener.Events.DISCONNECTED) {
