@@ -3,11 +3,18 @@ package dev.slne.surf.nats.client
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsRegistration
+import dev.slne.surf.nats.bytecode.ListenerInvoker
+import dev.slne.surf.nats.bytecode.ListenerInvokerFactory
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.event.EventDescriptor
+import dev.slne.surf.nats.event.EventListenerRegistration
+import dev.slne.surf.nats.event.EventSubscriptions
+import dev.slne.surf.nats.event.ListenerMethod
+import dev.slne.surf.nats.event.ListenerMethods
 import io.nats.client.Connection
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.serialization.modules.SerializersModule
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
@@ -22,7 +29,7 @@ class NatsClientImpl(
     private val onClose: (NatsClientImpl) -> Unit,
 ) : NatsClient {
 
-    private val logger = ComponentLogger.logger("NatsClient[$name]")
+    internal val logger = ComponentLogger.logger("NatsClient[$name]")
 
     internal val clientScope = CoroutineScope(
         Dispatchers.Default +
@@ -43,6 +50,8 @@ class NatsClientImpl(
             return EventDescriptor.of(type, name, codec)
         }
     }
+
+    internal val eventSubscriptions = EventSubscriptions(this)
 
     private val closed = AtomicBoolean(false)
     override val isClosed get() = closed.get()
@@ -73,7 +82,21 @@ class NatsClientImpl(
 
     override fun registerListener(listener: Any): NatsRegistration {
         checkOpen()
-        TODO("Not yet implemented")
+        val methods = ListenerMethods.findListenerMethods(listener, this)
+        val entries = methods.map { it to ListenerInvokerFactory.create(listener, it.method) }
+
+        val added = ObjectArrayList<Pair<ListenerMethod, ListenerInvoker>>()
+        try {
+            for (entry in entries) {
+                eventSubscriptions.add(entry.first, entry.second)
+                added += entry
+            }
+        } catch (e: Exception) {
+            added.forEach { (method, invoker) -> eventSubscriptions.remove(method, invoker) }
+            throw e
+        }
+
+        return EventListenerRegistration(this, entries).also { registerRegistration(it) }
     }
 
     override fun <S : Any> registerService(
@@ -109,6 +132,7 @@ class NatsClientImpl(
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
         closeRegistrations()
+        eventSubscriptions.close()
         clientScope.cancel("NatsClient[$name] closed")
         onClose(this)
     }

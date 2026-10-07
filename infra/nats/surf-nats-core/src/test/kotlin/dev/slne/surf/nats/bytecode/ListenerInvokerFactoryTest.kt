@@ -8,7 +8,6 @@ import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
-import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -171,7 +170,12 @@ class ListenerInvokerFactoryTest {
 
     @Test
     fun `normal method with return value is rejected`() {
-        assertFailsWith<IllegalArgumentException> { invokerFor(RecordingListener(), "returnsValue") }
+        assertFailsWith<IllegalArgumentException> {
+            invokerFor(
+                RecordingListener(),
+                "returnsValue"
+            )
+        }
     }
 
     @Test
@@ -186,10 +190,6 @@ class ListenerInvokerFactoryTest {
 
     private fun method(type: Class<*>, name: String): Method {
         return type.declaredMethods.single { it.name == name || it.name.startsWith("$name$") }
-    }
-
-    private suspend fun ListenerInvoker.call(event: Any) {
-        suspendCoroutineUninterceptedOrReturn { invoke(event, it) }
     }
 
     private object NoopContinuation : Continuation<Unit> {

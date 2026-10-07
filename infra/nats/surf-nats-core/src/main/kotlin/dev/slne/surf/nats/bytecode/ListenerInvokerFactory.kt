@@ -1,6 +1,7 @@
 package dev.slne.surf.nats.bytecode
 
 import dev.slne.surf.nats.InternalNatsApi
+import dev.slne.surf.nats.util.isSuspend
 import org.jetbrains.annotations.TestOnly
 import java.lang.classfile.ClassFile
 import java.lang.constant.ClassDesc
@@ -73,7 +74,7 @@ object ListenerInvokerFactory {
         }
 
         // suspend methods are already of the shape Object(event, continuation)
-        if (!isSuspend(method)) {
+        if (!method.isSuspend()) {
             // void(event) -> Object(event) (always returns Unit)
             handle = MethodHandles.filterReturnValue(
                 handle,
@@ -85,16 +86,6 @@ object ListenerInvokerFactory {
         }
 
         return handle.asType(INVOKER_TYPE)
-    }
-
-    private fun isSuspend(method: Method): Boolean {
-        val params = method.parameterTypes
-        if (params.size == 0) {
-            return false
-        }
-
-        val lastParam = params.last()
-        return Continuation::class.java.isAssignableFrom(lastParam)
     }
 
     private fun generateInvokerClass(): ByteArray {
