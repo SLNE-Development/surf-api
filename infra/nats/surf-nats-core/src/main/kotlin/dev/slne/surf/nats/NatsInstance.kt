@@ -1,6 +1,7 @@
 package dev.slne.surf.nats
 
 import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.nats.client.NatsClientFactoryImpl
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,6 +22,7 @@ abstract class NatsInstance {
 
     @MustBeInvokedByOverriders
     open suspend fun disable() {
+        NatsClientFactoryImpl.get().ensureAllClientsClosed()
         withContext(Dispatchers.IO) {
             NatsConnectionManager.disconnect()
         }

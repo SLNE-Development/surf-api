@@ -27,6 +27,7 @@ import kotlin.reflect.KClass
 class NatsClientImpl(
     override val name: String,
     serializersModule: SerializersModule,
+    internal val origin: ClientOrigin,
     private val onClose: (NatsClientImpl) -> Unit,
 ) : NatsClient {
 
