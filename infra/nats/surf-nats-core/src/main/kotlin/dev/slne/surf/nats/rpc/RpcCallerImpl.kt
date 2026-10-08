@@ -4,13 +4,12 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
-import io.ktor.utils.io.CancellationException
 import io.nats.client.JetStreamStatusException
 import io.nats.client.Message
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
-import java.util.concurrent.TimeoutException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.toJavaDuration
 
 @InternalNatsApi

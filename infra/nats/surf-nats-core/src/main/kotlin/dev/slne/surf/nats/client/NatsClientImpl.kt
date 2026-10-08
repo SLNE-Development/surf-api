@@ -12,6 +12,7 @@ import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.event.*
 import dev.slne.surf.nats.rpc.RpcCallerImpl
 import dev.slne.surf.nats.rpc.ServiceDescriptor
+import dev.slne.surf.nats.rpc.ServiceRegistration
 import io.nats.client.Connection
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
@@ -66,6 +67,8 @@ class NatsClientImpl(
         }
     }
 
+    private val services = ConcurrentHashMap<Class<*>, ServiceRegistration>()
+
     internal val eventSubscriptions = EventSubscriptions(this)
 
     private val closed = AtomicBoolean(false)
@@ -119,7 +122,25 @@ class NatsClientImpl(
         implementation: S
     ): NatsRegistration {
         checkOpen()
-        TODO("Not yet implemented")
+        require(type.java.isInstance(implementation)) {
+            "${implementation.javaClass.name} does not implement ${type.java.name}"
+        }
+        val descriptor = serviceDescriptor(type.java)
+        val registration = ServiceRegistration(this, descriptor, implementation)
+
+        check(services.putIfAbsent(type.java, registration) == null) {
+            "${type.java.name} is already registered on NatsClient[$name]"
+        }
+
+        try {
+            registration.subscribe()
+        } catch (e: Exception) {
+            registration.close()
+            throw e
+        }
+
+        registerRegistration(registration)
+        return registration
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -139,6 +160,10 @@ class NatsClientImpl(
 
     internal fun unregisterRegistration(registration: NatsRegistration) {
         registrations.remove(registration)
+    }
+
+    internal fun unregisterService(registration: ServiceRegistration) {
+        services.remove(registration.descriptor.type, registration)
     }
 
     internal fun eventDescriptor(type: Class<*>): EventDescriptor {

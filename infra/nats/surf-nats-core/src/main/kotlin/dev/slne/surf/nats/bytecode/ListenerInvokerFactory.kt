@@ -3,11 +3,7 @@ package dev.slne.surf.nats.bytecode
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.util.isSuspend
 import org.jetbrains.annotations.TestOnly
-import java.lang.classfile.ClassFile
 import java.lang.constant.ClassDesc
-import java.lang.constant.ConstantDescs
-import java.lang.constant.DynamicConstantDesc
-import java.lang.constant.MethodTypeDesc
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -29,28 +25,14 @@ object ListenerInvokerFactory {
 
     private val LOOKUP = MethodHandles.lookup()
 
-    private val CD_INVOKER_IMPL = ClassDesc.of(
-        ListenerInvoker::class.java.packageName,
-        "ListenerInvokerImpl"
-    )
-    private val CD_LISTENER_INVOKER = ClassDesc.of(ListenerInvoker::class.java.name)
-    private val CD_CONTINUATION = ClassDesc.of(Continuation::class.java.name)
-
-    // Object(Object, Continuation)
-    private val MTD_INVOKE = MethodTypeDesc.of(
-        ConstantDescs.CD_Object,
-        ConstantDescs.CD_Object,
-        CD_CONTINUATION,
-    )
-
-    // One time call of MethodHandles.classData(lookup, "_", MethodHandle.class)
-    private val CLASS_DATA_HANDLE = DynamicConstantDesc.ofNamed<MethodHandle>(
-        ConstantDescs.BSM_CLASS_DATA,
-        ConstantDescs.DEFAULT_NAME,
-        ConstantDescs.CD_MethodHandle,
-    )
-
-    private val invokerClassBytes by lazy { generateInvokerClass() }
+    private val invokerClassBytes by lazy {
+        HandleInvokerClasses.generate(
+            ClassDesc.of(ListenerInvoker::class.java.packageName, "ListenerInvokerImpl"),
+            ClassDesc.of(ListenerInvoker::class.java.name),
+            "invoke",
+            INVOKER_TYPE.describeConstable().orElseThrow(),
+        )
+    }
 
     fun create(target: Any?, method: Method): ListenerInvoker {
         val handle = adaptHandle(target, method)
@@ -88,47 +70,8 @@ object ListenerInvokerFactory {
         return handle.asType(INVOKER_TYPE)
     }
 
-    private fun generateInvokerClass(): ByteArray {
-        return ClassFile.of().build(CD_INVOKER_IMPL) { classBuilder ->
-            classBuilder.withFlags(ClassFile.ACC_FINAL or ClassFile.ACC_SYNTHETIC)
-            classBuilder.withInterfaceSymbols(CD_LISTENER_INVOKER)
-
-            // generate constructor: public ListenerInvokerImpl() { super(); }
-            classBuilder.withMethodBody(
-                ConstantDescs.INIT_NAME,
-                ConstantDescs.MTD_void,
-                ClassFile.ACC_PUBLIC
-            ) { codeBuilder ->
-                codeBuilder.aload(0)
-                    .invokespecial(
-                        ConstantDescs.CD_Object,
-                        ConstantDescs.INIT_NAME,
-                        ConstantDescs.MTD_void
-                    )
-                    .return_()
-            }
-
-            // generate invoke method: public Object invoke(Object event, Continuation c) { return handle.invokeExact(event, c); }
-            classBuilder.withMethodBody(
-                "invoke",
-                MTD_INVOKE,
-                ClassFile.ACC_PUBLIC
-            ) { codeBuilder ->
-                codeBuilder.ldc(CLASS_DATA_HANDLE) // Stack: handle
-                    .aload(1) // Stack: handle, event
-                    .aload(2) // Stack: handle, event, continuation
-                    .invokevirtual(
-                        ConstantDescs.CD_MethodHandle,
-                        "invokeExact",
-                        MTD_INVOKE
-                    ) // Stack: result
-                    .areturn()
-            }
-        }
-    }
-
     @TestOnly
     internal fun createInvokerClass(): ByteArray {
-        return generateInvokerClass()
+        return invokerClassBytes
     }
 }
