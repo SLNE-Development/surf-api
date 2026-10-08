@@ -44,6 +44,8 @@ internal class ServiceRegistration(
         .filter { it.persistent }
         .associateBy { it.subject }
 
+    private val scope = client.clientScope + SupervisorJob(client.clientScope.coroutineContext.job)
+
     private val active = AtomicBoolean(true)
     override val isActive get() = active.get()
 
@@ -101,7 +103,7 @@ internal class ServiceRegistration(
 
         val replyTo: String? = message.replyTo // null means fan-out without a response
 
-        client.clientScope.launch(CoroutineName("surf-nats/${client.name}/rpc/${methodDescriptor.subject}")) {
+        scope.launch(CoroutineName("surf-nats/${client.name}/rpc/${methodDescriptor.subject}")) {
             val reply = try {
                 val completed = withTimeoutOrNull(timeout) {
                     val data = PayloadStore.resolve(
@@ -140,7 +142,7 @@ internal class ServiceRegistration(
         val deadline = headers?.getFirst(NatsHeaders.DEADLINE)?.toLongOrNull()
         if (deadline != null && deadline <= System.currentTimeMillis()) return message.term()
 
-        client.clientScope.launch(context + CoroutineName("surf-nats/${client.name}/persist/${method.subject}")) {
+        scope.launch(context + CoroutineName("surf-nats/${client.name}/persist/${method.subject}")) {
             val keepAlive = launch {
                 while (isActive) {
                     delay(RpcDefaults.ACK_WAIT / 2)
@@ -283,6 +285,7 @@ internal class ServiceRegistration(
                 client.logger.warn("Failed to close service dispatcher", e)
             }
         }
+        scope.cancel("Service registration ${descriptor.type.name} closed")
         client.unregisterService(this)
         client.unregisterRegistration(this)
     }

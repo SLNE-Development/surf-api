@@ -280,6 +280,34 @@ class PersistentServiceTest {
     }
 
     @Test
+    fun `closing the registration cancels its handlers`() = withClient { client ->
+        RpcDefaults.ACK_WAIT = 1.seconds
+        val started = CompletableDeferred<Unit>()
+        val cancelled = CompletableDeferred<Unit>()
+        val first = client.registerService<OrderService>(OrderImpl().apply {
+            onPlace = { _, _ ->
+                started.complete(Unit)
+                try {
+                    awaitCancellation()
+                } finally {
+                    cancelled.complete(Unit)
+                }
+            }
+        })
+        client.service<OrderService>().place(7)
+        withTimeout(10.seconds) { started.await() }
+        first.close()
+        withTimeout(5.seconds) { cancelled.await() }
+
+        val impl = OrderImpl()
+        client.registerService<OrderService>(impl).use {
+            val delivery = withTimeout(15.seconds) { impl.deliveries.receive() }
+            assertEquals(7, delivery.id)
+            assertEquals(2, delivery.context!!.deliveryCount)
+        }
+    }
+
+    @Test
     fun `fire interrupted by a crash is redelivered`() = runTest(timeout = 2.minutes) {
         withContext(Dispatchers.Default) {
             RpcDefaults.ACK_WAIT = 1.seconds
