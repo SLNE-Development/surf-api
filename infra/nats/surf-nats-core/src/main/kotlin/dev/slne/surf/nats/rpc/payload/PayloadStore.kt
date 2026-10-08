@@ -36,7 +36,7 @@ internal object PayloadStore {
     private var bucket: Bucket? = null
 
     /**
-     * Offloads [body] if larger than the supported may payload and returns the body to send.
+     * Offloads [body] if larger than the supported max payload and returns the body to send.
      */
     suspend fun offload(headers: Headers, body: ByteArray, timeout: Duration): ByteArray {
         val connection = NatsConnectionManager.connection()
