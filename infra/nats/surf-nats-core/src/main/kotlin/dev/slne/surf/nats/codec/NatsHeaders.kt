@@ -15,6 +15,7 @@ object NatsHeaders {
     const val SENDER_VERSION = "Surf-Sender-Version"
     const val DEADLINE = "Surf-Deadline"
     const val ERROR = "Surf-Error"
+    const val PAYLOAD_REF = "Surf-Payload-Ref"
 
     const val ANSWER = "Surf-Answer"
     const val ANSWER_NONE = "none"

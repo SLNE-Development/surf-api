@@ -4,6 +4,7 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.rpc.payload.PayloadStore
 import io.nats.client.JetStreamStatusException
 import io.nats.client.Message
 import io.nats.client.impl.Headers
@@ -40,7 +41,8 @@ internal class RpcCallerImpl(
                 NatsHeaders.DEADLINE,
                 (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()
             )
-        val body = client.codec.encode(method.arguments, args, WireFormat.CBOR)
+        val encoded = client.codec.encode(method.arguments, args, WireFormat.CBOR)
+        val body = PayloadStore.offload(headers, encoded, timeout)
 
         return when (method.responders) {
             ResponderMode.ONE -> callOne(method, headers, body, timeout)
@@ -135,7 +137,7 @@ internal class RpcCallerImpl(
                 else -> return Answer.Of(
                     client.codec.decode(
                         result.serializer,
-                        reply.data,
+                        PayloadStore.resolve(reply, delete = true),
                         headers?.getFirst(NatsHeaders.CONTENT_TYPE)
                     )
                 )
@@ -148,7 +150,7 @@ internal class RpcCallerImpl(
         error("reply channel closed")
     }
 
-    private fun decodeReply(
+    private suspend fun decodeReply(
         method: MethodDescriptor,
         reply: Message
     ): Any? {
@@ -162,12 +164,23 @@ internal class RpcCallerImpl(
 
         return when (val result = method.result) {
             ResultKind.Unit -> Unit
-            is ResultKind.Value -> client.codec.decode(result.serializer, reply.data, contentType)
+            is ResultKind.Value -> client.codec.decode(
+                result.serializer,
+                PayloadStore.resolve(reply, delete = true),
+                contentType
+            )
+
             is ResultKind.Answer -> {
                 if (headers?.getFirst(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_NONE) {
                     Answer.None
                 } else {
-                    Answer.Of(client.codec.decode(result.serializer, reply.data, contentType))
+                    Answer.Of(
+                        client.codec.decode(
+                            result.serializer,
+                            PayloadStore.resolve(reply, delete = true),
+                            contentType
+                        )
+                    )
                 }
             }
         }

@@ -1,6 +1,7 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @InternalNatsApi
@@ -11,4 +12,6 @@ internal object RpcDefaults {
     val HEARTBEAT_INTERVAL = 5.seconds
     val PRESENCE_TTL = 15.seconds
     val PRESENCE_WARMUP = 1.seconds
+
+    val PAYLOAD_TTL = 10.minutes
 }

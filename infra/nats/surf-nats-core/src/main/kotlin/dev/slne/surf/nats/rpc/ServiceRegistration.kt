@@ -7,12 +7,14 @@ import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.rpc.payload.PayloadStore
 import io.nats.client.Dispatcher
 import io.nats.client.Message
 import io.nats.client.MessageHandler
 import io.nats.client.impl.Headers
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -93,10 +95,14 @@ internal class ServiceRegistration(
 
         client.clientScope.launch(CoroutineName("surf-nats/${client.name}/rpc/${methodDescriptor.subject}")) {
             val reply = try {
-                val args =
-                    client.codec.decode(methodDescriptor.arguments, message.data, contentType)
-                val completed = withTimeoutOrNull(timeout) { Completed(invoker.call(args)) }
-                    ?: return@launch // own timeout; do nothing requester has already given up
+                val completed = withTimeoutOrNull(timeout) {
+                    val data = PayloadStore.resolve(
+                        message,
+                        delete = methodDescriptor.responders == ResponderMode.ONE
+                    )
+                    val args = client.codec.decode(methodDescriptor.arguments, data, contentType)
+                    Completed(invoker.call(args))
+                } ?: return@launch // own timeout; do nothing requester has already given up
                 encodeResult(methodDescriptor, completed.value, format)
             } catch (e: CancellationException) {
                 ensureActive()
@@ -106,7 +112,7 @@ internal class ServiceRegistration(
             }
 
             if (replyTo != null) {
-                send(methodDescriptor, replyTo, reply, format)
+                send(methodDescriptor, replyTo, reply, format, timeout)
             }
         }
     }
@@ -160,16 +166,20 @@ internal class ServiceRegistration(
         )
     }
 
-    private fun send(
+    private suspend fun send(
         method: MethodDescriptor,
         replyTo: String,
         reply: Reply,
         format: WireFormat,
+        timeout: Duration,
     ) {
         val connection = NatsConnectionManager.connection()
         try {
-            connection.publish(replyTo, reply.headers, reply.body)
-        } catch (e: IllegalArgumentException) { // Most likely too large, replace with object store
+            val body = PayloadStore.offload(reply.headers, reply.body, timeout)
+            connection.publish(replyTo, reply.headers, body)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             val fallback = errorReply(method, e, format)
             connection.publish(replyTo, fallback.headers, fallback.body)
         }
