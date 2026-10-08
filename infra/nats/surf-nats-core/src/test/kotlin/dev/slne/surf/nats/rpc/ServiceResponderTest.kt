@@ -42,7 +42,7 @@ class ServiceResponderTest {
         suspend fun slow(): String
     }
 
-    open class CalcImpl : CalcService {
+    class CalcImpl : CalcService {
         val fired = Channel<String>(Channel.UNLIMITED)
         val calls = AtomicInteger()
         val slowStarted = CompletableDeferred<Unit>()

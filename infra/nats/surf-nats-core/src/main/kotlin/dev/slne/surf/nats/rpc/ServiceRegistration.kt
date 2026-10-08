@@ -21,11 +21,15 @@ import kotlin.time.toJavaDuration
 internal class ServiceRegistration(
     private val client: NatsClientImpl,
     val descriptor: ServiceDescriptor,
-    implementation: Any
+    implementation: Any,
 ) : NatsRegistration {
 
     private val invokers = descriptor.methods.map {
         ServiceInvokerFactory.create(implementation, it.method)
+    }
+
+    private val announcer = descriptor.presenceSubject?.let { subject ->
+        PresenceAnnouncer(client, subject)
     }
 
     private val active = AtomicBoolean(true)
@@ -47,11 +51,14 @@ internal class ServiceRegistration(
             }
         }
 
+        announcer?.start(dispatcher)
+
         NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
     }
 
     override fun close() {
         if (!active.compareAndSet(true, false)) return
+        announcer?.close()
         dispatcher?.let {
             try {
                 NatsConnectionManager.connection().closeDispatcher(it)

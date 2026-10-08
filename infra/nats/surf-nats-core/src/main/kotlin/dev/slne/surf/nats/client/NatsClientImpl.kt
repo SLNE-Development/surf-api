@@ -14,6 +14,7 @@ import dev.slne.surf.nats.rpc.RpcCallerImpl
 import dev.slne.surf.nats.rpc.ServiceDescriptor
 import dev.slne.surf.nats.rpc.ServiceRegistration
 import io.nats.client.Connection
+import io.nats.client.Dispatcher
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.serialization.modules.SerializersModule
@@ -73,6 +74,11 @@ class NatsClientImpl(
 
     private val closed = AtomicBoolean(false)
     override val isClosed get() = closed.get()
+
+    private val replyDispatcherLock = Any()
+
+    @Volatile
+    private var replyDispatcher: Dispatcher? = null
 
     override fun publish(event: Any) {
         checkOpen()
@@ -174,9 +180,20 @@ class NatsClientImpl(
         return serviceDescriptors.get(type)
     }
 
+    internal fun replyDispatcher(): Dispatcher {
+        replyDispatcher?.let { return it }
+        synchronized(replyDispatcherLock) {
+            checkOpen()
+            return replyDispatcher
+                ?: NatsConnectionManager.connection().createDispatcher()
+                    .also { replyDispatcher = it }
+        }
+    }
+
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
         closeRegistrations()
+        closeReplyDispatcher()
         eventSubscriptions.close()
         clientScope.cancel("NatsClient[$name] closed")
         onClose(this)
@@ -193,6 +210,19 @@ class NatsClientImpl(
 
         if (registrations.isNotEmpty()) {
             logger.warn("Some registrations were not closed properly: ${registrations.size} remaining")
+        }
+    }
+
+    private fun closeReplyDispatcher() {
+        synchronized(replyDispatcherLock) {
+            replyDispatcher?.let { dispatcher ->
+                try {
+                    NatsConnectionManager.connection().closeDispatcher(dispatcher)
+                } catch (e: Exception) {
+                    logger.warn("Failed to close reply dispatcher", e)
+                }
+            }
+            replyDispatcher = null
         }
     }
 

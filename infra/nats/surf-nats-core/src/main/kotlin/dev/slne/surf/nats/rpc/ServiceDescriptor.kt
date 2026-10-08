@@ -4,6 +4,7 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.subject.Subjects
 import dev.slne.surf.nats.util.isSuspend
+import io.ktor.websocket.Serializer
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.serialization.modules.SerializersModule
 import java.lang.reflect.Method
@@ -17,7 +18,8 @@ import kotlin.time.Duration.Companion.seconds
 internal class ServiceDescriptor(
     val type: Class<*>,
     val name: String,
-    val methods: List<MethodDescriptor>
+    val methods: List<MethodDescriptor>,
+    val presenceSubject: String?
 ) {
     companion object {
         fun of(type: Class<*>, client: NatsClientImpl): ServiceDescriptor {
@@ -128,7 +130,16 @@ internal class ServiceDescriptor(
 
             require(methods.isNotEmpty()) { "${type.name} has no service methods" }
 
-            return ServiceDescriptor(type, serviceName, methods)
+            val presenceSubject = if (methods.any { it.responders == ResponderMode.ALL }) {
+                Subjects.requireValidSubject(
+                    $$"$${client.name}.$presence.$$serviceName",
+                    "${type.name} presence",
+                )
+            } else {
+                null
+            }
+
+            return ServiceDescriptor(type, serviceName, methods, presenceSubject)
         }
 
         private fun resultKind(returnType: KType, module: SerializersModule): ResultKind {
