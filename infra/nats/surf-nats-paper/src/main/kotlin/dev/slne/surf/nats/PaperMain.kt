@@ -1,10 +1,16 @@
 package dev.slne.surf.nats
 
-import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
+import kotlinx.coroutines.runBlocking
 import org.bukkit.plugin.java.JavaPlugin
 
-class PaperMain : SuspendingJavaPlugin() {
+@InternalNatsApi
+class PaperMain : JavaPlugin() {
 
+    override fun onDisable() {
+        runBlocking {
+            NatsInstance.get().disable()
+        }
+    }
 }
 
 val plugin get() = JavaPlugin.getPlugin(PaperMain::class.java)

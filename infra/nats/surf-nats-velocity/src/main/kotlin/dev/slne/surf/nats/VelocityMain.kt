@@ -1,17 +1,29 @@
 package dev.slne.surf.nats
 
 import com.google.inject.Inject
+import com.velocitypowered.api.event.Subscribe
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent
 import com.velocitypowered.api.plugin.annotation.DataDirectory
-import com.velocitypowered.api.proxy.ProxyServer
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
-lateinit var instance: VelocityMain
+@InternalNatsApi
+lateinit var plugin: VelocityMain
+    private set
 
+@InternalNatsApi
 class VelocityMain @Inject constructor(
-    val proxy: ProxyServer,
     @DataDirectory val dataPath: Path
 ) {
     init {
-        instance = this
+        plugin = this
+        runBlocking {
+            NatsInstance.get().load()
+        }
+    }
+
+    @Subscribe(priority = Short.MIN_VALUE)
+    suspend fun onShutdown(@Suppress("unused") event: ProxyShutdownEvent) {
+        NatsInstance.instance.disable()
     }
 }
