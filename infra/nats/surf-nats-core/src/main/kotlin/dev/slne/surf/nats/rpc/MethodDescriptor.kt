@@ -12,7 +12,8 @@ internal class MethodDescriptor(
     val index: Int,
     val subject: String, // client.service.method-kebab
     val responders: ResponderMode,
-    val timeout: Duration?,
+    val timeout: Duration,
     val arguments: KSerializer<Array<Any?>>,
     val result: ResultKind,
+    val persistent: Boolean,
 )

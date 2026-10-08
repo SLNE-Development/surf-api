@@ -2,9 +2,9 @@ package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
+import dev.slne.surf.nats.jetstream.PersistentStreams
 import dev.slne.surf.nats.subject.Subjects
 import dev.slne.surf.nats.util.isSuspend
-import io.ktor.websocket.Serializer
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.serialization.modules.SerializersModule
 import java.lang.reflect.Method
@@ -19,7 +19,8 @@ internal class ServiceDescriptor(
     val type: Class<*>,
     val name: String,
     val methods: List<MethodDescriptor>,
-    val presenceSubject: String?
+    val presenceSubject: String?,
+    val streams: PersistentStreams?,
 ) {
     companion object {
         fun of(type: Class<*>, client: NatsClientImpl): ServiceDescriptor {
@@ -27,6 +28,9 @@ internal class ServiceDescriptor(
             val annotation = requireNotNull(type.getAnnotation(NatsService::class.java)) {
                 "${type.name} must be annotated with @NatsService"
             }
+            val servicePersistent = type.getAnnotation(Persistent::class.java)?.enabled ?: false
+            val serviceTimeout = type.getAnnotation(NatsTimeout::class.java)?.seconds?.seconds
+
             val codec = client.codec
             val serviceName = annotation.name.ifEmpty { Subjects.kebabCase(type.simpleName) }
             val module = codec.serializersModule(WireFormat.CBOR)
@@ -58,7 +62,15 @@ internal class ServiceDescriptor(
 
                 val responders =
                     method.getAnnotation(Responders::class.java)?.mode ?: annotation.responders
+                val persistent =
+                    method.getAnnotation(Persistent::class.java)?.enabled ?: servicePersistent
+                if (persistent && responders == ResponderMode.ALL) {
+                    methodProblems.add("$name: @Persistent is not supported with ALL responders, mark it @Persistent(false)")
+                }
+
                 val timeout = method.getAnnotation(NatsTimeout::class.java)?.seconds?.seconds
+                    ?: serviceTimeout
+                    ?: if (persistent) RpcDefaults.JETSTREAM_TIMEOUT else RpcDefaults.CORE_TIMEOUT
 
                 val parameters = function.parameters.filter { it.kind == KParameter.Kind.VALUE }
                 val serializers = parameters.mapNotNull { param ->
@@ -88,10 +100,13 @@ internal class ServiceDescriptor(
                 }
 
                 val subject = try {
-                    Subjects.requireValidSubject(
-                        "${client.name}.$serviceName.${Subjects.kebabCase(name)}",
-                        "${type.name}.$name"
-                    )
+                    val raw = if (persistent) {
+                        $$"$${client.name}.$persist.$$serviceName.$${Subjects.kebabCase(name)}"
+                    } else {
+                        "${client.name}.$serviceName.${Subjects.kebabCase(name)}"
+                    }
+
+                    Subjects.requireValidSubject(raw, "${type.name}.$name")
                 } catch (e: IllegalArgumentException) {
                     methodProblems.add(e.message.orEmpty())
                     null
@@ -115,7 +130,8 @@ internal class ServiceDescriptor(
                     responders,
                     timeout,
                     arguments,
-                    result
+                    result,
+                    persistent,
                 )
             }
 
@@ -139,7 +155,19 @@ internal class ServiceDescriptor(
                 null
             }
 
-            return ServiceDescriptor(type, serviceName, methods, presenceSubject)
+            val streams = if (methods.any { it.persistent }) {
+                val stream = "SURF_${client.name}_$serviceName".uppercase().replace("-", "_")
+                PersistentStreams(
+                    stream = stream,
+                    filter = $$"$${client.name}.$persist.$$serviceName.>",
+                    dlqStream = "${stream}_DLQ",
+                    dlqSubject = $$"$${client.name}.$dlq.$$serviceName",
+                )
+            } else {
+                null
+            }
+
+            return ServiceDescriptor(type, serviceName, methods, presenceSubject, streams)
         }
 
         private fun resultKind(returnType: KType, module: SerializersModule): ResultKind {

@@ -4,7 +4,6 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
-import dev.slne.surf.nats.rpc.RpcDefaults
 import io.nats.client.api.ObjectStoreConfiguration
 import io.nats.client.api.StorageType
 import io.nats.client.impl.Headers
@@ -125,7 +124,7 @@ class LargePayloadTest {
         assertNotNull(reply.headers.getFirst(NatsHeaders.PAYLOAD_REF))
         assertEquals(0, reply.data.size)
 
-        val data = PayloadStore.resolve(reply, delete = true)
+        val data = PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true)
         val contentType = reply.headers.getFirst(NatsHeaders.CONTENT_TYPE)
         assertContentEquals(blob(LARGE), client.codec.decode(ByteArraySerializer(), data, contentType))
     }
@@ -145,7 +144,7 @@ class LargePayloadTest {
         val contentType = assertNotNull(reply.headers.getFirst(NatsHeaders.CONTENT_TYPE))
         assertEquals(WireFormat.JSON, WireFormat.fromContentType(contentType))
 
-        val data = PayloadStore.resolve(reply, delete = true)
+        val data = PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true)
         assertContentEquals(blob(size), client.codec.decode(ByteArraySerializer(), data, contentType))
     }
 
@@ -170,7 +169,7 @@ class LargePayloadTest {
             val name = assertNotNull(message.headers.getFirst(NatsHeaders.PAYLOAD_REF))
             val arguments = client.codec.decode(
                 method.arguments,
-                PayloadStore.resolve(message, delete = false),
+                PayloadStore.resolve(message, PayloadBucket.TRANSIENT, delete = false),
                 message.headers.getFirst(NatsHeaders.CONTENT_TYPE)
             )
             assertContentEquals(data, arguments[0] as ByteArray)
@@ -197,7 +196,7 @@ class LargePayloadTest {
     @Test
     fun `timeout above the payload TTL fails before sending`() = withService {
         val before = liveObjects()
-        val tooLong = RpcDefaults.PAYLOAD_TTL + 1.minutes
+        val tooLong = PayloadBucket.TRANSIENT.ttl + 1.minutes
 
         assertFailsWith<IllegalArgumentException> {
             withNatsTimeout(tooLong) { blobs.checksum(blob(LARGE)) }
@@ -225,8 +224,8 @@ class LargePayloadTest {
     fun `bucket is created with the payload TTL`() = withService {
         blobs.checksum(blob(LARGE))
 
-        val status = NatsConnectionManager.connection().objectStoreManagement().getStatus(PayloadStore.BUCKET)
-        assertEquals(RpcDefaults.PAYLOAD_TTL.inWholeSeconds, status.ttl?.toSeconds())
+        val status = NatsConnectionManager.connection().objectStoreManagement().getStatus(PayloadBucket.TRANSIENT.bucketName)
+        assertEquals(PayloadBucket.TRANSIENT.ttl.inWholeSeconds, status.ttl?.toSeconds())
         assertEquals(StorageType.File, status.storageType)
     }
 
@@ -234,7 +233,7 @@ class LargePayloadTest {
     fun `existing bucket with a different configuration is reused`() = runTest(timeout = 2.minutes) {
         withContext(Dispatchers.Default) {
             val ttl = Duration.ofMinutes(1)
-            recreateBucket(ObjectStoreConfiguration.builder(PayloadStore.BUCKET).ttl(ttl).build())
+            recreateBucket(ObjectStoreConfiguration.builder(PayloadBucket.TRANSIENT.bucketName).ttl(ttl).build())
             try {
                 (NatsClient.create("rpc-payload-${clientCounter++}") as NatsClientImpl).use { client ->
                     val impl = BlobImpl()
@@ -245,7 +244,7 @@ class LargePayloadTest {
                 }
 
                 val status = NatsConnectionManager.connection().objectStoreManagement()
-                    .getStatus(PayloadStore.BUCKET)
+                    .getStatus(PayloadBucket.TRANSIENT.bucketName)
                 assertEquals(ttl, status.ttl, "existing bucket must not be replaced")
             } finally {
                 recreateBucket(null)
@@ -256,7 +255,7 @@ class LargePayloadTest {
     private suspend fun recreateBucket(config: ObjectStoreConfiguration?) {
         val management = NatsConnectionManager.connection().objectStoreManagement()
         withContext(Dispatchers.IO) {
-            if (PayloadStore.BUCKET in management.bucketNames) management.delete(PayloadStore.BUCKET)
+            if (PayloadBucket.TRANSIENT.bucketName in management.bucketNames) management.delete(PayloadBucket.TRANSIENT.bucketName)
             if (config != null) management.create(config)
         }
         NatsInstance.instance.disable()
@@ -275,11 +274,11 @@ class LargePayloadTest {
     private fun Fixture.method(name: String) =
         client.serviceDescriptor(BlobService::class.java).methods.single { it.method.name == name }
 
-    private fun store() = NatsConnectionManager.connection().objectStore(PayloadStore.BUCKET)
+    private fun store() = NatsConnectionManager.connection().objectStore(PayloadBucket.TRANSIENT.bucketName)
 
     private fun liveObjects(): Set<String> {
         val management = NatsConnectionManager.connection().objectStoreManagement()
-        if (PayloadStore.BUCKET !in management.bucketNames) return emptySet()
+        if (PayloadBucket.TRANSIENT.bucketName !in management.bucketNames) return emptySet()
         return store().list.filterNot { it.isDeleted }.mapTo(HashSet()) { it.objectName }
     }
 

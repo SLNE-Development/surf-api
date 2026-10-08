@@ -16,6 +16,8 @@ object NatsHeaders {
     const val DEADLINE = "Surf-Deadline"
     const val ERROR = "Surf-Error"
     const val PAYLOAD_REF = "Surf-Payload-Ref"
+    const val REPLY_TO = "Surf-Reply-To"
+    const val DEAD_SUBJECT = "Surf-Dead-Subject"
 
     const val ANSWER = "Surf-Answer"
     const val ANSWER_NONE = "none"

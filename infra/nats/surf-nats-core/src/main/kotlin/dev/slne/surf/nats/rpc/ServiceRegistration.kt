@@ -7,12 +7,18 @@ import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.jetstream.JetStreamProvisioner
+import dev.slne.surf.nats.rpc.payload.PayloadBucket
 import dev.slne.surf.nats.rpc.payload.PayloadStore
 import io.nats.client.Dispatcher
 import io.nats.client.Message
+import io.nats.client.MessageConsumer
 import io.nats.client.MessageHandler
 import io.nats.client.impl.Headers
+import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
+import org.jetbrains.annotations.Blocking
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -34,17 +40,27 @@ internal class ServiceRegistration(
         PresenceAnnouncer(client, subject)
     }
 
+    private val persistentBySubject = descriptor.methods
+        .filter { it.persistent }
+        .associateBy { it.subject }
+
     private val active = AtomicBoolean(true)
     override val isActive get() = active.get()
 
     @Volatile
     private var dispatcher: Dispatcher? = null
 
+    @Volatile
+    private var messageConsumer: MessageConsumer? = null
+
+    @Blocking
     fun subscribe() {
-        val dispatcher = NatsConnectionManager.connection().createDispatcher()
+        val connection = NatsConnectionManager.connection()
+        val dispatcher = connection.createDispatcher()
         this.dispatcher = dispatcher
 
         for (method in descriptor.methods) {
+            if (method.persistent) continue
             val invoker = invokers[method.index]
             val handler = MessageHandler { onRequest(method, invoker, it) }
             when (method.responders) {
@@ -53,23 +69,16 @@ internal class ServiceRegistration(
             }
         }
 
+        descriptor.streams?.let { streams ->
+            runBlocking { JetStreamProvisioner.ensureStreams(streams) }
+            val consumer = connection.getStreamContext(streams.stream)
+                .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(client.name))
+            messageConsumer = consumer.consume(dispatcher) { onPersistent(it) }
+        }
+
         announcer?.start(dispatcher)
 
-        NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
-    }
-
-    override fun close() {
-        if (!active.compareAndSet(true, false)) return
-        announcer?.close()
-        dispatcher?.let {
-            try {
-                NatsConnectionManager.connection().closeDispatcher(it)
-            } catch (e: Exception) {
-                client.logger.warn("Failed to close service dispatcher", e)
-            }
-        }
-        client.unregisterService(this)
-        client.unregisterRegistration(this)
+        connection.flush(5.seconds.toJavaDuration())
     }
 
     private fun onRequest(
@@ -84,7 +93,6 @@ internal class ServiceRegistration(
         val timeout = headers?.getFirst(NatsHeaders.DEADLINE)?.toLongOrNull()
             ?.let { (it - System.currentTimeMillis()).milliseconds }
             ?: methodDescriptor.timeout
-            ?: RpcDefaults.CORE_TIMEOUT
 
         if (!timeout.isPositive()) {
             client.logger.debug("Dropping expired request on ${message.subject}")
@@ -98,6 +106,7 @@ internal class ServiceRegistration(
                 val completed = withTimeoutOrNull(timeout) {
                     val data = PayloadStore.resolve(
                         message,
+                        PayloadBucket.TRANSIENT,
                         delete = methodDescriptor.responders == ResponderMode.ONE
                     )
                     val args = client.codec.decode(methodDescriptor.arguments, data, contentType)
@@ -115,6 +124,167 @@ internal class ServiceRegistration(
                 send(methodDescriptor, replyTo, reply, format, timeout)
             }
         }
+    }
+
+    private fun onPersistent(message: Message) {
+        val method = persistentBySubject[message.subject] ?: return message.term()
+        val meta = message.metaData()
+        val headers = if (message.hasHeaders()) message.headers else null
+        val context = NatsMessageContext(
+            messageId = headers?.getFirst(NatsJetStreamConstants.MSG_ID_HDR)
+                ?: meta.streamSequence().toString(),
+            deliveryCount = meta.deliveredCount(),
+        )
+
+        // Ignore already timed out messages
+        val deadline = headers?.getFirst(NatsHeaders.DEADLINE)?.toLongOrNull()
+        if (deadline != null && deadline <= System.currentTimeMillis()) return message.term()
+
+        client.clientScope.launch(context + CoroutineName("surf-nats/${client.name}/persist/${method.subject}")) {
+            val keepAlive = launch {
+                while (isActive) {
+                    delay(RpcDefaults.ACK_WAIT / 2)
+                    message.inProgress()
+                }
+            }
+            try {
+                if (method.result == ResultKind.Unit) {
+                    handleFire(method, message)
+                } else {
+                    handlePersistentRpc(method, message, deadline)
+                }
+            } finally {
+                keepAlive.cancel()
+            }
+        }
+    }
+
+    private suspend fun handleFire(method: MethodDescriptor, message: Message) {
+        try {
+            val data = PayloadStore.resolve(message, PayloadBucket.PERSISTENT, delete = false)
+            val contentType =
+                if (message.hasHeaders()) message.headers.getFirst(NatsHeaders.CONTENT_TYPE) else null
+            invokers[method.index].call(
+                client.codec.decode(
+                    method.arguments,
+                    data,
+                    contentType,
+                )
+            )
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            return failFire(method, message, e)
+        } catch (e: Exception) {
+            return failFire(method, message, e)
+        }
+
+        message.ack()
+        try {
+            PayloadStore.delete(message, PayloadBucket.PERSISTENT)
+        } catch (e: Exception) {
+            client.logger.warn("Failed to delete payload of ${message.subject}", e)
+        }
+    }
+
+    private suspend fun failFire(method: MethodDescriptor, message: Message, e: Throwable) {
+        val delivered = message.metaData().deliveredCount()
+        client.logger.error("Persistent ${method.subject} failed (delivery $delivered)", e)
+        if (delivered >= RpcDefaults.MAX_DELIVER) {
+            deadLetter(message, e)
+            message.term()
+        } else {
+            val backoff = RpcDefaults.NAK_BACKOFF[(delivered - 1).toInt()
+                .coerceIn(0, RpcDefaults.NAK_BACKOFF.lastIndex)]
+            message.nakWithDelay(backoff.toJavaDuration())
+        }
+    }
+
+    private suspend fun deadLetter(message: Message, e: Throwable) {
+        val streams = checkNotNull(descriptor.streams)
+        val headers = Headers(message.headers)
+            .put(NatsHeaders.ERROR, e.javaClass.name)
+            .put(NatsHeaders.DEAD_SUBJECT, message.subject)
+
+        headers.remove(headers.keySet().filter { it.startsWith("Nats-", ignoreCase = true) })
+
+        try {
+            NatsConnectionManager.connection()
+                .jetStream()
+                .publishAsync(streams.dlqSubject, headers, message.data)
+                .await()
+        } catch (dlq: Exception) {
+            client.logger.error("Failed to dead-letter ${message.subject}", dlq)
+        }
+    }
+
+    private suspend fun handlePersistentRpc(
+        method: MethodDescriptor,
+        message: Message,
+        deadline: Long?,
+    ) {
+        val headers = if (message.hasHeaders()) message.headers else null
+        val replyTo = message.headers?.getFirst(NatsHeaders.REPLY_TO)
+        val contentType = headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+        val format = contentType?.let(WireFormat::fromContentType) ?: WireFormat.CBOR
+        val timeout =
+            deadline?.let { (it - System.currentTimeMillis()).milliseconds } ?: method.timeout
+
+        val reply = try {
+            val completed = withTimeoutOrNull(timeout) {
+                val data = PayloadStore.resolve(message, PayloadBucket.TRANSIENT, delete = false)
+                Completed(
+                    invokers[method.index].call(
+                        client.codec.decode(
+                            method.arguments,
+                            data,
+                            contentType,
+                        )
+                    )
+                )
+            }
+            if (completed == null) {
+                message.term()
+                return // Caller has already given up
+            }
+            encodeResult(method, completed.value, format)
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            errorReply(method, e, format)
+        } catch (e: Exception) {
+            errorReply(method, e, format)
+        }
+
+        if (replyTo != null) {
+            send(method, replyTo, reply, format, timeout)
+        }
+        message.ack()
+
+        try {
+            PayloadStore.delete(message, PayloadBucket.TRANSIENT)
+        } catch (e: Exception) {
+            client.logger.warn("Failed to delete payload of ${message.subject}", e)
+        }
+    }
+
+    override fun close() {
+        if (!active.compareAndSet(true, false)) return
+        announcer?.close()
+        messageConsumer?.let {
+            try {
+                it.close()
+            } catch (e: Exception) {
+                client.logger.warn("Failed to close message consumer", e)
+            }
+        }
+        dispatcher?.let {
+            try {
+                NatsConnectionManager.connection().closeDispatcher(it)
+            } catch (e: Exception) {
+                client.logger.warn("Failed to close service dispatcher", e)
+            }
+        }
+        client.unregisterService(this)
+        client.unregisterRegistration(this)
     }
 
     private class Completed(@JvmField val value: Any?)
@@ -175,7 +345,8 @@ internal class ServiceRegistration(
     ) {
         val connection = NatsConnectionManager.connection()
         try {
-            val body = PayloadStore.offload(reply.headers, reply.body, timeout)
+            val body =
+                PayloadStore.offload(reply.headers, reply.body, timeout, PayloadBucket.TRANSIENT)
             connection.publish(replyTo, reply.headers, body)
         } catch (e: CancellationException) {
             throw e

@@ -4,17 +4,19 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.jetstream.JetStreamProvisioner
+import dev.slne.surf.nats.rpc.payload.PayloadBucket
 import dev.slne.surf.nats.rpc.payload.PayloadStore
 import io.nats.client.JetStreamStatusException
 import io.nats.client.Message
+import io.nats.client.PublishOptions
 import io.nats.client.impl.Headers
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.withTimeoutOrNull
+import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
@@ -33,16 +35,17 @@ internal class RpcCallerImpl(
 
     override suspend fun call(index: Int, args: Array<Any?>): Any? {
         val method = service.methods[index]
-        val timeout = currentCoroutineContext()[NatsTimeoutElement]?.timeout
-            ?: method.timeout
-            ?: RpcDefaults.CORE_TIMEOUT
+        val timeout = currentCoroutineContext()[NatsTimeoutElement]?.timeout ?: method.timeout
+
+        if (method.persistent) return callPersistent(method, args, timeout)
+
         val headers = NatsHeaders.base(client.name, WireFormat.CBOR)
             .add(
                 NatsHeaders.DEADLINE,
                 (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()
             )
         val encoded = client.codec.encode(method.arguments, args, WireFormat.CBOR)
-        val body = PayloadStore.offload(headers, encoded, timeout)
+        val body = PayloadStore.offload(headers, encoded, timeout, PayloadBucket.TRANSIENT)
 
         return when (method.responders) {
             ResponderMode.ONE -> callOne(method, headers, body, timeout)
@@ -137,7 +140,7 @@ internal class RpcCallerImpl(
                 else -> return Answer.Of(
                     client.codec.decode(
                         result.serializer,
-                        PayloadStore.resolve(reply, delete = true),
+                        PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true),
                         headers?.getFirst(NatsHeaders.CONTENT_TYPE)
                     )
                 )
@@ -166,7 +169,7 @@ internal class RpcCallerImpl(
             ResultKind.Unit -> Unit
             is ResultKind.Value -> client.codec.decode(
                 result.serializer,
-                PayloadStore.resolve(reply, delete = true),
+                PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true),
                 contentType
             )
 
@@ -177,12 +180,86 @@ internal class RpcCallerImpl(
                     Answer.Of(
                         client.codec.decode(
                             result.serializer,
-                            PayloadStore.resolve(reply, delete = true),
+                            PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true),
                             contentType
                         )
                     )
                 }
             }
+        }
+    }
+
+
+    private suspend fun callPersistent(
+        method: MethodDescriptor,
+        args: Array<Any?>,
+        timeout: Duration,
+    ): Any? {
+        val headers = NatsHeaders.base(client.name, WireFormat.CBOR)
+        val encoded = client.codec.encode(method.arguments, args, WireFormat.CBOR)
+
+        if (method.result == ResultKind.Unit) {
+            val body = PayloadStore.offload(
+                headers,
+                encoded,
+                RpcDefaults.PERSIST_MAX_AGE,
+                PayloadBucket.PERSISTENT,
+            )
+            publishPersistent(method, headers, body, timeout, ttl = null)
+            return Unit
+        }
+
+        val inbox = NatsConnectionManager.connection().createInbox()
+        headers.add(
+            NatsHeaders.DEADLINE,
+            (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()
+        )
+        headers.add(NatsHeaders.REPLY_TO, inbox)
+        val body = PayloadStore.offload(headers, encoded, timeout, PayloadBucket.TRANSIENT)
+
+        val reply = CompletableDeferred<Message>()
+        val dispatcher = client.replyDispatcher()
+        val subscription = dispatcher.subscribe(inbox) { reply.complete(it) }
+
+        try {
+            return withTimeoutOrNull(timeout) {
+                publishPersistent(method, headers, body, timeout, ttl = timeout)
+                decodeReply(method, reply.await())
+            } ?: throw NatsRequestTimeoutException(method.subject, timeout)
+        } finally {
+            runCatching { dispatcher.unsubscribe(subscription) }
+        }
+    }
+
+    private suspend fun publishPersistent(
+        method: MethodDescriptor,
+        headers: Headers,
+        body: ByteArray,
+        timeout: Duration,
+        ttl: Duration?,
+    ) {
+        val streams = checkNotNull(service.streams)
+        JetStreamProvisioner.ensureStreams(streams)
+
+        val options = PublishOptions.builder()
+            .messageId(UUID.randomUUID().toString())
+            .expectedStream(streams.stream)
+            .apply {
+                if (ttl != null) {
+                    messageTtlSeconds(ttl.inWholeSeconds.coerceAtLeast(1).toInt())
+                }
+            }
+            .build()
+
+        val connection = NatsConnectionManager.connection()
+        try {
+            withTimeout(timeout) {
+                connection.jetStream()
+                    .publishAsync(method.subject, headers, body, options)
+                    .await()
+            }
+        } catch (_: TimeoutCancellationException) {
+            throw NatsRequestTimeoutException(method.subject, timeout)
         }
     }
 

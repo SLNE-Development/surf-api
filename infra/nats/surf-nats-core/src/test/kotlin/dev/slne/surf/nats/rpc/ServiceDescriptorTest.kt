@@ -142,7 +142,7 @@ class ServiceDescriptorTest {
     fun `timeout comes from NatsTimeout`() {
         val descriptor = describe(PlayerService::class.java)
         assertEquals(15.seconds, descriptor.method("heavyReport").timeout)
-        assertNull(descriptor.method("health").timeout)
+        assertEquals(RpcDefaults.CORE_TIMEOUT, descriptor.method("health").timeout)
     }
 
     @Test
