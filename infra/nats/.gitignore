@@ -127,4 +127,5 @@ gradle-app.setting
 .classpath
 
 # Local run directory
-/run/
+run/
+data/

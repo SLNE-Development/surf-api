@@ -18,3 +18,7 @@ include("surf-nats-paper")
 include("surf-nats-velocity")
 include("surf-nats-minestom")
 include("surf-nats-standalone")
+
+include("surf-nats-test:surf-nats-test-common")
+include("surf-nats-test:surf-nats-test-paper")
+include("surf-nats-test:surf-nats-test-microservice")

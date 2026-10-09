@@ -9,6 +9,7 @@ buildscript {
     }
     dependencies {
         classpath("dev.slne.surf.api:surf-api-gradle-plugin:+")
+        classpath("dev.slne.surf.microservice:surf-microservice-gradle-plugin:+")
     }
 }
 
@@ -23,11 +24,11 @@ subprojects {
     }
 
     afterEvaluate {
-        configure<ShadowExtension> {
+        extensions.findByType<ShadowExtension>()?.apply {
             addShadowVariantIntoJavaComponent = false
         }
 
-        configure<KotlinJvmExtension> {
+        extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
                 optIn.add("dev.slne.surf.nats.InternalNatsApi")
             }
