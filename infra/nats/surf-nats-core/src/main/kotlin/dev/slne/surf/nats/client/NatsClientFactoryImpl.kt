@@ -40,7 +40,7 @@ class NatsClientFactoryImpl : NatsClientFactory {
             "NATS is being disconnected while %s NatsClient(s) are still open. " +
                     "These plugins probably did not call NatsClient.close(): %s",
             open.size,
-            open.joinToString { "${it.name} from ${it.origin.source}" }
+            open.joinToString { "${it.name} from ${it.clientOrigin.source}" }
         )
 
         log.atWarning().log(
@@ -52,7 +52,7 @@ class NatsClientFactoryImpl : NatsClientFactory {
         delay(10.seconds)
 
         for (client in open) {
-            val origin = client.origin
+            val origin = client.clientOrigin
             log.atWarning()
                 .log(
                     """

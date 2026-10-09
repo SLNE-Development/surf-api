@@ -1,6 +1,7 @@
 package dev.slne.surf.nats.event
 
 import dev.slne.surf.nats.InternalNatsApi
+import dev.slne.surf.nats.NatsEventContext
 import dev.slne.surf.nats.bytecode.ListenerInvoker
 import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl
@@ -20,11 +21,12 @@ import kotlin.coroutines.cancellation.CancellationException
 internal class EventSubscriptions(private val client: NatsClientImpl) {
 
     private data class Key(val subject: String, val queueGroup: String?)
+    private class Target(val invoker: ListenerInvoker, val ignoreOwn: Boolean)
 
     private class Entry(
         val descriptor: EventDescriptor,
         val subscription: Subscription,
-        val invokers: CopyOnWriteArrayList<ListenerInvoker>,
+        val targets: CopyOnWriteArrayList<Target>,
     )
 
     private val lock = Any()
@@ -38,18 +40,20 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         val key = keyOf(method)
         val existing = entries[key]
 
+        val target = Target(invoker, method.ignoreOwn)
+
         if (existing != null) {
             check(existing.descriptor.type == method.descriptor.type) {
                 "Subject '${key.subject}' is already used by ${existing.descriptor.type.name}, " +
                         "cannot register a listener for ${method.descriptor.type.name}"
             }
-            existing.invokers.add(invoker)
+            existing.targets.add(target)
             return
         }
 
-        val invokers = CopyOnWriteArrayList(listOf(invoker))
+        val targets = CopyOnWriteArrayList(listOf(target))
         val descriptor = method.descriptor
-        val handler = MessageHandler { message -> dispatch(descriptor, invokers, message) }
+        val handler = MessageHandler { message -> dispatch(descriptor, targets, message) }
 
         val dispatcher = dispatcher
             ?: NatsConnectionManager.connection().createDispatcher().also { dispatcher = it }
@@ -60,15 +64,16 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             dispatcher.subscribe(key.subject, key.queueGroup, handler)
         }
 
-        entries[key] = Entry(descriptor, subscription, invokers)
+        entries[key] = Entry(descriptor, subscription, targets)
     }
 
     fun remove(method: ListenerMethod, invoker: ListenerInvoker): Unit = synchronized(lock) {
         val key = keyOf(method)
         val entry = entries[key] ?: return
-        entry.invokers.remove(invoker)
 
-        if (entry.invokers.isEmpty()) {
+        entry.targets.removeIf { it.invoker === invoker }
+
+        if (entry.targets.isEmpty()) {
             entries.remove(key)
             if (!closed) {
                 dispatcher?.unsubscribe(entry.subscription)
@@ -92,14 +97,16 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
     private fun dispatch(
         descriptor: EventDescriptor,
-        invokers: List<ListenerInvoker>,
+        targets: List<Target>,
         message: Message
     ) {
-        val contentType = if (message.hasHeaders()) {
-            message.headers.getFirst(NatsHeaders.CONTENT_TYPE)
-        } else {
-            null
-        }
+        val headers = if (message.hasHeaders()) message.headers else null
+        val origin = headers?.getFirst(NatsHeaders.ORIGIN)
+        val contentType = headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+
+        val own = origin == client.origin
+
+        if (own && targets.all { it.ignoreOwn }) return
 
         val event = try {
             client.codec.decode(descriptor.serializer, message.data, contentType)
@@ -111,12 +118,14 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             return
         }
 
-        val coroutineName =
-            CoroutineName("surf-nats/${client.name}/listener/${descriptor.type.simpleName}")
-        for (invoker in invokers) {
-            client.clientScope.launch(coroutineName) {
+        val context = NatsEventContext(origin, own) +
+                CoroutineName("surf-nats/${client.name}/listener/${descriptor.type.simpleName}")
+
+        for (target in targets) {
+            if (own && target.ignoreOwn) continue
+            client.clientScope.launch(context) {
                 try {
-                    invoker.call(event)
+                    target.invoker.call(event)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

@@ -13,4 +13,7 @@ class NatsMessageContext @InternalNatsApi constructor(
     companion object Key : CoroutineContext.Key<NatsMessageContext>
 }
 
+suspend fun natsMessageContextOrNull() = currentCoroutineContext()[NatsMessageContext]
+
 suspend fun natsMessageContext() = currentCoroutineContext()[NatsMessageContext]
+    ?: error("NatsMessageContext not found. Make sure you are in a persistent NatsService method.")

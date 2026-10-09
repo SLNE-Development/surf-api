@@ -27,7 +27,7 @@ import kotlin.reflect.KClass
 class NatsClientImpl(
     override val name: String,
     serializersModule: SerializersModule,
-    internal val origin: ClientOrigin,
+    internal val clientOrigin: ClientOrigin,
     private val onClose: (NatsClientImpl) -> Unit,
 ) : NatsClient {
 
@@ -80,6 +80,8 @@ class NatsClientImpl(
 
     @Volatile
     private var replyDispatcher: Dispatcher? = null
+
+    val origin = NatsHeaders.origin(name)
 
     override fun publish(event: Any) {
         checkOpen()

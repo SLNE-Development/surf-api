@@ -2,9 +2,12 @@ package dev.slne.surf.nats.client
 
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsEvent
+import dev.slne.surf.nats.NatsEventContext
 import dev.slne.surf.nats.NatsInstance
 import dev.slne.surf.nats.NatsListener
 import dev.slne.surf.nats.WireFormat
+import dev.slne.surf.nats.natsEventContext
+import dev.slne.surf.nats.natsEventContextOrNull
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.impl.Headers
@@ -46,6 +49,9 @@ class NatsClientListenerTest {
     data class SharedSubjectB(val id: Long)
 
     data class NotAnEvent(val id: Long)
+
+    @NatsEvent("listener-test.origin", prefixed = false)
+    data class OriginEvent(val id: Long)
 
     class Recorder<T> {
         val received = Channel<T>(Channel.UNLIMITED)
@@ -150,6 +156,54 @@ class NatsClientListenerTest {
         fun on(event: SharedSubjectA) {
             recorder.received.trySend(event)
         }
+    }
+
+    class IgnoreOwnListener {
+        val recorder = Recorder<OriginEvent>()
+
+        @NatsListener(ignoreOwn = true)
+        fun on(event: OriginEvent) {
+            recorder.received.trySend(event)
+        }
+    }
+
+    class AllOriginsListener {
+        val recorder = Recorder<OriginEvent>()
+
+        @NatsListener
+        fun on(event: OriginEvent) {
+            recorder.received.trySend(event)
+        }
+    }
+
+    class MixedListener {
+        val ignoring = Recorder<OriginEvent>()
+        val all = Recorder<OriginEvent>()
+
+        @NatsListener(ignoreOwn = true)
+        fun ignoring(event: OriginEvent) {
+            ignoring.received.trySend(event)
+        }
+
+        @NatsListener
+        fun all(event: OriginEvent) {
+            all.received.trySend(event)
+        }
+    }
+
+    class ContextListener {
+        val recorder = Recorder<Pair<OriginEvent, NatsEventContext>>()
+
+        @NatsListener
+        suspend fun on(event: OriginEvent) {
+            recorder.received.send(event to natsEventContext())
+        }
+    }
+
+    @Suppress("unused", "UNUSED_PARAMETER")
+    class BalancedIgnoreOwnListener {
+        @NatsListener(loadBalanced = true, ignoreOwn = true)
+        fun balancedIgnoringOwn(event: Created) = Unit
     }
 
     @BeforeAll
@@ -312,6 +366,101 @@ class NatsClientListenerTest {
 
         assertEquals(SharedSubjectA(3), probe.recorder.receiveWithin())
         conflicting.recorder.assertNothingWithin()
+    }
+
+    @Test
+    fun `ignoreOwn skips events of the same client and keeps events of other clients`() =
+        withClient("listen-own-a") { client ->
+            val listener = IgnoreOwnListener()
+            client.registerListener(listener)
+
+            NatsClient.create("listen-own-b").use { other ->
+                client.publish(OriginEvent(1))
+                other.publish(OriginEvent(2))
+
+                assertEquals(OriginEvent(2), listener.recorder.receiveWithin())
+                listener.recorder.assertNothingWithin()
+            }
+        }
+
+    @Test
+    fun `listener without ignoreOwn receives own events`() = withClient("listen-own-default") { client ->
+        val listener = AllOriginsListener()
+        client.registerListener(listener)
+
+        client.publish(OriginEvent(3))
+
+        assertEquals(OriginEvent(3), listener.recorder.receiveWithin())
+    }
+
+    @Test
+    fun `ignoreOwn is applied per listener method`() = withClient("listen-own-mixed-a") { client ->
+        val listener = MixedListener()
+        client.registerListener(listener)
+
+        client.publish(OriginEvent(4))
+        assertEquals(OriginEvent(4), listener.all.receiveWithin())
+        listener.ignoring.assertNothingWithin()
+
+        NatsClient.create("listen-own-mixed-b").use { other ->
+            other.publish(OriginEvent(5))
+            assertEquals(OriginEvent(5), listener.all.receiveWithin())
+            assertEquals(OriginEvent(5), listener.ignoring.receiveWithin())
+        }
+    }
+
+    @Test
+    fun `event context reports origin and ownership`() = withClient("listen-ctx-a") { client ->
+        val listener = ContextListener()
+        client.registerListener(listener)
+
+        (NatsClient.create("listen-ctx-b") as NatsClientImpl).use { other ->
+            client.publish(OriginEvent(6))
+            val (ownEvent, ownContext) = listener.recorder.receiveWithin()
+            assertEquals(OriginEvent(6), ownEvent)
+            assertTrue(ownContext.isOwn)
+            assertEquals(client.origin, ownContext.origin)
+
+            other.publish(OriginEvent(7))
+            val (foreignEvent, foreignContext) = listener.recorder.receiveWithin()
+            assertEquals(OriginEvent(7), foreignEvent)
+            assertFalse(foreignContext.isOwn)
+            assertEquals(other.origin, foreignContext.origin)
+        }
+    }
+
+    @Test
+    fun `event without origin header is foreign`() = withClient("listen-no-origin") { client ->
+        val context = ContextListener()
+        val ignoring = IgnoreOwnListener()
+        client.registerListener(context)
+        client.registerListener(ignoring)
+
+        val descriptor = client.eventDescriptor(OriginEvent::class.java)
+        val bytes = client.codec.encode(descriptor.serializer, OriginEvent(8), WireFormat.CBOR)
+        val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.CBOR.contentType)
+        NatsConnectionManager.connection().publish("listener-test.origin", headers, bytes)
+
+        val (event, eventContext) = context.recorder.receiveWithin()
+        assertEquals(OriginEvent(8), event)
+        assertNull(eventContext.origin)
+        assertFalse(eventContext.isOwn)
+        assertEquals(OriginEvent(8), ignoring.recorder.receiveWithin())
+    }
+
+    @Test
+    fun `ignoreOwn cannot be combined with loadBalanced`() = withClient("listen-own-balanced") { client ->
+        val exception = assertFailsWith<IllegalArgumentException> {
+            client.registerListener(BalancedIgnoreOwnListener())
+        }
+        assertContains(exception.message.orEmpty(), "balancedIgnoringOwn")
+        assertContains(exception.message.orEmpty(), "ignoreOwn")
+    }
+
+    @Test
+    fun `event context is not available outside of listeners`() = runTest {
+        assertNull(natsEventContextOrNull())
+        assertFailsWith<IllegalStateException> { natsEventContext() }
     }
 
     private fun withClient(name: String, block: suspend (NatsClientImpl) -> Unit) = runTest {

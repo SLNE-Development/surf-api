@@ -23,7 +23,7 @@ class MicroserviceTestServiceImpl : MicroserviceTestService {
         log.atInfo()
             .log(
                 "store '%s' (message %s, delivery %s)",
-                entry, context?.messageId, context?.deliveryCount
+                entry, context.messageId, context.deliveryCount
             )
         entries += entry
     }

@@ -13,14 +13,14 @@ class ClientOriginTest {
     @Test
     fun `origin points to the caller of NatsClient create`() {
         NatsClient.create("origin-create").use { client ->
-            assertCallerIsThisTest((client as NatsClientImpl).origin)
+            assertCallerIsThisTest((client as NatsClientImpl).clientOrigin)
         }
     }
 
     @Test
     fun `origin points to the caller of the factory`() {
         NatsClientFactory.instance.create("origin-factory", EmptySerializersModule()).use { client ->
-            assertCallerIsThisTest((client as NatsClientImpl).origin)
+            assertCallerIsThisTest((client as NatsClientImpl).clientOrigin)
         }
     }
 
@@ -28,7 +28,7 @@ class ClientOriginTest {
     fun `origin records time and thread of creation`() {
         val before = Instant.now()
         NatsClient.create("origin-meta").use { client ->
-            val origin = (client as NatsClientImpl).origin
+            val origin = (client as NatsClientImpl).clientOrigin
             assertTrue(!origin.createdAt.isBefore(before) && !origin.createdAt.isAfter(Instant.now()))
             assertEquals(Thread.currentThread().name, origin.thread)
         }
@@ -37,7 +37,7 @@ class ClientOriginTest {
     @Test
     fun `source names the caller class and its location`() {
         NatsClient.create("origin-source").use { client ->
-            val source = (client as NatsClientImpl).origin.source
+            val source = (client as NatsClientImpl).clientOrigin.source
             val location = ClientOriginTest::class.java.protectionDomain.codeSource.location
             assertEquals("${ClientOriginTest::class.java.name} ($location)", source)
         }
@@ -46,7 +46,7 @@ class ClientOriginTest {
     @Test
     fun `stack trace is limited`() {
         NatsClient.create("origin-limit").use { client ->
-            val origin = (client as NatsClientImpl).origin
+            val origin = (client as NatsClientImpl).clientOrigin
             assertTrue(origin.stackTrace.size in 1..12, "frames: ${origin.stackTrace.size}")
         }
     }

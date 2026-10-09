@@ -33,10 +33,12 @@ object NatsHeaders {
 
         headers.add(CONTENT_TYPE, format.contentType)
         headers.add(SENDER_VERSION, NatsConstants.VERSION)
-        headers.add(ORIGIN, "$clientName@${NatsConnectionManager.instanceId}")
+        headers.add(ORIGIN, origin(clientName))
 
         return headers
     }
+
+    fun origin(clientName: String) = "$clientName@${NatsConnectionManager.instanceIdString}"
 }
 
 internal fun Message.presenceKind(): String? {

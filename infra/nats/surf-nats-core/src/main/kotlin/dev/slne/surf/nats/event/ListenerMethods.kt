@@ -15,6 +15,7 @@ internal class ListenerMethod(
     val method: Method,
     val descriptor: EventDescriptor,
     val loadBalanced: Boolean,
+    val ignoreOwn: Boolean,
 )
 
 @InternalNatsApi
@@ -47,6 +48,11 @@ internal object ListenerMethods {
                     continue
                 }
 
+                if (annotation.loadBalanced && annotation.ignoreOwn) {
+                    problems.add("${method.name}: ignoreOwn cannot be combined with loadBalanced")
+                    continue
+                }
+
                 val eventType = method.parameterTypes[0]
 
                 val descriptor = try {
@@ -56,7 +62,12 @@ internal object ListenerMethods {
                     continue
                 }
 
-                methods += ListenerMethod(method, descriptor, annotation.loadBalanced)
+                methods += ListenerMethod(
+                    method,
+                    descriptor,
+                    annotation.loadBalanced,
+                    annotation.ignoreOwn
+                )
             }
 
             currentClass = currentClass.superclass
