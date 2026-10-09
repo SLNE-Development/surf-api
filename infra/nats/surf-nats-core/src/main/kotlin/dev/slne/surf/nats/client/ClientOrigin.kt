@@ -5,7 +5,7 @@ import dev.slne.surf.nats.NatsClient
 import java.time.Instant
 
 @InternalNatsApi
-class ClientOrigin private constructor(
+internal class ClientOrigin private constructor(
     val createdAt: Instant,
     val thread: String,
     val source: String,

@@ -6,7 +6,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 
 @InternalNatsApi
-object NatsEnvironment {
+internal object NatsEnvironment {
 
     val SURF_NATS_SERVERS by env.optional(
         converter = { it.split(",").map(String::trim).filter(String::isNotBlank) },

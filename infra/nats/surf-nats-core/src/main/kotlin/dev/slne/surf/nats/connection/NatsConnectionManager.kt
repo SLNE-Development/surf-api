@@ -10,7 +10,7 @@ import java.time.Duration
 import java.util.*
 
 @InternalNatsApi
-object NatsConnectionManager {
+internal object NatsConnectionManager {
 
     private val log = logger()
 

@@ -90,7 +90,7 @@ class ServiceResponderTest {
         }
     }
 
-    class Fixture(
+    internal class Fixture(
         val client: NatsClientImpl,
         val calc: CalcService,
         val impl: CalcImpl,

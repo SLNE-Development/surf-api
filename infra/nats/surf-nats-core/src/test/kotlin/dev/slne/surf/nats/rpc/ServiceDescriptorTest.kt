@@ -73,6 +73,16 @@ class ServiceDescriptorTest {
     }
 
     @Suppress("unused")
+    @NatsService("bad-timeout")
+    @NatsTimeout(0)
+    interface InvalidTimeoutService {
+        @NatsTimeout(-5)
+        suspend fun negative(): String
+
+        suspend fun inherited(): String
+    }
+
+    @Suppress("unused")
     interface NotAnnotated {
         suspend fun ping(): String
     }
@@ -191,6 +201,16 @@ class ServiceDescriptorTest {
         assertContains(message, "allWithValue")
         assertContains(message, "badParameter")
         assertContains(message, "starAnswer")
+    }
+
+    @Test
+    fun `non-positive NatsTimeout on interface and method is rejected`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(InvalidTimeoutService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "@NatsTimeout on InvalidTimeoutService must be positive, was 0")
+        assertContains(message, "negative: @NatsTimeout must be positive, was -5")
     }
 
     @Test

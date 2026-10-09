@@ -5,11 +5,11 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
 @InternalNatsApi
-fun interface ServiceInvoker {
+internal fun interface ServiceInvoker {
     fun invoke(args: Array<Any?>, continuation: Continuation<Any?>): Any?
 }
 
 @InternalNatsApi
-suspend fun ServiceInvoker.call(args: Array<Any?>): Any? {
+internal suspend fun ServiceInvoker.call(args: Array<Any?>): Any? {
     return suspendCoroutineUninterceptedOrReturn { invoke(args, it) }
 }

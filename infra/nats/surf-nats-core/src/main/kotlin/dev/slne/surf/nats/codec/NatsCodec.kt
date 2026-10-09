@@ -17,7 +17,7 @@ import kotlinx.serialization.modules.overwriteWith
 
 @OptIn(ExperimentalSerializationApi::class)
 @InternalNatsApi
-class NatsCodec(serializersModule: SerializersModule) {
+internal class NatsCodec(serializersModule: SerializersModule) {
 
     private val cborSerializersModule = SurfSerializerModule.all
         .overwriteWith(SerializersModule {

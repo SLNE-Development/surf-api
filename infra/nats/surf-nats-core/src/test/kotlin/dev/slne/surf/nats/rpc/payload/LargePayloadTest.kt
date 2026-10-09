@@ -59,7 +59,7 @@ class LargePayloadTest {
         override suspend fun find(size: Int): Answer<ByteArray> = Answer.Of(blob(size))
     }
 
-    class Fixture(val client: NatsClientImpl, val blobs: BlobService, val impl: BlobImpl)
+    internal class Fixture(val client: NatsClientImpl, val blobs: BlobService, val impl: BlobImpl)
 
     private var clientCounter = 0
 

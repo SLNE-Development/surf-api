@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @AutoService(NatsClientFactory::class)
 @InternalNatsApi
-class NatsClientFactoryImpl : NatsClientFactory {
+internal class NatsClientFactoryImpl : NatsClientFactory {
     private val namePattern = NatsClient.NATS_CLIENT_NAME_PATTERN.toRegex()
 
     private val clients = ConcurrentHashMap<String, NatsClientImpl>()

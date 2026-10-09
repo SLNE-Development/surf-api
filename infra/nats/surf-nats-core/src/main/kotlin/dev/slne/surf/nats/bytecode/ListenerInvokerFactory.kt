@@ -12,7 +12,7 @@ import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
 
 @InternalNatsApi
-object ListenerInvokerFactory {
+internal object ListenerInvokerFactory {
 
     /**
      * @see ListenerInvoker

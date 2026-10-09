@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 @InternalNatsApi
-class NatsClientImpl(
+internal class NatsClientImpl(
     override val name: String,
     serializersModule: SerializersModule,
     internal val clientOrigin: ClientOrigin,

@@ -47,7 +47,7 @@ class AllRespondersTest {
         data object Hang : Behaviour
     }
 
-    class FakeInstance(
+    internal class FakeInstance(
         private val client: NatsClientImpl,
         private val announce: Boolean = true,
         private val behaviour: (Long) -> Behaviour,

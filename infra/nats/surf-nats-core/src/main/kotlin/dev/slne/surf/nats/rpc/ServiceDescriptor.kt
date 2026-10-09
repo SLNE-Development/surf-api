@@ -29,13 +29,17 @@ internal class ServiceDescriptor(
                 "${type.name} must be annotated with @NatsService"
             }
             val servicePersistent = type.getAnnotation(Persistent::class.java)?.enabled ?: false
-            val serviceTimeout = type.getAnnotation(NatsTimeout::class.java)?.seconds?.seconds
+            val serviceTimeoutSeconds = type.getAnnotation(NatsTimeout::class.java)?.seconds
+            val serviceTimeout = serviceTimeoutSeconds?.takeIf { it > 0 }?.seconds
 
             val codec = client.codec
             val serviceName = annotation.name.ifEmpty { Subjects.kebabCase(type.simpleName) }
             val module = codec.serializersModule(WireFormat.CBOR)
 
             val problems = ObjectArrayList<String>()
+            if (serviceTimeoutSeconds != null && serviceTimeoutSeconds <= 0) {
+                problems.add("@NatsTimeout on ${type.simpleName} must be positive, was $serviceTimeoutSeconds")
+            }
             val candidates = type.methods.filter { m ->
                 !m.isDefault && !Modifier.isStatic(m.modifiers) && !m.isSynthetic && !m.isBridge
             }
@@ -68,7 +72,11 @@ internal class ServiceDescriptor(
                     methodProblems.add("$name: @Persistent is not supported with ALL responders, mark it @Persistent(false)")
                 }
 
-                val timeout = method.getAnnotation(NatsTimeout::class.java)?.seconds?.seconds
+                val timeoutSeconds = method.getAnnotation(NatsTimeout::class.java)?.seconds
+                if (timeoutSeconds != null && timeoutSeconds <= 0) {
+                    methodProblems.add("$name: @NatsTimeout must be positive, was $timeoutSeconds")
+                }
+                val timeout = timeoutSeconds?.takeIf { it > 0 }?.seconds
                     ?: serviceTimeout
                     ?: if (persistent) RpcDefaults.JETSTREAM_TIMEOUT else RpcDefaults.CORE_TIMEOUT
 

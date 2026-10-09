@@ -20,4 +20,7 @@ class NatsTimeoutElement(val timeout: Duration) : AbstractCoroutineContextElemen
 suspend fun <T> withNatsTimeout(
     timeout: Duration,
     block: suspend CoroutineScope.() -> T
-): T = withContext(NatsTimeoutElement(timeout), block)
+): T {
+    require(timeout.isPositive()) { "NATS timeout must be positive, was $timeout" }
+    return withContext(NatsTimeoutElement(timeout), block)
+}

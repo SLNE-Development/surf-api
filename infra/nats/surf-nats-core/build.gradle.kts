@@ -18,6 +18,9 @@ tasks.test {
 }
 
 buildConfig {
+    useKotlinOutput {
+        internalVisibility = true
+    }
     forClass("dev.slne.surf.nats", "NatsConstants") {
         buildConfigField("VERSION", provider { project.version.toString() })
     }

@@ -13,7 +13,7 @@ import java.nio.file.Path
 
 @InternalNatsApi
 @ConfigSerializable
-data class NatsConfig(
+internal data class NatsConfig(
     val servers: List<String> = listOf(Options.DEFAULT_URL),
     val auth: Auth = Auth(),
     val connectionName: String? = null,
@@ -83,4 +83,4 @@ data class NatsConfig(
 }
 
 @InternalNatsApi
-val natsConfig by lazy { NatsConfig.getConfig().overwriteFromEnv().also { it.validate() } }
+internal val natsConfig by lazy { NatsConfig.getConfig().overwriteFromEnv().also { it.validate() } }

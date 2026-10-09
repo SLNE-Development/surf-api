@@ -8,7 +8,7 @@ import io.nats.client.Message
 import io.nats.client.impl.Headers
 
 @InternalNatsApi
-object NatsHeaders {
+internal object NatsHeaders {
 
     const val CONTENT_TYPE = "Content-Type"
     const val ORIGIN = "Surf-Origin"

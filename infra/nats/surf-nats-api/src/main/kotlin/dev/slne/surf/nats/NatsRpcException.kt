@@ -5,7 +5,7 @@ package dev.slne.surf.nats
 import java.io.Serial
 import kotlin.time.Duration
 
-open class NatsRpcException(
+open class NatsRpcException @InternalNatsApi constructor(
     message: String,
     cause: Throwable? = null,
 ) : RuntimeException(message, cause) {
@@ -15,7 +15,7 @@ open class NatsRpcException(
     }
 }
 
-class NatsRemoteException(
+class NatsRemoteException @InternalNatsApi constructor(
     val remoteType: String,
     val remoteMessage: String,
 ) : NatsRpcException("$remoteType: $remoteMessage") {
@@ -25,7 +25,7 @@ class NatsRemoteException(
     }
 }
 
-class NatsNoRespondersException(
+class NatsNoRespondersException @InternalNatsApi constructor(
     val subject: String,
 ) : NatsRpcException("No responders for $subject") {
     companion object {
@@ -34,7 +34,7 @@ class NatsNoRespondersException(
     }
 }
 
-class NatsRequestTimeoutException(
+class NatsRequestTimeoutException @InternalNatsApi constructor(
     val subject: String,
     val timeout: Duration,
 ) : NatsRpcException("No response on $subject within $timeout") {
