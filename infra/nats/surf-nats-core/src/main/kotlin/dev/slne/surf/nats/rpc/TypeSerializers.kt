@@ -20,7 +20,6 @@ internal object TypeSerializers {
             ?.takeIf { it != KSerializer::class }
             ?: return module.serializer(type)
 
-        // TODO: does kotlin serialization support this?
         val serializer = (custom.objectInstance ?: custom.createInstance()) as KSerializer<Any>
         return (if (type.isMarkedNullable) serializer.nullable else serializer) as KSerializer<Any?>
     }
