@@ -51,14 +51,14 @@ class NatsPersistentServiceTest {
         var onTotal: suspend (Long) -> Long = { it * 10 }
 
         override suspend fun place(id: Long) {
-            val context = natsPersistentContextOrNull()
+            val context = natsPersistentMessageContextOrNull()
             deliveries.send(Delivery(id, context))
             onPlace(id, context)
         }
 
         override suspend fun total(id: Long): Long {
             totalCalls.incrementAndGet()
-            totalContexts.send(natsPersistentContextOrNull())
+            totalContexts.send(natsPersistentMessageContextOrNull())
             return onTotal(id)
         }
 

@@ -14,11 +14,11 @@ public class NatsPersistentMessageContext @InternalNatsApi constructor(
     public companion object Key : CoroutineContext.Key<NatsPersistentMessageContext>
 }
 
-public suspend fun natsPersistentContextOrNull(): NatsPersistentMessageContext? {
+public suspend fun natsPersistentMessageContextOrNull(): NatsPersistentMessageContext? {
     return currentCoroutineContext()[NatsPersistentMessageContext]
 }
 
-public suspend fun natsPersistentContext(): NatsPersistentMessageContext {
+public suspend fun natsPersistentMessageContext(): NatsPersistentMessageContext {
     return currentCoroutineContext()[NatsPersistentMessageContext]
         ?: error("NatsPersistentMessageContext not found. Make sure you are in a persistent NatsService method.")
 }

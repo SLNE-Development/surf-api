@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
+import dev.slne.surf.nats.internal.NATS_CLIENT_NAME_PATTERN
 import dev.slne.surf.nats.internal.NatsClientFactory
 import kotlinx.coroutines.delay
 import kotlinx.serialization.modules.SerializersModule
@@ -13,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 @AutoService(NatsClientFactory::class)
 @InternalNatsApi
 internal class NatsClientFactoryImpl : NatsClientFactory {
-    private val namePattern = NatsClient.NATS_CLIENT_NAME_PATTERN.toRegex()
+    private val namePattern = NATS_CLIENT_NAME_PATTERN.toRegex()
 
     private val clients = ConcurrentHashMap<String, NatsClientImpl>()
 

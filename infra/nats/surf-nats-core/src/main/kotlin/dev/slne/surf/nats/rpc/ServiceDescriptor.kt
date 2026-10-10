@@ -6,11 +6,13 @@ import dev.slne.surf.nats.jetstream.PersistentStreams
 import dev.slne.surf.nats.subject.Subjects
 import dev.slne.surf.nats.util.isSuspend
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.serialization.modules.SerializersModule
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.time.Duration.Companion.seconds
 
@@ -24,7 +26,7 @@ internal class ServiceDescriptor(
 ) {
     companion object {
         fun of(type: Class<*>, client: NatsClientImpl): ServiceDescriptor {
-            require(type.isInterface) { "${type.name} must be an interface" }
+            require(type.isInterface) { notAnInterfaceMessage(type) }
             val annotation = requireNotNull(type.getAnnotation(NatsService::class.java)) {
                 "${type.name} must be annotated with @NatsService"
             }
@@ -72,6 +74,12 @@ internal class ServiceDescriptor(
                     methodProblems.add("$name: @NatsPersistent is not supported with ALL responders, mark it @NatsPersistent(false)")
                 }
 
+                val methodToken = method.getAnnotation(NatsMethod::class.java)?.name?.ifEmpty { null }
+                    ?: Subjects.kebabCase(name)
+                if ('.' in methodToken) {
+                    methodProblems.add("$name: @NatsMethod name must be a single subject token, was '$methodToken'")
+                }
+
                 val timeoutSeconds = method.getAnnotation(NatsTimeout::class.java)?.seconds
                 if (timeoutSeconds != null && timeoutSeconds <= 0) {
                     methodProblems.add("$name: @NatsTimeout must be positive, was $timeoutSeconds")
@@ -81,6 +89,19 @@ internal class ServiceDescriptor(
                     ?: if (persistent) RpcDefaults.JETSTREAM_TIMEOUT else RpcDefaults.CORE_TIMEOUT
 
                 val parameters = function.parameters.filter { it.kind == KParameter.Kind.VALUE }
+                val argumentNames = parameters.map { param ->
+                    val explicit = param.findAnnotation<NatsParam>()?.name
+                    if (explicit != null && explicit.isBlank()) {
+                        methodProblems.add("$name: @NatsParam on parameter '${param.name}' must not be blank")
+                    }
+                    explicit?.takeIf { it.isNotBlank() }
+                        ?: requireNotNull(param.name) { "$name has an unnamed parameter" }
+                }
+                argumentNames.groupBy { it }
+                    .filterValues { it.size > 1 }
+                    .keys
+                    .forEach { methodProblems.add("$name: argument name '$it' is used by more than one parameter") }
+
                 val serializers = parameters.mapNotNull { param ->
                     if (param.isOptional) {
                         client.logger.warn(
@@ -109,9 +130,9 @@ internal class ServiceDescriptor(
 
                 val subject = try {
                     val raw = if (persistent) {
-                        $$"$${client.name}.$persist.$$serviceName.$${Subjects.kebabCase(name)}"
+                        $$"$${client.name}.$persist.$$serviceName.$$methodToken"
                     } else {
-                        "${client.name}.$serviceName.${Subjects.kebabCase(name)}"
+                        "${client.name}.$serviceName.$methodToken"
                     }
 
                     Subjects.requireValidSubject(raw, "${type.name}.$name")
@@ -127,7 +148,7 @@ internal class ServiceDescriptor(
 
                 val arguments = ArgumentSerializer(
                     serialName = "$serviceName.$name",
-                    names = parameters.map { requireNotNull(it.name) { "$name has an unnamed parameter" } },
+                    names = argumentNames,
                     serializer = serializers,
                 )
 
@@ -147,6 +168,15 @@ internal class ServiceDescriptor(
                 .filter { m -> candidates.count { it.name == m.name } == 1 }
                 .sortedBy { it.name }
                 .mapIndexedNotNull { index, method -> describeMethod(method, index) }
+
+            methods.groupBy { it.subject }
+                .filterValues { it.size > 1 }
+                .forEach { (subject, clashing) ->
+                    problems.add(
+                        "Service methods must have unique subjects. '$subject' is used by " +
+                                clashing.joinToString { it.method.name }
+                    )
+                }
 
             require(problems.isEmpty) {
                 "Invalid @NatsService ${type.name}:\n" + problems.joinToString("\n") { " - $it" }
@@ -176,6 +206,22 @@ internal class ServiceDescriptor(
             }
 
             return ServiceDescriptor(type, serviceName, methods, presenceSubject, streams)
+        }
+
+        private fun notAnInterfaceMessage(type: Class<*>): String {
+            val services = ObjectLinkedOpenHashSet<Class<*>>()
+            fun collect(current: Class<*>) {
+                for (candidate in current.interfaces) {
+                    if (candidate.isAnnotationPresent(NatsService::class.java)) services.add(candidate)
+                    collect(candidate)
+                }
+            }
+            generateSequence(type) { it.superclass }.forEach(::collect)
+
+            if (services.isEmpty()) return "${type.name} must be an interface"
+            return "${type.name} must be an interface. Use the @NatsService interface it implements as the " +
+                    "type argument, e.g. registerService<${services.first().simpleName}>(implementation): " +
+                    services.joinToString { it.name }
         }
 
         private fun resultKind(returnType: KType, module: SerializersModule): ResultKind {

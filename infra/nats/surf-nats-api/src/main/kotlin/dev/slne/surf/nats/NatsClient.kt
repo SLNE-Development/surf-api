@@ -1,10 +1,9 @@
 package dev.slne.surf.nats
 
 import dev.slne.surf.nats.internal.NatsClientFactory
+import dev.slne.surf.nats.internal.NatsClientName
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import org.intellij.lang.annotations.Language
-import org.intellij.lang.annotations.Pattern
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Blocking
 import org.jetbrains.annotations.CheckReturnValue
@@ -32,13 +31,6 @@ public interface NatsClient : AutoCloseable {
     override fun close()
 
     public companion object Factory {
-        @Language("RegExp")
-        public const val NATS_CLIENT_NAME_PATTERN: String = "^[a-z0-9]+(-[a-z0-9]+)*$"
-
-        @Pattern(NATS_CLIENT_NAME_PATTERN)
-        @Target(AnnotationTarget.VALUE_PARAMETER)
-        public annotation class NatsClientName
-
         @CheckReturnValue
         public fun create(
             @NatsClientName name: String,

@@ -7,8 +7,9 @@ public sealed interface Answer<out T> {
 
 public fun <T : Any> Answer<T>.getOrNull(): T? = (this as? Answer.Of)?.value
 
-public inline fun <T> Answer<T>.getOrElse(default: () -> T): T {
-    return (this as? Answer.Of)?.value ?: default()
+public inline fun <T> Answer<T>.getOrElse(default: () -> T): T = when (this) {
+    is Answer.Of -> value
+    is Answer.None -> default()
 }
 
 public fun <T : Any> T?.toAnswer(): Answer<T> {

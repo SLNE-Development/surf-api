@@ -82,11 +82,46 @@ class ServiceDescriptorTest {
         suspend fun ping(): String
     }
 
+    @Serializable
+    data class WhitelistArguments(val userId: Long, val action: String)
+
+    @Suppress("unused")
+    @NatsService("roles")
+    interface WireNamedService {
+        @NatsMethod("whitelist-role")
+        suspend fun updateWhitelistRole(@NatsParam("userId") discordUserId: Long, action: String)
+
+        @NatsPersistent
+        @NatsMethod("store")
+        suspend fun persistEntry(entry: String)
+    }
+
+    @Suppress("unused")
+    @NatsService("invalid-wire")
+    interface InvalidWireNamesService {
+        @NatsMethod("a.b")
+        suspend fun dotted(): String
+
+        suspend fun blankParam(@NatsParam(" ") value: String): String
+
+        suspend fun sameParam(@NatsParam("id") first: Long, @NatsParam("id") second: Long): String
+
+        @NatsMethod("same")
+        suspend fun first(): String
+
+        @NatsMethod("same")
+        suspend fun second(): String
+    }
+
     @NatsService
     interface EmptyService
 
     @NatsService
     abstract class NotAnInterface
+
+    abstract class BasePing : DefaultNamedService
+
+    abstract class PingImpl : BasePing()
 
     private val clients = mutableListOf<NatsClientImpl>()
 
@@ -221,5 +256,54 @@ class ServiceDescriptorTest {
     @Test
     fun `class instead of interface is rejected`() {
         assertFailsWith<IllegalArgumentException> { describe(NotAnInterface::class.java) }
+    }
+
+    @Test
+    fun `implementation class is rejected with the service interface it implements`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(PingImpl::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "registerService<DefaultNamedService>(implementation)")
+        assertContains(message, DefaultNamedService::class.java.name)
+    }
+
+    @Test
+    fun `NatsMethod defines the method subject token`() {
+        val descriptor = describe(WireNamedService::class.java, "transaction")
+
+        assertEquals("transaction.roles.whitelist-role", descriptor.method("updateWhitelistRole").subject)
+        assertEquals($$"transaction.$persist.roles.store", descriptor.method("persistEntry").subject)
+    }
+
+    @Test
+    fun `NatsParam defines the argument name on the wire`() {
+        val client = client()
+        val arguments = client.serviceDescriptor(WireNamedService::class.java).method("updateWhitelistRole").arguments
+        val codec = client.codec
+
+        val json = codec.encode(arguments, arrayOf(42L, "ADD"), WireFormat.JSON).decodeToString()
+        assertEquals("""{"user_id":42,"action":"ADD"}""", json)
+
+        val external = """{"user_id":7,"action":"REMOVE"}""".encodeToByteArray()
+        assertContentEquals(arrayOf<Any?>(7L, "REMOVE"), codec.decode(arguments, external, WireFormat.JSON.contentType))
+
+        val cbor = codec.encode(arguments, arrayOf(42L, "ADD"), WireFormat.CBOR)
+        assertEquals(
+            WhitelistArguments(42, "ADD"),
+            codec.decode(WhitelistArguments.serializer(), cbor, WireFormat.CBOR.contentType),
+        )
+    }
+
+    @Test
+    fun `invalid wire names are reported together`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(InvalidWireNamesService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "dotted: @NatsMethod name must be a single subject token, was 'a.b'")
+        assertContains(message, "blankParam: @NatsParam on parameter 'value' must not be blank")
+        assertContains(message, "sameParam: argument name 'id' is used by more than one parameter")
+        assertContains(message, "invalid-wire.same' is used by first, second")
     }
 }
