@@ -132,7 +132,7 @@ internal class ServiceRegistration(
         val method = persistentBySubject[message.subject] ?: return message.term()
         val meta = message.metaData()
         val headers = if (message.hasHeaders()) message.headers else null
-        val context = NatsMessageContext(
+        val context = NatsPersistentMessageContext(
             messageId = headers?.getFirst(NatsJetStreamConstants.MSG_ID_HDR)
                 ?: meta.streamSequence().toString(),
             deliveryCount = meta.deliveredCount(),
@@ -190,7 +190,7 @@ internal class ServiceRegistration(
 
     private suspend fun failFire(method: MethodDescriptor, message: Message, e: Throwable) {
         val delivered = message.metaData().deliveredCount()
-        client.logger.error("Persistent ${method.subject} failed (delivery $delivered)", e)
+        client.logger.error("NatsPersistent ${method.subject} failed (delivery $delivered)", e)
         if (delivered >= RpcDefaults.MAX_DELIVER) {
             deadLetter(message, e)
             message.term()

@@ -1,7 +1,6 @@
 package dev.slne.surf.nats.event
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.NatsEventContext
 import dev.slne.surf.nats.bytecode.ListenerInvoker
 import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl

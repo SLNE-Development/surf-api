@@ -1,7 +1,6 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.ResponderMode
 import kotlinx.serialization.KSerializer
 import java.lang.reflect.Method
 import kotlin.time.Duration

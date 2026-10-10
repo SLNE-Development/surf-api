@@ -1,8 +1,6 @@
 package dev.slne.surf.nats.event
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.NatsEvent
-import dev.slne.surf.nats.NatsListener
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.util.isSuspend
 import it.unimi.dsi.fastutil.objects.ObjectArrayList

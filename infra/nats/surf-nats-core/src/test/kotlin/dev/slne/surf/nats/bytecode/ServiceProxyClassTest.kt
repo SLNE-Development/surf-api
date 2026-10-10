@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.bytecode
 
 import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsService
+import dev.slne.surf.nats.rpc.NatsService
 import dev.slne.surf.nats.client.NatsClientImpl
 import java.lang.classfile.ClassFile
 import kotlin.test.Test

@@ -4,6 +4,7 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.internal.NatsTimeoutElement
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.rpc.payload.PayloadBucket
 import dev.slne.surf.nats.rpc.payload.PayloadStore

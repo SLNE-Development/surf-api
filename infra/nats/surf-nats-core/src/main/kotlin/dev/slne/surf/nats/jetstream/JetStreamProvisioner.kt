@@ -32,7 +32,7 @@ internal object JetStreamProvisioner {
         mutex.withLock {
             if (provisioned[streams.stream] === connection) return
             check(connection.serverInfo.isJetStreamAvailable) {
-                "@Persistent requires JetStream to be enabled on the NATS server"
+                "@NatsPersistent requires JetStream to be enabled on the NATS server"
             }
 
             withContext(Dispatchers.IO) {

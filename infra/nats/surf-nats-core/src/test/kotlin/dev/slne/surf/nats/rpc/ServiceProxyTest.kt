@@ -1,19 +1,12 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.Answer
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsInstance
-import dev.slne.surf.nats.NatsNoRespondersException
-import dev.slne.surf.nats.NatsRemoteException
-import dev.slne.surf.nats.NatsRequestTimeoutException
-import dev.slne.surf.nats.NatsService
-import dev.slne.surf.nats.NatsTimeout
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.service
-import dev.slne.surf.nats.withNatsTimeout
 import io.nats.client.Message
 import io.nats.client.impl.Headers
 import kotlinx.coroutines.CoroutineScope
@@ -150,7 +143,7 @@ class ServiceProxyTest {
         respond(client, "slow") { /* never replies */ }.use {
             val start = TimeSource.Monotonic.markNow()
             val exception = assertFailsWith<NatsRequestTimeoutException> {
-                withNatsTimeout(300.milliseconds) { calc.slow() }
+                withNatsCallTimeout(300.milliseconds) { calc.slow() }
             }
             assertEquals(300.milliseconds, exception.timeout)
             assertTrue(start.elapsedNow() < 5.seconds, "took ${start.elapsedNow()}")

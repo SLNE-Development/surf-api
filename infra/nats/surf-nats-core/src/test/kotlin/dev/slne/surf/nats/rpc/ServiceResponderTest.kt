@@ -162,7 +162,7 @@ class ServiceResponderTest {
     fun `withNatsTimeout overrides NatsTimeout and cancels the implementation`() = withService {
         val start = TimeSource.Monotonic.markNow()
         val exception = assertFailsWith<NatsRequestTimeoutException> {
-            withNatsTimeout(300.milliseconds) { calc.slow() }
+            withNatsCallTimeout(300.milliseconds) { calc.slow() }
         }
 
         assertEquals(300.milliseconds, exception.timeout)

@@ -1,5 +1,6 @@
-package dev.slne.surf.nats
+package dev.slne.surf.nats.event
 
+import dev.slne.surf.nats.WireFormat
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MetaSerializable
 
@@ -11,7 +12,7 @@ import kotlinx.serialization.MetaSerializable
 @MetaSerializable
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class NatsEvent(
+public annotation class NatsEvent(
     /**
      * If left empty, the class name in kebab-case format will be used
      */

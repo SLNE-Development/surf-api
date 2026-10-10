@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.test.common.rpc
 
-import dev.slne.surf.nats.NatsService
-import dev.slne.surf.nats.Persistent
+import dev.slne.surf.nats.rpc.NatsService
+import dev.slne.surf.nats.rpc.NatsPersistent
 
 @NatsService("microservice")
 interface MicroserviceTestService {
@@ -29,12 +29,12 @@ interface MicroserviceTestService {
     /**
      * Stores the provided entry. Uses JetStream.
      */
-    @Persistent
+    @NatsPersistent
     suspend fun store(entry: String)
 
     /**
      * Returns the number of stored entries. Uses JetStream.
      */
-    @Persistent
+    @NatsPersistent
     suspend fun storedCount(): Int
 }

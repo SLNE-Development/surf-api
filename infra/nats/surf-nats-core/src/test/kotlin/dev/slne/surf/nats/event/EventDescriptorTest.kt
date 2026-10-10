@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.event
 
-import dev.slne.surf.nats.NatsEvent
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsCodec
 import kotlinx.serialization.Contextual

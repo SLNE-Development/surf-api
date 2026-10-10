@@ -3,7 +3,7 @@ package dev.slne.surf.nats
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
-interface NatsRegistration: AutoCloseable {
-    val isActive: Boolean
+public interface NatsRegistration: AutoCloseable {
+    public val isActive: Boolean
     override fun close()
 }

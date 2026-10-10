@@ -1,11 +1,6 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.Answer
 import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsService
-import dev.slne.surf.nats.NatsTimeout
-import dev.slne.surf.nats.ResponderMode
-import dev.slne.surf.nats.Responders
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
 import kotlinx.serialization.Serializable
@@ -26,10 +21,10 @@ class ServiceDescriptorTest {
     interface PlayerService {
         suspend fun health(player: String): PlayerHealth?
 
-        @Responders(ResponderMode.ALL)
+        @NatsResponders(ResponderMode.ALL)
         suspend fun findServer(player: String): Answer<String>
 
-        @Responders(ResponderMode.ALL)
+        @NatsResponders(ResponderMode.ALL)
         suspend fun broadcast(message: String)
 
         @NatsTimeout(15)
@@ -55,7 +50,7 @@ class ServiceDescriptorTest {
     interface AllByDefaultService {
         suspend fun lookup(id: Long): Answer<String>
 
-        @Responders(ResponderMode.ONE)
+        @NatsResponders(ResponderMode.ONE)
         suspend fun single(id: Long): String
     }
 
@@ -66,7 +61,7 @@ class ServiceDescriptorTest {
         suspend fun overloaded(value: Int): String
         suspend fun overloaded(value: String): String
 
-        @Responders(ResponderMode.ALL)
+        @NatsResponders(ResponderMode.ALL)
         suspend fun allWithValue(): String
         suspend fun badParameter(value: NotSerializable)
         suspend fun starAnswer(): Answer<*>

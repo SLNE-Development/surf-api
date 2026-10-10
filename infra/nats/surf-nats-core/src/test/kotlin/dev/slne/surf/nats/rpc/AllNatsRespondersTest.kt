@@ -21,7 +21,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AllRespondersTest {
+class AllNatsRespondersTest {
 
     @NatsService("finder", responders = ResponderMode.ALL)
     interface FinderService {
@@ -139,7 +139,7 @@ class AllRespondersTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsTimeout(5.seconds) { finder.find(7) } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(7) } }
 
             assertEquals(Answer.Of("server-7"), answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -154,7 +154,7 @@ class AllRespondersTest {
             FakeInstance(client) { Behaviour.None },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsTimeout(5.seconds) { finder.find(1) } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(1) } }
 
             assertEquals(Answer.None, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -169,7 +169,7 @@ class AllRespondersTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsTimeout(2.seconds) { finder.find(1) } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(1) } }
 
             assertEquals(Answer.None, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
@@ -187,7 +187,7 @@ class AllRespondersTest {
                 val finder = warmFinder(client)
                 val start = TimeSource.Monotonic.markNow()
                 val exception = assertFailsWith<NatsRemoteException> {
-                    withNatsTimeout(5.seconds) { finder.find(1) }
+                    withNatsCallTimeout(5.seconds) { finder.find(1) }
                 }
 
                 assertEquals("java.lang.IllegalStateException", exception.remoteType)
@@ -203,7 +203,7 @@ class AllRespondersTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            assertFailsWith<NatsRemoteException> { withNatsTimeout(1.seconds) { finder.find(1) } }
+            assertFailsWith<NatsRemoteException> { withNatsCallTimeout(1.seconds) { finder.find(1) } }
         }
     }
 
@@ -214,7 +214,7 @@ class AllRespondersTest {
             FakeInstance(client) { Behaviour.Of("found") },
         ) {
             val finder = warmFinder(client)
-            assertEquals(Answer.Of("found"), withNatsTimeout(5.seconds) { finder.find(1) })
+            assertEquals(Answer.Of("found"), withNatsCallTimeout(5.seconds) { finder.find(1) })
         }
     }
 
@@ -225,7 +225,7 @@ class AllRespondersTest {
             FakeInstance(client) { Behaviour.None },
         ) {
             val finder = client.service<FinderService>() // no warm-up
-            val (answer, elapsed) = timed { withNatsTimeout(2.seconds) { finder.find(1) } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(1) } }
 
             assertEquals(Answer.None, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
@@ -243,7 +243,7 @@ class AllRespondersTest {
             leaving.close()
             delay(200.milliseconds) // let the leave arrive
 
-            val (answer, elapsed) = timed { withNatsTimeout(5.seconds) { finder.find(1) } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(1) } }
 
             assertEquals(Answer.None, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -259,10 +259,10 @@ class AllRespondersTest {
                 announce = false
             ) { if (hang.get()) Behaviour.Hang else Behaviour.None }.use {
                 val finder = warmFinder(client)
-                assertEquals(Answer.None, withNatsTimeout(1.seconds) { finder.find(1) })
+                assertEquals(Answer.None, withNatsCallTimeout(1.seconds) { finder.find(1) })
 
                 hang.set(true)
-                val (answer, elapsed) = timed { withNatsTimeout(2.seconds) { finder.find(2) } }
+                val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(2) } }
                 assertEquals(Answer.None, answer)
                 assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
             }
@@ -272,7 +272,7 @@ class AllRespondersTest {
     @Test
     fun `no responders ends immediately with None`() = withClient { client ->
         val finder = warmFinder(client)
-        val (answer, elapsed) = timed { withNatsTimeout(5.seconds) { finder.find(1) } }
+        val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(1) } }
 
         assertEquals(Answer.None, answer)
         assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -283,7 +283,7 @@ class AllRespondersTest {
         client.registerService<FinderService>(FinderImpl { Answer.Of("self-$it") })
         val finder = warmFinder(client)
 
-        assertEquals(Answer.Of("self-3"), withNatsTimeout(5.seconds) { finder.find(3) })
+        assertEquals(Answer.Of("self-3"), withNatsCallTimeout(5.seconds) { finder.find(3) })
     }
 
     @Test
@@ -292,7 +292,7 @@ class AllRespondersTest {
             client.registerService<FinderService>(FinderImpl())
             val finder = warmFinder(client)
 
-            val (answer, elapsed) = timed { withNatsTimeout(5.seconds) { finder.find(3) } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(3) } }
             assertEquals(Answer.None, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
         }
@@ -321,7 +321,7 @@ class AllRespondersTest {
     fun `parallel calls keep their answers apart`() = withClient { client ->
         withInstances(FakeInstance(client) { Behaviour.Of("answer-$it") }) {
             val finder = warmFinder(client)
-            val answers = withNatsTimeout(5.seconds) {
+            val answers = withNatsCallTimeout(5.seconds) {
                 (1L..20L).map { id -> async { finder.find(id) } }.awaitAll()
             }
 

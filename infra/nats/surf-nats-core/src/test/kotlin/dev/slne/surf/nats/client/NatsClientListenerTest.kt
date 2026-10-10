@@ -1,13 +1,13 @@
 package dev.slne.surf.nats.client
 
 import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsEvent
-import dev.slne.surf.nats.NatsEventContext
+import dev.slne.surf.nats.event.NatsEvent
+import dev.slne.surf.nats.event.NatsEventContext
 import dev.slne.surf.nats.NatsInstance
-import dev.slne.surf.nats.NatsListener
+import dev.slne.surf.nats.event.NatsListener
 import dev.slne.surf.nats.WireFormat
-import dev.slne.surf.nats.natsEventContext
-import dev.slne.surf.nats.natsEventContextOrNull
+import dev.slne.surf.nats.event.natsEventContext
+import dev.slne.surf.nats.event.natsEventContextOrNull
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.impl.Headers

@@ -2,7 +2,7 @@ package dev.slne.surf.nats.test.microservice
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.microservice.api.microservice.command.microserviceCommand
-import dev.slne.surf.nats.Answer
+import dev.slne.surf.nats.rpc.Answer
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.Benchmark
 import dev.slne.surf.nats.test.common.NatsTestInstance

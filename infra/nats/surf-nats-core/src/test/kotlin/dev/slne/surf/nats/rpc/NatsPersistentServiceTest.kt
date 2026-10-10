@@ -22,43 +22,43 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PersistentServiceTest {
+class NatsPersistentServiceTest {
 
     @NatsService("orders")
-    @Persistent
+    @NatsPersistent
     interface OrderService {
         suspend fun place(id: Long)
         suspend fun total(id: Long): Long
         suspend fun big(data: ByteArray)
         suspend fun echo(data: ByteArray): ByteArray
 
-        @Persistent(false)
+        @NatsPersistent(false)
         suspend fun ping(): String
     }
 
-    class Delivery(val id: Long, val context: NatsMessageContext?)
+    class Delivery(val id: Long, val context: NatsPersistentMessageContext?)
 
     class OrderImpl : OrderService {
         val deliveries = Channel<Delivery>(Channel.UNLIMITED)
         val bigReceived = Channel<ByteArray>(Channel.UNLIMITED)
         val totalCalls = AtomicInteger()
-        val totalContexts = Channel<NatsMessageContext?>(Channel.UNLIMITED)
+        val totalContexts = Channel<NatsPersistentMessageContext?>(Channel.UNLIMITED)
 
         @Volatile
-        var onPlace: suspend (Long, NatsMessageContext?) -> Unit = { _, _ -> }
+        var onPlace: suspend (Long, NatsPersistentMessageContext?) -> Unit = { _, _ -> }
 
         @Volatile
         var onTotal: suspend (Long) -> Long = { it * 10 }
 
         override suspend fun place(id: Long) {
-            val context = natsMessageContextOrNull()
+            val context = natsPersistentContextOrNull()
             deliveries.send(Delivery(id, context))
             onPlace(id, context)
         }
 
         override suspend fun total(id: Long): Long {
             totalCalls.incrementAndGet()
-            totalContexts.send(natsMessageContextOrNull())
+            totalContexts.send(natsPersistentContextOrNull())
             return onTotal(id)
         }
 
@@ -72,7 +72,7 @@ class PersistentServiceTest {
     }
 
     @NatsService("timed")
-    @Persistent
+    @NatsPersistent
     @NatsTimeout(42)
     interface TimedService {
         suspend fun inherited(): Long
@@ -80,7 +80,7 @@ class PersistentServiceTest {
         @NatsTimeout(3)
         suspend fun own(): Long
 
-        @Persistent(false)
+        @NatsPersistent(false)
         suspend fun core(): Long
     }
 
@@ -88,24 +88,24 @@ class PersistentServiceTest {
     interface PlainService {
         suspend fun core(): Long
 
-        @Persistent
+        @NatsPersistent
         suspend fun stored(id: Long)
     }
 
     @NatsService("bad-all")
-    @Persistent
+    @NatsPersistent
     interface PersistentAllService {
-        @Responders(ResponderMode.ALL)
+        @NatsResponders(ResponderMode.ALL)
         suspend fun find(id: Long): Answer<String>
     }
 
     @NatsService("mixed")
-    @Persistent
+    @NatsPersistent
     interface MixedService {
         suspend fun store(id: Long)
 
-        @Persistent(false)
-        @Responders(ResponderMode.ALL)
+        @NatsPersistent(false)
+        @NatsResponders(ResponderMode.ALL)
         suspend fun find(id: Long): Answer<String>
     }
 
@@ -172,7 +172,7 @@ class PersistentServiceTest {
         val message = assertFailsWith<IllegalArgumentException> {
             client.serviceDescriptor(PersistentAllService::class.java)
         }.message.orEmpty()
-        assertContains(message, "@Persistent")
+        assertContains(message, "@NatsPersistent")
     }
 
     @Test
@@ -202,7 +202,7 @@ class PersistentServiceTest {
 
             val delivery = withTimeout(10.seconds) { impl.deliveries.receive() }
             assertEquals(1, delivery.id)
-            val context = assertNotNull(delivery.context, "NatsMessageContext missing")
+            val context = assertNotNull(delivery.context, "NatsPersistentMessageContext missing")
             assertEquals(1, context.deliveryCount)
             assertTrue(context.messageId.isNotBlank())
 
@@ -315,7 +315,7 @@ class PersistentServiceTest {
             val first = NatsClient.create(name) as NatsClientImpl
             val streams = first.serviceDescriptor(OrderService::class.java).streams!!
             try {
-                val started = CompletableDeferred<NatsMessageContext>()
+                val started = CompletableDeferred<NatsPersistentMessageContext>()
                 first.registerService<OrderService>(OrderImpl().apply {
                     onPlace = { _, context ->
                         started.complete(context!!)
@@ -353,7 +353,7 @@ class PersistentServiceTest {
         val impl = OrderImpl()
         client.registerService<OrderService>(impl)
 
-        assertEquals(30, withNatsTimeout(10.seconds) { client.service<OrderService>().total(3) })
+        assertEquals(30, withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(3) })
         val context = assertNotNull(impl.totalContexts.tryReceive().getOrNull())
         assertEquals(1, context.deliveryCount)
         eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
@@ -364,7 +364,7 @@ class PersistentServiceTest {
         withClient { client ->
             val orders = client.service<OrderService>()
             val start = TimeSource.Monotonic.markNow()
-            val result = async { withNatsTimeout(15.seconds) { orders.total(4) } }
+            val result = async { withNatsCallTimeout(15.seconds) { orders.total(4) } }
 
             delay(1500.milliseconds)
             assertFalse(result.isCompleted)
@@ -378,7 +378,7 @@ class PersistentServiceTest {
     fun `expired persistent rpc is never executed`() = withClient { client ->
         val orders = client.service<OrderService>()
         assertFailsWith<NatsRequestTimeoutException> {
-            withNatsTimeout(1.seconds) { orders.total(6) }
+            withNatsCallTimeout(1.seconds) { orders.total(6) }
         }
 
         delay(1500.milliseconds)
@@ -396,7 +396,7 @@ class PersistentServiceTest {
         client.registerService<OrderService>(impl)
 
         val exception = assertFailsWith<NatsRemoteException> {
-            withNatsTimeout(10.seconds) { client.service<OrderService>().total(1) }
+            withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(1) }
         }
         assertEquals(IllegalStateException::class.java.name, exception.remoteType)
         assertEquals("no total", exception.remoteMessage)
@@ -430,7 +430,7 @@ class PersistentServiceTest {
         val before = liveObjects(PayloadBucket.TRANSIENT)
         val data = blob(LARGE)
 
-        assertContentEquals(data, withNatsTimeout(30.seconds) { client.service<OrderService>().echo(data) })
+        assertContentEquals(data, withNatsCallTimeout(30.seconds) { client.service<OrderService>().echo(data) })
         eventually("transient payloads must be deleted") { liveObjects(PayloadBucket.TRANSIENT) == before }
     }
 

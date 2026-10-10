@@ -4,7 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.executors.CommandArguments
 import dev.jorel.commandapi.kotlindsl.*
 import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
-import dev.slne.surf.nats.Answer
+import dev.slne.surf.nats.rpc.Answer
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.Benchmark
 import dev.slne.surf.nats.test.common.event.TestChatEvent

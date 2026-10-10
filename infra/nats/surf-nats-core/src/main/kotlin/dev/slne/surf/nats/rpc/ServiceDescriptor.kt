@@ -28,7 +28,7 @@ internal class ServiceDescriptor(
             val annotation = requireNotNull(type.getAnnotation(NatsService::class.java)) {
                 "${type.name} must be annotated with @NatsService"
             }
-            val servicePersistent = type.getAnnotation(Persistent::class.java)?.enabled ?: false
+            val servicePersistent = type.getAnnotation(NatsPersistent::class.java)?.enabled ?: false
             val serviceTimeoutSeconds = type.getAnnotation(NatsTimeout::class.java)?.seconds
             val serviceTimeout = serviceTimeoutSeconds?.takeIf { it > 0 }?.seconds
 
@@ -65,11 +65,11 @@ internal class ServiceDescriptor(
                 }
 
                 val responders =
-                    method.getAnnotation(Responders::class.java)?.mode ?: annotation.responders
+                    method.getAnnotation(NatsResponders::class.java)?.mode ?: annotation.responders
                 val persistent =
-                    method.getAnnotation(Persistent::class.java)?.enabled ?: servicePersistent
+                    method.getAnnotation(NatsPersistent::class.java)?.enabled ?: servicePersistent
                 if (persistent && responders == ResponderMode.ALL) {
-                    methodProblems.add("$name: @Persistent is not supported with ALL responders, mark it @Persistent(false)")
+                    methodProblems.add("$name: @NatsPersistent is not supported with ALL responders, mark it @NatsPersistent(false)")
                 }
 
                 val timeoutSeconds = method.getAnnotation(NatsTimeout::class.java)?.seconds

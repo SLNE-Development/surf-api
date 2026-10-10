@@ -1,7 +1,6 @@
 package dev.slne.surf.nats.event
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.NatsEvent
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.subject.Subjects

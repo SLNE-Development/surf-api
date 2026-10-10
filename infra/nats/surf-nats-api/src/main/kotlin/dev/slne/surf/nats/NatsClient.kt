@@ -12,35 +12,35 @@ import kotlin.reflect.KClass
 
 @ApiStatus.NonExtendable
 @MustUseReturnValues
-interface NatsClient : AutoCloseable {
-    val name: String
-    val isClosed: Boolean
+public interface NatsClient : AutoCloseable {
+    public val name: String
+    public val isClosed: Boolean
 
     // pub/sub fire and forget
-    fun publish(event: Any)
+    public fun publish(event: Any)
 
     @IgnorableReturnValue
-    fun registerListener(listener: Any): NatsRegistration
+    public fun registerListener(listener: Any): NatsRegistration
 
     @Blocking
     @IgnorableReturnValue
-    fun <S : Any> registerService(type: KClass<S>, implementation: S): NatsRegistration
+    public fun <S : Any> registerService(type: KClass<S>, implementation: S): NatsRegistration
 
     @CheckReturnValue
-    fun <S : Any> service(type: KClass<S>): S
+    public fun <S : Any> service(type: KClass<S>): S
 
     override fun close()
 
-    companion object Factory {
+    public companion object Factory {
         @Language("RegExp")
-        const val NATS_CLIENT_NAME_PATTERN = "^[a-z0-9]+(-[a-z0-9]+)*$"
+        public const val NATS_CLIENT_NAME_PATTERN: String = "^[a-z0-9]+(-[a-z0-9]+)*$"
 
         @Pattern(NATS_CLIENT_NAME_PATTERN)
         @Target(AnnotationTarget.VALUE_PARAMETER)
-        annotation class NatsClientName
+        public annotation class NatsClientName
 
         @CheckReturnValue
-        fun create(
+        public fun create(
             @NatsClientName name: String,
             serializersModule: SerializersModule = EmptySerializersModule()
         ): NatsClient {

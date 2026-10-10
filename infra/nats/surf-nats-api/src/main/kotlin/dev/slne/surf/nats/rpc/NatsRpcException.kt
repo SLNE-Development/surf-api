@@ -1,44 +1,45 @@
 @file:Suppress("CanBeParameter")
 
-package dev.slne.surf.nats
+package dev.slne.surf.nats.rpc
 
+import dev.slne.surf.nats.InternalNatsApi
 import java.io.Serial
 import kotlin.time.Duration
 
-open class NatsRpcException @InternalNatsApi constructor(
+public open class NatsRpcException @InternalNatsApi constructor(
     message: String,
     cause: Throwable? = null,
 ) : RuntimeException(message, cause) {
-    companion object {
+    internal companion object {
         @Serial
         private const val serialVersionUID: Long = 2052306227954268506L
     }
 }
 
-class NatsRemoteException @InternalNatsApi constructor(
-    val remoteType: String,
-    val remoteMessage: String,
+public class NatsRemoteException @InternalNatsApi constructor(
+    public val remoteType: String,
+    public val remoteMessage: String,
 ) : NatsRpcException("$remoteType: $remoteMessage") {
-    companion object {
+    internal companion object {
         @Serial
         private const val serialVersionUID: Long = 769895995432718802L
     }
 }
 
-class NatsNoRespondersException @InternalNatsApi constructor(
-    val subject: String,
+public class NatsNoRespondersException @InternalNatsApi constructor(
+    public val subject: String,
 ) : NatsRpcException("No responders for $subject") {
-    companion object {
+    internal companion object {
         @Serial
         private const val serialVersionUID: Long = 8318956389694705193L
     }
 }
 
-class NatsRequestTimeoutException @InternalNatsApi constructor(
-    val subject: String,
-    val timeout: Duration,
+public class NatsRequestTimeoutException @InternalNatsApi constructor(
+    public val subject: String,
+    public val timeout: Duration,
 ) : NatsRpcException("No response on $subject within $timeout") {
-    companion object {
+    internal companion object {
         @Serial
         private const val serialVersionUID: Long = 6955693591776044694L
     }

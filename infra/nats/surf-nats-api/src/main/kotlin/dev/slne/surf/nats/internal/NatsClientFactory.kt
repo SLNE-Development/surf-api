@@ -6,11 +6,11 @@ import dev.slne.surf.nats.NatsClient
 import kotlinx.serialization.modules.SerializersModule
 
 @InternalNatsApi
-interface NatsClientFactory {
+public interface NatsClientFactory {
 
-    fun create(name: String, serializersModule: SerializersModule): NatsClient
+    public fun create(name: String, serializersModule: SerializersModule): NatsClient
 
-    companion object {
-        val instance = requiredService<NatsClientFactory>()
+    public companion object {
+        public val instance: NatsClientFactory = requiredService<NatsClientFactory>()
     }
 }

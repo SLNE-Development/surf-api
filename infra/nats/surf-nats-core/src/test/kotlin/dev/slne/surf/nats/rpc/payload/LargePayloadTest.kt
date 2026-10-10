@@ -4,6 +4,10 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.rpc.Answer
+import dev.slne.surf.nats.rpc.NatsService
+import dev.slne.surf.nats.rpc.ResponderMode
+import dev.slne.surf.nats.rpc.withNatsCallTimeout
 import io.nats.client.api.ObjectStoreConfiguration
 import io.nats.client.api.StorageType
 import io.nats.client.impl.Headers
@@ -186,7 +190,7 @@ class LargePayloadTest {
         client.registerService<BlobFanout>(FanoutImpl())
         val before = liveObjects()
 
-        val answer = withNatsTimeout(30.seconds) { client.service<BlobFanout>().find(LARGE) }
+        val answer = withNatsCallTimeout(30.seconds) { client.service<BlobFanout>().find(LARGE) }
 
         val value = assertIs<Answer.Of<ByteArray>>(answer).value
         assertContentEquals(blob(LARGE), value)
@@ -199,13 +203,13 @@ class LargePayloadTest {
         val tooLong = PayloadBucket.TRANSIENT.ttl + 1.minutes
 
         assertFailsWith<IllegalArgumentException> {
-            withNatsTimeout(tooLong) { blobs.checksum(blob(LARGE)) }
+            withNatsCallTimeout(tooLong) { blobs.checksum(blob(LARGE)) }
         }
         assertEquals(0, impl.calls.get())
         assertEquals(before, liveObjects())
 
         val small = blob(1_000)
-        assertEquals(small.checksum(), withNatsTimeout(tooLong) { blobs.checksum(small) })
+        assertEquals(small.checksum(), withNatsCallTimeout(tooLong) { blobs.checksum(small) })
     }
 
     @Test

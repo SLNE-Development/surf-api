@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.client
 
 import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsEvent
+import dev.slne.surf.nats.event.NatsEvent
 import dev.slne.surf.nats.NatsInstance
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsHeaders

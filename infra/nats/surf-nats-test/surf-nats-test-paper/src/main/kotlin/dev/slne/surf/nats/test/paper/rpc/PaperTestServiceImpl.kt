@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.test.paper.rpc
 
-import dev.slne.surf.nats.Answer
-import dev.slne.surf.nats.NatsListener
+import dev.slne.surf.nats.rpc.Answer
+import dev.slne.surf.nats.event.NatsListener
 import dev.slne.surf.nats.test.common.event.TestChatEvent
 import dev.slne.surf.nats.test.common.rpc.PaperTestService
 import dev.slne.surf.nats.test.paper.PaperMain

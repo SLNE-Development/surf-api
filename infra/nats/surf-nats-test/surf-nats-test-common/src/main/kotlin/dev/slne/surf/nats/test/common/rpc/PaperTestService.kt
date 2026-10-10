@@ -1,8 +1,8 @@
 package dev.slne.surf.nats.test.common.rpc
 
-import dev.slne.surf.nats.Answer
-import dev.slne.surf.nats.NatsService
-import dev.slne.surf.nats.ResponderMode
+import dev.slne.surf.nats.rpc.Answer
+import dev.slne.surf.nats.rpc.NatsService
+import dev.slne.surf.nats.rpc.ResponderMode
 
 @NatsService("paper", responders = ResponderMode.ALL)
 interface PaperTestService {

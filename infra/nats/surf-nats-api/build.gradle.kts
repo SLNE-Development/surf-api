@@ -19,6 +19,7 @@ kotlin {
             }
         }
     }
+    explicitApi()
 }
 
 publishing {
