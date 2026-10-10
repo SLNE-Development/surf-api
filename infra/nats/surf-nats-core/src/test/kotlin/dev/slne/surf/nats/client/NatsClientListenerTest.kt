@@ -276,7 +276,8 @@ class NatsClientListenerTest {
                         listener.recorder.received.tryReceive().getOrNull()?.let { delivered += it.id }
                         otherMember.nextMessage(Duration.ofMillis(10))?.let { message ->
                             val descriptor = client.eventDescriptor(Balanced::class.java)
-                            delivered += (client.codec.decode(descriptor.serializer, message.data, null) as Balanced).id
+                            val contentType = message.headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+                            delivered += (client.codec.decode(descriptor.serializer, message.data, contentType) as Balanced).id
                         }
                     }
                 }
@@ -338,7 +339,8 @@ class NatsClientListenerTest {
             probe.eventDescriptor(Created::class.java)
         }
         val bytes = (client as NatsClientImpl).codec.encode(descriptor.serializer, Created(1), WireFormat.CBOR)
-        NatsConnectionManager.connection().publish("listen-close-client.created", bytes)
+        val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.CBOR.contentType)
+        NatsConnectionManager.connection().publish("listen-close-client.created", headers, bytes)
 
         listener.recorder.assertNothingWithin()
     }

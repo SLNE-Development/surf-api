@@ -111,6 +111,59 @@ class ServiceDescriptorTest {
 
         @NatsMethod("same")
         suspend fun second(): String
+
+        @NatsMethod("\$internal")
+        suspend fun dollar(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("roles-api", prefixed = false)
+    interface UnprefixedService {
+        suspend fun lookup(id: Long): String
+
+        @NatsResponders(ResponderMode.ALL)
+        suspend fun find(id: Long): Answer<String>
+
+        @NatsPersistent
+        suspend fun store(entry: String)
+    }
+
+    @Suppress("unused")
+    @NatsService("bad.name")
+    interface DottedNameService {
+        suspend fun ping(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("Bad")
+    interface UpperCaseNameService {
+        suspend fun ping(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("bad_name")
+    interface UnderscoreNameService {
+        suspend fun ping(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("players")
+    interface UuidService {
+        suspend fun owner(id: UUID): UUID
+
+        suspend fun find(id: UUID): Answer<UUID>
+    }
+
+    @Suppress("unused")
+    @NatsService("roles-dlq")
+    interface DlqSuffixService {
+        suspend fun ping(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("dlq")
+    interface DlqNameService {
+        suspend fun ping(): String
     }
 
     @NatsService
@@ -305,5 +358,88 @@ class ServiceDescriptorTest {
         assertContains(message, "blankParam: @NatsParam on parameter 'value' must not be blank")
         assertContains(message, "sameParam: argument name 'id' is used by more than one parameter")
         assertContains(message, "invalid-wire.same' is used by first, second")
+        assertContains(message, "dollar: @NatsMethod name must not start with '\$', was '\$internal'")
+    }
+
+    @Test
+    fun `unprefixed service owns the service namespace`() {
+        val descriptor = describe(UnprefixedService::class.java, "transaction")
+
+        assertEquals("roles-api.lookup", descriptor.method("lookup").subject)
+        assertEquals("roles-api.find", descriptor.method("find").subject)
+        assertEquals("roles-api.\$persist.store", descriptor.method("store").subject)
+        assertEquals("roles-api.\$presence", descriptor.presenceSubject)
+        assertEquals("roles-api", descriptor.responderGroup)
+
+        val streams = assertNotNull(descriptor.streams)
+        assertEquals("SURF__ROLES_API", streams.stream)
+        assertEquals("roles-api.\$persist.>", streams.filter)
+        assertEquals("SURF__ROLES_API_DLQ", streams.dlqStream)
+        assertEquals("roles-api.\$dlq", streams.dlqSubject)
+    }
+
+    @Test
+    fun `unprefixed service has the same names in every client`() {
+        val first = describe(UnprefixedService::class.java)
+        val second = describe(UnprefixedService::class.java)
+
+        assertEquals(first.methods.map { it.subject }, second.methods.map { it.subject })
+        assertEquals(first.streams?.stream, second.streams?.stream)
+        assertEquals(first.responderGroup, second.responderGroup)
+    }
+
+    @Test
+    fun `prefixed service uses the client name for responders and streams`() {
+        val descriptor = describe(WireNamedService::class.java, "transaction")
+
+        assertEquals("transaction", descriptor.responderGroup)
+        val streams = assertNotNull(descriptor.streams)
+        assertEquals("SURF_TRANSACTION_ROLES", streams.stream)
+        assertEquals("transaction.\$persist.roles.>", streams.filter)
+        assertEquals("transaction.\$dlq.roles", streams.dlqSubject)
+    }
+
+    @Test
+    fun `service names must be kebab-case`() {
+        val types = listOf(
+            DottedNameService::class.java,
+            UpperCaseNameService::class.java,
+            UnderscoreNameService::class.java,
+        )
+        for (type in types) {
+            val message = assertFailsWith<IllegalArgumentException> { describe(type) }.message.orEmpty()
+            assertContains(message, "must be kebab-case", message = type.simpleName)
+        }
+    }
+
+    @Test
+    fun `serializers follow the wire format`() {
+        val client = client()
+        val descriptor = client.serviceDescriptor(UuidService::class.java)
+        val codec = client.codec
+        val owner = descriptor.method("owner")
+        val uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000")
+
+        assertEquals("""{"id":"$uuid"}""", codec.encode(owner.arguments, arrayOf(uuid), WireFormat.JSON).decodeToString())
+        val external = """{"id":"$uuid"}""".encodeToByteArray()
+        assertContentEquals(arrayOf<Any?>(uuid), codec.decode(owner.arguments, external, WireFormat.JSON.contentType))
+
+        val value = assertIs<ResultKind.Value>(owner.result)
+        assertEquals("\"$uuid\"", codec.encode(value.serializer, uuid, WireFormat.JSON).decodeToString())
+        val answer = assertIs<ResultKind.Answer>(descriptor.method("find").result)
+        assertEquals("\"$uuid\"", codec.encode(answer.serializer, uuid, WireFormat.JSON).decodeToString())
+
+        val cbor = codec.encode(owner.arguments, arrayOf(uuid), WireFormat.CBOR)
+        val uuidString = uuid.toString().encodeToByteArray().asList()
+        assertTrue(cbor.asList().windowed(uuidString.size).none { it == uuidString }, "CBOR must encode the UUID binary")
+        assertContentEquals(arrayOf<Any?>(uuid), codec.decode(owner.arguments, cbor, WireFormat.CBOR.contentType))
+    }
+
+    @Test
+    fun `service names ending in dlq are reserved`() {
+        for (type in listOf(DlqSuffixService::class.java, DlqNameService::class.java)) {
+            val message = assertFailsWith<IllegalArgumentException> { describe(type) }.message.orEmpty()
+            assertContains(message, "is reserved", message = type.simpleName)
+        }
     }
 }

@@ -51,21 +51,34 @@ internal class NatsCodec(serializersModule: SerializersModule) {
         }
     }
 
+    fun <T> encode(serializers: WireSerializers<T>, value: T, format: WireFormat): ByteArray {
+        return encode(serializers[format], value, format)
+    }
+
     fun <T> decode(
         deserializer: DeserializationStrategy<T>,
         bytes: ByteArray,
         contentType: String?
     ): T {
-        val format = if (contentType == null) {
-            WireFormat.CBOR
-        } else {
-            WireFormat.fromContentType(contentType)
-                ?: throw IllegalArgumentException("Unsupported content type: $contentType")
-        }
+        return decode(deserializer, bytes, formatOf(contentType))
+    }
 
+    fun <T> decode(serializers: WireSerializers<T>, bytes: ByteArray, contentType: String?): T {
+        val format = formatOf(contentType)
+        return decode(serializers[format], bytes, format)
+    }
+
+    private fun <T> decode(deserializer: DeserializationStrategy<T>, bytes: ByteArray, format: WireFormat): T {
         return when (format) {
             WireFormat.CBOR -> cbor.decodeFromByteArray(deserializer, bytes)
             WireFormat.JSON -> json.decodeFromString(deserializer, bytes.decodeToString())
+        }
+    }
+
+    private fun formatOf(contentType: String?): WireFormat {
+        requireNotNull(contentType) { "Missing Content-Type header, expected one of: $SUPPORTED_CONTENT_TYPES" }
+        return requireNotNull(WireFormat.fromContentType(contentType)) {
+            "Unsupported content type '$contentType', expected one of: $SUPPORTED_CONTENT_TYPES"
         }
     }
 
@@ -74,5 +87,9 @@ internal class NatsCodec(serializersModule: SerializersModule) {
             WireFormat.CBOR -> cborSerializersModule
             WireFormat.JSON -> jsonSerializersModule
         }
+    }
+
+    private companion object {
+        private val SUPPORTED_CONTENT_TYPES = WireFormat.entries.joinToString { it.contentType }
     }
 }

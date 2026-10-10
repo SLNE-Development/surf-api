@@ -1,13 +1,15 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.*
+import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.client.NatsClientImpl
+import dev.slne.surf.nats.codec.NatsCodec
+import dev.slne.surf.nats.codec.WireSerializers
+import dev.slne.surf.nats.internal.NATS_CLIENT_NAME_PATTERN
 import dev.slne.surf.nats.jetstream.PersistentStreams
 import dev.slne.surf.nats.subject.Subjects
 import dev.slne.surf.nats.util.isSuspend
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import kotlinx.serialization.modules.SerializersModule
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.reflect.KParameter
@@ -23,8 +25,15 @@ internal class ServiceDescriptor(
     val methods: List<MethodDescriptor>,
     val presenceSubject: String?,
     val streams: PersistentStreams?,
+    val responderGroup: String, // queue group of ONE methods and durable consumer of persistent methods
 ) {
     companion object {
+        private const val PERSIST = $$"$persist"
+        private const val PRESENCE = $$"$presence"
+        private const val DLQ = $$"$dlq"
+
+        private val SERVICE_NAME = NATS_CLIENT_NAME_PATTERN.toRegex()
+
         fun of(type: Class<*>, client: NatsClientImpl): ServiceDescriptor {
             require(type.isInterface) { notAnInterfaceMessage(type) }
             val annotation = requireNotNull(type.getAnnotation(NatsService::class.java)) {
@@ -36,12 +45,24 @@ internal class ServiceDescriptor(
 
             val codec = client.codec
             val serviceName = annotation.name.ifEmpty { Subjects.kebabCase(type.simpleName) }
-            val module = codec.serializersModule(WireFormat.CBOR)
 
             val problems = ObjectArrayList<String>()
+            if (!SERVICE_NAME.matches(serviceName)) {
+                problems.add("Service name '$serviceName' must be kebab-case ([a-z0-9] separated by '-')")
+            }
+            if (serviceName == "dlq" || serviceName.endsWith("-dlq")) {
+                problems.add("Service name '$serviceName' is reserved, names ending in 'dlq' collide with dead letter streams")
+            }
             if (serviceTimeoutSeconds != null && serviceTimeoutSeconds <= 0) {
                 problems.add("@NatsTimeout on ${type.simpleName} must be positive, was $serviceTimeoutSeconds")
             }
+
+            val prefixed = annotation.prefixed
+            val coreBase = if (prefixed) "${client.name}.$serviceName" else serviceName
+            fun internalSubject(kind: String): String {
+                return if (prefixed) "${client.name}.$kind.$serviceName" else "$serviceName.$kind"
+            }
+
             val candidates = type.methods.filter { m ->
                 !m.isDefault && !Modifier.isStatic(m.modifiers) && !m.isSynthetic && !m.isBridge
             }
@@ -74,10 +95,14 @@ internal class ServiceDescriptor(
                     methodProblems.add("$name: @NatsPersistent is not supported with ALL responders, mark it @NatsPersistent(false)")
                 }
 
-                val methodToken = method.getAnnotation(NatsMethod::class.java)?.name?.ifEmpty { null }
-                    ?: Subjects.kebabCase(name)
+                val methodToken =
+                    method.getAnnotation(NatsMethod::class.java)?.name?.ifEmpty { null }
+                        ?: Subjects.kebabCase(name)
                 if ('.' in methodToken) {
                     methodProblems.add("$name: @NatsMethod name must be a single subject token, was '$methodToken'")
+                }
+                if (methodToken.startsWith('$')) {
+                    methodProblems.add("$name: @NatsMethod name must not start with '$', was '$methodToken'")
                 }
 
                 val timeoutSeconds = method.getAnnotation(NatsTimeout::class.java)?.seconds
@@ -111,7 +136,7 @@ internal class ServiceDescriptor(
                     }
 
                     try {
-                        TypeSerializers.serializerFor(param.type, module)
+                        serializersFor(param.type, codec)
                     } catch (e: Exception) {
                         methodProblems.add("$name: parameter '${param.name}' (${param.type}) has no serializer: ${e.message}")
                         null
@@ -119,7 +144,7 @@ internal class ServiceDescriptor(
                 }
 
                 val result = try {
-                    resultKind(function.returnType, module)
+                    resultKind(function.returnType, codec)
                 } catch (e: Exception) {
                     methodProblems.add("$name: return type (${function.returnType}) is not serializable: ${e.message}")
                     null
@@ -130,9 +155,9 @@ internal class ServiceDescriptor(
 
                 val subject = try {
                     val raw = if (persistent) {
-                        $$"$${client.name}.$persist.$$serviceName.$$methodToken"
+                        "${internalSubject(PERSIST)}.$methodToken"
                     } else {
-                        "${client.name}.$serviceName.$methodToken"
+                        "$coreBase.$methodToken"
                     }
 
                     Subjects.requireValidSubject(raw, "${type.name}.$name")
@@ -146,11 +171,13 @@ internal class ServiceDescriptor(
                     return null
                 }
 
-                val arguments = ArgumentSerializer(
-                    serialName = "$serviceName.$name",
-                    names = argumentNames,
-                    serializer = serializers,
-                )
+                val arguments = WireSerializers.of { format ->
+                    ArgumentSerializer(
+                        serialName = "$serviceName.$name",
+                        names = argumentNames,
+                        serializer = serializers.map { it[format] },
+                    )
+                }
 
                 return MethodDescriptor(
                     method,
@@ -185,34 +212,44 @@ internal class ServiceDescriptor(
             require(methods.isNotEmpty()) { "${type.name} has no service methods" }
 
             val presenceSubject = if (methods.any { it.responders == ResponderMode.ALL }) {
-                Subjects.requireValidSubject(
-                    $$"$${client.name}.$presence.$$serviceName",
-                    "${type.name} presence",
-                )
+                Subjects.requireValidSubject(internalSubject(PRESENCE), "${type.name} presence")
             } else {
                 null
             }
 
             val streams = if (methods.any { it.persistent }) {
-                val stream = "SURF_${client.name}_$serviceName".uppercase().replace("-", "_")
+                val stream =
+                    (if (prefixed) "SURF_${client.name}_$serviceName" else "SURF__$serviceName")
+                        .uppercase()
+                        .replace("-", "_")
                 PersistentStreams(
                     stream = stream,
-                    filter = $$"$${client.name}.$persist.$$serviceName.>",
+                    filter = "${internalSubject(PERSIST)}.>",
                     dlqStream = "${stream}_DLQ",
-                    dlqSubject = $$"$${client.name}.$dlq.$$serviceName",
+                    dlqSubject = internalSubject(DLQ),
                 )
             } else {
                 null
             }
 
-            return ServiceDescriptor(type, serviceName, methods, presenceSubject, streams)
+            val responderGroup = if (prefixed) client.name else serviceName
+            return ServiceDescriptor(
+                type,
+                serviceName,
+                methods,
+                presenceSubject,
+                streams,
+                responderGroup
+            )
         }
 
         private fun notAnInterfaceMessage(type: Class<*>): String {
             val services = ObjectLinkedOpenHashSet<Class<*>>()
             fun collect(current: Class<*>) {
                 for (candidate in current.interfaces) {
-                    if (candidate.isAnnotationPresent(NatsService::class.java)) services.add(candidate)
+                    if (candidate.isAnnotationPresent(NatsService::class.java)) services.add(
+                        candidate
+                    )
                     collect(candidate)
                 }
             }
@@ -224,17 +261,23 @@ internal class ServiceDescriptor(
                     services.joinToString { it.name }
         }
 
-        private fun resultKind(returnType: KType, module: SerializersModule): ResultKind {
+        private fun resultKind(returnType: KType, codec: NatsCodec): ResultKind {
             return when (returnType.classifier) {
                 Unit::class -> ResultKind.Unit
                 Answer::class -> {
                     val valueType = requireNotNull(returnType.arguments[0].type) {
                         "Answer<*> is not allowed, the value type must be explicit"
                     }
-                    ResultKind.Answer(TypeSerializers.serializerFor(valueType, module))
+                    ResultKind.Answer(serializersFor(valueType, codec))
                 }
 
-                else -> ResultKind.Value(TypeSerializers.serializerFor(returnType, module))
+                else -> ResultKind.Value(serializersFor(returnType, codec))
+            }
+        }
+
+        private fun serializersFor(type: KType, codec: NatsCodec): WireSerializers<Any?> {
+            return WireSerializers.of { wireFormat ->
+                TypeSerializers.serializerFor(type, codec.serializersModule(wireFormat))
             }
         }
     }

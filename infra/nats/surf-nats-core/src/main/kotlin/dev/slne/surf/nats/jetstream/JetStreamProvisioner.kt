@@ -23,14 +23,16 @@ import kotlin.time.toJavaDuration
 internal object JetStreamProvisioner {
     private const val STREAM_CONFIG_MISMATCH = 10058
     private val mutex = Mutex()
-    private val provisioned = ConcurrentHashMap<String, Connection>()
+    private val provisioned = ConcurrentHashMap<String, Provisioned>()
+
+    private class Provisioned(val connection: Connection, val filter: String)
 
     suspend fun ensureStreams(streams: PersistentStreams) {
         val connection = NatsConnectionManager.connection()
-        if (provisioned[streams.stream] === connection) return
+        if (isProvisioned(streams, connection)) return
 
         mutex.withLock {
-            if (provisioned[streams.stream] === connection) return
+            if (isProvisioned(streams, connection)) return
             check(connection.serverInfo.isJetStreamAvailable) {
                 "@NatsPersistent requires JetStream to be enabled on the NATS server"
             }
@@ -58,8 +60,17 @@ internal object JetStreamProvisioner {
                         .build()
                 )
             }
-            provisioned[streams.stream] = connection
+            provisioned[streams.stream] = Provisioned(connection, streams.filter)
         }
+    }
+
+    private fun isProvisioned(streams: PersistentStreams, connection: Connection): Boolean {
+        val entry = provisioned[streams.stream] ?: return false
+        if (entry.connection !== connection) return false
+        check(entry.filter == streams.filter) {
+            collisionMessage(streams.stream, listOf(entry.filter), listOf(streams.filter))
+        }
+        return true
     }
 
     private fun addOrUpdate(jetStreamManagement: JetStreamManagement, config: StreamConfiguration) {
@@ -67,8 +78,18 @@ internal object JetStreamProvisioner {
             jetStreamManagement.addStream(config)
         } catch (e: JetStreamApiException) {
             if (e.apiErrorCode != STREAM_CONFIG_MISMATCH) throw e
+
+            val existing = jetStreamManagement.getStreamInfo(config.name).configuration.subjects
+            check(existing.toSet() == config.subjects.toSet()) {
+                collisionMessage(config.name, existing, config.subjects)
+            }
             jetStreamManagement.updateStream(config)
         }
+    }
+
+    private fun collisionMessage(stream: String, existing: List<String>, requested: List<String>): String {
+        return "Stream $stream already exists for subjects $existing and cannot be used for $requested. " +
+                "Two services map to the same stream name. Rename one of them."
     }
 
     fun consumerConfig(durable: String): ConsumerConfiguration = ConsumerConfiguration.builder()

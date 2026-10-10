@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.EmptySerializersModule
 import java.util.*
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -35,9 +36,14 @@ class NatsCodecTest {
     }
 
     @Test
-    fun `missing content type decodes as cbor`() {
+    fun `missing content type is rejected with the supported content types`() {
         val bytes = codec.encode(Sample.serializer(), sample, WireFormat.CBOR)
-        assertEquals(sample, codec.decode(Sample.serializer(), bytes, null))
+        val message = assertFailsWith<IllegalArgumentException> {
+            codec.decode(Sample.serializer(), bytes, null)
+        }.message.orEmpty()
+
+        assertContains(message, "Missing Content-Type")
+        WireFormat.entries.forEach { assertContains(message, it.contentType) }
     }
 
     @Test
@@ -50,11 +56,14 @@ class NatsCodecTest {
     }
 
     @Test
-    fun `unknown content type is rejected`() {
+    fun `unknown content type is rejected with the supported content types`() {
         val bytes = codec.encode(Sample.serializer(), sample, WireFormat.JSON)
-        assertFailsWith<IllegalArgumentException> {
+        val message = assertFailsWith<IllegalArgumentException> {
             codec.decode(Sample.serializer(), bytes, "text/plain")
-        }
+        }.message.orEmpty()
+
+        assertContains(message, "text/plain")
+        WireFormat.entries.forEach { assertContains(message, it.contentType) }
     }
 
     @Test

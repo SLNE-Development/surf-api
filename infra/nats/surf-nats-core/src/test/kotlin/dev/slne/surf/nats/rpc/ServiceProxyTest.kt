@@ -59,7 +59,8 @@ class ServiceProxyTest {
         val received = AtomicReference<Array<Any?>>()
 
         respond(client, "mixed") { request ->
-            received.set(client.codec.decode(method.arguments, request.data, null))
+            val contentType = request.headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+            received.set(client.codec.decode(method.arguments, request.data, contentType))
             reply(client, method, "ok", request)
         }.use {
             assertEquals("ok", calc.mixed(1, 2L, 3.5, true, "label"))

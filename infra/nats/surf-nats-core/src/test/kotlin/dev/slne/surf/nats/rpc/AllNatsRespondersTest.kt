@@ -69,7 +69,7 @@ class AllNatsRespondersTest {
                     client.codec.decode(
                         broadcast.arguments,
                         request.data,
-                        null
+                        request.headers?.getFirst(NatsHeaders.CONTENT_TYPE)
                     )[0] as String
                 )
             }
@@ -83,7 +83,8 @@ class AllNatsRespondersTest {
         }
 
         private fun onFind(request: Message) {
-            val id = client.codec.decode(find.arguments, request.data, null)[0] as Long
+            val contentType = request.headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+            val id = client.codec.decode(find.arguments, request.data, contentType)[0] as Long
             val headers =
                 NatsHeaders.base(client.name, WireFormat.CBOR).put(NatsHeaders.ORIGIN, origin)
 

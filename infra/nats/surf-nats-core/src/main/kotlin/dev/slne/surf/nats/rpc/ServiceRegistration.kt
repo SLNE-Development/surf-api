@@ -66,7 +66,7 @@ internal class ServiceRegistration(
             val invoker = invokers[method.index]
             val handler = MessageHandler { onRequest(method, invoker, it) }
             when (method.responders) {
-                ResponderMode.ONE -> dispatcher.subscribe(method.subject, client.name, handler)
+                ResponderMode.ONE -> dispatcher.subscribe(method.subject, descriptor.responderGroup, handler)
                 ResponderMode.ALL -> dispatcher.subscribe(method.subject, handler)
             }
         }
@@ -74,7 +74,7 @@ internal class ServiceRegistration(
         descriptor.streams?.let { streams ->
             runBlocking { JetStreamProvisioner.ensureStreams(streams) }
             val consumer = connection.getStreamContext(streams.stream)
-                .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(client.name))
+                .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(descriptor.responderGroup))
             messageConsumer = consumer.consume(dispatcher) { onPersistent(it) }
         }
 
@@ -129,7 +129,14 @@ internal class ServiceRegistration(
     }
 
     private fun onPersistent(message: Message) {
-        val method = persistentBySubject[message.subject] ?: return message.term()
+        val method = persistentBySubject[message.subject]
+        if (method == null) {
+            scope.launch(CoroutineName("surf-nats/${client.name}/persist/unknown")) {
+                val error = IllegalStateException("No persistent method is registered for ${message.subject}")
+                failFire(message, error, permanent = false)
+            }
+            return
+        }
         val meta = message.metaData()
         val headers = if (message.hasHeaders()) message.headers else null
         val context = NatsPersistentMessageContext(
@@ -162,22 +169,33 @@ internal class ServiceRegistration(
     }
 
     private suspend fun handleFire(method: MethodDescriptor, message: Message) {
-        try {
-            val data = PayloadStore.resolve(message, PayloadBucket.PERSISTENT, delete = false)
-            val contentType =
-                if (message.hasHeaders()) message.headers.getFirst(NatsHeaders.CONTENT_TYPE) else null
-            invokers[method.index].call(
-                client.codec.decode(
-                    method.arguments,
-                    data,
-                    contentType,
-                )
-            )
+        val data = try {
+            PayloadStore.resolve(message, PayloadBucket.PERSISTENT, delete = false)
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
-            return failFire(method, message, e)
+            return failFire(message, e, permanent = false)
         } catch (e: Exception) {
-            return failFire(method, message, e)
+            return failFire(message, e, permanent = e is IllegalArgumentException)
+        }
+
+        val arguments = try {
+            val contentType =
+                if (message.hasHeaders()) message.headers.getFirst(NatsHeaders.CONTENT_TYPE) else null
+            client.codec.decode(method.arguments, data, contentType)
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            return failFire(message, e, permanent = false)
+        } catch (e: Exception) {
+            return failFire(message, e, permanent = true)
+        }
+
+        try {
+            invokers[method.index].call(arguments)
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            return failFire(message, e, permanent = false)
+        } catch (e: Exception) {
+            return failFire(message, e, permanent = false)
         }
 
         message.ack()
@@ -188,11 +206,13 @@ internal class ServiceRegistration(
         }
     }
 
-    private suspend fun failFire(method: MethodDescriptor, message: Message, e: Throwable) {
+    private suspend fun failFire(message: Message, e: Throwable, permanent: Boolean) {
         val delivered = message.metaData().deliveredCount()
-        client.logger.error("NatsPersistent ${method.subject} failed (delivery $delivered)", e)
-        if (delivered >= RpcDefaults.MAX_DELIVER) {
-            deadLetter(message, e)
+        client.logger.error(
+            "Persistent call on ${message.subject} failed (delivery $delivered${if (permanent) ", permanent" else ""})",
+            e
+        )
+        if ((permanent || delivered >= RpcDefaults.MAX_DELIVER) && deadLetter(message, e)) {
             message.term()
         } else {
             val backoff = RpcDefaults.NAK_BACKOFF[(delivered - 1).toInt()
@@ -201,7 +221,7 @@ internal class ServiceRegistration(
         }
     }
 
-    private suspend fun deadLetter(message: Message, e: Throwable) {
+    private suspend fun deadLetter(message: Message, e: Throwable): Boolean {
         val streams = checkNotNull(descriptor.streams)
         val headers = Headers(message.headers)
             .put(NatsHeaders.ERROR, e.javaClass.name)
@@ -209,13 +229,17 @@ internal class ServiceRegistration(
 
         headers.remove(headers.keySet().filter { it.startsWith("Nats-", ignoreCase = true) })
 
-        try {
+        return try {
             NatsConnectionManager.connection()
                 .jetStream()
                 .publishAsync(streams.dlqSubject, headers, message.data)
                 .await()
+            true
+        } catch (e: CancellationException) {
+            throw e
         } catch (dlq: Exception) {
             client.logger.error("Failed to dead-letter ${message.subject}", dlq)
+            false
         }
     }
 

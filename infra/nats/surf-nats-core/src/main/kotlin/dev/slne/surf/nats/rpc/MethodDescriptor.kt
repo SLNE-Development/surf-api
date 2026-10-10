@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
-import kotlinx.serialization.KSerializer
+import dev.slne.surf.nats.codec.WireSerializers
 import java.lang.reflect.Method
 import kotlin.time.Duration
 
@@ -12,7 +12,7 @@ internal class MethodDescriptor(
     val subject: String, // client.service.method-kebab
     val responders: ResponderMode,
     val timeout: Duration,
-    val arguments: KSerializer<Array<Any?>>,
+    val arguments: WireSerializers<Array<Any?>>,
     val result: ResultKind,
     val persistent: Boolean,
 )
