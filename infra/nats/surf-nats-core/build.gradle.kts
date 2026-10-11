@@ -13,7 +13,6 @@ dependencies {
 }
 
 tasks.test {
-    failOnNoDiscoveredTests = false
     systemProperty("slf4j.provider", "org.apache.logging.slf4j.SLF4JServiceProvider")
 }
 
