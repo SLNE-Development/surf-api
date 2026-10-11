@@ -37,6 +37,7 @@ class ServiceResponderTest {
         suspend fun fail(message: String): String
         suspend fun innerTimeout(): String
         suspend fun count(): Int
+        suspend fun slowFire()
 
         @NatsTimeout(15)
         suspend fun slow(): String
@@ -47,6 +48,7 @@ class ServiceResponderTest {
         val calls = AtomicInteger()
         val slowStarted = CompletableDeferred<Unit>()
         val slowCancelled = CompletableDeferred<Unit>()
+        val slowFireDone = CompletableDeferred<Unit>()
 
         override suspend fun mixed(
             a: Int,
@@ -78,6 +80,11 @@ class ServiceResponderTest {
         }
 
         override suspend fun count(): Int = calls.incrementAndGet()
+
+        override suspend fun slowFire() {
+            delay(2.seconds)
+            slowFireDone.complete(Unit)
+        }
 
         override suspend fun slow(): String {
             slowStarted.complete(Unit)
@@ -308,6 +315,29 @@ class ServiceResponderTest {
             .publish(method.subject, NatsHeaders.base("external", WireFormat.CBOR), body)
 
         assertEquals("fan-out", withTimeout(5.seconds) { impl.fired.receive() })
+    }
+
+    @Test
+    fun `fan-out handler runs past the caller deadline`() = withService {
+        val method = method("slowFire")
+        val headers = NatsHeaders.base("external", WireFormat.CBOR)
+            .add(NatsHeaders.DEADLINE, (System.currentTimeMillis() + 1_000).toString())
+        val body = client.codec.encode(method.arguments, arrayOf(), WireFormat.CBOR)
+        NatsConnectionManager.connection().publish(method.subject, headers, body)
+
+        withTimeout(5.seconds) { impl.slowFireDone.await() }
+    }
+
+    @Test
+    fun `expired fan-out is dropped without calling the implementation`() = withService {
+        val method = method("count")
+        val headers = NatsHeaders.base("external", WireFormat.CBOR)
+            .add(NatsHeaders.DEADLINE, (System.currentTimeMillis() - 1_000).toString())
+        val body = client.codec.encode(method.arguments, arrayOf(), WireFormat.CBOR)
+        NatsConnectionManager.connection().publish(method.subject, headers, body)
+
+        delay(500.milliseconds)
+        assertEquals(0, impl.calls.get())
     }
 
     @Test

@@ -23,6 +23,7 @@ import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -107,7 +108,8 @@ internal class ServiceRegistration(
         val left = remaining(deadline, methodDescriptor.timeout)
         if (!left.isPositive()) return dropExpired(message, left)
 
-        val replyTo: String? = message.replyTo // null means fan-out without a response
+        val replyTo = message.replyTo
+            ?: return onFanOut(methodDescriptor, invoker, message, contentType, deadline)
 
         scope.launch(coroutineNames[methodDescriptor.index]) {
             val timeout = remaining(deadline, methodDescriptor.timeout)
@@ -137,10 +139,40 @@ internal class ServiceRegistration(
                 errorReply(methodDescriptor, e, format)
             }
 
-            if (replyTo != null) {
-                send(methodDescriptor, replyTo, reply, format, timeout)
+            send(methodDescriptor, replyTo, reply, format, timeout)
+        }
+    }
+
+    private fun onFanOut(
+        methodDescriptor: MethodDescriptor,
+        invoker: ServiceInvoker,
+        message: Message,
+        contentType: String?,
+        deadline: Long?,
+    ) {
+        scope.launch(coroutineNames[methodDescriptor.index]) {
+            val left = remaining(deadline, methodDescriptor.timeout)
+            if (!left.isPositive()) return@launch dropExpired(message, left)
+
+            try {
+                val data = PayloadStore.resolve(
+                    message,
+                    PayloadBucket.TRANSIENT,
+                    delete = methodDescriptor.responders == ResponderMode.ONE
+                )
+                invoker.call(client.codec.decode(methodDescriptor.arguments, data, contentType))
+            } catch (e: CancellationException) {
+                ensureActive()
+                logFanOutFailure(methodDescriptor, e)
+            } catch (e: Throwable) {
+                e.rethrowIfFatal()
+                logFanOutFailure(methodDescriptor, e)
             }
         }
+    }
+
+    private fun logFanOutFailure(method: MethodDescriptor, e: Throwable) {
+        client.logger.error("Fan-out of ${descriptor.type.name}.${method.method.name} failed", e)
     }
 
     private fun onPersistent(message: Message) {
@@ -207,14 +239,22 @@ internal class ServiceRegistration(
             return failFire(message, e, permanent = true)
         }
 
-        try {
-            invokers[method.index].call(arguments)
+        val completed: Unit? = try {
+            withTimeoutOrNull(RpcDefaults.FIRE_MAX_DURATION) {
+                invokers[method.index].call(arguments)
+                Unit
+            }
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
             return failFire(message, e, permanent = false)
         } catch (e: Throwable) {
             e.rethrowIfFatal()
             return failFire(message, e, permanent = false)
+        }
+
+        if (completed == null) {
+            val error = TimeoutException("Handler did not complete within ${RpcDefaults.FIRE_MAX_DURATION}")
+            return failFire(message, error, permanent = false)
         }
 
         if (!PayloadStore.isOffloaded(message)) {

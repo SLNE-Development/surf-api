@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.*
 import kotlin.time.Duration
@@ -127,6 +128,7 @@ class NatsPersistentServiceTest {
     private var clientCounter = 0
     private val defaultAckWait = RpcDefaults.ACK_WAIT
     private val defaultBackoff = RpcDefaults.NAK_BACKOFF
+    private val defaultFireMaxDuration = RpcDefaults.FIRE_MAX_DURATION
 
     @BeforeAll
     fun connect() = runBlocking { NatsInstance.instance.load() }
@@ -138,6 +140,7 @@ class NatsPersistentServiceTest {
     fun resetDefaults() {
         RpcDefaults.ACK_WAIT = defaultAckWait
         RpcDefaults.NAK_BACKOFF = defaultBackoff
+        RpcDefaults.FIRE_MAX_DURATION = defaultFireMaxDuration
     }
 
     // ---- descriptor ----
@@ -292,6 +295,44 @@ class NatsPersistentServiceTest {
 
         delay(500.milliseconds)
         assertNull(impl.deliveries.tryReceive().getOrNull(), "no delivery after the dead letter")
+    }
+
+    @Test
+    fun `fire exceeding the max duration ends in the dead letter stream`() = withClient { client ->
+        RpcDefaults.FIRE_MAX_DURATION = 200.milliseconds
+        RpcDefaults.NAK_BACKOFF = listOf(100.milliseconds)
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val impl = OrderImpl().apply { onPlace = { _, _ -> awaitCancellation() } }
+        client.registerService<OrderService>(impl)
+
+        client.service<OrderService>().place(11)
+
+        repeat(RpcDefaults.MAX_DELIVER) { withTimeout(10.seconds) { impl.deliveries.receive() } }
+        eventually("dead letter must be stored") { messageCount(streams.dlqStream) == 1L }
+
+        val dead = jsm().getLastMessage(streams.dlqStream, streams.dlqSubject)
+        assertEquals(TimeoutException::class.java.name, assertNotNull(dead.headers).getFirst(NatsHeaders.ERROR))
+    }
+
+    @Test
+    fun `timeout inside a fire handler is not reported as exceeding the max duration`() = withClient { client ->
+        RpcDefaults.NAK_BACKOFF = listOf(100.milliseconds)
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val impl = OrderImpl().apply {
+            onPlace = { _, _ -> withTimeout(10.milliseconds) { delay(1.seconds) } }
+        }
+        client.registerService<OrderService>(impl)
+
+        client.service<OrderService>().place(12)
+
+        repeat(RpcDefaults.MAX_DELIVER) { withTimeout(10.seconds) { impl.deliveries.receive() } }
+        eventually("dead letter must be stored") { messageCount(streams.dlqStream) == 1L }
+
+        val dead = jsm().getLastMessage(streams.dlqStream, streams.dlqSubject)
+        assertEquals(
+            TimeoutCancellationException::class.java.name,
+            assertNotNull(dead.headers).getFirst(NatsHeaders.ERROR)
+        )
     }
 
     @Test

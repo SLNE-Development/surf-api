@@ -20,6 +20,8 @@ internal object RpcDefaults {
     val ACK_SYNC_TIMEOUT = 5.seconds
     @Volatile
     internal var ACK_WAIT = 30.seconds // var for tests
+    @Volatile
+    internal var FIRE_MAX_DURATION = 10.minutes // var for tests
 
     const val MAX_DELIVER = 5
 
