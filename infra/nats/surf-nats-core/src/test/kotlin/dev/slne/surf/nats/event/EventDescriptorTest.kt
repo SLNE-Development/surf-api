@@ -88,8 +88,24 @@ class EventDescriptorTest {
         val event = PlayerHealthChanged(UUID.randomUUID(), 17.5)
 
         for (format in WireFormat.entries) {
-            val bytes = codec.encode(descriptor.serializer, event, format)
-            assertEquals(event, codec.decode(descriptor.serializer, bytes, format.contentType), "format $format")
+            val bytes = codec.encode(descriptor.serializers, event, format)
+            assertEquals(event, codec.decode(descriptor.serializers, bytes, format.contentType), "format $format")
         }
+    }
+
+    @Test
+    fun `serializer follows the content type instead of the declared format`() {
+        val descriptor = describe(PlayerHealthChanged::class.java)
+        val uuid = UUID.randomUUID()
+        val json = """{"player":"$uuid","health":17.5}"""
+
+        assertEquals(
+            PlayerHealthChanged(uuid, 17.5),
+            codec.decode(descriptor.serializers, json.encodeToByteArray(), WireFormat.JSON.contentType)
+        )
+        assertEquals(
+            """{"player":"$uuid","health":17.5}""",
+            codec.encode(descriptor.serializers, PlayerHealthChanged(uuid, 17.5), WireFormat.JSON).decodeToString()
+        )
     }
 }

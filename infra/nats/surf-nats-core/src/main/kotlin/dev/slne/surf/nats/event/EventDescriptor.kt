@@ -4,8 +4,8 @@ import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsCodec
+import dev.slne.surf.nats.codec.WireSerializers
 import dev.slne.surf.nats.subject.Subjects
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 
 @InternalNatsApi
@@ -13,7 +13,7 @@ internal class EventDescriptor(
     val type: Class<*>,
     val subject: String,
     val format: WireFormat,
-    val serializer: KSerializer<Any>,
+    val serializers: WireSerializers<Any>,
 ) {
     companion object {
         fun of(type: Class<*>, clientName: String, codec: NatsCodec): EventDescriptor {
@@ -29,13 +29,13 @@ internal class EventDescriptor(
             val subject = if (annotation.prefixed) "$clientName.$localSubject" else localSubject
 
             val format = type.getAnnotation(NatsFormat::class.java)?.format ?: WireFormat.CBOR
-            val serializer = codec.serializersModule(format).serializer(type)
+            val serializers = WireSerializers.of { codec.serializersModule(it).serializer(type) }
 
             return EventDescriptor(
                 type,
                 Subjects.requireValidEventSubject(subject, type.name),
                 format,
-                serializer
+                serializers
             )
         }
     }

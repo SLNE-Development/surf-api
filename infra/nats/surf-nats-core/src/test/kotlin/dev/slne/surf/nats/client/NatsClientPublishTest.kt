@@ -50,7 +50,7 @@ class NatsClientPublishTest {
         assertNotNull(message.headers.getFirst(NatsHeaders.SENDER_VERSION))
 
         val descriptor = client.eventDescriptor(PunishmentCreated::class.java)
-        val decoded = client.codec.decode(descriptor.serializer, message.data, WireFormat.CBOR.contentType)
+        val decoded = client.codec.decode(descriptor.serializers, message.data, WireFormat.CBOR.contentType)
         assertEquals(event, decoded)
     }
 

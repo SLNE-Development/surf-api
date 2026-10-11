@@ -108,7 +108,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         if (own && targets.all { it.ignoreOwn }) return
 
         val event = try {
-            client.codec.decode(descriptor.serializer, message.data, contentType)
+            client.codec.decode(descriptor.serializers, message.data, contentType)
         } catch (e: Exception) {
             client.logger.warn(
                 "Dropping undecodable ${descriptor.type.simpleName} on ${message.subject}",

@@ -12,6 +12,7 @@ import dev.slne.surf.nats.event.natsEventContextOrNull
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.impl.Headers
+import kotlinx.serialization.Contextual
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.time.Duration
+import java.util.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -37,6 +39,9 @@ class NatsClientListenerTest {
     @NatsEvent("json")
     @NatsFormat(WireFormat.JSON)
     data class JsonEvent(val playerName: String)
+
+    @NatsEvent("player")
+    data class PlayerEvent(val player: @Contextual UUID)
 
     @NatsEvent("panel.listener-test.created", prefixed = false)
     data class PanelEvent(val id: Long)
@@ -89,6 +94,15 @@ class NatsClientListenerTest {
 
         @NatsListener
         fun on(event: JsonEvent) {
+            recorder.received.trySend(event)
+        }
+    }
+
+    class PlayerListener {
+        val recorder = Recorder<PlayerEvent>()
+
+        @NatsListener
+        fun on(event: PlayerEvent) {
             recorder.received.trySend(event)
         }
     }
@@ -248,6 +262,19 @@ class NatsClientListenerTest {
     }
 
     @Test
+    fun `external json with a string uuid is received by a cbor event`() = withClient("listen-uuid") { client ->
+        val listener = PlayerListener()
+        client.registerListener(listener)
+
+        val uuid = UUID.randomUUID()
+        val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.JSON.contentType)
+        NatsConnectionManager.connection()
+            .publish("listen-uuid.player", headers, """{"player":"$uuid"}""".encodeToByteArray())
+
+        assertEquals(PlayerEvent(uuid), listener.recorder.receiveWithin())
+    }
+
+    @Test
     fun `unprefixed event is received on the plain subject`() = withClient("listen-unprefixed") { client ->
         val listener = PanelListener()
         client.registerListener(listener)
@@ -279,7 +306,7 @@ class NatsClientListenerTest {
                         otherMember.nextMessage(Duration.ofMillis(10))?.let { message ->
                             val descriptor = client.eventDescriptor(Balanced::class.java)
                             val contentType = message.headers?.getFirst(NatsHeaders.CONTENT_TYPE)
-                            delivered += (client.codec.decode(descriptor.serializer, message.data, contentType) as Balanced).id
+                            delivered += (client.codec.decode(descriptor.serializers, message.data, contentType) as Balanced).id
                         }
                     }
                 }
@@ -340,7 +367,7 @@ class NatsClientListenerTest {
         val descriptor = (NatsClient.create("listen-close-probe") as NatsClientImpl).use { probe ->
             probe.eventDescriptor(Created::class.java)
         }
-        val bytes = (client as NatsClientImpl).codec.encode(descriptor.serializer, Created(1), WireFormat.CBOR)
+        val bytes = (client as NatsClientImpl).codec.encode(descriptor.serializers, Created(1), WireFormat.CBOR)
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.CBOR.contentType)
         NatsConnectionManager.connection().publish("listen-close-client.created", headers, bytes)
 
@@ -441,7 +468,7 @@ class NatsClientListenerTest {
         client.registerListener(ignoring)
 
         val descriptor = client.eventDescriptor(OriginEvent::class.java)
-        val bytes = client.codec.encode(descriptor.serializer, OriginEvent(8), WireFormat.CBOR)
+        val bytes = client.codec.encode(descriptor.serializers, OriginEvent(8), WireFormat.CBOR)
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.CBOR.contentType)
         NatsConnectionManager.connection().publish("listener-test.origin", headers, bytes)
 

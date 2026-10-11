@@ -88,7 +88,7 @@ internal class NatsClientImpl(
     override fun publish(event: Any) {
         checkOpen()
         val descriptor = eventDescriptor(event.javaClass)
-        val data = codec.encode(descriptor.serializer, event, descriptor.format)
+        val data = codec.encode(descriptor.serializers, event, descriptor.format)
         val header = NatsHeaders.base(name, descriptor.format)
         val connection = NatsConnectionManager.connection()
 
