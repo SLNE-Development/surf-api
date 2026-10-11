@@ -11,6 +11,7 @@ import dev.slne.surf.nats.event.natsEventContext
 import dev.slne.surf.nats.event.natsEventContextOrNull
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import io.nats.client.JetStreamStatusException
 import io.nats.client.impl.Headers
 import kotlinx.serialization.Contextual
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.ExecutionException
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -415,16 +417,12 @@ class NatsClientListenerTest {
         val client = NatsClient.create("listen-close-client")
         val listener = CreatedListener()
         client.registerListener(listener)
+        client.publish(Created(1))
+        assertEquals(Created(1), listener.recorder.receiveWithin())
+
         client.close()
 
-        val descriptor = (NatsClient.create("listen-close-probe") as NatsClientImpl).use { probe ->
-            probe.eventDescriptor(Created::class.java)
-        }
-        val bytes = (client as NatsClientImpl).codec.encode(descriptor.serializers, Created(1), WireFormat.CBOR)
-        val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.CBOR.contentType)
-        NatsConnectionManager.connection().publish("listen-close-client.created", headers, bytes)
-
-        listener.recorder.assertNothingWithin()
+        assertNoSubscriber("listen-close-client.created")
     }
 
     @Test
@@ -553,6 +551,14 @@ class NatsClientListenerTest {
 
     private suspend fun <T> Recorder<T>.receiveWithin(timeout: kotlin.time.Duration = 5.seconds): T {
         return withContext(Dispatchers.Default) { withTimeout(timeout) { received.receive() } }
+    }
+
+    private suspend fun assertNoSubscriber(subject: String) = withContext(Dispatchers.IO) {
+        val connection = NatsConnectionManager.connection()
+        connection.flush(Duration.ofSeconds(5))
+        val reply = connection.requestWithTimeout(subject, Headers(), ByteArray(0), Duration.ofSeconds(2))
+        val failure = assertFailsWith<ExecutionException>("$subject still has a subscriber") { reply.get() }
+        assertIs<JetStreamStatusException>(failure.cause)
     }
 
     private suspend fun Recorder<*>.assertNothingWithin(window: kotlin.time.Duration = 300.milliseconds) {

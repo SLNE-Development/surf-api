@@ -196,6 +196,7 @@ class ServiceResponderTest {
 
     @Test
     fun `withNatsTimeout overrides NatsTimeout and cancels the implementation`() = withService {
+        warmUp()
         val start = TimeSource.Monotonic.markNow()
         val exception = assertFailsWith<NatsRequestTimeoutException> {
             withNatsCallTimeout(300.milliseconds) { calc.slow() }
@@ -209,6 +210,7 @@ class ServiceResponderTest {
 
     @Test
     fun `outer caller timeout is not translated into NatsRequestTimeoutException`() = withService {
+        warmUp()
         val start = TimeSource.Monotonic.markNow()
         val result = withTimeoutOrNull(300.milliseconds) { calc.slow() }
 
@@ -404,6 +406,11 @@ class ServiceResponderTest {
             val fixture = Fixture(client, client.service(), impl, registration)
             withContext(Dispatchers.Default) { fixture.block() }
         }
+    }
+
+    private suspend fun Fixture.warmUp() {
+        assertEquals(1, calc.count())
+        impl.calls.set(0)
     }
 
     private fun Fixture.method(name: String) =
