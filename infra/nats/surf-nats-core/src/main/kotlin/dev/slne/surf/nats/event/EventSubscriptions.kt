@@ -5,6 +5,7 @@ import dev.slne.surf.nats.bytecode.ListenerInvoker
 import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
+import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.Dispatcher
 import io.nats.client.Message
@@ -12,6 +13,7 @@ import io.nats.client.MessageHandler
 import io.nats.client.Subscription
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.cancellation.CancellationException
@@ -37,22 +39,27 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         check(!closed) { "NatsClient[${client.name}] is closed" }
 
         val key = keyOf(method)
-        val existing = entries[key]
+
+        for ((otherKey, other) in entries) {
+            if (otherKey.subject != key.subject) continue
+            check(other.descriptor.type == method.descriptor.type) {
+                "Subject '${key.subject}' is already used by ${other.descriptor.type.name}, " +
+                        "cannot register a listener for ${method.descriptor.type.name}"
+            }
+        }
 
         val target = Target(invoker, method.ignoreOwn)
 
+        val existing = entries[key]
         if (existing != null) {
-            check(existing.descriptor.type == method.descriptor.type) {
-                "Subject '${key.subject}' is already used by ${existing.descriptor.type.name}, " +
-                        "cannot register a listener for ${method.descriptor.type.name}"
-            }
             existing.targets.add(target)
             return
         }
 
         val targets = CopyOnWriteArrayList(listOf(target))
         val descriptor = method.descriptor
-        val handler = MessageHandler { message -> dispatch(descriptor, targets, message) }
+        val name = CoroutineName("surf-nats/${client.name}/listener/${descriptor.type.simpleName}")
+        val handler = MessageHandler { message -> dispatch(descriptor, name, targets, message) }
 
         val dispatcher = dispatcher
             ?: NatsConnectionManager.connection().createDispatcher().also { dispatcher = it }
@@ -96,12 +103,12 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
     private fun dispatch(
         descriptor: EventDescriptor,
+        name: CoroutineName,
         targets: List<Target>,
         message: Message
     ) {
-        val headers = if (message.hasHeaders()) message.headers else null
-        val origin = headers?.getFirst(NatsHeaders.ORIGIN)
-        val contentType = headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+        val origin = message.header(NatsHeaders.ORIGIN)
+        val contentType = message.header(NatsHeaders.CONTENT_TYPE)
 
         val own = origin == client.origin
 
@@ -117,8 +124,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             return
         }
 
-        val context = NatsEventContext(origin, own) +
-                CoroutineName("surf-nats/${client.name}/listener/${descriptor.type.simpleName}")
+        val context = NatsEventContext(origin, own) + name
 
         for (target in targets) {
             if (own && target.ignoreOwn) continue
@@ -126,15 +132,17 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
                 try {
                     target.invoker.call(event)
                 } catch (e: CancellationException) {
-                    throw e
+                    ensureActive()
+                    logListenerFailure(descriptor, message, e)
                 } catch (e: Exception) {
-                    client.logger.error(
-                        "Listener for ${descriptor.type.name} failed on ${message.subject}",
-                        e
-                    )
+                    logListenerFailure(descriptor, message, e)
                 }
             }
         }
+    }
+
+    private fun logListenerFailure(descriptor: EventDescriptor, message: Message, e: Exception) {
+        client.logger.error("Listener for ${descriptor.type.name} failed on ${message.subject}", e)
     }
 
     private fun keyOf(method: ListenerMethod): Key {

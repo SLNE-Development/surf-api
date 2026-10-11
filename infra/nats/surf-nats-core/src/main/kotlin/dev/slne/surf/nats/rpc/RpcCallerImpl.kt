@@ -1,8 +1,10 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.*
+import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
+import dev.slne.surf.nats.codec.WireSerializers
+import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.internal.NatsTimeoutElement
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
@@ -12,6 +14,7 @@ import io.nats.client.JetStreamStatusException
 import io.nats.client.Message
 import io.nats.client.PublishOptions
 import io.nats.client.impl.Headers
+import io.nats.client.support.NatsJetStreamConstants
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -35,6 +38,7 @@ internal class RpcCallerImpl(
     }
 
     override suspend fun call(index: Int, args: Array<Any?>): Any? {
+        client.checkOpen()
         val method = service.methods[index]
         val timeout = currentCoroutineContext()[NatsTimeoutElement]?.timeout ?: method.timeout
 
@@ -48,10 +52,14 @@ internal class RpcCallerImpl(
         val headers = NatsHeaders.base(client.name, method.format)
             .add(
                 NatsHeaders.DEADLINE,
-                (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()
-            )
+                NatsHeaders.deadline(timeout)
+            ) // Put the deadline in now, so the header size is correct for the object store
         val encoded = client.codec.encode(method.arguments, args, method.format)
         val body = PayloadStore.offload(headers, encoded, timeout, PayloadBucket.TRANSIENT)
+        headers.put(
+            NatsHeaders.DEADLINE,
+            NatsHeaders.deadline(timeout)
+        ) // Reset the deadline after a possible object store upload
 
         return when (method.responders) {
             ResponderMode.ONE -> callOne(method, headers, body, timeout)
@@ -73,9 +81,6 @@ internal class RpcCallerImpl(
             }
         } catch (_: JetStreamStatusException) {
             throw NatsNoRespondersException(method.subject)
-        } catch (_: TimeoutCancellationException) {
-            currentCoroutineContext().ensureActive()
-            throw NatsRequestTimeoutException(method.subject, timeout)
         } catch (_: CancellationException) {
             currentCoroutineContext().ensureActive()
             throw NatsRequestTimeoutException(method.subject, timeout)
@@ -132,29 +137,36 @@ internal class RpcCallerImpl(
                 continue
             }
 
-            val headers = if (reply.hasHeaders()) reply.headers else null
-            val origin = headers?.getFirst(NatsHeaders.ORIGIN)
+            val origin = reply.header(NatsHeaders.ORIGIN)
 
             if (origin != null) {
                 call.answered.add(origin)
                 presence?.seen(origin)
             }
 
-            val remoteType = headers?.getFirst(NatsHeaders.ERROR)
+            val remoteType = reply.header(NatsHeaders.ERROR)
             when {
                 remoteType != null -> {
                     call.fail(NatsRemoteException(remoteType, reply.data.decodeToString()))
                     client.logger.warn("ALL responder $origin failed on ${method.subject}: $remoteType")
                 }
 
-                headers?.getFirst(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_NONE -> Unit
-                else -> return Answer.Of(
-                    client.codec.decode(
-                        result.serializer,
-                        PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true),
-                        headers?.getFirst(NatsHeaders.CONTENT_TYPE)
-                    )
-                )
+                reply.header(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_NONE -> Unit
+                else -> {
+                    val decoded = try {
+                        Completed(decodeBody(result.serializer, reply))
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        call.fail(e)
+                        client.logger.warn(
+                            "Undecodable ALL answer from $origin on ${method.subject}",
+                            e
+                        )
+                        null
+                    }
+                    if (decoded != null) return Answer.Of(decoded.value)
+                }
             }
 
             if (presence?.allAnswered(call.answered) == true) {
@@ -168,57 +180,52 @@ internal class RpcCallerImpl(
         method: MethodDescriptor,
         reply: Message
     ): Any? {
-        val headers = if (reply.hasHeaders()) reply.headers else null
-
-        headers?.getFirst(NatsHeaders.ERROR)?.let { remoteType ->
+        reply.header(NatsHeaders.ERROR)?.let { remoteType ->
             throw NatsRemoteException(remoteType, reply.data.decodeToString())
         }
 
-        val contentType = headers?.getFirst(NatsHeaders.CONTENT_TYPE)
-
         return when (val result = method.result) {
             ResultKind.Unit -> Unit
-            is ResultKind.Value -> client.codec.decode(
-                result.serializer,
-                PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true),
-                contentType
-            )
-
+            is ResultKind.Value -> decodeBody(result.serializer, reply)
             is ResultKind.Answer -> {
-                if (headers?.getFirst(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_NONE) {
+                if (reply.header(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_NONE) {
                     Answer.None
                 } else {
-                    Answer.Of(
-                        client.codec.decode(
-                            result.serializer,
-                            PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true),
-                            contentType
-                        )
-                    )
+                    Answer.Of(decodeBody(result.serializer, reply))
                 }
             }
         }
     }
 
+    private suspend fun decodeBody(serializers: WireSerializers<Any?>, reply: Message): Any? {
+        return client.codec.decode(
+            serializers,
+            PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true),
+            reply.header(NatsHeaders.CONTENT_TYPE)
+        )
+    }
 
     private suspend fun callPersistent(
         method: MethodDescriptor,
         args: Array<Any?>,
         timeout: Duration,
     ): Any? {
+        val streams = checkNotNull(service.streams)
         val headers = NatsHeaders.base(client.name, method.format)
         val encoded = client.codec.encode(method.arguments, args, method.format)
 
         if (method.result == ResultKind.Unit) {
+            val options = publishOptions(streams.stream, ttl = null)
             val body = PayloadStore.offload(
                 headers,
                 encoded,
                 RpcDefaults.PERSIST_MAX_AGE,
                 PayloadBucket.PERSISTENT,
+                options.headerBytes(),
             )
             try {
                 withTimeout(timeout) {
-                    publishPersistent(method, headers, body, ttl = null)
+                    publishPersistent(method, headers, body, options)
                 }
             } catch (_: TimeoutCancellationException) {
                 currentCoroutineContext().ensureActive()
@@ -228,12 +235,17 @@ internal class RpcCallerImpl(
         }
 
         val inbox = NatsConnectionManager.connection().createInbox()
-        headers.add(
-            NatsHeaders.DEADLINE,
-            (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()
-        )
+        headers.add(NatsHeaders.DEADLINE, NatsHeaders.deadline(timeout))
         headers.add(NatsHeaders.REPLY_TO, inbox)
-        val body = PayloadStore.offload(headers, encoded, timeout, PayloadBucket.TRANSIENT)
+        val options = publishOptions(streams.stream, ttl = timeout)
+        val body = PayloadStore.offload(
+            headers,
+            encoded,
+            timeout,
+            PayloadBucket.TRANSIENT,
+            options.headerBytes()
+        )
+        headers.put(NatsHeaders.DEADLINE, NatsHeaders.deadline(timeout))
 
         val reply = CompletableDeferred<Message>()
         val dispatcher = client.replyDispatcher()
@@ -241,7 +253,7 @@ internal class RpcCallerImpl(
 
         try {
             val completed = withTimeoutOrNull(timeout) {
-                publishPersistent(method, headers, body, ttl = timeout)
+                publishPersistent(method, headers, body, options)
                 Completed(decodeReply(method, reply.await()))
             } ?: throw NatsRequestTimeoutException(method.subject, timeout)
             return completed.value
@@ -250,31 +262,42 @@ internal class RpcCallerImpl(
         }
     }
 
+    private fun publishOptions(stream: String, ttl: Duration?): PublishOptions {
+        return PublishOptions.builder()
+            .messageId(UUID.randomUUID().toString())
+            .expectedStream(stream)
+            .apply {
+                if (ttl != null) {
+                    messageTtlSeconds(
+                        ((ttl.inWholeMilliseconds + 999) / 1000).coerceAtLeast(1).toInt()
+                    )
+                }
+            }
+            .build()
+    }
+
+    private fun PublishOptions.headerBytes(): Int {
+        fun line(key: String, value: String?): Int {
+            return if (value.isNullOrEmpty()) 0 else key.length + value.length + 3
+        }
+
+        return line(NatsJetStreamConstants.EXPECTED_STREAM_HDR, expectedStream) +
+                line(NatsJetStreamConstants.MSG_ID_HDR, messageId) +
+                line(NatsJetStreamConstants.MSG_TTL_HDR, messageTtl)
+    }
+
     private suspend fun publishPersistent(
         method: MethodDescriptor,
         headers: Headers,
         body: ByteArray,
-        ttl: Duration?,
+        options: PublishOptions,
     ) {
-        val streams = checkNotNull(service.streams)
-        JetStreamProvisioner.ensureStreams(streams)
+        JetStreamProvisioner.ensureStreams(checkNotNull(service.streams))
 
-        val options = PublishOptions.builder()
-            .messageId(UUID.randomUUID().toString())
-            .expectedStream(streams.stream)
-            .apply {
-                if (ttl != null) {
-                    messageTtlSeconds(ttl.inWholeSeconds.coerceAtLeast(1).toInt())
-                }
-            }
-            .build()
-
+        val jetStream = NatsConnectionManager.connection().jetStream()
         while (true) {
             try {
-                NatsConnectionManager.connection()
-                    .jetStream()
-                    .publishAsync(method.subject, headers, body, options)
-                    .await()
+                jetStream.publishAsync(method.subject, headers, body, options).await()
                 return
             } catch (e: CancellationException) {
                 currentCoroutineContext().ensureActive()
@@ -289,10 +312,10 @@ internal class RpcCallerImpl(
     private class Completed(@JvmField val value: Any?)
 
     private class AllCall {
-        var failure: NatsRemoteException? = null
+        var failure: Exception? = null
         val answered = ObjectOpenHashSet<String>()
 
-        fun fail(exception: NatsRemoteException) {
+        fun fail(exception: Exception) {
             if (failure == null) {
                 failure = exception
             } else {

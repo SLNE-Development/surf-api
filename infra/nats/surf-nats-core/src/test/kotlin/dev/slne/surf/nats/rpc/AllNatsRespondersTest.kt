@@ -9,6 +9,7 @@ import io.nats.client.Message
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.SerializationException
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -46,6 +47,9 @@ class AllNatsRespondersTest {
         data object None : Behaviour
         data class Fail(val type: String, val message: String) : Behaviour
         data object Hang : Behaviour
+
+        /** A reply without `Surf-Error` and `Surf-Answer: none` whose body cannot be decoded. */
+        data class Garbage(val withContentType: Boolean = true) : Behaviour
     }
 
     internal class FakeInstance(
@@ -107,6 +111,11 @@ class AllNatsRespondersTest {
                     headers.add(NatsHeaders.ERROR, answer.type),
                     answer.message.encodeToByteArray()
                 )
+
+                is Behaviour.Garbage -> {
+                    if (!answer.withContentType) headers.remove(NatsHeaders.CONTENT_TYPE)
+                    connection.publish(request.replyTo, headers, byteArrayOf(0x7f, 0x01))
+                }
 
                 Behaviour.Hang -> Unit
             }
@@ -217,6 +226,43 @@ class AllNatsRespondersTest {
         ) {
             val finder = warmFinder(client)
             assertEquals(Answer.Of("found"), withNatsCallTimeout(5.seconds) { finder.find(1) })
+        }
+    }
+
+    @Test
+    fun `undecodable answer does not hide an Of from another instance`() = withClient { client ->
+        for (garbage in listOf(Behaviour.Garbage(), Behaviour.Garbage(withContentType = false))) {
+            withInstances(
+                FakeInstance(client) { garbage },
+                FakeInstance(client) { Behaviour.Of("found-$it") },
+            ) {
+                val finder = warmFinder(client)
+                assertEquals(Answer.Of("found-5"), withNatsCallTimeout(5.seconds) { finder.find(5) }, "$garbage")
+            }
+        }
+    }
+
+    @Test
+    fun `undecodable answer without any Of is reported instead of None`() = withClient { client ->
+        for (garbage in listOf(Behaviour.Garbage(), Behaviour.Garbage(withContentType = false))) {
+            withInstances(
+                FakeInstance(client) { garbage },
+                FakeInstance(client) { Behaviour.None },
+                FakeInstance(client) { Behaviour.None },
+            ) {
+                val finder = warmFinder(client)
+                val start = TimeSource.Monotonic.markNow()
+                val exception = assertFailsWith<Exception>("$garbage") {
+                    withNatsCallTimeout(5.seconds) { finder.find(1) }
+                }
+
+                if (garbage.withContentType) {
+                    assertIs<SerializationException>(exception)
+                } else {
+                    assertContains(exception.message.orEmpty(), "Content-Type")
+                }
+                assertTrue(start.elapsedNow() < 2.seconds, "$garbage took ${start.elapsedNow()}")
+            }
         }
     }
 

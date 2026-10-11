@@ -15,6 +15,6 @@ public suspend fun <T> withNatsCallTimeout(
     timeout: Duration,
     block: suspend CoroutineScope.() -> T
 ): T {
-    require(timeout.isPositive()) { "NATS timeout must be positive, was $timeout" }
+    require(timeout.isPositive() && timeout.isFinite()) { "NATS timeout must be positive and finite, was $timeout" }
     return withContext(NatsTimeoutElement(timeout), block)
 }

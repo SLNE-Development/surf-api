@@ -57,6 +57,8 @@ internal data class NatsConfig(
 
     fun validate() {
         check(servers.isNotEmpty()) { "NATS servers must not be empty" }
+        check(drainTimeout > 0) { "NATS drain-timeout-seconds must be positive, was $drainTimeout" }
+        check(reconnectWait >= 0) { "NATS reconnect-wait-millis must not be negative, was $reconnectWait" }
 
         for (rawServer in servers) {
             try {

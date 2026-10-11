@@ -1,7 +1,6 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.presenceKind
@@ -16,41 +15,50 @@ internal class PresenceAnnouncer(
     private val subject: String,
 ) : AutoCloseable {
 
+    private val lock = Any()
+
+    @Volatile
+    private var closed = false
+
     @Volatile
     private var heartbeat: Job? = null
 
     fun start(dispatcher: Dispatcher) {
         dispatcher.subscribe(subject) { message ->
             if (message.presenceKind() == NatsHeaders.PRESENCE_QUERY) {
-                announce(NatsHeaders.PRESENCE_BEAT)
+                beat()
             }
         }
-        announce(NatsHeaders.PRESENCE_JOIN)
-        heartbeat = client.clientScope.launch(CoroutineName("surf-nats/${client.name}/presence")) {
-            while (isActive) {
+        synchronized(lock) {
+            if (closed) return
+            announce(NatsHeaders.PRESENCE_JOIN)
+        }
+        heartbeat = client.clientScope.launch(Dispatchers.IO + CoroutineName("surf-nats/${client.name}/presence")) {
+            while (isActive && !closed) {
                 delay(RpcDefaults.HEARTBEAT_INTERVAL)
-                announce(NatsHeaders.PRESENCE_BEAT)
+                beat()
             }
         }
     }
 
     override fun close() {
+        synchronized(lock) {
+            if (closed) return
+            closed = true
+            announce(NatsHeaders.PRESENCE_LEAVE)
+        }
         heartbeat?.cancel("Presence announcer closed")
-        announce(NatsHeaders.PRESENCE_LEAVE)
+    }
+
+    private fun beat() = synchronized(lock) {
+        if (!closed) announce(NatsHeaders.PRESENCE_BEAT)
     }
 
     private fun announce(kind: String) {
         try {
-            val headers = NatsHeaders.base(client.name, WireFormat.CBOR)
-                .add(NatsHeaders.PRESENCE, kind)
-            NatsConnectionManager.connection().publish(subject, headers, EMPTY)
+            NatsConnectionManager.connection().publish(subject, NatsHeaders.presence(client.name, kind), NatsHeaders.EMPTY_BODY)
         } catch (e: Exception) {
             client.logger.debug("Failed to announce presence '$kind' on $subject", e)
         }
     }
-
-    companion object {
-        private val EMPTY = ByteArray(0)
-    }
-
 }

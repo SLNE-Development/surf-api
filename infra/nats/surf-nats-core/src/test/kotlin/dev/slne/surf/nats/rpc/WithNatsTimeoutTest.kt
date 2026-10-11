@@ -22,4 +22,9 @@ class WithNatsTimeoutTest {
         assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(Duration.ZERO) {} }
         assertFailsWith<IllegalArgumentException> { withNatsCallTimeout((-1).seconds) {} }
     }
+
+    @Test
+    fun `infinite timeout is rejected`() = runTest {
+        assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(Duration.INFINITE) {} }
+    }
 }

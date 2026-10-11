@@ -184,6 +184,21 @@ class ServiceProxyTest {
     }
 
     @Test
+    fun `repeated service calls return the same proxy instance`() = withService { client, calc ->
+        assertSame(calc, client.service<CalcService>())
+        assertSame(calc, client.service(CalcService::class))
+    }
+
+    @Test
+    fun `proxy call after the client was closed fails`() = withService { client, calc ->
+        client.close()
+
+        val exception = assertFailsWith<IllegalStateException> { calc.health("x") }
+        assertContains(exception.message.orEmpty(), "is closed")
+        assertFailsWith<IllegalStateException> { client.service<CalcService>() }
+    }
+
+    @Test
     fun `proxy class is shared between clients`() = withService { _, calc ->
         (NatsClient.create("rpc-proxy-shared") as NatsClientImpl).use { other ->
             val otherCalc = other.service<CalcService>()

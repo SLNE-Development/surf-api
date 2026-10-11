@@ -6,6 +6,7 @@ import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.Message
 import io.nats.client.impl.Headers
+import kotlin.time.Duration
 
 @InternalNatsApi
 internal object NatsHeaders {
@@ -28,6 +29,8 @@ internal object NatsHeaders {
     const val PRESENCE_LEAVE = "leave"
     const val PRESENCE_QUERY = "query"
 
+    val EMPTY_BODY = ByteArray(0)
+
     fun base(clientName: String, format: WireFormat): Headers {
         val headers = Headers()
 
@@ -38,9 +41,19 @@ internal object NatsHeaders {
         return headers
     }
 
+    fun presence(clientName: String, kind: String): Headers {
+        return base(clientName, WireFormat.CBOR).add(PRESENCE, kind)
+    }
+
     fun origin(clientName: String) = "$clientName@${NatsConnectionManager.instanceIdString}"
+
+    fun deadline(timeout: Duration): String {
+        return (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()
+    }
 }
 
-internal fun Message.presenceKind(): String? {
-    return if (hasHeaders()) headers.getFirst(NatsHeaders.PRESENCE) else null
-}
+internal fun Message.header(name: String): String? = headers?.getFirst(name)
+
+internal fun Message.presenceKind(): String? = header(NatsHeaders.PRESENCE)
+
+internal fun Message.deadlineMillis(): Long? = header(NatsHeaders.DEADLINE)?.toLongOrNull()

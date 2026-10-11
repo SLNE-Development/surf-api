@@ -116,6 +116,46 @@ class ServiceDescriptorTest {
     }
 
     @Suppress("unused")
+    @NatsService("value-class-param")
+    interface ValueClassParameterService {
+        suspend fun wait(duration: kotlin.time.Duration): String
+        suspend fun count(amount: UInt): String
+    }
+
+    @Suppress("unused")
+    @NatsService("value-class-ok")
+    interface ValueClassSupportedService {
+        suspend fun waitOptional(duration: kotlin.time.Duration?): String
+        suspend fun elapsed(): kotlin.time.Duration
+    }
+
+    @Suppress("unused")
+    @NatsService("receiver")
+    interface ExtensionReceiverService {
+        suspend fun String.shout(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("infinite-timeout")
+    @NatsTimeout(Long.MAX_VALUE)
+    interface InfiniteServiceTimeoutService {
+        suspend fun ping(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("infinite-method-timeout")
+    interface InfiniteMethodTimeoutService {
+        @NatsTimeout(Long.MAX_VALUE)
+        suspend fun wait(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("json-clash")
+    interface JsonNameClashService {
+        suspend fun pair(@NatsParam("userId") a: Long, @NatsParam("user_id") b: Long): String
+    }
+
+    @Suppress("unused")
     interface NotAnnotated {
         suspend fun ping(): String
     }
@@ -518,5 +558,58 @@ class ServiceDescriptorTest {
             val message = assertFailsWith<IllegalArgumentException> { describe(type) }.message.orEmpty()
             assertContains(message, "is reserved", message = type.simpleName)
         }
+    }
+
+    @Test
+    fun `non-null value class parameters are rejected`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(ValueClassParameterService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "wait: parameter 'duration' has the value class type")
+        assertContains(message, "count: parameter 'amount' has the value class type")
+        assertContains(message, "is not supported as a parameter")
+    }
+
+    @Test
+    fun `nullable value class parameter and value class result use the Kotlin method name`() {
+        val descriptor = describe(ValueClassSupportedService::class.java, "transaction")
+
+        val subjects = descriptor.methods.map { it.subject }
+        assertContains(subjects, "transaction.\$rpc.value-class-ok.wait-optional")
+        assertContains(subjects, "transaction.\$rpc.value-class-ok.elapsed")
+        assertEquals(2, subjects.size, subjects.toString())
+    }
+
+    @Test
+    fun `extension receivers are rejected`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(ExtensionReceiverService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "extension receivers and context parameters are not supported")
+    }
+
+    @Test
+    fun `infinite NatsTimeout on interface and method is rejected`() {
+        val onInterface = assertFailsWith<IllegalArgumentException> {
+            describe(InfiniteServiceTimeoutService::class.java)
+        }.message.orEmpty()
+        assertContains(onInterface, "@NatsTimeout on InfiniteServiceTimeoutService must be finite")
+
+        val onMethod = assertFailsWith<IllegalArgumentException> {
+            describe(InfiniteMethodTimeoutService::class.java)
+        }.message.orEmpty()
+        assertContains(onMethod, "wait: @NatsTimeout must be finite")
+    }
+
+    @Test
+    fun `argument names that collide in JSON are rejected`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(JsonNameClashService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "pair: argument names")
+        assertContains(message, "in JSON")
     }
 }

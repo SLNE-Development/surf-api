@@ -14,6 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
@@ -28,7 +29,10 @@ internal class ServiceDescriptor(
     val presenceSubject: String?,
     val streams: PersistentStreams?,
     val responderGroup: String, // queue group of ONE methods and durable consumer of persistent methods
+    prefixed: Boolean,
 ) {
+    val registrationKey = if (prefixed) "prefixed:$name" else "unprefixed:$name"
+
     companion object {
         private const val RPC = $$"$rpc"
         private const val PERSIST = $$"$persist"
@@ -47,7 +51,10 @@ internal class ServiceDescriptor(
                 type.getAnnotation(NatsResponders::class.java)?.mode ?: ResponderMode.ONE
             val serviceFormat = type.getAnnotation(NatsFormat::class.java)?.format
             val serviceTimeoutSeconds = type.getAnnotation(NatsTimeout::class.java)?.seconds
-            val serviceTimeout = serviceTimeoutSeconds?.takeIf { it > 0 }?.seconds
+            val serviceTimeout = serviceTimeoutSeconds
+                ?.takeIf { it > 0 }
+                ?.seconds
+                ?.takeIf { it.isFinite() }
 
             val codec = client.codec
             val serviceName = annotation.name.ifEmpty { Subjects.kebabCase(type.simpleName) }
@@ -61,6 +68,8 @@ internal class ServiceDescriptor(
             }
             if (serviceTimeoutSeconds != null && serviceTimeoutSeconds <= 0) {
                 problems.add("@NatsTimeout on ${type.simpleName} must be positive, was $serviceTimeoutSeconds")
+            } else if (serviceTimeoutSeconds != null && serviceTimeout == null) {
+                problems.add("@NatsTimeout on ${type.simpleName} must be finite, was $serviceTimeoutSeconds")
             }
 
             val prefixed = annotation.prefixed
@@ -72,13 +81,16 @@ internal class ServiceDescriptor(
                 !m.isDefault && !Modifier.isStatic(m.modifiers) && !m.isSynthetic && !m.isBridge
             }
 
-            candidates.groupBy { it.name }
-                .filterValues { it.size > 1 }
+            val functions = candidates.associateWith { it.kotlinFunction }
+            fun kotlinName(method: Method) = functions[method]?.name ?: method.name
+
+            val nameCounts = candidates.groupingBy(::kotlinName).eachCount()
+            nameCounts.filterValues { it > 1 }
                 .keys
                 .forEach { problems.add("Service methods must have unique names. Found duplicate: $it") }
 
             fun describeMethod(method: Method, index: Int): MethodDescriptor? {
-                val name = method.name
+                val name = kotlinName(method)
                 val methodProblems = ObjectArrayList<String>()
 
                 if (!method.isSuspend()) {
@@ -86,9 +98,14 @@ internal class ServiceDescriptor(
                     return null
                 }
 
-                val function = method.kotlinFunction
+                val function = functions[method]
                 if (function == null) {
                     problems.add("$name is not a kotlin function")
+                    return null
+                }
+
+                if (function.parameters.any { it.kind != KParameter.Kind.INSTANCE && it.kind != KParameter.Kind.VALUE }) {
+                    problems.add("$name: extension receivers and context parameters are not supported")
                     return null
                 }
 
@@ -111,10 +128,14 @@ internal class ServiceDescriptor(
                 }
 
                 val timeoutSeconds = method.getAnnotation(NatsTimeout::class.java)?.seconds
+                val methodTimeout =
+                    timeoutSeconds?.takeIf { it > 0 }?.seconds?.takeIf { it.isFinite() }
                 if (timeoutSeconds != null && timeoutSeconds <= 0) {
                     methodProblems.add("$name: @NatsTimeout must be positive, was $timeoutSeconds")
+                } else if (timeoutSeconds != null && methodTimeout == null) {
+                    methodProblems.add("$name: @NatsTimeout must be finite, was $timeoutSeconds")
                 }
-                val timeout = timeoutSeconds?.takeIf { it > 0 }?.seconds
+                val timeout = methodTimeout
                     ?: serviceTimeout
                     ?: if (persistent) RpcDefaults.JETSTREAM_TIMEOUT else RpcDefaults.CORE_TIMEOUT
                 if (persistent && timeout > RpcDefaults.DUPLICATE_WINDOW) {
@@ -126,6 +147,15 @@ internal class ServiceDescriptor(
                     ?: WireFormat.CBOR
 
                 val parameters = function.parameters.filter { it.kind == KParameter.Kind.VALUE }
+                parameters.forEachIndexed { i, param ->
+                    val valueClass = (param.type.classifier as? KClass<*>)?.takeIf { it.isValue }
+                    if (valueClass != null && method.parameterTypes[i] != valueClass.java) {
+                        methodProblems.add(
+                            "$name: parameter '${param.name}' has the value class type ${param.type}, which is not " +
+                                    "supported as a parameter. Use the underlying type or a @Serializable wrapper class"
+                        )
+                    }
+                }
                 val argumentNames = parameters.map { param ->
                     val explicit = param.findAnnotation<NatsParam>()?.name
                     if (explicit != null && explicit.isBlank()) {
@@ -138,6 +168,12 @@ internal class ServiceDescriptor(
                     .filterValues { it.size > 1 }
                     .keys
                     .forEach { methodProblems.add("$name: argument name '$it' is used by more than one parameter") }
+                argumentNames.distinct()
+                    .groupBy { codec.jsonName(it) }
+                    .filterValues { it.size > 1 }
+                    .forEach { (jsonName, clashing) ->
+                        methodProblems.add("$name: argument names $clashing are all named '$jsonName' in JSON")
+                    }
 
                 val serializers = parameters.mapNotNull { param ->
                     if (param.isOptional) {
@@ -201,7 +237,7 @@ internal class ServiceDescriptor(
             }
 
             val methods = candidates
-                .filter { m -> candidates.count { it.name == m.name } == 1 }
+                .filter { nameCounts.getValue(kotlinName(it)) == 1 }
                 .sortedBy { it.name }
                 .mapIndexedNotNull { index, method -> describeMethod(method, index) }
 
@@ -248,7 +284,8 @@ internal class ServiceDescriptor(
                 methods,
                 presenceSubject,
                 streams,
-                responderGroup
+                responderGroup,
+                prefixed,
             )
         }
 

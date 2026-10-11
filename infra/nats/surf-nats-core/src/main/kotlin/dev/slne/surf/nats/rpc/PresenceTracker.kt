@@ -3,9 +3,9 @@ package dev.slne.surf.nats.rpc
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.expireAfterWrite
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
+import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.codec.presenceKind
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.Dispatcher
@@ -24,16 +24,18 @@ internal class PresenceTracker(
 
     fun start(dispatcher: Dispatcher) {
         dispatcher.subscribe(subject) { message ->
-            if (!message.hasHeaders()) return@subscribe
-            val origin = message.headers.getFirst(NatsHeaders.ORIGIN) ?: return@subscribe
+            val origin = message.header(NatsHeaders.ORIGIN) ?: return@subscribe
             when (message.presenceKind()) {
                 NatsHeaders.PRESENCE_JOIN, NatsHeaders.PRESENCE_BEAT -> seen(origin)
                 NatsHeaders.PRESENCE_LEAVE -> left(origin)
             }
         }
-        val headers = NatsHeaders.base(client.name, WireFormat.CBOR)
-            .add(NatsHeaders.PRESENCE, NatsHeaders.PRESENCE_QUERY)
-        NatsConnectionManager.connection().publish(subject, headers, EMPTY)
+        try {
+            NatsConnectionManager.connection()
+                .publish(subject, NatsHeaders.presence(client.name, NatsHeaders.PRESENCE_QUERY), NatsHeaders.EMPTY_BODY)
+        } catch (e: Exception) {
+            client.logger.debug("Failed to query presence on $subject", e)
+        }
     }
 
     fun seen(origin: String) {
@@ -49,9 +51,5 @@ internal class PresenceTracker(
 
         val live = members.asMap().keys
         return live.isNotEmpty() && answered.containsAll(live)
-    }
-
-    companion object {
-        private val EMPTY = ByteArray(0)
     }
 }

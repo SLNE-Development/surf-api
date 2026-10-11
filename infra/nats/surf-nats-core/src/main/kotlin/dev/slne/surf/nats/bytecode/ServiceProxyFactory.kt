@@ -42,16 +42,26 @@ internal object ServiceProxyFactory {
         override fun computeValue(type: Class<*>): Constructor<*> {
             val proxyClass = synchronized(defineLock) {
                 val lookup = MethodHandles.privateLookupIn(type, LOOKUP)
-                findProxyClass(lookup, type) ?: lookup.defineClass(generateProxyClass(serviceDescriptor.get()!!))
+                try {
+                    lookup.defineClass(generateProxyClass(serviceDescriptor.get()!!))
+                } catch (e: LinkageError) {
+                    definedProxyClass(lookup, type) ?: throw e
+                }
             }
 
             return proxyClass.getDeclaredConstructor(RpcCaller::class.java)
         }
 
-        private fun findProxyClass(lookup: MethodHandles.Lookup, type: Class<*>): Class<*>? = try {
-            lookup.findClass(type.name + $$"$NatsProxy")
-        } catch (_: ClassNotFoundException) {
-            null
+        private fun definedProxyClass(lookup: MethodHandles.Lookup, type: Class<*>): Class<*>? {
+            val found = try {
+                lookup.findClass(type.name + $$"$NatsProxy")
+            } catch (_: ClassNotFoundException) {
+                return null
+            }
+            check(found.classLoader === type.classLoader && type.isAssignableFrom(found)) {
+                "${found.name} from ${found.classLoader} does not implement ${type.name} from ${type.classLoader}"
+            }
+            return found
         }
     }
 

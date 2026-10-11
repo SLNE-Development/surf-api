@@ -52,7 +52,7 @@ internal class NatsClientFactoryImpl : NatsClientFactory {
 
         delay(10.seconds)
 
-        for (client in open) {
+        for (client in open.filterNot { it.isClosed }) {
             val origin = client.clientOrigin
             log.atWarning()
                 .log(
@@ -63,8 +63,7 @@ internal class NatsClientFactoryImpl : NatsClientFactory {
                         createdAt: ${origin.createdAt}
                         creationThread: ${origin.thread}
                         creationStackTrace:
-                        ${origin.stackTrace.joinToString("\n") { "    at $it" }}
-                        """.trimIndent()
+                        """.trimIndent() + origin.stackTrace.joinToString("") { "\n    at $it" }
                 )
         }
     }

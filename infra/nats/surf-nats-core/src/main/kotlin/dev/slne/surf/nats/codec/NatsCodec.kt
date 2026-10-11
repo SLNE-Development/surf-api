@@ -9,6 +9,7 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.modules.SerializersModule
@@ -35,6 +36,7 @@ internal class NatsCodec(serializersModule: SerializersModule) {
         ignoreUnknownKeys = true
         encodeDefaults = true
         this.serializersModule = cborSerializersModule
+        alwaysUseByteString = true
     }
 
     private val json = Json {
@@ -89,7 +91,13 @@ internal class NatsCodec(serializersModule: SerializersModule) {
         }
     }
 
+    fun jsonName(serialName: String): String {
+        val strategy = json.configuration.namingStrategy ?: return serialName
+        return strategy.serialNameForJson(NAME_DESCRIPTOR, 0, serialName)
+    }
+
     private companion object {
         private val SUPPORTED_CONTENT_TYPES = WireFormat.entries.joinToString { it.contentType }
+        private val NAME_DESCRIPTOR = buildClassSerialDescriptor("dev.slne.surf.nats.Name")
     }
 }

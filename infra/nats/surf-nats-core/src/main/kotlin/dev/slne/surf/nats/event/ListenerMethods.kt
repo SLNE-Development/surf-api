@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.jvm.kotlinFunction
 
 @InternalNatsApi
 internal class ListenerMethod(
@@ -91,6 +92,7 @@ internal object ListenerMethods {
         return when {
             parameterTypes.size != expectedParameterCount -> "must take exactly one event parameter"
             !suspend && method.returnType != Void.TYPE -> "must return Unit"
+            suspend && method.kotlinFunction?.returnType?.classifier.let { it != null && it != Unit::class } -> "must return Unit"
             !parameterTypes[0].isAnnotationPresent(NatsEvent::class.java) -> "parameter ${parameterTypes[0].name} is not annotated with @NatsEvent"
             else -> null
         }

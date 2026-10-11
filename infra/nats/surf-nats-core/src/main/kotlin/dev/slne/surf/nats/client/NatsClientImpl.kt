@@ -61,17 +61,9 @@ internal class NatsClientImpl(
         }
     }
 
-    private val serviceProxies = object : ClassValue<Any>() {
-        override fun computeValue(type: Class<*>): Any {
-            val descriptor = serviceDescriptor(type)
-            return ServiceProxyFactory.create(
-                descriptor,
-                RpcCallerImpl(this@NatsClientImpl, descriptor)
-            )
-        }
-    }
+    private val serviceProxies = ConcurrentHashMap<Class<*>, Any>()
 
-    private val services = ConcurrentHashMap<Class<*>, ServiceRegistration>()
+    private val services = ConcurrentHashMap<String, ServiceRegistration>()
 
     internal val eventSubscriptions = EventSubscriptions(this)
 
@@ -123,7 +115,7 @@ internal class NatsClientImpl(
             withContext(Dispatchers.IO) {
                 NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             for ((method, invoker) in added) {
                 try {
                     eventSubscriptions.remove(method, invoker)
@@ -146,15 +138,19 @@ internal class NatsClientImpl(
             "${implementation.javaClass.name} does not implement ${type.java.name}"
         }
         val descriptor = serviceDescriptor(type.java)
-        val registration = ServiceRegistration(this, descriptor, implementation)
+        services[descriptor.registrationKey]?.let { existing ->
+            error(alreadyRegistered(descriptor, existing))
+        }
 
-        check(services.putIfAbsent(type.java, registration) == null) {
-            "${type.java.name} is already registered on NatsClient[$name]"
+        val registration = ServiceRegistration(this, descriptor, implementation)
+        services.putIfAbsent(descriptor.registrationKey, registration)?.let { existing ->
+            registration.discard()
+            error(alreadyRegistered(descriptor, existing))
         }
 
         try {
             registration.subscribe()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             registration.close()
             throw e
         }
@@ -163,10 +159,28 @@ internal class NatsClientImpl(
         return registration
     }
 
+    private fun alreadyRegistered(descriptor: ServiceDescriptor, existing: ServiceRegistration): String {
+        val type = descriptor.type.name
+        val existingType = existing.descriptor.type.name
+        return if (existingType == type) {
+            "$type is already registered on NatsClient[$name]"
+        } else {
+            "Service '${descriptor.name}' of $type is already registered on NatsClient[$name] by $existingType"
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     override fun <S : Any> service(type: KClass<S>): S {
         checkOpen()
-        return serviceProxies.get(type.java) as S
+        val proxy = serviceProxies.computeIfAbsent(type.java) { serviceType ->
+            val descriptor = serviceDescriptor(serviceType)
+            ServiceProxyFactory.create(descriptor, RpcCallerImpl(this, descriptor))
+        }
+        if (isClosed) {
+            serviceProxies.clear()
+            checkOpen()
+        }
+        return proxy as S
     }
 
     internal fun registerRegistration(registration: NatsRegistration) {
@@ -183,7 +197,7 @@ internal class NatsClientImpl(
     }
 
     internal fun unregisterService(registration: ServiceRegistration) {
-        services.remove(registration.descriptor.type, registration)
+        services.remove(registration.descriptor.registrationKey, registration)
     }
 
     internal fun eventDescriptor(type: Class<*>): EventDescriptor {
@@ -208,6 +222,7 @@ internal class NatsClientImpl(
         if (!closed.compareAndSet(false, true)) return
         closeRegistrations()
         closeReplyDispatcher()
+        serviceProxies.clear()
         eventSubscriptions.close()
         clientScope.cancel("NatsClient[$name] closed")
         onClose(this)
@@ -240,5 +255,5 @@ internal class NatsClientImpl(
         }
     }
 
-    private fun checkOpen() = check(!isClosed) { "NatsClient[$name] is closed" }
+    internal fun checkOpen() = check(!isClosed) { "NatsClient[$name] is closed" }
 }

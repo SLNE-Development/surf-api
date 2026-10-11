@@ -2,7 +2,7 @@ package dev.slne.surf.nats.test.microservice
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.microservice.api.microservice.command.microserviceCommand
-import dev.slne.surf.nats.rpc.Answer
+import dev.slne.surf.nats.rpc.getOrElse
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.Benchmark
 import dev.slne.surf.nats.test.common.NatsTestInstance
@@ -34,11 +34,7 @@ class MicroserviceNatsTestInstanceImpl : NatsTestInstance() {
             val (answer, took) = measureTimedValue {
                 paper.findPlayer(args.joinToString(" "))
             }
-            val text = when (answer) {
-                is Answer.Of -> answer.value
-                Answer.None -> "none"
-            }
-            sendLine("find -> $text ($took)")
+            sendLine("find -> ${answer.getOrElse { "none" }} ($took)")
         }
 
         microserviceCommand("broadcast") { args ->

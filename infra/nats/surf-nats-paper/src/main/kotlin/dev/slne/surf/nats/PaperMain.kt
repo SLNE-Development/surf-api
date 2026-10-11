@@ -12,5 +12,3 @@ class PaperMain : JavaPlugin() {
         }
     }
 }
-
-val plugin get() = JavaPlugin.getPlugin(PaperMain::class.java)

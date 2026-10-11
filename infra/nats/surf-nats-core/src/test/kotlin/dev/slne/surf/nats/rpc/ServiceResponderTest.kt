@@ -90,6 +90,35 @@ class ServiceResponderTest {
         }
     }
 
+    @NatsService("todo")
+    interface TodoService {
+        suspend fun missing(): String
+    }
+
+    class TodoImpl : TodoService {
+        override suspend fun missing(): String = TODO("not implemented yet")
+    }
+
+    @NatsService("name-clash")
+    interface ClashServiceA {
+        suspend fun ping(): String
+    }
+
+    @NatsService("name-clash")
+    interface ClashServiceB {
+        suspend fun ping(): String
+    }
+
+    @NatsService("name-clash-mixed", prefixed = false)
+    interface UnprefixedClashService {
+        suspend fun ping(): String
+    }
+
+    @NatsService("name-clash-mixed")
+    interface PrefixedClashService {
+        suspend fun ping(): String
+    }
+
     internal class Fixture(
         val client: NatsClientImpl,
         val calc: CalcService,
@@ -285,6 +314,50 @@ class ServiceResponderTest {
     fun `registering the same service twice fails`() = withService {
         assertFailsWith<IllegalStateException> { client.registerService<CalcService>(CalcImpl()) }
         assertEquals(1, calc.count(), "first registration must stay active")
+    }
+
+    @Test
+    fun `different interfaces with the same service name cannot share a client`() = withService {
+        val first = client.registerService<ClashServiceA>(object : ClashServiceA {
+            override suspend fun ping() = "first"
+        })
+
+        val message = assertFailsWith<IllegalStateException> {
+            client.registerService<ClashServiceB>(object : ClashServiceB {
+                override suspend fun ping() = "second"
+            })
+        }.message.orEmpty()
+
+        assertContains(message, "is already registered on NatsClient[")
+        assertContains(message, ClashServiceA::class.java.name)
+        assertContains(message, ClashServiceB::class.java.name)
+        assertFalse(first.isClosed)
+        assertEquals("first", client.service<ClashServiceA>().ping(), "first registration must stay active")
+    }
+
+    @Test
+    fun `same service name is allowed when only one interface is prefixed`() = withService {
+        client.registerService<UnprefixedClashService>(object : UnprefixedClashService {
+            override suspend fun ping() = "unprefixed"
+        })
+        client.registerService<PrefixedClashService>(object : PrefixedClashService {
+            override suspend fun ping() = "prefixed"
+        })
+
+        assertEquals("unprefixed", client.service<UnprefixedClashService>().ping())
+        assertEquals("prefixed", client.service<PrefixedClashService>().ping())
+    }
+
+    @Test
+    fun `implementation throwing an Error answers with the error instead of timing out`() = withService {
+        client.registerService<TodoService>(TodoImpl())
+        val todo = client.service<TodoService>()
+
+        val start = TimeSource.Monotonic.markNow()
+        val exception = assertFailsWith<NatsRemoteException> { todo.missing() }
+
+        assertEquals("kotlin.NotImplementedError", exception.remoteType)
+        assertTrue(start.elapsedNow() < 3.seconds, "took ${start.elapsedNow()}")
     }
 
     @Test

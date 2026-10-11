@@ -3,6 +3,7 @@ package dev.slne.surf.nats.rpc.payload
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.codec.NatsHeaders
+import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.Connection
 import io.nats.client.JetStreamApiException
@@ -24,7 +25,6 @@ import kotlin.time.toJavaDuration
 @InternalNatsApi
 internal object PayloadStore {
     private const val REF_RESERVE = 128
-    private val EMPTY = ByteArray(0)
     private val log = logger()
 
     private class Bucket(val connection: Connection, val store: ObjectStore)
@@ -34,21 +34,24 @@ internal object PayloadStore {
 
     /**
      * Offloads [body] if larger than the supported max payload and returns the body to send.
+     *
+     * [extraHeaderBytes] accounts for headers that are added after this call, such as the JetStream publish options.
      */
     suspend fun offload(
         headers: Headers,
         body: ByteArray,
         lifetime: Duration,
-        bucket: PayloadBucket
+        bucket: PayloadBucket,
+        extraHeaderBytes: Int = 0,
     ): ByteArray {
         val connection = NatsConnectionManager.connection()
-        if (body.size + headers.serializedLength() + REF_RESERVE <= connection.maxPayload) {
+        if (body.size + headers.serializedLength() + extraHeaderBytes + REF_RESERVE <= connection.maxPayload) {
             return body
         }
 
         require(lifetime <= bucket.ttl) {
             "Payload of ${body.size} bytes must be offloaded, but its lifetime $lifetime exceeds " +
-                    "the TTL of ${bucket.ttl} (${bucket.ttl})"
+                    "the TTL of ${bucket.ttl} (bucket ${bucket.bucketName})"
         }
 
         val name = UUID.randomUUID().toString()
@@ -59,7 +62,7 @@ internal object PayloadStore {
         }
         headers.add(NatsHeaders.PAYLOAD_REF, name)
 
-        return EMPTY
+        return NatsHeaders.EMPTY_BODY
     }
 
     /**
@@ -95,9 +98,7 @@ internal object PayloadStore {
 
     fun isOffloaded(message: Message): Boolean = payloadRef(message) != null
 
-    private fun payloadRef(message: Message): String? {
-        return if (message.hasHeaders()) message.headers.getFirst(NatsHeaders.PAYLOAD_REF) else null
-    }
+    private fun payloadRef(message: Message): String? = message.header(NatsHeaders.PAYLOAD_REF)
 
     private fun deleteQuietly(store: ObjectStore, name: String) {
         try {

@@ -12,3 +12,7 @@ internal fun Method.isSuspend(): Boolean {
     val lastParam = params.last()
     return Continuation::class.java.isAssignableFrom(lastParam)
 }
+
+internal fun Throwable.rethrowIfFatal() {
+    if (this is VirtualMachineError && this !is StackOverflowError) throw this
+}

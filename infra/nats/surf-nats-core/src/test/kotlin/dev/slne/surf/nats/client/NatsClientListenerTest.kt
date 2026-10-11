@@ -55,6 +55,12 @@ class NatsClientListenerTest {
     @NatsEvent("shared")
     data class SharedSubjectB(val id: Long)
 
+    @NatsEvent("queue-shared")
+    data class QueueSharedA(val id: Long)
+
+    @NatsEvent("queue-shared")
+    data class QueueSharedB(val id: Long)
+
     data class NotAnEvent(val id: Long)
 
     @NatsEvent("listener-test.origin", prefixed = false)
@@ -147,6 +153,26 @@ class NatsClientListenerTest {
 
         @NatsListener
         fun notAnEvent(event: NotAnEvent) = Unit
+    }
+
+    @Suppress("unused", "UNUSED_PARAMETER")
+    class ReturnsValueSuspendListener {
+        @NatsListener
+        suspend fun returnsValueSuspend(event: Created): Int = 1
+    }
+
+    class QueueSharedAListener {
+        val recorder = Recorder<QueueSharedA>()
+
+        @NatsListener
+        fun on(event: QueueSharedA) {
+            recorder.received.trySend(event)
+        }
+    }
+
+    class QueueSharedBBalancedListener {
+        @NatsListener(loadBalanced = true)
+        fun on(event: QueueSharedB) = Unit
     }
 
     class NoListenerMethods {
@@ -326,6 +352,33 @@ class NatsClientListenerTest {
         assertContains(message, "returnsValue")
         assertContains(message, "notAnEvent")
     }
+
+    @Test
+    fun `suspend listener with a return value other than Unit is rejected`() =
+        withClient("listen-suspend-value") { client ->
+            val exception = assertFailsWith<IllegalArgumentException> {
+                client.registerListener(ReturnsValueSuspendListener())
+            }
+            val message = exception.message.orEmpty()
+
+            assertContains(message, "returnsValueSuspend")
+            assertContains(message, "must return Unit")
+        }
+
+    @Test
+    fun `same subject in a different queue group is rejected and keeps the first listener`() =
+        withClient("listen-queue-conflict") { client ->
+            val first = QueueSharedAListener()
+            client.registerListener(first)
+
+            val exception = assertFailsWith<IllegalStateException> {
+                client.registerListener(QueueSharedBBalancedListener())
+            }
+            assertContains(exception.message.orEmpty(), "is already used by")
+
+            client.publish(QueueSharedA(11))
+            assertEquals(QueueSharedA(11), first.recorder.receiveWithin())
+        }
 
     @Test
     fun `object without listener methods is rejected`() = withClient("listen-none") { client ->

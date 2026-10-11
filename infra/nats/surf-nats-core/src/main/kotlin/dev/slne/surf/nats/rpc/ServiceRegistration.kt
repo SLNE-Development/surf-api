@@ -6,14 +6,18 @@ import dev.slne.surf.nats.bytecode.ServiceInvokerFactory
 import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
+import dev.slne.surf.nats.codec.deadlineMillis
+import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.rpc.payload.PayloadBucket
 import dev.slne.surf.nats.rpc.payload.PayloadStore
+import dev.slne.surf.nats.util.rethrowIfFatal
 import io.nats.client.Dispatcher
 import io.nats.client.Message
 import io.nats.client.MessageConsumer
 import io.nats.client.MessageHandler
+import io.nats.client.PublishOptions
 import io.nats.client.impl.Headers
 import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
@@ -43,6 +47,11 @@ internal class ServiceRegistration(
     private val persistentBySubject = descriptor.methods
         .filter { it.persistent }
         .associateBy { it.subject }
+
+    private val coroutineNames = descriptor.methods.map { method ->
+        val kind = if (method.persistent) "persist" else "rpc"
+        CoroutineName("surf-nats/${client.name}/$kind/${method.subject}")
+    }
 
     private val scope = client.clientScope + SupervisorJob(client.clientScope.coroutineContext.job)
 
@@ -91,22 +100,19 @@ internal class ServiceRegistration(
         invoker: ServiceInvoker,
         message: Message,
     ) {
-        val headers = if (message.hasHeaders()) message.headers else null
-        val contentType = headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+        val contentType = message.header(NatsHeaders.CONTENT_TYPE)
         val format = contentType?.let(WireFormat::fromContentType) ?: WireFormat.CBOR
+        val deadline = message.deadlineMillis()
 
-        val timeout = headers?.getFirst(NatsHeaders.DEADLINE)?.toLongOrNull()
-            ?.let { (it - System.currentTimeMillis()).milliseconds }
-            ?: methodDescriptor.timeout
-
-        if (!timeout.isPositive()) {
-            client.logger.debug("Dropping expired request on ${message.subject}")
-            return
-        }
+        val left = remaining(deadline, methodDescriptor.timeout)
+        if (!left.isPositive()) return dropExpired(message, left)
 
         val replyTo: String? = message.replyTo // null means fan-out without a response
 
-        scope.launch(CoroutineName("surf-nats/${client.name}/rpc/${methodDescriptor.subject}")) {
+        scope.launch(coroutineNames[methodDescriptor.index]) {
+            val timeout = remaining(deadline, methodDescriptor.timeout)
+            if (!timeout.isPositive()) return@launch dropExpired(message, timeout)
+
             val reply = try {
                 val completed = withTimeoutOrNull(timeout) {
                     val data = PayloadStore.resolve(
@@ -116,12 +122,18 @@ internal class ServiceRegistration(
                     )
                     val args = client.codec.decode(methodDescriptor.arguments, data, contentType)
                     Completed(invoker.call(args))
-                } ?: return@launch // own timeout; do nothing requester has already given up
+                }
+                if (completed == null) {
+                    // The requester has already given up
+                    client.logger.warn("Service method ${methodDescriptor.subject} did not complete within $timeout and was cancelled")
+                    return@launch
+                }
                 encodeResult(methodDescriptor, completed.value, format)
             } catch (e: CancellationException) {
                 ensureActive()
                 errorReply(methodDescriptor, e, format)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                e.rethrowIfFatal()
                 errorReply(methodDescriptor, e, format)
             }
 
@@ -141,22 +153,25 @@ internal class ServiceRegistration(
             return
         }
         val meta = message.metaData()
-        val headers = if (message.hasHeaders()) message.headers else null
         val context = NatsPersistentMessageContext(
-            messageId = headers?.getFirst(NatsJetStreamConstants.MSG_ID_HDR)
+            messageId = message.header(NatsJetStreamConstants.MSG_ID_HDR)
                 ?: meta.streamSequence().toString(),
             deliveryCount = meta.deliveredCount(),
         )
 
         // Ignore already timed out messages
-        val deadline = headers?.getFirst(NatsHeaders.DEADLINE)?.toLongOrNull()
+        val deadline = message.deadlineMillis()
         if (deadline != null && deadline <= System.currentTimeMillis()) return message.term()
 
-        scope.launch(context + CoroutineName("surf-nats/${client.name}/persist/${method.subject}")) {
-            val keepAlive = launch {
+        scope.launch(context + coroutineNames[method.index]) {
+            val keepAlive = launch(Dispatchers.IO) {
                 while (isActive) {
                     delay(RpcDefaults.ACK_WAIT / 2)
-                    message.inProgress()
+                    try {
+                        message.inProgress()
+                    } catch (e: Exception) {
+                        client.logger.debug("Failed to extend the ack wait of ${message.subject}", e)
+                    }
                 }
             }
             try {
@@ -177,18 +192,18 @@ internal class ServiceRegistration(
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
             return failFire(message, e, permanent = false)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfFatal()
             return failFire(message, e, permanent = isObjectNotFound(e))
         }
 
         val arguments = try {
-            val contentType =
-                if (message.hasHeaders()) message.headers.getFirst(NatsHeaders.CONTENT_TYPE) else null
-            client.codec.decode(method.arguments, data, contentType)
+            client.codec.decode(method.arguments, data, message.header(NatsHeaders.CONTENT_TYPE))
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
             return failFire(message, e, permanent = false)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfFatal()
             return failFire(message, e, permanent = true)
         }
 
@@ -197,7 +212,8 @@ internal class ServiceRegistration(
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
             return failFire(message, e, permanent = false)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfFatal()
             return failFire(message, e, permanent = false)
         }
 
@@ -224,7 +240,7 @@ internal class ServiceRegistration(
         }
     }
 
-    private fun isObjectNotFound(e: Exception): Boolean {
+    private fun isObjectNotFound(e: Throwable): Boolean {
         return e is IllegalArgumentException &&
                 e.message?.startsWith("[${NatsJetStreamClientError.OsObjectNotFound.id()}]") == true
     }
@@ -252,10 +268,14 @@ internal class ServiceRegistration(
 
         headers.remove(headers.keySet().filter { it.startsWith("Nats-", ignoreCase = true) })
 
+        val options = PublishOptions.builder()
+            .messageId("${streams.dlqStream}-${message.metaData().streamSequence()}")
+            .build()
+
         return try {
             NatsConnectionManager.connection()
                 .jetStream()
-                .publishAsync(streams.dlqSubject, headers, message.data)
+                .publishAsync(streams.dlqSubject, headers, message.data, options)
                 .await()
             true
         } catch (dlq: CancellationException) {
@@ -273,12 +293,10 @@ internal class ServiceRegistration(
         message: Message,
         deadline: Long?,
     ) {
-        val headers = if (message.hasHeaders()) message.headers else null
-        val replyTo = message.headers?.getFirst(NatsHeaders.REPLY_TO)
-        val contentType = headers?.getFirst(NatsHeaders.CONTENT_TYPE)
+        val replyTo = message.header(NatsHeaders.REPLY_TO)
+        val contentType = message.header(NatsHeaders.CONTENT_TYPE)
         val format = contentType?.let(WireFormat::fromContentType) ?: WireFormat.CBOR
-        val timeout =
-            deadline?.let { (it - System.currentTimeMillis()).milliseconds } ?: method.timeout
+        val timeout = remaining(deadline, method.timeout)
 
         val reply = try {
             val completed = withTimeoutOrNull(timeout) {
@@ -301,7 +319,8 @@ internal class ServiceRegistration(
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
             errorReply(method, e, format)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.rethrowIfFatal()
             errorReply(method, e, format)
         }
 
@@ -339,6 +358,22 @@ internal class ServiceRegistration(
         client.unregisterRegistration(this)
     }
 
+    fun discard() {
+        active.set(false)
+        scope.cancel("Service registration ${descriptor.type.name} discarded")
+    }
+
+    private fun remaining(deadline: Long?, fallback: Duration): Duration {
+        return deadline?.let { (it - System.currentTimeMillis()).milliseconds } ?: fallback
+    }
+
+    private fun dropExpired(message: Message, remaining: Duration) {
+        client.logger.warn(
+            "Dropping request on ${message.subject} that expired ${-remaining.inWholeMilliseconds} ms ago " +
+                    "(check the clock synchronization of the hosts if this happens regularly)"
+        )
+    }
+
     private class Completed(@JvmField val value: Any?)
     private class Reply(@JvmField val headers: Headers, @JvmField val body: ByteArray)
 
@@ -349,7 +384,7 @@ internal class ServiceRegistration(
     ): Reply {
         val headers = NatsHeaders.base(client.name, format)
         return when (val result = method.result) {
-            ResultKind.Unit -> Reply(headers, EMPTY)
+            ResultKind.Unit -> Reply(headers, NatsHeaders.EMPTY_BODY)
             is ResultKind.Value -> Reply(
                 headers,
                 client.codec.encode(result.serializer, value, format)
@@ -363,7 +398,7 @@ internal class ServiceRegistration(
 
                 Answer.None -> Reply(
                     headers.add(NatsHeaders.ANSWER, NatsHeaders.ANSWER_NONE),
-                    EMPTY
+                    NatsHeaders.EMPTY_BODY
                 )
             }
         }
@@ -406,9 +441,5 @@ internal class ServiceRegistration(
             val fallback = errorReply(method, e, format)
             connection.publish(replyTo, fallback.headers, fallback.body)
         }
-    }
-
-    companion object {
-        private val EMPTY = ByteArray(0)
     }
 }
