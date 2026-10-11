@@ -5,6 +5,7 @@ import dev.slne.surf.nats.event.NatsEvent
 import dev.slne.surf.nats.event.NatsEventContext
 import dev.slne.surf.nats.NatsInstance
 import dev.slne.surf.nats.event.NatsListener
+import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.event.natsEventContext
 import dev.slne.surf.nats.event.natsEventContextOrNull
@@ -33,7 +34,8 @@ class NatsClientListenerTest {
     @NatsEvent("created")
     data class Created(val id: Long)
 
-    @NatsEvent("json", format = WireFormat.JSON)
+    @NatsEvent("json")
+    @NatsFormat(WireFormat.JSON)
     data class JsonEvent(val playerName: String)
 
     @NatsEvent("panel.listener-test.created", prefixed = false)

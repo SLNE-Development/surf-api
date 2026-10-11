@@ -17,4 +17,12 @@ internal object Subjects {
         require(SUBJECT.matches(subject)) { "Invalid NATS subject '$subject' for $source" }
         return subject
     }
+
+    internal fun requireValidEventSubject(subject: String, source: Any): String {
+        requireValidSubject(subject, source)
+        require(subject.split('.').none { it.startsWith('$') }) {
+            "Invalid event subject '$subject' for $source: tokens starting with '$' are reserved"
+        }
+        return subject
+    }
 }

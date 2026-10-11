@@ -93,6 +93,8 @@ internal object PayloadStore {
         }
     }
 
+    fun isOffloaded(message: Message): Boolean = payloadRef(message) != null
+
     private fun payloadRef(message: Message): String? {
         return if (message.hasHeaders()) message.headers.getFirst(NatsHeaders.PAYLOAD_REF) else null
     }

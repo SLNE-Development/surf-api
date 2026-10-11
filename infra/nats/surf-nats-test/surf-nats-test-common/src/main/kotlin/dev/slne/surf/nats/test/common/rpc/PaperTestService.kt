@@ -1,10 +1,12 @@
 package dev.slne.surf.nats.test.common.rpc
 
 import dev.slne.surf.nats.rpc.Answer
+import dev.slne.surf.nats.rpc.NatsResponders
 import dev.slne.surf.nats.rpc.NatsService
 import dev.slne.surf.nats.rpc.ResponderMode
 
-@NatsService("paper", responders = ResponderMode.ALL)
+@NatsService("paper")
+@NatsResponders(ResponderMode.ALL)
 interface PaperTestService {
 
     /**

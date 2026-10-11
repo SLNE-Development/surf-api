@@ -147,7 +147,7 @@ class ServiceResponderTest {
         assertEquals(1, calc.count())
         registration.close()
 
-        assertFalse(registration.isActive)
+        assertTrue(registration.isClosed)
         assertFailsWith<NatsNoRespondersException> { calc.count() }
     }
 
@@ -166,9 +166,19 @@ class ServiceResponderTest {
         }
 
         assertEquals(300.milliseconds, exception.timeout)
-        assertTrue(start.elapsedNow() < 5.seconds, "took ${start.elapsedNow()}")
+        assertTrue(start.elapsedNow() < 1.seconds, "took ${start.elapsedNow()}")
         assertTrue(impl.slowStarted.isCompleted)
         withTimeout(5.seconds) { impl.slowCancelled.await() }
+    }
+
+    @Test
+    fun `outer caller timeout is not translated into NatsRequestTimeoutException`() = withService {
+        val start = TimeSource.Monotonic.markNow()
+        val result = withTimeoutOrNull(300.milliseconds) { calc.slow() }
+
+        assertNull(result)
+        assertTrue(start.elapsedNow() < 5.seconds, "took ${start.elapsedNow()}")
+        assertTrue(impl.slowStarted.isCompleted)
     }
 
     @Test

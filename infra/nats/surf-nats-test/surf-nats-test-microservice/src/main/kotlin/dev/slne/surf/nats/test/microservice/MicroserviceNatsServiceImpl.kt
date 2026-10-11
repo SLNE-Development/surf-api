@@ -10,7 +10,7 @@ import dev.slne.surf.nats.test.microservice.rpc.MicroserviceTestServiceImpl
 @AutoService(NatsService::class)
 class MicroserviceNatsServiceImpl : NatsService() {
 
-    override fun start() {
+    override suspend fun start() {
         super.start()
 
         client.registerListener(ChatListener)

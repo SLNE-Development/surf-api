@@ -1,6 +1,7 @@
 package dev.slne.surf.nats.event
 
 import dev.slne.surf.nats.InternalNatsApi
+import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.subject.Subjects
@@ -27,12 +28,12 @@ internal class EventDescriptor(
             }
             val subject = if (annotation.prefixed) "$clientName.$localSubject" else localSubject
 
-            val format = annotation.format
+            val format = type.getAnnotation(NatsFormat::class.java)?.format ?: WireFormat.CBOR
             val serializer = codec.serializersModule(format).serializer(type)
 
             return EventDescriptor(
                 type,
-                Subjects.requireValidSubject(subject, type.name),
+                Subjects.requireValidEventSubject(subject, type.name),
                 format,
                 serializer
             )

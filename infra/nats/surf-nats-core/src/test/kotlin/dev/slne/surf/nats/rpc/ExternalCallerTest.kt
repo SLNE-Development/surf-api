@@ -108,6 +108,34 @@ class ExternalCallerTest {
         override suspend fun put(id: Long) = Unit
     }
 
+    @NatsService("inner")
+    interface CoexInnerService {
+        @NatsPersistent
+        suspend fun put(id: Long)
+    }
+
+    @NatsService("coex", prefixed = false)
+    interface CoexOuterService {
+        @NatsPersistent
+        suspend fun put(id: Long)
+    }
+
+    class CoexInnerImpl : CoexInnerService {
+        val stored = ConcurrentLinkedQueue<Long>()
+
+        override suspend fun put(id: Long) {
+            stored += id
+        }
+    }
+
+    class CoexOuterImpl : CoexOuterService {
+        val stored = ConcurrentLinkedQueue<Long>()
+
+        override suspend fun put(id: Long) {
+            stored += id
+        }
+    }
+
     private val clients = mutableListOf<NatsClientImpl>()
     private val streamsToPurge = mutableListOf<PersistentStreams>()
     private var clientCounter = 0
@@ -187,6 +215,36 @@ class ExternalCallerTest {
     }
 
     @Test
+    fun `fire with a missing payload object is dead-lettered after one delivery`() = test {
+        RpcDefaults.NAK_BACKOFF = listOf(1.minutes) // a redelivery would not happen within the test
+        val client = client()
+        val impl = RolesImpl()
+        client.registerService<RolesService>(impl)
+        val descriptor = client.serviceDescriptor(RolesService::class.java)
+        val streams = track(descriptor)
+        fun delivered() =
+            jsm().getConsumerInfo(streams.stream, descriptor.responderGroup).delivered.consumerSequence
+        val before = delivered()
+
+        publishExternal(
+            WHITELIST,
+            "",
+            extraHeaders = mapOf(NatsHeaders.PAYLOAD_REF to UUID.randomUUID().toString()),
+        )
+
+        eventually("a missing payload object must be dead-lettered without waiting for a redelivery") {
+            messageCount(streams.dlqStream) == 1L
+        }
+        eventually("work queue must be empty after term") { messageCount(streams.stream) == 0L }
+        assertEquals(1L, delivered() - before, "a permanent failure must not be redelivered")
+        assertNull(impl.whitelisted.tryReceive().getOrNull(), "the implementation must not be called")
+
+        val deadHeaders = assertNotNull(jsm().getLastMessage(streams.dlqStream, streams.dlqSubject).headers)
+        assertNotNull(deadHeaders.getFirst(NatsHeaders.ERROR))
+        assertEquals(WHITELIST, deadHeaders.getFirst(NatsHeaders.DEAD_SUBJECT))
+    }
+
+    @Test
     fun `external publish before the first registration fails and works afterwards`() = test {
         val subject = "ext-late.\$persist.store"
         assertFails { publishExternal(subject, """{"id":1}""") }
@@ -227,6 +285,35 @@ class ExternalCallerTest {
         assertEquals(ids, (first.handled + second.handled).sorted(), "each core call must run exactly once")
     }
 
+    @Test
+    fun `prefixed and unprefixed persistent services of the same name coexist`() = test {
+        val client = client("coex")
+        val inner = CoexInnerImpl()
+        val outer = CoexOuterImpl()
+        val innerStreams = track(client.serviceDescriptor(CoexInnerService::class.java))
+        val outerStreams = track(client.serviceDescriptor(CoexOuterService::class.java))
+        assertEquals("coex.\$persist.inner.*", innerStreams.filter)
+        assertEquals("coex.\$persist.*", outerStreams.filter)
+
+        client.registerService<CoexInnerService>(inner)
+        client.registerService<CoexOuterService>(outer)
+
+        assertEquals(listOf(innerStreams.filter), jsm().getStreamInfo(innerStreams.stream).configuration.subjects)
+        assertEquals(listOf(outerStreams.filter), jsm().getStreamInfo(outerStreams.stream).configuration.subjects)
+
+        client.service<CoexInnerService>().put(1)
+        client.service<CoexOuterService>().put(2)
+
+        eventually("both calls must be processed") { inner.stored.size == 1 && outer.stored.size == 1 }
+        eventually("both work queues must be drained") {
+            messageCount(innerStreams.stream) == 0L && messageCount(outerStreams.stream) == 0L
+        }
+        assertEquals(listOf(1L), inner.stored.toList())
+        assertEquals(listOf(2L), outer.stored.toList())
+        assertEquals(0L, messageCount(innerStreams.dlqStream))
+        assertEquals(0L, messageCount(outerStreams.dlqStream))
+    }
+
     // ---- core requests from external callers ----
 
     @Test
@@ -237,7 +324,7 @@ class ExternalCallerTest {
 
         val reply = assertNotNull(
             NatsConnectionManager.connection()
-                .request("ext-roles.echo", """{"id":5}""".encodeToByteArray(), java.time.Duration.ofSeconds(5)),
+                .request("ext-roles.\$rpc.echo", """{"id":5}""".encodeToByteArray(), java.time.Duration.ofSeconds(5)),
             "no reply"
         )
 
@@ -254,7 +341,7 @@ class ExternalCallerTest {
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.JSON.contentType)
         val reply = assertNotNull(
             NatsConnectionManager.connection().request(
-                "ext-roles.echo",
+                "ext-roles.\$rpc.echo",
                 headers,
                 """{"id":5}""".encodeToByteArray(),
                 java.time.Duration.ofSeconds(5)
@@ -277,7 +364,7 @@ class ExternalCallerTest {
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.JSON.contentType)
         val reply = assertNotNull(
             NatsConnectionManager.connection().request(
-                "ext-roles.owner",
+                "ext-roles.\$rpc.owner",
                 headers,
                 """{"id":"$uuid"}""".encodeToByteArray(),
                 java.time.Duration.ofSeconds(5)
@@ -352,9 +439,11 @@ class ExternalCallerTest {
         subject: String,
         body: String,
         contentType: String? = WireFormat.JSON.contentType,
+        extraHeaders: Map<String, String> = emptyMap(),
     ) {
         val headers = Headers().add(NatsJetStreamConstants.MSG_ID_HDR, UUID.randomUUID().toString())
         if (contentType != null) headers.add(NatsHeaders.CONTENT_TYPE, contentType)
+        extraHeaders.forEach { (name, value) -> headers.add(name, value) }
         NatsConnectionManager.connection().jetStream().publish(subject, headers, body.encodeToByteArray())
     }
 

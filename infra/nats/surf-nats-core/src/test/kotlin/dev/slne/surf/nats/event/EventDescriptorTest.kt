@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.event
 
+import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsCodec
 import kotlinx.serialization.Contextual
@@ -14,7 +15,8 @@ class EventDescriptorTest {
     @NatsEvent
     data class PlayerHealthChanged(val player: @Contextual UUID, val health: Double)
 
-    @NatsEvent("created", format = WireFormat.JSON)
+    @NatsEvent("created")
+    @NatsFormat(WireFormat.JSON)
     data class PunishmentCreated(val id: Long)
 
     @NatsEvent("panel.punishment.created", prefixed = false)
@@ -22,6 +24,15 @@ class EventDescriptorTest {
 
     @NatsEvent("invalid subject")
     data class InvalidSubjectEvent(val id: Long)
+
+    @NatsEvent("\$rpc.created")
+    data class DollarPrefixedEvent(val id: Long)
+
+    @NatsEvent("panel.\$persist", prefixed = false)
+    data class DollarUnprefixedEvent(val id: Long)
+
+    @NatsEvent("a.b.c")
+    data class MultiTokenEvent(val id: Long)
 
     data class NotAnEvent(val id: Long)
 
@@ -53,6 +64,17 @@ class EventDescriptorTest {
     @Test
     fun `invalid explicit subject is rejected`() {
         assertFailsWith<IllegalArgumentException> { describe(InvalidSubjectEvent::class.java) }
+    }
+
+    @Test
+    fun `subject token starting with a dollar sign is rejected`() {
+        assertFailsWith<IllegalArgumentException> { describe(DollarPrefixedEvent::class.java) }
+        assertFailsWith<IllegalArgumentException> { describe(DollarUnprefixedEvent::class.java) }
+    }
+
+    @Test
+    fun `multi-token subject is accepted`() {
+        assertEquals("punishment.a.b.c", describe(MultiTokenEvent::class.java).subject)
     }
 
     @Test

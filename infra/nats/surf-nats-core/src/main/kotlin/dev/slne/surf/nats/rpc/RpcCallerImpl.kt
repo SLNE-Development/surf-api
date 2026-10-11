@@ -38,14 +38,19 @@ internal class RpcCallerImpl(
         val method = service.methods[index]
         val timeout = currentCoroutineContext()[NatsTimeoutElement]?.timeout ?: method.timeout
 
-        if (method.persistent) return callPersistent(method, args, timeout)
+        if (method.persistent) {
+            require(timeout <= RpcDefaults.DUPLICATE_WINDOW) {
+                "Timeout $timeout for persistent ${service.type.name}.${method.method.name} exceeds the JetStream duplicate window of ${RpcDefaults.DUPLICATE_WINDOW}"
+            }
+            return callPersistent(method, args, timeout)
+        }
 
-        val headers = NatsHeaders.base(client.name, WireFormat.CBOR)
+        val headers = NatsHeaders.base(client.name, method.format)
             .add(
                 NatsHeaders.DEADLINE,
                 (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()
             )
-        val encoded = client.codec.encode(method.arguments, args, WireFormat.CBOR)
+        val encoded = client.codec.encode(method.arguments, args, method.format)
         val body = PayloadStore.offload(headers, encoded, timeout, PayloadBucket.TRANSIENT)
 
         return when (method.responders) {
@@ -61,11 +66,16 @@ internal class RpcCallerImpl(
         timeout: Duration
     ): Any? {
         val reply = try {
-            NatsConnectionManager.connection()
-                .requestWithTimeout(method.subject, headers, body, timeout.toJavaDuration())
-                .await()
+            withTimeout(timeout) {
+                NatsConnectionManager.connection()
+                    .requestWithTimeout(method.subject, headers, body, timeout.toJavaDuration())
+                    .await()
+            }
         } catch (_: JetStreamStatusException) {
             throw NatsNoRespondersException(method.subject)
+        } catch (_: TimeoutCancellationException) {
+            currentCoroutineContext().ensureActive()
+            throw NatsRequestTimeoutException(method.subject, timeout)
         } catch (_: CancellationException) {
             currentCoroutineContext().ensureActive()
             throw NatsRequestTimeoutException(method.subject, timeout)
@@ -196,8 +206,8 @@ internal class RpcCallerImpl(
         args: Array<Any?>,
         timeout: Duration,
     ): Any? {
-        val headers = NatsHeaders.base(client.name, WireFormat.CBOR)
-        val encoded = client.codec.encode(method.arguments, args, WireFormat.CBOR)
+        val headers = NatsHeaders.base(client.name, method.format)
+        val encoded = client.codec.encode(method.arguments, args, method.format)
 
         if (method.result == ResultKind.Unit) {
             val body = PayloadStore.offload(
@@ -206,7 +216,14 @@ internal class RpcCallerImpl(
                 RpcDefaults.PERSIST_MAX_AGE,
                 PayloadBucket.PERSISTENT,
             )
-            publishPersistent(method, headers, body, timeout, ttl = null)
+            try {
+                withTimeout(timeout) {
+                    publishPersistent(method, headers, body, ttl = null)
+                }
+            } catch (_: TimeoutCancellationException) {
+                currentCoroutineContext().ensureActive()
+                throw NatsRequestTimeoutException(method.subject, timeout)
+            }
             return Unit
         }
 
@@ -223,10 +240,11 @@ internal class RpcCallerImpl(
         val subscription = dispatcher.subscribe(inbox) { reply.complete(it) }
 
         try {
-            return withTimeoutOrNull(timeout) {
-                publishPersistent(method, headers, body, timeout, ttl = timeout)
-                decodeReply(method, reply.await())
+            val completed = withTimeoutOrNull(timeout) {
+                publishPersistent(method, headers, body, ttl = timeout)
+                Completed(decodeReply(method, reply.await()))
             } ?: throw NatsRequestTimeoutException(method.subject, timeout)
+            return completed.value
         } finally {
             runCatching { dispatcher.unsubscribe(subscription) }
         }
@@ -236,7 +254,6 @@ internal class RpcCallerImpl(
         method: MethodDescriptor,
         headers: Headers,
         body: ByteArray,
-        timeout: Duration,
         ttl: Duration?,
     ) {
         val streams = checkNotNull(service.streams)
@@ -252,17 +269,24 @@ internal class RpcCallerImpl(
             }
             .build()
 
-        val connection = NatsConnectionManager.connection()
-        try {
-            withTimeout(timeout) {
-                connection.jetStream()
+        while (true) {
+            try {
+                NatsConnectionManager.connection()
+                    .jetStream()
                     .publishAsync(method.subject, headers, body, options)
                     .await()
+                return
+            } catch (e: CancellationException) {
+                currentCoroutineContext().ensureActive()
+                client.logger.debug(
+                    "No PubAck for ${method.subject}, publishing again with the same Nats-Msg-Id",
+                    e
+                )
             }
-        } catch (_: TimeoutCancellationException) {
-            throw NatsRequestTimeoutException(method.subject, timeout)
         }
     }
+
+    private class Completed(@JvmField val value: Any?)
 
     private class AllCall {
         var failure: NatsRemoteException? = null

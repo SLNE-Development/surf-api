@@ -1,6 +1,8 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
+import dev.slne.surf.nats.NatsFormat
+import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.WireSerializers
@@ -28,6 +30,7 @@ internal class ServiceDescriptor(
     val responderGroup: String, // queue group of ONE methods and durable consumer of persistent methods
 ) {
     companion object {
+        private const val RPC = $$"$rpc"
         private const val PERSIST = $$"$persist"
         private const val PRESENCE = $$"$presence"
         private const val DLQ = $$"$dlq"
@@ -40,6 +43,9 @@ internal class ServiceDescriptor(
                 "${type.name} must be annotated with @NatsService"
             }
             val servicePersistent = type.getAnnotation(NatsPersistent::class.java)?.enabled ?: false
+            val serviceResponders =
+                type.getAnnotation(NatsResponders::class.java)?.mode ?: ResponderMode.ONE
+            val serviceFormat = type.getAnnotation(NatsFormat::class.java)?.format
             val serviceTimeoutSeconds = type.getAnnotation(NatsTimeout::class.java)?.seconds
             val serviceTimeout = serviceTimeoutSeconds?.takeIf { it > 0 }?.seconds
 
@@ -58,7 +64,6 @@ internal class ServiceDescriptor(
             }
 
             val prefixed = annotation.prefixed
-            val coreBase = if (prefixed) "${client.name}.$serviceName" else serviceName
             fun internalSubject(kind: String): String {
                 return if (prefixed) "${client.name}.$kind.$serviceName" else "$serviceName.$kind"
             }
@@ -88,7 +93,7 @@ internal class ServiceDescriptor(
                 }
 
                 val responders =
-                    method.getAnnotation(NatsResponders::class.java)?.mode ?: annotation.responders
+                    method.getAnnotation(NatsResponders::class.java)?.mode ?: serviceResponders
                 val persistent =
                     method.getAnnotation(NatsPersistent::class.java)?.enabled ?: servicePersistent
                 if (persistent && responders == ResponderMode.ALL) {
@@ -112,6 +117,13 @@ internal class ServiceDescriptor(
                 val timeout = timeoutSeconds?.takeIf { it > 0 }?.seconds
                     ?: serviceTimeout
                     ?: if (persistent) RpcDefaults.JETSTREAM_TIMEOUT else RpcDefaults.CORE_TIMEOUT
+                if (persistent && timeout > RpcDefaults.DUPLICATE_WINDOW) {
+                    methodProblems.add("$name: timeout $timeout of a persistent method exceeds the JetStream duplicate window of ${RpcDefaults.DUPLICATE_WINDOW}")
+                }
+
+                val format = method.getAnnotation(NatsFormat::class.java)?.format
+                    ?: serviceFormat
+                    ?: WireFormat.CBOR
 
                 val parameters = function.parameters.filter { it.kind == KParameter.Kind.VALUE }
                 val argumentNames = parameters.map { param ->
@@ -154,11 +166,7 @@ internal class ServiceDescriptor(
                 }
 
                 val subject = try {
-                    val raw = if (persistent) {
-                        "${internalSubject(PERSIST)}.$methodToken"
-                    } else {
-                        "$coreBase.$methodToken"
-                    }
+                    val raw = "${internalSubject(if (persistent) PERSIST else RPC)}.$methodToken"
 
                     Subjects.requireValidSubject(raw, "${type.name}.$name")
                 } catch (e: IllegalArgumentException) {
@@ -188,6 +196,7 @@ internal class ServiceDescriptor(
                     arguments,
                     result,
                     persistent,
+                    format,
                 )
             }
 
@@ -224,7 +233,7 @@ internal class ServiceDescriptor(
                         .replace("-", "_")
                 PersistentStreams(
                     stream = stream,
-                    filter = "${internalSubject(PERSIST)}.>",
+                    filter = "${internalSubject(PERSIST)}.*",
                     dlqStream = "${stream}_DLQ",
                     dlqSubject = internalSubject(DLQ),
                 )

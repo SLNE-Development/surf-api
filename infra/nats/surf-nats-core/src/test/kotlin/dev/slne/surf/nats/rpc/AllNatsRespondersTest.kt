@@ -23,7 +23,8 @@ import kotlin.time.TimeSource
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AllNatsRespondersTest {
 
-    @NatsService("finder", responders = ResponderMode.ALL)
+    @NatsService("finder")
+    @NatsResponders(ResponderMode.ALL)
     interface FinderService {
         suspend fun find(id: Long): Answer<String>
         suspend fun broadcast(message: String)

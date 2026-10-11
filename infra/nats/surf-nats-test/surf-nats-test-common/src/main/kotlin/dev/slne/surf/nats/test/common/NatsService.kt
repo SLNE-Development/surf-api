@@ -9,7 +9,7 @@ abstract class NatsService {
     val client = NatsClient.create("surf-nats-test")
 
     @MustBeInvokedByOverriders
-    open fun start() {
+    open suspend fun start() {
 
     }
 

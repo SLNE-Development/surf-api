@@ -15,7 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.toJavaDuration
 
@@ -47,7 +46,7 @@ internal object JetStreamProvisioner {
                         .storageType(StorageType.File)
                         .allowMessageTtl()
                         .maxAge(RpcDefaults.PERSIST_MAX_AGE.toJavaDuration())
-                        .duplicateWindow(Duration.ofMinutes(2))
+                        .duplicateWindow(RpcDefaults.DUPLICATE_WINDOW.toJavaDuration())
                         .build()
                 )
                 addOrUpdate(
@@ -89,7 +88,7 @@ internal object JetStreamProvisioner {
 
     private fun collisionMessage(stream: String, existing: List<String>, requested: List<String>): String {
         return "Stream $stream already exists for subjects $existing and cannot be used for $requested. " +
-                "Two services map to the same stream name. Rename one of them."
+                "Two services map to the same stream name. Rename one of them, or delete the stream if it was created with an older subject filter."
     }
 
     fun consumerConfig(durable: String): ConsumerConfiguration = ConsumerConfiguration.builder()

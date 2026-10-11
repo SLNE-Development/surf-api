@@ -3,6 +3,7 @@ package dev.slne.surf.nats.client
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.event.NatsEvent
 import dev.slne.surf.nats.NatsInstance
+import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
@@ -20,7 +21,8 @@ class NatsClientPublishTest {
     @NatsEvent("created")
     data class PunishmentCreated(val id: Long, val reason: String)
 
-    @NatsEvent("json-created", format = WireFormat.JSON)
+    @NatsEvent("json-created")
+    @NatsFormat(WireFormat.JSON)
     data class JsonPunishmentCreated(val punishmentId: Long)
 
     @NatsEvent("panel.punishment.created", prefixed = false)

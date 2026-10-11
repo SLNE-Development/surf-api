@@ -5,6 +5,7 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.rpc.Answer
+import dev.slne.surf.nats.rpc.NatsResponders
 import dev.slne.surf.nats.rpc.NatsService
 import dev.slne.surf.nats.rpc.ResponderMode
 import dev.slne.surf.nats.rpc.withNatsCallTimeout
@@ -47,7 +48,8 @@ class LargePayloadTest {
         override suspend fun echo(data: ByteArray): ByteArray = data
     }
 
-    @NatsService("blob-fanout", responders = ResponderMode.ALL)
+    @NatsService("blob-fanout")
+    @NatsResponders(ResponderMode.ALL)
     interface BlobFanout {
         suspend fun push(data: ByteArray)
         suspend fun find(size: Int): Answer<ByteArray>

@@ -4,7 +4,11 @@ import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.rpc.payload.PayloadBucket
+import io.nats.client.Message
+import io.nats.client.api.StreamConfiguration
+import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.runTest
@@ -13,6 +17,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.*
 import kotlin.time.Duration
@@ -34,6 +39,16 @@ class NatsPersistentServiceTest {
 
         @NatsPersistent(false)
         suspend fun ping(): String
+    }
+
+    @NatsService("finder")
+    @NatsPersistent
+    interface FinderService {
+        suspend fun find(id: Long): String?
+    }
+
+    class FinderImpl : FinderService {
+        override suspend fun find(id: Long): String? = if (id == 0L) null else "found-$id"
     }
 
     class Delivery(val id: Long, val context: NatsPersistentMessageContext?)
@@ -137,12 +152,12 @@ class NatsPersistentServiceTest {
             assertTrue(place.persistent)
             assertEquals("${client.name}.\$persist.orders.place", place.subject)
             assertFalse(ping.persistent)
-            assertEquals("${client.name}.orders.ping", ping.subject)
+            assertEquals("${client.name}.\$rpc.orders.ping", ping.subject)
 
             val streams = assertNotNull(descriptor.streams)
             val prefix = "SURF_${client.name}_ORDERS".uppercase().replace('-', '_')
             assertEquals(prefix, streams.stream)
-            assertEquals("${client.name}.\$persist.orders.>", streams.filter)
+            assertEquals("${client.name}.\$persist.orders.*", streams.filter)
             assertEquals("${prefix}_DLQ", streams.dlqStream)
             assertEquals("${client.name}.\$dlq.orders", streams.dlqSubject)
         }
@@ -360,6 +375,22 @@ class NatsPersistentServiceTest {
     }
 
     @Test
+    fun `persistent rpc with a nullable result returns null instead of timing out`() =
+        withClient { client ->
+            val streams = client.serviceDescriptor(FinderService::class.java).streams!!
+            try {
+                client.registerService<FinderService>(FinderImpl())
+                val finder = client.service<FinderService>()
+
+                assertNull(withNatsCallTimeout(10.seconds) { finder.find(0) })
+                assertEquals("found-5", withNatsCallTimeout(10.seconds) { finder.find(5) })
+            } finally {
+                client.close()
+                deleteStreams(streams.stream, streams.dlqStream)
+            }
+        }
+
+    @Test
     fun `persistent rpc waits for a responder that starts within the timeout`() =
         withClient { client ->
             val orders = client.service<OrderService>()
@@ -404,6 +435,58 @@ class NatsPersistentServiceTest {
         eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
         delay(500.milliseconds)
         assertEquals(1, impl.totalCalls.get())
+    }
+
+    @Test
+    fun `persistent call timeout above the duplicate window is rejected before publishing`() =
+        withClient { client ->
+            val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+            JetStreamProvisioner.ensureStreams(streams)
+            val orders = client.service<OrderService>()
+
+            assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(3.minutes) { orders.place(1) } }
+            assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(3.minutes) { orders.total(1) } }
+
+            assertEquals(0L, messageCount(streams.stream), "nothing must be published")
+        }
+
+    @Test
+    fun `call timeout above the duplicate window is allowed for core methods`() = withClient { client ->
+        client.registerService<OrderService>(OrderImpl())
+
+        assertEquals("pong", withNatsCallTimeout(3.minutes) { client.service<OrderService>().ping() })
+    }
+
+    @Test
+    fun `missing PubAck is retried with the same message id and stores one message`() = withClient { client ->
+        val descriptor = client.serviceDescriptor(OrderService::class.java)
+        val streams = descriptor.streams!!
+        JetStreamProvisioner.ensureStreams(streams)
+        // The stream still stores and dedupes by Nats-Msg-Id, but never acknowledges a publish
+        val config = jsm().getStreamInfo(streams.stream).configuration
+        jsm().updateStream(StreamConfiguration.builder(config).noAck(true).build())
+
+        val connection = NatsConnectionManager.connection()
+        val raw = ConcurrentLinkedQueue<Message>()
+        val dispatcher = connection.createDispatcher()
+        dispatcher.subscribe(descriptor.method("place").subject) { raw += it }
+        connection.flush(java.time.Duration.ofSeconds(5))
+
+        try {
+            val start = TimeSource.Monotonic.markNow()
+            assertFailsWith<NatsRequestTimeoutException> {
+                withNatsCallTimeout(12.seconds) { client.service<OrderService>().place(1) }
+            }
+            assertTrue(start.elapsedNow() >= 11500.milliseconds, "took ${start.elapsedNow()}")
+
+            eventually("the publish must have been repeated") { raw.size >= 2 }
+            val ids = raw.map { it.headers.getFirst(NatsJetStreamConstants.MSG_ID_HDR) }
+            assertNotNull(ids.first())
+            assertEquals(1, ids.toSet().size, "every attempt must carry the same Nats-Msg-Id: $ids")
+            assertEquals(1L, messageCount(streams.stream), "the stream must dedupe the repeated publishes")
+        } finally {
+            connection.closeDispatcher(dispatcher)
+        }
     }
 
     // ---- large payloads ----

@@ -3,6 +3,7 @@ package dev.slne.surf.nats.client
 import dev.slne.surf.nats.NatsClient
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
 class NatsClientTest {
@@ -54,7 +55,7 @@ class NatsClientTest {
     }
 
     @Test
-    fun `closed client rejects further use`() {
+    fun `closed client rejects further use`() = runTest {
         val client = NatsClient.create("closed-use")
         client.close()
 

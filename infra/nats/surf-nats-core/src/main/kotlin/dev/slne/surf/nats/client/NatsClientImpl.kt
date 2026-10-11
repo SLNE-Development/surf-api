@@ -22,6 +22,8 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 @InternalNatsApi
 internal class NatsClientImpl(
@@ -107,7 +109,7 @@ internal class NatsClientImpl(
         }
     }
 
-    override fun registerListener(listener: Any): NatsRegistration {
+    override suspend fun registerListener(listener: Any): NatsRegistration {
         checkOpen()
         val methods = ListenerMethods.findListenerMethods(listener, this)
         val entries = methods.map { it to ListenerInvokerFactory.create(listener, it.method) }
@@ -118,15 +120,24 @@ internal class NatsClientImpl(
                 eventSubscriptions.add(entry.first, entry.second)
                 added += entry
             }
+            withContext(Dispatchers.IO) {
+                NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
+            }
         } catch (e: Exception) {
-            added.forEach { (method, invoker) -> eventSubscriptions.remove(method, invoker) }
+            for ((method, invoker) in added) {
+                try {
+                    eventSubscriptions.remove(method, invoker)
+                } catch (cleanup: Exception) {
+                    e.addSuppressed(cleanup)
+                }
+            }
             throw e
         }
 
         return EventListenerRegistration(this, entries).also { registerRegistration(it) }
     }
 
-    override fun <S : Any> registerService(
+    override suspend fun <S : Any> registerService(
         type: KClass<S>,
         implementation: S
     ): NatsRegistration {

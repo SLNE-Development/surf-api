@@ -15,10 +15,10 @@ import io.nats.client.Message
 import io.nats.client.MessageConsumer
 import io.nats.client.MessageHandler
 import io.nats.client.impl.Headers
+import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import org.jetbrains.annotations.Blocking
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -47,7 +47,7 @@ internal class ServiceRegistration(
     private val scope = client.clientScope + SupervisorJob(client.clientScope.coroutineContext.job)
 
     private val active = AtomicBoolean(true)
-    override val isActive get() = active.get()
+    override val isClosed get() = !active.get()
 
     @Volatile
     private var dispatcher: Dispatcher? = null
@@ -55,8 +55,7 @@ internal class ServiceRegistration(
     @Volatile
     private var messageConsumer: MessageConsumer? = null
 
-    @Blocking
-    fun subscribe() {
+    suspend fun subscribe() {
         val connection = NatsConnectionManager.connection()
         val dispatcher = connection.createDispatcher()
         this.dispatcher = dispatcher
@@ -72,15 +71,19 @@ internal class ServiceRegistration(
         }
 
         descriptor.streams?.let { streams ->
-            runBlocking { JetStreamProvisioner.ensureStreams(streams) }
-            val consumer = connection.getStreamContext(streams.stream)
-                .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(descriptor.responderGroup))
-            messageConsumer = consumer.consume(dispatcher) { onPersistent(it) }
+            JetStreamProvisioner.ensureStreams(streams)
+            withContext(Dispatchers.IO) {
+                val consumer = connection.getStreamContext(streams.stream)
+                    .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(descriptor.responderGroup))
+                messageConsumer = consumer.consume(dispatcher) { onPersistent(it) }
+            }
         }
 
         announcer?.start(dispatcher)
 
-        connection.flush(5.seconds.toJavaDuration())
+        withContext(Dispatchers.IO) {
+            connection.flush(5.seconds.toJavaDuration())
+        }
     }
 
     private fun onRequest(
@@ -175,7 +178,7 @@ internal class ServiceRegistration(
             currentCoroutineContext().ensureActive()
             return failFire(message, e, permanent = false)
         } catch (e: Exception) {
-            return failFire(message, e, permanent = e is IllegalArgumentException)
+            return failFire(message, e, permanent = isObjectNotFound(e))
         }
 
         val arguments = try {
@@ -198,12 +201,32 @@ internal class ServiceRegistration(
             return failFire(message, e, permanent = false)
         }
 
-        message.ack()
+        if (!PayloadStore.isOffloaded(message)) {
+            message.ack()
+            return
+        }
+
+        try {
+            runInterruptible(Dispatchers.IO) {
+                message.ackSync(RpcDefaults.ACK_SYNC_TIMEOUT.toJavaDuration())
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            client.logger.warn("Ack of ${message.subject} was not confirmed, keeping its payload", e)
+            return
+        }
+
         try {
             PayloadStore.delete(message, PayloadBucket.PERSISTENT)
         } catch (e: Exception) {
             client.logger.warn("Failed to delete payload of ${message.subject}", e)
         }
+    }
+
+    private fun isObjectNotFound(e: Exception): Boolean {
+        return e is IllegalArgumentException &&
+                e.message?.startsWith("[${NatsJetStreamClientError.OsObjectNotFound.id()}]") == true
     }
 
     private suspend fun failFire(message: Message, e: Throwable, permanent: Boolean) {
@@ -235,8 +258,10 @@ internal class ServiceRegistration(
                 .publishAsync(streams.dlqSubject, headers, message.data)
                 .await()
             true
-        } catch (e: CancellationException) {
-            throw e
+        } catch (dlq: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            client.logger.error("Failed to dead-letter ${message.subject}: no PubAck", dlq)
+            false
         } catch (dlq: Exception) {
             client.logger.error("Failed to dead-letter ${message.subject}", dlq)
             false

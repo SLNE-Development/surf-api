@@ -1,6 +1,7 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.NatsClient
+import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
 import kotlinx.serialization.Serializable
@@ -46,12 +47,49 @@ class ServiceDescriptorTest {
     }
 
     @Suppress("unused")
-    @NatsService(responders = ResponderMode.ALL)
+    @NatsService
+    @NatsResponders(ResponderMode.ALL)
     interface AllByDefaultService {
         suspend fun lookup(id: Long): Answer<String>
 
         @NatsResponders(ResponderMode.ONE)
         suspend fun single(id: Long): String
+    }
+
+    @Suppress("unused")
+    @NatsService("formatted")
+    @NatsFormat(WireFormat.JSON)
+    interface JsonByDefaultService {
+        suspend fun a(): String
+
+        @NatsFormat(WireFormat.CBOR)
+        suspend fun b(): String
+    }
+
+    @Suppress("unused")
+    @NatsService("slow-persist")
+    @NatsPersistent
+    @NatsTimeout(121)
+    interface TooSlowPersistentService {
+        suspend fun store(id: Long)
+    }
+
+    @Suppress("unused")
+    @NatsService("slow-mixed")
+    @NatsTimeout(180)
+    interface SlowMixedService {
+        suspend fun core(): String
+
+        @NatsPersistent
+        suspend fun stored(id: Long)
+    }
+
+    @Suppress("unused")
+    @NatsService("window-edge")
+    interface WindowEdgeService {
+        @NatsPersistent
+        @NatsTimeout(120)
+        suspend fun stored(id: Long)
     }
 
     @Suppress("unused")
@@ -194,9 +232,9 @@ class ServiceDescriptorTest {
         val descriptor = describe(PlayerService::class.java, "transaction")
 
         assertEquals("player", descriptor.name)
-        assertEquals("transaction.player.health", descriptor.method("health").subject)
-        assertEquals("transaction.player.find-server", descriptor.method("findServer").subject)
-        assertEquals("transaction.player.heavy-report", descriptor.method("heavyReport").subject)
+        assertEquals("transaction.\$rpc.player.health", descriptor.method("health").subject)
+        assertEquals("transaction.\$rpc.player.find-server", descriptor.method("findServer").subject)
+        assertEquals("transaction.\$rpc.player.heavy-report", descriptor.method("heavyReport").subject)
     }
 
     @Test
@@ -204,7 +242,7 @@ class ServiceDescriptorTest {
         val descriptor = describe(DefaultNamedService::class.java, "transaction")
 
         assertEquals("default-named-service", descriptor.name)
-        assertEquals("transaction.default-named-service.ping", descriptor.method("ping").subject)
+        assertEquals("transaction.\$rpc.default-named-service.ping", descriptor.method("ping").subject)
     }
 
     @Test
@@ -236,6 +274,45 @@ class ServiceDescriptorTest {
         val descriptor = describe(PlayerService::class.java)
         assertEquals(15.seconds, descriptor.method("heavyReport").timeout)
         assertEquals(RpcDefaults.CORE_TIMEOUT, descriptor.method("health").timeout)
+    }
+
+    @Test
+    fun `wire format comes from the method, the interface or defaults to CBOR`() {
+        val formatted = describe(JsonByDefaultService::class.java)
+        assertEquals(WireFormat.JSON, formatted.method("a").format)
+        assertEquals(WireFormat.CBOR, formatted.method("b").format)
+
+        assertEquals(WireFormat.CBOR, describe(PlayerService::class.java).method("health").format)
+    }
+
+    @Test
+    fun `persistent timeout above the duplicate window is rejected`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(TooSlowPersistentService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "store: timeout")
+        assertContains(message, "duplicate window")
+    }
+
+    @Test
+    fun `interface timeout above the duplicate window only rejects persistent methods`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(SlowMixedService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "stored: timeout")
+        assertContains(message, "duplicate window")
+        assertFalse("core:" in message, "core methods are not bound by the duplicate window: $message")
+        assertEquals(1, message.lines().count { it.startsWith(" - ") }, message)
+    }
+
+    @Test
+    fun `persistent timeout equal to the duplicate window is accepted`() {
+        val stored = describe(WindowEdgeService::class.java).method("stored")
+
+        assertTrue(stored.persistent)
+        assertEquals(RpcDefaults.DUPLICATE_WINDOW, stored.timeout)
     }
 
     @Test
@@ -325,7 +402,7 @@ class ServiceDescriptorTest {
     fun `NatsMethod defines the method subject token`() {
         val descriptor = describe(WireNamedService::class.java, "transaction")
 
-        assertEquals("transaction.roles.whitelist-role", descriptor.method("updateWhitelistRole").subject)
+        assertEquals("transaction.\$rpc.roles.whitelist-role", descriptor.method("updateWhitelistRole").subject)
         assertEquals($$"transaction.$persist.roles.store", descriptor.method("persistEntry").subject)
     }
 
@@ -365,15 +442,15 @@ class ServiceDescriptorTest {
     fun `unprefixed service owns the service namespace`() {
         val descriptor = describe(UnprefixedService::class.java, "transaction")
 
-        assertEquals("roles-api.lookup", descriptor.method("lookup").subject)
-        assertEquals("roles-api.find", descriptor.method("find").subject)
+        assertEquals("roles-api.\$rpc.lookup", descriptor.method("lookup").subject)
+        assertEquals("roles-api.\$rpc.find", descriptor.method("find").subject)
         assertEquals("roles-api.\$persist.store", descriptor.method("store").subject)
         assertEquals("roles-api.\$presence", descriptor.presenceSubject)
         assertEquals("roles-api", descriptor.responderGroup)
 
         val streams = assertNotNull(descriptor.streams)
         assertEquals("SURF__ROLES_API", streams.stream)
-        assertEquals("roles-api.\$persist.>", streams.filter)
+        assertEquals("roles-api.\$persist.*", streams.filter)
         assertEquals("SURF__ROLES_API_DLQ", streams.dlqStream)
         assertEquals("roles-api.\$dlq", streams.dlqSubject)
     }
@@ -395,7 +472,7 @@ class ServiceDescriptorTest {
         assertEquals("transaction", descriptor.responderGroup)
         val streams = assertNotNull(descriptor.streams)
         assertEquals("SURF_TRANSACTION_ROLES", streams.stream)
-        assertEquals("transaction.\$persist.roles.>", streams.filter)
+        assertEquals("transaction.\$persist.roles.*", streams.filter)
         assertEquals("transaction.\$dlq.roles", streams.dlqSubject)
     }
 

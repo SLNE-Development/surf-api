@@ -10,7 +10,7 @@ import dev.slne.surf.nats.test.paper.rpc.PaperTestServiceImpl
 @AutoService(NatsService::class)
 class PaperNatsServiceImpl : NatsService() {
 
-    override fun start() {
+    override suspend fun start() {
         super.start()
 
         client.registerListener(PaperChatListener(plugin))

@@ -13,7 +13,7 @@ internal class EventListenerRegistration(
 ) : NatsRegistration {
 
     private val active = AtomicBoolean(true)
-    override val isActive: Boolean get() = active.get()
+    override val isClosed: Boolean get() = !active.get()
 
     override fun close() {
         if (!active.compareAndSet(true, false)) return

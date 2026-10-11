@@ -1,6 +1,7 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.NatsClient
+import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.NatsInstance
 import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
@@ -42,6 +43,9 @@ class ServiceProxyTest {
         @NatsTimeout(15)
         suspend fun slow(): String
 
+        @NatsFormat(WireFormat.JSON)
+        suspend fun jsonReport(playerName: String, sampleCount: Int): Health
+
         fun local(): String = "local"
     }
 
@@ -67,6 +71,25 @@ class ServiceProxyTest {
         }
 
         assertContentEquals(arrayOf(1, 2L, 3.5, true, "label"), received.get())
+    }
+
+    @Test
+    fun `NatsFormat JSON method sends a JSON request and decodes a JSON reply`() = withService { client, calc ->
+        val method = client.method("jsonReport")
+        assertEquals(WireFormat.JSON, method.format)
+        val contentType = AtomicReference<String?>()
+        val body = AtomicReference<String>()
+
+        respond(client, "jsonReport") { request ->
+            contentType.set(request.headers?.getFirst(NatsHeaders.CONTENT_TYPE))
+            body.set(request.data.decodeToString())
+            reply(client, method, Health(17.5), request, WireFormat.JSON)
+        }.use {
+            assertEquals(Health(17.5), calc.jsonReport("steve", 3))
+        }
+
+        assertEquals(WireFormat.JSON.contentType, contentType.get())
+        assertEquals("""{"player_name":"steve","sample_count":3}""", body.get())
     }
 
     @Test
@@ -147,7 +170,7 @@ class ServiceProxyTest {
                 withNatsCallTimeout(300.milliseconds) { calc.slow() }
             }
             assertEquals(300.milliseconds, exception.timeout)
-            assertTrue(start.elapsedNow() < 5.seconds, "took ${start.elapsedNow()}")
+            assertTrue(start.elapsedNow() < 1.seconds, "took ${start.elapsedNow()}")
         }
     }
 
@@ -186,14 +209,20 @@ class ServiceProxyTest {
         return AutoCloseable { connection.closeDispatcher(dispatcher) }
     }
 
-    private fun reply(client: NatsClientImpl, method: MethodDescriptor, value: Any?, request: Message) {
+    private fun reply(
+        client: NatsClientImpl,
+        method: MethodDescriptor,
+        value: Any?,
+        request: Message,
+        format: WireFormat = WireFormat.CBOR,
+    ) {
         val serializer = when (val result = method.result) {
             is ResultKind.Value -> result.serializer
             is ResultKind.Answer -> result.serializer
             ResultKind.Unit -> error("unit methods reply with an empty body")
         }
-        val data = client.codec.encode(serializer, value, WireFormat.CBOR)
+        val data = client.codec.encode(serializer, value, format)
         NatsConnectionManager.connection()
-            .publish(request.replyTo, NatsHeaders.base(client.name, WireFormat.CBOR), data)
+            .publish(request.replyTo, NatsHeaders.base(client.name, format), data)
     }
 }

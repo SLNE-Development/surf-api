@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.event
 
-import dev.slne.surf.nats.WireFormat
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MetaSerializable
 
@@ -17,6 +16,5 @@ public annotation class NatsEvent(
      * If left empty, the class name in kebab-case format will be used
      */
     val subject: String = "",
-    val format: WireFormat = WireFormat.CBOR,
     val prefixed: Boolean = true,
 )
