@@ -182,6 +182,28 @@ class NatsClientListenerTest {
         fun on(event: Created) = Unit
     }
 
+    open class BaseListener {
+        val recorder = Recorder<Created>()
+
+        @NatsListener
+        open fun on(event: Created) {
+            recorder.received.trySend(event)
+        }
+    }
+
+    class UnannotatedOverrideListener : BaseListener() {
+        override fun on(event: Created) = Unit
+    }
+
+    open class AnnotatedOverrideListener : BaseListener() {
+        @NatsListener
+        override fun on(event: Created) = super.on(event)
+    }
+
+    class UnannotatedDeepOverrideListener : AnnotatedOverrideListener() {
+        override fun on(event: Created) = Unit
+    }
+
     class ConflictingListener {
         val recorder = Recorder<SharedSubjectA>()
 
@@ -386,6 +408,28 @@ class NatsClientListenerTest {
     @Test
     fun `object without listener methods is rejected`() = withClient("listen-none") { client ->
         assertFailsWith<IllegalArgumentException> { client.registerListener(NoListenerMethods()) }
+    }
+
+    @Test
+    fun `override without @NatsListener is rejected`() = withClient("listen-override-unannotated") { client ->
+        for (listener in listOf(UnannotatedOverrideListener(), UnannotatedDeepOverrideListener())) {
+            val exception = assertFailsWith<IllegalArgumentException> { client.registerListener(listener) }
+            val message = exception.message.orEmpty()
+
+            assertContains(message, "on: overrides the @NatsListener method of")
+            assertEquals(1, Regex("overrides").findAll(message).count(), "reported once: $message")
+        }
+    }
+
+    @Test
+    fun `annotated override is registered once`() = withClient("listen-override-annotated") { client ->
+        val listener = AnnotatedOverrideListener()
+        client.registerListener(listener)
+
+        client.publish(Created(1))
+
+        assertEquals(Created(1), listener.recorder.receiveWithin())
+        listener.recorder.assertNothingWithin()
     }
 
     @Test

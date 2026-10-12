@@ -28,19 +28,31 @@ internal object ListenerMethods {
         val problems = ObjectArrayList<String>()
 
         val seen = ObjectOpenHashSet<Signature>()
+        val unannotated = ObjectOpenHashSet<Signature>()
 
         var currentClass: Class<*>? = listener.javaClass
         while (currentClass != null) {
             for (method in currentClass.declaredMethods) {
                 if (method.isBridge || method.isSynthetic) continue
 
-                val modifiers = method.modifiers
-                val overridable = !Modifier.isPrivate(modifiers) && !Modifier.isStatic(modifiers)
-                if (overridable &&
-                    !seen.add(Signature(method.name, method.parameterTypes.toList()))
-                ) continue
+                val annotation = method.getAnnotation(NatsListener::class.java)
 
-                val annotation = method.getAnnotation(NatsListener::class.java) ?: continue
+                val modifiers = method.modifiers
+                if (!Modifier.isPrivate(modifiers) && !Modifier.isStatic(modifiers)) {
+                    val signature = Signature(method.name, method.parameterTypes.toList())
+                    if (!seen.add(signature)) {
+                        if (annotation != null && unannotated.remove(signature)) {
+                            problems.add(
+                                "${method.name}: overrides the @NatsListener method of " +
+                                        "${currentClass.name} without @NatsListener"
+                            )
+                        }
+                        continue
+                    }
+                    if (annotation == null) unannotated.add(signature)
+                }
+
+                if (annotation == null) continue
 
                 val problem = validate(method)
                 if (problem != null) {
