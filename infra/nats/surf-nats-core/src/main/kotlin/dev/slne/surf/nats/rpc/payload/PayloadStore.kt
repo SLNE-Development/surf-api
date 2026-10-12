@@ -13,9 +13,12 @@ import io.nats.client.api.ObjectStoreConfiguration
 import io.nats.client.api.StorageType
 import io.nats.client.impl.Headers
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 import java.io.ByteArrayOutputStream
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -90,9 +93,16 @@ internal object PayloadStore {
 
     suspend fun delete(message: Message, bucket: PayloadBucket) {
         val name = payloadRef(message) ?: return
-        val store = store(NatsConnectionManager.connection(), bucket)
-        withContext(Dispatchers.IO) {
-            deleteQuietly(store, name)
+        try {
+            val store = store(NatsConnectionManager.connection(), bucket)
+            withContext(Dispatchers.IO) {
+                deleteQuietly(store, name)
+            }
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            logDeleteFailure(name, e)
+        } catch (e: Exception) {
+            logDeleteFailure(name, e)
         }
     }
 
@@ -104,10 +114,14 @@ internal object PayloadStore {
         try {
             store.delete(name)
         } catch (e: Exception) {
-            log.atWarning()
-                .withCause(e)
-                .log("Failed to delete offloaded payload %s", name)
+            logDeleteFailure(name, e)
         }
+    }
+
+    private fun logDeleteFailure(name: String, e: Exception) {
+        log.atWarning()
+            .withCause(e)
+            .log("Failed to delete offloaded payload %s", name)
     }
 
     private suspend fun store(connection: Connection, bucket: PayloadBucket): ObjectStore {

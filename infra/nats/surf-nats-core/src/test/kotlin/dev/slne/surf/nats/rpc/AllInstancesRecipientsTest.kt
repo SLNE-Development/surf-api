@@ -5,6 +5,7 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.presenceKind
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import io.nats.client.Connection
 import io.nats.client.Message
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -40,6 +41,12 @@ class AllInstancesRecipientsTest {
         override suspend fun broadcast(message: String) {
             broadcasts.send(message)
         }
+    }
+
+    @NatsService("notifier")
+    @NatsRecipients(Recipients.ALL_INSTANCES)
+    interface NotifierService {
+        suspend fun announce(message: String)
     }
 
     sealed interface Behaviour {
@@ -403,12 +410,44 @@ class AllInstancesRecipientsTest {
         }
 
     @Test
-    fun `presence subject only exists for services with ALL_INSTANCES methods`() = withClient { client ->
+    fun `presence subject only exists for services with ALL_INSTANCES answers`() = withClient { client ->
         assertEquals(
             "${client.name}.\$presence.finder",
             client.serviceDescriptor(FinderService::class.java).presenceSubject
         )
         assertNull(client.serviceDescriptor(ServiceResponderTest.CalcService::class.java).presenceSubject)
+        assertNull(
+            client.serviceDescriptor(NotifierService::class.java).presenceSubject,
+            "fan-out does not wait for answers and needs no presence"
+        )
+    }
+
+    @Test
+    fun `reconnect restarts the presence warm-up`() = withClient { client ->
+        withInstances(
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Unknown },
+        ) {
+            val finder = warmFinder(client)
+            val connection = NatsConnectionManager.connection()
+            val reconnects = connection.statistics.reconnects
+
+            withContext(Dispatchers.IO) { TestNatsServer.restart() }
+            eventually("reconnect after the server restart", timeout = 30.seconds) {
+                connection.status == Connection.Status.CONNECTED && connection.statistics.reconnects > reconnects
+            }
+            withContext(Dispatchers.IO) { connection.flush(Duration.ofSeconds(5)) } // subscriptions are restored
+
+            // Members can expire while the connection is down, the old list must not end the call early
+            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(1) } }
+            assertEquals(Answer.Unknown, answer)
+            assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
+
+            // The members answered the new query, so calls end early again
+            val (again, quick) = timed { withNatsCallTimeout(5.seconds) { finder.find(1) } }
+            assertEquals(Answer.Unknown, again)
+            assertTrue(quick < 2.seconds, "took $quick")
+        }
     }
 
     private fun withClient(block: suspend CoroutineScope.(NatsClientImpl) -> Unit) = runTest {

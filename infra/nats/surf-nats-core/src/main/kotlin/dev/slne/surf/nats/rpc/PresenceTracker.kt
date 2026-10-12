@@ -9,13 +9,17 @@ import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.codec.presenceKind
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import io.nats.client.Dispatcher
+import java.util.concurrent.atomic.AtomicLong
 
 @InternalNatsApi
 internal class PresenceTracker(
     private val client: NatsClientImpl,
     private val subject: String,
 ) {
-    private val warmAt = System.nanoTime() + RpcDefaults.PRESENCE_WARMUP.inWholeNanoseconds
+    @Volatile
+    private var warmAt = 0L
+
+    private val queriedAtReconnects = AtomicLong()
 
     private val members = Caffeine.newBuilder()
         .expireAfterWrite(RpcDefaults.PRESENCE_TTL)
@@ -30,11 +34,15 @@ internal class PresenceTracker(
                 NatsHeaders.PRESENCE_LEAVE -> left(origin)
             }
         }
-        try {
-            NatsConnectionManager.connection()
-                .publish(subject, NatsHeaders.presence(client.name, NatsHeaders.PRESENCE_QUERY), NatsHeaders.EMPTY_BODY)
-        } catch (e: Exception) {
-            client.logger.debug("Failed to query presence on $subject", e)
+        queriedAtReconnects.set(reconnects())
+        query()
+    }
+
+    fun refreshAfterReconnect() {
+        val reconnects = reconnects()
+        val queried = queriedAtReconnects.get()
+        if (reconnects != queried && queriedAtReconnects.compareAndSet(queried, reconnects)) {
+            query()
         }
     }
 
@@ -49,7 +57,14 @@ internal class PresenceTracker(
     fun allAnswered(answered: Set<String>): Boolean {
         if (System.nanoTime() - warmAt < 0) return false
 
-        val live = members.asMap().keys
+        val live = members.asMap().keys.toList()
         return live.isNotEmpty() && answered.containsAll(live)
     }
+
+    private fun query() {
+        warmAt = System.nanoTime() + RpcDefaults.PRESENCE_WARMUP.inWholeNanoseconds
+        client.publishPresence(subject, NatsHeaders.PRESENCE_QUERY)
+    }
+
+    private fun reconnects() = NatsConnectionManager.connection().statistics.reconnects
 }

@@ -19,6 +19,7 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.kotlinFunction
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @InternalNatsApi
@@ -50,11 +51,6 @@ internal class ServiceDescriptor(
             val serviceRecipients =
                 type.getAnnotation(NatsRecipients::class.java)?.recipients ?: Recipients.ANY_INSTANCE
             val serviceFormat = type.getAnnotation(NatsFormat::class.java)?.format
-            val serviceTimeoutSeconds = type.getAnnotation(NatsCallTimeout::class.java)?.seconds
-            val serviceTimeout = serviceTimeoutSeconds
-                ?.takeIf { it > 0 }
-                ?.seconds
-                ?.takeIf { it.isFinite() }
 
             val codec = client.codec
             val serviceName = annotation.name.ifEmpty { Subjects.kebabCase(type.simpleName) }
@@ -66,11 +62,11 @@ internal class ServiceDescriptor(
             if (serviceName == "dlq" || serviceName.endsWith("-dlq")) {
                 problems.add("Service name '$serviceName' is reserved, names ending in 'dlq' collide with dead letter streams")
             }
-            if (serviceTimeoutSeconds != null && serviceTimeoutSeconds <= 0) {
-                problems.add("@NatsCallTimeout on ${type.simpleName} must be positive, was $serviceTimeoutSeconds")
-            } else if (serviceTimeoutSeconds != null && serviceTimeout == null) {
-                problems.add("@NatsCallTimeout on ${type.simpleName} must be finite, was $serviceTimeoutSeconds")
-            }
+            val serviceTimeout = timeoutOf(
+                type.getAnnotation(NatsCallTimeout::class.java)?.seconds,
+                "@NatsCallTimeout on ${type.simpleName}",
+                problems,
+            )
 
             val global = annotation.global
             fun internalSubject(kind: String): String {
@@ -127,14 +123,11 @@ internal class ServiceDescriptor(
                     methodProblems.add("$name: @NatsMethod name must not start with '$', was '$methodToken'")
                 }
 
-                val timeoutSeconds = method.getAnnotation(NatsCallTimeout::class.java)?.seconds
-                val methodTimeout =
-                    timeoutSeconds?.takeIf { it > 0 }?.seconds?.takeIf { it.isFinite() }
-                if (timeoutSeconds != null && timeoutSeconds <= 0) {
-                    methodProblems.add("$name: @NatsCallTimeout must be positive, was $timeoutSeconds")
-                } else if (timeoutSeconds != null && methodTimeout == null) {
-                    methodProblems.add("$name: @NatsCallTimeout must be finite, was $timeoutSeconds")
-                }
+                val methodTimeout = timeoutOf(
+                    method.getAnnotation(NatsCallTimeout::class.java)?.seconds,
+                    "$name: @NatsCallTimeout",
+                    methodProblems,
+                )
                 val timeout = methodTimeout
                     ?: serviceTimeout
                     ?: if (persistent) RpcDefaults.JETSTREAM_TIMEOUT else RpcDefaults.CORE_TIMEOUT
@@ -200,6 +193,9 @@ internal class ServiceDescriptor(
                 if (recipients == Recipients.ALL_INSTANCES && result is ResultKind.Value) {
                     methodProblems.add("$name uses ALL_INSTANCES recipients and must return either Answer<T> or Unit")
                 }
+                if (function.returnType.isMarkedNullable && result != null && result !is ResultKind.Value) {
+                    methodProblems.add("$name: return type ${function.returnType} must not be nullable, use Unit or Answer<T>")
+                }
 
                 val subject = try {
                     val raw = "${internalSubject(if (persistent) PERSIST else RPC)}.$methodToken"
@@ -256,7 +252,7 @@ internal class ServiceDescriptor(
 
             require(methods.isNotEmpty()) { "${type.name} has no service methods" }
 
-            val presenceSubject = if (methods.any { it.recipients == Recipients.ALL_INSTANCES }) {
+            val presenceSubject = if (methods.any { it.recipients == Recipients.ALL_INSTANCES && it.result is ResultKind.Answer }) {
                 Subjects.requireValidSubject(internalSubject(PRESENCE), "${type.name} presence")
             } else {
                 null
@@ -305,6 +301,20 @@ internal class ServiceDescriptor(
             return "${type.name} must be an interface. Use the @NatsService interface it implements as the " +
                     "type argument, e.g. registerService<${services.first().simpleName}>(implementation): " +
                     services.joinToString { it.name }
+        }
+
+        private fun timeoutOf(seconds: Long?, label: String, problems: MutableList<String>): Duration? {
+            if (seconds == null) return null
+            if (seconds <= 0) {
+                problems.add("$label must be positive, was $seconds")
+                return null
+            }
+            val timeout = seconds.seconds
+            if (!timeout.isFinite()) {
+                problems.add("$label must be finite, was $seconds")
+                return null
+            }
+            return timeout
         }
 
         private fun resultKind(returnType: KType, codec: NatsCodec): ResultKind {

@@ -45,7 +45,7 @@ internal object NatsHeaders {
         return base(clientName, WireFormat.CBOR).add(PRESENCE, kind)
     }
 
-    fun origin(clientName: String) = "$clientName@${NatsConnectionManager.instanceIdString}"
+    fun origin(clientName: String) = "$clientName@${NatsConnectionManager.instanceId}"
 
     fun deadline(timeout: Duration): String {
         return (System.currentTimeMillis() + timeout.inWholeMilliseconds).toString()

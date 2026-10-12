@@ -156,6 +156,17 @@ class ServiceDescriptorTest {
     }
 
     @Suppress("unused")
+    @NatsService("nullable-results")
+    interface NullableResultService {
+        suspend fun maybeUnit(): Unit?
+
+        @NatsRecipients(Recipients.ALL_INSTANCES)
+        suspend fun maybeAnswer(): Answer<String>?
+
+        suspend fun maybeValue(): String?
+    }
+
+    @Suppress("unused")
     interface NotAnnotated {
         suspend fun ping(): String
     }
@@ -611,5 +622,16 @@ class ServiceDescriptorTest {
 
         assertContains(message, "pair: argument names")
         assertContains(message, "in JSON")
+    }
+
+    @Test
+    fun `nullable Unit and Answer results are rejected`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(NullableResultService::class.java)
+        }.message.orEmpty()
+
+        assertContains(message, "maybeUnit: return type kotlin.Unit? must not be nullable")
+        assertContains(message, "maybeAnswer: return type dev.slne.surf.nats.rpc.Answer<kotlin.String>? must not be nullable")
+        assertFalse("maybeValue" in message, "nullable values are allowed: $message")
     }
 }

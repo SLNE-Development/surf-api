@@ -82,9 +82,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
         if (entry.targets.isEmpty()) {
             entries.remove(key)
-            if (!closed) {
-                dispatcher?.unsubscribe(entry.subscription)
-            }
+            dispatcher?.unsubscribe(entry.subscription)
         }
     }
 
@@ -95,11 +93,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
         val dispatcher = dispatcher ?: return
         this.dispatcher = null
-        try {
-            NatsConnectionManager.connection().closeDispatcher(dispatcher)
-        } catch (e: Exception) {
-            client.logger.warn("Failed to close event dispatcher", e)
-        }
+        client.closeDispatcher(dispatcher, "event dispatcher")
     }
 
     private fun dispatch(

@@ -10,6 +10,7 @@ import dev.slne.surf.nats.internal.NatsTimeoutElement
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.rpc.payload.PayloadBucket
 import dev.slne.surf.nats.rpc.payload.PayloadStore
+import io.nats.client.JetStreamApiException
 import io.nats.client.JetStreamStatusException
 import io.nats.client.Message
 import io.nats.client.PublishOptions
@@ -20,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.future.await
+import java.io.IOException
 import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
@@ -31,10 +33,10 @@ internal class RpcCallerImpl(
     private val service: ServiceDescriptor,
 ) : RpcCaller {
 
-    private val presence = service.presenceSubject?.let { subject ->
-        PresenceTracker(client, subject).also { tracker ->
-            tracker.start(client.replyDispatcher())
-        }
+    private val presence = service.presenceSubject?.let { subject -> PresenceTracker(client, subject) }
+
+    fun start() {
+        presence?.start(client.replyDispatcher())
     }
 
     override suspend fun call(index: Int, args: Array<Any?>): Any? {
@@ -102,6 +104,8 @@ internal class RpcCallerImpl(
             connection.publish(method.subject, headers, body)
             return Unit
         }
+
+        presence?.refreshAfterReconnect()
 
         val replyDispatcher = client.replyDispatcher()
         val inbox = connection.createInbox()
@@ -252,11 +256,11 @@ internal class RpcCallerImpl(
         val subscription = dispatcher.subscribe(inbox) { reply.complete(it) }
 
         try {
-            val completed = withTimeoutOrNull(timeout) {
+            val response = withTimeoutOrNull(timeout) {
                 publishPersistent(method, headers, body, options)
-                Completed(decodeReply(method, reply.await()))
+                reply.await()
             } ?: throw NatsCallTimeoutException(method.subject, timeout)
-            return completed.value
+            return decodeReply(method, response)
         } finally {
             runCatching { dispatcher.unsubscribe(subscription) }
         }
@@ -305,6 +309,12 @@ internal class RpcCallerImpl(
                     "No PubAck for ${method.subject}, publishing again with the same Nats-Msg-Id",
                     e
                 )
+            } catch (e: RuntimeException) {
+                val rejection = generateSequence(e.cause) { it.cause }
+                    .take(3)
+                    .firstOrNull { it is IOException || it is JetStreamApiException }
+                    ?: throw e
+                throw NatsRpcException("JetStream publish on ${method.subject} failed: ${rejection.message}", rejection)
             }
         }
     }

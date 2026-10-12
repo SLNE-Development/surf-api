@@ -279,10 +279,8 @@ class ServiceResponderTest {
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
         val body = """{"a":1,"b":2,"factor":3.5,"flag":true,"label":"panel"}""".encodeToByteArray()
 
-        val reply = NatsConnectionManager.connection()
-            .request(method("mixed").subject, headers, body, Duration.ofSeconds(5))
+        val reply = requestReply(method("mixed").subject, headers, body)
 
-        assertNotNull(reply, "no reply")
         assertNull(reply.headers.getFirst(NatsHeaders.ERROR), reply.data.decodeToString())
         val contentType = assertNotNull(reply.headers.getFirst(NatsHeaders.CONTENT_TYPE))
         assertEquals(WireFormat.JSON, WireFormat.fromContentType(contentType))
@@ -293,15 +291,8 @@ class ServiceResponderTest {
     fun `undecodable arguments are answered with an error`() = withService {
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.CBOR.contentType)
 
-        val reply = NatsConnectionManager.connection()
-            .request(
-                method("mixed").subject,
-                headers,
-                byteArrayOf(0x7f, 0x01, 0x02),
-                Duration.ofSeconds(5)
-            )
+        val reply = requestReply(method("mixed").subject, headers, byteArrayOf(0x7f, 0x01, 0x02))
 
-        assertNotNull(reply, "no reply")
         val remoteType = assertNotNull(reply.headers.getFirst(NatsHeaders.ERROR))
         assertTrue(
             SerializationException::class.java.isAssignableFrom(Class.forName(remoteType)),

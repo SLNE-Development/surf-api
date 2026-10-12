@@ -31,7 +31,7 @@ internal class PresenceAnnouncer(
         }
         synchronized(lock) {
             if (closed) return
-            announce(NatsHeaders.PRESENCE_JOIN)
+            client.publishPresence(subject, NatsHeaders.PRESENCE_JOIN)
         }
         heartbeat = client.clientScope.launch(Dispatchers.IO + CoroutineName("surf-nats/${client.name}/presence")) {
             while (isActive && !closed) {
@@ -45,20 +45,20 @@ internal class PresenceAnnouncer(
         synchronized(lock) {
             if (closed) return
             closed = true
-            announce(NatsHeaders.PRESENCE_LEAVE)
+            client.publishPresence(subject, NatsHeaders.PRESENCE_LEAVE)
         }
         heartbeat?.cancel("Presence announcer closed")
     }
 
     private fun beat() = synchronized(lock) {
-        if (!closed) announce(NatsHeaders.PRESENCE_BEAT)
+        if (!closed) client.publishPresence(subject, NatsHeaders.PRESENCE_BEAT)
     }
+}
 
-    private fun announce(kind: String) {
-        try {
-            NatsConnectionManager.connection().publish(subject, NatsHeaders.presence(client.name, kind), NatsHeaders.EMPTY_BODY)
-        } catch (e: Exception) {
-            client.logger.debug("Failed to announce presence '$kind' on $subject", e)
-        }
+internal fun NatsClientImpl.publishPresence(subject: String, kind: String) {
+    try {
+        NatsConnectionManager.connection().publish(subject, NatsHeaders.presence(name, kind), NatsHeaders.EMPTY_BODY)
+    } catch (e: Exception) {
+        logger.debug("Failed to publish presence '$kind' on $subject", e)
     }
 }

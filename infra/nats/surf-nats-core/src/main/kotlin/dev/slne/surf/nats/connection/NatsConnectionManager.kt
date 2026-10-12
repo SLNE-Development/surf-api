@@ -14,8 +14,7 @@ internal object NatsConnectionManager {
 
     private val log = logger()
 
-    val instanceId: UUID = UUID.randomUUID()
-    val instanceIdString = instanceId.toString()
+    val instanceId: String = UUID.randomUUID().toString()
 
     @Volatile
     private var connection: Connection? = null
@@ -32,7 +31,7 @@ internal object NatsConnectionManager {
 
             val options = Options.builder()
                 .servers(natsConfig.servers.toTypedArray())
-                .connectionName(natsConfig.connectionName ?: "surf-nats-${instanceIdString}")
+                .connectionName(natsConfig.connectionName ?: "surf-nats-$instanceId")
                 .reconnectWait(Duration.ofMillis(natsConfig.reconnectWait.toLong()))
                 .maxReconnects(-1)
                 .reportNoResponders()

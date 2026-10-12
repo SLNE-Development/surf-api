@@ -16,12 +16,12 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.*
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -462,6 +462,63 @@ class NatsPersistentServiceTest {
     }
 
     @Test
+    fun `persistent rpc past its deadline is terminated without running`() = withClient { client ->
+        val descriptor = client.serviceDescriptor(OrderService::class.java)
+        val streams = descriptor.streams!!
+        val impl = OrderImpl()
+        client.registerService<OrderService>(impl)
+
+        // Published like an external caller without Nats-TTL, so only the responder's deadline check stops it
+        val method = descriptor.method("total")
+        val headers = NatsHeaders.base("external", WireFormat.CBOR)
+            .add(NatsHeaders.DEADLINE, (System.currentTimeMillis() - 1_000).toString())
+        val body = client.codec.encode(method.arguments, arrayOf<Any?>(6L), WireFormat.CBOR)
+        NatsConnectionManager.connection().jetStream().publish(method.subject, headers, body)
+
+        eventually("the expired request must be removed from the work queue") { messageCount(streams.stream) == 0L }
+        assertEquals(0, impl.totalCalls.get(), "expired request must not run")
+    }
+
+    @Test
+    fun `persistent rpc slower than its timeout is cancelled and terminated`() = withClient { client ->
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val cancelled = CompletableDeferred<Unit>()
+        val impl = OrderImpl().apply {
+            onTotal = { id ->
+                try {
+                    delay(10.seconds)
+                    id
+                } catch (e: CancellationException) {
+                    cancelled.complete(Unit)
+                    throw e
+                }
+            }
+        }
+        client.registerService<OrderService>(impl)
+
+        assertFailsWith<NatsCallTimeoutException> {
+            withNatsCallTimeout(1.seconds) { client.service<OrderService>().total(7) }
+        }
+        withTimeout(5.seconds) { cancelled.await() }
+        assertEquals(1, impl.totalCalls.get())
+        eventually("the timed out request must be removed from the work queue") { messageCount(streams.stream) == 0L }
+    }
+
+    @Test
+    fun `rejected persistent publish is a NatsRpcException`() = withClient { client ->
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val orders = client.service<OrderService>()
+        withNatsCallTimeout(10.seconds) { orders.place(1) } // provisions the stream
+        jsm().deleteStream(streams.stream) // the provisioning cache does not notice this
+
+        val error = assertFailsWith<NatsRpcException> {
+            withNatsCallTimeout(10.seconds) { orders.place(2) }
+        }
+        // Coroutine stack trace recovery (tests run with assertions) may put a copy in front of the original
+        assertTrue(generateSequence(error.cause) { it.cause }.any { it is IOException }, error.stackTraceToString())
+    }
+
+    @Test
     fun `persistent rpc failure is answered and not redelivered`() = withClient { client ->
         val streams = client.serviceDescriptor(OrderService::class.java).streams!!
         val impl = OrderImpl().apply { onTotal = { throw IllegalStateException("no total") } }
@@ -577,11 +634,6 @@ class NatsPersistentServiceTest {
 
     private fun ServiceDescriptor.method(name: String) = methods.single { it.method.name == name }
 
-    private fun jsm() = NatsConnectionManager.connection().jetStreamManagement()
-
-    private fun messageCount(stream: String): Long =
-        jsm().getStreamInfo(stream).streamState.msgCount
-
     private fun deleteStreams(vararg streams: String) {
         for (stream in streams) runCatching { jsm().deleteStream(stream) }
     }
@@ -592,18 +644,6 @@ class NatsPersistentServiceTest {
         return connection.objectStore(bucket.bucketName).list
             .filterNot { it.isDeleted }
             .mapTo(HashSet()) { it.objectName }
-    }
-
-    private suspend fun eventually(
-        message: String,
-        timeout: Duration = 10.seconds,
-        condition: suspend () -> Boolean,
-    ) {
-        val start = TimeSource.Monotonic.markNow()
-        while (!condition()) {
-            if (start.elapsedNow() > timeout) fail("$message (waited $timeout)")
-            delay(50.milliseconds)
-        }
     }
 
     companion object {

@@ -12,7 +12,6 @@ import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
@@ -24,11 +23,9 @@ import org.junit.jupiter.api.TestInstance
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.test.*
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExternalCallerTest {
@@ -322,11 +319,7 @@ class ExternalCallerTest {
         client.registerService<RolesService>(RolesImpl())
         track(client.serviceDescriptor(RolesService::class.java))
 
-        val reply = assertNotNull(
-            NatsConnectionManager.connection()
-                .request("ext-roles.\$rpc.echo", """{"id":5}""".encodeToByteArray(), java.time.Duration.ofSeconds(5)),
-            "no reply"
-        )
+        val reply = requestReply("ext-roles.\$rpc.echo", null, """{"id":5}""".encodeToByteArray())
 
         assertEquals(IllegalArgumentException::class.java.name, reply.headers.getFirst(NatsHeaders.ERROR))
         assertContains(reply.data.decodeToString(), "Missing Content-Type")
@@ -339,15 +332,7 @@ class ExternalCallerTest {
         track(client.serviceDescriptor(RolesService::class.java))
 
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.JSON.contentType)
-        val reply = assertNotNull(
-            NatsConnectionManager.connection().request(
-                "ext-roles.\$rpc.echo",
-                headers,
-                """{"id":5}""".encodeToByteArray(),
-                java.time.Duration.ofSeconds(5)
-            ),
-            "no reply"
-        )
+        val reply = requestReply("ext-roles.\$rpc.echo", headers, """{"id":5}""".encodeToByteArray())
 
         assertNull(reply.headers.getFirst(NatsHeaders.ERROR))
         assertEquals(WireFormat.JSON.contentType, reply.headers.getFirst(NatsHeaders.CONTENT_TYPE))
@@ -362,15 +347,7 @@ class ExternalCallerTest {
         val uuid = UUID.randomUUID()
 
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.JSON.contentType)
-        val reply = assertNotNull(
-            NatsConnectionManager.connection().request(
-                "ext-roles.\$rpc.owner",
-                headers,
-                """{"id":"$uuid"}""".encodeToByteArray(),
-                java.time.Duration.ofSeconds(5)
-            ),
-            "no reply"
-        )
+        val reply = requestReply("ext-roles.\$rpc.owner", headers, """{"id":"$uuid"}""".encodeToByteArray())
         assertNull(reply.headers.getFirst(NatsHeaders.ERROR), reply.data.decodeToString())
         assertEquals("\"$uuid\"", reply.data.decodeToString())
 
@@ -447,25 +424,8 @@ class ExternalCallerTest {
         NatsConnectionManager.connection().jetStream().publish(subject, headers, body.encodeToByteArray())
     }
 
-    private fun jsm() = NatsConnectionManager.connection().jetStreamManagement()
-
-    private fun messageCount(stream: String): Long =
-        jsm().getStreamInfo(stream).streamState.msgCount
-
     private fun purgeStreams(vararg streams: String) {
         for (stream in streams) runCatching { jsm().purgeStream(stream) }
-    }
-
-    private suspend fun eventually(
-        message: String,
-        timeout: Duration = 10.seconds,
-        condition: suspend () -> Boolean,
-    ) {
-        val start = TimeSource.Monotonic.markNow()
-        while (!condition()) {
-            if (start.elapsedNow() > timeout) fail("$message (waited $timeout)")
-            delay(50.milliseconds)
-        }
     }
 
     companion object {

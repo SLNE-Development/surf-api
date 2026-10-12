@@ -17,9 +17,16 @@ internal class EventListenerRegistration(
 
     override fun close() {
         if (!active.compareAndSet(true, false)) return
-        entries.forEach { (method, invoker) ->
-            client.eventSubscriptions.remove(method, invoker)
+        try {
+            for ((method, invoker) in entries) {
+                try {
+                    client.eventSubscriptions.remove(method, invoker)
+                } catch (e: Exception) {
+                    client.logger.warn("Failed to remove listener ${method.method.name} on ${method.descriptor.subject}", e)
+                }
+            }
+        } finally {
+            client.unregisterRegistration(this)
         }
-        client.unregisterRegistration(this)
     }
 }

@@ -112,9 +112,7 @@ internal class NatsClientImpl(
                 eventSubscriptions.add(entry.first, entry.second)
                 added += entry
             }
-            withContext(Dispatchers.IO) {
-                NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
-            }
+            flush()
         } catch (e: Throwable) {
             for ((method, invoker) in added) {
                 try {
@@ -174,7 +172,8 @@ internal class NatsClientImpl(
         checkOpen()
         val proxy = serviceProxies.computeIfAbsent(type.java) { serviceType ->
             val descriptor = serviceDescriptor(serviceType)
-            ServiceProxyFactory.create(descriptor, RpcCallerImpl(this, descriptor))
+            val caller = RpcCallerImpl(this, descriptor)
+            ServiceProxyFactory.create<Any>(descriptor, caller).also { caller.start() }
         }
         if (isClosed) {
             serviceProxies.clear()
@@ -244,14 +243,22 @@ internal class NatsClientImpl(
 
     private fun closeReplyDispatcher() {
         synchronized(replyDispatcherLock) {
-            replyDispatcher?.let { dispatcher ->
-                try {
-                    NatsConnectionManager.connection().closeDispatcher(dispatcher)
-                } catch (e: Exception) {
-                    logger.warn("Failed to close reply dispatcher", e)
-                }
-            }
+            replyDispatcher?.let { closeDispatcher(it, "reply dispatcher") }
             replyDispatcher = null
+        }
+    }
+
+    internal fun closeDispatcher(dispatcher: Dispatcher, what: String) {
+        try {
+            NatsConnectionManager.connection().closeDispatcher(dispatcher)
+        } catch (e: Exception) {
+            logger.warn("Failed to close $what", e)
+        }
+    }
+
+    internal suspend fun flush() {
+        withContext(Dispatchers.IO) {
+            NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
         }
     }
 

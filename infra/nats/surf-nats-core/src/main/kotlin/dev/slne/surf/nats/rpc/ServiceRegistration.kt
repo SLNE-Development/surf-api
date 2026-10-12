@@ -24,7 +24,6 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 @InternalNatsApi
@@ -92,9 +91,7 @@ internal class ServiceRegistration(
 
         announcer?.start(dispatcher)
 
-        withContext(Dispatchers.IO) {
-            connection.flush(5.seconds.toJavaDuration())
-        }
+        client.flush()
     }
 
     private fun onRequest(method: MethodDescriptor, message: Message) {
@@ -122,9 +119,7 @@ internal class ServiceRegistration(
                     send(replyTo, replyOf(method, outcome, format), format, timeout)
                 }
 
-                Outcome.TimedOut -> client.logger.warn(
-                    "Service method ${method.subject} did not complete within $timeout and was cancelled"
-                )
+                Outcome.TimedOut -> logTimedOut(method, timeout)
             }
         }
     }
@@ -146,9 +141,12 @@ internal class ServiceRegistration(
             deliveryCount = meta.deliveredCount(),
         )
 
-        // Ignore already timed out messages
         val deadline = message.deadlineMillis()
-        if (deadline != null && deadline <= System.currentTimeMillis()) return message.term()
+        val left = remaining(deadline, method.timeout)
+        if (!left.isPositive()) {
+            dropExpired(message, left)
+            return message.term()
+        }
 
         scope.launch(context + coroutineNames[method.index]) {
             val keepAlive = launch(Dispatchers.IO) {
@@ -235,11 +233,7 @@ internal class ServiceRegistration(
             return
         }
 
-        try {
-            PayloadStore.delete(message, PayloadBucket.PERSISTENT)
-        } catch (e: Exception) {
-            client.logger.warn("Failed to delete payload of ${message.subject}", e)
-        }
+        PayloadStore.delete(message, PayloadBucket.PERSISTENT)
     }
 
     private fun isObjectNotFound(e: Throwable): Boolean {
@@ -300,6 +294,7 @@ internal class ServiceRegistration(
         // Keep the payload for a redelivery
         val outcome = invoke(method, message, timeout, deletePayload = false)
         if (outcome !is Outcome.Finished) {
+            logTimedOut(method, timeout)
             message.term()
             return // Caller has already given up
         }
@@ -310,11 +305,7 @@ internal class ServiceRegistration(
         }
         message.ack()
 
-        try {
-            PayloadStore.delete(message, PayloadBucket.TRANSIENT)
-        } catch (e: Exception) {
-            client.logger.warn("Failed to delete payload of ${message.subject}", e)
-        }
+        PayloadStore.delete(message, PayloadBucket.TRANSIENT)
     }
 
     override fun close() {
@@ -327,13 +318,7 @@ internal class ServiceRegistration(
                 client.logger.warn("Failed to close message consumer", e)
             }
         }
-        dispatcher?.let {
-            try {
-                NatsConnectionManager.connection().closeDispatcher(it)
-            } catch (e: Exception) {
-                client.logger.warn("Failed to close service dispatcher", e)
-            }
-        }
+        dispatcher?.let { client.closeDispatcher(it, "service dispatcher") }
         scope.cancel("Service registration ${descriptor.type.name} closed")
         client.unregisterService(this)
         client.unregisterRegistration(this)
@@ -353,6 +338,10 @@ internal class ServiceRegistration(
             "Dropping request on ${message.subject} that expired ${-remaining.inWholeMilliseconds} ms ago " +
                     "(check the clock synchronization of the hosts if this happens regularly)"
         )
+    }
+
+    private fun logTimedOut(method: MethodDescriptor, timeout: Duration) {
+        client.logger.warn("Service method ${method.subject} did not complete within $timeout and was cancelled")
     }
 
     private sealed interface Outcome {

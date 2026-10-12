@@ -107,10 +107,8 @@ class LargePayloadTest {
         val headers = NatsHeaders.base("external", WireFormat.CBOR)
         val body = client.codec.encode(method.arguments, arrayOf(blob(1_000)), WireFormat.CBOR)
 
-        val reply = NatsConnectionManager.connection()
-            .request(method.subject, headers, body, Duration.ofSeconds(5))
+        val reply = requestReply(method.subject, headers, body)
 
-        assertNotNull(reply, "no reply")
         assertNull(reply.headers.getFirst(NatsHeaders.PAYLOAD_REF))
         val contentType = reply.headers.getFirst(NatsHeaders.CONTENT_TYPE)
         assertContentEquals(blob(1_000), client.codec.decode(ByteArraySerializer(), reply.data, contentType))
@@ -122,10 +120,8 @@ class LargePayloadTest {
         val headers = NatsHeaders.base("external", WireFormat.CBOR)
         val body = client.codec.encode(method.arguments, arrayOf(LARGE), WireFormat.CBOR)
 
-        val reply = NatsConnectionManager.connection()
-            .request(method.subject, headers, body, Duration.ofSeconds(30))
+        val reply = requestReply(method.subject, headers, body, Duration.ofSeconds(30))
 
-        assertNotNull(reply, "no reply")
         assertNull(reply.headers.getFirst(NatsHeaders.ERROR), reply.data.decodeToString())
         assertNotNull(reply.headers.getFirst(NatsHeaders.PAYLOAD_REF))
         assertEquals(0, reply.data.size)
@@ -141,10 +137,8 @@ class LargePayloadTest {
         val headers = Headers().add(NatsHeaders.CONTENT_TYPE, WireFormat.JSON.contentType)
         val body = """{"size":$size}""".encodeToByteArray()
 
-        val reply = NatsConnectionManager.connection()
-            .request(method("create").subject, headers, body, Duration.ofSeconds(30))
+        val reply = requestReply(method("create").subject, headers, body, Duration.ofSeconds(30))
 
-        assertNotNull(reply, "no reply")
         assertNull(reply.headers.getFirst(NatsHeaders.ERROR), reply.data.decodeToString())
         assertNotNull(reply.headers.getFirst(NatsHeaders.PAYLOAD_REF))
         val contentType = assertNotNull(reply.headers.getFirst(NatsHeaders.CONTENT_TYPE))
