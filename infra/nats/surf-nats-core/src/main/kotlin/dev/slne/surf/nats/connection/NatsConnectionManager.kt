@@ -37,6 +37,8 @@ internal object NatsConnectionManager {
                 .maxReconnects(-1)
                 .reportNoResponders()
                 .dontForceFlushOnRequest()
+                .pingInterval(Duration.ofSeconds(10))
+                .advancedRequestBehavior()
                 .connectionListener { connection, events ->
                     val url =
                         connection.connectedUrl?.also { lastConnectedUrl = it } ?: lastConnectedUrl
