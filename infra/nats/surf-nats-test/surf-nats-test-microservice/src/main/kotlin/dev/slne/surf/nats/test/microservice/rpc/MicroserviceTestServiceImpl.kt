@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.test.microservice.rpc
 
 import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.nats.rpc.natsPersistentMessageContext
+import dev.slne.surf.nats.rpc.natsPersistentContext
 import dev.slne.surf.nats.test.common.rpc.MicroserviceTestService
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -19,7 +19,7 @@ class MicroserviceTestServiceImpl : MicroserviceTestService {
     override suspend fun stored() = entries.toList()
 
     override suspend fun store(entry: String) {
-        val context = natsPersistentMessageContext()
+        val context = natsPersistentContext()
         log.atInfo()
             .log(
                 "store '%s' (message %s, delivery %s)",

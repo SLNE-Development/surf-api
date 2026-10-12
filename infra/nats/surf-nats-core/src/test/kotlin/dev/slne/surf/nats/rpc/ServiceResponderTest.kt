@@ -39,7 +39,7 @@ class ServiceResponderTest {
         suspend fun count(): Int
         suspend fun slowFire()
 
-        @NatsTimeout(15)
+        @NatsCallTimeout(15)
         suspend fun slow(): String
     }
 
@@ -69,7 +69,7 @@ class ServiceResponderTest {
         }
 
         override suspend fun lookup(id: Long): Answer<String> {
-            return if (id == 0L) Answer.None else Answer.Of("server-$id")
+            return if (id == 0L) Answer.Unknown else Answer.Known("server-$id")
         }
 
         override suspend fun fail(message: String): String = throw IllegalStateException(message)
@@ -116,8 +116,8 @@ class ServiceResponderTest {
         suspend fun ping(): String
     }
 
-    @NatsService("name-clash-mixed", prefixed = false)
-    interface UnprefixedClashService {
+    @NatsService("name-clash-mixed", global = true)
+    interface GlobalClashService {
         suspend fun ping(): String
     }
 
@@ -160,8 +160,8 @@ class ServiceResponderTest {
 
     @Test
     fun `answer of and none roundtrip`() = withService {
-        assertEquals(Answer.Of("server-1"), calc.lookup(1))
-        assertEquals(Answer.None, calc.lookup(0))
+        assertEquals(Answer.Known("server-1"), calc.lookup(1))
+        assertEquals(Answer.Unknown, calc.lookup(0))
     }
 
     @Test
@@ -195,10 +195,10 @@ class ServiceResponderTest {
     }
 
     @Test
-    fun `withNatsTimeout overrides NatsTimeout and cancels the implementation`() = withService {
+    fun `withNatsCallTimeout overrides NatsCallTimeout and cancels the implementation`() = withService {
         warmUp()
         val start = TimeSource.Monotonic.markNow()
-        val exception = assertFailsWith<NatsRequestTimeoutException> {
+        val exception = assertFailsWith<NatsCallTimeoutException> {
             withNatsCallTimeout(300.milliseconds) { calc.slow() }
         }
 
@@ -209,7 +209,7 @@ class ServiceResponderTest {
     }
 
     @Test
-    fun `outer caller timeout is not translated into NatsRequestTimeoutException`() = withService {
+    fun `outer caller timeout is not translated into NatsCallTimeoutException`() = withService {
         warmUp()
         val start = TimeSource.Monotonic.markNow()
         val result = withTimeoutOrNull(300.milliseconds) { calc.slow() }
@@ -369,14 +369,14 @@ class ServiceResponderTest {
 
     @Test
     fun `same service name is allowed when only one interface is prefixed`() = withService {
-        client.registerService<UnprefixedClashService>(object : UnprefixedClashService {
-            override suspend fun ping() = "unprefixed"
+        client.registerService<GlobalClashService>(object : GlobalClashService {
+            override suspend fun ping() = "global"
         })
         client.registerService<PrefixedClashService>(object : PrefixedClashService {
             override suspend fun ping() = "prefixed"
         })
 
-        assertEquals("unprefixed", client.service<UnprefixedClashService>().ping())
+        assertEquals("global", client.service<GlobalClashService>().ping())
         assertEquals("prefixed", client.service<PrefixedClashService>().ping())
     }
 

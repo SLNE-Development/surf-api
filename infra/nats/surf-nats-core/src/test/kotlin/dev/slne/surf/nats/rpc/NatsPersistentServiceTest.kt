@@ -52,29 +52,29 @@ class NatsPersistentServiceTest {
         override suspend fun find(id: Long): String? = if (id == 0L) null else "found-$id"
     }
 
-    class Delivery(val id: Long, val context: NatsPersistentMessageContext?)
+    class Delivery(val id: Long, val context: NatsPersistentContext?)
 
     class OrderImpl : OrderService {
         val deliveries = Channel<Delivery>(Channel.UNLIMITED)
         val bigReceived = Channel<ByteArray>(Channel.UNLIMITED)
         val totalCalls = AtomicInteger()
-        val totalContexts = Channel<NatsPersistentMessageContext?>(Channel.UNLIMITED)
+        val totalContexts = Channel<NatsPersistentContext?>(Channel.UNLIMITED)
 
         @Volatile
-        var onPlace: suspend (Long, NatsPersistentMessageContext?) -> Unit = { _, _ -> }
+        var onPlace: suspend (Long, NatsPersistentContext?) -> Unit = { _, _ -> }
 
         @Volatile
         var onTotal: suspend (Long) -> Long = { it * 10 }
 
         override suspend fun place(id: Long) {
-            val context = natsPersistentMessageContextOrNull()
+            val context = natsPersistentContextOrNull()
             deliveries.send(Delivery(id, context))
             onPlace(id, context)
         }
 
         override suspend fun total(id: Long): Long {
             totalCalls.incrementAndGet()
-            totalContexts.send(natsPersistentMessageContextOrNull())
+            totalContexts.send(natsPersistentContextOrNull())
             return onTotal(id)
         }
 
@@ -89,11 +89,11 @@ class NatsPersistentServiceTest {
 
     @NatsService("timed")
     @NatsPersistent
-    @NatsTimeout(42)
+    @NatsCallTimeout(42)
     interface TimedService {
         suspend fun inherited(): Long
 
-        @NatsTimeout(3)
+        @NatsCallTimeout(3)
         suspend fun own(): Long
 
         @NatsPersistent(false)
@@ -111,7 +111,7 @@ class NatsPersistentServiceTest {
     @NatsService("bad-all")
     @NatsPersistent
     interface PersistentAllService {
-        @NatsResponders(ResponderMode.ALL)
+        @NatsRecipients(Recipients.ALL_INSTANCES)
         suspend fun find(id: Long): Answer<String>
     }
 
@@ -121,7 +121,7 @@ class NatsPersistentServiceTest {
         suspend fun store(id: Long)
 
         @NatsPersistent(false)
-        @NatsResponders(ResponderMode.ALL)
+        @NatsRecipients(Recipients.ALL_INSTANCES)
         suspend fun find(id: Long): Answer<String>
     }
 
@@ -186,7 +186,7 @@ class NatsPersistentServiceTest {
     }
 
     @Test
-    fun `persistent ALL method is rejected`() = withClient { client ->
+    fun `persistent ALL_INSTANCES method is rejected`() = withClient { client ->
         val message = assertFailsWith<IllegalArgumentException> {
             client.serviceDescriptor(PersistentAllService::class.java)
         }.message.orEmpty()
@@ -194,7 +194,7 @@ class NatsPersistentServiceTest {
     }
 
     @Test
-    fun `ALL method opted out of Persistent is accepted`() = withClient { client ->
+    fun `ALL_INSTANCES method opted out of Persistent is accepted`() = withClient { client ->
         val mixed = client.serviceDescriptor(MixedService::class.java)
         assertTrue(mixed.method("store").persistent)
         assertFalse(mixed.method("find").persistent)
@@ -220,7 +220,7 @@ class NatsPersistentServiceTest {
 
             val delivery = withTimeout(10.seconds) { impl.deliveries.receive() }
             assertEquals(1, delivery.id)
-            val context = assertNotNull(delivery.context, "NatsPersistentMessageContext missing")
+            val context = assertNotNull(delivery.context, "NatsPersistentContext missing")
             assertEquals(1, context.deliveryCount)
             assertTrue(context.messageId.isNotBlank())
 
@@ -371,7 +371,7 @@ class NatsPersistentServiceTest {
             val first = NatsClient.create(name) as NatsClientImpl
             val streams = first.serviceDescriptor(OrderService::class.java).streams!!
             try {
-                val started = CompletableDeferred<NatsPersistentMessageContext>()
+                val started = CompletableDeferred<NatsPersistentContext>()
                 first.registerService<OrderService>(OrderImpl().apply {
                     onPlace = { _, context ->
                         started.complete(context!!)
@@ -449,7 +449,7 @@ class NatsPersistentServiceTest {
     @Test
     fun `expired persistent rpc is never executed`() = withClient { client ->
         val orders = client.service<OrderService>()
-        assertFailsWith<NatsRequestTimeoutException> {
+        assertFailsWith<NatsCallTimeoutException> {
             withNatsCallTimeout(1.seconds) { orders.total(6) }
         }
 
@@ -515,7 +515,7 @@ class NatsPersistentServiceTest {
 
         try {
             val start = TimeSource.Monotonic.markNow()
-            assertFailsWith<NatsRequestTimeoutException> {
+            assertFailsWith<NatsCallTimeoutException> {
                 withNatsCallTimeout(12.seconds) { client.service<OrderService>().place(1) }
             }
             assertTrue(start.elapsedNow() >= 11500.milliseconds, "took ${start.elapsedNow()}")

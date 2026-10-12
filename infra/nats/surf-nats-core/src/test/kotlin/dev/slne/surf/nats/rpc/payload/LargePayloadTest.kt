@@ -5,9 +5,9 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.rpc.Answer
-import dev.slne.surf.nats.rpc.NatsResponders
+import dev.slne.surf.nats.rpc.NatsRecipients
 import dev.slne.surf.nats.rpc.NatsService
-import dev.slne.surf.nats.rpc.ResponderMode
+import dev.slne.surf.nats.rpc.Recipients
 import dev.slne.surf.nats.rpc.withNatsCallTimeout
 import io.nats.client.api.ObjectStoreConfiguration
 import io.nats.client.api.StorageType
@@ -49,7 +49,7 @@ class LargePayloadTest {
     }
 
     @NatsService("blob-fanout")
-    @NatsResponders(ResponderMode.ALL)
+    @NatsRecipients(Recipients.ALL_INSTANCES)
     interface BlobFanout {
         suspend fun push(data: ByteArray)
         suspend fun find(size: Int): Answer<ByteArray>
@@ -62,7 +62,7 @@ class LargePayloadTest {
             received.send(data)
         }
 
-        override suspend fun find(size: Int): Answer<ByteArray> = Answer.Of(blob(size))
+        override suspend fun find(size: Int): Answer<ByteArray> = Answer.Known(blob(size))
     }
 
     internal class Fixture(val client: NatsClientImpl, val blobs: BlobService, val impl: BlobImpl)
@@ -188,13 +188,13 @@ class LargePayloadTest {
     }
 
     @Test
-    fun `large ALL answer is resolved and deleted`() = withService {
+    fun `large ALL_INSTANCES answer is resolved and deleted`() = withService {
         client.registerService<BlobFanout>(FanoutImpl())
         val before = liveObjects()
 
         val answer = withNatsCallTimeout(30.seconds) { client.service<BlobFanout>().find(LARGE) }
 
-        val value = assertIs<Answer.Of<ByteArray>>(answer).value
+        val value = assertIs<Answer.Known<ByteArray>>(answer).value
         assertContentEquals(blob(LARGE), value)
         assertEquals(before, liveObjects())
     }

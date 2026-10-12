@@ -70,14 +70,14 @@ internal class ServiceRegistration(
         for (method in descriptor.methods) {
             if (method.persistent) continue
             val handler = MessageHandler { onRequest(method, it) }
-            when (method.responders) {
-                ResponderMode.ONE -> dispatcher.subscribe(
+            when (method.recipients) {
+                Recipients.ANY_INSTANCE -> dispatcher.subscribe(
                     method.subject,
                     descriptor.responderGroup,
                     handler
                 )
 
-                ResponderMode.ALL -> dispatcher.subscribe(method.subject, handler)
+                Recipients.ALL_INSTANCES -> dispatcher.subscribe(method.subject, handler)
             }
         }
 
@@ -104,7 +104,7 @@ internal class ServiceRegistration(
         if (!left.isPositive()) return dropExpired(message, left)
 
         val replyTo = message.replyTo
-        val deletePayload = method.responders == ResponderMode.ONE
+        val deletePayload = method.recipients == Recipients.ANY_INSTANCE
 
         scope.launch(coroutineNames[method.index]) {
             val timeout = remaining(deadline, method.timeout)
@@ -140,7 +140,7 @@ internal class ServiceRegistration(
             return
         }
         val meta = message.metaData()
-        val context = NatsPersistentMessageContext(
+        val context = NatsPersistentContext(
             messageId = message.header(NatsJetStreamConstants.MSG_ID_HDR)
                 ?: meta.streamSequence().toString(),
             deliveryCount = meta.deliveredCount(),
@@ -448,13 +448,13 @@ internal class ServiceRegistration(
             )
 
             is ResultKind.Answer -> when (val answer = value as Answer<*>) {
-                is Answer.Of -> Reply(
+                is Answer.Known -> Reply(
                     headers,
                     client.codec.encode(result.serializer, answer.value, format)
                 )
 
-                Answer.None -> Reply(
-                    headers.add(NatsHeaders.ANSWER, NatsHeaders.ANSWER_NONE),
+                Answer.Unknown -> Reply(
+                    headers.add(NatsHeaders.ANSWER, NatsHeaders.ANSWER_UNKNOWN),
                     NatsHeaders.EMPTY_BODY
                 )
             }

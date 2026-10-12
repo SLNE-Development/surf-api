@@ -7,6 +7,7 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.rpc.Recipients
 import io.nats.client.Dispatcher
 import io.nats.client.Message
 import io.nats.client.MessageHandler
@@ -22,7 +23,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal class EventSubscriptions(private val client: NatsClientImpl) {
 
     private data class Key(val subject: String, val queueGroup: String?)
-    private class Target(val invoker: ListenerInvoker, val ignoreOwn: Boolean)
+    private class Target(val invoker: ListenerInvoker, val ignoreFromThisClient: Boolean)
 
     private class Entry(
         val descriptor: EventDescriptor,
@@ -48,7 +49,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             }
         }
 
-        val target = Target(invoker, method.ignoreOwn)
+        val target = Target(invoker, method.ignoreFromThisClient)
 
         val existing = entries[key]
         if (existing != null) {
@@ -110,9 +111,9 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         val origin = message.header(NatsHeaders.ORIGIN)
         val contentType = message.header(NatsHeaders.CONTENT_TYPE)
 
-        val own = origin == client.origin
+        val fromThisClient = origin == client.origin
 
-        if (own && targets.all { it.ignoreOwn }) return
+        if (fromThisClient && targets.all { it.ignoreFromThisClient }) return
 
         val event = try {
             client.codec.decode(descriptor.serializers, message.data, contentType)
@@ -124,10 +125,10 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             return
         }
 
-        val context = NatsEventContext(origin, own) + name
+        val context = NatsEventContext(origin, fromThisClient) + name
 
         for (target in targets) {
-            if (own && target.ignoreOwn) continue
+            if (fromThisClient && target.ignoreFromThisClient) continue
             client.clientScope.launch(context) {
                 try {
                     target.invoker.call(event)
@@ -146,6 +147,6 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     }
 
     private fun keyOf(method: ListenerMethod): Key {
-        return Key(method.descriptor.subject, if (method.loadBalanced) client.name else null)
+        return Key(method.descriptor.subject, if (method.recipients == Recipients.ANY_INSTANCE) client.name else null)
     }
 }

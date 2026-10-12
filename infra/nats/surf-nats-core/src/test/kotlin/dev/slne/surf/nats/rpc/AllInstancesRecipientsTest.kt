@@ -22,16 +22,16 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AllNatsRespondersTest {
+class AllInstancesRecipientsTest {
 
     @NatsService("finder")
-    @NatsResponders(ResponderMode.ALL)
+    @NatsRecipients(Recipients.ALL_INSTANCES)
     interface FinderService {
         suspend fun find(id: Long): Answer<String>
         suspend fun broadcast(message: String)
     }
 
-    class FinderImpl(private val answer: (Long) -> Answer<String> = { Answer.None }) :
+    class FinderImpl(private val answer: (Long) -> Answer<String> = { Answer.Unknown }) :
         FinderService {
         val broadcasts = Channel<String>(Channel.UNLIMITED)
 
@@ -43,12 +43,12 @@ class AllNatsRespondersTest {
     }
 
     sealed interface Behaviour {
-        data class Of(val value: String) : Behaviour
-        data object None : Behaviour
+        data class Known(val value: String) : Behaviour
+        data object Unknown : Behaviour
         data class Fail(val type: String, val message: String) : Behaviour
         data object Hang : Behaviour
 
-        /** A reply without `Surf-Error` and `Surf-Answer: none` whose body cannot be decoded. */
+        /** A reply without `Surf-Error` and `Surf-Answer: unknown` whose body cannot be decoded. */
         data class Garbage(val withContentType: Boolean = true) : Behaviour
     }
 
@@ -94,15 +94,15 @@ class AllNatsRespondersTest {
                 NatsHeaders.base(client.name, WireFormat.CBOR).put(NatsHeaders.ORIGIN, origin)
 
             when (val answer = behaviour(id)) {
-                is Behaviour.Of -> {
+                is Behaviour.Known -> {
                     val serializer = (find.result as ResultKind.Answer).serializer
                     val data = client.codec.encode(serializer, answer.value, WireFormat.CBOR)
                     connection.publish(request.replyTo, headers, data)
                 }
 
-                Behaviour.None -> connection.publish(
+                Behaviour.Unknown -> connection.publish(
                     request.replyTo,
-                    headers.add(NatsHeaders.ANSWER, NatsHeaders.ANSWER_NONE),
+                    headers.add(NatsHeaders.ANSWER, NatsHeaders.ANSWER_UNKNOWN),
                     ByteArray(0)
                 )
 
@@ -143,57 +143,57 @@ class AllNatsRespondersTest {
     fun disconnect() = runBlocking { NatsInstance.instance.disable() }
 
     @Test
-    fun `first Of answer wins immediately`() = withClient { client ->
+    fun `first Known answer wins immediately`() = withClient { client ->
         withInstances(
-            FakeInstance(client) { Behaviour.None },
-            FakeInstance(client) { Behaviour.Of("server-$it") },
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Known("server-$it") },
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
             val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(7) } }
 
-            assertEquals(Answer.Of("server-7"), answer)
+            assertEquals(Answer.Known("server-7"), answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
         }
     }
 
     @Test
-    fun `all known instances answering None ends before the timeout`() = withClient { client ->
+    fun `all known instances answering Unknown ends before the timeout`() = withClient { client ->
         withInstances(
-            FakeInstance(client) { Behaviour.None },
-            FakeInstance(client) { Behaviour.None },
-            FakeInstance(client) { Behaviour.None },
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Unknown },
         ) {
             val finder = warmFinder(client)
             val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(1) } }
 
-            assertEquals(Answer.None, answer)
+            assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
         }
     }
 
     @Test
-    fun `hanging instance delays None until the timeout`() = withClient { client ->
+    fun `hanging instance delays Unknown until the timeout`() = withClient { client ->
         withInstances(
-            FakeInstance(client) { Behaviour.None },
-            FakeInstance(client) { Behaviour.None },
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Unknown },
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
             val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(1) } }
 
-            assertEquals(Answer.None, answer)
+            assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
         }
     }
 
     @Test
-    fun `failure without any Of becomes NatsRemoteException once all answered`() =
+    fun `failure without any Known becomes NatsRemoteException once all answered`() =
         withClient { client ->
             withInstances(
                 FakeInstance(client) { Behaviour.Fail("java.lang.IllegalStateException", "boom") },
-                FakeInstance(client) { Behaviour.None },
-                FakeInstance(client) { Behaviour.None },
+                FakeInstance(client) { Behaviour.Unknown },
+                FakeInstance(client) { Behaviour.Unknown },
             ) {
                 val finder = warmFinder(client)
                 val start = TimeSource.Monotonic.markNow()
@@ -219,36 +219,36 @@ class AllNatsRespondersTest {
     }
 
     @Test
-    fun `Of wins over a failure`() = withClient { client ->
+    fun `Known wins over a failure`() = withClient { client ->
         withInstances(
             FakeInstance(client) { Behaviour.Fail("java.lang.IllegalStateException", "boom") },
-            FakeInstance(client) { Behaviour.Of("found") },
+            FakeInstance(client) { Behaviour.Known("found") },
         ) {
             val finder = warmFinder(client)
-            assertEquals(Answer.Of("found"), withNatsCallTimeout(5.seconds) { finder.find(1) })
+            assertEquals(Answer.Known("found"), withNatsCallTimeout(5.seconds) { finder.find(1) })
         }
     }
 
     @Test
-    fun `undecodable answer does not hide an Of from another instance`() = withClient { client ->
+    fun `undecodable answer does not hide an Known from another instance`() = withClient { client ->
         for (garbage in listOf(Behaviour.Garbage(), Behaviour.Garbage(withContentType = false))) {
             withInstances(
                 FakeInstance(client) { garbage },
-                FakeInstance(client) { Behaviour.Of("found-$it") },
+                FakeInstance(client) { Behaviour.Known("found-$it") },
             ) {
                 val finder = warmFinder(client)
-                assertEquals(Answer.Of("found-5"), withNatsCallTimeout(5.seconds) { finder.find(5) }, "$garbage")
+                assertEquals(Answer.Known("found-5"), withNatsCallTimeout(5.seconds) { finder.find(5) }, "$garbage")
             }
         }
     }
 
     @Test
-    fun `undecodable answer without any Of is reported instead of None`() = withClient { client ->
+    fun `undecodable answer without any Known is reported instead of Unknown`() = withClient { client ->
         for (garbage in listOf(Behaviour.Garbage(), Behaviour.Garbage(withContentType = false))) {
             withInstances(
                 FakeInstance(client) { garbage },
-                FakeInstance(client) { Behaviour.None },
-                FakeInstance(client) { Behaviour.None },
+                FakeInstance(client) { Behaviour.Unknown },
+                FakeInstance(client) { Behaviour.Unknown },
             ) {
                 val finder = warmFinder(client)
                 val start = TimeSource.Monotonic.markNow()
@@ -269,13 +269,13 @@ class AllNatsRespondersTest {
     @Test
     fun `cold tracker does not end early`() = withClient { client ->
         withInstances(
-            FakeInstance(client) { Behaviour.None },
-            FakeInstance(client) { Behaviour.None },
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Unknown },
         ) {
             val finder = client.service<FinderService>() // no warm-up
             val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(1) } }
 
-            assertEquals(Answer.None, answer)
+            assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
         }
     }
@@ -283,65 +283,65 @@ class AllNatsRespondersTest {
     @Test
     fun `instance that left is no longer expected`() = withClient { client ->
         withInstances(
-            FakeInstance(client) { Behaviour.None },
-            FakeInstance(client) { Behaviour.None },
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Unknown },
         ) {
-            val leaving = FakeInstance(client) { Behaviour.None }
+            val leaving = FakeInstance(client) { Behaviour.Unknown }
             val finder = warmFinder(client)
             leaving.close()
             delay(200.milliseconds) // let the leave arrive
 
             val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(1) } }
 
-            assertEquals(Answer.None, answer)
+            assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
         }
     }
 
     @Test
     fun `unannounced instance that answers is counted for later calls`() = withClient { client ->
-        withInstances(FakeInstance(client) { if (it == 1L) Behaviour.Hang else Behaviour.None }) {
+        withInstances(FakeInstance(client) { if (it == 1L) Behaviour.Hang else Behaviour.Unknown }) {
             val hang = AtomicBoolean(false)
             FakeInstance(
                 client,
                 announce = false
-            ) { if (hang.get()) Behaviour.Hang else Behaviour.None }.use {
+            ) { if (hang.get()) Behaviour.Hang else Behaviour.Unknown }.use {
                 val finder = warmFinder(client)
-                assertEquals(Answer.None, withNatsCallTimeout(1.seconds) { finder.find(1) })
+                assertEquals(Answer.Unknown, withNatsCallTimeout(1.seconds) { finder.find(1) })
 
                 hang.set(true)
                 val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(2) } }
-                assertEquals(Answer.None, answer)
+                assertEquals(Answer.Unknown, answer)
                 assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
             }
         }
     }
 
     @Test
-    fun `no responders ends immediately with None`() = withClient { client ->
+    fun `no responders ends immediately with Unknown`() = withClient { client ->
         val finder = warmFinder(client)
         val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(1) } }
 
-        assertEquals(Answer.None, answer)
+        assertEquals(Answer.Unknown, answer)
         assertTrue(elapsed < 2.seconds, "took $elapsed")
     }
 
     @Test
     fun `registered service answers its own client`() = withClient { client ->
-        client.registerService<FinderService>(FinderImpl { Answer.Of("self-$it") })
+        client.registerService<FinderService>(FinderImpl { Answer.Known("self-$it") })
         val finder = warmFinder(client)
 
-        assertEquals(Answer.Of("self-3"), withNatsCallTimeout(5.seconds) { finder.find(3) })
+        assertEquals(Answer.Known("self-3"), withNatsCallTimeout(5.seconds) { finder.find(3) })
     }
 
     @Test
-    fun `registered service answering None ends early through its own presence`() =
+    fun `registered service answering Unknown ends early through its own presence`() =
         withClient { client ->
             client.registerService<FinderService>(FinderImpl())
             val finder = warmFinder(client)
 
             val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(3) } }
-            assertEquals(Answer.None, answer)
+            assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
         }
 
@@ -349,8 +349,8 @@ class AllNatsRespondersTest {
     fun `unit method fans out to every instance without waiting`() = withClient { client ->
         val impl = FinderImpl()
         client.registerService<FinderService>(impl)
-        val first = FakeInstance(client) { Behaviour.None }
-        val second = FakeInstance(client) { Behaviour.None }
+        val first = FakeInstance(client) { Behaviour.Unknown }
+        val second = FakeInstance(client) { Behaviour.Unknown }
 
         withInstances(first, second) {
             val finder = client.service<FinderService>()
@@ -367,13 +367,13 @@ class AllNatsRespondersTest {
 
     @Test
     fun `parallel calls keep their answers apart`() = withClient { client ->
-        withInstances(FakeInstance(client) { Behaviour.Of("answer-$it") }) {
+        withInstances(FakeInstance(client) { Behaviour.Known("answer-$it") }) {
             val finder = warmFinder(client)
             val answers = withNatsCallTimeout(5.seconds) {
                 (1L..20L).map { id -> async { finder.find(id) } }.awaitAll()
             }
 
-            assertEquals((1L..20L).map { Answer.Of("answer-$it") }, answers)
+            assertEquals((1L..20L).map { Answer.Known("answer-$it") }, answers)
         }
     }
 
@@ -403,7 +403,7 @@ class AllNatsRespondersTest {
         }
 
     @Test
-    fun `presence subject only exists for services with ALL methods`() = withClient { client ->
+    fun `presence subject only exists for services with ALL_INSTANCES methods`() = withClient { client ->
         assertEquals(
             "${client.name}.\$presence.finder",
             client.serviceDescriptor(FinderService::class.java).presenceSubject

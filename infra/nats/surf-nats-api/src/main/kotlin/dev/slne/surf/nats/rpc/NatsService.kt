@@ -11,7 +11,7 @@ public annotation class NatsService(
     val name: String = "",
 
     /**
-     * If false, the service is addressed without the client prefix and can be called and served by any client
+     * If true, the service is addressed without the client prefix and can be called and served by any client
      */
-    val prefixed: Boolean = true,
+    val global: Boolean = false,
 )

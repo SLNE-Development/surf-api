@@ -1,16 +1,16 @@
 package dev.slne.surf.nats.test.common.rpc
 
 import dev.slne.surf.nats.rpc.Answer
-import dev.slne.surf.nats.rpc.NatsResponders
+import dev.slne.surf.nats.rpc.NatsRecipients
 import dev.slne.surf.nats.rpc.NatsService
-import dev.slne.surf.nats.rpc.ResponderMode
+import dev.slne.surf.nats.rpc.Recipients
 
 @NatsService("paper")
-@NatsResponders(ResponderMode.ALL)
+@NatsRecipients(Recipients.ALL_INSTANCES)
 interface PaperTestService {
 
     /**
-     * Returns an info string about the player if online on the server, or Answer.None if not found.
+     * Returns an info string about the player if online on the server, or Answer.Unknown if not found.
      * Sent to all paper servers.
      */
     suspend fun findPlayer(name: String): Answer<String>

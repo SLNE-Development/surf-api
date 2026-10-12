@@ -7,7 +7,7 @@ import kotlin.time.Duration
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-public annotation class NatsTimeout(val seconds: Long)
+public annotation class NatsCallTimeout(val seconds: Long)
 
 // TODO: 08.10.2026 17:46 - reference somewhere in the kdocs
 

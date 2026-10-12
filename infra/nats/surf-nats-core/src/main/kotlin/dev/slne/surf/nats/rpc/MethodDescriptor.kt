@@ -11,7 +11,7 @@ internal class MethodDescriptor(
     val method: Method,
     val index: Int,
     val subject: String, // <prefix>.$rpc.<service>.<method>
-    val responders: ResponderMode,
+    val recipients: Recipients,
     val timeout: Duration,
     val arguments: WireSerializers<Array<Any?>>,
     val result: ResultKind,

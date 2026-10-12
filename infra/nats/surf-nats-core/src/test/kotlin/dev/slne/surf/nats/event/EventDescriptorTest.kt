@@ -19,7 +19,7 @@ class EventDescriptorTest {
     @NatsFormat(WireFormat.JSON)
     data class PunishmentCreated(val id: Long)
 
-    @NatsEvent("panel.punishment.created", prefixed = false)
+    @NatsEvent("panel.punishment.created", global = true)
     data class ExternalEvent(val id: Long)
 
     @NatsEvent("invalid subject")
@@ -28,8 +28,8 @@ class EventDescriptorTest {
     @NatsEvent("\$rpc.created")
     data class DollarPrefixedEvent(val id: Long)
 
-    @NatsEvent("panel.\$persist", prefixed = false)
-    data class DollarUnprefixedEvent(val id: Long)
+    @NatsEvent("panel.\$persist", global = true)
+    data class DollarGlobalEvent(val id: Long)
 
     @NatsEvent("a.b.c")
     data class MultiTokenEvent(val id: Long)
@@ -57,7 +57,7 @@ class EventDescriptorTest {
     }
 
     @Test
-    fun `unprefixed subject is used as is`() {
+    fun `global subject is used as is`() {
         assertEquals("panel.punishment.created", describe(ExternalEvent::class.java).subject)
     }
 
@@ -69,7 +69,7 @@ class EventDescriptorTest {
     @Test
     fun `subject token starting with a dollar sign is rejected`() {
         assertFailsWith<IllegalArgumentException> { describe(DollarPrefixedEvent::class.java) }
-        assertFailsWith<IllegalArgumentException> { describe(DollarUnprefixedEvent::class.java) }
+        assertFailsWith<IllegalArgumentException> { describe(DollarGlobalEvent::class.java) }
     }
 
     @Test

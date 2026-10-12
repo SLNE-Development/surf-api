@@ -35,7 +35,7 @@ public class NatsNoRespondersException @InternalNatsApi constructor(
     }
 }
 
-public class NatsRequestTimeoutException @InternalNatsApi constructor(
+public class NatsCallTimeoutException @InternalNatsApi constructor(
     public val subject: String,
     public val timeout: Duration,
 ) : NatsRpcException("No response on $subject within $timeout") {

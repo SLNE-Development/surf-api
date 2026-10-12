@@ -40,7 +40,7 @@ class ServiceProxyTest {
         suspend fun fire(message: String)
         suspend fun lookup(id: Long): Answer<String>
 
-        @NatsTimeout(15)
+        @NatsCallTimeout(15)
         suspend fun slow(): String
 
         @NatsFormat(WireFormat.JSON)
@@ -132,14 +132,14 @@ class ServiceProxyTest {
         val method = client.method("lookup")
 
         respond(client, "lookup") { reply(client, method, "server-1", it) }.use {
-            assertEquals(Answer.Of("server-1"), calc.lookup(1))
+            assertEquals(Answer.Known("server-1"), calc.lookup(1))
         }
 
         respond(client, "lookup") { request ->
-            val headers = Headers().add(NatsHeaders.ANSWER, NatsHeaders.ANSWER_NONE)
+            val headers = Headers().add(NatsHeaders.ANSWER, NatsHeaders.ANSWER_UNKNOWN)
             NatsConnectionManager.connection().publish(request.replyTo, headers, ByteArray(0))
         }.use {
-            assertEquals(Answer.None, calc.lookup(1))
+            assertEquals(Answer.Unknown, calc.lookup(1))
         }
     }
 
@@ -163,10 +163,10 @@ class ServiceProxyTest {
     }
 
     @Test
-    fun `silent responder times out and withNatsTimeout overrides NatsTimeout`() = withService { client, calc ->
+    fun `silent responder times out and withNatsCallTimeout overrides NatsCallTimeout`() = withService { client, calc ->
         respond(client, "slow") { /* never replies */ }.use {
             val start = TimeSource.Monotonic.markNow()
-            val exception = assertFailsWith<NatsRequestTimeoutException> {
+            val exception = assertFailsWith<NatsCallTimeoutException> {
                 withNatsCallTimeout(300.milliseconds) { calc.slow() }
             }
             assertEquals(300.milliseconds, exception.timeout)

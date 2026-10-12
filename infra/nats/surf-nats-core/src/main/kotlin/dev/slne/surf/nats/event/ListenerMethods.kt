@@ -2,6 +2,7 @@ package dev.slne.surf.nats.event
 
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.client.NatsClientImpl
+import dev.slne.surf.nats.rpc.Recipients
 import dev.slne.surf.nats.util.isSuspend
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
@@ -13,8 +14,8 @@ import kotlin.reflect.jvm.kotlinFunction
 internal class ListenerMethod(
     val method: Method,
     val descriptor: EventDescriptor,
-    val loadBalanced: Boolean,
-    val ignoreOwn: Boolean,
+    val recipients: Recipients,
+    val ignoreFromThisClient: Boolean,
 )
 
 @InternalNatsApi
@@ -47,8 +48,8 @@ internal object ListenerMethods {
                     continue
                 }
 
-                if (annotation.loadBalanced && annotation.ignoreOwn) {
-                    problems.add("${method.name}: ignoreOwn cannot be combined with loadBalanced")
+                if (annotation.recipients != Recipients.ALL_INSTANCES && annotation.ignoreFromThisClient) {
+                    problems.add("${method.name}: ignoreFromThisClient requires recipients = ALL_INSTANCES")
                     continue
                 }
 
@@ -64,8 +65,8 @@ internal object ListenerMethods {
                 methods += ListenerMethod(
                     method,
                     descriptor,
-                    annotation.loadBalanced,
-                    annotation.ignoreOwn
+                    annotation.recipients,
+                    annotation.ignoreFromThisClient
                 )
             }
 

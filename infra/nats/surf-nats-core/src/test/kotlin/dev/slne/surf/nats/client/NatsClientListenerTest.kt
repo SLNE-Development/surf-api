@@ -11,6 +11,7 @@ import dev.slne.surf.nats.event.natsEventContext
 import dev.slne.surf.nats.event.natsEventContextOrNull
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.rpc.Recipients
 import io.nats.client.JetStreamStatusException
 import io.nats.client.impl.Headers
 import kotlinx.serialization.Contextual
@@ -45,7 +46,7 @@ class NatsClientListenerTest {
     @NatsEvent("player")
     data class PlayerEvent(val player: @Contextual UUID)
 
-    @NatsEvent("panel.listener-test.created", prefixed = false)
+    @NatsEvent("panel.listener-test.created", global = true)
     data class PanelEvent(val id: Long)
 
     @NatsEvent("balanced")
@@ -65,7 +66,7 @@ class NatsClientListenerTest {
 
     data class NotAnEvent(val id: Long)
 
-    @NatsEvent("listener-test.origin", prefixed = false)
+    @NatsEvent("listener-test.origin", global = true)
     data class OriginEvent(val id: Long)
 
     class Recorder<T> {
@@ -127,7 +128,7 @@ class NatsClientListenerTest {
     class BalancedListener {
         val recorder = Recorder<Balanced>()
 
-        @NatsListener(loadBalanced = true)
+        @NatsListener(recipients = Recipients.ANY_INSTANCE)
         fun on(event: Balanced) {
             recorder.received.trySend(event)
         }
@@ -173,7 +174,7 @@ class NatsClientListenerTest {
     }
 
     class QueueSharedBBalancedListener {
-        @NatsListener(loadBalanced = true)
+        @NatsListener(recipients = Recipients.ANY_INSTANCE)
         fun on(event: QueueSharedB) = Unit
     }
 
@@ -205,7 +206,7 @@ class NatsClientListenerTest {
     class IgnoreOwnListener {
         val recorder = Recorder<OriginEvent>()
 
-        @NatsListener(ignoreOwn = true)
+        @NatsListener(ignoreFromThisClient = true)
         fun on(event: OriginEvent) {
             recorder.received.trySend(event)
         }
@@ -224,7 +225,7 @@ class NatsClientListenerTest {
         val ignoring = Recorder<OriginEvent>()
         val all = Recorder<OriginEvent>()
 
-        @NatsListener(ignoreOwn = true)
+        @NatsListener(ignoreFromThisClient = true)
         fun ignoring(event: OriginEvent) {
             ignoring.received.trySend(event)
         }
@@ -246,7 +247,7 @@ class NatsClientListenerTest {
 
     @Suppress("unused", "UNUSED_PARAMETER")
     class BalancedIgnoreOwnListener {
-        @NatsListener(loadBalanced = true, ignoreOwn = true)
+        @NatsListener(recipients = Recipients.ANY_INSTANCE, ignoreFromThisClient = true)
         fun balancedIgnoringOwn(event: Created) = Unit
     }
 
@@ -303,7 +304,7 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `unprefixed event is received on the plain subject`() = withClient("listen-unprefixed") { client ->
+    fun `global event is received on the plain subject`() = withClient("listen-global") { client ->
         val listener = PanelListener()
         client.registerListener(listener)
 
@@ -451,7 +452,7 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `ignoreOwn skips events of the same client and keeps events of other clients`() =
+    fun `ignoreFromThisClient skips events of the same client and keeps events of other clients`() =
         withClient("listen-own-a") { client ->
             val listener = IgnoreOwnListener()
             client.registerListener(listener)
@@ -466,7 +467,7 @@ class NatsClientListenerTest {
         }
 
     @Test
-    fun `listener without ignoreOwn receives own events`() = withClient("listen-own-default") { client ->
+    fun `listener without ignoreFromThisClient receives own events`() = withClient("listen-own-default") { client ->
         val listener = AllOriginsListener()
         client.registerListener(listener)
 
@@ -476,7 +477,7 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `ignoreOwn is applied per listener method`() = withClient("listen-own-mixed-a") { client ->
+    fun `ignoreFromThisClient is applied per listener method`() = withClient("listen-own-mixed-a") { client ->
         val listener = MixedListener()
         client.registerListener(listener)
 
@@ -500,13 +501,13 @@ class NatsClientListenerTest {
             client.publish(OriginEvent(6))
             val (ownEvent, ownContext) = listener.recorder.receiveWithin()
             assertEquals(OriginEvent(6), ownEvent)
-            assertTrue(ownContext.isOwn)
+            assertTrue(ownContext.isFromThisClient)
             assertEquals(client.origin, ownContext.origin)
 
             other.publish(OriginEvent(7))
             val (foreignEvent, foreignContext) = listener.recorder.receiveWithin()
             assertEquals(OriginEvent(7), foreignEvent)
-            assertFalse(foreignContext.isOwn)
+            assertFalse(foreignContext.isFromThisClient)
             assertEquals(other.origin, foreignContext.origin)
         }
     }
@@ -526,17 +527,17 @@ class NatsClientListenerTest {
         val (event, eventContext) = context.recorder.receiveWithin()
         assertEquals(OriginEvent(8), event)
         assertNull(eventContext.origin)
-        assertFalse(eventContext.isOwn)
+        assertFalse(eventContext.isFromThisClient)
         assertEquals(OriginEvent(8), ignoring.recorder.receiveWithin())
     }
 
     @Test
-    fun `ignoreOwn cannot be combined with loadBalanced`() = withClient("listen-own-balanced") { client ->
+    fun `ignoreFromThisClient requires ALL_INSTANCES recipients`() = withClient("listen-own-balanced") { client ->
         val exception = assertFailsWith<IllegalArgumentException> {
             client.registerListener(BalancedIgnoreOwnListener())
         }
         assertContains(exception.message.orEmpty(), "balancedIgnoringOwn")
-        assertContains(exception.message.orEmpty(), "ignoreOwn")
+        assertContains(exception.message.orEmpty(), "ignoreFromThisClient")
     }
 
     @Test

@@ -26,7 +26,7 @@ internal class EventDescriptor(
                 require(simpleName.isNotEmpty()) { "${type.name} needs an explicit subject as it does not have a simple name" }
                 Subjects.kebabCase(simpleName)
             }
-            val subject = if (annotation.prefixed) "$clientName.$localSubject" else localSubject
+            val subject = if (annotation.global) localSubject else "$clientName.$localSubject"
 
             val format = type.getAnnotation(NatsFormat::class.java)?.format ?: WireFormat.CBOR
             val serializers = WireSerializers.of { codec.serializersModule(it).serializer(type) }

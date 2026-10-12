@@ -28,10 +28,10 @@ internal class ServiceDescriptor(
     val methods: List<MethodDescriptor>,
     val presenceSubject: String?,
     val streams: PersistentStreams?,
-    val responderGroup: String, // queue group of ONE methods and durable consumer of persistent methods
-    prefixed: Boolean,
+    val responderGroup: String, // queue group of ANY_INSTANCE methods and durable consumer of persistent methods
+    global: Boolean,
 ) {
-    val registrationKey = if (prefixed) "prefixed:$name" else "unprefixed:$name"
+    val registrationKey = if (global) "global:$name" else "client:$name"
 
     companion object {
         private const val RPC = $$"$rpc"
@@ -47,10 +47,10 @@ internal class ServiceDescriptor(
                 "${type.name} must be annotated with @NatsService"
             }
             val servicePersistent = type.getAnnotation(NatsPersistent::class.java)?.enabled ?: false
-            val serviceResponders =
-                type.getAnnotation(NatsResponders::class.java)?.mode ?: ResponderMode.ONE
+            val serviceRecipients =
+                type.getAnnotation(NatsRecipients::class.java)?.recipients ?: Recipients.ANY_INSTANCE
             val serviceFormat = type.getAnnotation(NatsFormat::class.java)?.format
-            val serviceTimeoutSeconds = type.getAnnotation(NatsTimeout::class.java)?.seconds
+            val serviceTimeoutSeconds = type.getAnnotation(NatsCallTimeout::class.java)?.seconds
             val serviceTimeout = serviceTimeoutSeconds
                 ?.takeIf { it > 0 }
                 ?.seconds
@@ -67,14 +67,14 @@ internal class ServiceDescriptor(
                 problems.add("Service name '$serviceName' is reserved, names ending in 'dlq' collide with dead letter streams")
             }
             if (serviceTimeoutSeconds != null && serviceTimeoutSeconds <= 0) {
-                problems.add("@NatsTimeout on ${type.simpleName} must be positive, was $serviceTimeoutSeconds")
+                problems.add("@NatsCallTimeout on ${type.simpleName} must be positive, was $serviceTimeoutSeconds")
             } else if (serviceTimeoutSeconds != null && serviceTimeout == null) {
-                problems.add("@NatsTimeout on ${type.simpleName} must be finite, was $serviceTimeoutSeconds")
+                problems.add("@NatsCallTimeout on ${type.simpleName} must be finite, was $serviceTimeoutSeconds")
             }
 
-            val prefixed = annotation.prefixed
+            val global = annotation.global
             fun internalSubject(kind: String): String {
-                return if (prefixed) "${client.name}.$kind.$serviceName" else "$serviceName.$kind"
+                return if (global) "$serviceName.$kind" else "${client.name}.$kind.$serviceName"
             }
 
             val candidates = type.methods.filter { m ->
@@ -109,12 +109,12 @@ internal class ServiceDescriptor(
                     return null
                 }
 
-                val responders =
-                    method.getAnnotation(NatsResponders::class.java)?.mode ?: serviceResponders
+                val recipients =
+                    method.getAnnotation(NatsRecipients::class.java)?.recipients ?: serviceRecipients
                 val persistent =
                     method.getAnnotation(NatsPersistent::class.java)?.enabled ?: servicePersistent
-                if (persistent && responders == ResponderMode.ALL) {
-                    methodProblems.add("$name: @NatsPersistent is not supported with ALL responders, mark it @NatsPersistent(false)")
+                if (persistent && recipients == Recipients.ALL_INSTANCES) {
+                    methodProblems.add("$name: @NatsPersistent is not supported with ALL_INSTANCES recipients, mark it @NatsPersistent(false)")
                 }
 
                 val methodToken =
@@ -127,13 +127,13 @@ internal class ServiceDescriptor(
                     methodProblems.add("$name: @NatsMethod name must not start with '$', was '$methodToken'")
                 }
 
-                val timeoutSeconds = method.getAnnotation(NatsTimeout::class.java)?.seconds
+                val timeoutSeconds = method.getAnnotation(NatsCallTimeout::class.java)?.seconds
                 val methodTimeout =
                     timeoutSeconds?.takeIf { it > 0 }?.seconds?.takeIf { it.isFinite() }
                 if (timeoutSeconds != null && timeoutSeconds <= 0) {
-                    methodProblems.add("$name: @NatsTimeout must be positive, was $timeoutSeconds")
+                    methodProblems.add("$name: @NatsCallTimeout must be positive, was $timeoutSeconds")
                 } else if (timeoutSeconds != null && methodTimeout == null) {
-                    methodProblems.add("$name: @NatsTimeout must be finite, was $timeoutSeconds")
+                    methodProblems.add("$name: @NatsCallTimeout must be finite, was $timeoutSeconds")
                 }
                 val timeout = methodTimeout
                     ?: serviceTimeout
@@ -197,8 +197,8 @@ internal class ServiceDescriptor(
                     methodProblems.add("$name: return type (${function.returnType}) is not serializable: ${e.message}")
                     null
                 }
-                if (responders == ResponderMode.ALL && result is ResultKind.Value) {
-                    methodProblems.add("$name uses ALL responders and must return either Answer<T> or Unit")
+                if (recipients == Recipients.ALL_INSTANCES && result is ResultKind.Value) {
+                    methodProblems.add("$name uses ALL_INSTANCES recipients and must return either Answer<T> or Unit")
                 }
 
                 val subject = try {
@@ -227,7 +227,7 @@ internal class ServiceDescriptor(
                     method,
                     index,
                     subject,
-                    responders,
+                    recipients,
                     timeout,
                     arguments,
                     result,
@@ -256,7 +256,7 @@ internal class ServiceDescriptor(
 
             require(methods.isNotEmpty()) { "${type.name} has no service methods" }
 
-            val presenceSubject = if (methods.any { it.responders == ResponderMode.ALL }) {
+            val presenceSubject = if (methods.any { it.recipients == Recipients.ALL_INSTANCES }) {
                 Subjects.requireValidSubject(internalSubject(PRESENCE), "${type.name} presence")
             } else {
                 null
@@ -264,7 +264,7 @@ internal class ServiceDescriptor(
 
             val streams = if (methods.any { it.persistent }) {
                 val stream =
-                    (if (prefixed) "SURF_${client.name}_$serviceName" else "SURF__$serviceName")
+                    (if (global) "SURF__$serviceName" else "SURF_${client.name}_$serviceName")
                         .uppercase()
                         .replace("-", "_")
                 PersistentStreams(
@@ -277,7 +277,7 @@ internal class ServiceDescriptor(
                 null
             }
 
-            val responderGroup = if (prefixed) client.name else serviceName
+            val responderGroup = if (global) serviceName else client.name
             return ServiceDescriptor(
                 type,
                 serviceName,
@@ -285,7 +285,7 @@ internal class ServiceDescriptor(
                 presenceSubject,
                 streams,
                 responderGroup,
-                prefixed,
+                global,
             )
         }
 

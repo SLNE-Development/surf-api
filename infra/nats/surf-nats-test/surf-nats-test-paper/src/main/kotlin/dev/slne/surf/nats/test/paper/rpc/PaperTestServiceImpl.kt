@@ -10,8 +10,8 @@ import org.bukkit.Bukkit
 
 class PaperTestServiceImpl(private val plugin: PaperMain) : PaperTestService {
     override suspend fun findPlayer(name: String): Answer<String> {
-        val player = Bukkit.getPlayerExact(name) ?: return Answer.None
-        return Answer.Of("${player.name} on ${plugin.origin}")
+        val player = Bukkit.getPlayerExact(name) ?: return Answer.Unknown
+        return Answer.Known("${player.name} on ${plugin.origin}")
     }
 
     override suspend fun broadcast(message: String) {

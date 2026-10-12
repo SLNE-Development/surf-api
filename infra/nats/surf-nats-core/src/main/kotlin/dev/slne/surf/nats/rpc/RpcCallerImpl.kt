@@ -61,9 +61,9 @@ internal class RpcCallerImpl(
             NatsHeaders.deadline(timeout)
         ) // Reset the deadline after a possible object store upload
 
-        return when (method.responders) {
-            ResponderMode.ONE -> callOne(method, headers, body, timeout)
-            ResponderMode.ALL -> callAll(method, headers, body, timeout)
+        return when (method.recipients) {
+            Recipients.ANY_INSTANCE -> callOne(method, headers, body, timeout)
+            Recipients.ALL_INSTANCES -> callAll(method, headers, body, timeout)
         }
     }
 
@@ -83,7 +83,7 @@ internal class RpcCallerImpl(
             throw NatsNoRespondersException(method.subject)
         } catch (_: CancellationException) {
             currentCoroutineContext().ensureActive()
-            throw NatsRequestTimeoutException(method.subject, timeout)
+            throw NatsCallTimeoutException(method.subject, timeout)
         }
 
         return decodeReply(method, reply)
@@ -98,7 +98,7 @@ internal class RpcCallerImpl(
         val connection = NatsConnectionManager.connection()
 
         if (method.result == ResultKind.Unit) {
-            // Fan-out to all responders
+            // Fan-out to all instances
             connection.publish(method.subject, headers, body)
             return Unit
         }
@@ -132,7 +132,7 @@ internal class RpcCallerImpl(
         for (reply in replies) {
             if (reply.isStatusMessage) {
                 if (reply.status.isNoResponders) {
-                    return Answer.None
+                    return Answer.Unknown
                 }
                 continue
             }
@@ -148,10 +148,10 @@ internal class RpcCallerImpl(
             when {
                 remoteType != null -> {
                     call.fail(NatsRemoteException(remoteType, reply.data.decodeToString()))
-                    client.logger.warn("ALL responder $origin failed on ${method.subject}: $remoteType")
+                    client.logger.warn("ALL_INSTANCES responder $origin failed on ${method.subject}: $remoteType")
                 }
 
-                reply.header(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_NONE -> Unit
+                reply.header(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_UNKNOWN -> Unit
                 else -> {
                     val decoded = try {
                         Completed(decodeBody(result.serializer, reply))
@@ -160,12 +160,12 @@ internal class RpcCallerImpl(
                     } catch (e: Exception) {
                         call.fail(e)
                         client.logger.warn(
-                            "Undecodable ALL answer from $origin on ${method.subject}",
+                            "Undecodable ALL_INSTANCES answer from $origin on ${method.subject}",
                             e
                         )
                         null
                     }
-                    if (decoded != null) return Answer.Of(decoded.value)
+                    if (decoded != null) return Answer.Known(decoded.value)
                 }
             }
 
@@ -188,10 +188,10 @@ internal class RpcCallerImpl(
             ResultKind.Unit -> Unit
             is ResultKind.Value -> decodeBody(result.serializer, reply)
             is ResultKind.Answer -> {
-                if (reply.header(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_NONE) {
-                    Answer.None
+                if (reply.header(NatsHeaders.ANSWER) == NatsHeaders.ANSWER_UNKNOWN) {
+                    Answer.Unknown
                 } else {
-                    Answer.Of(decodeBody(result.serializer, reply))
+                    Answer.Known(decodeBody(result.serializer, reply))
                 }
             }
         }
@@ -229,7 +229,7 @@ internal class RpcCallerImpl(
                 }
             } catch (_: TimeoutCancellationException) {
                 currentCoroutineContext().ensureActive()
-                throw NatsRequestTimeoutException(method.subject, timeout)
+                throw NatsCallTimeoutException(method.subject, timeout)
             }
             return Unit
         }
@@ -255,7 +255,7 @@ internal class RpcCallerImpl(
             val completed = withTimeoutOrNull(timeout) {
                 publishPersistent(method, headers, body, options)
                 Completed(decodeReply(method, reply.await()))
-            } ?: throw NatsRequestTimeoutException(method.subject, timeout)
+            } ?: throw NatsCallTimeoutException(method.subject, timeout)
             return completed.value
         } finally {
             runCatching { dispatcher.unsubscribe(subscription) }
@@ -323,9 +323,9 @@ internal class RpcCallerImpl(
             }
         }
 
-        fun noAnswer(): Answer.None {
+        fun noAnswer(): Answer.Unknown {
             failure?.let { throw it }
-            return Answer.None
+            return Answer.Unknown
         }
     }
 }

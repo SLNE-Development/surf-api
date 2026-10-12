@@ -16,5 +16,5 @@ public annotation class NatsEvent(
      * If left empty, the class name in kebab-case format will be used
      */
     val subject: String = "",
-    val prefixed: Boolean = true,
+    val global: Boolean = false,
 )

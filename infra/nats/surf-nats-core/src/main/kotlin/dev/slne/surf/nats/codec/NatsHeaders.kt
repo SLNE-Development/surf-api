@@ -21,7 +21,7 @@ internal object NatsHeaders {
     const val DEAD_SUBJECT = "Surf-Dead-Subject"
 
     const val ANSWER = "Surf-Answer"
-    const val ANSWER_NONE = "none"
+    const val ANSWER_UNKNOWN = "unknown"
 
     const val PRESENCE = "Surf-Presence"
     const val PRESENCE_JOIN = "join"

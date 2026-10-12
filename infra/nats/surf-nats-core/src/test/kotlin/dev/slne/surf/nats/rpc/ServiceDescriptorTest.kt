@@ -22,13 +22,13 @@ class ServiceDescriptorTest {
     interface PlayerService {
         suspend fun health(player: String): PlayerHealth?
 
-        @NatsResponders(ResponderMode.ALL)
+        @NatsRecipients(Recipients.ALL_INSTANCES)
         suspend fun findServer(player: String): Answer<String>
 
-        @NatsResponders(ResponderMode.ALL)
+        @NatsRecipients(Recipients.ALL_INSTANCES)
         suspend fun broadcast(message: String)
 
-        @NatsTimeout(15)
+        @NatsCallTimeout(15)
         suspend fun heavyReport(): String
 
         suspend fun shout(
@@ -48,11 +48,11 @@ class ServiceDescriptorTest {
 
     @Suppress("unused")
     @NatsService
-    @NatsResponders(ResponderMode.ALL)
+    @NatsRecipients(Recipients.ALL_INSTANCES)
     interface AllByDefaultService {
         suspend fun lookup(id: Long): Answer<String>
 
-        @NatsResponders(ResponderMode.ONE)
+        @NatsRecipients(Recipients.ANY_INSTANCE)
         suspend fun single(id: Long): String
     }
 
@@ -69,14 +69,14 @@ class ServiceDescriptorTest {
     @Suppress("unused")
     @NatsService("slow-persist")
     @NatsPersistent
-    @NatsTimeout(121)
+    @NatsCallTimeout(121)
     interface TooSlowPersistentService {
         suspend fun store(id: Long)
     }
 
     @Suppress("unused")
     @NatsService("slow-mixed")
-    @NatsTimeout(180)
+    @NatsCallTimeout(180)
     interface SlowMixedService {
         suspend fun core(): String
 
@@ -88,7 +88,7 @@ class ServiceDescriptorTest {
     @NatsService("window-edge")
     interface WindowEdgeService {
         @NatsPersistent
-        @NatsTimeout(120)
+        @NatsCallTimeout(120)
         suspend fun stored(id: Long)
     }
 
@@ -99,7 +99,7 @@ class ServiceDescriptorTest {
         suspend fun overloaded(value: Int): String
         suspend fun overloaded(value: String): String
 
-        @NatsResponders(ResponderMode.ALL)
+        @NatsRecipients(Recipients.ALL_INSTANCES)
         suspend fun allWithValue(): String
         suspend fun badParameter(value: NotSerializable)
         suspend fun starAnswer(): Answer<*>
@@ -107,9 +107,9 @@ class ServiceDescriptorTest {
 
     @Suppress("unused")
     @NatsService("bad-timeout")
-    @NatsTimeout(0)
+    @NatsCallTimeout(0)
     interface InvalidTimeoutService {
-        @NatsTimeout(-5)
+        @NatsCallTimeout(-5)
         suspend fun negative(): String
 
         suspend fun inherited(): String
@@ -137,7 +137,7 @@ class ServiceDescriptorTest {
 
     @Suppress("unused")
     @NatsService("infinite-timeout")
-    @NatsTimeout(Long.MAX_VALUE)
+    @NatsCallTimeout(Long.MAX_VALUE)
     interface InfiniteServiceTimeoutService {
         suspend fun ping(): String
     }
@@ -145,7 +145,7 @@ class ServiceDescriptorTest {
     @Suppress("unused")
     @NatsService("infinite-method-timeout")
     interface InfiniteMethodTimeoutService {
-        @NatsTimeout(Long.MAX_VALUE)
+        @NatsCallTimeout(Long.MAX_VALUE)
         suspend fun wait(): String
     }
 
@@ -195,11 +195,11 @@ class ServiceDescriptorTest {
     }
 
     @Suppress("unused")
-    @NatsService("roles-api", prefixed = false)
-    interface UnprefixedService {
+    @NatsService("roles-api", global = true)
+    interface GlobalService {
         suspend fun lookup(id: Long): String
 
-        @NatsResponders(ResponderMode.ALL)
+        @NatsRecipients(Recipients.ALL_INSTANCES)
         suspend fun find(id: Long): Answer<String>
 
         @NatsPersistent
@@ -301,16 +301,16 @@ class ServiceDescriptorTest {
     @Test
     fun `responder mode comes from the method or the interface`() {
         val player = describe(PlayerService::class.java)
-        assertEquals(ResponderMode.ONE, player.method("health").responders)
-        assertEquals(ResponderMode.ALL, player.method("findServer").responders)
+        assertEquals(Recipients.ANY_INSTANCE, player.method("health").recipients)
+        assertEquals(Recipients.ALL_INSTANCES, player.method("findServer").recipients)
 
         val allByDefault = describe(AllByDefaultService::class.java)
-        assertEquals(ResponderMode.ALL, allByDefault.method("lookup").responders)
-        assertEquals(ResponderMode.ONE, allByDefault.method("single").responders)
+        assertEquals(Recipients.ALL_INSTANCES, allByDefault.method("lookup").recipients)
+        assertEquals(Recipients.ANY_INSTANCE, allByDefault.method("single").recipients)
     }
 
     @Test
-    fun `timeout comes from NatsTimeout`() {
+    fun `timeout comes from NatsCallTimeout`() {
         val descriptor = describe(PlayerService::class.java)
         assertEquals(15.seconds, descriptor.method("heavyReport").timeout)
         assertEquals(RpcDefaults.CORE_TIMEOUT, descriptor.method("health").timeout)
@@ -404,13 +404,13 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `non-positive NatsTimeout on interface and method is rejected`() {
+    fun `non-positive NatsCallTimeout on interface and method is rejected`() {
         val message = assertFailsWith<IllegalArgumentException> {
             describe(InvalidTimeoutService::class.java)
         }.message.orEmpty()
 
-        assertContains(message, "@NatsTimeout on InvalidTimeoutService must be positive, was 0")
-        assertContains(message, "negative: @NatsTimeout must be positive, was -5")
+        assertContains(message, "@NatsCallTimeout on InvalidTimeoutService must be positive, was 0")
+        assertContains(message, "negative: @NatsCallTimeout must be positive, was -5")
     }
 
     @Test
@@ -479,8 +479,8 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `unprefixed service owns the service namespace`() {
-        val descriptor = describe(UnprefixedService::class.java, "transaction")
+    fun `global service owns the service namespace`() {
+        val descriptor = describe(GlobalService::class.java, "transaction")
 
         assertEquals("roles-api.\$rpc.lookup", descriptor.method("lookup").subject)
         assertEquals("roles-api.\$rpc.find", descriptor.method("find").subject)
@@ -496,9 +496,9 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `unprefixed service has the same names in every client`() {
-        val first = describe(UnprefixedService::class.java)
-        val second = describe(UnprefixedService::class.java)
+    fun `global service has the same names in every client`() {
+        val first = describe(GlobalService::class.java)
+        val second = describe(GlobalService::class.java)
 
         assertEquals(first.methods.map { it.subject }, second.methods.map { it.subject })
         assertEquals(first.streams?.stream, second.streams?.stream)
@@ -591,16 +591,16 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `infinite NatsTimeout on interface and method is rejected`() {
+    fun `infinite NatsCallTimeout on interface and method is rejected`() {
         val onInterface = assertFailsWith<IllegalArgumentException> {
             describe(InfiniteServiceTimeoutService::class.java)
         }.message.orEmpty()
-        assertContains(onInterface, "@NatsTimeout on InfiniteServiceTimeoutService must be finite")
+        assertContains(onInterface, "@NatsCallTimeout on InfiniteServiceTimeoutService must be finite")
 
         val onMethod = assertFailsWith<IllegalArgumentException> {
             describe(InfiniteMethodTimeoutService::class.java)
         }.message.orEmpty()
-        assertContains(onMethod, "wait: @NatsTimeout must be finite")
+        assertContains(onMethod, "wait: @NatsCallTimeout must be finite")
     }
 
     @Test

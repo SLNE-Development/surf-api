@@ -33,7 +33,7 @@ import kotlin.time.TimeSource
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExternalCallerTest {
 
-    @NatsService("ext-roles", prefixed = false)
+    @NatsService("ext-roles", global = true)
     interface RolesService {
         @NatsPersistent
         @NatsMethod("whitelist")
@@ -56,7 +56,7 @@ class ExternalCallerTest {
         override suspend fun owner(id: UUID): UUID = id
     }
 
-    @NatsService("ext-late", prefixed = false)
+    @NatsService("ext-late", global = true)
     interface LateService {
         @NatsPersistent
         suspend fun store(id: Long)
@@ -70,7 +70,7 @@ class ExternalCallerTest {
         }
     }
 
-    @NatsService("ext-shared", prefixed = false)
+    @NatsService("ext-shared", global = true)
     interface SharedService {
         @NatsPersistent
         suspend fun store(id: Long)
@@ -114,7 +114,7 @@ class ExternalCallerTest {
         suspend fun put(id: Long)
     }
 
-    @NatsService("coex", prefixed = false)
+    @NatsService("coex", global = true)
     interface CoexOuterService {
         @NatsPersistent
         suspend fun put(id: Long)
@@ -258,10 +258,10 @@ class ExternalCallerTest {
         assertEquals(2L, withTimeout(10.seconds) { impl.stored.receive() })
     }
 
-    // ---- unprefixed services ----
+    // ---- global services ----
 
     @Test
-    fun `unprefixed service is shared between differently named clients`() = test {
+    fun `global service is shared between differently named clients`() = test {
         val first = SharedImpl()
         val second = SharedImpl()
         client().registerService<SharedService>(first)
@@ -286,7 +286,7 @@ class ExternalCallerTest {
     }
 
     @Test
-    fun `prefixed and unprefixed persistent services of the same name coexist`() = test {
+    fun `prefixed and global persistent services of the same name coexist`() = test {
         val client = client("coex")
         val inner = CoexInnerImpl()
         val outer = CoexOuterImpl()
@@ -428,7 +428,7 @@ class ExternalCallerTest {
         } finally {
             clients.forEach { it.close() }
             clients.clear()
-            // Purged instead of deleted: unprefixed streams are shared by tests, and the provisioning cache
+            // Purged instead of deleted: global streams are shared by tests, and the provisioning cache
             // would not notice a deleted stream
             streamsToPurge.forEach { purgeStreams(it.stream, it.dlqStream) }
             streamsToPurge.clear()

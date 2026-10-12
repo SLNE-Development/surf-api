@@ -13,9 +13,10 @@ public class NatsEventContext @InternalNatsApi constructor(
     public val origin: String?,
 
     /**
-     * If true, this event was published by this instance.
+     * If true, this event was published by this client on this instance. Other clients of the same
+     * instance do not count.
      */
-    public val isOwn: Boolean,
+    public val isFromThisClient: Boolean,
 ) : AbstractCoroutineContextElement(Key) {
     public companion object Key : CoroutineContext.Key<NatsEventContext>
 }

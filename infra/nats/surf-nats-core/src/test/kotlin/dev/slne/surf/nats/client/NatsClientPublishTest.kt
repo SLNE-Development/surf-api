@@ -25,7 +25,7 @@ class NatsClientPublishTest {
     @NatsFormat(WireFormat.JSON)
     data class JsonPunishmentCreated(val punishmentId: Long)
 
-    @NatsEvent("panel.punishment.created", prefixed = false)
+    @NatsEvent("panel.punishment.created", global = true)
     data class PanelPunishmentCreated(val id: Long)
 
     @NatsEvent
@@ -63,7 +63,7 @@ class NatsClientPublishTest {
     }
 
     @Test
-    fun `unprefixed event is published without the client prefix`() = withClient("publish-unprefixed") { client ->
+    fun `global event is published without the client prefix`() = withClient("publish-global") { client ->
         val message = publishAndReceive(client, "panel.punishment.created", PanelPunishmentCreated(7))
         assertEquals("panel.punishment.created", message.subject)
     }
