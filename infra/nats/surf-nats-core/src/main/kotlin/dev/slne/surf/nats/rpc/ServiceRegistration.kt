@@ -1,7 +1,8 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.*
-import dev.slne.surf.nats.bytecode.ServiceInvoker
+import dev.slne.surf.nats.InternalNatsApi
+import dev.slne.surf.nats.NatsRegistration
+import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.bytecode.ServiceInvokerFactory
 import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl
@@ -13,11 +14,7 @@ import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.rpc.payload.PayloadBucket
 import dev.slne.surf.nats.rpc.payload.PayloadStore
 import dev.slne.surf.nats.util.rethrowIfFatal
-import io.nats.client.Dispatcher
-import io.nats.client.Message
-import io.nats.client.MessageConsumer
-import io.nats.client.MessageHandler
-import io.nats.client.PublishOptions
+import io.nats.client.*
 import io.nats.client.impl.Headers
 import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
@@ -72,10 +69,14 @@ internal class ServiceRegistration(
 
         for (method in descriptor.methods) {
             if (method.persistent) continue
-            val invoker = invokers[method.index]
-            val handler = MessageHandler { onRequest(method, invoker, it) }
+            val handler = MessageHandler { onRequest(method, it) }
             when (method.responders) {
-                ResponderMode.ONE -> dispatcher.subscribe(method.subject, descriptor.responderGroup, handler)
+                ResponderMode.ONE -> dispatcher.subscribe(
+                    method.subject,
+                    descriptor.responderGroup,
+                    handler
+                )
+
                 ResponderMode.ALL -> dispatcher.subscribe(method.subject, handler)
             }
         }
@@ -96,90 +97,44 @@ internal class ServiceRegistration(
         }
     }
 
-    private fun onRequest(
-        methodDescriptor: MethodDescriptor,
-        invoker: ServiceInvoker,
-        message: Message,
-    ) {
-        val contentType = message.header(NatsHeaders.CONTENT_TYPE)
-        val format = contentType?.let(WireFormat::fromContentType) ?: WireFormat.CBOR
+    private fun onRequest(method: MethodDescriptor, message: Message) {
         val deadline = message.deadlineMillis()
 
-        val left = remaining(deadline, methodDescriptor.timeout)
+        val left = remaining(deadline, method.timeout)
         if (!left.isPositive()) return dropExpired(message, left)
 
         val replyTo = message.replyTo
-            ?: return onFanOut(methodDescriptor, invoker, message, contentType, deadline)
+        val deletePayload = method.responders == ResponderMode.ONE
 
-        scope.launch(coroutineNames[methodDescriptor.index]) {
-            val timeout = remaining(deadline, methodDescriptor.timeout)
+        scope.launch(coroutineNames[method.index]) {
+            val timeout = remaining(deadline, method.timeout)
             if (!timeout.isPositive()) return@launch dropExpired(message, timeout)
 
-            val reply = try {
-                val completed = withTimeoutOrNull(timeout) {
-                    val data = PayloadStore.resolve(
-                        message,
-                        PayloadBucket.TRANSIENT,
-                        delete = methodDescriptor.responders == ResponderMode.ONE
-                    )
-                    val args = client.codec.decode(methodDescriptor.arguments, data, contentType)
-                    Completed(invoker.call(args))
-                }
-                if (completed == null) {
-                    // The requester has already given up
-                    client.logger.warn("Service method ${methodDescriptor.subject} did not complete within $timeout and was cancelled")
-                    return@launch
-                }
-                encodeResult(methodDescriptor, completed.value, format)
-            } catch (e: CancellationException) {
-                ensureActive()
-                errorReply(methodDescriptor, e, format)
-            } catch (e: Throwable) {
-                e.rethrowIfFatal()
-                errorReply(methodDescriptor, e, format)
+            if (replyTo == null) {
+                // Nobody waits for a response, so the handle may take as long as needed
+                invoke(method, message, timeout = null, deletePayload)
+                return@launch
             }
 
-            send(methodDescriptor, replyTo, reply, format, timeout)
-        }
-    }
+            when (val outcome = invoke(method, message, timeout, deletePayload)) {
+                is Outcome.Finished -> {
+                    val format = replyFormat(message)
+                    send(replyTo, replyOf(method, outcome, format), format, timeout)
+                }
 
-    private fun onFanOut(
-        methodDescriptor: MethodDescriptor,
-        invoker: ServiceInvoker,
-        message: Message,
-        contentType: String?,
-        deadline: Long?,
-    ) {
-        scope.launch(coroutineNames[methodDescriptor.index]) {
-            val left = remaining(deadline, methodDescriptor.timeout)
-            if (!left.isPositive()) return@launch dropExpired(message, left)
-
-            try {
-                val data = PayloadStore.resolve(
-                    message,
-                    PayloadBucket.TRANSIENT,
-                    delete = methodDescriptor.responders == ResponderMode.ONE
+                Outcome.TimedOut -> client.logger.warn(
+                    "Service method ${method.subject} did not complete within $timeout and was cancelled"
                 )
-                invoker.call(client.codec.decode(methodDescriptor.arguments, data, contentType))
-            } catch (e: CancellationException) {
-                ensureActive()
-                logFanOutFailure(methodDescriptor, e)
-            } catch (e: Throwable) {
-                e.rethrowIfFatal()
-                logFanOutFailure(methodDescriptor, e)
             }
         }
-    }
-
-    private fun logFanOutFailure(method: MethodDescriptor, e: Throwable) {
-        client.logger.error("Fan-out of ${descriptor.type.name}.${method.method.name} failed", e)
     }
 
     private fun onPersistent(message: Message) {
         val method = persistentBySubject[message.subject]
         if (method == null) {
             scope.launch(CoroutineName("surf-nats/${client.name}/persist/unknown")) {
-                val error = IllegalStateException("No persistent method is registered for ${message.subject}")
+                val error =
+                    IllegalStateException("No persistent method is registered for ${message.subject}")
                 failFire(message, error, permanent = false)
             }
             return
@@ -202,7 +157,10 @@ internal class ServiceRegistration(
                     try {
                         message.inProgress()
                     } catch (e: Exception) {
-                        client.logger.debug("Failed to extend the ack wait of ${message.subject}", e)
+                        client.logger.debug(
+                            "Failed to extend the ack wait of ${message.subject}",
+                            e
+                        )
                     }
                 }
             }
@@ -253,7 +211,8 @@ internal class ServiceRegistration(
         }
 
         if (completed == null) {
-            val error = TimeoutException("Handler did not complete within ${RpcDefaults.FIRE_MAX_DURATION}")
+            val error =
+                TimeoutException("Handler did not complete within ${RpcDefaults.FIRE_MAX_DURATION}")
             return failFire(message, error, permanent = false)
         }
 
@@ -269,7 +228,10 @@ internal class ServiceRegistration(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            client.logger.warn("Ack of ${message.subject} was not confirmed, keeping its payload", e)
+            client.logger.warn(
+                "Ack of ${message.subject} was not confirmed, keeping its payload",
+                e
+            )
             return
         }
 
@@ -333,39 +295,18 @@ internal class ServiceRegistration(
         message: Message,
         deadline: Long?,
     ) {
-        val replyTo = message.header(NatsHeaders.REPLY_TO)
-        val contentType = message.header(NatsHeaders.CONTENT_TYPE)
-        val format = contentType?.let(WireFormat::fromContentType) ?: WireFormat.CBOR
         val timeout = remaining(deadline, method.timeout)
 
-        val reply = try {
-            val completed = withTimeoutOrNull(timeout) {
-                val data = PayloadStore.resolve(message, PayloadBucket.TRANSIENT, delete = false)
-                Completed(
-                    invokers[method.index].call(
-                        client.codec.decode(
-                            method.arguments,
-                            data,
-                            contentType,
-                        )
-                    )
-                )
-            }
-            if (completed == null) {
-                message.term()
-                return // Caller has already given up
-            }
-            encodeResult(method, completed.value, format)
-        } catch (e: CancellationException) {
-            currentCoroutineContext().ensureActive()
-            errorReply(method, e, format)
-        } catch (e: Throwable) {
-            e.rethrowIfFatal()
-            errorReply(method, e, format)
+        // Keep the payload for a redelivery
+        val outcome = invoke(method, message, timeout, deletePayload = false)
+        if (outcome !is Outcome.Finished) {
+            message.term()
+            return // Caller has already given up
         }
 
-        if (replyTo != null) {
-            send(method, replyTo, reply, format, timeout)
+        message.header(NatsHeaders.REPLY_TO)?.let { replyTo ->
+            val format = replyFormat(message)
+            send(replyTo, replyOf(method, outcome, format), format, timeout)
         }
         message.ack()
 
@@ -414,8 +355,84 @@ internal class ServiceRegistration(
         )
     }
 
-    private class Completed(@JvmField val value: Any?)
+    private sealed interface Outcome {
+        sealed interface Finished : Outcome
+        class Completed(@JvmField val value: Any?) : Finished
+        class Failed(@JvmField val error: Throwable) : Finished
+        data object TimedOut : Outcome
+    }
+
     private class Reply(@JvmField val headers: Headers, @JvmField val body: ByteArray)
+
+    private suspend fun invoke(
+        method: MethodDescriptor,
+        message: Message,
+        timeout: Duration?,
+        deletePayload: Boolean,
+    ): Outcome {
+        val call = suspend {
+            val data = PayloadStore.resolve(message, PayloadBucket.TRANSIENT, deletePayload)
+            val args = client.codec.decode(
+                method.arguments,
+                data,
+                message.header(NatsHeaders.CONTENT_TYPE)
+            )
+            Outcome.Completed(invokers[method.index].call(args))
+        }
+
+        val outcome = try {
+            if (timeout == null) {
+                call()
+            } else {
+                withTimeoutOrNull(timeout) {
+                    call()
+                } ?: Outcome.TimedOut
+            }
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            Outcome.Failed(e)
+        } catch (e: Throwable) {
+            e.rethrowIfFatal()
+            Outcome.Failed(e)
+        }
+
+        if (outcome is Outcome.Failed) {
+            logFailure(method, outcome.error)
+        }
+
+        return outcome
+    }
+
+    private fun replyFormat(request: Message): WireFormat {
+        return request.header(NatsHeaders.CONTENT_TYPE)
+            ?.let(WireFormat::fromContentType)
+            ?: WireFormat.CBOR
+    }
+
+    private fun replyOf(
+        method: MethodDescriptor,
+        outcome: Outcome.Finished,
+        format: WireFormat
+    ): Reply {
+        return when (outcome) {
+            is Outcome.Completed -> try {
+                encodeResult(method, outcome.value, format)
+            } catch (e: Throwable) {
+                e.rethrowIfFatal()
+                logFailure(method, e)
+                errorReply(e, format)
+            }
+
+            is Outcome.Failed -> errorReply(outcome.error, format)
+        }
+    }
+
+    private fun logFailure(method: MethodDescriptor, e: Throwable) {
+        client.logger.error(
+            "Service method ${descriptor.type.name}.${method.method.name} failed",
+            e
+        )
+    }
 
     private fun encodeResult(
         method: MethodDescriptor,
@@ -444,16 +461,7 @@ internal class ServiceRegistration(
         }
     }
 
-    private fun errorReply(
-        method: MethodDescriptor,
-        throwable: Throwable,
-        format: WireFormat,
-    ): Reply {
-        client.logger.error(
-            "Service method ${descriptor.type.name}.${method.method.name} failed",
-            throwable
-        )
-
+    private fun errorReply(throwable: Throwable, format: WireFormat): Reply {
         val headers = NatsHeaders.base(client.name, format)
             .add(NatsHeaders.ERROR, throwable.javaClass.name)
 
@@ -463,13 +471,7 @@ internal class ServiceRegistration(
         )
     }
 
-    private suspend fun send(
-        method: MethodDescriptor,
-        replyTo: String,
-        reply: Reply,
-        format: WireFormat,
-        timeout: Duration,
-    ) {
+    private suspend fun send(replyTo: String, reply: Reply, format: WireFormat, timeout: Duration) {
         val connection = NatsConnectionManager.connection()
         try {
             val body =
@@ -478,7 +480,8 @@ internal class ServiceRegistration(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            val fallback = errorReply(method, e, format)
+            client.logger.error("Failed to send the reply to $replyTo", e)
+            val fallback = errorReply(e, format)
             connection.publish(replyTo, fallback.headers, fallback.body)
         }
     }
