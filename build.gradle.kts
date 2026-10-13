@@ -23,6 +23,7 @@ allprojects {
                 includeGroup("net.minestom")
             }
         }
+        maven("https://repo.wyck.dev/snapshots/")
     }
 
     configurations.all {
