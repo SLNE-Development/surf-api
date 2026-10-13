@@ -6,6 +6,7 @@ import dev.slne.surf.api.gradle.generators.pluginfiles.dto.MinestomPluginFileDto
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.CommonSurfPluginWithPluginFile
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
+import dev.slne.surf.api.gradle.util.minestomSnapshots
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSet
@@ -15,6 +16,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
 
 /**
@@ -36,6 +38,10 @@ internal class MinestomSurfPlugin :
 
     override val extensionClass = MinestomSurfExtension::class.java
     override val dtoSerializer = MinestomPluginFileDto.serializer()
+
+    override fun Project.applyRepositories0() {
+        repositories { minestomSnapshots() }
+    }
 
     override fun apply(target: Project) {
         super.apply(target)

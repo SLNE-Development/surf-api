@@ -7,6 +7,7 @@ import dev.slne.surf.api.gradle.generators.GeneratePluginFile
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.platform.core.AbstractCoreSurfPlugin
+import dev.slne.surf.api.gradle.util.minestomSnapshots
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
@@ -23,6 +24,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.repositories
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.gradle.process.CommandLineArgumentProvider
 import xyz.jpenilla.gremlin.gradle.GremlinExtension
@@ -52,6 +54,10 @@ internal class MinestomServerSurfPlugin :
     }
 
     override val extensionClass = MinestomServerSurfExtension::class.java
+
+    override fun Project.applyRepositories0() {
+        repositories { minestomSnapshots() }
+    }
 
     override fun Project.applyPlugins0() {
         applyPlugin("org.gradle.application")

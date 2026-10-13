@@ -9,6 +9,13 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven("https://repo.lucko.me/")
+        maven("https://central.sonatype.com/repository/maven-snapshots/") {
+            name = "minestom-snapshots"
+            mavenContent {
+                snapshotsOnly()
+                includeGroup("net.minestom")
+            }
+        }
     }
 
     versionCatalogs {

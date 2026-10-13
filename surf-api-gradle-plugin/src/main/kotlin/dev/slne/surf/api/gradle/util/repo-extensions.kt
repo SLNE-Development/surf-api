@@ -22,6 +22,16 @@ inline fun RepositoryHandler.canvasMaven(crossinline block: MavenArtifactReposit
         block()
     }
 
+inline fun RepositoryHandler.minestomSnapshots(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
+    maven("https://central.sonatype.com/repository/maven-snapshots/") {
+        name = "minestom-snapshots"
+        mavenContent {
+            snapshotsOnly()
+            includeGroup("net.minestom")
+        }
+        block()
+    }
+
 inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
     maven("https://reposilite.slne.dev/releases/") {
         name = "slne-repository-releases"

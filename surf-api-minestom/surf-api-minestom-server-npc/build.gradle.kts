@@ -6,7 +6,7 @@ plugins {
 dependencies {
     api(projects.surfApiMinestom.surfApiMinestomServer)
     compileOnlyApi(libs.minestom.server)
-    api(libs.minestom.npc)
+    api(libs.minestom.npc) { exclude(group = "net.minestom") }
 
     testImplementation(libs.minestom.server)
     testImplementation(libs.minestom.testing)

@@ -11,7 +11,7 @@ dependencies {
 
     compileOnlyApi(libs.minestom.server)
     api(libs.minestom.brigadier)
-    compileOnlyApi(libs.minestom.npc)
+    compileOnlyApi(libs.minestom.npc) { exclude(group = "net.minestom") }
 
     api(libs.guava)
     api(libs.dazzleconf)
