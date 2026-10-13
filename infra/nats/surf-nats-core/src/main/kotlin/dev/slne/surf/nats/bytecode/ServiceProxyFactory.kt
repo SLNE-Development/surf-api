@@ -125,6 +125,7 @@ internal object ServiceProxyFactory {
         val method = descriptor.method
         val parameterTypes = method.parameterTypes
         val argumentTypes = parameterTypes.dropLast(1) // Args without continuation
+        val valueClasses = descriptor.valueClasses
         val methodType = MethodTypeDesc.of(
             method.returnType.describeConstable().orElseThrow(),
             *parameterTypes.map { it.describeConstable().orElseThrow() }.toTypedArray()
@@ -149,7 +150,12 @@ internal object ServiceProxyFactory {
                 codeBuilder.dup()
                     .loadConstant(i)
                     .loadLocal(kind, slot)
-                box(codeBuilder, parameterType)
+                val valueClass = valueClasses[i]
+                if (valueClass != null) {
+                    boxValueClass(codeBuilder, valueClass)
+                } else {
+                    box(codeBuilder, parameterType)
+                }
                 codeBuilder.aastore()
                 slot += kind.slotSize()
             }
@@ -158,6 +164,32 @@ internal object ServiceProxyFactory {
                 .invokeinterface(CD_RPC_CALLER, "call", MTD_CALL)
                 .areturn()
         }
+    }
+
+    // ValueClass.box-impl(underlying), keeping null for a reference underlying type
+    private fun boxValueClass(codeBuilder: CodeBuilder, parameter: ValueClassParameter) {
+        val box = parameter.box
+        val owner = box.declaringClass.describeConstable().orElseThrow()
+        val boxCall = MethodTypeDesc.of(
+            box.returnType.describeConstable().orElseThrow(),
+            parameter.underlying.describeConstable().orElseThrow()
+        )
+
+        if (parameter.underlying.isPrimitive) {
+            codeBuilder.invokestatic(owner, box.name, boxCall)
+            return
+        }
+
+        val boxed = codeBuilder.newLabel()
+        val end = codeBuilder.newLabel()
+        codeBuilder.dup()
+            .ifnonnull(boxed)
+            .pop()
+            .aconst_null()
+            .goto_(end)
+            .labelBinding(boxed)
+            .invokestatic(owner, box.name, boxCall)
+            .labelBinding(end)
     }
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")

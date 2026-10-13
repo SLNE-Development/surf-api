@@ -34,7 +34,7 @@ internal class ServiceRegistration(
 ) : NatsRegistration {
 
     private val invokers = descriptor.methods.map {
-        ServiceInvokerFactory.create(implementation, it.method)
+        ServiceInvokerFactory.create(implementation, it.method, it.valueClasses)
     }
 
     private val announcer = descriptor.presenceSubject?.let { subject ->

@@ -28,6 +28,10 @@ class ServiceResponderTest {
     @Serializable
     data class Health(val value: Double)
 
+    @JvmInline
+    @Serializable
+    value class Tag(val value: String)
+
     @NatsService("calc")
     interface CalcService {
         suspend fun mixed(a: Int, b: Long, factor: Double, flag: Boolean, label: String): String
@@ -38,6 +42,8 @@ class ServiceResponderTest {
         suspend fun innerTimeout(): String
         suspend fun count(): Int
         suspend fun slowFire()
+        suspend fun unsigned(id: ULong, small: UInt, optional: ULong?): ULong
+        suspend fun inline(duration: kotlin.time.Duration, tag: Tag, optional: Tag?): String
 
         @NatsCallTimeout(15)
         suspend fun slow(): String
@@ -84,6 +90,14 @@ class ServiceResponderTest {
         override suspend fun slowFire() {
             delay(2.seconds)
             slowFireDone.complete(Unit)
+        }
+
+        override suspend fun unsigned(id: ULong, small: UInt, optional: ULong?): ULong {
+            return id + small + (optional ?: 0uL)
+        }
+
+        override suspend fun inline(duration: kotlin.time.Duration, tag: Tag, optional: Tag?): String {
+            return "$duration|${tag.value}|${optional?.value}"
         }
 
         override suspend fun slow(): String {
@@ -144,6 +158,14 @@ class ServiceResponderTest {
     @Test
     fun `primitive and string arguments roundtrip`() = withService {
         assertEquals("1|2|3.5|true|label", calc.mixed(1, 2L, 3.5, true, "label"))
+    }
+
+    @Test
+    fun `value class arguments and results roundtrip`() = withService {
+        assertEquals(ULong.MAX_VALUE, calc.unsigned(ULong.MAX_VALUE - 5uL, 2u, 3uL))
+        assertEquals(7uL, calc.unsigned(7uL, 0u, null))
+        assertEquals("1.5s|a|b", calc.inline(1.5.seconds, Tag("a"), Tag("b")))
+        assertEquals("2s|a|null", calc.inline(2.seconds, Tag("a"), null))
     }
 
     @Test

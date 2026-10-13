@@ -3,6 +3,7 @@ package dev.slne.surf.nats.rpc
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsFormat
 import dev.slne.surf.nats.WireFormat
+import dev.slne.surf.nats.bytecode.ValueClassParameters
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.WireSerializers
@@ -14,7 +15,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
@@ -140,14 +140,11 @@ internal class ServiceDescriptor(
                     ?: WireFormat.CBOR
 
                 val parameters = function.parameters.filter { it.kind == KParameter.Kind.VALUE }
-                parameters.forEachIndexed { i, param ->
-                    val valueClass = (param.type.classifier as? KClass<*>)?.takeIf { it.isValue }
-                    if (valueClass != null && method.parameterTypes[i] != valueClass.java) {
-                        methodProblems.add(
-                            "$name: parameter '${param.name}' has the value class type ${param.type}, which is not " +
-                                    "supported as a parameter. Use the underlying type or a @Serializable wrapper class"
-                        )
-                    }
+                val valueClasses = try {
+                    ValueClassParameters.of(method, parameters)
+                } catch (e: IllegalArgumentException) {
+                    methodProblems.add("$name: ${e.message}")
+                    null
                 }
                 val argumentNames = parameters.map { param ->
                     val explicit = param.findAnnotation<NatsParam>()?.name
@@ -206,7 +203,7 @@ internal class ServiceDescriptor(
                     null
                 }
 
-                if (methodProblems.isNotEmpty() || result == null || subject == null) {
+                if (methodProblems.isNotEmpty() || result == null || subject == null || valueClasses == null) {
                     problems.addAll(methodProblems)
                     return null
                 }
@@ -229,6 +226,7 @@ internal class ServiceDescriptor(
                     result,
                     persistent,
                     format,
+                    valueClasses,
                 )
             }
 

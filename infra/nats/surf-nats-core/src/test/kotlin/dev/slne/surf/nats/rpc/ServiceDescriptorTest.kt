@@ -572,14 +572,13 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `non-null value class parameters are rejected`() {
-        val message = assertFailsWith<IllegalArgumentException> {
-            describe(ValueClassParameterService::class.java)
-        }.message.orEmpty()
+    fun `non-null value class parameters use the Kotlin method name`() {
+        val descriptor = describe(ValueClassParameterService::class.java, "transaction")
 
-        assertContains(message, "wait: parameter 'duration' has the value class type")
-        assertContains(message, "count: parameter 'amount' has the value class type")
-        assertContains(message, "is not supported as a parameter")
+        val subjects = descriptor.methods.map { it.subject }
+        assertContains(subjects, "transaction.\$rpc.value-class-param.wait")
+        assertContains(subjects, "transaction.\$rpc.value-class-param.count")
+        assertEquals(2, subjects.size, subjects.toString())
     }
 
     @Test

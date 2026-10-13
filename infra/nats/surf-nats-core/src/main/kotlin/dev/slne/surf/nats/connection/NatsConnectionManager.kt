@@ -59,6 +59,7 @@ internal object NatsConnectionManager {
                         val ioException = exp as? IOException ?: exp.cause as? IOException
                         if (ioException != null) {
                             log.atWarning()
+                                .withCause(ioException)
                                 .log("NATS I/O error: %s", ioException.message)
                         } else {
                             log.atWarning()
