@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: TheBjoRedCraft <red@slne.dev>
+Date: Tue, 13 Oct 2026 16:12:58 +0200
+Subject: [PATCH] Build the Minestom module against Minestom 26.3
+
+
+diff --git a/minestom/build.gradle b/minestom/build.gradle
+index ac55c4c19bd8c5d9a3efc42ffa65b93b486e6b8c..ee88b3a4c6bbefd51ea720b402013c9fd17a3cb4 100644
+--- a/minestom/build.gradle
++++ b/minestom/build.gradle
+@@ -8,11 +8,16 @@ plugins {
+ // minestom requires java 21+
+ 
+ repositories {
++    // experimental 26.3 builds
++    maven {
++        url "https://central.sonatype.com/repository/maven-snapshots/"
++        mavenContent { snapshotsOnly() }
++    }
+     mavenCentral()
+ }
+ 
+ dependencies {
+-    var minestom = "net.minestom:minestom:2026.07.22-26.2"
++    var minestom = "net.minestom:minestom:26_3-SNAPSHOT"
+ 
+     api(project(":common")) {
+         // exclude default config providers as they are inaccessible from the minestom module anyway
