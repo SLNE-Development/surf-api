@@ -10457,6 +10457,15 @@ public final class dev/slne/surf/api/core/serializer/java/url/URLSerializer : ko
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/net/URL;)V
 }
 
+public final class dev/slne/surf/api/core/serializer/java/uuid/JavaUUIDLongSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Ldev/slne/surf/api/core/serializer/java/uuid/JavaUUIDLongSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/util/UUID;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/util/UUID;)V
+}
+
 public final class dev/slne/surf/api/core/serializer/java/uuid/JavaUUIDSerializer : kotlinx/serialization/KSerializer {
 	public static final field INSTANCE Ldev/slne/surf/api/core/serializer/java/uuid/JavaUUIDSerializer;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
