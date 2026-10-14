@@ -3,7 +3,9 @@ package dev.slne.surf.nats.codec
 import dev.slne.surf.nats.WireFormat
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.modules.EmptySerializersModule
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -90,5 +92,28 @@ class NatsCodecTest {
             cbor.windowed(uuidString.size).none { it == uuidString },
             "CBOR payload contains the UUID as string"
         )
+    }
+
+    @Test
+    fun `cbor encodes uuid as 16 byte string`() {
+        val uuid = UUID.randomUUID()
+        val bytes = codec.encode(Sample.serializer(), Sample(uuid, "x"), WireFormat.CBOR)
+
+        val expected = byteArrayOf(0x50) + ByteBuffer.allocate(16)
+            .putLong(uuid.mostSignificantBits)
+            .putLong(uuid.leastSignificantBits)
+            .array()
+        assertTrue(
+            bytes.asList().windowed(expected.size).any { it == expected.asList() },
+            "CBOR payload does not contain the UUID as byte string (major type 2, length 16)"
+        )
+    }
+
+    @Test
+    fun `cbor encodes byte arrays as byte string`() {
+        val bytes = codec.encode(ByteArraySerializer(), ByteArray(64) { it.toByte() }, WireFormat.CBOR)
+
+        assertEquals(2 + 64, bytes.size, "64 bytes should be a byte string with a 2 byte header")
+        assertEquals(0x58, bytes[0].toInt() and 0xFF)
     }
 }

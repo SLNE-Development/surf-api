@@ -18,7 +18,7 @@ public enum class WireFormat(@InternalNatsApi public val contentType: String) {
 
         @InternalNatsApi
         public fun fromContentType(contentType: String): WireFormat? {
-            return byType[contentType.substringBefore(';').trim().lowercase()]
+            return byType[contentType] ?: byType[contentType.substringBefore(';').trim().lowercase()]
         }
     }
 }

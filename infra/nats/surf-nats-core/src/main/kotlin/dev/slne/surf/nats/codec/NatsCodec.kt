@@ -36,7 +36,7 @@ internal class NatsCodec(serializersModule: SerializersModule) {
         ignoreUnknownKeys = true
         encodeDefaults = true
         this.serializersModule = cborSerializersModule
-//        alwaysUseByteString = true // TODO: 11.10.2026 20:47 - fix uuid serializer in surf-api (use a concrete serial descriptor)
+        alwaysUseByteString = true
     }
 
     private val json = Json {

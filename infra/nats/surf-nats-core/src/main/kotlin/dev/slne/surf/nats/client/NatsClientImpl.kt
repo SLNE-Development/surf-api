@@ -3,6 +3,7 @@ package dev.slne.surf.nats.client
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsRegistration
+import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.bytecode.ListenerInvoker
 import dev.slne.surf.nats.bytecode.ListenerInvokerFactory
 import dev.slne.surf.nats.bytecode.ServiceProxyFactory
@@ -77,11 +78,13 @@ internal class NatsClientImpl(
 
     val origin = NatsHeaders.origin(name)
 
+    internal fun headers(format: WireFormat) = NatsHeaders.forOrigin(origin, format)
+
     override fun publish(event: Any) {
         checkOpen()
         val descriptor = eventDescriptor(event.javaClass)
         val data = codec.encode(descriptor.serializers, event, descriptor.format)
-        val header = NatsHeaders.base(name, descriptor.format)
+        val header = headers(descriptor.format)
         val connection = NatsConnectionManager.connection()
 
         checkPayloadSize(

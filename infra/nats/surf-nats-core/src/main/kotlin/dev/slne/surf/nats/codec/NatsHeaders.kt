@@ -32,17 +32,17 @@ internal object NatsHeaders {
     val EMPTY_BODY = ByteArray(0)
 
     fun base(clientName: String, format: WireFormat): Headers {
+        return forOrigin(origin(clientName), format)
+    }
+
+    fun forOrigin(origin: String, format: WireFormat): Headers {
         val headers = Headers()
 
         headers.add(CONTENT_TYPE, format.contentType)
         headers.add(SENDER_VERSION, NatsConstants.VERSION)
-        headers.add(ORIGIN, origin(clientName))
+        headers.add(ORIGIN, origin)
 
         return headers
-    }
-
-    fun presence(clientName: String, kind: String): Headers {
-        return base(clientName, WireFormat.CBOR).add(PRESENCE, kind)
     }
 
     fun origin(clientName: String) = "$clientName@${NatsConnectionManager.instanceId}"

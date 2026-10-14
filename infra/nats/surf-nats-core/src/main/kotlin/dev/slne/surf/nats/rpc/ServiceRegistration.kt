@@ -9,6 +9,7 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.deadlineMillis
 import dev.slne.surf.nats.codec.header
+import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.rpc.payload.PayloadBucket
@@ -20,10 +21,14 @@ import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlin.time.toJavaDuration
 
 @InternalNatsApi
@@ -311,6 +316,37 @@ internal class ServiceRegistration(
     override fun close() {
         if (!active.compareAndSet(true, false)) return
         announcer?.close()
+        drain(natsConfig.drainTimeout.seconds)
+        scope.cancel("Service registration ${descriptor.type.name} closed")
+        client.unregisterService(this)
+        client.unregisterRegistration(this)
+    }
+
+    private fun drain(timeout: Duration) {
+        val deadline = TimeSource.Monotonic.markNow() + timeout
+
+        messageConsumer?.let {
+            try {
+                it.stop()
+            } catch (e: Exception) {
+                client.logger.warn("Failed to stop message consumer", e)
+            }
+        }
+
+        dispatcher?.let { dispatcher ->
+            val drained = try {
+                dispatcher.drain(timeout.toJavaDuration())
+                    .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                false
+            } catch (e: Exception) {
+                client.logger.warn("Failed to drain service dispatcher", e)
+                false
+            }
+            if (!drained) client.closeDispatcher(dispatcher, "service dispatcher")
+        }
+
         messageConsumer?.let {
             try {
                 it.close()
@@ -318,11 +354,21 @@ internal class ServiceRegistration(
                 client.logger.warn("Failed to close message consumer", e)
             }
         }
-        dispatcher?.let { client.closeDispatcher(it, "service dispatcher") }
-        scope.cancel("Service registration ${descriptor.type.name} closed")
-        client.unregisterService(this)
-        client.unregisterRegistration(this)
+
+        val handlers = scope.coroutineContext.job.children.toList()
+        if (handlers.isEmpty()) return
+        val finished = runBlocking {
+            withTimeoutOrNull(deadline.timeLeft()) { handlers.joinAll() } != null
+        }
+        if (!finished) {
+            client.logger.warn(
+                "${handlers.count { it.isActive }} handlers of ${descriptor.type.name} did not finish " +
+                        "within the drain timeout of $timeout and are cancelled"
+            )
+        }
     }
+
+    private fun TimeMark.timeLeft(): Duration = (-elapsedNow()).coerceAtLeast(Duration.ZERO)
 
     fun discard() {
         active.set(false)
@@ -428,7 +474,7 @@ internal class ServiceRegistration(
         value: Any?,
         format: WireFormat,
     ): Reply {
-        val headers = NatsHeaders.base(client.name, format)
+        val headers = client.headers(format)
         return when (val result = method.result) {
             ResultKind.Unit -> Reply(headers, NatsHeaders.EMPTY_BODY)
             is ResultKind.Value -> Reply(
@@ -451,7 +497,7 @@ internal class ServiceRegistration(
     }
 
     private fun errorReply(throwable: Throwable, format: WireFormat): Reply {
-        val headers = NatsHeaders.base(client.name, format)
+        val headers = client.headers(format)
             .add(NatsHeaders.ERROR, throwable.javaClass.name)
 
         return Reply(

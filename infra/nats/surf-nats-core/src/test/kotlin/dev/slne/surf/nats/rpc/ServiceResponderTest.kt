@@ -42,6 +42,7 @@ class ServiceResponderTest {
         suspend fun innerTimeout(): String
         suspend fun count(): Int
         suspend fun slowFire()
+        suspend fun gated(): String
         suspend fun unsigned(id: ULong, small: UInt, optional: ULong?): ULong
         suspend fun inline(duration: kotlin.time.Duration, tag: Tag, optional: Tag?): String
 
@@ -55,6 +56,8 @@ class ServiceResponderTest {
         val slowStarted = CompletableDeferred<Unit>()
         val slowCancelled = CompletableDeferred<Unit>()
         val slowFireDone = CompletableDeferred<Unit>()
+        val gatedStarted = CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
 
         override suspend fun mixed(
             a: Int,
@@ -86,6 +89,12 @@ class ServiceResponderTest {
         }
 
         override suspend fun count(): Int = calls.incrementAndGet()
+
+        override suspend fun gated(): String {
+            gatedStarted.complete(Unit)
+            gate.await()
+            return "released"
+        }
 
         override suspend fun slowFire() {
             delay(2.seconds)
@@ -206,6 +215,23 @@ class ServiceResponderTest {
         registration.close()
 
         assertTrue(registration.isClosed)
+        assertFailsWith<NatsNoRespondersException> { calc.count() }
+    }
+
+    @Test
+    fun `close answers requests that are already being handled`() = withService {
+        coroutineScope {
+            val call = async { calc.gated() }
+            withTimeout(5.seconds) { impl.gatedStarted.await() }
+
+            val closing = async(Dispatchers.IO) { registration.close() }
+            delay(300.milliseconds)
+            assertFalse(closing.isCompleted, "close returned while a request was still being handled")
+
+            impl.gate.complete(Unit)
+            assertEquals("released", call.await())
+            withTimeout(5.seconds) { closing.await() }
+        }
         assertFailsWith<NatsNoRespondersException> { calc.count() }
     }
 

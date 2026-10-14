@@ -51,7 +51,7 @@ internal class RpcCallerImpl(
             return callPersistent(method, args, timeout)
         }
 
-        val headers = NatsHeaders.base(client.name, method.format)
+        val headers = client.headers(method.format)
             .add(
                 NatsHeaders.DEADLINE,
                 NatsHeaders.deadline(timeout)
@@ -215,7 +215,7 @@ internal class RpcCallerImpl(
         timeout: Duration,
     ): Any? {
         val streams = checkNotNull(service.streams)
-        val headers = NatsHeaders.base(client.name, method.format)
+        val headers = client.headers(method.format)
         val encoded = client.codec.encode(method.arguments, args, method.format)
 
         if (method.result == ResultKind.Unit) {

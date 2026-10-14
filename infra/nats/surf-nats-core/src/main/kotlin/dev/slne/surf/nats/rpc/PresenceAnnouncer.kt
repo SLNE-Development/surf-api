@@ -1,6 +1,7 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
+import dev.slne.surf.nats.WireFormat
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.presenceKind
@@ -57,7 +58,8 @@ internal class PresenceAnnouncer(
 
 internal fun NatsClientImpl.publishPresence(subject: String, kind: String) {
     try {
-        NatsConnectionManager.connection().publish(subject, NatsHeaders.presence(name, kind), NatsHeaders.EMPTY_BODY)
+        val presenceHeaders = headers(WireFormat.CBOR).add(NatsHeaders.PRESENCE, kind)
+        NatsConnectionManager.connection().publish(subject, presenceHeaders, NatsHeaders.EMPTY_BODY)
     } catch (e: Exception) {
         logger.debug("Failed to publish presence '$kind' on $subject", e)
     }
