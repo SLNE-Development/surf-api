@@ -6,6 +6,12 @@ import dev.slne.surf.nats.InternalNatsApi
 import java.io.Serial
 import kotlin.time.Duration
 
+/**
+ * Represents a failure of a remote service call.
+ *
+ * Also thrown directly when the server rejects a persistent publish. See [NatsService] for
+ * delivery and failure semantics.
+ */
 public open class NatsRpcException @InternalNatsApi constructor(
     message: String,
     cause: Throwable? = null,
@@ -16,6 +22,15 @@ public open class NatsRpcException @InternalNatsApi constructor(
     }
 }
 
+/**
+ * Reports a failure while the remote instance handles a service call or prepares its response.
+ *
+ * Carries the remote exception's type name and message, without its stack trace or cause.
+ * The original exception type is not recreated locally.
+ *
+ * @property remoteType the remote exception's binary class name.
+ * @property remoteMessage the remote message, truncated to at most 4096 characters, or empty if absent.
+ */
 public class NatsRemoteException @InternalNatsApi constructor(
     public val remoteType: String,
     public val remoteMessage: String,
@@ -26,6 +41,11 @@ public class NatsRemoteException @InternalNatsApi constructor(
     }
 }
 
+/**
+ * Indicates that no instance serves a non-persistent [Recipients.ANY_INSTANCE] method.
+ *
+ * @property subject the subject addressed by the call.
+ */
 public class NatsNoRespondersException @InternalNatsApi constructor(
     public val subject: String,
 ) : NatsRpcException("No responders for $subject") {
@@ -35,6 +55,14 @@ public class NatsNoRespondersException @InternalNatsApi constructor(
     }
 }
 
+/**
+ * Indicates that no response or storage confirmation arrived within the call timeout.
+ *
+ * Not thrown by [Recipients.ALL_INSTANCES] calls. See [NatsService].
+ *
+ * @property subject the subject addressed by the call.
+ * @property timeout the timeout used for the call.
+ */
 public class NatsCallTimeoutException @InternalNatsApi constructor(
     public val subject: String,
     public val timeout: Duration,
