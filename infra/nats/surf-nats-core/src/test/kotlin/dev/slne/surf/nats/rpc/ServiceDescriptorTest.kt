@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.AfterEach
 import java.util.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class ServiceDescriptorTest {
@@ -82,6 +83,14 @@ class ServiceDescriptorTest {
 
         @NatsPersistent
         suspend fun stored(id: Long)
+    }
+
+    @Suppress("unused")
+    @NatsService("slow-persistent-rpc")
+    interface SlowPersistentRpcService {
+        @NatsPersistent
+        @NatsCallTimeout(300)
+        suspend fun total(id: Long): Long
     }
 
     @Suppress("unused")
@@ -356,6 +365,14 @@ class ServiceDescriptorTest {
         assertContains(message, "duplicate window")
         assertFalse("core:" in message, "core methods are not bound by the duplicate window: $message")
         assertEquals(1, message.lines().count { it.startsWith(" - ") }, message)
+    }
+
+    @Test
+    fun `persistent timeout above the duplicate window is accepted for methods with a result`() {
+        val total = describe(SlowPersistentRpcService::class.java).method("total")
+
+        assertTrue(total.persistent)
+        assertEquals(5.minutes, total.timeout)
     }
 
     @Test

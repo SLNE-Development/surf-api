@@ -131,9 +131,6 @@ internal class ServiceDescriptor(
                 val timeout = methodTimeout
                     ?: serviceTimeout
                     ?: if (persistent) RpcDefaults.JETSTREAM_TIMEOUT else RpcDefaults.CORE_TIMEOUT
-                if (persistent && timeout > RpcDefaults.DUPLICATE_WINDOW) {
-                    methodProblems.add("$name: timeout $timeout of a persistent method exceeds the JetStream duplicate window of ${RpcDefaults.DUPLICATE_WINDOW}")
-                }
 
                 val format = method.getAnnotation(NatsFormat::class.java)?.format
                     ?: serviceFormat
@@ -192,6 +189,9 @@ internal class ServiceDescriptor(
                 }
                 if (function.returnType.isMarkedNullable && result != null && result !is ResultKind.Value) {
                     methodProblems.add("$name: return type ${function.returnType} must not be nullable, use Unit or Answer<T>")
+                }
+                if (persistent && result == ResultKind.Unit && timeout > RpcDefaults.DUPLICATE_WINDOW) {
+                    methodProblems.add("$name: timeout $timeout of a persistent method without a result exceeds the JetStream duplicate window of ${RpcDefaults.DUPLICATE_WINDOW}")
                 }
 
                 val subject = try {

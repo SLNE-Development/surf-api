@@ -129,6 +129,7 @@ class NatsPersistentServiceTest {
     private val defaultAckWait = RpcDefaults.ACK_WAIT
     private val defaultBackoff = RpcDefaults.NAK_BACKOFF
     private val defaultFireMaxDuration = RpcDefaults.FIRE_MAX_DURATION
+    private val defaultDuplicateWindow = RpcDefaults.DUPLICATE_WINDOW
 
     @BeforeAll
     fun connect() = runBlocking { NatsInstance.instance.load() }
@@ -141,6 +142,7 @@ class NatsPersistentServiceTest {
         RpcDefaults.ACK_WAIT = defaultAckWait
         RpcDefaults.NAK_BACKOFF = defaultBackoff
         RpcDefaults.FIRE_MAX_DURATION = defaultFireMaxDuration
+        RpcDefaults.DUPLICATE_WINDOW = defaultDuplicateWindow
     }
 
     // ---- descriptor ----
@@ -536,17 +538,50 @@ class NatsPersistentServiceTest {
     }
 
     @Test
-    fun `persistent call timeout above the duplicate window is rejected before publishing`() =
+    fun `persistent fire timeout above the duplicate window is rejected before publishing`() =
         withClient { client ->
             val streams = client.serviceDescriptor(OrderService::class.java).streams!!
             JetStreamProvisioner.ensureStreams(streams)
             val orders = client.service<OrderService>()
 
             assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(3.minutes) { orders.place(1) } }
-            assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(3.minutes) { orders.total(1) } }
 
             assertEquals(0L, messageCount(streams.stream), "nothing must be published")
         }
+
+    @Test
+    fun `persistent call with a result waits for a reply beyond the duplicate window`() = withClient { client ->
+        val impl = OrderImpl().apply {
+            onTotal = { id ->
+                delay(2.seconds)
+                id * 10
+            }
+        }
+        client.registerService<OrderService>(impl)
+        val orders = client.service<OrderService>()
+        RpcDefaults.DUPLICATE_WINDOW = 1.seconds // after the descriptor is built, it only bounds the publish
+
+        assertEquals(40L, withNatsCallTimeout(5.seconds) { orders.total(4) })
+    }
+
+    @Test
+    fun `publish phase of a persistent call with a result ends at the duplicate window`() = withClient { client ->
+        val descriptor = client.serviceDescriptor(OrderService::class.java)
+        val streams = descriptor.streams!!
+        JetStreamProvisioner.ensureStreams(streams)
+        val config = jsm().getStreamInfo(streams.stream).configuration
+        jsm().updateStream(StreamConfiguration.builder(config).noAck(true).build())
+        RpcDefaults.DUPLICATE_WINDOW = 1.seconds
+
+        val start = TimeSource.Monotonic.markNow()
+        val exception = assertFailsWith<NatsCallTimeoutException> {
+            withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(1) }
+        }
+        val took = start.elapsedNow()
+
+        assertEquals(10.seconds, exception.timeout)
+        assertTrue(took < 5.seconds, "the publish phase must end at the duplicate window, took $took")
+    }
 
     @Test
     fun `call timeout above the duplicate window is allowed for core methods`() = withClient { client ->

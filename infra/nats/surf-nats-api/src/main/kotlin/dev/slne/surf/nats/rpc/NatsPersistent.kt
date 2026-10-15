@@ -7,8 +7,9 @@ package dev.slne.surf.nats.rpc
  * interface's annotation. Methods are non-persistent by default. See [NatsService] for delivery
  * semantics for each combination of recipients and return type.
  *
- * Persistent methods cannot use [Recipients.ALL_INSTANCES], and their call timeout must not exceed
- * the two-minute deduplication window. Handlers must be idempotent because messages can be delivered
+ * Persistent methods cannot use [Recipients.ALL_INSTANCES]. The call timeout of a persistent method
+ * without a result must not exceed the two-minute deduplication window (see [NatsCallTimeout]).
+ * Handlers must be idempotent because messages can be delivered
  * more than once. [NatsPersistentContext] provides the message identity and delivery count.
  *
  * @property enabled whether persistence is enabled. Set to false on a method to override

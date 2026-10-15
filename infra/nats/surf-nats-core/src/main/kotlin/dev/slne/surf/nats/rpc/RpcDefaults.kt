@@ -16,7 +16,8 @@ internal object RpcDefaults {
 
     val JETSTREAM_TIMEOUT = 60.seconds
     val PERSIST_MAX_AGE = 7.days
-    val DUPLICATE_WINDOW = 2.minutes
+    @Volatile
+    internal var DUPLICATE_WINDOW = 2.minutes // var for tests
     val ACK_SYNC_TIMEOUT = 5.seconds
     @Volatile
     internal var ACK_WAIT = 10.seconds // var for tests

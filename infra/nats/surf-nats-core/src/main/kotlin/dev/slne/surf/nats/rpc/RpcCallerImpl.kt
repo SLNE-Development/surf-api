@@ -45,8 +45,10 @@ internal class RpcCallerImpl(
         val timeout = currentCoroutineContext()[NatsTimeoutElement]?.timeout ?: method.timeout
 
         if (method.persistent) {
-            require(timeout <= RpcDefaults.DUPLICATE_WINDOW) {
-                "Timeout $timeout for persistent ${service.type.name}.${method.method.name} exceeds the JetStream duplicate window of ${RpcDefaults.DUPLICATE_WINDOW}"
+            if (method.result == ResultKind.Unit) {
+                require(timeout <= RpcDefaults.DUPLICATE_WINDOW) {
+                    "Timeout $timeout for persistent ${service.type.name}.${method.method.name} without a result exceeds the JetStream duplicate window of ${RpcDefaults.DUPLICATE_WINDOW}"
+                }
             }
             return callPersistent(method, args, timeout)
         }
@@ -241,7 +243,7 @@ internal class RpcCallerImpl(
         val inbox = NatsConnectionManager.connection().createInbox()
         headers.add(NatsHeaders.DEADLINE, NatsHeaders.deadline(timeout))
         headers.add(NatsHeaders.REPLY_TO, inbox)
-        val options = publishOptions(streams.stream, ttl = timeout)
+        val options = publishOptions(streams.stream, ttl = minOf(timeout, RpcDefaults.PERSIST_MAX_AGE))
         val body = PayloadStore.offload(
             headers,
             encoded,
@@ -257,7 +259,9 @@ internal class RpcCallerImpl(
 
         try {
             val response = withTimeoutOrNull(timeout) {
-                publishPersistent(method, headers, body, options)
+                withTimeoutOrNull(minOf(timeout, RpcDefaults.DUPLICATE_WINDOW)) {
+                    publishPersistent(method, headers, body, options)
+                } ?: return@withTimeoutOrNull null
                 reply.await()
             } ?: throw NatsCallTimeoutException(method.subject, timeout)
             return decodeReply(method, response)
