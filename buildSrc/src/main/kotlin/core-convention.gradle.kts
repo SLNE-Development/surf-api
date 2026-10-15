@@ -26,6 +26,7 @@ version = findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
 repositories {
     mavenCentral()
     maven("https://reposilite.slne.dev/public") { name = "slne-repository-public" }
+    maven("https://repo.opencollab.dev/main/") { name = "OpenCollab" }
 }
 
 dependencies {

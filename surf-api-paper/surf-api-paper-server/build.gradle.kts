@@ -74,6 +74,7 @@ paper {
         registerSoft("ViaBackwards")
         registerSoft("ViaRewind")
         registerSoft("Geyser-Spigot")
+        registerSoft("floodgate")
         registerSoft("PlaceholderAPI")
 
         register("CommandAPI") {
