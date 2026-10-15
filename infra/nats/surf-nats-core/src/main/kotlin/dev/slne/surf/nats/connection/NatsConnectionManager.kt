@@ -113,4 +113,15 @@ internal object NatsConnectionManager {
     }
 
     fun connection() = checkNotNull(connection) { "NATS is not connected" }
+
+    fun health(): NatsConnectionHealth? {
+        val connection = connection ?: return null
+        val status = connection.status
+
+        return NatsConnectionHealth(
+            connectionName = connection.options.connectionName,
+            connected = status == Connection.Status.CONNECTED,
+            status = status.name,
+        )
+    }
 }

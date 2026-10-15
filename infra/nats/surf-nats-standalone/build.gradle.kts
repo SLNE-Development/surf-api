@@ -7,6 +7,8 @@ plugins {
 
 dependencies {
     api(projects.surfNatsCore)
+
+    compileOnly(libs.surf.microservice)
 }
 
 gradlePlugin {
