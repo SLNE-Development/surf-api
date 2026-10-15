@@ -29,5 +29,8 @@ include("surf-microservice-client:surf-microservice-client-paper")
 include("surf-microservice-client:surf-microservice-client-velocity")
 include("surf-microservice-microservice")
 
+// Integrations
+include("surf-microservice-nats")
+
 // Gradle Plugin
 include("surf-microservice-gradle-plugin")

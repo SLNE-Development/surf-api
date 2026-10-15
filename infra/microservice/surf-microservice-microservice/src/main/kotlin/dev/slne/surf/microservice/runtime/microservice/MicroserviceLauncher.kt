@@ -9,12 +9,14 @@ import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandCo
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandOutput
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandResult
 import dev.slne.surf.microservice.api.microservice.command.MicroserviceCommandSource
+import dev.slne.surf.microservice.api.microservice.integration.MicroserviceIntegration
 import dev.slne.surf.microservice.runtime.microservice.command.microserviceCommandManagerImpl
 import dev.slne.surf.microservice.runtime.microservice.command.transport.MicroserviceCommandClient
 import dev.slne.surf.microservice.runtime.microservice.command.transport.MicroserviceCommandServer
 import dev.slne.surf.microservice.runtime.microservice.spark.MicroserviceSpark
 import kotlinx.coroutines.*
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.exitProcess
 
@@ -40,6 +42,8 @@ object MicroserviceLauncher {
 
     private var commandServer: MicroserviceCommandServer? = null
 
+    private val startedIntegrations = ConcurrentLinkedDeque<MicroserviceIntegration>()
+
     private val consoleOutput = object : MicroserviceCommandOutput {
         override fun sendLine(message: String) {
             log.atInfo().log(message)
@@ -55,6 +59,8 @@ object MicroserviceLauncher {
 
         SurfApiStandaloneBootstrap.bootstrap()
         SurfApiStandaloneBootstrap.enable()
+
+        startIntegrations()
 
         microservice.bootstrap(args.toList())
 
@@ -102,6 +108,8 @@ object MicroserviceLauncher {
                     .log("Failed to disable the microservice.")
             }
 
+            stopIntegrations()
+
             try {
                 MicroserviceSpark.onDisable()
             } catch (exception: Throwable) {
@@ -116,6 +124,34 @@ object MicroserviceLauncher {
                 log.atSevere()
                     .withCause(exception)
                     .log("Failed to shut down SurfApiStandaloneBootstrap.")
+            }
+        }
+    }
+
+    private suspend fun startIntegrations() {
+        val integrations = ServiceLoader.load(
+            MicroserviceIntegration::class.java,
+            MicroserviceIntegration::class.java.classLoader
+        ).toList()
+
+        for (integration in integrations) {
+            integration.start(microservice)
+            startedIntegrations.push(integration)
+            log.atInfo()
+                .log("Started integration ${integration.name}.")
+        }
+    }
+
+    private suspend fun stopIntegrations() {
+        while (true) {
+            val integration = startedIntegrations.poll() ?: break
+
+            try {
+                integration.stop(microservice)
+            } catch (exception: Throwable) {
+                log.atSevere()
+                    .withCause(exception)
+                    .log("Failed to stop integration ${integration.name}.")
             }
         }
     }

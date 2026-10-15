@@ -6,3 +6,9 @@ dependencies {
     api(projects.surfMicroserviceApi.surfMicroserviceApiClient.surfMicroserviceApiClientPaper)
     api(projects.surfMicroserviceClient.surfMicroserviceClientCommon)
 }
+
+surfRawPaperApi {
+    testing {
+        mockBukkit = false
+    }
+}

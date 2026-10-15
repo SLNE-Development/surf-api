@@ -5,3 +5,9 @@ plugins {
 dependencies {
     api(projects.surfMicroserviceApi.surfMicroserviceApiClient.surfMicroserviceApiClientCommon)
 }
+
+surfRawPaperApi {
+    testing {
+        mockBukkit = false
+    }
+}

@@ -2,6 +2,7 @@ package dev.slne.surf.microservice.gradle.plugin
 
 import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import dev.slne.surf.api.gradle.platform.common.CommonSurfExtension
 import dev.slne.surf.microservice.gradle.plugin.rabbit.RabbitModuleSettings
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -116,6 +117,7 @@ abstract class MicroservicePlugin : Plugin<Project> {
         afterEvaluate {
             extension.module.orNull?.let { module ->
                 configureMicroserviceModule(module)
+                configureNatsIntegration(module)
             }
 
             extension.rabbitSettings.orNull?.let { rabbitSettings ->
@@ -179,6 +181,26 @@ private fun Project.configureMicroserviceModule(
 
     tasks.withType<ShadowJar>().configureEach {
         mainClass.set(MICROSERVICE_MAIN_CLASS)
+    }
+}
+
+private fun Project.configureNatsIntegration(
+    module: SurfMicroserviceModule,
+) {
+    if (module != SurfMicroserviceModule.MICROSERVICE) {
+        return
+    }
+
+    val surfNatsEnabled = extensions.findByType<CommonSurfExtension>()
+        ?.surfNatsEnabled
+        ?.get() == true
+
+    if (!surfNatsEnabled) {
+        return
+    }
+
+    dependencies {
+        "runtimeOnly"("$MICROSERVICE_GROUP:surf-microservice-nats:+")
     }
 }
 
