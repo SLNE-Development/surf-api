@@ -212,7 +212,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
-            freeCompilerArgs.addAll(listOf("-Xjsr305=strict", "-Xcontext-parameters"))
+            freeCompilerArgs.addAll(
+                listOf(
+                    "-Xjsr305=strict",
+                    "-Xcontext-parameters",
+                    "-Xreturn-value-checker=check",
+                )
+            )
             javaParameters = true
         }
     }
@@ -265,6 +271,16 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                     if (testingEnabled) {
                         add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
                     }
+                }
+            }
+        }
+
+        if (extension.withSurfNats.get()) {
+            dependencies {
+                val notation = "dev.slne.surf.nats:surf-nats-api:+"
+                add(COMPILE_ONLY, notation)
+                if (testingEnabled) {
+                    add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
                 }
             }
         }
