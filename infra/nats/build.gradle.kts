@@ -33,7 +33,6 @@ subprojects {
                 if (!project.path.startsWith(":surf-nats-test")) {
                     optIn.add("dev.slne.surf.nats.InternalNatsApi")
                 }
-                freeCompilerArgs.add("-Xreturn-value-checker=check") // TODO: 09.10.2026 21:30 - add to surf-api
             }
         }
     }

@@ -9,6 +9,10 @@ dependencies {
     api(projects.surfNatsCore)
 }
 
+gradlePlugin {
+    isAutomatedPublishing = false
+}
+
 val shadowComponent = components["shadow"] as AdhocComponentWithVariants
 shadowComponent.addVariantsFromConfiguration(configurations["sourcesElements"]) {}
 shadowComponent.addVariantsFromConfiguration(configurations["javadocElements"]) {}
