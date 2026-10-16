@@ -13,4 +13,10 @@ jobs:
     with:
       modules: "surf-api-paper-server-*-all.jar;surf-api-velocity-server-*-all.jar;surf-api-standalone-server-*-all.jar"
       check-kotlin-abi: true
+      pre-build-command: |
+        git -c 'url.https://github.com/.insteadOf=git@github.com:' submodule update --init --recursive
+        cd vendor
+        GIT_AUTHOR_NAME=github-actions GIT_AUTHOR_EMAIL=actions@slne.dev \
+          GIT_COMMITTER_NAME=github-actions GIT_COMMITTER_EMAIL=actions@slne.dev \
+          ./gradlew applyPatches
     secrets: inherit

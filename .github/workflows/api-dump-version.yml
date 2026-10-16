@@ -29,6 +29,20 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      - name: Init submodules
+        shell: bash
+        run: git -c 'url.https://github.com/.insteadOf=git@github.com:' submodule update --init --recursive
+
+      - name: Apply vendor patches
+        shell: bash
+        working-directory: vendor
+        env:
+          GIT_AUTHOR_NAME: github-actions
+          GIT_AUTHOR_EMAIL: actions@slne.dev
+          GIT_COMMITTER_NAME: github-actions
+          GIT_COMMITTER_EMAIL: actions@slne.dev
+        run: ./gradlew applyPatches
+
       - name: Run Kotlin Binary Compatibility Check
         id: check_api
         run: |

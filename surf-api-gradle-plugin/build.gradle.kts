@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.3.0")
+    append("2.4.0")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -37,7 +37,8 @@ val pluginDependencies = listOf(
     libs.shadow.gradle.plugin,
     libs.run.paper.gradle.plugin,
     libs.plugin.yml.paper.gradle.plugin,
-    libs.ksp.gradle.plugin
+    libs.ksp.gradle.plugin,
+    libs.gremlin.gradle.plugin,
 )
 
 dependencies {
@@ -95,6 +96,12 @@ gradlePlugin {
             implementationClass = "dev.slne.surf.api.gradle.platform.minestom.MinestomSurfPlugin"
         }
 
+        create("minestom-server") {
+            id = "dev.slne.surf.api.gradle.minestom-server"
+            implementationClass =
+                "dev.slne.surf.api.gradle.platform.minestom.server.MinestomServerSurfPlugin"
+        }
+
         create("minestom-relocations") {
             id = "dev.slne.surf.api.gradle.minestom-relocations"
             implementationClass =
@@ -131,7 +138,10 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
     inputs.property("libs.versions.commandapiplugin", libs.versions.commandapiplugin.get())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
-    inputs.property("libs.versions.luckpermsplugin.bukkit", libs.versions.luckpermsplugin.bukkit.get())
+    inputs.property(
+        "libs.versions.luckpermsplugin.bukkit",
+        libs.versions.luckpermsplugin.bukkit.get()
+    )
     inputs.property(
         "libs.versions.packetevents",
         libs.versions.packetevents.plugin.get()
@@ -150,6 +160,9 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.versions.mockbukkit", libs.versions.mockbukkit.get())
     inputs.property("libs.versions.minestom.testing", libs.versions.minestom.testing.get())
     inputs.property("libs.versions.kotlinxCoroutines", libs.versions.kotlinxCoroutines.get())
+    inputs.property("libs.minestom.server", libs.minestom.server.get().toString())
+    inputs.property("libs.versions.log4j", libs.versions.log4j.get())
+    inputs.property("libs.versions.asm", libs.versions.asm.get())
     outputs.dir(constantsOutputDir)
 
     doLast {
@@ -183,6 +196,10 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val TEST_MOCKBUKKIT_VERSION = "${libs.versions.mockbukkit.get()}"
             |    const val TEST_MINESTOM_TESTING_VERSION = "${libs.versions.minestom.testing.get()}"
             |    const val TEST_COROUTINES_VERSION = "${libs.versions.kotlinxCoroutines.get()}"
+            |
+            |    const val MINESTOM = "${libs.minestom.server.get()}"
+            |    const val LOG4J_VERSION = "${libs.versions.log4j.get()}"
+            |    const val ASM_VERSION = "${libs.versions.asm.get()}"
             |
             |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
             |}

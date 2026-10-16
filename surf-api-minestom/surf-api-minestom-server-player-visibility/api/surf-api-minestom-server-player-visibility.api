@@ -1,0 +1,41 @@
+public final class dev/slne/surf/api/minestom/server/visibility/PlayerVisibilityFeature : dev/slne/surf/api/minestom/server/SurfMinestomFeature, dev/slne/surf/api/minestom/visibility/PlayerVisibility$Provider {
+	public static final field Companion Ldev/slne/surf/api/minestom/server/visibility/PlayerVisibilityFeature$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getLoadPriority ()I
+	public fun isLimited (Lnet/minestom/server/entity/Player;)Z
+	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun refreshViewerRule (Lnet/minestom/server/entity/Player;)Z
+	public fun updateViewerRule (Lnet/minestom/server/entity/Player;Ljava/util/function/Predicate;)Z
+}
+
+public final class dev/slne/surf/api/minestom/server/visibility/PlayerVisibilityFeature$Companion {
+}
+
+public final class dev/slne/surf/api/minestom/server/visibility/PlayerVisibilityFeatureKt {
+	public static final fun withPlayerVisibility (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun withPlayerVisibility$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/visibility/PlayerVisibilitySettings {
+	public final fun getActivateAt ()I
+	public final fun getDeactivateBelow ()I
+	public final fun getMaxVisible ()I
+	public final fun getRefreshIntervalTicks ()I
+	public final fun getRetentionDistanceFactor ()D
+	public final fun setActivateAt (I)V
+	public final fun setDeactivateBelow (I)V
+	public final fun setMaxVisible (I)V
+	public final fun setRefreshIntervalTicks (I)V
+	public final fun setRetentionDistanceFactor (D)V
+}
+
+public final class net/minestom/server/entity/AutomaticPlayerVisibility {
+	public static fun hide (Lnet/minestom/server/entity/Player;Lnet/minestom/server/entity/Player;)V
+	public static fun show (Lnet/minestom/server/entity/Player;Lnet/minestom/server/entity/Player;)V
+	public static fun targetAllows (Lnet/minestom/server/entity/Player;Lnet/minestom/server/entity/Player;)Z
+	public static fun withViewerLock (Lnet/minestom/server/entity/Player;Ljava/lang/Runnable;)V
+}
+

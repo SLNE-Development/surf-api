@@ -1,0 +1,25 @@
+public final class dev/slne/surf/api/minestom/server/plugins/PluginsFeature : dev/slne/surf/api/minestom/server/SurfMinestomFeature {
+	public static final field Companion Ldev/slne/surf/api/minestom/server/plugins/PluginsFeature$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getLoadPriority ()I
+	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/plugins/PluginsFeature$Companion {
+}
+
+public final class dev/slne/surf/api/minestom/server/plugins/PluginsFeatureBuilder {
+	public final fun getDirectory ()Ljava/nio/file/Path;
+	public final fun getLoadClassPathPlugins ()Z
+	public final fun setDirectory (Ljava/nio/file/Path;)V
+	public final fun setLoadClassPathPlugins (Z)V
+}
+
+public final class dev/slne/surf/api/minestom/server/plugins/PluginsFeatureKt {
+	public static final fun withPlugins (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun withPlugins$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+

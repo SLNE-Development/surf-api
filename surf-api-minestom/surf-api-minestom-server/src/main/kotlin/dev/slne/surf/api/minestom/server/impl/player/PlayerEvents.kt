@@ -1,0 +1,196 @@
+package dev.slne.surf.api.minestom.server.impl.player
+
+import dev.slne.surf.api.minestom.extension.ConnectionManager
+import dev.slne.surf.api.minestom.extension.GlobalEventHandler
+import dev.slne.surf.api.minestom.extension.addListener
+import dev.slne.surf.api.minestom.player.PlayerLimit
+import dev.slne.surf.api.minestom.player.event.AsyncPlayerCountEvent
+import dev.slne.surf.api.minestom.player.event.AsyncPlayerSpawnLocationEvent
+import dev.slne.surf.api.minestom.player.event.PlayerJoinEvent
+import dev.slne.surf.api.minestom.player.event.PlayerQuitEvent
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.translation.GlobalTranslator
+import net.kyori.adventure.translation.TranslationStore
+import net.minestom.server.adventure.MinestomAdventure
+import net.minestom.server.adventure.audience.Audiences
+import net.minestom.server.entity.Player
+import net.minestom.server.event.Event
+import net.minestom.server.event.EventDispatcher
+import net.minestom.server.event.EventListener
+import net.minestom.server.event.EventNode
+import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
+import net.minestom.server.event.player.PlayerDisconnectEvent
+import net.minestom.server.event.player.PlayerSpawnEvent
+import net.minestom.server.event.server.ServerListPingEvent
+import net.minestom.server.ping.Status
+import java.text.MessageFormat
+import java.util.*
+
+/**
+ * Calls the player events of the surf api.
+ *
+ * Without the configuration phase of the surf api, [AsyncPlayerCountEvent] and
+ * [AsyncPlayerSpawnLocationEvent] are called around Minestom's own
+ * [AsyncPlayerConfigurationEvent]. The player count is checked by a listener registered on the
+ * global event handler at install, which runs before the listeners of every event node and before
+ * listeners registered on the global event handler afterwards, but not before ones registered
+ * earlier. The spawn location is chosen from an event node that runs after the other nodes. With
+ * the configuration phase, each is a step of its own.
+ */
+internal object PlayerEvents {
+    private val SERVER_FULL: Component = Component.text("The server is full.", NamedTextColor.RED)
+
+    private var first: EventListener<AsyncPlayerConfigurationEvent>? = null
+    private var last: EventNode<Event>? = null
+
+    /**
+     * Players that fired a join; only these produce a quit. Guarded by its own monitor.
+     */
+    private val joined = Collections.newSetFromMap(WeakHashMap<Player, Boolean>())
+
+    @Volatile
+    private var translationsRegistered = false
+
+    fun install(node: EventNode<Event>, configurationPhase: Boolean) {
+        registerTranslations()
+
+        if (!configurationPhase) {
+            val first = EventListener.of(AsyncPlayerConfigurationEvent::class.java) { event ->
+                if (event.isFirstConfig) admit(event.player)
+            }
+
+            val last = EventNode.all("surf-api-player-events-last").setPriority(Int.MAX_VALUE)
+            last.addListener<AsyncPlayerConfigurationEvent> { event ->
+                if (event.isFirstConfig && event.player.isOnline) chooseSpawnLocation(event)
+            }
+
+            GlobalEventHandler.addListener(first)
+            GlobalEventHandler.addChild(last)
+            this.first = first
+            this.last = last
+        }
+
+        node.addListener<PlayerSpawnEvent> { event ->
+            if (event.isFirstSpawn) join(event.player)
+        }
+        node.addListener<PlayerDisconnectEvent> { event -> quit(event.player) }
+        node.addListener<ServerListPingEvent>(::reportPlayerCount)
+    }
+
+    fun uninstall() {
+        first?.let(GlobalEventHandler::removeListener)
+        last?.let(GlobalEventHandler::removeChild)
+        first = null
+        last = null
+        synchronized(joined) { joined.clear() }
+    }
+
+    /**
+     * Calls [AsyncPlayerCountEvent] for [player] and kicks the player unless the event allows the
+     * join. The event's default result is `KICK_FULL` when the server is full.
+     *
+     * @return whether the player may join
+     */
+    fun admit(player: Player): Boolean {
+        val maxPlayers = PlayerLimit.maxPlayers
+        val playerCount = PlayerLimit.playerCount
+        val full = maxPlayers != null && playerCount > maxPlayers
+
+        val event = AsyncPlayerCountEvent(
+            player = player,
+            playerCount = playerCount,
+            maxPlayers = maxPlayers,
+            result = if (full) AsyncPlayerCountEvent.Result.KICK_FULL else AsyncPlayerCountEvent.Result.ALLOWED,
+            kickMessage = SERVER_FULL,
+        )
+        EventDispatcher.call(event)
+
+        if (event.isAllowed) return true
+
+        player.kick(event.kickMessage)
+        return false
+    }
+
+    /**
+     * Calls [AsyncPlayerSpawnLocationEvent] and applies its result to [configuration].
+     */
+    fun chooseSpawnLocation(configuration: AsyncPlayerConfigurationEvent) {
+        val player = configuration.player
+        val instance = requireNotNull(configuration.spawningInstance) {
+            "You need to specify a spawning instance in the AsyncPlayerConfigurationEvent"
+        }
+
+        val event = AsyncPlayerSpawnLocationEvent(player, instance, player.respawnPoint)
+        EventDispatcher.call(event)
+
+        configuration.spawningInstance = event.instance
+        player.respawnPoint = event.position
+    }
+
+    private fun join(player: Player) {
+        synchronized(joined) { joined += player }
+
+        val event = PlayerJoinEvent(
+            player,
+            Component.translatable("multiplayer.player.joined", NamedTextColor.YELLOW, player.name),
+        )
+        EventDispatcher.call(event)
+
+        event.joinMessage?.let(::broadcast)
+    }
+
+    private fun quit(player: Player) {
+        val wasJoined = synchronized(joined) { joined.remove(player) }
+        if (!wasJoined) return
+
+        val event = PlayerQuitEvent(
+            player,
+            Component.translatable("multiplayer.player.left", NamedTextColor.YELLOW, player.name),
+        )
+        EventDispatcher.call(event)
+
+        event.quitMessage?.let(::broadcast)
+    }
+
+    private fun broadcast(message: Component) {
+        for (player in ConnectionManager.onlinePlayers) {
+            player.sendMessage(message)
+        }
+        Audiences.console().sendMessage(GlobalTranslator.render(message, MinestomAdventure.getDefaultLocale()))
+    }
+
+    private fun reportPlayerCount(event: ServerListPingEvent) {
+        val maxPlayers = PlayerLimit.maxPlayers ?: return
+        val playerInfo = event.status.playerInfo() ?: return
+
+        event.status = Status.builder(event.status)
+            .playerInfo(
+                Status.PlayerInfo.builder(playerInfo)
+                    .onlinePlayers(PlayerLimit.playerCount)
+                    .maxPlayers(maxPlayers)
+                    .build()
+            )
+            .build()
+    }
+
+    /**
+     * Registers English join and quit message formats so the console shows text instead of keys.
+     */
+    private fun registerTranslations() {
+        if (translationsRegistered) return
+        translationsRegistered = true
+
+        val store = TranslationStore.messageFormat(Key.key("surf", "player"))
+        store.defaultLocale(Locale.US)
+        store.registerAll(
+            Locale.US,
+            mapOf(
+                "multiplayer.player.joined" to MessageFormat("{0} joined the game"),
+                "multiplayer.player.left" to MessageFormat("{0} left the game"),
+            ),
+        )
+        GlobalTranslator.translator().addSource(store)
+    }
+}
