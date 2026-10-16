@@ -20,7 +20,7 @@ open class SurfTestingExtension @Inject constructor(objects: ObjectFactory) {
 
     val mockk: Property<Boolean> = objects.property<Boolean>().convention(true)
     val lincheck: Property<Boolean> = objects.property<Boolean>().convention(true)
-    val mockBukkit: Property<Boolean> = objects.property<Boolean>().convention(true)
+    val mockBukkit: Property<Boolean> = objects.property<Boolean>().convention(false)
     val minestomTesting: Property<Boolean> = objects.property<Boolean>().convention(true)
 
     val junitVersion: Property<String> =
