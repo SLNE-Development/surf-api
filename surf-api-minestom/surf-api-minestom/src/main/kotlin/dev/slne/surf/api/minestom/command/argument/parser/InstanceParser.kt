@@ -11,14 +11,14 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.minestom.server.MinecraftServer
 import net.minestom.server.instance.Instance
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 /**
- * Reads a UUID or a dimension name and resolves it against the currently registered instances.
+ * Parses an instance by UUID or dimension name among the currently registered instances.
  *
- * A dimension name only resolves when it is unique among registered instances; an ambiguous or
- * unmatched token is reported at the position it started at.
+ * A dimension name resolves only while exactly one instance uses it. An unknown or ambiguous token
+ * fails at the position where the token starts.
  */
 internal object InstanceParser : ArgumentType<Instance> {
     private val UNKNOWN = DynamicCommandExceptionType { value ->
@@ -39,8 +39,7 @@ internal object InstanceParser : ArgumentType<Instance> {
     }
 
     /**
-     * Offers every instance's UUID, plus the dimension names that currently identify exactly one
-     * instance — an ambiguous name is not suggested because it would not resolve.
+     * Suggests the UUID of every instance and each dimension name used by exactly one instance.
      */
     override fun <S> listSuggestions(
         context: CommandContext<S>,

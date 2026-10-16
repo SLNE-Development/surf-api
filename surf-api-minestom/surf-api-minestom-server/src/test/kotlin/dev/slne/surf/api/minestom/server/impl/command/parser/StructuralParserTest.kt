@@ -4,12 +4,7 @@ import com.mojang.brigadier.LiteralMessage
 import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
-import dev.slne.surf.api.minestom.command.argument.CommandArgument
-import dev.slne.surf.api.minestom.command.argument.CustomArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.ListArgument
-import dev.slne.surf.api.minestom.command.argument.PositionArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
+import dev.slne.surf.api.minestom.command.argument.*
 import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxException
 import net.kyori.adventure.identity.Identity
 import net.kyori.adventure.text.Component
@@ -21,9 +16,8 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 /**
- * The parsers under test here are `internal` to the api module, so every case reaches them through
- * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition]'s publicly-typed
- * `rawType`, rather than importing a parser directly.
+ * Tests the structural parsers, which are `internal` to the api module, through the `rawType` of
+ * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition].
  */
 class StructuralParserTest {
     private val sender = StubSender()

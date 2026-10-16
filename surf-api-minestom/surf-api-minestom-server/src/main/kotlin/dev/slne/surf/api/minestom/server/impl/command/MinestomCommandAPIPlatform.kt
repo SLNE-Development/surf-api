@@ -17,11 +17,15 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 /**
- * Installs CommandAPI commands into the Brigadier dispatcher, which owns their parsing and dispatch.
+ * Registers CommandAPI commands in the Brigadier dispatcher, which owns their parsing and dispatch.
  *
- * Commands registered here are unknown to Minestom's own command manager, which reaches them
- * through [CommandAPIHook] from `CommandManagerMixin`. The manager is still consulted so a name
- * already taken by a foreign Minestom command is rejected rather than shadowed.
+ * Commands are not registered with Minestom's [CommandManager]; the manager reaches them through
+ * [CommandAPIHook] from `CommandManagerMixin`. The platform queries the manager only at
+ * registration, so that a label already used by a Minestom command is rejected instead of
+ * shadowed.
+ *
+ * Registration state is guarded by a lock, and a failed registration is rolled back completely.
+ * Constructing a platform makes it the active one that the accessors in the companion expose.
  */
 internal class MinestomCommandAPIPlatform(
     private val commandManager: CommandManager,
@@ -41,6 +45,14 @@ internal class MinestomCommandAPIPlatform(
         installed.set(this)
     }
 
+    /**
+     * Registers [definition] under its name, its aliases and, when [namespace] is set, their
+     * `namespace:label` forms.
+     *
+     * Definitions that cannot be declared to a client are rejected by [MinestomCommandCompiler].
+     *
+     * @throws IllegalStateException if the platform is closed or a label is already taken
+     */
     override fun register(
         definition: CommandDefinition,
         namespace: String?
@@ -78,9 +90,17 @@ internal class MinestomCommandAPIPlatform(
         return compiled.registration
     }
 
+    /**
+     * Executes [input] with the current dispatcher; Brigadier failures propagate to the caller.
+     */
     override fun execute(sender: CommandSender, input: String): Int =
         tree.dispatcher.execute(input, sender)
 
+    /**
+     * Unregisters the command that owns the label [name].
+     *
+     * Returns `false` when no command of this platform owns it.
+     */
     override fun unregister(name: String): Boolean = lock.withLock {
         val compiled = ownership.find(name) ?: return false
         if (compiled !in registrations) return false
@@ -88,6 +108,12 @@ internal class MinestomCommandAPIPlatform(
         return true
     }
 
+    /**
+     * Unregisters every command and rejects further registrations.
+     *
+     * Every command is detached even when some fail; the first failure is rethrown with the later
+     * ones attached as suppressed exceptions.
+     */
     override fun close(): Unit = lock.withLock {
         if (closed) return
         closed = true
@@ -127,17 +153,22 @@ internal class MinestomCommandAPIPlatform(
         private val installed = AtomicReference<MinestomCommandAPIPlatform?>()
 
         /**
-         * The merger of the currently installed platform, or `null` while none is installed.
+         * The merger of the active platform, or `null` while none is active.
          *
-         * The platform is created by the CommandAPI rather than by Minestom, so the mixin that
-         * reaches it through [CommandAPIHook] cannot be given it.
+         * The active platform is the most recently constructed one, until it is closed. The
+         * accessors serve [CommandAPIHook] and the suggestion listener, which cannot be handed the
+         * instance.
          */
         fun activeMerger(): DeclareCommandsMerger? = installed.get()?.merger
 
-        /** The dispatcher of the currently installed platform, or `null` while none is installed. */
+        /**
+         * The dispatcher of the active platform, or `null` while none is active.
+         */
         fun activeDispatcher(): CommandDispatcher<CommandSender>? = installed.get()?.tree?.dispatcher
 
-        /** The name registry of the currently installed platform, or `null` while none is installed. */
+        /**
+         * The name registry of the active platform, or `null` while none is active.
+         */
         fun activeOwnership(): MinestomCommandOwnership? = installed.get()?.ownership
     }
 }

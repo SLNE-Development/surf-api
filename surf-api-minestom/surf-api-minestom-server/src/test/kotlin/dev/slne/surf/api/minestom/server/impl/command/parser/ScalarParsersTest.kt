@@ -2,20 +2,16 @@ package dev.slne.surf.api.minestom.server.impl.command.parser
 
 import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.exceptions.CommandSyntaxException
-import dev.slne.surf.api.minestom.command.argument.AngleArgument
-import dev.slne.surf.api.minestom.command.argument.FloatRangeArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerRangeArgument
-import dev.slne.surf.api.minestom.command.argument.TimeArgument
-import dev.slne.surf.api.minestom.command.argument.UUIDArgument
+import dev.slne.surf.api.minestom.command.argument.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 
 /**
- * All five parsers under test here are `internal` to the api module, so every case reaches them
- * through [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition]'s
- * publicly-typed `rawType`, rather than importing the parser objects directly.
+ * Tests the angle, float range, integer range, time and UUID parsers, which are `internal` to the
+ * api module, through the `rawType` of
+ * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition].
  */
 class ScalarParsersTest {
     @Test

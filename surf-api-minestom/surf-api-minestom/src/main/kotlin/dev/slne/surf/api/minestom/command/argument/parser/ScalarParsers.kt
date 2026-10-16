@@ -9,10 +9,13 @@ import net.minestom.server.MinecraftServer
 import net.minestom.server.entity.Entity
 import net.minestom.server.utils.Range
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 
 /**
- * Reads a UUID in its canonical dashed hex form, e.g. `550e8400-e29b-41d4-a716-446655440000`.
+ * Parses a UUID in dashed hex form, e.g. `550e8400-e29b-41d4-a716-446655440000`.
+ *
+ * The token is validated by [UUID.fromString], so groups shorter than the canonical width are
+ * accepted as well.
  */
 internal object UuidParser : ArgumentType<UUID> {
     private val INVALID = SimpleCommandExceptionType(LiteralMessage("Invalid UUID"))
@@ -37,10 +40,10 @@ internal object UuidParser : ArgumentType<UUID> {
 }
 
 /**
- * Reads an angle in degrees: an absolute value, or `~` optionally followed by an offset applied to
- * the source's own yaw. The result is wrapped into `[-180, 180)`.
+ * Parses an angle in degrees, either absolute or `~` with an optional offset relative to the
+ * source's yaw. The result is wrapped into `[-180, 180)`.
  *
- * A source that has no position - the console, for instance - counts as facing yaw `0`.
+ * A source that is not an [Entity], such as the console, has yaw `0`.
  */
 internal object AngleParser : ArgumentType<Float> {
     private val INCOMPLETE = SimpleCommandExceptionType(LiteralMessage("Expected an angle"))
@@ -76,10 +79,11 @@ internal object AngleParser : ArgumentType<Float> {
 }
 
 /**
- * Reads a suffixed vanilla duration: a number followed by an optional unit, `d` for days
- * (24000 ticks), `s` for seconds (20 ticks) or `t` for ticks; an absent suffix also means ticks.
+ * Parses a vanilla time value: a number with an optional unit of `d` (24000 ticks), `s` (20 ticks)
+ * or `t` (ticks). Without a unit the number counts ticks.
  *
- * The result is rejected if it would be negative or if the suffix is anything else.
+ * The tick count is converted to a [Duration] using [MinecraftServer.TICK_MS]. Negative values and
+ * other units are rejected.
  */
 internal object TimeParser : ArgumentType<Duration> {
     private val INVALID_UNIT = DynamicCommandExceptionType { unit ->
@@ -115,11 +119,11 @@ internal object TimeParser : ArgumentType<Duration> {
 }
 
 /**
- * Reads an integer range in vanilla's `min..max` syntax.
+ * Parses an integer range in vanilla's `min..max` syntax.
  *
- * Either bound may be omitted, in which case it resolves to [Int.MIN_VALUE] or [Int.MAX_VALUE]
- * respectively. A bare value is shorthand for a range containing only that value. At least one
- * bound must be present, and the lower bound must not exceed the upper one.
+ * An omitted bound defaults to [Int.MIN_VALUE] or [Int.MAX_VALUE]. A bare value denotes a range
+ * containing only that value. At least one bound is required, and the minimum must not exceed the
+ * maximum.
  */
 internal object IntegerRangeParser : ArgumentType<Range.Int> {
     override fun parse(reader: StringReader): Range.Int {
@@ -135,11 +139,11 @@ internal object IntegerRangeParser : ArgumentType<Range.Int> {
 }
 
 /**
- * Reads a float range in vanilla's `min..max` syntax.
+ * Parses a float range in vanilla's `min..max` syntax.
  *
- * Either bound may be omitted, in which case it resolves to `-Float.MAX_VALUE` or
- * `Float.MAX_VALUE` respectively. A bare value is shorthand for a range containing only that
- * value. At least one bound must be present, and the lower bound must not exceed the upper one.
+ * An omitted bound defaults to `-Float.MAX_VALUE` or `Float.MAX_VALUE`. A bare value denotes a
+ * range containing only that value. At least one bound is required, and the minimum must not
+ * exceed the maximum.
  */
 internal object FloatRangeParser : ArgumentType<Range.Float> {
     override fun parse(reader: StringReader): Range.Float {
@@ -159,8 +163,10 @@ private val RANGE_INVALID = DynamicCommandExceptionType { value -> LiteralMessag
 private val RANGE_INVERTED = SimpleCommandExceptionType(LiteralMessage("Range minimum must not exceed its maximum"))
 
 /**
- * Reads a `<lower>..<upper>` range (either side optional, a bare value standing for both), and
- * converts each side with [parse]. Resets [reader]'s cursor to the range's start before throwing.
+ * Reads a `lower..upper` range, converting each bound with [parse]. A bare value supplies both
+ * bounds; an empty bound is returned as `null`.
+ *
+ * The cursor of [reader] is reset to the start of the range before an exception is thrown.
  */
 private fun <T> readRange(reader: StringReader, parse: (String) -> T?): Pair<T?, T?> {
     val start = reader.cursor
@@ -190,8 +196,9 @@ private fun <T> readRange(reader: StringReader, parse: (String) -> T?): Pair<T?,
 }
 
 /**
- * Reads one side of a range: an optional `-`, digits, and an optional single `.` followed by
- * more digits. Stops before a `..` separator instead of consuming it as a decimal point.
+ * Reads one range bound: an optional `-`, digits and an optional decimal part.
+ *
+ * A `..` separator ends the bound and is not read as a decimal point.
  */
 private fun readRangeBoundText(reader: StringReader): String {
     val start = reader.cursor

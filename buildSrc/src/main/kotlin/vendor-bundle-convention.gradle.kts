@@ -14,7 +14,9 @@ plugins {
     id("core-convention")
 }
 
-/** Libraries a Minestom server provides itself, which are therefore never bundled. */
+/**
+ * Libraries a Minestom server provides itself, which are therefore never bundled.
+ */
 private val providedGroups = setOf(
     "org.slf4j",
     "org.jspecify",
@@ -27,13 +29,16 @@ private val providedGroups = setOf(
     "com.google.errorprone",
 )
 
-/** Adventure ships with Minestom, apart from the few extensions spark brings along. */
+/**
+ * Adventure ships with Minestom, apart from the few extensions spark brings along.
+ */
 private val providedAdventureModules = Regex("adventure-(api|key|nbt|text-(minimessage|logger-slf4j|serializer-.*))|option|examination-.*")
 
 /**
- * Libraries the module has to declare as regular dependencies instead. A bundled ASM ends up on the
- * server's class path ahead of the one the server's library download relocates with, which then
- * cannot read current class files.
+ * Libraries the module declares as regular dependencies instead of bundling them. A bundled ASM
+ * would end up on the system class path ahead of the ASM the server's library download relocates
+ * with. The relocation would then run on the bundled version, which cannot read current class
+ * files.
  */
 private val declaredGroups = setOf(
     "org.ow2.asm",

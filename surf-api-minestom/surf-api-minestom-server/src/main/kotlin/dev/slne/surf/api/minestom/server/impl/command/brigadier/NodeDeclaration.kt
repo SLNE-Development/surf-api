@@ -11,10 +11,11 @@ import net.minestom.server.registry.BuiltinRegistries
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * How one argument is announced to the client: the vanilla parser id it should use, the parser's own
- * properties, and where the client should get its completions from.
+ * How an argument node is declared to the client: the vanilla [parser], its serialized
+ * [properties] and the [suggestionsType] that selects the source of suggestions.
  *
- * A `null` [suggestionsType] leaves the completion set to whatever the parser implies on the client.
+ * A `null` [suggestionsType] leaves the suggestions to the client's parser. Equality compares
+ * [properties] by content.
  */
 internal data class NodeDeclaration(
     val parser: ArgumentParserType,
@@ -37,17 +38,23 @@ internal data class NodeDeclaration(
 }
 
 /**
- * Derives the client-facing declaration of every argument kind.
+ * Derives the [NodeDeclaration] of an argument definition.
  *
- * A declaration is protocol data, not parsing: it only tells the client which vanilla parser to use
- * and how it is configured, while the server parses the input with the argument's own Brigadier
- * type. Minestom already encodes that mapping for most kinds, so the values are read off a throwaway
- * native argument rather than re-encoded by hand; the few kinds Minestom has no native argument for
- * name their vanilla parser directly.
+ * A declaration is protocol data only; the server parses input with the argument's own Brigadier
+ * type. For most kinds the parser and properties are read from an equivalent native Minestom
+ * argument, and the remaining kinds name their parser directly. Declarations are cached per
+ * definition and never evicted; the cache is safe for concurrent use.
  */
 internal class NodeDeclarations {
     private val cache = ConcurrentHashMap<ArgumentDefinition<*>, NodeDeclaration>()
 
+    /**
+     * Returns the declaration of [definition].
+     *
+     * The suggestions type is `ask_server` when the definition has a custom suggestion provider or
+     * its kind is one whose suggestions the client cannot produce itself, and the native one
+     * otherwise.
+     */
     fun of(definition: ArgumentDefinition<*>): NodeDeclaration = cache.computeIfAbsent(definition) {
         val base = baseDeclarationOf(definition)
         val server = definition.suggestions != SuggestionMode.BuiltIns ||
@@ -57,12 +64,10 @@ internal class NodeDeclarations {
     }
 
     /**
-     * Whether the completions of [kind] can only come from the server.
+     * Whether suggestions for [kind] must come from the server.
      *
-     * A client fills a node in from its own registries and its own tab list, which covers most
-     * kinds. It cannot know the values that only exist on this server - a live instance, a registry
-     * the client has no copy of - nor the accepted spellings of a node declared as a plain string,
-     * so those kinds are announced as `ask_server` even with no provider attached.
+     * These kinds are declared as `ask_server` even without a suggestion provider. Custom kinds
+     * follow their base kind and list kinds their element kind.
      */
     private tailrec fun computesSuggestions(kind: ArgumentKind<*>): Boolean = when (kind) {
         ArgumentKind.Sound,
@@ -86,8 +91,7 @@ internal class NodeDeclarations {
 
     private fun baseDeclarationOf(definition: ArgumentDefinition<*>): NodeDeclaration =
         when (val kind = definition.kind) {
-            // Minestom parses these on top of a differently-shaped native argument, so its own
-            // declaration would name the wrong parser.
+            // Declared directly because the native Minestom argument would name a different parser.
             ArgumentKind.Rotation -> NodeDeclaration(ArgumentParserType.ROTATION, null)
             ArgumentKind.Angle -> NodeDeclaration(ArgumentParserType.ANGLE, null)
             ArgumentKind.Axis -> NodeDeclaration(ArgumentParserType.SWIZZLE, null)
@@ -95,7 +99,7 @@ internal class NodeDeclarations {
 
             ArgumentKind.SignedMessage -> NodeDeclaration(ArgumentParserType.MESSAGE, null)
 
-            // A custom argument reads whatever its base reads, so it is announced as that base.
+            // A custom argument is declared as its base.
             is ArgumentKind.Custom<*, *> -> baseDeclarationOf(kind.base)
 
             else -> nativeFor(definition).let { native ->
@@ -121,8 +125,7 @@ internal class NodeDeclarations {
             ArgumentKind.Text -> ArgumentType.String(name)
             ArgumentKind.GreedyString -> ArgumentType.StringArray(name)
             is ArgumentKind.Literal -> ArgumentType.Literal(kind.literal)
-            // A fixed set of spellings is one node the server matches, not one literal node per
-            // spelling, so the client is told it is a word and asks for the accepted values.
+            // Declared as a word whose accepted values the client requests from the server.
             is ArgumentKind.MultiLiteral -> ArgumentType.Word(name)
             is ArgumentKind.Enum<*> -> ArgumentType.Word(name)
 
@@ -146,7 +149,7 @@ internal class NodeDeclarations {
             ArgumentKind.TeamColor -> ArgumentType.TeamColor(name)
             ArgumentKind.Particle -> ArgumentType.Particle(name)
 
-            // A sound and a potion effect are keys the client completes from its own registry.
+            // Sound and potion effect are declared as resource locations.
             ArgumentKind.Sound -> ArgumentType.ResourceLocation(name)
             ArgumentKind.PotionEffect -> ArgumentType.ResourceLocation(name)
             ArgumentKind.Biome -> ArgumentType.Resource(name, BuiltinRegistries.BIOME.name())
@@ -156,7 +159,7 @@ internal class NodeDeclarations {
             is ArgumentKind.Resource<*> -> ArgumentType.Resource(name, kind.identifier)
             ArgumentKind.Instance -> ArgumentType.Word(name)
 
-            // A list reads one greedy token and splits it itself.
+            // A list is declared as one greedy string that the server splits.
             is ArgumentKind.List<*> -> ArgumentType.StringArray(name)
 
             ArgumentKind.Rotation,

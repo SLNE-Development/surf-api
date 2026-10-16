@@ -8,23 +8,29 @@ import net.minestom.server.property.ServerProperty
 /**
  * The settings applied by `SurfMinestomServerBuilder.recommendedServerProperties`.
  *
- * A property set with `-D` and a compression threshold changed before are left alone. The
- * bootstrap of the server jar makes the properties writable; without it they keep their values.
+ * Values chosen explicitly are kept: a property set with `-D`, or a compression threshold that
+ * differs from Minestom's default. Minestom properties are writable at runtime only when
+ * `<name>.mutable` is set before they are first read, which the bootstrap of the server jar does;
+ * otherwise a warning is logged and the value stays.
  */
 internal object RecommendedServerProperties {
     private val LOGGER = ComponentLogger.logger()
 
     /**
-     * Velocity drops a backend that stays silent for its `login-timeout` (6 seconds by default)
-     * before the player reaches the play phase, while the configuration phase may hold a player
-     * indefinitely. Paper sends keep alives every second; Minestom's default is 10 seconds.
+     * Keep-alive interval in milliseconds. Velocity drops a backend that stays silent for its
+     * `login-timeout` (6 seconds by default) before the player reaches the play phase, while the
+     * configuration phase may hold a player indefinitely.
      */
     private const val KEEP_ALIVE_DELAY_MILLIS = 2_000L
 
-    /** Behind a proxy the backend connection is local, so compressing it only costs CPU. */
+    /**
+     * The connection to the proxy is local, so compression only costs CPU.
+     */
     private const val COMPRESSION_THRESHOLD = 0
 
-    /** Minestom's own compression threshold, which marks it as not chosen by the server. */
+    /**
+     * Minestom's default compression threshold; a different value means the server chose one.
+     */
     private const val MINESTOM_COMPRESSION_THRESHOLD = 256
 
     fun apply() {

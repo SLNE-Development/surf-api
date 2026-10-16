@@ -1,10 +1,10 @@
 package dev.slne.surf.api.minestom.server.visibility
 
+import dev.slne.surf.api.minestom.extension.addListener
+import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
-import dev.slne.surf.api.minestom.server.SurfMinestomFeature
-import dev.slne.surf.api.minestom.extension.addListener
 import dev.slne.surf.api.minestom.visibility.PlayerVisibility
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.entity.Entity
@@ -21,16 +21,24 @@ import java.util.function.Predicate
 @SurfMinestomServerDsl
 class PlayerVisibilitySettings internal constructor() {
 
-    /** How many players a player sees at most while the budget is active. */
+    /**
+     * How many players a player sees at most while the limit is active.
+     */
     var maxVisible: Int = 50
 
-    /** The budget activates once at least this many players would be visible. */
+    /**
+     * The limit activates once at least this many players would be visible.
+     */
     var activateAt: Int = 60
 
-    /** The budget deactivates once fewer than this many players would be visible. */
+    /**
+     * The limit deactivates once fewer than this many players would be visible.
+     */
     var deactivateBelow: Int = 45
 
-    /** How often, in ticks, the visible players of every player are selected anew. */
+    /**
+     * How often, in ticks, the visible players of every player are selected anew.
+     */
     var refreshIntervalTicks: Int = 5
 
     /**
@@ -53,12 +61,11 @@ class PlayerVisibilitySettings internal constructor() {
 }
 
 /**
- * Limits how many players a player sees at once to the nearest ones, which keeps crowded areas
- * cheap for both the server and the clients.
+ * Limits how many players each player sees at once to the nearest ones.
  *
- * The feature owns the viewer rule and the viewable rule of every player. Restrict what a player
- * sees through [PlayerVisibility.updateViewerRule] instead of `Player#updateViewerRule`, which
- * would remove the budget for that player.
+ * The feature owns the viewer rule and the viewable rule of every player from their first spawn
+ * on. Restrict what a player sees through [PlayerVisibility.updateViewerRule]; calling
+ * `Player#updateViewerRule` directly removes the limit for that player.
  */
 @OptIn(InternalSurfApi::class)
 class PlayerVisibilityFeature internal constructor(
@@ -119,8 +126,9 @@ class PlayerVisibilityFeature internal constructor(
 }
 
 /**
- * Limits how many players a player sees at once to the nearest ones.
+ * Installs the player visibility limit.
  *
+ * @throws IllegalArgumentException If the settings violate their documented constraints.
  * @see PlayerVisibilityFeature
  */
 fun SurfMinestomServerBuilder.withPlayerVisibility(block: PlayerVisibilitySettings.() -> Unit = {}) {

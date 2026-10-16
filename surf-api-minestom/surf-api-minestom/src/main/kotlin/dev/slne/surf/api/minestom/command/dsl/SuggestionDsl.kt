@@ -1,20 +1,17 @@
 package dev.slne.surf.api.minestom.command.dsl
 
 import dev.slne.surf.api.minestom.command.argument.Argument
-import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
-import dev.slne.surf.api.minestom.command.suggestion.SafeSuggestions
-import dev.slne.surf.api.minestom.command.suggestion.StringTooltip
-import dev.slne.surf.api.minestom.command.suggestion.SuggestionInfo
-import dev.slne.surf.api.minestom.command.suggestion.SuggestionsBranch
-import dev.slne.surf.api.minestom.command.suggestion.Tooltip
+import dev.slne.surf.api.minestom.command.suggestion.*
 
 fun <T> Argument<T>.replaceSuggestions(vararg values: String): Argument<T> =
     replaceSuggestions(ArgumentSuggestions.strings(*values))
 
 /**
- * A bare lambda literal at this call site resolves to [Argument.replaceSuggestions] instead of
- * this overload; pass an explicitly typed `(SuggestionInfo) -> Collection<String>` value to
- * select it.
+ * Replaces the built-in suggestions with the strings [provider] returns for each request.
+ *
+ * A lambda literal passed directly resolves to the member [Argument.replaceSuggestions] instead of
+ * this extension; pass a value explicitly typed `(SuggestionInfo) -> Collection<String>` to select
+ * it.
  */
 fun <T> Argument<T>.replaceSuggestions(provider: (SuggestionInfo) -> Collection<String>): Argument<T> =
     replaceSuggestions(ArgumentSuggestions.strings(provider))
@@ -23,9 +20,11 @@ fun <T> Argument<T>.includeSuggestions(vararg values: String): Argument<T> =
     includeSuggestions(ArgumentSuggestions.strings(*values))
 
 /**
- * A bare lambda literal at this call site resolves to [Argument.includeSuggestions] instead of
- * this overload; pass an explicitly typed `(SuggestionInfo) -> Collection<String>` value to
- * select it.
+ * Adds the strings [provider] returns for each request to the built-in suggestions.
+ *
+ * A lambda literal passed directly resolves to the member [Argument.includeSuggestions] instead of
+ * this extension; pass a value explicitly typed `(SuggestionInfo) -> Collection<String>` to select
+ * it.
  */
 fun <T> Argument<T>.includeSuggestions(provider: (SuggestionInfo) -> Collection<String>): Argument<T> =
     includeSuggestions(ArgumentSuggestions.strings(provider))
@@ -64,9 +63,11 @@ fun <T> Argument<T>.replaceSafeSuggestions(vararg values: T): Argument<T> =
     replaceSafeSuggestions(SafeSuggestions.suggest(*values))
 
 /**
- * A bare lambda literal at this call site resolves to [Argument.replaceSafeSuggestions] instead
- * of this overload; pass an explicitly typed `(SuggestionInfo) -> Collection<T>` value to select
- * it.
+ * Replaces the built-in suggestions with the values [provider] returns for each request.
+ *
+ * A lambda literal passed directly resolves to the member [Argument.replaceSafeSuggestions]
+ * instead of this extension; pass a value explicitly typed `(SuggestionInfo) -> Collection<T>` to
+ * select it.
  */
 fun <T> Argument<T>.replaceSafeSuggestions(provider: (SuggestionInfo) -> Collection<T>): Argument<T> =
     replaceSafeSuggestions(SafeSuggestions.suggest(provider))
@@ -75,9 +76,11 @@ fun <T> Argument<T>.includeSafeSuggestions(vararg values: T): Argument<T> =
     includeSafeSuggestions(SafeSuggestions.suggest(*values))
 
 /**
- * A bare lambda literal at this call site resolves to [Argument.includeSafeSuggestions] instead
- * of this overload; pass an explicitly typed `(SuggestionInfo) -> Collection<T>` value to select
- * it.
+ * Adds the values [provider] returns for each request to the built-in suggestions.
+ *
+ * A lambda literal passed directly resolves to the member [Argument.includeSafeSuggestions]
+ * instead of this extension; pass a value explicitly typed `(SuggestionInfo) -> Collection<T>` to
+ * select it.
  */
 fun <T> Argument<T>.includeSafeSuggestions(provider: (SuggestionInfo) -> Collection<T>): Argument<T> =
     includeSafeSuggestions(SafeSuggestions.suggest(provider))

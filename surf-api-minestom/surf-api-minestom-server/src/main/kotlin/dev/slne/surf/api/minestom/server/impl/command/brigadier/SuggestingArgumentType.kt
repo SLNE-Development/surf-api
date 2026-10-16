@@ -24,10 +24,10 @@ import net.minestom.server.command.CommandSender
 import java.util.concurrent.CompletableFuture
 
 /**
- * Adds an argument's declared suggestion provider to the values its raw type parses.
+ * Wraps [delegate] to serve the suggestion provider declared on [definition].
  *
- * Parsing is delegated untouched; only [listSuggestions] differs. Providers may suspend, so the
- * returned future is completed from a coroutine rather than on the netty thread.
+ * Parsing and examples are delegated unchanged. Suggestions are computed in a coroutine launched on
+ * [scope], so providers may suspend and the caller's thread is not blocked.
  */
 internal class SuggestingArgumentType(
     val delegate: ArgumentType<Any>,
@@ -42,8 +42,11 @@ internal class SuggestingArgumentType(
     override fun getExamples(): Collection<String> = delegate.examples
 
     /**
-     * An `include` mode keeps the raw type's own suggestions and adds the provider's on top; a
-     * `replace` mode offers only the provider's.
+     * Suggests the provider's entries, filtered by the provider's policy. Include modes add the
+     * [delegate]'s own suggestions; replace modes offer only the provider's.
+     *
+     * The returned future always completes normally. A failing provider is logged and the
+     * suggestions collected up to that point are returned.
      */
     override fun <S> listSuggestions(
         context: CommandContext<S>,
@@ -81,8 +84,8 @@ internal class SuggestingArgumentType(
                 )
             }
 
-            // The raw type is free to answer from a builder of its own - a list type offsets one
-            // per element - so the two results are merged rather than assumed to share a builder.
+            // The delegate may build its suggestions from a different builder (a list offsets one
+            // per element), so the results are merged instead of assumed to share [builder].
             val own = builder.build()
             future.complete(
                 if (builtIns == null) own else Suggestions.merge(builder.input, listOf(builtIns, own)),
@@ -124,10 +127,9 @@ internal class SuggestingArgumentType(
     }
 
     /**
-     * The arguments already parsed on this path, in the order they were read.
+     * The arguments parsed so far in [context], in the order they were read.
      *
-     * Only values Brigadier actually produced are present; a provider sees what the sender has
-     * typed so far and nothing more.
+     * Nodes without a parsed value, such as literals, are omitted.
      */
     private fun <S> previousArguments(context: CommandContext<S>): CommandArguments {
         val parsed = ObjectArrayList<ParsedArgument>()
@@ -149,15 +151,17 @@ internal class SuggestingArgumentType(
     }
 }
 
-/** Whether [SuggestionMode] keeps the suggestions the argument's own parser offers. */
+/**
+ * Whether this mode keeps the suggestions of the argument's own type.
+ */
 private fun SuggestionMode<*>.includesBuiltIns(): Boolean =
     this is SuggestionMode.Include<*> || this is SuggestionMode.IncludeSafe<*>
 
 /**
- * How the entries a provider returned are matched against what has been typed.
+ * How the entries of a provider are matched against the typed input.
  *
- * A safe provider returns typed values this argument stringifies itself, so it has no say in the
- * policy and is always filtered by prefix.
+ * Safe providers return typed values that the argument stringifies itself, so they are always
+ * filtered by prefix.
  */
 private fun SuggestionMode<*>.filterPolicy(): SuggestionFilter = when (this) {
     is SuggestionMode.Include<*> -> provider.filterPolicy
@@ -165,6 +169,8 @@ private fun SuggestionMode<*>.filterPolicy(): SuggestionFilter = when (this) {
     else -> SuggestionFilter.PREFIX
 }
 
-/** Whether definition carries a suggestion provider of its own. */
+/**
+ * Whether this definition carries a suggestion provider of its own.
+ */
 internal fun ArgumentDefinition<*>.hasCustomSuggestions(): Boolean =
     suggestions != SuggestionMode.BuiltIns

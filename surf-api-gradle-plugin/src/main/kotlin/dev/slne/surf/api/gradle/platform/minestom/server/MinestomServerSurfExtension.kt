@@ -13,7 +13,7 @@ import javax.inject.Inject
 /**
  * An optional part of the surf Minestom server, shipped as a module of its own.
  *
- * @property agentClass the Java agent the feature needs on startup, if any
+ * @property agentClass the delegate agent the bootstrap calls for the feature on startup, if any
  * @property mixinConfig the mixin configuration the feature's module ships, if any
  */
 enum class MinestomServerFeature(
@@ -34,7 +34,7 @@ enum class MinestomServerFeature(
 }
 
 /**
- * Configures a surf Minestom server module.
+ * Configures the build of a surf Minestom server.
  *
  * ```
  * surfMinestomServerApi {
@@ -54,8 +54,8 @@ enum class MinestomServerFeature(
  * Calling `withXxx()` only puts the feature's module on the class path; the server still installs
  * it in `surfMinestomServer { }`.
  *
- * The server jar only contains the project's own code and the surf modules: Minestom and every
- * other third-party library are downloaded into `libraries/` when the server starts, see
+ * By default, the server jar only contains the project's own code and the surf modules. Minestom
+ * and every other third-party library are downloaded into `libraries/` when the server starts, see
  * [downloadLibraries].
  */
 open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactory) :
@@ -74,12 +74,12 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
     val downloadLibraries = objects.property<Boolean>().convention(true)
 
     /**
-     * The plugins from the `plugins` directory the server's own code uses, by id.
+     * The plugins from the `plugins` directory the server's own code uses, by ID.
      *
-     * The server jar's bootstrap puts them and the plugins they depend on on the server's class
-     * path instead of giving them a class loader of their own, so the server can use their classes;
-     * add them as `compileOnly` dependencies to compile against them. The server does not start
-     * when a plugin that is not `optional` is missing.
+     * The bootstrap of the server jar puts these plugins, and the plugins they depend on, on the
+     * system class path instead of giving each a class loader of its own. The server's code can
+     * then use their classes; add them as `compileOnly` dependencies to compile against them. The
+     * server does not start when a plugin that is not `optional` is missing.
      */
     val pluginDependencies: NamedDomainObjectContainer<MinestomPluginFile.Dependency> =
         objects.domainObjectContainer(MinestomPluginFile.Dependency::class)
@@ -88,10 +88,14 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
         action.execute(pluginDependencies)
     }
 
-    /** The directory `runServer` starts the server in, relative to the project. */
+    /**
+     * The directory `runServer` starts the server in, relative to the project.
+     */
     val runDirectory = objects.property<String>().convention("run")
 
-    /** The class holding the server's `main` function, e.g. `dev.slne.example.server.MainKt`. */
+    /**
+     * The class holding the server's `main` function, e.g. `dev.slne.example.server.MainKt`.
+     */
     fun mainClass(value: String) {
         mainClass.set(value)
     }
@@ -100,8 +104,8 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
      * Applies the mixin configuration [name], a resource of the server's own code such as
      * `mixins.surf-lobby.json`, in addition to the ones of surf.
      *
-     * Every configuration needs a mixin package of its own. Mixin is installed by the server jar's
-     * bootstrap, so the server must not bootstrap Mixin itself.
+     * Every mixin configuration needs a mixin package of its own. Mixin is installed by the
+     * bootstrap of the server jar, so the server must not bootstrap Mixin itself.
      */
     fun mixinConfig(name: String) {
         mixinConfigs.add(name)
@@ -113,7 +117,10 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
 
     fun withSignedChat() = feature(MinestomServerFeature.SIGNED_CHAT)
 
-    /** Also calls the LuckPerms agent on startup, which it needs for its libraries. */
+    /**
+     * Also registers the LuckPerms agent as a delegate agent, which LuckPerms needs to load its
+     * libraries.
+     */
     fun withLuckPerms() = feature(MinestomServerFeature.LUCKPERMS)
     fun withSpark() = feature(MinestomServerFeature.SPARK)
     fun withNpcLib() = feature(MinestomServerFeature.NPC)
@@ -121,7 +128,9 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
     fun withConsole() = feature(MinestomServerFeature.CONSOLE)
     fun withPlugins() = feature(MinestomServerFeature.PLUGINS)
 
-    /** Puts every feature on the class path. */
+    /**
+     * Puts the module of every feature on the class path.
+     */
     fun withAllFeatures() {
         MinestomServerFeature.entries.forEach(::feature)
     }

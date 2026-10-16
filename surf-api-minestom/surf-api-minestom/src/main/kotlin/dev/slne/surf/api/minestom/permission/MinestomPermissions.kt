@@ -15,6 +15,9 @@ import net.minestom.server.entity.Player
  */
 fun interface PermissionProvider {
 
+    /**
+     * Returns the value of [permission] for [player], or [TriState.NOT_SET] when it is undefined.
+     */
     fun permissionValue(player: Player, permission: String): TriState
 }
 
@@ -31,18 +34,29 @@ object MinestomPermissions {
     var provider: PermissionProvider = NONE
         private set
 
-    /** Installs [provider], or removes the installed one when `null`. */
+    /**
+     * Installs [provider], or removes the installed one when `null`.
+     */
     @InternalSurfApi
     fun installProvider(provider: PermissionProvider?) {
         this.provider = provider ?: NONE
     }
 
+    /**
+     * Resolves the value of [permission] for [sender].
+     *
+     * The console and the server sender always resolve to [TriState.TRUE]; players resolve through
+     * the installed [provider]; any other sender resolves to [TriState.NOT_SET].
+     */
     fun permissionValue(sender: CommandSender, permission: String): TriState = when (sender) {
         is ConsoleSender, is ServerSender -> TriState.TRUE
         is Player -> provider.permissionValue(sender, permission)
         else -> TriState.NOT_SET
     }
 
+    /**
+     * Whether [permission] resolves to [TriState.TRUE] for [sender].
+     */
     fun hasPermission(sender: CommandSender, permission: String): Boolean =
         permissionValue(sender, permission) == TriState.TRUE
 }

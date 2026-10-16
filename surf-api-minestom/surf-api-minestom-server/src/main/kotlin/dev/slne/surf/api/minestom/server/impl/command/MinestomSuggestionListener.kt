@@ -14,8 +14,9 @@ import net.minestom.server.network.packet.server.play.TabCompletePacket
 /**
  * Answers tab completion for CommandAPI-owned commands from the Brigadier dispatcher.
  *
- * Input belonging to another registry is left to Minestom. Brigadier reports both the entries and
- * the range they replace, so the client receives the same replacement span it would get from vanilla.
+ * A request is handled only when its first word is exactly an owned label; every other request is
+ * left to Minestom. A handled request is cancelled, and its response is sent when the suggestion
+ * future completes, on whichever thread completes it. A response carries at most 1000 entries.
  */
 internal class MinestomSuggestionListener(
     private val ownership: MinestomCommandOwnership,

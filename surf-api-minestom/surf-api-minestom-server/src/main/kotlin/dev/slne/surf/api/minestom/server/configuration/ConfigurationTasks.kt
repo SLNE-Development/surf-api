@@ -33,45 +33,63 @@ object ConfigurationTasks {
 
     /**
      * Calls [dev.slne.surf.api.minestom.player.event.AsyncPlayerCountEvent] and kicks a refused
-     * player. Only on the first configuration.
+     * player. Only in the first configuration phase.
      */
     val PLAYER_COUNT = ConfigurationTaskId("player_count")
 
-    /** Sends the server brand. */
+    /**
+     * Sends the server brand.
+     */
     val BRAND = ConfigurationTaskId("brand")
 
-    /** Calls [AsyncPlayerConfigurationEvent] and stores it in the [ConfigurationContext]. */
+    /**
+     * Calls [AsyncPlayerConfigurationEvent] and stores it in the [ConfigurationContext].
+     */
     val CONFIGURATION_EVENT = ConfigurationTaskId("configuration_event")
 
     /**
      * Calls [dev.slne.surf.api.minestom.player.event.AsyncPlayerSpawnLocationEvent] and applies
-     * the location it chose. Only on the first configuration.
+     * the location it chose. Only in the first configuration phase.
      */
     val SPAWN_LOCATION = ConfigurationTaskId("spawn_location")
 
-    /** Sends the feature flags the configuration event collected and clears the chat if asked to. */
+    /**
+     * Sends the feature flags the configuration event collected and clears the chat if the event
+     * requests it.
+     */
     val ENABLED_FEATURES = ConfigurationTaskId("enabled_features")
 
-    /** Negotiates the known packs and sends the registry data. */
+    /**
+     * Negotiates the known packs and sends the registry data.
+     */
     val SYNCHRONIZE_REGISTRIES = ConfigurationTaskId("synchronize_registries")
 
-    /** Waits until the client's settings, and with them its locale, have arrived. */
+    /**
+     * Waits until the client's settings, and with them its locale, have arrived.
+     */
     val AWAIT_SETTINGS = ConfigurationTaskId("await_settings")
 
-    /** Shows the code of conduct and waits until the player accepts it. Not part of the defaults. */
+    /**
+     * Shows the code of conduct and waits until the player accepts it. Not one of the default
+     * steps.
+     */
     val CODE_OF_CONDUCT = ConfigurationTaskId("code_of_conduct")
 
-    /** Waits for the resource packs Minestom queued for the player. */
+    /**
+     * Waits for the resource packs Minestom queued for the player.
+     */
     val RESOURCE_PACK = ConfigurationTaskId("resource_pack")
 
-    /** Hands the player over to the play phase. Always the last step. */
+    /**
+     * Hands the player over to the play phase. Always the last step.
+     */
     val JOIN_WORLD = ConfigurationTaskId("join_world")
 
     /**
-     * Stops the keep alives the configuration phase sends.
+     * Stops the keep-alive packets the configuration phase sends.
      *
-     * Has to be called by a step that hands the player over to the play phase in place of
-     * [JOIN_WORLD], right before it sends the finish configuration packet.
+     * A step that hands the player over to the play phase in place of [JOIN_WORLD] has to call
+     * this right before it sends the finish configuration packet.
      */
     fun stopKeepAlive(player: Player) = ConfigurationPhase.stopKeepAlive(player)
 
@@ -175,10 +193,11 @@ object ConfigurationTasks {
     }
 
     /**
-     * Sends the code of conduct [text] returns for a player and holds the configuration until the
-     * player accepts it.
+     * Sends the code of conduct [text] returns for a player and keeps the player in the
+     * configuration phase until they accept it.
      *
-     * Only shown on the first configuration. A player for whom [text] returns `null` is let through.
+     * Only shown in the first configuration phase. A player for whom [text] returns `null` is let
+     * through.
      */
     class CodeOfConduct(private val text: (Player) -> String?) : ConfigurationTask {
         private val pending = ConcurrentHashMap<UUID, CompletableFuture<Unit>>()

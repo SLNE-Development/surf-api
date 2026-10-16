@@ -8,7 +8,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-/** Skips the tick of entities whose type is disabled in {@link EntityTickFilter}. */
+/**
+ * Skips the tick of entities rejected by {@link EntityTickFilter#shouldTick}.
+ */
 @SuppressWarnings("UnstableApiUsage")
 @Mixin(TickThread.class)
 abstract class EntityTickMixin {

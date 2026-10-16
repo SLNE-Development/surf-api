@@ -5,12 +5,7 @@
  */
 package dev.slne.surf.api.minestom.command.argument
 
-import com.mojang.brigadier.arguments.ArgumentType
-import com.mojang.brigadier.arguments.BoolArgumentType
-import com.mojang.brigadier.arguments.DoubleArgumentType
-import com.mojang.brigadier.arguments.FloatArgumentType
-import com.mojang.brigadier.arguments.IntegerArgumentType
-import com.mojang.brigadier.arguments.LongArgumentType
+import com.mojang.brigadier.arguments.*
 import dev.slne.surf.api.minestom.command.argument.parser.FixedSetParser
 import dev.slne.surf.api.minestom.command.argument.parser.FloatRangeParser
 import dev.slne.surf.api.minestom.command.argument.parser.IntegerRangeParser
@@ -18,12 +13,23 @@ import dev.slne.surf.api.minestom.command.argument.parser.UuidParser
 import net.minestom.server.utils.Range
 import java.util.*
 
+/**
+ * A boolean written as `true` or `false`.
+ *
+ * For an optional argument with a constant default, pass the value by name:
+ * `setOptional(default = true)`; see [Argument.setOptional].
+ */
 class BooleanArgument(nodeName: String) : Argument<Boolean>(nodeName) {
     override val kind = ArgumentKind.Boolean
     override val rawType: ArgumentType<Boolean> = BoolArgumentType.bool()
     override fun stringify(value: Boolean): String = value.toString()
 }
 
+/**
+ * An integer between [min] and [max], both inclusive.
+ *
+ * @throws IllegalArgumentException when [min] is greater than [max]
+ */
 class IntegerArgument(
     nodeName: String,
     min: Int = Int.MIN_VALUE,
@@ -39,6 +45,11 @@ class IntegerArgument(
     override fun stringify(value: Int): String = value.toString()
 }
 
+/**
+ * A long between [min] and [max], both inclusive.
+ *
+ * @throws IllegalArgumentException when [min] is greater than [max]
+ */
 class LongArgument(
     nodeName: String,
     min: Long = Long.MIN_VALUE,
@@ -54,6 +65,11 @@ class LongArgument(
     override fun stringify(value: Long): String = value.toString()
 }
 
+/**
+ * A float between [min] and [max], both inclusive.
+ *
+ * @throws IllegalArgumentException when [min] is greater than [max] or either bound is NaN
+ */
 class FloatArgument(
     nodeName: String,
     min: Float = -Float.MAX_VALUE,
@@ -71,6 +87,11 @@ class FloatArgument(
     override fun stringify(value: Float): String = value.toString()
 }
 
+/**
+ * A double between [min] and [max], both inclusive.
+ *
+ * @throws IllegalArgumentException when [min] is greater than [max] or either bound is NaN
+ */
 class DoubleArgument(
     nodeName: String,
     min: Double = -Double.MAX_VALUE,
@@ -88,6 +109,15 @@ class DoubleArgument(
     override fun stringify(value: Double): String = value.toString()
 }
 
+/**
+ * One of the enum constants in [values], written as the string [formatter] produces for it.
+ *
+ * The formatter defaults to the lowercase constant name. Parsing is case-sensitive; suggestions
+ * match case-insensitively.
+ *
+ * @throws IllegalArgumentException when [values] is empty, or the formatted values are blank or not
+ * unique
+ */
 class EnumArgument<E : Enum<E>>(
     nodeName: String,
     values: Collection<E>,
@@ -111,7 +141,7 @@ class EnumArgument<E : Enum<E>>(
 }
 
 /**
- * A UUID parsed in its canonical dashed hex form.
+ * A [UUID] written in dashed hex form.
  */
 class UUIDArgument(nodeName: String) : Argument<UUID>(nodeName) {
     override val kind = ArgumentKind.Uuid
@@ -120,10 +150,10 @@ class UUIDArgument(nodeName: String) : Argument<UUID>(nodeName) {
 }
 
 /**
- * An integer range parsed from vanilla's `min..max` syntax.
+ * An integer range in vanilla's `min..max` syntax.
  *
- * Either bound may be omitted; an omitted bound resolves to `Int.MIN_VALUE` or `Int.MAX_VALUE`
- * respectively. A bare value is shorthand for a range containing only that value.
+ * An omitted bound defaults to `Int.MIN_VALUE` or `Int.MAX_VALUE`. A bare value denotes a range
+ * containing only that value. The minimum must not exceed the maximum.
  */
 class IntegerRangeArgument(nodeName: String) : Argument<Range.Int>(nodeName) {
     override val kind = ArgumentKind.IntegerRange
@@ -132,11 +162,10 @@ class IntegerRangeArgument(nodeName: String) : Argument<Range.Int>(nodeName) {
 }
 
 /**
- * A float range parsed from vanilla's `min..max` syntax.
+ * A float range in vanilla's `min..max` syntax.
  *
- * Either bound may be omitted; an omitted bound resolves to `-Float.MAX_VALUE` or
- * `Float.MAX_VALUE` respectively. A bare value is shorthand for a range containing only that
- * value.
+ * An omitted bound defaults to `-Float.MAX_VALUE` or `Float.MAX_VALUE`. A bare value denotes a
+ * range containing only that value. The minimum must not exceed the maximum.
  */
 class FloatRangeArgument(nodeName: String) : Argument<Range.Float>(nodeName) {
     override val kind = ArgumentKind.FloatRange

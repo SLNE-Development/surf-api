@@ -22,8 +22,8 @@ class PluginsFeatureBuilder internal constructor() {
     /**
      * The directory plugin jars are loaded from, and their data directories are created in.
      *
-     * When the server declares plugin dependencies, start it with `-Dsurf.minestom.plugins=<dir>`
-     * after changing this, so that the bootstrap finds them in the same directory.
+     * When the server declares plugin dependencies and this value is changed, also start it with
+     * `-Dsurf.minestom.plugins=<dir>`, so that the bootstrap reads the same directory.
      */
     var directory: Path = Path("plugins")
 
@@ -35,19 +35,20 @@ class PluginsFeatureBuilder internal constructor() {
 }
 
 /**
- * Loads the plugins in the `plugins` directory, and those shaded into the server.
+ * Loads the plugins in the `plugins` directory and those shaded into the server.
  *
- * Plugins extend [dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin] and describe themselves in
- * a `minestom-plugin.json`, which the `dev.slne.surf.api.gradle.minestom` Gradle plugin generates.
- * Each plugin jar gets its own class loader that sees the server, the plugin itself and the
- * plugins it depends on.
+ * Plugins extend [dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin] and are described by a
+ * `minestom-plugin.json`, which the `dev.slne.surf.api.gradle.minestom` Gradle plugin generates.
+ * Each plugin jar loaded from the `plugins` directory gets its own class loader, which sees the
+ * server, the plugin itself and the plugins it depends on, but no other plugin.
  *
- * Plugins are loaded while the server starts, enabled on its first tick and disabled, in reverse
- * order, when it shuts down.
+ * Plugins load in dependency order while the server starts, are enabled on its first tick and are
+ * disabled in reverse order on shutdown.
  *
- * The server's own code can only use plugins on its class path. Plugins in the directory that the
- * server declares in `surfMinestomServerApi { pluginDependencies { } }` are put there by the
- * bootstrap of the server jar, together with the plugins they depend on, and loaded from there.
+ * The server's own code cannot see into a plugin class loader, so it can only use plugins on the
+ * system class path. The bootstrap of the server jar places the plugins declared in
+ * `surfMinestomServerApi { pluginDependencies { } }`, together with their dependencies, there, and
+ * the feature loads them from there.
  */
 @OptIn(InternalSurfApi::class)
 class PluginsFeature internal constructor(
@@ -56,7 +57,9 @@ class PluginsFeature internal constructor(
 
     override val id: String = ID
 
-    /** Plugins rely on the other features, so they are loaded after all of them. */
+    /**
+     * Loads after every other feature, so that plugins can use them.
+     */
     override val loadPriority: Int = Int.MAX_VALUE
 
     private var manager: PluginManagerImpl? = null
@@ -75,7 +78,7 @@ class PluginsFeature internal constructor(
                 val jar = candidate.jar?.toAbsolutePath()?.normalize()
                 when {
                     jar !in serverPluginJars -> add(candidate)
-                    // Already found through the class path index the jar carries
+                    // The class path index already lists the plugin of this bootstrap-placed jar
                     candidate.meta.id in classPathIds -> Unit
                     else -> add(candidate.copy(jar = null))
                 }
@@ -99,7 +102,6 @@ class PluginsFeature internal constructor(
         PluginManager.install(null)
     }
 
-    /** The plugin jars the bootstrap put on the server's class path. */
     private fun serverPluginJars(): Set<Path> =
         System.getProperty(SERVER_PLUGINS_PROPERTY).orEmpty()
             .split(File.pathSeparator)
@@ -109,15 +111,18 @@ class PluginsFeature internal constructor(
     companion object {
         const val ID = "plugins"
 
-        /** Set by the bootstrap of the server jar, see `ServerPlugins` there. */
+        /**
+         * System property holding the plugin jars the bootstrap placed on the system class path,
+         * separated by [File.pathSeparator]. Set by `ServerPlugins` in the bootstrap module.
+         */
         private const val SERVER_PLUGINS_PROPERTY = "surf.minestom.server-plugins"
     }
 }
 
 /**
- * Loads the plugins in the `plugins` directory, and those shaded into the server.
+ * Installs plugin loading.
  *
- * Plugins are loaded after every other feature, wherever this is called.
+ * Plugins load after every other feature, regardless of where this is called.
  *
  * @see PluginsFeature
  */

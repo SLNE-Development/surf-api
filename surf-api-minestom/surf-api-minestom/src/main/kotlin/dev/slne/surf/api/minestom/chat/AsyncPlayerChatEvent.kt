@@ -1,21 +1,18 @@
 package dev.slne.surf.api.minestom.chat
 
 import dev.slne.surf.api.minestom.event.SuspendingEventNode
-import net.minestom.server.entity.Player
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
+import net.minestom.server.entity.Player
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Fired when a [Player] sends a chat message.
  *
- * Listeners run off the tick thread on
- * a virtual thread, so they may suspend *and* they may block
- * without affecting the server's tick rate.
- *
- * Messages from one player are processed strictly in order, so a slow listener delays that player's
- * next message.
+ * Listeners run off the tick thread and may suspend or block without affecting the tick rate.
+ * Messages from one player are processed in order, so a slow listener delays that player's next
+ * message.
  *
  * ```
  * AsyncPlayerChatEvent.addListener { event ->
@@ -31,14 +28,12 @@ class AsyncPlayerChatEvent @ApiStatus.Internal constructor(
     val player: Player,
 
     /**
-     * The [Audience]s that this chat message will be displayed to.
-     *
-     * Can be modified to add and remove viewers.
+     * The [Audience]s the message is sent to. Add or remove entries to change the recipients.
      */
     val viewers: MutableSet<Audience>,
 
     /**
-     * The renderer used to turn [message] into the component every viewer sees.
+     * Renders [message] into the component shown to each viewer.
      */
     var renderer: ChatRenderer,
 
@@ -62,6 +57,9 @@ class AsyncPlayerChatEvent @ApiStatus.Internal constructor(
     val signedMessage: SignedMessage,
 ) {
 
+    /**
+     * Whether the message is dropped instead of being sent to [viewers].
+     */
     var isCancelled = false
 
     companion object {

@@ -1,20 +1,12 @@
 package dev.slne.surf.api.minestom.server.chat.impl
 
 import dev.slne.surf.api.minestom.coroutine.minestomBlockingScope
-import dev.slne.surf.api.minestom.server.chat.impl.signature.EXPIRED_PROFILE_PUBLIC_KEY
-import dev.slne.surf.api.minestom.server.chat.impl.signature.LastSeenMessages
-import dev.slne.surf.api.minestom.server.chat.impl.signature.LastSeenMessagesValidator
-import dev.slne.surf.api.minestom.server.chat.impl.signature.MessageSignatureCache
-import dev.slne.surf.api.minestom.server.chat.impl.signature.PlayerChatMessage
-import dev.slne.surf.api.minestom.server.chat.impl.signature.ProfilePublicKeyValidationException
-import dev.slne.surf.api.minestom.server.chat.impl.signature.RemoteChatSession
-import dev.slne.surf.api.minestom.server.chat.impl.signature.SignedMessageBody
-import dev.slne.surf.api.minestom.server.chat.impl.signature.SignedMessageChain
+import dev.slne.surf.api.minestom.server.chat.SignedChatSettings
+import dev.slne.surf.api.minestom.server.chat.impl.PlayerChatHandler.Companion.MAX_PENDING_CHATS
+import dev.slne.surf.api.minestom.server.chat.impl.signature.*
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.command.signableCommandArguments
 import dev.slne.surf.api.minestom.server.impl.command.signaturesCoverArguments
-import dev.slne.surf.api.minestom.server.chat.SignedChatSettings
-import dev.slne.surf.api.minestom.server.chat.impl.TickThrottler
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.translatable
@@ -34,6 +26,15 @@ import net.minestom.server.network.packet.server.play.PlayerChatMessagePacket
 import net.minestom.server.network.packet.server.play.SystemChatPacket
 import java.time.Instant
 
+/**
+ * Validates and sends the chat traffic of one player, following vanilla: last-seen
+ * acknowledgements, the signature chain, spam throttling and the cache of signatures sent to the
+ * client.
+ *
+ * Validation failures kick the player on the next tick. Chat messages are broadcast through a
+ * per-player chain, so they are processed one after another in arrival order. [tick] must be called
+ * once per server tick. [close] stops the chain; queued messages are dropped.
+ */
 internal class PlayerChatHandler(
     private val player: Player,
     private val config: SignedChatSettings,
@@ -66,12 +67,18 @@ internal class PlayerChatHandler(
     private val chatSpamThrottler = TickThrottler(20, 20 * config.chatSpamThresholdSeconds)
     private val commandSpamThrottler = TickThrottler(20, 20 * config.commandSpamThresholdSeconds)
 
+    /**
+     * Index of the next chat packet sent to this player; guarded by [messageSignatureCache].
+     */
     private var nextChatIndex = 0
 
     private var signedMessageDecoder: SignedMessageChain.Decoder =
         SignedMessageChain.Decoder.unsigned(player.uuid) { config.enforceSecureProfile }
 
 
+    /**
+     * The validated chat session of the player, or `null` until the client has sent one.
+     */
     @Volatile
     var chatSession: RemoteChatSession? = null
         private set
@@ -88,6 +95,12 @@ internal class PlayerChatHandler(
     }
 
 
+    /**
+     * Validates a chat message and queues [onMessage] on the message chain.
+     *
+     * The last-seen update and signature are validated immediately in packet order; only the
+     * broadcast runs on the chain. Does nothing while the server stops.
+     */
     fun handleChat(packet: ClientChatMessagePacket, onMessage: suspend (PlayerChatMessage) -> Unit) {
         if (MinecraftServer.isStopping()) return
 
@@ -105,6 +118,10 @@ internal class PlayerChatHandler(
         }
     }
 
+    /**
+     * Validates the signed arguments of a command and runs [onCommand] with them available through
+     * [SignedCommandArguments]. Does nothing while the server stops.
+     */
     fun handleSignedCommandChat(
         packet: ClientSignedCommandChatPacket,
         onCommand: (String) -> Unit
@@ -176,6 +193,10 @@ internal class PlayerChatHandler(
         }
     }
 
+    /**
+     * Adopts [session] and starts a new signature chain. [onSessionReset] runs on the message chain,
+     * after the messages queued earlier.
+     */
     private fun resetPlayerChatState(
         session: RemoteChatSession,
         onSessionReset: (RemoteChatSession) -> Unit
@@ -203,6 +224,9 @@ internal class PlayerChatHandler(
     /**
      * The message the sender signed for every signable argument of [packet]'s command, keyed by node
      * name, or `null` when the command must not run.
+     *
+     * Signatures that do not cover the arguments mark the chain as broken and kick the
+     * player. A signature that fails to decode is reported to the player instead.
      */
     private fun getSignedArguments(
         packet: ClientSignedCommandChatPacket,
@@ -313,6 +337,12 @@ internal class PlayerChatHandler(
         }
     }
 
+    /**
+     * Sends a signed chat message and records its signature for later last-seen references.
+     *
+     * Kicks the player when more than [MAX_PENDING_CHATS] messages are awaiting
+     * acknowledgement. Thread-safe.
+     */
     fun sendPlayerChatMessage(message: PlayerChatMessage, chatType: BoundChatType) {
         synchronized(messageSignatureCache) {
             player.sendPacket(
@@ -350,6 +380,9 @@ internal class PlayerChatHandler(
         )
     }
 
+    /**
+     * Kicks the player on the next tick, so the call is safe from any thread.
+     */
     private fun disconnect(reason: Component) {
         player.scheduleNextTick { player.kick(reason) }
     }

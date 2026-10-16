@@ -10,7 +10,9 @@ import org.spongepowered.asm.mixin.Mixin
 
 object MixinTestSupport {
 
-    /** The configurations applied in tests. */
+    /**
+     * The mixin configurations applied in tests.
+     */
     val CONFIGURATIONS: List<String> get() = SurfMixinTestEnvironment.configurations
 
     fun install() = SurfMixinTestEnvironment.install()
@@ -19,7 +21,9 @@ object MixinTestSupport {
 
     fun originalBytes(binaryName: String): ByteArray = MixinTransforms.originalBytes(binaryName)
 
-    /** The mixin classes of [configuration], by binary name. */
+    /**
+     * The binary names of the mixin classes listed in [configuration].
+     */
     fun mixinsOf(configuration: String): List<String> {
         val json = checkNotNull(javaClass.classLoader.getResourceAsStream(configuration)) {
             "Missing $configuration"
@@ -31,14 +35,18 @@ object MixinTestSupport {
         }
     }
 
-    /** The internal names of the interfaces [mixin] adds to its targets. */
+    /**
+     * The internal names of the interfaces [mixin] adds to its targets.
+     */
     fun interfacesOf(mixin: String): List<String> {
         val node = ClassNode(Opcodes.ASM9)
         ClassReader(originalBytes(mixin)).accept(node, ClassReader.SKIP_CODE)
         return node.interfaces.orEmpty()
     }
 
-    /** The classes [mixin] targets, read from its `@Mixin` annotation. */
+    /**
+     * The binary names of the classes [mixin] targets, read from its `@Mixin` annotation.
+     */
     fun targetsOf(mixin: String): List<String> {
         val node = ClassNode(Opcodes.ASM9)
         ClassReader(originalBytes(mixin)).accept(

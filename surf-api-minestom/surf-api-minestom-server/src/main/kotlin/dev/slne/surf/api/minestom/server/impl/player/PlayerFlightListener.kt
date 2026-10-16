@@ -11,6 +11,9 @@ import kotlin.experimental.and
 
 /**
  * Calls [PlayerToggleFlightEvent] before Minestom applies a player's flight toggle.
+ *
+ * A cancelled toggle is not applied and the abilities are resent. [uninstall] restores Minestom's
+ * [AbilitiesListener].
  */
 internal object PlayerFlightListener {
 

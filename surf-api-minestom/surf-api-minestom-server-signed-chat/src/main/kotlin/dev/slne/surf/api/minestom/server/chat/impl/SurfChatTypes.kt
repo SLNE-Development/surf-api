@@ -8,16 +8,24 @@ import net.minestom.server.message.ChatTypeDecoration
 import net.minestom.server.registry.RegistryKey
 
 
+/**
+ * The chat types the surf api adds to the registry.
+ */
 internal object SurfChatTypes {
 
     private val RAW_KEY = Key.key("surf", "raw")
 
+    /**
+     * The `surf:raw` chat type, which shows only the message content. Available after [register].
+     */
     lateinit var raw: RegistryKey<ChatType>
         private set
 
     /**
-     * Idempotent against the registry rather than a local flag, so a cached key from a previous
-     * server instance cannot survive into a new one and resolve to id -1.
+     * Registers [raw] unless the registry already contains it.
+     *
+     * Checks the registry instead of a local flag so that a key cached from an earlier server
+     * instance cannot outlive its registry and resolve to ID -1.
      */
     fun register() {
         ChatTypeRegistry.getKey(RAW_KEY)?.let {

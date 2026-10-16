@@ -14,11 +14,7 @@ import dev.slne.surf.api.minestom.command.executor.CommandExecutable
 import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import dev.slne.surf.api.minestom.command.suggestion.SafeSuggestions
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import it.unimi.dsi.fastutil.objects.ObjectLists
-import it.unimi.dsi.fastutil.objects.ObjectSets
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import it.unimi.dsi.fastutil.objects.*
 import net.minestom.server.command.CommandSender
 import net.minestom.server.utils.Range
 import org.jetbrains.annotations.ApiStatus
@@ -50,6 +46,12 @@ import kotlin.Int as KInt
 import kotlin.Long as KLong
 import kotlin.collections.List as KList
 
+/**
+ * Describes how an argument is parsed and declared to the client; [T] is the type of the parsed
+ * value.
+ *
+ * Kinds are consumed by the server platform and not meant to be implemented outside this module.
+ */
 sealed interface ArgumentKind<T> {
     data object Boolean : ArgumentKind<KBoolean>
 
@@ -145,6 +147,13 @@ sealed interface ArgumentKind<T> {
     ) : ArgumentKind<KList<T>>
 }
 
+/**
+ * How an argument sources its suggestions.
+ *
+ * [BuiltIns] offers only what the argument's parser suggests. The `Include` modes add the
+ * provider's entries to the built-in ones; the `Replace` modes offer only the provider's entries.
+ * The `Safe` modes take typed values that are converted to text with the argument's formatter.
+ */
 sealed interface SuggestionMode<out T> {
     data object BuiltIns : SuggestionMode<Nothing>
 
@@ -157,6 +166,9 @@ sealed interface SuggestionMode<out T> {
     data class ReplaceSafe<T>(val provider: SafeSuggestions<T>) : SuggestionMode<T>
 }
 
+/**
+ * Immutable snapshot of an [Argument] that the server platform compiles into a command node.
+ */
 data class ArgumentDefinition<T>(
     val nodeName: String,
     val kind: ArgumentKind<T>,
@@ -172,10 +184,10 @@ data class ArgumentDefinition<T>(
 )
 
 /**
- * A raw type for an argument whose parser has not been implemented.
+ * Placeholder raw type for kinds that the platform builds without a parser, such as
+ * [LiteralArgument] and [SignedMessageArgument].
  *
- * Rejecting the input keeps an unfinished argument from silently reading a value that means
- * something else.
+ * Parsing through it always fails.
  */
 @ApiStatus.Internal
 class UnsupportedArgumentType<T>(private val nodeName: String) : ArgumentType<T> {
@@ -184,22 +196,32 @@ class UnsupportedArgumentType<T>(private val nodeName: String) : ArgumentType<T>
     ).createWithContext(reader)
 }
 
+/**
+ * Base class of all command arguments.
+ *
+ * An argument is a node in a command: it parses one value, may be optional, carry permissions,
+ * requirements and a suggestion provider, and may have nested arguments and executors. Executors
+ * read the parsed value from [dev.slne.surf.api.minestom.command.executor.CommandArguments] by
+ * [nodeName].
+ *
+ * Instances are mutable builders; the `with*`, `set*` and suggestion functions return the same
+ * instance. An argument is not thread-safe while it is being configured.
+ *
+ * @property nodeName name under which the parsed value is available; must not be blank
+ */
 abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>> {
     protected abstract val kind: ArgumentKind<T>
 
     /**
-     * The Brigadier type that reads this argument's value from the command line.
-     *
-     * Kinds Brigadier already provides return its type directly, so parsing, bounds and error
-     * messages match vanilla exactly. Every other kind supplies its own parser.
+     * The Brigadier type that parses this argument's value.
      */
     protected abstract val rawType: ArgumentType<T>
 
     /**
      * Whether this argument consumes the rest of the command line.
      *
-     * A greedy argument must be the last one on its path, and cannot be the element type of a list;
-     * registration throws [CommandValidationException] otherwise.
+     * A greedy argument must be the last argument of its path; registration throws
+     * [CommandValidationException] otherwise.
      */
     protected open val greedy: KBoolean = false
 
@@ -220,13 +242,13 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
     protected abstract fun stringify(value: T): String
 
     /**
-     * Controls whether this argument is optional without assigning a default value.
+     * Marks this argument as optional or required without assigning a default value.
      *
-     * An optional argument cannot precede a required argument in the same registered path;
-     * registration throws [CommandValidationException] for that ordering.
+     * Making the argument required clears a default value. A required argument cannot follow an
+     * optional one on the same path; registration throws [CommandValidationException] otherwise.
      *
-     * For a [BooleanArgument], use the named form `setOptional(optional = true)` to
-     * distinguish this operation from a constant Boolean default.
+     * For a [BooleanArgument], use the named form `setOptional(optional = true)` to distinguish
+     * this overload from a constant default.
      */
     fun setOptional(optional: KBoolean): Argument<T> = apply {
         this.optional = optional
@@ -236,51 +258,101 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
     }
 
     /**
-     * Makes this argument optional and assigns a constant default value.
+     * Makes this argument optional and uses [default] as its value when it is omitted.
      *
-     * For a [BooleanArgument], use the named form `setOptional(default = true)` to
-     * distinguish the value from the optionality flag overload.
+     * For a [BooleanArgument], use the named form `setOptional(default = true)` to distinguish
+     * the value from the optionality flag overload.
      */
     fun setOptional(default: T): Argument<T> = apply {
         optional = true
         defaultValue = { default }
     }
 
+    /**
+     * Makes this argument optional and computes its value from the sender when it is omitted.
+     */
     fun setOptional(default: (CommandSender) -> T): Argument<T> = apply {
         optional = true
         defaultValue = default
     }
 
+    /**
+     * Requires [permission] to use this argument and the arguments nested below it.
+     *
+     * Multiple calls accumulate and every permission is required.
+     *
+     * @throws IllegalArgumentException when [permission] is blank
+     */
     fun withPermission(permission: String): Argument<T> = apply {
         val normalized = permission.trim()
         require(normalized.isNotBlank()) { "Argument permission must not be blank" }
         permissions += normalized
     }
 
+    /**
+     * Requires [requirement] to return `true` for the sender to use this argument and the arguments
+     * nested below it. Multiple requirements accumulate and all must pass.
+     */
     fun withRequirement(requirement: (CommandSender) -> KBoolean): Argument<T> = apply {
         requirements += requirement
     }
 
+    /**
+     * Offers only the entries of [suggestions], discarding the built-in suggestions of this
+     * argument.
+     *
+     * Replaces any suggestion provider configured before. Literal, command, position and rotation
+     * arguments do not support suggestion providers; registration throws
+     * [CommandValidationException] for them.
+     */
     fun replaceSuggestions(suggestions: ArgumentSuggestions): Argument<T> = apply {
         this.suggestions = SuggestionMode.Replace(suggestions)
     }
 
+    /**
+     * Offers the entries of [suggestions] in addition to the built-in suggestions of this argument.
+     *
+     * Replaces any suggestion provider configured before. Registration throws
+     * [CommandValidationException] for [EntityTypeArgument] and for the kinds listed at
+     * [replaceSuggestions].
+     */
     fun includeSuggestions(suggestions: ArgumentSuggestions): Argument<T> = apply {
         this.suggestions = SuggestionMode.Include(suggestions)
     }
 
+    /**
+     * Offers only the values of [suggestions], converted to text with the formatter of this
+     * argument.
+     *
+     * Replaces any suggestion provider configured before.
+     */
     fun replaceSafeSuggestions(suggestions: SafeSuggestions<T>): Argument<T> = apply {
         this.suggestions = SuggestionMode.ReplaceSafe(suggestions)
     }
 
+    /**
+     * Offers the values of [suggestions], converted to text with the formatter of this argument,
+     * in addition to the built-in suggestions.
+     *
+     * Replaces any suggestion provider configured before.
+     */
     fun includeSafeSuggestions(suggestions: SafeSuggestions<T>): Argument<T> = apply {
         this.suggestions = SuggestionMode.IncludeSafe(suggestions)
     }
 
+    /**
+     * Adds an executor that runs when the command ends at this argument.
+     */
     override fun addExecutor(definition: ExecutorDefinition): Argument<T> = apply {
         executors += definition
     }
 
+    /**
+     * Adds [child] as an argument that follows this one.
+     *
+     * @throws IllegalArgumentException when [child] is this argument; longer cycles are rejected
+     * at registration
+     */
     fun then(child: Argument<*>): Argument<T> = apply {
         require(child !== this) { "An argument cannot be its own child" }
         children += child

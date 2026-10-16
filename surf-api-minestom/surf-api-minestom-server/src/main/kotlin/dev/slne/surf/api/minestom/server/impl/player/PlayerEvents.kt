@@ -32,8 +32,8 @@ import java.util.*
  *
  * Without the configuration phase of the surf api, [AsyncPlayerCountEvent] and
  * [AsyncPlayerSpawnLocationEvent] are called around Minestom's own
- * [AsyncPlayerConfigurationEvent]: from a node that runs before every other listener and from one
- * that runs after them. With it, they are steps of their own.
+ * [AsyncPlayerConfigurationEvent], from an event node that runs before every other listener and
+ * one that runs after them. With the configuration phase, each is a step of its own.
  */
 internal object PlayerEvents {
     private val SERVER_FULL: Component = Component.text("The server is full.", NamedTextColor.RED)
@@ -41,7 +41,9 @@ internal object PlayerEvents {
     private var first: EventNode<Event>? = null
     private var last: EventNode<Event>? = null
 
-    /** Players that joined, so that only they are announced to have left. */
+    /**
+     * Players that fired a join; only these produce a quit. Guarded by its own monitor.
+     */
     private val joined = Collections.newSetFromMap(WeakHashMap<Player, Boolean>())
 
     @Volatile
@@ -83,7 +85,8 @@ internal object PlayerEvents {
     }
 
     /**
-     * Calls [AsyncPlayerCountEvent] for [player] and kicks them unless a slot is theirs.
+     * Calls [AsyncPlayerCountEvent] for [player] and kicks the player unless the event allows the
+     * join. The event's default result is `KICK_FULL` when the server is full.
      *
      * @return whether the player may join
      */
@@ -169,7 +172,9 @@ internal object PlayerEvents {
             .build()
     }
 
-    /** Server-side fallbacks, so that the console shows the messages rather than their keys. */
+    /**
+     * Registers English join and quit message formats so the console shows text instead of keys.
+     */
     private fun registerTranslations() {
         if (translationsRegistered) return
         translationsRegistered = true

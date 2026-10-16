@@ -11,7 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Hands CommandAPI commands from Minestom's command manager to the Brigadier dispatcher. */
+/**
+ * Routes commands registered through CommandAPI past Minestom's own command handling: name
+ * lookup, execution and the declare-commands packet.
+ */
 @Mixin(CommandManager.class)
 abstract class CommandManagerMixin {
 
@@ -28,8 +31,8 @@ abstract class CommandManagerMixin {
     }
 
     /**
-     * Injected at the parse call rather than at the head, so a {@code PlayerCommandEvent} listener
-     * still sees the command and can cancel or rewrite it before the dispatcher does.
+     * Injected before {@code parseCommand} instead of at the method head so that
+     * {@code PlayerCommandEvent} listeners see the command first and can cancel or rewrite it.
      */
     @Inject(
         method = "execute(Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)Lnet/minestom/server/command/builder/CommandResult;",

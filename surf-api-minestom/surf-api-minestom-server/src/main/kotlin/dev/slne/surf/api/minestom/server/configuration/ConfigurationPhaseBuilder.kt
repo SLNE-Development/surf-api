@@ -35,29 +35,41 @@ class ConfigurationPhaseBuilder internal constructor() {
         ConfigurationTasks.JOIN_WORLD to ConfigurationTasks.joinWorld,
     )
 
-    /** The ids of the configured steps, in the order they run. */
+    /**
+     * The IDs of the configured steps, in the order they run.
+     */
     val ids: List<ConfigurationTaskId> get() = tasks.keys.toList()
 
-    /** Replaces the step [id] with [task], keeping its position. */
+    /**
+     * Replaces the step [id] with [task], keeping its position.
+     */
     fun replace(id: ConfigurationTaskId, task: ConfigurationTask) {
         require(id in tasks) { "There is no configuration step '$id' to replace" }
         tasks[id] = task
     }
 
-    /** Removes the step [id]. */
+    /**
+     * Removes the step [id].
+     */
     fun remove(id: ConfigurationTaskId) {
         require(tasks.remove(id) != null) { "There is no configuration step '$id' to remove" }
     }
 
-    /** Runs [task] as [id] right before the step [anchor]. */
+    /**
+     * Runs [task] as [id] right before the step [anchor].
+     */
     fun before(anchor: ConfigurationTaskId, id: ConfigurationTaskId, task: ConfigurationTask) =
         insert(anchor, id, task, offset = 0)
 
-    /** Runs [task] as [id] right after the step [anchor]. */
+    /**
+     * Runs [task] as [id] right after the step [anchor].
+     */
     fun after(anchor: ConfigurationTaskId, id: ConfigurationTaskId, task: ConfigurationTask) =
         insert(anchor, id, task, offset = 1)
 
-    /** Runs [task] as [id] before every other step. */
+    /**
+     * Runs [task] as [id] before every other step.
+     */
     fun first(id: ConfigurationTaskId, task: ConfigurationTask) {
         requireUnknown(id)
         val entries = tasks.entries.map { it.toPair() }
@@ -69,22 +81,25 @@ class ConfigurationPhaseBuilder internal constructor() {
     /**
      * Runs [task] as [id] after every other step so far.
      *
-     * Mind that [ConfigurationTasks.JOIN_WORLD] hands the player over to the play phase, so a step
-     * after it no longer runs during the configuration.
+     * [ConfigurationTasks.JOIN_WORLD] hands the player over to the play phase, so a step added
+     * after it no longer runs during the configuration phase.
      */
     fun last(id: ConfigurationTaskId, task: ConfigurationTask) {
         requireUnknown(id)
         tasks[id] = task
     }
 
-    /** Waits up to [timeout] for the client's settings. */
+    /**
+     * Waits up to [timeout] for the client's settings.
+     */
     fun awaitSettings(timeout: Duration = 2.seconds) {
         replace(ConfigurationTasks.AWAIT_SETTINGS, ConfigurationTasks.AwaitSettings(timeout))
     }
 
     /**
-     * Shows the code of conduct [text] returns for a player and holds the configuration until the
-     * player has accepted it. A player for whom [text] returns `null` is let through.
+     * Shows the code of conduct [text] returns for a player and keeps the player in the
+     * configuration phase until they have accepted it. A player for whom [text] returns `null` is
+     * let through.
      *
      * The step runs after the settings arrived, so that [Player.getLocale] is the client's own.
      */

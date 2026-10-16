@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.transformer.meta.MixinMerged
 /**
  * Applies every configured mixin to the shipped bytecode of each of its targets.
  *
- * In production a failed transformation only loads the class untransformed, so a Minestom update
- * that moves an injection point has to fail here. Each mixin has to leave its own mark on the
- * target, so one mixin applying does not hide another on the same target failing.
+ * In production a failed transformation leaves the class untransformed without an error, so an
+ * injection point moved by a Minestom update must fail here. Each mixin is asserted by its own
+ * mark on the target, so one mixin applying cannot mask another failing on the same target.
  */
 class ConfiguredMixinsApplyTest {
 

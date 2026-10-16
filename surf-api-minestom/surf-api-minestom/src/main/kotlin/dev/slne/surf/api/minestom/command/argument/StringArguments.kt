@@ -10,18 +10,31 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import dev.slne.surf.api.minestom.command.argument.parser.FixedSetParser
 import it.unimi.dsi.fastutil.objects.ObjectList
 
+/**
+ * A single word, as read by Brigadier's `StringArgumentType.word()`: letters, digits and
+ * `_ - . +`.
+ */
 class StringArgument(nodeName: String) : Argument<String>(nodeName) {
     override val kind = ArgumentKind.Word
     override val rawType: ArgumentType<String> = StringArgumentType.word()
     override fun stringify(value: String): String = value
 }
 
+/**
+ * A single word or a double- or single-quoted phrase, as read by Brigadier's
+ * `StringArgumentType.string()`.
+ */
 class TextArgument(nodeName: String) : Argument<String>(nodeName) {
     override val kind = ArgumentKind.Text
     override val rawType: ArgumentType<String> = StringArgumentType.string()
     override fun stringify(value: String): String = value.asQuotablePhrase()
 }
 
+/**
+ * The remainder of the command line as one string.
+ *
+ * The argument is greedy and must be the last argument of its path.
+ */
 class GreedyStringArgument(nodeName: String) : Argument<String>(nodeName) {
     override val kind = ArgumentKind.GreedyString
     override val rawType: ArgumentType<String> = StringArgumentType.greedyString()
@@ -29,6 +42,15 @@ class GreedyStringArgument(nodeName: String) : Argument<String>(nodeName) {
     override fun stringify(value: String): String = value
 }
 
+/**
+ * A fixed keyword that the input must match exactly. The value is the keyword itself.
+ *
+ * A literal is matched by the command tree rather than parsed, so it cannot carry a suggestion
+ * provider.
+ *
+ * @param literal keyword to match; defaults to [nodeName]
+ * @throws IllegalArgumentException when [literal] is blank or contains whitespace
+ */
 class LiteralArgument(
     nodeName: String,
     val literal: String = nodeName,
@@ -44,6 +66,14 @@ class LiteralArgument(
     override fun stringify(value: String): String = value
 }
 
+/**
+ * One of several fixed keywords. The value is the matched keyword.
+ *
+ * Matching is case-sensitive; suggestions match case-insensitively.
+ *
+ * @throws IllegalArgumentException when no literal is given, or a literal is blank, contains
+ * whitespace or is duplicated
+ */
 class MultiLiteralArgument(nodeName: String, vararg literals: String) : Argument<String>(nodeName) {
     private val literals: List<String> = ObjectList.of(*literals)
     override val kind = ArgumentKind.MultiLiteral(this.literals)
@@ -62,7 +92,9 @@ class MultiLiteralArgument(nodeName: String, vararg literals: String) : Argument
 }
 
 /**
- * Reads the remainder of the input as a single string, the same way [GreedyStringArgument] does.
+ * The remainder of the command line as one string, declared to the client as a command argument.
+ *
+ * The argument is greedy and must be the last argument of its path.
  */
 class CommandArgument(nodeName: String) : Argument<String>(nodeName) {
     override val kind = ArgumentKind.Command

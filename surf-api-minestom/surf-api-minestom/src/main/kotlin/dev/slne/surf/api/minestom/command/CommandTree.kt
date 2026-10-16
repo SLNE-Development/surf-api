@@ -14,6 +14,15 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import net.minestom.server.command.CommandSender
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Builder for a command whose argument structure branches.
+ *
+ * Each argument added through [then] starts a branch that can carry its own executors and nested
+ * arguments. Permissions and requirements declared here apply to every branch. Invalid
+ * configuration surfaces as [CommandValidationException] from [register].
+ *
+ * @property name label of the command; letters, digits, `.`, `_` and `-` only
+ */
 class CommandTree(val name: String) : CommandExecutable<CommandTree> {
     private val aliases = ObjectArrayList<String>()
     private val permissions = ObjectLinkedOpenHashSet<String>()
@@ -30,6 +39,14 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
         this.aliases += aliases
     }
 
+    /**
+     * Requires [permission] to use any branch of the command.
+     *
+     * Multiple calls accumulate and every permission is required. The console always passes;
+     * players need all permissions; other senders pass only while no permission is declared.
+     *
+     * @throws CommandValidationException when [permission] is blank
+     */
     fun withPermission(permission: String): CommandTree = apply {
         val normalized = permission.trim()
         if (normalized.isBlank()) {
@@ -38,6 +55,10 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
         permissions += normalized
     }
 
+    /**
+     * Requires [requirement] to return `true` for the sender to use any branch of the command.
+     * Multiple requirements accumulate and all must pass.
+     */
     fun withRequirement(requirement: (CommandSender) -> Boolean): CommandTree = apply {
         requirements += requirement
     }
@@ -60,14 +81,15 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
         this.help = help
     }
 
+    /**
+     * Adds [argument], together with the branches nested below it, as a branch of the command.
+     */
     fun then(argument: Argument<*>): CommandTree = apply {
         arguments += argument
     }
 
     /**
-     * Registers an executor for the tree root, which runs when the command is invoked with no
-     * arguments. Root executors are independent of the branches added through [then]; a tree may
-     * carry both.
+     * Adds an executor that runs when the command is invoked without arguments.
      */
     override fun addExecutor(definition: ExecutorDefinition): CommandTree = apply {
         executors += definition
@@ -108,5 +130,13 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
         )
     }
 
+    /**
+     * Validates the command and registers it with the server.
+     *
+     * With a [namespace], the name and every alias are additionally registered as `namespace:label`.
+     *
+     * @throws CommandValidationException when the command or [namespace] is invalid
+     * @throws IllegalStateException when a label is already taken or the platform is not installed
+     */
     fun register(namespace: String? = null): RegisteredCommand = CommandAPI.register(toDefinition(), namespace)
 }

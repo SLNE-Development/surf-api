@@ -14,16 +14,40 @@ import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import net.minestom.server.command.CommandSender
 
+/**
+ * Suggestions for a sequence of arguments, selected by the values typed for the arguments before.
+ *
+ * [suggest] declares one provider per argument position, in order; `null` marks a position without
+ * suggestions that accepts any value. [branch] adds alternative continuations that follow those
+ * positions. A typed value at a position with a provider must equal one of that provider's
+ * suggestions.
+ *
+ * [ArgumentSuggestions.branch] selects the provider by the number and values of the preceding
+ * arguments, so the same branch is attached to every argument it covers.
+ */
 class SuggestionsBranch private constructor(
     suggestions: List<ArgumentSuggestions?>,
 ) {
     private val suggestions = ObjectImmutableList(suggestions)
     private val branches = ObjectArrayList<SuggestionsBranch>()
 
+    /**
+     * Adds [branches] as alternative continuations after this branch's own positions.
+     */
     fun branch(vararg branches: SuggestionsBranch): SuggestionsBranch = apply {
         this.branches += branches
     }
 
+    /**
+     * Returns the provider for the argument that follows the values in [previousRaw], or `null`
+     * when the branch defines no suggestions there.
+     *
+     * When several continuations match, their providers are merged with
+     * [ArgumentSuggestions.merge].
+     *
+     * @throws CommandSyntaxException when a value in [previousRaw] is not among the suggestions of
+     * its position, or when matching continuations disagree on whether a provider exists
+     */
     suspend fun getNextSuggestion(
         sender: CommandSender,
         vararg previousRaw: String,
@@ -34,6 +58,12 @@ class SuggestionsBranch private constructor(
         processed = emptyList(),
     ).provider
 
+    /**
+     * Verifies that [previousRaw] is a complete, valid sequence for this branch.
+     *
+     * @throws CommandSyntaxException when a value is not among the suggestions of its position, or
+     * when values are missing for a position whose provider has suggestions
+     */
     suspend fun enforceReplacements(
         sender: CommandSender,
         vararg previousRaw: String,
@@ -46,6 +76,12 @@ class SuggestionsBranch private constructor(
         )
     }
 
+    /**
+     * Matches [rawArguments] against the positions of this branch and then its continuations.
+     *
+     * [TraversalMode.NEXT] returns the provider for the first position without a value.
+     * [TraversalMode.ENFORCE] only validates and always returns an empty result.
+     */
     private suspend fun traverse(
         mode: TraversalMode,
         sender: CommandSender,
@@ -171,6 +207,11 @@ class SuggestionsBranch private constructor(
     }
 
     companion object {
+        /**
+         * Creates a branch with one provider per argument position, in order.
+         *
+         * A `null` entry marks a position without suggestions that accepts any value.
+         */
         fun suggest(vararg suggestions: ArgumentSuggestions?): SuggestionsBranch =
             SuggestionsBranch(ObjectList.of(*suggestions))
     }

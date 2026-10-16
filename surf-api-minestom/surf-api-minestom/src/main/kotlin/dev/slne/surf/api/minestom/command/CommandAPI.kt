@@ -8,6 +8,12 @@ import net.minestom.server.command.CommandSender
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Entry point for registering, unregistering and executing CommandAPI commands.
+ *
+ * The operations require the server platform, which is installed during server startup; earlier
+ * calls throw [IllegalStateException].
+ */
 object CommandAPI {
     private val platform = AtomicReference<CommandAPIPlatform?>()
 
@@ -29,6 +35,12 @@ object CommandAPI {
         return installedPlatform().register(definition, namespace)
     }
 
+    /**
+     * Unregisters the command that owns the label [name], together with its aliases and namespaced
+     * labels.
+     *
+     * @return `false` when no CommandAPI command owns [name]
+     */
     fun unregister(name: String): Boolean = installedPlatform().unregister(name)
 
     /**
@@ -42,8 +54,14 @@ object CommandAPI {
     fun execute(sender: CommandSender, input: String): Int =
         installedPlatform().execute(sender, input)
 
+    /**
+     * Aborts the running command with a [CommandSyntaxException] whose message is the plain text [message].
+     */
     fun failWithString(message: String): Nothing = failWithMessage(Component.text(message))
 
+    /**
+     * Aborts the running command with a [CommandSyntaxException] that carries [message] as its component.
+     */
     fun failWithMessage(message: Component): Nothing = throw CommandSyntaxException(message)
 
     private fun installedPlatform(): CommandAPIPlatform = checkNotNull(platform.get()) {

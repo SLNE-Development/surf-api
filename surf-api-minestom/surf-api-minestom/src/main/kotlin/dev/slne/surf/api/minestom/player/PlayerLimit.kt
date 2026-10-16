@@ -26,11 +26,15 @@ object PlayerLimit {
             limit = value
         }
 
-    /** The number of connected players, counting those still in the configuration phase. */
+    /**
+     * The number of connected players, counting those still in the configuration phase.
+     */
     val playerCount: Int
         get() = ConnectionManager.onlinePlayerCount + ConnectionManager.configPlayers.size
 
-    /** Whether [playerCount] has reached [maxPlayers]. */
+    /**
+     * Whether [playerCount] has reached [maxPlayers].
+     */
     val isFull: Boolean
         get() = limit?.let { playerCount >= it } ?: false
 }

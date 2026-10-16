@@ -8,8 +8,8 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.objectweb.asm.tree.MethodInsnNode
 
 /**
- * Gates the StomNPCs mixins against the dependency bytecode: production wraps a failed transform in
- * an `IllegalClassFormatException` that the JVM swallows, so a renamed field or a changed
+ * Applies the StomNPCs mixins to the dependency bytecode. Production wraps a failed transform in an
+ * `IllegalClassFormatException` that the JVM swallows, so a renamed field or a changed
  * `syncWithNpc` descriptor would silently load the untransformed controller.
  */
 class NpcDisplaySyncApplyTest {
@@ -22,7 +22,7 @@ class NpcDisplaySyncApplyTest {
     fun `the controller mixins guard syncWithNpc`(binaryName: String, handler: String) {
         val controller = MixinTransforms.transform(binaryName)
 
-        // mixin decorates handler names, e.g. handler$zzd000$surf$skipSynchronizedDisplay
+        // Mixin decorates handler names, e.g. handler$zzd000$surf$skipSynchronizedDisplay.
         val methods = controller.methods.map { it.name }
         assertTrue(methods.any { it.endsWith(handler) }) {
             "the head guard was not injected into $binaryName: $methods"

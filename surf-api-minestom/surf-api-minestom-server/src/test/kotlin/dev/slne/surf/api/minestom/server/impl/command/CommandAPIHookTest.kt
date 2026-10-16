@@ -16,18 +16,17 @@ import net.minestom.testing.Collector
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertFalse
 
 /**
- * The contract the `CommandManager` mixin relies on: an owned command answers with a result, and
- * anything else answers `null` so the manager keeps parsing it itself.
+ * Tests the contract `CommandManagerMixin` relies on: [CommandAPIHook.execute] returns a result
+ * for a command the CommandAPI owns and `null` otherwise, leaving the input to Minestom's own
+ * parsing.
  */
 @EnvTest
 class CommandAPIHookTest {

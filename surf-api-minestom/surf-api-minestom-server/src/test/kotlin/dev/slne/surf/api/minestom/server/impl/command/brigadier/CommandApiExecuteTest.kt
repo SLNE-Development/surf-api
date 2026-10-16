@@ -51,7 +51,7 @@ class CommandApiExecuteTest {
             assertEquals(1, CommandAPI.execute(manager.consoleSender, "owned thing"))
             assertEquals(1, runs.get())
 
-            // Minestom would accept the trailing token and run the same syntax; Brigadier rejects it.
+            // Minestom accepts the trailing token and runs the same syntax; Brigadier rejects it.
             assertThrows(CommandSyntaxException::class.java) {
                 CommandAPI.execute(manager.consoleSender, "owned thing extra")
             }

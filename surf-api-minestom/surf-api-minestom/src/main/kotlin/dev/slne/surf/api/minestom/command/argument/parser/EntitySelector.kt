@@ -5,23 +5,22 @@ import net.minestom.server.command.CommandSender
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Entity
 import net.minestom.server.instance.Instance
-import java.util.UUID
+import java.util.*
 
 /**
- * A resolved entity selector, produced by [EntitySelectorParser].
+ * Entity selector produced by [EntitySelectorParser].
  *
- * A bare player name or UUID resolves through [playerName]/[uuid] directly, bypassing
- * [predicates] entirely, matching vanilla's own selector grammar where those forms never carry
- * bracket options. Otherwise [find] gathers candidates - the sender's own entity for [self],
- * online players for a player-only selector, every entity in the relevant instances otherwise -
- * filters them with [predicates], orders them with [sorter] and caps the result at [limit].
+ * [find] resolves a selector given as a bare [playerName] or [uuid] directly; [predicates] do not
+ * apply to those forms. Any other selector takes its candidates from the sender for [self], from
+ * the online players, or, when [includesEntities] is set, from the entities of the searched
+ * instances. Candidates are filtered by [predicates], ordered by [sorter] and truncated to the
+ * smaller of [limit] and [maxResults].
  *
- * [predicates] and [sorter] each receive the selector's anchor position alongside the candidate,
- * resolved from [find]'s `sender` (an entity sender's own position, or the world origin for a
- * sender without one) and adjusted by any explicit `x`/`y`/`z` option. [worldLimited] restricts
- * position-based selectors (`x`, `y`, `z`, `dx`, `dy`, `dz`, `distance`) to the sender's own
- * instance when the sender is an entity; a non-entity sender has no instance to restrict to, so
- * the search falls back to every instance.
+ * [predicates] and [sorter] receive the sender's position as anchor, or the world origin when the
+ * sender is not an [Entity].
+ *
+ * When [worldLimited] is set and the sender is an entity in an instance, only that instance is
+ * searched; otherwise all instances are.
  */
 internal class EntitySelector(
     val maxResults: Int,

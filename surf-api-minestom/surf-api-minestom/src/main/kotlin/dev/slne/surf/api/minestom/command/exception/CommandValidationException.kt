@@ -3,12 +3,10 @@ package dev.slne.surf.api.minestom.command.exception
 import java.io.Serial
 
 /**
- * Exception thrown to indicate that a command validation error has occurred.
+ * Thrown when a command, argument or registration is configured invalidly, for example with a
+ * malformed name, a required argument after an optional one or an unsupported suggestion provider.
  *
- * This exception is used to signal issues related to the validation
- * of command inputs, parameters, or definitions within the Command API.
- *
- * @param message A detailed message describing the validation error.
+ * @param message description of the invalid configuration
  */
 class CommandValidationException(message: String) : IllegalArgumentException(message) {
     companion object {

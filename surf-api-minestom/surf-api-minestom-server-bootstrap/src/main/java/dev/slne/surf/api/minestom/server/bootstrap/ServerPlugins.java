@@ -31,19 +31,27 @@ import org.jspecify.annotations.Nullable;
  * <p>A plugin in {@code plugins/} normally gets a class loader of its own, which the server cannot
  * see into. The plugins the server declares in {@value #ATTRIBUTE} (and the plugins they depend
  * on) are appended to the system class path instead, and the plugins feature loads them from
- * there. Their jar paths are handed to it through the {@value #LOADED_PROPERTY} system
- * property.</p>
+ * there. The bootstrap passes their jar paths to the plugins feature in the
+ * {@value #LOADED_PROPERTY} system property.</p>
  */
 @NullMarked
 final class ServerPlugins {
 
-    /** The manifest attribute listing the plugin ids, comma separated, optional ones ending in {@code ?}. */
+    /**
+     * The manifest attribute listing the plugin IDs, comma separated. The ID of an optional plugin
+     * ends in {@code ?}.
+     */
     static final String ATTRIBUTE = "Surf-Plugin-Dependencies";
 
-    /** The system property overriding the plugin directory, which has to match {@code withPlugins}. */
+    /**
+     * The system property overriding the {@code plugins} directory. It has to match the directory
+     * configured in {@code withPlugins}.
+     */
     static final String DIRECTORY_PROPERTY = "surf.minestom.plugins";
 
-    /** The system property the appended jars are listed in, separated by the path separator. */
+    /**
+     * The system property the appended jars are listed in, separated by the path separator.
+     */
     static final String LOADED_PROPERTY = "surf.minestom.server-plugins";
 
     private static final String PLUGIN_FILE = "minestom-plugin.json";
@@ -119,7 +127,7 @@ final class ServerPlugins {
                     final String id = String.valueOf(meta.get("id"));
                     result.putIfAbsent(id, new PluginJar(path, dependencies(meta, id)));
                 } catch (final IOException | RuntimeException e) {
-                    // Reported again by the plugins feature, which skips the jar as well
+                    // The plugins feature reports the same failure when it skips the jar
                     logger.warn("Could not read the plugin " + path.getFileName(), e);
                 }
             }
@@ -129,7 +137,10 @@ final class ServerPlugins {
         return result;
     }
 
-    /** The ids of the plugins shaded into the server, which need no jar from the directory. */
+    /**
+     * The IDs of the plugins shaded into the server, which need no jar from the {@code plugins}
+     * directory.
+     */
     private static Set<String> classPathPluginIds() {
         final ClassLoader loader = ClassLoader.getSystemClassLoader();
         final Set<String> ids = new HashSet<>();

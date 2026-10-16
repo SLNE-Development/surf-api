@@ -4,7 +4,6 @@ import dev.slne.surf.api.minestom.chat.AsyncPlayerChatEvent
 import dev.slne.surf.api.minestom.chat.ChatRenderer
 import dev.slne.surf.api.minestom.extension.ConnectionManager
 import dev.slne.surf.api.minestom.server.chat.impl.signature.PlayerChatMessage
-import net.minestom.server.entity.Player
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -15,8 +14,22 @@ import net.kyori.adventure.translation.GlobalTranslator
 import net.minestom.server.adventure.MinestomAdventure
 import net.minestom.server.adventure.audience.Audiences
 import net.minestom.server.command.ConsoleSender
+import net.minestom.server.entity.Player
 import net.minestom.server.message.ChatType
 
+/**
+ * Runs one signed chat message through [AsyncPlayerChatEvent] and sends it to the event's viewers.
+ *
+ * Delivery depends on what the listeners changed. Cancelled events send nothing.
+ * - Nothing changed: the message is sent as received with the vanilla chat type.
+ * - Message changed, default renderer: vanilla chat type, the new content as unsigned content.
+ * - Custom renderer: `surf:raw` chat type ([SurfChatTypes.raw]), the rendered component as
+ *   unsigned content.
+ *
+ * The original signature stays attached in every case. [process] suspends while viewer-specific
+ * renderers run, and renders concurrently per viewer only for renderers that are not
+ * [ChatRenderer.ViewerUnaware].
+ */
 internal class ChatProcessor(
     private val player: Player,
     private val message: PlayerChatMessage,
@@ -145,8 +158,8 @@ internal class ChatProcessor(
 }
 
 /**
- * The name a chat message is attributed to: the display name, or the username, inserting the
- * username on shift-click and showing the player on hover.
+ * The name a chat message is attributed to: the display name, or the username when there is none.
+ * Shift-clicking it inserts the username, and hovering it shows the player.
  */
 internal fun Player.chatDisplayName(): Component = (displayName ?: Component.text(username))
     .insertion(username)

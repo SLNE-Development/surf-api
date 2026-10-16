@@ -11,9 +11,13 @@ import java.util.function.Predicate
 /**
  * The visibility state of one viewing player.
  *
- * The player's viewer rule is owned by this handler: it combines the rule requested through
- * [PlayerVisibility.updateViewerRule] with the budget of nearest players the
- * [PlayerVisibilityService] selected.
+ * Owns the player's viewer rule: it combines the rule requested through
+ * [PlayerVisibility.updateViewerRule] with the nearest-player selection published by
+ * [PlayerVisibilityService].
+ *
+ * [requestRule] and [requestRuleRefresh] may be called from any thread. Rule adoption and selection
+ * updates run on the service tick. The combined rule reads the selection and the applied rule
+ * through volatile fields.
  */
 internal class PlayerVisibilityHandler(private val player: Player) {
     private class RuleRequest(
@@ -67,8 +71,8 @@ internal class PlayerVisibilityHandler(private val player: Player) {
     fun init() {
         player.updateViewerRule(combinedRule)
 
-        // A viewable rule makes Minestom send this player's packets to its actual viewers only,
-        // rather than to every player in the surrounding chunks - most of whom no longer see it.
+        // Limits this player's packets to its actual viewers instead of every player in range,
+        // most of whom no longer see it once the limit applies.
         player.updateViewableRule(ALWAYS_VIEWABLE)
     }
 
@@ -81,6 +85,9 @@ internal class PlayerVisibilityHandler(private val player: Player) {
         requestedRule.set(RuleRequest(predicate))
     }
 
+    /**
+     * Forces the next tick to re-apply the current rule, e.g. when the predicate's inputs changed.
+     */
     fun requestRuleRefresh() {
         requestedRule.updateAndGet { RuleRequest(it.predicate) }
     }
@@ -89,6 +96,11 @@ internal class PlayerVisibilityHandler(private val player: Player) {
         return appliedRule?.test(entity) != false
     }
 
+    /**
+     * Adopts the latest requested rule.
+     *
+     * @return `true` when a new request was adopted; [requiresNativeRuleRefresh] is then set.
+     */
     fun applyRequestedRule(): Boolean {
         val request = requestedRule.get()
         if (request === appliedRequest) return false
@@ -100,6 +112,10 @@ internal class PlayerVisibilityHandler(private val player: Player) {
         return true
     }
 
+    /**
+     * Makes the combined rule reject every player until [resumePlayerAdmission], so that no player
+     * is admitted from a stale selection while the selection is replaced.
+     */
     fun pausePlayerAdmission() {
         AutomaticPlayerVisibility.withViewerLock(player) {
             admittingPlayers = false

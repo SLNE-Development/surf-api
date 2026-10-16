@@ -6,12 +6,12 @@ import net.minestom.server.entity.Player
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * A chat renderer is responsible for rendering chat messages sent by [Player]s to the server.
+ * Renders chat messages sent by [Player]s into the components shown to viewers.
  */
 fun interface ChatRenderer {
 
     /**
-     * Renders a chat message. This will be called once for each receiving [Audience].
+     * Renders a chat message. Called once per receiving [Audience].
      *
      * @param source            the message source
      * @param sourceDisplayName the display name of the source player
@@ -34,7 +34,7 @@ fun interface ChatRenderer {
     sealed interface Default : ChatRenderer, ViewerUnaware
 
     /**
-     * Similar to [ChatRenderer], but without knowledge of the message viewer.
+     * A [ChatRenderer] variant that does not depend on the viewer.
      *
      * @see viewerUnaware
      */
@@ -55,7 +55,8 @@ fun interface ChatRenderer {
     companion object {
 
         /**
-         * Creates a new instance of the default [ChatRenderer].
+         * Creates the default renderer, which formats messages with the vanilla `chat.type.text`
+         * translation.
          */
         fun defaultRenderer(): ChatRenderer =
             ViewerUnawareChatRenderer.Default { _, sourceDisplayName, message ->
@@ -63,10 +64,10 @@ fun interface ChatRenderer {
             }
 
         /**
-         * Creates a new viewer-unaware [ChatRenderer], which will render the chat message a single
-         * time, displaying the same rendered message to every viewing [Audience].
+         * Creates a [ChatRenderer] that renders the message once and shows the result to every
+         * [Audience].
          *
-         * @param renderer the viewer unaware renderer
+         * @param renderer the viewer-independent renderer
          */
         fun viewerUnaware(renderer: ViewerUnaware): ChatRenderer =
             ViewerUnawareChatRenderer.Impl(renderer)

@@ -6,13 +6,12 @@ import org.junit.platform.launcher.LauncherSession
 import org.junit.platform.launcher.LauncherSessionListener
 
 /**
- * Installs Mixin into the test JVM before the first test class is loaded, the way the server jar's
+ * Installs Mixin into the test JVM when the JUnit launcher session opens, like the server jar's
  * bootstrap does, so tests run against the transformed Minestom classes.
  *
- * Registered as a JUnit [LauncherSessionListener], so depending on the test fixtures of
- * `surf-api-minestom-server` is all it takes. Applies the surf configurations found on the test
- * class path plus those listed, comma separated, in the [CONFIGS_PROPERTY] system property, e.g. a
- * server's own `mixins.surf-lobby.json`.
+ * Registered as a [LauncherSessionListener], so depending on the test fixtures of
+ * `surf-api-minestom-server` is enough. Applies the surf mixin configurations found on the test
+ * class path plus those listed, comma separated, in the [CONFIGS_PROPERTY] system property.
  */
 class SurfMixinTestEnvironment : LauncherSessionListener {
     override fun launcherSessionOpened(session: LauncherSession) {
@@ -20,7 +19,9 @@ class SurfMixinTestEnvironment : LauncherSessionListener {
     }
 
     companion object {
-        /** The system property listing further mixin configurations to apply. */
+        /**
+         * System property listing further mixin configurations to apply, comma separated.
+         */
         const val CONFIGS_PROPERTY = "surf.test.mixin-configs"
 
         private val SURF_CONFIGS = listOf(
@@ -28,7 +29,9 @@ class SurfMixinTestEnvironment : LauncherSessionListener {
             "mixins.surf-api-minestom-server-npc.json",
         )
 
-        /** The configurations applied in this JVM. */
+        /**
+         * The mixin configurations applied in this JVM.
+         */
         val configurations: List<String> by lazy {
             val loader = SurfMixinTestEnvironment::class.java.classLoader
             val extra = System.getProperty(CONFIGS_PROPERTY).orEmpty()
@@ -38,7 +41,9 @@ class SurfMixinTestEnvironment : LauncherSessionListener {
             SURF_CONFIGS.filter { loader.getResource(it) != null } + extra
         }
 
-        /** Installs Mixin unless it already is. */
+        /**
+         * Installs Mixin unless it is already installed.
+         */
         @JvmStatic
         @Synchronized
         fun install() {

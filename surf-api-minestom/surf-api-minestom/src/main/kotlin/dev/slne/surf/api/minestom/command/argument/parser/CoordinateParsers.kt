@@ -26,12 +26,10 @@ private val ERROR_REQUIRES_SENDER = SimpleCommandExceptionType(
 private data class Component(val relative: Boolean, val value: Double)
 
 /**
- * Reads one world-coordinate component: an optional `~` marking it relative to the sender,
- * followed by an optional numeric offset that defaults to `0` when omitted. A leading `^` is
- * rejected here, since a position's components must agree on whether they are local.
+ * Reads one world coordinate: an absolute number, or `~` with an optional offset that defaults
+ * to `0`. A leading `^` is rejected as a mix of world and local coordinates.
  *
- * Absolute (non-`~`) values are read as whole numbers when [blockAligned] is set; a `~` offset
- * always accepts a decimal regardless of [blockAligned].
+ * With [blockAligned], absolute values must be whole numbers; `~` offsets may always be decimal.
  */
 private fun readWorldComponent(reader: StringReader, blockAligned: Boolean): Component {
     if (reader.canRead() && reader.peek() == '^') throw ERROR_MIXED_TYPE.createWithContext(reader)
@@ -49,7 +47,10 @@ private fun readWorldComponent(reader: StringReader, blockAligned: Boolean): Com
     return Component(relative, value)
 }
 
-/** Reads one `^`-prefixed local coordinate component; any other leading character is a mixed type. */
+/**
+ * Reads one `^`-prefixed local coordinate; any other leading character is rejected as a mix of
+ * world and local coordinates.
+ */
 private fun readLocalComponent(reader: StringReader): Double {
     if (!reader.canRead()) throw ERROR_EXPECTED_VALUE.createWithContext(reader)
     if (reader.peek() != '^') throw ERROR_MIXED_TYPE.createWithContext(reader)
@@ -69,8 +70,8 @@ private fun coordinateTypeOf(vararg relative: Boolean): RelativeVec.CoordinateTy
     if (relative.any { it }) RelativeVec.CoordinateType.RELATIVE else RelativeVec.CoordinateType.ABSOLUTE
 
 /**
- * Rebuilds this exception at [start], since [SimpleCommandExceptionType.createWithContext] bakes
- * the cursor in at construction time.
+ * Rebuilds this exception with its cursor at [start] and moves [reader] there, because
+ * [SimpleCommandExceptionType.createWithContext] fixes the cursor at construction.
  */
 private fun CommandSyntaxException.resetTo(reader: StringReader, start: Int): CommandSyntaxException {
     reader.cursor = start
@@ -78,9 +79,10 @@ private fun CommandSyntaxException.resetTo(reader: StringReader, start: Int): Co
 }
 
 /**
- * Returns [relative] unchanged when [sender] is present or when none of its components are
- * relative or local; otherwise rejects it, since resolving a `~` or `^` component without a sender
- * would silently substitute the origin for the sender's actual position or view.
+ * Returns [relative] unless [sender] is `null` and a component is relative or local.
+ *
+ * Resolving such a component without a sender would substitute the origin, so it is rejected
+ * instead, with [reader] reset to [start].
  */
 private fun requireResolvable(
     relative: RelativeVec,
@@ -96,17 +98,16 @@ private fun requireResolvable(
 }
 
 /**
- * Reads a vanilla-style position: three components (or two, when [twoDimensional], leaving the
- * middle component fixed at a non-relative `0`), each absolute, `~`-relative to the sender, or,
- * for the three-component form only, `^`-relative to the sender's facing direction. All components
- * must agree on whether they are local; mixing `^` with a bare or `~`-prefixed component is
- * rejected, and the reader's cursor is reset to the position's start before the failure is thrown.
+ * Parses a vanilla position into an unresolved [RelativeVec].
  *
- * [blockAligned] restricts absolute (non-`~`, non-`^`) components to whole numbers, matching a
- * block position's grammar.
+ * A position has three components, or `x` and `z` only when [twoDimensional]; the 2D form leaves
+ * `y` as an absolute `0`. Each component is absolute or `~`-relative. The three-component form
+ * alternatively accepts `^` local coordinates (left, up, forward) for all components; mixing local
+ * with other components is rejected. With [blockAligned], absolute components must be whole
+ * numbers.
  *
- * The result is a Minestom [RelativeVec] carrying the parsed values and their relativity, ready to
- * be resolved against a sender with [RelativeVec.fromSender] or [RelativeVec.from].
+ * Failures reset the reader to the start of the position. Resolve the result with
+ * [RelativeVec.fromSender] or [RelativeVec.from].
  */
 internal class PositionParser(
     private val blockAligned: Boolean,
@@ -166,12 +167,10 @@ internal class PositionParser(
 }
 
 /**
- * Reads a vanilla-style rotation: a yaw component followed by a pitch component, each absolute or
- * `~`-relative to the sender's current view. Local (`^`) coordinates are not part of vanilla's
- * rotation grammar, so a leading `^` is rejected the same way it is for a position.
+ * Parses a vanilla rotation, a yaw followed by a pitch, each absolute or `~`-relative to the
+ * sender's view. Local (`^`) components are rejected.
  *
- * The result is a [RelativeVec] whose `x` holds the yaw value and `z` the pitch value, resolved
- * against a sender's view with [RelativeVec.fromView].
+ * The result stores the yaw in `x` and the pitch in `z`; resolve it with [RelativeVec.fromView].
  */
 internal object RotationParser : ArgumentType<RelativeVec> {
     override fun parse(reader: StringReader): RelativeVec {
@@ -194,8 +193,10 @@ internal object RotationParser : ArgumentType<RelativeVec> {
 }
 
 /**
- * Reads a swizzle of world axes, such as `xyz` or `xz`, case-insensitively and without a repeated
- * letter. An unknown letter or a repeat is rejected at the swizzle's start.
+ * Parses a swizzle of world axes such as `xyz` or `xz`, case-insensitively.
+ *
+ * An unknown or repeated letter fails at the start of the swizzle. The returned set keeps the
+ * order the axes were written in.
  */
 internal object AxisParser : ArgumentType<Set<Axis>> {
     override fun parse(reader: StringReader): Set<Axis> {
@@ -221,13 +222,11 @@ internal object AxisParser : ArgumentType<Set<Axis>> {
 }
 
 /**
- * Adapts [PositionParser] to the plain [Vec] that
- * [dev.slne.surf.api.minestom.command.argument.PositionArgument] and its 2D and block
- * variants expose, resolving relative and local coordinates against the command source.
+ * Adapts [PositionParser] to the resolved [Vec] exposed by
+ * [dev.slne.surf.api.minestom.command.argument.PositionArgument] and its 2D and block variants.
  *
- * A relative or local coordinate requires a command source to resolve against; parsed without one
- * (as happens on the bare, sourceless overload, or when the source is not a [CommandSender]), it is
- * rejected rather than silently resolved against the origin.
+ * Relative and local coordinates are resolved against the command source. Without a
+ * [CommandSender] source they are rejected.
  */
 internal class PositionArgumentType(
     blockAligned: Boolean,
@@ -247,13 +246,12 @@ internal class PositionArgumentType(
 }
 
 /**
- * Adapts [RotationParser] to the plain [Rotation] that
- * [dev.slne.surf.api.minestom.command.argument.RotationArgument] exposes, resolving a
- * relative yaw or pitch against the command source's current view.
+ * Adapts [RotationParser] to the resolved [Rotation] exposed by
+ * [dev.slne.surf.api.minestom.command.argument.RotationArgument].
  *
- * A relative yaw or pitch requires a command source to resolve against; parsed without one (as
- * happens on the bare, sourceless overload, or when the source is not a [CommandSender]), it is
- * rejected rather than silently resolved against the origin's view.
+ * A relative yaw or pitch is resolved against the view of the command source, which is the origin
+ * view for a source that is not an [Entity]. Without a [CommandSender] source, relative values are
+ * rejected.
  */
 internal object RotationArgumentType : ArgumentType<Rotation> {
     override fun parse(reader: StringReader): Rotation = resolve(reader, null)

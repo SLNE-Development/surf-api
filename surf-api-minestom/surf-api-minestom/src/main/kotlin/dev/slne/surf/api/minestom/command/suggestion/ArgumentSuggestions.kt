@@ -12,17 +12,41 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
+/**
+ * Supplies suggestions for an argument.
+ *
+ * Providers run in a coroutine on the server's asynchronous scope, not on the network thread, and
+ * may suspend. An exception thrown by a provider is logged and the provider contributes no entries.
+ *
+ * Register a provider with [dev.slne.surf.api.minestom.command.argument.Argument.replaceSuggestions]
+ * or [dev.slne.surf.api.minestom.command.argument.Argument.includeSuggestions].
+ */
 fun interface ArgumentSuggestions {
+    /**
+     * Returns the suggestions for the input described by [info].
+     */
     suspend fun suggest(info: SuggestionInfo): List<StringTooltip>
 
+    /**
+     * How the returned entries are matched against the text typed for the argument.
+     */
     val filterPolicy: SuggestionFilter
         get() = SuggestionFilter.PREFIX
 
     companion object {
+        /**
+         * Returns a provider without entries.
+         */
         fun empty(): ArgumentSuggestions = ArgumentSuggestions { emptyList() }
 
+        /**
+         * Returns a provider that suggests the fixed [values].
+         */
         fun strings(vararg values: String): ArgumentSuggestions = strings(ObjectList.of(*values))
 
+        /**
+         * Returns a provider that suggests the fixed [values].
+         */
         fun strings(values: Collection<String>): ArgumentSuggestions {
             val copy = ObjectImmutableList(values)
             return ArgumentSuggestions {
@@ -30,6 +54,9 @@ fun interface ArgumentSuggestions {
             }
         }
 
+        /**
+         * Returns a provider that suggests the strings [provider] returns for each request.
+         */
         fun strings(provider: (SuggestionInfo) -> Collection<String>): ArgumentSuggestions {
             return ArgumentSuggestions { info ->
                 val provided = provider(info)
@@ -37,10 +64,17 @@ fun interface ArgumentSuggestions {
             }
         }
 
+        /**
+         * Alias of [strings] for a provider.
+         */
         fun stringCollection(provider: (SuggestionInfo) -> Collection<String>): ArgumentSuggestions {
             return strings(provider)
         }
 
+        /**
+         * Returns a provider that suggests the strings the suspending [provider] returns for each
+         * request.
+         */
         fun stringsAsync(provider: suspend (SuggestionInfo) -> Collection<String>): ArgumentSuggestions {
             return ArgumentSuggestions { info ->
                 val provided = provider(info)
@@ -48,31 +82,57 @@ fun interface ArgumentSuggestions {
             }
         }
 
+        /**
+         * Alias of [stringsAsync].
+         */
         fun stringCollectionAsync(provider: suspend (SuggestionInfo) -> Collection<String>): ArgumentSuggestions =
             stringsAsync(provider)
 
+        /**
+         * Returns a provider that suggests the fixed [values] with their tooltips.
+         */
         fun stringsWithTooltips(vararg values: StringTooltip): ArgumentSuggestions =
             stringsWithTooltips(ObjectList.of(*values))
 
+        /**
+         * Returns a provider that suggests the fixed [values] with their tooltips.
+         */
         fun stringsWithTooltips(values: Collection<StringTooltip>): ArgumentSuggestions {
             val copy = ObjectImmutableList(values)
             return ArgumentSuggestions { copy }
         }
 
+        /**
+         * Returns a provider that suggests the entries [provider] returns for each request.
+         */
         fun stringsWithTooltips(provider: (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
             return ArgumentSuggestions { info -> ObjectImmutableList(provider(info)) }
         }
 
+        /**
+         * Alias of [stringsWithTooltips] for a provider.
+         */
         fun stringsWithTooltipsCollection(provider: (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions =
             stringsWithTooltips(provider)
 
+        /**
+         * Returns a provider that suggests the entries the suspending [provider] returns for each
+         * request.
+         */
         fun stringsWithTooltipsAsync(provider: suspend (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
             return ArgumentSuggestions { info -> ObjectImmutableList(provider(info)) }
         }
 
+        /**
+         * Alias of [stringsWithTooltipsAsync].
+         */
         fun stringsWithTooltipsCollectionAsync(provider: suspend (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions =
             stringsWithTooltipsAsync(provider)
 
+        /**
+         * Returns a provider whose entries are offered without prefix filtering
+         * ([SuggestionFilter.NONE]).
+         */
         fun unfiltered(provider: suspend (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
             return object : ArgumentSuggestions {
                 override val filterPolicy = SuggestionFilter.NONE
@@ -83,6 +143,13 @@ fun interface ArgumentSuggestions {
             }
         }
 
+        /**
+         * Returns a provider that concatenates the entries of all [providers], which run
+         * concurrently.
+         *
+         * The merged provider filters by prefix; the filter policies of [providers] are not
+         * combined.
+         */
         fun merge(vararg providers: ArgumentSuggestions): ArgumentSuggestions {
             val copy = ObjectImmutableList(providers)
             return ArgumentSuggestions { info ->
@@ -96,6 +163,14 @@ fun interface ArgumentSuggestions {
             }
         }
 
+        /**
+         * Returns a provider that selects its entries from [branch] using the raw values of the
+         * arguments before the current one.
+         *
+         * Yields no entries when the branch has no provider for the current position. A previous
+         * value that the branch rejects makes the provider fail, see
+         * [SuggestionsBranch.getNextSuggestion].
+         */
         fun branch(branch: SuggestionsBranch): ArgumentSuggestions = ArgumentSuggestions { info ->
             branch.getNextSuggestion(info.sender, *info.previousArgs.rawArguments().toTypedArray())
                 ?.suggest(info)

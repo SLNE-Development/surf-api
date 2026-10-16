@@ -24,10 +24,14 @@ import kotlin.io.path.div
 @SurfMinestomServerDsl
 class LuckPermsFeatureBuilder internal constructor() {
 
-    /** Where LuckPerms keeps its configuration and data. */
+    /**
+     * Where LuckPerms keeps its configuration and data.
+     */
     var dataDirectory: Path = Path("plugins/luckperms")
 
-    /** Whether the `/lp` commands are registered. */
+    /**
+     * Whether the `/lp` commands are registered.
+     */
     var registerCommands: Boolean = true
 
     internal val customizers = mutableListOf<LuckPermsMinestom.Builder.() -> Unit>()
@@ -43,17 +47,18 @@ class LuckPermsFeatureBuilder internal constructor() {
 /**
  * Runs LuckPerms on this server and resolves every permission check of the surf api with it.
  *
- * LuckPerms downloads its libraries at runtime and adds them to the class path through the
- * instrumentation API. The server jar therefore has to declare its agent in the manifest:
+ * LuckPerms downloads its libraries at runtime and adds them to the system class path through the
+ * instrumentation API. The server jar therefore has to declare the LuckPerms agent in the
+ * manifest:
  *
  * ```
  * Launcher-Agent-Class: me.lucko.luckperms.minestom.dependencies.LuckPermsAgent
  * ```
  *
- * When the server already has an agent of its own, call
- * `LuckPermsAgent.agentmain(args, instrumentation)` from it instead. Servers built with
- * `dev.slne.surf.api.gradle.minestom-server` do this through the bootstrap agent, which lists it
- * in `Surf-Delegate-Agent-Classes`.
+ * When the server jar already has a `Launcher-Agent-Class` of its own, call
+ * `LuckPermsAgent.agentmain(args, instrumentation)` from that agent instead. Servers built with
+ * the `dev.slne.surf.api.gradle.minestom-server` Gradle plugin need neither: the plugin lists the
+ * LuckPerms agent in `Surf-Delegate-Agent-Classes`, and the bootstrap agent calls it.
  */
 class LuckPermsFeature internal constructor(
     private val settings: LuckPermsFeatureBuilder,
@@ -63,7 +68,9 @@ class LuckPermsFeature internal constructor(
 
     private var instance: LuckPerms? = null
 
-    /** The running LuckPerms api. */
+    /**
+     * The LuckPerms api; throws [IllegalStateException] before [load] and after [disable].
+     */
     val luckPerms: LuckPerms
         get() = checkNotNull(instance) { "LuckPerms has not been loaded yet" }
 
@@ -92,7 +99,9 @@ class LuckPermsFeature internal constructor(
         LuckPermsMinestom.disable()
     }
 
-    /** The value of [permission] for the loaded user [uuid]; unset while the user is not loaded. */
+    /**
+     * The value of [permission] for the loaded user [uuid]; unset while the user is not loaded.
+     */
     fun permissionValue(uuid: UUID, permission: String): TriState {
         val user = loadedUser(uuid) ?: return TriState.NOT_SET
 
@@ -103,13 +112,17 @@ class LuckPermsFeature internal constructor(
         }
     }
 
-    /** The user [uuid], if LuckPerms has them loaded. */
+    /**
+     * The user [uuid], if LuckPerms has them loaded.
+     */
     fun loadedUser(uuid: UUID): User? = instance?.userManager?.getUser(uuid)
 
     companion object {
         const val ID = "luckperms"
 
-        /** The installed LuckPerms feature. */
+        /**
+         * The installed LuckPerms feature.
+         */
         val instance: LuckPermsFeature
             get() = SurfMinestomServer.instance.feature(ID) as? LuckPermsFeature
                 ?: error("LuckPerms is not installed, call withLuckPerms() in surfMinestomServer { }")

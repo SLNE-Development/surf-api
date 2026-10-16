@@ -7,10 +7,10 @@ import dev.slne.surf.api.minestom.command.argument.SuggestionMode
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import java.util.Locale
+import java.util.*
 
 /**
- * The names a registered command answers to, together with the handle its registrant receives.
+ * A compiled command: the lowercase labels it occupies and the handle returned to its registrant.
  */
 internal data class CompiledRegistration(
     val names: Set<String>,
@@ -18,11 +18,17 @@ internal data class CompiledRegistration(
 )
 
 /**
- * Turns a command definition into the set of names it occupies and validates the parts of it that
- * cannot be expressed to a client.
+ * Derives the labels a [CommandDefinition] occupies and validates the parts of it that cannot be
+ * declared to a client.
  */
 internal class MinestomCommandCompiler {
 
+    /**
+     * Compiles [definition] into its labels: the name and aliases, plus their `namespace:label`
+     * forms when [namespace] is not `null`. Labels are lowercased and ordered by declaration.
+     *
+     * @throws CommandValidationException if an argument uses a suggestion mode its kind cannot carry
+     */
     fun compile(definition: CommandDefinition, namespace: String?): CompiledRegistration {
         validateSuggestionModes(definition)
 
@@ -44,18 +50,17 @@ internal class MinestomCommandCompiler {
     }
 
     /**
-     * Rejects suggestion providers on kinds whose client-facing node cannot advertise them.
+     * Rejects suggestion modes on argument kinds that cannot carry them.
      *
-     * A literal is not an argument node at all, and a command redirect keeps the client's own
-     * redirect behaviour, so neither can carry an `ask_server` suggestion type.
+     * Literal, command, position (3D, 2D and block) and rotation arguments accept no custom
+     * suggestions. An entity type argument accepts only the replacing modes, because the native set
+     * of summonable entity types is not available to merge extra entries into.
      */
     private fun validateSuggestionModes(definition: CommandDefinition) {
         definition.paths.forEach { path ->
             path.arguments.forEach { argument ->
                 if (argument.suggestions == SuggestionMode.BuiltIns) return@forEach
 
-                // The client completes an entity type from its own registry, so extra entries
-                // cannot be merged into that set without replacing it wholesale.
                 val includesBuiltIns = argument.suggestions is SuggestionMode.Include<*> ||
                         argument.suggestions is SuggestionMode.IncludeSafe<*>
                 if (baseKindOf(argument.kind) == ArgumentKind.EntityType && includesBuiltIns) {
@@ -84,10 +89,7 @@ internal class MinestomCommandCompiler {
     }
 
     /**
-     * The kind a suggestion mode really applies to, looking through wrappers.
-     *
-     * A custom or list argument advertises the node of the argument it is built on, so a provider
-     * attached to it lands on that node's parser.
+     * Unwraps a custom kind to its base kind and a list kind to its element kind.
      */
     private tailrec fun baseKindOf(kind: ArgumentKind<*>): ArgumentKind<*> = when (kind) {
         is ArgumentKind.Custom<*, *> -> baseKindOf(kind.base.kind)

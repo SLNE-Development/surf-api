@@ -1,11 +1,11 @@
 package dev.slne.surf.api.minestom.server.spark
 
+import dev.slne.surf.api.minestom.extension.CommandManager
+import dev.slne.surf.api.minestom.permission.hasPermission
+import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
-import dev.slne.surf.api.minestom.server.SurfMinestomFeature
-import dev.slne.surf.api.minestom.extension.CommandManager
-import dev.slne.surf.api.minestom.permission.hasPermission
 import me.lucko.spark.minestom.MinestomSparkPlugin
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -16,18 +16,22 @@ import kotlin.io.path.Path
 @SurfMinestomServerDsl
 class SparkFeatureBuilder internal constructor() {
 
-    /** Where spark keeps its configuration and data. */
+    /**
+     * Where spark keeps its configuration and data.
+     */
     var dataDirectory: Path = Path("plugins/spark")
 
-    /** Whether the profiler starts sampling every thread as soon as the server started. */
+    /**
+     * Whether the profiler starts sampling all threads on the first tick after the server started.
+     */
     var profileOnStartup: Boolean = false
 }
 
 /**
  * Runs the spark profiler on this server.
  *
- * The `/spark` command checks its permissions through the surf api, so install a permission
- * provider such as `withLuckPerms()` to let players use it. The console may always use it.
+ * `/spark` checks permissions through the surf api. Without a permission provider such as
+ * `withLuckPerms()`, only the console can use it.
  */
 class SparkFeature internal constructor(
     private val settings: SparkFeatureBuilder,
@@ -65,7 +69,7 @@ class SparkFeature internal constructor(
 }
 
 /**
- * Runs the spark profiler on this server.
+ * Installs the spark profiler.
  *
  * @see SparkFeature
  */

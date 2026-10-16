@@ -19,11 +19,11 @@ private const val UNKNOWN_COMMAND_KEY = "command.unknown.command"
 private const val UNKNOWN_ARGUMENT_KEY = "command.unknown.argument"
 
 /**
- * Reports [failure] to [sender] in vanilla's two-line layout: the message, then the input up to the
- * offending position with the remainder underlined and marked.
+ * Reports [failure] to [sender] in vanilla's layout: a heading with the failure message, then the
+ * input with the failing remainder underlined and followed by a marker.
  *
- * The heading distinguishes an input whose command label was never resolved from one that failed
- * partway through its arguments, which is the same distinction vanilla draws.
+ * The heading reads "unknown command" for a failure at the start of [input] and "unknown argument"
+ * for one later on.
  */
 internal fun reportSyntaxFailure(
     sender: CommandSender,
@@ -40,8 +40,7 @@ internal fun reportSyntaxFailure(
 }
 
 /**
- * Reports an input no registry could resolve, in the same layout vanilla uses for a command it does
- * not know: the heading, then the whole input marked as the offending part.
+ * Reports an input that no command registry resolved, marking the whole input as the failing part.
  */
 internal fun reportUnknownCommand(sender: CommandSender, input: String) =
     report(sender, input, cursor = 0, message = null)
@@ -63,6 +62,10 @@ private fun report(
     sender.sendTranslated(body.build())
 }
 
+/**
+ * The context line: up to [CONTEXT_LENGTH] characters before [cursor], the remainder underlined and
+ * a trailing marker. Clicking it suggests [input] as a command.
+ */
 private fun contextOf(input: String, cursor: Int): Component {
     val clamped = cursor.coerceIn(0, input.length)
     val context = text()
@@ -90,8 +93,8 @@ private fun contextOf(input: String, cursor: Int): Component {
 }
 
 /**
- * Sends [message] to this sender, resolving translation keys for senders that cannot resolve them
- * themselves. A player receives the keys untouched and renders them in its own language.
+ * Sends [message] with its translation keys resolved on the server, except to a player, whose
+ * client resolves them in its own language.
  */
 private fun CommandSender.sendTranslated(message: Component) {
     if (this is Player) {

@@ -7,11 +7,7 @@ import dev.slne.surf.api.minestom.extension.ConnectionManager
 import dev.slne.surf.api.minestom.server.chat.SignedChatSettings
 import dev.slne.surf.api.minestom.server.chat.impl.packet.DeleteChatPacketModern
 import dev.slne.surf.api.minestom.server.chat.impl.packet.framed
-import dev.slne.surf.api.minestom.server.chat.impl.signature.FILTER_MASK_PASS_THROUGH
-import dev.slne.surf.api.minestom.server.chat.impl.signature.LastSeenMessages
-import dev.slne.surf.api.minestom.server.chat.impl.signature.PlayerChatMessage
-import dev.slne.surf.api.minestom.server.chat.impl.signature.SignedMessageBody
-import dev.slne.surf.api.minestom.server.chat.impl.signature.SignedMessageLink
+import dev.slne.surf.api.minestom.server.chat.impl.signature.*
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
@@ -25,7 +21,10 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * The secure chat state of one player while `withSignedChat()` is installed.
+ * The secure chat state of one player while the signed chat feature is installed.
+ *
+ * Instances are bound to one [Player] object. A reconnecting player with the same UUID gets a new
+ * holder; [fromPlayer] never returns the holder of an earlier connection.
  */
 internal class ChatSessionHolderImpl(
     override val player: Player,
@@ -91,6 +90,8 @@ internal class ChatSessionHolderImpl(
             filterMask = FILTER_MASK_PASS_THROUGH
         )
 
+        // A sender unknown to this server gets a temporary tab-list entry, so the client can
+        // resolve and verify the message; the entry is removed again after the message.
         val announce = ConnectionManager.getOnlinePlayerByUuid(sender.uuid) == null
         if (announce) player.sendPacket(remoteSenderInfoPacket(sender))
 
@@ -136,6 +137,10 @@ internal class ChatSessionHolderImpl(
             player.sendPacket(DeleteChatPacketModern(packed).framed())
         }
 
+        /**
+         * Returns the holder of [player], creating it on first use. Returns `null` for a player
+         * that is no longer online.
+         */
         fun create(player: Player, settings: SignedChatSettings): ChatSessionHolderImpl? {
             if (!player.isOnline) return null
 
@@ -145,12 +150,19 @@ internal class ChatSessionHolderImpl(
             }
         }
 
+        /**
+         * Removes and returns the holder of [player]; does not close its handler. Returns `null`
+         * when the stored holder belongs to a different [Player] object.
+         */
         fun remove(player: Player): ChatSessionHolderImpl? {
             val holder = holders[player.uuid]?.takeIf { it.player === player } ?: return null
             holders.remove(player.uuid, holder)
             return holder
         }
 
+        /**
+         * Closes the handlers of all holders and removes them.
+         */
         fun clear() {
             holders.values.forEach { holder -> holder.handler.close() }
             holders.clear()

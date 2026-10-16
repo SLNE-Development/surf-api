@@ -12,9 +12,9 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 /**
- * Proves [EntityViewerLookup.directScan] visits exactly the entities that vanilla
- * [EntityTracker.nearbyEntitiesByChunkRange] visits (unit tests run without mixins, so the
- * tracker here is the unmodified bucket scan).
+ * Tests that [EntityViewerLookup.directScan] visits exactly the entities that
+ * [EntityTracker.nearbyEntitiesByChunkRange] visits. Unit tests run without mixins, so the tracker
+ * used here is the unmodified bucket scan.
  */
 @EnvTest
 class EntityViewerLookupTest {
@@ -26,13 +26,13 @@ class EntityViewerLookupTest {
                 val fixture = TrackerFixture()
 
                 fixture.spawn(centerX, centerZ)
-                // exactly on each edge and corner of the range square
+                // On each edge and corner of the range square.
                 for (dx in intArrayOf(-range, 0, range)) {
                     for (dz in intArrayOf(-range, 0, range)) {
                         fixture.spawn(centerX + dx, centerZ + dz)
                     }
                 }
-                // one chunk outside each edge and corner
+                // One chunk outside each edge and corner.
                 val outside = range + 1
                 for (dx in intArrayOf(-outside, 0, outside)) {
                     for (dz in intArrayOf(-outside, 0, outside)) {
@@ -124,7 +124,9 @@ class EntityViewerLookupTest {
         assertTrue(walker.entityId in fixture.directNearby(0, 0, 8))
     }
 
-    /** A vanilla tracker plus the recorded register/move positions the resolver replays. */
+    /**
+     * A vanilla tracker plus the registered and moved positions that the resolver replays.
+     */
     private class TrackerFixture {
         private val tracker = EntityTracker.newTracker()
         private val recorded = HashMap<Int, Point>()

@@ -1,20 +1,20 @@
 package dev.slne.surf.api.minestom.server.chat
 
+import dev.slne.surf.api.minestom.chat.ChatSessionHolder
+import dev.slne.surf.api.minestom.extension.CommandManager
+import dev.slne.surf.api.minestom.extension.ConnectionManager
+import dev.slne.surf.api.minestom.extension.PacketListenerManager
+import dev.slne.surf.api.minestom.extension.addListener
+import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
-import dev.slne.surf.api.minestom.server.SurfMinestomFeature
-import dev.slne.surf.api.minestom.chat.ChatSessionHolder
 import dev.slne.surf.api.minestom.server.chat.impl.ChatProcessor
 import dev.slne.surf.api.minestom.server.chat.impl.ChatSessionHolderImpl
 import dev.slne.surf.api.minestom.server.chat.impl.ChatTranslations
 import dev.slne.surf.api.minestom.server.chat.impl.SurfChatTypes
 import dev.slne.surf.api.minestom.server.chat.impl.signature.PlayerChatMessage
 import dev.slne.surf.api.minestom.server.chat.impl.signature.RemoteChatSession
-import dev.slne.surf.api.minestom.extension.CommandManager
-import dev.slne.surf.api.minestom.extension.ConnectionManager
-import dev.slne.surf.api.minestom.extension.PacketListenerManager
-import dev.slne.surf.api.minestom.extension.addListener
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.crypto.ChatSession
@@ -24,11 +24,7 @@ import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.event.player.PlayerSpawnEvent
 import net.minestom.server.event.player.PlayerTickEvent
 import net.minestom.server.listener.ChatMessageListener
-import net.minestom.server.network.packet.client.play.ClientChatAckPacket
-import net.minestom.server.network.packet.client.play.ClientChatMessagePacket
-import net.minestom.server.network.packet.client.play.ClientChatSessionUpdatePacket
-import net.minestom.server.network.packet.client.play.ClientCommandChatPacket
-import net.minestom.server.network.packet.client.play.ClientSignedCommandChatPacket
+import net.minestom.server.network.packet.client.play.*
 import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket
 import net.minestom.server.utils.PacketSendingUtils
 
@@ -39,29 +35,36 @@ import net.minestom.server.utils.PacketSendingUtils
 class SignedChatSettings internal constructor() {
 
     /**
-     * Whether clients must present a signed chat session before they may chat.
+     * Whether chat messages must be signed with a Mojang-issued profile key.
      *
-     * When enabled, players without a Mojang-issued profile key (offline mode, some proxies,
-     * Geyser) are told chat is disabled instead of being allowed to send unsigned messages.
+     * When enabled, players without a profile key (offline mode, some proxies, Geyser) receive an
+     * error message instead of having their unsigned messages sent.
      */
     var enforceSecureProfile: Boolean = false
 
     /**
-     * Vanilla's `chat-spam-threshold-seconds`. Each chat message adds 20 to a counter that drains
-     * by 1 per tick; exceeding 20 times this value disconnects the player with `disconnect.spam`.
+     * Vanilla's `chat-spam-threshold-seconds`.
+     *
+     * Each chat message adds 20 to a counter that drains by 1 per tick. The player is kicked with
+     * the `disconnect.spam` message once the counter reaches 20 times this value.
      */
     var chatSpamThresholdSeconds: Int = 10
 
-    /** Vanilla's `command-spam-threshold-seconds`. Same mechanism as above, for commands. */
+    /**
+     * Vanilla's `command-spam-threshold-seconds`; the same mechanism as [chatSpamThresholdSeconds],
+     * applied to commands.
+     */
     var commandSpamThresholdSeconds: Int = 10
 }
 
 /**
  * Handles chat the way vanilla does: messages keep their signatures, so clients show them as
- * verified, and can be reported.
+ * verified and can report them.
  *
- * Chat messages are processed through [AsyncPlayerChatEvent], off the tick thread. The secure chat
- * state of a player is reached through [ChatSessionHolder.fromPlayer].
+ * Replaces Minestom's play listeners for chat messages, chat acknowledgements, chat session updates
+ * and commands while the feature is loaded; [disable] restores Minestom's listeners. Chat messages
+ * pass through [AsyncPlayerChatEvent] off the tick thread, in the order they were received per
+ * player. The secure chat state of a player is available through [ChatSessionHolder.fromPlayer].
  */
 @OptIn(InternalSurfApi::class)
 class SignedChatFeature internal constructor(
@@ -146,8 +149,8 @@ class SignedChatFeature internal constructor(
     }
 
     /**
-     * Minestom announces every player to a joining one without a chat session, so the sessions
-     * the others already established are sent after it.
+     * Sends [joined] the chat sessions of the players already online. Minestom announces those
+     * players to a joining player without their chat session.
      */
     private fun announceChatSessionsTo(joined: Player) {
         for (other in ConnectionManager.onlinePlayers) {
@@ -181,8 +184,8 @@ class SignedChatFeature internal constructor(
 }
 
 /**
- * Handles chat the way vanilla does, keeping the signatures of chat messages and signed command
- * arguments.
+ * Installs vanilla-style chat handling that keeps the signatures of chat messages and signed
+ * command arguments.
  *
  * @see SignedChatFeature
  */

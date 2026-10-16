@@ -25,8 +25,8 @@ import java.nio.file.Path
  * `main` in the plugin's `minestom-plugin.json`.
  *
  * Listeners registered on [eventNode], coroutines launched in [scope] and commands registered while
- * one of the lifecycle functions runs, or from within [scope], belong to the plugin and are
- * removed once it is disabled.
+ * one of the lifecycle functions runs, or from within [scope], belong to the plugin. They are
+ * removed or, for coroutines, cancelled once the plugin is disabled.
  */
 abstract class SurfMinestomPlugin {
     // Taken in the constructor so that property initializers of the plugin, including those of an
@@ -36,32 +36,48 @@ abstract class SurfMinestomPlugin {
     private val requireContext: Context
         get() = checkNotNull(context) { "${javaClass.name} has not been initialized by the server yet" }
 
-    /** What the plugin's `minestom-plugin.json` says about it. */
+    /**
+     * What the plugin's `minestom-plugin.json` says about it.
+     */
     val meta: PluginMeta get() = requireContext.meta
 
-    /** The plugin's own event node; removed with all its listeners when the plugin is disabled. */
+    /**
+     * The plugin's own event node; removed with all its listeners when the plugin is disabled.
+     */
     val eventNode: EventNode<Event> get() = requireContext.eventNode
 
-    /** The plugin's own directory, `plugins/<id>`, for its configuration and data. */
+    /**
+     * The plugin's own directory, `plugins/<id>`, for its configuration and data.
+     */
     val dataDirectory: Path get() = requireContext.dataDirectory
 
     val logger: ComponentLogger get() = requireContext.logger
 
-    /** A scope for the plugin's coroutines; cancelled when the plugin is disabled. */
+    /**
+     * A scope for the plugin's coroutines; cancelled when the plugin is disabled.
+     */
     val scope: CoroutineScope get() = requireContext.scope
 
-    /** Called while the server starts, before it accepts players. */
+    /**
+     * Called while the server starts, before it accepts players.
+     */
     open suspend fun onLoad() = Unit
 
-    /** Called on the first tick after the server started. */
+    /**
+     * Called on the first tick after the server started.
+     */
     open suspend fun onEnable() = Unit
 
-    /** Called when the plugin is disabled, at the latest when the server shuts down. */
+    /**
+     * Called when the plugin is disabled, at the latest when the server shuts down.
+     */
     open suspend fun onDisable() = Unit
 
     override fun toString(): String = context?.let { "${it.meta.name} ${it.meta.version}" } ?: javaClass.name
 
-    /** What the server hands a plugin when creating it. */
+    /**
+     * What the server hands a plugin when creating it.
+     */
     @InternalSurfApi
     class Context(
         val meta: PluginMeta,
@@ -98,7 +114,9 @@ abstract class SurfMinestomPlugin {
         @InternalSurfApi
         fun current(): SurfMinestomPlugin? = current.get()
 
-        /** A coroutine context element that makes [plugin] the [current] one. */
+        /**
+         * A coroutine context element that makes [plugin] the [current] one.
+         */
         @InternalSurfApi
         fun contextElement(plugin: SurfMinestomPlugin): ThreadContextElement<SurfMinestomPlugin?> =
             current.asContextElement(plugin)

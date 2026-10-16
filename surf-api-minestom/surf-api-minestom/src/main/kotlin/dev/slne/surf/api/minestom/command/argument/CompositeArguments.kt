@@ -13,19 +13,42 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import java.util.concurrent.CompletableFuture
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.exception.ComponentMessage
 import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxException
 import net.minestom.server.command.CommandSender
+import java.util.concurrent.CompletableFuture
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException as ApiCommandSyntaxException
 
+/**
+ * Input of a [CustomArgument] parser.
+ *
+ * @property sender the sender running the command
+ * @property currentInput the text consumed by the base argument
+ * @property baseValue the value the base argument parsed from [currentInput]
+ */
 data class CustomArgumentInfo<B>(
     val sender: CommandSender,
     val currentInput: String,
     val baseValue: B,
 )
 
+/**
+ * Argument that parses its input with [base] and converts the result to [T] with a parser.
+ *
+ * The parser reports invalid input by throwing a [CommandSyntaxException], an
+ * [ApiCommandSyntaxException] (for example through [CommandAPI.failWithMessage]) or a
+ * [WrapperCommandSyntaxException]; the failure is shown at the start of the argument. Parsing needs
+ * a command source, so the argument cannot be parsed without one.
+ *
+ * The optional flag, default value, permissions and requirements of [base] carry over; a default
+ * value is passed through the parser with an empty [CustomArgumentInfo.currentInput]. Suggestions
+ * come from the raw type of [base]; suggestion providers set on [base] are not inherited.
+ * Values are stringified with `toString()`.
+ *
+ * @param base argument that reads the raw value
+ * @param parser converts the base value to [T]
+ */
 open class CustomArgument<T, B> internal constructor(
     private val base: Argument<B>,
     private val formatter: (T) -> String,
@@ -69,16 +92,14 @@ private val CUSTOM_ARGUMENT_NEEDS_SENDER = SimpleCommandExceptionType(
 )
 
 /**
- * Parses a value with [baseType], then hands it to [parser] wrapped in a [CustomArgumentInfo]
- * carrying the sender, the exact text [baseType] consumed and the parsed base value. [parser]
- * never sees the underlying [StringReader]; it composes on top of the already-parsed base value.
+ * Parses a value with [baseType] and converts it with [parser].
  *
- * A command source is required to build that info even when [parser] does not read it, so the
- * source-less overload is rejected rather than fabricating one.
+ * The overload without a source always fails, because [CustomArgumentInfo] requires a
+ * [CommandSender].
  *
- * A [CommandSyntaxException] thrown by [parser] passes through unchanged. This project's own
- * [ApiCommandSyntaxException] - directly, or unwrapped from a [WrapperCommandSyntaxException] - is
- * translated into one instead, with the reader's cursor reset to where this value started.
+ * A Brigadier [CommandSyntaxException] from [parser] propagates unchanged. An
+ * [ApiCommandSyntaxException], also when wrapped in a [WrapperCommandSyntaxException], is converted
+ * into a Brigadier exception positioned at the start of the value, keeping its component message.
  */
 private class CustomArgumentType<T, B>(
     private val baseType: ArgumentType<B>,
@@ -107,7 +128,9 @@ private class CustomArgumentType<T, B>(
         }
     }
 
-    /** A custom argument reads exactly what its base reads, so it completes the same values. */
+    /**
+     * Delegates to [baseType].
+     */
     override fun <S> listSuggestions(
         context: CommandContext<S>,
         builder: SuggestionsBuilder,
@@ -115,8 +138,8 @@ private class CustomArgumentType<T, B>(
 }
 
 /**
- * Rewrites this project's syntax failure as the Brigadier one the dispatcher expects, keeping the
- * styled component so the sender sees the message the argument wrote rather than its plain form.
+ * Converts this exception to a Brigadier exception at the cursor of [reader], keeping the
+ * component message when there is one.
  */
 private fun ApiCommandSyntaxException.toBrigadier(reader: StringReader): CommandSyntaxException {
     val message = component
@@ -126,6 +149,22 @@ private fun ApiCommandSyntaxException.toBrigadier(reader: StringReader): Command
     return SimpleCommandExceptionType(message).createWithContext(reader)
 }
 
+/**
+ * Delimiter-separated list of values parsed by [element].
+ *
+ * Whitespace around the delimiter and around the whole list is skipped, so a list can span several
+ * space-separated tokens. The argument is greedy and must be the last argument of its path.
+ * Values are stringified with the formatter of the element and joined with the delimiter.
+ *
+ * Without [allowEmpty], an empty list and an empty element, such as a leading, trailing or doubled
+ * delimiter, fail with `List must not be empty`. With it, an empty input parses to an empty list.
+ *
+ * Permissions and requirements of [element] carry over.
+ *
+ * @param delimiter separator between elements; must be a visible non-whitespace character
+ * @throws IllegalArgumentException when [delimiter] is whitespace or the NUL character, or
+ * [element] is greedy
+ */
 class ListArgument<T>(
     nodeName: String,
     private val element: Argument<T>,
@@ -161,14 +200,11 @@ class ListArgument<T>(
 private val LIST_ARGUMENT_EMPTY = SimpleCommandExceptionType(LiteralMessage("List must not be empty"))
 
 /**
- * Reads elements with [elementType], separated by [delimiter] (whitespace around the delimiter,
- * and leading or trailing whitespace around the whole list, is skipped). Rejects an empty list
- * unless [allowEmpty] permits it.
+ * Parses elements with [elementType], separated by [delimiter] and optional spaces.
  *
- * Also rejects an individual element that consumed no input at all - a leading, trailing, or
- * doubled-up delimiter - unless [allowEmpty] permits it. This is checked here rather than left to
- * [elementType], since some element types (a bare word, for instance) would otherwise accept an
- * empty token silently instead of rejecting it.
+ * Unless [allowEmpty] is set, an empty list and any element that consumed no input fail with
+ * `List must not be empty`. The empty-element check is made here because some element types, such
+ * as a bare word, accept an empty token.
  */
 private class ListArgumentType<T>(
     private val elementType: ArgumentType<T>,
@@ -181,8 +217,7 @@ private class ListArgumentType<T>(
         parseList(reader) { r -> elementType.parse(r, source) }
 
     /**
-     * Completes the element being typed, not the list: the offered entries replace the text after
-     * the last delimiter, so accepting one leaves the elements before it alone.
+     * Suggests entries for the element after the last delimiter and keeps the earlier elements.
      */
     override fun <S> listSuggestions(
         context: CommandContext<S>,
@@ -232,9 +267,20 @@ private class ListArgumentType<T>(
     }
 }
 
+/**
+ * Returns an argument that parses like this one and converts the value with [mapper].
+ *
+ * The result is stringified with `toString()`, which matters for safe suggestions.
+ */
 fun <T, R> Argument<T>.map(mapper: (T) -> R): Argument<R> =
     CustomArgument(this, parser = { info -> mapper(info.baseValue) })
 
+/**
+ * Returns an argument that parses like this one but rejects values for which [predicate] is
+ * `false`.
+ *
+ * A rejected value fails the command with `Invalid value for <nodeName>`.
+ */
 fun <T> Argument<T>.filter(predicate: (T) -> Boolean): Argument<T> {
     val definition = toDefinition()
     return CustomArgument(

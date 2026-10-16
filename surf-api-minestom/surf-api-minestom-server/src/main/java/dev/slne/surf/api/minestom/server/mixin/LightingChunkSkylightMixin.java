@@ -10,7 +10,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * Keeps sky light out of {@code createLightData} for dimensions without skylight.
+ * Excludes sky light from {@code createLightData} in dimensions without sky light, see
+ * {@link SkylightSuppression}.
  */
 @SuppressWarnings("UnstableApiUsage")
 @Mixin(LightingChunk.class)

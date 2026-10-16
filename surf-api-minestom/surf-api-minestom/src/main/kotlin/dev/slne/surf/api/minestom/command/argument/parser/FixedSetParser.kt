@@ -10,12 +10,11 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import java.util.concurrent.CompletableFuture
 
 /**
- * Reads one word and resolves it against a fixed set of accepted spellings.
+ * Parses one word into the value mapped to it in [values].
  *
- * Matching is case-sensitive, since each spelling is the canonical form its owning argument
- * stringifies back to; accepting other casings would let two spellings map to the same value.
- * Suggestions are offered case-insensitively, which costs nothing since they are only a typing
- * convenience.
+ * Parsing is case-sensitive: each key is the canonical spelling its argument stringifies to.
+ * Suggestions match the typed prefix case-insensitively. An unknown word fails with
+ * `Unknown value '<word>'`.
  */
 internal class FixedSetParser<T>(private val values: Map<String, T>) : ArgumentType<T> {
     override fun parse(reader: StringReader): T {

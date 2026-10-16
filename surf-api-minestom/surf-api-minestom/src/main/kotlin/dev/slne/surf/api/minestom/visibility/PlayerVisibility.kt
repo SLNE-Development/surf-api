@@ -9,9 +9,9 @@ import java.util.function.Predicate
  * Restricts what players see.
  *
  * When the server limits how many players a player sees at once, it owns the viewer rule of every
- * player; restrict what a player sees through [updateViewerRule] instead of
- * `Player#updateViewerRule`, which would remove the limit for that player. Without such a limit,
- * these functions simply update the player's viewer rule.
+ * player, the predicate that decides which entities the player sees. Restrict what a player sees
+ * through [updateViewerRule] instead of `Player#updateViewerRule`, which would remove the limit for
+ * that player. Without such a limit, these functions simply update the player's viewer rule.
  */
 object PlayerVisibility {
 
@@ -37,16 +37,24 @@ object PlayerVisibility {
         }
     }
 
-    /** Whether the limit currently restricts the players [player] sees. */
+    /**
+     * Whether the limit currently restricts the players [player] sees.
+     */
     fun isLimited(player: Player): Boolean = provider?.isLimited(player) == true
 
-    /** Implemented by the server when it limits the visible players. */
+    /**
+     * Implemented by the server when it limits the visible players.
+     */
     @InternalSurfApi
     interface Provider {
-        /** @return whether the rule was taken over, `false` to let the player apply it itself */
+        /**
+         * @return whether the rule was taken over, `false` to let the player apply it itself
+         */
         fun updateViewerRule(player: Player, predicate: Predicate<in Entity>?): Boolean
 
-        /** @return whether the refresh was taken over */
+        /**
+         * @return whether the refresh was taken over
+         */
         fun refreshViewerRule(player: Player): Boolean
 
         fun isLimited(player: Player): Boolean

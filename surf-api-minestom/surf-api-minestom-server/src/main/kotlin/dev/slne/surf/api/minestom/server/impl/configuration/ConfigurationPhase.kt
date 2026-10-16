@@ -13,11 +13,11 @@ import net.minestom.server.property.ServerProperties
 import org.jetbrains.annotations.Blocking
 
 /**
- * Runs the configuration phase as an ordered list of [ConfigurationTask]s.
+ * Runs the configuration phase as an ordered list of steps ([ConfigurationTask]s).
  *
  * `ConnectionManagerMixin` hands `ConnectionManager#doConfiguration` over to
  * [ConfigurationPhaseHook] while the phase is installed; otherwise Minestom runs its own
- * configuration.
+ * configuration phase.
  */
 internal object ConfigurationPhase {
     private val LOGGER = ComponentLogger.logger()
@@ -25,6 +25,10 @@ internal object ConfigurationPhase {
     @Volatile
     private var tasks: List<Pair<ConfigurationTaskId, ConfigurationTask>>? = null
 
+    /**
+     * Installs the listeners of the steps in [tasks], then activates the phase. Until then, [run]
+     * defers to Minestom.
+     */
     internal fun install(
         tasks: List<Pair<ConfigurationTaskId, ConfigurationTask>>,
         node: EventNode<Event>,
@@ -33,17 +37,25 @@ internal object ConfigurationPhase {
         this.tasks = tasks
     }
 
+    /**
+     * Deactivates the phase; Minestom runs its own configuration phase again.
+     */
     internal fun uninstall() {
         tasks = null
     }
 
+    /**
+     * Removes [player] from the connection manager's keep-alive set.
+     */
     fun stopKeepAlive(player: Player) {
         ConnectionManager.duck().`surf$keepAlivePlayers`().remove(player)
     }
 
     /**
-     * Runs the configuration of [player] in place of Minestom's, on the virtual thread Minestom
-     * started for it.
+     * Runs the configuration phase of [player] in place of Minestom's, on the virtual
+     * configuration thread Minestom started for the player.
+     *
+     * A failing step is logged and its exception propagates to Minestom.
      *
      * @return `false` when the phase is not installed and Minestom has to run its own
      */
@@ -91,15 +103,17 @@ internal object ConfigurationPhase {
 @Suppress("CAST_NEVER_SUCCEEDS", "NOTHING_TO_INLINE")
 private inline fun net.minestom.server.network.ConnectionManager.duck() = this as ConnectionManagerDuck
 
-/** Entry point of `ConnectionManagerMixin`. */
+/**
+ * Entry point of `ConnectionManagerMixin`.
+ */
 object ConfigurationPhaseHook {
 
     /**
-     * Runs the surf configuration phase for [player] of [manager] when it is installed, on the
-     * virtual thread Minestom started for the configuration; a failure propagates to Minestom,
-     * which kicks the player.
+     * Runs the surf configuration phase for [player] of [manager] when the phase is installed, on
+     * the virtual configuration thread Minestom started for the player. A failure propagates to
+     * Minestom, which kicks the player.
      *
-     * @return whether the phase ran, so that Minestom's own configuration must be skipped
+     * @return whether the phase ran, so that Minestom's own configuration phase must be skipped
      */
     @Blocking
     @JvmStatic

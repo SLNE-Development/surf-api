@@ -14,7 +14,9 @@ import org.jetbrains.annotations.ApiStatus
 class PlayerJoinEvent @ApiStatus.Internal constructor(
     private val player: Player,
 
-    /** The message announcing the player, or `null` for none. */
+    /**
+     * The message announcing the player, or `null` for none.
+     */
     var joinMessage: Component?,
 ) : PlayerInstanceEvent {
 

@@ -41,18 +41,18 @@ class RectangularChunkScanTest {
 
     @Test
     fun `direct scan is chosen only while candidate checks are cheaper than bucket probes`() {
-        // range 32 -> 4225 buckets, factor 3 -> break-even at 1409 candidates
+        // Range 32 is 4225 buckets; with factor 3 the break-even is 1409 candidates.
         assertTrue(EntityViewerLookup.useDirectScan(1, 32))
         assertTrue(EntityViewerLookup.useDirectScan(1000, 32))
         assertTrue(EntityViewerLookup.useDirectScan(1408, 32))
         assertFalse(EntityViewerLookup.useDirectScan(1409, 32))
         assertFalse(EntityViewerLookup.useDirectScan(5000, 32))
 
-        // range 1 -> 9 buckets
+        // Range 1 is 9 buckets.
         assertTrue(EntityViewerLookup.useDirectScan(2, 1))
         assertFalse(EntityViewerLookup.useDirectScan(3, 1))
 
-        // large values must not overflow
+        // Large values must not overflow.
         assertFalse(EntityViewerLookup.useDirectScan(Int.MAX_VALUE, 1))
         assertTrue(EntityViewerLookup.useDirectScan(Int.MAX_VALUE, 100_000))
     }

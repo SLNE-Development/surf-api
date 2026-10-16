@@ -17,6 +17,9 @@ import net.minestom.server.registry.RegistryKey
 import net.minestom.server.sound.SoundEvent
 import net.minestom.server.world.biome.Biome
 
+/**
+ * A [SoundEvent] given by its namespaced key; the namespace defaults to `minecraft`.
+ */
 class SoundArgument(nodeName: String) : Argument<SoundEvent>(nodeName) {
     override val kind = ArgumentKind.Sound
     override val rawType: ArgumentType<SoundEvent> = RegistryParser(
@@ -27,6 +30,9 @@ class SoundArgument(nodeName: String) : Argument<SoundEvent>(nodeName) {
     override fun stringify(value: SoundEvent): String = value.name()
 }
 
+/**
+ * A [PotionEffect] given by its namespaced key; the namespace defaults to `minecraft`.
+ */
 class PotionEffectArgument(nodeName: String) : Argument<PotionEffect>(nodeName) {
     override val kind = ArgumentKind.PotionEffect
     override val rawType: ArgumentType<PotionEffect> = RegistryParser(
@@ -37,6 +43,11 @@ class PotionEffectArgument(nodeName: String) : Argument<PotionEffect>(nodeName) 
     override fun stringify(value: PotionEffect): String = value.key().asString()
 }
 
+/**
+ * A biome given by its namespaced key, returned as a [RegistryKey].
+ *
+ * Keys are looked up in the server's biome registry, so only registered biomes are accepted.
+ */
 class BiomeArgument(nodeName: String) : Argument<RegistryKey<Biome>>(nodeName) {
     override val kind = ArgumentKind.Biome
     override val rawType: ArgumentType<RegistryKey<Biome>> = RegistryParser(
@@ -47,6 +58,12 @@ class BiomeArgument(nodeName: String) : Argument<RegistryKey<Biome>>(nodeName) {
     override fun stringify(value: RegistryKey<Biome>): String = value.name()
 }
 
+/**
+ * An enchantment given by its namespaced key, returned as a [RegistryKey].
+ *
+ * Keys are looked up in the server's enchantment registry, so only registered enchantments are
+ * accepted.
+ */
 class EnchantmentArgument(nodeName: String) : Argument<RegistryKey<Enchantment>>(nodeName) {
     override val kind = ArgumentKind.Enchantment
     override val rawType: ArgumentType<RegistryKey<Enchantment>> = RegistryParser(
@@ -60,8 +77,10 @@ class EnchantmentArgument(nodeName: String) : Argument<RegistryKey<Enchantment>>
 }
 
 /**
- * A resource resolved from an arbitrary [Registry] by namespaced key, advertised to the client
- * under [identifier].
+ * An entry of [registry] given by its namespaced key, returned as a [RegistryKey].
+ *
+ * @param identifier registry identifier sent to the client and used in the `Unknown <identifier>`
+ * failure message
  */
 class ResourceArgument<T>(
     nodeName: String,
@@ -78,8 +97,9 @@ class ResourceArgument<T>(
 }
 
 /**
- * A live [Instance], resolved by its UUID or by its dimension name when that name is unique
- * among currently registered instances.
+ * A registered [Instance], given by UUID or by dimension name.
+ *
+ * A dimension name resolves only while exactly one instance uses it.
  */
 class InstanceArgument(nodeName: String) : Argument<Instance>(nodeName) {
     override val kind = ArgumentKind.Instance

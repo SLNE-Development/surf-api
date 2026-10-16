@@ -7,13 +7,19 @@ import dev.slne.surf.api.shared.api.util.InternalSurfApi
  */
 interface PluginManager {
 
-    /** Every loaded plugin, in the order they were loaded. */
+    /**
+     * Every loaded plugin, in the order they were loaded.
+     */
     val plugins: Collection<SurfMinestomPlugin>
 
-    /** The loaded plugin [id], or `null` when there is none. */
+    /**
+     * The loaded plugin [id], or `null` when there is none.
+     */
     fun plugin(id: String): SurfMinestomPlugin?
 
-    /** Whether a plugin [id] is loaded. */
+    /**
+     * Whether a plugin [id] is loaded.
+     */
     fun isLoaded(id: String): Boolean = plugin(id) != null
 
     companion object {

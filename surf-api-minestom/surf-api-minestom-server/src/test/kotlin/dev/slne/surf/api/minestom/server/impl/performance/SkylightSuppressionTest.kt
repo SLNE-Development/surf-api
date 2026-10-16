@@ -38,7 +38,7 @@ class SkylightSuppressionTest {
 
         SkylightSuppression.sectionSkyLight(hasSkylight = false, section = section)
 
-        // requiresSend() consumes a flag, so the stand-in must not have asked the real sky light
+        // requiresSend() consumes a flag, so the stand-in must not call it on the real sky light.
         assertTrue(section.skyLight().requiresSend())
         assertTrue(section.skyLight().requiresUpdate())
         assertTrue(section.blockLight().requiresUpdate())

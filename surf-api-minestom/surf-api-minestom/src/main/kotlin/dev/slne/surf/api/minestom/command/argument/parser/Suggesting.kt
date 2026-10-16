@@ -5,10 +5,8 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import java.util.concurrent.CompletableFuture
 
 /**
- * Adds every entry of [values] that continues what has been typed so far, and completes the builder.
- *
- * Matching is case-insensitive because a suggestion is only a typing convenience; the parser still
- * decides which spellings it accepts.
+ * Suggests every entry of [values] that starts with the remaining input, ignoring case, and builds
+ * the result.
  */
 internal fun SuggestionsBuilder.suggestMatching(
     values: Iterable<String>,

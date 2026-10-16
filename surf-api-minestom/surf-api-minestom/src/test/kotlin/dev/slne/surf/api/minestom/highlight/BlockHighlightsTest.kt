@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.highlight
 
-import dev.slne.surf.api.minestom.highlight.BlockHighlights
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.coordinate.Point
 import net.minestom.server.coordinate.Pos
@@ -11,9 +10,7 @@ import net.minestom.server.instance.block.Block
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
 
@@ -140,8 +137,8 @@ class BlockHighlightsTest {
     }
 
     /**
-     * Loads the chunk holding the given block, so that a highlight shown there joins the instance
-     * straight away instead of once the chunk arrives.
+     * Loads the chunk containing the given block and returns its position, so a highlight shown
+     * there joins the instance immediately instead of when the chunk arrives.
      */
     private fun Instance.prepare(x: Int, y: Int, z: Int): Point {
         val position = Pos(x.toDouble(), y.toDouble(), z.toDouble())

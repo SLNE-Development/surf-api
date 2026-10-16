@@ -5,25 +5,28 @@ import net.minestom.server.coordinate.Point
 import net.minestom.server.entity.Entity
 import java.util.function.Consumer
 
-/** Entity lookup helpers used by [dev.slne.surf.api.minestom.server.mixin.EntityTrackerMixin]. */
+/**
+ * Entity lookup helpers used by [dev.slne.surf.api.minestom.server.mixin.EntityTrackerMixin].
+ */
 object EntityViewerLookup {
 
     /**
-     * Relative cost of one tracked-entity check (set-iteration step, id-to-entry map lookup,
-     * position read, two coordinate comparisons) against one chunk-bucket lookup (chunk-index
-     * computation, hash-map probe). ViewerLookupBenchmark measured the crossover near 1400
-     * candidates against 4225 bucket probes, so 3 keeps the direct scan to cases where it wins.
+     * Cost of one tracked-entity check relative to one chunk-bucket probe. Benchmarks put the
+     * crossover near 1400 candidates against 4225 probes, so a factor of 3 restricts the direct
+     * scan to cases where it wins.
      */
     private const val DIRECT_SCAN_COST_FACTOR = 3L
 
-    /** Resolves the tracker-recorded position of an entity, or null if it is not tracked. */
+    /**
+     * Resolves the tracker-recorded position of an entity, or `null` if it is not tracked.
+     */
     fun interface EntityPositionResolver {
         fun resolve(entity: Entity): Point?
     }
 
     /**
-     * Decides whether scanning all tracked candidates beats probing every chunk bucket in a
-     * square range of [chunkRange].
+     * Whether scanning all [candidateCount] tracked candidates is cheaper than probing every chunk
+     * bucket in the square of [chunkRange].
      */
     @JvmStatic
     fun useDirectScan(candidateCount: Int, chunkRange: Int): Boolean {
@@ -33,9 +36,9 @@ object EntityViewerLookup {
     }
 
     /**
-     * Visits every candidate whose resolved position lies within the square chunk range around
-     * `(centerChunkX, centerChunkZ)`, using the same inclusive bounds as
-     * [ChunkRange.chunksInRange].
+     * Passes every candidate whose resolved position lies within [chunkRange] chunks of
+     * `(centerChunkX, centerChunkZ)` to [query]. The bounds are inclusive, as in
+     * [ChunkRange.chunksInRange]. Candidates the [resolver] cannot place are skipped.
      */
     @Suppress("ConvertTwoComparisonsToRangeCheck")
     @JvmStatic
@@ -66,8 +69,8 @@ object EntityViewerLookup {
     }
 
     /**
-     * Visits the same chunk set as [ChunkRange.chunksInRange] in plain row-major order, without
-     * the spiral's sqrt/div/mod arithmetic. Only for order-independent lookups.
+     * Visits the same chunks as [ChunkRange.chunksInRange] in row-major instead of spiral order.
+     * Only for lookups that do not depend on visiting order.
      */
     @JvmStatic
     fun chunksInRangeRectangular(

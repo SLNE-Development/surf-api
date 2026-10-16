@@ -15,9 +15,8 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 /**
- * `FixedSetParser` is internal to the api module, so every case here reaches it through
- * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition]'s
- * publicly-typed `rawType`, rather than importing the parser directly.
+ * Tests `FixedSetParser`, which is `internal` to the api module, through the `rawType` of
+ * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition].
  */
 class FixedSetParserTest {
     private enum class AccessLevel { STAFF, GUEST }

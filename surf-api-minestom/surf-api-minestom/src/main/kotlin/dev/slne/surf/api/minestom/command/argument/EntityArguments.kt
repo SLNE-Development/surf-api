@@ -20,6 +20,12 @@ import net.minestom.server.entity.EntityType
 import net.minestom.server.entity.Player
 import java.util.concurrent.CompletableFuture
 
+/**
+ * A single online player, given by name or by a selector.
+ *
+ * Selectors that can match more than one player, such as `@a`, fail at parse time. A selector that
+ * matches no player fails with `No entity matched the selector`. Parsing requires a command source.
+ */
 class PlayerArgument(nodeName: String) : Argument<Player>(nodeName) {
     override val kind = ArgumentKind.Player
     override val rawType: ArgumentType<Player> =
@@ -28,6 +34,13 @@ class PlayerArgument(nodeName: String) : Argument<Player>(nodeName) {
     override fun stringify(value: Player): String = value.username
 }
 
+/**
+ * The online players matched by a player name or selector.
+ *
+ * Selectors that can match non-player entities, such as `@e`, fail at parse time. Without
+ * [allowEmpty], a selector that matches no player fails with `No entities matched the selector`;
+ * with it, the result is an empty list. Parsing requires a command source.
+ */
 class PlayersArgument(
     nodeName: String,
     val allowEmpty: Boolean = false,
@@ -43,6 +56,13 @@ class PlayersArgument(
         value.joinToString(",", transform = Player::getUsername)
 }
 
+/**
+ * A single entity, given by player name, UUID or selector.
+ *
+ * Selectors that can match more than one entity, such as `@e`, fail at parse time. A selector that
+ * matches no entity fails with `No entity matched the selector`. Parsing requires a command
+ * source.
+ */
 class EntityArgument(nodeName: String) : Argument<Entity>(nodeName) {
     override val kind = ArgumentKind.Entity
     override val rawType: ArgumentType<Entity> =
@@ -51,6 +71,13 @@ class EntityArgument(nodeName: String) : Argument<Entity>(nodeName) {
     override fun stringify(value: Entity): String = value.uuid.toString()
 }
 
+/**
+ * The entities matched by a player name, UUID or selector.
+ *
+ * Without [allowEmpty], a selector that matches no entity fails with
+ * `No entities matched the selector`; with it, the result is an empty list. Parsing requires a
+ * command source.
+ */
 class EntitiesArgument(
     nodeName: String,
     val allowEmpty: Boolean = false,
@@ -66,6 +93,9 @@ class EntitiesArgument(
         value.joinToString(",") { entity -> entity.uuid.toString() }
 }
 
+/**
+ * An entity type given by its namespaced key; the namespace defaults to `minecraft`.
+ */
 class EntityTypeArgument(nodeName: String) : Argument<EntityType>(nodeName) {
     override val kind = ArgumentKind.EntityType
     override val rawType: ArgumentType<EntityType> =
@@ -81,9 +111,10 @@ private val NO_MATCH = SimpleCommandExceptionType(LiteralMessage("No entity matc
 private val NO_MATCHES = SimpleCommandExceptionType(LiteralMessage("No entities matched the selector"))
 
 /**
- * Resolves an entity selector to exactly one entity of type [T], rejecting the input (rather than
- * resolving it) when the selector could structurally match more than one, or when the selector's
- * source is unavailable to resolve against.
+ * Parses an entity selector and resolves it to a single entity of type [T].
+ *
+ * Fails when the selector can match more than [maxResults] entities, when [select] returns `null`,
+ * or when no [CommandSender] source is available.
  */
 private class SingleTargetType<T : Entity>(
     maxResults: Int,
@@ -115,8 +146,10 @@ private class SingleTargetType<T : Entity>(
 }
 
 /**
- * Resolves an entity selector to every matching entity of type [T], rejecting an empty result
- * unless [allowEmpty] permits it.
+ * Parses an entity selector and resolves it to the matching entities of type [T].
+ *
+ * Fails on an empty result unless [allowEmpty] is set, and when no [CommandSender] source is
+ * available.
  */
 private class MultiTargetType<T : Entity>(
     maxResults: Int,

@@ -11,17 +11,25 @@ import net.minestom.server.command.CommandSender
 import net.minestom.server.network.packet.server.play.DeclareCommandsPacket
 
 /**
- * Builds the command tree a client is shown, merging the CommandAPI's commands into the packet
- * Minestom produced for its own.
+ * Merges the CommandAPI's commands into the [DeclareCommandsPacket] Minestom builds for a player.
  *
- * Nodes a sender may not use are left out entirely, so a command the sender cannot run does not
- * appear in its completions.
+ * Paths and arguments the sender fails the permissions or requirements of are omitted, and a
+ * command with no usable path is not declared at all. Holds no per-call state; safe to call from
+ * any thread.
  */
 internal class DeclareCommandsMerger(
     private val tree: BrigadierCommandTree,
     private val conditions: MinestomConditions = MinestomConditions(),
     private val declarations: NodeDeclarations = NodeDeclarations(),
 ) {
+    /**
+     * Returns a packet with a root literal for every label of every command [sender] can use,
+     * appended to the nodes of [original].
+     *
+     * [original] is not modified and is returned as is when no command is registered. A root
+     * literal of [original] that carries a CommandAPI label is removed so the merged tree is the
+     * only declaration of that label.
+     */
     fun merge(original: DeclareCommandsPacket, sender: CommandSender): DeclareCommandsPacket {
         val registered = tree.registered()
         if (registered.isEmpty()) return original
@@ -33,9 +41,7 @@ internal class DeclareCommandsMerger(
         val nodes = original.nodes().mapTo(ObjectArrayList(), ::copyOf)
         val extraRootChildren = IntArrayList()
 
-        // Minestom declares the bridge commands standing in for the CommandAPI's commands as plain
-        // greedy strings; they are replaced by the real tree below, or hidden from a sender who
-        // may use none of it. Their nodes stay in the array, unreachable from the root.
+        // The removed nodes stay in the array, unreachable from the root.
         val owned = registered.flatMapTo(HashSet()) { (labels, _) -> labels }
         val originalRoot = nodes[original.rootIndex()]
         originalRoot.children = originalRoot.children
@@ -92,8 +98,8 @@ internal class DeclareCommandsMerger(
     }
 
     /**
-     * The flags of a node: its type, whether it is executable, and whether it carries a suggestion
-     * type. A suggestion type is only written to the packet when the flags announce one.
+     * The flags of a node: its type, its executable bit and whether it carries a suggestions type.
+     * The packet writes a suggestions type only when its flag is set.
      */
     private fun flagsOf(
         type: DeclareCommandsPacket.NodeType,
@@ -114,10 +120,10 @@ internal class DeclareCommandsMerger(
     }
 
     /**
-     * Folds every path of [definition] into one tree, dropping whatever [sender] may not use.
+     * Folds the paths of [definition] that [sender] can use into one tree.
      *
-     * Paths that share a prefix collapse onto the same nodes, the way they do in the dispatcher, so
-     * the client sees one branch rather than one per declared path.
+     * Paths sharing a prefix share nodes, as Brigadier merges same-named children. A path is cut at
+     * the first argument the sender may not use. Returns `null` when the sender can execute no path.
      */
     private fun treeFor(definition: CommandDefinition, sender: CommandSender): PendingNode? {
         val root = PendingNode(literal = null, definition = null)
@@ -175,7 +181,9 @@ internal class DeclareCommandsMerger(
     }
 
     private companion object {
-        /** The bits of a node's flags that hold its type: root, literal or argument. */
+        /**
+         * The bits of a node's flags that hold its type: root, literal or argument.
+         */
         const val NODE_TYPE_MASK = 0x03
         const val LITERAL_NODE_TYPE = 0x01
     }

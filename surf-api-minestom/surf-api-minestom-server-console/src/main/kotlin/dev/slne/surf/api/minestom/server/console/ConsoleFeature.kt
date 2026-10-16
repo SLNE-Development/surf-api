@@ -1,9 +1,9 @@
 package dev.slne.surf.api.minestom.server.console
 
+import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
-import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import net.minecrell.terminalconsole.SimpleTerminalConsole
 import net.minestom.server.MinecraftServer
 import kotlin.system.exitProcess
@@ -14,7 +14,9 @@ import kotlin.system.exitProcess
 @SurfMinestomServerDsl
 class ConsoleFeatureBuilder internal constructor() {
 
-    /** The name of the thread reading the console. */
+    /**
+     * The name of the thread reading the console.
+     */
     var threadName: String = "surf-minestom-console"
 
     /**
@@ -59,8 +61,8 @@ class ConsoleFeature internal constructor(
     }
 
     override fun disable(api: SurfMinestomServer) {
-        // The thread is a daemon and stops reading once the server no longer runs. It is not
-        // interrupted, since the shutdown itself may have been started from the console.
+        // Not interrupted: the shutdown may have been started from the console thread itself.
+        // The daemon thread stops once the server is no longer started.
         thread = null
     }
 

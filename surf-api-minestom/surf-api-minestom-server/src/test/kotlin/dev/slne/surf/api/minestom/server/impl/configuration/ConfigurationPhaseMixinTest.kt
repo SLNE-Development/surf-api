@@ -17,8 +17,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * `ConnectionManagerMixin` hands `ConnectionManager#doConfiguration` to the surf configuration
- * phase while it is installed, and leaves it to Minestom otherwise.
+ * Tests that `ConnectionManagerMixin` hands `ConnectionManager#doConfiguration` to the surf
+ * configuration phase while the phase is installed, and leaves it to Minestom otherwise.
  */
 @EnvTest
 class ConfigurationPhaseMixinTest {
@@ -28,7 +28,7 @@ class ConfigurationPhaseMixinTest {
         val runs = CopyOnWriteArrayList<Boolean>()
         val server = surfMinestomServer {
             withConfigurationPhase {
-                // Both wait for the client, which a test connection never answers
+                // Both wait for a client response that a test connection never sends.
                 remove(ConfigurationTasks.AWAIT_SETTINGS)
                 remove(ConfigurationTasks.SYNCHRONIZE_REGISTRIES)
                 first(RECORD, ConfigurationTask { context -> runs += context.isFirstConfig })

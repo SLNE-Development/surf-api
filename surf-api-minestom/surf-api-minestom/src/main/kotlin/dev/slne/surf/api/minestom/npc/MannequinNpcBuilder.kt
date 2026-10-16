@@ -62,6 +62,9 @@ class MannequinNpcBuilder(private val name: String) {
         interactHandlers += handler
     }
 
+    /**
+     * Equips [item] in [slot] of the NPC.
+     */
     fun setEquipment(slot: EquipmentSlot, item: ItemStack) {
         equipments[slot] = item
     }

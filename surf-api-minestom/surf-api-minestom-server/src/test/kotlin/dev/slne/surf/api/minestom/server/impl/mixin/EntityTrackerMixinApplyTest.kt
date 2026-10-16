@@ -5,10 +5,9 @@ import org.junit.jupiter.api.Test
 import org.objectweb.asm.tree.MethodInsnNode
 
 /**
- * Applies the configured mixins to the shipped Minestom bytecode through the same service the
- * production agent uses, so an EntityTracker bytecode change fails here instead of silently at
- * runtime. Runs the transformer directly; no transformed class
- * is ever loaded.
+ * Applies the configured mixins to the shipped `EntityTracker` bytecode through the service the
+ * production agent uses, so a bytecode change that breaks an injection point fails here instead of
+ * silently at runtime. The transformer runs directly; no transformed class is loaded.
  */
 class EntityTrackerMixinApplyTest {
 
@@ -19,7 +18,7 @@ class EntityTrackerMixinApplyTest {
             "net.minestom.server.instance.EntityTrackerImpl\$EntityTrackerEntry",
         )
 
-        // mixin decorates handler names, e.g. handler$zzd000$surf$directNearbyScan
+        // Mixin decorates handler names, e.g. handler$zzd000$surf$directNearbyScan.
         val implMethods = impl.methods.map { it.name }
         assertTrue(implMethods.any { it.endsWith("surf\$directNearbyScan") }) {
             "fast-path inject missing: $implMethods"

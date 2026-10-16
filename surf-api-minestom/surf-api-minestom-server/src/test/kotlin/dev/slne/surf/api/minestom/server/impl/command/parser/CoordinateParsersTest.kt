@@ -2,13 +2,7 @@ package dev.slne.surf.api.minestom.server.impl.command.parser
 
 import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.exceptions.CommandSyntaxException
-import dev.slne.surf.api.minestom.command.argument.Axis
-import dev.slne.surf.api.minestom.command.argument.AxisArgument
-import dev.slne.surf.api.minestom.command.argument.BlockPositionArgument
-import dev.slne.surf.api.minestom.command.argument.Position2DArgument
-import dev.slne.surf.api.minestom.command.argument.PositionArgument
-import dev.slne.surf.api.minestom.command.argument.Rotation
-import dev.slne.surf.api.minestom.command.argument.RotationArgument
+import dev.slne.surf.api.minestom.command.argument.*
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.coordinate.Vec
 import net.minestom.server.entity.Player
@@ -20,18 +14,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 /**
- * The parsers under test here are `internal` to the api module, so every case reaches them through
- * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition]'s publicly-typed
- * `rawType`, rather than importing the parser objects directly.
+ * Tests the coordinate parsers, which are `internal` to the api module, through the `rawType` of
+ * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition].
  *
- * A `~`/`^` component needs a sender to resolve against; calls that omit one (the bare
- * `parse(reader)` overload used throughout most of this file) must reject it rather than silently
- * substituting the origin. The two tests that spawn a player exercise the sourced overload instead,
- * to prove a relative component actually resolves against that sender.
+ * Relative components (`~`, `^`) need a sender. The `parse(reader)` overload without one must
+ * reject them instead of resolving against the origin; the two tests that spawn a player cover
+ * the overload that takes a sender.
  */
 @EnvTest
 class CoordinateParsersTest {

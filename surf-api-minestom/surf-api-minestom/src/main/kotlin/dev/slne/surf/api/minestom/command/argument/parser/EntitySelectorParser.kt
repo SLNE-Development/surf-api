@@ -25,22 +25,18 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ThreadLocalRandom
 
 /**
- * Reads a vanilla-style entity selector: `@a`, `@e`, `@p`, `@r` and `@s`, each with their implied
- * limit and player-only default, an optional bracketed `key=value` option list, or a bare player
- * name or UUID.
+ * Parses a vanilla entity selector: `@a`, `@e`, `@p`, `@r` or `@s` with an optional
+ * `[key=value,...]` option list, or a bare player name or UUID.
  *
- * [maxResults] is the ceiling this argument allows; a selector whose own limit (implied by its
- * type or overridden by the `limit` option) exceeds it is rejected at parse time rather than
- * silently truncated, mirroring vanilla's single-target `EntityArgument`. [playersOnly] rejects a
- * selector that could include a non-player entity, except a self selector (`@s`), which is always
- * accepted and then filtered normally.
+ * A selector whose limit exceeds [maxResults] fails at parse time instead of being truncated. The
+ * limit is implied by the selector type or set with the `limit` option. With [playersOnly], a
+ * selector that can match non-player entities fails, except `@s`.
  *
- * `nbt` is rejected outright: expressing it would require SNBT, which this port does not parse.
- * `scores`, `advancements` and `predicate` have their grammar consumed - so a malformed value is
- * still reported, and later options in the same bracket list still parse correctly - but are then
- * rejected too, since Minestom has no per-entity scoreboard objectives, advancement progress or
- * loot-condition registry to resolve them against. Every other listed option resolves against a
- * real Minestom equivalent.
+ * Supported options are `x`, `y`, `z`, `dx`, `dy`, `dz`, `distance`, `limit`, `sort`, `name`,
+ * `type`, `tag`, `team`, `gamemode` and `level`. `nbt` is rejected because SNBT is not parsed.
+ * `scores`, `advancements` and `predicate` are rejected because Minestom has no matching data
+ * source; their value is read first, so a malformed value is reported before the unsupported
+ * option.
  */
 internal class EntitySelectorParser(
     private val maxResults: Int,
@@ -74,10 +70,9 @@ internal class EntitySelectorParser(
     }
 
     /**
-     * Offers the names of the online players followed by the selectors this argument accepts.
+     * Suggests the names of the online players, then the selectors this argument accepts.
      *
-     * A selector whose implied limit exceeds [maxResults] is left out, as is `@e` on a players-only
-     * argument, so every offered selector is one the parser would accept.
+     * Selectors whose implied limit exceeds [maxResults] are omitted, as is `@e` when [playersOnly].
      */
     override fun <S> listSuggestions(
         context: CommandContext<S>,
@@ -104,7 +99,9 @@ internal class EntitySelectorParser(
     }
 }
 
-/** Mutable accumulator for the selector being built; frozen into an [EntitySelector] once parsed. */
+/**
+ * Mutable state of a selector while it is parsed; [toSelector] converts it into an [EntitySelector].
+ */
 private class MutableSelector {
     var limit: Int = 1
     var includesEntities: Boolean = false
@@ -122,11 +119,15 @@ private class MutableSelector {
     var distance: Range.Float? = null
     val predicates: MutableList<(Pos, Entity) -> Boolean> = mutableListOf()
 
-    /** Options that may appear at most once: `x y z dx dy dz distance limit sort level`. */
+    /**
+     * Options already used among those allowed at most once: `x y z dx dy dz distance limit sort level`.
+     */
     val singleUseSeen: MutableSet<String> = mutableSetOf()
     private val invertableStates: MutableMap<String, InvertableState> = mutableMapOf()
 
-    /** The `name`/`type`/`team`/`gamemode` tracking state for [key], created on first use. */
+    /**
+     * Returns the usage state of the invertable option [key], created on first use.
+     */
     fun invertableStateFor(key: String): InvertableState =
         invertableStates.getOrPut(key) { InvertableState() }
 
@@ -144,9 +145,11 @@ private class MutableSelector {
 }
 
 /**
- * Mirrors vanilla's `InvertableSetOptionState`: an option using this may be set once as a positive
- * value, or any number of times as a negative (`!`) value, but never mixed - a positive after a
- * negative, or any repeat after a positive, is rejected.
+ * Tracks the use of an option that accepts negated (`!`) values, mirroring vanilla's
+ * `InvertableSetOptionState`.
+ *
+ * Such an option may be given once with a positive value or any number of times with negated
+ * values. Mixing the two, or repeating a positive value, is not allowed.
  */
 private class InvertableState {
     private var limitation = Limitation.NONE
@@ -356,9 +359,6 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
             val inverted = shouldInvertValue(reader)
             val tag = reader.readUnquotedString()
             state.predicates += { _, entity ->
-                // `?: emptyList()` guards an entity that never had ENTITY_TAGS written: the tag's
-                // own default should cover this, but nothing here may rely on that to avoid an NPE
-                // inside a predicate.
                 val tags = entity.getTag(ENTITY_TAGS) ?: emptyList()
                 (if (tag.isEmpty()) tags.isEmpty() else tags.contains(tag)) != inverted
             }
@@ -418,9 +418,10 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
 }
 
 /**
- * Rejects a repeated use of a single-use option (`x y z dx dy dz distance limit sort level`), and,
- * for `limit`/`sort`, a use on a self selector (`@s`) at all - both mirror vanilla's per-option
- * `canUse` gate, checked before the value is read so a repeat never even attempts to parse it.
+ * Rejects a repeated single-use option and an option that is not [applicable]; `limit` and `sort`
+ * are not applicable to a self selector (`@s`).
+ *
+ * The check runs before the value is read, so a rejected option never parses its value.
  */
 private fun requireSingleUse(
     key: String,
@@ -436,11 +437,9 @@ private fun requireSingleUse(
 }
 
 /**
- * Rejects a `name`/`type`/`team`/`gamemode` use that would mix a positive value with any other
- * value, or repeat a positive value - see [InvertableState]. Vanilla checks this at different
- * points relative to reading the value depending on the option; since a rejection here always
- * aborts the whole selector, checking immediately (before the value is read) is behaviorally
- * identical for every caller and simpler to keep consistent across the four options.
+ * Rejects a use of `name`, `type`, `team` or `gamemode` that [InvertableState] does not allow.
+ *
+ * The check runs before the value is read.
  */
 private fun requireInvertableUse(
     key: String,
@@ -458,8 +457,8 @@ private fun requireInvertableUse(
 }
 
 /**
- * Adds the volume-box and distance predicates once every option has been read, so both see the
- * final `x`/`y`/`z`/`dx`/`dy`/`dz`/`distance` values regardless of the order they appeared in.
+ * Adds the volume and distance predicates after all options are read, so they see the final
+ * `x`, `y`, `z`, `dx`, `dy`, `dz` and `distance` values regardless of option order.
  */
 private fun finalizePredicates(state: MutableSelector) {
     if (state.dx != null || state.dy != null || state.dz != null) {
@@ -470,15 +469,18 @@ private fun finalizePredicates(state: MutableSelector) {
     }
 }
 
-/** The anchor point: the sender's position with any explicit `x`/`y`/`z` substituted per axis. */
+/**
+ * Returns [basePos] with each axis replaced by the explicit `x`, `y` or `z` option, if given.
+ */
 private fun anchorOf(basePos: Pos, state: MutableSelector): Pos =
     Pos(state.x ?: basePos.x(), state.y ?: basePos.y(), state.z ?: basePos.z())
 
 /**
- * Matches entities within the box anchored at [anchor]'s origin corner, extended by `dx`/`dy`/`dz`
- * on whichever side is positive. Each axis's non-negative side is extended by one extra block
- * (mirroring vanilla's `EntitySelectorParser.createAabb`), so `dx=0,dy=0,dz=0` selects the single
- * block the origin sits in rather than a degenerate zero-width box.
+ * Matches entities whose position lies in the `dx`/`dy`/`dz` box.
+ *
+ * Per axis the box spans from the origin plus `min(0, d)` to the origin plus `max(0, d) + 1`, as in
+ * vanilla's `EntitySelectorParser.createAabb`. `dx=0,dy=0,dz=0` therefore covers the block at the
+ * origin.
  */
 private fun matchesVolume(anchor: Pos, state: MutableSelector, entity: Entity): Boolean {
     val origin = anchorOf(anchor, state)
@@ -507,7 +509,9 @@ private fun matchesName(entity: Entity, name: String): Boolean = when (entity) {
         ?.let { component -> PlainTextComponentSerializer.plainText().serialize(component) } == name
 }
 
-/** The name of the team `entity` belongs to, or an empty string if it belongs to none. */
+/**
+ * Returns the name of the team [entity] belongs to, or an empty string without a team.
+ */
 private fun teamNameOf(entity: Entity): String {
     val identifier = if (entity is Player) entity.username else entity.uuid.toString()
     return MinecraftServer.getTeamManager().teams
@@ -525,7 +529,9 @@ private fun shouldInvertValue(reader: StringReader): Boolean {
     return false
 }
 
-/** Consumes a `{name=range,...}` value without keeping it: `scores` has no backing store here. */
+/**
+ * Reads and discards a `scores` value of the form `{name=range,...}`.
+ */
 private fun consumeScores(reader: StringReader) {
     reader.expect('{')
     reader.skipWhitespace()
@@ -543,7 +549,9 @@ private fun consumeScores(reader: StringReader) {
     reader.expect('}')
 }
 
-/** Consumes a `{id=bool}` / `{id={crit=bool,...}}` value without keeping it: same reasoning as [consumeScores]. */
+/**
+ * Reads and discards an `advancements` value of the form `{id=bool}` or `{id={criterion=bool,...}}`.
+ */
 private fun consumeAdvancements(reader: StringReader) {
     reader.expect('{')
     reader.skipWhitespace()
@@ -584,7 +592,10 @@ private fun nearestComparator(anchor: Pos): Comparator<Entity> =
 private fun furthestComparator(anchor: Pos): Comparator<Entity> =
     nearestComparator(anchor).reversed()
 
-/** A stable-per-invocation random order: each entity gets one random key, reused across comparisons. */
+/**
+ * Returns a comparator that orders entities randomly. Each entity keeps one random weight for the
+ * lifetime of the comparator, so repeated comparisons stay consistent.
+ */
 private fun randomComparator(@Suppress("UNUSED_PARAMETER") anchor: Pos): Comparator<Entity> {
     val weights = IdentityHashMap<Entity, Double>()
     val random = ThreadLocalRandom.current()
@@ -594,7 +605,9 @@ private fun randomComparator(@Suppress("UNUSED_PARAMETER") anchor: Pos): Compara
 private val GAME_MODE_PARSER =
     FixedSetParser(GameMode.entries.associateBy { mode -> mode.name.lowercase() })
 
-/** Backing store for the `tag` option; nothing writes to it yet, so it is always empty today. */
+/**
+ * Entity tag holding the strings matched by the `tag` option. Nothing in this module writes it.
+ */
 private val ENTITY_TAGS: Tag<List<String>> = Tag.String("tags").list().defaultValue(emptyList())
 
 private val ERROR_MISSING_SELECTOR_TYPE =

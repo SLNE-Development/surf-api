@@ -16,8 +16,8 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 /**
- * Proves the direct scan plus entity-id dedup reproduces vanilla `ChunkView` viewer resolution
- * for real players, including players living in a `SharedInstance`.
+ * Tests that the direct scan plus entity ID deduplication resolves the same viewers as vanilla
+ * `ChunkView` for real players, including players in a `SharedInstance`.
  */
 @EnvTest
 class PlayerViewableEquivalenceTest {
@@ -63,7 +63,9 @@ class PlayerViewableEquivalenceTest {
         return onVirtualThread { connection.connect(instance, pos) }
     }
 
-    /** The harness completes spawns off the test thread; poll before touching trackers. */
+    /**
+     * Ticks until all [players] have spawned; the harness completes spawns off the test thread.
+     */
     private fun awaitSpawn(env: Env, vararg players: Player) {
         repeat(SPAWN_ATTEMPTS) {
             if (players.all { player -> player.instance != null }) return

@@ -11,17 +11,29 @@ import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.entity.Player
 import net.minestom.server.network.packet.server.play.DeclareCommandsPacket
 
+/**
+ * Static entry points through which `CommandManagerMixin` routes Minestom's command handling to the
+ * CommandAPI.
+ *
+ * Every function resolves the active platform on each call and falls back to Minestom's own
+ * behavior while none is active.
+ */
 object CommandAPIHook {
 
-    /** Whether [name] is a command label the CommandAPI owns. */
+    /**
+     * Whether [name] is a command label owned by the CommandAPI.
+     */
     @JvmStatic
     fun owns(name: String): Boolean = ownership()?.contains(name) == true
 
     /**
-     * Runs [input] through Brigadier when its command label belongs to the CommandAPI, returning
-     * `null` when it does not so the manager keeps parsing it itself.
+     * Executes [input] through the Brigadier dispatcher when its command label is owned by the
+     * CommandAPI.
      *
-     * A rejection is reported to [sender] the way vanilla reports it.
+     * Returns `null` for any other input, which the manager then parses itself. A syntax failure is
+     * reported to [sender] in vanilla's layout and yields [CommandResult.Type.INVALID_SYNTAX]. Any
+     * other [Throwable] is logged, answered with a generic failure message and yields
+     * [CommandResult.Type.CANCELLED].
      */
     @JvmStatic
     fun execute(sender: CommandSender, input: String): CommandResult? {
@@ -43,15 +55,18 @@ object CommandAPIHook {
         }
     }
 
-    /** [packet] with the CommandAPI's commands merged into the tree [player] is shown. */
+    /**
+     * Returns [packet] with the CommandAPI's commands merged in for [player], or [packet] unchanged
+     * while no platform is active.
+     */
     @JvmStatic
     fun declare(packet: DeclareCommandsPacket, player: Player): DeclareCommandsPacket =
         MinestomCommandAPIPlatform.activeMerger()?.merge(packet, player) ?: packet
 
     /**
-     * Reports an input no registry could resolve, in vanilla's layout.
+     * Reports an input that no command registry resolved, in vanilla's layout.
      *
-     * Installed as the manager's unknown command callback, which Minestom leaves unset.
+     * Installed as the manager's unknown command callback by [MinestomCommandAPIService].
      */
     @JvmStatic
     fun reportUnknown(sender: CommandSender, input: String) =

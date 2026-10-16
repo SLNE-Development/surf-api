@@ -7,6 +7,12 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayDeque
 
+/**
+ * Per-player stack of the views opened through back-navigable navigation.
+ *
+ * [markBackNavigation] flags a pending back navigation so that opening or closing the target view
+ * neither pushes nor clears the stack; [consumeBackNavigation] resets the flag.
+ */
 internal object ViewNavigationHistory {
     private val paths = ConcurrentHashMap<UUID, ArrayDeque<NavEntry>>()
     private val backNav = ConcurrentHashMap.newKeySet<UUID>()
@@ -41,6 +47,8 @@ internal object ViewNavigationHistory {
     internal data class NavEntry(val viewClass: Class<out View>, val data: Any?)
 }
 
-/** Forgets the views [player] navigated through; called by the server once they disconnect. */
+/**
+ * Forgets the views [player] navigated through; called by the server once they disconnect.
+ */
 @InternalSurfApi
 fun clearViewNavigationHistory(player: Player) = ViewNavigationHistory.clear(player)

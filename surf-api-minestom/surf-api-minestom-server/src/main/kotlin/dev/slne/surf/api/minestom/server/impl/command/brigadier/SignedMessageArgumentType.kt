@@ -8,7 +8,10 @@ import net.minestom.server.command.CommandSender
 import net.minestom.server.entity.Player
 
 /**
- * Reads the rest of the command line and pairs it with the signature its sender produced for it.
+ * Consumes the rest of the command line as a [SignedMessage].
+ *
+ * The result is the message supplied for [nodeName] through [SignedCommandArguments], or an unsigned
+ * one created by [SignedCommandArguments.unsignedFactory] when none is in scope.
  */
 internal class SignedMessageArgumentType(
     private val nodeName: String,

@@ -7,13 +7,18 @@ import net.minestom.server.message.ChatTypeDecoration
 import net.minestom.server.registry.RegistryKey
 import net.kyori.adventure.chat.ChatType as AdventureChatType
 
+/**
+ * A chat type together with the sender name and optional target name it is rendered with.
+ */
 internal data class BoundChatType(
     val chatType: RegistryKey<ChatType>,
     val name: Component,
     val targetName: Component? = null
 ) {
     /**
-     * The value the chat packets carry for this chat type.
+     * The chat type ID of the chat packets: the registry ID plus one.
+     *
+     * @throws IllegalStateException If the chat type is not registered.
      */
     val id: Int
         get() {
@@ -28,6 +33,10 @@ internal data class BoundChatType(
     fun adventure(): AdventureChatType.Bound =
         AdventureChatType.chatType(chatType.key()).bind(name, targetName)
 
+    /**
+     * Applies the decoration of the chat type to [content], for audiences that do not receive chat
+     * packets. Returns [content] unchanged when the chat type has no registered decoration.
+     */
     fun decorate(content: Component): Component {
         val decoration = ChatTypeRegistry.get(chatType)?.chat() ?: return content
 

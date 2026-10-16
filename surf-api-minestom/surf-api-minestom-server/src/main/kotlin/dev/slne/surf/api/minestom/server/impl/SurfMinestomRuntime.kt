@@ -28,7 +28,12 @@ import net.minestom.server.property.ServerProperties
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Brings the surf api up and down on a Minestom server.
+ * Lifecycle of the surf api on a Minestom server; at most one runtime exists per JVM.
+ *
+ * [start] runs the load phase synchronously: it installs the surf listeners and services and
+ * calls `load` on each feature in `loadPriority` order. Features are enabled on the next tick, and
+ * a feature whose `enable` throws is logged and skipped. [shutdown] is idempotent and calls
+ * `disable` on every loaded feature in reverse order, including ones that failed to enable.
  */
 internal class SurfMinestomRuntime private constructor(
     private val builder: SurfMinestomServerBuilder,
@@ -82,7 +87,8 @@ internal class SurfMinestomRuntime private constructor(
             loaded += feature
         }
 
-        // Set after the features, so that it takes precedence over one a feature installed
+        // Installed after the features, so the server's provider takes precedence over one a feature
+        // installed
         builder.permissionProvider?.let { provider -> MinestomPermissions.installProvider(provider) }
         running = true
 
@@ -145,8 +151,10 @@ internal class SurfMinestomRuntime private constructor(
         private val LOGGER = ComponentLogger.logger()
 
         /**
-         * Refuses to run without the mixins the CommandAPI, the configuration phase and the
-         * performance fixes depend on. Tests may run without them.
+         * Fails startup when Mixin is not installed or a class failed to transform, since the
+         * CommandAPI, the configuration phase and the performance fixes depend on the mixins.
+         * Only tests ([ServerProperties.INSIDE_TEST]) may run without Mixin. Detects transformation
+         * failures that happened before the call.
          */
         private fun checkMixins() {
             if (!SurfMixinAgent.isInstalled()) {
@@ -160,6 +168,7 @@ internal class SurfMinestomRuntime private constructor(
             val failed = SurfMixinAgent.failedTransformations()
             check(failed.isEmpty()) { "Mixins failed to apply to $failed, see the log above" }
         }
+
         private val current = AtomicReference<SurfMinestomRuntime?>()
 
         fun current(): SurfMinestomServer = checkNotNull(current.get()) {

@@ -23,22 +23,24 @@ import org.spongepowered.asm.mixin.Mixins;
 /**
  * Installs Mixin into a surf Minestom server.
  *
- * <p>Called by the server jar's bootstrap as its first delegate agent: after the libraries are on
- * the system class path and before any other agent or {@code main} runs, so the transformer is in
- * place before the first Minestom class is loaded. Classes loaded earlier are never transformed.</p>
+ * <p>Called by the bootstrap agent as its first delegate agent: after the libraries are on the
+ * system class path, before any other agent or {@code main} runs. The transformer must exist
+ * before the first Minestom class is loaded, because classes loaded earlier are never transformed.</p>
  *
- * <p>The mixin configurations are listed in the {@value #CONFIGS_ATTRIBUTE} manifest attribute of
- * the server jar, which the surf Gradle plugin writes from the installed features and the configs
- * the server registers itself. Mixin can be installed only once per JVM.</p>
+ * <p>The mixin configurations come from the {@value #CONFIGS_ATTRIBUTE} manifest attribute, which
+ * the surf Gradle plugin writes from the installed features and the mixin configurations the
+ * server registers. Mixin can be installed once per JVM.</p>
  *
  * <p>A required mixin whose target was loaded before the installation fails the installation. A
- * transformation that fails later only loads the class untransformed and is reported by
- * {@link #failedTransformations()}.</p>
+ * transformation that fails later makes the JVM load the class untransformed; such classes are
+ * reported by {@link #failedTransformations()}.</p>
  */
 @NullMarked
 public final class SurfMixinAgent {
 
-    /** The manifest attribute listing the mixin configurations to apply, comma separated. */
+    /**
+     * The manifest attribute listing the mixin configurations to apply, comma separated.
+     */
     public static final String CONFIGS_ATTRIBUTE = "Surf-Mixin-Configs";
 
     private static volatile boolean installed;
@@ -46,6 +48,12 @@ public final class SurfMixinAgent {
     private SurfMixinAgent() {
     }
 
+    /**
+     * Installs Mixin with the mixin configurations listed in the manifest.
+     *
+     * @throws IllegalStateException when the manifest lists no mixin configuration or Mixin is
+     * already installed
+     */
     public static void agentmain(final @Nullable String args, final Instrumentation instrumentation) {
         final List<String> configs = configsFromManifest();
         if (configs.isEmpty()) {
@@ -54,6 +62,9 @@ public final class SurfMixinAgent {
         install(instrumentation, configs);
     }
 
+    /**
+     * Delegates to {@link #agentmain}.
+     */
     public static void premain(final @Nullable String args, final Instrumentation instrumentation) {
         agentmain(args, instrumentation);
     }
@@ -80,17 +91,24 @@ public final class SurfMixinAgent {
         advancePhases();
     }
 
-    /** Whether Mixin was installed into this JVM. */
+    /**
+     * Whether Mixin was installed into this JVM.
+     */
     public static boolean isInstalled() {
         return installed;
     }
 
-    /** Binary names of the classes that were loaded untransformed because a mixin failed to apply. */
+    /**
+     * Binary names of the classes that were loaded untransformed because a mixin failed to apply.
+     */
     public static List<String> failedTransformations() {
         return InstrumentationMixinService.failures();
     }
 
-    /** Mixin only selects its configurations on a phase change, which no launcher triggers here. */
+    /**
+     * Moves Mixin through {@code INIT} to {@code DEFAULT}. Mixin selects its configurations on a
+     * phase change, which no launcher triggers here.
+     */
     private static void advancePhases() {
         try {
             final var gotoPhase = MixinEnvironment.class.getDeclaredMethod("gotoPhase", MixinEnvironment.Phase.class);

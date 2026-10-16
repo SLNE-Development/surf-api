@@ -3,16 +3,16 @@ package dev.slne.surf.api.minestom.example
 import dev.slne.surf.api.minestom.chat.AsyncPlayerChatEvent
 import dev.slne.surf.api.minestom.chat.ChatRenderer
 import dev.slne.surf.api.minestom.chat.sendSignedMessage
+import dev.slne.surf.api.minestom.event.EventRegistrar
+import dev.slne.surf.api.minestom.extension.*
+import dev.slne.surf.api.minestom.permission.hasPermission
+import dev.slne.surf.api.minestom.player.event.*
 import dev.slne.surf.api.minestom.server.chat.withSignedChat
 import dev.slne.surf.api.minestom.server.configuration.ConfigurationTaskId
 import dev.slne.surf.api.minestom.server.configuration.ConfigurationTasks
 import dev.slne.surf.api.minestom.server.console.withConsole
-import dev.slne.surf.api.minestom.event.EventRegistrar
-import dev.slne.surf.api.minestom.extension.*
 import dev.slne.surf.api.minestom.server.npc.withNpcLib
 import dev.slne.surf.api.minestom.server.plugins.withPlugins
-import dev.slne.surf.api.minestom.permission.hasPermission
-import dev.slne.surf.api.minestom.player.event.*
 import dev.slne.surf.api.minestom.server.spark.withSpark
 import dev.slne.surf.api.minestom.server.surfMinestomServer
 import dev.slne.surf.api.minestom.server.visibility.withPlayerVisibility
@@ -103,7 +103,7 @@ private class ExampleListeners(private val world: InstanceContainer) : EventRegi
             event.player.gameMode = GameMode.ADVENTURE
         }
 
-        // Abilities are sent to the client right away, which is only possible once it plays
+        // Abilities are sent to the client right away, which is only possible in the play phase
         node.addListener<PlayerSpawnEvent> { event ->
             if (event.isFirstSpawn) event.player.isAllowFlying = true
         }
@@ -117,7 +117,7 @@ private class ExampleListeners(private val world: InstanceContainer) : EventRegi
             }
         }
 
-        // Runs on the player's configuration thread, so a stored location could be loaded here
+        // Runs on the player's virtual configuration thread, so a stored location could be loaded here
         node.addListener<AsyncPlayerSpawnLocationEvent> { event ->
             event.position =
                 SPAWN.add(Random.nextDouble(-3.0, 3.0), 0.0, Random.nextDouble(-3.0, 3.0))
@@ -157,7 +157,9 @@ private class ExampleListeners(private val world: InstanceContainer) : EventRegi
     }
 }
 
-/** Sends a message to everyone, keeping the signature [message] was sent with. */
+/**
+ * Sends a message to everyone, keeping the signature [message] was sent with.
+ */
 internal fun broadcastSigned(
     message: SignedMessage,
     name: Component,

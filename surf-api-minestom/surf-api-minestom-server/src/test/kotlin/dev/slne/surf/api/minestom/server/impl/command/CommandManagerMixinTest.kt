@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * CommandAPI commands are reached through Minestom's own command manager by `CommandManagerMixin`.
+ * Tests that `CommandManagerMixin` routes CommandAPI commands through Minestom's command manager.
  */
 @EnvTest
 class CommandManagerMixinTest {

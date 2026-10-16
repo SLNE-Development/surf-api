@@ -5,8 +5,10 @@ import net.kyori.adventure.text.Component
 import net.minestom.server.entity.Player
 
 /**
- * Adapts a [ChatRenderer.ViewerUnaware] to a full [ChatRenderer], rendering the message only once
- * and reusing the result for every viewer.
+ * Adapts a [ChatRenderer.ViewerUnaware] to a [ChatRenderer].
+ *
+ * The first rendered result is cached and returned for every later call regardless of its
+ * arguments, so an instance serves one message only. The cache is not synchronized.
  */
 internal sealed class ViewerUnawareChatRenderer(
     private val unaware: ChatRenderer.ViewerUnaware

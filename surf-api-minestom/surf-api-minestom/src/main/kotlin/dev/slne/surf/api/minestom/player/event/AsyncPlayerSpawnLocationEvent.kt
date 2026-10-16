@@ -20,10 +20,14 @@ import org.jetbrains.annotations.ApiStatus
 class AsyncPlayerSpawnLocationEvent @ApiStatus.Internal constructor(
     private val player: Player,
 
-    /** The instance the player spawns in. */
+    /**
+     * The instance the player spawns in.
+     */
     var instance: Instance,
 
-    /** The position the player spawns at. */
+    /**
+     * The position the player spawns at.
+     */
     var position: Pos,
 ) : PlayerEvent, AsyncEvent {
 

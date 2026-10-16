@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Drops the per-tick interaction-hitbox teleport that {@code AbstractNpcEntity#update} triggers for
- * every NPC: the hitbox is only moved when it is not already on {@code npc.position.add(offset)}.
+ * Cancels the per-tick {@code syncWithNpc} teleport of the interaction hitbox while the hitbox
+ * already sits on {@code npc.position.add(offset)}. See {@link NpcDisplaySync#isSynchronized}.
  */
 @Mixin(value = InteractionController.class, remap = false)
 abstract class InteractionControllerMixin {

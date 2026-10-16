@@ -17,10 +17,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * Leaves the socket buffer sizes to the operating system on Linux unless
- * {@link ServerProperties#SOCKET_SEND_BUFFER_SIZE} / {@link ServerProperties#SOCKET_RECEIVE_BUFFER_SIZE}
- * differ from their defaults, and logs failed
- * socket reads and writes when {@code surf.network-debug} is enabled.
+ * Network adjustments to Minestom's socket server.
+ *
+ * <p>On Linux the socket buffer sizes are left to the operating system unless
+ * {@link ServerProperties#SOCKET_SEND_BUFFER_SIZE} or
+ * {@link ServerProperties#SOCKET_RECEIVE_BUFFER_SIZE} differ from their defaults. With
+ * {@code -Dsurf.network-debug=true}, failed socket reads and writes are logged before the
+ * exception propagates.</p>
  */
 @SuppressWarnings("UnstableApiUsage")
 @Mixin(value = Server.class, remap = false)

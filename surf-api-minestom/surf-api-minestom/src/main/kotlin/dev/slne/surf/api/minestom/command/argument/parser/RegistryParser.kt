@@ -11,13 +11,11 @@ import net.kyori.adventure.key.Key
 import java.util.concurrent.CompletableFuture
 
 /**
- * Reads a namespaced key and resolves it through [lookup].
+ * Parses a namespaced key into the value [lookup] returns for it.
  *
- * [registryName] only appears in the failure message. A key that resolves to `null` is reported at
- * the position the key started at, so the client underlines the key rather than the rest of the line.
- *
- * [keys] is queried on every completion rather than captured once, because a registry may gain
- * entries after the argument was built.
+ * A key for which [lookup] returns `null` fails at the position where the key starts, with a
+ * message naming [registryName]. [keys] supplies the suggestions and is evaluated on every
+ * request, so entries added to a registry later are included.
  */
 internal class RegistryParser<T>(
     private val registryName: String,

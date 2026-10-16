@@ -7,7 +7,9 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.service.IGlobalPropertyService;
 import org.spongepowered.asm.service.IPropertyKey;
 
-/** Holds Mixin's global properties, which a launcher would otherwise provide. */
+/**
+ * Holds Mixin's global properties, which a launcher would otherwise provide.
+ */
 @NullMarked
 public final class InstrumentationGlobalPropertyService implements IGlobalPropertyService {
 

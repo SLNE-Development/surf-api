@@ -6,9 +6,8 @@ import java.nio.file.Path
 /**
  * Loads the classes of one plugin jar.
  *
- * Classes are looked up in the server first, then in the plugin's own jar and finally in the jars
- * of the plugins it depends on, so a plugin sees the server, itself and its dependencies, but no
- * other plugin.
+ * Lookup order is the server class loader, the plugin's own jar, then the jars of [dependencies].
+ * A plugin therefore sees the server, itself and its dependencies, but no other plugin.
  */
 internal class PluginClassLoader(
     val pluginId: String,
@@ -16,7 +15,10 @@ internal class PluginClassLoader(
     parent: ClassLoader,
 ) : URLClassLoader("plugin-$pluginId", arrayOf(jar.toUri().toURL()), parent) {
 
-    /** The class loaders of every plugin this one depends on, directly or not. */
+    /**
+     * The class loaders of all plugins this one depends on, directly or transitively. Plugins
+     * on the system class path have no loader and are not listed.
+     */
     @Volatile
     var dependencies: List<PluginClassLoader> = emptyList()
 
@@ -33,7 +35,10 @@ internal class PluginClassLoader(
         }
     }
 
-    /** A class from this plugin's own jar, without asking the server or other plugins. */
+    /**
+     * Returns the class from this plugin's own jar, or `null`. Does not consult the server or other
+     * plugins.
+     */
     fun findOwnClass(name: String): Class<*>? = synchronized(getClassLoadingLock(name)) {
         findLoadedClass(name) ?: fromOwnJar(name)
     }

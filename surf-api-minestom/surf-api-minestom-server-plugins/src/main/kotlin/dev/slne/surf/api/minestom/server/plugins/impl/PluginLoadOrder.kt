@@ -6,13 +6,24 @@ package dev.slne.surf.api.minestom.server.plugins.impl
 internal object PluginLoadOrder {
 
     /**
-     * The result of ordering: the plugins that can be loaded, in order, and why the others cannot.
+     * The outcome of [order].
+     *
+     * @property ordered the loadable plugins, dependencies first
+     * @property rejected the reason each other plugin cannot be loaded, keyed by plugin ID; a
+     * duplicate ID is keyed as `id (source)`
      */
     data class Result(
         val ordered: List<PluginCandidate>,
         val rejected: Map<String, String>,
     )
 
+    /**
+     * Orders [candidates] by their dependencies, keeping the input order otherwise.
+     *
+     * The first candidate with an ID wins; later ones are rejected. Plugins with a missing required
+     * dependency, members of a dependency cycle and plugins depending on a rejected plugin are
+     * rejected as well. Missing optional dependencies are ignored.
+     */
     fun order(candidates: List<PluginCandidate>): Result {
         val rejected = linkedMapOf<String, String>()
         val byId = linkedMapOf<String, PluginCandidate>()
@@ -27,7 +38,7 @@ internal object PluginLoadOrder {
             byId[id] = candidate
         }
 
-        // Drop plugins whose required dependencies are missing, until nothing changes
+        // Repeats because removing a plugin can leave its dependents without a dependency
         var changed = true
         while (changed) {
             changed = false

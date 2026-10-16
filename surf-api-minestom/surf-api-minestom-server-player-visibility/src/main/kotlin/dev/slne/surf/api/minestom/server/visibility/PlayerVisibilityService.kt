@@ -11,8 +11,12 @@ import net.minestom.server.timer.Task
 import net.minestom.server.timer.TaskSchedule
 
 /**
- * Limits how many players a player sees at once to the nearest ones, refreshing the selection
- * every few ticks.
+ * Scheduler task that selects the visible players of every viewer with a [NearestPlayerSelector].
+ *
+ * Runs every tick. A viewer is refreshed when its rule or instance changed, and otherwise once
+ * every [PlayerVisibilitySettings.refreshIntervalTicks] ticks, staggered by entity ID. A failing
+ * refresh is logged and does not affect other viewers. Selection state is confined to the tick;
+ * the service is not thread-safe.
  */
 internal class PlayerVisibilityService(
     private val settings: PlayerVisibilitySettings,

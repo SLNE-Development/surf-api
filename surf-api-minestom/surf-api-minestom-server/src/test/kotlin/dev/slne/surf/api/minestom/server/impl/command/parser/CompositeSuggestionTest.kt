@@ -2,20 +2,15 @@ package dev.slne.surf.api.minestom.server.impl.command.parser
 
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import dev.slne.surf.api.minestom.command.argument.CustomArgument
-import dev.slne.surf.api.minestom.command.argument.EnumArgument
-import dev.slne.surf.api.minestom.command.argument.ListArgument
-import dev.slne.surf.api.minestom.command.argument.MultiLiteralArgument
-import dev.slne.surf.api.minestom.command.argument.PlayerArgument
-import dev.slne.surf.api.minestom.command.argument.PlayersArgument
+import dev.slne.surf.api.minestom.command.argument.*
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 /**
- * An argument that wraps another one has to hand completion through to it, or the values the inner
- * argument offers become unreachable.
+ * Tests that an argument wrapping another delegates suggestions to it; otherwise the inner
+ * argument's suggestions are unreachable.
  */
 @EnvTest
 class CompositeSuggestionTest {

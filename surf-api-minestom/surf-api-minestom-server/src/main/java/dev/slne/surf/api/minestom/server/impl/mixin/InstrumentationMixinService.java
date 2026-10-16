@@ -39,14 +39,15 @@ import org.spongepowered.asm.service.MixinServiceAbstract;
 /**
  * Runs Mixin on top of {@link Instrumentation} instead of a launcher.
  *
- * <p>Found by Mixin through {@code META-INF/services}; valid only once
+ * <p>Discovered by Mixin through {@code META-INF/services}; valid only after
  * {@link #setInstrumentation} was called. The transformer Mixin offers is registered as a
- * non-retransforming {@link ClassFileTransformer}, so it only affects classes loaded afterwards;
- * a required mixin whose target was loaded before fails Mixin's own early-load check.</p>
+ * non-retransforming {@link ClassFileTransformer}, so it only affects classes loaded afterwards.
+ * A required mixin whose target was loaded earlier fails Mixin's early-load check, which is
+ * answered from the class snapshot passed to {@link #setInstrumentation(Instrumentation, Set)}.</p>
  *
- * <p>Classes and resources are read from the system class loader, which holds the server and its
- * libraries. A failed transformation is logged and recorded in {@link #failures()} before it is
- * rethrown, since the JVM swallows the exception and loads the untransformed class.</p>
+ * <p>Classes and resources are read from the system class loader. A failed transformation is
+ * logged, recorded in {@link #failures()} and rethrown; the JVM ignores the exception and loads
+ * the class untransformed.</p>
  */
 @NullMarked
 public final class InstrumentationMixinService extends MixinServiceAbstract implements IClassProvider, IClassBytecodeProvider {
@@ -60,7 +61,9 @@ public final class InstrumentationMixinService extends MixinServiceAbstract impl
 
     private static volatile @Nullable Instrumentation instrumentation;
 
-    /** Binary names of the classes loaded before Mixin was installed. */
+    /**
+     * Binary names of the classes loaded before Mixin was installed.
+     */
     private static volatile Set<String> loadedBeforeInstall = Set.of();
 
     private static volatile @Nullable IMixinTransformer transformer;
@@ -73,7 +76,9 @@ public final class InstrumentationMixinService extends MixinServiceAbstract impl
         InstrumentationMixinService.instrumentation = instrumentation;
     }
 
-    /** The installed transformer, or {@code null} before Mixin offered it. */
+    /**
+     * The installed transformer, or {@code null} before Mixin offered it.
+     */
     static @Nullable IMixinTransformer transformer() {
         return transformer;
     }
@@ -83,7 +88,9 @@ public final class InstrumentationMixinService extends MixinServiceAbstract impl
         setInstrumentation(instrumentation);
     }
 
-    /** Binary names of the classes whose transformation failed, in the order they failed. */
+    /**
+     * Binary names of the classes whose transformation failed, in the order they failed.
+     */
     static List<String> failures() {
         return List.copyOf(FAILURES);
     }

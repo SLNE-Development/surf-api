@@ -11,13 +11,20 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Registry of server-side callbacks triggered by custom dialog actions.
+ *
+ * Each registration is bound to a random action key and expires after the use count or lifetime of
+ * its [DialogCallbackOptions]. Expired registrations are purged on [register] and [dispatch]. The
+ * registry is thread-safe.
+ */
 object DialogCallbacks {
     private const val NAMESPACE = "surf_dialog_callback"
 
     private val registrations = ConcurrentHashMap<Key, Registration>()
 
     /**
-     * Registers [callback] and returns the custom action key that runs it.
+     * Registers [callback] under [options] and returns the custom action key that triggers it.
      */
     fun register(
         options: DialogCallbackOptions = DialogCallbackOptions.DEFAULT,
@@ -32,7 +39,7 @@ object DialogCallbacks {
     }
 
     /**
-     * Registers [callback] and returns the custom action that runs it.
+     * Registers [callback] under [options] and returns the custom action that triggers it.
      */
     fun action(
         options: DialogCallbackOptions = DialogCallbackOptions.DEFAULT,
@@ -40,10 +47,10 @@ object DialogCallbacks {
     ): DialogAction = DialogAction.Custom(register(options, callback), null)
 
     /**
-     * Registers [callback] and returns the custom action that runs it with the values the dialog
-     * collected.
+     * Registers [callback] under [options] and returns the custom action that triggers it with the
+     * dialog's input values.
      *
-     * Unlike [action], the client reports the dialog's input values back, merged with [additions].
+     * Unlike [action], the client sends the input values back, merged with [additions].
      */
     fun dynamicAction(
         options: DialogCallbackOptions = DialogCallbackOptions.DEFAULT,
@@ -52,12 +59,16 @@ object DialogCallbacks {
     ): DialogAction = DialogAction.DynamicCustom(register(options, callback), additions)
 
     /**
-     * Forgets the callback [key] was handed out for.
+     * Removes the callback registered under [key].
+     *
+     * @return whether a callback was registered under [key]
      */
     fun unregister(key: Key): Boolean = registrations.remove(key) != null
 
     /**
-     * Runs the callback [key] was handed out for and reports whether one was still registered.
+     * Runs the callback registered under [key] with [player] and [payload], consuming one use.
+     *
+     * @return `false` when no callback is registered under [key] or it has expired or run out of uses
      */
     @ApiStatus.Internal
     @InternalSurfApi

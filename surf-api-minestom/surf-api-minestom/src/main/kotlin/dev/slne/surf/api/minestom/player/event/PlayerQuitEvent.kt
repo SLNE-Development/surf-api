@@ -14,7 +14,9 @@ import org.jetbrains.annotations.ApiStatus
 class PlayerQuitEvent @ApiStatus.Internal constructor(
     private val player: Player,
 
-    /** The message announcing the player left, or `null` for none. */
+    /**
+     * The message announcing the player left, or `null` for none.
+     */
     var quitMessage: Component?,
 ) : PlayerEvent {
 

@@ -11,7 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Hands the configuration phase to the surf configuration tasks while they are installed. */
+/**
+ * Redirects {@code doConfiguration} to {@link ConfigurationPhaseHook} and exposes the private
+ * player sets through {@link ConnectionManagerDuck}.
+ */
 @Mixin(ConnectionManager.class)
 abstract class ConnectionManagerMixin implements ConnectionManagerDuck {
 

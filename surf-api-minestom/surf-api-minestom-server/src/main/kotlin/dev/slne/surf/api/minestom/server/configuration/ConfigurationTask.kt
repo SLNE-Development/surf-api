@@ -10,13 +10,16 @@ import org.jetbrains.annotations.Blocking
 /**
  * One step of the configuration phase.
  *
- * Steps run in order on a virtual thread, so a step may block until the client has answered it.
+ * Steps run in order on the player's virtual configuration thread, so a step may block until the
+ * client has answered it.
  *
  * @see ConfigurationPhaseBuilder
  */
 fun interface ConfigurationTask {
 
-    /** Runs the step and blocks until the client has answered it. */
+    /**
+     * Runs the step and blocks until the client has answered it.
+     */
     @Blocking
     fun run(context: ConfigurationContext)
 
@@ -31,7 +34,7 @@ fun interface ConfigurationTask {
  * Identifies a step of the configuration phase, so that it can be replaced, removed or used as an
  * anchor for further steps.
  *
- * @see ConfigurationTasks for the ids of the default steps
+ * @see ConfigurationTasks for the IDs of the default steps
  */
 @JvmInline
 value class ConfigurationTaskId(val value: String) {
@@ -39,12 +42,15 @@ value class ConfigurationTaskId(val value: String) {
 }
 
 /**
- * Everything the steps of one configuration run share.
+ * Everything the steps of one run of the configuration phase share.
  */
 class ConfigurationContext internal constructor(
     val player: Player,
 
-    /** Whether the player is configured for the first time, rather than sent back from play. */
+    /**
+     * Whether this is the player's first configuration phase, rather than a return from the play
+     * phase.
+     */
     val isFirstConfig: Boolean,
 ) {
     private var configurationEvent: AsyncPlayerConfigurationEvent? = null
@@ -62,7 +68,9 @@ class ConfigurationContext internal constructor(
             configurationEvent = value
         }
 
-    /** The instance the player will spawn in, as chosen in the configuration [event]. */
+    /**
+     * The instance the player will spawn in, as chosen in the configuration [event].
+     */
     val spawningInstance: Instance
         get() = requireNotNull(event.spawningInstance) {
             "You need to specify a spawning instance in the AsyncPlayerConfigurationEvent"

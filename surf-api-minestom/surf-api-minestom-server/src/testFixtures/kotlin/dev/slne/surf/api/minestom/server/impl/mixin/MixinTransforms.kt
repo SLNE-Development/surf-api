@@ -11,7 +11,11 @@ import org.objectweb.asm.tree.ClassNode
  */
 object MixinTransforms {
 
-    /** Applies the mixins to the shipped bytecode of [binaryName]. */
+    /**
+     * Returns the class [binaryName] with the installed mixins applied to its shipped bytecode.
+     *
+     * Installs Mixin through [SurfMixinTestEnvironment] if needed. The result is not loaded.
+     */
     fun transform(binaryName: String): ClassNode {
         SurfMixinTestEnvironment.install()
         val transformer = checkNotNull(InstrumentationMixinService.transformer()) { "Mixin never offered its transformer" }
@@ -22,7 +26,9 @@ object MixinTransforms {
         return node
     }
 
-    /** The shipped bytecode of [binaryName]. */
+    /**
+     * Returns the unmodified bytecode of [binaryName] from the class path.
+     */
     fun originalBytes(binaryName: String): ByteArray {
         val resource = binaryName.replace('.', '/') + ".class"
         return checkNotNull(ClassLoader.getSystemClassLoader().getResourceAsStream(resource)) {

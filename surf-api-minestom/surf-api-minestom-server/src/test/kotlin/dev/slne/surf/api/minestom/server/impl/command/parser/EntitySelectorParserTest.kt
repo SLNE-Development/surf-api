@@ -15,21 +15,17 @@ import net.minestom.server.network.player.GameProfile
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 /**
- * The parser and selector are `internal` to the api module (see [ScalarParsersTest] for why), so
- * every case here drives them through [PlayerArgument], [PlayersArgument], [EntityArgument] and
- * [EntitiesArgument]'s `rawType`, asserting on the entities actually resolved rather than the
- * selector's internal fields.
+ * Tests the entity selector parser, which is `internal` to the api module (see
+ * [ScalarParsersTest]), through the `rawType` of [PlayerArgument], [PlayersArgument],
+ * [EntityArgument] and [EntitiesArgument]. Assertions target the resolved entities, not selector
+ * internals.
  */
 @EnvTest
 class EntitySelectorParserTest {
@@ -317,11 +313,11 @@ class EntitySelectorParserTest {
         withPlayers(env, 1) { _, players ->
             val raw = EntitiesArgument("targets").toDefinition().rawType
             val input = "@e[type=minecraft:zombie,type=minecraft:pig]"
-            // Cursor position is intentionally not asserted here: vanilla rejects this at the
-            // second `type` key's start (before `!` is even read), since its InvertableSetOptionState
-            // check runs before the modifier does. This port's requireInvertableUse runs inside the
-            // modifier and rejects at the value's start instead - a known, accepted divergence in
-            // underline column, not in outcome. Pinning the column would lock that divergence in.
+            // The cursor is not asserted. Vanilla rejects at the second `type` key's start because
+            // its InvertableSetOptionState check runs before the modifier; this parser's
+            // requireInvertableUse runs inside the modifier and rejects at the value's start. The
+            // underline column differs, the outcome does not, and asserting the column would pin
+            // the divergence.
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader(input), players[0])
             }

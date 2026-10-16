@@ -17,6 +17,9 @@ import net.minestom.server.entity.GameMode
 import net.minestom.server.particle.Particle
 import java.time.Duration
 
+/**
+ * A namespaced key such as `minecraft:stone`; the namespace defaults to `minecraft`.
+ */
 class ResourceLocationArgument(nodeName: String) : Argument<Key>(nodeName) {
     override val kind = ArgumentKind.ResourceLocation
     override val rawType: ArgumentType<Key> = ResourceLocationParser
@@ -25,8 +28,10 @@ class ResourceLocationArgument(nodeName: String) : Argument<Key>(nodeName) {
 }
 
 /**
- * A duration parsed from vanilla's suffixed time syntax (`50d`, `25s`, `75t`, or a bare tick
- * count).
+ * A [Duration] parsed from vanilla's time syntax: a number with an optional unit of `d` (days),
+ * `s` (seconds) or `t` (ticks), for example `5s`. Without a unit the number counts ticks.
+ *
+ * Negative values are rejected.
  */
 class TimeArgument(nodeName: String) : Argument<Duration>(nodeName) {
     override val kind = ArgumentKind.Time
@@ -36,8 +41,9 @@ class TimeArgument(nodeName: String) : Argument<Duration>(nodeName) {
 }
 
 /**
- * A team color parsed from its vanilla name (`black`, `dark_blue`, ..., `white`); matching is
- * case-sensitive, and suggestions are offered case-insensitively.
+ * A [TeamColor] parsed from its name as returned by [TeamColor.toString].
+ *
+ * Parsing is case-sensitive; suggestions match case-insensitively.
  */
 class TeamColorArgument(nodeName: String) : Argument<TeamColor>(nodeName) {
     override val kind = ArgumentKind.TeamColor
@@ -49,11 +55,10 @@ class TeamColorArgument(nodeName: String) : Argument<TeamColor>(nodeName) {
 }
 
 /**
- * A particle resolved by its namespaced key.
+ * A [Particle] given by its namespaced key.
  *
- * Only option-free particles (`flame`, `smoke`, and similar) are accepted; a particle whose kind
- * carries options (`dust`, `block`, `vibration`, and similar) has no syntax to supply those options
- * here and is rejected as unsupported.
+ * Only particles without options, such as `flame` or `smoke`, are accepted. Particles that take
+ * options, such as `dust`, `block` or `vibration`, are rejected as unsupported.
  */
 class ParticleArgument(nodeName: String) : Argument<Particle>(nodeName) {
     override val kind = ArgumentKind.Particle
@@ -63,8 +68,10 @@ class ParticleArgument(nodeName: String) : Argument<Particle>(nodeName) {
 }
 
 /**
- * A player game mode parsed from its vanilla name (`survival`, `creative`, `adventure`, or
- * `spectator`); matching is case-sensitive, and suggestions are offered case-insensitively.
+ * A [GameMode] parsed from its lowercase name: `survival`, `creative`, `adventure` or
+ * `spectator`.
+ *
+ * Parsing is case-sensitive; suggestions match case-insensitively.
  */
 class GameModeArgument(nodeName: String) : Argument<GameMode>(nodeName) {
     override val kind = ArgumentKind.GameMode

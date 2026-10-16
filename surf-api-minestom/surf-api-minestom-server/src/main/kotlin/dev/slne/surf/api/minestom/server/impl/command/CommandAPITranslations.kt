@@ -7,7 +7,11 @@ import java.text.MessageFormat
 import java.util.*
 
 /**
- * Server-side fallbacks for the vanilla command translation keys.
+ * English fallbacks for the vanilla command translation keys used by the failure reports.
+ *
+ * Players receive the keys untouched and render them client-side; the fallbacks serve senders that
+ * are rendered on the server, such as the console. The translation source is added to
+ * [GlobalTranslator] once and never removed.
  */
 object CommandAPITranslations {
     private val STORE_KEY = Key.key("surf", "commandapi")

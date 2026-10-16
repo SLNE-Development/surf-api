@@ -4,7 +4,9 @@ import java.util.Set;
 import net.minestom.server.entity.Player;
 import org.jspecify.annotations.NullMarked;
 
-/** Exposes the private player sets of {@code ConnectionManager}, implemented by {@code ConnectionManagerMixin}. */
+/**
+ * Exposes the private player sets of {@code ConnectionManager}, implemented by {@code ConnectionManagerMixin}.
+ */
 @NullMarked
 public interface ConnectionManagerDuck {
 

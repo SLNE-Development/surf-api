@@ -2,21 +2,17 @@ package dev.slne.surf.api.minestom.server.player
 
 import dev.slne.surf.api.minestom.extension.addListener
 import dev.slne.surf.api.minestom.player.PlayerLimit
-import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import dev.slne.surf.api.minestom.player.event.AsyncPlayerCountEvent
 import dev.slne.surf.api.minestom.player.event.AsyncPlayerSpawnLocationEvent
 import dev.slne.surf.api.minestom.player.event.PlayerJoinEvent
+import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import dev.slne.surf.api.minestom.server.surfMinestomServer
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.event.EventNode
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
 
@@ -108,7 +104,9 @@ class PlayerEventsTest {
         }
     }
 
-    /** Async events have to be called on a virtual thread, like the configuration runs on. */
+    /**
+     * Runs [block] on a virtual thread, as async events and the configuration phase do.
+     */
     private fun <T> onVirtualThread(block: () -> T): T {
         val result = CompletableFuture<T>()
         Thread.startVirtualThread {

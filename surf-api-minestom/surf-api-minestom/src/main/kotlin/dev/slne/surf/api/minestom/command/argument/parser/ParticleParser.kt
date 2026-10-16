@@ -7,12 +7,11 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import net.minestom.server.particle.Particle
 
 /**
- * Reads a namespaced particle key and resolves it to its option-free [Particle.Simple] value.
+ * Parses a namespaced particle key into a [Particle.Simple].
  *
- * A key naming a particle that carries options (`dust`, `block`, `vibration`, and similar) is
- * rejected as unsupported rather than silently resolved to its default-valued instance, since this
- * parser has no syntax for particle options. An unrecognized key is rejected as unknown. Both
- * failures are reported at the position the key started at.
+ * Particles that take options, such as `dust`, `block` or `vibration`, are rejected as unsupported
+ * because the syntax has no way to supply the options. Unknown keys are rejected as well. Both
+ * failures are reported at the position where the key starts.
  */
 internal object ParticleParser : ArgumentType<Particle> {
     private val UNKNOWN = DynamicCommandExceptionType { value ->

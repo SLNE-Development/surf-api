@@ -5,7 +5,9 @@ import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin
 import net.minestom.server.event.player.PlayerSpawnEvent
 
-/** A plugin on the test class path, found through its service entry. */
+/**
+ * A plugin on the test class path, found through its service entry.
+ */
 class TestPlugin : SurfMinestomPlugin() {
     override suspend fun onLoad() {
         calls += "load"

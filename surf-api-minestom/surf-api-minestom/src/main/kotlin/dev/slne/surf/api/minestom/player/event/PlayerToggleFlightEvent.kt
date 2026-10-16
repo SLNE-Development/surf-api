@@ -14,7 +14,7 @@ class PlayerToggleFlightEvent @ApiStatus.Internal constructor(
     private val player: Player,
 
     /**
-     * Whether the player is trying to start or stop flying.
+     * The requested state: `true` to start flying, `false` to stop.
      */
     val isFlying: Boolean,
 ) : PlayerInstanceEvent, CancellableEvent {

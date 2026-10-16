@@ -11,9 +11,8 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 /**
- * `InstanceParser` is internal to the api module, so every case here reaches it through
- * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition]'s
- * publicly-typed `rawType`, rather than importing the parser directly.
+ * Tests `InstanceParser`, which is `internal` to the api module, through the `rawType` of
+ * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition].
  */
 @EnvTest
 class InstanceParserTest {

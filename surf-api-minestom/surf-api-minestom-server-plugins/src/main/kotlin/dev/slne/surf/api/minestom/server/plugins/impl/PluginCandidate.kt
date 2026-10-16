@@ -13,7 +13,7 @@ import kotlin.io.path.listDirectoryEntries
 /**
  * A plugin that was found but not loaded yet.
  *
- * @property jar the plugin's jar, or `null` for a plugin on the server's own class path
+ * @property jar the plugin's jar, or `null` for a plugin on the system class path
  */
 internal data class PluginCandidate(
     val meta: PluginMeta,
@@ -23,7 +23,7 @@ internal data class PluginCandidate(
 }
 
 /**
- * Finds the plugins in a directory and on the server's class path.
+ * Finds the plugins in a directory and on the system class path.
  */
 internal object PluginDiscovery {
     private val LOGGER = ComponentLogger.logger()
@@ -32,7 +32,9 @@ internal object PluginDiscovery {
         ignoreUnknownKeys = true
     }
 
-    /** Every jar in [directory] that carries a `minestom-plugin.json`. */
+    /**
+     * Every jar in [directory] that carries a `minestom-plugin.json`.
+     */
     fun fromDirectory(directory: Path): List<PluginCandidate> {
         if (!directory.isDirectory()) return emptyList()
 

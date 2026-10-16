@@ -20,5 +20,8 @@ import net.minestom.server.event.EventNode
  */
 fun interface EventRegistrar {
 
+    /**
+     * Adds this registrar's listeners to [node].
+     */
     fun register(node: EventNode<Event>)
 }

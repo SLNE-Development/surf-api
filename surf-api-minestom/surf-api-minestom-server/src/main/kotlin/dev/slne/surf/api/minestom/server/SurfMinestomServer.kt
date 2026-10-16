@@ -15,18 +15,23 @@ annotation class SurfMinestomServerDsl
  * An optional part of the surf api, installed through [SurfMinestomServerBuilder.install].
  *
  * Feature modules ship their feature together with an extension on [SurfMinestomServerBuilder], e.g.
- * `withSignedChat()` or `withLuckPerms()`, so that depending on the module is all it takes to
+ * `withSignedChat()` or `withLuckPerms()`, so that adding the module as a dependency is enough to
  * offer the feature.
  *
- * Features are loaded in the order of their [loadPriority], then in the order they were
- * installed, and disabled in reverse.
+ * Features are loaded ordered by [loadPriority], ties in installation order, and disabled in
+ * reverse. A feature that throws in [enable] or [disable] is logged; the other features are not
+ * affected.
  */
 interface SurfMinestomFeature {
 
-    /** Identifies the feature; a feature can be installed only once. */
+    /**
+     * Identifies the feature; a feature can be installed only once.
+     */
     val id: String
 
-    /** Features with a higher priority are loaded later and disabled earlier. */
+    /**
+     * Features with a higher priority are loaded later and disabled earlier.
+     */
     val loadPriority: Int get() = 0
 
     /**
@@ -35,10 +40,15 @@ interface SurfMinestomFeature {
      */
     fun load(api: SurfMinestomServer) = Unit
 
-    /** Called on the first tick after the server started. */
+    /**
+     * Called on the first tick after [surfMinestomServer] started the api.
+     */
     fun enable(api: SurfMinestomServer) = Unit
 
-    /** Called when the server shuts down, or when [SurfMinestomServer.shutdown] is called. */
+    /**
+     * Called when the server shuts down or [SurfMinestomServer.shutdown] is called, for every
+     * loaded feature, including one whose [enable] failed.
+     */
     fun disable(api: SurfMinestomServer) = Unit
 }
 
@@ -74,24 +84,31 @@ class SurfMinestomServerBuilder internal constructor() {
      * chose them itself:
      *
      * - `minestom.keep-alive-delay`: 2 seconds, so the proxy does not drop a player held in the
-     *   configuration phase. Kept when set with `-D`; requires the server jar built by the surf
-     *   Gradle plugin, whose bootstrap makes the property writable at runtime.
-     * - Packet compression off, since the connection to the proxy is local. Kept when the
-     *   threshold was changed from Minestom's default before [surfMinestomServer].
+     *   configuration phase. The server chose it by setting it with `-D`. Applying it requires the
+     *   server jar built by the surf Gradle plugin, whose bootstrap makes the property writable at
+     *   runtime.
+     * - Packet compression off, since the connection to the proxy is local. The server chose it by
+     *   changing the threshold from Minestom's default before [surfMinestomServer].
      */
     var recommendedServerProperties: Boolean = true
 
-    /** Installs [feature]. */
+    /**
+     * Installs [feature].
+     */
     fun install(feature: SurfMinestomFeature) {
         require(features.putIfAbsent(feature.id, feature) == null) {
             "The feature '${feature.id}' is already installed"
         }
     }
 
-    /** Whether a feature with [id] is installed. */
+    /**
+     * Whether a feature with [id] is installed.
+     */
     fun isInstalled(id: String): Boolean = id in features
 
-    /** Registers [registrars] on the event node of the surf api. */
+    /**
+     * Registers [registrars] on the event node of the surf api.
+     */
     fun listeners(vararg registrars: EventRegistrar) {
         this.registrars += registrars
     }
@@ -117,7 +134,9 @@ class SurfMinestomServerBuilder internal constructor() {
         disableEntityTicking(types.asIterable())
     }
 
-    /** @see disableEntityTicking */
+    /**
+     * @see disableEntityTicking
+     */
     fun disableEntityTicking(types: Iterable<EntityType>) {
         types.forEach { type ->
             require(type != EntityType.PLAYER) { "Players have to tick" }
@@ -129,7 +148,7 @@ class SurfMinestomServerBuilder internal constructor() {
      * Runs the configuration phase as an ordered list of steps that can each be replaced, removed
      * or extended.
      *
-     * Without this, Minestom runs its own configuration.
+     * Without this, Minestom runs its own configuration phase.
      *
      * @see ConfigurationPhaseBuilder
      */
@@ -144,13 +163,19 @@ class SurfMinestomServerBuilder internal constructor() {
  */
 interface SurfMinestomServer {
 
-    /** The event node all surf listeners are registered on. */
+    /**
+     * The event node all surf listeners are registered on.
+     */
     val eventNode: EventNode<Event>
 
-    /** The installed features, in the order they were installed. */
+    /**
+     * The installed features, ordered by [SurfMinestomFeature.loadPriority], ties in installation order.
+     */
     val features: Collection<SurfMinestomFeature>
 
-    /** The installed feature with [id], or `null` when it is not installed. */
+    /**
+     * The installed feature with [id], or `null` when it is not installed.
+     */
     fun feature(id: String): SurfMinestomFeature?
 
     /**
@@ -161,7 +186,9 @@ interface SurfMinestomServer {
     fun shutdown()
 
     companion object {
-        /** The running surf api. */
+        /**
+         * The running surf api.
+         */
         val instance: SurfMinestomServer
             get() = SurfMinestomRuntime.current()
     }
@@ -186,6 +213,9 @@ interface SurfMinestomServer {
  * ```
  *
  * The CommandAPI is ready as soon as this returns, so commands can be registered right after it.
+ *
+ * @throws IllegalStateException when the server is not initialized, the api is already running,
+ * or Mixin is not installed (tests excepted)
  */
 fun surfMinestomServer(block: SurfMinestomServerBuilder.() -> Unit = {}): SurfMinestomServer =
     SurfMinestomRuntime.start(SurfMinestomServerBuilder().apply(block))

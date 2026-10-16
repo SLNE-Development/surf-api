@@ -1,19 +1,6 @@
 package dev.slne.surf.api.minestom.server.impl.command.brigadier
 
-import dev.slne.surf.api.minestom.command.argument.BiomeArgument
-import dev.slne.surf.api.minestom.command.argument.BooleanArgument
-import dev.slne.surf.api.minestom.command.argument.CustomArgument
-import dev.slne.surf.api.minestom.command.argument.EnumArgument
-import dev.slne.surf.api.minestom.command.argument.GameModeArgument
-import dev.slne.surf.api.minestom.command.argument.InstanceArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.ListArgument
-import dev.slne.surf.api.minestom.command.argument.MultiLiteralArgument
-import dev.slne.surf.api.minestom.command.argument.PlayerArgument
-import dev.slne.surf.api.minestom.command.argument.ResourceArgument
-import dev.slne.surf.api.minestom.command.argument.SoundArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.argument.TeamColorArgument
+import dev.slne.surf.api.minestom.command.argument.*
 import net.kyori.adventure.key.Key
 import net.minestom.server.command.builder.arguments.minecraft.SuggestionType
 import net.minestom.server.registry.DynamicRegistry
@@ -24,9 +11,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 /**
- * A client only asks the server to complete a node that says so. Every kind whose values the server
- * alone knows therefore has to be declared `ask_server`, or the completions its parser computes are
- * never requested.
+ * Tests that argument kinds whose values only the server knows are declared `ask_server`. Clients
+ * request suggestions only for nodes that declare it.
  */
 @EnvTest
 class NodeDeclarationTest {

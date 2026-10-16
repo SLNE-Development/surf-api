@@ -9,7 +9,7 @@ import net.kyori.adventure.key.InvalidKeyException
 import net.kyori.adventure.key.Key
 
 /**
- * Reads a namespaced key such as `minecraft:stone`, defaulting the namespace to `minecraft`.
+ * Parses a namespaced key such as `minecraft:stone`. The namespace defaults to `minecraft`.
  */
 internal object ResourceLocationParser : ArgumentType<Key> {
     private val INVALID = SimpleCommandExceptionType(LiteralMessage("Invalid identifier"))
@@ -17,13 +17,13 @@ internal object ResourceLocationParser : ArgumentType<Key> {
     override fun parse(reader: StringReader): Key = readKey(reader)
 
     /**
-     * Reads a namespaced key from [reader], consuming only characters allowed in a key and
-     * leaving the rest of the input untouched.
+     * Reads a namespaced key from [reader], consuming only the characters a key may contain.
      *
-     * A key with no separator, or with the separator as its first character, defaults its
-     * namespace to `minecraft`. The path must not be empty.
+     * The namespace defaults to `minecraft` when the separator is missing or leading. The path must
+     * not be empty.
      *
-     * @throws CommandSyntaxException if the consumed text is not a valid key
+     * @throws CommandSyntaxException when the consumed text is not a valid key; the cursor is reset
+     * to the start of the key
      */
     fun readKey(reader: StringReader): Key {
         val start = reader.cursor

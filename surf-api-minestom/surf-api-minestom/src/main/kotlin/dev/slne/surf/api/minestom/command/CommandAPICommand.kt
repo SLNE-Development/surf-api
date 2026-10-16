@@ -31,6 +31,17 @@ data class CommandPath(
     val requirements: List<(CommandSender) -> Boolean>,
 )
 
+/**
+ * Builder for a command made of a linear argument chain and optional subcommands.
+ *
+ * Executors added through [CommandExecutable] run after the last argument of the chain, or on the
+ * command itself when no arguments are declared. Use [CommandTree] for branching argument structures.
+ *
+ * Invalid configuration, such as a malformed name, a required argument after an optional one or a
+ * non-terminal greedy argument, surfaces as [CommandValidationException] from [register].
+ *
+ * @property name label of the command; letters, digits, `.`, `_` and `-` only
+ */
 class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand> {
     private val aliases = ObjectArrayList<String>()
     private val permissions = ObjectLinkedOpenHashSet<String>()
@@ -48,6 +59,14 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         this.aliases += aliases
     }
 
+    /**
+     * Requires [permission] to use the command and all of its subcommands.
+     *
+     * Multiple calls accumulate and every permission is required. The console always passes;
+     * players need all permissions; other senders pass only while no permission is declared.
+     *
+     * @throws CommandValidationException when [permission] is blank
+     */
     fun withPermission(permission: String): CommandAPICommand = apply {
         val normalized = permission.trim()
         if (normalized.isBlank()) {
@@ -56,6 +75,10 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         permissions += normalized
     }
 
+    /**
+     * Requires [requirement] to return `true` for the sender to use the command and its subcommands.
+     * Multiple requirements accumulate and all must pass.
+     */
     fun withRequirement(requirement: (CommandSender) -> Boolean): CommandAPICommand = apply {
         requirements += requirement
     }
@@ -64,11 +87,20 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         this.arguments += arguments
     }
 
+    /**
+     * Appends [arguments] to the chain and marks each of them optional.
+     */
     fun withOptionalArguments(vararg arguments: Argument<*>): CommandAPICommand = apply {
         arguments.forEach { argument -> argument.setOptional(true) }
         this.arguments += arguments
     }
 
+    /**
+     * Adds [subcommand], reachable by its name or aliases after this command's own arguments.
+     *
+     * @throws CommandValidationException when [subcommand] is this command; longer cycles are
+     * rejected by [register]
+     */
     fun withSubcommand(subcommand: CommandAPICommand): CommandAPICommand = apply {
         if (subcommand === this) {
             throw CommandValidationException("A command cannot be its own subcommand")
@@ -150,6 +182,14 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         )
     }
 
+    /**
+     * Validates the command and registers it with the server.
+     *
+     * With a [namespace], the name and every alias are additionally registered as `namespace:label`.
+     *
+     * @throws CommandValidationException when the command or [namespace] is invalid
+     * @throws IllegalStateException when a label is already taken or the platform is not installed
+     */
     fun register(namespace: String? = null): RegisteredCommand =
         CommandAPI.register(toDefinition(), namespace)
 

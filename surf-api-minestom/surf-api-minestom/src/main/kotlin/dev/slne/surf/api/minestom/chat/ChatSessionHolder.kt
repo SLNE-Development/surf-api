@@ -34,7 +34,7 @@ interface ChatSessionHolder {
      * [unsignedContent] replaces what is displayed without touching what was signed. Passing
      * `null` shows the signed content as it was sent.
      *
-     * A message that carries no signature of this server's own is sent as plain system text.
+     * A [message] not produced by this server's signed chat is sent as plain system text.
      */
     fun sendSignedMessage(
         message: SignedMessage,
@@ -71,18 +71,22 @@ interface ChatSessionHolder {
         boundName: Component,
     )
 
-    /** Deletes the message with [signature] from this player's chat. */
+    /**
+     * Deletes the message with [signature] from this player's chat.
+     */
     fun deleteMessage(signature: SignedMessage.Signature)
 
     /**
-     * Looks the holders up; installed by the server when it runs signed chat.
+     * Looks up holders. Installed by the server when it runs signed chat.
      */
     @InternalSurfApi
     interface Provider {
         fun fromPlayer(player: Player): ChatSessionHolder?
         fun fromUuid(uuid: UUID): ChatSessionHolder?
 
-        /** Deletes a message from [player]'s chat, which works with or without signed chat. */
+        /**
+         * Deletes the message with [signature] from [player]'s chat; [player] needs no holder.
+         */
         fun deleteMessage(player: Player, signature: SignedMessage.Signature)
     }
 

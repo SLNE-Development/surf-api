@@ -5,7 +5,9 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 
 /**
- * A Brigadier [Message] that keeps the component it was built from.
+ * Brigadier [Message] that retains the [component] it was created from.
+ *
+ * [getString] returns the plain text of the component.
  */
 class ComponentMessage(val component: Component) : Message {
     override fun getString(): String =
@@ -14,5 +16,7 @@ class ComponentMessage(val component: Component) : Message {
     override fun toString(): String = string
 }
 
-/** The component [Message] was built from, or `null` if it carries none. */
+/**
+ * Returns the component this message was created from, or `null` if it is not a [ComponentMessage].
+ */
 fun Message.componentOrNull(): Component? = (this as? ComponentMessage)?.component

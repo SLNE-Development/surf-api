@@ -1,5 +1,7 @@
 package dev.slne.surf.api.minestom.command.args
 
+import dev.slne.surf.api.core.command.builder.CommandExceptionBuilder
+import dev.slne.surf.api.core.minimessage.miniMessage
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
@@ -7,15 +9,16 @@ import dev.slne.surf.api.minestom.command.argument.Argument
 import dev.slne.surf.api.minestom.command.argument.CustomArgument
 import dev.slne.surf.api.minestom.command.argument.GreedyStringArgument
 import dev.slne.surf.api.minestom.command.argument.TextArgument
-import dev.slne.surf.api.core.command.builder.CommandExceptionBuilder
-import dev.slne.surf.api.core.minimessage.miniMessage
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.ParsingException
 
 /**
- * Reads a component written in MiniMessage.
+ * Parses a MiniMessage string into a [Component].
  *
- * @param greedy whether the argument consumes the rest of the command line
+ * Malformed MiniMessage fails the command with the parser's detail message and error position.
+ *
+ * @param greedy whether the argument consumes the rest of the command line instead of one quoted or
+ * unquoted text token
  */
 open class MiniMessageArgument(
     nodeName: String,

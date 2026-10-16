@@ -21,10 +21,14 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class PluginMeta(
-    /** Identifies the plugin; lowercase letters, digits, `-` and `_`. */
+    /**
+     * Identifies the plugin; lowercase letters, digits, `-` and `_`.
+     */
     val id: String,
 
-    /** The fully qualified name of the class extending [SurfMinestomPlugin]. */
+    /**
+     * The fully qualified name of the class extending [SurfMinestomPlugin].
+     */
     val main: String,
 
     val name: String = id,
@@ -33,7 +37,9 @@ data class PluginMeta(
     val url: String? = null,
     val authors: List<String> = emptyList(),
 
-    /** The plugins this plugin needs, which are loaded and enabled before it. */
+    /**
+     * The plugins this plugin needs, which are loaded and enabled before it.
+     */
     val dependencies: List<PluginDependency> = emptyList(),
 ) {
     init {
@@ -42,17 +48,21 @@ data class PluginMeta(
     }
 
     companion object {
-        /** The file a plugin jar carries its [PluginMeta] in. */
+        /**
+         * The file a plugin jar carries its [PluginMeta] in.
+         */
         const val FILE_NAME = "minestom-plugin.json"
 
         /**
-         * Lists the main classes of the plugins on the server's own class path, one per line.
+         * Lists the main classes of the plugins on the system class path, one per line.
          *
          * A service file, so that it survives when several plugins are shaded into one server jar.
          */
         const val CLASSPATH_INDEX = "META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin"
 
-        /** Where a plugin on the class path keeps its [PluginMeta], as `<main class>.json`. */
+        /**
+         * Where a plugin on the system class path keeps its [PluginMeta], as `<main class>.json`.
+         */
         const val CLASSPATH_DIRECTORY = "META-INF/surf-minestom-plugins/"
 
         val ID_REGEX = Regex("[a-z][a-z0-9-_]{0,63}")
@@ -66,6 +76,8 @@ data class PluginMeta(
 data class PluginDependency(
     val id: String,
 
-    /** Whether the depending plugin also loads without this one. */
+    /**
+     * Whether the depending plugin also loads without this one.
+     */
     val optional: Boolean = false,
 )

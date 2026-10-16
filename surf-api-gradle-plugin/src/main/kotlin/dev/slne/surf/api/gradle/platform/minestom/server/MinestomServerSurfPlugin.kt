@@ -26,18 +26,26 @@ import xyz.jpenilla.gremlin.gradle.GremlinExtension
 import xyz.jpenilla.gremlin.gradle.WriteDependencySet
 
 /**
- * A runnable surf Minestom server: the surf api server, Minestom, the features asked for and the
- * project's own code as one executable jar.
+ * Builds a runnable surf Minestom server as one executable server jar: the surf api, the
+ * requested features and the project's own code.
  *
  * Only the project's own modules, the surf modules and the bootstrap are shaded. Every other
- * library is listed in a gremlin `dependencies.txt` instead, which the bootstrap agent
- * downloads into `libraries/`, relocates like the shadow jar and appends to the class path
- * before `main` runs. It also puts the plugins the server declares in `pluginDependencies` on
- * the class path, so the server's own code can use them.
+ * library is listed in the gremlin dependency set `dependencies.txt`. The bootstrap agent
+ * downloads these libraries into `libraries/`, relocates them like the server jar and appends
+ * them to the system class path before `main` runs.
  *
- * The jar applies the same relocations as `dev.slne.surf.api.gradle.minestom`, so plugins built
- * with it, whether dropped into `plugins/` or shaded into the server through a project
- * dependency, refer to the packages the server actually contains.
+ * Manifest attributes written to the jar:
+ * - `Launcher-Agent-Class`: the bootstrap agent.
+ * - `Surf-Delegate-Agent-Classes`: delegate agents the bootstrap agent calls after the libraries
+ *   are installed. `SurfMixinAgent` is always first so its transformer exists before any other
+ *   agent loads a Minestom class.
+ * - `Surf-Mixin-Configs`: mixin configurations of surf, the features and the project.
+ * - `Surf-Plugin-Dependencies`: plugin IDs from `pluginDependencies`, which the bootstrap puts on
+ *   the system class path.
+ *
+ * The server jar applies the same relocations as the `dev.slne.surf.api.gradle.minestom` Gradle
+ * plugin. Plugins built with that plugin therefore refer to the packages the server actually
+ * contains, whether they are dropped into `plugins/` or shaded in through a project dependency.
  */
 internal class MinestomServerSurfPlugin :
     AbstractCoreSurfPlugin<MinestomServerSurfExtension>("minestomServer", SurfApiPlatform.MINESTOM_SERVER) {
@@ -67,8 +75,8 @@ internal class MinestomServerSurfPlugin :
         }
 
         tasks.named<ShadowJar>("shadowJar") {
-            // log4j-core and its add-ons each ship a plugin cache, which have to reach the
-            // transformer to be merged instead of being dropped as duplicates
+            // log4j-core and its add-ons each ship a Log4j plugin cache; all must reach the
+            // transformer to be merged rather than dropped as duplicates
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
             mergeServiceFiles()
             transform(Log4j2PluginsCacheFileTransformer::class.java)
@@ -108,7 +116,7 @@ internal class MinestomServerSurfPlugin :
             add("implementation", "dev.slne.surf.api:$BOOTSTRAP_MODULE:${Constants.SURF_API_VERSION}")
         }
 
-        // Mixin goes first, so its transformer is installed before another agent loads a Minestom class
+        // Mixin goes first: its transformer must be installed before another agent loads a Minestom class
         val agents = listOf(MIXIN_AGENT) + features.mapNotNull(MinestomServerFeature::agentClass)
         val mixinConfigs = listOf(MIXIN_CONFIG) +
                 features.mapNotNull(MinestomServerFeature::mixinConfig) +
@@ -138,9 +146,9 @@ internal class MinestomServerSurfPlugin :
     }
 
     /**
-     * Without a configuration, Log4j only logs errors. Unless the project brings a `log4j2.xml`
-     * of its own, one is generated that logs to the console, through the terminal console when
-     * the console feature is installed.
+     * Generates a default `log4j2.xml` (console and rolling file) unless the project ships its own.
+     * Without a configuration, Log4j logs errors only. When the console feature is installed, the
+     * console appender is the terminal console.
      */
     private fun Project.registerDefaultLoggingConfiguration(console: Boolean) {
         val ownConfiguration = layout.projectDirectory.file("src/main/resources/$LOG4J_CONFIG").asFile
@@ -194,9 +202,9 @@ internal class MinestomServerSurfPlugin :
     }
 
     /**
-     * Lists every third-party library in the `dependencies.txt` the bootstrap downloads them
-     * from, with the shadow jar's relocations, and leaves the project's own modules, the surf
-     * modules and the bootstrap in the server jar.
+     * Writes every third-party library, with the server jar's relocations, to `dependencies.txt`,
+     * the file the bootstrap downloads from. The project's own modules, the surf modules and the
+     * bootstrap stay shaded in the server jar.
      */
     private fun Project.configureLibraryDownload(extension: MinestomServerSurfExtension) {
         configurations.named(RUNTIME_DOWNLOAD) {
@@ -230,8 +238,9 @@ internal class MinestomServerSurfPlugin :
     }
 
     /**
-     * Mixin reads the ASM version from the manifest of the package `org/objectweb/asm/`, which the
-     * merged server jar lacks once ASM is shaded into it.
+     * Writes the ASM version into the `org/objectweb/asm/` manifest section. Mixin reads the
+     * version there, and the server jar lacks that section once ASM is shaded in. Applied only when
+     * the libraries are shaded instead of downloaded.
      */
     private fun Project.configureShadedAsmVersion() {
         val asmVersion = configurations.named("runtimeClasspath")
@@ -259,13 +268,16 @@ internal class MinestomServerSurfPlugin :
                 moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
 
     /**
-     * The surf modules (but not the surf forks of third-party libraries, `dev.slne.forks`) stay
-     * in the server jar, as does what the bootstrap needs before anything is downloaded.
+     * Whether the module stays in the server jar: surf modules (not the third-party forks under
+     * `dev.slne.forks`) and the [BOOTSTRAP_MODULES].
      */
     private fun isShaded(group: String, module: String) =
         group == "dev.slne.surf" || group.startsWith("dev.slne.surf.") || group to module in BOOTSTRAP_MODULES
 
-    /** Builds the server jar and runs it with `java -jar`, which the agent in the manifest needs. */
+    /**
+     * Registers `runServer`, which runs the server jar with `java -jar` so that the manifest's
+     * agents apply.
+     */
     private fun Project.registerRunServer(extension: MinestomServerSurfExtension) {
         val shadowJar = tasks.named<ShadowJar>("shadowJar")
         val runDirectory = layout.projectDirectory.dir(extension.runDirectory.get()).asFile
@@ -302,7 +314,9 @@ internal class MinestomServerSurfPlugin :
         const val MIXIN_CONFIGS_ATTRIBUTE = "Surf-Mixin-Configs"
         const val MIXIN_CONFIG = "mixins.surf-api-minestom-server.json"
 
-        /** What the bootstrap needs before anything is downloaded. */
+        /**
+         * What the bootstrap needs before anything is downloaded.
+         */
         val BOOTSTRAP_MODULES = setOf(
             "xyz.jpenilla" to "gremlin-runtime",
             "org.jspecify" to "jspecify",

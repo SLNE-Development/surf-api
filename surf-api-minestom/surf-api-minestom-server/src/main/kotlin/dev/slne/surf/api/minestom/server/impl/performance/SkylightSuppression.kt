@@ -6,16 +6,22 @@ import net.minestom.server.instance.light.Light
 import net.minestom.server.instance.light.LightCompute
 import net.minestom.server.instance.palette.Palette
 
-/** Sky light selection used by [dev.slne.surf.api.minestom.server.mixin.LightingChunkSkylightMixin]. */
+/**
+ * Sky light selection used by [dev.slne.surf.api.minestom.server.mixin.LightingChunkSkylightMixin].
+ */
 object SkylightSuppression {
 
-    /** Returns the sky light of [section], or [DisabledSkyLight] when the dimension has no skylight. */
+    /**
+     * The sky light of [section], or [DisabledSkyLight] when the dimension has no sky light.
+     */
     @JvmStatic
     fun sectionSkyLight(hasSkylight: Boolean, section: Section): Light {
         return if (hasSkylight) section.skyLight() else DisabledSkyLight
     }
 
-    /** Stand-in that never relights, never sends and reports an empty array, so no sky mask bit is set. */
+    /**
+     * Sky light that never relights or sends and reports unset content, so no sky light mask bit is set.
+     */
     @Suppress("UnstableApiUsage")
     object DisabledSkyLight : Light {
 

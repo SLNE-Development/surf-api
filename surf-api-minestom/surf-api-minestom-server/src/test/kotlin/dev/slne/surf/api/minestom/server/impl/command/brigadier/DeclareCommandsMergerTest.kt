@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
 /**
- * A node's suggestion type is only written to the packet when its flags carry
- * [DeclareCommandsPacket.HAS_SUGGESTION_TYPE], so a merged node that names `ask_server` without that
- * flag reaches the client as one offering no completions at all.
+ * Tests that merged nodes naming `ask_server` also carry
+ * [DeclareCommandsPacket.HAS_SUGGESTION_TYPE]. The packet writes a suggestion type only when that
+ * flag is set, so without it the client receives a node that offers no suggestions.
  */
 @EnvTest
 class DeclareCommandsMergerTest {
@@ -63,8 +63,8 @@ class DeclareCommandsMergerTest {
     }
 
     /**
-     * The CommandAPI's commands merged into a tree holding nothing but a root, which is all the
-     * merger reads of the packet Minestom produced.
+     * The CommandAPI's commands merged into a tree that contains only a root, the only part of
+     * Minestom's packet the merger reads.
      */
     private fun merge(sender: CommandSender): DeclareCommandsPacket {
         val root = DeclareCommandsPacket.Node().apply {

@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Drops the per-tick hologram teleport that {@code AbstractNpcEntity#update} triggers for every
- * NPC: the display is only moved when it is not already on {@code npc.position.add(offset)}.
+ * Cancels the per-tick {@code syncWithNpc} teleport of the text display while the display
+ * already sits on {@code npc.position.add(offset)}. See {@link NpcDisplaySync#isSynchronized}.
  */
 @Mixin(value = TextDisplayController.class, remap = false)
 abstract class TextDisplayControllerMixin {

@@ -12,13 +12,7 @@ import dev.slne.surf.api.minestom.command.CommandDefinition
 import dev.slne.surf.api.minestom.command.CommandPath
 import dev.slne.surf.api.minestom.command.argument.ArgumentDefinition
 import dev.slne.surf.api.minestom.command.argument.ArgumentKind
-import dev.slne.surf.api.minestom.command.executor.CommandArguments
-import dev.slne.surf.api.minestom.command.executor.ExecutionInfo
-import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
-import dev.slne.surf.api.minestom.command.executor.ExecutorType
-import dev.slne.surf.api.minestom.command.executor.ParsedArgument
-import dev.slne.surf.api.minestom.command.executor.handleCommandExecutorFailure
-import dev.slne.surf.api.minestom.command.executor.launchCommandExecutor
+import dev.slne.surf.api.minestom.command.executor.*
 import dev.slne.surf.api.minestom.coroutine.minestomAsyncScope
 import dev.slne.surf.api.minestom.server.impl.command.AccumulatedConditions
 import dev.slne.surf.api.minestom.server.impl.command.MinestomConditions
@@ -39,8 +33,10 @@ private val NO_COMPATIBLE_EXECUTOR: Component = Component.text(
 /**
  * The Brigadier command tree that owns parsing and dispatch for every registered command.
  *
- * Nodes are rebuilt from the registered [CommandDefinition]s whenever the set of commands changes,
- * because Brigadier offers no way to detach a node from a dispatcher.
+ * The dispatcher is rebuilt from the registered [CommandDefinition]s whenever the set of commands
+ * changes, because Brigadier cannot detach a node from a dispatcher. [register], [unregister] and
+ * [clear] are not thread-safe and must be serialized by the caller; [dispatcher] and [registered]
+ * can be read from any thread.
  */
 internal class BrigadierCommandTree(
     private val conditions: MinestomConditions = MinestomConditions(),
@@ -50,6 +46,11 @@ internal class BrigadierCommandTree(
 
     private val entries = Object2ObjectLinkedOpenHashMap<String, Entry>()
 
+    /**
+     * The current dispatcher, replaced as a whole on every change.
+     *
+     * A reference obtained earlier keeps the command set it was built from.
+     */
     @Volatile
     var dispatcher = CommandDispatcher<CommandSender>()
         private set
@@ -57,21 +58,33 @@ internal class BrigadierCommandTree(
     @Volatile
     private var registeredSnapshot: List<Pair<List<String>, CommandDefinition>> = emptyList()
 
+    /**
+     * Registers [definition] under [labels], replacing any command previously registered with the
+     * same [key].
+     */
     fun register(key: String, labels: Collection<String>, definition: CommandDefinition) {
         entries[key] = Entry(ObjectArrayList(labels), definition)
         rebuild()
     }
 
+    /**
+     * Removes the command registered under [key]; unknown keys are ignored.
+     */
     fun unregister(key: String) {
         if (entries.remove(key) != null) rebuild()
     }
 
+    /**
+     * Removes every command.
+     */
     fun clear() {
         entries.clear()
         rebuild()
     }
 
-    /** Every registered command, paired with the labels it answers to. */
+    /**
+     * Every registered command, paired with the labels it answers to.
+     */
     fun registered(): List<Pair<List<String>, CommandDefinition>> = registeredSnapshot
 
     private fun rebuild() {
@@ -92,8 +105,8 @@ internal class BrigadierCommandTree(
     ): LiteralArgumentBuilder<CommandSender> {
         val root = LiteralArgumentBuilder.literal<CommandSender>(label)
 
-        // Requirements every path agrees on gate the root, so a sender who can use none of them
-        // never sees the command at all rather than reaching it and being turned away
+        // Conditions shared by all paths gate the root, hiding the command from senders who can
+        // use none of them.
         val shared = sharedConditions(definition)
         if (shared.permissions.isNotEmpty() || shared.requirements.isNotEmpty()) {
             root.requires { sender ->
@@ -118,10 +131,8 @@ internal class BrigadierCommandTree(
         conditions.commonForPaths(definition.paths, AccumulatedConditions())
 
     /**
-     * Returns the argument counts at which [path] is executable.
-     *
-     * An optional suffix makes every length from the first optional argument onwards executable,
-     * which is how a single declared path yields several usable syntaxes.
+     * The argument counts at which [path] can execute: its full length, or every length from the
+     * first optional argument onwards.
      */
     private fun executableDepths(path: CommandPath): IntRange {
         val firstOptional = path.arguments.indexOfFirst(ArgumentDefinition<*>::optional)
@@ -160,11 +171,11 @@ internal class BrigadierCommandTree(
     }
 
     /**
-     * Builds the node for [definition].
+     * Builds the node for [definition]: a literal node for a literal kind, otherwise an argument
+     * node typed by the definition's raw type.
      *
-     * A literal becomes a Brigadier literal node rather than an argument, which is why a literal and
-     * an argument may share a name on the same path. Everything else becomes an argument node driven
-     * by the definition's own raw type.
+     * Signed message kinds use [SignedMessageArgumentType]. A custom suggestion provider wraps the
+     * type in [SuggestingArgumentType].
      */
     private fun nodeFor(definition: ArgumentDefinition<*>): ArgumentBuilder<CommandSender, *> {
         val kind = definition.kind
@@ -185,6 +196,13 @@ internal class BrigadierCommandTree(
         return RequiredArgumentBuilder.argument(definition.nodeName, type)
     }
 
+    /**
+     * The command executed when [path] is run with [depth] arguments.
+     *
+     * Returns `0` when the sender fails the path's conditions, no executor matches its type or the
+     * executor throws; the last two cases are reported to the sender. A suspending executor is
+     * launched and reported as successful before it completes.
+     */
     private fun executor(path: CommandPath, depth: Int) = Command { context ->
         val sender = context.source
         if (!conditions.canUse(sender, path.permissions, path.requirements)) {
@@ -221,10 +239,9 @@ internal class BrigadierCommandTree(
     }
 
     /**
-     * Snapshots the value-carrying arguments of [path] that a command at [depth] can see.
+     * Collects the non-literal arguments of [path] for a command executed with [depth] arguments.
      *
-     * A literal occupies no argument name and is left out. Arguments beyond [depth] were not typed,
-     * so they fall back to their declared default.
+     * An argument at or beyond [depth] is marked absent and takes its declared default value.
      */
     private fun argumentsOf(
         context: CommandContext<CommandSender>,
@@ -268,6 +285,11 @@ internal class BrigadierCommandTree(
         return null
     }
 
+    /**
+     * The executor for the type of [sender]: its own type first, then [ExecutorType.ANY].
+     *
+     * Yields `null` when neither matches exactly one executor.
+     */
     private fun selectExecutor(
         sender: CommandSender,
         executors: List<ExecutorDefinition>,

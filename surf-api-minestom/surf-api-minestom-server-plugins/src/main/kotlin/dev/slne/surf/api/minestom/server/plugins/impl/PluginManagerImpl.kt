@@ -4,13 +4,7 @@ import dev.slne.surf.api.minestom.plugin.PluginManager
 import dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin
 import dev.slne.surf.api.minestom.server.impl.command.PluginCommands
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
@@ -19,6 +13,10 @@ import kotlin.io.path.div
 
 /**
  * Loads, enables and disables the plugins of the server.
+ *
+ * Lifecycle functions run to completion on the calling thread. A plugin that throws from `onLoad`
+ * is cleaned up and removed, and plugins that require it are not loaded. A plugin that throws from
+ * `onEnable` is disabled and removed. [plugins] and [plugin] may be called from any thread.
  */
 @OptIn(InternalSurfApi::class)
 internal class PluginManagerImpl(
@@ -35,7 +33,8 @@ internal class PluginManagerImpl(
         synchronized(loaded) { loaded.firstOrNull { it.plugin.meta.id == id }?.plugin }
 
     /**
-     * Creates every plugin in [candidates] that can be loaded and calls their `onLoad`.
+     * Creates every loadable plugin of [candidates] in dependency order and calls its `onLoad`.
+     * Plugins that cannot be loaded are logged.
      */
     fun load(candidates: List<PluginCandidate>) {
         val order = PluginLoadOrder.order(candidates)
@@ -74,7 +73,10 @@ internal class PluginManagerImpl(
         }
     }
 
-    /** Calls `onEnable` of every loaded plugin, disabling those that fail. */
+    /**
+     * Calls `onEnable` of every loaded plugin. A plugin that fails is disabled, which includes
+     * calling its `onDisable`.
+     */
     fun enable() {
         for (loadedPlugin in synchronized(loaded) { loaded.toList() }) {
             val meta = loadedPlugin.plugin.meta
@@ -86,7 +88,9 @@ internal class PluginManagerImpl(
         }
     }
 
-    /** Disables every plugin, in reverse order of loading. */
+    /**
+     * Disables every plugin in reverse load order.
+     */
     fun disableAll() {
         for (loadedPlugin in synchronized(loaded) { loaded.toList() }.asReversed()) {
             disable(loadedPlugin)
@@ -118,8 +122,8 @@ internal class PluginManagerImpl(
         val eventNode = EventNode.all("plugin-${meta.id}")
         var scope: CoroutineScope? = null
 
-        // The context is handed to the plugin while it is constructed, so that its property
-        // initializers can use it. For an `object`, that happens while its class is initialized.
+        // The context must exist during construction so property initializers can use it; for an
+        // `object` that is during class initialization.
         val plugin = SurfMinestomPlugin.constructing({ plugin ->
             val pluginScope = CoroutineScope(
                 SupervisorJob() +
@@ -154,7 +158,10 @@ internal class PluginManagerImpl(
         return LoadedPlugin(plugin, classLoader, pluginScope)
     }
 
-    /** The `object` instance of [mainClass], or a new instance from its no-argument constructor. */
+    /**
+     * Returns the `object` instance of [mainClass], or a new instance from its no-argument
+     * constructor.
+     */
     private fun instantiate(mainClass: Class<*>): SurfMinestomPlugin {
         val objectInstance = mainClass.declaredFields.firstOrNull { field ->
             field.name == "INSTANCE" &&
@@ -182,7 +189,9 @@ internal class PluginManagerImpl(
         return result.toList()
     }
 
-    /** Runs a lifecycle function of the plugin, reporting whether it completed. */
+    /**
+     * Runs a lifecycle function of the plugin and returns whether it completed without throwing.
+     */
     private fun runLifecycle(
         loadedPlugin: LoadedPlugin,
         phase: String,

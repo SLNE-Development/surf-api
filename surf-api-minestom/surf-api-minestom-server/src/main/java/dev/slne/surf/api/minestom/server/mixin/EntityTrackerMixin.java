@@ -21,11 +21,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import space.vectrix.flare.fastutil.Int2ObjectSyncMap;
 
 /**
- * Speeds up {@code nearbyEntitiesByChunkRange}: with few tracked entities it scans them directly
- * against the requested range instead of probing every chunk bucket ({@code (2r+1)^2} map gets,
- * 4225 at view distance 32); the remaining bucket path drops the spiral traversal for a plain
- * rectangular loop. Membership checks use the tracker-recorded position, keeping vanilla
- * chunk-boundary semantics.
+ * Speeds up {@code nearbyEntitiesByChunkRange}.
+ *
+ * <p>When {@link EntityViewerLookup#useDirectScan} accepts the entity count and range, the
+ * tracked entities are tested against the range directly instead of probing every chunk bucket
+ * ({@code (2r+1)^2} lookups, 4225 at range 32). Otherwise the bucket path runs with a rectangular
+ * loop in place of the spiral traversal. Range checks use the position recorded by the tracker,
+ * which preserves Minestom's chunk-boundary semantics.</p>
  */
 @Mixin(targets = "net.minestom.server.instance.EntityTrackerImpl", remap = false)
 abstract class EntityTrackerMixin {
