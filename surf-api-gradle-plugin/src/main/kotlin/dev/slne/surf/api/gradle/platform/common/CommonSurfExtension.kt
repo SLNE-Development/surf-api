@@ -4,6 +4,7 @@ import dev.slne.surf.api.gradle.SurfCoreModules
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingExtension
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.property
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -19,6 +20,7 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
     internal val withSurfRedis = objects.property<Boolean>().convention(false)
     internal val surfRedisVersion = objects.property<String>()
     internal val surfRedisRelocation = objects.property<String>()
+    internal val withSurfNats = objects.property<Boolean>().convention(false)
     internal val withSurfDatabaseR2dbc = objects.property<Boolean>().convention(false)
     internal val surfDatabaseR2dbcVersion = objects.property<String>()
     internal val surfDatabaseR2dbcRelocation = objects.property<String>()
@@ -53,6 +55,15 @@ abstract class CommonSurfExtension(protected val objects: ObjectFactory) {
         surfRedisRelocation.set(relocation)
         surfRedisRelocation.finalizeValue()
     }
+
+
+    fun withSurfNats() {
+        withSurfNats.set(true)
+        withSurfNats.finalizeValue()
+    }
+
+    val surfNatsEnabled: Provider<Boolean>
+        get() = withSurfNats
 
     fun withSurfDatabaseR2dbc(version: String, relocation: String) {
         withSurfDatabaseR2dbc.set(true)

@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.2.2")
+    append("2.4.0")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -47,6 +47,14 @@ dependencies {
 
     implementation("com.palantir.javapoet:javapoet:0.20.0")
     implementation(libs.bundles.kotlin.serialization)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 gradlePlugin {
@@ -130,7 +138,7 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
     inputs.property("libs.versions.commandapiplugin", libs.versions.commandapiplugin.get())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
-    inputs.property("libs.versions.luckperms", libs.versions.luckperms.get())
+    inputs.property("libs.versions.luckpermsplugin.bukkit", libs.versions.luckpermsplugin.bukkit.get())
     inputs.property(
         "libs.versions.packetevents",
         libs.versions.packetevents.plugin.get()
@@ -175,7 +183,7 @@ val generateConstants = tasks.register("generateConstants") {
             |
             |    const val COMMAND_API_VERSION = "${libs.versions.commandapiplugin.get()}"
             |    const val PLACEHOLDER_API_VERSION = "${libs.versions.placeholder.api.get()}"
-            |    const val LUCKPERMS_VERSION = "${libs.versions.luckperms.get()}"
+            |    const val LUCKPERMS_VERSION = "${libs.versions.luckpermsplugin.bukkit.get()}"
             |    const val PACKETEVENTS_VERSION = "${libs.versions.packetevents.plugin.get()}"
             |
             |    const val TEST_JUNIT_VERSION = "${libs.versions.junit.asProvider().get()}"
