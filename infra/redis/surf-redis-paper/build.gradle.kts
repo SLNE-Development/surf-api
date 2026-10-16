@@ -7,6 +7,10 @@ surfPaperPluginApi {
     bootstrapper("dev.slne.surf.redis.PaperBootstrap")
     foliaSupported(true)
     authors.addAll("twisti")
+
+    testing {
+        mockBukkit.set(false)
+    }
 }
 
 dependencies {
