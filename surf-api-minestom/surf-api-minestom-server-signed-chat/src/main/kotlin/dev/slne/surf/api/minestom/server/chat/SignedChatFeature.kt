@@ -46,7 +46,8 @@ class SignedChatSettings internal constructor() {
      * Vanilla's `chat-spam-threshold-seconds`.
      *
      * Each chat message adds 20 to a counter that drains by 1 per tick. The player is kicked with
-     * the `disconnect.spam` message once the counter reaches 20 times this value.
+     * the `disconnect.spam` message once the counter reaches 20 times this value. 0 or less disables
+     * the check.
      */
     var chatSpamThresholdSeconds: Int = 10
 

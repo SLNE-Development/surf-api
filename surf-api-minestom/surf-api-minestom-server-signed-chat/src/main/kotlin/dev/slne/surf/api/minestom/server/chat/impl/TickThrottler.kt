@@ -20,5 +20,5 @@ internal class TickThrottler(private val incrementStep: Int, private val thresho
 
     fun isUnderThreshold() = threshold <= 0 || count.get() < threshold
 
-    fun isIncrementAndUnderThreshold() = count.addAndGet(incrementStep) < threshold
+    fun isIncrementAndUnderThreshold() = threshold <= 0 || count.addAndGet(incrementStep) < threshold
 }
