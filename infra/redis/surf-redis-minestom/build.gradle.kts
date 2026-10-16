@@ -10,7 +10,6 @@ dependencies {
 
 minestomPluginFile {
     main = "dev.slne.surf.redis.RedisMinestomPlugin"
-    authors = listOf("red")
 }
 
 val shadowComponent = components["shadow"] as AdhocComponentWithVariants
