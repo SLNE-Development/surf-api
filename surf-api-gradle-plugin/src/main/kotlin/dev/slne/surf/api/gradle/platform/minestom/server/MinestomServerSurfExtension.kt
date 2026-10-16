@@ -14,15 +14,20 @@ import javax.inject.Inject
  * An optional part of the surf Minestom server, shipped as a module of its own.
  *
  * @property agentClass the Java agent the feature needs on startup, if any
+ * @property mixinConfig the mixin configuration the feature's module ships, if any
  */
-enum class MinestomServerFeature(val module: String, internal val agentClass: String? = null) {
+enum class MinestomServerFeature(
+    val module: String,
+    internal val agentClass: String? = null,
+    internal val mixinConfig: String? = null,
+) {
     SIGNED_CHAT("surf-api-minestom-server-signed-chat"),
     LUCKPERMS(
         "surf-api-minestom-server-luckperms",
         "me.lucko.luckperms.minestom.dependencies.LuckPermsAgent",
     ),
     SPARK("surf-api-minestom-server-spark"),
-    NPC("surf-api-minestom-server-npc"),
+    NPC("surf-api-minestom-server-npc", mixinConfig = "mixins.surf-api-minestom-server-npc.json"),
     PLAYER_VISIBILITY("surf-api-minestom-server-player-visibility"),
     CONSOLE("surf-api-minestom-server-console"),
     PLUGINS("surf-api-minestom-server-plugins"),
@@ -58,6 +63,7 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
 
     internal val mainClass = objects.property<String>()
     internal val features = objects.setProperty<MinestomServerFeature>()
+    internal val mixinConfigs = objects.setProperty<String>()
 
     /**
      * Whether third-party libraries are downloaded with gremlin when the server starts instead of
@@ -88,6 +94,17 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
     /** The class holding the server's `main` function, e.g. `dev.slne.example.server.MainKt`. */
     fun mainClass(value: String) {
         mainClass.set(value)
+    }
+
+    /**
+     * Applies the mixin configuration [name], a resource of the server's own code such as
+     * `mixins.surf-lobby.json`, in addition to the ones of surf.
+     *
+     * Every configuration needs a mixin package of its own. Mixin is installed by the server jar's
+     * bootstrap, so the server must not bootstrap Mixin itself.
+     */
+    fun mixinConfig(name: String) {
+        mixinConfigs.add(name)
     }
 
     fun feature(feature: MinestomServerFeature) {

@@ -1,9 +1,10 @@
 package dev.slne.surf.api.minestom.server
 
-import dev.slne.surf.api.minestom.server.configuration.ConfigurationPhaseBuilder
 import dev.slne.surf.api.minestom.event.EventRegistrar
-import dev.slne.surf.api.minestom.server.impl.SurfMinestomRuntime
 import dev.slne.surf.api.minestom.permission.PermissionProvider
+import dev.slne.surf.api.minestom.server.configuration.ConfigurationPhaseBuilder
+import dev.slne.surf.api.minestom.server.impl.SurfMinestomRuntime
+import net.minestom.server.entity.EntityType
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
 
@@ -52,6 +53,7 @@ class SurfMinestomServerBuilder internal constructor() {
     internal val registrars = mutableListOf<EventRegistrar>()
     internal var configurationPhase: ConfigurationPhaseBuilder? = null
     internal var permissionProvider: PermissionProvider? = null
+    internal val disabledEntityTicks = mutableSetOf<EntityType>()
 
     /**
      * The name of the event node the surf api registers its listeners on. It is added as a child
@@ -66,6 +68,18 @@ class SurfMinestomServerBuilder internal constructor() {
      * @see dev.slne.surf.api.minestom.player.event.AsyncPlayerCountEvent
      */
     var maxPlayers: Int? = null
+
+    /**
+     * Whether to apply the settings surf recommends for a server behind a proxy, unless the server
+     * chose them itself:
+     *
+     * - `minestom.keep-alive-delay`: 2 seconds, so the proxy does not drop a player held in the
+     *   configuration phase. Kept when set with `-D`; requires the server jar built by the surf
+     *   Gradle plugin, whose bootstrap makes the property writable at runtime.
+     * - Packet compression off, since the connection to the proxy is local. Kept when the
+     *   threshold was changed from Minestom's default before [surfMinestomServer].
+     */
+    var recommendedServerProperties: Boolean = true
 
     /** Installs [feature]. */
     fun install(feature: SurfMinestomFeature) {
@@ -89,6 +103,26 @@ class SurfMinestomServerBuilder internal constructor() {
      */
     fun permissions(provider: PermissionProvider) {
         permissionProvider = provider
+    }
+
+    /**
+     * Stops entities of [types] from ticking, e.g. purely decorative entities in a lobby.
+     *
+     * Takes effect only when the server runs with the surf Mixin agent, i.e. from the server jar
+     * built by the surf Gradle plugin.
+     *
+     * @throws IllegalArgumentException for [EntityType.PLAYER]
+     */
+    fun disableEntityTicking(vararg types: EntityType) {
+        disableEntityTicking(types.asIterable())
+    }
+
+    /** @see disableEntityTicking */
+    fun disableEntityTicking(types: Iterable<EntityType>) {
+        types.forEach { type ->
+            require(type != EntityType.PLAYER) { "Players have to tick" }
+            disabledEntityTicks += type
+        }
     }
 
     /**

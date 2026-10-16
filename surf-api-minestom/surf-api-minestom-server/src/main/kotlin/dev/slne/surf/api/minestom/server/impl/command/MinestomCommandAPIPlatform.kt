@@ -9,7 +9,6 @@ import dev.slne.surf.api.minestom.server.impl.command.brigadier.BrigadierCommand
 import dev.slne.surf.api.minestom.server.impl.command.brigadier.DeclareCommandsMerger
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import net.minestom.server.command.CommandManager
 import net.minestom.server.command.CommandSender
@@ -20,10 +19,9 @@ import kotlin.concurrent.withLock
 /**
  * Installs CommandAPI commands into the Brigadier dispatcher, which owns their parsing and dispatch.
  *
- * Every command is also represented in Minestom's own command manager by a [CommandAPIBridgeCommand]
- * that hands the whole input over to the dispatcher, so the command runs no matter how Minestom is
- * asked to execute it. The manager is consulted first so a name already taken by a foreign Minestom
- * command is rejected rather than shadowed.
+ * Commands registered here are unknown to Minestom's own command manager, which reaches them
+ * through [CommandAPIHook] from `CommandManagerMixin`. The manager is still consulted so a name
+ * already taken by a foreign Minestom command is rejected rather than shadowed.
  */
 internal class MinestomCommandAPIPlatform(
     private val commandManager: CommandManager,
@@ -35,7 +33,6 @@ internal class MinestomCommandAPIPlatform(
 
     private val lock = ReentrantLock()
     private val registrations = ObjectOpenHashSet<CompiledRegistration>()
-    private val bridges = Reference2ObjectOpenHashMap<CompiledRegistration, CommandAPIBridgeCommand>()
     private val merger = DeclareCommandsMerger(tree)
 
     private var closed = false
@@ -64,10 +61,6 @@ internal class MinestomCommandAPIPlatform(
 
             ownership.claim(compiled.names, compiled)
             registrations += compiled
-
-            val bridge = CommandAPIBridgeCommand(compiled.names)
-            commandManager.register(bridge)
-            bridges[compiled] = bridge
 
             PluginCommands.track(compiled.registration.name)
         } catch (failure: Throwable) {
@@ -123,7 +116,6 @@ internal class MinestomCommandAPIPlatform(
 
         try {
             PluginCommands.forget(compiled.registration.name)
-            bridges.remove(compiled)?.let(commandManager::unregister)
             tree.unregister(compiled.registration.name)
         } finally {
             registrations.remove(compiled)
@@ -137,8 +129,8 @@ internal class MinestomCommandAPIPlatform(
         /**
          * The merger of the currently installed platform, or `null` while none is installed.
          *
-         * Minestom reaches the platform through [CommandAPIHook] from its own command manager and
-         * packet pipeline, neither of which can be handed an instance.
+         * The platform is created by the CommandAPI rather than by Minestom, so the mixin that
+         * reaches it through [CommandAPIHook] cannot be given it.
          */
         fun activeMerger(): DeclareCommandsMerger? = installed.get()?.merger
 

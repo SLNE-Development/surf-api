@@ -1,0 +1,133 @@
+package dev.slne.surf.api.minestom.server.impl.mixin;
+
+import com.llamalad7.mixinextras.MixinExtrasBootstrap;
+import java.io.IOException;
+import java.lang.instrument.Instrumentation;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.CodeSource;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.spongepowered.asm.launch.MixinBootstrap;
+import org.spongepowered.asm.mixin.MixinEnvironment;
+import org.spongepowered.asm.mixin.Mixins;
+
+/**
+ * Installs Mixin into a surf Minestom server.
+ *
+ * <p>Called by the server jar's bootstrap as its first delegate agent: after the libraries are on
+ * the system class path and before any other agent or {@code main} runs, so the transformer is in
+ * place before the first Minestom class is loaded. Classes loaded earlier are never transformed.</p>
+ *
+ * <p>The mixin configurations are listed in the {@value #CONFIGS_ATTRIBUTE} manifest attribute of
+ * the server jar, which the surf Gradle plugin writes from the installed features and the configs
+ * the server registers itself. Mixin can be installed only once per JVM.</p>
+ *
+ * <p>A required mixin whose target was loaded before the installation fails the installation. A
+ * transformation that fails later only loads the class untransformed and is reported by
+ * {@link #failedTransformations()}.</p>
+ */
+@NullMarked
+public final class SurfMixinAgent {
+
+    /** The manifest attribute listing the mixin configurations to apply, comma separated. */
+    public static final String CONFIGS_ATTRIBUTE = "Surf-Mixin-Configs";
+
+    private static volatile boolean installed;
+
+    private SurfMixinAgent() {
+    }
+
+    public static void agentmain(final @Nullable String args, final Instrumentation instrumentation) {
+        final List<String> configs = configsFromManifest();
+        if (configs.isEmpty()) {
+            throw new IllegalStateException("The server jar lists no mixin configurations in " + CONFIGS_ATTRIBUTE);
+        }
+        install(instrumentation, configs);
+    }
+
+    public static void premain(final @Nullable String args, final Instrumentation instrumentation) {
+        agentmain(args, instrumentation);
+    }
+
+    /**
+     * Installs the Mixin transformer through {@code instrumentation} and applies {@code configs}.
+     *
+     * @throws IllegalStateException when Mixin is already installed
+     */
+    public static synchronized void install(final Instrumentation instrumentation, final Collection<String> configs) {
+        if (installed) {
+            throw new IllegalStateException("Mixin is already installed");
+        }
+        installed = true;
+
+        final Set<String> loaded = Arrays.stream(instrumentation.getAllLoadedClasses())
+            .map(Class::getName)
+            .collect(Collectors.toUnmodifiableSet());
+
+        InstrumentationMixinService.setInstrumentation(instrumentation, loaded);
+        MixinBootstrap.init();
+        MixinExtrasBootstrap.init();
+        configs.forEach(Mixins::addConfiguration);
+        advancePhases();
+    }
+
+    /** Whether Mixin was installed into this JVM. */
+    public static boolean isInstalled() {
+        return installed;
+    }
+
+    /** Binary names of the classes that were loaded untransformed because a mixin failed to apply. */
+    public static List<String> failedTransformations() {
+        return InstrumentationMixinService.failures();
+    }
+
+    /** Mixin only selects its configurations on a phase change, which no launcher triggers here. */
+    private static void advancePhases() {
+        try {
+            final var gotoPhase = MixinEnvironment.class.getDeclaredMethod("gotoPhase", MixinEnvironment.Phase.class);
+            gotoPhase.setAccessible(true);
+            gotoPhase.invoke(null, MixinEnvironment.Phase.INIT);
+            gotoPhase.invoke(null, MixinEnvironment.Phase.DEFAULT);
+        } catch (final ReflectiveOperationException e) {
+            throw new IllegalStateException("Failed to advance the Mixin phases", e);
+        }
+    }
+
+    private static List<String> configsFromManifest() {
+        final @Nullable CodeSource codeSource = SurfMixinAgent.class.getProtectionDomain().getCodeSource();
+        if (codeSource == null) {
+            return List.of();
+        }
+
+        try {
+            final Path jar = Path.of(codeSource.getLocation().toURI());
+            if (!Files.isRegularFile(jar)) {
+                return List.of();
+            }
+
+            try (JarFile jarFile = new JarFile(jar.toFile())) {
+                final @Nullable Manifest manifest = jarFile.getManifest();
+                final @Nullable String configs = manifest == null ? null : manifest.getMainAttributes().getValue(CONFIGS_ATTRIBUTE);
+                if (configs == null) {
+                    return List.of();
+                }
+
+                return Arrays.stream(configs.split(","))
+                    .map(String::trim)
+                    .filter(config -> !config.isEmpty())
+                    .toList();
+            }
+        } catch (final IOException | URISyntaxException e) {
+            throw new IllegalStateException("Failed to read the mixin configurations from the server jar", e);
+        }
+    }
+}

@@ -6,7 +6,6 @@ import dev.slne.surf.api.minestom.server.impl.configuration.ConfigurationPhase
 import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
-import net.minestom.server.ServerFlag
 import net.minestom.server.entity.Player
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventDispatcher
@@ -16,18 +15,11 @@ import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.event.player.PlayerSettingsChangeEvent
 import net.minestom.server.network.packet.client.configuration.ClientAcceptCodeOfConductPacket
 import net.minestom.server.network.packet.server.common.PluginMessagePacket
-import net.minestom.server.network.packet.server.configuration.CodeOfConductPacket
-import net.minestom.server.network.packet.server.configuration.FinishConfigurationPacket
-import net.minestom.server.network.packet.server.configuration.ResetChatPacket
-import net.minestom.server.network.packet.server.configuration.SelectKnownPacksPacket
-import net.minestom.server.network.packet.server.configuration.UpdateEnabledFeaturesPacket
+import net.minestom.server.network.packet.server.configuration.*
+import net.minestom.server.property.ServerProperties
 import net.minestom.server.registry.Registries
 import java.util.*
-import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -122,7 +114,7 @@ object ConfigurationTasks {
             .requestKnownPacks(listOf(SelectKnownPacksPacket.MINECRAFT_CORE))
 
         val knownPacks = try {
-            response.get(ServerFlag.KNOWN_PACKS_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS)
+            response.get(ServerProperties.KNOWN_PACKS_RESPONSE_TIMEOUT.get(), TimeUnit.MILLISECONDS)
         } catch (_: TimeoutException) {
             LOGGER.warn("Player {} failed to respond to known packs query", player.username)
             player.playerConnection.disconnect()

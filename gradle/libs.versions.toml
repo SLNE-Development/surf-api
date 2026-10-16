@@ -46,6 +46,9 @@ mccoroutine = "2.23.1"
 
 # Miscellaneous Libraries
 asm = "9.10.1"
+sponge-mixin = "0.17.5+mixin.0.8.7"
+mixinextras = "0.5.5"
+flare = "2.0.1" # the version Minestom uses at runtime
 slf4j = "2.0.20"
 guava = "33.7.1-jre"
 caffeine = "3.3.0"
@@ -163,6 +166,9 @@ mccoroutine-velocity-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-v
 
 # Miscellaneous Libraries
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+sponge-mixin = { module = "net.fabricmc:sponge-mixin", version.ref = "sponge-mixin" }
+mixinextras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixinextras" }
+flare-fastutil = { module = "space.vectrix.flare:flare-fastutil", version.ref = "flare" }
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
@@ -204,6 +210,7 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core", version.ref = "reactor-netty" }
 reactor-netty-http = { module = "io.projectreactor.netty:reactor-netty-http", version.ref = "reactor-netty" }
 bytebuddy = { module = "net.bytebuddy:byte-buddy", version.ref = "bytebuddy" }
+bytebuddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "bytebuddy" }
 
 # Testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }

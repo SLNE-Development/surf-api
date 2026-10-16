@@ -1,5 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 
 plugins {
     `core-convention`
@@ -81,10 +80,14 @@ tasks {
         manifest {
             attributes["Main-Class"] = mainClassName
             attributes["Launcher-Agent-Class"] = "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
-            // LuckPerms adds the libraries it downloads to the class path through this agent
-            if (luckPerms != null) {
-                attributes["Surf-Delegate-Agent-Classes"] = "me.lucko.luckperms.minestom.dependencies.LuckPermsAgent"
-            }
+            // Mixin goes first, so its transformer is installed before another agent loads a Minestom
+            // class; LuckPerms adds the libraries it downloads to the class path through its agent
+            attributes["Surf-Delegate-Agent-Classes"] = listOfNotNull(
+                "dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent",
+                "me.lucko.luckperms.minestom.dependencies.LuckPermsAgent".takeIf { luckPerms != null },
+            ).joinToString(",")
+            attributes["Surf-Mixin-Configs"] =
+                "mixins.surf-api-minestom-server.json,mixins.surf-api-minestom-server-npc.json"
             attributes["Multi-Release"] = "true"
         }
     }

@@ -5,60 +5,58 @@ import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.argument.IntegerArgument
 import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import net.minestom.server.command.builder.Command
-import net.minestom.server.coordinate.Pos
 import net.minestom.server.command.builder.CommandResult
+import net.minestom.server.coordinate.Pos
 import net.minestom.server.network.packet.server.play.DeclareCommandsPacket
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * CommandAPI commands are reached through Minestom's own command manager by a bridge command.
+ * CommandAPI commands are reached through Minestom's own command manager by `CommandManagerMixin`.
  */
 @EnvTest
-class CommandAPIBridgeTest {
+class CommandManagerMixinTest {
 
     @Test
-    fun `the command manager runs a CommandAPI command through its bridge`(env: Env) {
+    fun `the command manager runs a CommandAPI command`(env: Env) {
         val manager = env.process().command()
         withPlatform(env) {
             val received = AtomicInteger(-1)
 
-            CommandAPICommand("bridged")
-                .withAliases("bridge")
+            CommandAPICommand("dispatched")
+                .withAliases("dispatch")
                 .withArguments(IntegerArgument("amount"))
                 .anyExecutor { _, args -> received.set(args.get<Int>("amount")) }
                 .register()
 
-            assertTrue(manager.commandExists("bridged"))
-            assertTrue(manager.commandExists("bridge"))
+            assertTrue(manager.commandExists("dispatched"))
+            assertTrue(manager.commandExists("dispatch"))
 
-            val result = manager.execute(manager.consoleSender, "bridged 7")
+            val result = manager.execute(manager.consoleSender, "dispatched 7")
             assertEquals(CommandResult.Type.SUCCESS, result.type)
             assertEquals(7, received.get())
 
-            manager.execute(manager.consoleSender, "bridge 9")
+            manager.execute(manager.consoleSender, "dispatch 9")
             assertEquals(9, received.get())
         }
     }
 
     @Test
-    fun `unregistering a command removes its bridge`(env: Env) {
+    fun `an unregistered command is unknown to the command manager`(env: Env) {
         val manager = env.process().command()
         withPlatform(env) {
             CommandAPICommand("temporary")
                 .anyExecutor { _, _ -> }
                 .register()
 
-            assertNotNull(manager.getCommand("temporary"))
+            assertTrue(manager.commandExists("temporary"))
+            assertNull(manager.getCommand("temporary"), "the command is not registered as a Minestom command")
             assertTrue(CommandAPI.unregister("temporary"))
-            assertNull(manager.getCommand("temporary"))
+            assertFalse(manager.commandExists("temporary"))
+            assertEquals(CommandResult.Type.UNKNOWN, manager.execute(manager.consoleSender, "temporary").type)
         }
     }
 
@@ -81,25 +79,21 @@ class CommandAPIBridgeTest {
     }
 
     @Test
-    fun `the declared tree replaces the bridge node with the real one`(env: Env) {
-        val manager = env.process().command()
+    fun `the declared commands contain the CommandAPI tree`(env: Env) {
         withPlatform(env) {
             CommandAPICommand("declared")
                 .withArguments(IntegerArgument("amount"))
                 .anyExecutor { _, _ -> }
                 .register()
 
-            val original = minestomDeclaration(env)
-            val merger = checkNotNull(MinestomCommandAPIPlatform.activeMerger())
-            val merged = merger.merge(original, manager.consoleSender)
+            val packet = minestomDeclaration(env)
 
-            val rootChildren = merged.nodes[merged.rootIndex].children.map { merged.nodes[it] }
+            val rootChildren = packet.nodes[packet.rootIndex].children.map { packet.nodes[it] }
             val declared = rootChildren.filter { it.name == "declared" }
-            assertEquals(1, declared.size, "only the CommandAPI's node is reachable from the root")
+            assertEquals(1, declared.size)
 
-            val arguments = declared.single().children.map { merged.nodes[it].name }
+            val arguments = declared.single().children.map { packet.nodes[it].name }
             assertEquals(listOf("amount"), arguments)
-            assertFalse("arguments" in arguments, "the bridge's greedy argument is not declared")
         }
     }
 

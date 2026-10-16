@@ -26,14 +26,18 @@ public final class dev/slne/surf/api/minestom/server/SurfMinestomServer$Companio
 }
 
 public final class dev/slne/surf/api/minestom/server/SurfMinestomServerBuilder {
+	public final fun disableEntityTicking (Ljava/lang/Iterable;)V
+	public final fun disableEntityTicking ([Lnet/minestom/server/entity/EntityType;)V
 	public final fun getEventNodeName ()Ljava/lang/String;
 	public final fun getMaxPlayers ()Ljava/lang/Integer;
+	public final fun getRecommendedServerProperties ()Z
 	public final fun install (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;)V
 	public final fun isInstalled (Ljava/lang/String;)Z
 	public final fun listeners ([Ldev/slne/surf/api/minestom/event/EventRegistrar;)V
 	public final fun permissions (Ldev/slne/surf/api/minestom/permission/PermissionProvider;)V
 	public final fun setEventNodeName (Ljava/lang/String;)V
 	public final fun setMaxPlayers (Ljava/lang/Integer;)V
+	public final fun setRecommendedServerProperties (Z)V
 	public final fun withConfigurationPhase (Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun withConfigurationPhase$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
@@ -157,5 +161,98 @@ public final class dev/slne/surf/api/minestom/server/impl/command/SignedCommandA
 public final class dev/slne/surf/api/minestom/server/impl/command/SignedCommandArgumentsKt {
 	public static final fun signableCommandArguments (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)Ljava/util/Map;
 	public static final fun signaturesCoverArguments (Lnet/minestom/server/crypto/ArgumentSignatures;Ljava/util/Map;)Z
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/configuration/ConfigurationPhaseHook {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/configuration/ConfigurationPhaseHook;
+	public static final fun configure (Ldev/slne/surf/api/minestom/server/impl/mixin/duck/ConnectionManagerDuck;Lnet/minestom/server/entity/Player;Z)Z
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/mixin/InstrumentationGlobalPropertyService : org/spongepowered/asm/service/IGlobalPropertyService {
+	public fun <init> ()V
+	public fun getProperty (Lorg/spongepowered/asm/service/IPropertyKey;)Ljava/lang/Object;
+	public fun getProperty (Lorg/spongepowered/asm/service/IPropertyKey;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun getPropertyString (Lorg/spongepowered/asm/service/IPropertyKey;Ljava/lang/String;)Ljava/lang/String;
+	public fun resolveKey (Ljava/lang/String;)Lorg/spongepowered/asm/service/IPropertyKey;
+	public fun setProperty (Lorg/spongepowered/asm/service/IPropertyKey;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/mixin/InstrumentationMixinService : org/spongepowered/asm/service/MixinServiceAbstract, org/spongepowered/asm/service/IClassBytecodeProvider, org/spongepowered/asm/service/IClassProvider {
+	public fun <init> ()V
+	public fun findAgentClass (Ljava/lang/String;Z)Ljava/lang/Class;
+	public fun findClass (Ljava/lang/String;)Ljava/lang/Class;
+	public fun findClass (Ljava/lang/String;Z)Ljava/lang/Class;
+	public fun getAdviceProvider ()Lorg/spongepowered/asm/service/IAdviceProvider;
+	public fun getAuditTrail ()Lorg/spongepowered/asm/service/IMixinAuditTrail;
+	public fun getBytecodeProvider ()Lorg/spongepowered/asm/service/IClassBytecodeProvider;
+	public fun getClassNode (Ljava/lang/String;)Lorg/objectweb/asm/tree/ClassNode;
+	public fun getClassNode (Ljava/lang/String;Z)Lorg/objectweb/asm/tree/ClassNode;
+	public fun getClassNode (Ljava/lang/String;ZI)Lorg/objectweb/asm/tree/ClassNode;
+	public fun getClassPath ()[Ljava/net/URL;
+	public fun getClassProvider ()Lorg/spongepowered/asm/service/IClassProvider;
+	public fun getClassTracker ()Lorg/spongepowered/asm/service/IClassTracker;
+	public fun getFeatureValidator ()Lorg/spongepowered/asm/service/IFeatureValidator;
+	public fun getMaxCompatibilityLevel ()Lorg/spongepowered/asm/mixin/MixinEnvironment$CompatibilityLevel;
+	public fun getMinCompatibilityLevel ()Lorg/spongepowered/asm/mixin/MixinEnvironment$CompatibilityLevel;
+	public fun getName ()Ljava/lang/String;
+	public fun getPlatformAgents ()Ljava/util/Collection;
+	public fun getPrimaryContainer ()Lorg/spongepowered/asm/launch/platform/container/IContainerHandle;
+	public fun getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	public fun getTransformerProvider ()Lorg/spongepowered/asm/service/ITransformerProvider;
+	public fun isValid ()Z
+	public fun offer (Lorg/spongepowered/asm/service/IMixinInternal;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/mixin/SurfMixinAgent {
+	public static final field CONFIGS_ATTRIBUTE Ljava/lang/String;
+	public static fun agentmain (Ljava/lang/String;Ljava/lang/instrument/Instrumentation;)V
+	public static fun failedTransformations ()Ljava/util/List;
+	public static fun install (Ljava/lang/instrument/Instrumentation;Ljava/util/Collection;)V
+	public static fun isInstalled ()Z
+	public static fun premain (Ljava/lang/String;Ljava/lang/instrument/Instrumentation;)V
+}
+
+public abstract interface class dev/slne/surf/api/minestom/server/impl/mixin/duck/ConnectionManagerDuck {
+	public abstract fun surf$configurationPlayers ()Ljava/util/Set;
+	public abstract fun surf$keepAlivePlayers ()Ljava/util/Set;
+}
+
+public abstract interface class dev/slne/surf/api/minestom/server/impl/mixin/duck/EntityTrackerEntryDuck {
+	public abstract fun surf$lastPosition ()Lnet/minestom/server/coordinate/Point;
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/performance/EntityTickFilter {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/performance/EntityTickFilter;
+	public final fun configure (Ljava/util/Collection;)V
+	public static final fun shouldTick (Lnet/minestom/server/entity/Entity;)Z
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/performance/EntityViewerLookup {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/performance/EntityViewerLookup;
+	public static final fun chunksInRangeRectangular (IIILnet/minestom/server/coordinate/ChunkRange$ChunkConsumer;)V
+	public static final fun directScan (Ljava/util/Set;Ldev/slne/surf/api/minestom/server/impl/performance/EntityViewerLookup$EntityPositionResolver;IIILjava/util/function/Consumer;)V
+	public static final fun useDirectScan (II)Z
+}
+
+public abstract interface class dev/slne/surf/api/minestom/server/impl/performance/EntityViewerLookup$EntityPositionResolver {
+	public abstract fun resolve (Lnet/minestom/server/entity/Entity;)Lnet/minestom/server/coordinate/Point;
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/performance/SkylightSuppression {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/performance/SkylightSuppression;
+	public static final fun sectionSkyLight (ZLnet/minestom/server/instance/Section;)Lnet/minestom/server/instance/light/Light;
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/performance/SkylightSuppression$DisabledSkyLight : net/minestom/server/instance/light/Light {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/performance/SkylightSuppression$DisabledSkyLight;
+	public fun array ()[B
+	public fun calculateExternal (Lnet/minestom/server/instance/palette/Palette;[Lnet/minestom/server/coordinate/Point;Lnet/minestom/server/instance/light/Light$LightLookup;Lnet/minestom/server/instance/light/Light$PaletteLookup;)Ljava/util/Set;
+	public fun calculateInternal (Lnet/minestom/server/instance/palette/Palette;III[IILnet/minestom/server/instance/light/Light$LightLookup;)Ljava/util/Set;
+	public fun flip ()V
+	public fun getLevel (III)I
+	public fun invalidate ()V
+	public fun requiresSend ()Z
+	public fun requiresUpdate ()Z
+	public fun set ([B)V
 }
 

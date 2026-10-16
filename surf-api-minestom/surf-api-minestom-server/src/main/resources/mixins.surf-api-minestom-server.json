@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8.7",
+  "package": "dev.slne.surf.api.minestom.server.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "CommandManagerMixin",
+    "ConnectionManagerMixin",
+    "EntityTickMixin",
+    "EntityTrackerEntryMixin",
+    "EntityTrackerMixin",
+    "LightingChunkSkylightMixin",
+    "ServerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

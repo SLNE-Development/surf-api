@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -44,6 +45,13 @@ public final class SurfMinestomBootstrap {
     /** The system property overriding the directory the libraries are downloaded to. */
     public static final String LIBRARIES_PROPERTY = "surf.minestom.libraries";
 
+    /**
+     * The Minestom server properties {@code SurfMinestomServerBuilder.recommendedServerProperties}
+     * may change at runtime. Minestom fixes a property's value when it is first loaded unless
+     * {@code <name>.mutable} is set beforehand.
+     */
+    private static final List<String> MUTABLE_SERVER_PROPERTIES = List.of("minestom.keep-alive-delay");
+
     private static final BootstrapLogger LOGGER = new BootstrapLogger();
 
     private SurfMinestomBootstrap() {
@@ -52,6 +60,12 @@ public final class SurfMinestomBootstrap {
     /** Called by the JVM for the {@code Launcher-Agent-Class} of a jar started with {@code java -jar}. */
     public static void agentmain(final @Nullable String args, final Instrumentation instrumentation) {
         try {
+            for (final String property : MUTABLE_SERVER_PROPERTIES) {
+                if (System.getProperty(property + ".mutable") == null) {
+                    System.setProperty(property + ".mutable", "true");
+                }
+            }
+
             final Attributes manifest = ownManifest();
             installLibraries(instrumentation);
 

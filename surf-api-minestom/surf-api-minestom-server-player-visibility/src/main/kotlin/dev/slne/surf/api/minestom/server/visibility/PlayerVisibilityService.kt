@@ -2,11 +2,11 @@ package dev.slne.surf.api.minestom.server.visibility
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import net.minestom.server.MinecraftServer
-import net.minestom.server.ServerFlag
 import net.minestom.server.entity.AutomaticPlayerVisibility
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.EntityTracker
 import net.minestom.server.instance.Instance
+import net.minestom.server.property.ServerProperties
 import net.minestom.server.timer.Task
 import net.minestom.server.timer.TaskSchedule
 
@@ -120,7 +120,7 @@ internal class PlayerVisibilityService(
 
             instance.entityTracker.nearbyEntitiesByChunkRange(
                 position,
-                ServerFlag.ENTITY_VIEW_DISTANCE,
+                ServerProperties.ENTITY_VIEW_DISTANCE.get(),
                 EntityTracker.Target.PLAYERS,
             ) { target ->
                 if (
@@ -184,7 +184,7 @@ internal class PlayerVisibilityService(
     ): Boolean {
         val origin = viewer.position
         val position = target.position
-        val range = ServerFlag.ENTITY_VIEW_DISTANCE
+        val range = ServerProperties.ENTITY_VIEW_DISTANCE.get()
 
         return position.chunkX() >= origin.chunkX() - range &&
                 position.chunkX() <= origin.chunkX() + range &&

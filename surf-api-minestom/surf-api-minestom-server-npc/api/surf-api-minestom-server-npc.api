@@ -15,3 +15,8 @@ public final class dev/slne/surf/api/minestom/server/npc/NpcFeatureKt {
 	public static final fun withNpcLib (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;)V
 }
 
+public final class dev/slne/surf/api/minestom/server/npc/impl/NpcDisplaySync {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/npc/impl/NpcDisplaySync;
+	public static final fun isSynchronized (Lnet/minestom/server/entity/Entity;Lnet/minestom/server/entity/Entity;Lnet/minestom/server/coordinate/Vec;)Z
+}
+

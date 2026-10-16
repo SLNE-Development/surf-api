@@ -4,18 +4,18 @@ import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.argument.ArgumentDefinition
+import dev.slne.surf.api.minestom.permission.MinestomPermissions
+import dev.slne.surf.api.minestom.permission.PermissionProvider
 import dev.slne.surf.api.minestom.server.impl.command.brigadier.NodeDeclaration
 import dev.slne.surf.api.minestom.server.impl.command.brigadier.NodeDeclarations
+import net.kyori.adventure.util.TriState
 import net.minestom.server.command.CommandSender
 import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.entity.Player
 import net.minestom.server.network.packet.server.play.DeclareCommandsPacket
-import net.minestom.testing.Env
-import dev.slne.surf.api.minestom.permission.MinestomPermissions
-import dev.slne.surf.api.minestom.permission.PermissionProvider
-import net.kyori.adventure.util.TriState
 import net.minestom.server.network.player.GameProfile
 import net.minestom.server.network.player.PlayerConnection
+import net.minestom.testing.Env
 
 /**
  * Runs [input] as [sender] and reports whether a command executed.
@@ -53,12 +53,8 @@ internal fun ArgumentDefinition<*>.declaration(): NodeDeclaration = NodeDeclarat
 /**
  * The command tree [player] would be sent: Minestom's own commands with the CommandAPI's merged in.
  */
-internal fun declaredCommands(env: Env, player: Player): DeclareCommandsPacket {
-    val original = env.process().command().createDeclareCommandsPacket(player)
-    val merger = MinestomCommandAPIPlatform.activeMerger()
-        ?: error("No Minestom CommandAPI platform is installed")
-    return merger.merge(original, player)
-}
+internal fun declaredCommands(env: Env, player: Player): DeclareCommandsPacket =
+    env.process().command().createDeclareCommandsPacket(player)
 
 /**
  * A player holding exactly [grantedPermissions], resolved through [MinestomPermissions].

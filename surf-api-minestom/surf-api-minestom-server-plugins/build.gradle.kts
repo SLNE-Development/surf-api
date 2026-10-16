@@ -9,6 +9,7 @@ dependencies {
 
     testImplementation(libs.minestom.server)
     testImplementation(libs.minestom.testing)
+    testImplementation(testFixtures(projects.surfApiMinestom.surfApiMinestomServer))
 }
 
 description = "surf-api-minestom-server-plugins"

@@ -15,6 +15,8 @@ import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.configuration.ConfigurationPhase
 import dev.slne.surf.api.minestom.server.impl.dialog.DialogCallbackListener
 import dev.slne.surf.api.minestom.server.impl.inventory.framework.MinestomInventoryLoader
+import dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent
+import dev.slne.surf.api.minestom.server.impl.performance.EntityTickFilter
 import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import dev.slne.surf.api.minestom.server.impl.player.PlayerFlightListener
 import kotlinx.coroutines.runBlocking
@@ -22,6 +24,7 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
+import net.minestom.server.property.ServerProperties
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -47,6 +50,8 @@ internal class SurfMinestomRuntime private constructor(
     override fun feature(id: String): SurfMinestomFeature? = builder.features[id]
 
     private fun load() {
+        checkMixins()
+        if (builder.recommendedServerProperties) RecommendedServerProperties.apply()
         preparePacketEvents()
         runBlocking {
             instance.bootstrap()
@@ -59,6 +64,7 @@ internal class SurfMinestomRuntime private constructor(
         DialogCallbackListener.register(eventNode)
         PlayerFlightListener.install()
         PlayerLimit.maxPlayers = builder.maxPlayers
+        EntityTickFilter.configure(builder.disabledEntityTicks)
         PlayerEvents.install(eventNode, configurationPhase = builder.configurationPhase != null)
         commandApi.start(eventNode)
 
@@ -116,6 +122,7 @@ internal class SurfMinestomRuntime private constructor(
         if (builder.configurationPhase != null) ConfigurationPhase.uninstall()
         commandApi.stop()
         PlayerFlightListener.uninstall()
+        EntityTickFilter.configure(emptySet())
         PlayerEvents.uninstall()
         GlobalEventHandler.removeChild(eventNode)
 
@@ -136,6 +143,23 @@ internal class SurfMinestomRuntime private constructor(
 
     companion object {
         private val LOGGER = ComponentLogger.logger()
+
+        /**
+         * Refuses to run without the mixins the CommandAPI, the configuration phase and the
+         * performance fixes depend on. Tests may run without them.
+         */
+        private fun checkMixins() {
+            if (!SurfMixinAgent.isInstalled()) {
+                check(ServerProperties.INSIDE_TEST.get()) {
+                    "Mixin is not installed; start the server from the jar built by the surf Gradle plugin"
+                }
+                LOGGER.warn("Mixin is not installed, the surf mixins do not apply")
+                return
+            }
+
+            val failed = SurfMixinAgent.failedTransformations()
+            check(failed.isEmpty()) { "Mixins failed to apply to $failed, see the log above" }
+        }
         private val current = AtomicReference<SurfMinestomRuntime?>()
 
         fun current(): SurfMinestomServer = checkNotNull(current.get()) {

@@ -19,12 +19,7 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JavaToolchainService
-import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.named
-import org.gradle.kotlin.dsl.register
-import org.gradle.kotlin.dsl.repositories
+import org.gradle.kotlin.dsl.*
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.gradle.process.CommandLineArgumentProvider
 import xyz.jpenilla.gremlin.gradle.GremlinExtension
@@ -113,14 +108,19 @@ internal class MinestomServerSurfPlugin :
             add("implementation", "dev.slne.surf.api:$BOOTSTRAP_MODULE:${Constants.SURF_API_VERSION}")
         }
 
-        val agents = features.mapNotNull(MinestomServerFeature::agentClass)
+        // Mixin goes first, so its transformer is installed before another agent loads a Minestom class
+        val agents = listOf(MIXIN_AGENT) + features.mapNotNull(MinestomServerFeature::agentClass)
+        val mixinConfigs = listOf(MIXIN_CONFIG) +
+                features.mapNotNull(MinestomServerFeature::mixinConfig) +
+                extension.mixinConfigs.get()
         val pluginDependencies = extension.pluginDependencies
             .filter { it.enabled.get() }
             .map { if (it.optional.get()) "${it.name}?" else it.name }
         tasks.named<ShadowJar>("shadowJar") {
             if (mainClass != null) manifest.attributes["Main-Class"] = mainClass
             manifest.attributes["Launcher-Agent-Class"] = BOOTSTRAP_AGENT
-            if (agents.isNotEmpty()) manifest.attributes[DELEGATE_AGENTS_ATTRIBUTE] = agents.joinToString(",")
+            manifest.attributes[DELEGATE_AGENTS_ATTRIBUTE] = agents.joinToString(",")
+            manifest.attributes[MIXIN_CONFIGS_ATTRIBUTE] = mixinConfigs.distinct().joinToString(",")
             if (pluginDependencies.isNotEmpty()) {
                 manifest.attributes[PLUGIN_DEPENDENCIES_ATTRIBUTE] = pluginDependencies.joinToString(",")
             }
@@ -130,6 +130,7 @@ internal class MinestomServerSurfPlugin :
             configureLibraryDownload(extension)
         } else {
             tasks.named<ProcessResources>("processResources") { exclude(DEPENDENCIES_FILE) }
+            configureShadedAsmVersion()
         }
 
         registerRunServer(extension)
@@ -228,6 +229,31 @@ internal class MinestomServerSurfPlugin :
         }
     }
 
+    /**
+     * Mixin reads the ASM version from the manifest of the package `org/objectweb/asm/`, which the
+     * merged server jar lacks once ASM is shaded into it.
+     */
+    private fun Project.configureShadedAsmVersion() {
+        val asmVersion = configurations.named("runtimeClasspath")
+            .flatMap { it.incoming.artifacts.resolvedArtifacts }
+            .map { artifacts ->
+                artifacts.asSequence()
+                    .map { it.id.componentIdentifier }
+                    .filterIsInstance<ModuleComponentIdentifier>()
+                    .firstOrNull { it.group == "org.ow2.asm" && it.module == "asm" }
+                    ?.version
+                    .orEmpty()
+            }
+        tasks.named<ShadowJar>("shadowJar") {
+            doFirst {
+                val version = asmVersion.get()
+                if (version.isNotEmpty()) {
+                    manifest.attributes(mapOf("Implementation-Version" to version), "org/objectweb/asm/")
+                }
+            }
+        }
+    }
+
     private fun ResolvedDependency.isShaded() =
         isShaded(moduleGroup, moduleName) ||
                 moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
@@ -272,6 +298,9 @@ internal class MinestomServerSurfPlugin :
         const val BOOTSTRAP_AGENT = "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
         const val DELEGATE_AGENTS_ATTRIBUTE = "Surf-Delegate-Agent-Classes"
         const val PLUGIN_DEPENDENCIES_ATTRIBUTE = "Surf-Plugin-Dependencies"
+        const val MIXIN_AGENT = "dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent"
+        const val MIXIN_CONFIGS_ATTRIBUTE = "Surf-Mixin-Configs"
+        const val MIXIN_CONFIG = "mixins.surf-api-minestom-server.json"
 
         /** What the bootstrap needs before anything is downloaded. */
         val BOOTSTRAP_MODULES = setOf(
