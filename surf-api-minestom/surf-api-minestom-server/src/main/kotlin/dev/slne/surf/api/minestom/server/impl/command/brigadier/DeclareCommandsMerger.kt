@@ -1,7 +1,6 @@
 package dev.slne.surf.api.minestom.server.impl.command.brigadier
 
 import dev.slne.surf.api.minestom.command.CommandDefinition
-import dev.slne.surf.api.minestom.command.CommandPath
 import dev.slne.surf.api.minestom.command.argument.ArgumentDefinition
 import dev.slne.surf.api.minestom.command.argument.ArgumentKind
 import dev.slne.surf.api.minestom.server.impl.command.MinestomConditions
@@ -68,7 +67,8 @@ internal class DeclareCommandsMerger(
     }
 
     private fun DeclareCommandsPacket.Node.isLiteral(): Boolean =
-        flags.toInt() and NODE_TYPE_MASK == LITERAL_NODE_TYPE
+        flags.toInt() and DeclareCommandsPacket.NODE_TYPE ==
+                DeclareCommandsPacket.NodeType.LITERAL.ordinal
 
     private fun emit(source: PendingNode, nodes: MutableList<DeclareCommandsPacket.Node>): Int {
         val node = DeclareCommandsPacket.Node()
@@ -123,7 +123,9 @@ internal class DeclareCommandsMerger(
      * Folds the paths of [definition] that [sender] can use into one tree.
      *
      * Paths sharing a prefix share nodes, as Brigadier merges same-named children. A path is cut at
-     * the first argument the sender may not use. Returns `null` when the sender can execute no path.
+     * the first argument the sender may not use and contributes only the nodes up to its last
+     * executable depth within the usable prefix. Returns `null` when the sender can execute no
+     * path.
      */
     private fun treeFor(definition: CommandDefinition, sender: CommandSender): PendingNode? {
         val root = PendingNode(literal = null, definition = null)
@@ -132,34 +134,27 @@ internal class DeclareCommandsMerger(
         definition.paths.forEach { path ->
             if (!conditions.canUse(sender, path.permissions, path.requirements)) return@forEach
 
-            val depths = executableDepths(path)
-            var current = root
-            if (0 in depths) {
-                root.executable = true
-                any = true
-            }
-
-            for ((index, argument) in path.arguments.withIndex()) {
-                if (!conditions.canUse(sender, argument.permissions, argument.requirements)) return@forEach
-
-                current = current.child(argument)
-                if (index + 1 in depths) {
-                    current.executable = true
-                    any = true
+            val depths = path.executableDepths()
+            val usable = path.arguments
+                .indexOfFirst { argument ->
+                    !conditions.canUse(sender, argument.permissions, argument.requirements)
                 }
+                .takeUnless { index -> index == -1 }
+                ?: path.arguments.size
+            val last = minOf(usable, depths.last)
+            if (last < depths.first) return@forEach
+
+            any = true
+            var current = root
+            if (0 in depths) root.executable = true
+
+            for (index in 0 until last) {
+                current = current.child(path.arguments[index])
+                if (index + 1 in depths) current.executable = true
             }
         }
 
         return root.takeIf { any }
-    }
-
-    private fun executableDepths(path: CommandPath): IntRange {
-        val firstOptional = path.arguments.indexOfFirst(ArgumentDefinition<*>::optional)
-        return if (firstOptional == -1) {
-            path.arguments.size..path.arguments.size
-        } else {
-            firstOptional..path.arguments.size
-        }
     }
 
     private class PendingNode(val literal: String?, val definition: ArgumentDefinition<*>?) {
@@ -178,13 +173,5 @@ internal class DeclareCommandsMerger(
                 )
             }
         }
-    }
-
-    private companion object {
-        /**
-         * The bits of a node's flags that hold its type: root, literal or argument.
-         */
-        const val NODE_TYPE_MASK = 0x03
-        const val LITERAL_NODE_TYPE = 0x01
     }
 }

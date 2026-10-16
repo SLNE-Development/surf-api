@@ -115,7 +115,8 @@ public final class SurfMinestomBootstrap {
         );
 
         try (DependencyResolver resolver = new DependencyResolver(LOGGER)) {
-            for (final Path jar : resolver.resolve(dependencies, cache).jarFiles()) {
+            // The resolved set is unordered; a fixed order keeps the class path identical between starts
+            for (final Path jar : resolver.resolve(dependencies, cache).jarFiles().stream().sorted().toList()) {
                 try {
                     instrumentation.appendToSystemClassLoaderSearch(new JarFile(jar.toFile()));
                 } catch (final IOException e) {

@@ -2,7 +2,6 @@ package dev.slne.surf.api.minestom.server.chat.impl.signature
 
 import net.kyori.adventure.chat.SignedMessage
 import net.minestom.server.crypto.MessageSignature
-import java.util.Base64
 
 
 internal fun MessageSignature.checksum(): Int = signature().contentHashCode()
@@ -21,6 +20,3 @@ internal fun MessageSignature.pack(cache: MessageSignatureCache): MessageSignatu
         MessageSignature.Packed(this)
     }
 }
-
-internal fun MessageSignature?.describe(): String =
-    if (this == null) "<no signature>" else Base64.getEncoder().encodeToString(signature())

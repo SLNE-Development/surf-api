@@ -27,18 +27,32 @@ fun ServerProcess.launch(
 suspend fun <T, R> AcquirableSource<T>.asyncSuspend(block: (T) -> R): R =
     acquirable().asyncSuspend(block)
 
+/**
+ * Runs [block] with the element while the thread owning it is held, on the IO dispatcher.
+ *
+ * [block] may return `null` when [R] is nullable.
+ */
 @Suppress("UnstableApiUsage")
 suspend fun <T, R> Acquirable<T>.asyncSuspend(block: (T) -> R): R {
     val acquire = this
     return withContext(Dispatchers.IO) {
-        var result: R? = null
+        var result: Any? = UNSET
         acquire.sync { element ->
             result = block.invoke(element)
         }
-        result!!
+
+        check(result !== UNSET) { "Acquirable did not run the block" }
+        @Suppress("UNCHECKED_CAST")
+        result as R
     }
 }
 
+/**
+ * Runs [block] with the elements of this collection on the IO dispatcher.
+ *
+ * The elements are acquired and released one at a time before [block] runs. [block] therefore
+ * runs after the acquisition ended and is not synchronized with the tick threads of the elements.
+ */
 @Suppress("UnstableApiUsage")
 suspend fun <T, R> Collection<Acquirable<T>>.asyncSuspend(block: (Collection<T>) -> R): R {
     val acquirableCollection = AcquirableCollection(this)
@@ -50,3 +64,5 @@ suspend fun <T, R> Collection<Acquirable<T>>.asyncSuspend(block: (Collection<T>)
         block.invoke(resolved)
     }
 }
+
+private val UNSET = Any()

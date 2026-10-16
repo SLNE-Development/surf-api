@@ -18,7 +18,6 @@ import net.minestom.server.network.packet.server.common.PluginMessagePacket
 import net.minestom.server.network.packet.server.configuration.*
 import net.minestom.server.property.ServerProperties
 import net.minestom.server.registry.Registries
-import java.util.*
 import java.util.concurrent.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -165,11 +164,11 @@ object ConfigurationTasks {
      * Waits until the client's settings have arrived, using the defaults after [timeout].
      */
     class AwaitSettings(private val timeout: Duration = 2.seconds) : ConfigurationTask {
-        private val received = ConcurrentHashMap<UUID, CompletableFuture<Unit>>()
+        private val received = ConcurrentHashMap<Player, CompletableFuture<Unit>>()
 
         override fun run(context: ConfigurationContext) {
             try {
-                settingsFuture(context.player.uuid)
+                settingsFuture(context.player)
                     .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             } catch (_: TimeoutException) {
                 LOGGER.warn(
@@ -181,15 +180,15 @@ object ConfigurationTasks {
 
         override fun install(node: EventNode<Event>) {
             node.addListener<PlayerSettingsChangeEvent> { event ->
-                settingsFuture(event.player.uuid).complete(Unit)
+                settingsFuture(event.player).complete(Unit)
             }
             node.addListener<PlayerDisconnectEvent> { event ->
-                received.remove(event.player.uuid)?.complete(Unit)
+                received.remove(event.player)?.complete(Unit)
             }
         }
 
-        private fun settingsFuture(uuid: UUID): CompletableFuture<Unit> =
-            received.computeIfAbsent(uuid) { CompletableFuture() }
+        private fun settingsFuture(player: Player): CompletableFuture<Unit> =
+            received.computeIfAbsent(player) { CompletableFuture() }
     }
 
     /**
@@ -200,7 +199,7 @@ object ConfigurationTasks {
      * through.
      */
     class CodeOfConduct(private val text: (Player) -> String?) : ConfigurationTask {
-        private val pending = ConcurrentHashMap<UUID, CompletableFuture<Unit>>()
+        private val pending = ConcurrentHashMap<Player, CompletableFuture<Unit>>()
 
         override fun run(context: ConfigurationContext) {
             if (!context.isFirstConfig) return
@@ -209,10 +208,10 @@ object ConfigurationTasks {
             val codeOfConduct = text(player) ?: return
 
             val future = CompletableFuture<Unit>()
-            val pendingFuture = pending.putIfAbsent(player.uuid, future) ?: future
+            val pendingFuture = pending.putIfAbsent(player, future) ?: future
 
             if (!player.isOnline) {
-                pending.remove(player.uuid, future)
+                pending.remove(player, future)
                 return
             }
 
@@ -235,7 +234,7 @@ object ConfigurationTasks {
 
         override fun install(node: EventNode<Event>) {
             node.addListener<PlayerDisconnectEvent> { event ->
-                pending.remove(event.player.uuid)?.cancel(true)
+                pending.remove(event.player)?.cancel(true)
             }
             PacketListenerManager.setConfigurationListener(
                 ClientAcceptCodeOfConductPacket::class.java,
@@ -247,7 +246,7 @@ object ConfigurationTasks {
             @Suppress("unused") packet: ClientAcceptCodeOfConductPacket,
             player: Player,
         ) {
-            val future = pending.remove(player.uuid)
+            val future = pending.remove(player)
             if (future == null) {
                 LOGGER.warn("Player {} accepted a code of conduct that was never sent", player.username)
                 player.playerConnection.disconnect()

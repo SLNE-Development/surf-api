@@ -6,7 +6,6 @@ import dev.slne.surf.api.minestom.server.chat.impl.PlayerChatHandler.Companion.M
 import dev.slne.surf.api.minestom.server.chat.impl.signature.*
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.command.signableCommandArguments
-import dev.slne.surf.api.minestom.server.impl.command.signaturesCoverArguments
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.translatable
@@ -121,6 +120,9 @@ internal class PlayerChatHandler(
     /**
      * Validates the signed arguments of a command and runs [onCommand] with them available through
      * [SignedCommandArguments]. Does nothing while the server stops.
+     *
+     * A command whose arguments fail validation is not run; the failure is reported to the player.
+     * Every handled command counts towards the command spam threshold.
      */
     fun handleSignedCommandChat(
         packet: ClientSignedCommandChatPacket,
@@ -131,18 +133,47 @@ internal class PlayerChatHandler(
         val lastSeen = unpackAndApplyLastSeen(LastSeenMessages.Update.fromPacket(packet)) ?: return
 
         tryHandleChat(packet.message(), isCommand = true) {
-            val signedArguments = getSignedArguments(packet, lastSeen) ?: return@tryHandleChat
+            val signedArguments = try {
+                getSignedArguments(packet, lastSeen)
+            } catch (failure: SignedMessageChain.DecodeException) {
+                handleMessageDecodeFailure(failure)
+                null
+            }
 
-            SignedCommandArguments.withMessages(
-                signedArguments.mapValues { (_, message) -> message.adventureView() }
-            ) { onCommand(packet.message()) }
+            if (signedArguments != null) {
+                SignedCommandArguments.withMessages(
+                    signedArguments.mapValues { (_, message) -> message.adventureView() }
+                ) { onCommand(packet.message()) }
+            }
+
             detectRateSpam(commandSpamThrottler)
         }
     }
 
+    /**
+     * Runs [command] received without signatures.
+     *
+     * With [SignedChatSettings.enforceSecureProfile], a command that has signable arguments is
+     * rejected instead.
+     */
     fun handleUnsignedCommandChat(command: String, onCommand: (String) -> Unit) {
         tryHandleChat(command, isCommand = true) {
-            onCommand(command)
+            if (config.enforceSecureProfile && signableCommandArguments(player, command).isNotEmpty()) {
+                LOGGER.warn(
+                    "Received unsigned command packet from {}, but the command requires signable arguments: {}",
+                    player.username,
+                    command
+                )
+                player.sendPacket(
+                    SystemChatPacket(
+                        translatable("chat.disabled.invalid_command_signature", NamedTextColor.RED),
+                        false
+                    )
+                )
+            } else {
+                onCommand(command)
+            }
+
             detectRateSpam(commandSpamThrottler)
         }
     }
@@ -223,48 +254,71 @@ internal class PlayerChatHandler(
 
     /**
      * The message the sender signed for every signable argument of [packet]'s command, keyed by node
-     * name, or `null` when the command must not run.
+     * name.
      *
-     * Signatures that do not cover the arguments mark the chain as broken and kick the
-     * player. A signature that fails to decode is reported to the player instead.
+     * Without signature entries, every signable argument is unpacked without a signature, so a
+     * player with a profile key, or any player while [SignedChatSettings.enforceSecureProfile] is
+     * set, fails with [SignedMessageChain.DecodeException.MISSING_PROFILE_KEY]. Entries that do not
+     * match the parsed arguments fail with
+     * [SignedMessageChain.DecodeException.INVALID_COMMAND_SIGNATURE]; an unknown argument name also
+     * breaks the signature chain.
+     *
+     * @throws SignedMessageChain.DecodeException when the command must not run
      */
     private fun getSignedArguments(
         packet: ClientSignedCommandChatPacket,
         lastSeenMessages: LastSeenMessages
-    ): Map<String, PlayerChatMessage>? {
+    ): Map<String, PlayerChatMessage> {
         val entries = packet.signatures().entries()
-        if (entries.isEmpty()) return emptyMap()
-
         val values = signableCommandArguments(player, packet.message())
-        if (!signaturesCoverArguments(packet.signatures(), values)) {
-            LOGGER.error(
-                "Failed to match the signed arguments of {} against '{}'",
-                player.username,
-                packet.message()
-            )
-            signedMessageDecoder.setChainBroken()
-            disconnect(CHAT_VALIDATION_FAILED)
-            return null
+        val signedArguments = Object2ObjectOpenHashMap<String, PlayerChatMessage>(values.size)
+
+        if (entries.isEmpty()) {
+            values.forEach { (name, value) ->
+                signedArguments[name] =
+                    signedMessageDecoder.unpack(null, SignedMessageBody.unsigned(value))
+            }
+
+            return signedArguments
         }
 
-        val signedArguments = Object2ObjectOpenHashMap<String, PlayerChatMessage>(entries.size)
         entries.forEach { entry ->
+            val value = values[entry.name()]
+            if (value == null) {
+                signedMessageDecoder.setChainBroken()
+                throw signedArgumentMismatch(packet, values)
+            }
+
             val body = SignedMessageBody(
-                content = values.getValue(entry.name()),
+                content = value,
                 timeStamp = Instant.ofEpochMilli(packet.timestamp()),
                 salt = packet.salt(),
                 lastSeen = lastSeenMessages
             )
 
-            try {
-                signedArguments[entry.name()] = signedMessageDecoder.unpack(entry.signature(), body)
-            } catch (failure: SignedMessageChain.DecodeException) {
-                handleMessageDecodeFailure(failure)
-                return null
-            }
+            signedArguments[entry.name()] = signedMessageDecoder.unpack(entry.signature(), body)
+        }
+
+        if (values.keys.any { it !in signedArguments }) {
+            throw signedArgumentMismatch(packet, values)
         }
 
         return signedArguments
+    }
+
+    private fun signedArgumentMismatch(
+        packet: ClientSignedCommandChatPacket,
+        expected: Map<String, String>
+    ): SignedMessageChain.DecodeException {
+        LOGGER.warn(
+            "Signed command mismatch for {} ('{}'): got [{}] from the client, but expected [{}]",
+            player.username,
+            packet.message(),
+            packet.signatures().entries().joinToString { it.name() },
+            expected.keys.joinToString()
+        )
+
+        return SignedMessageChain.DecodeException(SignedMessageChain.DecodeException.INVALID_COMMAND_SIGNATURE)
     }
 
     private inline fun tryHandleChat(message: String, isCommand: Boolean, chatHandler: () -> Unit) {
@@ -338,12 +392,20 @@ internal class PlayerChatHandler(
     }
 
     /**
+     * Whether the player's chat visibility setting allows player chat messages, which only `FULL`
+     * does.
+     */
+    fun acceptsChatMessages(): Boolean = player.settings.chatMessageType() == ChatMessageType.FULL
+
+    /**
      * Sends a signed chat message and records its signature for later last-seen references.
      *
-     * Kicks the player when more than [MAX_PENDING_CHATS] messages are awaiting
-     * acknowledgement. Thread-safe.
+     * Does nothing when the player does not accept chat messages. Kicks the player when more than
+     * [MAX_PENDING_CHATS] messages are awaiting acknowledgement. Thread-safe.
      */
     fun sendPlayerChatMessage(message: PlayerChatMessage, chatType: BoundChatType) {
+        if (!acceptsChatMessages()) return
+
         synchronized(messageSignatureCache) {
             player.sendPacket(
                 PlayerChatMessagePacket(
@@ -374,7 +436,13 @@ internal class PlayerChatHandler(
         }
     }
 
+    /**
+     * Sends [content] as a chat message without sender. Does nothing when the player does not
+     * accept chat messages.
+     */
     fun sendDisguisedChatMessage(content: Component, chatType: BoundChatType) {
+        if (!acceptsChatMessages()) return
+
         player.sendPacket(
             DisguisedChatPacket(content, chatType.id, chatType.name, chatType.targetName)
         )

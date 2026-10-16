@@ -14,6 +14,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import dev.slne.surf.api.minestom.command.CommandAPI
+import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.exception.ComponentMessage
 import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxException
 import net.minestom.server.command.CommandSender
@@ -48,6 +49,8 @@ data class CustomArgumentInfo<B>(
  *
  * @param base argument that reads the raw value
  * @param parser converts the base value to [T]
+ * @throws CommandValidationException when [base] is a [LiteralArgument] or a
+ * [SignedMessageArgument], which have no parser to wrap
  */
 open class CustomArgument<T, B> internal constructor(
     private val base: Argument<B>,
@@ -61,6 +64,7 @@ open class CustomArgument<T, B> internal constructor(
 
     init {
         val baseDefinition = base.toDefinition()
+        requireParsable(baseDefinition.kind, nodeName, "base")
         val defaultValue = baseDefinition.defaultValue
         when {
             defaultValue != null -> setOptional { sender ->
@@ -85,6 +89,19 @@ open class CustomArgument<T, B> internal constructor(
         get() = base.toDefinition().listDelimiter
 
     override fun stringify(value: T): String = formatter(value)
+}
+
+/**
+ * Rejects [kind]s that the platform builds without a parser, which would register a node that can
+ * never parse.
+ */
+private fun requireParsable(kind: ArgumentKind<*>, nodeName: String, role: String) {
+    val description = when (kind) {
+        is ArgumentKind.Literal -> "a literal argument"
+        is ArgumentKind.SignedMessage -> "a signed message argument"
+        else -> return
+    }
+    throw CommandValidationException("Argument '$nodeName' cannot use $description as its $role")
 }
 
 private val CUSTOM_ARGUMENT_NEEDS_SENDER = SimpleCommandExceptionType(
@@ -164,6 +181,8 @@ private fun ApiCommandSyntaxException.toBrigadier(reader: StringReader): Command
  * @param delimiter separator between elements; must be a visible non-whitespace character
  * @throws IllegalArgumentException when [delimiter] is whitespace or the NUL character, or
  * [element] is greedy
+ * @throws CommandValidationException when [element] is a [LiteralArgument] or a
+ * [SignedMessageArgument], which have no parser to repeat
  */
 class ListArgument<T>(
     nodeName: String,
@@ -173,6 +192,7 @@ class ListArgument<T>(
 ) : Argument<List<T>>(nodeName) {
     init {
         val elementDefinition = element.toDefinition()
+        requireParsable(elementDefinition.kind, nodeName, "element")
         require(!delimiter.isWhitespace() && delimiter != '\u0000') {
             "List delimiter must be a visible non-whitespace character"
         }

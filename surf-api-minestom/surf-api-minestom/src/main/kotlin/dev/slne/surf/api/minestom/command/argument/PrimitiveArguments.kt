@@ -5,12 +5,14 @@
  */
 package dev.slne.surf.api.minestom.command.argument
 
+import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.arguments.*
 import dev.slne.surf.api.minestom.command.argument.parser.FixedSetParser
 import dev.slne.surf.api.minestom.command.argument.parser.FloatRangeParser
 import dev.slne.surf.api.minestom.command.argument.parser.IntegerRangeParser
 import dev.slne.surf.api.minestom.command.argument.parser.UuidParser
 import net.minestom.server.utils.Range
+import java.math.BigDecimal
 import java.util.*
 
 /**
@@ -84,7 +86,7 @@ class FloatArgument(
         }
     }
 
-    override fun stringify(value: Float): String = value.toString()
+    override fun stringify(value: Float): String = value.toPlainDecimal()
 }
 
 /**
@@ -106,7 +108,7 @@ class DoubleArgument(
         }
     }
 
-    override fun stringify(value: Double): String = value.toString()
+    override fun stringify(value: Double): String = value.toPlainDecimal()
 }
 
 /**
@@ -115,8 +117,8 @@ class DoubleArgument(
  * The formatter defaults to the lowercase constant name. Parsing is case-sensitive; suggestions
  * match case-insensitively.
  *
- * @throws IllegalArgumentException when [values] is empty, or the formatted values are blank or not
- * unique
+ * @throws IllegalArgumentException when [values] is empty, or the formatted values are blank, contain
+ * a character Brigadier does not read in an unquoted word, or are not unique
  */
 class EnumArgument<E : Enum<E>>(
     nodeName: String,
@@ -134,6 +136,9 @@ class EnumArgument<E : Enum<E>>(
         val formattedValues = this.values.map(formatter)
 
         require(formattedValues.all(String::isNotBlank)) { "Formatted enum values must not be blank" }
+        require(formattedValues.all { value -> value.all(StringReader::isAllowedInUnquotedString) }) {
+            "Formatted enum values may only contain letters, digits, '_', '-', '.' and '+'"
+        }
         require(formattedValues.distinct().size == formattedValues.size) { "Formatted enum values must be unique" }
     }
 
@@ -174,8 +179,19 @@ class FloatRangeArgument(nodeName: String) : Argument<Range.Float>(nodeName) {
 }
 
 private fun stringifyRange(min: Number?, max: Number?): String = when {
-    min != null && min == max -> min.toString()
+    min != null && min == max -> min.toPlainDecimal()
     else -> "${min.orEmpty()}..${max.orEmpty()}"
 }
 
-private fun Number?.orEmpty(): String = this?.toString().orEmpty()
+private fun Number?.orEmpty(): String = this?.toPlainDecimal().orEmpty()
+
+/**
+ * Renders this number in plain decimal notation.
+ *
+ * Brigadier's number reader rejects the exponent that `toString()` emits for very small and very
+ * large floating-point values.
+ */
+internal fun Number.toPlainDecimal(): String {
+    val text = toString()
+    return if ('E' in text) BigDecimal(text).toPlainString() else text
+}

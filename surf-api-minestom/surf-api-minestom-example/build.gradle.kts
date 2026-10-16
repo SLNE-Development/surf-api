@@ -104,8 +104,10 @@ tasks {
 
         workingDir = runDirectory
         standardInput = System.`in`
-        doFirst { runDirectory.mkdirs() }
-        executable = launcher.get().executablePath.asFile.absolutePath
+        doFirst {
+            runDirectory.mkdirs()
+            executable = launcher.get().executablePath.asFile.absolutePath
+        }
         argumentProviders += CommandLineArgumentProvider {
             listOf("-jar", shadowJar.get().archiveFile.get().asFile.absolutePath)
         }

@@ -67,9 +67,9 @@ fun main() {
         withSpark()
         withNpcLib()
         withPlayerVisibility {
-            maxVisible = 20
-            activateAt = 25
-            deactivateBelow = 15
+            maxVisible = 10
+            activateAt = 15
+            deactivateBelow = 8
         }
         withConsole()
         withPlugins()

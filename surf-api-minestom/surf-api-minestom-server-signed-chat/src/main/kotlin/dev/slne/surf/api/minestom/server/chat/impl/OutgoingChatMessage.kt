@@ -10,7 +10,6 @@ internal sealed interface OutgoingChatMessage {
 
     fun sendToPlayer(
         handler: PlayerChatHandler,
-        filtered: Boolean,
         chatType: BoundChatType,
         unsigned: Component? = null
     )
@@ -19,7 +18,6 @@ internal sealed interface OutgoingChatMessage {
     data class Disguised(override val content: Component) : OutgoingChatMessage {
         override fun sendToPlayer(
             handler: PlayerChatHandler,
-            filtered: Boolean,
             chatType: BoundChatType,
             unsigned: Component?
         ) {
@@ -33,18 +31,11 @@ internal sealed interface OutgoingChatMessage {
 
         override fun sendToPlayer(
             handler: PlayerChatHandler,
-            filtered: Boolean,
             chatType: BoundChatType,
             unsigned: Component?
         ) {
-            var filteredMessage = message.filter(filtered)
-            if (unsigned != null) {
-                filteredMessage = filteredMessage.withUnsignedContent(unsigned)
-            }
-
-            if (!filteredMessage.isFullyFiltered()) {
-                handler.sendPlayerChatMessage(filteredMessage, chatType)
-            }
+            val outgoing = if (unsigned != null) message.withUnsignedContent(unsigned) else message
+            handler.sendPlayerChatMessage(outgoing, chatType)
         }
     }
 

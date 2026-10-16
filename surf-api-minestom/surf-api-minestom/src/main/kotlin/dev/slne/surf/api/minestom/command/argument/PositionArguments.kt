@@ -38,7 +38,8 @@ class PositionArgument(nodeName: String) : Argument<Vec>(nodeName) {
     override val kind = ArgumentKind.Position
     override val rawType: ArgumentType<Vec> =
         PositionArgumentType(blockAligned = false, twoDimensional = false)
-    override fun stringify(value: Vec): String = "${value.x()} ${value.y()} ${value.z()}"
+    override fun stringify(value: Vec): String =
+        "${value.x().toPlainDecimal()} ${value.y().toPlainDecimal()} ${value.z().toPlainDecimal()}"
 }
 
 /**
@@ -51,7 +52,8 @@ class Position2DArgument(nodeName: String) : Argument<Vec>(nodeName) {
     override val kind = ArgumentKind.Position2D
     override val rawType: ArgumentType<Vec> =
         PositionArgumentType(blockAligned = false, twoDimensional = true)
-    override fun stringify(value: Vec): String = "${value.x()} ${value.z()}"
+    override fun stringify(value: Vec): String =
+        "${value.x().toPlainDecimal()} ${value.z().toPlainDecimal()}"
 }
 
 /**
@@ -78,7 +80,8 @@ class BlockPositionArgument(nodeName: String) : Argument<Vec>(nodeName) {
 class RotationArgument(nodeName: String) : Argument<Rotation>(nodeName) {
     override val kind = ArgumentKind.Rotation
     override val rawType: ArgumentType<Rotation> = RotationArgumentType
-    override fun stringify(value: Rotation): String = "${value.yaw} ${value.pitch}"
+    override fun stringify(value: Rotation): String =
+        "${value.yaw.toPlainDecimal()} ${value.pitch.toPlainDecimal()}"
 }
 
 /**
@@ -88,7 +91,7 @@ class RotationArgument(nodeName: String) : Argument<Rotation>(nodeName) {
 class AngleArgument(nodeName: String) : Argument<Float>(nodeName) {
     override val kind = ArgumentKind.Angle
     override val rawType: ArgumentType<Float> = AngleParser
-    override fun stringify(value: Float): String = value.toString()
+    override fun stringify(value: Float): String = value.toPlainDecimal()
 }
 
 /**

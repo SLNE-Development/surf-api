@@ -42,11 +42,11 @@ class SuggestionsBranch private constructor(
      * Returns the provider for the argument that follows the values in [previousRaw], or `null`
      * when the branch defines no suggestions there.
      *
-     * When several continuations match, their providers are merged with
-     * [ArgumentSuggestions.merge].
+     * When several continuations match, the providers they define are merged with
+     * [ArgumentSuggestions.merge]; continuations without a provider are ignored.
      *
      * @throws CommandSyntaxException when a value in [previousRaw] is not among the suggestions of
-     * its position, or when matching continuations disagree on whether a provider exists
+     * its position
      */
     suspend fun getNextSuggestion(
         sender: CommandSender,
@@ -152,21 +152,13 @@ class SuggestionsBranch private constructor(
             return successes.single()
         }
 
-        val providers = successes.mapTo(ObjectArrayList(successes.size), TraversalResult::provider)
+        val providers = successes.mapNotNullTo(ObjectArrayList(successes.size), TraversalResult::provider)
 
-        if (providers.all { it == null }) {
-            return TraversalResult(null)
+        return when (providers.size) {
+            0 -> TraversalResult(null)
+            1 -> TraversalResult(providers.single())
+            else -> TraversalResult(ArgumentSuggestions.merge(*providers.toTypedArray()))
         }
-
-        if (providers.any { it == null }) {
-            throw syntax(
-                "Multiple paths for a SuggestionsBranch must either be all null or all non-null",
-                rawArguments,
-                currentProcessed,
-            )
-        }
-
-        return TraversalResult(ArgumentSuggestions.merge(*providers.filterNotNull().toTypedArray()))
     }
 
     private fun suggestionInfo(

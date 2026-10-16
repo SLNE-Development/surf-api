@@ -8,6 +8,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.tree.ArgumentCommandNode
+import com.mojang.brigadier.tree.LiteralCommandNode
 import dev.slne.surf.api.minestom.command.CommandDefinition
 import dev.slne.surf.api.minestom.command.CommandPath
 import dev.slne.surf.api.minestom.command.argument.ArgumentDefinition
@@ -31,72 +32,103 @@ private val NO_COMPATIBLE_EXECUTOR: Component = Component.text(
 )
 
 /**
+ * The argument counts at which this path can execute: its full length, or every length from the
+ * first optional argument onwards.
+ *
+ * The Brigadier tree and the tree declared to the client both derive their executable nodes from
+ * it and must agree.
+ */
+internal fun CommandPath.executableDepths(): IntRange {
+    val firstOptional = arguments.indexOfFirst(ArgumentDefinition<*>::optional)
+    return if (firstOptional == -1) {
+        arguments.size..arguments.size
+    } else {
+        firstOptional..arguments.size
+    }
+}
+
+/**
  * The Brigadier command tree that owns parsing and dispatch for every registered command.
  *
- * The dispatcher is rebuilt from the registered [CommandDefinition]s whenever the set of commands
- * changes, because Brigadier cannot detach a node from a dispatcher. [register], [unregister] and
- * [clear] are not thread-safe and must be serialized by the caller; [dispatcher] and [registered]
- * can be read from any thread.
+ * The dispatcher is rebuilt from the registered commands on the first read after the set of
+ * commands changed, because Brigadier cannot detach a node from a dispatcher. The nodes of a
+ * command are built at registration, so a definition that cannot be built fails there. [register]
+ * and [unregister] are not thread-safe and must be serialized by the caller; [dispatcher] and
+ * [registered] can be read from any thread.
  */
 internal class BrigadierCommandTree(
     private val conditions: MinestomConditions = MinestomConditions(),
     private val suggestionScope: () -> CoroutineScope = { minestomAsyncScope },
 ) {
-    private data class Entry(val labels: List<String>, val definition: CommandDefinition)
+    private class Entry(
+        val labels: List<String>,
+        val definition: CommandDefinition,
+        val nodes: List<LiteralCommandNode<CommandSender>>,
+    )
+
+    private class Snapshot(
+        val dispatcher: CommandDispatcher<CommandSender>,
+        val registered: List<Pair<List<String>, CommandDefinition>>,
+    )
 
     private val entries = Object2ObjectLinkedOpenHashMap<String, Entry>()
 
     /**
-     * The current dispatcher, replaced as a whole on every change.
+     * The snapshot of the current command set, or `null` when a change has not been built yet.
+     */
+    @Volatile
+    private var snapshot: Snapshot? = null
+
+    /**
+     * The current dispatcher, replaced as a whole after every change.
      *
      * A reference obtained earlier keeps the command set it was built from.
      */
-    @Volatile
-    var dispatcher = CommandDispatcher<CommandSender>()
-        private set
-
-    @Volatile
-    private var registeredSnapshot: List<Pair<List<String>, CommandDefinition>> = emptyList()
+    val dispatcher: CommandDispatcher<CommandSender>
+        get() = current().dispatcher
 
     /**
      * Registers [definition] under [labels], replacing any command previously registered with the
      * same [key].
      */
     fun register(key: String, labels: Collection<String>, definition: CommandDefinition) {
-        entries[key] = Entry(ObjectArrayList(labels), definition)
-        rebuild()
+        val labelList = ObjectArrayList(labels)
+        val nodes = labelList.map { label -> literalFor(label, definition).build() }
+
+        synchronized(entries) {
+            entries[key] = Entry(labelList, definition, nodes)
+            snapshot = null
+        }
     }
 
     /**
      * Removes the command registered under [key]; unknown keys are ignored.
      */
     fun unregister(key: String) {
-        if (entries.remove(key) != null) rebuild()
-    }
-
-    /**
-     * Removes every command.
-     */
-    fun clear() {
-        entries.clear()
-        rebuild()
+        synchronized(entries) {
+            if (entries.remove(key) != null) snapshot = null
+        }
     }
 
     /**
      * Every registered command, paired with the labels it answers to.
      */
-    fun registered(): List<Pair<List<String>, CommandDefinition>> = registeredSnapshot
+    fun registered(): List<Pair<List<String>, CommandDefinition>> = current().registered
 
-    private fun rebuild() {
-        val rebuilt = CommandDispatcher<CommandSender>()
+    private fun current(): Snapshot = snapshot ?: synchronized(entries) {
+        snapshot ?: build().also { built -> snapshot = built }
+    }
+
+    private fun build(): Snapshot {
+        val dispatcher = CommandDispatcher<CommandSender>()
         entries.values.forEach { entry ->
-            entry.labels.forEach { label ->
-                rebuilt.register(literalFor(label, entry.definition))
-            }
+            entry.nodes.forEach { node -> dispatcher.root.addChild(node) }
         }
 
-        registeredSnapshot = entries.values.map { entry -> entry.labels to entry.definition }
-        dispatcher = rebuilt
+        return Snapshot(
+            dispatcher = dispatcher,
+            registered = entries.values.map { entry -> entry.labels to entry.definition },
+        )
     }
 
     private fun literalFor(
@@ -115,7 +147,7 @@ internal class BrigadierCommandTree(
         }
 
         definition.paths.forEach { path ->
-            val executableDepths = executableDepths(path)
+            val executableDepths = path.executableDepths()
             if (0 in executableDepths) {
                 root.executes(executor(path, depth = 0))
             }
@@ -128,20 +160,7 @@ internal class BrigadierCommandTree(
     }
 
     private fun sharedConditions(definition: CommandDefinition): AccumulatedConditions =
-        conditions.commonForPaths(definition.paths, AccumulatedConditions())
-
-    /**
-     * The argument counts at which [path] can execute: its full length, or every length from the
-     * first optional argument onwards.
-     */
-    private fun executableDepths(path: CommandPath): IntRange {
-        val firstOptional = path.arguments.indexOfFirst(ArgumentDefinition<*>::optional)
-        return if (firstOptional == -1) {
-            path.arguments.size..path.arguments.size
-        } else {
-            firstOptional..path.arguments.size
-        }
-    }
+        conditions.commonForPaths(definition.paths)
 
     private fun chainFor(
         path: CommandPath,
@@ -199,8 +218,9 @@ internal class BrigadierCommandTree(
     /**
      * The command executed when [path] is run with [depth] arguments.
      *
-     * Returns `0` when the sender fails the path's conditions, no executor matches its type or the
-     * executor throws; the last two cases are reported to the sender. A suspending executor is
+     * Returns `0` when the sender fails the path's conditions, no executor matches its type, or the
+     * arguments cannot be resolved or the executor throws; the last three cases are reported to the
+     * sender. A suspending executor is
      * launched and reported as successful before it completes.
      */
     private fun executor(path: CommandPath, depth: Int) = Command { context ->
@@ -215,10 +235,10 @@ internal class BrigadierCommandTree(
                 return@Command 0
             }
 
-        val arguments = argumentsOf(context, path, depth)
-        val info = ExecutionInfo(sender, arguments, context.input)
-
         try {
+            val arguments = argumentsOf(context, path, depth)
+            val info = ExecutionInfo(sender, arguments, context.input)
+
             when (selected) {
                 is ExecutorDefinition.Normal -> {
                     selected.executor(info)

@@ -9,7 +9,7 @@ import net.minestom.server.crypto.FilterMask
 import net.minestom.server.crypto.MessageSignature
 import java.time.Duration
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 
 internal data class PlayerChatMessage(
@@ -23,8 +23,6 @@ internal data class PlayerChatMessage(
         private val SYSTEM_SENDER = NIL_UUID
 
         val MESSAGE_EXPIRES_AFTER_SERVER: Duration = Duration.ofMinutes(5L)
-        val MESSAGE_EXPIRES_AFTER_CLIENT: Duration =
-            MESSAGE_EXPIRES_AFTER_SERVER.plus(Duration.ofMinutes(2L))
 
         fun system(content: String) = unsigned(SYSTEM_SENDER, content)
 
@@ -50,22 +48,6 @@ internal data class PlayerChatMessage(
     fun withUnsignedContent(content: Component) =
         copy(unsignedContent = if (content != Component.text(signedContent())) content else null)
 
-    fun removeUnsignedContent() =
-        if (unsignedContent != null) copy(unsignedContent = null) else this
-
-    fun filter(filterMask: FilterMask) =
-        if (this.filterMask == filterMask) this else copy(filterMask = filterMask)
-
-    fun filter(filtered: Boolean) = filter(if (filtered) filterMask else FILTER_MASK_PASS_THROUGH)
-
-    fun removeSignature() = PlayerChatMessage(
-        link = SignedMessageLink.unsigned(sender()),
-        signature = null,
-        signedBody = SignedMessageBody.unsigned(signedContent()),
-        unsignedContent = unsignedContent,
-        filterMask = filterMask
-    )
-
     fun verify(signatureValidator: SignatureValidator): Boolean =
         signature != null && signature.verify(signatureValidator) { output ->
             updateSignature(output, link, signedBody)
@@ -82,31 +64,9 @@ internal data class PlayerChatMessage(
     fun hasExpiredServer(now: Instant): Boolean =
         now.isAfter(timeStamp().plus(MESSAGE_EXPIRES_AFTER_SERVER))
 
-    fun hasExpiredClient(now: Instant): Boolean =
-        now.isAfter(timeStamp().plus(MESSAGE_EXPIRES_AFTER_CLIENT))
-
     fun sender() = link.sender
 
     fun isSystem() = sender() == SYSTEM_SENDER
-
-    fun hasSignature() = signature != null
-
-    fun hasSignatureFrom(profileId: UUID) = hasSignature() && link.sender == profileId
-
-    fun isFullyFiltered() = filterMask.isFullyFiltered()
-
-    fun describeSigned(): String = buildString {
-        append("'").append(signedBody.content).append("' @ ").append(signedBody.timeStamp)
-        append("\n - From: ").append(link.sender).append("/").append(link.sessionId)
-        append(", message #").append(link.index)
-        append("\n - Salt: ").append(signedBody.salt)
-        append("\n - Signature: ").append(signature.describe())
-        append("\n - Last Seen: [\n")
-        for (entry in signedBody.lastSeen.entries) {
-            append("     ").append(entry.describe()).append("\n")
-        }
-        append(" ]\n")
-    }
 
     fun adventureView() = AdventureView()
 

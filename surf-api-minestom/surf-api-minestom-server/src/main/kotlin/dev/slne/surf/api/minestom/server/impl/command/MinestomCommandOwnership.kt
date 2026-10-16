@@ -1,8 +1,7 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal class MinestomCommandOwnership {
@@ -20,15 +19,6 @@ internal class MinestomCommandOwnership {
         return root
             .takeIf(String::isNotEmpty)
             ?.let(::find)
-    }
-
-    internal fun all(): Set<CompiledRegistration> {
-        val registrations = ReferenceOpenHashSet<CompiledRegistration>()
-        this.registrations.values.forEach { registration ->
-            registrations += registration
-        }
-
-        return registrations
     }
 
     internal fun claim(names: Collection<String>, registration: CompiledRegistration) {
@@ -54,10 +44,6 @@ internal class MinestomCommandOwnership {
         registration.names.forEach { rawName ->
             registrations.remove(normalize(rawName), registration)
         }
-    }
-
-    fun ownsInput(text: String): Boolean {
-        return findInput(text) != null
     }
 
     private fun normalize(name: String): String = name.lowercase(Locale.ROOT)

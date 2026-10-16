@@ -1,51 +1,33 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
+import com.mojang.brigadier.StringReader
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.argument.CustomArgument
-import dev.slne.surf.api.minestom.command.argument.EnumArgument
-import dev.slne.surf.api.minestom.command.argument.GreedyStringArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.ListArgument
-import dev.slne.surf.api.minestom.command.argument.LiteralArgument
-import dev.slne.surf.api.minestom.command.argument.PositionArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.argument.UUIDArgument
-import dev.slne.surf.api.minestom.command.argument.filter
-import dev.slne.surf.api.minestom.command.argument.map
+import dev.slne.surf.api.minestom.command.argument.*
+import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfo
+import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.command.dsl.customArgument
 import dev.slne.surf.api.minestom.command.dsl.listArgument
-import com.mojang.brigadier.StringReader
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.exception.componentOrNull
-import dev.slne.surf.api.minestom.server.impl.command.brigadier.NodeDeclarations
-import com.mojang.brigadier.exceptions.CommandSyntaxException as BrigadierCommandSyntaxException
-import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
+import dev.slne.surf.api.minestom.server.impl.command.brigadier.NodeDeclarations
 import net.kyori.adventure.identity.Identity
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.command.ArgumentParserType
 import net.minestom.server.command.CommandSender
-import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.command.builder.arguments.ArgumentType
-import net.minestom.server.command.builder.exception.ArgumentSyntaxException
 import net.minestom.server.tag.TagHandler
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import com.mojang.brigadier.exceptions.CommandSyntaxException as BrigadierCommandSyntaxException
 
 @EnvTest
 class CompositeArgumentIntegrationTest {
@@ -236,21 +218,26 @@ class CompositeArgumentIntegrationTest {
     }
 
     @Test
-    fun `custom argument wrapping a literal still fails registration despite the bypassed guard`(env: Env) {
-        withPlatform(env) { manager ->
-            val argument = CustomArgument(LiteralArgument("fixed")) { info -> info.baseValue }
-                .replaceSuggestions(ArgumentSuggestions.strings("other"))
-            val failure = assertThrows(CommandValidationException::class.java) {
-                CommandAPICommand("custom-reject-literal")
-                    .withArguments(argument)
-                    .anyExecutor { _, _ -> }
-                    .register()
-            }
-            assertEquals(
-                "Literal argument '${argument.nodeName}' cannot use custom suggestions",
-                failure.message,
-            )
-            assertFalse(runCommand(manager.consoleSender, "custom-reject-literal fixed"))
+    fun `custom and list arguments reject a literal or signed message kind at construction`() {
+        val failure = assertThrows(CommandValidationException::class.java) {
+            CustomArgument(LiteralArgument("fixed")) { info -> info.baseValue }
+        }
+        assertEquals("Argument 'fixed' cannot use a literal argument as its base", failure.message)
+
+        assertThrows(CommandValidationException::class.java) {
+            CustomArgument(SignedMessageArgument("message")) { info -> info.baseValue }
+        }
+        assertThrows(CommandValidationException::class.java) {
+            LiteralArgument("fixed").map { value -> value.length }
+        }
+        assertThrows(CommandValidationException::class.java) {
+            SignedMessageArgument("message").filter { true }
+        }
+        assertThrows(CommandValidationException::class.java) {
+            ListArgument("items", LiteralArgument("fixed"))
+        }
+        assertThrows(CommandValidationException::class.java) {
+            ListArgument("items", SignedMessageArgument("message"))
         }
     }
 
@@ -456,8 +443,11 @@ class CompositeArgumentIntegrationTest {
         try {
             block(manager)
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 

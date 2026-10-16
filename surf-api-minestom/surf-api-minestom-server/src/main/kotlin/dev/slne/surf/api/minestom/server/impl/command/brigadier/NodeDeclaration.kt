@@ -3,12 +3,12 @@ package dev.slne.surf.api.minestom.server.impl.command.brigadier
 import dev.slne.surf.api.minestom.command.argument.ArgumentDefinition
 import dev.slne.surf.api.minestom.command.argument.ArgumentKind
 import dev.slne.surf.api.minestom.command.argument.SuggestionMode
+import dev.slne.surf.api.minestom.server.impl.command.baseKind
 import net.minestom.server.command.ArgumentParserType
 import net.minestom.server.command.builder.arguments.Argument
 import net.minestom.server.command.builder.arguments.ArgumentType
 import net.minestom.server.command.builder.arguments.minecraft.SuggestionType
 import net.minestom.server.registry.BuiltinRegistries
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * How an argument node is declared to the client: the vanilla [parser], its serialized
@@ -42,11 +42,11 @@ internal data class NodeDeclaration(
  *
  * A declaration is protocol data only; the server parses input with the argument's own Brigadier
  * type. For most kinds the parser and properties are read from an equivalent native Minestom
- * argument, and the remaining kinds name their parser directly. Declarations are cached per
- * definition and never evicted; the cache is safe for concurrent use.
+ * argument, and the remaining kinds name their parser directly. Declarations are derived on every
+ * call and not cached, so no definition, and with it no plugin class loader, is retained. Safe to
+ * call from any thread.
  */
 internal class NodeDeclarations {
-    private val cache = ConcurrentHashMap<ArgumentDefinition<*>, NodeDeclaration>()
 
     /**
      * Returns the declaration of [definition].
@@ -55,21 +55,20 @@ internal class NodeDeclarations {
      * its kind is one whose suggestions the client cannot produce itself, and the native one
      * otherwise.
      */
-    fun of(definition: ArgumentDefinition<*>): NodeDeclaration = cache.computeIfAbsent(definition) {
+    fun of(definition: ArgumentDefinition<*>): NodeDeclaration {
         val base = baseDeclarationOf(definition)
         val server = definition.suggestions != SuggestionMode.BuiltIns ||
                 computesSuggestions(definition.kind)
 
-        if (server) base.copy(suggestionsType = SuggestionType.ASK_SERVER.identifier) else base
+        return if (server) base.copy(suggestionsType = SuggestionType.ASK_SERVER.identifier) else base
     }
 
     /**
      * Whether suggestions for [kind] must come from the server.
      *
-     * These kinds are declared as `ask_server` even without a suggestion provider. Custom kinds
-     * follow their base kind and list kinds their element kind.
+     * These kinds are declared as `ask_server` even without a suggestion provider.
      */
-    private tailrec fun computesSuggestions(kind: ArgumentKind<*>): Boolean = when (kind) {
+    private fun computesSuggestions(kind: ArgumentKind<*>): Boolean = when (kind.baseKind()) {
         ArgumentKind.Sound,
         ArgumentKind.PotionEffect,
         ArgumentKind.Biome,
@@ -84,8 +83,6 @@ internal class NodeDeclarations {
         is ArgumentKind.Enum<*>,
             -> true
 
-        is ArgumentKind.Custom<*, *> -> computesSuggestions(kind.base.kind)
-        is ArgumentKind.List<*> -> computesSuggestions(kind.element.kind)
         else -> false
     }
 
@@ -132,7 +129,8 @@ internal class NodeDeclarations {
             ArgumentKind.Uuid -> ArgumentType.UUID(name)
             ArgumentKind.IntegerRange -> ArgumentType.IntRange(name)
             ArgumentKind.FloatRange -> ArgumentType.FloatRange(name)
-            ArgumentKind.Command -> ArgumentType.Command(name)
+            // Minestom's command argument has no parser to declare; the raw type is a greedy string.
+            ArgumentKind.Command -> ArgumentType.StringArray(name)
 
             ArgumentKind.Player -> ArgumentType.Entity(name).singleEntity(true).onlyPlayers(true)
             is ArgumentKind.Players -> ArgumentType.Entity(name).singleEntity(false).onlyPlayers(true)

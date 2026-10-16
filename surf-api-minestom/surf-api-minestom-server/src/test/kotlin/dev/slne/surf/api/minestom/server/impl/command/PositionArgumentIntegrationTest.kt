@@ -3,30 +3,13 @@ package dev.slne.surf.api.minestom.server.impl.command
 import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.CommandAPI
-import dev.slne.surf.api.minestom.command.argument.MultiLiteralArgument
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.argument.AngleArgument
-import dev.slne.surf.api.minestom.command.argument.Axis
-import dev.slne.surf.api.minestom.command.argument.AxisArgument
-import dev.slne.surf.api.minestom.command.argument.BlockPositionArgument
-import dev.slne.surf.api.minestom.command.argument.Position2DArgument
-import dev.slne.surf.api.minestom.command.argument.PositionArgument
-import dev.slne.surf.api.minestom.command.argument.Rotation
-import dev.slne.surf.api.minestom.command.argument.RotationArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.dsl.angleArgument
-import dev.slne.surf.api.minestom.command.dsl.axisArgument
-import dev.slne.surf.api.minestom.command.dsl.blockPositionArgument
-import dev.slne.surf.api.minestom.command.dsl.location2DArgument
-import dev.slne.surf.api.minestom.command.dsl.locationArgument
-import dev.slne.surf.api.minestom.command.dsl.rotationArgument
-import dev.slne.surf.api.minestom.command.dsl.stringArgument
+import dev.slne.surf.api.minestom.command.argument.*
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import net.minestom.server.command.ArgumentParserType
-import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.command.builder.arguments.ArgumentType
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.coordinate.Vec
@@ -36,14 +19,10 @@ import net.minestom.server.network.player.GameProfile
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -329,9 +308,12 @@ class PositionArgumentIntegrationTest {
             }
             block(connected)
         } finally {
-            if (player?.isRemoved == false) player.remove()
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                if (player?.isRemoved == false) player.remove()
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
             env.destroyInstance(instance)
         }
     }

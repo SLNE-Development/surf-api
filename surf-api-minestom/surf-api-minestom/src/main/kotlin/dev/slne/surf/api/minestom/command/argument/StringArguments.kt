@@ -5,6 +5,7 @@
  */
 package dev.slne.surf.api.minestom.command.argument
 
+import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import dev.slne.surf.api.minestom.command.argument.parser.FixedSetParser
@@ -23,11 +24,14 @@ class StringArgument(nodeName: String) : Argument<String>(nodeName) {
 /**
  * A single word or a double- or single-quoted phrase, as read by Brigadier's
  * `StringArgumentType.string()`.
+ *
+ * Values are stringified as a bare word when every character is allowed unquoted, otherwise as a
+ * double-quoted phrase that escapes only `\` and `"`.
  */
 class TextArgument(nodeName: String) : Argument<String>(nodeName) {
     override val kind = ArgumentKind.Text
     override val rawType: ArgumentType<String> = StringArgumentType.string()
-    override fun stringify(value: String): String = value.asQuotablePhrase()
+    override fun stringify(value: String): String = StringArgumentType.escapeIfRequired(value)
 }
 
 /**
@@ -71,8 +75,8 @@ class LiteralArgument(
  *
  * Matching is case-sensitive; suggestions match case-insensitively.
  *
- * @throws IllegalArgumentException when no literal is given, or a literal is blank, contains
- * whitespace or is duplicated
+ * @throws IllegalArgumentException when no literal is given, or a literal is blank, contains a
+ * character Brigadier does not read in an unquoted word, or is duplicated
  */
 class MultiLiteralArgument(nodeName: String, vararg literals: String) : Argument<String>(nodeName) {
     private val literals: List<String> = ObjectList.of(*literals)
@@ -82,8 +86,8 @@ class MultiLiteralArgument(nodeName: String, vararg literals: String) : Argument
     init {
         require(this.literals.isNotEmpty()) { "Multi-literal argument must contain at least one literal" }
         require(this.literals.all(String::isNotBlank)) { "Literal values must not be blank" }
-        require(this.literals.none { literal -> literal.any(Char::isWhitespace) }) {
-            "Multi-literal values must be single tokens"
+        require(this.literals.all { literal -> literal.all(StringReader::isAllowedInUnquotedString) }) {
+            "Multi-literal values may only contain letters, digits, '_', '-', '.' and '+'"
         }
         require(this.literals.distinct().size == this.literals.size) { "Literal values must be unique" }
     }
@@ -102,39 +106,4 @@ class CommandArgument(nodeName: String) : Argument<String>(nodeName) {
     override val greedy = true
 
     override fun stringify(value: String): String = value
-}
-
-private fun String.asQuotablePhrase(): String {
-    if (none { character ->
-            character.isWhitespace() ||
-                    Character.isISOControl(character) ||
-                    character == '\'' ||
-                    character == '"'
-        }
-    ) {
-        return this
-    }
-
-    return buildString(length + 2) {
-        append('"')
-        this@asQuotablePhrase.forEach { character ->
-            append(
-                when (character) {
-                    '\\' -> "\\\\"
-                    '"' -> "\\\""
-                    '\b' -> "\\b"
-                    '\t' -> "\\t"
-                    '\n' -> "\\n"
-                    '\u000C' -> "\\f"
-                    '\r' -> "\\r"
-                    else -> if (Character.isISOControl(character)) {
-                        "\\u${character.code.toString(16).padStart(4, '0')}"
-                    } else {
-                        character
-                    }
-                },
-            )
-        }
-        append('"')
-    }
 }

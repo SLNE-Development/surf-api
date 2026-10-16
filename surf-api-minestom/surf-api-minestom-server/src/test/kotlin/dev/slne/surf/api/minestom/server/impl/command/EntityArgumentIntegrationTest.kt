@@ -1,33 +1,19 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.argument.EntitiesArgument
-import dev.slne.surf.api.minestom.command.argument.EntityArgument
-import dev.slne.surf.api.minestom.command.argument.EntityTypeArgument
-import dev.slne.surf.api.minestom.command.argument.PlayerArgument
-import dev.slne.surf.api.minestom.command.argument.PlayersArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.argument.map
-import dev.slne.surf.api.minestom.command.dsl.entitiesArgument
-import dev.slne.surf.api.minestom.command.dsl.entityArgument
-import dev.slne.surf.api.minestom.command.dsl.entityTypeArgument
-import dev.slne.surf.api.minestom.command.dsl.playerArgument
-import dev.slne.surf.api.minestom.command.dsl.playersArgument
-import com.mojang.brigadier.exceptions.CommandSyntaxException
+import dev.slne.surf.api.minestom.command.argument.*
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.executor.CommandArguments
-import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import dev.slne.surf.api.minestom.command.suggestion.SafeSuggestions
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.minestom.server.command.ArgumentParserType
-import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.command.builder.arguments.minecraft.SuggestionType
-import net.minestom.server.command.builder.exception.ArgumentSyntaxException
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
@@ -38,15 +24,10 @@ import net.minestom.server.network.player.GameProfile
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -354,11 +335,14 @@ class EntityArgumentIntegrationTest {
             }
             block(manager, alphaConnection, alpha, bravo, zombie)
         } finally {
-            zombie?.remove()
-            bravo?.remove()
-            alpha?.remove()
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                zombie?.remove()
+                bravo?.remove()
+                alpha?.remove()
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
             env.destroyInstance(instance)
         }
     }

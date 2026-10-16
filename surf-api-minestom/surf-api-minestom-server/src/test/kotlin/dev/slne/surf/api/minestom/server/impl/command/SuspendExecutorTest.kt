@@ -1,37 +1,14 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxException
-import dev.slne.surf.api.minestom.command.executor.CommandArguments
-import dev.slne.surf.api.minestom.command.executor.CommandExecutable
-import dev.slne.surf.api.minestom.command.executor.ExecutionInfo
-import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
-import dev.slne.surf.api.minestom.command.executor.ExecutorType
-import dev.slne.surf.api.minestom.command.executor.ParsedArgument
-import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfoExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
-import dev.slne.surf.api.minestom.command.dsl.anyExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.anyResultingExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.anyResultingExecutor
-import dev.slne.surf.api.minestom.command.dsl.consoleExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.consoleExecutionInfoExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.consoleExecutor
-import dev.slne.surf.api.minestom.command.dsl.consoleExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.consoleResultingExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.consoleResultingExecutor
-import dev.slne.surf.api.minestom.command.executor.launchCommandExecutor
-import dev.slne.surf.api.minestom.command.dsl.playerExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.playerExecutionInfoExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.playerExecutor
-import dev.slne.surf.api.minestom.command.dsl.playerExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.playerResultingExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.playerResultingExecutor
+import dev.slne.surf.api.minestom.command.executor.*
 import dev.slne.surf.api.minestom.coroutine.minestomAsyncScope
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import dev.slne.surf.api.minestom.event.SuspendingEventNode
+import kotlinx.coroutines.*
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.kyori.adventure.text.Component
@@ -39,7 +16,6 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.minestom.server.MinecraftServer
 import net.minestom.server.command.CommandSender
-import net.minestom.server.command.ConsoleSender
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
@@ -47,11 +23,7 @@ import net.minestom.server.network.packet.server.play.SystemChatPacket
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
 
@@ -303,6 +275,51 @@ class SuspendExecutorTest {
             assertTrue(job.isCancelled)
             messages.assertEmpty()
         }
+    }
+
+    @Test
+    fun `timeout of the executor itself is reported as an ordinary failure`(env: Env) = runTest {
+        withPlayerConnectionSuspend(env) { player, messages ->
+            val definition = ExecutorDefinition.Suspending(
+                type = ExecutorType.ANY,
+                scopeProvider = { this },
+                executor = { withTimeout(10) { delay(1_000) } },
+            )
+
+            val job = launchCommandExecutor(definition, player, CommandArguments.empty(), "timeout-test")
+            advanceUntilIdle()
+
+            assertTrue(job.isCompleted)
+            assertFalse(job.isCancelled)
+            messages.assertSingle { packet ->
+                assertMessage(
+                    Component.text(
+                        "Beim Ausführen des Befehls ist ein Fehler aufgetreten.",
+                        NamedTextColor.RED,
+                    ),
+                    packet,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `event node logs a listener timeout and continues while propagating cancellation`() = runTest {
+        val node = SuspendingEventNode<String>("timeouts")
+        val seen = mutableListOf<String>()
+        node.addListener(priority = 0) { withTimeout(10) { delay(1_000) } }
+        node.addListener(priority = 1) { event -> seen += event }
+
+        node.call("first")
+
+        assertEquals(listOf("first"), seen)
+
+        val cancelling = SuspendingEventNode<String>("cancelling")
+        cancelling.addListener { throw CancellationException("stop") }
+        cancelling.addListener { event -> seen += event }
+
+        assertTrue(runCatching { cancelling.call("second") }.exceptionOrNull() is CancellationException)
+        assertEquals(listOf("first"), seen)
     }
 
     @Test

@@ -45,6 +45,8 @@ public final class SurfMixinAgent {
 
     private static volatile boolean installed;
 
+    private static volatile @Nullable Throwable installationFailure;
+
     private SurfMixinAgent() {
     }
 
@@ -72,27 +74,41 @@ public final class SurfMixinAgent {
     /**
      * Installs the Mixin transformer through {@code instrumentation} and applies {@code configs}.
      *
-     * @throws IllegalStateException when Mixin is already installed
+     * <p>Mixin cannot be initialised again after a partial installation, so a failed installation
+     * is final: {@link #isInstalled()} stays {@code false} and every later call fails with the
+     * original failure as cause.</p>
+     *
+     * @throws IllegalStateException when Mixin is already installed or an earlier installation
+     * failed
      */
     public static synchronized void install(final Instrumentation instrumentation, final Collection<String> configs) {
         if (installed) {
             throw new IllegalStateException("Mixin is already installed");
         }
+        final @Nullable Throwable earlierFailure = installationFailure;
+        if (earlierFailure != null) {
+            throw new IllegalStateException("Mixin installation failed earlier and cannot be retried", earlierFailure);
+        }
+
+        try {
+            final Set<String> loaded = Arrays.stream(instrumentation.getAllLoadedClasses())
+                .map(Class::getName)
+                .collect(Collectors.toUnmodifiableSet());
+
+            InstrumentationMixinService.setInstrumentation(instrumentation, loaded);
+            MixinBootstrap.init();
+            MixinExtrasBootstrap.init();
+            configs.forEach(Mixins::addConfiguration);
+            advancePhases();
+        } catch (final Throwable failure) {
+            installationFailure = failure;
+            throw failure;
+        }
         installed = true;
-
-        final Set<String> loaded = Arrays.stream(instrumentation.getAllLoadedClasses())
-            .map(Class::getName)
-            .collect(Collectors.toUnmodifiableSet());
-
-        InstrumentationMixinService.setInstrumentation(instrumentation, loaded);
-        MixinBootstrap.init();
-        MixinExtrasBootstrap.init();
-        configs.forEach(Mixins::addConfiguration);
-        advancePhases();
     }
 
     /**
-     * Whether Mixin was installed into this JVM.
+     * Whether Mixin was installed completely into this JVM.
      */
     public static boolean isInstalled() {
         return installed;

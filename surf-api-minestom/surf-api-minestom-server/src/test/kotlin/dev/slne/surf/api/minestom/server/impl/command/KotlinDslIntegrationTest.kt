@@ -3,75 +3,31 @@ package dev.slne.surf.api.minestom.server.impl.command
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.argument.Argument
-import dev.slne.surf.api.minestom.command.argument.ArgumentKind
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.LiteralArgument
-import dev.slne.surf.api.minestom.command.argument.PlayerArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.argument.SuggestionMode
-import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
-import dev.slne.surf.api.minestom.command.dsl.booleanArgument
-import dev.slne.surf.api.minestom.command.dsl.commandAPICommand
-import dev.slne.surf.api.minestom.command.dsl.consoleExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.doubleArgument
-import dev.slne.surf.api.minestom.command.dsl.enumArgument
-import dev.slne.surf.api.minestom.command.dsl.floatArgument
-import dev.slne.surf.api.minestom.command.dsl.floatRangeArgument
-import dev.slne.surf.api.minestom.command.dsl.greedyStringArgument
-import dev.slne.surf.api.minestom.command.dsl.includeSafeSuggestions
-import dev.slne.surf.api.minestom.command.dsl.includeSafeSuggestionsAsync
-import dev.slne.surf.api.minestom.command.dsl.includeSafeSuggestionsWithTooltips
-import dev.slne.surf.api.minestom.command.dsl.includeSafeSuggestionsWithTooltipsAsync
-import dev.slne.surf.api.minestom.command.dsl.includeSuggestions
-import dev.slne.surf.api.minestom.command.dsl.includeSuggestionsAsync
-import dev.slne.surf.api.minestom.command.dsl.includeSuggestionsWithTooltips
-import dev.slne.surf.api.minestom.command.dsl.includeSuggestionsWithTooltipsAsync
-import dev.slne.surf.api.minestom.command.dsl.integerRangeArgument
-import dev.slne.surf.api.minestom.command.dsl.literalArgument
-import dev.slne.surf.api.minestom.command.dsl.longArgument
-import dev.slne.surf.api.minestom.command.dsl.multiLiteralArgument
-import dev.slne.surf.api.minestom.command.dsl.playerArgument
-import dev.slne.surf.api.minestom.command.dsl.playerExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.replaceSafeSuggestions
-import dev.slne.surf.api.minestom.command.dsl.replaceSafeSuggestionsAsync
-import dev.slne.surf.api.minestom.command.dsl.replaceSafeSuggestionsWithTooltips
-import dev.slne.surf.api.minestom.command.dsl.replaceSafeSuggestionsWithTooltipsAsync
-import dev.slne.surf.api.minestom.command.dsl.replaceSuggestions
-import dev.slne.surf.api.minestom.command.dsl.replaceSuggestionsAsync
-import dev.slne.surf.api.minestom.command.dsl.replaceSuggestionsWithTooltips
-import dev.slne.surf.api.minestom.command.dsl.replaceSuggestionsWithTooltipsAsync
-import dev.slne.surf.api.minestom.command.dsl.textArgument
-import dev.slne.surf.api.minestom.command.dsl.uuidArgument
+import dev.slne.surf.api.minestom.command.argument.*
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.executor.CommandArguments
-import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
-import dev.slne.surf.api.minestom.command.suggestion.StringTooltip
-import dev.slne.surf.api.minestom.command.suggestion.SuggestionInfo
-import dev.slne.surf.api.minestom.command.suggestion.SuggestionsBranch
-import dev.slne.surf.api.minestom.command.suggestion.Tooltip
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
+import dev.slne.surf.api.minestom.command.executor.ParsedArgument
+import dev.slne.surf.api.minestom.command.suggestion.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import net.kyori.adventure.chat.SignedMessage
+import net.kyori.adventure.identity.Identity
 import net.kyori.adventure.text.Component
-import net.minestom.server.command.builder.CommandResult
+import net.minestom.server.command.CommandSender
 import net.minestom.server.coordinate.Pos
-import net.minestom.server.crypto.ChatSession
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
 import net.minestom.server.network.player.GameProfile
-import net.minestom.server.network.player.PlayerConnection
+import net.minestom.server.tag.TagHandler
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.util.*
+import java.util.concurrent.CompletableFuture
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @EnvTest
@@ -415,6 +371,93 @@ class KotlinDslIntegrationTest {
     }
 
     @Test
+    fun `branch suggestions are empty for a previous value the branch rejects`(env: Env) = runTest {
+        val sender = env.process().command().consoleSender
+        val provider = ArgumentSuggestions.branch(
+            SuggestionsBranch.suggest(
+                ArgumentSuggestions.strings("a", "b"),
+                ArgumentSuggestions.strings("x"),
+            ),
+        )
+
+        fun info(vararg previous: String) = SuggestionInfo(
+            sender = sender,
+            previousArgs = CommandArguments.of(
+                previous.mapIndexed { index, raw -> ParsedArgument(index.toString(), raw, raw, present = true) },
+            ),
+            currentInput = previous.joinToString(" ", postfix = " "),
+            currentArg = "",
+        )
+
+        assertEquals(emptyList<StringTooltip>(), provider.suggest(info("zzz")))
+        assertEquals(listOf("x"), provider.suggest(info("a")).map(StringTooltip::suggestion))
+    }
+
+    @Test
+    fun `sibling branches resolving to a mix of null and non null providers use the non null ones`(env: Env) = runTest {
+        val sender = env.process().command().consoleSender
+        val branch = SuggestionsBranch.suggest(ArgumentSuggestions.strings("go"))
+            .branch(
+                SuggestionsBranch.suggest(ArgumentSuggestions.strings("x")),
+                SuggestionsBranch.suggest(ArgumentSuggestions.strings("x"), ArgumentSuggestions.strings("y")),
+            )
+
+        val provider = branch.getNextSuggestion(sender, "go", "x")
+
+        assertNotNull(provider)
+        assertEquals(
+            listOf("y"),
+            provider!!.suggest(SuggestionInfo(sender, CommandArguments.empty(), "go x ", "")).map(StringTooltip::suggestion),
+        )
+    }
+
+    @Test
+    fun `merged providers isolate failures and still propagate cancellation`(env: Env) = runTest {
+        val info = SuggestionInfo(env.process().command().consoleSender, CommandArguments.empty(), "", "")
+        val failing = ArgumentSuggestions { throw IllegalStateException("broken provider") }
+        val cancelling = ArgumentSuggestions { throw CancellationException("stop") }
+
+        val merged = ArgumentSuggestions.merge(failing, ArgumentSuggestions.strings("ok"))
+        val cancelled = runCatching { ArgumentSuggestions.merge(cancelling, ArgumentSuggestions.strings("ok")).suggest(info) }
+
+        assertEquals(listOf("ok"), merged.suggest(info).map(StringTooltip::suggestion))
+        assertTrue(cancelled.exceptionOrNull() is CancellationException)
+    }
+
+    @Test
+    fun `subcommand requirements and permissions hide the subcommand instead of reporting success`(env: Env) {
+        withPlatform(env) { manager ->
+            val executed = mutableListOf<String>()
+            CommandAPICommand("gated")
+                .anyExecutor { _, _ -> executed += "root" }
+                .withSubcommand(
+                    CommandAPICommand("blocked")
+                        .withRequirement { false }
+                        .anyExecutor { _, _ -> executed += "blocked" },
+                )
+                .withSubcommand(
+                    CommandAPICommand("admin")
+                        .withPermission("lobby.admin")
+                        .anyExecutor { _, _ -> executed += "admin" },
+                )
+                .withSubcommand(CommandAPICommand("open").anyExecutor { _, _ -> executed += "open" })
+                .register()
+            val console = manager.consoleSender
+            val plain = PlainSender()
+
+            assertTrue(runCommand(console, "gated"))
+            assertTrue(runCommand(console, "gated open"))
+            assertTrue(runCommand(console, "gated admin"))
+            assertTrue(runCommand(plain, "gated"))
+            assertTrue(runCommand(plain, "gated open"))
+            assertFalse(runCommand(console, "gated blocked"))
+            assertFalse(runCommandReporting(console, "gated blocked"))
+            assertFalse(runCommand(plain, "gated admin"))
+            assertEquals(listOf("root", "open", "admin", "root", "open"), executed)
+        }
+    }
+
+    @Test
     fun `a suggestion mode rejected at registration is not offered as a silently broken shortcut`() {
         val command = CommandAPICommand("rejected-literal")
             .withArguments(
@@ -473,8 +516,11 @@ class KotlinDslIntegrationTest {
         try {
             block(manager)
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 
@@ -489,6 +535,12 @@ class KotlinDslIntegrationTest {
     }
 
     private fun profile(name: String) = GameProfile(UUID.randomUUID(), name)
+
+    private class PlainSender : CommandSender {
+        override fun identity(): Identity = Identity.nil()
+
+        override fun tagHandler(): TagHandler = TagHandler.newHandler()
+    }
 
     private class PlayerDirectory(private val names: List<String>) {
         fun search(prefix: String): List<String> = names.filter { name -> name.startsWith(prefix, ignoreCase = true) }

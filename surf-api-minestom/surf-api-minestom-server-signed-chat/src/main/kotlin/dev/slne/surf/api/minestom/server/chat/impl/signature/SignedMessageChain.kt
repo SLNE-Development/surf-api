@@ -7,7 +7,7 @@ import net.minestom.server.crypto.MessageSignature
 import net.minestom.server.crypto.PlayerPublicKey
 import java.io.Serial
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 import java.util.function.BooleanSupplier
 
 internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
@@ -18,15 +18,6 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
 
     private var nextLink: SignedMessageLink? = SignedMessageLink.root(profileId, sessionId)
     private var lastTimeStamp: Instant = Instant.EPOCH
-
-    fun encoder(signer: Signer) = Encoder { body ->
-        val link = nextLink ?: return@Encoder null
-        nextLink = link.advance()
-
-        MessageSignature(signer.sign { output ->
-            PlayerChatMessage.updateSignature(output, link, body)
-        })
-    }
 
     fun decoder(profilePublicKey: PlayerPublicKey): Decoder {
         val signatureValidator = profilePublicKey.createSignatureValidator()
@@ -93,6 +84,8 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
             val EXPIRED_PROFILE_KEY: Component = translatable("chat.disabled.expiredProfileKey")
             val INVALID_SIGNATURE: Component = translatable("chat.disabled.invalid_signature")
             val OUT_OF_ORDER_CHAT: Component = translatable("chat.disabled.out_of_order_chat")
+            val INVALID_COMMAND_SIGNATURE: Component =
+                translatable("chat.disabled.invalid_command_signature")
         }
     }
 
@@ -110,14 +103,6 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
 
                     PlayerChatMessage.unsigned(profileId, body.content)
                 }
-        }
-    }
-
-    fun interface Encoder {
-        fun pack(body: SignedMessageBody): MessageSignature?
-
-        companion object {
-            val UNSIGNED = Encoder { null }
         }
     }
 }

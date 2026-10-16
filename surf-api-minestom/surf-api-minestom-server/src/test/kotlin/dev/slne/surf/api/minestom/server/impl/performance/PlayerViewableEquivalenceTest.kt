@@ -16,8 +16,12 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 /**
- * Tests that the direct scan plus entity ID deduplication resolves the same viewers as vanilla
- * `ChunkView` for real players, including players in a `SharedInstance`.
+ * Tests that the direct scan plus entity ID deduplication resolves the viewers that lie within view
+ * distance of a chunk for real players, including players in a `SharedInstance`.
+ *
+ * The expected viewers are computed by a brute-force chunk-range filter over the player positions.
+ * `ChunkView` runs through `EntityTrackerMixin` in the Mixin test environment and is only compared
+ * against that filter, not used as the oracle.
  */
 @EnvTest
 class PlayerViewableEquivalenceTest {
@@ -35,8 +39,17 @@ class PlayerViewableEquivalenceTest {
         awaitSpawn(env, near, nearEdge, far, sharedNear)
         check(far.position.chunkX() > ServerProperties.CHUNK_VIEW_DISTANCE.get())
 
+        val viewDistance = ServerProperties.CHUNK_VIEW_DISTANCE.get()
+        val expectedViewers = listOf(near, nearEdge, far, sharedNear)
+            .filter { player ->
+                player.position.chunkX() in -viewDistance..viewDistance &&
+                    player.position.chunkZ() in -viewDistance..viewDistance
+            }
+            .map { it.entityId }
+            .toSet()
+
         val viewable = instance.entityTracker.viewable(listOf(shared), 0, 0)
-        val vanillaViewers = viewable.viewers.map { it.entityId }.toSet()
+        val viewers = viewable.viewers.map { it.entityId }.toSet()
 
         val direct = HashMap<Int, Player>()
         val resolver = EntityViewerLookup.EntityPositionResolver { entity -> entity.position }
@@ -46,11 +59,12 @@ class PlayerViewableEquivalenceTest {
                 resolver,
                 0,
                 0,
-                ServerProperties.CHUNK_VIEW_DISTANCE.get(),
+                viewDistance,
             ) { player -> direct.putIfAbsent(player.entityId, player) }
         }
 
-        assertEquals(vanillaViewers, direct.keys)
+        assertEquals(expectedViewers, direct.keys)
+        assertEquals(expectedViewers, viewers)
         assertEquals(
             setOf(near.entityId, nearEdge.entityId, sharedNear.entityId),
             direct.keys,

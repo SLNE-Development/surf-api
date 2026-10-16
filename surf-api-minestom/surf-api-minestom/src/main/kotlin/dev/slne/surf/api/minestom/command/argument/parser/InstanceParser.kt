@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.minestom.server.MinecraftServer
 import net.minestom.server.instance.Instance
-import java.util.*
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -62,7 +61,7 @@ internal object InstanceParser : ArgumentType<Instance> {
 
     private fun resolve(input: String): Instance? {
         val instances = MinecraftServer.getInstanceManager().instances
-        runCatching { UUID.fromString(input) }.getOrNull()?.let { uuid ->
+        parseDashedUuid(input)?.let { uuid ->
             instances.singleOrNull { instance -> instance.uuid == uuid }?.let { return it }
         }
         return instances.singleOrNull { instance -> instance.dimensionName == input }

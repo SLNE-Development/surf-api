@@ -51,19 +51,16 @@ class ConsoleFeature internal constructor(
 
     override val id: String = ID
 
-    private var thread: Thread? = null
-
     override fun enable(api: SurfMinestomServer) {
-        thread = Thread(SurfTerminalConsole(settings.onShutdown)::start, settings.threadName).apply {
+        Thread(SurfTerminalConsole(settings.onShutdown)::start, settings.threadName).apply {
             isDaemon = true
             start()
         }
     }
 
     override fun disable(api: SurfMinestomServer) {
-        // Not interrupted: the shutdown may have been started from the console thread itself.
-        // The daemon thread stops once the server is no longer started.
-        thread = null
+        // The console thread is not interrupted: the shutdown may have been started from it. The
+        // daemon thread stops once the server is no longer started.
     }
 
     private class SurfTerminalConsole(

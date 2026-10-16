@@ -2,20 +2,20 @@ package dev.slne.surf.api.minestom.server.impl.command.brigadier
 
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
-import dev.slne.surf.api.minestom.command.argument.CustomArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
+import dev.slne.surf.api.minestom.command.argument.*
 import dev.slne.surf.api.minestom.command.dsl.anyExecutor
+import dev.slne.surf.api.minestom.command.dsl.commandTree
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import dev.slne.surf.api.minestom.server.impl.command.MinestomCommandAPIPlatform
 import dev.slne.surf.api.minestom.server.impl.command.MinestomCommandOwnership
+import net.minestom.server.command.ArgumentParserType
+import net.minestom.server.command.CommandManager
 import net.minestom.server.command.CommandSender
 import net.minestom.server.command.builder.arguments.minecraft.SuggestionType
 import net.minestom.server.network.packet.server.play.DeclareCommandsPacket
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 /**
@@ -57,8 +57,60 @@ class DeclareCommandsMergerTest {
                 "'count' carries no suggestion type to announce",
             )
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
+        }
+    }
+
+    @Test
+    fun `a command argument is declared with a parser`(env: Env) {
+        withPlatform(env) { manager ->
+            CommandAPICommand("declare-command")
+                .withArguments(CommandArgument("inner"))
+                .anyExecutor { _, _ -> }
+                .register()
+
+            val inner = merge(manager.consoleSender).nodes.single { node -> node.name == "inner" }
+
+            assertEquals(ArgumentParserType.STRING, inner.parser)
+        }
+    }
+
+    @Test
+    fun `a path cut at an unusable argument leaves no dead end prefix`(env: Env) {
+        withPlatform(env) { manager ->
+            commandTree("declare-prune") {
+                then(
+                    LiteralArgument("admin").then(
+                        LiteralArgument("reload").withRequirement { false }.executes { _, _ -> },
+                    ),
+                )
+                then(LiteralArgument("list").executes { _, _ -> })
+            }
+
+            val names = merge(manager.consoleSender).nodes.map { node -> node.name }
+
+            assertTrue("list" in names)
+            assertFalse("admin" in names)
+            assertFalse("reload" in names)
+        }
+    }
+
+    private inline fun withPlatform(env: Env, block: (CommandManager) -> Unit) {
+        val manager = env.process().command()
+        val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
+        CommandAPI.installPlatform(platform)
+        try {
+            block(manager)
+        } finally {
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 

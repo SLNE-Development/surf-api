@@ -5,12 +5,12 @@
  */
 package dev.slne.surf.api.minestom.command.suggestion
 
+import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList
 import it.unimi.dsi.fastutil.objects.ObjectList
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 
 /**
  * Supplies suggestions for an argument.
@@ -148,14 +148,15 @@ fun interface ArgumentSuggestions {
          * concurrently.
          *
          * The merged provider filters by prefix; the filter policies of [providers] are not
-         * combined.
+         * combined. A provider that fails is logged and contributes no entries without affecting
+         * the others; cancellation propagates.
          */
         fun merge(vararg providers: ArgumentSuggestions): ArgumentSuggestions {
             val copy = ObjectImmutableList(providers)
             return ArgumentSuggestions { info ->
                 coroutineScope {
                     copy.mapTo(ObjectArrayList(copy.size)) { provider ->
-                        async { provider.suggest(info) }
+                        async { suggestOrEmpty(provider, info) }
                     }
                         .awaitAll()
                         .flatten()
@@ -167,17 +168,35 @@ fun interface ArgumentSuggestions {
          * Returns a provider that selects its entries from [branch] using the raw values of the
          * arguments before the current one.
          *
-         * Yields no entries when the branch has no provider for the current position. A previous
-         * value that the branch rejects makes the provider fail, see
-         * [SuggestionsBranch.getNextSuggestion].
+         * Yields no entries when the branch has no provider for the current position or rejects a
+         * previous value, see [SuggestionsBranch.getNextSuggestion].
          */
         fun branch(branch: SuggestionsBranch): ArgumentSuggestions = ArgumentSuggestions { info ->
-            branch.getNextSuggestion(info.sender, *info.previousArgs.rawArguments().toTypedArray())
-                ?.suggest(info)
-                ?.let(::ObjectImmutableList)
-                .orEmpty()
+            val next = try {
+                branch.getNextSuggestion(info.sender, *info.previousArgs.rawArguments().toTypedArray())
+            } catch (_: CommandSyntaxException) {
+                null
+            }
+
+            next?.suggest(info)?.let(::ObjectImmutableList).orEmpty()
+        }
+
+        private suspend fun suggestOrEmpty(
+            provider: ArgumentSuggestions,
+            info: SuggestionInfo,
+        ): List<StringTooltip> = try {
+            provider.suggest(info)
+        } catch (failure: Throwable) {
+            val ownTimeout = failure is TimeoutCancellationException &&
+                    currentCoroutineContext().isActive
+            if (failure is CancellationException && !ownTimeout) throw failure
+
+            LOGGER.error("Suggestion provider failed and contributes no entries", failure)
+            emptyList()
         }
 
         private fun withoutTooltip(value: String) = StringTooltip(value, null)
     }
 }
+
+private val LOGGER = ComponentLogger.logger()

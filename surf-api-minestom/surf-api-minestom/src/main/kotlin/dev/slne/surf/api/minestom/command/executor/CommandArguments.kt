@@ -23,7 +23,7 @@ class CommandArguments private constructor(
         }
     }
 
-    inline fun <reified T> get(name: String): T = typed(name, T::class, nullable = false) as T
+    inline fun <reified T> get(name: String): T = typed(name, T::class, nullable = null is T) as T
 
     inline fun <reified T> getOptional(name: String): T? =
         typed(name, T::class, nullable = true) as T?

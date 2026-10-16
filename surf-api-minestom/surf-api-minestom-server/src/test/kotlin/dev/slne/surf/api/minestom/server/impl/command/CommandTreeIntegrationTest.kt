@@ -2,50 +2,37 @@ package dev.slne.surf.api.minestom.server.impl.command
 
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.argument.EnumArgument
+import dev.slne.surf.api.minestom.command.argument.LiteralArgument
 import dev.slne.surf.api.minestom.command.argument.StringArgument
 import dev.slne.surf.api.minestom.command.argument.SuggestionMode
-import dev.slne.surf.api.minestom.command.dsl.commandTree
-import dev.slne.surf.api.minestom.command.dsl.consoleExecutor
-import dev.slne.surf.api.minestom.command.dsl.consoleResultingExecutor
-import dev.slne.surf.api.minestom.command.dsl.includeSuggestionsWithTooltipsAsync
-import dev.slne.surf.api.minestom.command.dsl.listArgument
-import dev.slne.surf.api.minestom.command.dsl.literalArgument
-import dev.slne.surf.api.minestom.command.dsl.playerArgument
-import dev.slne.surf.api.minestom.command.dsl.replaceSuggestions
-import dev.slne.surf.api.minestom.command.dsl.textArgument
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.executor.CommandArguments
 import dev.slne.surf.api.minestom.command.executor.ParsedArgument
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import dev.slne.surf.api.minestom.command.suggestion.StringTooltip
 import dev.slne.surf.api.minestom.command.suggestion.SuggestionInfo
 import dev.slne.surf.api.minestom.command.suggestion.SuggestionsBranch
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
-import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.coordinate.Pos
-import net.minestom.server.crypto.ChatSession
 import net.minestom.server.entity.Player
 import net.minestom.server.event.EventNode
 import net.minestom.server.instance.Instance
 import net.minestom.server.network.packet.client.play.ClientTabCompletePacket
 import net.minestom.server.network.packet.server.play.TabCompletePacket
 import net.minestom.server.network.player.GameProfile
-import net.minestom.server.network.player.PlayerConnection
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @EnvTest
@@ -61,12 +48,12 @@ class CommandTreeIntegrationTest {
         val platform = MinestomCommandAPIPlatform(manager, ownership, suggestionScope = { this })
         val node = EventNode.all("admin-tree-test")
         CommandAPI.installPlatform(platform)
-        listener.register(node)
-        env.process().eventHandler().addChild(node)
-        env.process().connection().setPlayerProvider { connection, profile ->
-            TestPermissionPlayer(connection, profile, setOf("lobby.admin"))
-        }
         try {
+            listener.register(node)
+            env.process().eventHandler().addChild(node)
+            env.process().connection().setPlayerProvider { connection, profile ->
+                TestPermissionPlayer(connection, profile, setOf("lobby.admin"))
+            }
             val reloadCount = AtomicInteger()
             val kicked = mutableListOf<Pair<String, String>>()
             val tooltipInvocations = mutableListOf<String>()
@@ -131,8 +118,11 @@ class CommandTreeIntegrationTest {
                 env.destroyInstance(instance)
             }
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
             env.process().eventHandler().removeChild(node)
             env.process().connection().setPlayerProvider(null)
         }
@@ -202,8 +192,11 @@ class CommandTreeIntegrationTest {
             assertEquals(listOf(Difficulty.HIGH), applied)
             assertEquals(1, queried.get())
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 
@@ -232,8 +225,11 @@ class CommandTreeIntegrationTest {
             assertTrue(applied.isEmpty())
             assertEquals(0, queried.get())
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 
@@ -252,8 +248,55 @@ class CommandTreeIntegrationTest {
             assertTrue(runCommand(manager.consoleSender, "ping"))
             assertEquals(1, runs.get())
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
+        }
+    }
+
+    @Test
+    fun `tab completion of a namespaced label omits children the sender may not use`(env: Env) {
+        val manager = env.process().command()
+        val ownership = MinestomCommandOwnership()
+        val listener = MinestomSuggestionListener(ownership)
+        val platform = MinestomCommandAPIPlatform(manager, ownership)
+        val node = EventNode.all("namespaced-tab-test")
+        CommandAPI.installPlatform(platform)
+        try {
+            listener.register(node)
+            env.process().eventHandler().addChild(node)
+            commandTree("tab-gated", "plugin") {
+                then(LiteralArgument("list").executes { _, _ -> })
+                then(LiteralArgument("reload").withRequirement { false }.executes { _, _ -> })
+            }
+
+            val instance = env.createEmptyInstance()
+            var player: Player? = null
+            try {
+                val connection = env.createConnection(profile("Completer"))
+                player = connect(connection, instance)
+
+                val packets = connection.trackIncoming(TabCompletePacket::class.java)
+                env.process().packetListener().processClientPacket(
+                    ClientTabCompletePacket(1, "/plugin:tab-gated "),
+                    player.playerConnection,
+                )
+                packets.assertSingle { packet ->
+                    assertEquals(listOf("list"), packet.matches.map { match -> match.match })
+                }
+            } finally {
+                player?.remove()
+                env.destroyInstance(instance)
+            }
+        } finally {
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
+            env.process().eventHandler().removeChild(node)
         }
     }
 

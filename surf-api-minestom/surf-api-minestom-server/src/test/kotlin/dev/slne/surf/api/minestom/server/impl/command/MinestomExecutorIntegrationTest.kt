@@ -6,24 +6,18 @@ import dev.slne.surf.api.minestom.command.argument.EnumArgument
 import dev.slne.surf.api.minestom.command.argument.IntegerArgument
 import dev.slne.surf.api.minestom.command.argument.LiteralArgument
 import dev.slne.surf.api.minestom.command.argument.TextArgument
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxException
 import dev.slne.surf.api.minestom.command.executor.GENERIC_COMMAND_FAILURE
-import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfo
-import dev.slne.surf.api.minestom.command.dsl.anyExecutionInfoExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
-import dev.slne.surf.api.minestom.command.dsl.anyResultingExecutor
-import dev.slne.surf.api.minestom.command.dsl.consoleExecutor
-import dev.slne.surf.api.minestom.command.dsl.playerExecutor
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import net.kyori.adventure.identity.Identity
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.minestom.server.command.CommandSender
-import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
@@ -38,13 +32,9 @@ import org.apache.logging.log4j.core.LogEvent
 import org.apache.logging.log4j.core.LoggerContext
 import org.apache.logging.log4j.core.appender.AbstractAppender
 import org.apache.logging.log4j.core.layout.PatternLayout
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -286,8 +276,11 @@ class MinestomExecutorIntegrationTest {
         try {
             block(manager)
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 

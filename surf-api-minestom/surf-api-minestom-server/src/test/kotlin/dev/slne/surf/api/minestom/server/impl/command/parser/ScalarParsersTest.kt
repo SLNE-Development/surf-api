@@ -22,6 +22,29 @@ class ScalarParsersTest {
     }
 
     @Test
+    fun `a uuid with a group wider than canonical is rejected at its start`() {
+        val parser = UUIDArgument("id").toDefinition().rawType
+        listOf(
+            "1ffffffff-0-0-0-0",
+            "79d40754-7772-4ab4-a7c6-f21df121db4a0",
+            "79d40754-77720-4ab4-a7c6-f21df121db4a",
+        ).forEach { input ->
+            val failure = assertThrows(CommandSyntaxException::class.java) { parser.parse(StringReader(input)) }
+            assertEquals(0, failure.cursor, input)
+        }
+        assertEquals(
+            UUID.fromString("79d40754-7772-4ab4-a7c6-f21df121db4a"),
+            parser.parse(StringReader("79D40754-7772-4AB4-A7C6-F21DF121DB4A")),
+        )
+    }
+
+    @Test
+    fun `a uuid with groups shorter than canonical is accepted`() {
+        val parser = UUIDArgument("id").toDefinition().rawType
+        assertEquals(UUID.fromString("1234-5-6-7-8"), parser.parse(StringReader("1234-5-6-7-8")))
+    }
+
+    @Test
     fun `a malformed uuid is rejected at its start`() {
         val parser = UUIDArgument("id").toDefinition().rawType
         val reader = StringReader("1234-5678")
@@ -68,6 +91,23 @@ class ScalarParsersTest {
         assertEquals(20L, parser.parse(StringReader("20")).toMillis() / 50)
         assertEquals(20L, parser.parse(StringReader("1s")).toMillis() / 50)
         assertEquals(24000L, parser.parse(StringReader("1d")).toMillis() / 50)
+    }
+
+    @Test
+    fun `time rounds to the nearest tick like vanilla`() {
+        val parser = TimeArgument("delay").toDefinition().rawType
+        assertEquals(2L, parser.parse(StringReader("1.5t")).toMillis() / 50)
+        assertEquals(1L, parser.parse(StringReader("1.4t")).toMillis() / 50)
+        assertEquals(30L, parser.parse(StringReader("1.5s")).toMillis() / 50)
+    }
+
+    @Test
+    fun `time rejects values whose duration overflows at the value's start`() {
+        val parser = TimeArgument("delay").toDefinition().rawType
+        listOf("99999999999999999999999999999999999999d", "99999999999999999999", "100000000000000000d").forEach { input ->
+            val failure = assertThrows(CommandSyntaxException::class.java) { parser.parse(StringReader(input)) }
+            assertEquals(0, failure.cursor, input)
+        }
     }
 
     @Test

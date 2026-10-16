@@ -25,6 +25,7 @@ import net.minestom.server.MinecraftServer
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
 import net.minestom.server.property.ServerProperties
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -34,6 +35,9 @@ import java.util.concurrent.atomic.AtomicReference
  * calls `load` on each feature in `loadPriority` order. Features are enabled on the next tick, and
  * a feature whose `enable` throws is logged and skipped. [shutdown] is idempotent and calls
  * `disable` on every loaded feature in reverse order, including ones that failed to enable.
+ *
+ * A failing [start] rolls back what it installed with the same teardown as [shutdown] and rethrows
+ * the failure. A teardown step that throws is logged and does not skip the following steps.
  */
 internal class SurfMinestomRuntime private constructor(
     private val builder: SurfMinestomServerBuilder,
@@ -47,15 +51,14 @@ internal class SurfMinestomRuntime private constructor(
     private val commandApi = MinestomCommandAPIService()
 
     private val loaded = mutableListOf<SurfMinestomFeature>()
-    private val enabled = mutableListOf<SurfMinestomFeature>()
 
-    @Volatile
-    private var running = false
+    private val running = AtomicBoolean(false)
+
+    private var packetEventsPrepared = false
 
     override fun feature(id: String): SurfMinestomFeature? = builder.features[id]
 
     private fun load() {
-        checkMixins()
         if (builder.recommendedServerProperties) RecommendedServerProperties.apply()
         preparePacketEvents()
         runBlocking {
@@ -90,21 +93,25 @@ internal class SurfMinestomRuntime private constructor(
         // Installed after the features, so the server's provider takes precedence over one a feature
         // installed
         builder.permissionProvider?.let { provider -> MinestomPermissions.installProvider(provider) }
-        running = true
+        running.set(true)
 
         SchedulerManager.scheduleNextTick(::enable)
         SchedulerManager.buildShutdownTask(::shutdown)
     }
 
     private fun enable() {
-        if (!running) return
+        if (!running.get()) return
 
-        runBlocking { instance.onEnable() }
+        try {
+            runBlocking { instance.onEnable() }
+        } catch (failure: Throwable) {
+            LOGGER.error("Failed to enable the core listeners and the inventory framework", failure)
+        }
+        reportFailedMixins()
 
         for (feature in features) {
             try {
                 feature.enable(this)
-                enabled += feature
             } catch (failure: Throwable) {
                 LOGGER.error("Failed to enable feature {}", feature.id, failure)
             }
@@ -112,39 +119,76 @@ internal class SurfMinestomRuntime private constructor(
     }
 
     override fun shutdown() {
-        if (!running) return
-        running = false
+        if (!running.compareAndSet(true, false)) return
+        teardown()
+    }
 
-        for (feature in loaded.asReversed()) {
+    /**
+     * Undoes everything [load] installed and releases [current].
+     *
+     * Every step is a no-op for an install step that never ran, so this also rolls back a partial
+     * [load]. A failing step is logged and does not skip the following ones.
+     *
+     * @return the first step failure with the later ones attached as suppressed exceptions, or
+     * `null` when every step succeeded
+     */
+    private fun teardown(): Throwable? {
+        running.set(false)
+
+        var failure: Throwable? = null
+        fun step(name: String, action: () -> Unit) {
             try {
-                feature.disable(this)
-            } catch (failure: Throwable) {
-                LOGGER.error("Failed to disable feature {}", feature.id, failure)
+                action()
+            } catch (stepFailure: Throwable) {
+                LOGGER.error("Failed to {} while shutting down the surf api", name, stepFailure)
+                val first = failure
+                if (first == null) failure = stepFailure else first.addSuppressed(stepFailure)
             }
         }
-        loaded.clear()
-        enabled.clear()
 
-        if (builder.configurationPhase != null) ConfigurationPhase.uninstall()
-        commandApi.stop()
-        PlayerFlightListener.uninstall()
-        EntityTickFilter.configure(emptySet())
-        PlayerEvents.uninstall()
-        GlobalEventHandler.removeChild(eventNode)
+        try {
+            val toDisable = loaded.toList()
+            loaded.clear()
+            for (feature in toDisable.asReversed()) {
+                step("disable feature ${feature.id}") { feature.disable(this) }
+            }
 
-        runBlocking { instance.onDisable() }
-        packetEvents.terminate()
+            if (builder.configurationPhase != null) {
+                step("uninstall the configuration phase") { ConfigurationPhase.uninstall() }
+            }
+            step("stop the command api") { commandApi.stop() }
+            step("uninstall the flight listener") { PlayerFlightListener.uninstall() }
+            step("reset the entity tick filter") { EntityTickFilter.configure(emptySet()) }
+            step("uninstall the player events") { PlayerEvents.uninstall() }
+            step("remove the event node") { GlobalEventHandler.removeChild(eventNode) }
 
-        MinestomPermissions.installProvider(null)
-        SignedCommandArguments.resetUnsignedFactory()
+            if (packetEventsPrepared) {
+                step("disable the core instance") { runBlocking { instance.onDisable() } }
+                step("terminate packetevents") { packetEvents.terminate() }
+            }
 
-        current.compareAndSet(this, null)
+            step("reset the permission provider") { MinestomPermissions.installProvider(null) }
+            step("reset the unsigned argument factory") { SignedCommandArguments.resetUnsignedFactory() }
+        } finally {
+            current.compareAndSet(this, null)
+        }
+        return failure
     }
 
     private fun preparePacketEvents() {
         PacketEvents.setAPI(NoopPacketEvents())
+        packetEventsPrepared = true
         packetEvents.load()
         packetEvents.init()
+    }
+
+    private fun reportFailedMixins() {
+        if (!SurfMixinAgent.isInstalled()) return
+
+        val failed = SurfMixinAgent.failedTransformations()
+        if (failed.isNotEmpty()) {
+            LOGGER.error("Mixins failed to apply to {}, the surf api does not work correctly", failed)
+        }
     }
 
     companion object {
@@ -180,12 +224,15 @@ internal class SurfMinestomRuntime private constructor(
                 "The surf api needs an initialized server, call MinecraftServer.init() first"
             }
 
+            checkMixins()
+
             val runtime = SurfMinestomRuntime(builder)
             check(current.compareAndSet(null, runtime)) { "The surf api is already running" }
 
             try {
                 runtime.load()
             } catch (failure: Throwable) {
+                runtime.teardown()?.let(failure::addSuppressed)
                 current.compareAndSet(runtime, null)
                 throw failure
             }

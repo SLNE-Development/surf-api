@@ -27,7 +27,7 @@ open class MiniMessageArgument(
     if (greedy) GreedyStringArgument(nodeName) else TextArgument(nodeName),
     { info ->
         try {
-            miniMessage.deserialize(info.currentInput)
+            miniMessage.deserialize(info.baseValue)
         } catch (e: ParsingException) {
             CommandAPI.failWithMessage(
                 CommandExceptionBuilder(

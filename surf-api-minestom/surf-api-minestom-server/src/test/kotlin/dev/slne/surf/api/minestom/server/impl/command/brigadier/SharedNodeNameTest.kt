@@ -32,8 +32,11 @@ class SharedNodeNameTest {
             assertEquals(1, CommandAPI.execute(manager.consoleSender, "send server lobby-1"))
             assertEquals("lobby-1", received.get().get<String>("server"))
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 }

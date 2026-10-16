@@ -81,6 +81,10 @@
       "kind": "api"
     },
     {
+      "id": "surf-api-minestom-server-bootstrap",
+      "kind": "api"
+    },
+    {
       "id": "surf-api-minestom-server-plugins",
       "kind": "api"
     },

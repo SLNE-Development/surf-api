@@ -22,11 +22,8 @@ internal class MinestomInventoryLoader : EventRegistrar {
 
     private var registered = false
 
-    init {
-        instance = this
-    }
-
     override fun register(node: EventNode<Event>) {
+        instance = this
         viewFrame = ViewFrame.create(node)
 
         node.addListener<PlayerDisconnectEvent> { event ->

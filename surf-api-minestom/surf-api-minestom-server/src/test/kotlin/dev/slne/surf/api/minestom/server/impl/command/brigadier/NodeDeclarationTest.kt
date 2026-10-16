@@ -2,6 +2,7 @@ package dev.slne.surf.api.minestom.server.impl.command.brigadier
 
 import dev.slne.surf.api.minestom.command.argument.*
 import net.kyori.adventure.key.Key
+import net.minestom.server.command.ArgumentParserType
 import net.minestom.server.command.builder.arguments.minecraft.SuggestionType
 import net.minestom.server.registry.DynamicRegistry
 import net.minestom.testing.Env
@@ -52,6 +53,14 @@ class NodeDeclarationTest {
         assertEquals(askServer, declarations.of(wrapped.toDefinition()).suggestionsType)
         assertEquals(askServer, declarations.of(listed.toDefinition()).suggestionsType)
         assertNull(declarations.of(plain.toDefinition()).suggestionsType)
+    }
+
+    @Test
+    fun `a command argument is declared with a parser`(env: Env) {
+        val declaration = declarations.of(CommandArgument("value").toDefinition())
+
+        assertEquals(ArgumentParserType.STRING, declaration.parser)
+        assertNull(declaration.suggestionsType)
     }
 
     @Test

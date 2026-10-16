@@ -8,8 +8,8 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Parses the JSON of a {@code minestom-plugin.json}, since no JSON library is on the class path
- * while the bootstrap runs.
+ * Parses the JSON of a {@code minestom-plugin.json} without a JSON library, so the bootstrap does
+ * not depend on which libraries a server jar ships.
  *
  * <p>Objects become {@link Map Maps}, arrays {@link List Lists}, numbers {@link Double Doubles}.</p>
  */

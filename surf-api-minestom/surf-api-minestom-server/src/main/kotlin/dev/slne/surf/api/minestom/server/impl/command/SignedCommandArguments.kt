@@ -122,9 +122,6 @@ fun signaturesCoverArguments(
     return entries.size == values.size && entries.all { entry -> entry.name() in values }
 }
 
-/**
- * Whether a node of this type is one the client signs.
- */
 private fun ArgumentType<*>.isSignable(): Boolean = when (this) {
     is SuggestingArgumentType -> delegate is SignedMessageArgumentType
     else -> this is SignedMessageArgumentType

@@ -5,8 +5,6 @@ import dev.slne.surf.api.minestom.chat.RemoteChatSender
 import dev.slne.surf.api.minestom.chat.RemoteSignedMessage
 import dev.slne.surf.api.minestom.extension.ConnectionManager
 import dev.slne.surf.api.minestom.server.chat.SignedChatSettings
-import dev.slne.surf.api.minestom.server.chat.impl.packet.DeleteChatPacketModern
-import dev.slne.surf.api.minestom.server.chat.impl.packet.framed
 import dev.slne.surf.api.minestom.server.chat.impl.signature.*
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.chat.SignedMessage
@@ -15,6 +13,7 @@ import net.minestom.server.crypto.ChatSession
 import net.minestom.server.crypto.MessageSignature
 import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
+import net.minestom.server.network.packet.server.play.DeleteChatPacket
 import net.minestom.server.network.packet.server.play.PlayerInfoRemovePacket
 import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket
 import java.util.*
@@ -47,7 +46,6 @@ internal class ChatSessionHolderImpl(
 
         OutgoingChatMessage.create(signed).sendToPlayer(
             handler = handler,
-            filtered = false,
             chatType = BoundChatType(SurfChatTypes.raw, boundName),
             unsigned = unsignedContent,
         )
@@ -77,6 +75,8 @@ internal class ChatSessionHolderImpl(
         message: RemoteSignedMessage,
         boundName: Component,
     ) {
+        if (!handler.acceptsChatMessages()) return
+
         val signed = PlayerChatMessage(
             link = SignedMessageLink(message.index, message.sender, message.sessionId),
             signature = message.signature,
@@ -134,7 +134,7 @@ internal class ChatSessionHolderImpl(
 
         override fun deleteMessage(player: Player, signature: SignedMessage.Signature) {
             val packed = MessageSignature.Packed(MessageSignature(signature.bytes()))
-            player.sendPacket(DeleteChatPacketModern(packed).framed())
+            player.sendPacket(DeleteChatPacket(packed))
         }
 
         /**

@@ -68,6 +68,11 @@ internal class PlayerVisibilityHandler(private val player: Player) {
         }
     }
 
+    /**
+     * Whether this handler belongs to [other], by identity.
+     */
+    fun isFor(other: Player): Boolean = player === other
+
     fun init() {
         player.updateViewerRule(combinedRule)
 
@@ -76,7 +81,13 @@ internal class PlayerVisibilityHandler(private val player: Player) {
         player.updateViewableRule(ALWAYS_VIEWABLE)
     }
 
+    /**
+     * Restores the player's own rules. Does nothing for a player that is no longer online, whose
+     * view is not updated anymore.
+     */
     fun close() {
+        if (!player.isOnline) return
+
         player.updateViewerRule(appliedRule)
         player.updateViewableRule(null)
     }

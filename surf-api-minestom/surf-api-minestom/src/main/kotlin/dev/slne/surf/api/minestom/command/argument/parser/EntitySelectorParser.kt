@@ -10,14 +10,12 @@ import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectList
+import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.minestom.server.MinecraftServer
 import net.minestom.server.component.DataComponents
 import net.minestom.server.coordinate.Pos
-import net.minestom.server.entity.Entity
-import net.minestom.server.entity.EntityType
-import net.minestom.server.entity.GameMode
-import net.minestom.server.entity.Player
+import net.minestom.server.entity.*
 import net.minestom.server.tag.Tag
 import net.minestom.server.utils.Range
 import java.util.*
@@ -25,18 +23,19 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ThreadLocalRandom
 
 /**
- * Parses a vanilla entity selector: `@a`, `@e`, `@p`, `@r` or `@s` with an optional
+ * Parses a vanilla entity selector: `@a`, `@e`, `@n`, `@p`, `@r` or `@s` with an optional
  * `[key=value,...]` option list, or a bare player name or UUID.
  *
  * A selector whose limit exceeds [maxResults] fails at parse time instead of being truncated. The
  * limit is implied by the selector type or set with the `limit` option. With [playersOnly], a
- * selector that can match non-player entities fails, except `@s`.
+ * selector that can match non-player entities fails, except `@s`. `@e` and `@n` skip dead living
+ * entities.
  *
  * Supported options are `x`, `y`, `z`, `dx`, `dy`, `dz`, `distance`, `limit`, `sort`, `name`,
- * `type`, `tag`, `team`, `gamemode` and `level`. `nbt` is rejected because SNBT is not parsed.
- * `scores`, `advancements` and `predicate` are rejected because Minestom has no matching data
- * source; their value is read first, so a malformed value is reported before the unsupported
- * option.
+ * `type` (including `#tag`), `tag`, `team`, `gamemode`, `level`, `x_rotation` and `y_rotation`.
+ * `nbt` is rejected because SNBT is not parsed. `scores`, `advancements` and `predicate` are
+ * rejected because Minestom has no matching data source; their value is read first, so a
+ * malformed value is reported before the unsupported option.
  */
 internal class EntitySelectorParser(
     private val maxResults: Int,
@@ -79,9 +78,13 @@ internal class EntitySelectorParser(
         builder: SuggestionsBuilder,
     ): CompletableFuture<Suggestions> {
         val players = MinecraftServer.getConnectionManager().onlinePlayers
-        val values = ObjectArrayList<String>(players.size + ENTITY_SELECTORS.size)
+        val values = ObjectArrayList<String>(ENTITY_SELECTORS.size)
 
-        players.mapTo(values, Player::getUsername)
+        val prefix = builder.remaining
+        players.forEach { player ->
+            val username = player.username
+            if (username.startsWith(prefix, ignoreCase = true)) values += username
+        }
         values.sortWith(String.CASE_INSENSITIVE_ORDER)
 
         val selectors = if (playersOnly) PLAYER_SELECTORS else ENTITY_SELECTORS
@@ -93,9 +96,9 @@ internal class EntitySelectorParser(
     }
 
     private companion object {
-        val SINGLE_SELECTORS: ObjectList<String> = ObjectList.of("@p", "@r", "@s")
+        val SINGLE_SELECTORS: ObjectList<String> = ObjectList.of("@n", "@p", "@r", "@s")
         val PLAYER_SELECTORS: ObjectList<String> = ObjectList.of("@p", "@r", "@a", "@s")
-        val ENTITY_SELECTORS: ObjectList<String> = ObjectList.of("@p", "@r", "@a", "@e", "@s")
+        val ENTITY_SELECTORS: ObjectList<String> = ObjectList.of("@p", "@r", "@a", "@e", "@n", "@s")
     }
 }
 
@@ -110,17 +113,17 @@ private class MutableSelector {
     var uuid: UUID? = null
     var sorter: ((Pos) -> Comparator<Entity>)? = null
     var worldLimited: Boolean = false
-    var x: Double? = null
-    var y: Double? = null
-    var z: Double? = null
-    var dx: Double? = null
-    var dy: Double? = null
-    var dz: Double? = null
+
+    /**
+     * Values of the `x`, `y`, `z`, `dx`, `dy` and `dz` options by option name.
+     */
+    val coordinates: MutableMap<String, Double> = mutableMapOf()
     var distance: Range.Float? = null
     val predicates: MutableList<(Pos, Entity) -> Boolean> = mutableListOf()
 
     /**
-     * Options already used among those allowed at most once: `x y z dx dy dz distance limit sort level`.
+     * Options already used among those allowed at most once:
+     * `x y z dx dy dz distance limit sort level x_rotation y_rotation`.
      */
     val singleUseSeen: MutableSet<String> = mutableSetOf()
     private val invertableStates: MutableMap<String, InvertableState> = mutableMapOf()
@@ -137,6 +140,7 @@ private class MutableSelector {
         predicates = predicates.toList(),
         sorter = sorter,
         limit = limit,
+        position = originOf(coordinates),
         self = self,
         playerName = playerName,
         uuid = uuid,
@@ -149,10 +153,12 @@ private class MutableSelector {
  * `InvertableSetOptionState`.
  *
  * Such an option may be given once with a positive value or any number of times with negated
- * values. Mixing the two, or repeating a positive value, is not allowed.
+ * values. Mixing the two, or repeating a positive value, is not allowed. A tag counts as a negated
+ * value for this rule and may be given once.
  */
 private class InvertableState {
     private var limitation = Limitation.NONE
+    private val tags: MutableSet<Key> = mutableSetOf()
 
     fun canParseElement(inverted: Boolean): Boolean =
         if (inverted) limitation != Limitation.SINGLE else limitation == Limitation.NONE
@@ -161,13 +167,20 @@ private class InvertableState {
         limitation = if (inverted) Limitation.MULTIPLE else Limitation.SINGLE
     }
 
+    fun canParseTag(tag: Key): Boolean = limitation != Limitation.SINGLE && tag !in tags
+
+    fun markParsedTag(tag: Key) {
+        limitation = Limitation.MULTIPLE
+        tags += tag
+    }
+
     private enum class Limitation { NONE, SINGLE, MULTIPLE }
 }
 
 private fun parseNameOrUuid(reader: StringReader, state: MutableSelector) {
     val start = reader.cursor
     val name = reader.readString()
-    val uuid = runCatching { UUID.fromString(name) }.getOrNull()
+    val uuid = parseDashedUuid(name)
 
     if (uuid != null) {
         state.uuid = uuid
@@ -197,6 +210,14 @@ private fun parseSelectorType(reader: StringReader, state: MutableSelector) {
         'e' -> {
             state.limit = Int.MAX_VALUE
             state.includesEntities = true
+            state.predicates += ::isAlive
+        }
+
+        'n' -> {
+            state.limit = 1
+            state.includesEntities = true
+            state.sorter = ::nearestComparator
+            state.predicates += ::isAlive
         }
 
         'p' -> {
@@ -266,46 +287,21 @@ private fun parseOptions(reader: StringReader, state: MutableSelector) {
 private fun applyOption(key: String, keyStart: Int, reader: StringReader, state: MutableSelector) {
     val valueStart = reader.cursor
     when (key) {
-        "x" -> {
+        "x", "y", "z", "dx", "dy", "dz" -> {
             requireSingleUse(key, keyStart, reader, state)
             state.worldLimited = true
-            state.x = reader.readDouble()
-        }
-
-        "y" -> {
-            requireSingleUse(key, keyStart, reader, state)
-            state.worldLimited = true
-            state.y = reader.readDouble()
-        }
-
-        "z" -> {
-            requireSingleUse(key, keyStart, reader, state)
-            state.worldLimited = true
-            state.z = reader.readDouble()
-        }
-
-        "dx" -> {
-            requireSingleUse(key, keyStart, reader, state)
-            state.worldLimited = true
-            state.dx = reader.readDouble()
-        }
-
-        "dy" -> {
-            requireSingleUse(key, keyStart, reader, state)
-            state.worldLimited = true
-            state.dy = reader.readDouble()
-        }
-
-        "dz" -> {
-            requireSingleUse(key, keyStart, reader, state)
-            state.worldLimited = true
-            state.dz = reader.readDouble()
+            state.coordinates[key] = reader.readDouble()
         }
 
         "distance" -> {
             requireSingleUse(key, keyStart, reader, state)
+            val range = FloatRangeParser.parse(reader)
+            if (range.hasNegativeBound()) {
+                reader.cursor = valueStart
+                throw ERROR_DISTANCE_NEGATIVE.createWithContext(reader)
+            }
             state.worldLimited = true
-            state.distance = FloatRangeParser.parse(reader)
+            state.distance = range
         }
 
         "limit" -> {
@@ -342,6 +338,10 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
 
         "type" -> {
             val inverted = shouldInvertValue(reader)
+            if (consumeTagMarker(reader)) {
+                applyTypeTag(inverted, valueStart, reader, state)
+                return
+            }
             requireInvertableUse(key, inverted, valueStart, reader, state)
             val typeStart = reader.cursor
             val key0 = ResourceLocationParser.readKey(reader)
@@ -382,8 +382,22 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
         "level" -> {
             requireSingleUse(key, keyStart, reader, state)
             val range = IntegerRangeParser.parse(reader)
+            if (range.hasNegativeBound()) {
+                reader.cursor = valueStart
+                throw ERROR_LEVEL_NEGATIVE.createWithContext(reader)
+            }
             state.includesEntities = false
             state.predicates += { _, entity -> entity is Player && range.inRange(entity.level) }
+        }
+
+        "x_rotation" -> {
+            requireSingleUse(key, keyStart, reader, state)
+            state.predicates += rotationPredicate(FloatRangeParser.parse(reader)) { entity -> entity.position.pitch() }
+        }
+
+        "y_rotation" -> {
+            requireSingleUse(key, keyStart, reader, state)
+            state.predicates += rotationPredicate(FloatRangeParser.parse(reader)) { entity -> entity.position.yaw() }
         }
 
         "scores" -> {
@@ -415,6 +429,34 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
             throw ERROR_UNKNOWN_OPTION.createWithContext(reader, key)
         }
     }
+}
+
+private fun consumeTagMarker(reader: StringReader): Boolean {
+    reader.skipWhitespace()
+    if (reader.canRead() && reader.peek() == '#') {
+        reader.skip()
+        reader.skipWhitespace()
+        return true
+    }
+    return false
+}
+
+/**
+ * Reads the tag of a `type=#tag` value and adds the matching predicate.
+ *
+ * A tag that does not exist in Minestom's entity type registry matches no entity, as in vanilla.
+ */
+private fun applyTypeTag(inverted: Boolean, valueStart: Int, reader: StringReader, state: MutableSelector) {
+    val invertableState = state.invertableStateFor("type")
+    val tagKey = ResourceLocationParser.readKey(reader)
+    if (!invertableState.canParseTag(tagKey)) {
+        reader.cursor = valueStart
+        throw ERROR_INAPPLICABLE_OPTION.createWithContext(reader, "type")
+    }
+    invertableState.markParsedTag(tagKey)
+
+    val tag = EntityType.staticRegistry().getTag(tagKey)
+    state.predicates += { _, entity -> (tag != null && tag.contains(entity.entityType)) != inverted }
 }
 
 /**
@@ -458,49 +500,84 @@ private fun requireInvertableUse(
 
 /**
  * Adds the volume and distance predicates after all options are read, so they see the final
- * `x`, `y`, `z`, `dx`, `dy`, `dz` and `distance` values regardless of option order.
+ * `dx`, `dy`, `dz` and `distance` values regardless of option order.
  */
 private fun finalizePredicates(state: MutableSelector) {
-    if (state.dx != null || state.dy != null || state.dz != null) {
-        state.predicates += { anchor, entity -> matchesVolume(anchor, state, entity) }
+    val coordinates = state.coordinates
+    if ("dx" in coordinates || "dy" in coordinates || "dz" in coordinates) {
+        val dx = coordinates["dx"] ?: 0.0
+        val dy = coordinates["dy"] ?: 0.0
+        val dz = coordinates["dz"] ?: 0.0
+        state.predicates += { origin, entity -> matchesVolume(origin, dx, dy, dz, entity) }
     }
-    if (state.distance != null) {
-        state.predicates += { anchor, entity -> matchesDistance(anchor, state, entity) }
+    state.distance?.let { range ->
+        state.predicates += { origin, entity -> range.inRange(entity.getDistance(origin).toFloat()) }
     }
 }
 
-/**
- * Returns [basePos] with each axis replaced by the explicit `x`, `y` or `z` option, if given.
- */
-private fun anchorOf(basePos: Pos, state: MutableSelector): Pos =
-    Pos(state.x ?: basePos.x(), state.y ?: basePos.y(), state.z ?: basePos.z())
+private fun originOf(coordinates: Map<String, Double>): (Pos) -> Pos {
+    if ("x" !in coordinates && "y" !in coordinates && "z" !in coordinates) return { base -> base }
+    val x = coordinates["x"]
+    val y = coordinates["y"]
+    val z = coordinates["z"]
+    return { base -> Pos(x ?: base.x(), y ?: base.y(), z ?: base.z()) }
+}
 
 /**
- * Matches entities whose position lies in the `dx`/`dy`/`dz` box.
+ * Matches entities whose bounding box intersects the `dx`/`dy`/`dz` box at [origin].
  *
  * Per axis the box spans from the origin plus `min(0, d)` to the origin plus `max(0, d) + 1`, as in
- * vanilla's `EntitySelectorParser.createAabb`. `dx=0,dy=0,dz=0` therefore covers the block at the
- * origin.
+ * vanilla's `EntitySelectorParser.createAabb`, so `dx=0,dy=0,dz=0` covers the block at the origin.
+ * Boxes that only touch do not intersect.
  */
-private fun matchesVolume(anchor: Pos, state: MutableSelector, entity: Entity): Boolean {
-    val origin = anchorOf(anchor, state)
-    val dx = state.dx ?: 0.0
-    val dy = state.dy ?: 0.0
-    val dz = state.dz ?: 0.0
+private fun matchesVolume(origin: Pos, dx: Double, dy: Double, dz: Double, entity: Entity): Boolean {
     val pos = entity.position
+    val box = entity.boundingBox
 
-    return pos.x() >= origin.x() + minOf(0.0, dx) && pos.x() <= origin.x() + maxOf(0.0, dx) + 1.0 &&
-            pos.y() >= origin.y() + minOf(0.0, dy) && pos.y() <= origin.y() + maxOf(
-        0.0,
-        dy
-    ) + 1.0 &&
-            pos.z() >= origin.z() + minOf(0.0, dz) && pos.z() <= origin.z() + maxOf(0.0, dz) + 1.0
+    return pos.x() + box.minX() < origin.x() + maxOf(0.0, dx) + 1.0 &&
+            pos.x() + box.maxX() > origin.x() + minOf(0.0, dx) &&
+            pos.y() + box.minY() < origin.y() + maxOf(0.0, dy) + 1.0 &&
+            pos.y() + box.maxY() > origin.y() + minOf(0.0, dy) &&
+            pos.z() + box.minZ() < origin.z() + maxOf(0.0, dz) + 1.0 &&
+            pos.z() + box.maxZ() > origin.z() + minOf(0.0, dz)
 }
 
-private fun matchesDistance(anchor: Pos, state: MutableSelector, entity: Entity): Boolean {
-    val range = state.distance ?: return true
-    val origin = anchorOf(anchor, state)
-    return range.inRange(entity.getDistance(origin).toFloat())
+private fun isAlive(@Suppress("UNUSED_PARAMETER") origin: Pos, entity: Entity): Boolean =
+    !(entity is LivingEntity && entity.isDead)
+
+/**
+ * Returns a predicate matching the wrapped rotation of an entity against [range], as vanilla does.
+ * An omitted bound defaults to `0` or `359`; a minimum above the maximum after wrapping selects the
+ * range that crosses the `-180`/`180` boundary.
+ */
+private fun rotationPredicate(
+    range: Range.Float,
+    rotation: (Entity) -> Float,
+): (Pos, Entity) -> Boolean {
+    val min = wrapDegrees(range.min()?.takeIf { it != -Float.MAX_VALUE } ?: 0f)
+    val max = wrapDegrees(range.max()?.takeIf { it != Float.MAX_VALUE } ?: 359f)
+    return { _, entity ->
+        val degrees = wrapDegrees(rotation(entity))
+        if (min > max) degrees >= min || degrees <= max else degrees >= min && degrees <= max
+    }
+}
+
+/**
+ * Whether a bound of this range other than the omitted-bound default is negative.
+ */
+private fun Range.Float.hasNegativeBound(): Boolean {
+    val min = min()
+    val max = max()
+    return (min != null && min != -Float.MAX_VALUE && min < 0f) || (max != null && max < 0f)
+}
+
+/**
+ * Whether a bound of this range other than the omitted-bound default is negative.
+ */
+private fun Range.Int.hasNegativeBound(): Boolean {
+    val min = min()
+    val max = max()
+    return (min != null && min != Int.MIN_VALUE && min < 0) || (max != null && max < 0)
 }
 
 private fun matchesName(entity: Entity, name: String): Boolean = when (entity) {
@@ -509,9 +586,6 @@ private fun matchesName(entity: Entity, name: String): Boolean = when (entity) {
         ?.let { component -> PlainTextComponentSerializer.plainText().serialize(component) } == name
 }
 
-/**
- * Returns the name of the team [entity] belongs to, or an empty string without a team.
- */
 private fun teamNameOf(entity: Entity): String {
     val identifier = if (entity is Player) entity.username else entity.uuid.toString()
     return MinecraftServer.getTeamManager().teams
@@ -630,6 +704,10 @@ private val ERROR_UNSUPPORTED_OPTION = DynamicCommandExceptionType { key ->
 private val ERROR_NBT_UNSUPPORTED = SimpleCommandExceptionType(
     LiteralMessage("Option 'nbt' is unsupported: this command implementation cannot parse SNBT"),
 )
+private val ERROR_DISTANCE_NEGATIVE =
+    SimpleCommandExceptionType(LiteralMessage("Distance cannot be negative"))
+private val ERROR_LEVEL_NEGATIVE =
+    SimpleCommandExceptionType(LiteralMessage("Level cannot be negative"))
 private val ERROR_LIMIT_TOO_SMALL =
     SimpleCommandExceptionType(LiteralMessage("Limit must be at least 1"))
 private val ERROR_SORT_UNKNOWN =

@@ -61,9 +61,8 @@ internal class MinestomCommandCompiler {
             path.arguments.forEach { argument ->
                 if (argument.suggestions == SuggestionMode.BuiltIns) return@forEach
 
-                val includesBuiltIns = argument.suggestions is SuggestionMode.Include<*> ||
-                        argument.suggestions is SuggestionMode.IncludeSafe<*>
-                if (baseKindOf(argument.kind) == ArgumentKind.EntityType && includesBuiltIns) {
+                val baseKind = argument.kind.baseKind()
+                if (baseKind == ArgumentKind.EntityType && argument.suggestions.includesBuiltIns()) {
                     throw CommandValidationException(
                         "EntityType argument '${argument.nodeName}' cannot include custom suggestions " +
                                 "because Minestom does not expose the native summonable entity set; " +
@@ -71,7 +70,7 @@ internal class MinestomCommandCompiler {
                     )
                 }
 
-                val kindName = when (baseKindOf(argument.kind)) {
+                val kindName = when (baseKind) {
                     is ArgumentKind.Literal -> "Literal"
                     ArgumentKind.Command -> "Command"
                     ArgumentKind.Position -> "Position"
@@ -86,15 +85,6 @@ internal class MinestomCommandCompiler {
                 )
             }
         }
-    }
-
-    /**
-     * Unwraps a custom kind to its base kind and a list kind to its element kind.
-     */
-    private tailrec fun baseKindOf(kind: ArgumentKind<*>): ArgumentKind<*> = when (kind) {
-        is ArgumentKind.Custom<*, *> -> baseKindOf(kind.base.kind)
-        is ArgumentKind.List<*> -> baseKindOf(kind.element.kind)
-        else -> kind
     }
 
     private fun normalize(name: String): String = name.lowercase(Locale.ROOT)

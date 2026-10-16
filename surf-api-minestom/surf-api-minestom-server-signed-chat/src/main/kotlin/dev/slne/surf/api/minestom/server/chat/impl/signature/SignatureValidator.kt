@@ -8,14 +8,15 @@ internal fun interface SignatureValidator {
 
     fun validate(updater: SignatureUpdater, signature: ByteArray): Boolean
 
-    fun validate(payload: ByteArray, signature: ByteArray): Boolean =
-        validate({ output -> output.update(payload) }, signature)
-
     companion object {
         private val LOGGER = ComponentLogger.logger()
 
-        val NO_VALIDATION = SignatureValidator { _, _ -> true }
-
+        /**
+         * A validator that verifies signatures with [algorithm] against [publicKey].
+         *
+         * A signature that cannot be verified, e.g. because it is malformed, is rejected. The
+         * failure is logged at debug level only, as the signature is client input.
+         */
         fun from(publicKey: PublicKey, algorithm: String) =
             SignatureValidator { updater, signature ->
                 try {
@@ -24,7 +25,7 @@ internal fun interface SignatureValidator {
                     updater.update(verifier::update)
                     verifier.verify(signature)
                 } catch (e: Exception) {
-                    LOGGER.error("Failed to verify signature", e)
+                    LOGGER.debug("Failed to verify signature: {}", e.toString())
                     false
                 }
             }

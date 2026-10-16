@@ -128,6 +128,9 @@ class SurfMinestomServerBuilder internal constructor() {
      * Takes effect only when the server runs with the surf Mixin agent, i.e. from the server jar
      * built by the surf Gradle plugin.
      *
+     * Only the entity's own update, physics and tick events stop. Tasks on the entity's scheduler,
+     * such as `Entity#scheduleRemove` or `scheduler().scheduleNextTick`, keep running.
+     *
      * @throws IllegalArgumentException for [EntityType.PLAYER]
      */
     fun disableEntityTicking(vararg types: EntityType) {

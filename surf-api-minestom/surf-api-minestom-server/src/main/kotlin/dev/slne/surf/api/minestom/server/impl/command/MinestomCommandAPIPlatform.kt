@@ -25,7 +25,9 @@ import kotlin.concurrent.withLock
  * shadowed.
  *
  * Registration state is guarded by a lock, and a failed registration is rolled back completely.
- * Constructing a platform makes it the active one that the accessors in the companion expose.
+ * Constructing a platform makes it the active one that the accessors in the companion expose;
+ * closing it deactivates it. A platform that is not installed afterwards is discarded with
+ * [discard], which also reactivates the platform that was active before.
  */
 internal class MinestomCommandAPIPlatform(
     private val commandManager: CommandManager,
@@ -151,6 +153,25 @@ internal class MinestomCommandAPIPlatform(
 
     internal companion object {
         private val installed = AtomicReference<MinestomCommandAPIPlatform?>()
+
+        /**
+         * The active platform, or `null` while none is active.
+         */
+        fun active(): MinestomCommandAPIPlatform? = installed.get()
+
+        /**
+         * Closes [platform] and makes [previous], the platform that was active before [platform] was
+         * constructed, the active one again.
+         *
+         * A failure of [AutoCloseable.close] propagates after the reactivation.
+         */
+        fun discard(platform: MinestomCommandAPIPlatform, previous: MinestomCommandAPIPlatform?) {
+            try {
+                platform.close()
+            } finally {
+                installed.compareAndSet(null, previous)
+            }
+        }
 
         /**
          * The merger of the active platform, or `null` while none is active.

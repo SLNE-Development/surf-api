@@ -14,8 +14,8 @@ import java.util.*
 /**
  * Parses a UUID in dashed hex form, e.g. `550e8400-e29b-41d4-a716-446655440000`.
  *
- * The token is validated by [UUID.fromString], so groups shorter than the canonical width are
- * accepted as well.
+ * Groups shorter than the canonical width are accepted as well; wider groups are rejected instead
+ * of being truncated.
  */
 internal object UuidParser : ArgumentType<UUID> {
     private val INVALID = SimpleCommandExceptionType(LiteralMessage("Invalid UUID"))
@@ -27,9 +27,7 @@ internal object UuidParser : ArgumentType<UUID> {
         }
         val text = reader.string.substring(start, reader.cursor)
 
-        return try {
-            UUID.fromString(text)
-        } catch (cause: IllegalArgumentException) {
+        return parseDashedUuid(text) ?: run {
             reader.cursor = start
             throw INVALID.createWithContext(reader)
         }
@@ -37,6 +35,40 @@ internal object UuidParser : ArgumentType<UUID> {
 
     private fun isAllowed(character: Char): Boolean = character in '0'..'9' ||
             character in 'a'..'f' || character in 'A'..'F' || character == '-'
+}
+
+/**
+ * Parses [text] as a UUID of five dashed hex groups, or returns `null` for any other text.
+ *
+ * As with [UUID.fromString], a group may be shorter than its canonical 8-4-4-4-12 width; a wider
+ * group is rejected instead of being truncated. Ordinary names are rejected without an exception.
+ */
+internal fun parseDashedUuid(text: String): UUID? {
+    var group = 0
+    var groupLength = 0
+    for (character in text) {
+        if (character == '-') {
+            if (groupLength == 0 || ++group >= UUID_GROUP_WIDTHS.size) return null
+            groupLength = 0
+            continue
+        }
+        val hex = character in '0'..'9' || character in 'a'..'f' || character in 'A'..'F'
+        if (!hex || ++groupLength > UUID_GROUP_WIDTHS[group]) return null
+    }
+    if (group != UUID_GROUP_WIDTHS.lastIndex || groupLength == 0) return null
+    return UUID.fromString(text)
+}
+
+private val UUID_GROUP_WIDTHS = intArrayOf(8, 4, 4, 4, 12)
+
+/**
+ * Wraps [degrees] into `[-180, 180)`.
+ */
+internal fun wrapDegrees(degrees: Float): Float {
+    var wrapped = degrees % 360f
+    if (wrapped >= 180f) wrapped -= 360f
+    if (wrapped < -180f) wrapped += 360f
+    return wrapped
 }
 
 /**
@@ -69,27 +101,23 @@ internal object AngleParser : ArgumentType<Float> {
 
         return wrapDegrees(if (relative) value + yaw else value)
     }
-
-    private fun wrapDegrees(degrees: Float): Float {
-        var wrapped = degrees % 360f
-        if (wrapped >= 180f) wrapped -= 360f
-        if (wrapped < -180f) wrapped += 360f
-        return wrapped
-    }
 }
 
 /**
  * Parses a vanilla time value: a number with an optional unit of `d` (24000 ticks), `s` (20 ticks)
  * or `t` (ticks). Without a unit the number counts ticks.
  *
- * The tick count is converted to a [Duration] using [MinecraftServer.TICK_MS]. Negative values and
- * other units are rejected.
+ * The value is rounded to the nearest tick and converted to a [Duration] using
+ * [MinecraftServer.TICK_MS]. Negative values, values whose duration does not fit a [Duration] in
+ * milliseconds and other units are rejected.
  */
 internal object TimeParser : ArgumentType<Duration> {
     private val INVALID_UNIT = DynamicCommandExceptionType { unit ->
         LiteralMessage("Invalid unit '$unit'; expected 'd', 's', 't' or none")
     }
     private val NEGATIVE = SimpleCommandExceptionType(LiteralMessage("Duration must not be negative"))
+    private val OUT_OF_RANGE = SimpleCommandExceptionType(LiteralMessage("Duration is out of range"))
+    private val MAX_TICKS = Long.MAX_VALUE / MinecraftServer.TICK_MS
 
     override fun parse(reader: StringReader): Duration {
         val start = reader.cursor
@@ -101,10 +129,20 @@ internal object TimeParser : ArgumentType<Duration> {
             throw INVALID_UNIT.createWithContext(reader, unit.toString())
         }
 
-        val ticks = (amount * factor).toLong()
+        val scaled = amount * factor
+        if (!scaled.isFinite()) {
+            reader.cursor = start
+            throw OUT_OF_RANGE.createWithContext(reader)
+        }
+
+        val ticks = Math.round(scaled.toDouble())
         if (ticks < 0) {
             reader.cursor = start
             throw NEGATIVE.createWithContext(reader)
+        }
+        if (ticks > MAX_TICKS) {
+            reader.cursor = start
+            throw OUT_OF_RANGE.createWithContext(reader)
         }
 
         return Duration.ofMillis(ticks * MinecraftServer.TICK_MS)

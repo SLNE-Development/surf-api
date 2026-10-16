@@ -27,6 +27,11 @@ import java.nio.file.Path
  * Listeners registered on [eventNode], coroutines launched in [scope] and commands registered while
  * one of the lifecycle functions runs, or from within [scope], belong to the plugin. They are
  * removed or, for coroutines, cancelled once the plugin is disabled.
+ *
+ * The lifecycle functions run blocking on the server thread: `onLoad` before the server accepts
+ * players, `onEnable` on the first tick and `onDisable` during shutdown. They must not wait for
+ * work dispatched to `MinestomDispatchers.Main` or to an entity scheduler, because that work only
+ * runs once the blocked thread returns to the tick loop. Such work is launched in [scope] instead.
  */
 abstract class SurfMinestomPlugin {
     // Taken in the constructor so that property initializers of the plugin, including those of an

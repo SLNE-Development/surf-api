@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import com.mojang.brigadier.tree.ArgumentCommandNode
 import dev.slne.surf.api.minestom.command.argument.ArgumentDefinition
 import dev.slne.surf.api.minestom.command.argument.SuggestionMode
 import dev.slne.surf.api.minestom.command.exception.ComponentMessage
@@ -15,6 +16,7 @@ import dev.slne.surf.api.minestom.command.suggestion.StringTooltip
 import dev.slne.surf.api.minestom.command.suggestion.SuggestionFilter
 import dev.slne.surf.api.minestom.command.suggestion.SuggestionInfo
 import dev.slne.surf.api.minestom.coroutine.minestomAsyncScope
+import dev.slne.surf.api.minestom.server.impl.command.includesBuiltIns
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
@@ -134,15 +136,16 @@ internal class SuggestingArgumentType(
     private fun <S> previousArguments(context: CommandContext<S>): CommandArguments {
         val parsed = ObjectArrayList<ParsedArgument>()
 
-        context.nodes.forEach { node ->
-            val name = node.node.name
+        context.nodes.forEach { parsedNode ->
+            val node = parsedNode.node as? ArgumentCommandNode<*, *> ?: return@forEach
+            val name = node.name
             val value = runCatching { context.getArgument(name, Any::class.java) }.getOrNull()
                 ?: return@forEach
 
             parsed += ParsedArgument(
                 name = name,
                 value = value,
-                raw = context.input.substring(node.range.start, node.range.end),
+                raw = context.input.substring(parsedNode.range.start, parsedNode.range.end),
                 present = true,
             )
         }
@@ -150,12 +153,6 @@ internal class SuggestingArgumentType(
         return CommandArguments.of(parsed)
     }
 }
-
-/**
- * Whether this mode keeps the suggestions of the argument's own type.
- */
-private fun SuggestionMode<*>.includesBuiltIns(): Boolean =
-    this is SuggestionMode.Include<*> || this is SuggestionMode.IncludeSafe<*>
 
 /**
  * How the entries of a provider are matched against the typed input.

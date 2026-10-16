@@ -18,6 +18,7 @@ dependencies {
 
 tasks.test {
     systemProperty("minestom.inside-test", "true")
+    systemProperty("junit.jupiter.execution.timeout.default", "2m")
 }
 
 description = "surf-api-minestom-server-npc"

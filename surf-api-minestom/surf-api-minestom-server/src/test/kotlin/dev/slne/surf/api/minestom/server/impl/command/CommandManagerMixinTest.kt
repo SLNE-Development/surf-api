@@ -114,8 +114,11 @@ class CommandManagerMixinTest {
         try {
             block()
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 }

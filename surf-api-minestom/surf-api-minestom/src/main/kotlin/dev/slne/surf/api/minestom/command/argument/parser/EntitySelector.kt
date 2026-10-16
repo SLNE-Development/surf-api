@@ -16,8 +16,9 @@ import java.util.*
  * instances. Candidates are filtered by [predicates], ordered by [sorter] and truncated to the
  * smaller of [limit] and [maxResults].
  *
- * [predicates] and [sorter] receive the sender's position as anchor, or the world origin when the
- * sender is not an [Entity].
+ * [predicates] and [sorter] receive the selector origin: the sender's position, or the world origin
+ * when the sender is not an [Entity], with each axis replaced by the `x`, `y` or `z` option
+ * through [position].
  *
  * When [worldLimited] is set and the sender is an entity in an instance, only that instance is
  * searched; otherwise all instances are.
@@ -28,6 +29,7 @@ internal class EntitySelector(
     val predicates: List<(Pos, Entity) -> Boolean>,
     val sorter: ((Pos) -> Comparator<Entity>)?,
     val limit: Int,
+    val position: (Pos) -> Pos,
     val self: Boolean,
     val playerName: String?,
     val uuid: UUID?,
@@ -41,10 +43,10 @@ internal class EntitySelector(
             return listOfNotNull(findByUuid(id))
         }
 
-        val anchor = (sender as? Entity)?.position ?: Pos.ZERO
+        val origin = position((sender as? Entity)?.position ?: Pos.ZERO)
         if (self) {
             val entity = sender as? Entity ?: return emptyList()
-            return if (matches(anchor, entity)) listOf(entity) else emptyList()
+            return if (matches(origin, entity)) listOf(entity) else emptyList()
         }
 
         val senderInstance = (sender as? Entity)?.instance
@@ -57,14 +59,15 @@ internal class EntitySelector(
 
         val filtered = candidates
             .filter { entity -> !entity.isRemoved }
-            .filter { entity -> matches(anchor, entity) }
-            .toList()
-        val ordered = sorter?.let { comparatorFor -> filtered.sortedWith(comparatorFor(anchor)) } ?: filtered
+            .filter { entity -> matches(origin, entity) }
+        val resultLimit = minOf(limit, maxResults)
+        val comparator = sorter?.invoke(origin) ?: return filtered.take(resultLimit).toList()
 
-        return ordered.take(minOf(limit, maxResults))
+        if (resultLimit == 1) return listOfNotNull(filtered.minWithOrNull(comparator))
+        return filtered.toList().sortedWith(comparator).take(resultLimit)
     }
 
-    private fun matches(anchor: Pos, entity: Entity): Boolean = predicates.all { predicate -> predicate(anchor, entity) }
+    private fun matches(origin: Pos, entity: Entity): Boolean = predicates.all { predicate -> predicate(origin, entity) }
 
     private fun findByUuid(id: UUID): Entity? {
         MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(id)?.let { return it }

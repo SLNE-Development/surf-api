@@ -1,5 +1,6 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.extension.CommandManager
 import net.minestom.server.event.Event
@@ -28,13 +29,26 @@ internal class MinestomCommandAPIService {
 
         CommandAPITranslations.register()
 
+        // Process-wide, as in vanilla: failed parses while typing do not need a stack trace
+        CommandSyntaxException.ENABLE_COMMAND_STACK_TRACES = false
+
+        val previousActive = MinestomCommandAPIPlatform.active()
         val installed = MinestomCommandAPIPlatform(CommandManager, ownership)
-        CommandAPI.installPlatform(installed)
+        try {
+            CommandAPI.installPlatform(installed)
+        } catch (failure: Throwable) {
+            try {
+                MinestomCommandAPIPlatform.discard(installed, previousActive)
+            } catch (discardFailure: Throwable) {
+                failure.addSuppressed(discardFailure)
+            }
+            throw failure
+        }
         platform = installed
 
+        previousUnknownCommandCallback = CommandManager.unknownCommandCallback
         MinestomSuggestionListener(ownership).register(node)
 
-        previousUnknownCommandCallback = CommandManager.unknownCommandCallback
         CommandManager.unknownCommandCallback = CommandCallback(CommandAPIHook::reportUnknown)
     }
 

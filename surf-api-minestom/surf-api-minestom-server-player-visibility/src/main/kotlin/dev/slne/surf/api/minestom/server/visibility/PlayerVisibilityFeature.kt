@@ -9,6 +9,7 @@ import dev.slne.surf.api.minestom.visibility.PlayerVisibility
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.Player
+import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
 import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.event.player.PlayerSpawnEvent
 import java.util.*
@@ -63,9 +64,9 @@ class PlayerVisibilitySettings internal constructor() {
 /**
  * Limits how many players each player sees at once to the nearest ones.
  *
- * The feature owns the viewer rule and the viewable rule of every player from their first spawn
- * on. Restrict what a player sees through [PlayerVisibility.updateViewerRule]; calling
- * `Player#updateViewerRule` directly removes the limit for that player.
+ * The feature owns the viewer rule and the viewable rule of every player from their first
+ * configuration on. Restrict what a player sees through [PlayerVisibility.updateViewerRule];
+ * calling `Player#updateViewerRule` directly removes the limit for that player.
  */
 @OptIn(InternalSurfApi::class)
 class PlayerVisibilityFeature internal constructor(
@@ -75,21 +76,28 @@ class PlayerVisibilityFeature internal constructor(
     override val id: String = ID
 
     private val handlers = ConcurrentHashMap<UUID, PlayerVisibilityHandler>()
-    private val service = PlayerVisibilityService(settings) { player -> handlers[player.uuid] }
+    private val service = PlayerVisibilityService(settings) { player -> handler(player) }
 
     override fun load(api: SurfMinestomServer) {
         PlayerVisibility.installProvider(this)
 
+        api.eventNode.addListener<AsyncPlayerConfigurationEvent> { event ->
+            handlerFor(event.player)
+        }
+
         api.eventNode.addListener<PlayerSpawnEvent> { event ->
             if (!event.isFirstSpawn) return@addListener
 
-            val handler = PlayerVisibilityHandler(event.player)
-            handlers[event.player.uuid] = handler
-            handler.init()
+            handlerFor(event.player)
         }
 
         api.eventNode.addListener<PlayerDisconnectEvent> { event ->
-            handlers.remove(event.player.uuid)
+            val player = event.player
+            val handler = handler(player) ?: return@addListener
+
+            if (handlers.remove(player.uuid, handler)) {
+                handler.close()
+            }
         }
     }
 
@@ -104,16 +112,48 @@ class PlayerVisibilityFeature internal constructor(
         handlers.clear()
     }
 
-    internal fun handler(player: Player): PlayerVisibilityHandler? = handlers[player.uuid]
+    internal fun handler(player: Player): PlayerVisibilityHandler? =
+        handlers[player.uuid]?.takeIf { it.isFor(player) }
+
+    /**
+     * Returns the handler of [player], creating and initializing it when it does not exist yet.
+     *
+     * The handler is created during the first configuration, before [player] is registered in an
+     * entity tracker, so that no player is shown before the limit applies. Requests that arrive
+     * earlier create it on demand. A handler left over from an earlier connection with the same
+     * UUID is replaced and closed. Returns `null` for a player that is no longer online.
+     */
+    private fun handlerFor(player: Player): PlayerVisibilityHandler? {
+        handler(player)?.let { return it }
+        if (!player.isOnline) return null
+
+        val created = PlayerVisibilityHandler(player)
+        var stale: PlayerVisibilityHandler? = null
+        val current = handlers.compute(player.uuid) { _, existing ->
+            if (existing != null && existing.isFor(player)) {
+                existing
+            } else {
+                stale = existing
+                created
+            }
+        }
+
+        stale?.close()
+        if (current === created) {
+            created.init()
+        }
+
+        return current
+    }
 
     override fun updateViewerRule(player: Player, predicate: Predicate<in Entity>?): Boolean {
-        val handler = handler(player) ?: return false
+        val handler = handlerFor(player) ?: return false
         handler.requestRule(predicate)
         return true
     }
 
     override fun refreshViewerRule(player: Player): Boolean {
-        val handler = handler(player) ?: return false
+        val handler = handlerFor(player) ?: return false
         handler.requestRuleRefresh()
         return true
     }

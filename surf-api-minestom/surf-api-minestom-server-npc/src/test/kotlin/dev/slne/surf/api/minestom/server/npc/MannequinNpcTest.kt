@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.server.npc
 
-import codes.bed.minestom.npc.StomNPCs
 import dev.slne.surf.api.minestom.npc.mannequinNpc
 import net.kyori.adventure.text.Component
 import net.minestom.server.coordinate.Pos
@@ -10,8 +9,6 @@ import net.minestom.server.entity.Player
 import net.minestom.server.entity.PlayerHand
 import net.minestom.server.entity.PlayerSkin
 import net.minestom.server.entity.metadata.avatar.MannequinMeta
-import net.minestom.server.event.EventFilter
-import net.minestom.server.event.EventNode
 import net.minestom.server.event.player.PlayerEntityInteractEvent
 import net.minestom.server.instance.Instance
 import net.minestom.server.network.player.ResolvableProfile
@@ -30,6 +27,8 @@ class MannequinNpcTest {
 
     @Test
     fun `mannequin npc spawns with skin, immovable meta and hologram`(env: Env) {
+        env.attachNpcs()
+
         val instance = env.createFlatInstance()
         instance.loadChunk(0, 0).join()
 
@@ -53,9 +52,7 @@ class MannequinNpcTest {
 
     @Test
     fun `mannequin npc receives interactions through the npc listener`(env: Env) {
-        val npcNode = EventNode.type("test-npcs", EventFilter.INSTANCE)
-        env.process().eventHandler().addChild(npcNode)
-        StomNPCs.initialize(npcNode)
+        env.attachNpcs()
 
         val instance = env.createFlatInstance()
         instance.loadChunk(0, 0).join()
@@ -77,9 +74,7 @@ class MannequinNpcTest {
 
     @Test
     fun `mannequin npc attaches a single hologram when its chunk loads late`(env: Env) {
-        val npcNode = EventNode.type("test-npcs-late-chunk", EventFilter.INSTANCE)
-        env.process().eventHandler().addChild(npcNode)
-        StomNPCs.initialize(npcNode)
+        env.attachNpcs()
 
         val instance = env.createFlatInstance()
         val failures = CopyOnWriteArrayList<Throwable>()
@@ -102,6 +97,12 @@ class MannequinNpcTest {
         assertSame(npc.textDisplayController?.getEntity(), displays.single())
         assertTrue(failures.isEmpty(), "spawning logged exceptions: $failures")
     }
+
+    /**
+     * Attaches the process-wide NPC node of [NpcFeature] to this test's event handler, so that no
+     * test depends on which test initialized StomNPCs first.
+     */
+    private fun Env.attachNpcs() = NpcFeature.attach(process().eventHandler())
 
     private fun connect(connection: TestConnection, instance: Instance): Player {
         val player = CompletableFuture<Player>()

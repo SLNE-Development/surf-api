@@ -111,21 +111,27 @@ private val NO_MATCH = SimpleCommandExceptionType(LiteralMessage("No entity matc
 private val NO_MATCHES = SimpleCommandExceptionType(LiteralMessage("No entities matched the selector"))
 
 /**
- * Parses an entity selector and resolves it to a single entity of type [T].
+ * Parses an entity selector and resolves the matched entities to a value of type [R].
  *
- * Fails when the selector can match more than [maxResults] entities, when [select] returns `null`,
- * or when no [CommandSender] source is available.
+ * Fails when [resolve] returns `null`, reporting [noMatch], and when no [CommandSender] source is
+ * available.
  */
-private class SingleTargetType<T : Entity>(
+private abstract class TargetType<R : Any>(
     maxResults: Int,
     playersOnly: Boolean,
-    private val select: (List<Entity>) -> T?,
-) : ArgumentType<T> {
+    private val noMatch: SimpleCommandExceptionType,
+) : ArgumentType<R> {
     private val selector = EntitySelectorParser(maxResults, playersOnly)
 
-    override fun parse(reader: StringReader): T = throw SELECTOR_NEEDS_SENDER.createWithContext(reader)
+    /**
+     * Converts the entities the selector matched to the parsed value, or `null` when there is no
+     * acceptable match.
+     */
+    protected abstract fun resolve(entities: List<Entity>): R?
 
-    override fun <S> parse(reader: StringReader, source: S): T {
+    override fun parse(reader: StringReader): R = throw SELECTOR_NEEDS_SENDER.createWithContext(reader)
+
+    override fun <S> parse(reader: StringReader, source: S): R {
         val start = reader.cursor
         val parsed = selector.parse(reader)
         val sender = source as? CommandSender ?: run {
@@ -133,9 +139,9 @@ private class SingleTargetType<T : Entity>(
             throw SELECTOR_NEEDS_SENDER.createWithContext(reader)
         }
 
-        return select(parsed.find(sender)) ?: run {
+        return resolve(parsed.find(sender)) ?: run {
             reader.cursor = start
-            throw NO_MATCH.createWithContext(reader)
+            throw noMatch.createWithContext(reader)
         }
     }
 
@@ -146,39 +152,30 @@ private class SingleTargetType<T : Entity>(
 }
 
 /**
- * Parses an entity selector and resolves it to the matching entities of type [T].
+ * Resolves an entity selector to a single entity of type [T].
  *
- * Fails on an empty result unless [allowEmpty] is set, and when no [CommandSender] source is
- * available.
+ * Fails when the selector can match more than [maxResults] entities or when [select] returns
+ * `null`.
+ */
+private class SingleTargetType<T : Entity>(
+    maxResults: Int,
+    playersOnly: Boolean,
+    private val select: (List<Entity>) -> T?,
+) : TargetType<T>(maxResults, playersOnly, NO_MATCH) {
+    override fun resolve(entities: List<Entity>): T? = select(entities)
+}
+
+/**
+ * Resolves an entity selector to the matching entities of type [T].
+ *
+ * Fails on an empty result unless [allowEmpty] is set.
  */
 private class MultiTargetType<T : Entity>(
     maxResults: Int,
     playersOnly: Boolean,
     private val allowEmpty: Boolean,
     private val select: (List<Entity>) -> List<T>,
-) : ArgumentType<List<T>> {
-    private val selector = EntitySelectorParser(maxResults, playersOnly)
-
-    override fun parse(reader: StringReader): List<T> = throw SELECTOR_NEEDS_SENDER.createWithContext(reader)
-
-    override fun <S> parse(reader: StringReader, source: S): List<T> {
-        val start = reader.cursor
-        val parsed = selector.parse(reader)
-        val sender = source as? CommandSender ?: run {
-            reader.cursor = start
-            throw SELECTOR_NEEDS_SENDER.createWithContext(reader)
-        }
-
-        val results = select(parsed.find(sender))
-        if (results.isEmpty() && !allowEmpty) {
-            reader.cursor = start
-            throw NO_MATCHES.createWithContext(reader)
-        }
-        return results
-    }
-
-    override fun <S> listSuggestions(
-        context: CommandContext<S>,
-        builder: SuggestionsBuilder,
-    ): CompletableFuture<Suggestions> = selector.listSuggestions(context, builder)
+) : TargetType<List<T>>(maxResults, playersOnly, NO_MATCHES) {
+    override fun resolve(entities: List<Entity>): List<T>? =
+        select(entities).takeIf { results -> allowEmpty || results.isNotEmpty() }
 }

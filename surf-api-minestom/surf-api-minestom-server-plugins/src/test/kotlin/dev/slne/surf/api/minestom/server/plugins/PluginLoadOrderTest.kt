@@ -72,4 +72,58 @@ class PluginLoadOrderTest {
         assertEquals(listOf(first), result.ordered)
         assertEquals(1, result.rejected.size)
     }
+
+    @Test
+    fun `plugins that optionally depend on each other are both loaded`() {
+        val result = PluginLoadOrder.order(
+            listOf(
+                plugin("a", optional("b")),
+                plugin("b", optional("a")),
+            )
+        )
+
+        assertEquals(setOf("a", "b"), result.ids().toSet())
+        assertEquals(2, result.ids().size)
+        assertEquals(emptyMap<String, String>(), result.rejected)
+    }
+
+    @Test
+    fun `an optional dependency that would close a cycle is ignored`() {
+        val result = PluginLoadOrder.order(
+            listOf(
+                plugin("a", optional("b")),
+                plugin("b", required("a")),
+            )
+        )
+
+        assertEquals(listOf("a", "b"), result.ids())
+        assertEquals(emptyMap<String, String>(), result.rejected)
+    }
+
+    @Test
+    fun `an optional dependency on a cycle member does not reject the plugin`() {
+        val result = PluginLoadOrder.order(
+            listOf(
+                plugin("x", optional("a")),
+                plugin("a", required("b")),
+                plugin("b", required("a")),
+            )
+        )
+
+        assertEquals(listOf("x"), result.ids())
+        assertEquals(setOf("a", "b"), result.rejected.keys)
+    }
+
+    @Test
+    fun `an optional dependency on a rejected plugin does not reject the plugin`() {
+        val result = PluginLoadOrder.order(
+            listOf(
+                plugin("x", optional("broken")),
+                plugin("broken", required("missing")),
+            )
+        )
+
+        assertEquals(listOf("x"), result.ids())
+        assertEquals(setOf("broken"), result.rejected.keys)
+    }
 }

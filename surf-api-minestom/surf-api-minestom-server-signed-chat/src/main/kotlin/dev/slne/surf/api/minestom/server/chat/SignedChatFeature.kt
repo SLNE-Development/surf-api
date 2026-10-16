@@ -20,6 +20,7 @@ import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.crypto.ChatSession
 import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
+import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
 import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.event.player.PlayerSpawnEvent
 import net.minestom.server.event.player.PlayerTickEvent
@@ -88,8 +89,15 @@ class SignedChatFeature internal constructor(
         api.eventNode.addListener<PlayerTickEvent> { event ->
             ChatSessionHolderImpl.fromPlayer(event.player)?.handler?.tick()
         }
+        // The client starts a new chat state with every configuration phase; so does the handler.
+        api.eventNode.addListener<AsyncPlayerConfigurationEvent> { event ->
+            if (!event.isFirstConfig) ChatSessionHolderImpl.remove(event.player)?.handler?.close()
+        }
         api.eventNode.addListener<PlayerSpawnEvent> { event ->
-            if (event.isFirstSpawn) announceChatSessionsTo(event.player)
+            if (event.isFirstSpawn) {
+                holder(event.player)
+                announceChatSessionsTo(event.player)
+            }
         }
         api.eventNode.addListener<PlayerDisconnectEvent> { event ->
             ChatSessionHolderImpl.remove(event.player)?.handler?.close()

@@ -20,7 +20,8 @@ import net.minestom.server.message.ChatType
 /**
  * Runs one signed chat message through [AsyncPlayerChatEvent] and sends it to the event's viewers.
  *
- * Delivery depends on what the listeners changed. Cancelled events send nothing.
+ * Delivery depends on what the listeners changed. Nothing is sent for cancelled events or when the
+ * sender has left while the listeners ran.
  * - Nothing changed: the message is sent as received with the vanilla chat type.
  * - Message changed, default renderer: vanilla chat type, the new content as unsigned content.
  * - Custom renderer: `surf:raw` chat type ([SurfChatTypes.raw]), the rendered component as
@@ -36,9 +37,6 @@ internal class ChatProcessor(
 ) {
     private val originalMessage = message.decoratedContent()
     private val outgoing = OutgoingChatMessage.create(message)
-
-    private var messageChanged = false
-    private var formatChanged = false
 
     suspend fun process() {
         val players = ConnectionManager.onlinePlayers
@@ -59,19 +57,19 @@ internal class ChatProcessor(
 
         AsyncPlayerChatEvent.node.call(event)
 
-        readModifications(event, renderer)
-        complete(event)
+        complete(
+            event,
+            messageChanged = event.message != originalMessage,
+            formatChanged = event.renderer !== renderer,
+        )
     }
 
-    private fun readModifications(event: AsyncPlayerChatEvent, originalRenderer: ChatRenderer) {
-        messageChanged = event.message != originalMessage
-        if (originalRenderer !== event.renderer) {
-            formatChanged = true
-        }
-    }
-
-    private suspend fun complete(event: AsyncPlayerChatEvent) {
-        if (event.isCancelled) return
+    private suspend fun complete(
+        event: AsyncPlayerChatEvent,
+        messageChanged: Boolean,
+        formatChanged: Boolean,
+    ) {
+        if (event.isCancelled || player.isRemoved || !player.isOnline) return
 
         val displayName = player.chatDisplayName()
         val message = event.message
@@ -115,9 +113,7 @@ internal class ChatProcessor(
         unsignedFor: (suspend (Audience) -> Component)?
     ) {
         if (viewers.isEmpty()) return
-        if (viewers.size == 1) {
-            sendTo(viewers.first(), chatType, unsignedFor?.invoke(viewers.first()))
-        } else if (sendConcurrent) {
+        if (sendConcurrent) {
             supervisorScope {
                 for (viewer in viewers) {
                     launch {
@@ -136,7 +132,7 @@ internal class ChatProcessor(
         when (viewer) {
             is Player -> {
                 val holder = ChatSessionHolderImpl.fromPlayer(viewer) ?: return
-                outgoing.sendToPlayer(holder.handler, filtered = false, chatType, unsigned)
+                outgoing.sendToPlayer(holder.handler, chatType, unsigned)
             }
 
             is ConsoleSender -> viewer.sendMessage(

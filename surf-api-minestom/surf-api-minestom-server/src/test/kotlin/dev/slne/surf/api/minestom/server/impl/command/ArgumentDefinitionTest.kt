@@ -1,38 +1,19 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
-import dev.slne.surf.api.minestom.command.argument.ArgumentKind
-import dev.slne.surf.api.minestom.command.argument.BooleanArgument
-import dev.slne.surf.api.minestom.command.argument.CommandArgument
-import dev.slne.surf.api.minestom.command.argument.DoubleArgument
-import dev.slne.surf.api.minestom.command.argument.EnumArgument
-import dev.slne.surf.api.minestom.command.argument.FloatArgument
-import dev.slne.surf.api.minestom.command.argument.FloatRangeArgument
-import dev.slne.surf.api.minestom.command.argument.GreedyStringArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerRangeArgument
-import dev.slne.surf.api.minestom.command.argument.LiteralArgument
-import dev.slne.surf.api.minestom.command.argument.LongArgument
-import dev.slne.surf.api.minestom.command.argument.MultiLiteralArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.argument.SuggestionMode
-import dev.slne.surf.api.minestom.command.argument.TextArgument
-import dev.slne.surf.api.minestom.command.argument.UUIDArgument
+import com.mojang.brigadier.StringReader
+import com.mojang.brigadier.arguments.StringArgumentType
+import dev.slne.surf.api.minestom.command.argument.*
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import dev.slne.surf.api.minestom.command.suggestion.SafeSuggestions
 import net.minestom.server.command.builder.arguments.ArgumentType
+import net.minestom.server.coordinate.Vec
 import net.minestom.server.utils.Range
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.util.EnumSet
-import java.util.UUID
+import java.util.*
 
 @EnvTest
 class ArgumentDefinitionTest {
@@ -92,6 +73,13 @@ class ArgumentDefinitionTest {
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "one", "") }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "one", "two words") }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "one\ttwo") }
+        assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "ns:fast") }
+        assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "a/b") }
+        assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "ä") }
+        assertEquals(
+            listOf("a-b.c+d_1"),
+            (MultiLiteralArgument("choice", "a-b.c+d_1").toDefinition().kind as ArgumentKind.MultiLiteral).literals,
+        )
 
         val source = arrayOf("one", "two")
         val argument = MultiLiteralArgument("choice", *source)
@@ -114,6 +102,16 @@ class ArgumentDefinitionTest {
         assertEquals(EnumSet.of(AccessLevel.STAFF, AccessLevel.GUEST), kind.values)
         assertEquals("team", kind.formatter(AccessLevel.STAFF))
         assertEquals("guest", definition.stringify(AccessLevel.GUEST))
+    }
+
+    @Test
+    fun `enum arguments reject formatted values that Brigadier cannot read unquoted`() {
+        assertThrows<IllegalArgumentException> {
+            EnumArgument("access", AccessLevel.entries) { value -> "ns:${value.name.lowercase()}" }
+        }
+        assertThrows<IllegalArgumentException> {
+            EnumArgument("access", AccessLevel.entries) { value -> "${value.name.lowercase()}/x" }
+        }
     }
 
     @Test
@@ -158,14 +156,45 @@ class ArgumentDefinitionTest {
         assertEquals("plain", stringify("plain"))
         assertEquals("\"hello world\"", stringify("hello world"))
         assertEquals("\"say \\\"hello\\\"\"", stringify("say \"hello\""))
-        assertEquals("C:\\temp", stringify("C:\\temp"))
+        assertEquals("\"C:\\\\temp\"", stringify("C:\\temp"))
+        assertEquals("\"a:b\"", stringify("a:b"))
+        assertEquals("\"héllo\"", stringify("héllo"))
         assertEquals("\"C:\\\\Program Files\\\\app\"", stringify("C:\\Program Files\\app"))
         assertEquals("\"Grüße Welt\"", stringify("Grüße Welt"))
-        assertEquals("\"left\\u000bright\"", verticalTabSerialized)
+        assertEquals("\"left\u000Bright\"", verticalTabSerialized)
         assertEquals(
             verticalTabValue,
             ArgumentType.String("text").parse(env.process().command().consoleSender, verticalTabSerialized),
         )
+        listOf("plain", "a:b", "héllo", "C:\\temp", "tab\there", "new\nline", "say \"hi\"", "back\\slash").forEach { value ->
+            assertEquals(value, StringArgumentType.string().parse(StringReader(stringify(value))))
+        }
+    }
+
+    @Test
+    fun `numeric and position kinds never serialize scientific notation`() {
+        val doubles = DoubleArgument("double").toDefinition().stringify
+        val floats = FloatArgument("float").toDefinition().stringify
+        val floatRange = FloatRangeArgument("range").toDefinition().stringify
+
+        listOf(1.0E-4, 1.2345678E7, -1.0E20, 12.5, 0.0).forEach { value ->
+            val text = doubles(value)
+            assertFalse('E' in text, text)
+            assertEquals(value, text.toDouble())
+        }
+        listOf(1.0E-4f, 1.2345678E7f, -Float.MAX_VALUE, 12.5f).forEach { value ->
+            val text = floats(value)
+            assertFalse('E' in text, text)
+            assertEquals(value, text.toFloat())
+        }
+
+        assertFalse('E' in floatRange(Range.Float(1.0E-4f, 1.2345678E7f)))
+        assertFalse('E' in floatRange(Range.Float(-Float.MAX_VALUE, Float.MAX_VALUE)))
+        assertFalse('E' in PositionArgument("pos").toDefinition().stringify(Vec(1.0E-4, 2.0, 3.0E10)))
+        assertFalse('E' in Position2DArgument("pos").toDefinition().stringify(Vec(1.0E-4, 0.0, 3.0E10)))
+        assertFalse('E' in RotationArgument("rot").toDefinition().stringify(Rotation(1.0E-4f, 1.2345678E7f)))
+        assertFalse('E' in AngleArgument("angle").toDefinition().stringify(1.0E-4f))
+        assertEquals("1.5 2.0 3.0", PositionArgument("pos").toDefinition().stringify(Vec(1.5, 2.0, 3.0)))
     }
 
     @Test

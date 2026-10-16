@@ -24,13 +24,15 @@ object BlockHighlights {
 
     private const val OVERSIZE = 0.02
 
-    private val highlights = ConcurrentHashMap<HighlightKey, Entity>()
+    private val highlights = ConcurrentHashMap<HighlightKey, Highlight>()
 
     /**
      * Outlines the block at [position] in [color] for [viewer] alone.
      *
      * Showing a highlight where the same player already has one replaces it, so a highlight can be
      * refreshed after the block below it changed.
+     *
+     * Nothing is shown when the chunk of [position] is neither loaded nor loadable.
      *
      * @param viewer the only player who sees the highlight
      * @param instance the instance the block sits in
@@ -61,9 +63,23 @@ object BlockHighlights {
             }
         }
 
-        highlights.put(key, entity)?.remove()
-        entity.setInstance(instance, position.blockPos())
-            .thenRun { entity.addViewer(viewer) }
+        val highlight = Highlight(entity)
+        highlights.put(key, highlight)?.retire()
+
+        try {
+            val placement = entity.setInstance(instance, position.blockPos())
+
+            if (placement == null) {
+                highlights.remove(key, highlight)
+                highlight.fail()
+            } else {
+                placement.whenComplete { _, _ -> highlight.placed(key, viewer) }
+            }
+        } catch (throwable: Throwable) {
+            highlights.remove(key, highlight)
+            highlight.fail()
+            throw throwable
+        }
     }
 
     /**
@@ -73,7 +89,7 @@ object BlockHighlights {
      */
     fun hide(viewer: Player, instance: Instance, position: Point): Boolean =
         highlights.remove(HighlightKey.of(viewer, instance, position))
-            ?.also { it.remove() } != null
+            ?.also { it.retire() } != null
 
     /**
      * Takes back every highlight [viewer] was shown.
@@ -85,11 +101,11 @@ object BlockHighlights {
         val entries = highlights.entries.iterator()
 
         while (entries.hasNext()) {
-            val (key, entity) = entries.next()
+            val (key, highlight) = entries.next()
             if (key.viewer != viewer.uuid) continue
 
             entries.remove()
-            entity.remove()
+            highlight.retire()
             removed++
         }
 
@@ -106,6 +122,46 @@ object BlockHighlights {
 
     private fun Point.blockPos() =
         Pos(blockX().toDouble(), blockY().toDouble(), blockZ().toDouble())
+
+    /**
+     * A highlight entity together with the state of its asynchronous placement.
+     *
+     * The placement callback and [retire] exclude each other, so an entity retired while it is still
+     * being placed is removed once the placement finished instead of being left in the instance.
+     */
+    private class Highlight(private val entity: Entity) {
+        private var finished = false
+        private var retired = false
+
+        @Synchronized
+        fun placed(key: HighlightKey, viewer: Player) {
+            finished = true
+
+            if (!retired && (entity.isRemoved || entity.chunk == null)) {
+                highlights.remove(key, this)
+                retired = true
+            }
+
+            if (retired) {
+                entity.remove()
+            } else {
+                entity.addViewer(viewer)
+            }
+        }
+
+        @Synchronized
+        fun retire() {
+            retired = true
+            if (finished) entity.remove()
+        }
+
+        @Synchronized
+        fun fail() {
+            retired = true
+            finished = true
+            entity.remove()
+        }
+    }
 
     private data class HighlightKey(
         val viewer: UUID,

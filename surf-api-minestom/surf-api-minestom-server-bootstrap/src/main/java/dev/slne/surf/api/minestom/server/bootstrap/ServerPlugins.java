@@ -17,10 +17,12 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -58,6 +60,11 @@ final class ServerPlugins {
     private static final String CLASSPATH_INDEX = "META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin";
     private static final String CLASSPATH_DIRECTORY = "META-INF/surf-minestom-plugins/";
 
+    /**
+     * The format of a plugin ID, kept in sync with {@code PluginMeta.ID_REGEX}.
+     */
+    private static final Pattern PLUGIN_ID = Pattern.compile("[a-z][a-z0-9-_]{0,63}");
+
     private ServerPlugins() {
     }
 
@@ -67,26 +74,20 @@ final class ServerPlugins {
         final Set<String> onClassPath = classPathPluginIds();
 
         final Map<String, PluginJar> selected = new LinkedHashMap<>();
-        final Deque<Requirement> pending = new ArrayDeque<>(parse(declared, "the server"));
-        while (!pending.isEmpty()) {
-            final Requirement requirement = pending.removeFirst();
-            if (selected.containsKey(requirement.id()) || onClassPath.contains(requirement.id())) {
+        for (final Requirement root : parse(declared, "the server")) {
+            final Map<String, PluginJar> added = new LinkedHashMap<>();
+            final @Nullable Requirement missing = resolve(root, available, onClassPath, selected, added);
+            if (missing == null) {
+                selected.putAll(added);
                 continue;
             }
 
-            final @Nullable PluginJar jar = available.get(requirement.id());
-            if (jar == null) {
-                if (!requirement.optional()) {
-                    throw new IllegalStateException(
-                        "The plugin " + requirement.id() + ", which " + requirement.requiredBy()
-                            + " depends on, is missing in " + directory
-                    );
-                }
-                continue;
+            final String message = "The plugin " + missing.id() + ", which " + missing.requiredBy()
+                + " depends on, is missing in " + directory;
+            if (!root.optional()) {
+                throw new IllegalStateException(message);
             }
-
-            selected.put(requirement.id(), jar);
-            pending.addAll(jar.dependencies());
+            logger.warn("Not adding the optional plugin " + root.id() + " to the server's class path. " + message);
         }
 
         final List<String> paths = new ArrayList<>();
@@ -105,6 +106,42 @@ final class ServerPlugins {
         System.setProperty(LOADED_PROPERTY, String.join(File.pathSeparator, paths));
     }
 
+    /**
+     * Collects {@code root} and the plugins it requires into {@code added}, skipping the ones
+     * already in {@code selected} or on the class path.
+     *
+     * @return the first required plugin that is missing, or {@code null} when everything
+     * {@code root} needs is available; a missing {@code root} that is optional is not reported
+     */
+    private static @Nullable Requirement resolve(
+        final Requirement root,
+        final Map<String, PluginJar> available,
+        final Set<String> onClassPath,
+        final Map<String, PluginJar> selected,
+        final Map<String, PluginJar> added
+    ) {
+        final Deque<Requirement> pending = new ArrayDeque<>(List.of(root));
+        while (!pending.isEmpty()) {
+            final Requirement requirement = pending.removeFirst();
+            final String id = requirement.id();
+            if (selected.containsKey(id) || added.containsKey(id) || onClassPath.contains(id)) {
+                continue;
+            }
+
+            final @Nullable PluginJar jar = available.get(id);
+            if (jar == null) {
+                if (!requirement.optional()) {
+                    return requirement;
+                }
+                continue;
+            }
+
+            added.put(id, jar);
+            pending.addAll(jar.dependencies());
+        }
+        return null;
+    }
+
     private static Map<String, PluginJar> scan(final Path directory, final BootstrapLogger logger) {
         if (!Files.isDirectory(directory)) {
             return Map.of();
@@ -113,7 +150,7 @@ final class ServerPlugins {
         final Map<String, PluginJar> result = new LinkedHashMap<>();
         try (Stream<Path> files = Files.list(directory)) {
             for (final Path path : files.sorted().toList()) {
-                if (!Files.isRegularFile(path) || !path.getFileName().toString().toLowerCase().endsWith(".jar")) {
+                if (!Files.isRegularFile(path) || !path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar")) {
                     continue;
                 }
 
@@ -124,7 +161,11 @@ final class ServerPlugins {
                     }
 
                     final Map<?, ?> meta = readObject(jar.getInputStream(entry));
-                    final String id = String.valueOf(meta.get("id"));
+                    if (!(meta.get("id") instanceof final String id) || !PLUGIN_ID.matcher(id).matches()) {
+                        logger.warn("Skipping " + path.getFileName() + ", its " + PLUGIN_FILE + " has no valid plugin id");
+                        continue;
+                    }
+
                     result.putIfAbsent(id, new PluginJar(path, dependencies(meta, id)));
                 } catch (final IOException | RuntimeException e) {
                     // The plugins feature reports the same failure when it skips the jar

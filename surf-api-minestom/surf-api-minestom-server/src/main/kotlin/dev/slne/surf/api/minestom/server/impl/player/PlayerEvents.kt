@@ -18,6 +18,7 @@ import net.minestom.server.adventure.audience.Audiences
 import net.minestom.server.entity.Player
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventDispatcher
+import net.minestom.server.event.EventListener
 import net.minestom.server.event.EventNode
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
 import net.minestom.server.event.player.PlayerDisconnectEvent
@@ -32,13 +33,16 @@ import java.util.*
  *
  * Without the configuration phase of the surf api, [AsyncPlayerCountEvent] and
  * [AsyncPlayerSpawnLocationEvent] are called around Minestom's own
- * [AsyncPlayerConfigurationEvent], from an event node that runs before every other listener and
- * one that runs after them. With the configuration phase, each is a step of its own.
+ * [AsyncPlayerConfigurationEvent]. The player count is checked by a listener registered on the
+ * global event handler at install, which runs before the listeners of every event node and before
+ * listeners registered on the global event handler afterwards, but not before ones registered
+ * earlier. The spawn location is chosen from an event node that runs after the other nodes. With
+ * the configuration phase, each is a step of its own.
  */
 internal object PlayerEvents {
     private val SERVER_FULL: Component = Component.text("The server is full.", NamedTextColor.RED)
 
-    private var first: EventNode<Event>? = null
+    private var first: EventListener<AsyncPlayerConfigurationEvent>? = null
     private var last: EventNode<Event>? = null
 
     /**
@@ -53,8 +57,7 @@ internal object PlayerEvents {
         registerTranslations()
 
         if (!configurationPhase) {
-            val first = EventNode.all("surf-api-player-events-first").setPriority(Int.MIN_VALUE)
-            first.addListener<AsyncPlayerConfigurationEvent> { event ->
+            val first = EventListener.of(AsyncPlayerConfigurationEvent::class.java) { event ->
                 if (event.isFirstConfig) admit(event.player)
             }
 
@@ -63,7 +66,7 @@ internal object PlayerEvents {
                 if (event.isFirstConfig && event.player.isOnline) chooseSpawnLocation(event)
             }
 
-            GlobalEventHandler.addChild(first)
+            GlobalEventHandler.addListener(first)
             GlobalEventHandler.addChild(last)
             this.first = first
             this.last = last
@@ -77,7 +80,7 @@ internal object PlayerEvents {
     }
 
     fun uninstall() {
-        first?.let(GlobalEventHandler::removeChild)
+        first?.let(GlobalEventHandler::removeListener)
         last?.let(GlobalEventHandler::removeChild)
         first = null
         last = null

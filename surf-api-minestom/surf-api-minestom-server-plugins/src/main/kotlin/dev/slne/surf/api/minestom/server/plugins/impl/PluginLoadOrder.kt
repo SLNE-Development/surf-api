@@ -22,7 +22,10 @@ internal object PluginLoadOrder {
      *
      * The first candidate with an ID wins; later ones are rejected. Plugins with a missing required
      * dependency, members of a dependency cycle and plugins depending on a rejected plugin are
-     * rejected as well. Missing optional dependencies are ignored.
+     * rejected as well.
+     *
+     * Optional dependencies only influence the order and never reject a plugin: one that is missing,
+     * refers to a rejected plugin or would close a cycle is ignored.
      */
     fun order(candidates: List<PluginCandidate>): Result {
         val rejected = linkedMapOf<String, String>()
@@ -78,6 +81,7 @@ internal object PluginLoadOrder {
 
             state[id] = VisitState.VISITING
             for (dependency in candidate.meta.dependencies) {
+                if (dependency.optional) continue
                 val target = byId[dependency.id] ?: continue
                 if (!visit(target, path + id)) {
                     if (state[id] != VisitState.FAILED) {
@@ -97,7 +101,43 @@ internal object PluginLoadOrder {
 
         byId.values.forEach { candidate -> visit(candidate, emptyList()) }
 
-        return Result(ordered, rejected)
+        val loadable = ordered.mapTo(hashSetOf()) { it.meta.id }
+        return Result(withOptionalDependencies(byId.values.filter { it.meta.id in loadable }), rejected)
+    }
+
+    /**
+     * Orders [candidates], which are loadable, so that each comes after its required dependencies
+     * and after those of its optional dependencies that do not depend on it in turn.
+     */
+    private fun withOptionalDependencies(candidates: List<PluginCandidate>): List<PluginCandidate> {
+        val byId = candidates.associateBy { it.meta.id }
+        val edges = byId.mapValues { (_, candidate) ->
+            candidate.meta.dependencies.filter { !it.optional }.mapTo(linkedSetOf()) { it.id }
+        }
+
+        fun dependsOn(id: String, target: String, seen: MutableSet<String> = hashSetOf()): Boolean =
+            id == target || (seen.add(id) && edges.getValue(id).any { dependsOn(it, target, seen) })
+
+        for (candidate in candidates) {
+            val id = candidate.meta.id
+            for (dependency in candidate.meta.dependencies) {
+                if (dependency.optional && dependency.id in byId && !dependsOn(dependency.id, id)) {
+                    edges.getValue(id) += dependency.id
+                }
+            }
+        }
+
+        val result = mutableListOf<PluginCandidate>()
+        val emitted = hashSetOf<String>()
+
+        fun emit(id: String) {
+            if (!emitted.add(id)) return
+            edges.getValue(id).forEach(::emit)
+            result += byId.getValue(id)
+        }
+
+        byId.keys.forEach(::emit)
+        return result
     }
 
     private enum class VisitState { VISITING, DONE, FAILED }

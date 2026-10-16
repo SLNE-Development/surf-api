@@ -4,54 +4,28 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.argument.GameModeArgument
-import dev.slne.surf.api.minestom.command.argument.ParticleArgument
-import dev.slne.surf.api.minestom.command.argument.ResourceLocationArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.argument.TeamColorArgument
-import dev.slne.surf.api.minestom.command.argument.TimeArgument
-import dev.slne.surf.api.minestom.command.dsl.commandArgument
-import dev.slne.surf.api.minestom.command.dsl.gameModeArgument
-import dev.slne.surf.api.minestom.command.dsl.particleArgument
-import dev.slne.surf.api.minestom.command.dsl.resourceLocationArgument
-import dev.slne.surf.api.minestom.command.dsl.teamColorArgument
-import dev.slne.surf.api.minestom.command.dsl.timeArgument
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
+import dev.slne.surf.api.minestom.command.argument.*
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import net.kyori.adventure.key.Key
-import net.kyori.adventure.nbt.BinaryTag
-import net.kyori.adventure.nbt.CompoundBinaryTag
-import net.kyori.adventure.nbt.IntBinaryTag
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import net.minestom.server.MinecraftServer
-import net.minestom.server.adventure.MinestomAdventure
 import net.minestom.server.color.TeamColor
 import net.minestom.server.command.ArgumentParserType
 import net.minestom.server.command.CommandManager
-import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.command.builder.arguments.ArgumentType
-import net.minestom.server.component.DataComponents
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
-import net.minestom.server.instance.block.Block
-import net.minestom.server.item.ItemStack
-import net.minestom.server.item.Material
 import net.minestom.server.network.player.GameProfile
 import net.minestom.server.particle.Particle
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @EnvTest
@@ -261,8 +235,11 @@ class MinecraftArgumentIntegrationTest {
         try {
             block()
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 
@@ -280,9 +257,12 @@ class MinecraftArgumentIntegrationTest {
             player = connected
             block(manager, connected)
         } finally {
-            if (player?.isRemoved == false) player.remove()
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                if (player?.isRemoved == false) player.remove()
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
             env.destroyInstance(instance)
         }
     }

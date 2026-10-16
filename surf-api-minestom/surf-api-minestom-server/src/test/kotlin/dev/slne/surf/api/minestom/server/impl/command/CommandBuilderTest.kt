@@ -1,29 +1,19 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
-import dev.slne.surf.api.minestom.command.CommandAPI
-import dev.slne.surf.api.minestom.command.CommandAPICommand
-import dev.slne.surf.api.minestom.command.CommandDefinition
-import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.RegisteredCommand
-import dev.slne.surf.api.minestom.command.argument.GreedyStringArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.LiteralArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
+import dev.slne.surf.api.minestom.command.*
+import dev.slne.surf.api.minestom.command.argument.*
 import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.command.dsl.commandAPICommand
 import dev.slne.surf.api.minestom.command.dsl.integerArgument
-import dev.slne.surf.api.minestom.command.executor.ExecutorType
 import dev.slne.surf.api.minestom.command.dsl.playerExecutor
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
+import dev.slne.surf.api.minestom.command.executor.ExecutorType
 import dev.slne.surf.api.minestom.command.internal.CommandAPIPlatform
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.minestom.server.command.CommandSender
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.lang.reflect.Proxy
 
@@ -238,6 +228,79 @@ class CommandBuilderTest {
             listOf(listOf("left", "value"), listOf("right", "value")),
             definition.paths.map { path -> path.arguments.map { it.nodeName } },
         )
+    }
+
+    @Test
+    fun `sibling paths merging into one node with a conflict are rejected`() {
+        assertThrows(CommandValidationException::class.java) {
+            CommandTree("kinds")
+                .then(IntegerArgument("value").anyExecutor { _, _ -> })
+                .then(StringArgument("value").anyExecutor { _, _ -> })
+                .toDefinition()
+        }
+        assertThrows(CommandValidationException::class.java) {
+            CommandTree("literal-versus-argument")
+                .then(LiteralArgument("value").anyExecutor { _, _ -> })
+                .then(StringArgument("value").anyExecutor { _, _ -> })
+                .toDefinition()
+        }
+        assertThrows(CommandValidationException::class.java) {
+            CommandAPICommand("same-label")
+                .withSubcommand(CommandAPICommand("sub").anyExecutor { _, _ -> })
+                .withSubcommand(CommandAPICommand("sub").anyExecutor { _, _ -> })
+                .toDefinition()
+        }
+        assertThrows(CommandValidationException::class.java) {
+            CommandTree("optional-branches")
+                .then(StringArgument("first").setOptional(true).anyExecutor { _, _ -> })
+                .then(IntegerArgument("second").setOptional(true).anyExecutor { _, _ -> })
+                .toDefinition()
+        }
+    }
+
+    @Test
+    fun `sibling paths sharing an identical prefix node stay valid`() {
+        val custom = StringArgument("name").map { name -> name.length }
+            .then(LiteralArgument("x").anyExecutor { _, _ -> })
+            .then(LiteralArgument("y").anyExecutor { _, _ -> })
+
+        val tree = CommandTree("shared-prefix")
+            .then(LiteralArgument("set").then(StringArgument("key").anyExecutor { _, _ -> }))
+            .then(LiteralArgument("set").then(IntegerArgument("id").anyExecutor { _, _ -> }))
+            .then(StringArgument("v").then(LiteralArgument("a").anyExecutor { _, _ -> }))
+            .then(StringArgument("v").then(LiteralArgument("b").anyExecutor { _, _ -> }))
+            .then(custom)
+            .toDefinition()
+        val command = CommandAPICommand("nested")
+            .withSubcommand(CommandAPICommand("a").withSubcommand(CommandAPICommand("b").anyExecutor { _, _ -> }))
+            .withSubcommand(CommandAPICommand("a").withSubcommand(CommandAPICommand("c").anyExecutor { _, _ -> }))
+            .toDefinition()
+
+        assertEquals(6, tree.paths.size)
+        assertEquals(2, command.paths.size)
+    }
+
+    @Test
+    fun `subcommand literals carry the subcommand permissions and requirements`() {
+        val requirement: (CommandSender) -> Boolean = { true }
+        val definition = CommandAPICommand("staff")
+            .anyExecutor { _, _ -> }
+            .withSubcommand(
+                CommandAPICommand("admin")
+                    .withAliases("op")
+                    .withPermission("lobby.admin")
+                    .withRequirement(requirement)
+                    .anyExecutor { _, _ -> },
+            )
+            .toDefinition()
+
+        val admin = definition.paths.single { path -> path.arguments.map { it.nodeName } == listOf("admin") }
+        val alias = definition.paths.single { path -> path.arguments.map { it.nodeName } == listOf("op") }
+
+        assertEquals(setOf("lobby.admin"), admin.arguments.single().permissions)
+        assertSame(requirement, admin.arguments.single().requirements.single())
+        assertEquals(setOf("lobby.admin"), alias.arguments.single().permissions)
+        assertEquals(emptySet<String>(), definition.paths.single { path -> path.arguments.isEmpty() }.permissions)
     }
 
     @Test

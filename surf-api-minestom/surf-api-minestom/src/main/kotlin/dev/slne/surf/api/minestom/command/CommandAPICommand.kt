@@ -245,12 +245,23 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         nestedSubcommands: List<ArgumentTreeNode>,
         body: List<ArgumentTreeNode>,
     ): ArgumentTreeNode = ArgumentTreeNode(
-        argument = LiteralArgument(label).toDefinition(),
+        argument = subcommandLiteral(label),
         executors = if (arguments.isEmpty) immutableList(executors) else emptyList(),
         children = if (arguments.isEmpty) nestedSubcommands else body,
         permissions = immutableSet(permissions),
         requirements = immutableList(requirements),
     )
+
+    /**
+     * The literal that selects this subcommand, carrying the subcommand's own permissions and
+     * requirements so that they hide the literal from senders that fail them.
+     */
+    private fun subcommandLiteral(label: String): ArgumentDefinition<String> {
+        val literal = LiteralArgument(label)
+        permissions.forEach(literal::withPermission)
+        requirements.forEach(literal::withRequirement)
+        return literal.toDefinition()
+    }
 }
 
 internal fun validateCommandLabels(name: String, aliases: Collection<String>) {
@@ -402,7 +413,88 @@ internal fun validateAndFreezePaths(
         }
     }
 
+    validateNoMergeConflicts(paths, commandName)
+
     return immutableList(paths)
+}
+
+/**
+ * Rejects sibling paths that the command tree would merge into one node with a conflict.
+ *
+ * Paths share a node when they agree on the node names of the whole prefix. Sharing is valid when
+ * the arguments of one node are of the same kind and at most one path executes there; otherwise
+ * the first node would silently win its type and the later executor would replace the earlier one.
+ */
+private fun validateNoMergeConflicts(paths: List<CommandPath>, commandName: String) {
+    val root = PathNode(null)
+
+    paths.forEach { path ->
+        val firstOptional = path.arguments.indexOfFirst { argument -> argument.optional }
+        val executableDepths = if (firstOptional == -1) {
+            path.arguments.size..path.arguments.size
+        } else {
+            firstOptional..path.arguments.size
+        }
+
+        var node = root
+        if (0 in executableDepths) node.claimExecutor(commandName)
+
+        path.arguments.forEachIndexed { index, argument ->
+            val name = argument.treeName()
+            val existing = node.children[name]
+            val child = if (existing == null) {
+                PathNode(argument, node, name).also { created -> node.children[name] = created }
+            } else {
+                if (existing.argument?.kind != argument.kind) {
+                    throw CommandValidationException(
+                        "Command '$commandName' declares conflicting arguments named '$name' " +
+                                "at '${existing.describe()}'",
+                    )
+                }
+                existing
+            }
+
+            node = child
+            if (index + 1 in executableDepths) node.claimExecutor(commandName)
+        }
+    }
+}
+
+/**
+ * Name under which the command tree registers this argument: the keyword of a literal, otherwise the
+ * argument name.
+ */
+private fun ArgumentDefinition<*>.treeName(): String =
+    (kind as? ArgumentKind.Literal)?.literal ?: nodeName
+
+private class PathNode(
+    val argument: ArgumentDefinition<*>?,
+    private val parent: PathNode? = null,
+    private val name: String? = null,
+) {
+    val children = Object2ObjectOpenHashMap<String, PathNode>()
+    private var executes = false
+
+    fun claimExecutor(commandName: String) {
+        if (executes) {
+            throw CommandValidationException(
+                "Command '$commandName' declares more than one executable path ending at " +
+                        "'${describe()}'",
+            )
+        }
+        executes = true
+    }
+
+    fun describe(): String {
+        val names = ObjectArrayList<String>()
+        var node: PathNode? = this
+        while (node?.name != null) {
+            names += node.name
+            node = node.parent
+        }
+        names.reverse()
+        return if (names.isEmpty) "<command>" else names.joinToString(" ")
+    }
 }
 
 private fun commandPath(

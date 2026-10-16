@@ -85,8 +85,11 @@ class CommandApiExecuteTest {
         try {
             block(manager)
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 }

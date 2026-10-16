@@ -4,25 +4,19 @@ import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.argument.StringArgument
 import dev.slne.surf.api.minestom.command.dsl.anyExecutor
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicInteger
-import net.kyori.adventure.chat.SignedMessage
-import net.kyori.adventure.text.Component
-import net.minestom.server.command.builder.CommandResult
+import net.minestom.server.command.ServerSender
 import net.minestom.server.coordinate.Pos
-import net.minestom.server.crypto.ChatSession
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
 import net.minestom.server.network.player.GameProfile
-import net.minestom.server.network.player.PlayerConnection
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicInteger
 
 @EnvTest
 class MinestomPermissionIntegrationTest {
@@ -138,6 +132,21 @@ class MinestomPermissionIntegrationTest {
         }
     }
 
+    @Test
+    fun `server sender holds every permission`(env: Env) {
+        withPlatform(env) { manager ->
+            val executions = AtomicInteger()
+            CommandAPICommand("server-permission")
+                .withPermission("lobby.root")
+                .withArguments(StringArgument("value").withPermission("lobby.value"))
+                .anyExecutor { _, _ -> executions.incrementAndGet() }
+                .register()
+
+            assertTrue(runCommand(ServerSender(), "server-permission accepted"))
+            assertEquals(1, executions.get())
+        }
+    }
+
     private inline fun withPlatform(env: Env, block: (net.minestom.server.command.CommandManager) -> Unit) {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
@@ -145,8 +154,11 @@ class MinestomPermissionIntegrationTest {
         try {
             block(manager)
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 

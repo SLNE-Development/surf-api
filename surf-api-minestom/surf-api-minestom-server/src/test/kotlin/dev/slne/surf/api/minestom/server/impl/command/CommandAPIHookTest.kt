@@ -106,19 +106,21 @@ class CommandAPIHookTest {
             env.process().command(),
             MinestomCommandOwnership(),
         )
-        CommandAPI.installPlatform(platform)
-
         val instance = env.createEmptyInstance()
         var player: Player? = null
+        CommandAPI.installPlatform(platform)
         try {
             val connection = env.createConnection()
             player = connect(connection, instance)
             block(player, connection.trackIncoming(SystemChatPacket::class.java))
         } finally {
-            player?.remove()
-            env.destroyInstance(instance)
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                player?.remove()
+                env.destroyInstance(instance)
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 

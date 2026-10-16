@@ -8,6 +8,8 @@ import dev.slne.surf.api.minestom.player.event.PlayerJoinEvent
 import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import dev.slne.surf.api.minestom.server.surfMinestomServer
 import net.minestom.server.coordinate.Pos
+import net.minestom.server.event.EventDispatcher
+import net.minestom.server.event.EventListener
 import net.minestom.server.event.EventNode
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
 import net.minestom.testing.Env
@@ -102,6 +104,34 @@ class PlayerEventsTest {
             api.shutdown()
             env.process().eventHandler().removeChild(node)
         }
+    }
+
+    @Test
+    fun `the player count is checked before listeners registered later on the global handler`(env: Env) {
+        val instance = env.createFlatInstance()
+        val player = env.createPlayer(instance, Pos.ZERO)
+        val calls = mutableListOf<String>()
+        val node = EventNode.all("admission-order-test")
+        val handler = env.process().eventHandler()
+        handler.addChild(node)
+        node.addListener<AsyncPlayerCountEvent> { calls += "count" }
+
+        PlayerEvents.install(node, configurationPhase = false)
+        val later = EventListener.of(AsyncPlayerConfigurationEvent::class.java) { calls += "later" }
+        handler.addListener(later)
+
+        try {
+            onVirtualThread { EventDispatcher.call(AsyncPlayerConfigurationEvent(player, true)) }
+            assertEquals(listOf("count", "later"), calls)
+        } finally {
+            handler.removeListener(later)
+            PlayerEvents.uninstall()
+            handler.removeChild(node)
+        }
+
+        calls.clear()
+        onVirtualThread { EventDispatcher.call(AsyncPlayerConfigurationEvent(player, true)) }
+        assertTrue(calls.isEmpty())
     }
 
     /**

@@ -136,6 +136,26 @@ class BlockHighlightsTest {
         }
     }
 
+    @Test
+    fun `a highlight in a chunk that cannot be loaded is not kept`(env: Env) {
+        val instance = env.createFlatInstance()
+        val viewer = connect(env.createConnection(), instance)
+        instance.enableAutoChunkLoad(false)
+
+        try {
+            val position = Pos(4000.0, 40.0, 4000.0)
+            assertFalse(instance.isChunkLoaded(position))
+
+            BlockHighlights.show(viewer, instance, position)
+
+            assertEquals(0, BlockHighlights.count(viewer))
+            assertFalse(BlockHighlights.hide(viewer, instance, position))
+            assertTrue(blockDisplays(instance).isEmpty())
+        } finally {
+            cleanUp(env, instance, viewer)
+        }
+    }
+
     /**
      * Loads the chunk containing the given block and returns its position, so a highlight shown
      * there joins the instance immediately instead of when the chunk arrives.

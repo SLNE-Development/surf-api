@@ -3,9 +3,7 @@ package dev.slne.surf.api.minestom.command.executor
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxException
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.MinecraftServer
@@ -17,6 +15,12 @@ val GENERIC_COMMAND_FAILURE: Component = Component.text(
     NamedTextColor.RED,
 )
 
+/**
+ * Launches the suspending executor of [definition] in its scope and reports a failure to [sender].
+ *
+ * A [TimeoutCancellationException] from the executor's own timeout is reported like any other
+ * failure; cancellation of the launched coroutine propagates.
+ */
 @InternalSurfApi
 fun launchCommandExecutor(
     definition: ExecutorDefinition.Suspending,
@@ -27,36 +31,28 @@ fun launchCommandExecutor(
     try {
         definition.executor(this, ExecutionInfo(sender, arguments, input))
     } catch (failure: Throwable) {
+        if (failure is TimeoutCancellationException && !isActive) throw failure
         handleCommandFailure(sender, input, failure)
     }
 }
 
+/**
+ * Reports [failure] to [sender]: a syntax failure with its component, anything else as a logged
+ * generic failure.
+ *
+ * Rethrows a [CancellationException] other than a [TimeoutCancellationException].
+ */
 internal fun handleCommandFailure(
     sender: CommandSender,
     input: String,
     failure: Throwable,
-    knownFailure: (Throwable) -> Component? = { null },
-    unexpectedFailure: Component = GENERIC_COMMAND_FAILURE,
-    syntaxFailurePolicy: SyntaxFailurePolicy = SyntaxFailurePolicy.RENDER,
 ) {
-    if (failure is CancellationException) throw failure
+    if (failure is CancellationException && failure !is TimeoutCancellationException) throw failure
 
-    val knownMessage = knownFailure(failure)
-    if (knownMessage != null) {
-        sender.sendMessage(knownMessage)
-        return
-    }
-
-    when {
-        syntaxFailurePolicy == SyntaxFailurePolicy.USE_UNEXPECTED_FAILURE -> sendUnexpectedFailure(
-            sender,
-            input,
-            failure,
-            unexpectedFailure,
-        )
-        failure is WrapperCommandSyntaxException -> sendSyntaxFailure(sender, failure.exception)
-        failure is CommandSyntaxException -> sendSyntaxFailure(sender, failure)
-        else -> sendUnexpectedFailure(sender, input, failure, unexpectedFailure)
+    when (failure) {
+        is WrapperCommandSyntaxException -> sendSyntaxFailure(sender, failure.exception)
+        is CommandSyntaxException -> sendSyntaxFailure(sender, failure)
+        else -> sendUnexpectedFailure(sender, input, failure, GENERIC_COMMAND_FAILURE)
     }
 }
 
@@ -66,11 +62,6 @@ fun handleCommandExecutorFailure(
     input: String,
     failure: Throwable,
 ) = handleCommandFailure(sender, input, failure)
-
-internal enum class SyntaxFailurePolicy {
-    RENDER,
-    USE_UNEXPECTED_FAILURE,
-}
 
 private fun sendUnexpectedFailure(
     sender: CommandSender,

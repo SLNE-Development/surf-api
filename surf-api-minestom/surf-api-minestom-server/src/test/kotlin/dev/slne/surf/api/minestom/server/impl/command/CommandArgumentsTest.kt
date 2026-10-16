@@ -6,11 +6,7 @@ import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxExceptio
 import dev.slne.surf.api.minestom.command.executor.CommandArguments
 import dev.slne.surf.api.minestom.command.executor.ParsedArgument
 import net.kyori.adventure.text.Component
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -32,6 +28,23 @@ class CommandArgumentsTest {
         assertNull(reason)
         assertEquals("Deniz", arguments.getRaw("target"))
         assertThrows<IllegalArgumentException> { arguments.get<Int>("target") }
+    }
+
+    @Test
+    fun `explicit get honors a nullable requested type`() {
+        val arguments = CommandArguments.of(
+            listOf(
+                ParsedArgument("target", "Deniz", "Deniz", present = true),
+                ParsedArgument("reason", null, null, present = false),
+            ),
+        )
+
+        val reason = arguments.get<String?>("reason")
+        val target = arguments.get<String?>("target")
+
+        assertNull(reason)
+        assertEquals("Deniz", target)
+        assertThrows<IllegalArgumentException> { arguments.get<String>("reason") }
     }
 
     @Test

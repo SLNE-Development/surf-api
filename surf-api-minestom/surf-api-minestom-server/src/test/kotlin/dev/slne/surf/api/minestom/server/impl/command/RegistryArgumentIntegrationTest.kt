@@ -1,23 +1,11 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.argument.BiomeArgument
-import dev.slne.surf.api.minestom.command.argument.EnchantmentArgument
-import dev.slne.surf.api.minestom.command.argument.InstanceArgument
-import dev.slne.surf.api.minestom.command.argument.PotionEffectArgument
-import dev.slne.surf.api.minestom.command.argument.ResourceArgument
-import dev.slne.surf.api.minestom.command.argument.SoundArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
-import dev.slne.surf.api.minestom.command.dsl.biomeArgument
-import dev.slne.surf.api.minestom.command.dsl.enchantmentArgument
-import dev.slne.surf.api.minestom.command.dsl.instanceArgument
-import dev.slne.surf.api.minestom.command.dsl.potionEffectArgument
-import dev.slne.surf.api.minestom.command.dsl.resourceArgument
-import dev.slne.surf.api.minestom.command.dsl.soundArgument
-import com.mojang.brigadier.exceptions.CommandSyntaxException
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
+import dev.slne.surf.api.minestom.command.argument.*
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -27,7 +15,6 @@ import net.kyori.adventure.key.Key
 import net.minestom.server.MinecraftServer
 import net.minestom.server.command.ArgumentParserType
 import net.minestom.server.command.CommandManager
-import net.minestom.server.command.builder.CommandResult
 import net.minestom.server.command.builder.arguments.ArgumentType
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Player
@@ -44,13 +31,9 @@ import net.minestom.server.world.DimensionType
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -429,8 +412,11 @@ class RegistryArgumentIntegrationTest {
         try {
             block()
         } finally {
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
         }
     }
 
@@ -448,9 +434,12 @@ class RegistryArgumentIntegrationTest {
             player = connected
             block(manager, connected)
         } finally {
-            if (player?.isRemoved == false) player.remove()
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                if (player?.isRemoved == false) player.remove()
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
             env.destroyInstance(instance)
         }
     }
@@ -467,17 +456,20 @@ class RegistryArgumentIntegrationTest {
         val instance = env.createEmptyInstance()
         var player: Player? = null
         CommandAPI.installPlatform(platform)
-        listener.register(node)
-        env.process().eventHandler().addChild(node)
         try {
+            listener.register(node)
+            env.process().eventHandler().addChild(node)
             val connection = env.createConnection()
             val connected = connect(connection, instance)
             player = connected
             BackendFixture(connection, connected).block()
         } finally {
-            if (player?.isRemoved == false) player.remove()
-            platform.close()
-            CommandAPI.uninstallPlatform(platform)
+            try {
+                if (player?.isRemoved == false) player.remove()
+                platform.close()
+            } finally {
+                CommandAPI.uninstallPlatform(platform)
+            }
             env.process().eventHandler().removeChild(node)
             env.destroyInstance(instance)
         }

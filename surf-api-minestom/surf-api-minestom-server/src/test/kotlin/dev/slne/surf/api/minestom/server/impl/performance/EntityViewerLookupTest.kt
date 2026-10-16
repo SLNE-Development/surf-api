@@ -12,15 +12,18 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 /**
- * Tests that [EntityViewerLookup.directScan] visits exactly the entities that
- * [EntityTracker.nearbyEntitiesByChunkRange] visits. Unit tests run without mixins, so the tracker
- * used here is the unmodified bucket scan.
+ * Tests that [EntityViewerLookup.directScan] visits exactly the entities whose recorded chunk lies
+ * within the inclusive square around the query center.
+ *
+ * The expected sets are computed by a brute-force filter over the recorded chunk coordinates. The
+ * tracker itself is not used as the oracle: the Mixin test environment applies `EntityTrackerMixin`
+ * JVM-wide, so [EntityTracker.nearbyEntitiesByChunkRange] may delegate to `directScan`.
  */
 @EnvTest
 class EntityViewerLookupTest {
 
     @Test
-    fun `every range matches the bucket scan on and around the boundary`(env: Env) {
+    fun `every range matches the reference filter on and around the boundary`(env: Env) {
         for (range in listOf(0, 1, 8, 32)) {
             for ((centerX, centerZ) in listOf(0 to 0, 37 to -12)) {
                 val fixture = TrackerFixture()
@@ -53,7 +56,7 @@ class EntityViewerLookupTest {
     }
 
     @Test
-    fun `negative chunk coordinates match the bucket scan`(env: Env) {
+    fun `negative chunk coordinates match the reference filter`(env: Env) {
         val fixture = TrackerFixture()
         for (range in listOf(0, 1, 8, 32)) {
             val centerX = -40
@@ -68,7 +71,7 @@ class EntityViewerLookupTest {
     }
 
     @Test
-    fun `many entities in one chunk match the bucket scan`(env: Env) {
+    fun `many entities in one chunk match the reference filter`(env: Env) {
         val fixture = TrackerFixture()
         repeat(64) { fixture.spawn(3, -2) }
         fixture.spawn(4, -2)
@@ -79,7 +82,7 @@ class EntityViewerLookupTest {
     }
 
     @Test
-    fun `entities distributed over thousands of chunks match the bucket scan`(env: Env) {
+    fun `entities distributed over thousands of chunks match the reference filter`(env: Env) {
         val fixture = TrackerFixture()
         for (chunkX in -40..40 step 2) {
             for (chunkZ in -40..40 step 2) {
@@ -93,7 +96,7 @@ class EntityViewerLookupTest {
     }
 
     @Test
-    fun `registration and removal stay in sync with the bucket scan`(env: Env) {
+    fun `registration and removal stay in sync with the reference filter`(env: Env) {
         val fixture = TrackerFixture()
         val entities = (0 until 20).map { fixture.spawn(it, it) }
         fixture.assertEquivalent(5, 5, 8)
@@ -107,7 +110,7 @@ class EntityViewerLookupTest {
     }
 
     @Test
-    fun `movement across chunk boundaries stays in sync with the bucket scan`(env: Env) {
+    fun `movement across chunk boundaries stays in sync with the reference filter`(env: Env) {
         val fixture = TrackerFixture()
         val walker = fixture.spawn(8, 0)
         fixture.spawn(0, 0)
@@ -125,11 +128,13 @@ class EntityViewerLookupTest {
     }
 
     /**
-     * A vanilla tracker plus the registered and moved positions that the resolver replays.
+     * A tracker plus the registered and moved positions that the resolver replays, and the chunk
+     * coordinates that the reference filter evaluates.
      */
     private class TrackerFixture {
         private val tracker = EntityTracker.newTracker()
         private val recorded = HashMap<Int, Point>()
+        private val recordedChunks = HashMap<Int, Pair<Int, Int>>()
         private val resolver =
             EntityViewerLookup.EntityPositionResolver { entity -> recorded[entity.entityId] }
 
@@ -138,6 +143,7 @@ class EntityViewerLookupTest {
             val point = chunkCenter(chunkX, chunkZ)
             tracker.register(entity, point, EntityTracker.Target.ENTITIES, null)
             recorded[entity.entityId] = point
+            recordedChunks[entity.entityId] = chunkX to chunkZ
             return entity
         }
 
@@ -145,22 +151,20 @@ class EntityViewerLookupTest {
             val point = chunkCenter(chunkX, chunkZ)
             tracker.move(entity, point, EntityTracker.Target.ENTITIES, null)
             recorded[entity.entityId] = point
+            recordedChunks[entity.entityId] = chunkX to chunkZ
         }
 
         fun remove(entity: Entity) {
             tracker.unregister(entity, EntityTracker.Target.ENTITIES, null)
             recorded.remove(entity.entityId)
+            recordedChunks.remove(entity.entityId)
         }
 
-        fun vanillaNearby(centerChunkX: Int, centerChunkZ: Int, range: Int): Set<Int> {
-            val ids = LinkedHashSet<Int>()
-            tracker.nearbyEntitiesByChunkRange(
-                chunkCenter(centerChunkX, centerChunkZ),
-                range,
-                EntityTracker.Target.ENTITIES,
-            ) { entity -> assertTrue(ids.add(entity.entityId), "bucket scan visited an entity twice") }
-            return ids
-        }
+        fun expectedNearby(centerChunkX: Int, centerChunkZ: Int, range: Int): Set<Int> =
+            recordedChunks.filterValues { (chunkX, chunkZ) ->
+                chunkX in centerChunkX - range..centerChunkX + range &&
+                    chunkZ in centerChunkZ - range..centerChunkZ + range
+            }.keys
 
         fun directNearby(centerChunkX: Int, centerChunkZ: Int, range: Int): Set<Int> {
             val ids = LinkedHashSet<Int>()
@@ -176,9 +180,9 @@ class EntityViewerLookupTest {
 
         fun assertEquivalent(centerChunkX: Int, centerChunkZ: Int, range: Int) {
             assertEquals(
-                vanillaNearby(centerChunkX, centerChunkZ, range),
+                expectedNearby(centerChunkX, centerChunkZ, range),
                 directNearby(centerChunkX, centerChunkZ, range),
-                "direct scan diverged from the bucket scan at ($centerChunkX, $centerChunkZ) range $range",
+                "direct scan diverged from the reference filter at ($centerChunkX, $centerChunkZ) range $range",
             )
         }
 

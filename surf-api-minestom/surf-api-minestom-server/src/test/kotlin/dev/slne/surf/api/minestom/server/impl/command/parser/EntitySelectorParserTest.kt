@@ -1,7 +1,9 @@
 package dev.slne.surf.api.minestom.server.impl.command.parser
 
+import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.exceptions.CommandSyntaxException
+import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import dev.slne.surf.api.minestom.command.argument.EntitiesArgument
 import dev.slne.surf.api.minestom.command.argument.EntityArgument
 import dev.slne.surf.api.minestom.command.argument.PlayerArgument
@@ -9,6 +11,7 @@ import dev.slne.surf.api.minestom.command.argument.PlayersArgument
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
+import net.minestom.server.entity.LivingEntity
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
 import net.minestom.server.network.player.GameProfile
@@ -338,6 +341,174 @@ class EntitySelectorParserTest {
             assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader("@s[sort=nearest]"), players[0])
             }
+        }
+    }
+
+    @Test
+    fun `sorting uses the x y z options as origin`(env: Env) {
+        withPlayers(env, 1) { instance, players ->
+            val nearSender = Entity(EntityType.ZOMBIE)
+            val nearOrigin = Entity(EntityType.ZOMBIE)
+            nearSender.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
+            nearOrigin.setInstance(instance, Pos(100.0, 0.0, 100.0)).join()
+            try {
+                val raw = EntitiesArgument("targets").toDefinition().rawType
+                val nearest = raw.parse(
+                    StringReader("@e[type=minecraft:zombie,sort=nearest,limit=1,x=100,z=100]"),
+                    players[0],
+                )
+                assertEquals(listOf(nearOrigin), nearest)
+
+                val furthest = raw.parse(
+                    StringReader("@e[type=minecraft:zombie,sort=furthest,limit=1,x=100,z=100]"),
+                    players[0],
+                )
+                assertEquals(listOf(nearSender), furthest)
+            } finally {
+                nearSender.remove()
+                nearOrigin.remove()
+            }
+        }
+    }
+
+    @Test
+    fun `dx dy dz match an entity whose bounding box overlaps the box but whose feet do not`(env: Env) {
+        withPlayers(env, 1) { instance, players ->
+            val overlapping = Entity(EntityType.ZOMBIE)
+            val clear = Entity(EntityType.ZOMBIE)
+            overlapping.setInstance(instance, Pos(1.25, 0.0, 0.5)).join()
+            clear.setInstance(instance, Pos(1.5, 0.0, 0.5)).join()
+            try {
+                val raw = EntitiesArgument("targets").toDefinition().rawType
+                val result = raw.parse(StringReader("@e[type=minecraft:zombie,dx=0,dy=0,dz=0]"), players[0])
+                assertEquals(listOf(overlapping), result)
+            } finally {
+                overlapping.remove()
+                clear.remove()
+            }
+        }
+    }
+
+    @Test
+    fun `negative distance and level bounds are rejected at the value's start`(env: Env) {
+        withPlayers(env, 1) { _, players ->
+            val raw = EntitiesArgument("targets").toDefinition().rawType
+            listOf("distance=..-1", "distance=-5..5", "level=-3..", "level=..-1").forEach { option ->
+                val input = "@e[$option]"
+                val failure = assertThrows(CommandSyntaxException::class.java) {
+                    raw.parse(StringReader(input), players[0])
+                }
+                assertEquals(input.indexOf('=') + 1, failure.cursor, option)
+                assertTrue(failure.message?.contains("negative") == true, failure.message)
+            }
+
+            assertEquals(players, raw.parse(StringReader("@e[distance=..5,level=0..]"), players[0]))
+        }
+    }
+
+    @Test
+    fun `at-n selects the nearest entity including non-players`(env: Env) {
+        withPlayers(env, 1) { instance, players ->
+            val near = Entity(EntityType.ZOMBIE)
+            val far = Entity(EntityType.ZOMBIE)
+            near.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
+            far.setInstance(instance, Pos(20.0, 0.0, 0.0)).join()
+            try {
+                val raw = EntityArgument("target").toDefinition().rawType
+                assertSame(players[0], raw.parse(StringReader("@n"), players[0]))
+                assertSame(near, raw.parse(StringReader("@n[type=minecraft:zombie]"), players[0]))
+                assertSame(far, raw.parse(StringReader("@n[type=minecraft:zombie,x=20]"), players[0]))
+            } finally {
+                near.remove()
+                far.remove()
+            }
+        }
+    }
+
+    @Test
+    fun `at-e and at-n skip dead living entities`(env: Env) {
+        withPlayers(env, 1) { instance, players ->
+            val dead = LivingEntity(EntityType.ZOMBIE)
+            dead.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
+            dead.kill()
+            try {
+                val raw = EntitiesArgument("targets", allowEmpty = true).toDefinition().rawType
+                assertEquals(emptyList<Entity>(), raw.parse(StringReader("@e[type=minecraft:zombie]"), players[0]))
+                assertEquals(emptyList<Entity>(), raw.parse(StringReader("@n[type=minecraft:zombie]"), players[0]))
+            } finally {
+                dead.remove()
+            }
+        }
+    }
+
+    @Test
+    fun `x_rotation and y_rotation filter by wrapped angle ranges`(env: Env) {
+        withPlayers(env, 1) { instance, players ->
+            val zombie = Entity(EntityType.ZOMBIE)
+            zombie.setInstance(instance, Pos(2.0, 0.0, 0.0, 270f, 30f)).join()
+            try {
+                val raw = EntitiesArgument("targets", allowEmpty = true).toDefinition().rawType
+                val prefix = "@e[type=minecraft:zombie,"
+                assertEquals(listOf(zombie), raw.parse(StringReader(prefix + "y_rotation=-135..-45]"), players[0]))
+                assertEquals(emptyList<Entity>(), raw.parse(StringReader(prefix + "y_rotation=45..135]"), players[0]))
+                assertEquals(listOf(zombie), raw.parse(StringReader(prefix + "x_rotation=20..40]"), players[0]))
+                assertEquals(emptyList<Entity>(), raw.parse(StringReader(prefix + "x_rotation=..10]"), players[0]))
+                assertEquals(listOf(zombie), raw.parse(StringReader(prefix + "y_rotation=200..]"), players[0]))
+            } finally {
+                zombie.remove()
+            }
+        }
+    }
+
+    @Test
+    fun `type option accepts entity type tags and negated tags`(env: Env) {
+        withPlayers(env, 1) { instance, players ->
+            val skeleton = Entity(EntityType.SKELETON)
+            val zombie = Entity(EntityType.ZOMBIE)
+            skeleton.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
+            zombie.setInstance(instance, Pos(3.0, 0.0, 0.0)).join()
+            try {
+                val raw = EntitiesArgument("targets", allowEmpty = true).toDefinition().rawType
+                assertEquals(listOf(skeleton), raw.parse(StringReader("@e[type=#minecraft:skeletons]"), players[0]))
+                assertEquals(
+                    setOf(zombie, players[0]),
+                    raw.parse(StringReader("@e[type=!#minecraft:skeletons]"), players[0]).toSet(),
+                )
+                assertEquals(emptyList<Entity>(), raw.parse(StringReader("@e[type=#minecraft:no_such_tag]"), players[0]))
+                assertThrows(CommandSyntaxException::class.java) {
+                    raw.parse(StringReader("@e[type=minecraft:zombie,type=#minecraft:skeletons]"), players[0])
+                }
+                assertThrows(CommandSyntaxException::class.java) {
+                    raw.parse(StringReader("@e[type=#minecraft:skeletons,type=#minecraft:skeletons]"), players[0])
+                }
+            } finally {
+                skeleton.remove()
+                zombie.remove()
+            }
+        }
+    }
+
+    @Test
+    fun `a bare token with a uuid group wider than canonical is treated as a name`(env: Env) {
+        withPlayers(env, 1) { _, players ->
+            val raw = EntityArgument("target").toDefinition().rawType
+            assertThrows(CommandSyntaxException::class.java) {
+                raw.parse(StringReader("1ffffffff-0-0-0-0"), players[0])
+            }
+        }
+    }
+
+    @Test
+    fun `suggestions list the matching player names and selectors including at-n`(env: Env) {
+        withPlayers(env, 2) { _, players ->
+            val context = CommandDispatcher<Any>().parse("", Any()).context.build("")
+            val raw = EntityArgument("target").toDefinition().rawType
+
+            val names = raw.listSuggestions(context, SuggestionsBuilder("Player", 0)).join()
+            assertEquals(players.map(Player::getUsername).sorted(), names.list.map { it.text })
+
+            val selectors = raw.listSuggestions(context, SuggestionsBuilder("@", 0)).join()
+            assertTrue(selectors.list.any { it.text == "@n" })
         }
     }
 

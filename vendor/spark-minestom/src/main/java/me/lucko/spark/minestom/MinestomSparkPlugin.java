@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 import me.lucko.spark.common.SparkPlatform;
@@ -68,9 +69,9 @@ public final class MinestomSparkPlugin implements SparkPlugin {
   private final Path directory;
   private final PermissionChecker permissionChecker;
 
-  private @Nullable SparkPlatform platform;
-  private @Nullable MinestomSparkCommand command;
-  private boolean disabled;
+  private volatile @Nullable SparkPlatform platform;
+  private volatile @Nullable MinestomSparkCommand command;
+  private final AtomicBoolean disabled = new AtomicBoolean();
 
   public MinestomSparkPlugin(Path directory) {
     this(directory, PermissionChecker.DEFAULT);
@@ -91,26 +92,50 @@ public final class MinestomSparkPlugin implements SparkPlugin {
       throw new IllegalStateException("spark has already been enabled");
     }
 
-    this.platform = new SparkPlatform(this);
-    this.platform.enable();
-    this.command = new MinestomSparkCommand(this.platform, this.permissionChecker);
-    MinecraftServer.getCommandManager().register(this.command);
+    final SparkPlatform platform = new SparkPlatform(this);
+    boolean platformEnabled = false;
+    try {
+      platform.enable();
+      platformEnabled = true;
+
+      final MinestomSparkCommand command = new MinestomSparkCommand(platform,
+          this.permissionChecker);
+      MinecraftServer.getCommandManager().register(command);
+
+      this.command = command;
+      this.platform = platform;
+    } catch (final Throwable throwable) {
+      if (platformEnabled) {
+        try {
+          platform.disable();
+        } catch (final Throwable suppressed) {
+          throwable.addSuppressed(suppressed);
+        }
+      }
+      this.scheduler.shutdown();
+      throw throwable;
+    }
   }
 
   /**
    * Disables spark and unregisters the {@code /spark} command.
    */
   public void disable() {
-    if (this.platform == null || this.disabled) {
+    final SparkPlatform platform = this.platform;
+    if (platform == null || !this.disabled.compareAndSet(false, true)) {
       return;
     }
-    this.disabled = true;
 
-    assert this.command != null : "command should not be null if platform is not null";
+    try {
+      platform.disable();
 
-    this.platform.disable();
-    MinecraftServer.getCommandManager().unregister(this.command);
-    this.scheduler.shutdown();
+      final MinestomSparkCommand command = this.command;
+      if (command != null) {
+        MinecraftServer.getCommandManager().unregister(command);
+      }
+    } finally {
+      this.scheduler.shutdown();
+    }
   }
 
   @Override
