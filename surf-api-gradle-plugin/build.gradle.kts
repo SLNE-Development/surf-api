@@ -20,7 +20,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("2.4.0")
+    append("2.4.1")
     if (snapshot) append("-SNAPSHOT")
 }
 
@@ -138,7 +138,10 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
     inputs.property("libs.versions.commandapiplugin", libs.versions.commandapiplugin.get())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
-    inputs.property("libs.versions.luckpermsplugin.bukkit", libs.versions.luckpermsplugin.bukkit.get())
+    inputs.property(
+        "libs.versions.luckpermsplugin.bukkit",
+        libs.versions.luckpermsplugin.bukkit.get()
+    )
     inputs.property(
         "libs.versions.packetevents",
         libs.versions.packetevents.plugin.get()
