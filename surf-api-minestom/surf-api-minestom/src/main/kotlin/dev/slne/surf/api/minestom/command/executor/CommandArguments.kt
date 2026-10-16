@@ -1,9 +1,9 @@
 package dev.slne.surf.api.minestom.command.executor
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -71,7 +71,7 @@ class CommandArguments private constructor(
     }
 
     companion object {
-        @ApiStatus.Internal
+        @InternalSurfApi
         fun of(arguments: List<ParsedArgument>): CommandArguments {
             val copy = ObjectArrayList(arguments)
             val names = ObjectOpenHashSet<String>(copy.size)

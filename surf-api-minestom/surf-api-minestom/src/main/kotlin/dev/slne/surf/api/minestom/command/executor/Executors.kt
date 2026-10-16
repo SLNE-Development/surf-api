@@ -1,10 +1,10 @@
 package dev.slne.surf.api.minestom.command.executor
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import net.minestom.server.command.CommandSender
 import net.minestom.server.command.ConsoleSender
 import net.minestom.server.entity.Player
-import org.jetbrains.annotations.ApiStatus
 
 enum class ExecutorType {
     ANY,
@@ -39,7 +39,7 @@ sealed interface ExecutorDefinition {
 }
 
 interface CommandExecutable<SELF : CommandExecutable<SELF>> {
-    @ApiStatus.Internal
+    @InternalSurfApi
     fun addExecutor(definition: ExecutorDefinition): SELF
 
     fun executes(executor: (CommandSender, CommandArguments) -> Unit): SELF = addExecutor(

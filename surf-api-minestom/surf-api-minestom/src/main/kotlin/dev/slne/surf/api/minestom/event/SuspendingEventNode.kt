@@ -1,7 +1,7 @@
 package dev.slne.surf.api.minestom.event
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
-import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.cancellation.CancellationException
 
 class SuspendingEventNode<E : Any>(private val name: String) {
@@ -27,7 +27,7 @@ class SuspendingEventNode<E : Any>(private val name: String) {
     }
 
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     suspend fun call(event: E) {
         for (registration in listeners) {
             try {

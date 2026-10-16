@@ -60,7 +60,11 @@ internal object ConfigurationPhase {
      * @return `false` when the phase is not installed and Minestom has to run its own
      */
     @Blocking
-    internal fun run(manager: ConnectionManagerDuck, player: Player, isFirstConfig: Boolean): Boolean {
+    internal fun run(
+        manager: ConnectionManagerDuck,
+        player: Player,
+        isFirstConfig: Boolean
+    ): Boolean {
         val tasks = tasks ?: return false
         configure(manager, player, isFirstConfig, tasks)
         return true
@@ -101,7 +105,8 @@ internal object ConfigurationPhase {
 }
 
 @Suppress("CAST_NEVER_SUCCEEDS", "NOTHING_TO_INLINE")
-private inline fun net.minestom.server.network.ConnectionManager.duck() = this as ConnectionManagerDuck
+private inline fun net.minestom.server.network.ConnectionManager.duck() =
+    this as ConnectionManagerDuck
 
 /**
  * Entry point of `ConnectionManagerMixin`.

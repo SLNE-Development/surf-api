@@ -1,11 +1,11 @@
 package dev.slne.surf.api.minestom.player.event
 
 import dev.slne.surf.api.minestom.player.PlayerLimit
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.Component
 import net.minestom.server.entity.Player
 import net.minestom.server.event.trait.AsyncEvent
 import net.minestom.server.event.trait.PlayerEvent
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Called once per player, before the server configures them, to decide whether they may join.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Listeners run on the player's own virtual configuration thread, so they may block.
  */
-class AsyncPlayerCountEvent @ApiStatus.Internal constructor(
+class AsyncPlayerCountEvent @InternalSurfApi constructor(
     private val player: Player,
 
     /**

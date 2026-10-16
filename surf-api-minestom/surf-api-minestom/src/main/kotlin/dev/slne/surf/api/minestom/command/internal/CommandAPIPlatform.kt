@@ -2,10 +2,10 @@ package dev.slne.surf.api.minestom.command.internal
 
 import dev.slne.surf.api.minestom.command.CommandDefinition
 import dev.slne.surf.api.minestom.command.RegisteredCommand
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.command.CommandSender
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@InternalSurfApi
 interface CommandAPIPlatform {
     fun register(definition: CommandDefinition, namespace: String?): RegisteredCommand
 

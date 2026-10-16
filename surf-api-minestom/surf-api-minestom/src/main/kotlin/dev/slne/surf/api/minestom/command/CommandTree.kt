@@ -9,10 +9,10 @@ import dev.slne.surf.api.minestom.command.argument.Argument
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.executor.CommandExecutable
 import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import net.minestom.server.command.CommandSender
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Builder for a command whose argument structure branches.
@@ -95,7 +95,7 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
         executors += definition
     }
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     fun toDefinition(): CommandDefinition {
         validateCommandLabels(name, aliases)
 

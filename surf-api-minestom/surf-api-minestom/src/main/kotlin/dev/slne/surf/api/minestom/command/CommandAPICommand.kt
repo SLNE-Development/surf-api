@@ -10,12 +10,12 @@ import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.executor.CommandExecutable
 import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
 import dev.slne.surf.api.minestom.command.executor.ExecutorType
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import it.unimi.dsi.fastutil.objects.*
 import net.minestom.server.command.CommandSender
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@ApiStatus.Internal
+@InternalSurfApi
 data class CommandDefinition(
     val name: String,
     val aliases: Set<String>,
@@ -23,7 +23,7 @@ data class CommandDefinition(
     val paths: List<CommandPath>,
 )
 
-@ApiStatus.Internal
+@InternalSurfApi
 data class CommandPath(
     val arguments: List<ArgumentDefinition<*>>,
     val executors: List<ExecutorDefinition>,
@@ -134,7 +134,7 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         executors += definition
     }
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     fun toDefinition(): CommandDefinition {
         val stack = ReferenceOpenHashSet<CommandAPICommand>()
 

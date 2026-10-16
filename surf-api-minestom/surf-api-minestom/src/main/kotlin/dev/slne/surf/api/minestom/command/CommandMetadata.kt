@@ -1,10 +1,10 @@
 package dev.slne.surf.api.minestom.command
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectLists
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@InternalSurfApi
 data class CommandMetadata(
     val shortDescription: String? = null,
     val fullDescription: List<String> = emptyList(),
@@ -12,7 +12,7 @@ data class CommandMetadata(
     val help: String? = null,
 ) {
     companion object {
-        @ApiStatus.Internal
+        @InternalSurfApi
         fun snapshot(
             shortDescription: String?,
             fullDescription: Collection<String>,

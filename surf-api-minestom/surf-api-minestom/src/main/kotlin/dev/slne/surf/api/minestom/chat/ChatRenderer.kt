@@ -1,5 +1,6 @@
 package dev.slne.surf.api.minestom.chat
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.minestom.server.entity.Player
@@ -30,7 +31,7 @@ fun interface ChatRenderer {
     /**
      * Marker for the renderer returned by [defaultRenderer].
      */
-    @ApiStatus.Internal
+    @InternalSurfApi
     sealed interface Default : ChatRenderer, ViewerUnaware
 
     /**

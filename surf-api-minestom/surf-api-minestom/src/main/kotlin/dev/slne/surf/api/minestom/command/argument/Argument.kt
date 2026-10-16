@@ -14,10 +14,10 @@ import dev.slne.surf.api.minestom.command.executor.CommandExecutable
 import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import dev.slne.surf.api.minestom.command.suggestion.SafeSuggestions
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import it.unimi.dsi.fastutil.objects.*
 import net.minestom.server.command.CommandSender
 import net.minestom.server.utils.Range
-import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.util.*
 import dev.slne.surf.api.minestom.command.argument.Axis as AxisType
@@ -189,7 +189,7 @@ data class ArgumentDefinition<T>(
  *
  * Parsing through it always fails.
  */
-@ApiStatus.Internal
+@InternalSurfApi
 class UnsupportedArgumentType<T>(private val nodeName: String) : ArgumentType<T> {
     override fun parse(reader: StringReader): T = throw SimpleCommandExceptionType(
         LiteralMessage("Argument '$nodeName' has no parser"),
@@ -358,7 +358,7 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
         children += child
     }
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     internal fun toTreeNode(): ArgumentTreeNode = toTreeNode(ReferenceOpenHashSet())
 
     private fun toTreeNode(stack: MutableSet<Argument<*>>): ArgumentTreeNode {
@@ -378,7 +378,7 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
         }
     }
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     fun toDefinition(): ArgumentDefinition<T> = ArgumentDefinition(
         nodeName = nodeName,
         kind = kind,
@@ -394,7 +394,7 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
     )
 }
 
-@ApiStatus.Internal
+@InternalSurfApi
 internal data class ArgumentTreeNode(
     val argument: ArgumentDefinition<*>,
     val executors: KList<ExecutorDefinition>,

@@ -6,6 +6,7 @@ import codes.bed.minestom.npc.api.NpcKind
 import codes.bed.minestom.npc.display.TextDisplayController
 import codes.bed.minestom.npc.types.AbstractNpcEntity
 import dev.slne.surf.api.minestom.extension.editEntityMeta
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.Component
 import net.minestom.server.coordinate.Vec
 import net.minestom.server.entity.EntityType
@@ -18,7 +19,6 @@ import net.minestom.server.inventory.EquipmentHandler
 import net.minestom.server.item.ItemStack
 import net.minestom.server.network.packet.server.play.EntityAttributesPacket
 import net.minestom.server.network.player.ResolvableProfile
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
@@ -71,7 +71,7 @@ class MannequinNpc(
 
     override val displayName: String get() = name
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     override fun spawn() {
         StomNPCs.manager().register(this)
 
@@ -93,7 +93,7 @@ class MannequinNpc(
     }
 
     @Suppress("UnstableApiUsage")
-    @ApiStatus.Internal
+    @InternalSurfApi
     override fun updateNewViewer(player: Player) {
         super.updateNewViewer(player)
 

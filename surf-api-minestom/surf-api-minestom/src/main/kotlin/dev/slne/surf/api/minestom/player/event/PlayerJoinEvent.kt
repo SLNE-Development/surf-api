@@ -1,9 +1,9 @@
 package dev.slne.surf.api.minestom.player.event
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.Component
 import net.minestom.server.entity.Player
 import net.minestom.server.event.trait.PlayerInstanceEvent
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Called once a player joined the server and spawned for the first time.
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * [joinMessage] is broadcast to every player and the console afterwards; set it to `null` to
  * join silently.
  */
-class PlayerJoinEvent @ApiStatus.Internal constructor(
+class PlayerJoinEvent @InternalSurfApi constructor(
     private val player: Player,
 
     /**

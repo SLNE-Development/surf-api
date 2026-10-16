@@ -3,9 +3,9 @@ package dev.slne.surf.api.minestom.command
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.internal.CommandAPIPlatform
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.Component
 import net.minestom.server.command.CommandSender
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -17,19 +17,19 @@ import java.util.concurrent.atomic.AtomicReference
 object CommandAPI {
     private val platform = AtomicReference<CommandAPIPlatform?>()
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     fun installPlatform(value: CommandAPIPlatform) {
         check(platform.compareAndSet(null, value)) {
             "The CommandAPI platform is already installed"
         }
     }
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     fun uninstallPlatform(value: CommandAPIPlatform) {
         platform.compareAndSet(value, null)
     }
 
-    @ApiStatus.Internal
+    @InternalSurfApi
     fun register(definition: CommandDefinition, namespace: String?): RegisteredCommand {
         validateNamespace(namespace)
         return installedPlatform().register(definition, namespace)

@@ -1,11 +1,11 @@
 package dev.slne.surf.api.minestom.chat
 
 import dev.slne.surf.api.minestom.event.SuspendingEventNode
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
 import net.minestom.server.entity.Player
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Fired when a [Player] sends a chat message.
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
  * }
  * ```
  */
-class AsyncPlayerChatEvent @ApiStatus.Internal constructor(
+class AsyncPlayerChatEvent @InternalSurfApi constructor(
 
     val player: Player,
 
@@ -63,7 +63,7 @@ class AsyncPlayerChatEvent @ApiStatus.Internal constructor(
     var isCancelled = false
 
     companion object {
-        @ApiStatus.Internal
+        @InternalSurfApi
         val node = SuspendingEventNode<AsyncPlayerChatEvent>("async-chat")
 
         typealias AsyncPlayerChatEventListener = suspend (AsyncPlayerChatEvent) -> Unit

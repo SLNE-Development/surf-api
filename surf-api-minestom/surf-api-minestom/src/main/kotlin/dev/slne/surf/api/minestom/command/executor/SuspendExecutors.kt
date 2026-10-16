@@ -2,6 +2,7 @@ package dev.slne.surf.api.minestom.command.executor
 
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.exception.WrapperCommandSyntaxException
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -9,15 +10,14 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.MinecraftServer
 import net.minestom.server.command.CommandSender
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@InternalSurfApi
 val GENERIC_COMMAND_FAILURE: Component = Component.text(
     "Beim Ausführen des Befehls ist ein Fehler aufgetreten.",
     NamedTextColor.RED,
 )
 
-@ApiStatus.Internal
+@InternalSurfApi
 fun launchCommandExecutor(
     definition: ExecutorDefinition.Suspending,
     sender: CommandSender,
@@ -60,7 +60,7 @@ internal fun handleCommandFailure(
     }
 }
 
-@ApiStatus.Internal
+@InternalSurfApi
 fun handleCommandExecutorFailure(
     sender: CommandSender,
     input: String,
