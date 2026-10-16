@@ -52,8 +52,10 @@ includeBuild("vendor/spark-minestom") {
     }
 }
 
+val ci = System.getenv("CI")?.toBoolean() ?: false
+
 // vendor/LuckPerms is generated from the LuckPerms-Upstream submodule and the patches next to it,
-// so the LuckPerms feature is only built once it has been created
+// so the LuckPerms feature is only built once it has been created; CI builds require it
 val luckPermsDir = file("vendor/LuckPerms")
 if (luckPermsDir.resolve("settings.gradle").isFile) {
     include(":surf-api-minestom:surf-api-minestom-server-luckperms")
@@ -64,16 +66,15 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
         }
     }
 } else {
-    logger.warn(
-        """
+    val message = """
         vendor/LuckPerms is missing, so surf-api-minestom-server-luckperms is not built. Create it with:
           git submodule update --init --recursive
           cd vendor && ./gradlew applyPatches
         """.trimIndent()
-    )
-}
 
-val ci = System.getenv("CI")?.toBoolean() ?: false
+    if (ci) error(message)
+    logger.warn(message)
+}
 
 if (!ci) {
     include(":surf-api-paper:surf-api-paper-plugin-test")
