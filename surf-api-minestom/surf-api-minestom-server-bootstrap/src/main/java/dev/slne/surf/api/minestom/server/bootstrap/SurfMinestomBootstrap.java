@@ -56,11 +56,25 @@ public final class SurfMinestomBootstrap {
     public static final String LIBRARIES_PROPERTY = "surf.minestom.libraries";
 
     /**
+     * The system property the bootstrap agent sets to the path of the server jar before it calls
+     * the delegate agents, so that an agent loaded from a downloaded library still finds the
+     * manifest of the server jar.
+     */
+    public static final String SERVER_JAR_PROPERTY = "surf.minestom.server-jar";
+
+    /**
      * The Minestom server properties that may change at runtime, see
      * {@code SurfMinestomServerBuilder.recommendedServerProperties}. Minestom freezes a property's
      * value when it is first read unless {@code <name>.mutable} is set before that.
      */
     private static final List<String> MUTABLE_SERVER_PROPERTIES = List.of("minestom.keep-alive-delay");
+
+    /**
+     * Minestom's own JVM shutdown hook. The surf api stops the server from a hook of its own, which
+     * also runs the server's shutdown actions, so Minestom's is turned off unless set with
+     * {@code -D}.
+     */
+    private static final String SHUTDOWN_ON_SIGNAL_PROPERTY = "minestom.shutdown-on-signal";
 
     private static final BootstrapLogger LOGGER = new BootstrapLogger();
 
@@ -77,8 +91,14 @@ public final class SurfMinestomBootstrap {
                     System.setProperty(property + ".mutable", "true");
                 }
             }
+            if (System.getProperty(SHUTDOWN_ON_SIGNAL_PROPERTY) == null) {
+                System.setProperty(SHUTDOWN_ON_SIGNAL_PROPERTY, "false");
+            }
 
-            final Attributes manifest = ownManifest();
+            final Path serverJar = ownJar();
+            System.setProperty(SERVER_JAR_PROPERTY, serverJar.toString());
+
+            final Attributes manifest = manifest(serverJar);
             installLibraries(instrumentation);
 
             final @Nullable String serverPlugins = manifest.getValue(ServerPlugins.ATTRIBUTE);
@@ -160,14 +180,19 @@ public final class SurfMinestomBootstrap {
         }
     }
 
-    private static Attributes ownManifest() {
+    private static Path ownJar() {
         try {
-            final Path jar = Path.of(SurfMinestomBootstrap.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            try (JarFile jarFile = new JarFile(jar.toFile())) {
-                final @Nullable Manifest manifest = jarFile.getManifest();
-                return manifest == null ? new Attributes() : manifest.getMainAttributes();
-            }
-        } catch (final IOException | URISyntaxException e) {
+            return Path.of(SurfMinestomBootstrap.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        } catch (final URISyntaxException e) {
+            throw new IllegalStateException("Failed to locate the server jar", e);
+        }
+    }
+
+    private static Attributes manifest(final Path jar) {
+        try (JarFile jarFile = new JarFile(jar.toFile())) {
+            final @Nullable Manifest manifest = jarFile.getManifest();
+            return manifest == null ? new Attributes() : manifest.getMainAttributes();
+        } catch (final IOException e) {
             throw new IllegalStateException("Failed to read the manifest of the server jar", e);
         }
     }

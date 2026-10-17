@@ -24,6 +24,9 @@ internal data class PluginCandidate(
 
 /**
  * Finds the plugins in a directory and on the system class path.
+ *
+ * A plugin that is found but whose description cannot be read is logged and added to the
+ * `failures` of the call, keyed by its jar or main class, with the reason.
  */
 internal object PluginDiscovery {
     private val LOGGER = ComponentLogger.logger()
@@ -35,16 +38,16 @@ internal object PluginDiscovery {
     /**
      * Every jar in [directory] that carries a `minestom-plugin.json`.
      */
-    fun fromDirectory(directory: Path): List<PluginCandidate> {
+    fun fromDirectory(directory: Path, failures: MutableMap<String, String> = mutableMapOf()): List<PluginCandidate> {
         if (!directory.isDirectory()) return emptyList()
 
         return directory.listDirectoryEntries()
             .filter { it.isRegularFile() && it.extension.equals("jar", ignoreCase = true) }
             .sortedBy { it.fileName.toString() }
-            .mapNotNull(::fromJar)
+            .mapNotNull { jar -> fromJar(jar, failures) }
     }
 
-    fun fromJar(jar: Path): PluginCandidate? = try {
+    fun fromJar(jar: Path, failures: MutableMap<String, String> = mutableMapOf()): PluginCandidate? = try {
         JarFile(jar.toFile()).use { file ->
             val entry = file.getJarEntry(PluginMeta.FILE_NAME)
             if (entry == null) {
@@ -57,24 +60,27 @@ internal object PluginDiscovery {
         }
     } catch (failure: Exception) {
         LOGGER.error("Could not read the plugin {}", jar.fileName, failure)
+        failures[jar.fileName.toString()] = "its description could not be read: ${describe(failure)}"
         null
     }
 
     /**
      * The plugins shaded into the server itself, listed in [PluginMeta.CLASSPATH_INDEX].
      */
-    fun fromClassPath(classLoader: ClassLoader): List<PluginCandidate> {
-        val mainClasses = classLoader.getResources(PluginMeta.CLASSPATH_INDEX).toList()
+    fun fromClassPath(classLoader: ClassLoader, failures: MutableMap<String, String> = mutableMapOf()): List<PluginCandidate> {
+        val mainClasses = classLoader.getResources(PluginMeta.CLASSPATH_INDEX).asSequence()
             .flatMap { url -> url.openStream().use { it.readBytes().decodeToString() }.lines() }
             .map { line -> line.substringBefore('#').trim() }
             .filter(String::isNotEmpty)
             .distinct()
+            .toList()
 
         return mainClasses.mapNotNull { mainClass ->
             val path = "${PluginMeta.CLASSPATH_DIRECTORY}$mainClass.json"
             val resource = classLoader.getResource(path)
             if (resource == null) {
-                LOGGER.warn("The plugin {} on the class path has no {}", mainClass, path)
+                LOGGER.error("The plugin {} on the class path has no {}", mainClass, path)
+                failures[mainClass] = "its description $path is missing"
                 return@mapNotNull null
             }
 
@@ -83,10 +89,14 @@ internal object PluginDiscovery {
                 PluginCandidate(meta, jar = null)
             } catch (failure: Exception) {
                 LOGGER.error("Could not read the plugin {} on the class path", mainClass, failure)
+                failures[mainClass] = "its description could not be read: ${describe(failure)}"
                 null
             }
         }
     }
 
     fun parse(content: String): PluginMeta = json.decodeFromString(PluginMeta.serializer(), content)
+
+    private fun describe(failure: Throwable): String =
+        failure.message?.let { "${failure.javaClass.simpleName}: $it" } ?: failure.javaClass.simpleName
 }

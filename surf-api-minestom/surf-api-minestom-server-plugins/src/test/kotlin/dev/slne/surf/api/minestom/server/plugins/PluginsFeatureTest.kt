@@ -6,12 +6,7 @@ import dev.slne.surf.api.minestom.server.plugins.impl.PluginDiscovery
 import dev.slne.surf.api.minestom.server.surfMinestomServer
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -40,7 +35,7 @@ class PluginsFeatureTest {
             assertSame(TestPlugin.instance, plugin)
             assertEquals("TestPlugin", plugin!!.meta.name)
             assertEquals(directory.resolve("test-plugin"), plugin.dataDirectory)
-            assertEquals(listOf("load"), TestPlugin.calls)
+            assertEquals(listOf("load", "enable"), TestPlugin.calls, "the plugin was not enabled before the start returned")
             assertTrue(commands.commandExists("test-plugin-command"))
             assertTrue(plugin.eventNode.parent != null)
             plugin
@@ -48,7 +43,7 @@ class PluginsFeatureTest {
             server.shutdown()
         }
 
-        assertEquals(listOf("load", "disable"), TestPlugin.calls)
+        assertEquals(listOf("load", "enable", "disable"), TestPlugin.calls)
         assertFalse(commands.commandExists("test-plugin-command"), "the plugin's command is unregistered")
         assertNull(plugin.eventNode.parent, "the plugin's event node is removed")
     }

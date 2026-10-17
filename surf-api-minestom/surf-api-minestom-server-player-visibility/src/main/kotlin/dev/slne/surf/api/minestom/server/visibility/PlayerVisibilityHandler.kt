@@ -1,6 +1,8 @@
 package dev.slne.surf.api.minestom.server.visibility
 
+import dev.slne.surf.api.minestom.player.SurfMinestomPlayer
 import dev.slne.surf.api.minestom.visibility.PlayerVisibility
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.entity.AutomaticPlayerVisibility
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.Player
@@ -19,6 +21,7 @@ import java.util.function.Predicate
  * updates run on the service tick. The combined rule reads the selection and the applied rule
  * through volatile fields.
  */
+@OptIn(InternalSurfApi::class)
 internal class PlayerVisibilityHandler(private val player: Player) {
     private class RuleRequest(
         val predicate: Predicate<in Entity>?,
@@ -78,7 +81,8 @@ internal class PlayerVisibilityHandler(private val player: Player) {
 
         // Limits this player's packets to its actual viewers instead of every player in range,
         // most of whom no longer see it once the limit applies.
-        player.updateViewableRule(ALWAYS_VIEWABLE)
+        (player as? SurfMinestomPlayer)?.refreshViewableRule()
+            ?: player.updateViewableRule(ALWAYS_VIEWABLE)
     }
 
     /**
@@ -89,7 +93,8 @@ internal class PlayerVisibilityHandler(private val player: Player) {
         if (!player.isOnline) return
 
         player.updateViewerRule(appliedRule)
-        player.updateViewableRule(null)
+        (player as? SurfMinestomPlayer)?.refreshViewableRule()
+            ?: player.updateViewableRule(null)
     }
 
     fun requestRule(predicate: Predicate<in Entity>?) {

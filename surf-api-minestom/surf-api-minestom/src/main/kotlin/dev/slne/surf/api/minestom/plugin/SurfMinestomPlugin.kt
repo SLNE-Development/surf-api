@@ -28,10 +28,11 @@ import java.nio.file.Path
  * one of the lifecycle functions runs, or from within [scope], belong to the plugin. They are
  * removed or, for coroutines, cancelled once the plugin is disabled.
  *
- * The lifecycle functions run blocking on the server thread: `onLoad` before the server accepts
- * players, `onEnable` on the first tick and `onDisable` during shutdown. They must not wait for
- * work dispatched to `MinestomDispatchers.Main` or to an entity scheduler, because that work only
- * runs once the blocked thread returns to the tick loop. Such work is launched in [scope] instead.
+ * The lifecycle functions run blocking: `onLoad` and then `onEnable` while the server starts,
+ * before it accepts players, and `onDisable` during shutdown. They must not wait for work
+ * dispatched to `MinestomDispatchers.Main` or to an entity scheduler, because that work only runs
+ * on a tick: the server does not tick yet while it starts and no longer ticks while it stops. Such
+ * work is launched in [scope] instead.
  */
 abstract class SurfMinestomPlugin {
     // Taken in the constructor so that property initializers of the plugin, including those of an
@@ -69,7 +70,7 @@ abstract class SurfMinestomPlugin {
     open suspend fun onLoad() = Unit
 
     /**
-     * Called on the first tick after the server started.
+     * Called once every plugin is loaded, while the server starts, before it accepts players.
      */
     open suspend fun onEnable() = Unit
 

@@ -12,8 +12,10 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaApplication
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -29,10 +31,17 @@ import xyz.jpenilla.gremlin.gradle.WriteDependencySet
  * Builds a runnable surf Minestom server as one executable server jar: the surf api, the
  * requested features and the project's own code.
  *
- * Only the project's own modules, the surf modules and the bootstrap are shaded. Every other
- * library is listed in the gremlin dependency set `dependencies.txt`. The bootstrap agent
+ * The server jar contains the project's own modules, the bootstrap, the surf modules and the
+ * modules declared in the `shaded` configuration. With
+ * [MinestomServerSurfExtension.downloadSurfModules] the surf modules are downloaded instead. Every
+ * other library is listed in the gremlin dependency set `dependencies.txt`. The bootstrap agent
  * downloads these libraries into `libraries/`, relocates them like the server jar and appends
  * them to the system class path before `main` runs.
+ *
+ * The `shaded` configuration is extended by `runtimeOnly` and embeds modules that cannot be
+ * downloaded, such as those of repositories that need credentials. The whole resolved closure of
+ * the dependencies declared in it is embedded, including public modules they depend on. A module
+ * of that closure is never downloaded, regardless of other paths to it.
  *
  * Manifest attributes written to the jar:
  * - `Launcher-Agent-Class`: the bootstrap agent.
@@ -68,10 +77,18 @@ internal class MinestomServerSurfPlugin :
     }
 
     override fun Project.configure0() {
+        val shaded = configurations.create(SHADED) {
+            description = "Dependencies embedded in the server jar instead of being downloaded, " +
+                    "for repositories that need credentials"
+            isCanBeConsumed = false
+            isCanBeResolved = true
+        }
+        configurations.named("runtimeOnly") { extendsFrom(shaded) }
+
         dependencies {
-            add("implementation", Constants.MINESTOM)
-            add("runtimeOnly", "org.apache.logging.log4j:log4j-core:${Constants.LOG4J_VERSION}")
-            add("runtimeOnly", "org.apache.logging.log4j:log4j-slf4j2-impl:${Constants.LOG4J_VERSION}")
+            "implementation"(Constants.MINESTOM)
+            "runtimeOnly"("org.apache.logging.log4j:log4j-core:${Constants.LOG4J_VERSION}")
+            "runtimeOnly"("org.apache.logging.log4j:log4j-slf4j2-impl:${Constants.LOG4J_VERSION}")
         }
 
         tasks.named<ShadowJar>("shadowJar") {
@@ -137,6 +154,9 @@ internal class MinestomServerSurfPlugin :
         if (extension.downloadLibraries.get()) {
             configureLibraryDownload(extension)
         } else {
+            if (extension.downloadSurfModules.get()) {
+                logger.warn("downloadSurfModules has no effect on ${project.path} while downloadLibraries is disabled")
+            }
             tasks.named<ProcessResources>("processResources") { exclude(DEPENDENCIES_FILE) }
             configureShadedAsmVersion()
         }
@@ -202,11 +222,33 @@ internal class MinestomServerSurfPlugin :
     }
 
     /**
-     * Writes every third-party library, with the server jar's relocations, to `dependencies.txt`,
-     * the file the bootstrap downloads from. The project's own modules, the surf modules and the
-     * bootstrap stay shaded in the server jar.
+     * Writes every library that is not shaded, with the server jar's relocations, to
+     * `dependencies.txt`, the file the bootstrap downloads from. The [ShadingRules] decide which
+     * modules stay in the server jar.
      */
     private fun Project.configureLibraryDownload(extension: MinestomServerSurfExtension) {
+        val runtimeClasspath = configurations.getByName("runtimeClasspath")
+        val shaded = configurations.named(SHADED) {
+            // Selects the same versions as the runtime graph and resolves the same variants
+            shouldResolveConsistentlyWith(runtimeClasspath)
+            attributes {
+                runtimeClasspath.attributes.keySet().forEach { key ->
+                    @Suppress("UNCHECKED_CAST")
+                    attribute(key as Attribute<Any>, runtimeClasspath.attributes.getAttribute(key)!!)
+                }
+            }
+        }
+        val rules = ShadingRules(
+            downloadSurfModules = extension.downloadSurfModules.get(),
+            embedded = shaded.map { configuration ->
+                configuration.incoming.resolutionResult.allComponents
+                    .mapNotNull { component ->
+                        (component.id as? ModuleComponentIdentifier)?.let { it.group to it.module }
+                    }
+                    .toSet()
+            },
+        )
+
         configurations.named(RUNTIME_DOWNLOAD) {
             extendsFrom(configurations.getByName("implementation"), configurations.getByName("runtimeOnly"))
             shouldResolveConsistentlyWith(configurations.getByName("runtimeClasspath"))
@@ -215,8 +257,10 @@ internal class MinestomServerSurfPlugin :
         tasks.named<WriteDependencySet>("writeDependencies") {
             // Filtered per component, so that the libraries of shaded modules are still downloaded
             dependencies.setFrom(configurations.named(RUNTIME_DOWNLOAD).map { configuration ->
+                // Resolves `shaded` before the artifact view, not during its resolution
+                rules.embeddedModules
                 configuration.incoming.artifactView {
-                    componentFilter { id -> id !is ModuleComponentIdentifier || !isShaded(id.group, id.module) }
+                    componentFilter { id -> id !is ModuleComponentIdentifier || !rules.isShaded(id.group, id.module) }
                 }.artifacts
             })
             forEachRelocation { from, to, excludes ->
@@ -232,7 +276,7 @@ internal class MinestomServerSurfPlugin :
 
         tasks.named<ShadowJar>("shadowJar") {
             dependencies {
-                exclude { dependency -> !dependency.isShaded() }
+                exclude { dependency -> !rules.isShaded(dependency) }
             }
         }
     }
@@ -263,16 +307,35 @@ internal class MinestomServerSurfPlugin :
         }
     }
 
-    private fun ResolvedDependency.isShaded() =
-        isShaded(moduleGroup, moduleName) ||
-                moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
-
     /**
-     * Whether the module stays in the server jar: surf modules (not the third-party forks under
-     * `dev.slne.forks`) and the [BOOTSTRAP_MODULES].
+     * Decides which modules stay in the server jar when the libraries are downloaded.
+     *
+     * A module is shaded when it is one of the [BOOTSTRAP_MODULES], a project dependency, part of
+     * the `shaded` closure or, unless [downloadSurfModules] is set, a surf module. Surf modules
+     * exclude the third-party forks under `dev.slne.forks`. Every component therefore has exactly
+     * one destination: the server jar or `dependencies.txt`.
+     *
+     * The `shaded` closure is resolved on first use, at execution time, and then kept.
+     *
+     * @param embedded `group` to `name` of every module in the resolution result of `shaded`
      */
-    private fun isShaded(group: String, module: String) =
-        group == "dev.slne.surf" || group.startsWith("dev.slne.surf.") || group to module in BOOTSTRAP_MODULES
+    private class ShadingRules(
+        private val downloadSurfModules: Boolean,
+        embedded: Provider<Set<Pair<String, String>>>,
+    ) {
+        val embeddedModules: Set<Pair<String, String>> by lazy { embedded.get() }
+
+        fun isShaded(group: String, module: String): Boolean {
+            val id = group to module
+            return id in BOOTSTRAP_MODULES ||
+                    id in embeddedModules ||
+                    (!downloadSurfModules && (group == "dev.slne.surf" || group.startsWith("dev.slne.surf.")))
+        }
+
+        fun isShaded(dependency: ResolvedDependency) =
+            isShaded(dependency.moduleGroup, dependency.moduleName) ||
+                    dependency.moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
+    }
 
     /**
      * Registers `runServer`, which runs the server jar with `java -jar` so that the manifest's
@@ -306,6 +369,7 @@ internal class MinestomServerSurfPlugin :
         const val LOG4J_CONFIG = "log4j2.xml"
 
         const val RUNTIME_DOWNLOAD = "runtimeDownload"
+        const val SHADED = "shaded"
         const val JAR_RELOCATOR_RUNTIME = "jarRelocatorRuntime"
         const val DEPENDENCIES_FILE = "dependencies.txt"
         const val BOOTSTRAP_MODULE = "surf-api-minestom-server-bootstrap"
@@ -317,9 +381,11 @@ internal class MinestomServerSurfPlugin :
         const val MIXIN_CONFIG = "mixins.surf-api-minestom-server.json"
 
         /**
-         * What the bootstrap needs before anything is downloaded.
+         * What the bootstrap needs before anything is downloaded, independent of
+         * [MinestomServerSurfExtension.downloadSurfModules].
          */
         val BOOTSTRAP_MODULES = setOf(
+            "dev.slne.surf.api" to BOOTSTRAP_MODULE,
             "xyz.jpenilla" to "gremlin-runtime",
             "org.jspecify" to "jspecify",
         )

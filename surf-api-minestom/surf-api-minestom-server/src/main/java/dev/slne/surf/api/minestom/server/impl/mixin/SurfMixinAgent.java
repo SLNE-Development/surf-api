@@ -27,9 +27,11 @@ import org.spongepowered.asm.mixin.Mixins;
  * system class path, before any other agent or {@code main} runs. The transformer must exist
  * before the first Minestom class is loaded, because classes loaded earlier are never transformed.</p>
  *
- * <p>The mixin configurations come from the {@value #CONFIGS_ATTRIBUTE} manifest attribute, which
- * the surf Gradle plugin writes from the installed features and the mixin configurations the
- * server registers. Mixin can be installed once per JVM.</p>
+ * <p>The mixin configurations come from the {@value #CONFIGS_ATTRIBUTE} manifest attribute of the
+ * server jar, which the surf Gradle plugin writes from the installed features and the mixin
+ * configurations the server registers. The server jar is the one the bootstrap agent reports in
+ * {@code surf.minestom.server-jar}, since this class may come from a downloaded library, or else
+ * the jar this class was loaded from. Mixin can be installed once per JVM.</p>
  *
  * <p>A required mixin whose target was loaded before the installation fails the installation. A
  * transformation that fails later makes the JVM load the class untransformed; such classes are
@@ -42,6 +44,11 @@ public final class SurfMixinAgent {
      * The manifest attribute listing the mixin configurations to apply, comma separated.
      */
     public static final String CONFIGS_ATTRIBUTE = "Surf-Mixin-Configs";
+
+    /**
+     * The system property {@code SurfMinestomBootstrap} sets to the path of the server jar.
+     */
+    private static final String SERVER_JAR_PROPERTY = "surf.minestom.server-jar";
 
     private static volatile boolean installed;
 
@@ -137,31 +144,42 @@ public final class SurfMixinAgent {
     }
 
     private static List<String> configsFromManifest() {
-        final @Nullable CodeSource codeSource = SurfMixinAgent.class.getProtectionDomain().getCodeSource();
-        if (codeSource == null) {
+        final @Nullable Path jar = serverJar();
+        if (jar == null || !Files.isRegularFile(jar)) {
             return List.of();
         }
 
-        try {
-            final Path jar = Path.of(codeSource.getLocation().toURI());
-            if (!Files.isRegularFile(jar)) {
+        try (JarFile jarFile = new JarFile(jar.toFile())) {
+            final @Nullable Manifest manifest = jarFile.getManifest();
+            final @Nullable String configs = manifest == null ? null : manifest.getMainAttributes().getValue(CONFIGS_ATTRIBUTE);
+            if (configs == null) {
                 return List.of();
             }
 
-            try (JarFile jarFile = new JarFile(jar.toFile())) {
-                final @Nullable Manifest manifest = jarFile.getManifest();
-                final @Nullable String configs = manifest == null ? null : manifest.getMainAttributes().getValue(CONFIGS_ATTRIBUTE);
-                if (configs == null) {
-                    return List.of();
-                }
-
-                return Arrays.stream(configs.split(","))
-                    .map(String::trim)
-                    .filter(config -> !config.isEmpty())
-                    .toList();
-            }
-        } catch (final IOException | URISyntaxException e) {
+            return Arrays.stream(configs.split(","))
+                .map(String::trim)
+                .filter(config -> !config.isEmpty())
+                .toList();
+        } catch (final IOException e) {
             throw new IllegalStateException("Failed to read the mixin configurations from the server jar", e);
+        }
+    }
+
+    private static @Nullable Path serverJar() {
+        final @Nullable String reported = System.getProperty(SERVER_JAR_PROPERTY);
+        if (reported != null) {
+            return Path.of(reported);
+        }
+
+        final @Nullable CodeSource codeSource = SurfMixinAgent.class.getProtectionDomain().getCodeSource();
+        if (codeSource == null) {
+            return null;
+        }
+
+        try {
+            return Path.of(codeSource.getLocation().toURI());
+        } catch (final URISyntaxException e) {
+            throw new IllegalStateException("Failed to locate the server jar", e);
         }
     }
 }
