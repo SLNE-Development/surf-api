@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -33,6 +34,13 @@ import org.spongepowered.asm.mixin.Mixins;
  * {@code surf.minestom.server-jar}, since this class may come from a downloaded library, or else
  * the jar this class was loaded from. Mixin can be installed once per JVM.</p>
  *
+ * <p>In addition, the optional compatibility configurations of surf are applied for each library
+ * whose marker class is on the system class path, see {@link #compatibilityConfigs()}. Servers
+ * need not list them in the manifest, and a server without such a library gets no warning about a
+ * missing target. Their injections are not required, so a library version that no longer needs a
+ * fix is left untransformed without an error. A manifest that lists no configuration at all still
+ * fails the installation.</p>
+ *
  * <p>A required mixin whose target was loaded before the installation fails the installation. A
  * transformation that fails later makes the JVM load the class untransformed; such classes are
  * reported by {@link #failedTransformations()}.</p>
@@ -50,6 +58,16 @@ public final class SurfMixinAgent {
      */
     private static final String SERVER_JAR_PROPERTY = "surf.minestom.server-jar";
 
+    /**
+     * Optional configurations that fix the compatibility of a third-party library with Minestom.
+     */
+    private static final List<CompatibilityConfig> COMPATIBILITY_CONFIGS = List.of(
+        new CompatibilityConfig(
+            "mixins.surf-api-minestom-server-miniplaceholders.json",
+            "io/github/miniplaceholders/minestom/command/MinestomCommand.class"
+        )
+    );
+
     private static volatile boolean installed;
 
     private static volatile @Nullable Throwable installationFailure;
@@ -58,7 +76,23 @@ public final class SurfMixinAgent {
     }
 
     /**
-     * Installs Mixin with the mixin configurations listed in the manifest.
+     * The surf compatibility mixin configurations whose marker class is on the system class path.
+     *
+     * <p>Each configuration targets a third-party class, so it is applied only when that library is
+     * present; the Mixin target of a missing library would be reported as not found.</p>
+     */
+    public static List<String> compatibilityConfigs() {
+        final ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+        return COMPATIBILITY_CONFIGS.stream()
+            .filter(config -> classLoader.getResource(config.markerResource()) != null)
+            .map(CompatibilityConfig::config)
+            .toList();
+    }
+
+    /**
+     * Installs Mixin with the mixin configurations listed in the manifest, plus the
+     * {@linkplain #compatibilityConfigs() compatibility configurations} of the libraries on the
+     * class path.
      *
      * @throws IllegalStateException when the manifest lists no mixin configuration or Mixin is
      * already installed
@@ -68,7 +102,14 @@ public final class SurfMixinAgent {
         if (configs.isEmpty()) {
             throw new IllegalStateException("The server jar lists no mixin configurations in " + CONFIGS_ATTRIBUTE);
         }
-        install(instrumentation, configs);
+
+        final List<String> all = new ArrayList<>(configs);
+        for (final String compatibilityConfig : compatibilityConfigs()) {
+            if (!all.contains(compatibilityConfig)) {
+                all.add(compatibilityConfig);
+            }
+        }
+        install(instrumentation, all);
     }
 
     /**
@@ -163,6 +204,13 @@ public final class SurfMixinAgent {
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to read the mixin configurations from the server jar", e);
         }
+    }
+
+    /**
+     * A mixin configuration that applies only when {@code markerResource}, the class file of the
+     * library it targets, is on the class path.
+     */
+    private record CompatibilityConfig(String config, String markerResource) {
     }
 
     private static @Nullable Path serverJar() {

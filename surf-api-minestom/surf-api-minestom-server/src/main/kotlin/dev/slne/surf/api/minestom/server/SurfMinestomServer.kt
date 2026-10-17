@@ -191,7 +191,8 @@ class SurfMinestomServerBuilder internal constructor() {
      * are disabled, e.g. to close a database the server's own code opened.
      *
      * Actions run in registration order on the thread that stops the server; one that throws is
-     * logged and the others still run.
+     * logged and the others still run. They do not terminate the process, and must not call
+     * [exitFlushingLogs]; [SurfMinestomServer.instance] is no longer available while they run.
      *
      * @see SurfMinestomServer.stop
      */
@@ -255,8 +256,24 @@ interface SurfMinestomServer {
      * until they are stopped, so a call from a tick thread, e.g. directly from the executor of a
      * command a player ran, throws [IllegalStateException]. Like [shutdown], it cannot be called
      * from within the start.
+     *
+     * The process keeps running afterwards. To terminate it, use [exit], or [exitFlushingLogs] from
+     * a thread that may block.
      */
     fun stop()
+
+    /**
+     * Stops the server like [stop], flushes the logs and terminates the JVM with [status].
+     *
+     * Runs [exitFlushingLogs] on a new non-daemon thread named `surf-minestom-exit` and returns
+     * right away, so it may be called from any thread, including a tick thread, e.g. the executor
+     * of a command a player ran, and the console. A shutdown action or a `disable` may call it on a
+     * server reference captured before the stop, since [instance] is unavailable then. The process
+     * terminates asynchronously with the status of the first exit request, after a start in
+     * progress has finished; the stop itself runs once. While the JVM already shuts down, the
+     * request is logged and ignored.
+     */
+    fun exit(status: Int = 0)
 
     companion object {
         /**

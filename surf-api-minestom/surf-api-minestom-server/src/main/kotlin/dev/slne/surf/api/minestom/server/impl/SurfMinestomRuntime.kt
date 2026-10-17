@@ -10,6 +10,8 @@ import dev.slne.surf.api.minestom.player.PlayerLimit
 import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
+import dev.slne.surf.api.minestom.server.exitFlushingLogs
+import dev.slne.surf.api.minestom.server.impl.SurfMinestomRuntime.Companion.isShutdownHookInstalled
 import dev.slne.surf.api.minestom.server.impl.command.MinestomCommandAPIService
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.configuration.ConfigurationPhase
@@ -151,11 +153,7 @@ internal class SurfMinestomRuntime private constructor(
     }
 
     override fun stop() {
-        val thread = Thread.currentThread()
-        check(thread !is TickThread && thread !is TickSchedulerThread) {
-            "The server cannot be stopped from the tick thread ${thread.name}, which stop() would " +
-                    "block until the plugins and Minestom are stopped; call stop() from another thread"
-        }
+        checkNotTickThread()
         checkNotStarting()
 
         if (!stopping.compareAndSet(false, true)) {
@@ -189,6 +187,16 @@ internal class SurfMinestomRuntime private constructor(
         }
     }
 
+    override fun exit(status: Int) {
+        Thread({
+            try {
+                exitFlushingLogs(status)
+            } catch (refused: IllegalStateException) {
+                LOGGER.warn("Not exiting: {}", refused.message)
+            }
+        }, "surf-minestom-exit").apply { isDaemon = false }.start()
+    }
+
     private fun checkNotStarting() {
         check(Thread.currentThread() !== startingThread) {
             "The surf api cannot be shut down while it starts; throw from load or enable to fail the start instead"
@@ -196,10 +204,26 @@ internal class SurfMinestomRuntime private constructor(
     }
 
     /**
+     * Refuses to terminate the JVM from code the lifecycle of this runtime runs on the calling
+     * thread: the start, a teardown (a `disable`) or a stop (a shutdown action). The shutdown hook
+     * of the surf api would wait for that code, which waits for the termination.
+     */
+    private fun checkNotInLifecycle() {
+        val thread = Thread.currentThread()
+        check(!lifecycleLock.isHeldByCurrentThread && (thread !== stoppingThread || stopped.isDone)) {
+            "The JVM cannot be terminated from code the start or the stop of the surf api runs, e.g. a " +
+                    "disable or a shutdown action; call exit() on a server reference captured before"
+        }
+    }
+
+    /**
      * Stops the server when the JVM shuts down, so that the plugins, the features and the shutdown
      * actions also stop on a signal. Installed once the start succeeded; tests do not get one.
      *
-     * The hook stays registered after [shutdown]: [stop] then still runs the shutdown actions.
+     * The hook stays registered after [shutdown]: [stop] then still runs the shutdown actions. It
+     * flushes the logs once [stop] returned or failed and sets [isShutdownHookInstalled], so that
+     * [exitFlushingLogs] leaves the flushing to it. Other application shutdown hooks run
+     * concurrently and may log after the flush.
      */
     private fun installShutdownHook() {
         if (ServerProperties.INSIDE_TEST.get()) return
@@ -212,7 +236,14 @@ internal class SurfMinestomRuntime private constructor(
             )
         }
 
-        Runtime.getRuntime().addShutdownHook(Thread(::stop, "surf-minestom-shutdown"))
+        Runtime.getRuntime().addShutdownHook(Thread({
+            try {
+                stop()
+            } finally {
+                LogFlush.flush()
+            }
+        }, "surf-minestom-shutdown"))
+        isShutdownHookInstalled = true
     }
 
     /**
@@ -308,8 +339,86 @@ internal class SurfMinestomRuntime private constructor(
 
         private val current = AtomicReference<SurfMinestomRuntime?>()
 
+        /**
+         * The runtime whose start succeeded last. Kept after [shutdown], so that a later exit still
+         * runs its shutdown actions.
+         */
+        @Volatile
+        private var lastStarted: SurfMinestomRuntime? = null
+
+        /**
+         * The first requested exit, whose status every later exit request terminates with.
+         */
+        private val exitRequest = AtomicReference<ExitRequest?>()
+
+        private class ExitRequest(val status: Int)
+
+        /**
+         * Whether the JVM shutdown hook of the surf api is installed, which flushes the logs after
+         * it stopped the server. Stays set: the hook outlives [shutdown].
+         */
+        @Volatile
+        private var isShutdownHookInstalled: Boolean = false
+
         fun current(): SurfMinestomServer = checkNotNull(current.get()) {
             "The surf api has not been started yet, call surfMinestomServer { } first"
+        }
+
+        /**
+         * Implements [exitFlushingLogs].
+         */
+        fun exitProcess(status: Int): Nothing {
+            checkNotTickThread()
+            current.get()?.checkNotInLifecycle()
+            lastStarted?.checkNotInLifecycle()
+            check(!isJvmShuttingDown()) { "The JVM is already shutting down" }
+
+            exitRequest.compareAndSet(null, ExitRequest(status))
+
+            // A JVM whose last non-daemon thread ends runs its hooks and exits with status 0, so a
+            // daemon caller, e.g. the console, hands the termination to a non-daemon thread
+            if (!Thread.currentThread().isDaemon) terminate()
+            val terminator = Thread(::terminate, "surf-minestom-exit").apply { isDaemon = false }
+            terminator.start()
+            terminator.join()
+            error("The JVM was not terminated")
+        }
+
+        private fun terminate(): Nothing {
+            // Waits for a start in progress, so that the server it starts is stopped as well
+            current.get()?.lifecycleLock?.withLock {}
+
+            try {
+                lastStarted?.stop()
+            } catch (failure: Throwable) {
+                LOGGER.error("Failed to stop the server before exiting", failure)
+            }
+
+            if (!isShutdownHookInstalled) LogFlush.flush()
+            kotlin.system.exitProcess(checkNotNull(exitRequest.get()).status)
+        }
+
+        private fun checkNotTickThread() {
+            val thread = Thread.currentThread()
+            check(thread !is TickThread && thread !is TickSchedulerThread) {
+                "The server cannot be stopped from the tick thread ${thread.name}, which would stay " +
+                        "blocked until the plugins and Minestom are stopped; use SurfMinestomServer.exit() " +
+                        "or another thread"
+            }
+        }
+
+        /**
+         * Whether the JVM runs its shutdown hooks, during which System.exit blocks forever.
+         */
+        private fun isJvmShuttingDown(): Boolean {
+            val probe = Thread {}
+            return try {
+                Runtime.getRuntime().addShutdownHook(probe)
+                Runtime.getRuntime().removeShutdownHook(probe)
+                false
+            } catch (_: IllegalStateException) {
+                true
+            }
         }
 
         fun start(builder: SurfMinestomServerBuilder): SurfMinestomServer {
@@ -340,6 +449,7 @@ internal class SurfMinestomRuntime private constructor(
             }
 
             runtime.installShutdownHook()
+            lastStarted = runtime
             return runtime
         }
     }

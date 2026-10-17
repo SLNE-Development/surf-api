@@ -20,6 +20,7 @@ dependencies {
     testImplementation(libs.minestom.testing)
     testImplementation(libs.log4j.core)
     testImplementation(libs.log4j.slf4j2.impl)
+    testImplementation(libs.minestom.miniplaceholders) { isTransitive = false }
 
     testFixturesApi(libs.sponge.mixin)
     testFixturesImplementation(libs.bytebuddy.agent)
