@@ -3335,6 +3335,15 @@ public final class dev/slne/surf/api/minestom/player/PlayerLimit {
 	public final fun setMaxPlayers (Ljava/lang/Integer;)V
 }
 
+public class dev/slne/surf/api/minestom/player/SurfMinestomPlayer : net/minestom/server/entity/Player {
+	public fun <init> (Lnet/minestom/server/network/player/PlayerConnection;Lnet/minestom/server/network/player/GameProfile;)V
+	public fun deleteMessage (Lnet/kyori/adventure/chat/SignedMessage$Signature;)V
+	protected fun getAddPlayerToList ()Lnet/minestom/server/network/packet/server/play/PlayerInfoUpdatePacket;
+	public fun pointers ()Lnet/kyori/adventure/pointer/Pointers;
+	public final fun refreshViewableRule ()V
+	public fun setGameMode (Lnet/minestom/server/entity/GameMode;)Z
+}
+
 public final class dev/slne/surf/api/minestom/player/event/AsyncPlayerCountEvent : net/minestom/server/event/trait/AsyncEvent, net/minestom/server/event/trait/PlayerEvent {
 	public fun <init> (Lnet/minestom/server/entity/Player;ILjava/lang/Integer;Ldev/slne/surf/api/minestom/player/event/AsyncPlayerCountEvent$Result;Lnet/kyori/adventure/text/Component;)V
 	public final fun allow ()V
@@ -3514,12 +3523,14 @@ public final class dev/slne/surf/api/minestom/visibility/PlayerVisibility {
 	public static final field INSTANCE Ldev/slne/surf/api/minestom/visibility/PlayerVisibility;
 	public final fun installProvider (Ldev/slne/surf/api/minestom/visibility/PlayerVisibility$Provider;)V
 	public final fun isLimited (Lnet/minestom/server/entity/Player;)Z
+	public final fun isManaged (Lnet/minestom/server/entity/Player;)Z
 	public final fun updateViewerRule (Lnet/minestom/server/entity/Player;)V
 	public final fun updateViewerRule (Lnet/minestom/server/entity/Player;Ljava/util/function/Predicate;)V
 }
 
 public abstract interface class dev/slne/surf/api/minestom/visibility/PlayerVisibility$Provider {
 	public abstract fun isLimited (Lnet/minestom/server/entity/Player;)Z
+	public abstract fun manages (Lnet/minestom/server/entity/Player;)Z
 	public abstract fun refreshViewerRule (Lnet/minestom/server/entity/Player;)Z
 	public abstract fun updateViewerRule (Lnet/minestom/server/entity/Player;Ljava/util/function/Predicate;)Z
 }

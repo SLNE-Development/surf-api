@@ -43,6 +43,11 @@ object PlayerVisibility {
     fun isLimited(player: Player): Boolean = provider?.isLimited(player) == true
 
     /**
+     * Whether the server's visibility limit owns the viewer and viewable rules of [player].
+     */
+    fun isManaged(player: Player): Boolean = provider?.manages(player) == true
+
+    /**
      * Implemented by the server when it limits the visible players.
      */
     @InternalSurfApi
@@ -58,6 +63,11 @@ object PlayerVisibility {
         fun refreshViewerRule(player: Player): Boolean
 
         fun isLimited(player: Player): Boolean
+
+        /**
+         * Whether this provider owns the viewer and viewable rules of [player].
+         */
+        fun manages(player: Player): Boolean
     }
 
     @InternalSurfApi

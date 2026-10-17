@@ -76,6 +76,9 @@ fun main() {
 
         maxPlayers = 20
         listeners(ExampleListeners(world))
+
+        // Runs after the plugins and features are disabled, also when the process is terminated
+        onShutdown { LOGGER.info("Example server stopped") }
     }
 
     ExampleCommands.register()

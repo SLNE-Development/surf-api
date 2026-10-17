@@ -160,6 +160,8 @@ class PlayerVisibilityFeature internal constructor(
 
     override fun isLimited(player: Player): Boolean = handler(player)?.visibilityLimited == true
 
+    override fun manages(player: Player): Boolean = handler(player) != null
+
     companion object {
         const val ID = "player-visibility"
     }

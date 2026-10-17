@@ -13,12 +13,17 @@ public final class dev/slne/surf/api/minestom/server/SurfMinestomFeature$Default
 	public static fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
 }
 
+public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomPlayerFactory {
+	public abstract fun create (Lnet/minestom/server/network/player/PlayerConnection;Lnet/minestom/server/network/player/GameProfile;)Ldev/slne/surf/api/minestom/player/SurfMinestomPlayer;
+}
+
 public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomServer {
 	public static final field Companion Ldev/slne/surf/api/minestom/server/SurfMinestomServer$Companion;
 	public abstract fun feature (Ljava/lang/String;)Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;
 	public abstract fun getEventNode ()Lnet/minestom/server/event/EventNode;
 	public abstract fun getFeatures ()Ljava/util/Collection;
 	public abstract fun shutdown ()V
+	public abstract fun stop ()V
 }
 
 public final class dev/slne/surf/api/minestom/server/SurfMinestomServer$Companion {
@@ -34,7 +39,9 @@ public final class dev/slne/surf/api/minestom/server/SurfMinestomServerBuilder {
 	public final fun install (Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;)V
 	public final fun isInstalled (Ljava/lang/String;)Z
 	public final fun listeners ([Ldev/slne/surf/api/minestom/event/EventRegistrar;)V
+	public final fun onShutdown (Lkotlin/jvm/functions/Function0;)V
 	public final fun permissions (Ldev/slne/surf/api/minestom/permission/PermissionProvider;)V
+	public final fun playerFactory (Ldev/slne/surf/api/minestom/server/SurfMinestomPlayerFactory;)V
 	public final fun setEventNodeName (Ljava/lang/String;)V
 	public final fun setMaxPlayers (Ljava/lang/Integer;)V
 	public final fun setRecommendedServerProperties (Z)V
@@ -254,5 +261,10 @@ public final class dev/slne/surf/api/minestom/server/impl/performance/SkylightSu
 	public fun requiresSend ()Z
 	public fun requiresUpdate ()Z
 	public fun set ([B)V
+}
+
+public final class dev/slne/surf/api/minestom/server/impl/player/SurfPlayerProviders {
+	public static final field INSTANCE Ldev/slne/surf/api/minestom/server/impl/player/SurfPlayerProviders;
+	public static final fun checkProvider (Lnet/minestom/server/network/PlayerProvider;)V
 }
 

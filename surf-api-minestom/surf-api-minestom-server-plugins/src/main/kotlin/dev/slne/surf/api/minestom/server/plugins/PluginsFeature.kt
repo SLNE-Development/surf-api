@@ -32,6 +32,18 @@ class PluginsFeatureBuilder internal constructor() {
      * same Gradle project.
      */
     var loadClassPathPlugins: Boolean = true
+
+    /**
+     * Whether the server fails to start when a plugin cannot be loaded or enabled.
+     *
+     * A plugin cannot be loaded when its description cannot be read, it is rejected, fails to be
+     * created, throws from `onLoad` or requires a plugin that could not be loaded; it cannot be
+     * enabled when it throws from `onEnable` or requires a plugin that could not be enabled. A jar
+     * in [directory] without a `minestom-plugin.json` is no plugin and does not count. When
+     * `false`, the server logs the failure and runs without that plugin and the plugins that depend
+     * on it.
+     */
+    var requireAll: Boolean = false
 }
 
 /**
@@ -42,8 +54,13 @@ class PluginsFeatureBuilder internal constructor() {
  * Each plugin jar loaded from the `plugins` directory gets its own class loader, which sees the
  * server, the plugin itself and the plugins it depends on, but no other plugin.
  *
- * Plugins load in dependency order while the server starts, are enabled on its first tick and are
- * disabled in reverse order on shutdown.
+ * Plugins load in dependency order while the server starts, are enabled right after they are loaded,
+ * before [dev.slne.surf.api.minestom.server.surfMinestomServer] returns and so before the server
+ * accepts players, and are disabled in reverse order on shutdown.
+ *
+ * Each plugin's data directory, `<directory>/<id>`, is created before the plugin is constructed.
+ * A plugin that fails to load or enable is skipped, unless [PluginsFeatureBuilder.requireAll] is
+ * set.
  *
  * The server's own code cannot see into a plugin class loader, so it can only use plugins on the
  * system class path. The bootstrap of the server jar places the plugins declared in
@@ -68,13 +85,18 @@ class PluginsFeature internal constructor(
         val directory = settings.directory.createDirectories()
         val serverClassLoader = PluginsFeature::class.java.classLoader
 
-        val classPath = if (settings.loadClassPathPlugins) PluginDiscovery.fromClassPath(serverClassLoader) else emptyList()
+        val discoveryFailures = linkedMapOf<String, String>()
+        val classPath = if (settings.loadClassPathPlugins) {
+            PluginDiscovery.fromClassPath(serverClassLoader, discoveryFailures)
+        } else {
+            emptyList()
+        }
         val classPathIds = classPath.mapTo(mutableSetOf()) { it.meta.id }
         val serverPluginJars = serverPluginJars()
 
         val candidates = buildList {
             addAll(classPath)
-            for (candidate in PluginDiscovery.fromDirectory(directory)) {
+            for (candidate in PluginDiscovery.fromDirectory(directory, discoveryFailures)) {
                 val jar = candidate.jar?.toAbsolutePath()?.normalize()
                 when {
                     jar !in serverPluginJars -> add(candidate)
@@ -89,11 +111,19 @@ class PluginsFeature internal constructor(
         this.manager = manager
         PluginManager.install(manager)
 
-        manager.load(candidates)
+        val failures = discoveryFailures + manager.load(candidates)
+        if (failures.isNotEmpty() && settings.requireAll) {
+            // Rolls back here, so that no plugin stays loaded however the runtime handles a failing load
+            disable(api)
+            throw requireAllFailure("loaded", failures.keys)
+        }
     }
 
     override fun enable(api: SurfMinestomServer) {
-        manager?.enable()
+        val failures = manager?.enable().orEmpty()
+        if (failures.isNotEmpty() && settings.requireAll) {
+            throw requireAllFailure("enabled", failures.keys)
+        }
     }
 
     override fun disable(api: SurfMinestomServer) {
@@ -101,6 +131,11 @@ class PluginsFeature internal constructor(
         manager = null
         PluginManager.install(null)
     }
+
+    private fun requireAllFailure(action: String, ids: Collection<String>) = IllegalStateException(
+        "Plugins could not be $action: ${ids.joinToString()}. They are required by requireAll, " +
+                "the reasons are logged above"
+    )
 
     private fun serverPluginJars(): Set<Path> =
         System.getProperty(SERVER_PLUGINS_PROPERTY).orEmpty()
