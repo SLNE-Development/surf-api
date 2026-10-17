@@ -13,6 +13,8 @@ dependencies {
     api(libs.minestom.brigadier)
     compileOnlyApi(libs.minestom.npc) { exclude(group = "net.minestom") }
 
+    api(libs.adventure.text.minimessage)
+
     api(libs.guava)
     api(libs.dazzleconf)
     api(libs.spongepowered.math)

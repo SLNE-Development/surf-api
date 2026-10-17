@@ -11,7 +11,9 @@ import org.junit.platform.launcher.LauncherSessionListener
  *
  * Registered as a [LauncherSessionListener], so depending on the test fixtures of
  * `surf-api-minestom-server` is enough. Applies the surf mixin configurations found on the test
- * class path plus those listed, comma separated, in the [CONFIGS_PROPERTY] system property.
+ * class path, the compatibility configurations of the libraries on it (see
+ * [SurfMixinAgent.compatibilityConfigs]) plus those listed, comma separated, in the
+ * [CONFIGS_PROPERTY] system property.
  */
 class SurfMixinTestEnvironment : LauncherSessionListener {
     override fun launcherSessionOpened(session: LauncherSession) {
@@ -38,7 +40,7 @@ class SurfMixinTestEnvironment : LauncherSessionListener {
                 .split(',')
                 .map(String::trim)
                 .filter(String::isNotEmpty)
-            SURF_CONFIGS.filter { loader.getResource(it) != null } + extra
+            SURF_CONFIGS.filter { loader.getResource(it) != null } + SurfMixinAgent.compatibilityConfigs() + extra
         }
 
         /**

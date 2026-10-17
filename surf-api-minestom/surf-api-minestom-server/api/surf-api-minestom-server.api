@@ -1,3 +1,7 @@
+public final class dev/slne/surf/api/minestom/server/ExitKt {
+	public static final fun exitFlushingLogs (I)Ljava/lang/Void;
+}
+
 public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomFeature {
 	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
 	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
@@ -19,6 +23,8 @@ public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomPl
 
 public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomServer {
 	public static final field Companion Ldev/slne/surf/api/minestom/server/SurfMinestomServer$Companion;
+	public abstract fun exit (I)V
+	public static synthetic fun exit$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;IILjava/lang/Object;)V
 	public abstract fun feature (Ljava/lang/String;)Ldev/slne/surf/api/minestom/server/SurfMinestomFeature;
 	public abstract fun getEventNode ()Lnet/minestom/server/event/EventNode;
 	public abstract fun getFeatures ()Ljava/util/Collection;
@@ -28,6 +34,10 @@ public abstract interface class dev/slne/surf/api/minestom/server/SurfMinestomSe
 
 public final class dev/slne/surf/api/minestom/server/SurfMinestomServer$Companion {
 	public final fun getInstance ()Ldev/slne/surf/api/minestom/server/SurfMinestomServer;
+}
+
+public final class dev/slne/surf/api/minestom/server/SurfMinestomServer$DefaultImpls {
+	public static synthetic fun exit$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;IILjava/lang/Object;)V
 }
 
 public final class dev/slne/surf/api/minestom/server/SurfMinestomServerBuilder {
@@ -213,6 +223,7 @@ public final class dev/slne/surf/api/minestom/server/impl/mixin/InstrumentationM
 public final class dev/slne/surf/api/minestom/server/impl/mixin/SurfMixinAgent {
 	public static final field CONFIGS_ATTRIBUTE Ljava/lang/String;
 	public static fun agentmain (Ljava/lang/String;Ljava/lang/instrument/Instrumentation;)V
+	public static fun compatibilityConfigs ()Ljava/util/List;
 	public static fun failedTransformations ()Ljava/util/List;
 	public static fun install (Ljava/lang/instrument/Instrumentation;Ljava/util/Collection;)V
 	public static fun isInstalled ()Z

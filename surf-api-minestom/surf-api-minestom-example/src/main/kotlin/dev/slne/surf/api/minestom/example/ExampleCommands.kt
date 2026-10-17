@@ -11,7 +11,6 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
-import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -64,15 +63,11 @@ internal object ExampleCommands {
             }
         }
 
-        // stop() waits until the plugins are disabled, which a tick thread must not wait for
+        // exit() returns right away, since stopping waits until the plugins are disabled, which a tick
+        // thread must not wait for
         commandAPICommand("stop") {
             withPermission("example.stop")
-            anyExecutor { _, _ ->
-                Thread({
-                    SurfMinestomServer.instance.stop()
-                    exitProcess(0)
-                }, "example-stop").start()
-            }
+            anyExecutor { _, _ -> SurfMinestomServer.instance.exit() }
         }
 
         // The message keeps the signature the client produced for the argument
