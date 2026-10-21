@@ -1,0 +1,103 @@
+package dev.slne.surf.database.migration
+
+/**
+ * Marks the migration DSL so that nested builders cannot accidentally call outer receivers.
+ */
+@DslMarker
+annotation class MigrationDsl
+
+/**
+ * Describes the migrations of one plugin.
+ *
+ * Every entry is optional, but at least one of [sql], [classes] or [classPackage] must be given. Each may be called
+ * more than once.
+ *
+ * All migrations must be idempotent (for example `CREATE TABLE IF NOT EXISTS`): the history of a plugin starts at its
+ * [baselineVersion], and the target database may already contain objects created before migrations were introduced.
+ */
+@MigrationDsl
+class MigrationSpec internal constructor(private val defaultClassLoader: ClassLoader) {
+    private val sqlLocations = mutableListOf<String>()
+    private val migrations = mutableListOf<SurfMigration>()
+    private val packages = mutableListOf<String>()
+    private var baseline = "0"
+    private var loader: ClassLoader? = null
+
+    /**
+     * Adds classpath locations that contain `V<version>__<description>.sql` files.
+     * A missing `classpath:` prefix is added.
+     */
+    fun sql(vararg locations: String) {
+        locations.forEach {
+            require(it.isNotBlank()) { "SQL location must not be blank" }
+            sqlLocations += if (it.startsWith(CLASSPATH_PREFIX)) it else CLASSPATH_PREFIX + it
+        }
+    }
+
+    /**
+     * Adds code migrations. The same instance added twice is only run once.
+     */
+    fun classes(vararg migrations: SurfMigration) {
+        this.migrations += migrations
+    }
+
+    /**
+     * Adds a package that is scanned for [SurfMigration] subclasses with a no-argument constructor.
+     */
+    fun classPackage(packageName: String) {
+        require(packageName.isNotBlank()) { "Package name must not be blank" }
+        packages += packageName
+    }
+
+    /**
+     * Sets the version at which the plugin's history is baselined. Defaults to `"0"`, so that a brand-new plugin on a
+     * shared, non-empty database still runs its `V1`. Migrations up to and including the baseline are treated as
+     * already applied on a database without history, so every migration above it must be idempotent.
+     */
+    fun baselineVersion(version: String) {
+        require(version.isNotBlank()) { "Baseline version must not be blank" }
+        baseline = version
+    }
+
+    /**
+     * Sets the class loader used to find SQL files and load scanned classes. Defaults to the class loader of the
+     * plugin that called migrate.
+     */
+    fun classLoader(loader: ClassLoader) {
+        this.loader = loader
+    }
+
+    internal fun snapshot(name: String): MigrationPlan {
+        val normalized = name.lowercase()
+        require(NAME_REGEX.matches(normalized)) {
+            "Migration name '$name' must match [a-z0-9_]{1,40}"
+        }
+        require(sqlLocations.isNotEmpty() || migrations.isNotEmpty() || packages.isNotEmpty()) {
+            "Migration '$name' needs at least one of sql(), classes() or classPackage()"
+        }
+        return MigrationPlan(
+            historyTable = "flyway_schema_history_$normalized",
+            sqlLocations = sqlLocations.distinct(),
+            migrations = migrations.distinct(),
+            packages = packages.distinct(),
+            baselineVersion = baseline,
+            classLoader = loader ?: defaultClassLoader
+        )
+    }
+
+    private companion object {
+        const val CLASSPATH_PREFIX = "classpath:"
+        val NAME_REGEX = Regex("[a-z0-9_]{1,40}")
+    }
+}
+
+internal data class MigrationPlan(
+    val historyTable: String,
+    val sqlLocations: List<String>,
+    val migrations: List<SurfMigration>,
+    val packages: List<String>,
+    val baselineVersion: String,
+    val classLoader: ClassLoader
+)
+
+internal fun MigrationSpec.build(name: String): MigrationPlan = snapshot(name)
