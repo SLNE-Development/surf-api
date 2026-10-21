@@ -27,6 +27,10 @@ import kotlin.test.assertTrue
  */
 class FlywayMigrationRunnerTest {
 
+    private class Versioned(version: String) : JdbcMigration(version, "versioned $version") {
+        override fun migrate(connection: Connection) = Unit
+    }
+
     private val mariadb: DataSource = JdbcDataSources.create(
         ConnectionDetails(databaseType = DatabaseType.MARIADB, host = "localhost", port = 1)
     )
@@ -119,6 +123,13 @@ class FlywayMigrationRunnerTest {
         val configuration = configure { classes(V3_Class(), V3_Class()) }
 
         assertEquals(1, configuration.javaMigrations.size)
+    }
+
+    @Test
+    fun keepsEveryVersionOfTheSameClass() {
+        val configuration = configure { classes(Versioned("2"), Versioned("3"), Versioned("2")) }
+
+        assertEquals(listOf("2", "3"), configuration.javaMigrations.map { it.version.version })
     }
 
     @Test

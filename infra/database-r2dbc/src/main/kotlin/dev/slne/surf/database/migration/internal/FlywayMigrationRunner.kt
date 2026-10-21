@@ -30,7 +30,8 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
 
         val scanned = plan.packages.flatMap { MigrationClassScanner.scan(plan.classLoader, it) }
         val adapters = (plan.migrations + scanned)
-            .distinctBy { it.javaClass }
+            // The same migration may be both listed and scanned; different versions of one class are separate migrations.
+            .distinctBy { it.javaClass to it.version }
             .map { FlywayJavaMigrationAdapter(api, it) }
 
         val configuration = Flyway.configure(MigrationClassLoader(plan.classLoader))
