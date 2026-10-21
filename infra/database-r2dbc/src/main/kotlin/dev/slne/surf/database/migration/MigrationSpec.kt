@@ -51,8 +51,9 @@ class MigrationSpec internal constructor(private val defaultClassLoader: ClassLo
 
     /**
      * Sets the version at which the plugin's history is baselined. Defaults to `"0"`, so that a brand-new plugin on a
-     * shared, non-empty database still runs its `V1`. Migrations up to and including the baseline are treated as
-     * already applied on a database without history, so every migration above it must be idempotent.
+     * shared, non-empty database still runs its `V1`. On a non-empty database without history, migrations up to and
+     * including the baseline are treated as already applied, so every migration above it must be idempotent. On an
+     * empty database no baseline is written and every migration runs, including those at or below the baseline.
      *
      * @param version Dot-separated numbers, for example `"0"`, `"1"` or `"2.1"`.
      * @throws IllegalArgumentException if [version] does not match `\d+(\.\d+)*`
@@ -72,7 +73,7 @@ class MigrationSpec internal constructor(private val defaultClassLoader: ClassLo
         this.loader = loader
     }
 
-    internal fun snapshot(name: String): MigrationPlan {
+    internal fun build(name: String): MigrationPlan {
         val normalized = name.lowercase()
         require(NAME_REGEX.matches(normalized)) {
             "Migration name '$name' must match [a-z0-9_]{1,40}"
@@ -105,5 +106,3 @@ internal data class MigrationPlan(
     val baselineVersion: String,
     val classLoader: ClassLoader
 )
-
-internal fun MigrationSpec.build(name: String): MigrationPlan = snapshot(name)
