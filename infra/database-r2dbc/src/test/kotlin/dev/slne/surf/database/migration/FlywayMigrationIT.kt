@@ -9,6 +9,7 @@ import dev.slne.surf.database.testing.DatabaseContainers
 import dev.slne.surf.database.testing.toDatabaseApi
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
+import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -17,6 +18,7 @@ import org.mariadb.r2dbc.MariadbConnectionConfiguration
 import org.mariadb.r2dbc.MariadbConnectionFactory
 import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.sql.Connection
 import java.sql.SQLException
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -69,8 +71,11 @@ class FlywayMigrationIT {
         false
     }
 
-    /** Rows of a history table as `version:type:success`, ordered by rank; empty if the table does not exist. */
-    private fun DatabaseApi.history(table: String): List<String> = try {
+    /**
+     * Rows of a history table as `version:type:success`, ordered by rank. Throws if the table does not exist, so an
+     * assertion on the history can never pass just because the table is missing.
+     */
+    private fun DatabaseApi.history(table: String): List<String> =
         assertNotNull(migrationDataSource).connection.use { c ->
             c.createStatement().use { s ->
                 s.executeQuery("SELECT version, type, success FROM $table ORDER BY installed_rank").use { rs ->
@@ -80,9 +85,6 @@ class FlywayMigrationIT {
                 }
             }
         }
-    } catch (_: SQLException) {
-        emptyList()
-    }
 
     private fun DatabaseApi.script(table: String, version: String): String? =
         assertNotNull(migrationDataSource).connection.use { c ->
@@ -121,6 +123,7 @@ class FlywayMigrationIT {
 
         assertEquals(0, second.migrationsExecuted)
         assertEquals("3", second.initialVersion)
+        assertNull(second.targetVersion)
         assertEquals(2, api.count("a_items"))
     }
 
@@ -168,22 +171,88 @@ class FlywayMigrationIT {
         val result = api.migrate("plugin_a") { sql("migrations/plugin_a") }
 
         assertEquals(1, result.migrationsExecuted)
+        assertEquals("0", result.initialVersion)
+        assertEquals("1", result.targetVersion)
         assertEquals(
             listOf("0:BASELINE:true", "1:SQL:true"),
             api.history("flyway_schema_history_plugin_a")
         )
     }
 
+    /**
+     * Postgres runs the failing SQL migration in a transaction and rolls it back, so no row is left. MariaDB DDL is
+     * not transactional, so Flyway records every failed migration there with `success = false`.
+     */
     @ParameterizedTest
     @MethodSource("databases")
-    fun failingSqlMigrationThrowsAndIsNotRecorded(db: String) = withApi(db) { api ->
+    fun failingSqlMigrationIsRecordedOnlyWhereDdlIsNonTransactional(db: String) = withApi(db) { api ->
         val error = assertFailsWith<IllegalStateException> {
             api.migrate("failing") { sql("migrations/failing") }
         }
 
-        assertContains(assertNotNull(error.message), "1")
-        assertContains(assertNotNull(error.message), "failing")
-        assertFalse(api.history("flyway_schema_history_failing").any { it.startsWith("1:") && it.endsWith(":true") })
+        val message = assertNotNull(error.message)
+        assertContains(message, "Migration 'failing' failed at version 1 (broken)")
+        assertContains(message, "V1__broken.sql")
+        val expected = if (db == "mariadb") listOf("1:SQL:false") else emptyList()
+        assertEquals(expected, api.history("flyway_schema_history_failing"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun failingJdbcMigrationIsRecordedOnlyWhereDdlIsNonTransactional(db: String) = withApi(db) { api ->
+        val failing = object : JdbcMigration("1", "broken jdbc") {
+            override fun migrate(connection: Connection) {
+                connection.createStatement().use { it.execute("THIS IS NOT VALID SQL") }
+            }
+        }
+
+        val error = assertFailsWith<IllegalStateException> { api.migrate("failing_jdbc") { classes(failing) } }
+
+        assertContains(assertNotNull(error.message), "Migration 'failing_jdbc' failed at version 1 (broken jdbc)")
+        val expected = if (db == "mariadb") listOf("1:JDBC:false") else emptyList()
+        assertEquals(expected, api.history("flyway_schema_history_failing_jdbc"))
+    }
+
+    /**
+     * An [ExposedMigration] is non-transactional for Flyway, so Flyway writes a failed row on both databases. On
+     * PostgreSQL that insert runs inside the transaction of Flyway's transactional advisory lock and is rolled back
+     * with it, so only MariaDB keeps the row.
+     */
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun failingExposedMigrationIsRecordedOnlyOnMariaDb(db: String) = withApi(db) { api ->
+        val failing = object : ExposedMigration("1", "broken exposed") {
+            override suspend fun R2dbcTransaction.migrate() {
+                exec("THIS IS NOT VALID SQL")
+            }
+        }
+
+        val error = assertFailsWith<IllegalStateException> { api.migrate("failing_exposed") { classes(failing) } }
+
+        assertContains(assertNotNull(error.message), "Migration 'failing_exposed' failed at version 1 (broken exposed)")
+        val expected = if (db == "mariadb") listOf("1:JDBC:false") else emptyList()
+        assertEquals(expected, api.history("flyway_schema_history_failing_exposed"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun missingSqlLocationFails(db: String) = withApi(db) { api ->
+        val error = assertFailsWith<IllegalStateException> {
+            api.migrate("missing") { sql("migrations/does_not_exist") }
+        }
+
+        assertContains(assertNotNull(error.message), "migrations/does_not_exist")
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun misnamedSqlFileFails(db: String) = withApi(db) { api ->
+        val error = assertFailsWith<IllegalStateException> {
+            api.migrate("misnamed") { sql("migrations/misnamed") }
+        }
+
+        assertContains(assertNotNull(error.message), "V1_init.sql")
+        assertFalse(api.tableExists("misnamed_items"))
     }
 
     @OptIn(TestOnlyDatabaseApi::class)
