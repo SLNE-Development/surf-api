@@ -1,5 +1,8 @@
 package dev.slne.surf.database.query
 
+import dev.slne.surf.database.DatabaseApi
+import dev.slne.surf.database.testing.DatabaseContainers
+import dev.slne.surf.database.testing.toDatabaseApi
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.runBlocking
@@ -11,20 +14,16 @@ import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import org.jetbrains.exposed.v1.r2dbc.insertAndGetId
 import org.jetbrains.exposed.v1.r2dbc.selectAll
-import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.r2dbc.update
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.utility.DockerImageName
+import org.testcontainers.containers.JdbcDatabaseContainer
+import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-
-internal class Container(image: String) : GenericContainer<Container>(DockerImageName.parse(image))
 
 private class ChainNodes(name: String) : LongIdTable(name) {
     val parent = reference("parent_id", this).nullable()
@@ -38,18 +37,17 @@ private object NonNullParentNodes : LongIdTable("non_null_parent_nodes") {
     val parent = reference("parent_id", this)
 }
 
+@Testcontainers(disabledWithoutDocker = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class SelfReferencingChainTest {
 
-    internal abstract fun startContainer(): Container
-    internal abstract fun url(container: Container): String
-    protected abstract val user: String
+    protected abstract fun container(): JdbcDatabaseContainer<*>
     protected open val schemaName: String? = null
 
     // Built after connecting: Exposed quotes identifiers with the dialect that is current at creation.
     private lateinit var nodes: ChainNodes
 
-    private lateinit var container: Container
+    private lateinit var api: DatabaseApi
     private lateinit var database: R2dbcDatabase
 
     // Ids of the rows inserted in setUp.
@@ -62,8 +60,10 @@ abstract class SelfReferencingChainTest {
 
     @BeforeAll
     fun setUp(): Unit = runBlocking {
-        container = startContainer()
-        database = R2dbcDatabase.connect(url = url(container), user = user, password = PASSWORD)
+        // A fresh database (MariaDB) / schema (PostgreSQL) per class: each gets its own name, which Exposed's
+        // JVM-wide identifier-quoting cache is keyed on.
+        api = container().toDatabaseApi(fresh = true)
+        database = api.database
 
         suspendTransaction(database) {
             val schemaName = schemaName
@@ -85,8 +85,8 @@ abstract class SelfReferencingChainTest {
 
     @AfterAll
     fun tearDown() {
-        if (::database.isInitialized) TransactionManager.closeAndUnregister(database)
-        if (::container.isInitialized) container.stop()
+        // The shared containers outlive this class; only the connection pool is released.
+        if (::api.isInitialized) api.shutdown()
     }
 
     private suspend fun insert(parent: Long?): Long = nodes.insertAndGetId { row ->
@@ -147,51 +147,15 @@ abstract class SelfReferencingChainTest {
     fun `accepts a non-nullable parent column`() {
         NonNullParentNodes.selfReferencingChain(NonNullParentNodes.parent, leaf, maxDepth = 5)
     }
-
-    // Each subclass names its own database: Exposed caches identifier quoting per database name for
-    // the whole JVM, so a shared name gives the second dialect the first one's quote character.
-    protected companion object {
-        const val PASSWORD = "test"
-    }
 }
 
 class MariaDbSelfReferencingChainTest : SelfReferencingChainTest() {
-    override val user = "root"
-
-    override fun startContainer(): Container = Container("mariadb:11").apply {
-        withEnv("MARIADB_ROOT_PASSWORD", PASSWORD)
-        withEnv("MARIADB_DATABASE", DATABASE)
-        withExposedPorts(3306)
-        waitingFor(Wait.forLogMessage(".*ready for connections.*", 2))
-        start()
-    }
-
-    override fun url(container: Container): String =
-        "r2dbc:mariadb://${container.host}:${container.getMappedPort(3306)}/$DATABASE"
-
-    private companion object {
-        const val DATABASE = "chain_test_mariadb"
-    }
+    override fun container(): JdbcDatabaseContainer<*> = DatabaseContainers.mariadb()
 }
 
 class PostgresSelfReferencingChainTest : SelfReferencingChainTest() {
-    override val user = "postgres"
-
     // A schema name that needs quoting, like the "surf-*" schemas of the game backend.
     override val schemaName = "surf-chain-test"
 
-    override fun startContainer(): Container = Container("postgres:17").apply {
-        withEnv("POSTGRES_PASSWORD", PASSWORD)
-        withEnv("POSTGRES_DB", DATABASE)
-        withExposedPorts(5432)
-        waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 2))
-        start()
-    }
-
-    override fun url(container: Container): String =
-        "r2dbc:postgresql://${container.host}:${container.getMappedPort(5432)}/$DATABASE"
-
-    private companion object {
-        const val DATABASE = "chain_test_postgres"
-    }
+    override fun container(): JdbcDatabaseContainer<*> = DatabaseContainers.postgres()
 }
