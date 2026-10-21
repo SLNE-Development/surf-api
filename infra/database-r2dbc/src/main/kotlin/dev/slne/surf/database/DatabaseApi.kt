@@ -37,7 +37,8 @@ import javax.sql.DataSource
 class DatabaseApi internal constructor(
     val database: R2dbcDatabase,
     healthCheckName: String,
-    internal val migrationDataSource: DataSource? = null
+    internal val migrationDataSource: DataSource? = null,
+    private val releaseResources: () -> Unit = {}
 ) {
     init {
         DatabaseHealthRegistry.register(
@@ -67,6 +68,14 @@ class DatabaseApi internal constructor(
         ): DatabaseApi {
             val config = DatabaseConfig.create(pluginPath, fileName)
             val databaseType = config.credentials.databaseType
+            // Created before any pool or event loop, so an invalid configuration cannot leak them.
+            val migrationDataSource = JdbcDataSources.create(config.credentials)
+            val loopResources = LoopResources.create(
+                "${databaseType.name.lowercase()}-r2dbc-event-loop-$poolName",
+                1,
+                4,
+                true
+            )
 
             val connectionFactory: ConnectionFactory = when (databaseType) {
                 DatabaseType.MARIADB -> {
@@ -76,14 +85,7 @@ class DatabaseApi internal constructor(
                         .username(config.credentials.username)
                         .password(config.credentials.password)
                         .database(config.credentials.database)
-                        .loopResources(
-                            LoopResources.create(
-                                "mariadb-r2dbc-event-loop-$poolName",
-                                1,
-                                4,
-                                true
-                            )
-                        )
+                        .loopResources(loopResources)
                         .build()
 
                     MariadbConnectionFactory.from(configuration)
@@ -97,14 +99,7 @@ class DatabaseApi internal constructor(
                         .password(config.credentials.password)
                         .database(config.credentials.database)
                         .schema(config.credentials.schema)
-                        .loopResources(
-                            LoopResources.create(
-                                "postgresql-r2dbc-event-loop-$poolName",
-                                1,
-                                4,
-                                true
-                            )
-                        )
+                        .loopResources(loopResources)
                         .build()
 
                     PostgresqlConnectionFactory(configuration)
@@ -143,7 +138,14 @@ class DatabaseApi internal constructor(
                 logger = logger,
                 logLevel = logLevel,
                 healthCheckName = poolName,
-                migrationDataSource = JdbcDataSources.create(config.credentials),
+                migrationDataSource = migrationDataSource,
+                releaseResources = {
+                    try {
+                        pool.dispose()
+                    } finally {
+                        loopResources.dispose()
+                    }
+                },
                 configCustomizer = configCustomizer
             )
         }
@@ -179,9 +181,31 @@ class DatabaseApi internal constructor(
                 logLevel = logLevel,
                 healthCheckName = nextManualHealthCheckName(),
                 migrationDataSource = migrationDataSource,
+                releaseResources = {},
                 configCustomizer = configCustomizer
             )
         }
+
+        /**
+         * Binary-compatible variant of [create] from before migrations were added; kept so that callers compiled
+         * against earlier versions keep working.
+         */
+        @TestOnlyDatabaseApi
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        fun create(
+            connectionFactory: ConnectionFactory,
+            dialect: DatabaseDialect,
+            logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
+            logLevel: Level = Level.DEBUG,
+            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
+        ): DatabaseApi = create(
+            connectionFactory = connectionFactory,
+            dialect = dialect,
+            logger = logger,
+            logLevel = logLevel,
+            migrationDataSource = null,
+            configCustomizer = configCustomizer
+        )
 
         private fun createDatabase(
             connectionFactory: ConnectionFactory,
@@ -190,6 +214,7 @@ class DatabaseApi internal constructor(
             logLevel: Level,
             healthCheckName: String,
             migrationDataSource: DataSource?,
+            releaseResources: () -> Unit,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit
         ): DatabaseApi {
             val database = R2dbcDatabase.connect(
@@ -206,7 +231,8 @@ class DatabaseApi internal constructor(
             return DatabaseApi(
                 database = database,
                 healthCheckName = healthCheckName,
-                migrationDataSource = migrationDataSource
+                migrationDataSource = migrationDataSource,
+                releaseResources = releaseResources
             )
         }
 
@@ -222,7 +248,9 @@ class DatabaseApi internal constructor(
     }
 
     /**
-     * Closes and unregisters this database instance from Exposed's [TransactionManager].
+     * Closes and unregisters this database instance from Exposed's [TransactionManager]. For an instance created
+     * from a config file, also disposes the connection pool and its event loop; a [ConnectionFactory] passed in by
+     * the caller is left to the caller.
      *
      * Call this during plugin/application shutdown to ensure connections are released.
      */
@@ -230,7 +258,11 @@ class DatabaseApi internal constructor(
         try {
             TransactionManager.closeAndUnregister(database)
         } finally {
-            DatabaseHealthRegistry.unregister(this)
+            try {
+                DatabaseHealthRegistry.unregister(this)
+            } finally {
+                releaseResources()
+            }
         }
     }
 }
