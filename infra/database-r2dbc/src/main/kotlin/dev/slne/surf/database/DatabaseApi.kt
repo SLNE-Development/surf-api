@@ -5,6 +5,7 @@ import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.health.DatabaseHealthRegistry
 import dev.slne.surf.database.logger.ComponentSqlLogger
+import dev.slne.surf.database.migration.internal.JdbcDataSources
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
@@ -25,6 +26,7 @@ import reactor.netty.resources.LoopResources
 import java.nio.file.Path
 import java.time.Duration.ofMillis
 import java.util.concurrent.atomic.AtomicLong
+import javax.sql.DataSource
 
 /**
  * Small wrapper around an [R2dbcDatabase] instance.
@@ -34,7 +36,8 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class DatabaseApi internal constructor(
     val database: R2dbcDatabase,
-    healthCheckName: String
+    healthCheckName: String,
+    internal val migrationDataSource: DataSource? = null
 ) {
     init {
         DatabaseHealthRegistry.register(
@@ -140,6 +143,7 @@ class DatabaseApi internal constructor(
                 logger = logger,
                 logLevel = logLevel,
                 healthCheckName = poolName,
+                migrationDataSource = JdbcDataSources.create(config.credentials),
                 configCustomizer = configCustomizer
             )
         }
@@ -156,6 +160,8 @@ class DatabaseApi internal constructor(
          * @param logger Optional logger for Exposed's SQL logging (defaults to a logger named "DatabaseApi").
          * @param logLevel Optional log level for Exposed's SQL logging (
          * @param configCustomizer Optional customization hook for Exposed's [R2dbcDatabaseConfig].
+         * @param migrationDataSource Optional JDBC data source used for schema migrations. Without one, migrations
+         * cannot be run on the resulting [DatabaseApi].
          */
         @TestOnlyDatabaseApi
         fun create(
@@ -163,7 +169,8 @@ class DatabaseApi internal constructor(
             dialect: DatabaseDialect,
             logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
             logLevel: Level = Level.DEBUG,
-            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
+            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {},
+            migrationDataSource: DataSource? = null
         ): DatabaseApi {
             return createDatabase(
                 connectionFactory = connectionFactory,
@@ -171,6 +178,7 @@ class DatabaseApi internal constructor(
                 logger = logger,
                 logLevel = logLevel,
                 healthCheckName = nextManualHealthCheckName(),
+                migrationDataSource = migrationDataSource,
                 configCustomizer = configCustomizer
             )
         }
@@ -181,6 +189,7 @@ class DatabaseApi internal constructor(
             logger: ComponentLogger,
             logLevel: Level,
             healthCheckName: String,
+            migrationDataSource: DataSource?,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit
         ): DatabaseApi {
             val database = R2dbcDatabase.connect(
@@ -196,7 +205,8 @@ class DatabaseApi internal constructor(
 
             return DatabaseApi(
                 database = database,
-                healthCheckName = healthCheckName
+                healthCheckName = healthCheckName,
+                migrationDataSource = migrationDataSource
             )
         }
 

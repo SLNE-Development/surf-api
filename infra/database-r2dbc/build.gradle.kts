@@ -19,8 +19,16 @@ dependencies {
     implementation(libs.bundles.exposed)
     implementation(libs.r2dbc.pool)
     implementation(libs.bundles.databaseDriver)
+    implementation(libs.bundles.migration)
 
     compileOnly(libs.surf.microservice)
+
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.mariadb)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 configurations.runtimeClasspath {
@@ -52,6 +60,8 @@ val shadedRoots = listOf(
     "kotlinx.datetime",
     "reactor.netty",
     "reactor.pool",
+    "org.flywaydb",
+    "org.postgresql",
 )
 
 val relocationRewrites = shadedRoots.flatMap { root ->
@@ -195,6 +205,7 @@ tasks {
     shadowJar {
         relocationPrefix = "dev.slne.surf.database.libs"
         enableAutoRelocation = true
+        mergeServiceFiles()
     }
 
     test {
