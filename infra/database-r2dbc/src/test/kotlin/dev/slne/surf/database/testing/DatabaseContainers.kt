@@ -1,7 +1,6 @@
 package dev.slne.surf.database.testing
 
 import dev.slne.surf.database.DatabaseApi
-import dev.slne.surf.database.TestOnlyDatabaseApi
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.migration.internal.JdbcDataSources
@@ -10,10 +9,12 @@ import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import io.r2dbc.spi.ConnectionFactory
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.mariadb.r2dbc.MariadbConnectionConfiguration
 import org.mariadb.r2dbc.MariadbConnectionFactory
+import org.slf4j.event.Level
 import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.mariadb.MariaDBContainer
 import org.testcontainers.postgresql.PostgreSQLContainer
@@ -39,7 +40,6 @@ private val isolationCounter = AtomicInteger()
  * With [fresh] set, a new empty database (MariaDB) or schema (PostgreSQL) is created first, so a test
  * does not see tables of other tests.
  */
-@OptIn(TestOnlyDatabaseApi::class)
 fun JdbcDatabaseContainer<*>.toDatabaseApi(fresh: Boolean = false): DatabaseApi {
     val isMariaDb = this is MariaDBContainer
     val unique = "t${isolationCounter.incrementAndGet()}_${System.nanoTime()}"
@@ -95,9 +95,15 @@ fun JdbcDatabaseContainer<*>.toDatabaseApi(fresh: Boolean = false): DatabaseApi 
         ConnectionPoolConfiguration.builder().connectionFactory(connectionFactory).maxSize(5).build()
     )
 
-    return DatabaseApi.create(
+    // The API owns this pool, so shutdown() releases its connections to the shared container.
+    return DatabaseApi.createDatabase(
         connectionFactory = pool,
         dialect = if (isMariaDb) MariaDBDialect() else PostgreSQLDialect(),
-        migrationDataSource = JdbcDataSources.create(details)
+        logger = ComponentLogger.logger("DatabaseApi"),
+        logLevel = Level.DEBUG,
+        healthCheckName = "test-$unique",
+        migrationDataSource = JdbcDataSources.create(details),
+        releaseResources = { pool.dispose() },
+        configCustomizer = {}
     )
 }

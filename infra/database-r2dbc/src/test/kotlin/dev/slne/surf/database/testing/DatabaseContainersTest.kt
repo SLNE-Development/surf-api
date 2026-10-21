@@ -4,9 +4,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.junit.jupiter.api.Test
+import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
+@Testcontainers(disabledWithoutDocker = true)
 class DatabaseContainersTest {
     @Test
     fun mariaDbFreshApiWorksOverR2dbcAndJdbc() = runTest {
