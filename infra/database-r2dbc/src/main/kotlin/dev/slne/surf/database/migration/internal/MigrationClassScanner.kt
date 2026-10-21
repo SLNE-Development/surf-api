@@ -23,7 +23,8 @@ internal object MigrationClassScanner {
      * it (as [ClassLoader.getResources] returns nothing otherwise), so a jar without directory entries finds nothing.
      *
      * @return the migrations sorted by class name; empty if the package does not exist
-     * @throws IllegalStateException if a concrete migration has neither an `INSTANCE` field nor a public no-arg
+     * @throws IllegalStateException if a class in the package cannot be loaded (for example a
+     * [NoClassDefFoundError]), or a concrete migration has neither an `INSTANCE` field nor a public no-arg
      * constructor, or cannot be instantiated
      */
     fun scan(classLoader: ClassLoader, packageName: String): List<SurfMigration> {
@@ -37,7 +38,15 @@ internal object MigrationClassScanner {
             }
         }
 
-        return classNames.mapNotNull { instantiate(Class.forName(it, false, classLoader)) }
+        return classNames.mapNotNull { instantiate(load(it, classLoader)) }
+    }
+
+    private fun load(className: String, classLoader: ClassLoader): Class<*> = try {
+        Class.forName(className, false, classLoader)
+    } catch (e: ClassNotFoundException) {
+        throw IllegalStateException("Could not load migration class $className", e)
+    } catch (e: LinkageError) {
+        throw IllegalStateException("Could not load migration class $className", e)
     }
 
     private fun scanDirectory(dir: File, packageName: String, out: MutableSet<String>) {

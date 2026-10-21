@@ -82,4 +82,20 @@ class MigrationClassScannerTest {
     fun unknownPackageReturnsEmpty() {
         assertEquals(emptyList(), MigrationClassScanner.scan(javaClass.classLoader, "dev.slne.surf.database.migration.fixtures.doesnotexist"))
     }
+
+    @Test
+    fun wrapsLinkageErrorsWhileLoadingAClass() {
+        val broken = "$scanPackage.V3_Class"
+        // Finds the fixture package like the test loader, but fails to load one class as if a dependency were missing.
+        val loader = object : ClassLoader(javaClass.classLoader) {
+            override fun loadClass(name: String, resolve: Boolean): Class<*> {
+                if (name == broken) throw NoClassDefFoundError("missing/Dependency")
+                return super.loadClass(name, resolve)
+            }
+        }
+
+        val e = assertThrows<IllegalStateException> { MigrationClassScanner.scan(loader, scanPackage) }
+        assertTrue(e.message!!.contains(broken), e.message)
+        assertTrue(e.cause is NoClassDefFoundError)
+    }
 }
