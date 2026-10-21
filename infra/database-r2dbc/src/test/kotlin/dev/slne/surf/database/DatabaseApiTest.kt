@@ -1,6 +1,7 @@
 package dev.slne.surf.database
 
 import dev.slne.surf.database.testing.offlineConnectionFactory
+import dev.slne.surf.database.testing.use
 import dev.slne.surf.database.testing.withOfflineDatabaseApi
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.junit.jupiter.api.Test
@@ -34,12 +35,6 @@ class DatabaseApiTest {
             """.trimIndent()
         )
         return DatabaseApi.create(pluginPath = dir, fileName = "database.yml", poolName = "api-test")
-    }
-
-    private inline fun <T> DatabaseApi.use(block: (DatabaseApi) -> T): T = try {
-        block(this)
-    } finally {
-        shutdown()
     }
 
     @Test

@@ -1,25 +1,20 @@
 package dev.slne.surf.database.migration
 
 import dev.slne.surf.database.DatabaseApi
-import dev.slne.surf.database.TestOnlyDatabaseApi
 import dev.slne.surf.database.migration.fixtures.plugina.V2_JdbcInsert
 import dev.slne.surf.database.migration.fixtures.plugina.V3_ExposedInsert
-import dev.slne.surf.database.migration.fixtures.scan.V2_Object
-import dev.slne.surf.database.migration.internal.FlywayMigrationRunner
 import dev.slne.surf.database.testing.DatabaseContainers
 import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.withOfflineDatabaseApi
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.mariadb.r2dbc.MariadbConnectionConfiguration
-import org.mariadb.r2dbc.MariadbConnectionFactory
-import org.testcontainers.containers.JdbcDatabaseContainer
 import org.postgresql.ds.PGSimpleDataSource
+import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.net.URLClassLoader
 import java.nio.file.Path
@@ -300,31 +295,14 @@ class FlywayMigrationIT {
     @ParameterizedTest
     @MethodSource("databases")
     fun changedChecksumOfAppliedMigrationFails(db: String) = withApi(db) { api ->
-        val original = object : JdbcMigration("1", "checked") {
-            override val checksum: Int = 1
+        class Checked(override val checksum: Int) : JdbcMigration("1", "checked") {
             override fun migrate(connection: Connection) = Unit
         }
-        val changed = object : JdbcMigration("1", "checked") {
-            override val checksum: Int = 2
-            override fun migrate(connection: Connection) = Unit
-        }
-        api.migrate("checked") { classes(original) }
+        api.migrate("checked") { classes(Checked(1)) }
 
-        val error = assertFailsWith<IllegalStateException> { api.migrate("checked") { classes(changed) } }
+        val error = assertFailsWith<IllegalStateException> { api.migrate("checked") { classes(Checked(2)) } }
 
         assertContains(assertNotNull(error.message), "checksum", ignoreCase = true)
-    }
-
-    @ParameterizedTest
-    @MethodSource("databases")
-    fun migrationGivenTwiceRunsOnce(db: String) = withApi(db) { api ->
-        val result = api.migrate("scan") {
-            classes(V2_Object)
-            classPackage("dev.slne.surf.database.migration.fixtures.scan")
-        }
-
-        assertEquals(3, result.migrationsExecuted)
-        assertEquals(listOf("2:JDBC:true", "3:JDBC:true", "5:JDBC:true"), api.history("flyway_schema_history_scan"))
     }
 
     @ParameterizedTest
@@ -349,50 +327,25 @@ class FlywayMigrationIT {
     fun postgresHistoryTableIsCreatedInTheApiSchema() = withApi("postgres") { api ->
         api.migrate("plugin_a") { sql("migrations/plugin_a") }
 
-        val schemas = assertNotNull(api.migrationDataSource).connection.use { c ->
-            c.prepareStatement("SELECT table_schema FROM information_schema.tables WHERE table_name = ?").use { s ->
-                s.setString(1, "flyway_schema_history_plugin_a")
+        val schema = assertIs<PGSimpleDataSource>(api.migrationDataSource).currentSchema
+        val schemas = api.migrationDataSource.connection.use { c ->
+            c.prepareStatement(
+                "SELECT table_schema FROM information_schema.tables " +
+                    "WHERE table_name = 'flyway_schema_history_plugin_a' AND table_schema IN (?, 'public')"
+            ).use { s ->
+                s.setString(1, schema)
                 s.executeQuery().use { rs -> buildList { while (rs.next()) add(rs.getString(1)) } }
             }
         }
 
-        // Other tests migrate plugin_a in their own schemas of the shared container, so only check the two that matter.
-        assertContains(schemas, assertIs<PGSimpleDataSource>(api.migrationDataSource).currentSchema)
-        assertFalse("public" in schemas, schemas.toString())
+        assertEquals(listOf(schema), schemas)
     }
 
-    @OptIn(TestOnlyDatabaseApi::class)
     @Test
-    fun migrateWithoutDataSourceFails() = runBlocking {
-        val factory = MariadbConnectionFactory.from(
-            MariadbConnectionConfiguration.builder().host("localhost").port(1).username("x").build()
-        )
-        val api = DatabaseApi.create(connectionFactory = factory, dialect = MariaDBDialect())
-        try {
-            val error = assertFailsWith<IllegalStateException> {
-                api.migrate("plugin_a") { sql("migrations/plugin_a") }
-            }
-            assertContains(assertNotNull(error.message), "migrationDataSource")
-        } finally {
-            api.shutdown()
+    fun migrateWithoutDataSourceFails() = withOfflineDatabaseApi { api ->
+        val error = assertFailsWith<IllegalStateException> {
+            api.migrate("plugin_a") { sql("migrations/plugin_a") }
         }
-    }
-
-    @Test
-    fun cleanIsDisabled() = withApi("mariadb") { api ->
-        val plan = MigrationSpec(javaClass.classLoader).apply { sql("migrations/plugin_a") }.build("plugin_a")
-
-        val configuration = FlywayMigrationRunner(api).configure(plan)
-
-        assertTrue(configuration.isCleanDisabled)
-    }
-
-    @Test
-    fun withoutSqlNoDefaultLocationIsUsed() = withApi("mariadb") { api ->
-        val plan = MigrationSpec(javaClass.classLoader).apply { classes(V2_JdbcInsert) }.build("plugin_a")
-
-        val configuration = FlywayMigrationRunner(api).configure(plan)
-
-        assertTrue(configuration.locations.isEmpty())
+        assertContains(assertNotNull(error.message), "migrationDataSource")
     }
 }

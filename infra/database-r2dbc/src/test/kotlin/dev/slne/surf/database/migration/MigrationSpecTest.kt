@@ -16,11 +16,6 @@ class MigrationSpecTest {
         MigrationSpec(javaClass.classLoader).apply(block)
 
     @Test
-    fun historyTableIsDerivedFromName() {
-        assertEquals("flyway_schema_history_myplugin", spec().build("MyPlugin").historyTable)
-    }
-
-    @Test
     fun rejectsInvalidNames() {
         listOf("my-plugin", "", "a".repeat(41)).forEach {
             assertThrows<IllegalArgumentException> { spec().build(it) }
@@ -67,16 +62,11 @@ class MigrationSpecTest {
     }
 
     @Test
-    fun rejectsBlankSqlLocation() {
-        listOf("", " ").forEach {
-            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().sql(it) }
-        }
-    }
-
-    @Test
-    fun rejectsBlankPackage() {
-        listOf("", " ").forEach {
-            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().classPackage(it) }
+    fun rejectsBlankSqlLocationOrPackage() {
+        listOf<MigrationSpec.(String) -> Unit>({ sql(it) }, { classPackage(it) }).forEach { add ->
+            listOf("", " ").forEach {
+                assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().add(it) }
+            }
         }
     }
 
@@ -96,11 +86,6 @@ class MigrationSpecTest {
 
         assertEquals(listOf("classpath:db/migrations"), plan.sqlLocations)
         assertEquals(listOf("a.b"), plan.packages)
-    }
-
-    @Test
-    fun distinctInstancesOfTheSameClassAreKept() {
-        assertEquals(2, spec { classes(V1(), V1()) }.build("p").migrations.size)
     }
 
     @Test

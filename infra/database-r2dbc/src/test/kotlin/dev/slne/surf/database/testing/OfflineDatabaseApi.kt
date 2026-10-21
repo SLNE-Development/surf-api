@@ -10,6 +10,15 @@ import org.mariadb.r2dbc.MariadbConnectionFactory
 import javax.sql.DataSource
 
 /**
+ * Runs [block] with this API and shuts it down afterwards.
+ */
+inline fun <T> DatabaseApi.use(block: (DatabaseApi) -> T): T = try {
+    block(this)
+} finally {
+    shutdown()
+}
+
+/**
  * An R2DBC factory pointing at a closed port, for APIs that never connect.
  */
 fun offlineConnectionFactory(): ConnectionFactory = MariadbConnectionFactory.from(
@@ -25,14 +34,9 @@ fun <T> withOfflineDatabaseApi(
     migrationDataSource: DataSource? = null,
     block: suspend (DatabaseApi) -> T
 ): T = runBlocking {
-    val api = DatabaseApi.create(
+    DatabaseApi.create(
         connectionFactory = offlineConnectionFactory(),
         dialect = MariaDBDialect(),
         migrationDataSource = migrationDataSource
-    )
-    try {
-        block(api)
-    } finally {
-        api.shutdown()
-    }
+    ).use { block(it) }
 }

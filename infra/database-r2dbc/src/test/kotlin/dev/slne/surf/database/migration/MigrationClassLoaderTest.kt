@@ -4,8 +4,7 @@ import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.migration.internal.MigrationClassLoader
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.io.File
+import java.net.URI
 import java.net.URL
 import java.util.Collections
 import java.util.Enumeration
@@ -32,7 +31,7 @@ class MigrationClassLoaderTest {
             Collections.enumeration(resources[name].orEmpty())
     }
 
-    private fun file(dir: File, name: String): URL = File(dir, name).apply { writeText("SELECT 1;") }.toURI().toURL()
+    private val pluginUrl = URI("file:/plugin/V1__init.sql").toURL()
 
     @Test
     fun parentIsTheLibraryClassLoader() {
@@ -68,12 +67,11 @@ class MigrationClassLoaderTest {
     }
 
     @Test
-    fun findsResourcesOfThePlugin(@TempDir dir: File) {
-        val url = file(dir, "V1__plugin.sql")
-        val loader = MigrationClassLoader(PluginLoader(resources = mapOf("plugin/V1__plugin.sql" to listOf(url))))
+    fun findsResourcesOfThePlugin() {
+        val loader = MigrationClassLoader(PluginLoader(resources = mapOf("plugin/V1__init.sql" to listOf(pluginUrl))))
 
-        assertEquals(url, loader.getResource("plugin/V1__plugin.sql"))
-        assertEquals(listOf(url), loader.getResources("plugin/V1__plugin.sql").toList())
+        assertEquals(pluginUrl, loader.getResource("plugin/V1__init.sql"))
+        assertEquals(listOf(pluginUrl), loader.getResources("plugin/V1__init.sql").toList())
     }
 
     @Test
@@ -82,37 +80,22 @@ class MigrationClassLoaderTest {
     }
 
     @Test
-    fun prefersTheLibraryResourceOverThePlugin(@TempDir dir: File) {
-        val pluginUrl = file(dir, "V1__init.sql")
+    fun libraryResourcesComeBeforePluginResources() {
         val name = "migrations/plugin_a/V1__init.sql"
+        val libraryUrl = assertNotNull(library.getResource(name))
         val loader = MigrationClassLoader(PluginLoader(resources = mapOf(name to listOf(pluginUrl))))
 
-        assertEquals(assertNotNull(library.getResource(name)), loader.getResource(name))
+        assertEquals(libraryUrl, loader.getResource(name))
+        assertEquals(listOf(libraryUrl, pluginUrl), loader.getResources(name).toList())
     }
 
     @Test
-    fun listsLibraryResourcesBeforePluginResources(@TempDir dir: File) {
-        val pluginUrl = file(dir, "V1__init.sql")
-        val name = "migrations/plugin_a/V1__init.sql"
-        val loader = MigrationClassLoader(PluginLoader(resources = mapOf(name to listOf(pluginUrl))))
+    fun pluginSharingTheLibraryResourcesDoesNotDuplicateThem() {
+        val expected = library.getResources("migrations/plugin_a").toList()
 
-        assertEquals(listOf(assertNotNull(library.getResource(name)), pluginUrl), loader.getResources(name).toList())
-    }
-
-    @Test
-    fun pluginDelegatingToTheLibraryDoesNotDuplicateResources() {
-        val delegating = object : ClassLoader(library) {}
-
-        val urls = MigrationClassLoader(delegating).getResources("migrations/plugin_a").toList()
-
-        assertEquals(library.getResources("migrations/plugin_a").toList(), urls)
-        assertEquals(1, urls.size)
-    }
-
-    @Test
-    fun pluginThatIsTheLibraryDoesNotDuplicateResources() {
-        val urls = MigrationClassLoader(library).getResources("migrations/plugin_a").toList()
-
-        assertEquals(1, urls.size)
+        listOf(object : ClassLoader(library) {}, library).forEach { plugin ->
+            assertEquals(expected, MigrationClassLoader(plugin).getResources("migrations/plugin_a").toList())
+        }
+        assertEquals(1, expected.size)
     }
 }
