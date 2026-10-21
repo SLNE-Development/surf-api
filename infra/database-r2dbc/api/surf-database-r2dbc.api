@@ -181,6 +181,10 @@ public abstract class dev/slne/surf/database/migration/SurfMigration {
 	public final fun getVersion ()Ljava/lang/String;
 }
 
+public final class dev/slne/surf/database/query/SelfReferencingChainKt {
+	public static final fun selfReferencingChain (Lorg/jetbrains/exposed/v1/core/dao/id/IdTable;Lorg/jetbrains/exposed/v1/core/Column;Ljava/lang/Object;I)Lorg/jetbrains/exposed/v1/core/Op;
+}
+
 public class dev/slne/surf/database/table/AuditableLongIdTable : org/jetbrains/exposed/v1/core/dao/id/ULongIdTable {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
