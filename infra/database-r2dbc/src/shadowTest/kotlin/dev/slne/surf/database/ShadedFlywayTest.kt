@@ -1,6 +1,14 @@
 package dev.slne.surf.database
 
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.core.Table
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.javatime.datetime
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.SchemaUtils
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.insert
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.selectAll
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import dev.slne.surf.database.migration.migrate
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
@@ -14,6 +22,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.LocalDateTime
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
@@ -89,6 +98,49 @@ class ShadedFlywayTest {
 
         val location = DatabaseApi::class.java.protectionDomain.codeSource.location.toString()
         assertTrue(location.endsWith("-all.jar"), "DatabaseApi must come from the shaded jar, was $location")
+    }
+
+    @Test
+    fun jdbcDriversAreOnlyAvailableRelocated() {
+        assertFailsWith<ClassNotFoundException> { Class.forName("org.postgresql.Driver") }
+        assertFailsWith<ClassNotFoundException> { Class.forName("org.mariadb.jdbc.Driver") }
+        Class.forName("dev.slne.surf.database.libs.org.postgresql.Driver")
+        Class.forName("dev.slne.surf.database.libs.org.mariadb.jdbc.Driver")
+    }
+
+    private object RoundTripTable : Table("shaded_round_trip") {
+        val createdAt = datetime("created_at")
+    }
+
+    /**
+     * Writes and reads back a datetime through Exposed over R2DBC from the shaded jar. Binding the parameter and
+     * reading the column go through Exposed's `TypeMapper`s (`DateTimeTypeMapper`, `DateTimeMySqlTypeMapper`, ...),
+     * which Exposed loads with `ServiceLoader` from the merged, relocated `META-INF/services` file, and through the
+     * relocated R2DBC driver selected by its `ConnectionFactoryProvider` service entry.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = ["mariadb", "postgres"])
+    fun shadedR2dbcRoundTripsDatetime(db: String, @TempDir tempDir: Path) {
+        val configDir = tempDir.resolve("config").createDirectories()
+        configDir.resolve("database.yml").writeText(databaseYml(db))
+        val written = LocalDateTime.of(2026, 10, 21, 13, 37, 42, 123_456_000)
+
+        val api = DatabaseApi.create(pluginPath = configDir, fileName = "database.yml", poolName = "round-trip-$db")
+        try {
+            val read = runBlocking {
+                suspendTransaction(db = api.database) {
+                    SchemaUtils.create(RoundTripTable)
+                    RoundTripTable.insert { it[createdAt] = written }
+                    RoundTripTable.selectAll().map { it[RoundTripTable.createdAt] }.toList().also {
+                        // The Postgres schema is shared with the migration test, which checks the exact table list.
+                        SchemaUtils.drop(RoundTripTable)
+                    }
+                }
+            }
+            assertEquals(listOf(written), read)
+        } finally {
+            api.shutdown()
+        }
     }
 
     @ParameterizedTest
