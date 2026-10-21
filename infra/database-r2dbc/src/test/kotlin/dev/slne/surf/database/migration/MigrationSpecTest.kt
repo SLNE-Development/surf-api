@@ -50,4 +50,18 @@ class MigrationSpecTest {
         val v1 = V1()
         assertEquals(1, spec { classes(v1, v1) }.build("p").migrations.size)
     }
+
+    @Test
+    fun acceptsValidBaselineVersions() {
+        listOf("0", "1", "2.1", "10.0.3").forEach {
+            assertEquals(it, spec { sql("db/migrations"); baselineVersion(it) }.build("p").baselineVersion)
+        }
+    }
+
+    @Test
+    fun rejectsInvalidBaselineVersions() {
+        listOf("", " ", "v1", "1.", ".1", "1..2", "1_2", "abc", "1 2").forEach {
+            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().baselineVersion(it) }
+        }
+    }
 }

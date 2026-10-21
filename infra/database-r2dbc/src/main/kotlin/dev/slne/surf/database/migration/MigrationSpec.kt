@@ -53,9 +53,14 @@ class MigrationSpec internal constructor(private val defaultClassLoader: ClassLo
      * Sets the version at which the plugin's history is baselined. Defaults to `"0"`, so that a brand-new plugin on a
      * shared, non-empty database still runs its `V1`. Migrations up to and including the baseline are treated as
      * already applied on a database without history, so every migration above it must be idempotent.
+     *
+     * @param version Dot-separated numbers, for example `"0"`, `"1"` or `"2.1"`.
+     * @throws IllegalArgumentException if [version] does not match `\d+(\.\d+)*`
      */
     fun baselineVersion(version: String) {
-        require(version.isNotBlank()) { "Baseline version must not be blank" }
+        require(VERSION_REGEX.matches(version)) {
+            "Baseline version '$version' must be dot-separated numbers, for example \"1\" or \"2.1\""
+        }
         baseline = version
     }
 
@@ -88,6 +93,7 @@ class MigrationSpec internal constructor(private val defaultClassLoader: ClassLo
     private companion object {
         const val CLASSPATH_PREFIX = "classpath:"
         val NAME_REGEX = Regex("[a-z0-9_]{1,40}")
+        val VERSION_REGEX = Regex("""\d+(\.\d+)*""")
     }
 }
 
