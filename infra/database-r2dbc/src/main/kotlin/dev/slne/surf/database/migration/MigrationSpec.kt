@@ -42,7 +42,8 @@ class MigrationSpec internal constructor(private val defaultClassLoader: ClassLo
     }
 
     /**
-     * Adds a package that is scanned for [SurfMigration] subclasses with a no-argument constructor.
+     * Adds a package that is scanned (including subpackages and named nested classes) for [SurfMigration] objects
+     * and subclasses with a public no-argument constructor. `migrate()` fails if the package contains none.
      */
     fun classPackage(packageName: String) {
         require(packageName.isNotBlank()) { "Package name must not be blank" }

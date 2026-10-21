@@ -41,7 +41,8 @@ import java.nio.file.Path
  * @param block Describes the migrations; at least one of `sql`, `classes` or `classPackage` must be given.
  * @return the outcome of the run
  * @throws IllegalArgumentException if [name] or [block] is invalid
- * @throws IllegalStateException if this [DatabaseApi] has no JDBC data source for migrations, or a migration fails
+ * @throws IllegalStateException if this [DatabaseApi] has no JDBC data source for migrations, a scanned package
+ * contains no migration classes, or a migration fails
  */
 suspend fun DatabaseApi.migrate(name: String, block: MigrationSpec.() -> Unit): MigrationResult {
     val plan = MigrationSpec(block.javaClass.classLoader).apply(block).build(name)

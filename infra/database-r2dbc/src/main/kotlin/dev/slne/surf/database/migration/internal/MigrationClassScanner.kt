@@ -5,6 +5,8 @@ import java.io.File
 import java.lang.reflect.Modifier
 import java.net.JarURLConnection
 import java.net.URL
+import java.net.URLClassLoader
+import java.util.jar.JarFile
 
 /**
  * Finds [SurfMigration] classes in a package, including subpackages, on both `file:` directories and `jar:` URLs.
@@ -17,10 +19,12 @@ internal object MigrationClassScanner {
     /**
      * Scans [packageName] (and its subpackages) through [classLoader] and instantiates every concrete
      * [SurfMigration]. Kotlin `object`s are resolved through their `INSTANCE` field, other classes through their
-     * public no-arg constructor. Abstract classes and classes that are no [SurfMigration] are skipped.
+     * public no-arg constructor. Named nested classes and objects are included; abstract, anonymous, local and
+     * synthetic classes and classes that are no [SurfMigration] are skipped.
      *
-     * Jars are matched by entry prefix, but the package is only discovered if the jar contains a directory entry for
-     * it (as [ClassLoader.getResources] returns nothing otherwise), so a jar without directory entries finds nothing.
+     * Jars are matched by entry prefix. A jar without a directory entry for the package is invisible to
+     * [ClassLoader.getResources]; if that finds nothing and [classLoader] is a [URLClassLoader] (as plugin class loaders
+     * are), its own jars are searched directly.
      *
      * @return the migrations sorted by class name; empty if the package does not exist
      * @throws IllegalStateException if a class in the package cannot be loaded (for example a
@@ -31,10 +35,18 @@ internal object MigrationClassScanner {
         val packagePath = packageName.replace('.', '/')
         val classNames = sortedSetOf<String>()
 
-        for (url in classLoader.getResources(packagePath)) {
+        val packageUrls = classLoader.getResources(packagePath).toList()
+        for (url in packageUrls) {
             when (url.protocol) {
                 "file" -> scanDirectory(File(url.toURI()), packageName, classNames)
                 "jar" -> scanJar(url, packagePath, classNames)
+            }
+        }
+        if (packageUrls.isEmpty() && classLoader is URLClassLoader) {
+            for (url in classLoader.urLs) {
+                if (url.protocol == "file" && url.path.endsWith(".jar")) {
+                    JarFile(File(url.toURI())).use { scanEntries(it, packagePath, classNames) }
+                }
             }
         }
 
@@ -65,29 +77,29 @@ internal object MigrationClassScanner {
         // Do not share the cached JarFile: closing it here must not affect other users, and a cached open file
         // would keep the jar locked on Windows.
         connection.useCaches = false
-        val jarFile = connection.jarFile
-        try {
-            val prefix = "$packagePath/"
-            for (entry in jarFile.entries()) {
-                val name = entry.name
-                if (entry.isDirectory || !name.startsWith(prefix) || !name.endsWith(".class")) continue
-                addClassName(name.removeSuffix(".class").replace('/', '.'), out)
-            }
-        } finally {
-            jarFile.close()
+        connection.jarFile.use { scanEntries(it, packagePath, out) }
+    }
+
+    private fun scanEntries(jarFile: JarFile, packagePath: String, out: MutableSet<String>) {
+        val prefix = "$packagePath/"
+        for (entry in jarFile.entries()) {
+            val name = entry.name
+            if (entry.isDirectory || !name.startsWith(prefix) || !name.endsWith(".class")) continue
+            addClassName(name.removeSuffix(".class").replace('/', '.'), out)
         }
     }
 
     private fun addClassName(name: String, out: MutableSet<String>) {
-        // module-info, package-info and anonymous or nested classes are never migrations
+        // module-info and package-info are never migrations
         val simple = name.substringAfterLast('.')
-        if (simple == "module-info" || simple == "package-info" || '$' in simple) return
+        if (simple == "module-info" || simple == "package-info") return
         out.add(name)
     }
 
     private fun instantiate(clazz: Class<*>): SurfMigration? {
         if (!SurfMigration::class.java.isAssignableFrom(clazz)) return null
         if (Modifier.isAbstract(clazz.modifiers) || clazz.isInterface) return null
+        if (clazz.isAnonymousClass || clazz.isLocalClass || clazz.isSynthetic) return null
 
         return try {
             val instanceField = runCatching { clazz.getField("INSTANCE") }.getOrNull()

@@ -19,7 +19,8 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
      * and only the configured SQL locations (never Flyway's default `db/migration`). A configured location that cannot
      * be found, or a SQL file in it that does not follow the `V<version>__<description>.sql` naming, fails the run.
      *
-     * @throws IllegalStateException if [api] has no migration data source
+     * @throws IllegalStateException if [api] has no migration data source, or a scanned package contains no migration
+     * classes
      */
     fun configure(plan: MigrationPlan): FluentConfiguration {
         val dataSource = api.migrationDataSource
@@ -28,12 +29,17 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
                     "Create it with DatabaseApi.create(pluginPath, ...) or pass a migrationDataSource."
             )
 
-        // A class can be found by several (nested) packages, or be listed as well; listed instances win.
-        val listed = plan.migrations.mapTo(HashSet()) { it.javaClass }
+        // A class can be found by several (nested) packages, or be listed as well; a listed instance replaces the
+        // scanned one only if it has the same version.
+        val listed = plan.migrations.mapTo(HashSet()) { it.javaClass to it.version }
         val scanned = plan.packages
-            .flatMap { MigrationClassScanner.scan(plan.classLoader, it) }
+            .flatMap { packageName ->
+                MigrationClassScanner.scan(plan.classLoader, packageName).ifEmpty {
+                    error("classPackage(\"$packageName\") found no migration classes")
+                }
+            }
             .distinctBy { it.javaClass }
-            .filterNot { it.javaClass in listed }
+            .filterNot { (it.javaClass to it.version) in listed }
         val adapters = (plan.migrations + scanned).map { FlywayJavaMigrationAdapter(api, it) }
 
         val configuration = Flyway.configure(MigrationClassLoader(plan.classLoader))

@@ -2,6 +2,7 @@ package dev.slne.surf.database.migration
 
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
+import dev.slne.surf.database.migration.fixtures.mixedscan.V2_Default
 import dev.slne.surf.database.migration.fixtures.scan.V2_Object
 import dev.slne.surf.database.migration.internal.FlywayMigrationRunner
 import dev.slne.surf.database.migration.internal.JdbcDataSources
@@ -137,6 +138,35 @@ class FlywayMigrationRunnerTest {
         val configuration = configure { classes(Versioned("2"), Versioned("3")) }
 
         assertEquals(listOf("2", "3"), configuration.javaMigrations.map { it.version.version })
+    }
+
+    @Test
+    fun listedInstanceWithAnotherVersionKeepsTheScannedOne() {
+        val configuration = configure {
+            classes(V2_Default("3"))
+            classPackage("dev.slne.surf.database.migration.fixtures.mixedscan")
+        }
+
+        assertEquals(listOf("2", "3"), configuration.javaMigrations.map { it.version.version }.sorted())
+    }
+
+    @Test
+    fun listedInstanceWithTheScannedVersionReplacesTheScannedOne() {
+        val configuration = configure {
+            classes(V2_Default())
+            classPackage("dev.slne.surf.database.migration.fixtures.mixedscan")
+        }
+
+        assertEquals(listOf("2"), configuration.javaMigrations.map { it.version.version })
+    }
+
+    @Test
+    fun failsWhenAScannedPackageHasNoMigrations() {
+        val error = assertFailsWith<IllegalStateException> {
+            configure { classPackage("dev.slne.surf.database.migration.fixtures.doesnotexist") }
+        }
+
+        assertContains(assertNotNull(error.message), "fixtures.doesnotexist")
     }
 
     @Test
