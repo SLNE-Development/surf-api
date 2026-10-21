@@ -22,6 +22,13 @@ import java.nio.file.Path
  * SQL files and scanned classes are looked up through the class loader of the plugin that calls this function
  * (overridable with [MigrationSpec.classLoader]). Runs on [Dispatchers.IO].
  *
+ * Do not call this inside an open transaction: Flyway uses its own JDBC connection, and on MariaDB the metadata locks
+ * held by the open transaction can block Flyway's DDL indefinitely.
+ *
+ * A failed migration throws, naming its version. On MariaDB, which cannot roll back DDL, every failed migration is
+ * recorded as failed in `flyway_schema_history_<name>`, and later calls fail until that row is deleted manually; there
+ * is no repair API. On PostgreSQL a failed migration leaves no history row.
+ *
  * ```
  * databaseApi.migrate("my_plugin") {
  *     sql("db/migrations")

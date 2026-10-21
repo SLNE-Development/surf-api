@@ -104,12 +104,19 @@ suspend fun connect() {
         classes(V2_BackfillItems)                             // code migrations
         classPackage("dev.slne.surf.myplugin.migrations")     // scan a package for code migrations
     }
-    logger.info("Migrated ${result.initialVersion} -> ${result.targetVersion}")
+    logger.info("Applied ${result.migrationsExecuted} migration(s), schema was at ${result.initialVersion}")
 }
 ```
 
 At least one of `sql`, `classes` or `classPackage` is required; each may be given more than once.
 `name` must match `[a-z0-9_]{1,40}` (it is lowercased).
+
+`result.targetVersion` is the version of the last migration executed in this run, so it is `null`
+when there was nothing to do; `result.initialVersion` is `null` the first time a plugin migrates
+an empty schema.
+
+**Do not call `migrate()` inside an open transaction.** Flyway uses its own JDBC connection, and on
+MariaDB the metadata locks held by your open transaction can block Flyway's DDL indefinitely.
 
 ### SQL files
 
@@ -117,6 +124,10 @@ SQL migrations are classpath resources named `V<version>__<description>.sql`, fo
 `db/migrations/V1__create_users.sql` and `db/migrations/V2__add_items.sql`. They are looked up through
 the plugin's class loader: the class loader of the lambda passed to `migrate` by default, or the one
 you set with `classLoader(...)`.
+
+A location that cannot be found fails `migrate()`, and so does a SQL file whose name does not follow
+the convention (for example `V1_init.sql` with a single underscore), so a typo never silently skips
+migrations.
 
 ### History table per plugin
 
@@ -141,26 +152,38 @@ CREATE TABLE IF NOT EXISTS users (
 
 For changes that SQL cannot express, extend one of:
 
-- `JdbcMigration` runs on plain JDBC inside the transaction of the migration run. If it throws, it is
-  rolled back and not recorded.
+- `JdbcMigration` runs on plain JDBC inside the transaction of the migration run. Do not commit or
+  close the connection yourself.
 - `ExposedMigration` runs in a `suspendTransaction` using Exposed over R2DBC. This transaction is
   **not** the one that records the migration in the history table, so if the process stops between the
   two, the migration runs again on the next start.
 
 ```kotlin
-object V2_BackfillItems : ExposedMigration("2", "backfill items") {
+object V2_BackfillItems : ExposedMigration("2", "backfill item names") {
     override suspend fun R2dbcTransaction.migrate() {
-        SchemaUtils.create(ItemsTable) // idempotent
+        // Plain SQL, so the migration keeps working when ItemsTable changes later. Idempotent.
+        exec("UPDATE items SET display_name = name WHERE display_name IS NULL")
     }
 }
 ```
 
 ### Failed migrations
 
-MariaDB DDL is not transactional, and `ExposedMigration` runs outside Flyway's transaction, so a
-failed migration can leave a failed row in the history table. Until you remove that row manually from
-`flyway_schema_history_<name>`, `migrate()` refuses to run. This is another reason migrations must be
-idempotent: after fixing the problem the migration is run again against a partially changed schema.
+A failed migration makes `migrate()` throw with the migration's version and description in the
+message. Whether a row is left in `flyway_schema_history_<name>` depends on the database:
+
+| Migration          | MariaDB            | PostgreSQL                                       |
+|--------------------|--------------------|--------------------------------------------------|
+| SQL file           | recorded as failed | rolled back, no row                              |
+| `JdbcMigration`    | recorded as failed | rolled back, no row                              |
+| `ExposedMigration` | recorded as failed | its own transaction is rolled back, no row       |
+
+MariaDB cannot roll back DDL, so Flyway records **every** failed migration there as failed
+(`success = false`), whether it changed the schema, only data, or nothing at all. While such a row
+exists, every later `migrate()` for that plugin fails. There is no repair API: fix the migration, undo
+or finish what it partially did, then delete the failed row manually from
+`flyway_schema_history_<name>`. This is another reason migrations must be idempotent: after fixing the
+problem the migration runs again against a possibly partially changed schema.
 
 ### Generating a script (development helper)
 
@@ -181,6 +204,15 @@ idempotent** (for example a plain `CREATE TABLE`); edit the file before shipping
 ### Safety
 
 `clean` is disabled, so Flyway never drops objects from your database.
+
+### Upgrade notes (2.4.0)
+
+The shaded jar now merges the `META-INF/services` files of all bundled libraries (Flyway needs this
+to find its database plugins). As a side effect, service registrations of the relocated libraries
+that had no effect in earlier versions are now active, for example Exposed's R2DBC `TypeMapper`s and
+the plugins of the R2DBC MariaDB (`AuthenticationPlugin`) and PostgreSQL (`Extension`) drivers. If
+you worked around missing type mappings or driver plugins, check whether the workaround is still
+needed.
 
 ---
 

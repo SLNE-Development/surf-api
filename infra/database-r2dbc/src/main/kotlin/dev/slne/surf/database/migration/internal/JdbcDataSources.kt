@@ -9,8 +9,12 @@ import javax.sql.DataSource
 /**
  * Creates JDBC [DataSource]s for Flyway from [ConnectionDetails].
  *
- * Driver `DataSource` classes are instantiated directly instead of going through `DriverManager`, because
- * `DriverManager` does not see drivers that were loaded by an isolated plugin classloader.
+ * Driver `DataSource` classes are instantiated directly; this code never asks `DriverManager` for a connection itself,
+ * because `DriverManager` only hands out drivers visible to the caller's class loader, which an isolated plugin class
+ * loader may not see. `MariaDbDataSource` connects through its driver without `DriverManager`. pgjdbc's
+ * `BaseDataSource.getConnection` does call `DriverManager.getConnection`, which works because loading the data source
+ * registers the (relocated) pgjdbc driver and `DriverManager` checks it against the data source's own class loader,
+ * which defined that driver.
  */
 internal object JdbcDataSources {
     fun create(details: ConnectionDetails): DataSource = when (details.databaseType) {

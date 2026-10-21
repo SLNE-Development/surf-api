@@ -26,8 +26,12 @@ sealed class SurfMigration(val version: String, val description: String) {
 /**
  * A migration written against plain JDBC.
  *
- * [migrate] runs inside the JDBC transaction of the migration run; if it throws, the migration is rolled back and not
- * recorded in the history table. Do not commit or close the [Connection] yourself.
+ * [migrate] runs inside the JDBC transaction of the migration run. Do not commit or close the [Connection] yourself.
+ * If it throws, `migrate()` fails, and what is left behind depends on the database:
+ * - PostgreSQL rolls the transaction back, including DDL, and no history row is written.
+ * - MariaDB cannot roll back DDL, so Flyway records the migration as failed (`success = false`) in
+ *   `flyway_schema_history_<name>`, whatever the migration did. Every later `migrate()` for that plugin fails until
+ *   the row is deleted manually; there is no repair API.
  *
  * Must be idempotent.
  */
@@ -45,6 +49,11 @@ abstract class JdbcMigration(version: String, description: String) : SurfMigrati
  * separate from the one that records the migration in the history table: if the migration succeeds but the history
  * insert fails (or the process stops in between), the migration runs again on the next start. Therefore it must be
  * idempotent.
+ *
+ * If [migrate] throws, its own `suspendTransaction` is rolled back (on MariaDB, DDL it already ran stays) and
+ * `migrate()` fails. On MariaDB, Flyway also records the migration as failed (`success = false`) in
+ * `flyway_schema_history_<name>`, and every later `migrate()` for that plugin fails until the row is deleted manually;
+ * there is no repair API. On PostgreSQL no history row is left.
  */
 abstract class ExposedMigration(version: String, description: String) : SurfMigration(version, description) {
     /**
