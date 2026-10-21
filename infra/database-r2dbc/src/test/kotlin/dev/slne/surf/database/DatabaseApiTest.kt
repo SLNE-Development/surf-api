@@ -83,6 +83,37 @@ class DatabaseApiTest {
         }
     }
 
+    @Test
+    fun configWithoutPortUsesThePostgresDefaultPort(@TempDir dir: Path) {
+        val api = createFromConfig(
+            dir,
+            """
+            database-type: POSTGRESQL
+            host: db.example
+            """
+        )
+
+        api.use {
+            assertContentEquals(intArrayOf(5432), assertIs<PGSimpleDataSource>(it.migrationDataSource).portNumbers)
+        }
+    }
+
+    @Test
+    fun configWithoutPortUsesTheMariaDbDefaultPort(@TempDir dir: Path) {
+        val api = createFromConfig(
+            dir,
+            """
+            database-type: MARIADB
+            host: db.example
+            """
+        )
+
+        api.use {
+            // The driver leaves its default port 3306 out of the URL; any other port would be listed.
+            assertContains(assertIs<MariaDbDataSource>(it.migrationDataSource).url, "jdbc:mariadb://db.example/")
+        }
+    }
+
     @OptIn(TestOnlyDatabaseApi::class)
     @Test
     fun manualApiAcceptsTheConfigCustomizerAsTrailingLambda() {

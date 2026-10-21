@@ -19,7 +19,7 @@ import javax.sql.DataSource
 internal object JdbcDataSources {
     fun create(details: ConnectionDetails): DataSource = when (details.databaseType) {
         DatabaseType.MARIADB -> MariaDbDataSource(
-            "jdbc:mariadb://${details.host}:${details.port}/${details.database}"
+            "jdbc:mariadb://${details.host}:${details.resolvedPort}/${details.database}"
         ).apply {
             user = details.username
             setPassword(details.password)
@@ -27,7 +27,7 @@ internal object JdbcDataSources {
 
         DatabaseType.POSTGRESQL -> PGSimpleDataSource().apply {
             setServerNames(arrayOf(details.host))
-            setPortNumbers(intArrayOf(details.port))
+            setPortNumbers(intArrayOf(details.resolvedPort))
             databaseName = details.database
             user = details.username
             password = details.password

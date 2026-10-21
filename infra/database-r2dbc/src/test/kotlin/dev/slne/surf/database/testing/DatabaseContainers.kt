@@ -76,7 +76,7 @@ fun JdbcDatabaseContainer<*>.toDatabaseApi(fresh: Boolean = false): DatabaseApi 
     val connectionFactory: ConnectionFactory = if (isMariaDb) {
         MariadbConnectionFactory.from(
             MariadbConnectionConfiguration.builder()
-                .host(details.host).port(details.port)
+                .host(details.host).port(details.resolvedPort)
                 .username(details.username).password(details.password)
                 .database(details.database)
                 .build()
@@ -84,7 +84,7 @@ fun JdbcDatabaseContainer<*>.toDatabaseApi(fresh: Boolean = false): DatabaseApi 
     } else {
         PostgresqlConnectionFactory(
             PostgresqlConnectionConfiguration.builder()
-                .host(details.host).port(details.port)
+                .host(details.host).port(details.resolvedPort)
                 .username(details.username).password(details.password)
                 .database(details.database).schema(details.schema)
                 .build()

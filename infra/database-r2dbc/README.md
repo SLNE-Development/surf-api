@@ -268,7 +268,7 @@ a timeout.
 | `SURF_DATABASE_TYPE`                                   | `credentials.database-type`                   | `MARIADB`                                          |
 | `SURF_DATABASE_SCHEMA`                                 | `credentials.schema`                          | `public` (PostgreSQL only)                         |
 | `SURF_DATABASE_HOST`                                   | `credentials.host`                            | `localhost`                                        |
-| `SURF_DATABASE_PORT`                                   | `credentials.port`                            | `3306`; valid range `1..65535`                     |
+| `SURF_DATABASE_PORT`                                   | `credentials.port`                            | `3306` (MariaDB) or `5432` (PostgreSQL); `1..65535` |
 | `SURF_DATABASE_NAME`                                   | `credentials.database`                        | `database`                                         |
 | `SURF_DATABASE_USERNAME`                               | `credentials.username`                        | `root`                                             |
 | `SURF_DATABASE_PASSWORD`                               | `credentials.password`                        | existing YAML/default value; configure as a secret |

@@ -35,7 +35,7 @@ internal fun DatabaseConfig.withEnvironmentOverrides(
             databaseType = environment.enum(DatabaseEnvironmentVariables.TYPE, credentials.databaseType),
             schema = environment.text(DatabaseEnvironmentVariables.SCHEMA, credentials.schema),
             host = environment.text(DatabaseEnvironmentVariables.HOST, credentials.host),
-            port = environment.integer(DatabaseEnvironmentVariables.PORT, credentials.port),
+            port = environment.integer(DatabaseEnvironmentVariables.PORT) ?: credentials.port,
             database = environment.text(DatabaseEnvironmentVariables.NAME, credentials.database),
             username = environment.text(DatabaseEnvironmentVariables.USERNAME, credentials.username),
             password = environment.text(
@@ -89,7 +89,7 @@ internal fun DatabaseConfig.withEnvironmentOverrides(
 }
 
 private fun DatabaseConfig.validate() {
-    require(credentials.port in 1..65535) {
+    require(credentials.resolvedPort in 1..65535) {
         "Database port must be in the range 1..65535. Configure ${DatabaseEnvironmentVariables.PORT}."
     }
 
@@ -137,8 +137,11 @@ private fun DatabaseEnvironmentVariableLookup.text(
     return value
 }
 
-private fun DatabaseEnvironmentVariableLookup.integer(name: String, fallback: Int): Int {
-    val rawValue = this[name] ?: return fallback
+private fun DatabaseEnvironmentVariableLookup.integer(name: String, fallback: Int): Int =
+    integer(name) ?: fallback
+
+private fun DatabaseEnvironmentVariableLookup.integer(name: String): Int? {
+    val rawValue = this[name] ?: return null
     return rawValue.toIntOrNull()
         ?: throw IllegalArgumentException("Environment variable $name must be an integer.")
 }

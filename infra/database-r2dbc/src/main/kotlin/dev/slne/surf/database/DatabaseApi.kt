@@ -81,7 +81,7 @@ class DatabaseApi internal constructor(
                 DatabaseType.MARIADB -> {
                     val configuration = MariadbConnectionConfiguration.builder()
                         .host(config.credentials.host)
-                        .port(config.credentials.port)
+                        .port(config.credentials.resolvedPort)
                         .username(config.credentials.username)
                         .password(config.credentials.password)
                         .database(config.credentials.database)
@@ -94,7 +94,7 @@ class DatabaseApi internal constructor(
                 DatabaseType.POSTGRESQL -> {
                     val configuration = PostgresqlConnectionConfiguration.builder()
                         .host(config.credentials.host)
-                        .port(config.credentials.port)
+                        .port(config.credentials.resolvedPort)
                         .username(config.credentials.username)
                         .password(config.credentials.password)
                         .database(config.credentials.database)
