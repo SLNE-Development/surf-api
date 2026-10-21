@@ -4,6 +4,7 @@ import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.TestOnlyDatabaseApi
 import dev.slne.surf.database.migration.fixtures.plugina.V2_JdbcInsert
 import dev.slne.surf.database.migration.fixtures.plugina.V3_ExposedInsert
+import dev.slne.surf.database.migration.fixtures.scan.V2_Object
 import dev.slne.surf.database.migration.internal.FlywayMigrationRunner
 import dev.slne.surf.database.testing.DatabaseContainers
 import dev.slne.surf.database.testing.toDatabaseApi
@@ -11,19 +12,26 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.mariadb.r2dbc.MariadbConnectionConfiguration
 import org.mariadb.r2dbc.MariadbConnectionFactory
 import org.testcontainers.containers.JdbcDatabaseContainer
+import org.postgresql.ds.PGSimpleDataSource
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.net.URLClassLoader
+import java.nio.file.Path
 import java.sql.Connection
 import java.sql.SQLException
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeText
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -253,6 +261,104 @@ class FlywayMigrationIT {
 
         assertContains(assertNotNull(error.message), "V1_init.sql")
         assertFalse(api.tableExists("misnamed_items"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun customBaselineSkipsMigrationsUpToIt(db: String) = withApi(db) { api ->
+        api.execute("CREATE TABLE a_items (id INT PRIMARY KEY, name VARCHAR(64) NOT NULL)")
+
+        val result = api.migrate("plugin_a") {
+            sql("migrations/plugin_a")
+            classes(V2_JdbcInsert, V3_ExposedInsert)
+            baselineVersion("2")
+        }
+
+        assertEquals(1, result.migrationsExecuted)
+        assertEquals("2", result.initialVersion)
+        assertEquals("3", result.targetVersion)
+        assertEquals(1, api.count("a_items"))
+        assertEquals(listOf("2:BASELINE:true", "3:JDBC:true"), api.history("flyway_schema_history_plugin_a"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun laterMigrationsRunOnTopOfEarlierRuns(db: String) = withApi(db) { api ->
+        api.migrate("plugin_a") { sql("migrations/plugin_a") }
+
+        val second = api.migrate("plugin_a") {
+            sql("migrations/plugin_a")
+            classes(V2_JdbcInsert, V3_ExposedInsert)
+        }
+
+        assertEquals(2, second.migrationsExecuted)
+        assertEquals("1", second.initialVersion)
+        assertEquals("3", second.targetVersion)
+        assertEquals(listOf("1:SQL:true", "2:JDBC:true", "3:JDBC:true"), api.history("flyway_schema_history_plugin_a"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun changedChecksumOfAppliedMigrationFails(db: String) = withApi(db) { api ->
+        val original = object : JdbcMigration("1", "checked") {
+            override val checksum: Int = 1
+            override fun migrate(connection: Connection) = Unit
+        }
+        val changed = object : JdbcMigration("1", "checked") {
+            override val checksum: Int = 2
+            override fun migrate(connection: Connection) = Unit
+        }
+        api.migrate("checked") { classes(original) }
+
+        val error = assertFailsWith<IllegalStateException> { api.migrate("checked") { classes(changed) } }
+
+        assertContains(assertNotNull(error.message), "checksum", ignoreCase = true)
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun migrationGivenTwiceRunsOnce(db: String) = withApi(db) { api ->
+        val result = api.migrate("scan") {
+            classes(V2_Object)
+            classPackage("dev.slne.surf.database.migration.fixtures.scan")
+        }
+
+        assertEquals(3, result.migrationsExecuted)
+        assertEquals(listOf("2:JDBC:true", "3:JDBC:true", "5:JDBC:true"), api.history("flyway_schema_history_scan"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun sqlIsFoundThroughTheConfiguredClassLoader(db: String, @TempDir dir: Path) = withApi(db) { api ->
+        dir.resolve("isolated").createDirectories()
+            .resolve("V1__isolated.sql")
+            .writeText("CREATE TABLE IF NOT EXISTS isolated_items (id INT PRIMARY KEY);")
+
+        val result = URLClassLoader(arrayOf(dir.toUri().toURL()), null).use { isolated ->
+            api.migrate("isolated") {
+                sql("isolated")
+                classLoader(isolated)
+            }
+        }
+
+        assertEquals(1, result.migrationsExecuted)
+        assertTrue(api.tableExists("isolated_items"))
+    }
+
+    @Test
+    fun postgresHistoryTableIsCreatedInTheApiSchema() = withApi("postgres") { api ->
+        api.migrate("plugin_a") { sql("migrations/plugin_a") }
+
+        val schemas = assertNotNull(api.migrationDataSource).connection.use { c ->
+            c.prepareStatement("SELECT table_schema FROM information_schema.tables WHERE table_name = ?").use { s ->
+                s.setString(1, "flyway_schema_history_plugin_a")
+                s.executeQuery().use { rs -> buildList { while (rs.next()) add(rs.getString(1)) } }
+            }
+        }
+
+        // Other tests migrate plugin_a in their own schemas of the shared container, so only check the two that matter.
+        assertContains(schemas, assertIs<PGSimpleDataSource>(api.migrationDataSource).currentSchema)
+        assertFalse("public" in schemas, schemas.toString())
     }
 
     @OptIn(TestOnlyDatabaseApi::class)
