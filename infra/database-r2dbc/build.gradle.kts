@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.bundles.databaseDriver)
 
     compileOnly(libs.surf.microservice)
+
+    testImplementation(libs.testcontainers)
 }
 
 configurations.runtimeClasspath {
@@ -195,6 +197,11 @@ tasks {
     shadowJar {
         relocationPrefix = "dev.slne.surf.database.libs"
         enableAutoRelocation = true
+
+        mergeServiceFiles()
+        filesMatching("META-INF/services/**") {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
     }
 
     test {
