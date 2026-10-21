@@ -3,11 +3,13 @@ package dev.slne.surf.database
 import dev.slne.surf.database.testing.offlineConnectionFactory
 import dev.slne.surf.database.testing.use
 import dev.slne.surf.database.testing.withOfflineDatabaseApi
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mariadb.jdbc.MariaDbDataSource
 import org.postgresql.ds.PGSimpleDataSource
+import org.slf4j.event.Level
 import java.nio.file.Path
 import kotlin.io.path.writeText
 import kotlin.test.assertContains
@@ -121,6 +123,23 @@ class DatabaseApiTest {
 
         DatabaseApi.create(offlineConnectionFactory(), MariaDBDialect()) { customized = true }.shutdown()
 
+        assertTrue(customized)
+    }
+
+    @OptIn(TestOnlyDatabaseApi::class)
+    @Test
+    fun manualApiAcceptsPositionalArgumentsWithoutDataSource() {
+        var customized = false
+
+        val api = DatabaseApi.create(
+            offlineConnectionFactory(),
+            MariaDBDialect(),
+            ComponentLogger.logger("positional"),
+            Level.INFO,
+            { customized = true }
+        )
+
+        api.use { assertNull(it.migrationDataSource) }
         assertTrue(customized)
     }
 

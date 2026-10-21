@@ -151,7 +151,8 @@ class DatabaseApi internal constructor(
         }
 
         /**
-         * Creates a [DatabaseApi] from an already constructed [ConnectionFactory].
+         * Creates a [DatabaseApi] from an already constructed [ConnectionFactory]. Migrations cannot be run on the
+         * result; use the overload with a `migrationDataSource` for that.
          *
          * This overload bypasses [DatabaseConfig] loading and pool creation and is therefore mainly intended for tests or
          * special setups where the caller manages the connection factory manually. Prefer
@@ -161,8 +162,6 @@ class DatabaseApi internal constructor(
          * @param dialect The database dialect to use (e.g., MariaDB, Postgres).
          * @param logger Optional logger for Exposed's SQL logging (defaults to a logger named "DatabaseApi").
          * @param logLevel Optional log level for Exposed's SQL logging (
-         * @param migrationDataSource Optional JDBC data source used for schema migrations. Without one, migrations
-         * cannot be run on the resulting [DatabaseApi].
          * @param configCustomizer Optional customization hook for Exposed's [R2dbcDatabaseConfig].
          */
         @TestOnlyDatabaseApi
@@ -171,43 +170,55 @@ class DatabaseApi internal constructor(
             dialect: DatabaseDialect,
             logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
             logLevel: Level = Level.DEBUG,
-            migrationDataSource: DataSource? = null,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
-        ): DatabaseApi {
-            return createDatabase(
-                connectionFactory = connectionFactory,
-                dialect = dialect,
-                logger = logger,
-                logLevel = logLevel,
-                healthCheckName = nextManualHealthCheckName(),
-                migrationDataSource = migrationDataSource,
-                releaseResources = {},
-                configCustomizer = configCustomizer
-            )
-        }
+        ): DatabaseApi = createManual(connectionFactory, dialect, logger, logLevel, null, configCustomizer)
 
         /**
-         * Binary-compatible variant of [create] from before migrations were added; kept so that callers compiled
-         * against earlier versions keep working.
+         * Creates a [DatabaseApi] from an already constructed [ConnectionFactory] that can run migrations through
+         * [migrationDataSource].
+         *
+         * Like the overload without a data source, this is mainly intended for tests or special setups; the caller
+         * keeps ownership of [connectionFactory] and [migrationDataSource].
+         *
+         * @param connectionFactory The factory to connect with (e.g., testcontainers, in-memory, custom pool).
+         * @param dialect The database dialect to use (e.g., MariaDB, Postgres).
+         * @param migrationDataSource JDBC data source used for schema migrations; it must point at the same database.
+         * @param logger Optional logger for Exposed's SQL logging (defaults to a logger named "DatabaseApi").
+         * @param logLevel Optional log level for Exposed's SQL logging.
+         * @param configCustomizer Optional customization hook for Exposed's [R2dbcDatabaseConfig].
          */
         @TestOnlyDatabaseApi
-        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
         fun create(
             connectionFactory: ConnectionFactory,
             dialect: DatabaseDialect,
+            migrationDataSource: DataSource,
             logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
             logLevel: Level = Level.DEBUG,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
-        ): DatabaseApi = create(
+        ): DatabaseApi = createManual(connectionFactory, dialect, logger, logLevel, migrationDataSource, configCustomizer)
+
+        private fun createManual(
+            connectionFactory: ConnectionFactory,
+            dialect: DatabaseDialect,
+            logger: ComponentLogger,
+            logLevel: Level,
+            migrationDataSource: DataSource?,
+            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit
+        ): DatabaseApi = createDatabase(
             connectionFactory = connectionFactory,
             dialect = dialect,
             logger = logger,
             logLevel = logLevel,
-            migrationDataSource = null,
+            healthCheckName = nextManualHealthCheckName(),
+            migrationDataSource = migrationDataSource,
+            releaseResources = {},
             configCustomizer = configCustomizer
         )
 
-        private fun createDatabase(
+        /**
+         * Builds the [DatabaseApi]; [releaseResources] runs on [shutdown] after the database is unregistered.
+         */
+        internal fun createDatabase(
             connectionFactory: ConnectionFactory,
             dialect: DatabaseDialect,
             logger: ComponentLogger,

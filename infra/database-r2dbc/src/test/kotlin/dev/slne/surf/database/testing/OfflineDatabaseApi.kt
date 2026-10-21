@@ -34,9 +34,10 @@ fun <T> withOfflineDatabaseApi(
     migrationDataSource: DataSource? = null,
     block: suspend (DatabaseApi) -> T
 ): T = runBlocking {
-    DatabaseApi.create(
-        connectionFactory = offlineConnectionFactory(),
-        dialect = MariaDBDialect(),
-        migrationDataSource = migrationDataSource
-    ).use { block(it) }
+    val api = if (migrationDataSource == null) {
+        DatabaseApi.create(offlineConnectionFactory(), MariaDBDialect())
+    } else {
+        DatabaseApi.create(offlineConnectionFactory(), MariaDBDialect(), migrationDataSource)
+    }
+    api.use { block(it) }
 }
