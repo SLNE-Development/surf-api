@@ -94,8 +94,10 @@ abstract class UtcInstantDateTimeColumnType<T : Any> :
             currentDialect is SQLiteDialect ->
                 SQLITE_AND_ORACLE_DATE_TIME_STRING_FORMATTER.format(utcDateTime)
 
+            // Bound as LocalDateTime: Timestamp.valueOf would interpret the UTC wall-clock in the JVM's zone and
+            // shift times that fall into a local daylight-saving gap by an hour.
             else ->
-                Timestamp.valueOf(utcDateTime)
+                utcDateTime
         }
     }
 
