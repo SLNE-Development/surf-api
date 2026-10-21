@@ -3,7 +3,6 @@ package dev.slne.surf.database.migration
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.migration.fixtures.scan.V2_Object
-import dev.slne.surf.database.migration.fixtures.scan.V3_Class
 import dev.slne.surf.database.migration.internal.FlywayMigrationRunner
 import dev.slne.surf.database.migration.internal.JdbcDataSources
 import dev.slne.surf.database.migration.internal.MigrationClassLoader
@@ -77,7 +76,7 @@ class FlywayMigrationRunnerTest {
     }
 
     @Test
-    fun failsOnMissingLocationsAndMisnamedFiles() {
+    fun usesStrictFlywaySettings() {
         val configuration = configure { sql("db") }
 
         assertTrue(configuration.isFailOnMissingLocations)
@@ -90,6 +89,11 @@ class FlywayMigrationRunnerTest {
         val configuration = configure { sql("db/one", "classpath:db/two") }
 
         assertEquals(listOf("classpath:db/one", "classpath:db/two"), configuration.locations.map { it.descriptor })
+    }
+
+    @Test
+    fun withoutSqlNoDefaultLocationIsUsed() {
+        assertTrue(configure { classes(V2_Object) }.locations.isEmpty())
     }
 
     @Test
@@ -119,15 +123,18 @@ class FlywayMigrationRunnerTest {
     }
 
     @Test
-    fun deduplicatesMigrationsOfTheSameClass() {
-        val configuration = configure { classes(V3_Class(), V3_Class()) }
+    fun classFoundByNestedPackagesIsRegisteredOnce() {
+        val configuration = configure {
+            classPackage("dev.slne.surf.database.migration.fixtures.scan")
+            classPackage("dev.slne.surf.database.migration.fixtures.scan.nested")
+        }
 
-        assertEquals(1, configuration.javaMigrations.size)
+        assertEquals(listOf("2", "3", "5"), configuration.javaMigrations.map { it.version.version }.sorted())
     }
 
     @Test
     fun keepsEveryVersionOfTheSameClass() {
-        val configuration = configure { classes(Versioned("2"), Versioned("3"), Versioned("2")) }
+        val configuration = configure { classes(Versioned("2"), Versioned("3")) }
 
         assertEquals(listOf("2", "3"), configuration.javaMigrations.map { it.version.version })
     }

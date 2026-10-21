@@ -28,11 +28,13 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
                     "Create it with DatabaseApi.create(pluginPath, ...) or pass a migrationDataSource."
             )
 
-        val scanned = plan.packages.flatMap { MigrationClassScanner.scan(plan.classLoader, it) }
-        val adapters = (plan.migrations + scanned)
-            // The same migration may be both listed and scanned; different versions of one class are separate migrations.
-            .distinctBy { it.javaClass to it.version }
-            .map { FlywayJavaMigrationAdapter(api, it) }
+        // A class can be found by several (nested) packages, or be listed as well; listed instances win.
+        val listed = plan.migrations.mapTo(HashSet()) { it.javaClass }
+        val scanned = plan.packages
+            .flatMap { MigrationClassScanner.scan(plan.classLoader, it) }
+            .distinctBy { it.javaClass }
+            .filterNot { it.javaClass in listed }
+        val adapters = (plan.migrations + scanned).map { FlywayJavaMigrationAdapter(api, it) }
 
         val configuration = Flyway.configure(MigrationClassLoader(plan.classLoader))
             .dataSource(dataSource)
