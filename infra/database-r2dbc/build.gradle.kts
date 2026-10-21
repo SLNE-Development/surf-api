@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.bundles.databaseDriver)
 
     compileOnly(libs.surf.microservice)
+
+    testImplementation(libs.testcontainers)
 }
 
 configurations.runtimeClasspath {
