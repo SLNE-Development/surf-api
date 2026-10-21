@@ -2,11 +2,19 @@ package dev.slne.surf.database.testing
 
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.TestOnlyDatabaseApi
+import io.r2dbc.spi.ConnectionFactory
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.mariadb.r2dbc.MariadbConnectionConfiguration
 import org.mariadb.r2dbc.MariadbConnectionFactory
 import javax.sql.DataSource
+
+/**
+ * An R2DBC factory pointing at a closed port, for APIs that never connect.
+ */
+fun offlineConnectionFactory(): ConnectionFactory = MariadbConnectionFactory.from(
+    MariadbConnectionConfiguration.builder().host("localhost").port(1).username("x").build()
+)
 
 /**
  * Runs [block] with a [DatabaseApi] whose R2DBC factory points at a closed port, for tests that never connect.
@@ -17,11 +25,8 @@ fun <T> withOfflineDatabaseApi(
     migrationDataSource: DataSource? = null,
     block: suspend (DatabaseApi) -> T
 ): T = runBlocking {
-    val factory = MariadbConnectionFactory.from(
-        MariadbConnectionConfiguration.builder().host("localhost").port(1).username("x").build()
-    )
     val api = DatabaseApi.create(
-        connectionFactory = factory,
+        connectionFactory = offlineConnectionFactory(),
         dialect = MariaDBDialect(),
         migrationDataSource = migrationDataSource
     )

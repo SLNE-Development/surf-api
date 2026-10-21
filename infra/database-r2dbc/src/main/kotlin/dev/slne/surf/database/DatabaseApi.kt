@@ -159,9 +159,9 @@ class DatabaseApi internal constructor(
          * @param dialect The database dialect to use (e.g., MariaDB, Postgres).
          * @param logger Optional logger for Exposed's SQL logging (defaults to a logger named "DatabaseApi").
          * @param logLevel Optional log level for Exposed's SQL logging (
-         * @param configCustomizer Optional customization hook for Exposed's [R2dbcDatabaseConfig].
          * @param migrationDataSource Optional JDBC data source used for schema migrations. Without one, migrations
          * cannot be run on the resulting [DatabaseApi].
+         * @param configCustomizer Optional customization hook for Exposed's [R2dbcDatabaseConfig].
          */
         @TestOnlyDatabaseApi
         fun create(
@@ -169,8 +169,8 @@ class DatabaseApi internal constructor(
             dialect: DatabaseDialect,
             logger: ComponentLogger = ComponentLogger.logger("DatabaseApi"),
             logLevel: Level = Level.DEBUG,
-            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {},
-            migrationDataSource: DataSource? = null
+            migrationDataSource: DataSource? = null,
+            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit = {}
         ): DatabaseApi {
             return createDatabase(
                 connectionFactory = connectionFactory,

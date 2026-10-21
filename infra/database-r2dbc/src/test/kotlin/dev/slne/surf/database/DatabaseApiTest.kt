@@ -1,6 +1,8 @@
 package dev.slne.surf.database
 
+import dev.slne.surf.database.testing.offlineConnectionFactory
 import dev.slne.surf.database.testing.withOfflineDatabaseApi
+import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mariadb.jdbc.MariaDbDataSource
@@ -13,6 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /**
  * Checks how [DatabaseApi.create] sets up the JDBC data source for migrations. Nothing here connects to a database.
@@ -83,6 +86,16 @@ class DatabaseApiTest {
             assertEquals("plugin_schema", dataSource.currentSchema)
             assertEquals("surf", dataSource.user)
         }
+    }
+
+    @OptIn(TestOnlyDatabaseApi::class)
+    @Test
+    fun manualApiAcceptsTheConfigCustomizerAsTrailingLambda() {
+        var customized = false
+
+        DatabaseApi.create(offlineConnectionFactory(), MariaDBDialect()) { customized = true }.shutdown()
+
+        assertTrue(customized)
     }
 
     @Test
