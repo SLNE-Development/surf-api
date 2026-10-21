@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import dev.slne.surf.api.gradle.util.slneReleases
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
@@ -201,16 +202,108 @@ java {
     withJavadocJar()
 }
 
+/**
+ * Merges `META-INF/services` files of all bundled jars. The service file transformer only sees duplicates that are not
+ * dropped first, so they must be included for those paths; without this only one jar's entries survive (Flyway then
+ * loses its core plugins and fails on load). Every other duplicate is still excluded.
+ */
+fun ShadowJar.mergeAllServiceFiles() {
+    mergeServiceFiles()
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    filesNotMatching("META-INF/services/**") { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+}
+
 tasks {
     shadowJar {
         relocationPrefix = "dev.slne.surf.database.libs"
         enableAutoRelocation = true
-        mergeServiceFiles()
+        mergeAllServiceFiles()
     }
 
     test {
         useJUnitPlatform()
     }
+}
+
+/**
+ * Smoke tests that run against the shaded jar only: no `main` output and no unshaded Flyway, drivers, Exposed or
+ * R2DBC on the classpath. The surf runtime APIs are taken from what the surf gradle plugin adds to `test`.
+ */
+val shadowTestSourceSet = sourceSets.create("shadowTest") {
+    // The SQL is served by an isolated class loader in the test, so it must not be on the test classpath.
+    resources.setSrcDirs(emptyList<Any>())
+}
+val shadowTestPluginSql = layout.projectDirectory.dir("src/shadowTest/resources")
+val shadowJarFile = tasks.shadowJar.flatMap { it.archiveFile }
+
+fun surfApiDependencies(from: String) = provider {
+    configurations[from].dependencies.filter { it.group == "dev.slne.surf.api" }
+}
+
+configurations.named(shadowTestSourceSet.implementationConfigurationName) {
+    withDependencies { addAllLater(surfApiDependencies(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)) }
+}
+configurations.named(shadowTestSourceSet.runtimeOnlyConfigurationName) {
+    withDependencies { addAllLater(surfApiDependencies(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)) }
+}
+
+dependencies {
+    add(shadowTestSourceSet.implementationConfigurationName, files(shadowJarFile))
+    add(shadowTestSourceSet.implementationConfigurationName, libs.junit.jupiter)
+    add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.junit)
+    add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.mariadb)
+    add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.postgresql)
+    add(shadowTestSourceSet.implementationConfigurationName, libs.kotlinx.coroutines.test)
+    add(shadowTestSourceSet.implementationConfigurationName, "org.jetbrains.kotlin:kotlin-test-junit5")
+    add(shadowTestSourceSet.runtimeOnlyConfigurationName, "org.junit.platform:junit-platform-launcher")
+}
+
+/**
+ * The shaded jar references configurate as `dev.slne.surf.api.libs.configurate` (relocated by the surf gradle
+ * plugin, matching the surf runtime on a server), while the published surf API artifacts use the original package.
+ * This task bundles the surf API and configurate artifacts of the shadowTest runtime; the surf gradle plugin applies
+ * the same configurate relocation to every `ShadowJar` task.
+ */
+val surfRuntimeGroups = setOf("dev.slne.surf.api", "dev.slne.forks.configurate")
+val shadowTestRuntimeClasspath = configurations.named(shadowTestSourceSet.runtimeClasspathConfigurationName)
+
+fun shadowTestRuntimeArtifacts(surfRuntime: Boolean) = shadowTestRuntimeClasspath.map { configuration ->
+    configuration.incoming.artifactView {
+        componentFilter { id ->
+            val isSurfRuntime = id is ModuleComponentIdentifier && id.group in surfRuntimeGroups
+            isSurfRuntime == surfRuntime
+        }
+    }.files
+}
+
+val shadowTestSurfRuntime = tasks.register<ShadowJar>("shadowTestSurfRuntime") {
+    description = "Bundles the surf runtime for shadowTest with configurate relocated like on a server."
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+
+    archiveFileName = "shadow-test-surf-runtime.jar"
+    destinationDirectory = layout.buildDirectory.dir("shadowTest")
+    configurations.set(emptyList())
+    from(shadowTestRuntimeArtifacts(surfRuntime = true).map { jars -> jars.map(::zipTree) })
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "module-info.class")
+    mergeAllServiceFiles()
+}
+
+val shadowTest = tasks.register<Test>("shadowTest") {
+    description = "Runs plugin migrations from the shaded jar with an isolated plugin class loader."
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+
+    testClassesDirs = shadowTestSourceSet.output.classesDirs
+    classpath = shadowTestSourceSet.output +
+        files(shadowTestSurfRuntime) +
+        files(shadowTestRuntimeArtifacts(surfRuntime = false))
+    useJUnitPlatform()
+
+    inputs.dir(shadowTestPluginSql).withPathSensitivity(PathSensitivity.RELATIVE)
+    systemProperty("surf.shadowTest.pluginSql", shadowTestPluginSql.asFile.absolutePath)
+}
+
+tasks.check {
+    dependsOn(shadowTest)
 }
 
 val shadowComponent = components["shadow"] as AdhocComponentWithVariants

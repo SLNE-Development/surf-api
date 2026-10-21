@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS smoke_items (
+    id INT PRIMARY KEY
+);
