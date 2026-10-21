@@ -4,6 +4,11 @@ import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.migration.internal.FlywayMigrationRunner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.exposed.v1.core.ExperimentalDatabaseMigrationApi
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.migration.r2dbc.MigrationUtils
+import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
+import java.nio.file.Path
 
 /**
  * Runs the migrations of one plugin, described by [block], against this database.
@@ -36,4 +41,31 @@ suspend fun DatabaseApi.migrate(name: String, block: MigrationSpec.() -> Unit): 
     return withContext(Dispatchers.IO) {
         FlywayMigrationRunner(this@migrate).migrate(name, plan)
     }
+}
+
+/**
+ * Writes the SQL statements that bring this database in line with [tables] to
+ * `<scriptDirectory>/<scriptName>.sql`, for use as the next `V<n>__*.sql` migration. This is a development helper;
+ * call it against a database that does not yet contain the change.
+ *
+ * **The generated statements are not idempotent** (for example a plain `CREATE TABLE`, and `DROP` statements for
+ * anything that differs). Edit the file before shipping it, since all migrations must be idempotent.
+ *
+ * @param tables The tables to compare against the database; must not be empty.
+ * @param scriptDirectory Directory the script is written to.
+ * @param scriptName File name without the `.sql` extension, for example `V2__items`.
+ * @return the written file
+ * @throws IllegalArgumentException if [tables] is empty
+ */
+@OptIn(ExperimentalDatabaseMigrationApi::class)
+suspend fun DatabaseApi.generateMigrationScript(
+    vararg tables: Table,
+    scriptDirectory: Path,
+    scriptName: String
+): Path = suspendTransaction(db = database) {
+    MigrationUtils.generateMigrationScript(
+        *tables,
+        scriptDirectory = scriptDirectory.toString(),
+        scriptName = scriptName
+    ).toPath()
 }

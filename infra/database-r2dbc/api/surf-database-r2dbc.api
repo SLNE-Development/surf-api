@@ -134,6 +134,7 @@ public final class dev/slne/surf/database/logger/ComponentSqlLogger : org/jetbra
 }
 
 public final class dev/slne/surf/database/migration/DatabaseMigrationsKt {
+	public static final fun generateMigrationScript (Ldev/slne/surf/database/DatabaseApi;[Lorg/jetbrains/exposed/v1/core/Table;Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun migrate (Ldev/slne/surf/database/DatabaseApi;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
