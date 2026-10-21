@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.sql.Connection
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 
 class MigrationSpecTest {
 
@@ -56,6 +57,81 @@ class MigrationSpecTest {
         listOf("0", "1", "2.1", "10.0.3").forEach {
             assertEquals(it, spec { sql("db/migrations"); baselineVersion(it) }.build("p").baselineVersion)
         }
+    }
+
+    @Test
+    fun acceptsValidNames() {
+        listOf("p", "plugin_2", "a".repeat(40), "My_Plugin").forEach {
+            assertEquals("flyway_schema_history_${it.lowercase()}", spec().build(it).historyTable)
+        }
+    }
+
+    @Test
+    fun rejectsBlankSqlLocation() {
+        listOf("", " ").forEach {
+            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().sql(it) }
+        }
+    }
+
+    @Test
+    fun rejectsBlankPackage() {
+        listOf("", " ").forEach {
+            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().classPackage(it) }
+        }
+    }
+
+    @Test
+    fun eachEntryAloneIsEnough() {
+        assertEquals(listOf("one"), spec { classes(V1()) }.build("p").migrations.map { it.description })
+        assertEquals(listOf("a.b"), spec { classPackage("a.b") }.build("p").packages)
+    }
+
+    @Test
+    fun duplicateLocationsAndPackagesAreDeduplicated() {
+        val plan = spec {
+            sql("db/migrations", "classpath:db/migrations")
+            classPackage("a.b")
+            classPackage("a.b")
+        }.build("p")
+
+        assertEquals(listOf("classpath:db/migrations"), plan.sqlLocations)
+        assertEquals(listOf("a.b"), plan.packages)
+    }
+
+    @Test
+    fun distinctInstancesOfTheSameClassAreKept() {
+        assertEquals(2, spec { classes(V1(), V1()) }.build("p").migrations.size)
+    }
+
+    @Test
+    fun keepsMigrationOrder() {
+        val first = V1()
+        val second = V1()
+        assertEquals(listOf<SurfMigration>(first, second), spec { classes(first); classes(second) }.build("p").migrations)
+    }
+
+    @Test
+    fun classLoaderDefaultsToTheGivenLoader() {
+        val loader = object : ClassLoader(null) {}
+        assertSame(loader, MigrationSpec(loader).apply { sql("db") }.build("p").classLoader)
+    }
+
+    @Test
+    fun classLoaderCanBeOverridden() {
+        val loader = object : ClassLoader(null) {}
+        assertSame(loader, spec { sql("db"); classLoader(loader) }.build("p").classLoader)
+    }
+
+    @Test
+    fun lastBaselineVersionWins() {
+        assertEquals("3", spec { sql("db"); baselineVersion("2"); baselineVersion("3") }.build("p").baselineVersion)
+    }
+
+    @Test
+    fun rejectedBaselineVersionKeepsThePreviousOne() {
+        val spec = spec { sql("db"); baselineVersion("2") }
+        assertThrows<IllegalArgumentException> { spec.baselineVersion("x") }
+        assertEquals("2", spec.build("p").baselineVersion)
     }
 
     @Test
