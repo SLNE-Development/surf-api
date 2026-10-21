@@ -133,6 +133,10 @@ public final class dev/slne/surf/database/logger/ComponentSqlLogger : org/jetbra
 	public fun log (Lorg/jetbrains/exposed/v1/core/statements/StatementContext;Lorg/jetbrains/exposed/v1/core/Transaction;)V
 }
 
+public final class dev/slne/surf/database/migration/DatabaseMigrationsKt {
+	public static final fun migrate (Ldev/slne/surf/database/DatabaseApi;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public abstract class dev/slne/surf/database/migration/ExposedMigration : dev/slne/surf/database/migration/SurfMigration {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun migrate (Lorg/jetbrains/exposed/v1/r2dbc/R2dbcTransaction;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

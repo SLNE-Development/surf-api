@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS a_items (
+    id   INT PRIMARY KEY,
+    name VARCHAR(64) NOT NULL
+);

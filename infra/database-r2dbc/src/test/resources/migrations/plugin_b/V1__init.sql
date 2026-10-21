@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS b_items (
+    id INT PRIMARY KEY
+);
