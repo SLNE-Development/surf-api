@@ -19,6 +19,9 @@ internal object MigrationClassScanner {
      * [SurfMigration]. Kotlin `object`s are resolved through their `INSTANCE` field, other classes through their
      * public no-arg constructor. Abstract classes and classes that are no [SurfMigration] are skipped.
      *
+     * Jars are matched by entry prefix, but the package is only discovered if the jar contains a directory entry for
+     * it (as [ClassLoader.getResources] returns nothing otherwise), so a jar without directory entries finds nothing.
+     *
      * @return the migrations sorted by class name; empty if the package does not exist
      * @throws IllegalStateException if a concrete migration has neither an `INSTANCE` field nor a public no-arg
      * constructor, or cannot be instantiated
@@ -89,6 +92,10 @@ internal object MigrationClassScanner {
         } catch (e: IllegalStateException) {
             throw e
         } catch (e: ReflectiveOperationException) {
+            throw IllegalStateException("Could not instantiate migration class ${clazz.name}", e)
+        } catch (e: LinkageError) {
+            throw IllegalStateException("Could not instantiate migration class ${clazz.name}", e)
+        } catch (e: ClassCastException) {
             throw IllegalStateException("Could not instantiate migration class ${clazz.name}", e)
         }
     }

@@ -41,7 +41,6 @@ class MigrationClassScannerTest {
         val root = File(V2_Object::class.java.protectionDomain.codeSource.location.toURI())
         val pkgDir = File(root, scanPackage.replace('.', '/'))
         JarOutputStream(jar.outputStream()).use { out ->
-            val entries = mutableSetOf<String>()
             pkgDir.walkTopDown().forEach { f ->
                 val name = root.toPath().relativize(f.toPath()).toString().replace(File.separatorChar, '/')
                 if (f.isDirectory) {
@@ -58,6 +57,10 @@ class MigrationClassScannerTest {
         // Child-first loader for the fixture package, so the classes are provably defined by the jar loader.
         val parent = javaClass.classLoader
         val jarLoader = object : URLClassLoader(arrayOf(jar.toURI().toURL()), parent) {
+            // Resources of the scanned package come only from the jar, never from the parent's directory.
+            override fun getResources(name: String): java.util.Enumeration<java.net.URL> =
+                if (name.startsWith(scanPackage.replace('.', '/'))) findResources(name) else super.getResources(name)
+
             override fun loadClass(name: String, resolve: Boolean): Class<*> {
                 if (!name.startsWith("$scanPackage.")) return super.loadClass(name, resolve)
                 synchronized(getClassLoadingLock(name)) {
@@ -69,6 +72,7 @@ class MigrationClassScannerTest {
         }
         jarLoader.use { loader ->
             val result = MigrationClassScanner.scan(loader, scanPackage)
+            assertEquals("jar", loader.getResources(scanPackage.replace('.', '/')).toList().single().protocol)
             assertEquals(expected, result.map { it::class.java.simpleName }.toSet())
             assertTrue(result.all { it::class.java.classLoader === loader })
         }
