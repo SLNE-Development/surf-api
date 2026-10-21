@@ -197,6 +197,11 @@ tasks {
     shadowJar {
         relocationPrefix = "dev.slne.surf.database.libs"
         enableAutoRelocation = true
+
+        mergeServiceFiles()
+        filesMatching("META-INF/services/**") {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
     }
 
     test {

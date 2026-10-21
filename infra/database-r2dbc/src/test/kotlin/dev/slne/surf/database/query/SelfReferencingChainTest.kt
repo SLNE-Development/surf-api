@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import org.jetbrains.exposed.v1.r2dbc.insertAndGetId
 import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.r2dbc.update
 import org.junit.jupiter.api.AfterAll
@@ -31,6 +32,10 @@ private class ChainNodes(name: String) : LongIdTable(name) {
 
 private object OtherNodes : LongIdTable("other_nodes") {
     val parent = reference("parent_id", ChainNodes("unused")).nullable()
+}
+
+private object NonNullParentNodes : LongIdTable("non_null_parent_nodes") {
+    val parent = reference("parent_id", this)
 }
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -80,7 +85,8 @@ abstract class SelfReferencingChainTest {
 
     @AfterAll
     fun tearDown() {
-        container.stop()
+        if (::database.isInitialized) TransactionManager.closeAndUnregister(database)
+        if (::container.isInitialized) container.stop()
     }
 
     private suspend fun insert(parent: Long?): Long = nodes.insertAndGetId { row ->
@@ -132,9 +138,20 @@ abstract class SelfReferencingChainTest {
         assertFailsWith<IllegalArgumentException> { nodes.selfReferencingChain(OtherNodes.parent, leaf, maxDepth = 5) }
     }
 
+    @Test
+    fun `rejects a column that references another table`() {
+        assertFailsWith<IllegalArgumentException> { OtherNodes.selfReferencingChain(OtherNodes.parent, leaf, maxDepth = 5) }
+    }
+
+    @Test
+    fun `accepts a non-nullable parent column`() {
+        NonNullParentNodes.selfReferencingChain(NonNullParentNodes.parent, leaf, maxDepth = 5)
+    }
+
+    // Each subclass names its own database: Exposed caches identifier quoting per database name for
+    // the whole JVM, so a shared name gives the second dialect the first one's quote character.
     protected companion object {
         const val PASSWORD = "test"
-        const val DATABASE = "test"
     }
 }
 
@@ -151,6 +168,10 @@ class MariaDbSelfReferencingChainTest : SelfReferencingChainTest() {
 
     override fun url(container: Container): String =
         "r2dbc:mariadb://${container.host}:${container.getMappedPort(3306)}/$DATABASE"
+
+    private companion object {
+        const val DATABASE = "chain_test_mariadb"
+    }
 }
 
 class PostgresSelfReferencingChainTest : SelfReferencingChainTest() {
@@ -169,4 +190,8 @@ class PostgresSelfReferencingChainTest : SelfReferencingChainTest() {
 
     override fun url(container: Container): String =
         "r2dbc:postgresql://${container.host}:${container.getMappedPort(5432)}/$DATABASE"
+
+    private companion object {
+        const val DATABASE = "chain_test_postgres"
+    }
 }
