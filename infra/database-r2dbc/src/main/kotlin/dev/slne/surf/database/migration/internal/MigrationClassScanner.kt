@@ -9,115 +9,114 @@ import java.net.URLClassLoader
 import java.util.jar.JarFile
 
 /**
- * Finds [SurfMigration] classes in a package, including subpackages, on both `file:` directories and `jar:` URLs.
+ * Finds [SurfMigration] classes in a package and its subpackages, in directories and jars.
  *
- * Works through [ClassLoader.getResources] instead of the class path, so it also finds classes in plugin jars loaded
- * by isolated class loaders.
+ * Lookups go through [ClassLoader.getResources] instead of the class path, so classes in plugin jars loaded by
+ * isolated class loaders are found as well.
  */
 internal object MigrationClassScanner {
+    private val INFO_CLASSES = setOf("module-info", "package-info")
 
     /**
-     * Scans [packageName] (and its subpackages) through [classLoader] and instantiates every concrete
-     * [SurfMigration]. Kotlin `object`s are resolved through their `INSTANCE` field, other classes through their
-     * public no-arg constructor. Named nested classes and objects are included; abstract, anonymous, local and
-     * synthetic classes and classes that are no [SurfMigration] are skipped.
+     * Instantiates every concrete [SurfMigration] in [packageName] and its subpackages.
      *
-     * Jars are matched by entry prefix. A jar without a directory entry for the package is invisible to
-     * [ClassLoader.getResources]; if that finds nothing and [classLoader] is a [URLClassLoader] (as plugin class loaders
-     * are), its own jars are searched directly.
+     * Kotlin `object`s are resolved through their `INSTANCE` field, other classes through their public no-arg
+     * constructor. Named nested classes are included; abstract, anonymous, local and synthetic classes are skipped.
+     *
+     * A jar without a directory entry for the package is invisible to [ClassLoader.getResources]. If that lookup
+     * finds nothing and [classLoader] is a [URLClassLoader], as plugin class loaders are, its jars are read directly.
      *
      * @return the migrations sorted by class name; empty if the package does not exist
-     * @throws IllegalStateException if a class in the package cannot be loaded (for example a
-     * [NoClassDefFoundError]), or a concrete migration has neither an `INSTANCE` field nor a public no-arg
-     * constructor, or cannot be instantiated
+     * @throws IllegalStateException if a class in the package cannot be loaded, or a migration has neither an
+     * `INSTANCE` field nor a public no-arg constructor, or cannot be instantiated
      */
     fun scan(classLoader: ClassLoader, packageName: String): List<SurfMigration> {
-        val packagePath = packageName.replace('.', '/')
-        val classNames = sortedSetOf<String>()
-
-        val packageUrls = classLoader.getResources(packagePath).toList()
-        for (url in packageUrls) {
-            when (url.protocol) {
-                "file" -> scanDirectory(File(url.toURI()), packageName, classNames)
-                "jar" -> scanJar(url, packagePath, classNames)
-            }
-        }
-        if (packageUrls.isEmpty() && classLoader is URLClassLoader) {
-            for (url in classLoader.urLs) {
-                if (url.protocol == "file" && url.path.endsWith(".jar")) {
-                    JarFile(File(url.toURI())).use { scanEntries(it, packagePath, classNames) }
-                }
-            }
-        }
-
+        val classNames = findClassNames(classLoader, packageName.replace('.', '/'))
         return classNames.mapNotNull { instantiate(load(it, classLoader)) }
     }
 
-    private fun load(className: String, classLoader: ClassLoader): Class<*> = try {
-        Class.forName(className, false, classLoader)
-    } catch (e: ClassNotFoundException) {
-        throw IllegalStateException("Could not load migration class $className", e)
-    } catch (e: LinkageError) {
-        throw IllegalStateException("Could not load migration class $className", e)
-    }
-
-    private fun scanDirectory(dir: File, packageName: String, out: MutableSet<String>) {
-        val children = dir.listFiles() ?: return
-        for (child in children) {
-            if (child.isDirectory) {
-                scanDirectory(child, "$packageName.${child.name}", out)
-            } else if (child.name.endsWith(".class")) {
-                addClassName("$packageName.${child.name.removeSuffix(".class")}", out)
-            }
+    private fun findClassNames(classLoader: ClassLoader, packagePath: String): Set<String> {
+        val packageUrls = classLoader.getResources(packagePath).toList()
+        val classFiles = if (packageUrls.isEmpty()) {
+            jarsOf(classLoader).flatMap { jar -> JarFile(jar).use { classFilesInJar(it, packagePath) } }
+        } else {
+            packageUrls.flatMap { classFilesAt(it, packagePath) }
         }
+
+        return classFiles
+            .map { it.removeSuffix(".class").replace('/', '.') }
+            .filterNot { it.substringAfterLast('.') in INFO_CLASSES }
+            .toSortedSet()
     }
 
-    private fun scanJar(url: URL, packagePath: String, out: MutableSet<String>) {
+    private fun classFilesAt(url: URL, packagePath: String): List<String> = when (url.protocol) {
+        "file" -> classFilesInDirectory(File(url.toURI()), packagePath)
+        "jar" -> openUncached(url).use { classFilesInJar(it, packagePath) }
+        else -> emptyList()
+    }
+
+    private fun classFilesInDirectory(directory: File, packagePath: String): List<String> = directory.walkTopDown()
+        .filter { it.isFile && it.name.endsWith(".class") }
+        .map { "$packagePath/${it.relativeTo(directory).invariantSeparatorsPath}" }
+        .toList()
+
+    private fun classFilesInJar(jar: JarFile, packagePath: String): List<String> = jar.entries().asSequence()
+        .map { it.name }
+        .filter { it.startsWith("$packagePath/") && it.endsWith(".class") }
+        .toList()
+
+    /**
+     * Opens the jar behind [url] without the JVM's shared cache, so closing it does not affect other users of the
+     * cached file and does not leave the jar locked on Windows.
+     */
+    private fun openUncached(url: URL): JarFile {
         val connection = url.openConnection() as JarURLConnection
-        // Do not share the cached JarFile: closing it here must not affect other users, and a cached open file
-        // would keep the jar locked on Windows.
         connection.useCaches = false
-        connection.jarFile.use { scanEntries(it, packagePath, out) }
+        return connection.jarFile
     }
 
-    private fun scanEntries(jarFile: JarFile, packagePath: String, out: MutableSet<String>) {
-        val prefix = "$packagePath/"
-        for (entry in jarFile.entries()) {
-            val name = entry.name
-            if (entry.isDirectory || !name.startsWith(prefix) || !name.endsWith(".class")) continue
-            addClassName(name.removeSuffix(".class").replace('/', '.'), out)
+    private fun jarsOf(classLoader: ClassLoader): List<File> = (classLoader as? URLClassLoader)?.urLs.orEmpty()
+        .filter { it.protocol == "file" && it.path.endsWith(".jar") }
+        .map { File(it.toURI()) }
+
+    private fun load(className: String, classLoader: ClassLoader): Class<*> =
+        wrapFailure("Could not load migration class $className") {
+            Class.forName(className, false, classLoader)
         }
-    }
 
-    private fun addClassName(name: String, out: MutableSet<String>) {
-        // module-info and package-info are never migrations
-        val simple = name.substringAfterLast('.')
-        if (simple == "module-info" || simple == "package-info") return
-        out.add(name)
-    }
+    private fun instantiate(type: Class<*>): SurfMigration? {
+        if (!isConcreteMigration(type)) return null
 
-    private fun instantiate(clazz: Class<*>): SurfMigration? {
-        if (!SurfMigration::class.java.isAssignableFrom(clazz)) return null
-        if (Modifier.isAbstract(clazz.modifiers) || clazz.isInterface) return null
-        if (clazz.isAnonymousClass || clazz.isLocalClass || clazz.isSynthetic) return null
+        return wrapFailure("Could not instantiate migration class ${type.name}") {
+            val instance = type.fields.find { it.name == "INSTANCE" && Modifier.isStatic(it.modifiers) }
+            val constructor = type.constructors.find { it.parameterCount == 0 }
 
-        return try {
-            val instanceField = runCatching { clazz.getField("INSTANCE") }.getOrNull()
-            if (instanceField != null && Modifier.isStatic(instanceField.modifiers)) {
-                instanceField.get(null) as SurfMigration
-            } else {
-                val constructor = runCatching { clazz.getConstructor() }.getOrNull()
-                    ?: error("Migration class ${clazz.name} needs a public no-arg constructor or must be an object")
-                constructor.newInstance() as SurfMigration
+            when {
+                instance != null -> instance.get(null) as SurfMigration
+                constructor != null -> constructor.newInstance() as SurfMigration
+                else -> error("Migration class ${type.name} needs a public no-arg constructor or must be an object")
             }
-        } catch (e: IllegalStateException) {
-            throw e
-        } catch (e: ReflectiveOperationException) {
-            throw IllegalStateException("Could not instantiate migration class ${clazz.name}", e)
-        } catch (e: LinkageError) {
-            throw IllegalStateException("Could not instantiate migration class ${clazz.name}", e)
-        } catch (e: ClassCastException) {
-            throw IllegalStateException("Could not instantiate migration class ${clazz.name}", e)
         }
+    }
+
+    private fun isConcreteMigration(type: Class<*>): Boolean =
+        SurfMigration::class.java.isAssignableFrom(type) &&
+            !type.isInterface &&
+            !Modifier.isAbstract(type.modifiers) &&
+            !type.isAnonymousClass &&
+            !type.isLocalClass &&
+            !type.isSynthetic
+
+    /**
+     * Rethrows reflection and linkage failures from [block] as an [IllegalStateException] with [message].
+     */
+    private inline fun <T> wrapFailure(message: String, block: () -> T): T = try {
+        block()
+    } catch (e: IllegalStateException) {
+        throw e
+    } catch (e: Exception) {
+        throw IllegalStateException(message, e)
+    } catch (e: LinkageError) {
+        throw IllegalStateException(message, e)
     }
 }
