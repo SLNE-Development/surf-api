@@ -38,7 +38,7 @@ class DatabaseApi internal constructor(
     val database: R2dbcDatabase,
     healthCheckName: String,
     internal val migrationDataSource: DataSource? = null,
-    private val releaseResources: () -> Unit = {}
+    private val releaseResources: () -> Unit = {},
 ) {
     init {
         DatabaseHealthRegistry.register(
@@ -68,7 +68,6 @@ class DatabaseApi internal constructor(
         ): DatabaseApi {
             val config = DatabaseConfig.create(pluginPath, fileName)
             val databaseType = config.credentials.databaseType
-            // Created before any pool or event loop, so an invalid configuration cannot leak them.
             val migrationDataSource = JdbcDataSources.create(config.credentials)
             val loopResources = LoopResources.create(
                 "${databaseType.name.lowercase()}-r2dbc-event-loop-$poolName",
