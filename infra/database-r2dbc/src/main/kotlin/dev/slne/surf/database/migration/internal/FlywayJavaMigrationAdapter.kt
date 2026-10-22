@@ -24,7 +24,7 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
  */
 internal class FlywayJavaMigrationAdapter(
     private val api: DatabaseApi,
-    private val migration: SurfMigration
+    private val migration: SurfMigration,
 ) : JavaMigration {
 
     override fun getVersion(): MigrationVersion = MigrationVersion.fromVersion(migration.version)
