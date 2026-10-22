@@ -54,10 +54,10 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
                     "Create it with DatabaseApi.create(pluginPath, ...) or pass a migrationDataSource."
         }
 
-        val configuration = Flyway.configure(MigrationClassLoader(plan.classLoader, plan.sqlLocations))
+        val configuration = Flyway.configure(MigrationClassLoader(plan.classLoader, plan.sqlPaths))
             .dataSource(dataSource)
             .table(plan.historyTable)
-            .locations(*plan.sqlLocations.toTypedArray())
+            .locations(*plan.sqlPaths.map { "classpath:$it" }.toTypedArray())
             .failOnMissingLocations(true)
             .validateMigrationNaming(true)
             .javaMigrations(*javaMigrations(plan).toTypedArray())

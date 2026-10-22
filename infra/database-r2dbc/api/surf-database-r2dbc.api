@@ -150,9 +150,6 @@ public abstract class dev/slne/surf/database/migration/JdbcMigration : dev/slne/
 	public abstract fun migrate (Ljava/sql/Connection;)V
 }
 
-public abstract interface annotation class dev/slne/surf/database/migration/MigrationDsl : java/lang/annotation/Annotation {
-}
-
 public final class dev/slne/surf/database/migration/MigrationResult {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;I)V
 	public final fun component1 ()Ljava/lang/String;

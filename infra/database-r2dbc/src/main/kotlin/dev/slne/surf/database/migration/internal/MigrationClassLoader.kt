@@ -10,17 +10,15 @@ import java.util.*
  * Classes and resources are looked up in the library first and in [plugin] second. The library comes first so that
  * Flyway's `ServiceLoader` finds the relocated Flyway plugins bundled with this library.
  *
- * Resources under one of the [sqlLocations] come from [plugin] only, so SQL files that the library's class loader
+ * Resources under one of the [sqlPaths] come from [plugin] only, so SQL files that the library's class loader
  * happens to see under the same path are never run as migrations of the plugin.
  *
- * @param sqlLocations Flyway locations such as `classpath:db/migrations`.
+ * @param sqlPaths Classpath paths of the SQL locations, such as `db/migrations`.
  */
 internal class MigrationClassLoader(
     private val plugin: ClassLoader,
-    sqlLocations: List<String>,
+    private val sqlPaths: List<String>,
 ) : ClassLoader(DatabaseApi::class.java.classLoader) {
-
-    private val sqlRoots = sqlLocations.map { it.removePrefix(CLASSPATH_PREFIX).trim('/') }
 
     override fun findClass(name: String): Class<*> = plugin.loadClass(name)
 
@@ -47,10 +45,6 @@ internal class MigrationClassLoader(
 
     private fun isSqlResource(name: String): Boolean {
         val path = name.trimStart('/')
-        return sqlRoots.any { root -> root.isEmpty() || path == root || path.startsWith("$root/") }
-    }
-
-    private companion object {
-        const val CLASSPATH_PREFIX = "classpath:"
+        return sqlPaths.any { root -> root.isEmpty() || path == root || path.startsWith("$root/") }
     }
 }
