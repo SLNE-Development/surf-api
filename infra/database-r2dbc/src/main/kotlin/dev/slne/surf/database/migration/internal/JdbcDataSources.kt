@@ -7,31 +7,41 @@ import org.postgresql.ds.PGSimpleDataSource
 import javax.sql.DataSource
 
 /**
- * Creates JDBC [DataSource]s for Flyway from [ConnectionDetails].
+ * Creates the JDBC [DataSource] that Flyway migrates through.
  *
- * Driver `DataSource` classes are instantiated directly; this code never asks `DriverManager` for a connection itself,
- * because `DriverManager` only hands out drivers visible to the caller's class loader, which an isolated plugin class
- * loader may not see. `MariaDbDataSource` connects through its driver without `DriverManager`. pgjdbc's
- * `BaseDataSource.getConnection` does call `DriverManager.getConnection`, which works because loading the data source
- * registers the (relocated) pgjdbc driver and `DriverManager` checks it against the data source's own class loader,
- * which defined that driver.
+ * The driver's data source is instantiated directly instead of going through `DriverManager`, which only offers
+ * drivers visible to the caller's class loader and can miss the relocated drivers from an isolated plugin class
+ * loader. pgjdbc still calls `DriverManager` internally; that works because loading [PGSimpleDataSource] registers
+ * the driver from the same class loader.
  */
 internal object JdbcDataSources {
     fun create(details: ConnectionDetails): DataSource = when (details.databaseType) {
-        DatabaseType.MARIADB -> MariaDbDataSource(
-            "jdbc:mariadb://${details.host}:${details.resolvedPort}/${details.database}"
-        ).apply {
+        DatabaseType.MARIADB -> mariaDb(details)
+        DatabaseType.POSTGRESQL -> postgres(details)
+    }
+
+    private fun mariaDb(details: ConnectionDetails): MariaDbDataSource {
+        val url = buildString {
+            append("jdbc:mariadb://")
+            append(details.host)
+            append(':')
+            append(details.resolvedPort)
+            append('/')
+            append(details.database)
+        }
+
+        return MariaDbDataSource(url).apply {
             user = details.username
             setPassword(details.password)
         }
+    }
 
-        DatabaseType.POSTGRESQL -> PGSimpleDataSource().apply {
-            setServerNames(arrayOf(details.host))
-            setPortNumbers(intArrayOf(details.resolvedPort))
-            databaseName = details.database
-            user = details.username
-            password = details.password
-            currentSchema = details.schema
-        }
+    private fun postgres(details: ConnectionDetails) = PGSimpleDataSource().apply {
+        serverNames = arrayOf(details.host)
+        portNumbers = intArrayOf(details.resolvedPort)
+        databaseName = details.database
+        user = details.username
+        password = details.password
+        currentSchema = details.schema
     }
 }
