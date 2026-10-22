@@ -78,6 +78,7 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
         }
 
         return MigrationPlan(
+            name = name,
             historyTable = "flyway_schema_history_$normalizedName",
             sqlPaths = sqlPaths.toList(),
             migrations = migrations.toList(),
@@ -97,9 +98,11 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
 /**
  * Validated migration settings of one plugin.
  *
+ * @property name Migration name as passed to `migrate()`, used in error messages.
  * @property sqlPaths Classpath paths of the SQL locations, without `classpath:` prefix and surrounding slashes.
  */
 internal data class MigrationPlan(
+    val name: String,
     val historyTable: String,
     val sqlPaths: List<String>,
     val migrations: List<SurfMigration>,

@@ -25,11 +25,11 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
      * description of the failed migration
      */
     @Blocking
-    fun migrate(name: String, plan: MigrationPlan): MigrationResult {
+    fun migrate(plan: MigrationPlan): MigrationResult {
         val result = try {
             configure(plan).load().migrate()
         } catch (e: FlywayException) {
-            throw IllegalStateException(failureMessage(name, e), e)
+            throw IllegalStateException(failureMessage(plan.name, e), e)
         }
 
         return MigrationResult(
