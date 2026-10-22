@@ -1,6 +1,9 @@
 package dev.slne.surf.database.config
 
 import dev.slne.surf.api.core.config.type.number.IntOr
+import dev.slne.surf.api.core.environment.EnvironmentVariableValidation
+import dev.slne.surf.api.core.environment.env
+import org.slf4j.event.Level
 
 internal object DatabaseEnvironmentVariables {
     const val LOG_LEVEL = "SURF_DATABASE_LOG_LEVEL"
@@ -20,73 +23,56 @@ internal object DatabaseEnvironmentVariables {
     const val POOL_MAX_VALIDATION_TIME_MILLIS = "SURF_DATABASE_POOL_MAX_VALIDATION_TIME_MILLIS"
     const val POOL_MAX_IDLE_TIME_MILLIS = "SURF_DATABASE_POOL_MAX_IDLE_TIME_MILLIS"
     const val POOL_MAX_LIFE_TIME_MILLIS = "SURF_DATABASE_POOL_MAX_LIFE_TIME_MILLIS"
+
+    val logLevel by env.optional(enumIgnoringCase<Level>()).named(LOG_LEVEL)
+    val type by env.optional(enumIgnoringCase<DatabaseType>()).named(TYPE)
+    val schema by env.optional(validation = nonBlank).named(SCHEMA)
+    val host by env.optional(validation = nonBlank).named(HOST)
+    val port by env.optionalInt().named(PORT)
+    val name by env.optional(validation = nonBlank).named(NAME)
+    val username by env.optional(validation = nonBlank).named(USERNAME)
+    val password by env.optional(sensitive = true).named(PASSWORD)
+    val poolInitialSize by env.optionalInt().named(POOL_INITIAL_SIZE)
+    val poolMinIdle by env.optionalInt().named(POOL_MIN_IDLE)
+    val poolMaxSize by env.optionalInt().named(POOL_MAX_SIZE)
+    val poolMaxAcquireTimeMillis by env.optionalLong().named(POOL_MAX_ACQUIRE_TIME_MILLIS)
+    val poolMaxCreateConnectionTimeMillis by env.optionalLong()
+        .named(POOL_MAX_CREATE_CONNECTION_TIME_MILLIS)
+    val poolMaxValidationTimeMillis by env.optionalLong().named(POOL_MAX_VALIDATION_TIME_MILLIS)
+    val poolMaxIdleTimeMillis by env.optionalLong().named(POOL_MAX_IDLE_TIME_MILLIS)
+    val poolMaxLifeTimeMillis by env.optionalLong().named(POOL_MAX_LIFE_TIME_MILLIS)
 }
 
-internal fun interface DatabaseEnvironmentVariableLookup {
-    operator fun get(name: String): String?
-}
-
-internal fun DatabaseConfig.withEnvironmentOverrides(
-    environment: DatabaseEnvironmentVariableLookup = DatabaseEnvironmentVariableLookup(System::getenv),
-): DatabaseConfig {
+internal fun DatabaseConfig.withEnvironmentOverrides(): DatabaseConfig {
+    val environment = DatabaseEnvironmentVariables
     val overridden = copy(
-        logLevel = environment.enum(DatabaseEnvironmentVariables.LOG_LEVEL, logLevel),
+        logLevel = environment.logLevel ?: logLevel,
         credentials = credentials.copy(
-            databaseType = environment.enum(
-                DatabaseEnvironmentVariables.TYPE,
-                credentials.databaseType
-            ),
-            schema = environment.text(DatabaseEnvironmentVariables.SCHEMA, credentials.schema),
-            host = environment.text(DatabaseEnvironmentVariables.HOST, credentials.host),
-            port = environment.integer(DatabaseEnvironmentVariables.PORT)?.let(IntOr::Default)
-                ?: credentials.port,
-            database = environment.text(DatabaseEnvironmentVariables.NAME, credentials.database),
-            username = environment.text(
-                DatabaseEnvironmentVariables.USERNAME,
-                credentials.username
-            ),
-            password = environment.text(
-                DatabaseEnvironmentVariables.PASSWORD,
-                credentials.password,
-                allowBlank = true,
-            ),
+            databaseType = environment.type ?: credentials.databaseType,
+            schema = environment.schema ?: credentials.schema,
+            host = environment.host ?: credentials.host,
+            port = environment.port?.let(IntOr::Default) ?: credentials.port,
+            database = environment.name ?: credentials.database,
+            username = environment.username ?: credentials.username,
+            password = environment.password ?: credentials.password,
         ),
         pool = pool.copy(
             sizing = pool.sizing.copy(
-                initialSize = environment.integer(
-                    DatabaseEnvironmentVariables.POOL_INITIAL_SIZE,
-                    pool.sizing.initialSize,
-                ),
-                minIdle = environment.integer(
-                    DatabaseEnvironmentVariables.POOL_MIN_IDLE,
-                    pool.sizing.minIdle,
-                ),
-                maxSize = environment.integer(
-                    DatabaseEnvironmentVariables.POOL_MAX_SIZE,
-                    pool.sizing.maxSize,
-                ),
+                initialSize = environment.poolInitialSize ?: pool.sizing.initialSize,
+                minIdle = environment.poolMinIdle ?: pool.sizing.minIdle,
+                maxSize = environment.poolMaxSize ?: pool.sizing.maxSize,
             ),
             timeouts = pool.timeouts.copy(
-                maxAcquireTimeMillis = environment.long(
-                    DatabaseEnvironmentVariables.POOL_MAX_ACQUIRE_TIME_MILLIS,
-                    pool.timeouts.maxAcquireTimeMillis,
-                ),
-                maxCreateConnectionTimeMillis = environment.long(
-                    DatabaseEnvironmentVariables.POOL_MAX_CREATE_CONNECTION_TIME_MILLIS,
-                    pool.timeouts.maxCreateConnectionTimeMillis,
-                ),
-                maxValidationTimeMillis = environment.long(
-                    DatabaseEnvironmentVariables.POOL_MAX_VALIDATION_TIME_MILLIS,
-                    pool.timeouts.maxValidationTimeMillis,
-                ),
-                maxIdleTimeMillis = environment.long(
-                    DatabaseEnvironmentVariables.POOL_MAX_IDLE_TIME_MILLIS,
-                    pool.timeouts.maxIdleTimeMillis,
-                ),
-                maxLifeTimeMillis = environment.long(
-                    DatabaseEnvironmentVariables.POOL_MAX_LIFE_TIME_MILLIS,
-                    pool.timeouts.maxLifeTimeMillis,
-                ),
+                maxAcquireTimeMillis = environment.poolMaxAcquireTimeMillis
+                    ?: pool.timeouts.maxAcquireTimeMillis,
+                maxCreateConnectionTimeMillis = environment.poolMaxCreateConnectionTimeMillis
+                    ?: pool.timeouts.maxCreateConnectionTimeMillis,
+                maxValidationTimeMillis = environment.poolMaxValidationTimeMillis
+                    ?: pool.timeouts.maxValidationTimeMillis,
+                maxIdleTimeMillis = environment.poolMaxIdleTimeMillis
+                    ?: pool.timeouts.maxIdleTimeMillis,
+                maxLifeTimeMillis = environment.poolMaxLifeTimeMillis
+                    ?: pool.timeouts.maxLifeTimeMillis,
             ),
         ),
     )
@@ -120,41 +106,13 @@ private fun DatabaseConfig.validate() {
     }
 }
 
-private inline fun <reified T : Enum<T>> DatabaseEnvironmentVariableLookup.enum(
-    name: String,
-    fallback: T,
-): T {
-    val rawValue = this[name] ?: return fallback
-    return enumValues<T>().firstOrNull { it.name.equals(rawValue, ignoreCase = true) }
+private val nonBlank: EnvironmentVariableValidation<String>.() -> Unit = {
+    require("expected a non-blank string") { it.isNotBlank() }
+}
+
+private inline fun <reified T : Enum<T>> enumIgnoringCase(): (String) -> T = { rawValue ->
+    enumValues<T>().firstOrNull { it.name.equals(rawValue, ignoreCase = true) }
         ?: throw IllegalArgumentException(
-            "Environment variable $name must be one of: " +
-                    enumValues<T>().joinToString { it.name.lowercase() } + "."
+            "Expected one of: " + enumValues<T>().joinToString { it.name.lowercase() }
         )
-}
-
-private fun DatabaseEnvironmentVariableLookup.text(
-    name: String,
-    fallback: String,
-    allowBlank: Boolean = false,
-): String {
-    val value = this[name] ?: return fallback
-    require(allowBlank || value.isNotBlank()) {
-        "Environment variable $name must not be blank."
-    }
-    return value
-}
-
-private fun DatabaseEnvironmentVariableLookup.integer(name: String, fallback: Int): Int =
-    integer(name) ?: fallback
-
-private fun DatabaseEnvironmentVariableLookup.integer(name: String): Int? {
-    val rawValue = this[name] ?: return null
-    return rawValue.toIntOrNull()
-        ?: throw IllegalArgumentException("Environment variable $name must be an integer.")
-}
-
-private fun DatabaseEnvironmentVariableLookup.long(name: String, fallback: Long): Long {
-    val rawValue = this[name] ?: return fallback
-    return rawValue.toLongOrNull()
-        ?: throw IllegalArgumentException("Environment variable $name must be a long integer.")
 }
