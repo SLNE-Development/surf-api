@@ -1,24 +1,27 @@
 package dev.slne.surf.database.migration
 
+import dev.slne.surf.database.DatabaseApi
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import java.sql.Connection
 
 /**
- * A code-based migration shipped by a plugin.
+ * A code migration shipped by a plugin; extend [JdbcMigration] or [ExposedMigration].
  *
- * Extend [JdbcMigration] or [ExposedMigration]; this class is sealed. The [version] and [description] are used to
- * order and label the migration in the plugin's history table, exactly like the `V<version>__<description>.sql`
- * naming of SQL migrations.
+ * [version] and [description] order and label the migration in the plugin's history table, like the
+ * `V<version>__<description>.sql` name of a SQL migration. Migrations must be idempotent, for example
+ * `CREATE TABLE IF NOT EXISTS`, because the database may already contain objects created before the plugin's history
+ * started.
  *
- * All migrations must be idempotent (for example `CREATE TABLE IF NOT EXISTS`), because a plugin's history starts at
- * its baseline and the database may already contain objects created before migrations were introduced.
+ * When a migration throws, `migrate()` fails. On PostgreSQL no history row is left. On MariaDB the migration is
+ * recorded as failed, and every later `migrate()` of the plugin fails until that row is deleted manually; there is no
+ * repair API.
  *
- * @property version Migration version, for example `"2"` or `"2.1"`.
- * @property description Short human-readable description.
+ * @property version Dot-separated numbers, for example `"2"` or `"2.1"`.
  */
 sealed class SurfMigration(val version: String, val description: String) {
     /**
-     * Optional checksum used to detect changes to an already applied migration, or `null` for none.
+     * Checksum stored with the applied migration; a later run with a different checksum fails validation. `null`
+     * disables the check.
      */
     open val checksum: Int? = null
 }
@@ -26,18 +29,12 @@ sealed class SurfMigration(val version: String, val description: String) {
 /**
  * A migration written against plain JDBC.
  *
- * [migrate] runs inside the JDBC transaction of the migration run. Do not commit or close the [Connection] yourself.
- * If it throws, `migrate()` fails, and what is left behind depends on the database:
- * - PostgreSQL rolls the transaction back, including DDL, and no history row is written.
- * - MariaDB cannot roll back DDL, so Flyway records the migration as failed (`success = false`) in
- *   `flyway_schema_history_<name>`, whatever the migration did. Every later `migrate()` for that plugin fails until
- *   the row is deleted manually; there is no repair API.
- *
- * Must be idempotent.
+ * [migrate] runs inside the transaction of the migration run; the connection must not be committed or closed. If it
+ * throws, PostgreSQL rolls back everything including DDL, while MariaDB keeps any DDL that already ran.
  */
 abstract class JdbcMigration(version: String, description: String) : SurfMigration(version, description) {
     /**
-     * Executes the migration on the given [connection].
+     * Executes the migration on [connection].
      */
     abstract fun migrate(connection: Connection)
 }
@@ -45,19 +42,13 @@ abstract class JdbcMigration(version: String, description: String) : SurfMigrati
 /**
  * A migration written with Exposed over R2DBC.
  *
- * [migrate] runs in a `suspendTransaction` on [dev.slne.surf.database.DatabaseApi.database]. This transaction is
- * separate from the one that records the migration in the history table: if the migration succeeds but the history
- * insert fails (or the process stops in between), the migration runs again on the next start. Therefore it must be
- * idempotent.
- *
- * If [migrate] throws, its own `suspendTransaction` is rolled back (on MariaDB, DDL it already ran stays) and
- * `migrate()` fails. On MariaDB, Flyway also records the migration as failed (`success = false`) in
- * `flyway_schema_history_<name>`, and every later `migrate()` for that plugin fails until the row is deleted manually;
- * there is no repair API. On PostgreSQL no history row is left.
+ * [migrate] runs in its own `suspendTransaction` on [DatabaseApi.database], separate from the transaction that writes
+ * the history row. If the process stops between the two, the migration runs again on the next start. If it throws,
+ * its transaction is rolled back, except for DDL on MariaDB.
  */
 abstract class ExposedMigration(version: String, description: String) : SurfMigration(version, description) {
     /**
-     * Executes the migration within the given Exposed transaction.
+     * Executes the migration within the given transaction.
      */
     abstract suspend fun R2dbcTransaction.migrate()
 }
