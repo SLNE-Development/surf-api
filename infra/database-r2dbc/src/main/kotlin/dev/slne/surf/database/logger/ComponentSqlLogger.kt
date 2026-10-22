@@ -19,8 +19,8 @@ class ComponentSqlLogger(
         context: StatementContext,
         transaction: Transaction
     ) {
-        if (!logger.isEnabledForLevel(level)) return
         logger.atLevel(level)
-            .log("SQL: ${context.expandArgs(transaction)}")
+            .addArgument { context.expandArgs(transaction) }
+            .log("SQL: {}")
     }
 }
