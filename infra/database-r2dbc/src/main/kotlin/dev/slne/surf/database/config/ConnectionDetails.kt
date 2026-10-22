@@ -1,5 +1,6 @@
 package dev.slne.surf.database.config
 
+import dev.slne.surf.api.core.config.type.number.IntOr
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 
@@ -10,16 +11,12 @@ internal data class ConnectionDetails(
     val schema: String = "public",
     val host: String = "localhost",
     @param:Comment("The port of the database server. Defaults to 3306 for MariaDB and 5432 for PostgreSQL.")
-    val port: Int? = null,
+    val port: IntOr.Default = IntOr.Default.USE_DEFAULT,
     val database: String = "database",
     val username: String = "root",
     val password: String = "1234"
 ) {
-    /**
-     * The configured [port], or the default port of the [databaseType].
-     */
-    val resolvedPort: Int
-        get() = port ?: databaseType.defaultPort
+    val resolvedPort: Int = port or databaseType.defaultPort
 
     override fun toString(): String {
         return "ConnectionDetails(databaseType=$databaseType, schema=$schema, host=$host, port=$resolvedPort, " +

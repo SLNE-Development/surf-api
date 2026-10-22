@@ -1,6 +1,6 @@
 package dev.slne.surf.database.config
 
-import org.slf4j.event.Level
+import dev.slne.surf.api.core.config.type.number.IntOr
 
 internal object DatabaseEnvironmentVariables {
     const val LOG_LEVEL = "SURF_DATABASE_LOG_LEVEL"
@@ -32,12 +32,19 @@ internal fun DatabaseConfig.withEnvironmentOverrides(
     val overridden = copy(
         logLevel = environment.enum(DatabaseEnvironmentVariables.LOG_LEVEL, logLevel),
         credentials = credentials.copy(
-            databaseType = environment.enum(DatabaseEnvironmentVariables.TYPE, credentials.databaseType),
+            databaseType = environment.enum(
+                DatabaseEnvironmentVariables.TYPE,
+                credentials.databaseType
+            ),
             schema = environment.text(DatabaseEnvironmentVariables.SCHEMA, credentials.schema),
             host = environment.text(DatabaseEnvironmentVariables.HOST, credentials.host),
-            port = environment.integer(DatabaseEnvironmentVariables.PORT) ?: credentials.port,
+            port = environment.integer(DatabaseEnvironmentVariables.PORT)?.let(IntOr::Default)
+                ?: credentials.port,
             database = environment.text(DatabaseEnvironmentVariables.NAME, credentials.database),
-            username = environment.text(DatabaseEnvironmentVariables.USERNAME, credentials.username),
+            username = environment.text(
+                DatabaseEnvironmentVariables.USERNAME,
+                credentials.username
+            ),
             password = environment.text(
                 DatabaseEnvironmentVariables.PASSWORD,
                 credentials.password,
