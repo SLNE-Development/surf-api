@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+// ALL_INSTANCES service: a message response becomes Answer<FindReply>, an Empty response a fan-out.
+service FinderService {
+  option (surf.nats.v1.service) = { name: "finder" recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+
+  rpc Find(FindRequest) returns (FindReply);
+  rpc Broadcast(BroadcastRequest) returns (google.protobuf.Empty);
+  // Overridden back to one instance: plain FindReply result.
+  rpc Lookup(FindRequest) returns (FindReply) {
+    option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ANY_INSTANCE };
+  }
+}
+
+message FindRequest {
+  optional string key = 1;
+}
+
+message FindReply {
+  optional string value = 1 [(surf.nats.v1.nullable) = true];
+}
+
+message BroadcastRequest {
+  optional string message = 1;
+}

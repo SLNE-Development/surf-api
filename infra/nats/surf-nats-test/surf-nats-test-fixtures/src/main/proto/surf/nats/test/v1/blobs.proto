@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/common.proto";
+
+// Large payloads through the payload store.
+service BlobService {
+  option (surf.nats.v1.service) = { name: "blobs" };
+
+  rpc Checksum(Blob) returns (Number);
+  rpc Create(CreateRequest) returns (Blob);
+  rpc Echo(Blob) returns (Blob);
+}
+
+service BlobFanoutService {
+  option (surf.nats.v1.service) = { name: "blob-fanout" recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+
+  rpc Push(Blob) returns (google.protobuf.Empty);
+  // Answer<Blob>.
+  rpc Find(CreateRequest) returns (Blob);
+}
+
+message CreateRequest {
+  optional int32 size = 1;
+}

@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package surf.nats.testing.v1;
+
+option java_package = "dev.slne.surf.nats.test.common.proto.v1";
+
+import "surf/nats/v1/options.proto";
+
+// Chat line published by a test command; subject surf-nats-test.v1.chat.
+message TestChatEvent {
+  option (surf.nats.v1.event) = { subject: "chat" };
+
+  optional string origin = 1;
+  optional string message = 2;
+}

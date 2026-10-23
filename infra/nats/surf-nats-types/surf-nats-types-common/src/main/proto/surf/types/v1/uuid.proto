@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// java.util.UUID. value is required: a reader rejects a message without it.
+message Uuid {
+  // Exactly 16 bytes, big-endian: most significant 64 bits, then least significant 64 bits.
+  optional bytes value = 1;
+}

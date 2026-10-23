@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "surf/nats/v1/options.proto";
+
+// Content-aware equality (bytes) next to floating point fields.
+message Measurement {
+  optional bytes data = 1;
+  optional double value = 2;
+  optional float ratio = 3;
+  optional double previous = 4 [(surf.nats.v1.nullable) = true];
+}

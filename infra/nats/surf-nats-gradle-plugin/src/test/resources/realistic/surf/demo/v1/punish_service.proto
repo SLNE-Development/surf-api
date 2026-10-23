@@ -1,0 +1,76 @@
+syntax = "proto2";
+
+package surf.demo.v1;
+
+option java_package = "dev.slne.surf.demo.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+import "surf/types/v1/uuid.proto";
+import "surf/demo/v1/common.proto";
+
+service PunishService {
+  option (surf.nats.v1.service) = { name: "punish" call_timeout_seconds: 10 };
+
+  rpc FindPunishments(FindPunishmentsRequest) returns (FindPunishmentsResponse);
+
+  rpc Broadcast(BroadcastRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  }
+
+  rpc Lookup(LookupRequest) returns (LookupReply) {
+    option (surf.nats.v1.method) = { name: "lookup-player" recipients: NATS_RECIPIENTS_ALL_INSTANCES call_timeout_seconds: 0 };
+  }
+
+  rpc Store(StoreRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { persistent: true };
+  }
+
+  rpc Total(google.protobuf.Empty) returns (Count) {
+    option (surf.nats.v1.method) = { persistent: true call_timeout_seconds: 300 };
+  }
+
+  rpc Ping(Ack) returns (Text);
+}
+
+message FindPunishmentsRequest {
+  optional surf.types.v1.Uuid player = 1;
+  optional int32 limit = 2 [default = 10];
+  optional fixed32 flags = 3 [default = 0x10];
+  repeated int32 ids = 4 [packed = true];
+  oneof filter {
+    PunishmentType type = 5;
+    string reason = 6;
+  }
+  optional string server = 7 [(surf.nats.v1.nullable) = true];
+  map<fixed32, string> labels = 8;
+}
+
+message FindPunishmentsResponse {
+  repeated Punishment punishments = 1;
+
+  message Punishment {
+    optional int64 id = 1;
+    optional PunishmentType type = 2;
+    optional bytes evidence = 3 [(surf.nats.v1.nullable) = true];
+  }
+}
+
+message BroadcastRequest {
+  optional string message = 1;
+}
+
+message LookupRequest {
+  optional surf.types.v1.Uuid player = 1;
+}
+
+message LookupReply {
+  optional string server = 1 [(surf.nats.v1.nullable) = true];
+}
+
+message StoreRequest {
+  optional int64 id = 1;
+  repeated bytes payloads = 2;
+  optional Tag tag = 3;
+  optional Tag previous_tag = 4 [(surf.nats.v1.nullable) = true];
+}

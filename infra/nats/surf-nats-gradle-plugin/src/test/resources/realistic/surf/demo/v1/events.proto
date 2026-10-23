@@ -1,0 +1,59 @@
+syntax = "proto2";
+
+package surf.demo.v1;
+
+option java_package = "dev.slne.surf.demo.proto.v1";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "surf/nats/v1/options.proto";
+import "surf/types/v1/component.proto";
+import "surf/types/v1/key.proto";
+import "surf/types/v1/uuid.proto";
+import "surf/demo/v1/common.proto";
+
+message PunishmentCreated {
+  option (surf.nats.v1.event) = {};
+
+  optional surf.types.v1.Uuid player = 1;
+  optional PunishmentType type = 2;
+  optional google.protobuf.Timestamp created_at = 3;
+  optional google.protobuf.Duration duration = 4 [(surf.nats.v1.nullable) = true];
+  optional string reason = 5 [default = "none"];
+  repeated string tags = 6;
+  map<string, int64> counters = 7;
+  oneof target {
+    string server = 10;
+    sint64 region = 11;
+    Text note = 12;
+  }
+  repeated google.protobuf.Timestamp history = 8;
+  map<string, surf.types.v1.Uuid> witnesses = 9;
+}
+
+message ServerStarted {
+  option (surf.nats.v1.event) = { subject: "servers.started" global: true };
+}
+
+message PlayerJoined {
+  option (surf.nats.v1.event).subject = "player.joined";
+
+  optional surf.types.v1.Uuid player = 1;
+  optional surf.types.v1.Component display_name = 2 [(surf.nats.v1.nullable) = true];
+  optional surf.types.v1.Key world = 3;
+  optional Location location = 4;
+
+  message Location {
+    optional double x = 1;
+    optional double y = 2;
+    optional double z = 3;
+    optional float yaw = 4 [default = 0.5];
+    optional Facing facing = 5 [default = FACING_UNSPECIFIED];
+
+    enum Facing {
+      FACING_UNSPECIFIED = 0;
+      FACING_NORTH = 1;
+      FACING_SOUTH = 2;
+    }
+  }
+}

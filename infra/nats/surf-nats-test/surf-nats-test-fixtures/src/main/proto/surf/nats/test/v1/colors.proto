@@ -1,0 +1,40 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "surf/nats/v1/options.proto";
+
+enum Color {
+  COLOR_UNSPECIFIED = 0;
+  COLOR_RED = 1;
+  COLOR_GREEN = 2;
+  COLOR_BLUE = 3;
+}
+
+// A Color in every field position. Decoding a WideColorHolder that carries WIDE_COLOR_PURPLE yields
+// COLOR_UNSPECIFIED in each position.
+message ColorHolder {
+  optional Color color = 1;
+  optional Color maybe_color = 2 [(surf.nats.v1.nullable) = true];
+  repeated Color colors = 3;
+  map<string, Color> colors_by_name = 4;
+}
+
+// Color with one more value, for unknown-enum tests.
+enum WideColor {
+  WIDE_COLOR_UNSPECIFIED = 0;
+  WIDE_COLOR_RED = 1;
+  WIDE_COLOR_GREEN = 2;
+  WIDE_COLOR_BLUE = 3;
+  WIDE_COLOR_PURPLE = 4;
+}
+
+// Wire-identical to ColorHolder except for the enum.
+message WideColorHolder {
+  optional WideColor color = 1;
+  optional WideColor maybe_color = 2 [(surf.nats.v1.nullable) = true];
+  repeated WideColor colors = 3;
+  map<string, WideColor> colors_by_name = 4;
+}

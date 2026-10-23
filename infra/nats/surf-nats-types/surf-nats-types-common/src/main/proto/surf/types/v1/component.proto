@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// Adventure text component. json is required: a reader rejects a message without it.
+message Component {
+  // Adventure Gson JSON (GsonComponentSerializer.gson()).
+  optional string json = 1;
+}

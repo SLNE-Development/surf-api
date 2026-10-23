@@ -1,0 +1,47 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+// Persistent services for stream provisioning tests.
+
+// Its stream must not exist before the first registration.
+service LateService {
+  option (surf.nats.v1.service) = { name: "ext-late" global: true persistent: true };
+
+  rpc Put(PutRequest) returns (google.protobuf.Empty);
+}
+
+// A prefixed and a global service side by side.
+service CoexInnerService {
+  option (surf.nats.v1.service) = { name: "inner" persistent: true };
+
+  rpc Put(PutRequest) returns (google.protobuf.Empty);
+}
+
+service CoexOuterService {
+  option (surf.nats.v1.service) = { name: "coex" global: true persistent: true };
+
+  rpc Put(PutRequest) returns (google.protobuf.Empty);
+}
+
+// Client "coll" with "x-y" and client "coll-x" with "y" share a stream name (runtime collision check).
+service CollidingXyService {
+  option (surf.nats.v1.service) = { name: "x-y" persistent: true };
+
+  rpc Put(PutRequest) returns (google.protobuf.Empty);
+}
+
+service CollidingYService {
+  option (surf.nats.v1.service) = { name: "y" persistent: true };
+
+  rpc Put(PutRequest) returns (google.protobuf.Empty);
+}
+
+message PutRequest {
+  optional int64 id = 1;
+}

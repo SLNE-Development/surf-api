@@ -1,0 +1,47 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/common.proto";
+import "surf/types/v1/uuid.proto";
+
+// Global service for external callers: subjects without a client prefix.
+service RolesService {
+  option (surf.nats.v1.service) = { name: "ext-roles" global: true };
+
+  rpc Whitelist(WhitelistRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { name: "whitelist" persistent: true };
+  }
+  rpc Echo(EchoRequest) returns (Number);
+  rpc Owner(OwnerRequest) returns (OwnerReply);
+  rpc Store(StoreRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { persistent: true };
+  }
+  rpc Handle(StoreRequest) returns (Number);
+}
+
+message WhitelistRequest {
+  optional string action = 1;
+  optional int64 user_id = 2;
+}
+
+message EchoRequest {
+  optional int64 id = 1;
+}
+
+message OwnerRequest {
+  optional surf.types.v1.Uuid player = 1;
+}
+
+message OwnerReply {
+  optional surf.types.v1.Uuid owner = 1;
+}
+
+message StoreRequest {
+  optional int64 id = 1;
+  optional string payload = 2 [(surf.nats.v1.nullable) = true];
+}

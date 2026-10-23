@@ -1,17 +1,21 @@
 @file:OptIn(ExperimentalAbiValidation::class)
 
-import dev.slne.surf.api.gradle.util.slneReleases
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
-    id("dev.slne.surf.api.gradle.core")
-}
-
-surfCoreApi {
-    withApiValidation()
+    id("org.jetbrains.kotlin.multiplatform")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 kotlin {
+    explicitApi()
+
+    jvm()
+
+    js {
+        nodejs()
+    }
+
     abiValidation {
         filters {
             exclude {
@@ -19,11 +23,22 @@ kotlin {
             }
         }
     }
-    explicitApi()
+
+    sourceSets {
+        jvmMain.dependencies {
+            compileOnly(libs.surf.api.core)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+        jvmTest.dependencies {
+            implementation(libs.junit.jupiter)
+
+            runtimeOnly(libs.junit.platform.launcher)
+        }
+    }
 }
 
-publishing {
-    repositories {
-        slneReleases()
-    }
+tasks.named<Test>("jvmTest") {
+    useJUnitPlatform()
 }

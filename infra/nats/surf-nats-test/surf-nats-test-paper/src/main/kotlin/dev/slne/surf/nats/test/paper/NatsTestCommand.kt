@@ -4,13 +4,13 @@ import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.executors.CommandArguments
 import dev.jorel.commandapi.kotlindsl.*
 import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
-import dev.slne.surf.nats.rpc.getOrElse
+import dev.slne.surf.nats.rpc.getOrNull
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.Benchmark
-import dev.slne.surf.nats.test.common.event.TestChatEvent
 import dev.slne.surf.nats.test.common.natsClient
-import dev.slne.surf.nats.test.common.rpc.MicroserviceTestService
-import dev.slne.surf.nats.test.common.rpc.PaperTestService
+import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
+import dev.slne.surf.nats.test.common.proto.v1.PaperTestService
+import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
@@ -28,32 +28,32 @@ fun registerNatsTestCommand() = commandAPICommand("natstest") {
         greedyStringArgument("message")
         anyExecutorSuspend { sender, args ->
             val message: String by args
-            natsClient.publish(TestChatEvent(plugin.origin, message))
+            natsClient.publish(TestChatEvent(origin = plugin.origin, message = message))
             sender.reply("event published")
         }
     }
 
     call("echo", { greedyStringArgument("text") }) { args ->
         val text: String by args
-        microservice.echo(text)
+        microservice.echo(text).text
     }
     call("fail", { greedyStringArgument("message") }) { args ->
         val message: String by args
-        microservice.fail(message)
+        microservice.fail(message).text
     }
     call("size", { integerArgument("kilobytes", min = 0) }) { args ->
         val kilobytes: Int by args
-        microservice.size(ByteArray(kilobytes * 1024))
+        microservice.size(ByteArray(kilobytes * 1024)).size
     }
-    call("stored") { microservice.stored() }
+    call("stored") { microservice.stored().entries }
     call("store", { greedyStringArgument("entry") }) { args ->
         val entry: String by args
         microservice.store(entry)
     }
-    call("count") { microservice.storedCount() }
+    call("count") { microservice.storedCount().count }
     call("find", { stringArgument("player") }) { args ->
         val player: String by args
-        paper.findPlayer(player).getOrElse { "none" }
+        paper.findPlayer(player).getOrNull()?.info ?: "none"
     }
     call("broadcast", { greedyStringArgument("message") }) { args ->
         val message: String by args

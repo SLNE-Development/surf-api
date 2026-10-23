@@ -1,0 +1,72 @@
+syntax = "proto2";
+
+package surf.nats.testing.v1;
+
+option java_package = "dev.slne.surf.nats.test.common.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+// Served by the test microservice (one instance per call).
+service MicroserviceTestService {
+  option (surf.nats.v1.service) = { name: "microservice" };
+
+  // Echoes the text with a prefix.
+  rpc Echo(EchoRequest) returns (EchoResponse);
+  // Always fails on the implementation.
+  rpc Fail(FailRequest) returns (FailResponse);
+  // Returns the size of the data; large data goes through the payload store.
+  rpc Size(SizeRequest) returns (SizeResponse);
+  // Returns the stored entries.
+  rpc Stored(StoredRequest) returns (StoredResponse);
+  // Stores the entry (JetStream fire).
+  rpc Store(StoreRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { persistent: true };
+  }
+  // Returns the number of stored entries (JetStream RPC).
+  rpc StoredCount(StoredCountRequest) returns (StoredCountResponse) {
+    option (surf.nats.v1.method) = { persistent: true };
+  }
+}
+
+message EchoRequest {
+  optional string text = 1;
+}
+
+message EchoResponse {
+  optional string text = 1;
+}
+
+message FailRequest {
+  optional string message = 1;
+}
+
+message FailResponse {
+  optional string text = 1;
+}
+
+message SizeRequest {
+  optional bytes data = 1;
+}
+
+message SizeResponse {
+  optional int32 size = 1;
+}
+
+message StoredRequest {
+}
+
+message StoredResponse {
+  repeated string entries = 1;
+}
+
+message StoreRequest {
+  optional string entry = 1;
+}
+
+message StoredCountRequest {
+}
+
+message StoredCountResponse {
+  optional int32 count = 1;
+}

@@ -1,0 +1,19 @@
+syntax = "proto2";
+
+package surf.types.paper.v1;
+
+import "surf/nats/v1/options.proto";
+import "surf/types/v1/uuid.proto";
+
+option java_package = "dev.slne.surf.nats.types.paper.proto";
+
+// org.bukkit.Location. x, y, z, yaw and pitch are required.
+message Location {
+    // World UID; unset for a location without a world.
+    optional surf.types.v1.Uuid world = 1 [(surf.nats.v1.nullable) = true];
+    optional double x = 2;
+    optional double y = 3;
+    optional double z = 4;
+    optional float yaw = 5;
+    optional float pitch = 6;
+}

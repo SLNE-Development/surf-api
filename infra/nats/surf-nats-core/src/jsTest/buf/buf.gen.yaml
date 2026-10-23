@@ -1,0 +1,7 @@
+version: v2
+plugins:
+  - local: ["${node}", "${protocGenEs}"]
+    out: gen
+    opt:
+      - target=js+dts
+      - import_extension=js

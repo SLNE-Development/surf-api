@@ -1,0 +1,142 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/colors.proto";
+import "surf/types/v1/uuid.proto";
+
+// Kotlin/JVM <-> protobuf-es interop fixtures (spec 12.7). Unknown enums: ColorHolder and WideColorHolder.
+
+// uint32/uint64 values >= 2^31 / 2^63 in both directions.
+message InteropScalars {
+  optional uint32 unsigned_small = 1;
+  optional uint64 unsigned_large = 2;
+  optional sint64 signed_large = 3;
+  optional int32 small = 4;
+  optional int64 large = 5;
+  optional fixed32 fixed_small = 6;
+  optional double ratio = 7;
+  optional bool flag = 8;
+}
+
+message InteropMaps {
+  map<string, sint64> signed_by_name = 1;
+  map<fixed32, string> names_by_fixed = 2;
+}
+
+message InteropPacked {
+  repeated int32 packed_values = 1 [packed = true];
+  repeated int32 unpacked_values = 2;
+}
+
+// null versus explicit zero or empty values.
+message InteropNullables {
+  optional string text = 1 [(surf.nats.v1.nullable) = true];
+  optional int32 number = 2 [(surf.nats.v1.nullable) = true];
+  optional bytes data = 3 [(surf.nats.v1.nullable) = true];
+  optional InteropScalars scalars = 4 [(surf.nats.v1.nullable) = true];
+  optional surf.types.v1.Uuid uuid = 5 [(surf.nats.v1.nullable) = true];
+  optional Color color = 6 [(surf.nats.v1.nullable) = true];
+}
+
+// [default] values elided by the sender and restored by the reader, in both directions.
+message InteropDefaults {
+  optional int32 number = 1 [default = 7];
+  optional string text = 2 [default = "surf"];
+  optional bool flag = 3 [default = true];
+  optional double ratio = 4 [default = 1.5];
+  optional Color color = 5 [default = COLOR_UNSPECIFIED];
+  optional bytes data = 6 [default = "\001\002"];
+  optional uint32 unsigned_small = 7 [default = 4294967295];
+}
+
+// name is required: a TS sender that omits it must fail its validation.
+message InteropRequired {
+  optional string name = 1;
+  optional int32 count = 2 [(surf.nats.v1.nullable) = true];
+}
+
+// 16-byte big-endian Uuid, epoch Timestamp (encodes as 0a00 inside its field), negative Duration.
+message InteropTypes {
+  optional surf.types.v1.Uuid uuid = 1;
+  optional google.protobuf.Timestamp timestamp = 2;
+  optional google.protobuf.Duration duration = 3;
+}
+
+message InteropEmpty {
+}
+
+// Unset and each case.
+message InteropOneof {
+  oneof value {
+    string text = 1;
+    sint64 number = 2;
+    InteropEmpty empty = 3;
+  }
+}
+
+// Schema evolution within one major version: InteropEvolvedV2 is the newer InteropEvolved, with a nullable and a
+// [default] field added at higher numbers. Old and new readers on both runtimes must accept each other's messages.
+message InteropEvolved {
+  optional string name = 1;
+  optional int32 level = 2;
+}
+
+message InteropEvolvedV2 {
+  optional string name = 1;
+  optional int32 level = 2;
+  optional string nickname = 3 [(surf.nats.v1.nullable) = true];
+  optional int32 rank = 4 [default = 5];
+}
+
+message InteropEvent {
+  option (surf.nats.v1.event) = { subject: "interop" };
+
+  optional InteropScalars scalars = 1;
+  optional InteropTypes types = 2 [(surf.nats.v1.nullable) = true];
+}
+
+service InteropService {
+  option (surf.nats.v1.service) = { name: "interop" };
+
+  rpc EchoScalars(InteropScalars) returns (InteropScalars);
+  rpc EchoMaps(InteropMaps) returns (InteropMaps);
+  rpc EchoPacked(InteropPacked) returns (InteropPacked);
+  rpc EchoColors(ColorHolder) returns (ColorHolder);
+  rpc EchoNullables(InteropNullables) returns (InteropNullables);
+  rpc EchoDefaults(InteropDefaults) returns (InteropDefaults);
+  rpc EchoRequired(InteropRequired) returns (InteropRequired);
+  rpc EchoTypes(InteropTypes) returns (InteropTypes);
+  rpc EchoEmpty(InteropEmpty) returns (InteropEmpty);
+  rpc EchoOneof(InteropOneof) returns (InteropOneof);
+  rpc EchoEvolved(InteropEvolved) returns (InteropEvolved);
+  rpc EchoEvolvedV2(InteropEvolvedV2) returns (InteropEvolvedV2);
+}
+
+// Serves the Kotlin-encoded wire vectors of the JVM <-> JS interop test by name; the JS side checks the decoded
+// message and sends it back through InteropService.
+service InteropVectorService {
+  option (surf.nats.v1.service) = { name: "interop-vectors" };
+
+  rpc Scalars(InteropVectorRequest) returns (InteropScalars);
+  rpc Maps(InteropVectorRequest) returns (InteropMaps);
+  rpc Packed(InteropVectorRequest) returns (InteropPacked);
+  rpc Colors(InteropVectorRequest) returns (ColorHolder);
+  rpc Nullables(InteropVectorRequest) returns (InteropNullables);
+  rpc Defaults(InteropVectorRequest) returns (InteropDefaults);
+  rpc Required(InteropVectorRequest) returns (InteropRequired);
+  rpc Types(InteropVectorRequest) returns (InteropTypes);
+  rpc Empty(InteropVectorRequest) returns (InteropEmpty);
+  rpc Oneof(InteropVectorRequest) returns (InteropOneof);
+  rpc Evolved(InteropVectorRequest) returns (InteropEvolved);
+  rpc EvolvedV2(InteropVectorRequest) returns (InteropEvolvedV2);
+}
+
+message InteropVectorRequest {
+  optional string name = 1;
+}

@@ -3,7 +3,7 @@ package dev.slne.surf.nats.test.microservice
 import com.google.auto.service.AutoService
 import dev.slne.surf.nats.registerService
 import dev.slne.surf.nats.test.common.NatsService
-import dev.slne.surf.nats.test.common.rpc.MicroserviceTestService
+import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
 import dev.slne.surf.nats.test.microservice.event.ChatListener
 import dev.slne.surf.nats.test.microservice.rpc.MicroserviceTestServiceImpl
 

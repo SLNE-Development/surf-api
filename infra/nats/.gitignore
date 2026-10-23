@@ -105,6 +105,7 @@ fabric.properties
 
 ### Gradle template
 .gradle
+.kotlin
 **/build/
 !src/**/build/
 
@@ -129,3 +130,6 @@ gradle-app.setting
 # Local run directory
 run/
 data/
+
+# JVM heap dumps
+*.hprof

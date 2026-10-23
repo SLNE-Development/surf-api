@@ -1,0 +1,73 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "surf/nats/v1/options.proto";
+import "surf/types/v1/uuid.proto";
+
+// Prefixed events: <client>.v1.<subject>.
+
+message Created {
+  option (surf.nats.v1.event) = { subject: "created" };
+
+  optional int64 id = 1;
+}
+
+message PlayerEvent {
+  option (surf.nats.v1.event) = { subject: "player" };
+
+  optional surf.types.v1.Uuid player = 1;
+}
+
+message Balanced {
+  option (surf.nats.v1.event) = { subject: "balanced" };
+
+  optional int32 id = 1;
+}
+
+message QueueShared {
+  option (surf.nats.v1.event) = { subject: "queue-shared" };
+
+  optional int64 id = 1;
+}
+
+message BigEvent {
+  option (surf.nats.v1.event) = { subject: "big-event" };
+
+  optional string payload = 1;
+}
+
+// Fieldless event with the default subject "heartbeat".
+message Heartbeat {
+  option (surf.nats.v1.event) = {};
+}
+
+// Default subject "profile-updated", nullable fields.
+message ProfileUpdated {
+  option (surf.nats.v1.event) = {};
+
+  optional surf.types.v1.Uuid player = 1;
+  optional string nickname = 2 [(surf.nats.v1.nullable) = true];
+  optional surf.types.v1.Uuid previous_owner = 3 [(surf.nats.v1.nullable) = true];
+}
+
+// Global events: <first token>.v1.<remaining tokens>.
+
+message PanelEvent {
+  option (surf.nats.v1.event) = { subject: "panel.listener-test.created" global: true };
+
+  optional int64 id = 1;
+}
+
+message OriginEvent {
+  option (surf.nats.v1.event) = { subject: "listener-test.origin" global: true };
+
+  optional int64 id = 1;
+}
+
+// Not an event: listener-signature and publish rejection tests.
+message NotAnEvent {
+  optional int64 id = 1;
+}

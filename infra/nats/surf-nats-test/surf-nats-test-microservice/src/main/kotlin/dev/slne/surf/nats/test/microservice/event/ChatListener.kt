@@ -2,7 +2,7 @@ package dev.slne.surf.nats.test.microservice.event
 
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.nats.event.NatsListener
-import dev.slne.surf.nats.test.common.event.TestChatEvent
+import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 
 object ChatListener {
     private val log = logger()

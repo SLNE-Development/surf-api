@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+package surf.nats.testing.v1;
+
+option java_package = "dev.slne.surf.nats.test.common.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+// Served by every test paper server.
+service PaperTestService {
+  option (surf.nats.v1.service) = { name: "paper" recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+
+  // Answer<FindPlayerResponse>: known from the server the player is online on, unknown otherwise.
+  rpc FindPlayer(FindPlayerRequest) returns (FindPlayerResponse);
+  // Fan-out to all servers without a reply.
+  rpc Broadcast(BroadcastRequest) returns (google.protobuf.Empty);
+}
+
+message FindPlayerRequest {
+  optional string name = 1;
+}
+
+message FindPlayerResponse {
+  optional string info = 1;
+}
+
+message BroadcastRequest {
+  optional string message = 1;
+}

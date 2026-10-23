@@ -1,0 +1,38 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+// Major version 1 of a contract that surf/nats/test/v2/versioned.proto continues: both register in one client.
+service VersionedService {
+  option (surf.nats.v1.service) = { name: "versioned" };
+
+  rpc Ping(VersionedPingRequest) returns (VersionedPingReply);
+}
+
+// Persistent twin of VersionedService: one stream per major version.
+service VersionedJournalService {
+  option (surf.nats.v1.service) = { name: "versioned-journal" persistent: true };
+
+  rpc Record(VersionedPingRequest) returns (google.protobuf.Empty);
+  rpc Append(VersionedPingRequest) returns (VersionedPingReply);
+}
+
+message VersionedPingRequest {
+  optional string message = 1;
+}
+
+message VersionedPingReply {
+  optional string message = 1;
+  optional int32 version = 2;
+}
+
+message VersionedChanged {
+  option (surf.nats.v1.event) = { subject: "versioned.changed" };
+
+  optional string message = 1;
+}

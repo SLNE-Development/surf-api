@@ -1,0 +1,49 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/colors.proto";
+import "surf/nats/test/v1/common.proto";
+
+// Persistent by default; Ping opts out per method.
+service OrderService {
+  option (surf.nats.v1.service) = { name: "orders" persistent: true };
+
+  // Persistent fire.
+  rpc Place(PlaceRequest) returns (google.protobuf.Empty);
+  // Persistent rpcs.
+  rpc Total(TotalRequest) returns (Number);
+  rpc Lookup(LookupRequest) returns (LookupReply);
+  // Large payloads through the persistent and the transient payload bucket.
+  rpc Big(Blob) returns (google.protobuf.Empty);
+  rpc Echo(Blob) returns (Blob);
+  // Persistent rpc whose timeout exceeds the duplicate window.
+  rpc Audit(TotalRequest) returns (Number) {
+    option (surf.nats.v1.method) = { call_timeout_seconds: 180 };
+  }
+  // Persistent fire with a Color in every field position, for unknown enum values.
+  rpc Paint(ColorHolder) returns (google.protobuf.Empty);
+  rpc Ping(google.protobuf.Empty) returns (Text) {
+    option (surf.nats.v1.method) = { persistent: false };
+  }
+}
+
+message PlaceRequest {
+  optional int64 id = 1;
+}
+
+message TotalRequest {
+  optional int64 id = 1;
+}
+
+message LookupRequest {
+  optional int64 id = 1;
+}
+
+message LookupReply {
+  optional string value = 1 [(surf.nats.v1.nullable) = true];
+}

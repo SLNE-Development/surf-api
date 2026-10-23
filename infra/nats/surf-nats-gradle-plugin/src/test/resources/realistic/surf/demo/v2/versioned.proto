@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+package surf.demo.v2;
+
+option java_package = "dev.slne.surf.demo.proto.v2";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+service VersionedService {
+  option (surf.nats.v1.service) = { global: true recipients: NATS_RECIPIENTS_ANY_INSTANCE persistent: true };
+
+  rpc Ping(google.protobuf.Empty) returns (Pong) {
+    option (surf.nats.v1.method) = { persistent: false };
+  }
+}
+
+message Pong {
+  optional sfixed64 at = 1 [default = -9223372036854775808];
+  optional uint64 big = 2 [default = 18446744073709551615];
+}

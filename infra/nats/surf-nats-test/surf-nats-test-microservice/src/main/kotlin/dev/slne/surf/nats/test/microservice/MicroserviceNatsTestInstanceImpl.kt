@@ -2,14 +2,14 @@ package dev.slne.surf.nats.test.microservice
 
 import com.google.auto.service.AutoService
 import dev.slne.surf.microservice.api.microservice.command.microserviceCommand
-import dev.slne.surf.nats.rpc.getOrElse
+import dev.slne.surf.nats.rpc.getOrNull
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.Benchmark
 import dev.slne.surf.nats.test.common.NatsTestInstance
-import dev.slne.surf.nats.test.common.event.TestChatEvent
 import dev.slne.surf.nats.test.common.natsClient
-import dev.slne.surf.nats.test.common.rpc.MicroserviceTestService
-import dev.slne.surf.nats.test.common.rpc.PaperTestService
+import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
+import dev.slne.surf.nats.test.common.proto.v1.PaperTestService
+import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import kotlin.time.measureTimedValue
 
 @AutoService(NatsTestInstance::class)
@@ -26,7 +26,7 @@ class MicroserviceNatsTestInstanceImpl : NatsTestInstance() {
         val paper = natsClient.service<PaperTestService>()
 
         microserviceCommand("event") { args ->
-            natsClient.publish(TestChatEvent(ORIGIN, args.joinToString(" ")))
+            natsClient.publish(TestChatEvent(origin = ORIGIN, message = args.joinToString(" ")))
             sendLine("event published")
         }
 
@@ -34,7 +34,7 @@ class MicroserviceNatsTestInstanceImpl : NatsTestInstance() {
             val (answer, took) = measureTimedValue {
                 paper.findPlayer(args.joinToString(" "))
             }
-            sendLine("find -> ${answer.getOrElse { "none" }} ($took)")
+            sendLine("find -> ${answer.getOrNull()?.info ?: "none"} ($took)")
         }
 
         microserviceCommand("broadcast") { args ->

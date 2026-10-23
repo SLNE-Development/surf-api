@@ -1,0 +1,37 @@
+syntax = "proto2";
+
+package surf.demo.v1;
+
+option java_package = "dev.slne.surf.demo.proto.v1";
+
+// Kind of a punishment.
+enum PunishmentType {
+  PUNISHMENT_TYPE_UNSPECIFIED = 0;
+  PUNISHMENT_TYPE_BAN = 1;
+  PUNISHMENT_TYPE_MUTE = 2;
+  PUNISHMENT_TYPE_KICK = 3;
+}
+
+message Text {
+  optional string value = 1;
+}
+
+message Count {
+  optional int64 value = 1;
+}
+
+// Fieldless acknowledgement.
+message Ack {
+}
+
+// Mapped to a hand-written Kotlin value class by mapType, so no class is generated.
+message Tag {
+  optional string value = 1;
+}
+
+message Blob {
+  optional bytes data = 1;
+  repeated bytes chunks = 2;
+  map<string, bytes> parts = 3;
+  optional string name = 4 [default = "blob"];
+}

@@ -1,0 +1,86 @@
+syntax = "proto2";
+
+package surf.natsjs.test.v1;
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+message FindPlayerRequest {
+  optional string name = 1;
+}
+
+message FindPlayerResponse {
+  optional string name = 1;
+  optional string server = 2 [(surf.nats.v1.nullable) = true];
+}
+
+message LocateRequest {
+  optional string name = 1;
+}
+
+message LocateResponse {
+  optional string server = 1;
+}
+
+message BlobRequest {
+  optional bytes data = 1;
+}
+
+message BlobResponse {
+  optional bytes data = 1;
+}
+
+service PlayerService {
+  option (surf.nats.v1.service) = { name: "players" };
+
+  rpc FindPlayer(FindPlayerRequest) returns (FindPlayerResponse);
+  rpc Kick(FindPlayerRequest) returns (google.protobuf.Empty);
+  rpc Locate(LocateRequest) returns (LocateResponse) {
+    option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  }
+  rpc Broadcast(FindPlayerRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { name: "broadcast-all", recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  }
+  rpc SlowFind(FindPlayerRequest) returns (FindPlayerResponse) {
+    option (surf.nats.v1.method) = { call_timeout_seconds: 1 };
+  }
+  rpc Echo(BlobRequest) returns (BlobResponse);
+}
+
+message AuditEntry {
+  optional string action = 1;
+  optional bytes data = 2 [(surf.nats.v1.nullable) = true];
+}
+
+message AuditQuery {
+  optional string action = 1;
+}
+
+message AuditResult {
+  optional int32 count = 1;
+}
+
+service AuditService {
+  option (surf.nats.v1.service) = { persistent: true, call_timeout_seconds: 10 };
+
+  rpc Record(AuditEntry) returns (google.protobuf.Empty);
+  rpc Query(AuditQuery) returns (AuditResult);
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { persistent: false, call_timeout_seconds: 0 };
+  }
+}
+
+service RegistryService {
+  option (surf.nats.v1.service) = { global: true, recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+
+  rpc Lookup(FindPlayerRequest) returns (FindPlayerResponse) {
+    option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ANY_INSTANCE };
+  }
+  rpc Announce(FindPlayerRequest) returns (google.protobuf.Empty);
+}
+
+service StreamingService {
+  option (surf.nats.v1.service) = { name: "streaming" };
+
+  rpc Watch(FindPlayerRequest) returns (stream FindPlayerResponse);
+}

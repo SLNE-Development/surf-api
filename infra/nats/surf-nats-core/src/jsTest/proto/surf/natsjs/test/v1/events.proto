@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package surf.natsjs.test.v1;
+
+import "surf/nats/v1/options.proto";
+import "surf/types/v1/uuid.proto";
+
+// Default subject: kebab-case of the message name.
+message PlayerJoined {
+  option (surf.nats.v1.event) = { global: false };
+
+  optional string name = 1;
+  optional surf.types.v1.Uuid id = 2;
+  optional string server = 3 [(surf.nats.v1.nullable) = true];
+}
+
+message ChatMessage {
+  option (surf.nats.v1.event) = { subject: "chat.message" };
+
+  optional string text = 1;
+}
+
+message ServerStarted {
+  option (surf.nats.v1.event) = { subject: "server.started", global: true };
+
+  optional string server = 1;
+}
+
+// Not an event: no (surf.nats.v1.event) option.
+message PlainMessage {
+  optional string text = 1;
+}

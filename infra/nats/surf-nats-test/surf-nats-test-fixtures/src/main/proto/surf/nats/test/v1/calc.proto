@@ -1,0 +1,72 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/common.proto";
+
+// Core ANY_INSTANCE service: primitives, unsigned, value classes, nullable results, Unit, timeouts, errors.
+service CalcService {
+  option (surf.nats.v1.service) = { name: "calc" };
+
+  rpc Mixed(MixedRequest) returns (Text);
+  // Nullable result: a HealthReply without health encodes to a 0-byte body.
+  rpc Health(google.protobuf.Empty) returns (HealthReply);
+  // Fieldless request, Unit result (waits for the empty ack).
+  rpc Fire(FireRequest) returns (google.protobuf.Empty);
+  rpc Fail(FailRequest) returns (Text);
+  rpc InnerTimeout(google.protobuf.Empty) returns (Text);
+  // Qualified: protoc resolves a bare "Count" to this rpc (innermost scope first) and rejects the file.
+  rpc Count(google.protobuf.Empty) returns (surf.nats.test.v1.Count);
+  rpc SlowFire(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc Gated(google.protobuf.Empty) returns (Text);
+  rpc Unsigned(UnsignedRequest) returns (UnsignedReply);
+  // Value class (Tag) and Duration parameters, non-null and nullable.
+  rpc Inline(InlineRequest) returns (Text);
+  rpc Slow(google.protobuf.Empty) returns (Text) {
+    option (surf.nats.v1.method) = { call_timeout_seconds: 15 };
+  }
+  rpc Missing(google.protobuf.Empty) returns (Text);
+}
+
+message MixedRequest {
+  optional int32 a = 1;
+  optional int64 b = 2;
+  optional double factor = 3;
+  optional bool flag = 4;
+  optional string label = 5;
+}
+
+message HealthReply {
+  optional Health health = 1 [(surf.nats.v1.nullable) = true];
+}
+
+message FireRequest {
+}
+
+message FailRequest {
+  optional string message = 1;
+}
+
+message UnsignedRequest {
+  optional uint64 id = 1;
+  optional uint32 small = 2;
+  optional uint64 optional_id = 3 [(surf.nats.v1.nullable) = true];
+}
+
+message UnsignedReply {
+  optional uint64 id = 1;
+  optional uint32 small = 2;
+  optional uint64 optional_id = 3 [(surf.nats.v1.nullable) = true];
+}
+
+message InlineRequest {
+  optional google.protobuf.Duration duration = 1;
+  optional google.protobuf.Duration maybe_duration = 2 [(surf.nats.v1.nullable) = true];
+  optional Tag tag = 3;
+  optional Tag maybe_tag = 4 [(surf.nats.v1.nullable) = true];
+}
