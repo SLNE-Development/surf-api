@@ -70,5 +70,9 @@ public fun natsContentToString(value: List<ByteArray?>?): String {
 @NatsGeneratedApi
 public fun natsContentToString(value: Map<*, ByteArray?>?): String {
     if (value == null) return "null"
-    return value.entries.joinToString(", ", "{", "}") { (key, element) -> "$key=${element.contentToString()}" }
+    return value.entries.joinToString(
+        ", ",
+        "{",
+        "}"
+    ) { (key, element) -> "$key=${element.contentToString()}" }
 }
