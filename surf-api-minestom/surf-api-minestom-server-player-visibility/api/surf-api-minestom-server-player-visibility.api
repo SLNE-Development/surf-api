@@ -7,6 +7,7 @@ public final class dev/slne/surf/api/minestom/server/visibility/PlayerVisibility
 	public fun getLoadPriority ()I
 	public fun isLimited (Lnet/minestom/server/entity/Player;)Z
 	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun manages (Lnet/minestom/server/entity/Player;)Z
 	public fun refreshViewerRule (Lnet/minestom/server/entity/Player;)Z
 	public fun updateViewerRule (Lnet/minestom/server/entity/Player;Ljava/util/function/Predicate;)Z
 }

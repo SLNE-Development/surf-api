@@ -1,21 +1,14 @@
 package dev.slne.surf.api.minestom.example
 
-import dev.slne.surf.api.minestom.command.dsl.anyExecutor
-import dev.slne.surf.api.minestom.command.dsl.commandAPICommand
-import dev.slne.surf.api.minestom.command.dsl.integerArgument
-import dev.slne.surf.api.minestom.command.dsl.playerArgument
-import dev.slne.surf.api.minestom.command.dsl.playerExecutor
-import dev.slne.surf.api.minestom.command.dsl.playerExecutorSuspend
-import dev.slne.surf.api.minestom.command.dsl.signedMessageArgument
-import dev.slne.surf.api.minestom.command.dsl.subcommand
+import dev.slne.surf.api.minestom.command.dsl.*
 import dev.slne.surf.api.minestom.coroutine.withEntity
 import dev.slne.surf.api.minestom.highlight.BlockHighlights
+import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.visibility.PlayerVisibility
 import kotlinx.coroutines.delay
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import net.minestom.server.MinecraftServer
 import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
 import kotlin.time.Duration.Companion.seconds
@@ -70,9 +63,11 @@ internal object ExampleCommands {
             }
         }
 
+        // exit() returns right away, since stopping waits until the plugins are disabled, which a tick
+        // thread must not wait for
         commandAPICommand("stop") {
             withPermission("example.stop")
-            anyExecutor { _, _ -> MinecraftServer.stopCleanly() }
+            anyExecutor { _, _ -> SurfMinestomServer.instance.exit() }
         }
 
         // The message keeps the signature the client produced for the argument

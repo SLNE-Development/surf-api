@@ -1,12 +1,9 @@
 package dev.slne.surf.api.minestom.server.console
 
-import dev.slne.surf.api.minestom.server.SurfMinestomFeature
-import dev.slne.surf.api.minestom.server.SurfMinestomServer
-import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
-import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
+import dev.slne.surf.api.minestom.extension.SchedulerManager
+import dev.slne.surf.api.minestom.server.*
 import net.minecrell.terminalconsole.SimpleTerminalConsole
 import net.minestom.server.MinecraftServer
-import kotlin.system.exitProcess
 
 /**
  * Configures [withConsole].
@@ -20,14 +17,14 @@ class ConsoleFeatureBuilder internal constructor() {
     var threadName: String = "surf-minestom-console"
 
     /**
-     * Runs when the console asks the server to stop, e.g. on Ctrl+C or end of input.
+     * Runs on the console thread when the console asks the server to stop, e.g. on Ctrl+C or end
+     * of input.
      *
-     * Stops the server and exits the process by default.
+     * Calls [exitFlushingLogs] by default: stops the server with [SurfMinestomServer.stop], which
+     * also runs its shutdown actions, flushes the logs and exits the process. The console thread is
+     * no tick thread, so it may block; this also works when the api is already stopped.
      */
-    var onShutdown: () -> Unit = {
-        MinecraftServer.stopCleanly()
-        exitProcess(0)
-    }
+    var onShutdown: () -> Unit = { exitFlushingLogs(0) }
 }
 
 /**
@@ -52,10 +49,11 @@ class ConsoleFeature internal constructor(
     override val id: String = ID
 
     override fun enable(api: SurfMinestomServer) {
-        Thread(SurfTerminalConsole(settings.onShutdown)::start, settings.threadName).apply {
+        val console = Thread(SurfTerminalConsole(settings.onShutdown)::start, settings.threadName).apply {
             isDaemon = true
-            start()
         }
+
+        SchedulerManager.scheduleNextTick(console::start)
     }
 
     override fun disable(api: SurfMinestomServer) {

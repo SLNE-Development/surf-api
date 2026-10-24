@@ -1,0 +1,9 @@
+{
+  "required": false,
+  "minVersion": "0.8.7",
+  "package": "dev.slne.surf.api.minestom.server.mixin.compat",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "MiniPlaceholdersCommandMixin"
+  ]
+}

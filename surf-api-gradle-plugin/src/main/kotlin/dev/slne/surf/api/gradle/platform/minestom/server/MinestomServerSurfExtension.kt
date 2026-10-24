@@ -54,9 +54,21 @@ enum class MinestomServerFeature(
  * Calling `withXxx()` only puts the feature's module on the class path; the server still installs
  * it in `surfMinestomServer { }`.
  *
- * By default, the server jar only contains the project's own code and the surf modules. Minestom
- * and every other third-party library are downloaded into `libraries/` when the server starts, see
- * [downloadLibraries].
+ * By default, the server jar only contains the project's own code, the surf modules and the
+ * dependencies declared in the `shaded` configuration. Minestom and every other third-party
+ * library are downloaded into `libraries/` when the server starts, see [downloadLibraries]. With
+ * [downloadSurfModules], the surf modules are downloaded as well.
+ *
+ * Dependencies from repositories that need credentials cannot be downloaded at runtime. Declare
+ * them in the `shaded` configuration to embed them in the server jar:
+ * ```
+ * dependencies {
+ *     shaded(libs.private.plugin)
+ * }
+ * ```
+ * The whole resolved closure of a shaded dependency is embedded and therefore not downloaded, which
+ * may include public modules it depends on. `isTransitive = false` limits a declaration to the
+ * module itself.
  */
 open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactory) :
     CoreSurfExtension(objects) {
@@ -69,9 +81,20 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
      * Whether third-party libraries are downloaded with gremlin when the server starts instead of
      * being shaded into the server jar. They are fetched from the project's HTTP(S) Maven
      * repositories, so libraries that only exist in `mavenLocal()` or need credentials have to be
-     * shaded. Surf modules (`dev.slne.surf*`) are always shaded.
+     * declared in the `shaded` configuration. Surf modules (`dev.slne.surf*`) are shaded unless
+     * [downloadSurfModules] is set.
      */
     val downloadLibraries = objects.property<Boolean>().convention(true)
+
+    /**
+     * Whether surf modules (`dev.slne.surf*`, such as surf-api and the bundled plugins) are
+     * downloaded on the first start like third-party libraries instead of being shaded.
+     *
+     * Only the project's own modules, the bootstrap and the `shaded` dependencies stay in the
+     * server jar, which keeps it small. Requires [downloadLibraries]; without it the setting has no
+     * effect and every module is shaded.
+     */
+    val downloadSurfModules = objects.property<Boolean>().convention(false)
 
     /**
      * The plugins from the `plugins` directory the server's own code uses, by ID.

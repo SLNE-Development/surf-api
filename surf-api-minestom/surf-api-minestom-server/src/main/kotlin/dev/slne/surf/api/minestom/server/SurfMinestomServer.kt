@@ -2,11 +2,14 @@ package dev.slne.surf.api.minestom.server
 
 import dev.slne.surf.api.minestom.event.EventRegistrar
 import dev.slne.surf.api.minestom.permission.PermissionProvider
+import dev.slne.surf.api.minestom.player.SurfMinestomPlayer
 import dev.slne.surf.api.minestom.server.configuration.ConfigurationPhaseBuilder
 import dev.slne.surf.api.minestom.server.impl.SurfMinestomRuntime
 import net.minestom.server.entity.EntityType
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
+import net.minestom.server.network.player.GameProfile
+import net.minestom.server.network.player.PlayerConnection
 
 @DslMarker
 annotation class SurfMinestomServerDsl
@@ -18,9 +21,10 @@ annotation class SurfMinestomServerDsl
  * `withSignedChat()` or `withLuckPerms()`, so that adding the module as a dependency is enough to
  * offer the feature.
  *
- * Features are loaded ordered by [loadPriority], ties in installation order, and disabled in
- * reverse. A feature that throws in [enable] or [disable] is logged; the other features are not
- * affected.
+ * Features are loaded ordered by [loadPriority], ties in installation order, then enabled in the
+ * same order, and disabled in reverse. A feature that throws in [load] or [enable] fails
+ * [surfMinestomServer], which disables the features loaded so far; a feature that throws in
+ * [disable] is logged and the other features are still disabled.
  */
 interface SurfMinestomFeature {
 
@@ -41,13 +45,20 @@ interface SurfMinestomFeature {
     fun load(api: SurfMinestomServer) = Unit
 
     /**
-     * Called on the first tick after [surfMinestomServer] started the api.
+     * Called once every feature is loaded, while [surfMinestomServer] still runs, so before the
+     * server accepts players.
+     *
+     * The server does not tick yet: work scheduled for a tick runs once it is started, and must not
+     * be waited for here.
      */
     fun enable(api: SurfMinestomServer) = Unit
 
     /**
      * Called when the server shuts down or [SurfMinestomServer.shutdown] is called, for every
      * loaded feature, including one whose [enable] failed.
+     *
+     * When the server stops, Minestom no longer ticks: work scheduled for a tick does not run and
+     * must not be waited for here.
      */
     fun disable(api: SurfMinestomServer) = Unit
 }
@@ -64,6 +75,8 @@ class SurfMinestomServerBuilder internal constructor() {
     internal var configurationPhase: ConfigurationPhaseBuilder? = null
     internal var permissionProvider: PermissionProvider? = null
     internal val disabledEntityTicks = mutableSetOf<EntityType>()
+    internal var playerFactory = SurfMinestomPlayerFactory(::SurfMinestomPlayer)
+    internal val shutdownActions = mutableListOf<() -> Unit>()
 
     /**
      * The name of the event node the surf api registers its listeners on. It is added as a child
@@ -159,6 +172,46 @@ class SurfMinestomServerBuilder internal constructor() {
         val builder = configurationPhase ?: ConfigurationPhaseBuilder().also { configurationPhase = it }
         builder.block()
     }
+
+    /**
+     * Creates every player of the server with [factory], e.g. to use a subclass of
+     * [SurfMinestomPlayer] with behavior of the server's own.
+     *
+     * Players are [SurfMinestomPlayer]s by default. The surf api installs the factory as Minestom's
+     * player provider; while the api runs, `ConnectionManager#setPlayerProvider` rejects any other
+     * provider. A provider set through Minestom before the api starts fails the start, except in
+     * tests (`minestom.inside-test`), where Minestom's test environment sets one for every test.
+     */
+    fun playerFactory(factory: SurfMinestomPlayerFactory) {
+        playerFactory = factory
+    }
+
+    /**
+     * Runs [action] when the server stops, after Minestom stopped and the features and plugins
+     * are disabled, e.g. to close a database the server's own code opened.
+     *
+     * Actions run in registration order on the thread that stops the server; one that throws is
+     * logged and the others still run. They do not terminate the process, and must not call
+     * [exitFlushingLogs]; [SurfMinestomServer.instance] is no longer available while they run.
+     *
+     * @see SurfMinestomServer.stop
+     */
+    fun onShutdown(action: () -> Unit) {
+        shutdownActions += action
+    }
+}
+
+/**
+ * Creates the players of a surf server.
+ *
+ * @see SurfMinestomServerBuilder.playerFactory
+ */
+fun interface SurfMinestomPlayerFactory {
+
+    /**
+     * Creates the player of [connection], called on the player's login thread.
+     */
+    fun create(connection: PlayerConnection, gameProfile: GameProfile): SurfMinestomPlayer
 }
 
 /**
@@ -184,9 +237,43 @@ interface SurfMinestomServer {
     /**
      * Disables every feature and the surf api itself.
      *
-     * Runs automatically when the server shuts down.
+     * Runs automatically when Minestom stops, see [stop] for stopping the whole server. Does
+     * nothing once the api is shut down. A call from another thread while the api starts waits for
+     * the start, which then fails; a call from within the start, e.g. from a feature's `enable`,
+     * throws [IllegalStateException].
      */
     fun shutdown()
+
+    /**
+     * Stops the server: stops Minestom, which shuts down the api, then runs the actions registered
+     * with [SurfMinestomServerBuilder.onShutdown].
+     *
+     * Blocks until the server is stopped. Runs once; a concurrent call waits until the first one
+     * has finished, and a later call returns right away. The surf api calls it from a JVM shutdown
+     * hook as well, so that the actions also run when the process is terminated.
+     *
+     * Minestom stops the plugins and its connections on the calling thread, which stays blocked
+     * until they are stopped, so a call from a tick thread, e.g. directly from the executor of a
+     * command a player ran, throws [IllegalStateException]. Like [shutdown], it cannot be called
+     * from within the start.
+     *
+     * The process keeps running afterwards. To terminate it, use [exit], or [exitFlushingLogs] from
+     * a thread that may block.
+     */
+    fun stop()
+
+    /**
+     * Stops the server like [stop], flushes the logs and terminates the JVM with [status].
+     *
+     * Runs [exitFlushingLogs] on a new non-daemon thread named `surf-minestom-exit` and returns
+     * right away, so it may be called from any thread, including a tick thread, e.g. the executor
+     * of a command a player ran, and the console. A shutdown action or a `disable` may call it on a
+     * server reference captured before the stop, since [instance] is unavailable then. The process
+     * terminates asynchronously with the status of the first exit request, after a start in
+     * progress has finished; the stop itself runs once. While the JVM already shuts down, the
+     * request is logged and ignored.
+     */
+    fun exit(status: Int = 0)
 
     companion object {
         /**
@@ -215,10 +302,14 @@ interface SurfMinestomServer {
  * server.start("0.0.0.0", 25565)
  * ```
  *
- * The CommandAPI is ready as soon as this returns, so commands can be registered right after it.
+ * Every feature is loaded and enabled, and with them every plugin, before this returns, so the
+ * server is ready for players once it is started. The CommandAPI is ready as well, so commands can
+ * be registered right after it.
  *
  * @throws IllegalStateException when the server is not initialized, the api is already running,
  * or Mixin is not installed (tests excepted)
+ * @throws Exception whatever a feature threw while loading or enabling; the features loaded so far
+ * are disabled again
  */
 fun surfMinestomServer(block: SurfMinestomServerBuilder.() -> Unit = {}): SurfMinestomServer =
     SurfMinestomRuntime.start(SurfMinestomServerBuilder().apply(block))

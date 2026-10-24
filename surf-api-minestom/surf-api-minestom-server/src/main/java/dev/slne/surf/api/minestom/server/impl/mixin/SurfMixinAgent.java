@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -27,9 +28,18 @@ import org.spongepowered.asm.mixin.Mixins;
  * system class path, before any other agent or {@code main} runs. The transformer must exist
  * before the first Minestom class is loaded, because classes loaded earlier are never transformed.</p>
  *
- * <p>The mixin configurations come from the {@value #CONFIGS_ATTRIBUTE} manifest attribute, which
- * the surf Gradle plugin writes from the installed features and the mixin configurations the
- * server registers. Mixin can be installed once per JVM.</p>
+ * <p>The mixin configurations come from the {@value #CONFIGS_ATTRIBUTE} manifest attribute of the
+ * server jar, which the surf Gradle plugin writes from the installed features and the mixin
+ * configurations the server registers. The server jar is the one the bootstrap agent reports in
+ * {@code surf.minestom.server-jar}, since this class may come from a downloaded library, or else
+ * the jar this class was loaded from. Mixin can be installed once per JVM.</p>
+ *
+ * <p>In addition, the optional compatibility configurations of surf are applied for each library
+ * whose marker class is on the system class path, see {@link #compatibilityConfigs()}. Servers
+ * need not list them in the manifest, and a server without such a library gets no warning about a
+ * missing target. Their injections are not required, so a library version that no longer needs a
+ * fix is left untransformed without an error. A manifest that lists no configuration at all still
+ * fails the installation.</p>
  *
  * <p>A required mixin whose target was loaded before the installation fails the installation. A
  * transformation that fails later makes the JVM load the class untransformed; such classes are
@@ -43,6 +53,21 @@ public final class SurfMixinAgent {
      */
     public static final String CONFIGS_ATTRIBUTE = "Surf-Mixin-Configs";
 
+    /**
+     * The system property {@code SurfMinestomBootstrap} sets to the path of the server jar.
+     */
+    private static final String SERVER_JAR_PROPERTY = "surf.minestom.server-jar";
+
+    /**
+     * Optional configurations that fix the compatibility of a third-party library with Minestom.
+     */
+    private static final List<CompatibilityConfig> COMPATIBILITY_CONFIGS = List.of(
+        new CompatibilityConfig(
+            "mixins.surf-api-minestom-server-miniplaceholders.json",
+            "io/github/miniplaceholders/minestom/command/MinestomCommand.class"
+        )
+    );
+
     private static volatile boolean installed;
 
     private static volatile @Nullable Throwable installationFailure;
@@ -51,7 +76,23 @@ public final class SurfMixinAgent {
     }
 
     /**
-     * Installs Mixin with the mixin configurations listed in the manifest.
+     * The surf compatibility mixin configurations whose marker class is on the system class path.
+     *
+     * <p>Each configuration targets a third-party class, so it is applied only when that library is
+     * present; the Mixin target of a missing library would be reported as not found.</p>
+     */
+    public static List<String> compatibilityConfigs() {
+        final ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+        return COMPATIBILITY_CONFIGS.stream()
+            .filter(config -> classLoader.getResource(config.markerResource()) != null)
+            .map(CompatibilityConfig::config)
+            .toList();
+    }
+
+    /**
+     * Installs Mixin with the mixin configurations listed in the manifest, plus the
+     * {@linkplain #compatibilityConfigs() compatibility configurations} of the libraries on the
+     * class path.
      *
      * @throws IllegalStateException when the manifest lists no mixin configuration or Mixin is
      * already installed
@@ -61,7 +102,14 @@ public final class SurfMixinAgent {
         if (configs.isEmpty()) {
             throw new IllegalStateException("The server jar lists no mixin configurations in " + CONFIGS_ATTRIBUTE);
         }
-        install(instrumentation, configs);
+
+        final List<String> all = new ArrayList<>(configs);
+        for (final String compatibilityConfig : compatibilityConfigs()) {
+            if (!all.contains(compatibilityConfig)) {
+                all.add(compatibilityConfig);
+            }
+        }
+        install(instrumentation, all);
     }
 
     /**
@@ -137,31 +185,49 @@ public final class SurfMixinAgent {
     }
 
     private static List<String> configsFromManifest() {
-        final @Nullable CodeSource codeSource = SurfMixinAgent.class.getProtectionDomain().getCodeSource();
-        if (codeSource == null) {
+        final @Nullable Path jar = serverJar();
+        if (jar == null || !Files.isRegularFile(jar)) {
             return List.of();
         }
 
-        try {
-            final Path jar = Path.of(codeSource.getLocation().toURI());
-            if (!Files.isRegularFile(jar)) {
+        try (JarFile jarFile = new JarFile(jar.toFile())) {
+            final @Nullable Manifest manifest = jarFile.getManifest();
+            final @Nullable String configs = manifest == null ? null : manifest.getMainAttributes().getValue(CONFIGS_ATTRIBUTE);
+            if (configs == null) {
                 return List.of();
             }
 
-            try (JarFile jarFile = new JarFile(jar.toFile())) {
-                final @Nullable Manifest manifest = jarFile.getManifest();
-                final @Nullable String configs = manifest == null ? null : manifest.getMainAttributes().getValue(CONFIGS_ATTRIBUTE);
-                if (configs == null) {
-                    return List.of();
-                }
-
-                return Arrays.stream(configs.split(","))
-                    .map(String::trim)
-                    .filter(config -> !config.isEmpty())
-                    .toList();
-            }
-        } catch (final IOException | URISyntaxException e) {
+            return Arrays.stream(configs.split(","))
+                .map(String::trim)
+                .filter(config -> !config.isEmpty())
+                .toList();
+        } catch (final IOException e) {
             throw new IllegalStateException("Failed to read the mixin configurations from the server jar", e);
+        }
+    }
+
+    /**
+     * A mixin configuration that applies only when {@code markerResource}, the class file of the
+     * library it targets, is on the class path.
+     */
+    private record CompatibilityConfig(String config, String markerResource) {
+    }
+
+    private static @Nullable Path serverJar() {
+        final @Nullable String reported = System.getProperty(SERVER_JAR_PROPERTY);
+        if (reported != null) {
+            return Path.of(reported);
+        }
+
+        final @Nullable CodeSource codeSource = SurfMixinAgent.class.getProtectionDomain().getCodeSource();
+        if (codeSource == null) {
+            return null;
+        }
+
+        try {
+            return Path.of(codeSource.getLocation().toURI());
+        } catch (final URISyntaxException e) {
+            throw new IllegalStateException("Failed to locate the server jar", e);
         }
     }
 }
