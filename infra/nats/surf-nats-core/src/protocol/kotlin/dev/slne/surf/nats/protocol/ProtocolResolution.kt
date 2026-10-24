@@ -11,12 +11,15 @@ internal enum class RecipientsOption(val number: Int, val protoName: String) {
     ALL_INSTANCES(2, "NATS_RECIPIENTS_ALL_INSTANCES");
 
     companion object {
-        fun ofNumber(number: Int): RecipientsOption? = entries.firstOrNull { it.number == number }
+        private val byNumber = entries.associateBy { it.number }
+        private val byName = entries.associateBy { it.protoName }
+
+        fun ofNumber(number: Int): RecipientsOption? = byNumber[number]
 
         /**
          * Resolves a proto constant name such as `NATS_RECIPIENTS_ANY_INSTANCE`; names without the prefix return `null`.
          */
-        fun ofName(name: String): RecipientsOption? = entries.firstOrNull { it.protoName == name }
+        fun ofName(name: String): RecipientsOption? = byName[name]
     }
 }
 
@@ -47,7 +50,10 @@ internal object ProtocolResolution {
         return ResolvedMethod(
             name = name(options.name, declaredName),
             persistent = persistent(options.persistent, service.options.persistent),
-            callTimeoutSeconds = callTimeoutSeconds(options.callTimeoutSeconds, service.options.callTimeoutSeconds),
+            callTimeoutSeconds = callTimeoutSeconds(
+                options.callTimeoutSeconds,
+                service.options.callTimeoutSeconds
+            ),
             recipients = recipients,
             resultKind = ResultKindOption.of(emptyResponse, recipients),
             streaming = streaming,
