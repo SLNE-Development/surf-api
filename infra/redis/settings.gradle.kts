@@ -1,7 +1,7 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        maven("https://reposilite.slne.dev/public/") { name = "public" }
+        maven("https://reposilite.slne.dev/public/")
     }
 }
 
