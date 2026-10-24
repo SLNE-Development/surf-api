@@ -8,7 +8,11 @@ import dev.slne.surf.nats.protocol.ProtocolHeaders
  * ([answer]); the headers are read only for replies without a status.
  */
 @InternalNatsApi
-internal inline fun classifyAllReply(status: Int, error: () -> String?, answer: () -> String?): AllReply = when {
+internal inline fun classifyAllReply(
+    status: Int,
+    error: () -> String?,
+    answer: () -> String?,
+): AllReply = when {
     status == AllReply.NO_RESPONDERS_STATUS -> AllReply.NO_RESPONDERS
     status != 0 -> AllReply.OTHER_STATUS
     error() != null -> AllReply.REMOTE_ERROR

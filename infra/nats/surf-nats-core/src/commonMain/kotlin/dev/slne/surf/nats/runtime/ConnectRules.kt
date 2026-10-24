@@ -14,7 +14,9 @@ internal object ConnectRules {
     /**
      * Returns the trimmed, non-empty server URLs of [entries].
      */
-    fun servers(entries: Iterable<String>): List<String> = entries.map(String::trim).filter(String::isNotEmpty)
+    fun servers(entries: Iterable<String>): List<String> = entries
+        .map(String::trim)
+        .filter(String::isNotEmpty)
 
     /**
      * Returns the server URLs of a comma-separated list.

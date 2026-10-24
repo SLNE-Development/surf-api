@@ -8,4 +8,6 @@ import kotlin.time.Duration
  * Returns the `Surf-Deadline` value of a request that is sent now and waits [timeout].
  */
 @InternalNatsApi
-internal fun deadlineHeader(timeout: Duration): String = ProtocolHeaders.deadline(epochMillis(), timeout)
+internal fun deadlineHeader(timeout: Duration): String {
+    return ProtocolHeaders.deadline(epochMillis(), timeout)
+}

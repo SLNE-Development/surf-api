@@ -12,6 +12,7 @@ package dev.slne.surf.nats
     AnnotationTarget.CLASS,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY,
-    AnnotationTarget.CONSTRUCTOR
+    AnnotationTarget.CONSTRUCTOR,
+    AnnotationTarget.TYPEALIAS,
 )
 public annotation class InternalNatsApi
