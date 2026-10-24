@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8.7",
+  "package": "dev.slne.surf.api.minestom.server.npc.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "InteractionControllerMixin",
+    "TextDisplayControllerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

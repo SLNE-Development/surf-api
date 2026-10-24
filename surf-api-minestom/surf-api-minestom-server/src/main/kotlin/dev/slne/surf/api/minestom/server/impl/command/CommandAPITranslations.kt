@@ -1,0 +1,42 @@
+package dev.slne.surf.api.minestom.server.impl.command
+
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.translation.GlobalTranslator
+import net.kyori.adventure.translation.TranslationStore
+import java.text.MessageFormat
+import java.util.*
+
+/**
+ * English fallbacks for the vanilla command translation keys used by the failure reports.
+ *
+ * Players receive the keys untouched and render them client-side; the fallbacks serve senders that
+ * are rendered on the server, such as the console. The translation source is added to
+ * [GlobalTranslator] once and never removed.
+ */
+object CommandAPITranslations {
+    private val STORE_KEY = Key.key("surf", "commandapi")
+
+    @Volatile
+    private var registered = false
+
+    fun register() {
+        if (registered) return
+        registered = true
+
+        val store = TranslationStore.messageFormat(STORE_KEY)
+        store.defaultLocale(Locale.US)
+
+        store.registerAll(
+            Locale.US,
+            mapOf(
+                "command.unknown.command" to
+                        MessageFormat("Unknown or incomplete command. See below for error"),
+                "command.unknown.argument" to MessageFormat("Incorrect argument for command"),
+                "command.context.here" to MessageFormat("<--[HERE]"),
+            ),
+        )
+
+        GlobalTranslator.translator().addSource(store)
+    }
+}
+

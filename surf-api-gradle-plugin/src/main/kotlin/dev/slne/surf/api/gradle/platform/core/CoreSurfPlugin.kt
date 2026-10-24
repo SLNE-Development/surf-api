@@ -2,6 +2,7 @@ package dev.slne.surf.api.gradle.platform.core
 
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.CommonSurfPlugin
+import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import org.gradle.api.Project
 
 internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
@@ -28,4 +29,11 @@ internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
 internal class CoreSurfPlugin :
     AbstractCoreSurfPlugin<CoreSurfExtension>("core", SurfApiPlatform.CORE) {
     override val extensionClass = CoreSurfExtension::class.java
+
+    override fun Project.platformTestDependencies(extension: CoreSurfExtension) {
+        dependencies.add(
+            SurfTestingConfigurer.TEST_RUNTIME_ONLY,
+            SurfApiPlatform.STANDALONE.dependency
+        )
+    }
 }

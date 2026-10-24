@@ -64,6 +64,11 @@ internal class VelocitySurfPlugin :
                 optional.convention(false)
                 enabled.convention(redisEnabled)
             }
+
+            register("surf-nats-velocity") {
+                optional.convention(false)
+                enabled.convention(ext.withSurfNats)
+            }
         }
     }
 

@@ -1,0 +1,27 @@
+public final class dev/slne/surf/api/minestom/server/chat/SignedChatFeature : dev/slne/surf/api/minestom/server/SurfMinestomFeature {
+	public static final field Companion Ldev/slne/surf/api/minestom/server/chat/SignedChatFeature$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getLoadPriority ()I
+	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/chat/SignedChatFeature$Companion {
+}
+
+public final class dev/slne/surf/api/minestom/server/chat/SignedChatFeatureKt {
+	public static final fun withSignedChat (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun withSignedChat$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/chat/SignedChatSettings {
+	public final fun getChatSpamThresholdSeconds ()I
+	public final fun getCommandSpamThresholdSeconds ()I
+	public final fun getEnforceSecureProfile ()Z
+	public final fun setChatSpamThresholdSeconds (I)V
+	public final fun setCommandSpamThresholdSeconds (I)V
+	public final fun setEnforceSecureProfile (Z)V
+}
+

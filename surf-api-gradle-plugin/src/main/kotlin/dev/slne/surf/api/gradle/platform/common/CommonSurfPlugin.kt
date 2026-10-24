@@ -81,6 +81,21 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         relocations += Relocation(from, to, excludes)
     }
 
+    /**
+     * Relocates [from] below the surf relocation prefix, as `<prefix>.<to>`.
+     */
+    internal fun applyRelocation(from: String, to: String, excludes: List<String> = emptyList()) {
+        relocations += Relocation(from, to, excludes)
+    }
+
+    /**
+     * Calls [action] for every relocation the shadow jar applies, with [to] already below the surf
+     * relocation prefix.
+     */
+    internal fun forEachRelocation(action: (from: String, to: String, excludes: List<String>) -> Unit) {
+        relocations.forEach { action(it.from, "${Constants.RELOCATION_PREFIX}.${it.to}", it.excludes) }
+    }
+
     fun addRelocationsForDependency(
         dependency: String,
         vararg relocations: Pair<String, String>,
@@ -212,7 +227,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
         jvmToolchain(Constants.JAVA_VERSION)
         compilerOptions {
-            freeCompilerArgs.addAll(listOf("-Xjsr305=strict", "-Xcontext-parameters"))
+            freeCompilerArgs.addAll(
+                listOf(
+                    "-Xjsr305=strict",
+                    "-Xcontext-parameters",
+                    "-Xreturn-value-checker=check",
+                )
+            )
             javaParameters = true
         }
     }
@@ -265,6 +286,16 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                     if (testingEnabled) {
                         add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
                     }
+                }
+            }
+        }
+
+        if (extension.withSurfNats.get()) {
+            dependencies {
+                val notation = "dev.slne.surf.nats:surf-nats-api:+"
+                add(COMPILE_ONLY, notation)
+                if (testingEnabled) {
+                    add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
                 }
             }
         }

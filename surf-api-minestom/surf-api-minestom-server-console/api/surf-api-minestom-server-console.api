@@ -1,0 +1,25 @@
+public final class dev/slne/surf/api/minestom/server/console/ConsoleFeature : dev/slne/surf/api/minestom/server/SurfMinestomFeature {
+	public static final field Companion Ldev/slne/surf/api/minestom/server/console/ConsoleFeature$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getLoadPriority ()I
+	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/console/ConsoleFeature$Companion {
+}
+
+public final class dev/slne/surf/api/minestom/server/console/ConsoleFeatureBuilder {
+	public final fun getOnShutdown ()Lkotlin/jvm/functions/Function0;
+	public final fun getThreadName ()Ljava/lang/String;
+	public final fun setOnShutdown (Lkotlin/jvm/functions/Function0;)V
+	public final fun setThreadName (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/minestom/server/console/ConsoleFeatureKt {
+	public static final fun withConsole (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun withConsole$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
