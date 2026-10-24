@@ -78,7 +78,7 @@ ktor = "3.6.0"
 glm = "0.9.9.1-15"
 ksp-version = "2.3.12"
 reactor-netty = "1.3.7"
-bytebuddy = "1.18.14"
+bytebuddy = "1.18.15"
 wyck = "4.0.0-e5d01de"
 gremlin = "0.0.9"
 
