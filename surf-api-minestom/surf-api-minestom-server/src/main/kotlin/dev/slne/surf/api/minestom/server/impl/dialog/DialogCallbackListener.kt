@@ -1,0 +1,19 @@
+package dev.slne.surf.api.minestom.server.impl.dialog
+
+import dev.slne.surf.api.minestom.dialog.callback.DialogCallbacks
+import dev.slne.surf.api.minestom.event.EventRegistrar
+import dev.slne.surf.api.minestom.extension.addListener
+import net.minestom.server.event.Event
+import net.minestom.server.event.EventNode
+import net.minestom.server.event.player.PlayerCustomClickEvent
+
+/**
+ * Runs the [DialogCallbacks] a client reports back after pressing a dialog button.
+ */
+internal object DialogCallbackListener : EventRegistrar {
+    override fun register(node: EventNode<Event>) {
+        node.addListener<PlayerCustomClickEvent> { event ->
+            DialogCallbacks.dispatch(event.player, event.key, event.payload)
+        }
+    }
+}

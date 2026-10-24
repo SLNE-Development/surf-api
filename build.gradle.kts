@@ -16,6 +16,13 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://central.sonatype.com/repository/maven-snapshots/") {
+            name = "minestom-snapshots"
+            mavenContent {
+                snapshotsOnly()
+                includeGroup("net.minestom")
+            }
+        }
         maven("https://repo.wyck.dev/snapshots/")
     }
 

@@ -1,0 +1,30 @@
+public final class dev/slne/surf/api/minestom/server/luckperms/LuckPermsFeature : dev/slne/surf/api/minestom/server/SurfMinestomFeature {
+	public static final field Companion Ldev/slne/surf/api/minestom/server/luckperms/LuckPermsFeature$Companion;
+	public static final field ID Ljava/lang/String;
+	public fun disable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun enable (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public fun getId ()Ljava/lang/String;
+	public fun getLoadPriority ()I
+	public final fun getLuckPerms ()Lnet/luckperms/api/LuckPerms;
+	public fun load (Ldev/slne/surf/api/minestom/server/SurfMinestomServer;)V
+	public final fun loadedUser (Ljava/util/UUID;)Lnet/luckperms/api/model/user/User;
+	public final fun permissionValue (Ljava/util/UUID;Ljava/lang/String;)Lnet/kyori/adventure/util/TriState;
+}
+
+public final class dev/slne/surf/api/minestom/server/luckperms/LuckPermsFeature$Companion {
+	public final fun getInstance ()Ldev/slne/surf/api/minestom/server/luckperms/LuckPermsFeature;
+}
+
+public final class dev/slne/surf/api/minestom/server/luckperms/LuckPermsFeatureBuilder {
+	public final fun customize (Lkotlin/jvm/functions/Function1;)V
+	public final fun getDataDirectory ()Ljava/nio/file/Path;
+	public final fun getRegisterCommands ()Z
+	public final fun setDataDirectory (Ljava/nio/file/Path;)V
+	public final fun setRegisterCommands (Z)V
+}
+
+public final class dev/slne/surf/api/minestom/server/luckperms/LuckPermsFeatureKt {
+	public static final fun withLuckPerms (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun withLuckPerms$default (Ldev/slne/surf/api/minestom/server/SurfMinestomServerBuilder;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
