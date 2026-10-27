@@ -2,7 +2,7 @@
 
 package dev.slne.surf.nats.js.external.protobuf
 
-import dev.slne.surf.nats.js.ProtoMessage
+import dev.slne.surf.nats.js.api.ProtoMessage
 
 internal external interface FileDescriptorProto : ProtoMessage {
     val name: String

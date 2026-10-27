@@ -2,7 +2,7 @@
 
 package dev.slne.surf.nats.js.external.protobuf
 
-import dev.slne.surf.nats.js.MessageSchema
+import dev.slne.surf.nats.js.api.MessageSchema
 
 // A GenMessage is passed to the exported API as MessageSchema.
 internal external interface DescMessage : AnyDesc, MessageSchema {

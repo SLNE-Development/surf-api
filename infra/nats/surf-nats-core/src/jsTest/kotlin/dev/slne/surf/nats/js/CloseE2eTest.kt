@@ -2,6 +2,11 @@
 
 package dev.slne.surf.nats.js
 
+import dev.slne.surf.nats.js.api.EventContext
+import dev.slne.surf.nats.js.api.ListenOptions
+import dev.slne.surf.nats.js.api.ProtoMessage
+import dev.slne.surf.nats.js.api.PublishOptions
+import dev.slne.surf.nats.js.client.JsRuntimeDefaults
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.fixtures.ChatMessage
 import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
@@ -33,9 +38,9 @@ import kotlin.time.Duration.Companion.seconds
 
 class CloseE2eTest {
 
-    private fun listenOptions(owner: String): ListenOptions = unsafeJso<ListenOptionsInit> { this.owner = owner }
+    private fun listenOptions(owner: String): ListenOptions = ListenOptions(owner = owner)
 
-    private fun publishOptions(owner: String): PublishOptions = unsafeJso<PublishOptionsInit> { this.owner = owner }
+    private fun publishOptions(owner: String): PublishOptions = PublishOptions(owner = owner)
 
     private fun findPlayer(): DescMethod = PlayerService.methods.first { it.localName == "findPlayer" }
 
@@ -188,7 +193,7 @@ class CloseE2eTest {
             val whileClosing = assertFailsWith<IllegalStateException> {
                 client.listen(ChatMessageSchema, { _, _ -> }, listenOptions(owner)).await()
             }
-            assertEquals("SurfNatsClient[${client.name}] is closing", whileClosing.message)
+            assertEquals("NatsClient[${client.name}] is closing", whileClosing.message)
 
             gated.release()
             closing.await()
@@ -196,7 +201,7 @@ class CloseE2eTest {
             val afterClose = assertFailsWith<IllegalStateException> {
                 client.listen(ChatMessageSchema, { _, _ -> }, listenOptions(owner)).await()
             }
-            assertEquals("SurfNatsClient[${client.name}] is closed", afterClose.message)
+            assertEquals("NatsClient[${client.name}] is closed", afterClose.message)
         } finally {
             client.close().await()
             publisher.close().await()

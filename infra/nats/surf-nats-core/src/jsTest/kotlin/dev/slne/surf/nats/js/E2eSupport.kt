@@ -1,5 +1,8 @@
 package dev.slne.surf.nats.js
 
+import dev.slne.surf.nats.js.api.ProtoMessage
+import dev.slne.surf.nats.js.api.ProtoMessageInit
+import dev.slne.surf.nats.js.codec.NatsHeaders
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.external.nats.core.MsgHdrs
 import dev.slne.surf.nats.js.external.nats.core.NatsConnection
@@ -25,7 +28,6 @@ import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.protocol.ServiceNames
-import js.objects.unsafeJso
 import js.typedarrays.Uint8Array
 import kotlinx.coroutines.await
 import node.crypto.randomUUID
@@ -36,19 +38,16 @@ import node.crypto.randomUUID
 internal class RawNats(val connection: NatsConnection) {
 
     fun subscribe(subject: String, queue: String? = null, handler: (Msg) -> Unit): Subscription {
-        val options = unsafeJso<SubscriptionOptions> {
-            if (queue != null) this.queue = queue
-            callback = { error, message ->
-                if (error == null) handler(message)
-            }
-        }
+        val options = SubscriptionOptions(queue = queue, callback = { error, message ->
+            if (error == null) handler(message)
+        })
         return connection.subscribe(subject, options)
     }
 
     suspend fun flush() = connection.flush().await()
 
     fun publish(subject: String, data: Uint8Array<*>, headers: MsgHdrs? = null) {
-        connection.publish(subject, data, unsafeJso<NatsPublishOptions> { if (headers != null) this.headers = headers })
+        connection.publish(subject, data, NatsPublishOptions(headers = headers))
     }
 
     fun encode(schema: DescMessage, init: ProtoMessageInit): Uint8Array<*> = toBinary(schema, create(schema, init))
@@ -63,7 +62,7 @@ internal class RawNats(val connection: NatsConnection) {
     }
 
     fun respond(request: Msg, data: Uint8Array<*>, headers: MsgHdrs = jvmHeaders()) {
-        request.respond(data, unsafeJso<NatsPublishOptions> { this.headers = headers })
+        request.respond(data, NatsPublishOptions(headers = headers))
     }
 
     /**
@@ -74,23 +73,20 @@ internal class RawNats(val connection: NatsConnection) {
     suspend fun addPersistentStreams(names: ServiceNames, noAck: Boolean = false) {
         val manager = jetstreamManager(connection).await()
         manager.streams.add(
-            unsafeJso<StreamConfig> {
-                name = names.stream
-                subjects = arrayOf(names.streamFilter)
-                retention = "workqueue"
-                storage = "file"
-                allow_msg_ttl = true
-                max_age = ProtocolDefaults.PERSIST_MAX_AGE_SECONDS * NANOS_PER_SECOND
-                duplicate_window = ProtocolDefaults.DEDUPE_WINDOW_SECONDS * NANOS_PER_SECOND
-                if (noAck) no_ack = true
-            }
+            StreamConfig(
+                name = names.stream,
+                subjects = arrayOf(names.streamFilter),
+                retention = "workqueue",
+                storage = "file",
+                allow_msg_ttl = true,
+                max_age = ProtocolDefaults.PERSIST_MAX_AGE_SECONDS * NANOS_PER_SECOND,
+                duplicate_window = ProtocolDefaults.DEDUPE_WINDOW_SECONDS * NANOS_PER_SECOND,
+                no_ack = noAck,
+            )
         ).await()
         manager.consumers.add(
             names.stream,
-            unsafeJso<ConsumerConfig> {
-                durable_name = names.responderGroup
-                ack_policy = "explicit"
-            },
+            ConsumerConfig(durable_name = names.responderGroup, ack_policy = "explicit"),
         ).await()
     }
 
@@ -99,7 +95,7 @@ internal class RawNats(val connection: NatsConnection) {
      */
     suspend fun nextPersistent(names: ServiceNames, expiresMs: Int = 5000): JsMsg? {
         val consumer = jetstreamWithConsumers(connection).consumers.get(names.stream, names.responderGroup).await()
-        return consumer.next(unsafeJso<NextOptions> { expires = expiresMs }).await()
+        return consumer.next(NextOptions(expires = expiresMs)).await()
     }
 
     suspend fun streamMessages(stream: String): Int = jetstreamManager(connection).await().streams.info(stream).await().state.messages
@@ -108,10 +104,10 @@ internal class RawNats(val connection: NatsConnection) {
      * Creates [bucket] like the JS `PayloadStore` when it does not exist yet.
      */
     suspend fun ensureBucket(bucket: PayloadBucket) {
-        Objm(connection).create(bucket.bucketName, unsafeJso<ObjectStoreOptions> {
-            ttl = bucket.ttl.inWholeNanoseconds.toDouble()
-            storage = "file"
-        }).await()
+        Objm(connection).create(
+            bucket.bucketName,
+            ObjectStoreOptions(ttl = bucket.ttl.inWholeNanoseconds.toDouble(), storage = "file"),
+        ).await()
     }
 
     suspend fun bucketStatus(bucket: String): ObjectStoreStatus = ObjmAdmin(connection).open(bucket).await().status().await()
@@ -123,7 +119,7 @@ internal class RawNats(val connection: NatsConnection) {
     suspend fun putBlob(bucket: String, data: Uint8Array<*>): String {
         val name = randomUUID()
         val store = Objm(connection).open(bucket).await()
-        store.putBlob(unsafeJso<ObjectStoreMeta> { this.name = name }, data).await()
+        store.putBlob(ObjectStoreMeta(name = name), data).await()
         return name
     }
 
@@ -134,7 +130,7 @@ internal class RawNats(val connection: NatsConnection) {
     }
 }
 
-internal fun header(message: Msg, name: String): String? = Wire.header(message, name)
+internal fun header(message: Msg, name: String): String? = NatsHeaders.get(message, name)
 
 internal fun header(message: JsMsg, name: String): String? = message.headers?.get(name)?.takeIf { it.isNotEmpty() }
 

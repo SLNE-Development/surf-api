@@ -2,7 +2,7 @@
 
 package dev.slne.surf.nats.js.external.protobuf.reflect
 
-import dev.slne.surf.nats.js.ProtoMessage
+import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.external.protobuf.DescMessage
 
 internal external fun reflect(

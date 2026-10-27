@@ -2,14 +2,17 @@
 
 package dev.slne.surf.nats.js.external.nats.obj
 
+import kotlinx.js.JsPlainObject
+
 // Partial<ObjectStoreOptions>
+@JsPlainObject
 internal external interface ObjectStoreOptions {
-    var description: String?
+    val description: String?
 
     // Nanos
-    var ttl: Double?
+    val ttl: Double?
 
     // StorageType: file | memory
-    var storage: String?
-    var replicas: Int?
+    val storage: String?
+    val replicas: Int?
 }

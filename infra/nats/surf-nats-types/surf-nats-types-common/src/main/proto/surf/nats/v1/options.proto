@@ -6,7 +6,7 @@ option java_package = "dev.slne.surf.nats.proto";
 
 import "google/protobuf/descriptor.proto";
 
-// Extension numbers 51000-51099 are reserved for surf-nats.
+// Extension numbers 51000–51099 are reserved for surf-nats.
 
 enum NatsRecipients {
   NATS_RECIPIENTS_UNSPECIFIED = 0;

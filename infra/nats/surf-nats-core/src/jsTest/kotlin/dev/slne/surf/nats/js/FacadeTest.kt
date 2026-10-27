@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.js
 
+import dev.slne.surf.nats.js.error.NatsRemoteError
 import dev.slne.surf.nats.js.external.protobuf.create
 import dev.slne.surf.nats.js.external.protobuf.fromBinary
 import dev.slne.surf.nats.js.external.protobuf.toBinary

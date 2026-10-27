@@ -15,6 +15,7 @@ import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.rpc.RpcCallerImpl
 import dev.slne.surf.nats.rpc.ServiceDescriptor
 import dev.slne.surf.nats.rpc.ServiceRegistration
+import dev.slne.surf.nats.runtime.ClientLifecycle
 import io.nats.client.Dispatcher
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
@@ -224,7 +225,7 @@ internal class NatsClientImpl(
         closeReplyDispatcher()
         serviceProxies.clear()
         eventSubscriptions.close()
-        clientScope.cancel("NatsClient[$name] closed")
+        clientScope.cancel("${lifecycle.label} closed")
         onClose(this)
     }
 

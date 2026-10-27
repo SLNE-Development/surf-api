@@ -4,7 +4,7 @@ import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
-import dev.slne.surf.nats.runtime.writeBaseHeaders
+import dev.slne.surf.nats.runtime.writeBaseNatsHeaders
 import io.nats.client.Message
 import io.nats.client.impl.Headers
 
@@ -22,7 +22,7 @@ internal object NatsHeaders {
 
     fun forOrigin(origin: String): Headers {
         val headers = Headers()
-        writeBaseHeaders(origin) { name, value -> headers.add(name, value) }
+        writeBaseNatsHeaders(origin, headers::add)
         return headers
     }
 

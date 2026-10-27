@@ -1,5 +1,10 @@
 package dev.slne.surf.nats.js
 
+import dev.slne.surf.nats.js.api.MethodSchema
+import dev.slne.surf.nats.js.codec.emptyBody
+import dev.slne.surf.nats.js.error.NatsCallTimeoutError
+import dev.slne.surf.nats.js.error.NatsNoRespondersError
+import dev.slne.surf.nats.js.error.NatsRemoteError
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.external.protobuf.DescService
@@ -84,7 +89,7 @@ class RpcE2eTest {
                 headers.set(ProtocolHeaders.ERROR, "java.lang.IllegalStateException")
                 raw.respond(request, utf8Bytes("player is offline"), headers)
             }
-            raw.subscribe(subject(owner, "kick"), queue = owner) { request -> raw.respond(request, Wire.emptyBody()) }
+            raw.subscribe(subject(owner, "kick"), queue = owner) { request -> raw.respond(request, emptyBody()) }
             raw.flush()
 
             val error = assertFails {
@@ -192,7 +197,7 @@ class RpcE2eTest {
                 raw.subscribe(locate) { request ->
                     val headers = raw.jvmHeaders()
                     headers.set(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN)
-                    raw.respond(request, Wire.emptyBody(), headers)
+                    raw.respond(request, emptyBody(), headers)
                 }
             }
             raw.subscribe(locate) { request ->
@@ -228,7 +233,7 @@ class RpcE2eTest {
             val unknownSubscription = raw.subscribe(subject(owner, "locate")) { message ->
                 val headers = raw.jvmHeaders()
                 headers.set(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN)
-                raw.respond(message, Wire.emptyBody(), headers)
+                raw.respond(message, emptyBody(), headers)
             }
             raw.flush()
             assertEquals(false, client.callAnswer(locate, request, options(owner, 400)).await().known)

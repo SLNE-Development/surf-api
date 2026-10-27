@@ -1,6 +1,13 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.descriptor.NatsResultKind
+import dev.slne.surf.nats.js.api.Answer
+import dev.slne.surf.nats.js.api.ProtoMessage
+import dev.slne.surf.nats.js.codec.emptyBody
+import dev.slne.surf.nats.js.error.NatsCallTimeoutError
+import dev.slne.surf.nats.js.error.NatsNoRespondersError
+import dev.slne.surf.nats.js.error.NatsRemoteError
+import dev.slne.surf.nats.js.error.NatsRpcError
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.external.nats.core.NoRespondersError
 import dev.slne.surf.nats.js.external.nats.core.RequestError
@@ -11,6 +18,9 @@ import dev.slne.surf.nats.js.external.protobuf.toBinary
 import dev.slne.surf.nats.js.fixtures.FindPlayerResponse
 import dev.slne.surf.nats.js.fixtures.FindPlayerResponseSchema
 import dev.slne.surf.nats.js.fixtures.fields
+import dev.slne.surf.nats.js.rpc.AllAnswers
+import dev.slne.surf.nats.js.rpc.ReplyDecoder
+import dev.slne.surf.nats.js.rpc.mapRequestError
 import js.errors.ErrorOptions
 import js.objects.unsafeJso
 import js.typedarrays.Uint8Array
@@ -27,9 +37,9 @@ class RepliesTest {
 
     private val rawBody: suspend (Msg) -> Uint8Array<*> = { it.data }
 
-    private fun decoder(kind: NatsResultKind) = ReplyDecoder(FindPlayerResponseSchema, kind)
+    private fun decoder(kind: NatsResultKind) = ReplyDecoder(FindPlayerResponseSchema, kind, rawBody)
 
-    private suspend fun decode(kind: NatsResultKind, reply: Msg): ProtoMessage? = decoder(kind).decode(reply, rawBody)
+    private suspend fun decode(kind: NatsResultKind, reply: Msg): ProtoMessage? = decoder(kind).decode(reply)
 
     private fun responseMessage(name: String) = create(FindPlayerResponseSchema, unsafeJso<FindPlayerResponse> { this.name = name })
 
@@ -38,7 +48,7 @@ class RepliesTest {
     private fun errorReply(type: String, message: String) =
         fakeMessage(utf8Bytes(message), protobufHeaders("Surf-Error" to type))
 
-    private fun unknownReply() = fakeMessage(Wire.emptyBody(), protobufHeaders("Surf-Answer" to "unknown"))
+    private fun unknownReply() = fakeMessage(emptyBody(), protobufHeaders("Surf-Answer" to "unknown"))
 
     private fun cause(error: Throwable): ErrorOptions = unsafeJso { cause = error }
 
@@ -113,7 +123,7 @@ class RepliesTest {
         val channel = Channel<Msg>(Channel.UNLIMITED)
         replies.forEach { channel.trySend(it) }
         channel.close()
-        return AllAnswers(decoder(NatsResultKind.ANSWER), rawBody, "a.b").collect(channel)
+        return AllAnswers(decoder(NatsResultKind.ANSWER), "a.b").collect(channel)
     }
 
     @Test
@@ -140,7 +150,7 @@ class RepliesTest {
 
     @Test
     fun allNoRespondersIsUnknown() = asyncTest {
-        val status = fakeMessage(Wire.emptyBody(), headers(503, "No Responders"))
+        val status = fakeMessage(emptyBody(), headers(503, "No Responders"))
         assertEquals(false, collect(status, errorReply("E", "after")).known)
     }
 
@@ -158,11 +168,11 @@ class RepliesTest {
     @Test
     fun answerObjectsHaveTheTsShape() {
         val message = responseMessage("v")
-        val known = knownAnswer(message)
+        val known = Answer(known = true, value = message)
         assertEquals(true, known.known)
         assertSame(message, known.value)
         assertEquals(listOf("known", "value"), objectKeys(known))
-        val unknown = unknownAnswer()
+        val unknown = Answer(known = false)
         assertEquals(false, unknown.known)
         assertEquals(listOf("known"), objectKeys(unknown))
     }

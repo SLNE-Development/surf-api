@@ -2,9 +2,12 @@
 
 package dev.slne.surf.nats.js.external.nats.core
 
+import kotlinx.js.JsPlainObject
+
+@JsPlainObject
 internal external interface RequestOptions {
-    var timeout: Int
-    var headers: MsgHdrs?
-    var noMux: Boolean?
-    var reply: String?
+    val timeout: Int
+    val headers: MsgHdrs?
+    val noMux: Boolean?
+    val reply: String?
 }

@@ -2,10 +2,13 @@
 
 package dev.slne.surf.nats.js.external.nats.core
 
+import kotlinx.js.JsPlainObject
+
 // SubscriptionOptions (SubOpts<Msg>) of nats-core
+@JsPlainObject
 internal external interface SubscriptionOptions {
-    var queue: String?
-    var max: Int?
-    var timeout: Int?
-    var callback: ((error: Throwable?, message: Msg) -> Unit)?
+    val queue: String?
+    val max: Int?
+    val timeout: Int?
+    val callback: ((error: Throwable?, message: Msg) -> Unit)?
 }

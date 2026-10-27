@@ -2,6 +2,11 @@
 
 package dev.slne.surf.nats.js
 
+import dev.slne.surf.nats.js.api.CallOptions
+import dev.slne.surf.nats.js.api.ConnectOptions
+import dev.slne.surf.nats.js.api.ListenOptions
+import dev.slne.surf.nats.js.api.PublishOptions
+import dev.slne.surf.nats.js.codec.decodeUtf8
 import dev.slne.surf.nats.js.external.nats.core.ConnectionOptions
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.external.nats.core.MsgHdrs
@@ -40,38 +45,8 @@ internal fun uniqueName(prefix: String): String {
     return "$prefix-${epochMillis() % 1_000_000}-$uniqueCounter"
 }
 
-// Mutable views of the exported option shapes for building them in tests.
-
-internal external interface ConnectOptionsInit : ConnectOptions {
-    override var name: String
-    override var servers: Array<String>?
-    override var token: String?
-    override var user: String?
-    override var pass: String?
-    override var credsFile: String?
-    override var connectTimeoutMs: Int?
-}
-
-internal external interface PublishOptionsInit : PublishOptions {
-    override var owner: String?
-    override var timeoutMs: Int?
-}
-
-internal external interface ListenOptionsInit : ListenOptions {
-    override var owner: String?
-    override var recipients: String?
-    override var ignoreFromThisClient: Boolean?
-}
-
-internal external interface CallOptionsInit : CallOptions {
-    override var owner: String?
-    override var timeoutMs: Int?
-}
-
-internal fun callOptions(owner: String? = null, timeoutMs: Int? = null): CallOptions = unsafeJso<CallOptionsInit> {
-    this.owner = owner
-    this.timeoutMs = timeoutMs
-}
+internal fun callOptions(owner: String? = null, timeoutMs: Int? = null): CallOptions =
+    CallOptions(owner = owner, timeoutMs = timeoutMs)
 
 internal fun bytes(vararg values: Int): Uint8Array<*> {
     val array = Uint8Array<ArrayBuffer>(values.size)
@@ -137,7 +112,7 @@ internal external object JsObject {
 internal object TestNats {
     private val url: String? by lazy {
         val file = process.env["SURF_NATS_JS_TEST_URL_FILE"] ?: return@lazy null
-        Wire.utf8(readFileSync(file, unsafeJso<ReadFileSyncBufferOptions>())).trim()
+        readFileSync(file, ReadFileSyncBufferOptions()).decodeUtf8().trim()
     }
 
     fun urlOrNull(): String? = url
@@ -145,7 +120,7 @@ internal object TestNats {
     // tokenUrl, token, userUrl, user, pass of the authenticating servers
     private val auth: Map<String, String>? by lazy {
         val file = process.env["SURF_NATS_JS_TEST_AUTH_FILE"] ?: return@lazy null
-        Wire.utf8(readFileSync(file, unsafeJso<ReadFileSyncBufferOptions>())).lines()
+        readFileSync(file, ReadFileSyncBufferOptions()).decodeUtf8().lines()
             .map(String::trim)
             .filter { '=' in it }
             .associate { it.substringBefore('=') to it.substringAfter('=') }
@@ -155,10 +130,7 @@ internal object TestNats {
 
     suspend fun rawConnection(): NatsConnection {
         val server = checkNotNull(url) { "NATS e2e server is not configured" }
-        val options = unsafeJso<ConnectionOptions> {
-            servers = arrayOf(server)
-            name = "raw-test"
-        }
+        val options = ConnectionOptions(servers = arrayOf(server), name = "raw-test")
         var last: Throwable? = null
         repeat(50) {
             try {
@@ -173,10 +145,7 @@ internal object TestNats {
 
     suspend fun client(name: String): SurfNatsClient {
         rawConnection().close().await()
-        val options = unsafeJso<ConnectOptionsInit> {
-            this.name = name
-            servers = arrayOf(checkNotNull(url))
-        }
+        val options = ConnectOptions(name = name, servers = arrayOf(checkNotNull(url)))
         return connect(options).await()
     }
 }

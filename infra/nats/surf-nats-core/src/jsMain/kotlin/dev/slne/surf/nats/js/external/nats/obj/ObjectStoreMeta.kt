@@ -2,7 +2,10 @@
 
 package dev.slne.surf.nats.js.external.nats.obj
 
+import kotlinx.js.JsPlainObject
+
+@JsPlainObject
 internal external interface ObjectStoreMeta {
-    var name: String
-    var description: String?
+    val name: String
+    val description: String?
 }

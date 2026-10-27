@@ -53,4 +53,5 @@ log4j = ["log4j-core", "log4j-api", "log4j-slf4j2-impl"]
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-js-plain-objects = { id = "org.jetbrains.kotlin.plugin.js-plain-objects", version.ref = "kotlin" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }

@@ -14,6 +14,7 @@ import javax.inject.Inject
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.kotlin.js.plain.objects)
     id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 

@@ -1,5 +1,8 @@
 package dev.slne.surf.nats.js
 
+import dev.slne.surf.nats.js.client.JsRuntimeDefaults
+import dev.slne.surf.nats.js.error.NatsCallTimeoutError
+import dev.slne.surf.nats.js.error.NatsRpcError
 import dev.slne.surf.nats.js.fixtures.AuditEntry
 import dev.slne.surf.nats.js.fixtures.AuditEntrySchema
 import dev.slne.surf.nats.js.fixtures.AuditQuerySchema

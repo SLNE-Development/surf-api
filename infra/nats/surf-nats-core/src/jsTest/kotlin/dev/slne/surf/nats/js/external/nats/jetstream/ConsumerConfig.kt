@@ -2,9 +2,12 @@
 
 package dev.slne.surf.nats.js.external.nats.jetstream
 
+import kotlinx.js.JsPlainObject
+
 // Partial<ConsumerConfig>
 @Suppress("PropertyName")
+@JsPlainObject
 internal external interface ConsumerConfig {
-    var durable_name: String?
-    var ack_policy: String?
+    val durable_name: String?
+    val ack_policy: String?
 }

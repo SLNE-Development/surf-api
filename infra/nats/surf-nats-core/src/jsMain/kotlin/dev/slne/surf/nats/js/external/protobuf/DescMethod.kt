@@ -2,7 +2,7 @@
 
 package dev.slne.surf.nats.js.external.protobuf
 
-import dev.slne.surf.nats.js.MethodSchema
+import dev.slne.surf.nats.js.api.MethodSchema
 
 // Service.method.x is passed to the exported API as MethodSchema.
 internal external interface DescMethod : AnyDesc, MethodSchema {

@@ -1,6 +1,8 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.descriptor.NatsResultKind
+import dev.slne.surf.nats.js.contract.Contracts
+import dev.slne.surf.nats.js.contract.ProtocolOptionReader
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.external.protobuf.DescService
 import dev.slne.surf.nats.js.fixtures.AuditService
@@ -154,8 +156,8 @@ class ContractsTest {
     @Test
     fun nullableOption() {
         val fields = RulesSchema.fields.associateBy { it.localName }
-        assertTrue(Contracts.isNullable(fields.getValue("nullableText")))
-        assertFalse(Contracts.isNullable(fields.getValue("requiredText")))
-        assertFalse(Contracts.isNullable(fields.getValue("defaulted")))
+        assertTrue(ProtocolOptionReader.isNullable(fields.getValue("nullableText")))
+        assertFalse(ProtocolOptionReader.isNullable(fields.getValue("requiredText")))
+        assertFalse(ProtocolOptionReader.isNullable(fields.getValue("defaulted")))
     }
 }

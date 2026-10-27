@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.js.fixtures
 
-import dev.slne.surf.nats.js.ProtoMessage
-import dev.slne.surf.nats.js.ProtoMessageInit
+import dev.slne.surf.nats.js.api.ProtoMessage
+import dev.slne.surf.nats.js.api.ProtoMessageInit
 import js.typedarrays.Uint8Array
 import kotlin.js.Json
 

@@ -1,6 +1,9 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.NatsConstants
+import dev.slne.surf.nats.js.api.EventContext
+import dev.slne.surf.nats.js.api.ListenOptions
+import dev.slne.surf.nats.js.api.PublishOptions
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.fixtures.ChatMessage
 import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
@@ -25,13 +28,9 @@ import kotlin.time.Duration.Companion.milliseconds
 class EventsE2eTest {
 
     private fun listenOptions(owner: String, recipients: String? = null, ignore: Boolean? = null): ListenOptions =
-        unsafeJso<ListenOptionsInit> {
-            this.owner = owner
-            this.recipients = recipients
-            ignoreFromThisClient = ignore
-        }
+        ListenOptions(owner = owner, recipients = recipients, ignoreFromThisClient = ignore)
 
-    private fun publishOptions(owner: String): PublishOptions = unsafeJso<PublishOptionsInit> { this.owner = owner }
+    private fun publishOptions(owner: String): PublishOptions = PublishOptions(owner = owner)
 
     private fun playerJoined(name: String? = null): PlayerJoined = unsafeJso {
         if (name != null) this.name = name
@@ -188,7 +187,7 @@ class EventsE2eTest {
             val received = mutableListOf<String>()
             for (client in listOf(first, second)) {
                 // An options object without recipients, as TypeScript callers pass it
-                val options = unsafeJso<ListenOptionsInit> { this.owner = owner }
+                val options = ListenOptions(owner = owner)
                 client.listen(ChatMessageSchema, { _, _ -> received.add(client.origin) }, options).await()
             }
 

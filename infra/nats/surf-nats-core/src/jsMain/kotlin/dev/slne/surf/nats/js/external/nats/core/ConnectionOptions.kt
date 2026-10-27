@@ -2,16 +2,19 @@
 
 package dev.slne.surf.nats.js.external.nats.core
 
+import kotlinx.js.JsPlainObject
+
 // ConnectionOptions (NodeConnectionOptions) of the options that surf-nats sets.
+@JsPlainObject
 internal external interface ConnectionOptions {
     // Array<string> | string; surf-nats always passes an array.
-    var servers: Array<String>?
-    var name: String?
-    var timeout: Int?
-    var maxReconnectAttempts: Int?
-    var pingInterval: Int?
-    var token: String?
-    var user: String?
-    var pass: String?
-    var authenticator: Authenticator?
+    val servers: Array<String>?
+    val name: String?
+    val timeout: Int?
+    val maxReconnectAttempts: Int?
+    val pingInterval: Int?
+    val token: String?
+    val user: String?
+    val pass: String?
+    val authenticator: Authenticator?
 }

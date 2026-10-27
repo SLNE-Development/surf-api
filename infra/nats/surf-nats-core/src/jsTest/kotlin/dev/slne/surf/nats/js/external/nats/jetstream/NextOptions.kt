@@ -2,7 +2,10 @@
 
 package dev.slne.surf.nats.js.external.nats.jetstream
 
+import kotlinx.js.JsPlainObject
+
 // Expires & Bind
+@JsPlainObject
 internal external interface NextOptions {
-    var expires: Int?
+    val expires: Int?
 }

@@ -2,15 +2,18 @@
 
 package dev.slne.surf.nats.js.external.nats.jetstream
 
+import kotlinx.js.JsPlainObject
+
 // Partial<StreamConfig>; durations in nanoseconds
 @Suppress("PropertyName")
+@JsPlainObject
 internal external interface StreamConfig {
-    var name: String
-    var subjects: Array<String>?
-    var retention: String?
-    var storage: String?
-    var allow_msg_ttl: Boolean?
-    var max_age: Double?
-    var duplicate_window: Double?
-    var no_ack: Boolean?
+    val name: String
+    val subjects: Array<String>?
+    val retention: String?
+    val storage: String?
+    val allow_msg_ttl: Boolean?
+    val max_age: Double?
+    val duplicate_window: Double?
+    val no_ack: Boolean?
 }
