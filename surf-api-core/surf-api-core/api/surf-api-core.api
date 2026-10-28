@@ -7974,6 +7974,7 @@ public final class dev/slne/surf/api/core/invoker/SuspendInvokerSupport {
 public final class dev/slne/surf/api/core/luckperms/LuckPermsAccess {
 	public static final field INSTANCE Ldev/slne/surf/api/core/luckperms/LuckPermsAccess;
 	public final fun getLuckperms ()Lnet/luckperms/api/LuckPerms;
+	public final fun getOrLoadUser (Ljava/util/UUID;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getUser (Ljava/util/UUID;)Lnet/luckperms/api/model/user/User;
 	public final fun loadUser (Ljava/util/UUID;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -7981,6 +7982,10 @@ public final class dev/slne/surf/api/core/luckperms/LuckPermsAccess {
 public final class dev/slne/surf/api/core/luckperms/LuckPermsAccessKt {
 	public static final fun getLuckPermsUser (Lnet/kyori/adventure/audience/Audience;)Lnet/luckperms/api/model/user/User;
 	public static final fun getLuckPermsUserOrNull (Lnet/kyori/adventure/audience/Audience;)Lnet/luckperms/api/model/user/User;
+	public static final fun getMeta (Lnet/luckperms/api/model/user/User;Ljava/lang/String;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun getMeta (Lnet/luckperms/api/model/user/User;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getMeta (Lnet/luckperms/api/model/user/User;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun getMetaValue (Lnet/luckperms/api/model/user/User;Ljava/lang/String;)Ljava/lang/String;
 	public static final fun getPrefix (Lnet/luckperms/api/model/user/User;)Ljava/lang/String;
 	public static final fun getSuffix (Lnet/luckperms/api/model/user/User;)Ljava/lang/String;
 	public static final fun getWeight (Lnet/luckperms/api/model/user/User;)I
