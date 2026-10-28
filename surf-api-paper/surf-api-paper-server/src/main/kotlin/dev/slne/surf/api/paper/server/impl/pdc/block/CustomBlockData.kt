@@ -25,6 +25,7 @@ package dev.slne.surf.api.paper.server.impl.pdc.block
 import dev.slne.surf.api.paper.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.api.paper.pdc.block.pdc
 import dev.slne.surf.api.paper.util.namespacedKey
+import net.kyori.adventure.key.Key
 import org.bukkit.Chunk
 import org.bukkit.NamespacedKey
 import org.bukkit.block.Block
@@ -109,6 +110,10 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
         defaultValue: C,
     ): C {
         return pdc.getOrDefault(key, type, defaultValue)
+    }
+
+    override fun getPrimitiveStorageType(key: Key): PersistentDataType<*, *>? {
+        return pdc.getPrimitiveStorageType(key)
     }
 
     override fun getKeys(): Set<NamespacedKey> {
