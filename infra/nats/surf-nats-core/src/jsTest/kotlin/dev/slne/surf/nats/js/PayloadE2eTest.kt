@@ -1,7 +1,6 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.codec.NatsHeaders
-import dev.slne.surf.nats.js.codec.emptyBody
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.fixtures.AuditEntry
 import dev.slne.surf.nats.js.fixtures.AuditService
@@ -107,8 +106,8 @@ class PayloadE2eTest {
             raw.flush()
 
             // Headers at the size check: the base headers and the Surf-Deadline line (13 digits)
-            val headerBytes = NatsHeaders.encodedSize(NatsHeaders.base(client.origin)) +
-                    NatsHeaders.lineSize(ProtocolHeaders.DEADLINE, "0".repeat(13))
+            val headerBytes = NatsHeaders.serializedLength(NatsHeaders.forOrigin(client.origin)) +
+                    NatsHeaders.lineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
             val maxPayload = assertNotNull(raw.connection.info).max_payload.toLong()
             val maxBody = (maxPayload - headerBytes - ProtocolDefaults.PAYLOAD_REF_RESERVE).toInt()
             // BlobRequest.data is the field tag, a 3-byte length varint and the data
@@ -203,7 +202,7 @@ class PayloadE2eTest {
                     refs += ref
                     val headers = raw.jvmHeaders()
                     headers.set(ProtocolHeaders.PAYLOAD_REF, ref)
-                    raw.respond(request, emptyBody(), headers)
+                    raw.respond(request, NatsHeaders.EMPTY_BODY, headers)
                 }
             }
             raw.flush()
@@ -237,7 +236,7 @@ class PayloadE2eTest {
             val ref = raw.putBlob(bucket, raw.encode(BlobResponseSchema, blob(data)))
             val headers = raw.jvmHeaders()
             headers.set(ProtocolHeaders.PAYLOAD_REF, ref)
-            raw.respond(request, emptyBody(), headers)
+            raw.respond(request, NatsHeaders.EMPTY_BODY, headers)
             refs += ref
         }
     }

@@ -11,7 +11,7 @@ import dev.slne.surf.nats.js.api.MethodSchema
 import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.api.ProtoMessageInit
 import dev.slne.surf.nats.js.api.PublishOptions
-import dev.slne.surf.nats.js.client.NatsRuntime
+import dev.slne.surf.nats.js.client.NatsClientImpl
 import dev.slne.surf.nats.js.client.apiScope
 import dev.slne.surf.nats.js.event.NatsRegistration
 import dev.slne.surf.nats.js.interop.requireFromJs
@@ -26,15 +26,15 @@ import kotlin.js.Promise
  * `call` serves every method except `ALL_INSTANCES` methods with a result, which use `callAnswer`.
  */
 @JsExport
-class SurfNatsClient internal constructor(private val runtime: NatsRuntime) {
-    private val operations = SurfNatsOperations(runtime, defaultOwner = null)
+class SurfNatsClient internal constructor(private val client: NatsClientImpl) {
+    private val operations = SurfNatsOperations(client, defaultOwner = null)
 
-    val name: String get() = runtime.name
-    val origin: String get() = runtime.origin
-    val isClosed: Boolean get() = runtime.isClosed
+    val name: String get() = client.name
+    val origin: String get() = client.origin
+    val isClosed: Boolean get() = client.isClosed
 
     fun target(owner: String): SurfNatsTarget {
-        return SurfNatsTarget(runtime, ProtocolNaming.requireClientName(requireFromJs(owner, "owner"), "owner"))
+        return SurfNatsTarget(client, ProtocolNaming.requireClientName(requireFromJs(owner, "owner"), "owner"))
     }
 
     fun publish(schema: MessageSchema, message: ProtoMessageInit?, options: PublishOptions? = null): Promise<Unit> {
@@ -55,5 +55,5 @@ class SurfNatsClient internal constructor(private val runtime: NatsRuntime) {
         return operations.callAnswer(method, request, options)
     }
 
-    fun close(): Promise<Unit> = apiScope.promise { runtime.close() }
+    fun close(): Promise<Unit> = apiScope.promise { client.close() }
 }

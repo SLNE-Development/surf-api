@@ -6,7 +6,7 @@ import dev.slne.surf.nats.js.api.CallOptions
 import dev.slne.surf.nats.js.api.ConnectOptions
 import dev.slne.surf.nats.js.api.ListenOptions
 import dev.slne.surf.nats.js.api.PublishOptions
-import dev.slne.surf.nats.js.codec.decodeUtf8
+import dev.slne.surf.nats.js.codec.decodeToString
 import dev.slne.surf.nats.js.external.nats.core.ConnectionOptions
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.external.nats.core.MsgHdrs
@@ -112,7 +112,7 @@ internal external object JsObject {
 internal object TestNats {
     private val url: String? by lazy {
         val file = process.env["SURF_NATS_JS_TEST_URL_FILE"] ?: return@lazy null
-        readFileSync(file, ReadFileSyncBufferOptions()).decodeUtf8().trim()
+        readFileSync(file, ReadFileSyncBufferOptions()).decodeToString().trim()
     }
 
     fun urlOrNull(): String? = url
@@ -120,7 +120,7 @@ internal object TestNats {
     // tokenUrl, token, userUrl, user, pass of the authenticating servers
     private val auth: Map<String, String>? by lazy {
         val file = process.env["SURF_NATS_JS_TEST_AUTH_FILE"] ?: return@lazy null
-        readFileSync(file, ReadFileSyncBufferOptions()).decodeUtf8().lines()
+        readFileSync(file, ReadFileSyncBufferOptions()).decodeToString().lines()
             .map(String::trim)
             .filter { '=' in it }
             .associate { it.substringBefore('=') to it.substringAfter('=') }

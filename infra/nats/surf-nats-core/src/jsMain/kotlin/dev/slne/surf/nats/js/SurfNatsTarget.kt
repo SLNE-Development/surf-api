@@ -11,7 +11,7 @@ import dev.slne.surf.nats.js.api.MethodSchema
 import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.api.ProtoMessageInit
 import dev.slne.surf.nats.js.api.PublishOptions
-import dev.slne.surf.nats.js.client.NatsRuntime
+import dev.slne.surf.nats.js.client.NatsClientImpl
 import dev.slne.surf.nats.js.event.NatsRegistration
 import kotlin.js.Promise
 
@@ -19,8 +19,8 @@ import kotlin.js.Promise
  * Operations of a [SurfNatsClient] on the contracts owned by [owner]; an `owner` option overrides it.
  */
 @JsExport
-class SurfNatsTarget internal constructor(runtime: NatsRuntime, val owner: String) {
-    private val operations = SurfNatsOperations(runtime, defaultOwner = owner)
+class SurfNatsTarget internal constructor(client: NatsClientImpl, val owner: String) {
+    private val operations = SurfNatsOperations(client, defaultOwner = owner)
 
     fun publish(schema: MessageSchema, message: ProtoMessageInit?, options: PublishOptions? = null): Promise<Unit> {
         return operations.publish(schema, message, options)

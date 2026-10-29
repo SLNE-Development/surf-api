@@ -4,6 +4,7 @@ import dev.slne.surf.nats.NatsConstants
 import dev.slne.surf.nats.js.api.EventContext
 import dev.slne.surf.nats.js.api.ListenOptions
 import dev.slne.surf.nats.js.api.PublishOptions
+import dev.slne.surf.nats.js.event.NatsRegistration
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.fixtures.ChatMessage
 import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
@@ -314,5 +315,76 @@ class EventsE2eTest {
             client.publish(ChatMessageSchema, chat("x"), publishOptions("surf-punish")).await()
         }
         assertTrue(client.isClosed)
+    }
+
+    @Test
+    fun listenersOfOneClientShareTheSubscriptionOfTheirQueueGroup() = e2eTest {
+        val owner = uniqueName("events-owner")
+        val client = TestNats.client(uniqueName("events-shared"))
+        val publisher = TestNats.client(uniqueName("events-publisher"))
+        try {
+            val first = mutableListOf<String?>()
+            val second = mutableListOf<String?>()
+            client.listen(
+                ChatMessageSchema,
+                { event, _ -> first.add(event.fields<ChatMessage>().text) },
+                listenOptions(owner, "ANY_INSTANCE"),
+            ).await()
+            val registration = client.listen(
+                ChatMessageSchema,
+                { event, _ -> second.add(event.fields<ChatMessage>().text) },
+                listenOptions(owner, "ANY_INSTANCE"),
+            ).await()
+
+            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it"), publishOptions(owner)).await() }
+
+            // Both listeners see every event the queue group delivers to this client
+            eventually { first.size == 3 && second.size == 3 }
+            assertEquals(listOf<String?>("hello-0", "hello-1", "hello-2"), first)
+            assertEquals(first, second)
+
+            // Closing one registration keeps the shared subscription for the other
+            registration.close()
+            publisher.publish(ChatMessageSchema, chat("after"), publishOptions(owner)).await()
+            eventually { first.size == 4 }
+            delay(100.milliseconds)
+            assertEquals(3, second.size)
+        } finally {
+            client.close().await()
+            publisher.close().await()
+        }
+    }
+
+    @Test
+    fun aHandlerMayCloseItsRegistrationWhileTheEventIsDispatched() = e2eTest {
+        val owner = uniqueName("events-owner")
+        val client = TestNats.client(uniqueName("events-reentrant"))
+        val publisher = TestNats.client(uniqueName("events-publisher"))
+        try {
+            val once = mutableListOf<String?>()
+            val every = mutableListOf<String?>()
+            var registration: NatsRegistration? = null
+            registration = client.listen(
+                ChatMessageSchema,
+                { event, _ ->
+                    once.add(event.fields<ChatMessage>().text)
+                    registration!!.close()
+                },
+                listenOptions(owner),
+            ).await()
+            client.listen(ChatMessageSchema, { event, _ -> every.add(event.fields<ChatMessage>().text) }, listenOptions(owner)).await()
+
+            publisher.publish(ChatMessageSchema, chat("one"), publishOptions(owner)).await()
+            publisher.publish(ChatMessageSchema, chat("two"), publishOptions(owner)).await()
+
+            eventually { every.size == 2 }
+            delay(100.milliseconds)
+            assertEquals(listOf<String?>("one"), once)
+            assertEquals(listOf<String?>("one", "two"), every)
+            assertTrue(registration!!.isClosed)
+        } finally {
+            client.close().await()
+            publisher.close().await()
+        }
     }
 }

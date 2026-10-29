@@ -5,32 +5,37 @@ import dev.slne.surf.nats.js.external.nats.core.MsgHdrs
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.runtime.writeBaseNatsHeaders
+import js.buffer.ArrayBuffer
+import js.typedarrays.Uint8Array
 import dev.slne.surf.nats.js.external.nats.core.headers as createNatsHeaders
 
 internal object NatsHeaders {
-    /**
-     * Bytes nats.js writes around each header line: `\r\n<name>: <value>`.
-     */
-    private const val LINE_OVERHEAD_BYTES = 4
 
-    fun base(origin: String): MsgHdrs {
+    // nats.js writes a header line as `\r\nname: value`
+    private const val LINE_SEPARATOR_BYTES = 4
+
+    val EMPTY_BODY: Uint8Array<*> = Uint8Array<ArrayBuffer>(0)
+
+    fun forOrigin(origin: String): MsgHdrs {
         val headers = createNatsHeaders()
         writeBaseNatsHeaders(origin, headers::set)
         return headers
     }
 
-    fun get(message: Msg, name: String): String? {
-        return ProtocolHeaders.valueOrNull(message.headers?.get(name))
-    }
-
-    fun statusCode(message: Msg): Int = message.headers?.code ?: 0
+    /**
+     * Returns the size of the encoded header block, including the terminating `\r\n\r\n`.
+     */
+    fun serializedLength(headers: MsgHdrs): Int = headers.encode().length
 
     /**
-     * Size of the whole encoded header block, including the terminating `\r\n\r\n`.
+     * Returns the encoded size of a header line nats.js writes for [value]; `0` for a missing or empty value.
      */
-    fun encodedSize(headers: MsgHdrs): Int = headers.encode().length
-
-    fun lineSize(name: String, value: String): Int {
-        return ProtocolDefaults.headerLineBytes(name, value, LINE_OVERHEAD_BYTES)
+    fun lineBytes(name: String, value: String?): Int {
+        return if (value.isNullOrEmpty()) 0 else ProtocolDefaults.headerLineBytes(name, value, LINE_SEPARATOR_BYTES)
     }
 }
+
+internal fun Msg.header(name: String): String? = ProtocolHeaders.valueOrNull(headers?.get(name))
+
+// Status code of a status message (503 = no responders), 0 for regular messages
+internal fun Msg.statusCode(): Int = headers?.code ?: 0

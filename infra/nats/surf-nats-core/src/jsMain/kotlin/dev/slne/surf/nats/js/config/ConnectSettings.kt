@@ -1,4 +1,4 @@
-package dev.slne.surf.nats.js.client
+package dev.slne.surf.nats.js.config
 
 import dev.slne.surf.nats.js.api.ConnectOptions
 import dev.slne.surf.nats.js.interop.requireFromJs
@@ -24,8 +24,9 @@ internal class ConnectSettings(
         const val DEFAULT_CONNECT_TIMEOUT_MS = 5000
 
         fun of(options: ConnectOptions): ConnectSettings {
-            val name =
-                ProtocolNaming.requireClientName(requireFromJs(options.name, "NATS client name"))
+            val name = ProtocolNaming.requireClientName(
+                requireFromJs(options.name, "NATS client name")
+            )
 
             val timeout = options.connectTimeoutMs ?: DEFAULT_CONNECT_TIMEOUT_MS
             require(timeout > 0) { "NATS connectTimeoutMs must be positive, was $timeout" }
@@ -48,8 +49,9 @@ internal class ConnectSettings(
             val pass = options.pass.orNullIfEmpty()
             val credsFile = options.credsFile.orNullIfEmpty()
 
-            ConnectRules.authProblem(token, user, pass, credsFile)
-                ?.let { throw IllegalArgumentException(it) }
+            val problem = ConnectRules.authProblem(token, user, pass, credsFile)
+
+            require(problem == null) { problem.toString() }
 
             return when {
                 token != null -> Auth.Token(token)

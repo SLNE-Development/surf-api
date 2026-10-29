@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.api.MethodSchema
-import dev.slne.surf.nats.js.codec.emptyBody
+import dev.slne.surf.nats.js.codec.NatsHeaders
 import dev.slne.surf.nats.js.error.NatsCallTimeoutError
 import dev.slne.surf.nats.js.error.NatsNoRespondersError
 import dev.slne.surf.nats.js.error.NatsRemoteError
@@ -89,7 +89,7 @@ class RpcE2eTest {
                 headers.set(ProtocolHeaders.ERROR, "java.lang.IllegalStateException")
                 raw.respond(request, utf8Bytes("player is offline"), headers)
             }
-            raw.subscribe(subject(owner, "kick"), queue = owner) { request -> raw.respond(request, emptyBody()) }
+            raw.subscribe(subject(owner, "kick"), queue = owner) { request -> raw.respond(request, NatsHeaders.EMPTY_BODY) }
             raw.flush()
 
             val error = assertFails {
@@ -197,7 +197,7 @@ class RpcE2eTest {
                 raw.subscribe(locate) { request ->
                     val headers = raw.jvmHeaders()
                     headers.set(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN)
-                    raw.respond(request, emptyBody(), headers)
+                    raw.respond(request, NatsHeaders.EMPTY_BODY, headers)
                 }
             }
             raw.subscribe(locate) { request ->
@@ -233,7 +233,7 @@ class RpcE2eTest {
             val unknownSubscription = raw.subscribe(subject(owner, "locate")) { message ->
                 val headers = raw.jvmHeaders()
                 headers.set(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN)
-                raw.respond(message, emptyBody(), headers)
+                raw.respond(message, NatsHeaders.EMPTY_BODY, headers)
             }
             raw.flush()
             assertEquals(false, client.callAnswer(locate, request, options(owner, 400)).await().known)
@@ -272,6 +272,35 @@ class RpcE2eTest {
             assertTrue(received.all { it.reply == null || it.reply == "" }, "fan-out has no reply subject")
             assertTrue(received.all { header(it, ProtocolHeaders.DEADLINE) != null })
             assertEquals("all", raw.decode(FindPlayerRequestSchema, received.first().data).fields<FindPlayerRequest>().name)
+        } finally {
+            client.close().await()
+            raw.close()
+        }
+    }
+
+    @Test
+    fun allInstancesUndecodableAnswersAreRecorded() = e2eTest {
+        val owner = uniqueName("rpc-owner")
+        val raw = rawNats()
+        val client = TestNats.client(uniqueName("rpc-caller"))
+        try {
+            val locate = method(PlayerService, "locate")
+            val request = findRequest("Steve")
+            raw.subscribe(subject(owner, "locate")) { message -> raw.respond(message, bytes(0x0a, 0x7f), raw.jvmHeaders()) }
+            raw.flush()
+
+            // Only undecodable answers: the decoding error is thrown when the call ends
+            val error = assertFails { client.callAnswer(locate, request, options(owner, 400)).await() }
+            assertTrue(error !is NatsRemoteError, "unexpected $error")
+
+            // A known answer of another responder still wins
+            raw.subscribe(subject(owner, "locate")) { message ->
+                raw.respond(message, raw.encode(LocateResponseSchema, unsafeJso<LocateResponse> { server = "lobby-3" }))
+            }
+            raw.flush()
+            val answer = client.callAnswer(locate, request, options(owner, 5_000)).await()
+            assertEquals(true, answer.known)
+            assertEquals("lobby-3", answer.value.fields<LocateResponse>().server)
         } finally {
             client.close().await()
             raw.close()

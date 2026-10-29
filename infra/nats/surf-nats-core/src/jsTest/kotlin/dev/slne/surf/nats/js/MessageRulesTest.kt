@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.api.ProtoMessage
-import dev.slne.surf.nats.js.codec.MessageCodec
+import dev.slne.surf.nats.js.codec.NatsCodec
 import dev.slne.surf.nats.js.codec.rules.MessageRules
 import dev.slne.surf.nats.js.external.protobuf.create
 import dev.slne.surf.nats.js.external.protobuf.fromBinary
@@ -192,13 +192,13 @@ class MessageRulesTest {
     @Test
     fun decodeRejectsAMissingRequiredField() {
         val bytes = toBinary(RulesSchema, create(RulesSchema, unsafeJso<Rules> { color = 1 }))
-        val error = assertFailsWith<IllegalArgumentException> { MessageCodec.decode(RulesSchema, bytes, ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test") }
+        val error = assertFailsWith<IllegalArgumentException> { NatsCodec.decode(RulesSchema, bytes, ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test") }
         assertTrue(error.message!!.contains("'requiredText'"), error.message)
     }
 
     @Test
     fun defaultsAreAppliedWhenAbsent() {
-        val decoded = MessageCodec.decode(RulesSchema, toBinary(RulesSchema, create(RulesSchema, validInit())), ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test")
+        val decoded = NatsCodec.decode(RulesSchema, toBinary(RulesSchema, create(RulesSchema, validInit())), ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test")
         assertEquals(7, decoded.fields<Rules>().defaulted)
         assertEquals("", decoded.fields<Rules>().nullableText)
         assertTrue(!isSet(decoded, "nullableText"))
@@ -208,7 +208,7 @@ class MessageRulesTest {
     fun uint32AboveIntMaxRoundTrips() {
         val init = validInit()
         init.big = 3_000_000_000.0
-        val decoded = MessageCodec.decode(RulesSchema, toBinary(RulesSchema, create(RulesSchema, init)), ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test")
+        val decoded = NatsCodec.decode(RulesSchema, toBinary(RulesSchema, create(RulesSchema, init)), ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test")
         assertEquals(3_000_000_000.0, decoded.fields<Rules>().big)
     }
 

@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.api.ConnectOptions
-import dev.slne.surf.nats.js.client.ConnectSettings
+import dev.slne.surf.nats.js.config.ConnectSettings
 import js.objects.unsafeJso
 import kotlin.test.Test
 import kotlin.test.assertEquals

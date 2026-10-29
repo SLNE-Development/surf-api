@@ -2,34 +2,25 @@
 
 package dev.slne.surf.nats.js.event
 
-import dev.slne.surf.nats.js.external.nats.core.Subscription
-import kotlin.js.Promise
+import dev.slne.surf.nats.js.client.NatsClientImpl
 
 @JsExport
 class NatsRegistration internal constructor(
-    private val listeners: EventListeners,
-    private val subscription: Subscription,
+    private val client: NatsClientImpl,
+    private val listener: EventListener,
 ) {
-    private var closed = false
-    val isClosed: Boolean get() = closed
+    private var active = true
+    val isClosed: Boolean get() = !active
 
     fun close() {
-        if (!markClosed()) return
-        if (!subscription.isClosed()) subscription.unsubscribe()
-    }
-
-    /**
-     * Stops the delivery like [close]; messages already received are still dispatched before the promise resolves.
-     */
-    internal fun drain(): Promise<Unit>? {
-        if (!markClosed()) return null
-        return if (subscription.isClosed()) null else subscription.drain()
-    }
-
-    private fun markClosed(): Boolean {
-        if (closed) return false
-        closed = true
-        listeners.unregister(this)
-        return true
+        if (!active) return
+        active = false
+        try {
+            client.eventSubscriptions.remove(listener)
+        } catch (e: Throwable) {
+            client.logger.warn("Failed to remove the listener for ${listener.descriptor.typeName} on ${listener.subject}", e)
+        } finally {
+            client.unregisterRegistration(this)
+        }
     }
 }

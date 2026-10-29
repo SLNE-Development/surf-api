@@ -2,7 +2,7 @@ package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.api.ProtoMessageInit
-import dev.slne.surf.nats.js.codec.NatsHeaders
+import dev.slne.surf.nats.js.codec.header
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.external.nats.core.MsgHdrs
 import dev.slne.surf.nats.js.external.nats.core.NatsConnection
@@ -130,7 +130,7 @@ internal class RawNats(val connection: NatsConnection) {
     }
 }
 
-internal fun header(message: Msg, name: String): String? = NatsHeaders.get(message, name)
+internal fun header(message: Msg, name: String): String? = message.header(name)
 
 internal fun header(message: JsMsg, name: String): String? = message.headers?.get(name)?.takeIf { it.isNotEmpty() }
 

@@ -1,6 +1,6 @@
 package dev.slne.surf.nats.js.codec.rules
 
-import dev.slne.surf.nats.js.contract.ProtocolOptionReader
+import dev.slne.surf.nats.js.descriptor.ProtocolOptionReader
 import dev.slne.surf.nats.js.external.protobuf.DescFieldSingular
 import dev.slne.surf.nats.js.external.protobuf.DescMessage
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage

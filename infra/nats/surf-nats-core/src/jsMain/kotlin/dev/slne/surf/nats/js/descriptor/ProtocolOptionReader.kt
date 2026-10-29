@@ -1,4 +1,4 @@
-package dev.slne.surf.nats.js.contract
+package dev.slne.surf.nats.js.descriptor
 
 import dev.slne.surf.nats.js.external.protobuf.*
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
@@ -7,7 +7,6 @@ import dev.slne.surf.nats.js.interop.getOrPut
 import dev.slne.surf.nats.js.interop.messageOf
 import dev.slne.surf.nats.protocol.ProtocolOptions
 import js.collections.WeakMap
-import kotlin.collections.contains
 
 /**
  * Reads the `surf.nats.v1` options of protobuf-es descriptors.

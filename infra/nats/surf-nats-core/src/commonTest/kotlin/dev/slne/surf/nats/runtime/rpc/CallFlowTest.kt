@@ -44,9 +44,9 @@ class CallFlowTest {
 
     @Test
     fun fireTimeoutsMustFitTheDuplicateWindow() {
-        PersistentRules.requireFireTimeout(2.minutes, 2.minutes) { "a.B.fire" }
+        PersistentRules.requireFireTimeout(2.minutes, 2.minutes, "a.B.fire")
         val error = assertFailsWith<IllegalArgumentException> {
-            PersistentRules.requireFireTimeout(121.seconds, 2.minutes) { "a.B.fire" }
+            PersistentRules.requireFireTimeout(121.seconds, 2.minutes, "a.B.fire")
         }
         assertEquals(
             "Timeout 2m 1s for persistent a.B.fire without a result exceeds the JetStream duplicate window of 2m",

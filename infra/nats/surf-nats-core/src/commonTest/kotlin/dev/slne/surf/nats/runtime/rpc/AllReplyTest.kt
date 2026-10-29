@@ -4,25 +4,17 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
-import kotlin.test.fail
 
 class AllReplyTest {
 
-    private fun classify(status: Int, error: String?, answer: String?) = classifyAllReply(status, { error }, { answer })
-
     @Test
     fun repliesAreClassifiedByStatusThenHeaders() {
-        assertEquals(AllReply.NO_RESPONDERS, classify(503, "x", null))
-        assertEquals(AllReply.OTHER_STATUS, classify(408, null, null))
-        assertEquals(AllReply.REMOTE_ERROR, classify(0, "java.lang.IllegalStateException", "unknown"))
-        assertEquals(AllReply.UNKNOWN, classify(0, null, "unknown"))
-        assertEquals(AllReply.ANSWER, classify(0, null, null))
-        assertEquals(AllReply.ANSWER, classify(0, null, "known"))
-    }
-
-    @Test
-    fun headersOfStatusRepliesAreNotRead() {
-        assertEquals(AllReply.NO_RESPONDERS, classifyAllReply(503, { fail("error read") }, { fail("answer read") }))
+        assertEquals(AllReply.NO_RESPONDERS, classifyAllReply(503, "x", null))
+        assertEquals(AllReply.OTHER_STATUS, classifyAllReply(408, null, null))
+        assertEquals(AllReply.REMOTE_ERROR, classifyAllReply(0, "java.lang.IllegalStateException", "unknown"))
+        assertEquals(AllReply.UNKNOWN, classifyAllReply(0, null, "unknown"))
+        assertEquals(AllReply.ANSWER, classifyAllReply(0, null, null))
+        assertEquals(AllReply.ANSWER, classifyAllReply(0, null, "known"))
     }
 
     @Test

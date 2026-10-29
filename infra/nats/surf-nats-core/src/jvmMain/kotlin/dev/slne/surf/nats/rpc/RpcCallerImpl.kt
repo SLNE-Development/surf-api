@@ -128,11 +128,7 @@ internal class RpcCallerImpl(
     ): Answer<*> {
         for (reply in replies) {
             val status = if (reply.isStatusMessage) reply.status.code else 0
-            val kind = classifyAllReply(
-                status,
-                { reply.header(ProtocolHeaders.ERROR) },
-                { reply.header(ProtocolHeaders.ANSWER) },
-            )
+            val kind = classifyAllReply(status, reply.header(ProtocolHeaders.ERROR), reply.header(ProtocolHeaders.ANSWER))
             when (kind) {
                 AllReply.NO_RESPONDERS -> return call.noAnswer()
                 AllReply.OTHER_STATUS -> continue
@@ -209,7 +205,7 @@ internal class RpcCallerImpl(
         timeout: Duration,
     ): Any? {
         if (flow == CallFlow.FIRE) {
-            PersistentRules.requireFireTimeout(timeout, RuntimeDefaults.dedupeWindow) { method.label }
+            PersistentRules.requireFireTimeout(timeout, RuntimeDefaults.dedupeWindow, method.label)
         }
 
         val streams = checkNotNull(service.streams)

@@ -1,9 +1,9 @@
-package dev.slne.surf.nats.js.payload
+package dev.slne.surf.nats.js.rpc.payload
 
 import dev.slne.surf.nats.js.codec.NatsHeaders
-import dev.slne.surf.nats.js.codec.OutgoingHeaders
-import dev.slne.surf.nats.js.codec.emptyBody
+import dev.slne.surf.nats.js.codec.header
 import dev.slne.surf.nats.js.external.nats.core.Msg
+import dev.slne.surf.nats.js.external.nats.core.MsgHdrs
 import dev.slne.surf.nats.js.external.nats.core.NatsConnection
 import dev.slne.surf.nats.js.external.nats.obj.ObjectStore
 import dev.slne.surf.nats.js.external.nats.obj.ObjectStoreMeta
@@ -35,13 +35,14 @@ internal class PayloadStore(
     val maxPayload: Long get() = (connection.info?.max_payload ?: DEFAULT_MAX_PAYLOAD).toLong()
 
     /**
-     * Returns the body to send: [body] itself, or an empty body after uploading it and adding `Surf-Payload-Ref`.
+     * Offloads [body] if larger than the supported max payload and returns the body to send.
      *
-     * [extraHeaderBytes] covers headers that nats.js adds after this call (JetStream publish options). With
-     * [stampDeadline], `Surf-Deadline` (now + [lifetime]) is set and counted in the size check.
+     * [extraHeaderBytes] accounts for headers that are added after this call, such as the JetStream publish options.
+     * With [stampDeadline], `Surf-Deadline` (now + [lifetime]) is added after a possible upload and counted in the
+     * size check.
      */
     suspend fun offload(
-        headers: OutgoingHeaders,
+        headers: MsgHdrs,
         body: Uint8Array<*>,
         lifetime: Duration,
         bucket: PayloadBucket,
@@ -49,40 +50,29 @@ internal class PayloadStore(
         stampDeadline: Boolean = false,
     ): Uint8Array<*> {
         val deadline = if (stampDeadline) deadlineHeader(lifetime) else null
-        val deadlineBytes =
-            deadline?.let { NatsHeaders.lineSize(ProtocolHeaders.DEADLINE, it) } ?: 0
-
-        val offloadRequired = ProtocolDefaults.requiresOffload(
-            bodyBytes = body.length,
-            headerBytes = headers.bytes + deadlineBytes,
-            extraHeaderBytes = extraHeaderBytes,
-            maxPayload = maxPayload,
-        )
-
-        if (!offloadRequired) {
-            if (deadline != null) {
-                headers.set(ProtocolHeaders.DEADLINE, deadline)
-            }
+        val headerBytes = NatsHeaders.serializedLength(headers) + NatsHeaders.lineBytes(ProtocolHeaders.DEADLINE, deadline)
+        if (!ProtocolDefaults.requiresOffload(body.length, headerBytes, extraHeaderBytes, maxPayload)) {
+            if (deadline != null) headers.set(ProtocolHeaders.DEADLINE, deadline)
             return body
         }
 
-        require(lifetime <= bucket.ttl) {
-            bucket.lifetimeExceededMessage(body.length, lifetime)
-        }
+        require(lifetime <= bucket.ttl) { bucket.lifetimeExceededMessage(body.length, lifetime) }
 
-        val name = upload(bucket, body)
-
-        // Stamped after the upload, which used up part of the lifetime
-        if (stampDeadline) {
-            headers.set(ProtocolHeaders.DEADLINE, deadlineHeader(lifetime))
-        }
-
+        val name = randomUUID()
+        store(bucket).putBlob(ObjectStoreMeta(name = name), body).await()
+        // The upload used up part of the lifetime
+        if (stampDeadline) headers.set(ProtocolHeaders.DEADLINE, deadlineHeader(lifetime))
         headers.set(ProtocolHeaders.PAYLOAD_REF, name)
-        return emptyBody()
+
+        return NatsHeaders.EMPTY_BODY
     }
 
+    /**
+     * Resolves the body from [message] which may be loaded from the object store.
+     * Optionally deletes the payload from the object store.
+     */
     suspend fun resolve(message: Msg, bucket: PayloadBucket, delete: Boolean): Uint8Array<*> {
-        val name = NatsHeaders.get(message, ProtocolHeaders.PAYLOAD_REF) ?: return message.data
+        val name = message.header(ProtocolHeaders.PAYLOAD_REF) ?: return message.data
         val store = store(bucket)
         val data = store.getBlob(name).await()
             ?: error("Offloaded payload $name not found in bucket ${bucket.bucketName}")
@@ -92,12 +82,6 @@ internal class PayloadStore(
         }
 
         return data
-    }
-
-    private suspend fun upload(bucket: PayloadBucket, body: Uint8Array<*>): String {
-        val name = randomUUID()
-        store(bucket).putBlob(ObjectStoreMeta(name = name), body).await()
-        return name
     }
 
     private suspend fun deleteQuietly(store: ObjectStore, name: String) {

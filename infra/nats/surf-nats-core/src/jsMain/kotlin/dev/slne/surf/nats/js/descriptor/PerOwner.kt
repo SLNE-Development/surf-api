@@ -1,4 +1,4 @@
-package dev.slne.surf.nats.js.contract
+package dev.slne.surf.nats.js.descriptor
 
 import dev.slne.surf.nats.protocol.ProtocolNaming
 

@@ -12,9 +12,9 @@ internal object PersistentRules {
     /**
      * Requires the [timeout] of a fire to fit into [window]: republished attempts are deduplicated only within it.
      */
-    inline fun requireFireTimeout(timeout: Duration, window: Duration, label: () -> String) {
+    fun requireFireTimeout(timeout: Duration, window: Duration, label: String) {
         require(timeout <= window) {
-            "Timeout $timeout for persistent ${label()} without a result exceeds the JetStream duplicate window of $window"
+            "Timeout $timeout for persistent $label without a result exceeds the JetStream duplicate window of $window"
         }
     }
 
