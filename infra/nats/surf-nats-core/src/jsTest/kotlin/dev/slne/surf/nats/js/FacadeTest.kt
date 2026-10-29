@@ -54,8 +54,7 @@ class FacadeTest {
     }
 
     @Test
-    fun connectSplitsAServerStringBeforeKotlinValidatesIt() = asyncTest {
-        // Only blank entries remain after the split, so Kotlin rejects the list before connecting.
+    fun connectRejectsABlankServerString() = asyncTest {
         val error = assertFailsWith<IllegalArgumentException> { facadeConnect(facadeOptions("surf-panel", " , ")).await() }
         assertTrue(error.message!!.contains("must not be empty"), error.message)
     }

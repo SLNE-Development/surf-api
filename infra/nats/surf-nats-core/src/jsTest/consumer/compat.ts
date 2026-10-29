@@ -33,7 +33,4 @@ export const client: Pick<Facade.SurfNatsClient, "name" | "origin" | "isClosed" 
 export const target: Pick<Facade.SurfNatsTarget, "owner"> = kotlinTarget;
 export const targetOf: (owner: string) => Kotlin.SurfNatsTarget = kotlinClient.target;
 export const registration: Facade.NatsRegistration = kotlinRegistration;
-// The facade's connect passes the options on with a string servers value split into an array (Kotlin only reads
-// the array, so a readonly one passes as well).
-type ForwardedConnectOptions = Omit<Facade.ConnectOptions, "servers"> & { readonly servers?: string[] };
-export const connectFn: (options: ForwardedConnectOptions) => Promise<Kotlin.SurfNatsClient> = kotlinConnect;
+export const connectFn: (options: Facade.ConnectOptions) => Promise<Kotlin.SurfNatsClient> = kotlinConnect;

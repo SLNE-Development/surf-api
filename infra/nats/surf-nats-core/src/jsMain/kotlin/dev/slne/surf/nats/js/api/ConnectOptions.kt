@@ -8,7 +8,11 @@ import kotlinx.js.JsPlainObject
 @JsPlainObject
 external interface ConnectOptions {
     val name: String
-    val servers: Array<String>?
+
+    /**
+     * A comma-separated server list or an array of server URLs.
+     */
+    val servers: Any?
     val token: String?
     val user: String?
     val pass: String?

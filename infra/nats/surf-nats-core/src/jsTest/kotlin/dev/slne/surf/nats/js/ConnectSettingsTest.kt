@@ -46,7 +46,29 @@ class ConnectSettingsTest {
             settings(ConnectOptions(name = "c", servers = arrayOf("nats://a:4222", " "))).servers,
         )
         assertTrue(failure(ConnectOptions(name = "c", servers = arrayOf(" ", ""))).contains("must not be empty"))
-        assertTrue(failure(ConnectOptions(name = "c", servers = arrayOf())).contains("must not be empty"))
+        assertTrue(failure(ConnectOptions(name = "c", servers = arrayOf<String>())).contains("must not be empty"))
+    }
+
+    @Test
+    fun serverString() {
+        assertEquals(
+            listOf("nats://a:4222", "nats://b:4222"),
+            settings(ConnectOptions(name = "c", servers = " nats://a:4222, ,nats://b:4222 ")).servers,
+        )
+        assertTrue(failure(ConnectOptions(name = "c", servers = " , ")).contains("must not be empty"))
+        assertTrue(failure(ConnectOptions(name = "c", servers = "")).contains("must not be empty"))
+    }
+
+    @Test
+    fun serversMustBeStrings() {
+        assertEquals(
+            "NATS servers must be a string or an array of strings, got number",
+            failure(ConnectOptions(name = "c", servers = 4222)),
+        )
+        assertEquals(
+            "NATS servers must be strings, got number",
+            failure(ConnectOptions(name = "c", servers = arrayOf<Any>("nats://a:4222", 4222))),
+        )
     }
 
     @Test

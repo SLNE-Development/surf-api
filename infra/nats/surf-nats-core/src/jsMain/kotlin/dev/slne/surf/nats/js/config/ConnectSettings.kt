@@ -34,10 +34,18 @@ internal class ConnectSettings(
             return ConnectSettings(name, servers(options.servers), auth(options), timeout)
         }
 
-        private fun servers(value: Array<String>?): List<String> {
-            if (value == null) return listOf(ConnectRules.DEFAULT_SERVER)
-
-            val servers = ConnectRules.servers(value.asList())
+        private fun servers(value: Any?): List<String> {
+            val servers = when (value) {
+                null -> return listOf(ConnectRules.DEFAULT_SERVER)
+                is String -> ConnectRules.parseServers(value)
+                is Array<*> -> ConnectRules.servers(value.map { entry ->
+                    entry as? String
+                        ?: throw IllegalArgumentException("NATS servers must be strings, got ${jsTypeOf(entry)}")
+                })
+                else -> throw IllegalArgumentException(
+                    "NATS servers must be a string or an array of strings, got ${jsTypeOf(value)}"
+                )
+            }
             require(servers.isNotEmpty()) { "NATS servers must not be empty" }
 
             return servers
