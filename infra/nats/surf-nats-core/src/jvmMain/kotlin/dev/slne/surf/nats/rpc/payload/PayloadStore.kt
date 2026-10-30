@@ -9,6 +9,8 @@ import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.runtime.deadlineHeader
+import dev.slne.surf.nats.runtime.headerLineBytes
+import dev.slne.surf.nats.runtime.randomId
 import io.nats.client.Connection
 import io.nats.client.JetStreamApiException
 import io.nats.client.Message
@@ -55,7 +57,7 @@ internal object PayloadStore {
     ): ByteArray {
         val connection = NatsConnectionManager.connection()
         val deadline = if (stampDeadline) deadlineHeader(lifetime) else null
-        val headerBytes = headers.serializedLength() + NatsHeaders.lineBytes(ProtocolHeaders.DEADLINE, deadline)
+        val headerBytes = headers.serializedLength() + headerLineBytes(ProtocolHeaders.DEADLINE, deadline)
         if (!ProtocolDefaults.requiresOffload(body.size, headerBytes, extraHeaderBytes, connection.maxPayload)) {
             if (deadline != null) headers.add(ProtocolHeaders.DEADLINE, deadline)
             return body
@@ -63,7 +65,7 @@ internal object PayloadStore {
 
         require(lifetime <= bucket.ttl) { bucket.lifetimeExceededMessage(body.size, lifetime) }
 
-        val name = UUID.randomUUID().toString()
+        val name = randomId()
         val store = store(connection, bucket)
 
         withContext(Dispatchers.IO) {

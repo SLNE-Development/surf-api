@@ -2,6 +2,9 @@
 
 package dev.slne.surf.nats.js.error
 
+import dev.slne.surf.nats.rpc.NatsRpcMessages
+import kotlin.time.Duration.Companion.milliseconds
+
 /**
  * No response, PubAck or publish flush arrived within [timeoutMs].
  */
@@ -9,4 +12,4 @@ package dev.slne.surf.nats.js.error
 class NatsCallTimeoutError internal constructor(
     val subject: String,
     val timeoutMs: Int,
-) : NatsRpcError("No response on $subject within $timeoutMs ms")
+) : NatsRpcError(NatsRpcMessages.callTimeout(subject, timeoutMs.milliseconds))

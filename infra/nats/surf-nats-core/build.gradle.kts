@@ -185,6 +185,10 @@ val natsTestServers = gradle.sharedServices.registerIfAbsent("surfNatsJsTestServ
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     jvm()
 
     js {

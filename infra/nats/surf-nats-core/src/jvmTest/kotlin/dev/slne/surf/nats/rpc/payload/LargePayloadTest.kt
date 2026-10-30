@@ -11,6 +11,7 @@ import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.rpc.Answer
 import dev.slne.surf.nats.rpc.withNatsCallTimeout
+import dev.slne.surf.nats.runtime.headerLineBytes
 import dev.slne.surf.nats.test.proto.v1.Blob
 import dev.slne.surf.nats.test.proto.v1.BlobFanoutService
 import dev.slne.surf.nats.test.proto.v1.BlobService
@@ -123,7 +124,7 @@ class LargePayloadTest {
                 try {
                     // Headers at the size check: the base headers and the Surf-Deadline line (13 digits)
                     val headerBytes = client.headers().serializedLength() +
-                            NatsHeaders.lineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
+                            headerLineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
                     val maxBody = (connection.maxPayload - headerBytes - ProtocolDefaults.PAYLOAD_REF_RESERVE).toInt()
                     // Blob(data) is the field tag, a 3-byte length varint and the data
                     val atThreshold = maxBody - 4

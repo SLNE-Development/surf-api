@@ -6,7 +6,6 @@ import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.api.ProtoMessageInit
 import dev.slne.surf.nats.js.client.JsRuntimeDefaults
 import dev.slne.surf.nats.js.client.NatsClientImpl
-import dev.slne.surf.nats.js.codec.NatsHeaders
 import dev.slne.surf.nats.js.codec.decodeToString
 import dev.slne.surf.nats.js.codec.header
 import dev.slne.surf.nats.js.codec.statusCode
@@ -27,6 +26,8 @@ import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.rpc.Recipients
 import dev.slne.surf.nats.runtime.RuntimeDefaults
+import dev.slne.surf.nats.runtime.headerLineBytes
+import dev.slne.surf.nats.runtime.randomId
 import dev.slne.surf.nats.runtime.rpc.AllReply
 import dev.slne.surf.nats.runtime.rpc.CallFlow
 import dev.slne.surf.nats.runtime.rpc.FailureRecorder
@@ -36,7 +37,6 @@ import js.typedarrays.Uint8Array
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import node.crypto.randomUUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 
@@ -203,7 +203,7 @@ internal class RpcCaller(private val client: NatsClientImpl) {
 
         val inbox = if (flow.sendsReplyTo) createInbox() else null
         if (inbox != null) headers.set(ProtocolHeaders.REPLY_TO, inbox)
-        headers.set(ProtocolHeaders.NATS_MSG_ID, randomUUID())
+        headers.set(ProtocolHeaders.NATS_MSG_ID, randomId())
         if (flow.sendsTtl) headers.set(ProtocolHeaders.NATS_TTL, "${ProtocolDefaults.natsTtlSeconds(timeout)}s")
         val body = payloads.offload(
             headers,
@@ -211,7 +211,7 @@ internal class RpcCaller(private val client: NatsClientImpl) {
             flow.offloadLifetime(timeout),
             flow.bucket,
             // nats.js adds the expected stream header for the publish options after the offload check
-            extraHeaderBytes = NatsHeaders.lineBytes(ProtocolHeaders.NATS_EXPECTED_STREAM, stream),
+            extraHeaderBytes = headerLineBytes(ProtocolHeaders.NATS_EXPECTED_STREAM, stream),
             stampDeadline = flow.sendsDeadline,
         )
         val options = publishOptions(headers, stream)

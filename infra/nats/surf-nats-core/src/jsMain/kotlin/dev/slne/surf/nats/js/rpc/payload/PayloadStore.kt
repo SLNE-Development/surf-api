@@ -13,12 +13,13 @@ import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.runtime.deadlineHeader
+import dev.slne.surf.nats.runtime.headerLineBytes
+import dev.slne.surf.nats.runtime.randomId
 import js.typedarrays.Uint8Array
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.await
-import node.crypto.randomUUID
 import kotlin.time.Duration
 
 /**
@@ -50,7 +51,7 @@ internal class PayloadStore(
         stampDeadline: Boolean = false,
     ): Uint8Array<*> {
         val deadline = if (stampDeadline) deadlineHeader(lifetime) else null
-        val headerBytes = NatsHeaders.serializedLength(headers) + NatsHeaders.lineBytes(ProtocolHeaders.DEADLINE, deadline)
+        val headerBytes = NatsHeaders.serializedLength(headers) + headerLineBytes(ProtocolHeaders.DEADLINE, deadline)
         if (!ProtocolDefaults.requiresOffload(body.length, headerBytes, extraHeaderBytes, maxPayload)) {
             if (deadline != null) headers.set(ProtocolHeaders.DEADLINE, deadline)
             return body
@@ -58,7 +59,7 @@ internal class PayloadStore(
 
         require(lifetime <= bucket.ttl) { bucket.lifetimeExceededMessage(body.length, lifetime) }
 
-        val name = randomUUID()
+        val name = randomId()
         store(bucket).putBlob(ObjectStoreMeta(name = name), body).await()
         // The upload used up part of the lifetime
         if (stampDeadline) headers.set(ProtocolHeaders.DEADLINE, deadlineHeader(lifetime))

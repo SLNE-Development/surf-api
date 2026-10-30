@@ -16,6 +16,7 @@ import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.protocol.ServiceNames
+import dev.slne.surf.nats.runtime.headerLineBytes
 import js.objects.unsafeJso
 import js.typedarrays.Uint8Array
 import kotlinx.coroutines.CoroutineScope
@@ -107,7 +108,7 @@ class PayloadE2eTest {
 
             // Headers at the size check: the base headers and the Surf-Deadline line (13 digits)
             val headerBytes = NatsHeaders.serializedLength(NatsHeaders.forOrigin(client.origin)) +
-                    NatsHeaders.lineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
+                    headerLineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
             val maxPayload = assertNotNull(raw.connection.info).max_payload.toLong()
             val maxBody = (maxPayload - headerBytes - ProtocolDefaults.PAYLOAD_REF_RESERVE).toInt()
             // BlobRequest.data is the field tag, a 3-byte length varint and the data

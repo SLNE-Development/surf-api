@@ -11,15 +11,13 @@ import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.descriptor.NatsEvent
 import dev.slne.surf.nats.event.*
-import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.rpc.RpcCallerImpl
 import dev.slne.surf.nats.rpc.ServiceDescriptor
 import dev.slne.surf.nats.rpc.ServiceRegistration
-import dev.slne.surf.nats.runtime.ClientLifecycle
+import dev.slne.surf.nats.runtime.AbstractNatsClient
 import io.nats.client.Dispatcher
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
@@ -27,12 +25,10 @@ import kotlin.time.toJavaDuration
 
 @InternalNatsApi
 internal class NatsClientImpl(
-    override val name: String,
+    name: String,
     internal val clientOrigin: ClientOrigin,
     private val onClose: (NatsClientImpl) -> Unit,
-) : NatsClient {
-
-    internal val logger = ComponentLogger.logger("NatsClient[$name]")
+) : AbstractNatsClient<NatsRegistration>(name), NatsClient {
 
     internal val clientScope = CoroutineScope(
         Dispatchers.Default +
@@ -43,8 +39,6 @@ internal class NatsClientImpl(
                     logger.error("Unhandled exception in coroutine '$coroutine'", throwable)
                 }
     )
-
-    private val registrations = ConcurrentHashMap.newKeySet<NatsRegistration>()
 
     private val eventDescriptors = object : ClassValue<EventDescriptor>() {
         override fun computeValue(type: Class<*>): EventDescriptor {
@@ -64,9 +58,6 @@ internal class NatsClientImpl(
 
     internal val eventSubscriptions = EventSubscriptions(this)
 
-    private val lifecycle = ClientLifecycle(name)
-    override val isClosed get() = lifecycle.isClosed
-
     private val replyDispatcherLock = Any()
 
     @Volatile
@@ -83,11 +74,12 @@ internal class NatsClientImpl(
         val header = headers()
         val connection = NatsConnectionManager.connection()
 
-        val size = data.size + header.serializedLength()
-        val max = connection.serverInfo.maxPayload
-        require(size <= max) {
-            ProtocolDefaults.eventTooLargeMessage(descriptor.type.name, size, max, descriptor.subject)
-        }
+        requireEventFits(
+            descriptor.type.name,
+            descriptor.subject,
+            data.size + header.serializedLength(),
+            connection.serverInfo.maxPayload,
+        )
 
         connection.publish(descriptor.subject, header, data)
     }
@@ -181,19 +173,7 @@ internal class NatsClientImpl(
         return checkNotNull(proxy)
     }
 
-    internal fun registerRegistration(registration: NatsRegistration) {
-        lifecycle.admit(
-            add = { registrations.add(registration) },
-            undo = {
-                registrations.remove(registration)
-                registration.close()
-            },
-        )
-    }
-
-    internal fun unregisterRegistration(registration: NatsRegistration) {
-        registrations.remove(registration)
-    }
+    override fun closeRegistration(registration: NatsRegistration) = registration.close()
 
     internal fun unregisterService(registration: ServiceRegistration) {
         services.remove(registration.descriptor.registrationKey, registration)
@@ -229,20 +209,6 @@ internal class NatsClientImpl(
         onClose(this)
     }
 
-    private fun closeRegistrations() {
-        for (registration in registrations.toList()) {
-            try {
-                registration.close()
-            } catch (e: Exception) {
-                logger.error("Failed to close registration $registration", e)
-            }
-        }
-
-        if (registrations.isNotEmpty()) {
-            logger.warn("Some registrations were not closed properly: ${registrations.size} remaining")
-        }
-    }
-
     private fun closeReplyDispatcher() {
         synchronized(replyDispatcherLock) {
             replyDispatcher?.let { closeDispatcher(it, "reply dispatcher") }
@@ -263,6 +229,4 @@ internal class NatsClientImpl(
             NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
         }
     }
-
-    internal fun checkOpen() = lifecycle.requireOpen()
 }

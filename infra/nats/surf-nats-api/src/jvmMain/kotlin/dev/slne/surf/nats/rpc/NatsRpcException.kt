@@ -33,7 +33,7 @@ public open class NatsRpcException @InternalNatsApi constructor(
 public class NatsRemoteException @InternalNatsApi constructor(
     public val remoteType: String,
     public val remoteMessage: String,
-) : NatsRpcException("$remoteType: $remoteMessage") {
+) : NatsRpcException(NatsRpcMessages.remote(remoteType, remoteMessage)) {
     internal companion object {
         @Serial
         private const val serialVersionUID: Long = 769895995432718802L
@@ -47,7 +47,7 @@ public class NatsRemoteException @InternalNatsApi constructor(
  */
 public class NatsNoRespondersException @InternalNatsApi constructor(
     public val subject: String,
-) : NatsRpcException("No responders for $subject") {
+) : NatsRpcException(NatsRpcMessages.noResponders(subject)) {
     internal companion object {
         @Serial
         private const val serialVersionUID: Long = 8318956389694705193L
@@ -65,7 +65,7 @@ public class NatsNoRespondersException @InternalNatsApi constructor(
 public class NatsCallTimeoutException @InternalNatsApi constructor(
     public val subject: String,
     public val timeout: Duration,
-) : NatsRpcException("No response on $subject within $timeout") {
+) : NatsRpcException(NatsRpcMessages.callTimeout(subject, timeout)) {
     internal companion object {
         @Serial
         private const val serialVersionUID: Long = 6955693591776044694L

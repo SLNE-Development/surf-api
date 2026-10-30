@@ -4,7 +4,7 @@ import dev.slne.surf.nats.js.api.ConnectOptions
 import dev.slne.surf.nats.js.config.ConnectSettings
 import dev.slne.surf.nats.js.connection.NatsConnector
 import dev.slne.surf.nats.protocol.ProtocolHeaders
-import node.crypto.randomUUID
+import dev.slne.surf.nats.runtime.randomId
 
 internal object NatsClientFactory {
     /**
@@ -12,7 +12,7 @@ internal object NatsClientFactory {
      */
     suspend fun create(options: ConnectOptions): NatsClientImpl {
         val settings = ConnectSettings.of(options)
-        val origin = ProtocolHeaders.origin(settings.name, randomUUID())
+        val origin = ProtocolHeaders.origin(settings.name, randomId())
         val connection = NatsConnector.connect(settings, connectionName = origin)
 
         return NatsClientImpl(settings.name, origin, connection)

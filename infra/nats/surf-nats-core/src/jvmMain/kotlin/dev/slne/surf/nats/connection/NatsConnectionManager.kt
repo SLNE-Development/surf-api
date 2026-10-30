@@ -4,18 +4,18 @@ import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.runtime.ConnectRules
+import dev.slne.surf.nats.runtime.randomId
 import io.nats.client.*
 import org.jetbrains.annotations.Blocking
 import java.io.IOException
 import java.time.Duration
-import java.util.*
 
 @InternalNatsApi
 internal object NatsConnectionManager {
 
     private val log = logger()
 
-    val instanceId: String = UUID.randomUUID().toString()
+    val instanceId: String = randomId()
 
     @Volatile
     private var connection: Connection? = null

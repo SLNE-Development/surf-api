@@ -2,7 +2,6 @@ package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.client.NatsClientImpl
-import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.descriptor.NatsResultKind
@@ -13,6 +12,8 @@ import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.rpc.payload.PayloadStore
 import dev.slne.surf.nats.runtime.RuntimeDefaults
+import dev.slne.surf.nats.runtime.headerLineBytes
+import dev.slne.surf.nats.runtime.randomId
 import dev.slne.surf.nats.runtime.rpc.AllReply
 import dev.slne.surf.nats.runtime.rpc.CallFlow
 import dev.slne.surf.nats.runtime.rpc.FailureRecorder
@@ -256,7 +257,7 @@ internal class RpcCallerImpl(
 
     private fun publishOptions(stream: String, ttlSeconds: Int?): PublishOptions {
         return PublishOptions.builder()
-            .messageId(UUID.randomUUID().toString())
+            .messageId(randomId())
             .expectedStream(stream)
             .apply { if (ttlSeconds != null) messageTtlSeconds(ttlSeconds) }
             .build()
@@ -264,9 +265,9 @@ internal class RpcCallerImpl(
 
     // Headers jnats adds for the publish options after the offload check
     private fun PublishOptions.headerBytes(): Int {
-        return NatsHeaders.lineBytes(ProtocolHeaders.NATS_EXPECTED_STREAM, expectedStream) +
-                NatsHeaders.lineBytes(ProtocolHeaders.NATS_MSG_ID, messageId) +
-                NatsHeaders.lineBytes(ProtocolHeaders.NATS_TTL, messageTtl)
+        return headerLineBytes(ProtocolHeaders.NATS_EXPECTED_STREAM, expectedStream) +
+                headerLineBytes(ProtocolHeaders.NATS_MSG_ID, messageId) +
+                headerLineBytes(ProtocolHeaders.NATS_TTL, messageTtl)
     }
 
     private suspend fun publishPersistent(

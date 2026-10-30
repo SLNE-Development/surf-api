@@ -1,10 +1,10 @@
 package dev.slne.surf.nats.js.connection
 
-import dev.slne.surf.nats.js.client.ClientLogger
 import dev.slne.surf.nats.js.config.ConnectSettings
 import dev.slne.surf.nats.js.external.nats.core.ConnectionOptions
 import dev.slne.surf.nats.js.external.nats.core.NatsConnection
 import dev.slne.surf.nats.js.external.nats.core.credsAuthenticator
+import dev.slne.surf.nats.runtime.ClientLogger
 import dev.slne.surf.nats.runtime.ConnectRules
 import js.iterable.asFlow
 import kotlinx.coroutines.CoroutineScope

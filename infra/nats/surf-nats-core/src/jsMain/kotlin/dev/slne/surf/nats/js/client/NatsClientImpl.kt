@@ -27,7 +27,7 @@ import dev.slne.surf.nats.js.rpc.MethodDescriptor
 import dev.slne.surf.nats.js.rpc.RpcCaller
 import dev.slne.surf.nats.js.rpc.payload.PayloadStore
 import dev.slne.surf.nats.protocol.ProtocolDefaults
-import dev.slne.surf.nats.runtime.ClientLifecycle
+import dev.slne.surf.nats.runtime.AbstractNatsClient
 import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,12 +35,10 @@ import kotlin.time.Duration.Companion.seconds
  * One NATS connection of a surf-nats JS client, created by [NatsClientFactory].
  */
 internal class NatsClientImpl(
-    val name: String,
+    name: String,
     val origin: String,
     val connection: NatsConnection,
-) {
-
-    internal val logger = ClientLogger(name)
+) : AbstractNatsClient<NatsRegistration>(name) {
 
     internal val clientScope = CoroutineScope(
         CoroutineName("surf-nats/$name") +
@@ -51,14 +49,9 @@ internal class NatsClientImpl(
                 }
     )
 
-    private val registrations = mutableSetOf<NatsRegistration>()
-
     internal val eventSubscriptions = EventSubscriptions(this)
 
     private val rpcCaller = RpcCaller(this)
-
-    private val lifecycle = ClientLifecycle(name)
-    val isClosed: Boolean get() = lifecycle.isClosed
 
     private val closed = CompletableDeferred<Unit>()
 
@@ -83,11 +76,12 @@ internal class NatsClientImpl(
         val data = NatsCodec.encode(schema, event)
         val header = headers()
 
-        val size = data.length + NatsHeaders.serializedLength(header)
-        val max = payloads.maxPayload
-        require(size <= max) {
-            ProtocolDefaults.eventTooLargeMessage(descriptor.typeName, size, max, subject)
-        }
+        requireEventFits(
+            descriptor.typeName,
+            subject,
+            data.length + NatsHeaders.serializedLength(header),
+            payloads.maxPayload,
+        )
 
         connection.publish(subject, data, NatsPublishOptions(headers = header))
         withTimeoutOrNull(timeout) { // TODO: replace with fire and forget like on the jvm?
@@ -158,19 +152,7 @@ internal class NatsClientImpl(
         return rpcCaller.call(descriptor, owner, request, timeoutMs).unsafeCast<Answer>()
     }
 
-    internal fun registerRegistration(registration: NatsRegistration) {
-        lifecycle.admit(
-            add = { registrations.add(registration) },
-            undo = {
-                registrations.remove(registration)
-                registration.close()
-            },
-        )
-    }
-
-    internal fun unregisterRegistration(registration: NatsRegistration) {
-        registrations.remove(registration)
-    }
+    override fun closeRegistration(registration: NatsRegistration) = registration.close()
 
     /**
      * Drains the subscriptions and the connection; running handlers may still publish and call until the drain
@@ -190,23 +172,7 @@ internal class NatsClientImpl(
         }
     }
 
-    private fun closeRegistrations() {
-        for (registration in registrations.toList()) {
-            try {
-                registration.close()
-            } catch (e: Throwable) {
-                logger.error("Failed to close a listener registration", e)
-            }
-        }
-
-        if (registrations.isNotEmpty()) {
-            logger.warn("Some registrations were not closed properly: ${registrations.size} remaining")
-        }
-    }
-
     internal suspend fun flush() {
         connection.flush().await()
     }
-
-    internal fun checkOpen() = lifecycle.requireOpen()
 }
