@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+// Rejected by the runtime and by protoc-gen-surf-nats; buf.gen.yaml excludes the package from protoc-gen-surf-nats.
+package surf.natsjs.invalid.v1;
+
+message WatchRequest {
+  optional string name = 1;
+}
+
+message WatchResponse {
+  optional string server = 1;
+}
+
+service StreamingService {
+  rpc Watch(WatchRequest) returns (stream WatchResponse);
+}

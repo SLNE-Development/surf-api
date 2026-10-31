@@ -158,5 +158,5 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         )
     }
 
-    private fun keyOf(listener: EventListener): Key = Key(listener.subject, listener.queueGroup)
+    private fun keyOf(listener: EventListener): Key = Key(listener.descriptor.subject, listener.queueGroup)
 }

@@ -10,7 +10,7 @@ import "surf/nats/test/v1/finder.proto";
 
 // ALL_INSTANCES fan-out only, no Answer method.
 service NotifierService {
-  option (surf.nats.v1.service) = { name: "notifier" recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  option (surf.nats.v1.service) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
 
   rpc Announce(BroadcastRequest) returns (google.protobuf.Empty);
 }

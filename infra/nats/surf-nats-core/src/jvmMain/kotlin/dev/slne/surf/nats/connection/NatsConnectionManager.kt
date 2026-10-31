@@ -6,9 +6,14 @@ import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.runtime.ConnectRules
 import dev.slne.surf.nats.runtime.randomId
 import io.nats.client.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
 import org.jetbrains.annotations.Blocking
 import java.io.IOException
 import java.time.Duration
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.locks.ReentrantLock
 
 @InternalNatsApi
 internal object NatsConnectionManager {
@@ -22,6 +27,8 @@ internal object NatsConnectionManager {
 
     @Volatile
     private var lastConnectedUrl: String? = null
+
+    private val flushLock = ReentrantLock(true)
 
     @Blocking
     fun connect() {
@@ -114,6 +121,40 @@ internal object NatsConnectionManager {
     }
 
     fun connection() = checkNotNull(connection) { "NATS is not connected" }
+
+    /**
+     * Flushes the shared connection and fails with a [TimeoutException] after [timeout], including the wait for
+     * the flush lock.
+     */
+    suspend fun flush(timeout: Duration) {
+        runInterruptible(Dispatchers.IO) {
+            withFlushLock(timeout) { remaining -> connection().flush(remaining) }
+        }
+    }
+
+    /**
+     * Runs [block] under the flush lock of the shared connection and passes it the part of [timeout] that is left.
+     *
+     * Every operation that pings the server and waits for the pong, such as `Connection.flush` or
+     * `Dispatcher.drain`, must run under this lock: jnats drops the connection of all clients when more pings than
+     * `maxPingsOut` are outstanding. The lock is fair. Throws a [TimeoutException] when the lock is not acquired
+     * within [timeout].
+     */
+    @Blocking
+    fun <T> withFlushLock(timeout: Duration, block: (remaining: Duration) -> T): T {
+        val deadline = System.nanoTime() + timeout.toNanos()
+        if (!flushLock.tryLock(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
+            throw TimeoutException("Timed out after $timeout waiting for the NATS flush lock")
+        }
+        try {
+            val remaining = deadline - System.nanoTime()
+            // jnats treats a zero timeout as no timeout
+            if (remaining <= 0) throw TimeoutException("No time left of $timeout after acquiring the NATS flush lock")
+            return block(Duration.ofNanos(remaining))
+        } finally {
+            flushLock.unlock()
+        }
+    }
 
     fun health(): NatsConnectionHealth? {
         val connection = connection ?: return null

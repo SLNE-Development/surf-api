@@ -56,19 +56,13 @@ internal object ProtocolVectors {
         "" to "",
     )
 
-    val validTokens = listOf("a", "\$rpc", "b-c", "d_e", "Mixed", "1", "a\$b", "a/b", "#", "x y", "ä")
-
-    val invalidTokens = listOf(
-        "", "a.b", ".", "*", ">", "a*", "a>", " ", "a b", "a\tb", "a\nb", "a\u000Bb", "a\u000Cb", "a\rb",
-    )
-
     val validSubjects = listOf(
         "a",
         "punishment.created",
         "a.b-c.d_e",
         "Mixed.Case",
-        "surf-punish.\$rpc.v1.player.ban",
-        "roles.\$persist.v2.grant",
+        "surf.rpc.surf.punish.v1.PlayerService.Ban",
+        "surf.persist.surf.roles.v2.RolesService.Grant",
         "x y.z",
     )
 
@@ -77,9 +71,22 @@ internal object ProtocolVectors {
         "a\rb", "a.b c",
     )
 
-    val validEventSubjects = listOf("a", "punishment.created", "a.b\$", "x.y-z.w_v")
+    val protoNames = listOf(
+        "a",
+        "A",
+        "surf.punish.v1.PlayerService",
+        "surf.demo.v1.PlayerJoined.Location",
+        "a.b_c",
+        "a_b.c",
+        "a_",
+        "x__y.Z9",
+        "HTTPServer2Up",
+    )
 
-    val invalidEventSubjects = listOf("\$rpc", "a.\$b", "\$", "a.\$rpc.b") + invalidSubjects
+    val invalidProtoNames = listOf(
+        "", ".", "..", "a.", ".a", "a..b", "_a", "a._b", "1a", "a.1b", "a-b", "a b", "a\$", "\$rpc", "ä", "a.*",
+        "a.>", "a.b ",
+    )
 
     val kebabNames = listOf("a", "surf-punish", "a1-b2", "1", "abc-def-ghi")
 
@@ -131,23 +138,19 @@ internal object ProtocolVectors {
         "NatsRecipients.NATS_RECIPIENTS_ANY_INSTANCE",
     )
 
-    class EventVector(val client: String?, val subject: String, val majorVersion: Int, val expected: String)
+    class EventVector(val messageName: String, val expected: String)
 
     val events = listOf(
-        EventVector("punish", "punishment.created", 1, "punish.v1.punishment.created"),
-        EventVector("punish", "created", 1, "punish.v1.created"),
-        EventVector("surf-punish", "player-health-changed", 3, "surf-punish.v3.player-health-changed"),
-        EventVector(null, "roles.whitelisted", 1, "roles.v1.whitelisted"),
-        EventVector(null, "whitelisted", 1, "whitelisted.v1"),
-        EventVector(null, "a.b.c", 12, "a.v12.b.c"),
+        EventVector("surf.punish.v1.PlayerJoined", "surf.evt.surf.punish.v1.PlayerJoined"),
+        EventVector("surf.demo.v1.PlayerJoined.Location", "surf.evt.surf.demo.v1.PlayerJoined.Location"),
+        EventVector("surf.servers.v2.HTTPServer2Up", "surf.evt.surf.servers.v2.HTTPServer2Up"),
+        EventVector("my_pkg.v1.Snake_Event", "surf.evt.my_pkg.v1.Snake_Event"),
     )
 
     class MethodVector(val method: String, val persistent: Boolean, val expected: String)
 
     class ServiceVector(
-        val client: String?,
         val service: String,
-        val majorVersion: Int,
         val rpcBase: String,
         val persistBase: String,
         val presenceSubject: String,
@@ -155,98 +158,72 @@ internal object ProtocolVectors {
         val streamFilter: String,
         val stream: String,
         val dlqStream: String,
-        val responderGroup: String,
-        val registrationKey: String,
         val methods: List<MethodVector>,
     )
 
     val services = listOf(
         ServiceVector(
-            client = "surf-punish",
-            service = "player",
-            majorVersion = 1,
-            rpcBase = "surf-punish.\$rpc.v1.player",
-            persistBase = "surf-punish.\$persist.v1.player",
-            presenceSubject = "surf-punish.\$presence.v1.player",
-            dlqSubject = "surf-punish.\$dlq.v1.player",
-            streamFilter = "surf-punish.\$persist.v1.player.*",
-            stream = "SURF_SURF_PUNISH_PLAYER_V1",
-            dlqStream = "SURF_SURF_PUNISH_PLAYER_V1_DLQ",
-            responderGroup = "surf-punish",
-            registrationKey = "client:player:v1",
+            service = "surf.punish.v1.PlayerService",
+            rpcBase = "surf.rpc.surf.punish.v1.PlayerService",
+            persistBase = "surf.persist.surf.punish.v1.PlayerService",
+            presenceSubject = "surf.presence.surf.punish.v1.PlayerService",
+            dlqSubject = "surf.dlq.surf.punish.v1.PlayerService",
+            streamFilter = "surf.persist.surf.punish.v1.PlayerService.*",
+            stream = "SURF_PERSIST_surf_punish_v1_PlayerService",
+            dlqStream = "SURF_DLQ_surf_punish_v1_PlayerService",
             methods = listOf(
-                MethodVector("health", persistent = false, "surf-punish.\$rpc.v1.player.health"),
-                MethodVector("ban", persistent = true, "surf-punish.\$persist.v1.player.ban"),
+                MethodVector("FindPlayer", persistent = false, "surf.rpc.surf.punish.v1.PlayerService.FindPlayer"),
+                MethodVector("Store", persistent = true, "surf.persist.surf.punish.v1.PlayerService.Store"),
             ),
         ),
         ServiceVector(
-            client = "surf-punish",
-            service = "player",
-            majorVersion = 2,
-            rpcBase = "surf-punish.\$rpc.v2.player",
-            persistBase = "surf-punish.\$persist.v2.player",
-            presenceSubject = "surf-punish.\$presence.v2.player",
-            dlqSubject = "surf-punish.\$dlq.v2.player",
-            streamFilter = "surf-punish.\$persist.v2.player.*",
-            stream = "SURF_SURF_PUNISH_PLAYER_V2",
-            dlqStream = "SURF_SURF_PUNISH_PLAYER_V2_DLQ",
-            responderGroup = "surf-punish",
-            registrationKey = "client:player:v2",
+            service = "surf.punish.v2.PlayerService",
+            rpcBase = "surf.rpc.surf.punish.v2.PlayerService",
+            persistBase = "surf.persist.surf.punish.v2.PlayerService",
+            presenceSubject = "surf.presence.surf.punish.v2.PlayerService",
+            dlqSubject = "surf.dlq.surf.punish.v2.PlayerService",
+            streamFilter = "surf.persist.surf.punish.v2.PlayerService.*",
+            stream = "SURF_PERSIST_surf_punish_v2_PlayerService",
+            dlqStream = "SURF_DLQ_surf_punish_v2_PlayerService",
             methods = listOf(
-                MethodVector("health", persistent = false, "surf-punish.\$rpc.v2.player.health"),
+                MethodVector("FindPlayer", persistent = false, "surf.rpc.surf.punish.v2.PlayerService.FindPlayer"),
             ),
         ),
         ServiceVector(
-            client = "punish",
-            service = "player-stats",
-            majorVersion = 10,
-            rpcBase = "punish.\$rpc.v10.player-stats",
-            persistBase = "punish.\$persist.v10.player-stats",
-            presenceSubject = "punish.\$presence.v10.player-stats",
-            dlqSubject = "punish.\$dlq.v10.player-stats",
-            streamFilter = "punish.\$persist.v10.player-stats.*",
-            stream = "SURF_PUNISH_PLAYER_STATS_V10",
-            dlqStream = "SURF_PUNISH_PLAYER_STATS_V10_DLQ",
-            responderGroup = "punish",
-            registrationKey = "client:player-stats:v10",
+            service = "my_pkg.v10.Snake_Service",
+            rpcBase = "surf.rpc.my_pkg.v10.Snake_Service",
+            persistBase = "surf.persist.my_pkg.v10.Snake_Service",
+            presenceSubject = "surf.presence.my_pkg.v10.Snake_Service",
+            dlqSubject = "surf.dlq.my_pkg.v10.Snake_Service",
+            streamFilter = "surf.persist.my_pkg.v10.Snake_Service.*",
+            stream = "SURF_PERSIST_my__pkg_v10_Snake__Service",
+            dlqStream = "SURF_DLQ_my__pkg_v10_Snake__Service",
             methods = listOf(
-                MethodVector("top-players", persistent = false, "punish.\$rpc.v10.player-stats.top-players"),
+                MethodVector("get_player", persistent = false, "surf.rpc.my_pkg.v10.Snake_Service.get_player"),
+                MethodVector("Push", persistent = true, "surf.persist.my_pkg.v10.Snake_Service.Push"),
             ),
         ),
         ServiceVector(
-            client = null,
-            service = "roles",
-            majorVersion = 2,
-            rpcBase = "roles.\$rpc.v2",
-            persistBase = "roles.\$persist.v2",
-            presenceSubject = "roles.\$presence.v2",
-            dlqSubject = "roles.\$dlq.v2",
-            streamFilter = "roles.\$persist.v2.*",
-            stream = "SURF__ROLES_V2",
-            dlqStream = "SURF__ROLES_V2_DLQ",
-            responderGroup = "roles",
-            registrationKey = "global:roles:v2",
-            methods = listOf(
-                MethodVector("find-server", persistent = false, "roles.\$rpc.v2.find-server"),
-                MethodVector("grant", persistent = true, "roles.\$persist.v2.grant"),
-            ),
+            service = "a.b_c",
+            rpcBase = "surf.rpc.a.b_c",
+            persistBase = "surf.persist.a.b_c",
+            presenceSubject = "surf.presence.a.b_c",
+            dlqSubject = "surf.dlq.a.b_c",
+            streamFilter = "surf.persist.a.b_c.*",
+            stream = "SURF_PERSIST_a_b__c",
+            dlqStream = "SURF_DLQ_a_b__c",
+            methods = emptyList(),
         ),
         ServiceVector(
-            client = null,
-            service = "player-sync",
-            majorVersion = 1,
-            rpcBase = "player-sync.\$rpc.v1",
-            persistBase = "player-sync.\$persist.v1",
-            presenceSubject = "player-sync.\$presence.v1",
-            dlqSubject = "player-sync.\$dlq.v1",
-            streamFilter = "player-sync.\$persist.v1.*",
-            stream = "SURF__PLAYER_SYNC_V1",
-            dlqStream = "SURF__PLAYER_SYNC_V1_DLQ",
-            responderGroup = "player-sync",
-            registrationKey = "global:player-sync:v1",
-            methods = listOf(
-                MethodVector("push", persistent = true, "player-sync.\$persist.v1.push"),
-            ),
+            service = "a_b.c",
+            rpcBase = "surf.rpc.a_b.c",
+            persistBase = "surf.persist.a_b.c",
+            presenceSubject = "surf.presence.a_b.c",
+            dlqSubject = "surf.dlq.a_b.c",
+            streamFilter = "surf.persist.a_b.c.*",
+            stream = "SURF_PERSIST_a__b_c",
+            dlqStream = "SURF_DLQ_a__b_c",
+            methods = emptyList(),
         ),
     )
 }

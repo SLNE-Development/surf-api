@@ -35,20 +35,19 @@ class RpcE2eTest {
 
     private fun method(service: DescService, name: String): DescMethod = service.methods.first { it.localName == name }
 
-    private fun options(owner: String?, timeoutMs: Int? = null) = callOptions(owner, timeoutMs)
-
     private fun findRequest(name: String? = null): FindPlayerRequest = unsafeJso { if (name != null) this.name = name }
 
-    private fun subject(owner: String, method: String) = "$owner.\$rpc.v1.players.$method"
+    private val service = "surf.natsjs.test.v1.PlayerService"
+
+    private fun subject(method: String) = "surf.rpc.$service.$method"
 
     @Test
     fun coreCallSendsTheProtocolHeadersAndDecodesTheResponse() = e2eTest {
-        val owner = uniqueName("rpc-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
             val requests = mutableListOf<Msg>()
-            raw.subscribe(subject(owner, "find-player"), queue = owner) { request ->
+            raw.subscribe(subject("FindPlayer"), queue = service) { request ->
                 requests += request
                 val name = raw.decode(FindPlayerRequestSchema, request.data).fields<FindPlayerRequest>().name
                 raw.respond(request, raw.encode(FindPlayerResponseSchema, unsafeJso<FindPlayerResponse> {
@@ -59,8 +58,7 @@ class RpcE2eTest {
             raw.flush()
 
             val before = epochMillis()
-            val response = client.target(owner)
-                .call(method(PlayerService, "findPlayer"), findRequest("Steve"))
+            val response = client.call(method(PlayerService, "findPlayer"), findRequest("Steve"))
                 .await()
                 .fields<FindPlayerResponse>()
             assertEquals("Steve", response.name)
@@ -80,26 +78,25 @@ class RpcE2eTest {
 
     @Test
     fun surfErrorBecomesNatsRemoteErrorAndEmptyResponsesAreUnit() = e2eTest {
-        val owner = uniqueName("rpc-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
-            raw.subscribe(subject(owner, "find-player"), queue = owner) { request ->
+            raw.subscribe(subject("FindPlayer"), queue = service) { request ->
                 val headers = raw.jvmHeaders()
                 headers.set(ProtocolHeaders.ERROR, "java.lang.IllegalStateException")
                 raw.respond(request, utf8Bytes("player is offline"), headers)
             }
-            raw.subscribe(subject(owner, "kick"), queue = owner) { request -> raw.respond(request, NatsHeaders.EMPTY_BODY) }
+            raw.subscribe(subject("Kick"), queue = service) { request -> raw.respond(request, NatsHeaders.EMPTY_BODY) }
             raw.flush()
 
             val error = assertFails {
-                client.call(method(PlayerService, "findPlayer"), findRequest("x"), options(owner)).await()
+                client.call(method(PlayerService, "findPlayer"), findRequest("x")).await()
             }
             val remote = assertIs<NatsRemoteError>(error)
             assertEquals("java.lang.IllegalStateException", remote.type)
             assertEquals("player is offline", remote.remoteMessage)
 
-            val kicked = client.call(method(PlayerService, "kick"), findRequest("x"), options(owner)).await()
+            val kicked = client.call(method(PlayerService, "kick"), findRequest("x")).await()
             assertEquals("undefined", jsTypeOf(kicked))
         } finally {
             client.close().await()
@@ -109,31 +106,30 @@ class RpcE2eTest {
 
     @Test
     fun noRespondersAndTimeout() = e2eTest {
-        val owner = uniqueName("rpc-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
             val noResponders = assertFails {
-                client.call(method(PlayerService, "findPlayer"), findRequest("x"), options(owner)).await()
+                client.call(method(PlayerService, "findPlayer"), findRequest("x")).await()
             }
-            assertEquals(subject(owner, "find-player"), assertIs<NatsNoRespondersError>(noResponders).subject)
+            assertEquals(subject("FindPlayer"), assertIs<NatsNoRespondersError>(noResponders).subject)
 
-            raw.subscribe(subject(owner, "find-player"), queue = owner) { }
+            raw.subscribe(subject("FindPlayer"), queue = service) { }
             raw.flush()
             val started = epochMillis()
             val timeout = assertFails {
-                client.call(method(PlayerService, "findPlayer"), findRequest("x"), options(owner, 300)).await()
+                client.call(method(PlayerService, "findPlayer"), findRequest("x"), callOptions(300)).await()
             }
             val timeoutError = assertIs<NatsCallTimeoutError>(timeout)
             assertEquals(300, timeoutError.timeoutMs)
-            assertEquals(subject(owner, "find-player"), timeoutError.subject)
+            assertEquals(subject("FindPlayer"), timeoutError.subject)
             assertTrue(epochMillis() - started < 3_000)
 
             // The contract timeout (call_timeout_seconds: 1) applies without an option.
-            raw.subscribe(subject(owner, "slow-find"), queue = owner) { }
+            raw.subscribe(subject("SlowFind"), queue = service) { }
             raw.flush()
             val contractTimeout = assertFails {
-                client.call(method(PlayerService, "slowFind"), findRequest("x"), options(owner)).await()
+                client.call(method(PlayerService, "slowFind"), findRequest("x")).await()
             }
             assertEquals(1000, assertIs<NatsCallTimeoutError>(contractTimeout).timeoutMs)
         } finally {
@@ -147,22 +143,22 @@ class RpcE2eTest {
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
             val missing = assertFails {
-                client.call(method(PlayerService, "findPlayer"), findRequest(), options("surf-punish")).await()
+                client.call(method(PlayerService, "findPlayer"), findRequest()).await()
             }
             assertTrue(missing.message!!.contains("'name'"), missing.message)
 
             val answerMethod = assertFails {
-                client.call(method(PlayerService, "locate"), findRequest("x"), options("surf-punish")).await()
+                client.call(method(PlayerService, "locate"), findRequest("x")).await()
             }
             assertTrue(answerMethod.message!!.contains("use callAnswer"), answerMethod.message)
 
             val valueMethod = assertFails {
-                client.callAnswer(method(PlayerService, "findPlayer"), findRequest("x"), options("surf-punish")).await()
+                client.callAnswer(method(PlayerService, "findPlayer"), findRequest("x")).await()
             }
             assertTrue(valueMethod.message!!.contains("use call"), valueMethod.message)
 
             assertFailsWith<IllegalArgumentException> {
-                client.call(FindPlayerRequestSchema.unsafeCast<MethodSchema>(), findRequest(), options("surf-punish")).await()
+                client.call(FindPlayerRequestSchema.unsafeCast<MethodSchema>(), findRequest()).await()
             }
         } finally {
             client.close().await()
@@ -170,16 +166,21 @@ class RpcE2eTest {
     }
 
     @Test
-    fun globalServiceCall() = e2eTest {
+    fun anyInstanceCallReachesOneMemberOfTheServiceQueueGroup() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
-            raw.subscribe("registry-service.\$rpc.v1.lookup", queue = "registry-service") { request ->
-                raw.respond(request, raw.encode(FindPlayerResponseSchema, unsafeJso<FindPlayerResponse> { name = "global" }))
+            val registry = "surf.natsjs.test.v1.RegistryService"
+            val served = mutableListOf<String>()
+            for (responder in listOf("first", "second")) {
+                raw.subscribe("surf.rpc.$registry.Lookup", queue = registry) { request ->
+                    served += responder
+                    raw.respond(request, raw.encode(FindPlayerResponseSchema, unsafeJso<FindPlayerResponse> { name = responder }))
+                }
             }
             raw.flush()
             val response = client.call(method(RegistryService, "lookup"), findRequest("x")).await()
-            assertEquals("global", response.fields<FindPlayerResponse>().name)
+            assertEquals(served.single(), response.fields<FindPlayerResponse>().name)
         } finally {
             client.close().await()
             raw.close()
@@ -188,11 +189,10 @@ class RpcE2eTest {
 
     @Test
     fun allInstancesFirstKnownAnswerWins() = e2eTest {
-        val owner = uniqueName("rpc-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
-            val locate = subject(owner, "locate")
+            val locate = subject("Locate")
             repeat(2) {
                 raw.subscribe(locate) { request ->
                     val headers = raw.jvmHeaders()
@@ -206,7 +206,7 @@ class RpcE2eTest {
             raw.flush()
 
             val started = epochMillis()
-            val answer = client.callAnswer(method(PlayerService, "locate"), findRequest("Steve"), options(owner, 5_000)).await()
+            val answer = client.callAnswer(method(PlayerService, "locate"), findRequest("Steve"), callOptions(5_000)).await()
             assertEquals(true, answer.known)
             assertEquals("lobby-2", answer.value.fields<LocateResponse>().server)
             assertTrue(epochMillis() - started < 4_000, "the first known answer ends the call")
@@ -218,7 +218,6 @@ class RpcE2eTest {
 
     @Test
     fun allInstancesUnknownErrorsAndNoResponders() = e2eTest {
-        val owner = uniqueName("rpc-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
@@ -226,25 +225,25 @@ class RpcE2eTest {
             val request = findRequest("Steve")
 
             val started = epochMillis()
-            val none = client.callAnswer(locate, request, options(owner, 5_000)).await()
+            val none = client.callAnswer(locate, request, callOptions(5_000)).await()
             assertEquals(false, none.known)
             assertTrue(epochMillis() - started < 4_000, "no responders ends the call")
 
-            val unknownSubscription = raw.subscribe(subject(owner, "locate")) { message ->
+            val unknownSubscription = raw.subscribe(subject("Locate")) { message ->
                 val headers = raw.jvmHeaders()
                 headers.set(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN)
                 raw.respond(message, NatsHeaders.EMPTY_BODY, headers)
             }
             raw.flush()
-            assertEquals(false, client.callAnswer(locate, request, options(owner, 400)).await().known)
+            assertEquals(false, client.callAnswer(locate, request, callOptions(400)).await().known)
 
-            raw.subscribe(subject(owner, "locate")) { message ->
+            raw.subscribe(subject("Locate")) { message ->
                 val headers = raw.jvmHeaders()
                 headers.set(ProtocolHeaders.ERROR, "java.lang.RuntimeException")
                 raw.respond(message, utf8Bytes("broken"), headers)
             }
             raw.flush()
-            val error = assertFails { client.callAnswer(locate, request, options(owner, 400)).await() }
+            val error = assertFails { client.callAnswer(locate, request, callOptions(400)).await() }
             assertEquals("java.lang.RuntimeException", assertIs<NatsRemoteError>(error).type)
             unknownSubscription.unsubscribe()
         } finally {
@@ -255,15 +254,14 @@ class RpcE2eTest {
 
     @Test
     fun allInstancesWithoutResultFansOut() = e2eTest {
-        val owner = uniqueName("rpc-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
             val received = mutableListOf<Msg>()
-            repeat(2) { raw.subscribe(subject(owner, "broadcast-all")) { received += it } }
+            repeat(2) { raw.subscribe(subject("Broadcast")) { received += it } }
             raw.flush()
 
-            val result = client.call(method(PlayerService, "broadcast"), findRequest("all"), options(owner)).await()
+            val result = client.call(method(PlayerService, "broadcast"), findRequest("all")).await()
             assertEquals("undefined", jsTypeOf(result))
 
             eventually { received.size == 2 }
@@ -280,25 +278,24 @@ class RpcE2eTest {
 
     @Test
     fun allInstancesUndecodableAnswersAreRecorded() = e2eTest {
-        val owner = uniqueName("rpc-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("rpc-caller"))
         try {
             val locate = method(PlayerService, "locate")
             val request = findRequest("Steve")
-            raw.subscribe(subject(owner, "locate")) { message -> raw.respond(message, bytes(0x0a, 0x7f), raw.jvmHeaders()) }
+            raw.subscribe(subject("Locate")) { message -> raw.respond(message, bytes(0x0a, 0x7f), raw.jvmHeaders()) }
             raw.flush()
 
             // Only undecodable answers: the decoding error is thrown when the call ends
-            val error = assertFails { client.callAnswer(locate, request, options(owner, 400)).await() }
+            val error = assertFails { client.callAnswer(locate, request, callOptions(400)).await() }
             assertTrue(error !is NatsRemoteError, "unexpected $error")
 
             // A known answer of another responder still wins
-            raw.subscribe(subject(owner, "locate")) { message ->
+            raw.subscribe(subject("Locate")) { message ->
                 raw.respond(message, raw.encode(LocateResponseSchema, unsafeJso<LocateResponse> { server = "lobby-3" }))
             }
             raw.flush()
-            val answer = client.callAnswer(locate, request, options(owner, 5_000)).await()
+            val answer = client.callAnswer(locate, request, callOptions(5_000)).await()
             assertEquals(true, answer.known)
             assertEquals("lobby-3", answer.value.fields<LocateResponse>().server)
         } finally {

@@ -18,4 +18,3 @@ internal external val AuditResultSchema: DescMessage
 internal external val PlayerService: DescService
 internal external val AuditService: DescService
 internal external val RegistryService: DescService
-internal external val StreamingService: DescService

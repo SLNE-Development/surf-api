@@ -1,8 +1,6 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.api.ConnectOptions
-import dev.slne.surf.nats.js.api.ListenOptions
-import dev.slne.surf.nats.js.api.PublishOptions
 import dev.slne.surf.nats.js.fixtures.ChatMessage
 import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
 import dev.slne.surf.nats.js.fixtures.fields
@@ -33,10 +31,9 @@ class AuthE2eTest {
     private suspend fun assertUsable(client: SurfNatsClient) {
         try {
             assertFalse(client.isClosed)
-            val owner = uniqueName("auth-owner")
             val received = mutableListOf<String?>()
-            client.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }, ListenOptions(owner = owner)).await()
-            client.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = "authorized" }, PublishOptions(owner = owner)).await()
+            client.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }).await()
+            client.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = "authorized" }).await()
             eventually { received.size == 1 }
             assertEquals(listOf<String?>("authorized"), received)
         } finally {

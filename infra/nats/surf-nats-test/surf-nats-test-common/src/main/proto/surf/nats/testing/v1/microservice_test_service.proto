@@ -9,8 +9,6 @@ import "surf/nats/v1/options.proto";
 
 // Served by the test microservice (one instance per call).
 service MicroserviceTestService {
-  option (surf.nats.v1.service) = { name: "microservice" };
-
   // Echoes the text with a prefix.
   rpc Echo(EchoRequest) returns (EchoResponse);
   // Always fails on the implementation.

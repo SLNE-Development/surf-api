@@ -27,17 +27,9 @@ export interface ConnectOptions {
 }
 
 /**
- * `owner` is the client that owns a non-global contract (for example `"surf-punish"`). It is required for
- * non-global contracts unless the operation runs on a `SurfNatsTarget`, and ignored for global contracts.
- */
-export interface OwnerOptions {
-    readonly owner?: string;
-}
-
-/**
  * `timeoutMs` bounds the flush that confirms the publish (default 5000).
  */
-export interface PublishOptions extends OwnerOptions {
+export interface PublishOptions {
     readonly timeoutMs?: number;
 }
 
@@ -48,7 +40,7 @@ export type Recipients = "ANY_INSTANCE" | "ALL_INSTANCES";
  * listener. With `ignoreFromThisClient`, events published by this client are skipped; it requires
  * `ALL_INSTANCES` (`listen` rejects it with `ANY_INSTANCE`, where a skipped event would reach no other instance).
  */
-export interface ListenOptions extends OwnerOptions {
+export interface ListenOptions {
     readonly recipients?: Recipients;
     readonly ignoreFromThisClient?: boolean;
 }
@@ -56,7 +48,7 @@ export interface ListenOptions extends OwnerOptions {
 /**
  * `timeoutMs` overrides the call timeout of the contract (default 5 s, persistent 60 s).
  */
-export interface CallOptions extends OwnerOptions {
+export interface CallOptions {
     readonly timeoutMs?: number;
 }
 
@@ -89,9 +81,12 @@ export interface NatsRegistration {
     close(): void;
 }
 
+/**
+ * Operations on surf-nats contracts, addressed by the proto full names of their schemas.
+ */
 export interface SurfNatsOperations {
     /**
-     * Publishes an event (a message with the `(surf.nats.v1.event)` option). Required fields are checked
+     * Publishes an event (a message with `option (surf.nats.v1.event) = true`). Required fields are checked
      * before sending; an init object is converted with `create`.
      */
     publish<D extends DescMessage>(schema: D, message: MessageInitShape<D>, options?: PublishOptions): Promise<void>;
@@ -126,19 +121,10 @@ export interface SurfNatsOperations {
     ): Promise<Answer<MessageShape<M["output"]>>>;
 }
 
-export interface SurfNatsTarget extends SurfNatsOperations {
-    readonly owner: string;
-}
-
 export interface SurfNatsClient extends SurfNatsOperations {
     readonly name: string;
     readonly origin: string;
     readonly isClosed: boolean;
-
-    /**
-     * Returns the operations on contracts owned by `owner`.
-     */
-    target(owner: string): SurfNatsTarget;
 
     /**
      * Drains the subscriptions and closes the connection.

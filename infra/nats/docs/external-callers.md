@@ -17,11 +17,10 @@ methods.
   The contracts import `surf/nats/v1/options.proto` and the `surf/types/v1` messages from the jar of
   `surf-nats-types-common`, and Paper contracts the `surf/types/paper/v1` messages from `surf-nats-types-paper`.
   Copy all of them into one directory. The `google/protobuf` files come with your Protocol Buffers tooling.
-- **Know the owner.** The subjects of an event or service that is not `global` contain the client name of the
-  application that owns it, for example `surf-punish`. Your application needs that name. Global contracts have no
-  owner.
-- **Prefer explicit names.** Contracts that external applications use should set `subject` on events and `name` on
-  services and methods. Derived names change when someone renames a message or an `rpc`.
+- **The contract is the address.** Subjects and streams derive from the proto full names of the event message, the
+  service, and the `rpc`, for example `surf.roles.v1.RolesService`. Any application can publish and receive any event
+  and call any service; no client name is needed. Renaming a message, a service, or an `rpc`, or moving it to another
+  package, changes its address.
 - **Register persistent services first.** Registration on the JVM creates the JetStream stream of a persistent
   service. External callers never create it, and their persistent calls fail until the service has been registered
   once.
@@ -31,7 +30,7 @@ How you call a method depends on whether it is persistent, which instances it ad
 `recipients` in the `(surf.nats.v1.service)` and `(surf.nats.v1.method)` options, and for a response of type
 `google.protobuf.Empty`.
 
-The examples in this guide use the global event `NameChanged` from the README and this global service:
+The examples in this guide use the event `NameChanged` from the README and this service:
 
 ```proto
 // surf/roles/v1/roles_service.proto
@@ -45,13 +44,9 @@ import "google/protobuf/empty.proto";
 import "surf/nats/v1/options.proto";
 
 service RolesService {
-  option (surf.nats.v1.service) = { name: "roles" global: true };
-
-  rpc Lookup(LookupRequest) returns (LookupResponse) {
-    option (surf.nats.v1.method) = { name: "lookup" };
-  }
+  rpc Lookup(LookupRequest) returns (LookupResponse);
   rpc Whitelist(WhitelistRequest) returns (google.protobuf.Empty) {
-    option (surf.nats.v1.method) = { name: "whitelist" persistent: true };
+    option (surf.nats.v1.method) = { persistent: true };
   }
 }
 
@@ -80,12 +75,14 @@ enum WhitelistAction {
 `./gradlew :surf-nats-core:jsNodeProductionLibraryDistribution` builds the npm package `@slne/surf-nats` into
 `surf-nats-core/build/dist/js/productionLibrary`. How the package will be distributed is not decided yet. It runs
 on Node.js, depends on `@nats-io/transport-node`, `@nats-io/jetstream`, and `@nats-io/obj` 3.4.0, and needs
-`@bufbuild/protobuf` 2.16.0 as a peer dependency.
+`@bufbuild/protobuf` 2.16.0 as a peer dependency. It also depends on `@bufbuild/protoplugin` 2.16.0, which pulls in
+TypeScript 5.4.5; only the `protoc-gen-surf-nats` binary loads it, the client does not.
 
-### Schemas
+### Schemas and clients
 
-Generate the schemas from the contracts with [buf](https://buf.build/) and `@bufbuild/protoc-gen-es` 2.16.0. With
-the contracts in `proto/`:
+Generate the schemas from the contracts with [buf](https://buf.build/) and `@bufbuild/protoc-gen-es` 2.16.0, and a
+typed client per service with `protoc-gen-surf-nats`, which the package `@slne/surf-nats` ships as a binary. With the
+contracts in `proto/`:
 
 ```yaml
 # buf.yaml
@@ -103,6 +100,11 @@ plugins:
     opt:
       - target=js+dts
       - import_extension=js
+  - local: protoc-gen-surf-nats
+    out: src/gen
+    opt:
+      - target=js+dts
+      - import_extension=js
 ```
 
 ```sh
@@ -110,8 +112,23 @@ npx buf generate
 ```
 
 Generate `surf/nats/v1/options.proto` together with the contracts: the client reads the surf-nats options, such as
-the subject, the service name, and `persistent`, from the generated schemas. protoc-gen-es drops the enum prefix as
-Kotlin does, so `WHITELIST_ACTION_ADD` is `WhitelistAction.ADD` in both.
+`event`, `persistent`, and `recipients`, from the generated schemas. protoc-gen-es drops the enum prefix as Kotlin
+does, so `WHITELIST_ACTION_ADD` is `WhitelistAction.ADD` in both.
+
+For every `.proto` file that declares a service, `protoc-gen-surf-nats` writes `<file>_nats.js` and `<file>_nats.d.ts`
+(or `<file>_nats.ts` with `target=ts`). These files import the `<file>_pb` files of protoc-gen-es, so both plugins
+need the same `out` directory. `protoc-gen-surf-nats` is built on `@bufbuild/protoplugin` and takes the same standard
+options as protoc-gen-es, for example:
+
+| Option             | Values                                 | Default  |
+|--------------------|----------------------------------------|----------|
+| `target`           | `js`, `ts`, `dts`, joined with `+`     | `js+dts` |
+| `import_extension` | `none`, `js`, `ts`                     | `none`   |
+
+If `protoc-gen-surf-nats` is not on the `PATH`, run the script of the package:
+`local: ["node", "node_modules/@slne/surf-nats/bin/protoc-gen-surf-nats.mjs"]`. The plugin applies the contract rules
+of the Gradle plugin and fails on contracts that the JVM side rejects, such as a package without a `.v<N>` suffix or
+a streaming `rpc`.
 
 ### Connecting
 
@@ -129,9 +146,8 @@ application in the `Surf-Origin` header and names the connection. `servers` take
 string and defaults to `nats://localhost:4222`. Set at most one way to authenticate: `token`, `user` with `pass`, or
 `credsFile`. The client does not read environment variables; pass their values yourself.
 
-For contracts that are not global, name the owner, either per call with `{ owner: "surf-punish" }` or once with
-`nats.target("surf-punish")`, which returns the same operations bound to that owner. Global contracts ignore the
-owner.
+The client addresses events and services by the proto full names of their schemas and needs no other setting to
+reach them.
 
 ### Events
 
@@ -162,20 +178,31 @@ or that lack a required field, are dropped with a warning.
 
 ```ts
 import { isFieldSet } from "@bufbuild/protobuf";
-import { LookupResponseSchema, RolesService, WhitelistAction } from "./gen/surf/roles/v1/roles_service_pb.js";
+import { createRolesServiceClient } from "./gen/surf/roles/v1/roles_service_nats.js";
+import { LookupResponseSchema, WhitelistAction } from "./gen/surf/roles/v1/roles_service_pb.js";
 
-const response = await nats.call(RolesService.method.lookup, { userId: 42n });
+const roles = createRolesServiceClient(nats);
+
+const response = await roles.lookup({ userId: 42n });
 if (isFieldSet(response, LookupResponseSchema.field.role)) {
     console.log(`user 42 has role ${response.role}`);
 }
 
-await nats.call(RolesService.method.whitelist, { action: WhitelistAction.ADD, userId: 42n });
+await roles.whitelist({ action: WhitelistAction.ADD, userId: 42n }, { timeoutMs: 10_000 });
 ```
 
-`call` returns the response message, or nothing for a response of type `google.protobuf.Empty`. It handles every
-kind of method except `ALL_INSTANCES` methods with a response message. Call those with `callAnswer`, which returns
-`{ known: true, value }` for the first known answer. Without a known answer, it returns `{ known: false }`, or
-throws the first error an instance replied with.
+`createRolesServiceClient` returns a `RolesServiceClient`, an interface with one method per `rpc`, which tests can
+replace with a fake. Each method takes an init object of the request message and optional `CallOptions`. It returns
+the response message, or nothing for a response of type `google.protobuf.Empty`. An `ALL_INSTANCES` method with a
+response message returns an `Answer` instead: `{ known: true, value }` for the first known answer, or
+`{ known: false }` without one. If no instance knows an answer and some threw, it throws the first error an instance
+replied with. The TS client does not track which instances are running, so without a known answer it resolves only
+after `timeoutMs`; a Kotlin caller returns as soon as every running instance has answered. Pick a short `timeoutMs`
+for methods that often answer unknown.
+
+The generated methods delegate to `nats.call` and `nats.callAnswer`, which also take the method descriptors of
+protoc-gen-es directly, for example `nats.call(RolesService.method.lookup, { userId: 42n })`. `call` handles every
+kind of method except `ALL_INSTANCES` methods with a response message, which need `callAnswer`.
 `timeoutMs` overrides the timeout of the contract (default 5 seconds, persistent 60 seconds). Like `publish`, `call`
 checks the request before it sends it. Fields with the `nullable` option have explicit presence; check them with
 `isFieldSet`.
@@ -194,7 +221,7 @@ Calls reject with these errors:
 | `NatsCallTimeoutError`  | No reply, storage confirmation, or flush within `timeoutMs`. Carries `subject` and `timeoutMs`.   |
 | `NatsRpcError`          | The base class of all three. Thrown directly when JetStream rejects a persistent call, for example because its stream does not exist. |
 
-A request that lacks a required field, or a non-global contract without an owner, fails before anything is sent.
+A request that lacks a required field fails before anything is sent.
 
 ### UUIDs
 
@@ -239,28 +266,40 @@ The shared types have these fields, all of them required except `Location.world`
 
 ### Subjects
 
-NATS delivers each message by its subject. surf-nats builds subjects as follows:
+NATS delivers each message by its subject. surf-nats builds a subject from the root `surf`, a token for the kind of
+message, and the proto full name, spelled exactly as in the contract:
 
-| What                      | Global                             | Owned by client `profiles`                   |
-|---------------------------|------------------------------------|----------------------------------------------|
-| Event                     | `<first token>.v<N>.<other tokens>` | `profiles.v<N>.<subject>`                   |
-| Service method            | `<service>.$rpc.v<N>.<method>`     | `profiles.$rpc.v<N>.<service>.<method>`      |
-| Persistent service method | `<service>.$persist.v<N>.<method>` | `profiles.$persist.v<N>.<service>.<method>`  |
+| What                      | Subject                                  |
+|---------------------------|------------------------------------------|
+| Event                     | `surf.evt.<message full name>`           |
+| Service method            | `surf.rpc.<service full name>.<rpc>`     |
+| Persistent service method | `surf.persist.<service full name>.<rpc>` |
+| Dead letter               | `surf.dlq.<service full name>`           |
+| Instance presence         | `surf.presence.<service full name>`      |
 
-`<N>` is the major version, the `.v<N>` at the end of the proto package. `<subject>` is the `subject` option of the
-event, `<service>` the `name` option of the service, and `<method>` the `name` option of the method. Without these
-options, surf-nats derives the names in kebab case (see [Names](../README.md#names)). A global event subject of one
-token gets the version appended: `ready` travels on `ready.v1`.
+The full name includes the package, which ends with the major version `.v<N>`, so versions 1 and 2 of a contract
+never share a subject. `<rpc>` is the name of the `rpc` as written in the contract. Neither `java_package` nor the
+names in generated code affect a subject.
+
+Kotlin instances that serve an `ALL_INSTANCES` method with a response message announce themselves on the presence
+subject, so Kotlin callers know when every running instance has answered. External callers neither publish nor need
+these messages.
 
 The examples travel on these subjects:
 
-| Contract                                         | Subject                      |
-|--------------------------------------------------|------------------------------|
-| Event `NameChanged`, `subject: "player.name-changed"` | `player.v1.name-changed` |
-| Method `lookup` of the global service `roles`    | `roles.$rpc.v1.lookup`       |
-| Persistent method `whitelist` of `roles`         | `roles.$persist.v1.whitelist` |
+| Contract                                  | Subject                                             |
+|-------------------------------------------|-----------------------------------------------------|
+| Event `NameChanged` in `surf.profiles.v1` | `surf.evt.surf.profiles.v1.NameChanged`             |
+| Method `Lookup` of `RolesService`         | `surf.rpc.surf.roles.v1.RolesService.Lookup`        |
+| Persistent method `Whitelist`             | `surf.persist.surf.roles.v1.RolesService.Whitelist` |
 
-Subjects that contain `$` must be quoted in a shell: `'roles.$persist.v1.whitelist'`.
+Subscribers can match the hierarchy with wildcards, for example `surf.evt.surf.profiles.v1.>` for every event of one
+package.
+
+The instances that serve a service subscribe to its non-persistent `ANY_INSTANCE` methods in one queue group, named
+after the service full name, whichever client registered them, so each call reaches one of them. They subscribe to
+`ALL_INSTANCES` methods without a queue group, so every instance receives each call. Persistent methods share one
+durable consumer per service, named `responders`.
 
 ### Events
 
@@ -294,8 +333,8 @@ combination.
 
 #### Calls to one instance
 
-Send a NATS request to the method's subject, for example `roles.$rpc.v1.lookup`. NATS picks one instance, and its
-reply comes back to your request.
+Send a NATS request to the method's subject, for example `surf.rpc.surf.roles.v1.RolesService.Lookup`. NATS picks
+one instance, and its reply comes back to your request.
 
 If no instance serves the method, NATS answers at once with a "no responders" status. If the method takes longer
 than your request timeout, you get no reply.
@@ -335,7 +374,7 @@ A persistent call goes to JetStream, which stores it and confirms the storage wi
 it as a NATS request, because a request to a stream subject returns that acknowledgement, and add a `Nats-Msg-Id`
 header, for example `panel-whitelist-42-1718000000`.
 
-The acknowledgement looks like `{"stream":"SURF__ROLES_V1","seq":17}`. Only that acknowledgement means that the call
+The acknowledgement looks like `{"stream":"SURF_PERSIST_surf_roles_v1_RolesService","seq":17}`. Only that acknowledgement means that the call
 is stored. If you get an error or no acknowledgement, the call may not be stored. Send it again with the same
 `Nats-Msg-Id`.
 
@@ -397,22 +436,28 @@ after 7 days in `surf-nats-persistent-payloads`.
 |-------------------------------------------------------|------------------------------|-------------------------|------------------------------|---------------------------|
 | Missing or unknown `Content-Type`                     | dropped, logged as a warning | reply with `Surf-Error` | dead letter at once          | reply with `Surf-Error`   |
 | Body cannot be decoded or lacks a required field      | dropped, logged as a warning | reply with `Surf-Error` | dead letter at once          | reply with `Surf-Error`   |
-| Method name unknown                                   | not applicable               | no responders           | retried, then dead letter    | retried, then dead letter |
+| Method name unknown                                   | not applicable               | no responders           | retried, then dead letter    | retried, see below        |
 | Method throws                                         | not applicable               | reply with `Surf-Error` | retried, then dead letter    | reply with `Surf-Error`   |
 | Deadline passed                                       | not applicable               | dropped                 | dropped                      | dropped                   |
+
+A persistent call with a result to an unknown method is retried until its `Nats-TTL` ends. JetStream then removes it,
+so it reaches the dead letters only when it has no `Nats-TTL` or the retries end first (after about 2.5 minutes).
+The caller sees a timeout.
 
 ### Dead letters
 
 A dead letter is a persistent call that surf-nats gave up on: one that could not be decoded, or one that failed
-every retry. surf-nats moves it to the dead-letter stream of the service and does not touch it again. The stream is
-named `SURF__<SERVICE>_V<N>_DLQ` for a global service, in upper case with hyphens replaced by underscores, for
-example `SURF__ROLES_V1_DLQ`. Inspect it with the `nats` CLI:
+every retry. surf-nats publishes it to `surf.dlq.<service full name>`, which the dead-letter stream of the service
+stores, and does not touch it again. The stream is named `SURF_DLQ_` followed by the encoded service full name (see
+[Streams and dead letters](../README.md#streams-and-dead-letters)), for example `SURF_DLQ_surf_roles_v1_RolesService`.
+Inspect it with the `nats` CLI:
 
 ```sh
-nats stream view SURF__ROLES_V1_DLQ
+nats stream view SURF_DLQ_surf_roles_v1_RolesService
 ```
 
-A dead letter keeps the body and all headers of the call except the `Nats-*` headers, and gains two headers:
+A dead letter keeps the body and all headers of the call except the `Nats-*` headers. It gets its own `Nats-Msg-Id`,
+the dedupe id of the dead-letter publish, and two more headers:
 
 | Header              | Value                                            |
 |---------------------|--------------------------------------------------|
@@ -439,3 +484,4 @@ Keep `Surf-Payload-Ref` if present: its object lives for 7 days from the origina
 | `Surf-Error`          | no          | yes            | Exception class of a failed call. The body holds the message.              |
 | `Surf-Answer`         | no          | yes            | `unknown` for `Answer.Unknown`.                                            |
 | `Surf-Dead-Subject`   | no          | yes            | Original subject of a dead letter.                                         |
+| `Surf-Presence`       | no          | no             | `join`, `beat`, `leave` or `query` on the presence subject. Internal.      |

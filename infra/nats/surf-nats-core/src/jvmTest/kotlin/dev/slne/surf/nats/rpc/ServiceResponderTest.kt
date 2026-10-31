@@ -293,10 +293,10 @@ class ServiceResponderTest {
     @Test
     fun `handlers running while the client closes can still publish and call through it`() = withService {
         NatsClient.create("rpc-responder-${clientCounter++}").use { other ->
-            other.registerService<GlobalClashService>(object : GlobalClashService {
+            other.registerService<PingService>(object : PingService {
                 override suspend fun ping() = Text("nested")
             })
-            assertEquals(Text("nested"), client.service<GlobalClashService>().ping())
+            assertEquals(Text("nested"), client.service<PingService>().ping())
 
             val connection = NatsConnectionManager.connection()
             val events = connection.subscribe(client.eventDescriptor(Created::class.java).subject)
@@ -304,7 +304,7 @@ class ServiceResponderTest {
 
             impl.afterGate = {
                 client.publish(Created(7))
-                client.service<GlobalClashService>().ping()
+                client.service<PingService>().ping()
             }
 
             coroutineScope {
@@ -402,7 +402,7 @@ class ServiceResponderTest {
 
         val connection = NatsConnectionManager.connection()
         val dispatcher = connection.createDispatcher()
-        dispatcher.subscribe(method.subject, client.name) { request ->
+        dispatcher.subscribe(method.subject, client.serviceDescriptor(CalcService::class.java).names.queueGroup) { request ->
             val data = NatsCodec.encode(checkNotNull(method.response), Count(otherCalls.incrementAndGet()))
             connection.publish(
                 request.replyTo,
@@ -543,24 +543,11 @@ class ServiceResponderTest {
             })
         }.message.orEmpty()
 
-        assertContains(message, "Service 'name-clash' v1 of ${ClashServiceB::class.java.name}")
+        assertContains(message, "Service surf.nats.test.v1.NameClashService of ${ClashServiceB::class.java.name}")
         assertContains(message, "is already registered on NatsClient[")
         assertContains(message, ClashServiceA::class.java.name)
         assertFalse(first.isClosed)
         assertEquals(Text("first"), client.service<ClashServiceA>().ping(), "first registration must stay active")
-    }
-
-    @Test
-    fun `same service name is allowed when only one interface is prefixed`() = withService {
-        client.registerService<GlobalClashService>(object : GlobalClashService {
-            override suspend fun ping() = Text("global")
-        })
-        client.registerService<PrefixedClashService>(object : PrefixedClashService {
-            override suspend fun ping() = Text("prefixed")
-        })
-
-        assertEquals(Text("global"), client.service<GlobalClashService>().ping())
-        assertEquals(Text("prefixed"), client.service<PrefixedClashService>().ping())
     }
 
     @Test
@@ -583,8 +570,8 @@ class ServiceResponderTest {
 
         val v1 = client.serviceDescriptor(VersionedServiceV1::class.java).methods.single()
         val v2 = client.serviceDescriptor(VersionedServiceV2::class.java).methods.single()
-        assertEquals("${client.name}.\$rpc.v1.versioned.ping", v1.subject)
-        assertEquals("${client.name}.\$rpc.v2.versioned.ping", v2.subject)
+        assertEquals("surf.rpc.surf.nats.test.v1.VersionedService.Ping", v1.subject)
+        assertEquals("surf.rpc.surf.nats.test.v2.VersionedService.Ping", v2.subject)
     }
 
     @Test

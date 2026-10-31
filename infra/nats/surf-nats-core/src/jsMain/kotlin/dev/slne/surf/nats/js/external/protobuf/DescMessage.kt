@@ -11,4 +11,5 @@ internal external interface DescMessage : AnyDesc, MessageSchema {
     val file: DescFile
     val fields: Array<DescField>
     val oneofs: Array<DescOneof>
+    val nestedMessages: Array<DescMessage>
 }

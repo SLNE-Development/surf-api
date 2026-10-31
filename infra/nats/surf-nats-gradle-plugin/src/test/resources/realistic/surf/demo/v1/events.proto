@@ -13,7 +13,7 @@ import "surf/types/v1/uuid.proto";
 import "surf/demo/v1/common.proto";
 
 message PunishmentCreated {
-  option (surf.nats.v1.event) = {};
+  option (surf.nats.v1.event) = true;
 
   optional surf.types.v1.Uuid player = 1;
   optional PunishmentType type = 2;
@@ -32,11 +32,11 @@ message PunishmentCreated {
 }
 
 message ServerStarted {
-  option (surf.nats.v1.event) = { subject: "servers.started" global: true };
+  option (surf.nats.v1.event) = true;
 }
 
 message PlayerJoined {
-  option (surf.nats.v1.event).subject = "player.joined";
+  option (surf.nats.v1.event) = true;
 
   optional surf.types.v1.Uuid player = 1;
   optional surf.types.v1.Component display_name = 2 [(surf.nats.v1.nullable) = true];

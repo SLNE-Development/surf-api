@@ -14,28 +14,20 @@ enum NatsRecipients {
   NATS_RECIPIENTS_ALL_INSTANCES = 2;
 }
 
-message NatsEventOptions {
-  optional string subject = 1;
-  optional bool global = 2;
-}
-
 message NatsServiceOptions {
-  optional string name = 1;
-  optional bool global = 2;
-  optional uint32 call_timeout_seconds = 3;
-  optional NatsRecipients recipients = 4;
-  optional bool persistent = 5;
+  optional uint32 call_timeout_seconds = 1;
+  optional NatsRecipients recipients = 2;
+  optional bool persistent = 3;
 }
 
 message NatsMethodOptions {
-  optional string name = 1;
-  optional bool persistent = 2;
-  optional uint32 call_timeout_seconds = 3;
-  optional NatsRecipients recipients = 4;
+  optional bool persistent = 1;
+  optional uint32 call_timeout_seconds = 2;
+  optional NatsRecipients recipients = 3;
 }
 
 extend google.protobuf.MessageOptions {
-  optional NatsEventOptions event = 51000;
+  optional bool event = 51000;
 }
 
 extend google.protobuf.ServiceOptions {

@@ -5,9 +5,8 @@ package surf.natsjs.test.v1;
 import "surf/nats/v1/options.proto";
 import "surf/types/v1/uuid.proto";
 
-// Default subject: kebab-case of the message name.
 message PlayerJoined {
-  option (surf.nats.v1.event) = { global: false };
+  option (surf.nats.v1.event) = true;
 
   optional string name = 1;
   optional surf.types.v1.Uuid id = 2;
@@ -15,18 +14,25 @@ message PlayerJoined {
 }
 
 message ChatMessage {
-  option (surf.nats.v1.event) = { subject: "chat.message" };
+  option (surf.nats.v1.event) = true;
 
   optional string text = 1;
 }
 
 message ServerStarted {
-  option (surf.nats.v1.event) = { subject: "server.started", global: true };
+  option (surf.nats.v1.event) = true;
 
   optional string server = 1;
 }
 
 // Not an event: no (surf.nats.v1.event) option.
 message PlainMessage {
+  optional string text = 1;
+}
+
+// Not an event: the option is false.
+message OptedOutMessage {
+  option (surf.nats.v1.event) = false;
+
   optional string text = 1;
 }

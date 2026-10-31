@@ -3,15 +3,12 @@ package dev.slne.surf.nats.js
 import dev.slne.surf.nats.NatsConstants
 import dev.slne.surf.nats.js.api.EventContext
 import dev.slne.surf.nats.js.api.ListenOptions
-import dev.slne.surf.nats.js.api.PublishOptions
 import dev.slne.surf.nats.js.event.NatsRegistration
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.fixtures.ChatMessage
 import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
 import dev.slne.surf.nats.js.fixtures.PlayerJoined
 import dev.slne.surf.nats.js.fixtures.PlayerJoinedSchema
-import dev.slne.surf.nats.js.fixtures.ServerStarted
-import dev.slne.surf.nats.js.fixtures.ServerStartedSchema
 import dev.slne.surf.nats.js.fixtures.Uuid
 import dev.slne.surf.nats.js.fixtures.fields
 import dev.slne.surf.nats.protocol.ProtocolHeaders
@@ -25,13 +22,19 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import dev.slne.surf.nats.js.fixtures.v2.PlayerJoinedSchema as PlayerJoinedV2Schema
 
 class EventsE2eTest {
 
-    private fun listenOptions(owner: String, recipients: String? = null, ignore: Boolean? = null): ListenOptions =
-        ListenOptions(owner = owner, recipients = recipients, ignoreFromThisClient = ignore)
+    // Absent options stay absent keys, as TypeScript callers pass them
+    private fun listenOptions(recipients: String? = null, ignore: Boolean? = null): ListenOptions = when {
+        recipients != null && ignore != null -> ListenOptions(recipients = recipients, ignoreFromThisClient = ignore)
+        recipients != null -> ListenOptions(recipients = recipients)
+        ignore != null -> ListenOptions(ignoreFromThisClient = ignore)
+        else -> ListenOptions()
+    }
 
-    private fun publishOptions(owner: String): PublishOptions = PublishOptions(owner = owner)
+    private val playerJoinedSubject = "surf.evt.surf.natsjs.test.v1.PlayerJoined"
 
     private fun playerJoined(name: String? = null): PlayerJoined = unsafeJso {
         if (name != null) this.name = name
@@ -41,16 +44,15 @@ class EventsE2eTest {
     private fun chat(text: String): ChatMessage = unsafeJso { this.text = text }
 
     @Test
-    fun publishWritesTheVersionedSubjectAndTheSurfHeaders() = e2eTest {
-        val owner = uniqueName("events-owner")
+    fun publishWritesTheMessageFullNameSubjectAndTheSurfHeaders() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("events-publisher"))
         try {
             val received = mutableListOf<Msg>()
-            raw.subscribe("$owner.v1.player-joined") { received += it }
+            raw.subscribe(playerJoinedSubject) { received += it }
             raw.flush()
 
-            client.publish(PlayerJoinedSchema, playerJoined("Steve"), publishOptions(owner)).await()
+            client.publish(PlayerJoinedSchema, playerJoined("Steve")).await()
 
             eventually { received.size == 1 }
             val message = received.single()
@@ -66,18 +68,22 @@ class EventsE2eTest {
     }
 
     @Test
-    fun globalEventsNeedNoOwner() = e2eTest {
+    fun majorVersionsOfAnEventUseDistinctSubjects() = e2eTest {
         val raw = rawNats()
-        val client = TestNats.client(uniqueName("events-global"))
+        val client = TestNats.client(uniqueName("events-versions"))
         try {
-            val received = mutableListOf<Msg>()
-            raw.subscribe("server.v1.started") { received += it }
+            val v1 = mutableListOf<Msg>()
+            val v2 = mutableListOf<Msg>()
+            raw.subscribe(playerJoinedSubject) { v1 += it }
+            raw.subscribe("surf.evt.surf.natsjs.test.v2.PlayerJoined") { v2 += it }
             raw.flush()
 
-            client.publish(ServerStartedSchema, unsafeJso<ServerStarted> { server = "lobby-1" }).await()
+            client.publish(PlayerJoinedV2Schema, unsafeJso<PlayerJoined> { name = "Steve" }).await()
 
-            eventually { received.size == 1 }
-            assertEquals("lobby-1", raw.decode(ServerStartedSchema, received.single().data).fields<ServerStarted>().server)
+            eventually { v2.size == 1 }
+            delay(100.milliseconds)
+            assertTrue(v1.isEmpty(), "a v2 event must not reach v1 listeners: $v1")
+            assertEquals("Steve", raw.decode(PlayerJoinedV2Schema, v2.single().data).fields<PlayerJoined>().name)
         } finally {
             client.close().await()
             raw.close()
@@ -86,7 +92,6 @@ class EventsE2eTest {
 
     @Test
     fun anyInstanceDeliversOncePerClientNameAndAllInstancesToEveryInstance() = e2eTest {
-        val owner = uniqueName("events-owner")
         val name = uniqueName("events-listener")
         val first = TestNats.client(name)
         val second = TestNats.client(name)
@@ -98,16 +103,16 @@ class EventsE2eTest {
                 client.listen(
                     ChatMessageSchema,
                     { event, _ -> any.add("${client.origin}:${event.fields<ChatMessage>().text}") },
-                    listenOptions(owner, "ANY_INSTANCE"),
+                    listenOptions("ANY_INSTANCE"),
                 ).await()
                 client.listen(
                     ChatMessageSchema,
                     { event, _ -> all.add("${client.origin}:${event.fields<ChatMessage>().text}") },
-                    listenOptions(owner, "ALL_INSTANCES"),
+                    listenOptions("ALL_INSTANCES"),
                 ).await()
             }
 
-            publisher.publish(ChatMessageSchema, chat("hello"), publishOptions(owner)).await()
+            publisher.publish(ChatMessageSchema, chat("hello")).await()
 
             eventually { any.size == 1 && all.size == 2 }
             delay(300.milliseconds)
@@ -122,7 +127,6 @@ class EventsE2eTest {
 
     @Test
     fun anyInstanceListenersShareTheQueueGroupOfTheirClientName() = e2eTest {
-        val owner = uniqueName("events-owner")
         val name = uniqueName("events-listener")
         val first = TestNats.client(name)
         val second = TestNats.client(name)
@@ -133,14 +137,14 @@ class EventsE2eTest {
             val group = mutableListOf<String>()
             val otherClient = mutableListOf<String>()
             for (client in listOf(first, second)) {
-                client.listen(ChatMessageSchema, { _, _ -> group.add(client.origin) }, listenOptions(owner, "ANY_INSTANCE")).await()
+                client.listen(ChatMessageSchema, { _, _ -> group.add(client.origin) }, listenOptions("ANY_INSTANCE")).await()
             }
-            other.listen(ChatMessageSchema, { _, _ -> otherClient.add(other.origin) }, listenOptions(owner, "ANY_INSTANCE")).await()
+            other.listen(ChatMessageSchema, { _, _ -> otherClient.add(other.origin) }, listenOptions("ANY_INSTANCE")).await()
             // A raw member of the queue group named like the client: shares the events with first and second
-            raw.subscribe("$owner.v1.chat.message", queue = name) { group.add("raw") }
+            raw.subscribe("surf.evt.surf.natsjs.test.v1.ChatMessage", queue = name) { group.add("raw") }
             raw.flush()
 
-            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it"), publishOptions(owner)).await() }
+            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it")).await() }
 
             eventually { group.size == 3 && otherClient.size == 3 }
             delay(300.milliseconds)
@@ -157,19 +161,18 @@ class EventsE2eTest {
 
     @Test
     fun ignoreFromThisClientIsRejectedForAnyInstance() = e2eTest {
-        val owner = uniqueName("events-owner")
         val client = TestNats.client(uniqueName("events-any-ignore"))
         val publisher = TestNats.client(uniqueName("events-publisher"))
         try {
             val error = assertFailsWith<IllegalArgumentException> {
-                client.listen(ChatMessageSchema, { _, _ -> }, listenOptions(owner, "ANY_INSTANCE", ignore = true)).await()
+                client.listen(ChatMessageSchema, { _, _ -> }, listenOptions("ANY_INSTANCE", ignore = true)).await()
             }
             assertTrue(error.message!!.startsWith("ignoreFromThisClient requires recipients = ALL_INSTANCES"), error.message)
 
             // Nothing was subscribed: the queue group of the client stays empty
             val received = mutableListOf<String?>()
-            publisher.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }, listenOptions(owner)).await()
-            client.publish(ChatMessageSchema, chat("after"), publishOptions(owner)).await()
+            publisher.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }, listenOptions()).await()
+            client.publish(ChatMessageSchema, chat("after")).await()
             eventually { received.size == 1 }
         } finally {
             client.close().await()
@@ -179,7 +182,6 @@ class EventsE2eTest {
 
     @Test
     fun omittedRecipientsListenOnAllInstances() = e2eTest {
-        val owner = uniqueName("events-owner")
         val name = uniqueName("events-listener")
         val first = TestNats.client(name)
         val second = TestNats.client(name)
@@ -188,11 +190,11 @@ class EventsE2eTest {
             val received = mutableListOf<String>()
             for (client in listOf(first, second)) {
                 // An options object without recipients, as TypeScript callers pass it
-                val options = ListenOptions(owner = owner)
+                val options = ListenOptions()
                 client.listen(ChatMessageSchema, { _, _ -> received.add(client.origin) }, options).await()
             }
 
-            publisher.publish(ChatMessageSchema, chat("hello"), publishOptions(owner)).await()
+            publisher.publish(ChatMessageSchema, chat("hello")).await()
 
             eventually { received.size == 2 }
             assertEquals(setOf(first.origin, second.origin), received.toSet())
@@ -205,18 +207,17 @@ class EventsE2eTest {
 
     @Test
     fun ignoreFromThisClientAndEventContext() = e2eTest {
-        val owner = uniqueName("events-owner")
         val client = TestNats.client(uniqueName("events-self"))
         val other = TestNats.client(uniqueName("events-other"))
         try {
             val ignored = mutableListOf<EventContext>()
             val own = mutableListOf<EventContext>()
             val foreign = mutableListOf<EventContext>()
-            client.listen(ChatMessageSchema, { _, context -> ignored.add(context) }, listenOptions(owner, ignore = true)).await()
-            client.listen(ChatMessageSchema, { _, context -> own.add(context) }, listenOptions(owner)).await()
-            other.listen(ChatMessageSchema, { _, context -> foreign.add(context) }, listenOptions(owner)).await()
+            client.listen(ChatMessageSchema, { _, context -> ignored.add(context) }, listenOptions(ignore = true)).await()
+            client.listen(ChatMessageSchema, { _, context -> own.add(context) }, listenOptions()).await()
+            other.listen(ChatMessageSchema, { _, context -> foreign.add(context) }, listenOptions()).await()
 
-            client.publish(ChatMessageSchema, chat("self"), publishOptions(owner)).await()
+            client.publish(ChatMessageSchema, chat("self")).await()
 
             eventually { own.size == 1 && foreign.size == 1 }
             delay(200.milliseconds)
@@ -233,7 +234,6 @@ class EventsE2eTest {
 
     @Test
     fun undecodableEventsAreDroppedAndRegistrationsClose() = e2eTest {
-        val owner = uniqueName("events-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("events-listener"))
         try {
@@ -241,9 +241,9 @@ class EventsE2eTest {
             val registration = client.listen(
                 PlayerJoinedSchema,
                 { event, _ -> received.add(event.fields<PlayerJoined>().name) },
-                listenOptions(owner),
+                listenOptions(),
             ).await()
-            val subject = "$owner.v1.player-joined"
+            val subject = playerJoinedSubject
 
             // name is required; a missing content type is rejected like on the JVM
             raw.publish(subject, raw.encode(PlayerJoinedSchema, playerJoined()), raw.jvmHeaders())
@@ -268,20 +268,19 @@ class EventsE2eTest {
 
     @Test
     fun listenerFailuresAndRejectedPromisesAreLoggedAndDoNotStopTheListener() = e2eTest {
-        val owner = uniqueName("events-owner")
         val client = TestNats.client(uniqueName("events-failing"))
         try {
             val received = mutableListOf<String?>()
-            client.listen(ChatMessageSchema, { _, _ -> throw IllegalStateException("handler failed") }, listenOptions(owner)).await()
+            client.listen(ChatMessageSchema, { _, _ -> throw IllegalStateException("handler failed") }, listenOptions()).await()
             client.listen(
                 ChatMessageSchema,
                 { _, _ -> kotlin.js.Promise.reject(IllegalStateException("async handler failed")) },
-                listenOptions(owner),
+                listenOptions(),
             ).await()
-            client.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }, listenOptions(owner)).await()
+            client.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }, listenOptions()).await()
 
-            client.publish(ChatMessageSchema, chat("one"), publishOptions(owner)).await()
-            client.publish(ChatMessageSchema, chat("two"), publishOptions(owner)).await()
+            client.publish(ChatMessageSchema, chat("one")).await()
+            client.publish(ChatMessageSchema, chat("two")).await()
 
             eventually { received.size == 2 }
             assertEquals(listOf<String?>("one", "two"), received)
@@ -295,31 +294,25 @@ class EventsE2eTest {
         val client = TestNats.client(uniqueName("events-invalid"))
         try {
             val missingName = assertFailsWith<IllegalArgumentException> {
-                client.publish(PlayerJoinedSchema, unsafeJso<PlayerJoined> { }, publishOptions("surf-punish")).await()
+                client.publish(PlayerJoinedSchema, unsafeJso<PlayerJoined> { }).await()
             }
             assertTrue(missingName.message!!.contains("'name'"), missingName.message)
 
-            val missingOwner = assertFails {
-                client.publish(ChatMessageSchema, chat("x")).await()
-            }
-            assertTrue(missingOwner.message!!.contains("is not global"), missingOwner.message)
-
             val tooLarge = assertFails {
-                client.publish(ChatMessageSchema, chat("x".repeat(1_100_000)), publishOptions("surf-punish")).await()
+                client.publish(ChatMessageSchema, chat("x".repeat(1_100_000))).await()
             }
             assertTrue(tooLarge.message!!.contains("exceeding the NATS max payload"), tooLarge.message)
         } finally {
             client.close().await()
         }
         assertFailsWith<IllegalStateException> {
-            client.publish(ChatMessageSchema, chat("x"), publishOptions("surf-punish")).await()
+            client.publish(ChatMessageSchema, chat("x")).await()
         }
         assertTrue(client.isClosed)
     }
 
     @Test
     fun listenersOfOneClientShareTheSubscriptionOfTheirQueueGroup() = e2eTest {
-        val owner = uniqueName("events-owner")
         val client = TestNats.client(uniqueName("events-shared"))
         val publisher = TestNats.client(uniqueName("events-publisher"))
         try {
@@ -328,15 +321,15 @@ class EventsE2eTest {
             client.listen(
                 ChatMessageSchema,
                 { event, _ -> first.add(event.fields<ChatMessage>().text) },
-                listenOptions(owner, "ANY_INSTANCE"),
+                listenOptions("ANY_INSTANCE"),
             ).await()
             val registration = client.listen(
                 ChatMessageSchema,
                 { event, _ -> second.add(event.fields<ChatMessage>().text) },
-                listenOptions(owner, "ANY_INSTANCE"),
+                listenOptions("ANY_INSTANCE"),
             ).await()
 
-            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it"), publishOptions(owner)).await() }
+            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it")).await() }
 
             // Both listeners see every event the queue group delivers to this client
             eventually { first.size == 3 && second.size == 3 }
@@ -345,7 +338,7 @@ class EventsE2eTest {
 
             // Closing one registration keeps the shared subscription for the other
             registration.close()
-            publisher.publish(ChatMessageSchema, chat("after"), publishOptions(owner)).await()
+            publisher.publish(ChatMessageSchema, chat("after")).await()
             eventually { first.size == 4 }
             delay(100.milliseconds)
             assertEquals(3, second.size)
@@ -357,7 +350,6 @@ class EventsE2eTest {
 
     @Test
     fun aHandlerMayCloseItsRegistrationWhileTheEventIsDispatched() = e2eTest {
-        val owner = uniqueName("events-owner")
         val client = TestNats.client(uniqueName("events-reentrant"))
         val publisher = TestNats.client(uniqueName("events-publisher"))
         try {
@@ -370,12 +362,12 @@ class EventsE2eTest {
                     once.add(event.fields<ChatMessage>().text)
                     registration!!.close()
                 },
-                listenOptions(owner),
+                listenOptions(),
             ).await()
-            client.listen(ChatMessageSchema, { event, _ -> every.add(event.fields<ChatMessage>().text) }, listenOptions(owner)).await()
+            client.listen(ChatMessageSchema, { event, _ -> every.add(event.fields<ChatMessage>().text) }, listenOptions()).await()
 
-            publisher.publish(ChatMessageSchema, chat("one"), publishOptions(owner)).await()
-            publisher.publish(ChatMessageSchema, chat("two"), publishOptions(owner)).await()
+            publisher.publish(ChatMessageSchema, chat("one")).await()
+            publisher.publish(ChatMessageSchema, chat("two")).await()
 
             eventually { every.size == 2 }
             delay(100.milliseconds)

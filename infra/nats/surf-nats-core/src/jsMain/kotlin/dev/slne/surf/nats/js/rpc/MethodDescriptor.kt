@@ -4,7 +4,6 @@ import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.api.ProtoMessageInit
 import dev.slne.surf.nats.js.codec.NatsCodec
-import dev.slne.surf.nats.js.descriptor.PerOwner
 import dev.slne.surf.nats.js.external.protobuf.DescMessage
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.protocol.RecipientsOption
@@ -22,7 +21,6 @@ internal class MethodDescriptor(
     resolved: ResolvedMethod,
 ) {
     val protoName: String get() = desc.name
-    val name: String = resolved.name // kebab-case rpc name of the subject
     val persistent: Boolean = resolved.persistent
     val timeout: Duration = resolved.effectiveCallTimeoutSeconds.seconds
     val label: String = "${service.typeName}.$protoName"
@@ -43,14 +41,10 @@ internal class MethodDescriptor(
 
     val flow: CallFlow = CallFlow.of(persistent, result)
 
-    private val subjects = PerOwner(service.global, service.typeName) { owner ->
-        service.names(owner).methodSubject(name, persistent)
-    }
-
-    fun subject(owner: String?): String = subjects[owner] // <owner>.$rpc.v<N>.<service>.<method>
+    val subject: String = service.names.methodSubject(protoName, persistent) // surf.rpc|persist.<service>.<rpc>
 
     // Work queue stream of persistent methods
-    fun stream(owner: String?): String = service.names(owner).stream
+    val stream: String get() = service.names.stream
 
     fun encodeRequest(request: ProtoMessageInit?): Uint8Array<*> = NatsCodec.encode(input, request)
 

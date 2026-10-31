@@ -14,7 +14,7 @@ import dev.slne.surf.nats.protocol.ProtocolOptions
 /**
  * Per-file facts the generator derives before emitting code.
  */
-internal class FileFacts(val file: ProtoFile, val kotlinPackage: String, val majorVersion: Int?)
+internal class FileFacts(val file: ProtoFile, val kotlinPackage: String)
 
 /**
  * File-level rules: syntax, version suffix, Kotlin package hygiene, options import and unsupported extensions.
@@ -33,12 +33,8 @@ internal class FileRules(private val problems: Problems) {
         val majorVersion = ProtocolNaming.majorVersionOrNull(protoPackage)
 
         val declaresContracts = file.services.isNotEmpty() || file.types.any(::declaresEvent)
-        if (declaresContracts && majorVersion == null) {
-            problems.error(
-                location,
-                "package '$protoPackage' declares events or services and must end with a major version '.v<N>' " +
-                        "(N >= 1, no leading zeros)",
-            )
+        if (declaresContracts) {
+            ProtocolNaming.contractPackageProblem(protoPackage)?.let { problems.error(location, it) }
         }
         if (majorVersion != null && kotlinPackage.substringAfterLast('.') != "v$majorVersion") {
             problems.error(location, "Kotlin package '$kotlinPackage' of proto package '$protoPackage' must end with '.v$majorVersion'")
@@ -58,7 +54,7 @@ internal class FileRules(private val problems: Problems) {
         }
 
         for (extend in file.extendList + file.types.flatMap(::nestedExtends)) checkExtend(extend)
-        return FileFacts(file, kotlinPackage, majorVersion)
+        return FileFacts(file, kotlinPackage)
     }
 
     private fun checkExtend(extend: Extend) {
@@ -71,7 +67,7 @@ internal class FileRules(private val problems: Problems) {
     private fun nestedExtends(type: Type): List<Extend> = type.nestedExtendList + type.nestedTypes.flatMap(::nestedExtends)
 
     private fun declaresEvent(type: Type): Boolean {
-        return (type is MessageType && SurfOptions.isSet(type.options, SurfOptions.EVENT)) || type.nestedTypes.any(::declaresEvent)
+        return (type is MessageType && SurfOptions.isEvent(type.options)) || type.nestedTypes.any(::declaresEvent)
     }
 
     private fun usesSurfOptions(file: ProtoFile): Boolean {

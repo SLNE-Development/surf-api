@@ -8,3 +8,4 @@ internal external val PlayerJoinedSchema: DescMessage
 internal external val ChatMessageSchema: DescMessage
 internal external val ServerStartedSchema: DescMessage
 internal external val PlainMessageSchema: DescMessage
+internal external val OptedOutMessageSchema: DescMessage

@@ -51,7 +51,7 @@ class ValidationTest {
     @Test
     fun `events and services need a versioned package`() {
         assertError(
-            errors("message E { option (surf.nats.v1.event) = {}; }", protoPackage = "surf.test"),
+            errors("message E { option (surf.nats.v1.event) = true; }", protoPackage = "surf.test"),
             "bad.proto", "package 'surf.test' declares events or services and must end with a major version '.v<N>'",
         )
         assertError(
@@ -98,7 +98,7 @@ class ValidationTest {
             .proto("surf/test/v1/base.proto", "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nmessage Base {}")
             .proto(
                 "surf/test/v1/bad.proto",
-                "$PROTO2\npackage surf.test.v1;\nimport \"surf/test/v1/base.proto\";\nmessage E { option (surf.nats.v1.event) = {}; }",
+                "$PROTO2\npackage surf.test.v1;\nimport \"surf/test/v1/base.proto\";\nmessage E { option (surf.nats.v1.event) = true; }",
             )
             .errors()
         assertError(errors, "surf/test/v1/bad.proto:4:1: surf/test/v1/bad.proto needs to import surf/nats/v1/options.proto")
@@ -344,38 +344,31 @@ class ValidationTest {
     // Events
 
     @Test
-    fun `invalid event subjects are rejected`() {
-        val errors = errors(
-            """
-            message A { option (surf.nats.v1.event) = { subject: "a b" }; }
-            message B { option (surf.nats.v1.event) = { subject: "${'$'}rpc.created" }; }
-            message C { option (surf.nats.v1.event) = { subject: "a..b" global: true }; }
-            message D { option (surf.nats.v1.event) = { subject: "a.*" }; }
-            """.trimIndent()
-        )
-        assertLocated(errors, 4, "event surf.test.v1.A has an invalid subject 'a b'")
-        assertLocated(errors, 5, "has an invalid subject '\$rpc.created'")
-        assertLocated(errors, 6, "has an invalid subject 'a..b'")
-        assertLocated(errors, 7, "has an invalid subject 'a.*'")
+    fun `the event option is a bool`() {
+        val errors = errors("message A { option (surf.nats.v1.event) = { subject: \"a\" }; }")
+        assertError(errors, "bad.proto:4:", "unable to resolve option subject on bool")
     }
 
     @Test
-    fun `duplicate event subjects are rejected per version and namespace`() {
-        val errors = errors(
-            """
-            message A { option (surf.nats.v1.event) = { subject: "created" }; }
-            message B { option (surf.nats.v1.event) = { subject: "created" }; }
-            message C { option (surf.nats.v1.event) = { subject: "created" global: true }; }
-            """.trimIndent()
+    fun `event names must start with a letter`() {
+        assertLocated(
+            errors("message _Hidden { option (surf.nats.v1.event) = true; }"),
+            4, "event surf.test.v1._Hidden: every name component must start with an ASCII letter",
         )
-        assertLocated(errors, 5, "event surf.test.v1.B uses the prefixed subject 'created' of v1, already used by the event at")
-        assertFalse(errors.any { "surf.test.v1.C" in it }, errors.joinToString("\n"))
+    }
+
+    @Test
+    fun `event names must not contain a dot`() {
+        assertLocated(
+            errors("message E.F { option (surf.nats.v1.event) = true; }"),
+            4, "event surf.test.v1.E.F: the declared name 'E.F' must not contain '.'",
+        )
     }
 
     @Test
     fun `events must not declare a natsDescriptor field`() {
         assertLocated(
-            errors("message A {\n  option (surf.nats.v1.event) = {};\n  optional int32 nats_descriptor = 1;\n}"),
+            errors("message A {\n  option (surf.nats.v1.event) = true;\n  optional int32 nats_descriptor = 1;\n}"),
             6, "event surf.test.v1.A must not have a field named natsDescriptor",
         )
     }
@@ -384,7 +377,7 @@ class ValidationTest {
     fun `mapped events are rejected`() {
         val errors = harness().proto(
             "surf/test/v1/bad.proto",
-            "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nmessage Tag { option (surf.nats.v1.event) = {}; optional string v = 1; }",
+            "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nmessage Tag { option (surf.nats.v1.event) = true; optional string v = 1; }",
         ).errors(harness().input(mappings = listOf(TypeMapping("surf.test.v1.Tag", "dev.example.Tag", "dev.example.TagSerializer"))))
         assertLocated(errors, 4, "event message surf.test.v1.Tag is mapped by mapType")
     }
@@ -459,60 +452,94 @@ class ValidationTest {
     }
 
     @Test
-    fun `method names must be unique single tokens`() {
+    fun `rpc names must map to distinct Kotlin functions`() {
         val errors = errors(
             """
             service S {
               rpc GetPlayer(google.protobuf.Empty) returns (google.protobuf.Empty);
               rpc get_player(google.protobuf.Empty) returns (google.protobuf.Empty);
-              rpc Other(google.protobuf.Empty) returns (google.protobuf.Empty) { option (surf.nats.v1.method).name = "get-player"; }
-              rpc Dotted(google.protobuf.Empty) returns (google.protobuf.Empty) { option (surf.nats.v1.method).name = "a.b"; }
-              rpc Dollar(google.protobuf.Empty) returns (google.protobuf.Empty) { option (surf.nats.v1.method).name = "${'$'}internal"; }
               rpc ToString(google.protobuf.Empty) returns (google.protobuf.Empty);
             }
             """.trimIndent()
         )
         assertLocated(errors, 6, "rpc get_player maps to the Kotlin function 'getPlayer', already used by the rpc at")
-        assertLocated(errors, 7, "rpc Other resolves to the method name 'get-player', already used by the rpc at")
-        assertLocated(errors, 8, "rpc Dotted resolves to the method name 'a.b', which is not a single subject token")
-        assertLocated(errors, 9, "rpc Dollar resolves to the method name '\$internal', which is not a single subject token")
-        assertLocated(errors, 10, "rpc ToString maps to the Kotlin function 'toString', which clashes with a member of Any")
+        assertLocated(errors, 7, "rpc ToString maps to the Kotlin function 'toString', which clashes with a member of Any")
+        assertEquals(2, errors.size, errors.joinToString("\n"))
     }
 
     @Test
-    fun `service names must be kebab-case and not reserved`() {
+    fun `stream names of services are limited to 255 characters`() {
+        // SURF_PERSIST_ (13) + surf_test_v1_ (13) + the service name
+        val longest = "S" + "x".repeat(228)
+        val tooLong = "T" + "x".repeat(229)
         val errors = errors(
             """
-            service Bad_Name { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }
-            service Dotted { option (surf.nats.v1.service).name = "bad.name"; rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }
-            service Upper { option (surf.nats.v1.service).name = "Bad"; rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }
+            service $longest { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }
+            service $tooLong { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }
             service Dlq { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }
-            service RolesDlq { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }
             """.trimIndent()
         )
-        assertLocated(errors, 4, "service surf.test.v1.Bad_Name resolves to the name 'bad_name', which is not kebab-case")
-        assertLocated(errors, 5, "resolves to the name 'bad.name', which is not kebab-case")
-        assertLocated(errors, 6, "resolves to the name 'Bad', which is not kebab-case")
-        assertLocated(errors, 7, "service name 'dlq' is reserved")
-        assertLocated(errors, 8, "service name 'roles-dlq' is reserved")
+        assertLocated(
+            errors, 5,
+            "service surf.test.v1.$tooLong: its stream name SURF_PERSIST_surf_test_v1_$tooLong has 256 characters, more than 255",
+        )
+        assertEquals(1, errors.size, errors.joinToString("\n"))
+    }
+
+    @Test
+    fun `underscores count twice towards the stream name limit`() {
+        val tooLong = "T_" + "x".repeat(227)
+        assertLocated(
+            errors("service $tooLong { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }"),
+            4, "its stream name SURF_PERSIST_surf_test_v1_T__${"x".repeat(227)} has 256 characters",
+        )
+    }
+
+    @Test
+    fun `service names must start with a letter`() {
+        assertLocated(
+            errors("service _Hidden { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }"),
+            4, "service surf.test.v1._Hidden: every name component must start with an ASCII letter",
+        )
+    }
+
+    @Test
+    fun `service names must not contain a dot`() {
+        assertLocated(
+            errors("service S.T { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }"),
+            4, "service surf.test.v1.S.T: the declared name 'S.T' must not contain '.'",
+        )
+    }
+
+    @Test
+    fun `rpc names must be single identifiers`() {
+        val errors = errors(
+            "service S {\n" +
+                    "  rpc A.B(google.protobuf.Empty) returns (google.protobuf.Empty) { option (surf.nats.v1.method).persistent = true; }\n" +
+                    "  rpc _C(google.protobuf.Empty) returns (google.protobuf.Empty);\n}"
+        )
+        assertLocated(errors, 5, "rpc surf.test.v1.S.A.B: the declared name 'A.B' must not contain '.'")
+        assertLocated(errors, 6, "rpc surf.test.v1.S._C: every name component must start with an ASCII letter")
+    }
+
+    @Test
+    fun `a full name must not be declared in two files`() {
+        val service = "service S { rpc A(google.protobuf.Empty) returns (google.protobuf.Empty); }"
+        val event = "message E { option (surf.nats.v1.event) = true; }"
+        fun file(javaPackage: String) =
+            "$PROTO2\npackage a.v1;\noption java_package = \"$javaPackage\";\n$OPTIONS_IMPORT import \"google/protobuf/empty.proto\";\n$service\n$event"
+
+        val errors = harness()
+            .proto("a/v1/one.proto", file("x.one.v1"))
+            .proto("a/v1/two.proto", file("x.two.v1"))
+            .errors()
+        assertError(errors, "a/v1/two.proto:5:", "service a.v1.S: the full name is already declared at", "a/v1/one.proto:5:")
+        assertError(errors, "a/v1/two.proto:6:", "message a.v1.E: the full name is already declared at", "a/v1/one.proto:6:")
     }
 
     @Test
     fun `services need at least one rpc`() {
         assertLocated(errors("service Empty {}"), 4, "service surf.test.v1.Empty declares no rpcs")
-    }
-
-    @Test
-    fun `duplicate service names are rejected per version and namespace`() {
-        val errors = errors(
-            """
-            service A { option (surf.nats.v1.service).name = "roles"; rpc X(google.protobuf.Empty) returns (google.protobuf.Empty); }
-            service B { option (surf.nats.v1.service).name = "roles"; rpc X(google.protobuf.Empty) returns (google.protobuf.Empty); }
-            service C { option (surf.nats.v1.service) = { name: "roles" global: true }; rpc X(google.protobuf.Empty) returns (google.protobuf.Empty); }
-            """.trimIndent()
-        )
-        assertLocated(errors, 5, "service surf.test.v1.B resolves to the prefixed name 'roles' of v1, already used by the service at")
-        assertFalse(errors.any { "surf.test.v1.C" in it }, errors.joinToString("\n"))
     }
 
     @Test

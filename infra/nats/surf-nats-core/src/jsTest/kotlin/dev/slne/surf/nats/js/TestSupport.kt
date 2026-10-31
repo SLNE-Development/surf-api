@@ -4,8 +4,6 @@ package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.api.CallOptions
 import dev.slne.surf.nats.js.api.ConnectOptions
-import dev.slne.surf.nats.js.api.ListenOptions
-import dev.slne.surf.nats.js.api.PublishOptions
 import dev.slne.surf.nats.js.codec.decodeToString
 import dev.slne.surf.nats.js.external.nats.core.ConnectionOptions
 import dev.slne.surf.nats.js.external.nats.core.Msg
@@ -45,8 +43,7 @@ internal fun uniqueName(prefix: String): String {
     return "$prefix-${epochMillis() % 1_000_000}-$uniqueCounter"
 }
 
-internal fun callOptions(owner: String? = null, timeoutMs: Int? = null): CallOptions =
-    CallOptions(owner = owner, timeoutMs = timeoutMs)
+internal fun callOptions(timeoutMs: Int): CallOptions = CallOptions(timeoutMs = timeoutMs)
 
 internal fun bytes(vararg values: Int): Uint8Array<*> {
     val array = Uint8Array<ArrayBuffer>(values.size)

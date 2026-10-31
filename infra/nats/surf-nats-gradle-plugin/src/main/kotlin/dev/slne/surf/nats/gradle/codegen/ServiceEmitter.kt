@@ -28,6 +28,7 @@ import dev.slne.surf.nats.protocol.ProtocolDescriptors
 import dev.slne.surf.nats.protocol.ProtocolResolution
 import dev.slne.surf.nats.protocol.ResolvedService
 import dev.slne.surf.nats.protocol.ResultKindOption
+import dev.slne.surf.nats.protocol.ServiceNames
 
 /**
  * Kotlin names an rpc must not map to: they clash with the members of [Any].
@@ -45,38 +46,28 @@ private class RpcMessage(val kotlinType: ClassName, val serializer: CodeBlock, v
 internal class ServiceEmitter(
     private val model: ContractModel,
     private val visibility: GeneratedVisibility,
-    private val services: MutableMap<ServiceKey, Location>,
 ) {
     private val problems get() = model.problems
 
     /**
      * Emits [service]; file-private constants its descriptor uses are added to [constants].
      */
-    fun emit(service: Service, className: ClassName, majorVersion: Int?, constants: FileConstants): TypeSpec {
-        val resolved = ProtocolResolution.service(SurfOptions.service(service.options, service.location, problems), service.name)
-        val name = resolved.name
-        val global = resolved.global
-        for (problem in resolved.problems(service.type.toString())) problems.error(service.location, problem)
-        if (majorVersion != null) {
-            services.put(ServiceKey(global, name, majorVersion), service.location)?.let { previous ->
-                problems.error(
-                    service.location,
-                    "service ${service.type} resolves to the ${if (global) "global" else "prefixed"} name '$name' " +
-                            "of v$majorVersion, already used by the service at $previous",
-                )
-            }
-        }
+    fun emit(service: Service, className: ClassName, constants: FileConstants): TypeSpec {
+        val resolved = ProtocolResolution.service(
+            SurfOptions.service(service.options, service.location, problems),
+            service.type.toString(),
+        )
+        for (problem in resolved.problems(service.name)) problems.error(service.location, problem)
         if (service.rpcs.isEmpty()) problems.error(service.location, "service ${service.type} declares no rpcs")
         validateTypeScoping(service)
 
         val builder = TypeSpec.interfaceBuilder(className).applyVisibility(visibility)
 
-        val tokens = HashMap<String, Location>()
         val kotlinNames = HashMap<String, Location>()
         val descriptors = mutableListOf<CodeBlock>()
         var uncheckedCasts = false
         for (rpc in service.rpcs) {
-            val method = method(rpc, resolved, tokens, kotlinNames, constants) ?: continue
+            val method = method(rpc, resolved, kotlinNames, constants) ?: continue
             builder.addFunction(method.function)
             descriptors += method.descriptor
             uncheckedCasts = uncheckedCasts || method.uncheckedCasts
@@ -86,10 +77,7 @@ internal class ServiceEmitter(
         val initializer = CodeBlock.builder()
             .add("%T(\n", descriptorType)
             .indent()
-            .add("protoName = %S,\n", service.type.toString())
-            .add("name = %S,\n", name)
-            .add("global = %L,\n", global)
-            .add("majorVersion = %L,\n", majorVersion ?: 0)
+            .add("protoName = %S,\n", resolved.protoName)
             .addListArgument("methods", descriptors)
             .unindent()
             .add(")")
@@ -128,7 +116,6 @@ internal class ServiceEmitter(
     private fun method(
         rpc: Rpc,
         service: ResolvedService,
-        tokens: MutableMap<String, Location>,
         kotlinNames: MutableMap<String, Location>,
         constants: FileConstants,
     ): Method? {
@@ -136,17 +123,13 @@ internal class ServiceEmitter(
         val resolved = ProtocolResolution.method(
             SurfOptions.method(rpc.options, location, problems),
             service,
-            rpc.name,
             emptyResponse = rpc.responseType == ProtoType.EMPTY,
             streaming = rpc.requestStreaming || rpc.responseStreaming,
         )
+        ServiceNames.methodProblem(service.protoName, rpc.name)?.let { problems.error(location, it) }
         for (problem in resolved.problems(rpc.name)) problems.error(location, problem)
         if (resolved.streaming) return null
 
-        val token = resolved.name
-        tokens.put(token, location)?.let { previous ->
-            problems.error(location, "rpc ${rpc.name} resolves to the method name '$token', already used by the rpc at $previous")
-        }
         val kotlinName = KotlinNaming.lowerCamel(rpc.name)
         if (kotlinName in RESERVED_METHOD_NAMES) {
             problems.error(location, "rpc ${rpc.name} maps to the Kotlin function '$kotlinName', which clashes with a member of Any")
@@ -181,7 +164,6 @@ internal class ServiceEmitter(
             .add("%T<%T, %T>(\n", KotlinTypes.NATS_METHOD_DESCRIPTOR, request.kotlinType, resultType)
             .indent()
             .add("protoName = %S,\n", rpc.name)
-            .add("name = %S,\n", token)
             .add("kotlinName = %S,\n", kotlinName)
             .add("persistent = %L,\n", resolved.persistent)
             .add("callTimeoutSeconds = %L,\n", resolved.callTimeoutSeconds ?: "null")

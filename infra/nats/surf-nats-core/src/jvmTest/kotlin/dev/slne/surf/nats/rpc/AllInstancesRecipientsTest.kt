@@ -408,7 +408,7 @@ class AllInstancesRecipientsTest {
     @Test
     fun `presence subject only exists for services with ALL_INSTANCES answers`() = withClient { client ->
         assertEquals(
-            "${client.name}.\$presence.v1.finder",
+            "surf.presence.surf.nats.test.v1.FinderService",
             client.serviceDescriptor(FinderService::class.java).presenceSubject
         )
         assertNull(client.serviceDescriptor(CalcService::class.java).presenceSubject)

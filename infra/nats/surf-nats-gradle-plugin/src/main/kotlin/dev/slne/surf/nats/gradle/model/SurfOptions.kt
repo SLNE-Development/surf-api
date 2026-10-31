@@ -5,7 +5,6 @@ import com.squareup.wire.schema.Options
 import com.squareup.wire.schema.ProtoMember
 import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.gradle.validate.Problems
-import dev.slne.surf.nats.protocol.EventOptions
 import dev.slne.surf.nats.protocol.MethodOptions
 import dev.slne.surf.nats.protocol.ProtocolOptions
 import dev.slne.surf.nats.protocol.RecipientsOption
@@ -21,25 +20,26 @@ internal object SurfOptions {
     val METHOD: ProtoMember = ProtoMember.get(Options.METHOD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.METHOD))
     val NULLABLE: ProtoMember = ProtoMember.get(Options.FIELD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.NULLABLE))
 
-    private val EVENT_OPTIONS = ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.EVENT_OPTIONS))
     private val SERVICE_OPTIONS = ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.SERVICE_OPTIONS))
     private val METHOD_OPTIONS = ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.METHOD_OPTIONS))
     private val INT_MAX: BigInteger = BigInteger.valueOf(Int.MAX_VALUE.toLong())
 
     fun isSet(options: Options, member: ProtoMember): Boolean = options.get(member) != null
 
-    fun event(options: Options, location: Location, problems: Problems): EventOptions? {
-        val values = messageValue(options, EVENT) ?: return null
-        val reader = Reader(EVENT_OPTIONS, values, location, problems)
-        return EventOptions(reader.string(ProtocolOptions.SUBJECT), reader.boolean(ProtocolOptions.GLOBAL))
-    }
+    /**
+     * Returns whether the message opts in as an event with `(surf.nats.v1.event) = true`.
+     */
+    fun event(options: Options, location: Location, problems: Problems): Boolean = flag(options, EVENT, location, problems)
+
+    /**
+     * Returns [event] without reporting an invalid value, which counts as no event.
+     */
+    fun isEvent(options: Options): Boolean = options.get(EVENT)?.toString()?.toBooleanStrictOrNull() == true
 
     fun service(options: Options, location: Location, problems: Problems): ServiceOptions {
         val values = messageValue(options, SERVICE) ?: return ServiceOptions()
         val reader = Reader(SERVICE_OPTIONS, values, location, problems)
         return ServiceOptions(
-            name = reader.string(ProtocolOptions.NAME),
-            global = reader.boolean(ProtocolOptions.GLOBAL),
             callTimeoutSeconds = reader.timeoutSeconds(ProtocolOptions.CALL_TIMEOUT_SECONDS),
             recipients = reader.recipients(ProtocolOptions.RECIPIENTS),
             persistent = reader.boolean(ProtocolOptions.PERSISTENT),
@@ -50,16 +50,17 @@ internal object SurfOptions {
         val values = messageValue(options, METHOD) ?: return MethodOptions()
         val reader = Reader(METHOD_OPTIONS, values, location, problems)
         return MethodOptions(
-            name = reader.string(ProtocolOptions.NAME),
             persistent = reader.boolean(ProtocolOptions.PERSISTENT),
             callTimeoutSeconds = reader.timeoutSeconds(ProtocolOptions.CALL_TIMEOUT_SECONDS),
             recipients = reader.recipients(ProtocolOptions.RECIPIENTS),
         )
     }
 
-    fun nullable(options: Options, location: Location, problems: Problems): Boolean {
-        val value = options.get(NULLABLE) ?: return false
-        return parseBoolean(value, "(${ProtocolOptions.qualified(ProtocolOptions.NULLABLE)})", location, problems) ?: false
+    fun nullable(options: Options, location: Location, problems: Problems): Boolean = flag(options, NULLABLE, location, problems)
+
+    private fun flag(options: Options, member: ProtoMember, location: Location, problems: Problems): Boolean {
+        val value = options.get(member) ?: return false
+        return parseBoolean(value, "(${member.member})", location, problems) ?: false
     }
 
     private fun messageValue(options: Options, member: ProtoMember): Map<*, *>? {
@@ -83,8 +84,6 @@ internal object SurfOptions {
         private val problems: Problems,
     ) {
         private fun raw(field: String): Any? = values[ProtoMember.get(type, field)]
-
-        fun string(field: String): String? = raw(field)?.toString()
 
         fun boolean(field: String): Boolean? {
             val value = raw(field) ?: return null

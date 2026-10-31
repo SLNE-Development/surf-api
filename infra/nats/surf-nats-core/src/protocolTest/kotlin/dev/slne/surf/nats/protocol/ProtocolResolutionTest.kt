@@ -17,14 +17,6 @@ import kotlin.time.Duration.Companion.seconds
 class ProtocolResolutionTest {
 
     @Test
-    fun namesInheritKebabCaseWhenUnsetOrEmpty() {
-        assertEquals("player-health-changed", ProtocolResolution.name(null, "PlayerHealthChanged"))
-        assertEquals("find-server", ProtocolResolution.name("", "FindServer"))
-        assertEquals("punishment.created", ProtocolResolution.name("punishment.created", "PunishmentCreated"))
-        assertEquals("Custom", ProtocolResolution.name("Custom", "Other"))
-    }
-
-    @Test
     fun persistentResolvesMethodOverService() {
         assertFalse(ProtocolResolution.persistent(method = null, service = null))
         assertTrue(ProtocolResolution.persistent(method = null, service = true))
@@ -148,37 +140,15 @@ class ProtocolResolutionTest {
     }
 
     @Test
-    fun eventsResolveTheirSubject() {
-        val event = ProtocolResolution.event(EventOptions(), "PlayerHealthChanged")
-        assertEquals("player-health-changed", event.subject)
-        assertFalse(event.global)
-        assertEquals(emptyList(), event.problems("a.PlayerHealthChanged"))
-
-        val global = ProtocolResolution.event(EventOptions(subject = "roles.whitelisted", global = true), "X")
-        assertEquals("roles.whitelisted", global.subject)
-        assertTrue(global.global)
-
-        assertEquals(
-            listOf(
-                "event a.X has an invalid subject '\$rpc.x' (tokens must not be empty, contain '.', '*', '>' " +
-                        "or whitespace, or start with '\$')"
-            ),
-            ProtocolResolution.event(EventOptions(subject = "\$rpc.x"), "X").problems("a.X"),
-        )
-    }
-
-    @Test
     fun methodsResolveAgainstTheirService() {
         val service = ProtocolResolution.service(
             ServiceOptions(callTimeoutSeconds = 30, recipients = ALL_INSTANCES, persistent = true),
-            "PlayerStats",
+            "surf.punish.v1.PlayerStats",
         )
-        assertEquals("player-stats", service.name)
-        assertFalse(service.global)
-        assertEquals(emptyList(), service.problems("a.PlayerStats"))
+        assertEquals("surf.punish.v1.PlayerStats", service.protoName)
+        assertEquals(emptyList(), service.problems())
 
-        val inherited = ProtocolResolution.method(MethodOptions(), service, "FindPlayer", emptyResponse = false, streaming = false)
-        assertEquals("find-player", inherited.name)
+        val inherited = ProtocolResolution.method(MethodOptions(), service, emptyResponse = false, streaming = false)
         assertTrue(inherited.persistent)
         assertEquals(30, inherited.callTimeoutSeconds)
         assertEquals(30, inherited.effectiveCallTimeoutSeconds)
@@ -187,13 +157,11 @@ class ProtocolResolutionTest {
         assertEquals(listOf("rpc a.FindPlayer: persistent methods cannot address ALL_INSTANCES"), inherited.problems("a.FindPlayer"))
 
         val own = ProtocolResolution.method(
-            MethodOptions(name = "find", persistent = false, callTimeoutSeconds = 0, recipients = ANY_INSTANCE),
+            MethodOptions(persistent = false, callTimeoutSeconds = 0, recipients = ANY_INSTANCE),
             service,
-            "FindPlayer",
             emptyResponse = false,
             streaming = false,
         )
-        assertEquals("find", own.name)
         assertFalse(own.persistent)
         assertEquals(30, own.callTimeoutSeconds)
         assertEquals(ResultKindOption.VALUE, own.resultKind)
@@ -210,18 +178,15 @@ class ProtocolResolutionTest {
 
     @Test
     fun methodProblems() {
-        val core = ProtocolResolution.service(ServiceOptions(), "S")
+        val core = ProtocolResolution.service(ServiceOptions(), "a.v1.S")
         fun problems(options: MethodOptions, emptyResponse: Boolean = true, streaming: Boolean = false) =
-            ProtocolResolution.method(options, core, "A", emptyResponse, streaming).problems("A")
+            ProtocolResolution.method(options, core, emptyResponse, streaming).problems("A")
 
-        assertEquals(listOf("rpc A: streaming rpcs are not supported"), problems(MethodOptions(name = "a.b"), streaming = true))
         assertEquals(
-            listOf(
-                "rpc A resolves to the method name 'a.b', which is not a single subject token " +
-                        "(no '.', '*', '>', whitespace, no leading '\$')"
-            ),
-            problems(MethodOptions(name = "a.b")),
+            listOf("rpc A: streaming rpcs are not supported"),
+            problems(MethodOptions(persistent = true, recipients = ALL_INSTANCES), streaming = true),
         )
+        assertEquals(emptyList(), problems(MethodOptions()))
         assertEquals(emptyList(), problems(MethodOptions(persistent = true, callTimeoutSeconds = 120)))
         assertEquals(
             listOf("rpc A: the call timeout of a persistent fire method (121s) must not exceed the 120s duplicate window"),

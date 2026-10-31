@@ -9,7 +9,7 @@ import "surf/nats/v1/options.proto";
 
 // Served by every test paper server.
 service PaperTestService {
-  option (surf.nats.v1.service) = { name: "paper" recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  option (surf.nats.v1.service) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
 
   // Answer<FindPlayerResponse>: known from the server the player is online on, unknown otherwise.
   rpc FindPlayer(FindPlayerRequest) returns (FindPlayerResponse);

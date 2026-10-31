@@ -11,8 +11,6 @@ import "surf/nats/test/v1/common.proto";
 
 // Core ANY_INSTANCE service: primitives, unsigned, value classes, nullable results, Unit, timeouts, errors.
 service CalcService {
-  option (surf.nats.v1.service) = { name: "calc" };
-
   rpc Mixed(MixedRequest) returns (Text);
   // Nullable result: a HealthReply without health encodes to a 0-byte body.
   rpc Health(google.protobuf.Empty) returns (HealthReply);

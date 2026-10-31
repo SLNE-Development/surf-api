@@ -15,7 +15,7 @@ internal class MethodDescriptor(
     val generated: NatsMethodDescriptor<Any, *>,
     val method: Method, // interface method, JVM name mangled for value class parameters
     val index: Int,
-    val subject: String, // <prefix>.$rpc.v<N>.<service>.<method>
+    val subject: String, // surf.rpc|persist.<service>.<rpc>
     val timeout: Duration,
     val valueClasses: List<ValueClassParameter?>,
     val label: String, // <interface>.<kotlinName>

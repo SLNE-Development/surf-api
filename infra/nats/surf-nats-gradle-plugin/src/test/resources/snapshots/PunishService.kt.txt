@@ -195,13 +195,9 @@ public interface PunishService {
         public val NATS_DESCRIPTOR: NatsServiceDescriptor<PunishService> =
                 NatsServiceDescriptor<PunishService>(
                     protoName = "surf.demo.v1.PunishService",
-                    name = "punish",
-                    global = false,
-                    majorVersion = 1,
                     methods = listOf(
                         NatsMethodDescriptor<FindPunishmentsRequest, FindPunishmentsResponse>(
                             protoName = "FindPunishments",
-                            name = "find-punishments",
                             kotlinName = "findPunishments",
                             persistent = false,
                             callTimeoutSeconds = 10,
@@ -223,7 +219,6 @@ public interface PunishService {
                         ),
                         NatsMethodDescriptor<BroadcastRequest, Unit>(
                             protoName = "Broadcast",
-                            name = "broadcast",
                             kotlinName = "broadcast",
                             persistent = false,
                             callTimeoutSeconds = 10,
@@ -239,7 +234,6 @@ public interface PunishService {
                         ),
                         NatsMethodDescriptor<LookupRequest, Answer<LookupReply>>(
                             protoName = "Lookup",
-                            name = "lookup-player",
                             kotlinName = "lookup",
                             persistent = false,
                             callTimeoutSeconds = 10,
@@ -255,7 +249,6 @@ public interface PunishService {
                         ),
                         NatsMethodDescriptor<StoreRequest, Unit>(
                             protoName = "Store",
-                            name = "store",
                             kotlinName = "store",
                             persistent = true,
                             callTimeoutSeconds = 10,
@@ -274,7 +267,6 @@ public interface PunishService {
                         ),
                         NatsMethodDescriptor<Unit, Count>(
                             protoName = "Total",
-                            name = "total",
                             kotlinName = "total",
                             persistent = true,
                             callTimeoutSeconds = 300,
@@ -288,7 +280,6 @@ public interface PunishService {
                         ),
                         NatsMethodDescriptor<Ack, Text>(
                             protoName = "Ping",
-                            name = "ping",
                             kotlinName = "ping",
                             persistent = false,
                             callTimeoutSeconds = 10,

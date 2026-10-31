@@ -3,6 +3,12 @@ package dev.slne.surf.nats.protocol
 internal object ProtocolNaming {
 
     /**
+     * The rule of [isProtoName] for error messages.
+     */
+    const val PROTO_NAME_RULE =
+        "every name component must start with an ASCII letter and contain only ASCII letters, digits and '_'"
+
+    /**
      * Converts a declared name to kebab-case.
      *
      * Words split between an ASCII lowercase letter or digit and an ASCII uppercase letter, and before the last
@@ -18,31 +24,55 @@ internal object ProtocolNaming {
         }
     }.lowercase()
 
-    fun isValidToken(token: String): Boolean {
-        return token.isNotEmpty() &&
-                token.none { it == '.' || it == '*' || it == '>' || isSubjectWhitespace(it) }
-    }
+    /**
+     * Returns whether [name] is a proto full name: identifiers joined by single `.`, each starting with an ASCII
+     * letter and containing only ASCII letters, digits and `_`.
+     *
+     * Subjects and stream names embed such names unchanged; the leading letter keeps the stream name encoding of
+     * [ProtocolStreams] injective.
+     */
+    fun isProtoName(name: String): Boolean {
+        if (name.isEmpty()) return false
 
-    fun isReservedToken(token: String): Boolean = token.startsWith('$')
-
-    fun isValidNameToken(token: String): Boolean = isValidToken(token) && !isReservedToken(token)
-
-    fun isValidSubject(subject: String): Boolean = isValidSubject(subject, allowReserved = true)
-
-    fun isValidEventSubject(subject: String): Boolean =
-        isValidSubject(subject, allowReserved = false)
-
-    fun requireValidSubject(subject: String, source: Any): String {
-        require(isValidSubject(subject)) { "Invalid NATS subject '$subject' for $source" }
-        return subject
-    }
-
-    fun requireValidEventSubject(subject: String, source: Any): String {
-        requireValidSubject(subject, source)
-        require(!hasReservedToken(subject)) {
-            "Invalid event subject '$subject' for $source: tokens starting with '$' are reserved"
+        var atStart = true
+        for (char in name) {
+            if (char == '.') {
+                if (atStart) return false
+                atStart = true
+            } else {
+                val valid = isAsciiLetter(char) || !atStart && (isAsciiDigit(char) || char == '_')
+                if (!valid) return false
+                atStart = false
+            }
         }
-        return subject
+        return !atStart
+    }
+
+    /**
+     * Returns whether [name] is a single component of a proto full name ([isProtoName]), without `.`.
+     */
+    fun isProtoIdentifier(name: String): Boolean = '.' !in name && isProtoName(name)
+
+    /**
+     * Returns why [fullName] cannot name a [kind] declaration, or `null`.
+     *
+     * [fullName] must be a proto full name ([isProtoName]). [declaredName], when given, is the name the declaration
+     * itself declares and must not contain `.`: some parsers accept dotted declared names, which would add subject
+     * tokens and collide with other full names.
+     */
+    fun nameProblem(kind: String, fullName: String, declaredName: String? = null): String? = when {
+        declaredName != null && '.' in declaredName -> "$kind $fullName: the declared name '$declaredName' must not contain '.'"
+        !isProtoName(fullName) -> "$kind $fullName: $PROTO_NAME_RULE"
+        else -> null
+    }
+
+    /**
+     * Returns [name] when [nameProblem] reports nothing for it, else throws [IllegalArgumentException] with that
+     * problem.
+     */
+    fun requireProtoName(name: String, kind: String): String {
+        nameProblem(kind, name)?.let { throw IllegalArgumentException(it) }
+        return name
     }
 
     /**
@@ -68,8 +98,8 @@ internal object ProtocolNaming {
     /**
      * Returns the major version of a proto package that ends with `.v<N>`, or `null` without such a suffix.
      *
-     * `N` must be at least 1 and is written without leading zeros, so the package suffix and the version token of
-     * subjects and streams are identical.
+     * `N` must be at least 1 and is written without leading zeros, so each major version has exactly one package
+     * spelling in subjects and stream names.
      */
     fun majorVersionOrNull(protoPackage: String): Int? {
         val dot = protoPackage.lastIndexOf('.')
@@ -79,6 +109,16 @@ internal object ProtocolNaming {
         if (digits[0] == '0' || digits.any { !isAsciiDigit(it) }) return null
 
         return digits.toIntOrNull()
+    }
+
+    /**
+     * Returns why a file with the proto package [protoPackage] cannot declare events or services, or `null` when the
+     * package has a major version suffix ([majorVersionOrNull]).
+     */
+    fun contractPackageProblem(protoPackage: String): String? {
+        if (majorVersionOrNull(protoPackage) != null) return null
+        return "package '$protoPackage' declares events or services and must end with a major version '.v<N>' " +
+                "(N >= 1, no leading zeros)"
     }
 
     /**
@@ -97,61 +137,6 @@ internal object ProtocolNaming {
         return name
     }
 
-    /**
-     * Returns why [name] cannot be the resolved name of the service [label], or `null`.
-     *
-     * Service names are kebab-case; `dlq` and names ending in `-dlq` are reserved because their stream would collide
-     * with the dead-letter stream of another service.
-     */
-    fun serviceNameProblem(name: String, label: String): String? = when {
-        !isKebabName(name) -> "service $label resolves to the name '$name', which is not kebab-case " +
-                "([a-z0-9] words joined by '-'); set (surf.nats.v1.service).name"
-
-        name == "dlq" || name.endsWith("-dlq") ->
-            "service name '$name' is reserved: its stream would collide with the dead-letter stream of another service"
-
-        else -> null
-    }
-
-    private fun isValidSubject(
-        subject: String,
-        allowReserved: Boolean,
-    ): Boolean {
-        if (subject.isEmpty()) return false
-
-        var atTokenStart = true
-
-        for (char in subject) {
-            when {
-                char == '.' -> {
-                    if (atTokenStart) return false
-                    atTokenStart = true
-                }
-
-                char == '*' || char == '>' || isSubjectWhitespace(char) ->
-                    return false
-
-                !allowReserved && atTokenStart && char == '$' ->
-                    return false
-
-                else -> atTokenStart = false
-            }
-        }
-
-        return !atTokenStart
-    }
-
-    private fun hasReservedToken(subject: String): Boolean {
-        var atTokenStart = true
-
-        for (char in subject) {
-            if (atTokenStart && char == '$') return true
-            atTokenStart = char == '.'
-        }
-
-        return false
-    }
-
     @Suppress("RedundantIf")
     private fun isWordBoundary(name: String, index: Int): Boolean {
         val previous = name[index - 1]
@@ -168,17 +153,9 @@ internal object ProtocolNaming {
                 isAsciiLower(name[index + 1])
     }
 
-    // The whitespace set of java.util.regex `\s` without UNICODE_CHARACTER_CLASS.
-    private fun isSubjectWhitespace(char: Char): Boolean {
-        return char == ' ' ||
-                char == '\t' ||
-                char == '\n' ||
-                char == '\u000B' ||
-                char == '\u000C' ||
-                char == '\r'
-    }
-
     private fun isAsciiLower(char: Char): Boolean = char in 'a'..'z'
+
+    private fun isAsciiLetter(char: Char): Boolean = isAsciiLower(char) || isAsciiUpper(char)
 
     private fun isAsciiUpper(char: Char): Boolean = char in 'A'..'Z'
 

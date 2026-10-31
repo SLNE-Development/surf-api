@@ -9,14 +9,12 @@ import "surf/nats/v1/options.proto";
 
 // Major version 1 of a contract that surf/nats/test/v2/versioned.proto continues: both register in one client.
 service VersionedService {
-  option (surf.nats.v1.service) = { name: "versioned" };
-
   rpc Ping(VersionedPingRequest) returns (VersionedPingReply);
 }
 
 // Persistent twin of VersionedService: one stream per major version.
 service VersionedJournalService {
-  option (surf.nats.v1.service) = { name: "versioned-journal" persistent: true };
+  option (surf.nats.v1.service) = { persistent: true };
 
   rpc Record(VersionedPingRequest) returns (google.protobuf.Empty);
   rpc Append(VersionedPingRequest) returns (VersionedPingReply);
@@ -32,7 +30,7 @@ message VersionedPingReply {
 }
 
 message VersionedChanged {
-  option (surf.nats.v1.event) = { subject: "versioned.changed" };
+  option (surf.nats.v1.event) = true;
 
   optional string message = 1;
 }

@@ -27,19 +27,18 @@ declare function log(...values: unknown[]): void;
 
 export async function consume(): Promise<void> {
     const nats: SurfNatsClient = await connect({ name: "surf-panel", servers: ["nats://localhost:4222"], token: "t" });
-    const punish = nats.target("surf-punish");
 
-    await nats.publish(ChatMessageSchema, { text: "hi" }, { owner: "surf-punish" });
-    await punish.publish(PlayerJoinedSchema, create(PlayerJoinedSchema, { name: "Steve", id: { value: new Uint8Array(16) } }));
+    await nats.publish(ChatMessageSchema, { text: "hi" });
+    await nats.publish(PlayerJoinedSchema, create(PlayerJoinedSchema, { name: "Steve", id: { value: new Uint8Array(16) } }));
     const playerId: Uuid = uuidFromString("00112233-4455-6677-8899-aabbccddeeff");
     const helperId: UuidMessage = uuidFromString("00112233-4455-6677-8899-aabbccddeeff");
-    await punish.publish(PlayerJoinedSchema, { name: "Alex", id: playerId });
+    await nats.publish(PlayerJoinedSchema, { name: "Alex", id: playerId });
     const joinedMessage = create(PlayerJoinedSchema, { name: "Alex" });
     joinedMessage.id = helperId;
     const playerIdText: string = uuidToString(playerId) + uuidToString(helperId.value);
     await nats.publish(ServerStartedSchema, { server: "lobby-1" }, { timeoutMs: 1000 });
 
-    const registration: NatsRegistration = await punish.listen(
+    const registration: NatsRegistration = await nats.listen(
         PlayerJoinedSchema,
         (event, context: EventContext) => {
             const name: string = event.name;
@@ -52,26 +51,26 @@ export async function consume(): Promise<void> {
     registration.close();
 
     const joined: unknown[] = [];
-    await punish.listen(PlayerJoinedSchema, (event) => joined.push(event));
-    await punish.listen(PlayerJoinedSchema, async (event) => {
+    await nats.listen(PlayerJoinedSchema, (event) => joined.push(event));
+    await nats.listen(PlayerJoinedSchema, async (event) => {
         joined.push(event);
     });
-    await nats.target("surf-other").listen(ChatMessageSchema, (event) => Promise.resolve(event.text));
+    await nats.listen(ChatMessageSchema, (event) => Promise.resolve(event.text));
     await connect({ name: "surf-panel", servers: "nats://a:4222,nats://b:4222" });
 
-    const found: FindPlayerResponse = await punish.call(PlayerService.method.findPlayer, { name: "Steve" });
-    const kicked: void = await punish.call(PlayerService.method.kick, { name: "Steve" }, { timeoutMs: 2000 });
-    const located: Answer<LocateResponse> = await punish.callAnswer(PlayerService.method.locate, { name: "Steve" });
+    const found: FindPlayerResponse = await nats.call(PlayerService.method.findPlayer, { name: "Steve" });
+    const kicked: void = await nats.call(PlayerService.method.kick, { name: "Steve" }, { timeoutMs: 2000 });
+    const located: Answer<LocateResponse> = await nats.callAnswer(PlayerService.method.locate, { name: "Steve" });
     if (located.known) {
         const server: string = located.value.server;
         log(server);
     }
-    await nats.call(AuditService.method.record, { action: "ban" }, { owner: "surf-punish" });
-    const count: number = (await punish.call(AuditService.method.query, { action: "ban" })).count;
+    await nats.call(AuditService.method.record, { action: "ban" });
+    const count: number = (await nats.call(AuditService.method.query, { action: "ban" })).count;
     log(found.name, kicked, count, playerIdText);
 
     try {
-        await punish.call(PlayerService.method.findPlayer, {});
+        await nats.call(PlayerService.method.findPlayer, {});
     } catch (e) {
         if (e instanceof NatsRemoteError) log(e.type, e.remoteMessage);
         if (e instanceof NatsNoRespondersError) log(e.subject);
@@ -99,5 +98,9 @@ export async function rejected(nats: SurfNatsClient): Promise<void> {
     await connect({ name: "surf-panel", servers: [4222] });
     // @ts-expect-error a UUID is formatted from a Uuid message or its bytes
     uuidToString("00112233-4455-6677-8899-aabbccddeeff");
+    // @ts-expect-error contracts are addressed by their schema, not by an owning client
+    nats.target("surf-punish");
+    // @ts-expect-error the options name no owner
+    await nats.call(AuditService.method.record, { action: "ban" }, { owner: "surf-punish" });
     log(answer);
 }

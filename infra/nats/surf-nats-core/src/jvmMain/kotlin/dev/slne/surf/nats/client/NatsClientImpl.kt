@@ -40,18 +40,6 @@ internal class NatsClientImpl(
                 }
     )
 
-    private val eventDescriptors = object : ClassValue<EventDescriptor>() {
-        override fun computeValue(type: Class<*>): EventDescriptor {
-            return EventDescriptor.of(type, name)
-        }
-    }
-
-    private val serviceDescriptors = object : ClassValue<ServiceDescriptor>() {
-        override fun computeValue(type: Class<*>): ServiceDescriptor {
-            return ServiceDescriptor.of(type, name)
-        }
-    }
-
     private val serviceProxies = ConcurrentHashMap<Class<*>, Any>()
 
     private val services = ConcurrentHashMap<String, ServiceRegistration>()
@@ -119,12 +107,12 @@ internal class NatsClientImpl(
             "${implementation.javaClass.name} does not implement ${type.java.name}"
         }
         val descriptor = serviceDescriptor(type.java)
-        services[descriptor.registrationKey]?.let { existing ->
+        services[descriptor.name]?.let { existing ->
             error(alreadyRegistered(descriptor, existing))
         }
 
         val registration = ServiceRegistration(this, descriptor, implementation)
-        services.putIfAbsent(descriptor.registrationKey, registration)?.let { existing ->
+        services.putIfAbsent(descriptor.name, registration)?.let { existing ->
             registration.discard()
             error(alreadyRegistered(descriptor, existing))
         }
@@ -146,7 +134,7 @@ internal class NatsClientImpl(
         return if (existingType == type) {
             "$type is already registered on NatsClient[$name]"
         } else {
-            "Service '${descriptor.name}' v${descriptor.majorVersion} of $type is already registered on " +
+            "Service ${descriptor.name} of $type is already registered on " +
                     "NatsClient[$name] by $existingType"
         }
     }
@@ -176,15 +164,15 @@ internal class NatsClientImpl(
     override fun closeRegistration(registration: NatsRegistration) = registration.close()
 
     internal fun unregisterService(registration: ServiceRegistration) {
-        services.remove(registration.descriptor.registrationKey, registration)
+        services.remove(registration.descriptor.name, registration)
     }
 
     internal fun eventDescriptor(type: Class<*>): EventDescriptor {
-        return eventDescriptors.get(type)
+        return EVENT_DESCRIPTORS.get(type)
     }
 
     internal fun serviceDescriptor(type: Class<*>): ServiceDescriptor {
-        return serviceDescriptors.get(type)
+        return SERVICE_DESCRIPTORS.get(type)
     }
 
     internal fun replyDispatcher(): Dispatcher {
@@ -225,8 +213,16 @@ internal class NatsClientImpl(
     }
 
     internal suspend fun flush() {
-        withContext(Dispatchers.IO) {
-            NatsConnectionManager.connection().flush(5.seconds.toJavaDuration())
+        NatsConnectionManager.flush(5.seconds.toJavaDuration())
+    }
+
+    private companion object {
+        private val EVENT_DESCRIPTORS = object : ClassValue<EventDescriptor>() {
+            override fun computeValue(type: Class<*>): EventDescriptor = EventDescriptor.of(type)
+        }
+
+        private val SERVICE_DESCRIPTORS = object : ClassValue<ServiceDescriptor>() {
+            override fun computeValue(type: Class<*>): ServiceDescriptor = ServiceDescriptor.of(type)
         }
     }
 }

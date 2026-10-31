@@ -60,7 +60,7 @@ fun everything() = Everything(
 // never sees together, and for classes that are not generated events.
 
 /**
- * Uses the subject of the generated [Created] with another type.
+ * Uses the proto name, and therefore the subject, of the generated [Created] with another type.
  */
 @Serializable
 @SerialName("surf.nats.test.v1.CreatedImpostor")
@@ -69,64 +69,21 @@ data class CreatedImpostor(@ProtoNumber(1) val id: Long) : NatsEvent {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR = NatsEventDescriptor(
-            "surf.nats.test.v1.CreatedImpostor",
-            "created",
-            global = false,
-            majorVersion = 1,
-            serializer(),
-        )
+        val NATS_DESCRIPTOR = NatsEventDescriptor<CreatedImpostor>("surf.nats.test.v1.Created", serializer())
     }
 }
 
+/**
+ * Declares a proto name that is no proto full name.
+ */
 @Serializable
-@SerialName("surf.roles.v1.SingleTokenGlobal")
-data class SingleTokenGlobal(@ProtoNumber(1) val id: Long) : NatsEvent {
+@SerialName("surf.nats.test.v1.InvalidProtoNameEvent")
+data class InvalidProtoNameEvent(@ProtoNumber(1) val id: Long) : NatsEvent {
     override val natsDescriptor: NatsEventDescriptor<*> get() = NATS_DESCRIPTOR
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR = NatsEventDescriptor(
-            "surf.roles.v1.SingleTokenGlobal",
-            "roles",
-            global = true,
-            majorVersion = 1,
-            serializer(),
-        )
-    }
-}
-
-@Serializable
-@SerialName("surf.nats.test.v1.InvalidSubjectEvent")
-data class InvalidSubjectEvent(@ProtoNumber(1) val id: Long) : NatsEvent {
-    override val natsDescriptor: NatsEventDescriptor<*> get() = NATS_DESCRIPTOR
-
-    companion object {
-        @JvmField
-        val NATS_DESCRIPTOR = NatsEventDescriptor(
-            "surf.nats.test.v1.InvalidSubjectEvent",
-            "invalid subject",
-            global = false,
-            majorVersion = 1,
-            serializer(),
-        )
-    }
-}
-
-@Serializable
-@SerialName("surf.nats.test.v1.ReservedTokenEvent")
-data class ReservedTokenEvent(@ProtoNumber(1) val id: Long) : NatsEvent {
-    override val natsDescriptor: NatsEventDescriptor<*> get() = NATS_DESCRIPTOR
-
-    companion object {
-        @JvmField
-        val NATS_DESCRIPTOR = NatsEventDescriptor(
-            "surf.nats.test.v1.ReservedTokenEvent",
-            "panel.\$persist",
-            global = true,
-            majorVersion = 1,
-            serializer(),
-        )
+        val NATS_DESCRIPTOR = NatsEventDescriptor<InvalidProtoNameEvent>("surf.nats.test.v1.Invalid Name", serializer())
     }
 }
 

@@ -13,21 +13,15 @@ import kotlin.time.Duration
 // Service interfaces with hand-written descriptors. They stand in for contracts of other modules, which one generator
 // run never sees together, and for descriptors that do not match their interface.
 
-// One `rpc <Name>(google.protobuf.Empty) returns (Text)` per entry of rpcs
+// Service surf.nats.test.v1.<service> with one `rpc <Name>(google.protobuf.Empty) returns (Text)` per entry of rpcs
 fun <S : Any> textService(
-    name: String,
-    global: Boolean = false,
-    majorVersion: Int = 1,
+    service: String,
     rpcs: List<String> = listOf("ping"),
 ): NatsServiceDescriptor<S> = NatsServiceDescriptor(
-    protoName = "surf.nats.test.v$majorVersion.${name.replace("-", "")}",
-    name = name,
-    global = global,
-    majorVersion = majorVersion,
+    protoName = "surf.nats.test.v1.$service",
     methods = rpcs.map { rpc ->
         NatsMethodDescriptor<Unit, Text>(
             protoName = rpc.replaceFirstChar(Char::uppercaseChar),
-            name = rpc,
             kotlinName = rpc,
             persistent = false,
             callTimeoutSeconds = null,
@@ -47,7 +41,7 @@ interface ClashServiceA {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<ClashServiceA> = textService("name-clash")
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<ClashServiceA> = textService("NameClashService")
     }
 }
 
@@ -56,26 +50,16 @@ interface ClashServiceB {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<ClashServiceB> = textService("name-clash")
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<ClashServiceB> = textService("NameClashService")
     }
 }
 
-interface GlobalClashService {
+interface PingService {
     suspend fun ping(): Text
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<GlobalClashService> =
-            textService("name-clash-mixed", global = true)
-    }
-}
-
-interface PrefixedClashService {
-    suspend fun ping(): Text
-
-    companion object {
-        @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<PrefixedClashService> = textService("name-clash-mixed")
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<PingService> = textService("PingService")
     }
 }
 
@@ -86,7 +70,7 @@ interface MissingMethodService {
     companion object {
         @JvmField
         val NATS_DESCRIPTOR: NatsServiceDescriptor<MissingMethodService> =
-            textService("missing-method", rpcs = listOf("ping", "pong"))
+            textService("MissingMethodService", rpcs = listOf("ping", "pong"))
     }
 }
 
@@ -98,7 +82,7 @@ interface UndescribedMethodService {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<UndescribedMethodService> = textService("undescribed-method")
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<UndescribedMethodService> = textService("UndescribedMethodService")
     }
 }
 
@@ -109,7 +93,7 @@ interface DuplicateRpcService {
     companion object {
         @JvmField
         val NATS_DESCRIPTOR: NatsServiceDescriptor<DuplicateRpcService> =
-            textService("duplicate-rpc", rpcs = listOf("ping", "ping"))
+            textService("DuplicateRpcService", rpcs = listOf("ping", "ping"))
     }
 }
 
@@ -123,13 +107,9 @@ interface OverloadedService {
         @JvmField
         val NATS_DESCRIPTOR: NatsServiceDescriptor<OverloadedService> = NatsServiceDescriptor(
             protoName = "surf.nats.test.v1.OverloadedService",
-            name = "overloaded",
-            global = false,
-            majorVersion = 1,
             methods = listOf(
                 NatsMethodDescriptor<Unit, Text>(
                     protoName = "Find",
-                    name = "find",
                     kotlinName = "find",
                     persistent = false,
                     callTimeoutSeconds = null,
@@ -146,21 +126,17 @@ interface OverloadedService {
     }
 }
 
-// The method name token "pi ng" makes the composed method subject invalid
-interface InvalidSubjectService {
+// The rpc name "Pi ng" is no proto identifier
+interface InvalidRpcNameService {
     suspend fun ping(): Text
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<InvalidSubjectService> = NatsServiceDescriptor(
-            protoName = "surf.nats.test.v1.InvalidSubjectService",
-            name = "invalid-subject",
-            global = false,
-            majorVersion = 1,
-            methods = textService<InvalidSubjectService>("invalid-subject").methods.map { method ->
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<InvalidRpcNameService> = NatsServiceDescriptor(
+            protoName = "surf.nats.test.v1.InvalidRpcNameService",
+            methods = textService<InvalidRpcNameService>("InvalidRpcNameService").methods.map { method ->
                 NatsMethodDescriptor<Unit, Text>(
-                    protoName = method.protoName,
-                    name = "pi ng",
+                    protoName = "Pi ng",
                     kotlinName = method.kotlinName,
                     persistent = false,
                     callTimeoutSeconds = null,
@@ -181,7 +157,7 @@ interface InvalidSubjectService {
 interface EmptyService {
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<EmptyService> = textService("empty", rpcs = emptyList())
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<EmptyService> = textService("EmptyService", rpcs = emptyList())
     }
 }
 
@@ -193,13 +169,9 @@ interface MismatchedValueClassService {
         @JvmField
         val NATS_DESCRIPTOR: NatsServiceDescriptor<MismatchedValueClassService> = NatsServiceDescriptor(
             protoName = "surf.nats.test.v1.MismatchedValueClassService",
-            name = "mismatched-value-class",
-            global = false,
-            majorVersion = 1,
             methods = listOf(
                 NatsMethodDescriptor<Unit, Text>(
                     protoName = "Pause",
-                    name = "pause",
                     kotlinName = "pause",
                     persistent = false,
                     callTimeoutSeconds = null,

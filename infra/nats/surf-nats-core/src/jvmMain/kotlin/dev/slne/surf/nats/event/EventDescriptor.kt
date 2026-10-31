@@ -13,18 +13,21 @@ internal class EventDescriptor(
     val serializer: KSerializer<Any>,
 ) {
     companion object {
+        /**
+         * Reads the generated descriptor of [type] and derives its subject from the proto full name.
+         *
+         * Throws [IllegalArgumentException] when [type] is no generated event or its proto name is invalid.
+         */
         @Suppress("UNCHECKED_CAST")
-        fun of(type: Class<*>, clientName: String): EventDescriptor {
+        fun of(type: Class<*>): EventDescriptor {
             val generated = GeneratedDescriptors.event(type)
-            val subject = ProtocolSubjects.event(
-                if (generated.global) null else clientName,
-                generated.subject,
-                generated.majorVersion,
-            )
+            ProtocolNaming.nameProblem("event", generated.protoName)?.let { problem ->
+                throw IllegalArgumentException("Invalid NATS_DESCRIPTOR of ${type.name}: $problem")
+            }
 
             return EventDescriptor(
                 type,
-                ProtocolNaming.requireValidEventSubject(subject, type.name),
+                ProtocolSubjects.event(generated.protoName),
                 generated.serializer as KSerializer<Any>,
             )
         }

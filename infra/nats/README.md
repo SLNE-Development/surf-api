@@ -253,22 +253,21 @@ client.close()
 The client name identifies your application. It consists of lowercase letters and digits, separated by hyphens.
 All instances of an application use the same name. Within one JVM, the name must be unique.
 
-The name scopes events and services. By default, an event published by `profiles` reaches only instances whose
-client is named `profiles`, and a service registered by `profiles` can only be called by `profiles`. Mark an event
-or service as `global` to share it with other applications.
+The name is not part of any address: the contract alone decides where events and calls travel (see
+[Subjects](#subjects)). surf-nats uses the name to tell where a message came from (`Surf-Origin`), to name the
+connection, and to group `ANY_INSTANCE` listeners per application.
 
 `close()` closes every listener and service registration of the client. A closed client cannot be reused. After
 surf-nats restarts, create a new client.
 
 ## Events
 
-An event is a message with the `(surf.nats.v1.event)` option:
+An event is a message with the option `(surf.nats.v1.event) = true`:
 
 ```proto
 // surf/profiles/v1/name_changed.proto
 message NameChanged {
-  // subject is optional. Without it, surf-nats derives it from the message name: "name-changed".
-  option (surf.nats.v1.event) = { subject: "name-changed" };
+  option (surf.nats.v1.event) = true;
 
   optional string player_id = 1;
   optional string name = 2;
@@ -288,7 +287,7 @@ message, whose size the server limits with `max_payload` (1 MB by default). For 
 `IllegalArgumentException`.
 
 Only messages with the event option are events. Messages without it are ordinary types that events and services
-use.
+use. Every application that listens to an event receives it, whichever client published it.
 
 ### Listening
 
@@ -317,11 +316,11 @@ A listener method that throws does not affect other listener methods. surf-nats 
 
 ### Recipients
 
-By default, every instance of the client receives every event (`Recipients.ALL_INSTANCES`). This is the behavior of
+By default, every listening instance receives every event (`Recipients.ALL_INSTANCES`). This is the behavior of
 surf-redis.
 
-With `Recipients.ANY_INSTANCE`, each event goes to exactly one instance of the client. Use it to spread work across
-instances:
+With `Recipients.ANY_INSTANCE`, each event goes to exactly one instance per client name, so every application that
+listens still receives it once. Use it to spread work across the instances of your application:
 
 ```kotlin
 @NatsListener(recipients = Recipients.ANY_INSTANCE)
@@ -359,33 +358,17 @@ suspend fun onNameChanged(event: NameChanged) {
 `origin` has the form `<client name>@<instance id>`, where the instance id is a random id per JVM. It is `null` for
 events from publishers that do not set it.
 
-### Subjects and global events
+### Subjects
 
-NATS delivers each message by its subject, an address such as `profiles.v1.name-changed`. surf-nats builds the NATS
-subject of an event from the client name, the major version of the contract, and the `subject` option. The event
-`NameChanged` of package `surf.profiles.v1`, published by client `profiles`, therefore travels on
-`profiles.v1.name-changed`. Instances of client `profiles` subscribe to that NATS subject. Instances of client
-`lobby` subscribe to `lobby.v1.name-changed` and never see the event.
+NATS delivers each message by its subject. surf-nats builds the subject of an event from the root `surf`, the kind
+token `evt`, and the full name of the message in the contract, spelled as written there. The event `NameChanged` of
+package `surf.profiles.v1` travels on `surf.evt.surf.profiles.v1.NameChanged`, whichever client publishes it. Every
+application that listens to `NameChanged` subscribes to that subject: another plugin, a microservice, or an
+application outside surf-nats such as a web panel.
 
-Set `global: true` when other applications publish or receive the event: another plugin with a different client
-name, a microservice, or an application outside surf-nats such as a web panel. A global event travels on its
-`subject` without the client name, with the version after the first token:
-
-```proto
-message NameChanged {
-  option (surf.nats.v1.event) = { subject: "player.name-changed" global: true };
-
-  optional string player_id = 1;
-  optional string name = 2;
-}
-```
-
-This event travels on `player.v1.name-changed`. Do not start a global subject with a client name: `profiles.name-changed`
-as a global subject would mix with the events of client `profiles`. No token of a subject may start with `$`.
-
-The derived subject changes when you rename the message. For events that other applications use, set `subject`
-explicitly. Dots in the subject build a hierarchy that subscribers can match with wildcards, such as
-`player.v1.>`.
+Renaming the message or moving it to another package changes its subject (see [Names](#names)). The dots build a
+hierarchy that subscribers can match with wildcards, such as `surf.evt.surf.profiles.v1.>` for every event of one
+package.
 
 ## Services
 
@@ -395,8 +378,6 @@ message:
 ```proto
 // surf/profiles/v1/profile_service.proto
 service ProfileService {
-  option (surf.nats.v1.service) = { name: "profiles" };
-
   rpc FindName(FindNameRequest) returns (FindNameResponse);
   rpc Rename(RenameRequest) returns (RenameResponse);
 }
@@ -437,8 +418,11 @@ A request of type `google.protobuf.Empty` gives a method without parameters, and
 request message of your own, such as `message ListRequest {}`, also gives a method without parameters, and it can
 gain fields later.
 
-An instance registers an implementation, and other instances call it through a generated proxy. By default, both
-sides belong to the same application (see [Global services](#global-services) for calls between applications).
+An instance registers an implementation, and any instance of any application calls it through a generated proxy.
+A call to the `rpc` `FindName` travels on `surf.rpc.surf.profiles.v1.ProfileService.FindName`: the root `surf`, the
+kind token `rpc` (`persist` for [persistent methods](#persistent-methods)), the full name of the service, and the
+name of the `rpc`. All instances that register an implementation of a service share its calls, whichever client
+registered them.
 
 A call works like an event with a reply. The proxy publishes the call as a NATS message, an instance that listens
 for it runs the method, and the result travels back as another message. Like events, NATS does not store these
@@ -457,7 +441,7 @@ object ProfileServiceImpl : ProfileService {
 client.registerService<ProfileService>(ProfileServiceImpl)
 ```
 
-Call it from any instance of the same application:
+Call it from any instance, in this application or another one:
 
 ```kotlin
 val profiles = client.service<ProfileService>()
@@ -465,13 +449,6 @@ val name = profiles.findName(playerId = "alice").name
 ```
 
 `service()` returns the same proxy every time for a given interface, so you can fetch it once and keep it.
-
-### Global services
-
-Like events, services are scoped to the client name. Set `global: true` in the `(surf.nats.v1.service)` option to
-let other applications call the service or serve it. All implementations of a global service share its calls,
-whichever client registered them. Two different global services must therefore not share a name, or their calls
-would mix.
 
 ### What a call does
 
@@ -500,7 +477,7 @@ and in the `(surf.nats.v1.method)` option of an `rpc` to override them for that 
 
 ```proto
 service SettingsService {
-  option (surf.nats.v1.service) = { name: "settings" call_timeout_seconds: 10 };
+  option (surf.nats.v1.service) = { call_timeout_seconds: 10 };
 
   rpc SaveSettings(SaveSettingsRequest) returns (google.protobuf.Empty) {
     option (surf.nats.v1.method) = { persistent: true };
@@ -521,8 +498,6 @@ returns `Answer<T>`, and every instance answers with `Answer.Known(value)` or `A
 
 ```proto
 service PlayerService {
-  option (surf.nats.v1.service) = { name: "players" };
-
   rpc FindServer(FindServerRequest) returns (FindServerResponse) {
     option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
   }
@@ -610,16 +585,14 @@ A service method cannot return `null`. Use a response message with a `nullable` 
 
 ### Names
 
-The names on the wire come from the contract: the service name from the `name` option, each method name from the
-`name` option of the method, and each event subject from the `subject` option. Without these options, surf-nats
-derives the names in kebab case: `ProfileService` becomes `profile-service`, the `rpc` `FindName` becomes
-`find-name`, and the message `NameChanged` becomes `name-changed`. Service names must be kebab case, and `dlq` or
-names ending in `-dlq` are reserved.
+The names on the wire are the proto names from the contract: the full name of an event message, the full name of a
+service, and the name of each `rpc`, spelled exactly as written. `java_package` and the names of the generated
+Kotlin and TypeScript code play no part.
 
 Field names do not travel on the wire; field numbers do. Renaming Kotlin code changes nothing, because the Kotlin
-code is generated. Renaming a service, an `rpc`, or a message in the contract changes the derived names and breaks
-callers that still use the old ones. When a service or an event has callers outside your codebase, or callers that
-update at a different time, set the names explicitly.
+code is generated. Renaming a message, a service, or an `rpc` in the contract, or moving it to another package,
+gives it a new address: callers that still use the old name reach nobody, and the compatibility check reports the
+rename as a removal. Rename only in a new major version (see [Versioning](#versioning)).
 
 ## Versioning
 
@@ -632,9 +605,8 @@ registration. Within one major version, contracts must stay compatible:
 - Incompatible: changing the number, type, or label of a field, even between wire-compatible types such as `int32`
   and `int64`; a new non-null field without a `[default]`; changing `[default]` or `nullable`; removing or renaming
   a message, enum, enum value, service, or `rpc` without reserving it; changing the zero value of an enum; changing
-  the request or response type of an `rpc`; changing the event `subject` or `global`, the service `name` or
-  `global`, or the method `name`, `persistent`, or `recipients`; moving a type to another Kotlin package; removing a
-  reservation.
+  the request or response type of an `rpc`; removing `(surf.nats.v1.event) = true` from an event; changing
+  `persistent` or `recipients` of a method; moving a type to another Kotlin package; removing a reservation.
 
 For an incompatible change, create a new major version: a package `surf.profiles.v2` in `surf/profiles/v2/`, with
 `java_package` ending in `.v2`. Versions 1 and 2 have their own subjects, streams, and registrations, and one client
@@ -663,8 +635,6 @@ non-persistent, so that they fail fast when the service is down.
 
 ```proto
 service ProfileService {
-  option (surf.nats.v1.service) = { name: "profiles" };
-
   rpc Rename(RenameRequest) returns (google.protobuf.Empty) {
     option (surf.nats.v1.method) = { persistent: true };
   }
@@ -674,6 +644,13 @@ service ProfileService {
 
 To make all methods persistent except a few, set `persistent: true` in the service option and `persistent: false`
 in the method option of the exceptions.
+
+All instances of a service read its persistent calls through one shared consumer, which delivers calls of every
+persistent `rpc` of the service. An instance that does not know an `rpc`, such as one still running an older
+release, fails each call to it and the call is retried. A call without a result finally moves to the dead-letter
+stream (see [Calls without a result](#calls-without-a-result)). A call with a result expires when its timeout ends,
+unless the retries end first, and its caller fails with a timeout. Roll out a new persistent `rpc` to every instance
+that serves the service before any caller uses it.
 
 ### Calls without a result
 
@@ -771,20 +748,24 @@ calls, for up to `drain-timeout-seconds`. Running listener methods are not waite
 
 ### Streams and dead letters
 
-Each persistent service has a stream for its calls and a dead-letter stream for calls that failed for good. The
-stream is named `SURF_<CLIENT>_<SERVICE>_V<N>`, or `SURF__<SERVICE>_V<N>` for a global service, in upper case with
-hyphens replaced by underscores. `<N>` is the major version of the contract. The dead-letter stream appends `_DLQ`:
+Each persistent service has a stream for its calls and a dead-letter stream for calls that failed for good. Their
+names are `SURF_PERSIST_<service>` and `SURF_DLQ_<service>`, where `<service>` is the full name of the service with
+every `_` doubled and then every `.` replaced by `_`, in its original case:
 
-| Service                                           | Stream                         | Dead-letter stream                 |
-|---------------------------------------------------|--------------------------------|------------------------------------|
-| `profiles` of client `player-data`, version 1     | `SURF_PLAYER_DATA_PROFILES_V1` | `SURF_PLAYER_DATA_PROFILES_V1_DLQ` |
-| global `profiles`, version 1                      | `SURF__PROFILES_V1`            | `SURF__PROFILES_V1_DLQ`            |
+| Service                           | Stream                                          | Dead-letter stream                          |
+|-----------------------------------|-------------------------------------------------|---------------------------------------------|
+| `surf.profiles.v1.ProfileService` | `SURF_PERSIST_surf_profiles_v1_ProfileService`  | `SURF_DLQ_surf_profiles_v1_ProfileService`  |
+| `surf.player_data.v2.DataService` | `SURF_PERSIST_surf_player__data_v2_DataService` | `SURF_DLQ_surf_player__data_v2_DataService` |
+
+The stream stores the subjects `surf.persist.<service full name>.*`, the dead-letter stream the subject
+`surf.dlq.<service full name>`. All instances of the service share the durable consumer `responders` on the stream.
+A stream name may have at most 255 characters; the plugin rejects longer service names.
 
 Both streams keep messages for 7 days. surf-nats does not process the dead-letter stream. Inspect it with the
 `nats` CLI, fix the cause, and publish the calls to the service again:
 
 ```sh
-nats stream view SURF_PLAYER_DATA_PROFILES_V1_DLQ
+nats stream view SURF_DLQ_surf_profiles_v1_ProfileService
 ```
 
 [External callers](docs/external-callers.md#dead-letters) describes the headers of a dead letter and how to
@@ -800,23 +781,32 @@ publish the call again.
   original call.
 - If a stream is deleted, restart every instance that registers or calls the service. surf-nats does not recreate
   deleted streams or consumers while running.
-- A new major version, or a change of `global` on a service, uses a new stream. The old stream and its unprocessed
-  calls stay behind.
+- A new major version, or a renamed service, uses a new stream. The old stream and its unprocessed calls stay
+  behind.
 - Instances that share a consumer use the consumer settings of the instance that registered last. Keep versions
   aligned during rolling updates.
 - Repeated warnings about expired calls can point to clock skew between hosts (see [Deadlines](#deadlines)).
+
+### Upgrading from earlier snapshots
+
+Snapshots before the current address scheme put the client name into subjects and named their streams
+`SURF_<CLIENT>_<SERVICE>_V<N>`, `SURF__<SERVICE>_V<N>`, and the same with `_DLQ`. surf-nats neither reads nor
+migrates them. Process or drop the calls they still hold, then delete these streams and their durable consumers,
+for example with `nats stream rm <stream>`, which removes their durable consumers as well.
 
 ## External callers
 
 Applications outside the JVM, such as a web panel, can publish and receive events and call services. They read the
 contracts from the jar of the contract module (`META-INF/surf-nats/proto/`) and send Protocol Buffers messages with
-the header `Content-Type: application/protobuf`. A persistent method without a result fits commands that need no
-answer. Set the names explicitly (see [Names](#names)), and register a persistent service once before the external
-application publishes calls.
+the header `Content-Type: application/protobuf`. They need no client name of the application that serves a
+contract: the contract alone determines the subjects. A persistent method without a result fits commands that need
+no answer. Register a persistent service once before the external application publishes calls.
 
 For Node.js and TypeScript, `surf-nats-core` builds the client `@slne/surf-nats`, which works with
-[protobuf-es](https://github.com/bufbuild/protobuf-es) schemas. [External callers](docs/external-callers.md)
-describes that client and the wire format for other NATS clients: subjects, headers, replies, and dead letters.
+[protobuf-es](https://github.com/bufbuild/protobuf-es) schemas, and its protoc plugin `protoc-gen-surf-nats`, which
+generates a typed client per service next to the protobuf-es code. [External callers](docs/external-callers.md)
+describes both, with a `buf.gen.yaml` example, and the wire format for other NATS clients: subjects, headers,
+replies, and dead letters.
 
 ## Migrating from surf-redis and surf-rabbitmq
 
@@ -837,8 +827,8 @@ Points that behave differently:
   Mark methods with side effects `persistent: true`. Keep reads non-persistent.
 - **One `rpc` per request type.** Replace packets that switch on a type field with one `rpc` per type, each with its
   own response message.
-- **Event subjects come from the message name.** Renaming an event message changes its subject. Set `subject` for
-  events that other applications use.
+- **Subjects come from the contract.** An event travels on `surf.evt.<message full name>`, a call on
+  `surf.rpc.<service full name>.<rpc>`. Renaming a message, a service, or an `rpc` changes its subject.
 - **Commands that only some instances can handle become services.** A message such as "send this player a message",
   which only the server the player is on can carry out, belongs in an `rpc` with `ALL_INSTANCES`: a
   `google.protobuf.Empty` response to send it to every instance, or a response message to learn which instance

@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+// Rejected by protoc-gen-surf-nats; buf.gen.yaml excludes the package from protoc-gen-surf-nats.
+package surf.natsjs.invalid.v1;
+
+import "surf/natsjs/invalid/v1/reexport.proto";
+
+service IndirectService {
+  option (surf.nats.v1.service) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  rpc Get(ReexportRequest) returns (ReexportRequest);
+}

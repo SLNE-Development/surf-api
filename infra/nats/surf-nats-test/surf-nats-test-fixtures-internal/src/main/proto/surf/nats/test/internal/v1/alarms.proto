@@ -16,7 +16,7 @@ enum AlarmLevel {
 }
 
 message AlarmRaised {
-  option (surf.nats.v1.event) = {};
+  option (surf.nats.v1.event) = true;
 
   optional AlarmLevel level = 1;
   optional string message = 2 [(surf.nats.v1.nullable) = true];
@@ -28,8 +28,6 @@ message AlarmRaised {
 }
 
 service AlarmService {
-  option (surf.nats.v1.service) = { name: "alarms" };
-
   rpc Raise(RaiseRequest) returns (RaiseReply);
   rpc Clear(google.protobuf.Empty) returns (google.protobuf.Empty);
 }

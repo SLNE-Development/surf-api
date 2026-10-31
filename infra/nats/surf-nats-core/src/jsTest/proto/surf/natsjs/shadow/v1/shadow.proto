@@ -1,0 +1,20 @@
+syntax = "proto2";
+
+// Services and messages named like the identifiers of the generated client code.
+package surf.natsjs.shadow.v1;
+
+message Promise {
+  optional string value = 1;
+}
+
+service nats {
+  rpc Get(Promise) returns (Promise);
+}
+
+service request {
+  rpc Get(Promise) returns (Promise);
+}
+
+service options {
+  rpc Get(Promise) returns (Promise);
+}

@@ -14,45 +14,41 @@ import dev.slne.surf.nats.js.api.PublishOptions
 import dev.slne.surf.nats.js.client.NatsClientImpl
 import dev.slne.surf.nats.js.client.apiScope
 import dev.slne.surf.nats.js.event.NatsRegistration
+import dev.slne.surf.nats.js.interop.asDesc
 import dev.slne.surf.nats.js.interop.requireFromJs
-import dev.slne.surf.nats.protocol.ProtocolNaming
 import kotlinx.coroutines.promise
 import kotlin.js.Promise
 
 /**
  * A connected surf-nats client.
  *
- * Non-global contracts are addressed under the owning client's name: pass `owner` per call or use [target].
+ * Every operation addresses its contract through the proto full name of the schema.
  * `call` serves every method except `ALL_INSTANCES` methods with a result, which use `callAnswer`.
  */
 @JsExport
 class SurfNatsClient internal constructor(private val client: NatsClientImpl) {
-    private val operations = SurfNatsOperations(client, defaultOwner = null)
-
     val name: String get() = client.name
     val origin: String get() = client.origin
     val isClosed: Boolean get() = client.isClosed
 
-    fun target(owner: String): SurfNatsTarget {
-        return SurfNatsTarget(client, ProtocolNaming.requireClientName(requireFromJs(owner, "owner"), "owner"))
-    }
-
     fun publish(schema: MessageSchema, message: ProtoMessageInit?, options: PublishOptions? = null): Promise<Unit> {
-        return operations.publish(schema, message, options)
+        return apiScope.promise { client.publish(schema.asDesc(), message, options?.timeoutMs) }
     }
 
     fun listen(
         schema: MessageSchema,
         handler: (ProtoMessage, EventContext) -> Any?,
         options: ListenOptions? = null,
-    ): Promise<NatsRegistration> = operations.listen(schema, handler, options)
+    ): Promise<NatsRegistration> = apiScope.promise {
+        client.registerListener(schema.asDesc(), requireFromJs(handler, "handler"), options)
+    }
 
     fun call(method: MethodSchema, request: ProtoMessageInit?, options: CallOptions? = null): Promise<ProtoMessage?> {
-        return operations.call(method, request, options)
+        return apiScope.promise { client.call(method.asDesc(), request, options?.timeoutMs) }
     }
 
     fun callAnswer(method: MethodSchema, request: ProtoMessageInit?, options: CallOptions? = null): Promise<Answer> {
-        return operations.callAnswer(method, request, options)
+        return apiScope.promise { client.callAnswer(method.asDesc(), request, options?.timeoutMs) }
     }
 
     fun close(): Promise<Unit> = apiScope.promise { client.close() }

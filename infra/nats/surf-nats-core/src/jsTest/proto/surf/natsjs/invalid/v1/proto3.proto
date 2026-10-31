@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+// Rejected by protoc-gen-surf-nats; buf.gen.yaml excludes the package from protoc-gen-surf-nats.
+package surf.natsjs.invalid.v1;
+
+message Proto3Request {
+  string name = 1;
+}
+
+service Proto3Service {
+  rpc Get(Proto3Request) returns (Proto3Request);
+}

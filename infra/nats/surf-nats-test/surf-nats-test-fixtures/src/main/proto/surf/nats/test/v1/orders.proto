@@ -11,7 +11,7 @@ import "surf/nats/test/v1/common.proto";
 
 // Persistent by default; Ping opts out per method.
 service OrderService {
-  option (surf.nats.v1.service) = { name: "orders" persistent: true };
+  option (surf.nats.v1.service) = { persistent: true };
 
   // Persistent fire.
   rpc Place(PlaceRequest) returns (google.protobuf.Empty);

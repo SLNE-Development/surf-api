@@ -3,8 +3,6 @@ package dev.slne.surf.nats.interop
 import dev.slne.surf.nats.test.proto.v1.ColorHolder
 import dev.slne.surf.nats.test.proto.v1.InteropDefaults
 import dev.slne.surf.nats.test.proto.v1.InteropEmpty
-import dev.slne.surf.nats.test.proto.v1.InteropEvolved
-import dev.slne.surf.nats.test.proto.v1.InteropEvolvedV2
 import dev.slne.surf.nats.test.proto.v1.InteropMaps
 import dev.slne.surf.nats.test.proto.v1.InteropNullables
 import dev.slne.surf.nats.test.proto.v1.InteropOneof
@@ -34,8 +32,4 @@ internal class VectorProvider(private val book: VectorBook) : InteropVectorServi
     override suspend fun empty(name: String): InteropEmpty = book.serveTyped(name)
 
     override suspend fun oneof(name: String): InteropOneof = book.serveTyped(name)
-
-    override suspend fun evolved(name: String): InteropEvolved = book.serveTyped(name)
-
-    override suspend fun evolvedV2(name: String): InteropEvolvedV2 = book.serveTyped(name)
 }

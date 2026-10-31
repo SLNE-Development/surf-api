@@ -5,7 +5,9 @@ import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 import dev.slne.surf.nats.js.external.protobuf.reflect.reflect
 import dev.slne.surf.nats.js.interop.getOrPut
 import dev.slne.surf.nats.js.interop.messageOf
+import dev.slne.surf.nats.protocol.MethodOptions
 import dev.slne.surf.nats.protocol.ProtocolOptions
+import dev.slne.surf.nats.protocol.ServiceOptions
 import js.collections.WeakMap
 
 /**
@@ -18,22 +20,55 @@ internal object ProtocolOptionReader {
 
     private val extensionsByFile = WeakMap<DescFile, Map<String, DescExtension>>()
 
-    fun event(schema: DescMessage): OptionValues {
-        return read(schema, schema.file, ProtocolOptions.EVENT)
+    /**
+     * Returns whether [schema] opts in as a surf-nats event with `(surf.nats.v1.event) = true`.
+     */
+    fun isEvent(schema: DescMessage): Boolean = flag(schema, schema.file, ProtocolOptions.EVENT)
+
+    /**
+     * Returns the `(surf.nats.v1.service)` option of [service]; unset fields are `null`.
+     */
+    fun service(service: DescService): ServiceOptions {
+        val options = read(service, service.file, ProtocolOptions.SERVICE)
+        return ServiceOptions(
+            callTimeoutSeconds = options.int(ProtocolOptions.CALL_TIMEOUT_SECONDS),
+            recipients = options.recipients(),
+            persistent = options.boolean(ProtocolOptions.PERSISTENT),
+        )
     }
 
-    fun service(service: DescService): OptionValues {
-        return read(service, service.file, ProtocolOptions.SERVICE)
+    /**
+     * Returns the `(surf.nats.v1.method)` option of [method]; unset fields are `null`.
+     */
+    fun method(method: DescMethod): MethodOptions {
+        val options = read(method, method.parent.file, ProtocolOptions.METHOD)
+        return MethodOptions(
+            persistent = options.boolean(ProtocolOptions.PERSISTENT),
+            callTimeoutSeconds = options.int(ProtocolOptions.CALL_TIMEOUT_SECONDS),
+            recipients = options.recipients(),
+        )
     }
 
-    fun method(method: DescMethod): OptionValues {
-        return read(method, method.parent.file, ProtocolOptions.METHOD)
-    }
+    /**
+     * Returns `call_timeout_seconds` of the `(surf.nats.v1.service)` option of [service] without a range check, or
+     * `null` when unset.
+     */
+    fun serviceTimeoutSeconds(service: DescService): Double? =
+        read(service, service.file, ProtocolOptions.SERVICE).number(ProtocolOptions.CALL_TIMEOUT_SECONDS)
 
-    fun isNullable(field: DescField): Boolean {
-        val extension = findExtension(field.parent.file, ProtocolOptions.NULLABLE) ?: return false
+    /**
+     * Returns `call_timeout_seconds` of the `(surf.nats.v1.method)` option of [method] without a range check, or
+     * `null` when unset.
+     */
+    fun methodTimeoutSeconds(method: DescMethod): Double? =
+        read(method, method.parent.file, ProtocolOptions.METHOD).number(ProtocolOptions.CALL_TIMEOUT_SECONDS)
 
-        return hasOption(field, extension) && getOption(field, extension) == true
+    fun isNullable(field: DescField): Boolean = flag(field, field.parent.file, ProtocolOptions.NULLABLE)
+
+    private fun flag(element: AnyDesc, file: DescFile, option: String): Boolean {
+        val extension = findExtension(file, option) ?: return false
+
+        return hasOption(element, extension) && getOption(element, extension) == true
     }
 
     private fun read(element: AnyDesc, file: DescFile, option: String): OptionValues {

@@ -68,10 +68,10 @@ internal class NatsClientImpl(
     /**
      * Publishes the event and waits for the flush that confirms it; events are never offloaded.
      */
-    suspend fun publish(schema: DescMessage, event: ProtoMessageInit?, owner: String?, timeoutMs: Int?) {
+    suspend fun publish(schema: DescMessage, event: ProtoMessageInit?, timeoutMs: Int?) {
         checkOpen()
         val descriptor = EventDescriptor.of(schema)
-        val subject = descriptor.subject(owner)
+        val subject = descriptor.subject
         val timeout = positiveTimeoutOrNull(timeoutMs, "Timeout") ?: ProtocolDefaults.CORE_TIMEOUT_SECONDS.seconds
         val data = NatsCodec.encode(schema, event)
         val header = headers()
@@ -92,12 +92,11 @@ internal class NatsClientImpl(
     suspend fun registerListener(
         schema: DescMessage,
         handler: EventHandler,
-        owner: String?,
         options: ListenOptions?,
     ): NatsRegistration {
         lifecycle.requireAccepting()
         val descriptor = EventDescriptor.of(schema)
-        val subject = descriptor.subject(owner)
+        val subject = descriptor.subject
         val settings = ListenerSettings.of(options)
         require(settings.problem == null) {
             "${settings.problem} (listener for ${descriptor.typeName} on $subject)"
@@ -105,7 +104,6 @@ internal class NatsClientImpl(
 
         val listener = EventListener(
             descriptor,
-            subject,
             settings.queueGroup(name),
             settings.ignoreFromThisClient,
             handler,
@@ -129,27 +127,27 @@ internal class NatsClientImpl(
     /**
      * Calls every method except `ALL_INSTANCES` methods with a result; returns `undefined` for UNIT methods.
      */
-    suspend fun call(method: DescMethod, request: ProtoMessageInit?, owner: String?, timeoutMs: Int?): ProtoMessage? {
+    suspend fun call(method: DescMethod, request: ProtoMessageInit?, timeoutMs: Int?): ProtoMessage? {
         checkOpen()
         val descriptor = MethodDescriptor.of(method)
         require(descriptor.result != NatsResultKind.ANSWER) {
             "${descriptor.label} is an ALL_INSTANCES method with a result and returns an Answer: use callAnswer"
         }
 
-        return rpcCaller.call(descriptor, owner, request, timeoutMs).unsafeCast<ProtoMessage?>()
+        return rpcCaller.call(descriptor, request, timeoutMs).unsafeCast<ProtoMessage?>()
     }
 
     /**
      * Calls an `ALL_INSTANCES` method with a result.
      */
-    suspend fun callAnswer(method: DescMethod, request: ProtoMessageInit?, owner: String?, timeoutMs: Int?): Answer {
+    suspend fun callAnswer(method: DescMethod, request: ProtoMessageInit?, timeoutMs: Int?): Answer {
         checkOpen()
         val descriptor = MethodDescriptor.of(method)
         require(descriptor.result == NatsResultKind.ANSWER) {
             "${descriptor.label} is not an ALL_INSTANCES method with a result: use call"
         }
 
-        return rpcCaller.call(descriptor, owner, request, timeoutMs).unsafeCast<Answer>()
+        return rpcCaller.call(descriptor, request, timeoutMs).unsafeCast<Answer>()
     }
 
     override fun closeRegistration(registration: NatsRegistration) = registration.close()

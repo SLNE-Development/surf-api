@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+// Rejected by protoc-gen-surf-nats; buf.gen.yaml excludes the package from protoc-gen-surf-nats.
+package surf.natsjs.invalid.v1;
+
+import "surf/nats/v1/options.proto";
+
+message NameRequest {
+  optional string name = 1;
+}
+
+service NamesService {
+  rpc _Find(NameRequest) returns (NameRequest);
+  rpc Spread(NameRequest) returns (NameRequest) {
+    option (surf.nats.v1.method) = { persistent: true, recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  }
+}

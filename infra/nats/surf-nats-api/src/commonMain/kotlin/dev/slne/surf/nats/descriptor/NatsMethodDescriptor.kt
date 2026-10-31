@@ -4,9 +4,13 @@ import dev.slne.surf.nats.NatsGeneratedApi
 import dev.slne.surf.nats.rpc.Recipients
 import kotlinx.serialization.KSerializer
 
+/**
+ * Describes one rpc of a generated service interface.
+ *
+ * [protoName] is the rpc name as declared in the `.proto` and the last token of the method subject.
+ */
 public class NatsMethodDescriptor<Req : Any, Res> @NatsGeneratedApi constructor(
     public val protoName: String,
-    public val name: String,
     public val kotlinName: String,
     public val persistent: Boolean,
     public val callTimeoutSeconds: Int?,

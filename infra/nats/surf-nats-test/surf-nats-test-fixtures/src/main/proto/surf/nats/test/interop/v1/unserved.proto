@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package surf.nats.test.interop.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.interop.v1";
+
+import "google/protobuf/empty.proto";
+
+// Registered by no client of the JVM <-> JS interop test: calls end with no responders.
+service UnservedService {
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+}

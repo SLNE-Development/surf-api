@@ -3,13 +3,12 @@ package dev.slne.surf.nats.gradle.generator
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.wire.schema.EnumType
 import com.squareup.wire.schema.Location
 import com.squareup.wire.schema.ProtoFile
 import com.squareup.wire.schema.Type
-import dev.slne.surf.nats.gradle.codegen.EventKey
 import dev.slne.surf.nats.gradle.codegen.FileConstants
 import dev.slne.surf.nats.gradle.codegen.ServiceEmitter
-import dev.slne.surf.nats.gradle.codegen.ServiceKey
 import dev.slne.surf.nats.gradle.codegen.TypeEmitter
 import dev.slne.surf.nats.gradle.model.ContractModel
 import dev.slne.surf.nats.gradle.model.KotlinNaming
@@ -48,10 +47,8 @@ class SurfNatsGenerator {
         val facts = loaded.sourceFiles.map(rules::check)
         register(facts, model, problems)
 
-        val events = HashMap<EventKey, Location>()
-        val services = HashMap<ServiceKey, Location>()
-        val typeEmitter = TypeEmitter(model, input.visibility, events)
-        val serviceEmitter = ServiceEmitter(model, input.visibility, services)
+        val typeEmitter = TypeEmitter(model, input.visibility)
+        val serviceEmitter = ServiceEmitter(model, input.visibility)
         val files = facts.mapNotNull { fileSpec(it, typeEmitter, serviceEmitter) }
         problems.throwIfAny()
 
@@ -91,6 +88,8 @@ class SurfNatsGenerator {
     private fun register(facts: List<FileFacts>, model: ContractModel, problems: Problems) {
         val classes = HashMap<String, Location>()
         val files = HashMap<String, Location>()
+        // wire links a full name declared in two files, protoc and buf reject it
+        val fullNames = HashMap<String, Location>()
 
         fun claim(className: ClassName, location: Location) {
             classes.put(className.canonicalName, location)?.let { previous ->
@@ -98,7 +97,14 @@ class SurfNatsGenerator {
             }
         }
 
+        fun declare(kind: String, fullName: String, location: Location) {
+            fullNames.put(fullName, location)?.let { previous ->
+                problems.error(location, "$kind $fullName: the full name is already declared at $previous")
+            }
+        }
+
         fun registerType(type: Type, className: ClassName) {
+            declare(if (type is EnumType) "enum" else "message", type.type.toString(), type.location)
             if (model.isMapped(type.type)) return
             model.register(type.type, className)
             claim(className, type.location)
@@ -114,18 +120,21 @@ class SurfNatsGenerator {
                 )
             }
             for (type in fact.file.types) registerType(type, ClassName(fact.kotlinPackage, type.type.simpleName))
-            for (service in fact.file.services) claim(ClassName(fact.kotlinPackage, service.name), service.location)
+            for (service in fact.file.services) {
+                declare("service", service.type.toString(), service.location)
+                claim(ClassName(fact.kotlinPackage, service.name), service.location)
+            }
         }
     }
 
     private fun fileSpec(facts: FileFacts, typeEmitter: TypeEmitter, serviceEmitter: ServiceEmitter): FileSpec? {
         val file = facts.file
         val types = file.types.mapNotNull { type ->
-            typeEmitter.emit(type, ClassName(facts.kotlinPackage, type.type.simpleName), facts.majorVersion)
+            typeEmitter.emit(type, ClassName(facts.kotlinPackage, type.type.simpleName))
         }
         val constants = FileConstants()
         val services = file.services.map { service ->
-            serviceEmitter.emit(service, ClassName(facts.kotlinPackage, service.name), facts.majorVersion, constants)
+            serviceEmitter.emit(service, ClassName(facts.kotlinPackage, service.name), constants)
         }
         if (types.isEmpty() && services.isEmpty()) return null
 

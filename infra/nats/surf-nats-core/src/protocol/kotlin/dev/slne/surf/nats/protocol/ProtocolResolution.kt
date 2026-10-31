@@ -26,29 +26,24 @@ internal enum class RecipientsOption(val number: Int, val protoName: String) {
 /**
  * Inheritance of contract options: method over service over default.
  *
- * An unset option (`null`), an empty name, a timeout of `0` and [RecipientsOption.UNSPECIFIED]
- * inherit. A `false` that is set on a method overrides `persistent = true` on its service.
+ * An unset option (`null`), a timeout of `0` and [RecipientsOption.UNSPECIFIED] inherit. A `false` that is set on a
+ * method overrides `persistent = true` on its service.
  */
 internal object ProtocolResolution {
 
-    fun event(options: EventOptions, declaredName: String): ResolvedEvent {
-        return ResolvedEvent(name(options.subject, declaredName), options.global ?: false)
-    }
-
-    fun service(options: ServiceOptions, declaredName: String): ResolvedService {
-        return ResolvedService(name(options.name, declaredName), options.global ?: false, options)
-    }
+    /**
+     * Resolves the service with the proto full name [protoName].
+     */
+    fun service(options: ServiceOptions, protoName: String): ResolvedService = ResolvedService(protoName, options)
 
     fun method(
         options: MethodOptions,
         service: ResolvedService,
-        declaredName: String,
         emptyResponse: Boolean,
         streaming: Boolean,
     ): ResolvedMethod {
         val recipients = recipients(options.recipients, service.options.recipients)
         return ResolvedMethod(
-            name = name(options.name, declaredName),
             persistent = persistent(options.persistent, service.options.persistent),
             callTimeoutSeconds = callTimeoutSeconds(
                 options.callTimeoutSeconds,
@@ -58,10 +53,6 @@ internal object ProtocolResolution {
             resultKind = ResultKindOption.of(emptyResponse, recipients),
             streaming = streaming,
         )
-    }
-
-    fun name(explicit: String?, declaredName: String): String {
-        return if (explicit.isNullOrEmpty()) ProtocolNaming.kebabCase(declaredName) else explicit
     }
 
     fun persistent(method: Boolean?, service: Boolean?): Boolean = method ?: service ?: false

@@ -8,4 +8,5 @@ import kotlin.js.Promise
 internal external interface StreamApi {
     fun add(cfg: StreamConfig): Promise<StreamInfo>
     fun info(stream: String): Promise<StreamInfo>
+    fun delete(stream: String): Promise<Boolean>
 }

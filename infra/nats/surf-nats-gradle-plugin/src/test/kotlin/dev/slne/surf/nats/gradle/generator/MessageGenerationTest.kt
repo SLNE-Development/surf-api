@@ -532,7 +532,7 @@ class MessageGenerationTest {
             import "google/protobuf/empty.proto";
             enum Color { COLOR_UNSPECIFIED = 0; COLOR_RED = 1; }
             message Event {
-              option (surf.nats.v1.event) = {};
+              option (surf.nats.v1.event) = true;
               optional bytes data = 1;
               oneof choice { string a = 2; int32 b = 3; }
               message Nested { optional int32 x = 1; }

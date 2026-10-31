@@ -7,6 +7,5 @@ import kotlinx.js.JsPlainObject
 @JsExport
 @JsPlainObject
 external interface PublishOptions {
-    val owner: String?
     val timeoutMs: Int?
 }

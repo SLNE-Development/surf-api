@@ -9,5 +9,5 @@
     "skipLibCheck": false,
     "types": []
   },
-  "include": ["consumer.ts", "compat.ts"]
+  "include": ["consumer.ts", "compat.ts", "clients.ts", "gen/**/*_nats.d.ts", "golden-ts/**/*.ts"]
 }

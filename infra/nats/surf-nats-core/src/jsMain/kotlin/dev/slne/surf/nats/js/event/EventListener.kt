@@ -5,7 +5,6 @@ package dev.slne.surf.nats.js.event
  */
 internal class EventListener(
     val descriptor: EventDescriptor,
-    val subject: String,
     val queueGroup: String?,
     val ignoreFromThisClient: Boolean,
     val handler: EventHandler,

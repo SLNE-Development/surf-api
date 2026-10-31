@@ -30,9 +30,10 @@ import java.io.File
  * Compares the current `.proto` sources with a published baseline.
  *
  * Elements match by fully qualified proto name, so a new major package (`.v2`) is never compared with an older one,
- * while a removed package reports every one of its elements as removed. Options are compared in their resolved form
- * (method over service over default), the call timeout is not compared. Beyond the wire rules, a changed Kotlin
- * package of a file and a dropped reservation are incompatible.
+ * while a removed package reports every one of its elements as removed. Subjects and streams derive from these names,
+ * so a rename is a removal. Method options are compared in their resolved form (method over service over default),
+ * the call timeout is not compared. Beyond the wire rules, a changed Kotlin package of a file, a dropped reservation
+ * and a dropped event opt-in are incompatible.
  */
 object CompatibilityChecker {
 
@@ -285,16 +286,10 @@ private class Comparison(currentFiles: List<ProtoFile>) {
 
     private fun compareEvent(baseline: MessageType, current: MessageType) {
         val name = baseline.type.toString()
-        val optionsBefore = SurfOptions.event(baseline.options, baseline.location, ignoredProblems) ?: return
-        val optionsAfter = SurfOptions.event(current.options, current.location, ignoredProblems)
-        if (optionsAfter == null) {
-            changed(current.location, name, "is no longer an event: (surf.nats.v1.event) was removed")
-            return
+        if (!SurfOptions.event(baseline.options, baseline.location, ignoredProblems)) return
+        if (!SurfOptions.event(current.options, current.location, ignoredProblems)) {
+            changed(current.location, name, "is no longer an event: (surf.nats.v1.event) = true was removed")
         }
-        val before = ProtocolResolution.event(optionsBefore, baseline.name)
-        val after = ProtocolResolution.event(optionsAfter, current.name)
-        diff(current.location, name, "event subject", before.subject, after.subject, quoted = true)
-        diff(current.location, name, "event global", before.global, after.global)
     }
 
     private fun compareEnum(baseline: EnumType, current: EnumType) {
@@ -330,10 +325,8 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             removed(baseline.location, name, "service $name was removed or renamed")
             return
         }
-        val serviceBefore = ProtocolResolution.service(SurfOptions.service(baseline.options, baseline.location, ignoredProblems), baseline.name)
-        val serviceAfter = ProtocolResolution.service(SurfOptions.service(current.options, current.location, ignoredProblems), current.name)
-        diff(current.location, name, "service name", serviceBefore.name, serviceAfter.name, quoted = true)
-        diff(current.location, name, "service global", serviceBefore.global, serviceAfter.global)
+        val serviceBefore = ProtocolResolution.service(SurfOptions.service(baseline.options, baseline.location, ignoredProblems), name)
+        val serviceAfter = ProtocolResolution.service(SurfOptions.service(current.options, current.location, ignoredProblems), name)
 
         for (before in baseline.rpcs) {
             val element = "$name.${before.name}"
@@ -346,7 +339,6 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             diff(after.location, element, "response type", before.responseType.toString(), after.responseType.toString())
             val methodBefore = resolve(before, serviceBefore)
             val methodAfter = resolve(after, serviceAfter)
-            diff(after.location, element, "method name", methodBefore.name, methodAfter.name, quoted = true)
             diff(after.location, element, "persistent", methodBefore.persistent, methodAfter.persistent)
             diff(after.location, element, "recipients", methodBefore.recipients, methodAfter.recipients)
         }
@@ -356,7 +348,6 @@ private class Comparison(currentFiles: List<ProtoFile>) {
         return ProtocolResolution.method(
             SurfOptions.method(rpc.options, rpc.location, ignoredProblems),
             service,
-            rpc.name,
             emptyResponse = rpc.responseType == ProtoType.EMPTY,
             streaming = rpc.requestStreaming || rpc.responseStreaming,
         )
@@ -411,12 +402,11 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     private fun kind(type: Type): String = if (type is EnumType) "enum" else "message"
 
     /**
-     * Reports `<what> changed from <before> to <after>` when the values differ; [quoted] wraps both values in `'`.
+     * Reports `<what> changed from <before> to <after>` when the values differ.
      */
-    private fun <T> diff(location: Location, element: String, what: String, before: T, after: T, quoted: Boolean = false) {
+    private fun <T> diff(location: Location, element: String, what: String, before: T, after: T) {
         if (before == after) return
-        val quote = if (quoted) "'" else ""
-        changed(location, element, "$what changed from $quote$before$quote to $quote$after$quote")
+        changed(location, element, "$what changed from $before to $after")
     }
 
     private fun changed(location: Location, element: String, message: String) {

@@ -4,12 +4,14 @@
 // script compares it with `expect` and its own re-encoding with the Kotlin bytes. Then the script sends the decoded
 // message and its own message (`send`, default `expect`) back through InteropService: the JVM compares what Kotlin
 // decodes with its expectation and replies with it, and the script compares the reply with `expectEcho` (default
-// `expect`). `raw` vectors come from RawVectorResponder; `reject` vectors must fail on the JS side. `unknownFields`
-// lists the field numbers the decoded message keeps as unknown fields (a newer sender's fields).
+// `expect`). `raw` vectors come from RawVectorService (RawVectorResponder); `reject` vectors must fail on the JS side.
+// `unknownFields` lists the field numbers the decoded message keeps as unknown fields (a newer sender's fields).
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { create, isFieldSet, toBinary } from "@bufbuild/protobuf";
+import { createRawVectorServiceClient } from "./gen/surf/nats/test/interop/v1/raw_vectors_nats.js";
 import { Color, ColorHolderSchema } from "./gen/surf/nats/test/v1/colors_pb.js";
+import { createInteropServiceClient, createInteropVectorServiceClient } from "./gen/surf/nats/test/v1/interop_nats.js";
 import {
     InteropDefaultsSchema,
     InteropEmptySchema,
@@ -21,25 +23,25 @@ import {
     InteropPackedSchema,
     InteropRequiredSchema,
     InteropScalarsSchema,
-    InteropService,
     InteropTypesSchema,
-    InteropVectorService,
 } from "./gen/surf/nats/test/v1/interop_pb.js";
 import { assertMessage, hex, UUID_BYTES, vectorPassed } from "./support.mjs";
 
+// Per kind: the schema, the method that fetches the vector (on InteropVectorService, or RawVectorService for `raw`
+// vectors) and the InteropService method that echoes it.
 const KINDS = {
-    scalars: [InteropScalarsSchema, InteropVectorService.method.scalars, InteropService.method.echoScalars],
-    maps: [InteropMapsSchema, InteropVectorService.method.maps, InteropService.method.echoMaps],
-    packed: [InteropPackedSchema, InteropVectorService.method.packed, InteropService.method.echoPacked],
-    colors: [ColorHolderSchema, InteropVectorService.method.colors, InteropService.method.echoColors],
-    nullables: [InteropNullablesSchema, InteropVectorService.method.nullables, InteropService.method.echoNullables],
-    defaults: [InteropDefaultsSchema, InteropVectorService.method.defaults, InteropService.method.echoDefaults],
-    required: [InteropRequiredSchema, InteropVectorService.method.required, InteropService.method.echoRequired],
-    types: [InteropTypesSchema, InteropVectorService.method.types, InteropService.method.echoTypes],
-    empty: [InteropEmptySchema, InteropVectorService.method.empty, InteropService.method.echoEmpty],
-    oneof: [InteropOneofSchema, InteropVectorService.method.oneof, InteropService.method.echoOneof],
-    evolved: [InteropEvolvedSchema, InteropVectorService.method.evolved, InteropService.method.echoEvolved],
-    evolvedV2: [InteropEvolvedV2Schema, InteropVectorService.method.evolvedV2, InteropService.method.echoEvolvedV2],
+    scalars: [InteropScalarsSchema, "scalars", "echoScalars"],
+    maps: [InteropMapsSchema, "maps", "echoMaps"],
+    packed: [InteropPackedSchema, "packed", "echoPacked"],
+    colors: [ColorHolderSchema, "colors", "echoColors"],
+    nullables: [InteropNullablesSchema, "nullables", "echoNullables"],
+    defaults: [InteropDefaultsSchema, "defaults", "echoDefaults"],
+    required: [InteropRequiredSchema, "required", "echoRequired"],
+    types: [InteropTypesSchema, "types", "echoTypes"],
+    empty: [InteropEmptySchema, "empty", "echoEmpty"],
+    oneof: [InteropOneofSchema, "oneof", "echoOneof"],
+    evolved: [InteropEvolvedSchema, "evolved", "echoEvolved"],
+    evolvedV2: [InteropEvolvedV2Schema, "evolvedV2", "echoEvolvedV2"],
 };
 
 const ZERO_SCALARS = {
@@ -219,12 +221,9 @@ const VECTORS = [
         name: "required",
         kind: "required",
         expect: { name: "steve" },
-        check: async (_, { nats, owner }) => {
+        check: async (_, { echoes }) => {
             // A non-null field omitted by the TS sender fails the local validation, nothing is sent
-            await assert.rejects(
-                async () => nats.call(InteropService.method.echoRequired, { count: 1 }, { owner }),
-                /required field 'name' is not set/,
-            );
+            await assert.rejects(async () => echoes.echoRequired({ count: 1 }), /required field 'name' is not set/);
         },
     },
     { name: "required-empty", kind: "required", expect: { name: "", count: 0 } },
@@ -295,12 +294,12 @@ const VECTORS = [
     },
 ];
 
-async function runVector(nats, context, kotlinHex, vector) {
+async function runVector(clients, kotlinHex, vector) {
     const [schema, fetch, echo] = KINDS[vector.kind];
     const label = `vector ${vector.name}`;
-    const owner = context.owner;
-    const fetchOwner = vector.raw ? context.rawOwner : owner;
-    const fetched = async () => nats.call(fetch, { name: vector.name }, { owner: fetchOwner });
+    const source = vector.raw ? clients.raw : clients.vectors;
+    assert.ok(source[fetch], `${label}: ${vector.raw ? "RawVectorService" : "InteropVectorService"} has no ${fetch}`);
+    const fetched = async () => source[fetch]({ name: vector.name });
 
     if (vector.reject) {
         await assert.rejects(fetched, vector.reject, `${label}: the reply must be rejected`);
@@ -317,18 +316,24 @@ async function runVector(nats, context, kotlinHex, vector) {
     if (vector.sameBytes !== false) {
         assert.equal(hex(toBinary(schema, decoded)), kotlinHex[vector.name], `${label}: JS re-encoding of the Kotlin bytes`);
     }
-    await vector.check?.(decoded, { nats, owner });
+    await vector.check?.(decoded, clients);
 
     const expectEcho = vector.expectEcho ?? vector.expect;
-    assertMessage(schema, await nats.call(echo, decoded, { owner }), expectEcho, `${label}: echo of the decoded message`);
+    const echoes = clients.echoes;
+    assertMessage(schema, await echoes[echo](decoded), expectEcho, `${label}: echo of the decoded message`);
     const sent = vector.send ?? vector.expect;
-    assertMessage(schema, await nats.call(echo, sent, { owner }), expectEcho, `${label}: echo of the JS message`);
+    assertMessage(schema, await echoes[echo](sent), expectEcho, `${label}: echo of the JS message`);
 }
 
 export async function runVectors(nats, context) {
     const kotlinHex = JSON.parse(readFileSync(context.vectorsFile, "utf8"));
+    const clients = {
+        vectors: createInteropVectorServiceClient(nats),
+        raw: createRawVectorServiceClient(nats),
+        echoes: createInteropServiceClient(nats),
+    };
     for (const vector of VECTORS) {
-        await runVector(nats, context, kotlinHex, vector);
+        await runVector(clients, kotlinHex, vector);
         vectorPassed(vector.name);
     }
 }

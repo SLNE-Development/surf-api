@@ -62,7 +62,7 @@ class SchemaLoadingTest {
             $OPTIONS_IMPORT
             import "other/v1/shared.proto";
             message A {
-              option (surf.nats.v1.event) = {};
+              option (surf.nats.v1.event) = true;
               optional other.v1.Shared shared = 1;
             }
             """,

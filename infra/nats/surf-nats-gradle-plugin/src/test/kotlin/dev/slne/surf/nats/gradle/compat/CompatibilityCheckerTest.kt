@@ -70,7 +70,7 @@ class CompatibilityCheckerTest {
     fun `an unchanged contract is compatible`() {
         val contract = """
             message Player {
-              option (surf.nats.v1.event) = {};
+              option (surf.nats.v1.event) = true;
               optional int64 id = 1;
               optional string name = 2 [(surf.nats.v1.nullable) = true];
               repeated string tags = 3;
@@ -323,55 +323,46 @@ class CompatibilityCheckerTest {
     }
 
     @Test
-    fun `event subject and global are compared resolved`() {
-        assertCompatible(
-            "message PlayerJoined { option (surf.nats.v1.event) = {}; }",
-            "message PlayerJoined { option (surf.nats.v1.event) = { subject: \"player-joined\" }; }",
-        )
+    fun `dropping the event opt-in is incompatible`() {
         assertViolation(
-            "message PlayerJoined { option (surf.nats.v1.event) = {}; }",
-            "message PlayerJoined { option (surf.nats.v1.event) = { subject: \"player.joined\" }; }",
-            "surf.demo.v1.PlayerJoined", "event subject changed from 'player-joined' to 'player.joined'",
-        )
-        assertViolation(
-            "message PlayerJoined { option (surf.nats.v1.event) = {}; }",
-            "message PlayerJoined { option (surf.nats.v1.event) = { global: true }; }",
-            "surf.demo.v1.PlayerJoined", "event global changed from false to true",
-        )
-        assertViolation(
-            "message PlayerJoined { option (surf.nats.v1.event) = {}; }",
+            "message PlayerJoined { option (surf.nats.v1.event) = true; }",
             "message PlayerJoined { }",
             "surf.demo.v1.PlayerJoined", "is no longer an event",
         )
-        assertCompatible("message PlayerJoined { }", "message PlayerJoined { option (surf.nats.v1.event) = {}; }")
-    }
-
-    @Test
-    fun `service name and global are compared resolved`() {
-        val message = "message A { optional int64 id = 1; }"
+        assertViolation(
+            "message PlayerJoined { option (surf.nats.v1.event) = true; }",
+            "message PlayerJoined { option (surf.nats.v1.event) = false; }",
+            "surf.demo.v1.PlayerJoined", "is no longer an event",
+        )
+        assertCompatible("message PlayerJoined { }", "message PlayerJoined { option (surf.nats.v1.event) = true; }")
         assertCompatible(
-            "$message service PlayerService { rpc Call(A) returns (A); }",
-            "$message service PlayerService { option (surf.nats.v1.service) = { name: \"player-service\" }; rpc Call(A) returns (A); }",
-        )
-        assertViolation(
-            "$message service PlayerService { rpc Call(A) returns (A); }",
-            "$message service PlayerService { option (surf.nats.v1.service) = { name: \"players\" }; rpc Call(A) returns (A); }",
-            "surf.demo.v1.PlayerService", "service name changed from 'player-service' to 'players'",
-        )
-        assertViolation(
-            "$message service PlayerService { rpc Call(A) returns (A); }",
-            "$message service PlayerService { option (surf.nats.v1.service) = { global: true }; rpc Call(A) returns (A); }",
-            "surf.demo.v1.PlayerService", "service global changed from false to true",
+            "message PlayerJoined { option (surf.nats.v1.event) = false; }",
+            "message PlayerJoined { option (surf.nats.v1.event) = true; }",
         )
     }
 
     @Test
-    fun `method name, resolved persistent and recipients changes are incompatible`() {
+    fun `renaming an event or a service removes it`() {
+        assertViolation(
+            "message PlayerJoined { option (surf.nats.v1.event) = true; }",
+            "message PlayerEntered { option (surf.nats.v1.event) = true; }",
+            "surf.demo.v1.PlayerJoined", "message surf.demo.v1.PlayerJoined was removed or renamed",
+        )
+        val message = "message A { optional int64 id = 1; }"
+        assertViolation(
+            "$message service PlayerService { rpc Call(A) returns (A); }",
+            "$message service Players { rpc Call(A) returns (A); }",
+            "surf.demo.v1.PlayerService", "service surf.demo.v1.PlayerService was removed or renamed",
+        )
+    }
+
+    @Test
+    fun `rpc renames, resolved persistent and recipients changes are incompatible`() {
         val message = "message A { optional int64 id = 1; }"
         assertViolation(
             "$message service S { rpc FindPlayer(A) returns (A); }",
-            "$message service S { rpc FindPlayer(A) returns (A) { option (surf.nats.v1.method) = { name: \"find\" }; } }",
-            "surf.demo.v1.S.FindPlayer", "method name changed from 'find-player' to 'find'",
+            "$message service S { rpc Find(A) returns (A); }",
+            "surf.demo.v1.S.FindPlayer", "rpc FindPlayer was removed or renamed",
         )
         assertViolation(
             "$message service S { rpc Call(A) returns (A); }",

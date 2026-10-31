@@ -26,41 +26,12 @@ class ProtocolNamingTest {
     }
 
     @Test
-    fun validTokensAreAccepted() {
-        for (token in ProtocolVectors.validTokens) {
-            assertTrue(ProtocolNaming.isValidToken(token), "token '$token'")
-        }
-    }
-
-    @Test
-    fun invalidTokensAreRejected() {
-        for (token in ProtocolVectors.invalidTokens) {
-            assertFalse(ProtocolNaming.isValidToken(token), "token '$token'")
-            assertFalse(ProtocolNaming.isValidNameToken(token), "name token '$token'")
-        }
-    }
-
-    @Test
-    fun reservedTokensAreNoNameTokens() {
-        assertTrue(ProtocolNaming.isReservedToken("\$rpc"))
-        assertFalse(ProtocolNaming.isReservedToken("a\$"))
-        assertFalse(ProtocolNaming.isValidNameToken("\$rpc"))
-        assertFalse(ProtocolNaming.isValidNameToken("\$"))
-        assertTrue(ProtocolNaming.isValidNameToken("find-server"))
-        assertTrue(ProtocolNaming.isValidNameToken("a\$"))
-    }
-
-    @Test
     fun subjectsMatchVectors() {
         for (subject in ProtocolVectors.validSubjects) {
-            assertTrue(ProtocolNaming.isValidSubject(subject), "subject '$subject'")
-            assertEquals(subject, ProtocolNaming.requireValidSubject(subject, "test"))
+            assertTrue(SubjectSyntax.isValid(subject), "subject '$subject'")
         }
         for (subject in ProtocolVectors.invalidSubjects) {
-            assertFalse(ProtocolNaming.isValidSubject(subject), "subject '$subject'")
-            assertFailsWith<IllegalArgumentException>("subject '$subject'") {
-                ProtocolNaming.requireValidSubject(subject, "test")
-            }
+            assertFalse(SubjectSyntax.isValid(subject), "subject '$subject'")
         }
     }
 
@@ -70,21 +41,55 @@ class ProtocolNamingTest {
         val token = "[^ \t\n\u000B\u000C\r.*>]+"
         val subject = Regex("$token(\\.$token)*")
         for (candidate in allStrings("a.*> \t\$ ", maxLength = 4)) {
-            assertEquals(subject.matches(candidate), ProtocolNaming.isValidSubject(candidate), "subject '$candidate'")
+            assertEquals(subject.matches(candidate), SubjectSyntax.isValid(candidate), "subject '$candidate'")
         }
     }
 
     @Test
-    fun eventSubjectsMatchVectors() {
-        for (subject in ProtocolVectors.validEventSubjects) {
-            assertTrue(ProtocolNaming.isValidEventSubject(subject), "event subject '$subject'")
-            assertEquals(subject, ProtocolNaming.requireValidEventSubject(subject, "test"))
+    fun protoNamesMatchVectors() {
+        for (name in ProtocolVectors.protoNames) {
+            assertTrue(ProtocolNaming.isProtoName(name), "proto name '$name'")
+            assertEquals(name, ProtocolNaming.requireProtoName(name, "test"))
         }
-        for (subject in ProtocolVectors.invalidEventSubjects) {
-            assertFalse(ProtocolNaming.isValidEventSubject(subject), "event subject '$subject'")
-            assertFailsWith<IllegalArgumentException>("event subject '$subject'") {
-                ProtocolNaming.requireValidEventSubject(subject, "test")
+        for (name in ProtocolVectors.invalidProtoNames) {
+            assertFalse(ProtocolNaming.isProtoName(name), "proto name '$name'")
+            val error = assertFailsWith<IllegalArgumentException>("proto name '$name'") {
+                ProtocolNaming.requireProtoName(name, "test")
             }
+            assertEquals("test $name: ${ProtocolNaming.PROTO_NAME_RULE}", error.message)
+        }
+    }
+
+    @Test
+    fun protoIdentifiersAreProtoNamesWithoutDots() {
+        for (name in ProtocolVectors.protoNames) {
+            assertEquals('.' !in name, ProtocolNaming.isProtoIdentifier(name), "identifier '$name'")
+        }
+        for (name in ProtocolVectors.invalidProtoNames) {
+            assertFalse(ProtocolNaming.isProtoIdentifier(name), "identifier '$name'")
+        }
+    }
+
+    @Test
+    fun nameProblemsRejectDottedDeclaredNames() {
+        assertNull(ProtocolNaming.nameProblem("service", "a.v1.S", "S"))
+        assertNull(ProtocolNaming.nameProblem("service", "a.v1.S"))
+        assertEquals(
+            "service a.v1.S.T: the declared name 'S.T' must not contain '.'",
+            ProtocolNaming.nameProblem("service", "a.v1.S.T", "S.T"),
+        )
+        assertEquals(
+            "event a.v1._E: ${ProtocolNaming.PROTO_NAME_RULE}",
+            ProtocolNaming.nameProblem("event", "a.v1._E", "_E"),
+        )
+    }
+
+    @Test
+    fun protoNamesMatchReferenceRegexExhaustively() {
+        val identifier = "[A-Za-z][A-Za-z0-9_]*"
+        val pattern = Regex("$identifier(\\.$identifier)*")
+        for (candidate in allStrings("aB1_.-", maxLength = 5)) {
+            assertEquals(pattern.matches(candidate), ProtocolNaming.isProtoName(candidate), "proto name '$candidate'")
         }
     }
 
@@ -143,30 +148,8 @@ class ProtocolNamingTest {
             val error = assertFailsWith<IllegalArgumentException>("name '$name'") { ProtocolNaming.requireClientName(name) }
             assertEquals("Invalid NATS client name '$name': must be kebab-case ([a-z0-9] separated by '-')", error.message)
         }
-        val owner = assertFailsWith<IllegalArgumentException> { ProtocolNaming.requireClientName("A", "owner") }
-        assertEquals("Invalid owner 'A': must be kebab-case ([a-z0-9] separated by '-')", owner.message)
-    }
-
-    @Test
-    fun serviceNamesMustBeKebabCaseAndNotReserved() {
-        for (name in ProtocolVectors.kebabNames) {
-            assertNull(ProtocolNaming.serviceNameProblem(name, "a.S"), "name '$name'")
-        }
-        for (name in ProtocolVectors.invalidKebabNames) {
-            assertEquals(
-                "service a.S resolves to the name '$name', which is not kebab-case ([a-z0-9] words joined by '-'); " +
-                        "set (surf.nats.v1.service).name",
-                ProtocolNaming.serviceNameProblem(name, "a.S"),
-            )
-        }
-        for (name in listOf("dlq", "roles-dlq", "a-b-dlq")) {
-            assertEquals(
-                "service name '$name' is reserved: its stream would collide with the dead-letter stream of another service",
-                ProtocolNaming.serviceNameProblem(name, "a.S"),
-            )
-        }
-        assertNull(ProtocolNaming.serviceNameProblem("dlq-roles", "a.S"))
-        assertNull(ProtocolNaming.serviceNameProblem("roles-dlqs", "a.S"))
+        val labelled = assertFailsWith<IllegalArgumentException> { ProtocolNaming.requireClientName("A", "client name") }
+        assertEquals("Invalid client name 'A': must be kebab-case ([a-z0-9] separated by '-')", labelled.message)
     }
 
     private fun allStrings(alphabet: String, maxLength: Int): List<String> {

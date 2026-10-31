@@ -10,6 +10,7 @@ import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolHeaders
+import dev.slne.surf.nats.protocol.ServiceNames
 import dev.slne.surf.nats.runtime.RuntimeDefaults
 import dev.slne.surf.nats.test.proto.v1.Blob
 import dev.slne.surf.nats.test.proto.v1.Color
@@ -332,7 +333,7 @@ class NatsPersistentServiceTest {
                 }
             } finally {
                 first.close()
-                deleteStreams(streams.stream, streams.dlqStream)
+                deleteStreams(streams)
             }
         }
     }
@@ -697,12 +698,11 @@ class NatsPersistentServiceTest {
         val streams1 = v1.streams!!
         val streams2 = v2.streams!!
         try {
-            val prefix = "SURF_${client.name}_VERSIONED_JOURNAL".uppercase().replace('-', '_')
-            assertEquals("${prefix}_V1", streams1.stream)
-            assertEquals("${prefix}_V2", streams2.stream)
-            assertEquals("${client.name}.\$persist.v1.versioned-journal.*", streams1.streamFilter)
-            assertEquals("${client.name}.\$persist.v2.versioned-journal.*", streams2.streamFilter)
-            assertEquals(v1.responderGroup, v2.responderGroup, "durables stay unversioned, one per stream")
+            assertEquals("SURF_PERSIST_surf_nats_test_v1_VersionedJournalService", streams1.stream)
+            assertEquals("SURF_PERSIST_surf_nats_test_v2_VersionedJournalService", streams2.stream)
+            assertEquals("surf.persist.surf.nats.test.v1.VersionedJournalService.*", streams1.streamFilter)
+            assertEquals("surf.persist.surf.nats.test.v2.VersionedJournalService.*", streams2.streamFilter)
+            assertEquals(streams1.durable, streams2.durable, "durables stay unversioned, one per stream")
 
             val journal1 = JournalV1()
             val journal2 = JournalV2()
@@ -732,7 +732,8 @@ class NatsPersistentServiceTest {
             assertNull(journal2.recorded.tryReceive().getOrNull(), "v2 must not receive v1 calls")
         } finally {
             client.close()
-            deleteStreams(streams1.stream, streams1.dlqStream, streams2.stream, streams2.dlqStream)
+            deleteStreams(streams1)
+            deleteStreams(streams2)
         }
     }
 
@@ -777,15 +778,17 @@ class NatsPersistentServiceTest {
                     withContext(Dispatchers.Default) { block(client) }
                 } finally {
                     client.close()
-                    deleteStreams(streams.stream, streams.dlqStream)
+                    deleteStreams(streams)
                 }
             }
         }
 
     private fun ServiceDescriptor.method(name: String) = methods.single { it.kotlinName == name }
 
-    private fun delivered(descriptor: ServiceDescriptor): Long =
-        jsm().getConsumerInfo(descriptor.streams!!.stream, descriptor.responderGroup).delivered.consumerSequence
+    private fun delivered(descriptor: ServiceDescriptor): Long {
+        val streams = descriptor.streams!!
+        return jsm().getConsumerInfo(streams.stream, streams.durable).delivered.consumerSequence
+    }
 
     // Publishes like an external producer: protobuf Content-Type and a Nats-Msg-Id, no Surf headers
     private fun publishExternal(subject: String, body: ByteArray, extraHeaders: Map<String, String> = emptyMap()) {
@@ -796,8 +799,10 @@ class NatsPersistentServiceTest {
         NatsConnectionManager.connection().jetStream().publish(subject, headers, body)
     }
 
-    private fun deleteStreams(vararg streams: String) {
-        for (stream in streams) runCatching { jsm().deleteStream(stream) }
+    // All tests share the streams of a service; the provisioning cache must forget them to create them again
+    private fun deleteStreams(streams: ServiceNames) {
+        for (stream in listOf(streams.stream, streams.dlqStream)) runCatching { jsm().deleteStream(stream) }
+        JetStreamProvisioner.invalidate(streams)
     }
 
     private fun liveObjects(bucket: PayloadBucket): Set<String> {

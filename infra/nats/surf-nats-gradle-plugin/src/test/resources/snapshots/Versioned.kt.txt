@@ -43,13 +43,9 @@ public interface VersionedService {
         public val NATS_DESCRIPTOR: NatsServiceDescriptor<VersionedService> =
                 NatsServiceDescriptor<VersionedService>(
                     protoName = "surf.demo.v2.VersionedService",
-                    name = "versioned-service",
-                    global = true,
-                    majorVersion = 2,
                     methods = listOf(
                         NatsMethodDescriptor<Unit, Pong>(
                             protoName = "Ping",
-                            name = "ping",
                             kotlinName = "ping",
                             persistent = false,
                             callTimeoutSeconds = null,

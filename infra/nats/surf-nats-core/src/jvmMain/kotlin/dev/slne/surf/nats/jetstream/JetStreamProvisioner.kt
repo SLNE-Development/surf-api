@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.toJavaDuration
 
@@ -25,10 +26,13 @@ import kotlin.time.toJavaDuration
 internal object JetStreamProvisioner {
     private const val STREAM_CONFIG_MISMATCH = 10058
     private val mutex = Mutex()
-    private val provisioned = ConcurrentHashMap<String, Provisioned>()
+    private val provisioned = ConcurrentHashMap<String, Connection>()
 
-    private class Provisioned(val connection: Connection, val filter: String)
-
+    /**
+     * Creates or updates the work-queue and dead-letter streams of [streams] once per connection.
+     *
+     * Throws [IllegalStateException] when JetStream is disabled or a stream of that name exists for other subjects.
+     */
     suspend fun ensureStreams(streams: ServiceNames) {
         val connection = NatsConnectionManager.connection()
         if (isProvisioned(streams, connection)) return
@@ -62,17 +66,23 @@ internal object JetStreamProvisioner {
                         .build()
                 )
             }
-            provisioned[streams.stream] = Provisioned(connection, streams.streamFilter)
+            provisioned[streams.stream] = connection
         }
     }
 
+    /**
+     * Forgets that the streams of [streams] were provisioned, so the next [ensureStreams] creates them again after
+     * they were deleted on the server.
+     *
+     * Does not take the provisioning lock: an [ensureStreams] running at the same time may record the streams again.
+     */
+    @TestOnly
+    fun invalidate(streams: ServiceNames) {
+        provisioned.remove(streams.stream)
+    }
+
     private fun isProvisioned(streams: ServiceNames, connection: Connection): Boolean {
-        val entry = provisioned[streams.stream] ?: return false
-        if (entry.connection !== connection) return false
-        check(entry.filter == streams.streamFilter) {
-            collisionMessage(streams.stream, listOf(entry.filter), listOf(streams.streamFilter))
-        }
-        return true
+        return provisioned[streams.stream] === connection
     }
 
     private fun addOrUpdate(jetStreamManagement: JetStreamManagement, config: StreamConfiguration) {
@@ -91,7 +101,7 @@ internal object JetStreamProvisioner {
 
     private fun collisionMessage(stream: String, existing: List<String>, requested: List<String>): String {
         return "Stream $stream already exists for subjects $existing and cannot be used for $requested. " +
-                "Two services map to the same stream name. Rename one of them, or delete the stream if it was created with an older subject filter."
+                "It was created by another tool or with an older subject filter; delete it to let surf-nats recreate it."
     }
 
     fun consumerConfig(durable: String): ConsumerConfiguration = ConsumerConfiguration.builder()

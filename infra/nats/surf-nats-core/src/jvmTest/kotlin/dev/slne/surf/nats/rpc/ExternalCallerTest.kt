@@ -5,12 +5,9 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.protocol.ServiceNames
-import dev.slne.surf.nats.test.proto.v1.CoexInnerService
-import dev.slne.surf.nats.test.proto.v1.CoexOuterService
-import dev.slne.surf.nats.test.proto.v1.CollidingXyService
-import dev.slne.surf.nats.test.proto.v1.CollidingYService
 import dev.slne.surf.nats.test.proto.v1.EchoRequest
 import dev.slne.surf.nats.test.proto.v1.LateService
 import dev.slne.surf.nats.test.proto.v1.Number
@@ -24,6 +21,8 @@ import io.nats.client.impl.Headers
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -37,6 +36,7 @@ import org.junit.jupiter.api.TestInstance
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CyclicBarrier
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -73,26 +73,6 @@ class ExternalCallerTest {
 
         override suspend fun put(id: Long) {
             stored.send(id)
-        }
-    }
-
-    class CollidingImpl : CollidingXyService, CollidingYService {
-        override suspend fun put(id: Long) = Unit
-    }
-
-    class CoexInnerImpl : CoexInnerService {
-        val stored = ConcurrentLinkedQueue<Long>()
-
-        override suspend fun put(id: Long) {
-            stored += id
-        }
-    }
-
-    class CoexOuterImpl : CoexOuterService {
-        val stored = ConcurrentLinkedQueue<Long>()
-
-        override suspend fun put(id: Long) {
-            stored += id
         }
     }
 
@@ -168,7 +148,7 @@ class ExternalCallerTest {
         val streams = track(descriptor)
         val before = delivered(descriptor)
 
-        publishExternal("ext-roles.\$persist.v1.unknown", whitelist("ADD", 3))
+        publishExternal("surf.persist.surf.nats.test.v1.RolesService.Unknown", whitelist("ADD", 3))
 
         eventually("unknown method must end in the dead letter stream", timeout = 20.seconds) {
             messageCount(streams.dlqStream) == 1L
@@ -181,6 +161,28 @@ class ExternalCallerTest {
         val deadHeaders = assertNotNull(jsm().getLastMessage(streams.dlqStream, streams.dlqSubject).headers)
         assertEquals(IllegalStateException::class.java.name, deadHeaders.getFirst(ProtocolHeaders.ERROR))
         eventually("work queue must be empty after term") { messageCount(streams.stream) == 0L }
+    }
+
+    @Test
+    fun `unknown persistent method with a Nats-TTL expires before it is dead-lettered`() = test {
+        RpcDefaults.NAK_BACKOFF = listOf(1.minutes) // a redelivery would not happen within the test
+        val client = client()
+        client.registerService<RolesService>(RolesImpl())
+        val descriptor = client.serviceDescriptor(RolesService::class.java)
+        val streams = track(descriptor)
+        val before = delivered(descriptor)
+
+        publishExternal(
+            "surf.persist.surf.nats.test.v1.RolesService.Unknown",
+            NatsCodec.encode(EchoRequest.serializer(), EchoRequest(4)),
+            extraHeaders = mapOf(ProtocolHeaders.NATS_TTL to "2s"),
+        )
+
+        eventually("the NAKed call must expire with its Nats-TTL", timeout = 15.seconds) {
+            messageCount(streams.stream) == 0L
+        }
+        assertEquals(1L, delivered(descriptor) - before, "the expired call must not be redelivered")
+        assertEquals(0L, messageCount(streams.dlqStream), "the expired call must not be dead-lettered")
     }
 
     @Test
@@ -213,30 +215,31 @@ class ExternalCallerTest {
 
     @Test
     fun `external publish before the first registration fails and works afterwards`() = test {
-        val subject = "ext-late.\$persist.v1.put"
+        val streams = deleteLateStreams()
+        val subject = "surf.persist.surf.nats.test.v1.LateService.Put"
         assertFails { publishExternal(subject, NatsCodec.encode(PutRequest.serializer(), PutRequest(1))) }
 
         val client = client()
         val impl = LateImpl()
         client.registerService<LateService>(impl)
-        val streams = track(client.serviceDescriptor(LateService::class.java))
-        assertEquals("SURF__EXT_LATE_V1", streams.stream)
+        track(client.serviceDescriptor(LateService::class.java))
+        assertEquals("SURF_PERSIST_surf_nats_test_v1_LateService", streams.stream)
 
         publishExternal(subject, NatsCodec.encode(PutRequest.serializer(), PutRequest(2)))
         assertEquals(2L, withTimeout(10.seconds) { impl.stored.receive() })
     }
 
-    // ---- global services ----
+    // ---- shared services ----
 
     @Test
-    fun `global service is shared between differently named clients`() = test {
+    fun `differently named clients share one service and its durable`() = test {
         val first = RolesImpl()
         val second = RolesImpl()
-        client().registerService<RolesService>(first)
-        client().registerService<RolesService>(second)
+        client("roles-a").registerService<RolesService>(first)
+        client("roles-b").registerService<RolesService>(second)
         val caller = client()
-        val descriptor = caller.serviceDescriptor(RolesService::class.java)
-        val streams = track(descriptor)
+        val streams = track(caller.serviceDescriptor(RolesService::class.java))
+        assertEquals(listOf(streams.durable), jsm().getConsumerNames(streams.stream))
         val roles = caller.service<RolesService>()
         val ids = (1L..20L).toList()
 
@@ -244,42 +247,57 @@ class ExternalCallerTest {
         eventually("every persistent call must be processed") { first.stored.size + second.stored.size >= ids.size }
         eventually("work queue must be drained and acked") {
             messageCount(streams.stream) == 0L &&
-                    jsm().getConsumerInfo(streams.stream, descriptor.responderGroup).numAckPending == 0L
+                    jsm().getConsumerInfo(streams.stream, streams.durable).numAckPending == 0L
         }
 
         for (id in ids) assertEquals(Number(id), roles.handle(id))
 
         assertEquals(ids, (first.stored + second.stored).sorted(), "each persistent call must run exactly once")
         assertEquals(ids, (first.handled + second.handled).sorted(), "each core call must run exactly once")
+        assertEquals(0L, messageCount(streams.dlqStream))
     }
 
     @Test
-    fun `prefixed and global persistent services of the same name coexist`() = test {
-        val client = client("coex")
-        val inner = CoexInnerImpl()
-        val outer = CoexOuterImpl()
-        val innerStreams = track(client.serviceDescriptor(CoexInnerService::class.java))
-        val outerStreams = track(client.serviceDescriptor(CoexOuterService::class.java))
-        assertEquals("coex.\$persist.v1.inner.*", innerStreams.streamFilter)
-        assertEquals("coex.\$persist.v1.*", outerStreams.streamFilter)
-
-        client.registerService<CoexInnerService>(inner)
-        client.registerService<CoexOuterService>(outer)
-
-        assertEquals(listOf(innerStreams.streamFilter), jsm().getStreamInfo(innerStreams.stream).configuration.subjects)
-        assertEquals(listOf(outerStreams.streamFilter), jsm().getStreamInfo(outerStreams.stream).configuration.subjects)
-
-        client.service<CoexInnerService>().put(1)
-        client.service<CoexOuterService>().put(2)
-
-        eventually("both calls must be processed") { inner.stored.size == 1 && outer.stored.size == 1 }
-        eventually("both work queues must be drained") {
-            messageCount(innerStreams.stream) == 0L && messageCount(outerStreams.stream) == 0L
+    fun `differently named clients register one service concurrently`() = test {
+        // Every registration flushes the shared connection; more than two concurrent flushes used to exceed
+        // the outgoing ping limit of jnats and drop the connection
+        repeat(5) { round ->
+            val registrations = List(4) { client("roles-concurrent-$round-$it") }.map { client ->
+                async { client.registerService<RolesService>(RolesImpl()) }
+            }.awaitAll()
+            registrations.forEach { it.close() }
         }
-        assertEquals(listOf(1L), inner.stored.toList())
-        assertEquals(listOf(2L), outer.stored.toList())
-        assertEquals(0L, messageCount(innerStreams.dlqStream))
-        assertEquals(0L, messageCount(outerStreams.dlqStream))
+
+        client("roles-concurrent-a").registerService<RolesService>(RolesImpl())
+        val caller = client()
+        val streams = track(caller.serviceDescriptor(RolesService::class.java))
+        assertEquals(listOf(streams.durable), jsm().getConsumerNames(streams.stream))
+        assertEquals(Number(1), caller.service<RolesService>().handle(1))
+    }
+
+    @Test
+    fun `concurrently closed registrations keep the shared connection`() = test {
+        // Every close drains its dispatcher, which flushes the shared connection like a registration does
+        val connection = NatsConnectionManager.connection()
+        val reconnects = connection.statistics.reconnects
+        repeat(10) { round ->
+            val registrations = List(6) { client("roles-closing-$round-$it") }
+                .map { it.registerService<RolesService>(RolesImpl()) }
+            val barrier = CyclicBarrier(registrations.size)
+            registrations.map { registration ->
+                async(Dispatchers.IO) {
+                    barrier.await()
+                    registration.close()
+                }
+            }.awaitAll()
+        }
+
+        assertEquals(reconnects, connection.statistics.reconnects, "the shared connection must not reconnect")
+        client("roles-closing-a").registerService<RolesService>(RolesImpl())
+        val caller = client()
+        val streams = track(caller.serviceDescriptor(RolesService::class.java))
+        assertEquals(listOf(streams.durable), jsm().getConsumerNames(streams.stream))
+        assertEquals(Number(1), caller.service<RolesService>().handle(1))
     }
 
     // ---- core requests from external callers ----
@@ -321,7 +339,7 @@ class ExternalCallerTest {
         // OwnerRequest { player: Uuid { value: <msb><lsb> } }, field 1 of both messages
         val bytes = ByteBuffer.allocate(16).putLong(uuid.mostSignificantBits).putLong(uuid.leastSignificantBits).array()
         val encoded = byteArrayOf(0x0a, 18, 0x0a, 16) + bytes
-        val reply = requestReply("ext-roles.\$rpc.v1.owner", protobufHeaders(), encoded)
+        val reply = requestReply("surf.rpc.surf.nats.test.v1.RolesService.Owner", protobufHeaders(), encoded)
 
         assertNull(reply.headers.getFirst(ProtocolHeaders.ERROR), reply.data.decodeToString())
         assertContentEquals(encoded, reply.data, "OwnerReply has the same layout")
@@ -330,16 +348,14 @@ class ExternalCallerTest {
         assertEquals(OwnerReply(uuid), client.service<RolesService>().owner(uuid))
     }
 
-    // ---- stream name collisions ----
+    // ---- foreign streams ----
 
     @Test
-    fun `stream owned by another service is not rewritten`() = test {
-        val client = client("coll")
-        val streams = track(client.serviceDescriptor(CollidingXyService::class.java))
-        assertEquals("SURF_COLL_X_Y_V1", streams.stream)
+    fun `stream created for other subjects is not rewritten`() = test {
+        val streams = deleteLateStreams()
 
-        // Created by "coll-x" for its service "y", e.g. from another JVM
-        val foreign = listOf("coll-x.\$persist.v1.y.>")
+        // Created by another tool under the name surf-nats derives for LateService
+        val foreign = listOf("other.persist.LateService.>")
         jsm().addStream(
             StreamConfiguration.builder()
                 .name(streams.stream)
@@ -348,25 +364,15 @@ class ExternalCallerTest {
                 .build()
         )
 
-        val error = assertFailsWith<IllegalStateException> {
-            client.registerService<CollidingXyService>(CollidingImpl())
+        try {
+            val error = assertFailsWith<IllegalStateException> {
+                client().registerService<LateService>(LateImpl())
+            }
+            assertContains(error.message.orEmpty(), streams.stream)
+            assertEquals(foreign, jsm().getStreamInfo(streams.stream).configuration.subjects)
+        } finally {
+            deleteLateStreams()
         }
-        assertContains(error.message.orEmpty(), streams.stream)
-        assertEquals(foreign, jsm().getStreamInfo(streams.stream).configuration.subjects)
-    }
-
-    @Test
-    fun `stream name collision inside one JVM is rejected`() = test {
-        val owner = client("coll2-x")
-        owner.registerService<CollidingYService>(CollidingImpl())
-        val streams = track(owner.serviceDescriptor(CollidingYService::class.java))
-        assertEquals("SURF_COLL2_X_Y_V1", streams.stream)
-
-        val error = assertFailsWith<IllegalStateException> {
-            client("coll2").registerService<CollidingXyService>(CollidingImpl())
-        }
-        assertContains(error.message.orEmpty(), streams.stream)
-        assertEquals(listOf(streams.streamFilter), jsm().getStreamInfo(streams.stream).configuration.subjects)
     }
 
     // ---- helpers ----
@@ -377,8 +383,19 @@ class ExternalCallerTest {
     private fun track(descriptor: ServiceDescriptor): ServiceNames =
         descriptor.streams!!.also { streamsToPurge += it }
 
-    private fun delivered(descriptor: ServiceDescriptor): Long =
-        jsm().getConsumerInfo(descriptor.streams!!.stream, descriptor.responderGroup).delivered.consumerSequence
+    private fun delivered(descriptor: ServiceDescriptor): Long {
+        val streams = descriptor.streams!!
+        return jsm().getConsumerInfo(streams.stream, streams.durable).delivered.consumerSequence
+    }
+
+    // The streams of LateService are deleted, unlike the purged streams of the other services, so a test can rely on
+    // their absence; the provisioning cache forgets them
+    private fun deleteLateStreams(): ServiceNames {
+        val streams = ServiceDescriptor.of(LateService::class.java).streams!!
+        for (stream in listOf(streams.stream, streams.dlqStream)) runCatching { jsm().deleteStream(stream) }
+        JetStreamProvisioner.invalidate(streams)
+        return streams
+    }
 
     private fun deadLetters(streams: ServiceNames) = jsm().getStreamInfo(streams.dlqStream).streamState
         .let { state -> (state.firstSequence..state.lastSequence) }
@@ -390,8 +407,8 @@ class ExternalCallerTest {
         } finally {
             clients.forEach { it.close() }
             clients.clear()
-            // Purged instead of deleted: global streams are shared by tests, and the provisioning cache
-            // would not notice a deleted stream
+            // Purged instead of deleted: the streams of a service are shared by all tests, and the provisioning
+            // cache would not notice a deleted stream
             streamsToPurge.forEach { purgeStreams(it.stream, it.dlqStream) }
             streamsToPurge.clear()
         }
@@ -420,7 +437,7 @@ class ExternalCallerTest {
     }
 
     companion object {
-        private const val WHITELIST = "ext-roles.\$persist.v1.whitelist"
-        private const val ECHO = "ext-roles.\$rpc.v1.echo"
+        private const val WHITELIST = "surf.persist.surf.nats.test.v1.RolesService.Whitelist"
+        private const val ECHO = "surf.rpc.surf.nats.test.v1.RolesService.Echo"
     }
 }

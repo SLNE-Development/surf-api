@@ -14,13 +14,11 @@ message FindPlayerResponse {
 }
 
 service PlayerService {
-  option (surf.nats.v1.service) = { name: "players" };
-
   rpc FindPlayer(FindPlayerRequest) returns (FindPlayerResponse);
 }
 
 message PlayerJoined {
-  option (surf.nats.v1.event) = { global: false };
+  option (surf.nats.v1.event) = true;
 
   optional string name = 1;
 }

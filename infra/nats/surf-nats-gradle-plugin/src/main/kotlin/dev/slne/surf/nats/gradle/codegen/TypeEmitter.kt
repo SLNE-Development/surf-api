@@ -31,15 +31,9 @@ import dev.slne.surf.nats.gradle.model.MessageShape
 import dev.slne.surf.nats.gradle.model.OneofModel
 import dev.slne.surf.nats.gradle.model.SurfOptions
 import dev.slne.surf.nats.protocol.ProtocolDescriptors
-import dev.slne.surf.nats.protocol.ProtocolResolution
-import dev.slne.surf.nats.protocol.ResolvedEvent
+import dev.slne.surf.nats.protocol.ProtocolNaming
 
 private const val NATS_DESCRIPTOR_PROPERTY = "natsDescriptor"
-
-/**
- * Event identity used to detect duplicate subjects within one generation run.
- */
-internal data class EventKey(val global: Boolean, val subject: String, val majorVersion: Int)
 
 /**
  * Emits messages (data classes, fieldless classes, events, oneofs) and enums.
@@ -47,20 +41,19 @@ internal data class EventKey(val global: Boolean, val subject: String, val major
 internal class TypeEmitter(
     private val model: ContractModel,
     private val visibility: GeneratedVisibility,
-    private val events: MutableMap<EventKey, Location>,
 ) {
     private val problems get() = model.problems
 
-    fun emit(type: Type, className: ClassName, majorVersion: Int?): TypeSpec? = when (type) {
-        is MessageType -> message(type, className, majorVersion)
+    fun emit(type: Type, className: ClassName): TypeSpec? = when (type) {
+        is MessageType -> message(type, className)
         is EnumType -> enum(type, className)
         else -> null
     }
 
-    private fun message(type: MessageType, className: ClassName, majorVersion: Int?): TypeSpec? {
-        val eventOptions = SurfOptions.event(type.options, type.location, problems)
+    private fun message(type: MessageType, className: ClassName): TypeSpec? {
+        val event = SurfOptions.event(type.options, type.location, problems)
         if (model.isMapped(type.type)) {
-            if (eventOptions != null) {
+            if (event) {
                 problems.error(type.location, "event message ${type.type} is mapped by mapType; events must be generated")
             }
             return null
@@ -94,9 +87,7 @@ internal class TypeEmitter(
             if (shape.contentAware) builder.addFunctions(contentMembers(shape))
         }
 
-        if (eventOptions != null) {
-            addEvent(builder, type, className, shape, ProtocolResolution.event(eventOptions, type.name), majorVersion)
-        }
+        if (event) addEvent(builder, type, className, shape)
 
         val nestedNames = HashMap<String, Location>()
         for (oneof in shape.oneofs) {
@@ -105,7 +96,7 @@ internal class TypeEmitter(
         }
         for (nested in type.nestedTypes) {
             checkNestedName(className, nested, nestedNames)
-            emit(nested, className.nestedClass(nested.type.simpleName), majorVersion)?.let(builder::addType)
+            emit(nested, className.nestedClass(nested.type.simpleName))?.let(builder::addType)
         }
         return builder.build()
     }
@@ -123,29 +114,12 @@ internal class TypeEmitter(
         }
     }
 
-    private fun addEvent(
-        builder: TypeSpec.Builder,
-        type: MessageType,
-        className: ClassName,
-        shape: MessageShape,
-        event: ResolvedEvent,
-        majorVersion: Int?,
-    ) {
+    private fun addEvent(builder: TypeSpec.Builder, type: MessageType, className: ClassName, shape: MessageShape) {
         shape.properties.firstOrNull { it.name == NATS_DESCRIPTOR_PROPERTY }?.let {
             problems.error(it.location, "event ${type.type} must not have a field named $NATS_DESCRIPTOR_PROPERTY")
         }
-        val subject = event.subject
-        val global = event.global
-        for (problem in event.problems(type.type.toString())) problems.error(type.location, problem)
-        if (majorVersion != null) {
-            events.put(EventKey(global, subject, majorVersion), type.location)?.let { previous ->
-                problems.error(
-                    type.location,
-                    "event ${type.type} uses the ${if (global) "global" else "prefixed"} subject '$subject' " +
-                            "of v$majorVersion, already used by the event at $previous",
-                )
-            }
-        }
+        val protoName = type.type.toString()
+        ProtocolNaming.nameProblem("event", protoName, type.name)?.let { problems.error(type.location, it) }
 
         val descriptorType = KotlinTypes.NATS_EVENT_DESCRIPTOR.parameterizedBy(className)
         builder.addSuperinterface(KotlinTypes.NATS_EVENT)
@@ -158,10 +132,7 @@ internal class TypeEmitter(
         val initializer = CodeBlock.builder()
             .add("%T(\n", descriptorType)
             .indent()
-            .add("protoName = %S,\n", type.type.toString())
-            .add("subject = %S,\n", subject)
-            .add("global = %L,\n", global)
-            .add("majorVersion = %L,\n", majorVersion ?: 0)
+            .add("protoName = %S,\n", protoName)
             .add("serializer = serializer(),\n")
             .unindent()
             .add(")")

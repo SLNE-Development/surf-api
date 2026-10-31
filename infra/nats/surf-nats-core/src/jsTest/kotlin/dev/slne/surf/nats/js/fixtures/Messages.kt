@@ -59,10 +59,6 @@ internal external interface ChatMessage : ProtoMessageInit {
     var text: String?
 }
 
-internal external interface ServerStarted : ProtoMessageInit {
-    var server: String?
-}
-
 internal external interface FindPlayerRequest : ProtoMessageInit {
     var name: String?
 }

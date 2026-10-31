@@ -33,7 +33,7 @@ class ContractGenerationTest {
         val text = contracts(
             """
             message PlayerHealthChanged {
-              option (surf.nats.v1.event) = {};
+              option (surf.nats.v1.event) = true;
               optional double health = 1;
             }
             """
@@ -44,39 +44,36 @@ class ContractGenerationTest {
             "public data class PlayerHealthChanged(\n    @ProtoNumber(1)\n    public val health: Double,\n) : NatsEvent {",
             "override val natsDescriptor: NatsEventDescriptor<*>\n        get() = NATS_DESCRIPTOR",
             "public companion object {\n        @JvmField\n        public val NATS_DESCRIPTOR: NatsEventDescriptor<PlayerHealthChanged> =",
-            "protoName = \"surf.test.v1.PlayerHealthChanged\",",
-            "subject = \"player-health-changed\",",
-            "global = false,",
-            "majorVersion = 1,",
-            "serializer = serializer(),",
+            "NatsEventDescriptor<PlayerHealthChanged>(\n                    protoName = \"surf.test.v1.PlayerHealthChanged\",\n" +
+                    "                    serializer = serializer(),\n                )",
         )
-        assertNotContains(text, "import dev.slne.surf.nats.event.NatsEvent")
+        assertNotContains(text, "import dev.slne.surf.nats.event.NatsEvent", "subject =", "global =", "majorVersion =")
     }
 
     @Test
-    fun `event subjects default to the kebab-case message name of the shared protocol`() {
+    fun `event descriptors carry the exact proto full name`() {
         val text = contracts(
             """
-            message HTTPServer2Up { option (surf.nats.v1.event) = {}; }
-            message NATSEvent { option (surf.nats.v1.event).global = true; }
-            message Explicit { option (surf.nats.v1.event) = { subject: "panel.punishment.created" global: true }; }
-            message Blank { option (surf.nats.v1.event) = { subject: "" }; }
+            message HTTPServer2Up { option (surf.nats.v1.event) = true; }
+            message snake_Event { option (surf.nats.v1.event) = true; }
+            message Outer { message Inner { option (surf.nats.v1.event) = true; optional int32 x = 1; } }
             """,
-            protoPackage = "surf.test.v3",
+            protoPackage = "surf.test_pkg.v3",
         )
         assertContainsAll(
             text,
-            "subject = \"http-server2-up\",\n                    global = false,\n                    majorVersion = 3,",
-            "subject = \"nats-event\",\n                    global = true,",
-            "subject = \"panel.punishment.created\",\n                    global = true,",
-            "subject = \"blank\",",
+            "protoName = \"surf.test_pkg.v3.HTTPServer2Up\",",
+            "protoName = \"surf.test_pkg.v3.snake_Event\",",
+            "public data class Inner(",
+            ") : NatsEvent {",
+            "protoName = \"surf.test_pkg.v3.Outer.Inner\",",
         )
     }
 
     @Test
-    fun `nested messages can be events`() {
-        val text = contracts("message Outer { message Inner { option (surf.nats.v1.event) = {}; optional int32 x = 1; } }")
-        assertContainsAll(text, "public data class Inner(", ") : NatsEvent {", "subject = \"inner\",")
+    fun `messages with the event option set to false are not events`() {
+        val text = contracts("message Plain { option (surf.nats.v1.event) = false; optional int32 x = 1; }")
+        assertNotContains(text, "NatsEvent", "NATS_DESCRIPTOR", "companion")
     }
 
     @Test
@@ -111,7 +108,6 @@ class ContractGenerationTest {
                     "        filter: FindServerRequest.Filter? = null,\n        owner: UUID,\n    ): FindServerReply",
             "NatsMethodDescriptor<FindServerRequest, FindServerReply>(",
             "protoName = \"FindServer\",",
-            "name = \"find-server\",",
             "kotlinName = \"findServer\",",
             "NatsParameter(name = \"player\", type = String::class, nullable = false),",
             "NatsParameter(name = \"region\", type = String::class, nullable = true),",
@@ -256,9 +252,9 @@ class ContractGenerationTest {
         val text = contracts(
             """
             service OrderService {
-              option (surf.nats.v1.service) = { name: "orders" persistent: true call_timeout_seconds: 30 };
+              option (surf.nats.v1.service) = { persistent: true call_timeout_seconds: 30 };
               rpc Place(Order) returns (google.protobuf.Empty);
-              rpc Ping(google.protobuf.Empty) returns (Order) { option (surf.nats.v1.method) = { persistent: false name: "health-check" }; }
+              rpc Ping(google.protobuf.Empty) returns (Order) { option (surf.nats.v1.method) = { persistent: false }; }
               rpc Total(google.protobuf.Empty) returns (Order) { option (surf.nats.v1.method) = { call_timeout_seconds: 0 }; }
               rpc Slow(google.protobuf.Empty) returns (Order) { option (surf.nats.v1.method) = { call_timeout_seconds: 300 }; }
             }
@@ -268,39 +264,40 @@ class ContractGenerationTest {
         )
         assertContainsAll(
             text,
-            "name = \"orders\",\n                    global = false,",
-            "protoName = \"Place\",\n                            name = \"place\",\n                            kotlinName = \"place\",\n" +
+            "protoName = \"surf.test.v1.OrderService\",\n                    methods = listOf(",
+            "protoName = \"Place\",\n                            kotlinName = \"place\",\n" +
                     "                            persistent = true,\n                            callTimeoutSeconds = 30,",
-            "protoName = \"Ping\",\n                            name = \"health-check\",\n                            kotlinName = \"ping\",\n" +
+            "protoName = \"Ping\",\n                            kotlinName = \"ping\",\n" +
                     "                            persistent = false,\n                            callTimeoutSeconds = 30,",
-            "protoName = \"Total\",\n                            name = \"total\",\n                            kotlinName = \"total\",\n" +
+            "protoName = \"Total\",\n                            kotlinName = \"total\",\n" +
                     "                            persistent = true,\n                            callTimeoutSeconds = 30,",
-            "protoName = \"Slow\",\n                            name = \"slow\",\n                            kotlinName = \"slow\",\n" +
+            "protoName = \"Slow\",\n                            kotlinName = \"slow\",\n" +
                     "                            persistent = true,\n                            callTimeoutSeconds = 300,",
-            "name = \"plain-service\",",
-            "protoName = \"Get\",\n                            name = \"get\",\n                            kotlinName = \"get\",\n" +
+            "protoName = \"surf.test.v1.PlainService\",",
+            "protoName = \"Get\",\n                            kotlinName = \"get\",\n" +
                     "                            persistent = false,\n                            callTimeoutSeconds = null,\n" +
                     "                            recipients = Recipients.ANY_INSTANCE,",
         )
     }
 
     @Test
-    fun `global services carry the global flag and the package version`() {
+    fun `service descriptors carry the proto full name and the exact rpc names`() {
         val text = contracts(
             """
-            service RolesApi {
-              option (surf.nats.v1.service) = { name: "roles-api" global: true };
-              rpc Lookup(google.protobuf.Empty) returns (google.protobuf.Empty);
+            service Roles_Api {
+              rpc lookup_Role(google.protobuf.Empty) returns (google.protobuf.Empty);
             }
             """,
             protoPackage = "surf.roles.v2",
         )
         assertContainsAll(
             text,
-            "protoName = \"surf.roles.v2.RolesApi\",\n                    name = \"roles-api\",\n                    global = true,\n" +
-                    "                    majorVersion = 2,",
-            "public suspend fun lookup()\n",
+            "NatsServiceDescriptor<Roles_Api>(\n                    protoName = \"surf.roles.v2.Roles_Api\",\n" +
+                    "                    methods = listOf(",
+            "protoName = \"lookup_Role\",\n                            kotlinName = \"lookupRole\",",
+            "public suspend fun lookupRole()\n",
         )
+        assertNotContains(text, "global =", "majorVersion =", " name =")
     }
 
     @Test

@@ -1,12 +1,8 @@
 package dev.slne.surf.nats.event
 
-import dev.slne.surf.nats.InvalidSubjectEvent
-import dev.slne.surf.nats.ReservedTokenEvent
-import dev.slne.surf.nats.SingleTokenGlobal
+import dev.slne.surf.nats.InvalidProtoNameEvent
 import dev.slne.surf.nats.test.proto.v1.Created
 import dev.slne.surf.nats.test.proto.v1.NotAnEvent
-import dev.slne.surf.nats.test.proto.v1.OriginEvent
-import dev.slne.surf.nats.test.proto.v1.PanelEvent
 import dev.slne.surf.nats.test.proto.v1.ProfileUpdated
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -18,21 +14,18 @@ import dev.slne.surf.nats.test.proto.v2.VersionedChanged as VersionedChangedV2
 
 class EventDescriptorTest {
 
-    private fun describe(type: Class<*>) = EventDescriptor.of(type, "punishment")
+    private fun describe(type: Class<*>) = EventDescriptor.of(type)
 
     @Test
-    fun `prefixed subject puts the major version after the client name`() {
-        assertEquals("punishment.v1.created", describe(Created::class.java).subject)
-        assertEquals("punishment.v1.profile-updated", describe(ProfileUpdated::class.java).subject)
-        assertEquals("punishment.v1.versioned.changed", describe(VersionedChangedV1::class.java).subject)
-        assertEquals("punishment.v2.versioned.changed", describe(VersionedChangedV2::class.java).subject)
+    fun `subject is the proto full name under surf evt`() {
+        assertEquals("surf.evt.surf.nats.test.v1.Created", describe(Created::class.java).subject)
+        assertEquals("surf.evt.surf.nats.test.v1.ProfileUpdated", describe(ProfileUpdated::class.java).subject)
     }
 
     @Test
-    fun `global subject puts the major version after its first token`() {
-        assertEquals("panel.v1.listener-test.created", describe(PanelEvent::class.java).subject)
-        assertEquals("listener-test.v1.origin", describe(OriginEvent::class.java).subject)
-        assertEquals("roles.v1", describe(SingleTokenGlobal::class.java).subject)
+    fun `major versions of an event have separate subjects`() {
+        assertEquals("surf.evt.surf.nats.test.v1.VersionedChanged", describe(VersionedChangedV1::class.java).subject)
+        assertEquals("surf.evt.surf.nats.test.v2.VersionedChanged", describe(VersionedChangedV2::class.java).subject)
     }
 
     @Test
@@ -51,11 +44,12 @@ class EventDescriptorTest {
     }
 
     @Test
-    fun `invalid subjects of hand-built descriptors are rejected`() {
-        val invalid = assertFailsWith<IllegalArgumentException> { describe(InvalidSubjectEvent::class.java) }
-        assertContains(invalid.message.orEmpty(), "punishment.v1.invalid subject")
+    fun `invalid proto name of a hand-built descriptor is rejected`() {
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(InvalidProtoNameEvent::class.java)
+        }.message.orEmpty()
 
-        val reserved = assertFailsWith<IllegalArgumentException> { describe(ReservedTokenEvent::class.java) }
-        assertContains(reserved.message.orEmpty(), "tokens starting with '$' are reserved")
+        assertContains(message, "Invalid NATS_DESCRIPTOR of ${InvalidProtoNameEvent::class.java.name}")
+        assertContains(message, "event surf.nats.test.v1.Invalid Name")
     }
 }

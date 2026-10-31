@@ -7,6 +7,5 @@ import kotlinx.js.JsPlainObject
 @JsExport
 @JsPlainObject
 external interface CallOptions {
-    val owner: String?
     val timeoutMs: Int?
 }

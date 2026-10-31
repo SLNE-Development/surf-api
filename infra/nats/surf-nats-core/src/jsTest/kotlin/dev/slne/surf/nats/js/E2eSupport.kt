@@ -66,11 +66,13 @@ internal class RawNats(val connection: NatsConnection) {
     }
 
     /**
-     * Creates the work-queue stream and the DLQ stream of [names] with the JVM `JetStreamProvisioner` settings.
+     * Recreates the work-queue stream of [names] and its durable consumer with the JVM `JetStreamProvisioner`
+     * settings; the DLQ stream is deleted.
      *
      * With [noAck] the stream stores and deduplicates publishes but never acknowledges them (lost PubAcks).
      */
     suspend fun addPersistentStreams(names: ServiceNames, noAck: Boolean = false) {
+        deletePersistentStreams(names)
         val manager = jetstreamManager(connection).await()
         manager.streams.add(
             StreamConfig(
@@ -86,15 +88,31 @@ internal class RawNats(val connection: NatsConnection) {
         ).await()
         manager.consumers.add(
             names.stream,
-            ConsumerConfig(durable_name = names.responderGroup, ack_policy = "explicit"),
+            ConsumerConfig(durable_name = names.durable, ack_policy = "explicit"),
         ).await()
+    }
+
+    /**
+     * Deletes the work-queue stream and the DLQ stream of [names] when they exist.
+     *
+     * The tests of a persistent service share its streams, so each test starts by removing them.
+     */
+    suspend fun deletePersistentStreams(names: ServiceNames) {
+        val streams = jetstreamManager(connection).await().streams
+        for (stream in listOf(names.stream, names.dlqStream)) {
+            try {
+                streams.delete(stream).await()
+            } catch (e: Throwable) {
+                if (e.message?.contains("stream not found") != true) throw e
+            }
+        }
     }
 
     /**
      * Returns the next message of the durable consumer of [names], or `null` after [expiresMs].
      */
     suspend fun nextPersistent(names: ServiceNames, expiresMs: Int = 5000): JsMsg? {
-        val consumer = jetstreamWithConsumers(connection).consumers.get(names.stream, names.responderGroup).await()
+        val consumer = jetstreamWithConsumers(connection).consumers.get(names.stream, names.durable).await()
         return consumer.next(NextOptions(expires = expiresMs)).await()
     }
 

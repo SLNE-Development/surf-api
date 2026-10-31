@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+// Rejected by protoc-gen-surf-nats: the package has no major version suffix.
+package surf.natsjs.invalid;
+
+message UnversionedRequest {
+  optional string name = 1;
+}
+
+service UnversionedService {
+  rpc Find(UnversionedRequest) returns (UnversionedRequest);
+}

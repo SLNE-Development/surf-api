@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+// Request and response types of other files, and a response whose name another imported response shares.
+package surf.natsjs.lookup.v1;
+
+import "surf/natsjs/test/v1/services.proto";
+import "surf/types/v1/uuid.proto";
+
+message FindPlayerResponse {
+  optional string name = 1;
+}
+
+message ResolveResponse {
+  optional surf.types.v1.Uuid id = 1;
+}
+
+service LookupService {
+  rpc Resolve(surf.natsjs.test.v1.FindPlayerRequest) returns (ResolveResponse);
+  rpc Find(surf.natsjs.test.v1.FindPlayerRequest) returns (FindPlayerResponse);
+  rpc FindOriginal(surf.natsjs.test.v1.FindPlayerRequest) returns (surf.natsjs.test.v1.FindPlayerResponse);
+}

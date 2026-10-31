@@ -12,13 +12,9 @@ internal object ProtocolOptions {
     const val METHOD = "method"
     const val NULLABLE = "nullable"
 
-    const val EVENT_OPTIONS = "NatsEventOptions"
     const val SERVICE_OPTIONS = "NatsServiceOptions"
     const val METHOD_OPTIONS = "NatsMethodOptions"
 
-    const val SUBJECT = "subject"
-    const val GLOBAL = "global"
-    const val NAME = "name"
     const val CALL_TIMEOUT_SECONDS = "call_timeout_seconds"
     const val RECIPIENTS = "recipients"
     const val PERSISTENT = "persistent"

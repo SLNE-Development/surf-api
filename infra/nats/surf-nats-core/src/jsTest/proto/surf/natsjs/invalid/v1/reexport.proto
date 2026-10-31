@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+// Makes the surf-nats options visible to importers only through a public import.
+package surf.natsjs.invalid.v1;
+
+import public "surf/nats/v1/options.proto";
+
+message ReexportRequest {
+  optional string name = 1;
+}

@@ -50,30 +50,29 @@ internal class RpcCaller(private val client: NatsClientImpl) {
     /**
      * Returns `undefined` for UNIT methods, the decoded response for VALUE methods and an [Answer] for ANSWER methods.
      */
-    suspend fun call(method: MethodDescriptor, owner: String?, request: ProtoMessageInit?, timeoutMs: Int?): Any? {
+    suspend fun call(method: MethodDescriptor, request: ProtoMessageInit?, timeoutMs: Int?): Any? {
         val timeout = positiveTimeoutOrNull(timeoutMs, "Call timeout") ?: method.timeout
-        val subject = method.subject(owner)
 
         val flow = method.flow
-        if (flow != CallFlow.CORE) return callPersistent(method, subject, method.stream(owner), flow, request, timeout)
+        if (flow != CallFlow.CORE) return callPersistent(method, flow, request, timeout)
 
         val headers = client.headers()
         val encoded = method.encodeRequest(request)
         val body = payloads.offload(headers, encoded, timeout, flow.bucket, stampDeadline = flow.sendsDeadline)
 
         return when (method.recipients) {
-            Recipients.ANY_INSTANCE -> callOne(method, subject, headers, body, timeout)
-            Recipients.ALL_INSTANCES -> callAll(method, subject, headers, body, timeout)
+            Recipients.ANY_INSTANCE -> callOne(method, headers, body, timeout)
+            Recipients.ALL_INSTANCES -> callAll(method, headers, body, timeout)
         }
     }
 
     private suspend fun callOne(
         method: MethodDescriptor,
-        subject: String,
         headers: MsgHdrs,
         body: Uint8Array<*>,
         timeout: Duration,
     ): Any? {
+        val subject = method.subject
         val timeoutMs = timeout.inWholeMilliseconds.toInt()
         val reply = try {
             connection.request(subject, body, RequestOptions(timeout = timeoutMs, headers = headers)).await()
@@ -88,11 +87,11 @@ internal class RpcCaller(private val client: NatsClientImpl) {
 
     private suspend fun callAll(
         method: MethodDescriptor,
-        subject: String,
         headers: MsgHdrs,
         body: Uint8Array<*>,
         timeout: Duration,
     ): Any? {
+        val subject = method.subject
         if (method.result == NatsResultKind.UNIT) {
             // Fan-out to all instances
             connection.publish(subject, body, NatsPublishOptions(headers = headers))
@@ -117,7 +116,7 @@ internal class RpcCaller(private val client: NatsClientImpl) {
             val call = AllCall()
 
             return withTimeoutOrNull(timeout) {
-                collect(method, subject, replies, call)
+                collect(method, replies, call)
             } ?: call.noAnswer()
         } finally {
             subscription.unsubscribe()
@@ -127,7 +126,6 @@ internal class RpcCaller(private val client: NatsClientImpl) {
 
     private suspend fun collect(
         method: MethodDescriptor,
-        subject: String,
         replies: ReceiveChannel<Msg>,
         call: AllCall,
     ): Answer {
@@ -144,7 +142,7 @@ internal class RpcCaller(private val client: NatsClientImpl) {
                     val origin = reply.header(ProtocolHeaders.ORIGIN)
                     val remoteType = reply.header(ProtocolHeaders.ERROR)!!
                     call.record(NatsRemoteError(remoteType, reply.data.decodeToString()))
-                    client.logger.warn("ALL_INSTANCES responder $origin failed on $subject: $remoteType")
+                    client.logger.warn("ALL_INSTANCES responder $origin failed on ${method.subject}: $remoteType")
                 }
 
                 AllReply.ANSWER -> {
@@ -155,7 +153,7 @@ internal class RpcCaller(private val client: NatsClientImpl) {
                         throw e
                     } catch (e: Throwable) {
                         call.record(e)
-                        client.logger.warn("Undecodable ALL_INSTANCES answer from $origin on $subject", e)
+                        client.logger.warn("Undecodable ALL_INSTANCES answer from $origin on ${method.subject}", e)
                         null
                     }
                     if (decoded != null) return Answer(known = true, value = decoded)
@@ -188,12 +186,12 @@ internal class RpcCaller(private val client: NatsClientImpl) {
     // FIRE and PERSISTENT_RPC
     private suspend fun callPersistent(
         method: MethodDescriptor,
-        subject: String,
-        stream: String,
         flow: CallFlow,
         request: ProtoMessageInit?,
         timeout: Duration,
     ): Any? {
+        val subject = method.subject
+        val stream = method.stream
         if (flow == CallFlow.FIRE) {
             PersistentRules.requireFireTimeout(timeout, RuntimeDefaults.dedupeWindow, method.label)
         }

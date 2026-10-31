@@ -79,7 +79,7 @@ internal class ServiceRegistration(
             when (method.recipients) {
                 Recipients.ANY_INSTANCE -> dispatcher.subscribe(
                     method.subject,
-                    descriptor.responderGroup,
+                    descriptor.names.queueGroup,
                     handler
                 )
 
@@ -91,7 +91,7 @@ internal class ServiceRegistration(
             JetStreamProvisioner.ensureStreams(streams)
             withContext(Dispatchers.IO) {
                 val consumer = connection.getStreamContext(streams.stream)
-                    .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(descriptor.responderGroup))
+                    .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(streams.durable))
                 messageConsumer = consumer.consume(dispatcher) { onPersistent(it) }
             }
         }
@@ -333,7 +333,8 @@ internal class ServiceRegistration(
 
         dispatcher?.let { dispatcher ->
             val drained = try {
-                dispatcher.drain(timeout.toJavaDuration())
+                // jnats unsubscribes and flushes before drain returns, so the lock does not cover the wait
+                NatsConnectionManager.withFlushLock(timeout.toJavaDuration()) { dispatcher.drain(it) }
                     .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()

@@ -32,10 +32,10 @@ class NatsClientPublishTest {
     fun disconnect() = runBlocking { NatsInstance.instance.disable() }
 
     @Test
-    fun `event is published as protobuf with headers on the versioned subject`() = withClient("publish-proto") { client ->
+    fun `event is published as protobuf with headers on the subject of its proto name`() = withClient("publish-proto") { client ->
         val event = Created(42)
 
-        val message = publishAndReceive(client, "publish-proto.v1.created", event)
+        val message = publishAndReceive(client, "surf.evt.surf.nats.test.v1.Created", event)
 
         val contentType = message.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)
         assertEquals("application/protobuf", contentType)
@@ -47,16 +47,18 @@ class NatsClientPublishTest {
     }
 
     @Test
-    fun `global event is published on its versioned subject without the client prefix`() =
-        withClient("publish-global") { client ->
-            val message = publishAndReceive(client, "panel.v1.listener-test.created", PanelEvent(7))
-            assertEquals("panel.v1.listener-test.created", message.subject)
+    fun `differently named clients publish an event on the same subject`() = withClient("publish-same-a") { client ->
+        withClient("publish-same-b") { other ->
+            val subject = "surf.evt.surf.nats.test.v1.PanelEvent"
+            assertEquals(subject, publishAndReceive(client, subject, PanelEvent(7)).subject)
+            assertEquals(subject, publishAndReceive(other, subject, PanelEvent(8)).subject)
         }
+    }
 
     @Test
     fun `major versions of an event are published on separate subjects`() = withClient("publish-versions") { client ->
-        val v1 = publishAndReceive(client, "publish-versions.v1.versioned.changed", VersionedChangedV1("one"))
-        val v2 = publishAndReceive(client, "publish-versions.v2.versioned.changed", VersionedChangedV2("two", 2))
+        val v1 = publishAndReceive(client, "surf.evt.surf.nats.test.v1.VersionedChanged", VersionedChangedV1("one"))
+        val v2 = publishAndReceive(client, "surf.evt.surf.nats.test.v2.VersionedChanged", VersionedChangedV2("two", 2))
 
         val contentType = ProtocolHeaders.PROTOBUF_CONTENT_TYPE
         assertEquals(VersionedChangedV1("one"), NatsCodec.decode(VersionedChangedV1.serializer(), v1.data, contentType))
@@ -65,7 +67,7 @@ class NatsClientPublishTest {
 
     @Test
     fun `fieldless event is published with an empty body`() = withClient("publish-empty") { client ->
-        val message = publishAndReceive(client, "publish-empty.v1.heartbeat", Heartbeat())
+        val message = publishAndReceive(client, "surf.evt.surf.nats.test.v1.Heartbeat", Heartbeat())
 
         assertEquals(0, message.data?.size ?: 0)
     }

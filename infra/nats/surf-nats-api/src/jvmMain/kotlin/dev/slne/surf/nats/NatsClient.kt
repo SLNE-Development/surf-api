@@ -41,8 +41,9 @@ public interface NatsClient : AutoCloseable {
     /**
      * Identifies the application on the network using lowercase alphanumeric groups separated by hyphens.
      *
-     * Prefixes non-global events and services and groups [dev.slne.surf.nats.rpc.Recipients.ANY_INSTANCE]
-     * listeners and non-global service handlers. Changing this name changes the protocol.
+     * Appears in the `Surf-Origin` header of outgoing messages and is the queue group of
+     * [dev.slne.surf.nats.rpc.Recipients.ANY_INSTANCE] listeners, so each application receives such an event once.
+     * Subjects, streams and service queue groups derive from the proto names of the contracts, not from this name.
      */
     public val name: String
 
@@ -58,7 +59,7 @@ public interface NatsClient : AutoCloseable {
      * handed to the connection. Delivery is not guaranteed. Events exceeding the server's payload
      * limit are rejected and are never offloaded. Serialization failures propagate to the caller.
      *
-     * @throws IllegalArgumentException if the event class is not a generated event, its subject is invalid, or the
+     * @throws IllegalArgumentException if the event class is not a generated event, its proto name is invalid, or the
      * message is too large.
      * @throws IllegalStateException if the client is closed or no NATS connection is initialized.
      */
@@ -86,9 +87,10 @@ public interface NatsClient : AutoCloseable {
      * Registers an implementation of the generated service interface [type].
      *
      * The implementation must implement [type]. Interface validation problems are reported together.
-     * This client allows only one active registration for each service name and major version within
-     * its global or client scope. Registration returns once the server has processed the subscriptions and, for
-     * persistent methods, storage and consumers have been provisioned.
+     * This client allows only one active registration for each proto service name. All clients that register the
+     * same service share its [dev.slne.surf.nats.rpc.Recipients.ANY_INSTANCE] and persistent requests, whatever
+     * their [name]. Registration returns once the server has processed the subscriptions and, for persistent methods,
+     * storage and consumers have been provisioned.
      *
      * Handlers run on [kotlinx.coroutines.Dispatchers.Default] and may run concurrently. Move blocking
      * work to [kotlinx.coroutines.Dispatchers.IO] using [kotlinx.coroutines.withContext].

@@ -2,7 +2,7 @@ package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.DuplicateRpcService
 import dev.slne.surf.nats.EmptyService
-import dev.slne.surf.nats.InvalidSubjectService
+import dev.slne.surf.nats.InvalidRpcNameService
 import dev.slne.surf.nats.MismatchedValueClassService
 import dev.slne.surf.nats.MissingMethodService
 import dev.slne.surf.nats.NatsClient
@@ -44,20 +44,19 @@ class ServiceDescriptorTest {
     private fun client(name: String = "svc-${UUID.randomUUID().toString().take(8)}") =
         (NatsClient.create(name) as NatsClientImpl).also { clients += it }
 
-    private fun describe(type: Class<*>, clientName: String? = null) =
-        (if (clientName != null) client(clientName) else client()).serviceDescriptor(type)
+    private fun describe(type: Class<*>) = ServiceDescriptor.of(type)
 
     private fun ServiceDescriptor.method(name: String) = methods.single { it.kotlinName == name }
 
     @Test
-    fun `prefixed method subjects carry the client, kind and major version`() {
-        val descriptor = describe(CalcService::class.java, "transaction")
+    fun `method subjects carry the kind, the service full name and the rpc name`() {
+        val descriptor = describe(CalcService::class.java)
 
-        assertEquals("calc", descriptor.name)
-        assertEquals(1, descriptor.majorVersion)
-        assertEquals("transaction.\$rpc.v1.calc.mixed", descriptor.method("mixed").subject)
-        assertEquals("transaction.\$rpc.v1.calc.inner-timeout", descriptor.method("innerTimeout").subject)
-        assertEquals("transaction.\$rpc.v1.calc.slow-fire", descriptor.method("slowFire").subject)
+        assertEquals("surf.nats.test.v1.CalcService", descriptor.name)
+        assertEquals("surf.rpc.surf.nats.test.v1.CalcService.Mixed", descriptor.method("mixed").subject)
+        assertEquals("surf.rpc.surf.nats.test.v1.CalcService.InnerTimeout", descriptor.method("innerTimeout").subject)
+        assertEquals("surf.rpc.surf.nats.test.v1.CalcService.SlowFire", descriptor.method("slowFire").subject)
+        assertEquals("surf.nats.test.v1.CalcService", descriptor.names.queueGroup)
     }
 
     @Test
@@ -144,20 +143,20 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `persistent methods use the persist namespace and versioned streams`() {
-        val descriptor = describe(OrderService::class.java, "transaction")
+    fun `persistent methods use the persist namespace and the service streams`() {
+        val descriptor = describe(OrderService::class.java)
 
         assertTrue(descriptor.method("place").persistent)
-        assertEquals("transaction.\$persist.v1.orders.place", descriptor.method("place").subject)
+        assertEquals("surf.persist.surf.nats.test.v1.OrderService.Place", descriptor.method("place").subject)
         assertFalse(descriptor.method("ping").persistent)
-        assertEquals("transaction.\$rpc.v1.orders.ping", descriptor.method("ping").subject)
-        assertEquals("transaction", descriptor.responderGroup)
+        assertEquals("surf.rpc.surf.nats.test.v1.OrderService.Ping", descriptor.method("ping").subject)
 
         val streams = assertNotNull(descriptor.streams)
-        assertEquals("SURF_TRANSACTION_ORDERS_V1", streams.stream)
-        assertEquals("transaction.\$persist.v1.orders.*", streams.streamFilter)
-        assertEquals("SURF_TRANSACTION_ORDERS_V1_DLQ", streams.dlqStream)
-        assertEquals("transaction.\$dlq.v1.orders", streams.dlqSubject)
+        assertEquals("SURF_PERSIST_surf_nats_test_v1_OrderService", streams.stream)
+        assertEquals("surf.persist.surf.nats.test.v1.OrderService.*", streams.streamFilter)
+        assertEquals("SURF_DLQ_surf_nats_test_v1_OrderService", streams.dlqStream)
+        assertEquals("surf.dlq.surf.nats.test.v1.OrderService", streams.dlqSubject)
+        assertEquals("responders", streams.durable)
     }
 
     @Test
@@ -166,52 +165,37 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `global service owns the service namespace`() {
-        val descriptor = describe(RolesService::class.java, "transaction")
+    fun `differently named clients share one descriptor named after the contract`() {
+        val first = client("transaction").serviceDescriptor(RolesService::class.java)
+        val second = client("lobby").serviceDescriptor(RolesService::class.java)
 
-        assertEquals("ext-roles.\$rpc.v1.echo", descriptor.method("echo").subject)
-        assertEquals("ext-roles.\$persist.v1.whitelist", descriptor.method("whitelist").subject)
-        assertEquals("ext-roles.\$persist.v1.store", descriptor.method("store").subject)
-        assertNull(descriptor.presenceSubject)
-        assertEquals("ext-roles", descriptor.responderGroup)
-
-        val streams = assertNotNull(descriptor.streams)
-        assertEquals("SURF__EXT_ROLES_V1", streams.stream)
-        assertEquals("ext-roles.\$persist.v1.*", streams.streamFilter)
-        assertEquals("SURF__EXT_ROLES_V1_DLQ", streams.dlqStream)
-        assertEquals("ext-roles.\$dlq.v1", streams.dlqSubject)
+        assertSame(first, second)
+        assertEquals(
+            listOf(
+                "surf.persist.surf.nats.test.v1.RolesService.Whitelist",
+                "surf.rpc.surf.nats.test.v1.RolesService.Echo",
+                "surf.rpc.surf.nats.test.v1.RolesService.Owner",
+                "surf.persist.surf.nats.test.v1.RolesService.Store",
+                "surf.rpc.surf.nats.test.v1.RolesService.Handle",
+            ),
+            first.methods.map { it.subject },
+        )
+        assertEquals("surf.nats.test.v1.RolesService", first.names.queueGroup)
+        val streams = assertNotNull(first.streams)
+        assertEquals("SURF_PERSIST_surf_nats_test_v1_RolesService", streams.stream)
+        assertEquals("responders", streams.durable)
+        assertNull(first.presenceSubject)
     }
 
     @Test
-    fun `global service has the same names in every client`() {
-        val first = describe(RolesService::class.java)
-        val second = describe(RolesService::class.java)
+    fun `major versions of one service use separate subjects and streams`() {
+        val v1 = describe(VersionedServiceV1::class.java)
+        val v2 = describe(VersionedServiceV2::class.java)
 
-        assertEquals(first.methods.map { it.subject }, second.methods.map { it.subject })
-        assertEquals(first.streams?.stream, second.streams?.stream)
-        assertEquals(first.responderGroup, second.responderGroup)
-        assertEquals(first.registrationKey, second.registrationKey)
-    }
-
-    @Test
-    fun `registration keys carry the scope and the major version`() {
-        val client = client("transaction")
-
-        assertEquals("client:calc:v1", client.serviceDescriptor(CalcService::class.java).registrationKey)
-        assertEquals("global:ext-roles:v1", client.serviceDescriptor(RolesService::class.java).registrationKey)
-        assertEquals("client:versioned:v1", client.serviceDescriptor(VersionedServiceV1::class.java).registrationKey)
-        assertEquals("client:versioned:v2", client.serviceDescriptor(VersionedServiceV2::class.java).registrationKey)
-    }
-
-    @Test
-    fun `major versions of one service use separate subjects`() {
-        val client = client("transaction")
-        val v1 = client.serviceDescriptor(VersionedServiceV1::class.java)
-        val v2 = client.serviceDescriptor(VersionedServiceV2::class.java)
-
-        assertEquals(v1.name, v2.name)
-        assertEquals("transaction.\$rpc.v1.versioned.ping", v1.methods.single().subject)
-        assertEquals("transaction.\$rpc.v2.versioned.ping", v2.methods.single().subject)
+        assertEquals("surf.nats.test.v1.VersionedService", v1.name)
+        assertEquals("surf.nats.test.v2.VersionedService", v2.name)
+        assertEquals("surf.rpc.surf.nats.test.v1.VersionedService.Ping", v1.methods.single().subject)
+        assertEquals("surf.rpc.surf.nats.test.v2.VersionedService.Ping", v2.methods.single().subject)
     }
 
     @Test
@@ -272,16 +256,13 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `an invalid composed method subject is rejected`() {
+    fun `an rpc name that is no proto identifier is rejected`() {
         val message = assertFailsWith<IllegalArgumentException> {
-            describe(InvalidSubjectService::class.java, "transaction")
+            describe(InvalidRpcNameService::class.java)
         }.message.orEmpty()
 
-        assertContains(message, "Invalid NATS_DESCRIPTOR of ${InvalidSubjectService::class.java.name}")
-        assertContains(
-            message,
-            "Invalid NATS subject 'transaction.\$rpc.v1.invalid-subject.pi ng' for ${InvalidSubjectService::class.java.name}.ping",
-        )
+        assertContains(message, "Invalid NATS_DESCRIPTOR of ${InvalidRpcNameService::class.java.name}")
+        assertContains(message, "ping (rpc Pi ng): rpc surf.nats.test.v1.InvalidRpcNameService.Pi ng:")
     }
 
     @Test

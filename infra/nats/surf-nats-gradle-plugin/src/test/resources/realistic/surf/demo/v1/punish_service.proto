@@ -10,7 +10,7 @@ import "surf/types/v1/uuid.proto";
 import "surf/demo/v1/common.proto";
 
 service PunishService {
-  option (surf.nats.v1.service) = { name: "punish" call_timeout_seconds: 10 };
+  option (surf.nats.v1.service) = { call_timeout_seconds: 10 };
 
   rpc FindPunishments(FindPunishmentsRequest) returns (FindPunishmentsResponse);
 
@@ -19,7 +19,7 @@ service PunishService {
   }
 
   rpc Lookup(LookupRequest) returns (LookupReply) {
-    option (surf.nats.v1.method) = { name: "lookup-player" recipients: NATS_RECIPIENTS_ALL_INSTANCES call_timeout_seconds: 0 };
+    option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES call_timeout_seconds: 0 };
   }
 
   rpc Store(StoreRequest) returns (google.protobuf.Empty) {

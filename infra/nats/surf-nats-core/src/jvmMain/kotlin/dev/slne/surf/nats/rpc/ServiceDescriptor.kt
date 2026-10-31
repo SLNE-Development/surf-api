@@ -5,7 +5,6 @@ import dev.slne.surf.nats.bytecode.ValueClassParameters
 import dev.slne.surf.nats.descriptor.GeneratedDescriptors
 import dev.slne.surf.nats.descriptor.NatsMethodDescriptor
 import dev.slne.surf.nats.descriptor.NatsResultKind
-import dev.slne.surf.nats.protocol.ProtocolNaming
 import dev.slne.surf.nats.protocol.ProtocolResolution
 import dev.slne.surf.nats.protocol.ServiceNames
 import dev.slne.surf.nats.util.isSuspend
@@ -21,12 +20,10 @@ internal class ServiceDescriptor(
     val names: ServiceNames,
     val methods: List<MethodDescriptor>,
 ) {
+    /**
+     * Proto full name of the service; a client registers at most one implementation per name.
+     */
     val name: String get() = names.service
-    val majorVersion: Int get() = names.majorVersion
-
-    // Queue group of ANY_INSTANCE methods and durable consumer of persistent methods
-    val responderGroup: String get() = names.responderGroup
-    val registrationKey: String get() = names.registrationKey
 
     val presenceSubject: String? = if (methods.any { it.recipients == Recipients.ALL_INSTANCES && it.result == NatsResultKind.ANSWER }) {
         names.presenceSubject
@@ -38,13 +35,18 @@ internal class ServiceDescriptor(
     val streams: ServiceNames? = if (methods.any { it.persistent }) names else null
 
     companion object {
-        fun of(type: Class<*>, clientName: String): ServiceDescriptor {
+        /**
+         * Reads the generated descriptor of [type] and resolves it against the interface methods.
+         *
+         * Throws [IllegalArgumentException] listing every problem when the descriptor does not match [type] or names
+         * an invalid service or rpc.
+         */
+        fun of(type: Class<*>): ServiceDescriptor {
             val generated = GeneratedDescriptors.service(type)
-            val names = ServiceNames(
-                if (generated.global) null else clientName,
-                generated.name,
-                generated.majorVersion,
-            )
+            ServiceNames.problem(generated.protoName)?.let { problem ->
+                throw IllegalArgumentException("Invalid NATS_DESCRIPTOR of ${type.name}: $problem")
+            }
+            val names = ServiceNames(generated.protoName)
 
             // Static and synthetic members include the `$default` bridges of default parameter values
             val candidates = type.methods.filter { m ->
@@ -71,11 +73,11 @@ internal class ServiceDescriptor(
                 val valueClasses = ValueClassParameters.of(jvmMethod, method.parameters, label, problems)
                     ?: return@forEachIndexed
 
-                val subject = names.methodSubject(method.name, method.persistent)
-                if (!ProtocolNaming.isValidSubject(subject)) {
-                    problems.add("Invalid NATS subject '$subject' for ${type.name}.${method.kotlinName}")
+                ServiceNames.methodProblem(names.service, method.protoName)?.let { problem ->
+                    problems.add("$label: $problem")
                     return@forEachIndexed
                 }
+                val subject = names.methodSubject(method.protoName, method.persistent)
 
                 val timeout = ProtocolResolution
                     .effectiveCallTimeoutSeconds(method.callTimeoutSeconds, method.persistent)

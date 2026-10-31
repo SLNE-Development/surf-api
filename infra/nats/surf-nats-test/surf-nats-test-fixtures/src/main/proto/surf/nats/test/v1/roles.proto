@@ -9,12 +9,10 @@ import "surf/nats/v1/options.proto";
 import "surf/nats/test/v1/common.proto";
 import "surf/types/v1/uuid.proto";
 
-// Global service for external callers: subjects without a client prefix.
+// Service for external callers.
 service RolesService {
-  option (surf.nats.v1.service) = { name: "ext-roles" global: true };
-
   rpc Whitelist(WhitelistRequest) returns (google.protobuf.Empty) {
-    option (surf.nats.v1.method) = { name: "whitelist" persistent: true };
+    option (surf.nats.v1.method) = { persistent: true };
   }
   rpc Echo(EchoRequest) returns (Number);
   rpc Owner(OwnerRequest) returns (OwnerReply);

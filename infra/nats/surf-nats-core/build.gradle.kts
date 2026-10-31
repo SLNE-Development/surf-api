@@ -18,7 +18,8 @@ plugins {
     id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
-// Kotlin/JS test harness: protobuf-es code for src/jsTest/proto and NATS servers (Docker) for the e2e tests.
+// Kotlin/JS test harness: protobuf-es and protoc-gen-surf-nats code for src/jsTest/proto and NATS servers (Docker) for
+// the e2e tests.
 
 val bufVersion = "1.75.0"
 val natsTestImage = "nats:2-alpine"
@@ -27,6 +28,16 @@ val natsTestContainerPrefix = "surf-nats-core-js-test"
 val rootNodeModules = rootProject.layout.buildDirectory.dir("js/node_modules")
 val fixtureEsProtoDir = layout.buildDirectory.dir("es-proto")
 val generatedEsDir = layout.buildDirectory.dir("generated/es")
+val fixtureImageFile = layout.buildDirectory.file("generated/protoc-image/fixtures.binpb")
+val protocGoldenDir = layout.projectDirectory.dir("src/jsTest/protoc/golden")
+// Below the root build/js, so Node resolves the npm dependencies of the staged package from the root node_modules
+val protocPluginDir = rootProject.layout.buildDirectory.dir("js/surf-nats-protoc")
+
+val prepareProtocPlugin = tasks.register<Sync>("prepareProtocPlugin") {
+    description = "Stages the npm distribution, whose bin protoc-gen-surf-nats generateFixtureEs runs."
+    into(protocPluginDir)
+    from(tasks.named("jsNodeProductionLibraryDistribution"))
+}
 val natsTestUrlFile = layout.buildDirectory.file("nats-js-test/url.txt")
 val natsTestAuthFile = layout.buildDirectory.file("nats-js-test/auth.properties")
 val natsTestContainersFile = layout.buildDirectory.file("nats-js-test/containers.txt")
@@ -36,6 +47,7 @@ val prepareFixtureEsProtos = tasks.register<Sync>("prepareFixtureEsProtos") {
     description = "Stages the protos and the buf configuration for generateFixtureEs."
     val nodeExecutable = project.the<NodeJsEnvSpec>().executable
     val protocGenEs = rootNodeModules.map { it.file("@bufbuild/protoc-gen-es/bin/protoc-gen-es").asFile }
+    val protocGenSurfNats = protocPluginDir.map { it.file("bin/protoc-gen-surf-nats.mjs").asFile }
 
     into(fixtureEsProtoDir)
     from("src/jsTest/buf") {
@@ -43,6 +55,7 @@ val prepareFixtureEsProtos = tasks.register<Sync>("prepareFixtureEsProtos") {
             expand(
                 "node" to nodeExecutable.get().replace('\\', '/'),
                 "protocGenEs" to protocGenEs.get().invariantSeparatorsPath,
+                "protocGenSurfNats" to protocGenSurfNats.get().invariantSeparatorsPath,
             )
         }
     }
@@ -55,14 +68,16 @@ val prepareFixtureEsProtos = tasks.register<Sync>("prepareFixtureEsProtos") {
 }
 
 val generateFixtureEs = tasks.register<Exec>("generateFixtureEs") {
-    description = "Generates protobuf-es code (target=js+dts) for the JS test protos into build/generated/es."
-    dependsOn(prepareFixtureEsProtos, ":kotlinNpmInstall", tasks.named("kotlinNodeJsSetup"))
+    description = "Generates protobuf-es code and surf-nats clients (target=js+dts) for the JS test protos into " +
+            "build/generated/es."
+    dependsOn(prepareFixtureEsProtos, prepareProtocPlugin, ":kotlinNpmInstall", tasks.named("kotlinNodeJsSetup"))
 
     val nodeExecutable = project.the<NodeJsEnvSpec>().executable
     val buf = rootNodeModules.map { it.file("@bufbuild/buf/bin/buf").asFile.absolutePath }
     val outputDir = generatedEsDir
 
     inputs.dir(fixtureEsProtoDir)
+    inputs.dir(protocPluginDir)
     outputs.dir(outputDir)
     workingDir(fixtureEsProtoDir)
 
@@ -70,6 +85,26 @@ val generateFixtureEs = tasks.register<Exec>("generateFixtureEs") {
         outputDir.get().asFile.deleteRecursively()
         executable = nodeExecutable.get()
         setArgs(listOf(buf.get(), "generate", "--output", outputDir.get().asFile.absolutePath))
+    }
+}
+
+// FileDescriptorSet of the JS test protos (with source info) for the in-process tests of protoc-gen-surf-nats.
+val buildFixtureImage = tasks.register<Exec>("buildFixtureImage") {
+    description = "Builds the JS test protos into a FileDescriptorSet for the protoc-gen-surf-nats tests."
+    dependsOn(prepareFixtureEsProtos, ":kotlinNpmInstall", tasks.named("kotlinNodeJsSetup"))
+
+    val nodeExecutable = project.the<NodeJsEnvSpec>().executable
+    val buf = rootNodeModules.map { it.file("@bufbuild/buf/bin/buf").asFile.absolutePath }
+    val imageFile = fixtureImageFile
+
+    inputs.dir(fixtureEsProtoDir.map { it.dir("proto") })
+    outputs.file(imageFile)
+    workingDir(fixtureEsProtoDir)
+
+    doFirst {
+        imageFile.get().asFile.parentFile.mkdirs()
+        executable = nodeExecutable.get()
+        setArgs(listOf(buf.get(), "build", "--as-file-descriptor-set", "-o", imageFile.get().asFile.absolutePath))
     }
 }
 
@@ -204,10 +239,12 @@ kotlin {
         generateTypeScriptDefinitions()
         outputModuleName = "@slne/surf-nats"
 
-        // The hand-written facade (src/jsMain/resources) adds protobuf-es generics on top of the Kotlin exports.
+        // The hand-written facade (src/jsMain/resources) adds protobuf-es generics on top of the Kotlin exports;
+        // bin/protoc-gen-surf-nats.mjs runs the protoc plugin.
         compilations["main"].packageJson {
             customField("main", "index.mjs")
             customField("types", "index.d.mts")
+            customField("bin", mapOf("protoc-gen-surf-nats" to "bin/protoc-gen-surf-nats.mjs"))
             customField(
                 "exports", mapOf(
                     "." to mapOf(
@@ -244,6 +281,8 @@ kotlin {
             implementation(npm("@nats-io/jetstream", libs.versions.nats.js.get()))
             implementation(npm("@nats-io/obj", libs.versions.nats.js.get()))
             implementation(peerNpm("@bufbuild/protobuf", libs.versions.bufbuild.protobuf.get()))
+            // protoc-gen-surf-nats; loaded on demand, so the client runtime does not load it
+            implementation(npm("@bufbuild/protoplugin", libs.versions.bufbuild.protobuf.get()))
         }
         jsTest {
             resources.srcDir(generateFixtureEs)
@@ -292,6 +331,17 @@ tasks.named<Test>("jvmTest") {
 }
 
 tasks.named<KotlinJsTest>("jsNodeTest") {
+    // ProtocPluginTest reads the fixture image and compares against the golden files;
+    // -Psurf.nats.protoc.updateGolden=true rewrites the golden files instead.
+    dependsOn(buildFixtureImage)
+    inputs.file(fixtureImageFile)
+    inputs.dir(protocGoldenDir)
+    environment("SURF_NATS_PROTOC_IMAGE", fixtureImageFile.get().asFile.absolutePath)
+    environment("SURF_NATS_PROTOC_GOLDEN_DIR", protocGoldenDir.asFile.absolutePath)
+    if (providers.gradleProperty("surf.nats.protoc.updateGolden").map(String::toBoolean).getOrElse(false)) {
+        environment("SURF_NATS_PROTOC_UPDATE_GOLDEN", "true")
+    }
+
     if (jsE2eEnabled) {
         val servers = natsTestServers
         usesService(servers)
@@ -325,6 +375,14 @@ val prepareJsConsumerCheck = tasks.register<Sync>("prepareJsConsumerCheck") {
     with(jsDistributionWithFixtures)
     from(rootNodeModules.map { it.dir("@bufbuild/protobuf") }) {
         into("node_modules/@bufbuild/protobuf")
+    }
+    // The target=ts golden files of protoc-gen-surf-nats, next to the protobuf-es declarations they import
+    into("golden-ts") {
+        from(protocGoldenDir.dir("ts"))
+        from("src/jsTest/resources/gen")
+        from(generateFixtureEs.map { it.outputs.files.singleFile.resolve("gen") }) {
+            include("**/*_pb.d.ts")
+        }
     }
 }
 

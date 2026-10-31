@@ -95,15 +95,13 @@ message InteropEvolvedV2 {
 }
 
 message InteropEvent {
-  option (surf.nats.v1.event) = { subject: "interop" };
+  option (surf.nats.v1.event) = true;
 
   optional InteropScalars scalars = 1;
   optional InteropTypes types = 2 [(surf.nats.v1.nullable) = true];
 }
 
 service InteropService {
-  option (surf.nats.v1.service) = { name: "interop" };
-
   rpc EchoScalars(InteropScalars) returns (InteropScalars);
   rpc EchoMaps(InteropMaps) returns (InteropMaps);
   rpc EchoPacked(InteropPacked) returns (InteropPacked);
@@ -119,10 +117,8 @@ service InteropService {
 }
 
 // Serves the Kotlin-encoded wire vectors of the JVM <-> JS interop test by name; the JS side checks the decoded
-// message and sends it back through InteropService.
+// message and sends it back through InteropService. surf.nats.test.interop.v1.RawVectorService serves the raw ones.
 service InteropVectorService {
-  option (surf.nats.v1.service) = { name: "interop-vectors" };
-
   rpc Scalars(InteropVectorRequest) returns (InteropScalars);
   rpc Maps(InteropVectorRequest) returns (InteropMaps);
   rpc Packed(InteropVectorRequest) returns (InteropPacked);
@@ -133,8 +129,6 @@ service InteropVectorService {
   rpc Types(InteropVectorRequest) returns (InteropTypes);
   rpc Empty(InteropVectorRequest) returns (InteropEmpty);
   rpc Oneof(InteropVectorRequest) returns (InteropOneof);
-  rpc Evolved(InteropVectorRequest) returns (InteropEvolved);
-  rpc EvolvedV2(InteropVectorRequest) returns (InteropEvolvedV2);
 }
 
 message InteropVectorRequest {

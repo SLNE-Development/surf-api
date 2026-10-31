@@ -30,16 +30,16 @@ message BlobResponse {
   optional bytes data = 1;
 }
 
+// Players on the network.
 service PlayerService {
-  option (surf.nats.v1.service) = { name: "players" };
-
+  // Finds an online player by name.
   rpc FindPlayer(FindPlayerRequest) returns (FindPlayerResponse);
   rpc Kick(FindPlayerRequest) returns (google.protobuf.Empty);
   rpc Locate(LocateRequest) returns (LocateResponse) {
     option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
   }
   rpc Broadcast(FindPlayerRequest) returns (google.protobuf.Empty) {
-    option (surf.nats.v1.method) = { name: "broadcast-all", recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+    option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
   }
   rpc SlowFind(FindPlayerRequest) returns (FindPlayerResponse) {
     option (surf.nats.v1.method) = { call_timeout_seconds: 1 };
@@ -71,16 +71,10 @@ service AuditService {
 }
 
 service RegistryService {
-  option (surf.nats.v1.service) = { global: true, recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  option (surf.nats.v1.service) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
 
   rpc Lookup(FindPlayerRequest) returns (FindPlayerResponse) {
     option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ANY_INSTANCE };
   }
   rpc Announce(FindPlayerRequest) returns (google.protobuf.Empty);
-}
-
-service StreamingService {
-  option (surf.nats.v1.service) = { name: "streaming" };
-
-  rpc Watch(FindPlayerRequest) returns (stream FindPlayerResponse);
 }

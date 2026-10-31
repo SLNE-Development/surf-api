@@ -8,7 +8,7 @@ import "google/protobuf/empty.proto";
 import "surf/nats/v1/options.proto";
 
 service VersionedService {
-  option (surf.nats.v1.service) = { global: true recipients: NATS_RECIPIENTS_ANY_INSTANCE persistent: true };
+  option (surf.nats.v1.service) = { recipients: NATS_RECIPIENTS_ANY_INSTANCE persistent: true };
 
   rpc Ping(google.protobuf.Empty) returns (Pong) {
     option (surf.nats.v1.method) = { persistent: false };

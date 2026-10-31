@@ -37,9 +37,12 @@ class PayloadE2eTest {
 
     private fun blob(data: Uint8Array<*>?): BlobData = unsafeJso { this.data = data }
 
+    private val players = ServiceNames("surf.natsjs.test.v1.PlayerService")
+
+    private val echoSubject get() = players.methodSubject("Echo", persistent = false)
+
     @Test
     fun largeRequestsAndResponsesGoThroughTheObjectStore() = e2eTest {
-        val owner = uniqueName("payload-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
         try {
@@ -49,13 +52,13 @@ class PayloadE2eTest {
             val replyRefs = mutableListOf<String>()
             val responder = this
 
-            raw.subscribe("$owner.\$rpc.v1.players.echo", queue = owner) { request ->
+            raw.subscribe(echoSubject, queue = players.queueGroup) { request ->
                 seenRequests += request
                 responder.respondLarge(raw, request, responseData, replyRefs)
             }
             raw.flush()
 
-            val response = client.target(owner).call(echo, blob(requestData)).await()
+            val response = client.call(echo, blob(requestData)).await()
             assertTrue(responseData.contentEquals(response.fields<BlobData>().data))
 
             val request = seenRequests.single()
@@ -74,18 +77,17 @@ class PayloadE2eTest {
 
     @Test
     fun smallPayloadsStayInline() = e2eTest {
-        val owner = uniqueName("payload-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
         try {
-            raw.subscribe("$owner.\$rpc.v1.players.echo", queue = owner) { request ->
+            raw.subscribe(echoSubject, queue = players.queueGroup) { request ->
                 val data = raw.decode(BlobRequestSchema, request.data).fields<BlobData>().data
                 raw.respond(request, raw.encode(BlobResponseSchema, blob(data)))
             }
             raw.flush()
 
             val data = bytesOfSize(1000)
-            val response = client.target(owner).call(echo, blob(data)).await()
+            val response = client.call(echo, blob(data)).await()
             assertTrue(data.contentEquals(response.fields<BlobData>().data))
         } finally {
             client.close().await()
@@ -95,12 +97,11 @@ class PayloadE2eTest {
 
     @Test
     fun requestsAreOffloadedExactlyAboveTheReservedPayloadSize() = e2eTest {
-        val owner = uniqueName("payload-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
         try {
             val requests = mutableListOf<Msg>()
-            raw.subscribe("$owner.\$rpc.v1.players.echo", queue = owner) { request ->
+            raw.subscribe(echoSubject, queue = players.queueGroup) { request ->
                 requests += request
                 raw.respond(request, raw.encode(BlobResponseSchema, blob(bytesOfSize(1))))
             }
@@ -114,8 +115,8 @@ class PayloadE2eTest {
             // BlobRequest.data is the field tag, a 3-byte length varint and the data
             val atThreshold = maxBody - 4
 
-            client.target(owner).call(echo, blob(bytesOfSize(atThreshold))).await()
-            client.target(owner).call(echo, blob(bytesOfSize(atThreshold + 1))).await()
+            client.call(echo, blob(bytesOfSize(atThreshold))).await()
+            client.call(echo, blob(bytesOfSize(atThreshold + 1))).await()
 
             val (inline, offloaded) = requests
             assertNull(header(inline, ProtocolHeaders.PAYLOAD_REF))
@@ -130,17 +131,16 @@ class PayloadE2eTest {
 
     @Test
     fun offloadedPayloadsMustNotOutliveTheBucketTtl() = e2eTest {
-        val owner = uniqueName("payload-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
         try {
             val requests = mutableListOf<Msg>()
-            raw.subscribe("$owner.\$rpc.v1.players.echo", queue = owner) { requests += it }
+            raw.subscribe(echoSubject, queue = players.queueGroup) { requests += it }
             raw.flush()
 
             // The transient bucket keeps objects for 10 min; a call waiting longer cannot offload its request
             val error = assertFailsWith<IllegalArgumentException> {
-                client.target(owner).call(echo, blob(bytesOfSize(1_500_000)), callOptions(timeoutMs = 601_000)).await()
+                client.call(echo, blob(bytesOfSize(1_500_000)), callOptions(timeoutMs = 601_000)).await()
             }
             assertTrue(error.message!!.contains("exceeds the TTL of 10m (bucket ${ProtocolDefaults.TRANSIENT_PAYLOAD_BUCKET})"), error.message)
 
@@ -155,20 +155,19 @@ class PayloadE2eTest {
 
     @Test
     fun payloadBucketsAreCreatedWithTheJvmTtlAndFileStorage() = e2eTest {
-        val owner = uniqueName("payload-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
         try {
-            raw.subscribe("$owner.\$rpc.v1.players.echo", queue = owner) { request ->
+            raw.subscribe(echoSubject, queue = players.queueGroup) { request ->
                 raw.respond(request, raw.encode(BlobResponseSchema, blob(bytesOfSize(10))))
             }
             raw.flush()
-            val names = ServiceNames(owner, "audit-service", 1)
+            val names = ServiceNames("surf.natsjs.test.v1.AuditService")
             raw.addPersistentStreams(names)
 
             // One offload per bucket; only surf-nats-js creates these buckets on the e2e server
-            client.target(owner).call(echo, blob(bytesOfSize(1_500_000))).await()
-            client.target(owner).call(AuditService.methods.first { it.localName == "record" }, unsafeJso<AuditEntry> {
+            client.call(echo, blob(bytesOfSize(1_500_000))).await()
+            client.call(AuditService.methods.first { it.localName == "record" }, unsafeJso<AuditEntry> {
                 action = "big"
                 data = bytesOfSize(1_500_000)
             }).await()
@@ -189,7 +188,6 @@ class PayloadE2eTest {
 
     @Test
     fun offloadedAllInstancesAnswersAreResolvedAndDeleted() = e2eTest {
-        val owner = uniqueName("payload-owner")
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
         try {
@@ -197,7 +195,7 @@ class PayloadE2eTest {
             raw.ensureBucket(bucket)
             val refs = mutableListOf<String>()
             val responder = this
-            raw.subscribe("$owner.\$rpc.v1.players.locate") { request ->
+            raw.subscribe(players.methodSubject("Locate", persistent = false)) { request ->
                 responder.launch {
                     val ref = raw.putBlob(bucket.bucketName, raw.encode(LocateResponseSchema, unsafeJso<LocateResponse> { server = "lobby-7" }))
                     refs += ref
@@ -209,7 +207,7 @@ class PayloadE2eTest {
             raw.flush()
 
             val locate = PlayerService.methods.first { it.localName == "locate" }
-            val answer = client.target(owner).callAnswer(locate, unsafeJso<FindPlayerRequest> { name = "Steve" }).await()
+            val answer = client.callAnswer(locate, unsafeJso<FindPlayerRequest> { name = "Steve" }).await()
 
             assertTrue(answer.known)
             assertEquals("lobby-7", answer.value.fields<LocateResponse>().server)

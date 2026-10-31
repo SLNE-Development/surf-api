@@ -14,7 +14,7 @@ type Fits<F extends Fn, K extends Fn> =
 
 declare const facade: Facade.SurfNatsOperations;
 
-type OperationsFit<K extends Kotlin.SurfNatsClient | Kotlin.SurfNatsTarget> = [
+type OperationsFit<K extends Kotlin.SurfNatsClient> = [
     Fits<typeof facade.publish<DescMessage>, K["publish"]>,
     Fits<typeof facade.listen<DescMessage>, K["listen"]>,
     Fits<typeof facade.call<DescMethod>, K["call"]>,
@@ -22,15 +22,11 @@ type OperationsFit<K extends Kotlin.SurfNatsClient | Kotlin.SurfNatsTarget> = [
 ];
 
 export const clientOperations: OperationsFit<Kotlin.SurfNatsClient> = [true, true, true, true];
-export const targetOperations: OperationsFit<Kotlin.SurfNatsTarget> = [true, true, true, true];
 
 declare const kotlinClient: Kotlin.SurfNatsClient;
-declare const kotlinTarget: Kotlin.SurfNatsTarget;
 declare const kotlinRegistration: Kotlin.NatsRegistration;
 declare const kotlinConnect: typeof Kotlin.connect;
 
 export const client: Pick<Facade.SurfNatsClient, "name" | "origin" | "isClosed" | "close"> = kotlinClient;
-export const target: Pick<Facade.SurfNatsTarget, "owner"> = kotlinTarget;
-export const targetOf: (owner: string) => Kotlin.SurfNatsTarget = kotlinClient.target;
 export const registration: Facade.NatsRegistration = kotlinRegistration;
 export const connectFn: (options: Facade.ConnectOptions) => Promise<Kotlin.SurfNatsClient> = kotlinConnect;

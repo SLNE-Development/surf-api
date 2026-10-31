@@ -78,9 +78,6 @@ public data class PunishmentCreated(
         public val NATS_DESCRIPTOR: NatsEventDescriptor<PunishmentCreated> =
                 NatsEventDescriptor<PunishmentCreated>(
                     protoName = "surf.demo.v1.PunishmentCreated",
-                    subject = "punishment-created",
-                    global = false,
-                    majorVersion = 1,
                     serializer = serializer(),
                 )
     }
@@ -125,9 +122,6 @@ public class ServerStarted : NatsEvent {
         public val NATS_DESCRIPTOR: NatsEventDescriptor<ServerStarted> =
                 NatsEventDescriptor<ServerStarted>(
                     protoName = "surf.demo.v1.ServerStarted",
-                    subject = "servers.started",
-                    global = true,
-                    majorVersion = 1,
                     serializer = serializer(),
                 )
     }
@@ -153,9 +147,6 @@ public data class PlayerJoined(
         public val NATS_DESCRIPTOR: NatsEventDescriptor<PlayerJoined> =
                 NatsEventDescriptor<PlayerJoined>(
                     protoName = "surf.demo.v1.PlayerJoined",
-                    subject = "player.joined",
-                    global = false,
-                    majorVersion = 1,
                     serializer = serializer(),
                 )
     }

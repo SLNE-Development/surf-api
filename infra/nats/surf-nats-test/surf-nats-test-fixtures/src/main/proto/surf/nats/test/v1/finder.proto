@@ -9,7 +9,7 @@ import "surf/nats/v1/options.proto";
 
 // ALL_INSTANCES service: a message response becomes Answer<FindReply>, an Empty response a fan-out.
 service FinderService {
-  option (surf.nats.v1.service) = { name: "finder" recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+  option (surf.nats.v1.service) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
 
   rpc Find(FindRequest) returns (FindReply);
   rpc Broadcast(BroadcastRequest) returns (google.protobuf.Empty);

@@ -9,12 +9,10 @@ export const SETTLE_MS = 500;
 export const UUID_BYTES = Uint8Array.from(Buffer.from("123e4567e89b12d3a456426614174000", "hex"));
 
 /**
- * Owners and files passed by JsInteropTest.
+ * Files passed by JsInteropTest.
  */
 export function context() {
     return {
-        owner: required("SURF_NATS_INTEROP_OWNER"),
-        rawOwner: required("SURF_NATS_INTEROP_RAW_OWNER"),
         vectorsFile: required("SURF_NATS_INTEROP_VECTORS"),
     };
 }
