@@ -1,11 +1,12 @@
 package dev.slne.surf.nats.gradle
 
-import dev.slne.surf.api.gradle.platform.common.CommonSurfExtension
+import dev.slne.surf.api.gradle.generators.pluginfiles.VelocityPluginFile
 import dev.slne.surf.nats.gradle.generator.DefaultTypeMappings
 import dev.slne.surf.nats.gradle.generator.GeneratedVisibility
 import dev.slne.surf.nats.gradle.generator.TypeMapping
 import dev.slne.surf.nats.gradle.tasks.CheckSurfNatsCompatibilityTask
 import dev.slne.surf.nats.gradle.tasks.GenerateSurfNatsKotlinTask
+import net.minecrell.pluginyml.paper.PaperPluginDescription
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.attributes.Usage
@@ -190,11 +191,10 @@ class SurfNatsPluginTest {
     }
 
     @Test
-    fun `the surf-api bridge enables surf-nats and adds the contract dependencies`() {
+    fun `surf-api plugins get the contract dependencies`() {
         val orders = listOf(arrayOf(SURF_API_CORE, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_CORE))
         orders.forEachIndexed { index, order ->
             val project = project(*order, dir = projectDir.resolve(index.toString()))
-            assertTrue(project.extensions.getByType(CommonSurfExtension::class.java).surfNatsEnabled.get(), order.joinToString())
             assertEquals(DefaultTypeMappings.common, project.generate.defaultTypeMappings.get())
 
             for (configuration in listOf("compileOnly", "testImplementation")) {
@@ -224,9 +224,37 @@ class SurfNatsPluginTest {
         assertEquals(SurfNatsPluginVersion.VERSION, dependency.versionConstraint.strictVersion)
     }
 
+    @Test
+    fun `paper plugins require surf-nats-paper at bootstrap and server`() {
+        val orders = listOf(arrayOf(SURF_API_PAPER_PLUGIN, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_PAPER_PLUGIN))
+        orders.forEachIndexed { index, order ->
+            val project = project(*order, dir = projectDir.resolve(index.toString()))
+            val description = project.extensions.getByType(PaperPluginDescription::class.java)
+            for (dependencies in listOf(description.bootstrapDependencies, description.serverDependencies)) {
+                val dependency = assertNotNull(dependencies.findByName("surf-nats-paper"), order.joinToString())
+                assertTrue(dependency.required)
+                assertTrue(dependency.joinClasspath)
+                assertEquals(PaperPluginDescription.RelativeLoadOrder.BEFORE, dependency.load)
+            }
+        }
+    }
+
+    @Test
+    fun `velocity plugins require surf-nats-velocity`() {
+        val orders = listOf(arrayOf(SURF_API_VELOCITY, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_VELOCITY))
+        orders.forEachIndexed { index, order ->
+            val project = project(*order, dir = projectDir.resolve(index.toString()))
+            val dependency = project.extensions.getByType(VelocityPluginFile::class.java)
+                .pluginDependencies.findByName("surf-nats-velocity")
+            assertFalse(assertNotNull(dependency, order.joinToString()).optional.get())
+        }
+    }
+
     private companion object {
         const val KOTLIN_JVM = "org.jetbrains.kotlin.jvm"
         const val SURF_API_CORE = "dev.slne.surf.api.gradle.core"
+        const val SURF_API_PAPER_PLUGIN = "dev.slne.surf.api.gradle.paper-plugin"
         const val SURF_API_PAPER_RAW = "dev.slne.surf.api.gradle.paper-raw"
+        const val SURF_API_VELOCITY = "dev.slne.surf.api.gradle.velocity"
     }
 }

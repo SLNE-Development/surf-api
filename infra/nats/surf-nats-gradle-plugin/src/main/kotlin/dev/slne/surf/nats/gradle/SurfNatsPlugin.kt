@@ -93,9 +93,11 @@ class SurfNatsPlugin : Plugin<Project> {
                     paperTypes = true
                     defaultTypeMappings.addAll(DefaultTypeMappings.paper)
                 }
-                SurfApiBridge.configure(project, paper)
+                SurfApiBridge.addContractDependencies(project, paper)
             }
         }
+        pluginManager.withPlugin(SURF_API_PAPER_PLUGIN) { SurfApiBridge.requirePaperPlugin(project) }
+        pluginManager.withPlugin(SURF_API_VELOCITY) { SurfApiBridge.requireVelocityPlugin(project) }
     }
 
     /**
@@ -157,19 +159,20 @@ class SurfNatsPlugin : Plugin<Project> {
         private const val KOTLIN_MULTIPLATFORM = "org.jetbrains.kotlin.multiplatform"
         private const val KOTLIN_SERIALIZATION = "org.jetbrains.kotlin.plugin.serialization"
 
-        private val SURF_API_PAPER_PLUGINS = setOf(
-            "dev.slne.surf.api.gradle.paper-plugin",
-            "dev.slne.surf.api.gradle.paper-raw",
-        )
+        private const val SURF_API_PAPER_PLUGIN = "dev.slne.surf.api.gradle.paper-plugin"
+        private const val SURF_API_PAPER_RAW = "dev.slne.surf.api.gradle.paper-raw"
+        private const val SURF_API_VELOCITY = "dev.slne.surf.api.gradle.velocity"
+
+        private val SURF_API_PAPER_PLUGINS = setOf(SURF_API_PAPER_PLUGIN, SURF_API_PAPER_RAW)
 
         /**
-         * The surf-api plugin ids whose extension is a `CommonSurfExtension`.
+         * The surf-api platform plugin ids.
          */
         private val SURF_API_PLUGINS = listOf(
             "dev.slne.surf.api.gradle.core",
-            "dev.slne.surf.api.gradle.paper-plugin",
-            "dev.slne.surf.api.gradle.paper-raw",
-            "dev.slne.surf.api.gradle.velocity",
+            SURF_API_PAPER_PLUGIN,
+            SURF_API_PAPER_RAW,
+            SURF_API_VELOCITY,
             "dev.slne.surf.api.gradle.minestom",
             "dev.slne.surf.api.gradle.minestom-server",
             "dev.slne.surf.api.gradle.standalone",
