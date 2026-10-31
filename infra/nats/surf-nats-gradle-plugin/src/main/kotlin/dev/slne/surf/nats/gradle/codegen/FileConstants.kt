@@ -1,11 +1,7 @@
 package dev.slne.surf.nats.gradle.codegen
 
-import com.squareup.kotlinpoet.ANY
-import com.squareup.kotlinpoet.ARRAY
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
 import dev.slne.surf.nats.protocol.ProtocolNaming
 
 /**
@@ -15,28 +11,42 @@ import dev.slne.surf.nats.protocol.ProtocolNaming
  * [instance] for fieldless request messages, whose generated `equals` compares by type only.
  */
 internal class FileConstants {
-    private var noArguments: PropertySpec? = null
+    private var noArgumentsArray: PropertySpec? = null
     private val instances = LinkedHashMap<ClassName, PropertySpec>()
     private val instanceNames = HashSet<String>()
 
     /**
      * `NO_ARGUMENTS` first, then the instances in first-use order.
      */
-    val properties: List<PropertySpec> get() = listOfNotNull(noArguments) + instances.values
+    val properties: List<PropertySpec> get() = listOfNotNull(noArgumentsArray) + instances.values
 
     fun noArguments(): PropertySpec {
-        return noArguments ?: PropertySpec.builder(NO_ARGUMENTS, NULLABLE_ARRAY, KModifier.PRIVATE)
+        noArgumentsArray?.let { return it }
+
+        val noArguments = PropertySpec.builder(NO_ARGUMENTS, NULLABLE_ARRAY, KModifier.PRIVATE)
             .initializer("emptyArray()")
             .build()
-            .also { noArguments = it }
+
+        this.noArgumentsArray = noArguments
+
+        return noArguments
     }
 
     fun instance(className: ClassName): PropertySpec = instances.getOrPut(className) {
-        val base = className.simpleNames.joinToString("_") { ProtocolNaming.kebabCase(it).uppercase().replace('-', '_') } + "_INSTANCE"
+        // Map.Entry -> MAP_ENTRY_INSTANCE
+        val base = className.simpleNames.joinToString("_") {
+            ProtocolNaming.kebabCase(it).uppercase().replace('-', '_')
+        } + "_INSTANCE"
+
         var name = base
         var suffix = 2
-        while (!instanceNames.add(name)) name = "${base}_${suffix++}"
-        PropertySpec.builder(name, className, KModifier.PRIVATE).initializer("%T()", className).build()
+        while (!instanceNames.add(name)) {
+            name = "${base}_${suffix++}"
+        }
+
+        PropertySpec.builder(name, className, KModifier.PRIVATE)
+            .initializer("%T()", className)
+            .build()
     }
 
     private companion object {
