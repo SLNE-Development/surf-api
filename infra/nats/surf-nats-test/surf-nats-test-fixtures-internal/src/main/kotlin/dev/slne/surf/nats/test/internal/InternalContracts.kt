@@ -6,6 +6,7 @@ import dev.slne.surf.nats.test.internal.proto.v1.AlarmLevel
 import dev.slne.surf.nats.test.internal.proto.v1.AlarmRaised
 import dev.slne.surf.nats.test.internal.proto.v1.AlarmService
 import dev.slne.surf.nats.test.internal.proto.v1.RaiseReply
+import dev.slne.surf.nats.test.internal.proto.v1.RaiseRequest
 
 /**
  * Uses the internal generated contracts from code of the same module.
@@ -18,7 +19,7 @@ internal object InternalContracts {
     fun alarm(): AlarmRaised = AlarmRaised(level = AlarmLevel.HIGH, source = AlarmRaised.Source.Server("lobby"))
 
     val implementation: AlarmService = object : AlarmService {
-        override suspend fun raise(level: AlarmLevel, message: String): RaiseReply = RaiseReply(id = level.number.toLong())
+        override suspend fun raise(request: RaiseRequest): RaiseReply = RaiseReply(id = request.level.number.toLong())
 
         override suspend fun clear() = Unit
     }

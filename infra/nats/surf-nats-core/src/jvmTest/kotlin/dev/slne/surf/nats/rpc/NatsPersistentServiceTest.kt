@@ -16,8 +16,10 @@ import dev.slne.surf.nats.test.proto.v1.Blob
 import dev.slne.surf.nats.test.proto.v1.Color
 import dev.slne.surf.nats.test.proto.v1.ColorHolder
 import dev.slne.surf.nats.test.proto.v1.LookupReply
+import dev.slne.surf.nats.test.proto.v1.LookupRequest
 import dev.slne.surf.nats.test.proto.v1.Number
 import dev.slne.surf.nats.test.proto.v1.OrderService
+import dev.slne.surf.nats.test.proto.v1.PlaceRequest
 import dev.slne.surf.nats.test.proto.v1.Text
 import dev.slne.surf.nats.test.proto.v1.TotalRequest
 import dev.slne.surf.nats.test.proto.v1.WideColor
@@ -47,8 +49,10 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import dev.slne.surf.nats.test.proto.v1.VersionedJournalService as VersionedJournalServiceV1
 import dev.slne.surf.nats.test.proto.v1.VersionedPingReply as VersionedPingReplyV1
+import dev.slne.surf.nats.test.proto.v1.VersionedPingRequest as VersionedPingRequestV1
 import dev.slne.surf.nats.test.proto.v2.VersionedJournalService as VersionedJournalServiceV2
 import dev.slne.surf.nats.test.proto.v2.VersionedPingReply as VersionedPingReplyV2
+import dev.slne.surf.nats.test.proto.v2.VersionedPingRequest as VersionedPingRequestV2
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class NatsPersistentServiceTest {
@@ -68,35 +72,31 @@ class NatsPersistentServiceTest {
         @Volatile
         var onTotal: suspend (Long) -> Long = { it * 10 }
 
-        override suspend fun place(id: Long) {
+        override suspend fun place(request: PlaceRequest) {
             val context = natsPersistentContextOrNull()
-            deliveries.send(Delivery(id, context))
-            onPlace(id, context)
+            deliveries.send(Delivery(request.id, context))
+            onPlace(request.id, context)
         }
 
-        override suspend fun total(id: Long): Number {
+        override suspend fun total(request: TotalRequest): Number {
             totalCalls.incrementAndGet()
             totalContexts.send(natsPersistentContextOrNull())
-            return Number(onTotal(id))
+            return Number(onTotal(request.id))
         }
 
-        override suspend fun lookup(id: Long): LookupReply = LookupReply(if (id == 0L) null else "found-$id")
+        override suspend fun lookup(request: LookupRequest): LookupReply =
+            LookupReply(if (request.id == 0L) null else "found-${request.id}")
 
-        override suspend fun big(data: ByteArray) {
-            bigReceived.send(data)
+        override suspend fun big(request: Blob) {
+            bigReceived.send(request.data)
         }
 
-        override suspend fun echo(data: ByteArray): Blob = Blob(data)
+        override suspend fun echo(request: Blob): Blob = request
 
-        override suspend fun audit(id: Long): Number = Number(id)
+        override suspend fun audit(request: TotalRequest): Number = Number(request.id)
 
-        override suspend fun paint(
-            color: Color,
-            maybeColor: Color?,
-            colors: List<Color>,
-            colorsByName: Map<String, Color>,
-        ) {
-            painted.send(ColorHolder(color, maybeColor, colors, colorsByName))
+        override suspend fun paint(request: ColorHolder) {
+            painted.send(request)
         }
 
         override suspend fun ping(): Text = Text("pong")
@@ -105,22 +105,22 @@ class NatsPersistentServiceTest {
     class JournalV1 : VersionedJournalServiceV1 {
         val recorded = Channel<String>(Channel.UNLIMITED)
 
-        override suspend fun record(message: String) {
-            recorded.send(message)
+        override suspend fun record(request: VersionedPingRequestV1) {
+            recorded.send(request.message)
         }
 
-        override suspend fun append(message: String) = VersionedPingReplyV1(message, version = 1)
+        override suspend fun append(request: VersionedPingRequestV1) = VersionedPingReplyV1(request.message, version = 1)
     }
 
     class JournalV2 : VersionedJournalServiceV2 {
         val recorded = Channel<Pair<String, Int>>(Channel.UNLIMITED)
 
-        override suspend fun record(message: String, attempt: Int) {
-            recorded.send(message to attempt)
+        override suspend fun record(request: VersionedPingRequestV2) {
+            recorded.send(request.message to request.attempt)
         }
 
-        override suspend fun append(message: String, attempt: Int) =
-            VersionedPingReplyV2(message, version = 2, region = "attempt-$attempt")
+        override suspend fun append(request: VersionedPingRequestV2) =
+            VersionedPingReplyV2(request.message, version = 2, region = "attempt-${request.attempt}")
     }
 
     private var clientCounter = 0
@@ -149,7 +149,7 @@ class NatsPersistentServiceTest {
     fun `fire while the responder is offline is processed after it registers`() =
         withClient { client ->
             val streams = client.serviceDescriptor(OrderService::class.java).streams!!
-            client.service<OrderService>().place(1)
+            client.service<OrderService>().place(PlaceRequest(1))
             assertEquals(1, messageCount(streams.stream), "message must wait in the stream")
 
             val impl = OrderImpl()
@@ -174,7 +174,7 @@ class NatsPersistentServiceTest {
         assertEquals(Text("pong"), orders.ping())
         assertEquals(0, messageCount(streams.stream), "core call must not be stored")
 
-        orders.place(7)
+        orders.place(PlaceRequest(7))
         assertEquals(7, withTimeout(10.seconds) { impl.deliveries.receive() }.id)
         eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
 
@@ -191,7 +191,7 @@ class NatsPersistentServiceTest {
         }
         client.registerService<OrderService>(impl)
 
-        client.service<OrderService>().place(3)
+        client.service<OrderService>().place(PlaceRequest(3))
 
         val first = withTimeout(10.seconds) { impl.deliveries.receive() }
         val second = withTimeout(10.seconds) { impl.deliveries.receive() }
@@ -212,7 +212,7 @@ class NatsPersistentServiceTest {
         }
         client.registerService<OrderService>(impl)
 
-        client.service<OrderService>().place(9)
+        client.service<OrderService>().place(PlaceRequest(9))
 
         val counts = (1..RpcDefaults.MAX_DELIVER).map {
             withTimeout(10.seconds) { impl.deliveries.receive() }.context!!.deliveryCount
@@ -242,7 +242,7 @@ class NatsPersistentServiceTest {
         val impl = OrderImpl().apply { onPlace = { _, _ -> awaitCancellation() } }
         client.registerService<OrderService>(impl)
 
-        client.service<OrderService>().place(11)
+        client.service<OrderService>().place(PlaceRequest(11))
 
         repeat(RpcDefaults.MAX_DELIVER) { withTimeout(10.seconds) { impl.deliveries.receive() } }
         eventually("dead letter must be stored") { messageCount(streams.dlqStream) == 1L }
@@ -260,7 +260,7 @@ class NatsPersistentServiceTest {
         }
         client.registerService<OrderService>(impl)
 
-        client.service<OrderService>().place(12)
+        client.service<OrderService>().place(PlaceRequest(12))
 
         repeat(RpcDefaults.MAX_DELIVER) { withTimeout(10.seconds) { impl.deliveries.receive() } }
         eventually("dead letter must be stored") { messageCount(streams.dlqStream) == 1L }
@@ -287,7 +287,7 @@ class NatsPersistentServiceTest {
                 }
             }
         })
-        client.service<OrderService>().place(7)
+        client.service<OrderService>().place(PlaceRequest(7))
         withTimeout(10.seconds) { started.await() }
         first.close()
         withTimeout(5.seconds) { cancelled.await() }
@@ -315,7 +315,7 @@ class NatsPersistentServiceTest {
                         awaitCancellation()
                     }
                 })
-                first.service<OrderService>().place(5)
+                first.service<OrderService>().place(PlaceRequest(5))
                 val firstContext = withTimeout(10.seconds) { started.await() }
                 first.close() // crash: handler cancelled, no ack
 
@@ -404,7 +404,7 @@ class NatsPersistentServiceTest {
         connection.flush(java.time.Duration.ofSeconds(5))
 
         try {
-            orders.place(1)
+            orders.place(PlaceRequest(1))
             val fire = withTimeout(10.seconds) { raw.receive() }
             assertEquals(descriptor.method("place").subject, fire.subject)
             assertCommonHeaders(client, streams.stream, fire)
@@ -413,7 +413,7 @@ class NatsPersistentServiceTest {
             assertNull(fire.headers.getFirst(ProtocolHeaders.NATS_TTL), "persistent fire has no TTL")
 
             val sentAt = System.currentTimeMillis()
-            assertEquals(Number(20), withNatsCallTimeout(10.seconds) { orders.total(2) })
+            assertEquals(Number(20), withNatsCallTimeout(10.seconds) { orders.total(TotalRequest(2)) })
             val rpc = withTimeout(10.seconds) { raw.receive() }
             assertEquals(descriptor.method("total").subject, rpc.subject)
             assertCommonHeaders(client, streams.stream, rpc)
@@ -422,7 +422,7 @@ class NatsPersistentServiceTest {
             assertTrue(assertNotNull(rpc.headers.getFirst(ProtocolHeaders.REPLY_TO)).startsWith("_INBOX."))
             assertEquals("10s", rpc.headers.getFirst(ProtocolHeaders.NATS_TTL))
 
-            assertEquals(Number(3), orders.audit(3))
+            assertEquals(Number(3), orders.audit(TotalRequest(3)))
             val audit = withTimeout(10.seconds) { raw.receive() }
             assertEquals("180s", audit.headers.getFirst(ProtocolHeaders.NATS_TTL), "Nats-TTL follows the call timeout")
         } finally {
@@ -447,7 +447,7 @@ class NatsPersistentServiceTest {
         val impl = OrderImpl()
         client.registerService<OrderService>(impl)
 
-        assertEquals(Number(30), withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(3) })
+        assertEquals(Number(30), withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(TotalRequest(3)) })
         val context = assertNotNull(impl.totalContexts.tryReceive().getOrNull())
         assertEquals(1, context.deliveryCount)
         eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
@@ -460,8 +460,8 @@ class NatsPersistentServiceTest {
             val orders = client.service<OrderService>()
 
             // LookupReply(null) is a 0-byte body
-            assertEquals(LookupReply(null), withNatsCallTimeout(10.seconds) { orders.lookup(0) })
-            assertEquals(LookupReply("found-5"), withNatsCallTimeout(10.seconds) { orders.lookup(5) })
+            assertEquals(LookupReply(null), withNatsCallTimeout(10.seconds) { orders.lookup(LookupRequest(0)) })
+            assertEquals(LookupReply("found-5"), withNatsCallTimeout(10.seconds) { orders.lookup(LookupRequest(5)) })
         }
 
     @Test
@@ -469,7 +469,7 @@ class NatsPersistentServiceTest {
         withClient { client ->
             val orders = client.service<OrderService>()
             val start = TimeSource.Monotonic.markNow()
-            val result = async { withNatsCallTimeout(15.seconds) { orders.total(4) } }
+            val result = async { withNatsCallTimeout(15.seconds) { orders.total(TotalRequest(4)) } }
 
             delay(1500.milliseconds)
             assertFalse(result.isCompleted)
@@ -483,7 +483,7 @@ class NatsPersistentServiceTest {
     fun `expired persistent rpc is never executed`() = withClient { client ->
         val orders = client.service<OrderService>()
         assertFailsWith<NatsCallTimeoutException> {
-            withNatsCallTimeout(1.seconds) { orders.total(6) }
+            withNatsCallTimeout(1.seconds) { orders.total(TotalRequest(6)) }
         }
 
         delay(1500.milliseconds)
@@ -530,7 +530,7 @@ class NatsPersistentServiceTest {
         client.registerService<OrderService>(impl)
 
         assertFailsWith<NatsCallTimeoutException> {
-            withNatsCallTimeout(1.seconds) { client.service<OrderService>().total(7) }
+            withNatsCallTimeout(1.seconds) { client.service<OrderService>().total(TotalRequest(7)) }
         }
         withTimeout(5.seconds) { cancelled.await() }
         assertEquals(1, impl.totalCalls.get())
@@ -541,11 +541,11 @@ class NatsPersistentServiceTest {
     fun `rejected persistent publish is a NatsRpcException`() = withClient { client ->
         val streams = client.serviceDescriptor(OrderService::class.java).streams!!
         val orders = client.service<OrderService>()
-        withNatsCallTimeout(10.seconds) { orders.place(1) } // provisions the stream
+        withNatsCallTimeout(10.seconds) { orders.place(PlaceRequest(1)) } // provisions the stream
         jsm().deleteStream(streams.stream) // the provisioning cache does not notice this
 
         val error = assertFailsWith<NatsRpcException> {
-            withNatsCallTimeout(10.seconds) { orders.place(2) }
+            withNatsCallTimeout(10.seconds) { orders.place(PlaceRequest(2)) }
         }
         // Coroutine stack trace recovery (tests run with assertions) may put a copy in front of the original
         assertTrue(generateSequence(error.cause) { it.cause }.any { it is IOException }, error.stackTraceToString())
@@ -558,7 +558,7 @@ class NatsPersistentServiceTest {
         client.registerService<OrderService>(impl)
 
         val exception = assertFailsWith<NatsRemoteException> {
-            withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(1) }
+            withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(TotalRequest(1)) }
         }
         assertEquals(IllegalStateException::class.java.name, exception.remoteType)
         assertEquals("no total", exception.remoteMessage)
@@ -611,7 +611,7 @@ class NatsPersistentServiceTest {
             JetStreamProvisioner.ensureStreams(streams)
             val orders = client.service<OrderService>()
 
-            assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(3.minutes) { orders.place(1) } }
+            assertFailsWith<IllegalArgumentException> { withNatsCallTimeout(3.minutes) { orders.place(PlaceRequest(1)) } }
 
             assertEquals(0L, messageCount(streams.stream), "nothing must be published")
         }
@@ -628,7 +628,7 @@ class NatsPersistentServiceTest {
         val orders = client.service<OrderService>()
         RuntimeDefaults.dedupeWindow = 1.seconds // only bounds the publish phase
 
-        assertEquals(Number(40), withNatsCallTimeout(5.seconds) { orders.total(4) })
+        assertEquals(Number(40), withNatsCallTimeout(5.seconds) { orders.total(TotalRequest(4)) })
     }
 
     @Test
@@ -642,7 +642,7 @@ class NatsPersistentServiceTest {
 
         val start = TimeSource.Monotonic.markNow()
         val exception = assertFailsWith<NatsCallTimeoutException> {
-            withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(1) }
+            withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(TotalRequest(1)) }
         }
         val took = start.elapsedNow()
 
@@ -675,7 +675,7 @@ class NatsPersistentServiceTest {
         try {
             val start = TimeSource.Monotonic.markNow()
             assertFailsWith<NatsCallTimeoutException> {
-                withNatsCallTimeout(12.seconds) { client.service<OrderService>().place(1) }
+                withNatsCallTimeout(12.seconds) { client.service<OrderService>().place(PlaceRequest(1)) }
             }
             assertTrue(start.elapsedNow() >= 11500.milliseconds, "took ${start.elapsedNow()}")
 
@@ -713,14 +713,14 @@ class NatsPersistentServiceTest {
 
             val service1 = client.service<VersionedJournalServiceV1>()
             val service2 = client.service<VersionedJournalServiceV2>()
-            assertEquals(VersionedPingReplyV1("a", 1), withNatsCallTimeout(10.seconds) { service1.append("a") })
+            assertEquals(VersionedPingReplyV1("a", 1), withNatsCallTimeout(10.seconds) { service1.append(VersionedPingRequestV1("a")) })
             assertEquals(
                 VersionedPingReplyV2("b", 2, "attempt-1"),
-                withNatsCallTimeout(10.seconds) { service2.append("b") },
+                withNatsCallTimeout(10.seconds) { service2.append(VersionedPingRequestV2("b")) },
             )
 
-            service1.record("one")
-            service2.record("two", attempt = 3)
+            service1.record(VersionedPingRequestV1("one"))
+            service2.record(VersionedPingRequestV2("two", attempt = 3))
             assertEquals("one", withTimeout(10.seconds) { journal1.recorded.receive() })
             assertEquals("two" to 3, withTimeout(10.seconds) { journal2.recorded.receive() })
             eventually("both work queues must be drained") {
@@ -747,7 +747,7 @@ class NatsPersistentServiceTest {
             val before = liveObjects(PayloadBucket.PERSISTENT)
             val data = blob(LARGE)
 
-            client.service<OrderService>().big(data)
+            client.service<OrderService>().big(Blob(data))
 
             assertContentEquals(data, withTimeout(30.seconds) { impl.bigReceived.receive() })
             eventually("persistent payload must be deleted after the ack") {
@@ -761,7 +761,7 @@ class NatsPersistentServiceTest {
         val before = liveObjects(PayloadBucket.TRANSIENT)
         val data = blob(LARGE)
 
-        val echoed = withNatsCallTimeout(30.seconds) { client.service<OrderService>().echo(data) }
+        val echoed = withNatsCallTimeout(30.seconds) { client.service<OrderService>().echo(Blob(data)) }
         assertContentEquals(data, echoed.data)
         eventually("transient payloads must be deleted") { liveObjects(PayloadBucket.TRANSIENT) == before }
     }

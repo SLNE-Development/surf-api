@@ -8,7 +8,7 @@ import java.io.File
 import kotlin.test.assertEquals
 
 /**
- * Events and services: descriptors, option resolution and flattened rpc signatures.
+ * Events and services: descriptors, option resolution and rpc signatures.
  */
 class ContractGenerationTest {
     @TempDir
@@ -83,7 +83,7 @@ class ContractGenerationTest {
     }
 
     @Test
-    fun `service methods take the flattened request fields as parameters`() {
+    fun `service methods take the request message as their only parameter`() {
         val text = contracts(
             """
             service PlayerService {
@@ -103,52 +103,15 @@ class ContractGenerationTest {
         )
         assertContainsAll(
             text,
-            "public interface PlayerService {\n    public suspend fun findServer(\n        player: String,\n" +
-                    "        limit: Int = 5,\n        region: String? = null,\n        tags: List<String> = emptyList(),\n" +
-                    "        filter: FindServerRequest.Filter? = null,\n        owner: UUID,\n    ): FindServerReply",
+            "public interface PlayerService {\n    public suspend fun findServer(request: FindServerRequest): FindServerReply\n",
             "NatsMethodDescriptor<FindServerRequest, FindServerReply>(",
             "protoName = \"FindServer\",",
             "kotlinName = \"findServer\",",
-            "NatsParameter(name = \"player\", type = String::class, nullable = false),",
-            "NatsParameter(name = \"region\", type = String::class, nullable = true),",
-            "NatsParameter(name = \"tags\", type = List::class, nullable = false),",
-            "NatsParameter(name = \"filter\", type = FindServerRequest.Filter::class, nullable = true),",
-            "NatsParameter(name = \"owner\", type = UUID::class, nullable = false),",
             "requestSerializer = FindServerRequest.serializer(),",
-            "responseSerializer = FindServerReply.serializer(),",
-            "toRequest = { a -> FindServerRequest(player = a[0] as String, limit = a[1] as Int, region = a[2] as String?, " +
-                    "tags = a[3] as List<String>, filter = a[4] as FindServerRequest.Filter?, owner = a[5] as UUID) },",
-            "toArguments = { r -> arrayOf<Any?>(r.player, r.limit, r.region, r.tags, r.filter, r.owner) },",
-            "@JvmField\n        @Suppress(\"UNCHECKED_CAST\")\n        public val NATS_DESCRIPTOR: NatsServiceDescriptor<PlayerService> =",
+            "responseSerializer = FindServerReply.serializer(),\n                        ),",
+            "@JvmField\n        public val NATS_DESCRIPTOR: NatsServiceDescriptor<PlayerService> =",
         )
-    }
-
-    @Test
-    fun `method parameters follow ascending field numbers of the request`() {
-        val text = contracts(
-            """
-            service OrderService {
-              rpc Place(PlaceRequest) returns (google.protobuf.Empty);
-            }
-            message PlaceRequest {
-              optional string note = 3;
-              optional int64 id = 1;
-              optional int32 amount = 2;
-            }
-            """
-        )
-        assertContainsAll(
-            text,
-            "public suspend fun place(\n        id: Long,\n        amount: Int,\n        note: String,\n    )\n",
-            "toRequest = { a -> PlaceRequest(id = a[0] as Long, amount = a[1] as Int, note = a[2] as String) },",
-            "toArguments = { r -> arrayOf<Any?>(r.id, r.amount, r.note) },",
-        )
-        assertInOrder(
-            text,
-            "NatsParameter(name = \"id\", type = Long::class, nullable = false),",
-            "NatsParameter(name = \"amount\", type = Int::class, nullable = false),",
-            "NatsParameter(name = \"note\", type = String::class, nullable = false),",
-        )
+        assertNotContains(text, "NatsParameter", "parameters =", "toRequest", "toArguments", "UNCHECKED_CAST")
     }
 
     @Test
@@ -178,16 +141,11 @@ class ContractGenerationTest {
                     "oneof target { int64 player = 4; string server = 5; } optional string note = 3; }",
         )
         assertEquals(declared, reordered)
-        assertContainsAll(
-            declared,
-            "public suspend fun place(\n        id: Long,\n        amount: Int = 1,\n        note: String,\n" +
-                    "        target: PlaceRequest.Target? = null,\n    ): PlaceReply",
-            "toArguments = { r -> arrayOf<Any?>(r.id, r.amount, r.note, r.target) },",
-        )
+        assertContainsAll(declared, "public suspend fun place(request: PlaceRequest): PlaceReply\n")
     }
 
     @Test
-    fun `empty and fieldless requests produce parameterless methods`() {
+    fun `Empty requests produce parameterless methods and fieldless requests keep their parameter`() {
         val text = contracts(
             """
             service PingService {
@@ -200,22 +158,25 @@ class ContractGenerationTest {
         )
         assertContainsAll(
             text,
-            "public suspend fun ping(): Pong",
-            "public suspend fun hello()\n",
+            "public suspend fun ping(): Pong\n",
+            "public suspend fun hello(request: Hello)\n",
             "NatsMethodDescriptor<Unit, Pong>(",
             "requestSerializer = EmptySerializer,",
-            "toRequest = { },",
             "NatsMethodDescriptor<Hello, Unit>(",
             "requestSerializer = Hello.serializer(),",
             "responseSerializer = null,",
-            "toRequest = { HELLO_INSTANCE },",
-            "toArguments = { NO_ARGUMENTS },",
-            "private val NO_ARGUMENTS: Array<Any?> = emptyArray()",
-            "private val HELLO_INSTANCE: Hello = Hello()",
-            "parameters = emptyList(),",
             "import dev.slne.surf.nats.types.EmptySerializer",
         )
-        assertNotContains(text, "UNCHECKED_CAST")
+        assertNotContains(
+            text,
+            "toRequest",
+            "toArguments",
+            "parameters =",
+            "NO_ARGUMENTS",
+            "HELLO_INSTANCE",
+            "UNCHECKED_CAST",
+            "request: Unit",
+        )
     }
 
     @Test
@@ -235,10 +196,10 @@ class ContractGenerationTest {
         )
         assertContainsAll(
             text,
-            "public suspend fun find(id: Long): Answer<Reply>",
-            "public suspend fun broadcast(id: Long)\n",
-            "public suspend fun single(id: Long): Reply",
-            "public suspend fun inherit(id: Long): Answer<Reply>",
+            "public suspend fun find(request: Query): Answer<Reply>",
+            "public suspend fun broadcast(request: Query)\n",
+            "public suspend fun single(request: Query): Reply",
+            "public suspend fun inherit(request: Query): Answer<Reply>",
             "NatsMethodDescriptor<Query, Answer<Reply>>(\n                            protoName = \"Find\",",
             "recipients = Recipients.ALL_INSTANCES,\n                            resultKind = NatsResultKind.ANSWER,",
             "recipients = Recipients.ALL_INSTANCES,\n                            resultKind = NatsResultKind.UNIT,",

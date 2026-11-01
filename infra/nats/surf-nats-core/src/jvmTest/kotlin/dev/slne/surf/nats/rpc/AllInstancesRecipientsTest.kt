@@ -38,13 +38,13 @@ class AllInstancesRecipientsTest {
         FinderService {
         val broadcasts = Channel<String>(Channel.UNLIMITED)
 
-        override suspend fun find(key: String): Answer<FindReply> = answer(key)
+        override suspend fun find(request: FindRequest): Answer<FindReply> = answer(request.key)
 
-        override suspend fun broadcast(message: String) {
-            broadcasts.send(message)
+        override suspend fun broadcast(request: BroadcastRequest) {
+            broadcasts.send(request.message)
         }
 
-        override suspend fun lookup(key: String): FindReply = FindReply(answer(key).getOrNull()?.value)
+        override suspend fun lookup(request: FindRequest): FindReply = FindReply(answer(request.key).getOrNull()?.value)
     }
 
     sealed interface Behaviour {
@@ -153,7 +153,7 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find("7") } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("7")) } }
 
             assertEquals(Answer.Known(FindReply("server-7")), answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -168,7 +168,7 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Unknown },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find("1") } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -183,7 +183,7 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find("1") } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("1")) } }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
@@ -201,7 +201,7 @@ class AllInstancesRecipientsTest {
                 val finder = warmFinder(client)
                 val start = TimeSource.Monotonic.markNow()
                 val exception = assertFailsWith<NatsRemoteException> {
-                    withNatsCallTimeout(5.seconds) { finder.find("1") }
+                    withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) }
                 }
 
                 assertEquals("java.lang.IllegalStateException", exception.remoteType)
@@ -217,7 +217,7 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            assertFailsWith<NatsRemoteException> { withNatsCallTimeout(1.seconds) { finder.find("1") } }
+            assertFailsWith<NatsRemoteException> { withNatsCallTimeout(1.seconds) { finder.find(FindRequest("1")) } }
         }
     }
 
@@ -228,7 +228,7 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Known("found") },
         ) {
             val finder = warmFinder(client)
-            assertEquals(Answer.Known(FindReply("found")), withNatsCallTimeout(5.seconds) { finder.find("1") })
+            assertEquals(Answer.Known(FindReply("found")), withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) })
         }
     }
 
@@ -240,7 +240,7 @@ class AllInstancesRecipientsTest {
                 FakeInstance(client) { Behaviour.Known("found-$it") },
             ) {
                 val finder = warmFinder(client)
-                assertEquals(Answer.Known(FindReply("found-5")), withNatsCallTimeout(5.seconds) { finder.find("5") }, "$garbage")
+                assertEquals(Answer.Known(FindReply("found-5")), withNatsCallTimeout(5.seconds) { finder.find(FindRequest("5")) }, "$garbage")
             }
         }
     }
@@ -256,7 +256,7 @@ class AllInstancesRecipientsTest {
                 val finder = warmFinder(client)
                 val start = TimeSource.Monotonic.markNow()
                 val exception = assertFailsWith<Exception>("$garbage") {
-                    withNatsCallTimeout(5.seconds) { finder.find("1") }
+                    withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) }
                 }
 
                 if (garbage.withContentType) {
@@ -276,7 +276,7 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Unknown },
         ) {
             val finder = client.service<FinderService>() // no warm-up
-            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find("1") } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("1")) } }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
@@ -294,7 +294,7 @@ class AllInstancesRecipientsTest {
             leaving.close()
             delay(200.milliseconds) // let the leave arrive
 
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find("1") } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -310,10 +310,10 @@ class AllInstancesRecipientsTest {
                 announce = false
             ) { if (hang.get()) Behaviour.Hang else Behaviour.Unknown }.use {
                 val finder = warmFinder(client)
-                assertEquals(Answer.Unknown, withNatsCallTimeout(1.seconds) { finder.find("1") })
+                assertEquals(Answer.Unknown, withNatsCallTimeout(1.seconds) { finder.find(FindRequest("1")) })
 
                 hang.set(true)
-                val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find("2") } }
+                val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("2")) } }
                 assertEquals(Answer.Unknown, answer)
                 assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
             }
@@ -323,7 +323,7 @@ class AllInstancesRecipientsTest {
     @Test
     fun `no responders ends immediately with Unknown`() = withClient { client ->
         val finder = warmFinder(client)
-        val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find("1") } }
+        val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
 
         assertEquals(Answer.Unknown, answer)
         assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -334,7 +334,7 @@ class AllInstancesRecipientsTest {
         client.registerService<FinderService>(FinderImpl { Answer.Known(FindReply("self-$it")) })
         val finder = warmFinder(client)
 
-        assertEquals(Answer.Known(FindReply("self-3")), withNatsCallTimeout(5.seconds) { finder.find("3") })
+        assertEquals(Answer.Known(FindReply("self-3")), withNatsCallTimeout(5.seconds) { finder.find(FindRequest("3")) })
     }
 
     @Test
@@ -343,7 +343,7 @@ class AllInstancesRecipientsTest {
             client.registerService<FinderService>(FinderImpl())
             val finder = warmFinder(client)
 
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find("3") } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("3")) } }
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
         }
@@ -357,7 +357,7 @@ class AllInstancesRecipientsTest {
 
         withInstances(first, second) {
             val finder = client.service<FinderService>()
-            val (_, elapsed) = timed { finder.broadcast("hello") }
+            val (_, elapsed) = timed { finder.broadcast(BroadcastRequest("hello")) }
             assertTrue(elapsed < 1.seconds, "took $elapsed")
 
             withTimeout(5.seconds) {
@@ -373,7 +373,7 @@ class AllInstancesRecipientsTest {
         withInstances(FakeInstance(client) { Behaviour.Known("answer-$it") }) {
             val finder = warmFinder(client)
             val answers = withNatsCallTimeout(5.seconds) {
-                (1..20).map { id -> async { finder.find("$id") } }.awaitAll()
+                (1..20).map { id -> async { finder.find(FindRequest("$id")) } }.awaitAll()
             }
 
             assertEquals((1..20).map { Answer.Known(FindReply("answer-$it")) }, answers)
@@ -427,8 +427,8 @@ class AllInstancesRecipientsTest {
         client.registerService<FinderService>(FinderImpl { if (it == "none") Answer.Unknown else Answer.Known(FindReply("v-$it")) })
         val finder = client.service<FinderService>()
 
-        assertEquals(FindReply("v-1"), finder.lookup("1"))
-        assertEquals(FindReply(null), finder.lookup("none"))
+        assertEquals(FindReply("v-1"), finder.lookup(FindRequest("1")))
+        assertEquals(FindReply(null), finder.lookup(FindRequest("none")))
     }
 
     @Test
@@ -448,12 +448,12 @@ class AllInstancesRecipientsTest {
             withContext(Dispatchers.IO) { connection.flush(Duration.ofSeconds(5)) } // subscriptions are restored
 
             // Members can expire while the connection is down, the old list must not end the call early
-            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find("1") } }
+            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("1")) } }
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
 
             // The members answered the new query, so calls end early again
-            val (again, quick) = timed { withNatsCallTimeout(5.seconds) { finder.find("1") } }
+            val (again, quick) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
             assertEquals(Answer.Unknown, again)
             assertTrue(quick < 2.seconds, "took $quick")
         }

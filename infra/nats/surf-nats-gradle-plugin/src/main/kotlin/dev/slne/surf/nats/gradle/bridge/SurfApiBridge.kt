@@ -40,9 +40,9 @@ internal object SurfApiBridge {
         for (configuration in configurations) {
             for (module in modules) {
                 project.dependencies {
-                    create("${SurfNatsPluginVersion.GROUP}:$module") {
+                    add(configuration, create("${SurfNatsPluginVersion.GROUP}:$module") {
                         version { it.strictly(SurfNatsPluginVersion.VERSION) }
-                    }
+                    })
                 }
             }
 

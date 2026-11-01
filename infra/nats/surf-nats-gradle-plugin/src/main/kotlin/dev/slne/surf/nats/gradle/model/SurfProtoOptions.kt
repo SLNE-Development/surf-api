@@ -14,7 +14,7 @@ import java.math.BigInteger
 /**
  * Reads the options of `surf/nats/v1/options.proto`; wire delivers scalars as literal text and messages as maps.
  */
-internal object SurfOptions {
+internal object SurfProtoOptions {
     val EVENT: ProtoMember = ProtoMember.get(Options.MESSAGE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.EVENT))
     val SERVICE: ProtoMember = ProtoMember.get(Options.SERVICE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.SERVICE))
     val METHOD: ProtoMember = ProtoMember.get(Options.METHOD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.METHOD))

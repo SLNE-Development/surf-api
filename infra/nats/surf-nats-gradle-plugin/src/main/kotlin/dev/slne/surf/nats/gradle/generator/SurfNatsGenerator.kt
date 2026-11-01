@@ -7,7 +7,6 @@ import com.squareup.wire.schema.EnumType
 import com.squareup.wire.schema.Location
 import com.squareup.wire.schema.ProtoFile
 import com.squareup.wire.schema.Type
-import dev.slne.surf.nats.gradle.codegen.FileConstants
 import dev.slne.surf.nats.gradle.codegen.ServiceEmitter
 import dev.slne.surf.nats.gradle.codegen.TypeEmitter
 import dev.slne.surf.nats.gradle.model.ContractModel
@@ -132,9 +131,8 @@ class SurfNatsGenerator {
         val types = file.types.mapNotNull { type ->
             typeEmitter.emit(type, ClassName(facts.kotlinPackage, type.type.simpleName))
         }
-        val constants = FileConstants()
         val services = file.services.map { service ->
-            serviceEmitter.emit(service, ClassName(facts.kotlinPackage, service.name), constants)
+            serviceEmitter.emit(service, ClassName(facts.kotlinPackage, service.name))
         }
         if (types.isEmpty() && services.isEmpty()) return null
 
@@ -152,7 +150,6 @@ class SurfNatsGenerator {
             .apply {
                 types.forEach(::addType)
                 services.forEach(::addType)
-                constants.properties.forEach(::addProperty)
             }
             .build()
     }

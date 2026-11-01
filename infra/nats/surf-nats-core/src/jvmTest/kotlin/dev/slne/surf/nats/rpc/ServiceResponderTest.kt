@@ -12,24 +12,26 @@ import dev.slne.surf.nats.test.proto.v1.Color
 import dev.slne.surf.nats.test.proto.v1.Count
 import dev.slne.surf.nats.test.proto.v1.Created
 import dev.slne.surf.nats.test.proto.v1.Everything
+import dev.slne.surf.nats.test.proto.v1.FailRequest
 import dev.slne.surf.nats.test.proto.v1.FinderService
+import dev.slne.surf.nats.test.proto.v1.FireRequest
 import dev.slne.surf.nats.test.proto.v1.Health
 import dev.slne.surf.nats.test.proto.v1.HealthReply
+import dev.slne.surf.nats.test.proto.v1.InlineRequest
+import dev.slne.surf.nats.test.proto.v1.MixedRequest
 import dev.slne.surf.nats.test.proto.v1.Text
 import dev.slne.surf.nats.test.proto.v1.TypesService
 import dev.slne.surf.nats.test.proto.v1.UnsignedReply
+import dev.slne.surf.nats.test.proto.v1.UnsignedRequest
 import io.nats.client.impl.Headers
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
-import net.kyori.adventure.key.Key
-import net.kyori.adventure.text.Component
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
@@ -39,8 +41,10 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import dev.slne.surf.nats.test.proto.v1.VersionedPingReply as VersionedPingReplyV1
+import dev.slne.surf.nats.test.proto.v1.VersionedPingRequest as VersionedPingRequestV1
 import dev.slne.surf.nats.test.proto.v1.VersionedService as VersionedServiceV1
 import dev.slne.surf.nats.test.proto.v2.VersionedPingReply as VersionedPingReplyV2
+import dev.slne.surf.nats.test.proto.v2.VersionedPingRequest as VersionedPingRequestV2
 import dev.slne.surf.nats.test.proto.v2.VersionedService as VersionedServiceV2
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -62,17 +66,17 @@ class ServiceResponderTest {
         @Volatile
         var afterGate: (suspend () -> Text)? = null
 
-        override suspend fun mixed(a: Int, b: Long, factor: Double, flag: Boolean, label: String): Text {
-            return Text("$a|$b|$factor|$flag|$label")
+        override suspend fun mixed(request: MixedRequest): Text = with(request) {
+            Text("$a|$b|$factor|$flag|$label")
         }
 
         override suspend fun health(): HealthReply = HealthReply(health)
 
-        override suspend fun fire() {
+        override suspend fun fire(request: FireRequest) {
             fired.send(Unit)
         }
 
-        override suspend fun fail(message: String): Text = throw IllegalStateException(message)
+        override suspend fun fail(request: FailRequest): Text = throw IllegalStateException(request.message)
 
         override suspend fun innerTimeout(): Text = withTimeout(10.milliseconds) {
             delay(5.seconds)
@@ -92,12 +96,12 @@ class ServiceResponderTest {
             return afterGate?.invoke() ?: Text("released")
         }
 
-        override suspend fun unsigned(id: Long, small: Int, optionalId: Long?): UnsignedReply {
-            return UnsignedReply(id, small, optionalId)
+        override suspend fun unsigned(request: UnsignedRequest): UnsignedReply = with(request) {
+            UnsignedReply(id, small, optionalId)
         }
 
-        override suspend fun `inline`(duration: Duration, maybeDuration: Duration?, tag: Tag, maybeTag: Tag?): Text {
-            return Text("$duration|$maybeDuration|${tag.value}|${maybeTag?.value}")
+        override suspend fun `inline`(request: InlineRequest): Text = with(request) {
+            Text("$duration|$maybeDuration|${tag.value}|${maybeTag?.value}")
         }
 
         override suspend fun slow(): Text {
@@ -114,69 +118,7 @@ class ServiceResponderTest {
     }
 
     class TypesImpl : TypesService {
-        override suspend fun roundtrip(
-            small: Int,
-            large: Long,
-            unsignedSmall: Int,
-            unsignedLarge: Long,
-            signedLarge: Long,
-            fixedSmall: Int,
-            fixedLarge: Long,
-            signedFixedSmall: Int,
-            signedFixedLarge: Long,
-            flag: Boolean,
-            ratio: Double,
-            scale: Float,
-            label: String,
-            payload: ByteArray,
-            names: List<String>,
-            counts: Map<String, Int>,
-            nested: Everything.Nested,
-            color: Color,
-            choice: Everything.Choice?,
-            createdAt: Instant,
-            duration: Duration,
-            uuid: UUID,
-            component: Component,
-            key: Key,
-            nullableLabel: String?,
-            defaulted: Int,
-            tag: Tag,
-            nullableTag: Tag?,
-            nestedList: List<Everything.Nested>,
-            nestedById: Map<Long, Everything.Nested>,
-        ) = Everything(
-            small = small,
-            large = large,
-            unsignedSmall = unsignedSmall,
-            unsignedLarge = unsignedLarge,
-            signedLarge = signedLarge,
-            fixedSmall = fixedSmall,
-            fixedLarge = fixedLarge,
-            signedFixedSmall = signedFixedSmall,
-            signedFixedLarge = signedFixedLarge,
-            flag = flag,
-            ratio = ratio,
-            scale = scale,
-            label = label,
-            payload = payload,
-            names = names,
-            counts = counts,
-            nested = nested,
-            color = color,
-            choice = choice,
-            createdAt = createdAt,
-            duration = duration,
-            uuid = uuid,
-            component = component,
-            key = key,
-            nullableLabel = nullableLabel,
-            defaulted = defaulted,
-            tag = tag,
-            nullableTag = nullableTag,
-            nestedList = nestedList,
-            nestedById = nestedById,
-        )
+        override suspend fun roundtrip(request: Everything) = request
     }
 
     internal class Fixture(
@@ -195,30 +137,30 @@ class ServiceResponderTest {
     fun disconnect() = runBlocking { NatsInstance.instance.disable() }
 
     @Test
-    fun `primitive and string arguments roundtrip`() = withService {
-        assertEquals(Text("1|2|3.5|true|label"), calc.mixed(1, 2L, 3.5, true, "label"))
+    fun `request with primitive and string fields roundtrips`() = withService {
+        assertEquals(Text("1|2|3.5|true|label"), calc.mixed(MixedRequest(1, 2L, 3.5, true, "label")))
     }
 
     @Test
     fun `unsigned values roundtrip as two's complement`() = withService {
-        assertEquals(UnsignedReply(-1L, -1, Long.MIN_VALUE), calc.unsigned(-1L, -1, Long.MIN_VALUE))
-        assertEquals(UnsignedReply(7, 0, null), calc.unsigned(7, 0, null))
+        assertEquals(UnsignedReply(-1L, -1, Long.MIN_VALUE), calc.unsigned(UnsignedRequest(-1L, -1, Long.MIN_VALUE)))
+        assertEquals(UnsignedReply(7, 0, null), calc.unsigned(UnsignedRequest(7, 0, null)))
     }
 
     @Test
-    fun `value class arguments roundtrip`() = withService {
+    fun `request with value class fields roundtrips`() = withService {
         assertTrue(Duration::class.java.isAnnotationPresent(JvmInline::class.java))
         assertTrue(Tag::class.java.isAnnotationPresent(JvmInline::class.java))
 
-        assertEquals(Text("1.5s|null|a|b"), calc.inline(1.5.seconds, null, Tag("a"), Tag("b")))
-        assertEquals(Text("2s|3s|a|null"), calc.inline(2.seconds, 3.seconds, Tag("a"), null))
-        assertEquals(Text("-1ms|0s||"), calc.inline((-1).milliseconds, Duration.ZERO, Tag(""), Tag("")))
+        assertEquals(Text("1.5s|null|a|b"), calc.inline(InlineRequest(1.5.seconds, null, Tag("a"), Tag("b"))))
+        assertEquals(Text("2s|3s|a|null"), calc.inline(InlineRequest(2.seconds, 3.seconds, Tag("a"), null)))
+        assertEquals(Text("-1ms|0s||"), calc.inline(InlineRequest((-1).milliseconds, Duration.ZERO, Tag(""), Tag(""))))
     }
 
     @Test
-    fun `omitted default arguments roundtrip`() = withService {
-        assertEquals(UnsignedReply(1, 2, null), calc.unsigned(1, 2))
-        assertEquals(Text("1s|null|t|null"), calc.inline(1.seconds, tag = Tag("t")))
+    fun `omitted request fields roundtrip with their defaults`() = withService {
+        assertEquals(UnsignedReply(1, 2, null), calc.unsigned(UnsignedRequest(1, 2)))
+        assertEquals(Text("1s|null|t|null"), calc.inline(InlineRequest(1.seconds, tag = Tag("t"))))
     }
 
     @Test
@@ -227,12 +169,7 @@ class ServiceResponderTest {
         val types = client.service<TypesService>()
         val e = everything()
 
-        val result = types.roundtrip(
-            e.small, e.large, e.unsignedSmall, e.unsignedLarge, e.signedLarge, e.fixedSmall, e.fixedLarge,
-            e.signedFixedSmall, e.signedFixedLarge, e.flag, e.ratio, e.scale, e.label, e.payload, e.names, e.counts,
-            e.nested, e.color, e.choice, e.createdAt, e.duration, e.uuid, e.component, e.key, e.nullableLabel,
-            e.defaulted, e.tag, e.nullableTag, e.nestedList, e.nestedById,
-        )
+        val result = types.roundtrip(e)
 
         assertEquals(e, result)
     }
@@ -246,13 +183,13 @@ class ServiceResponderTest {
 
     @Test
     fun `unit method returns after the implementation ran`() = withService {
-        calc.fire()
+        calc.fire(FireRequest())
         assertTrue(impl.fired.tryReceive().isSuccess)
     }
 
     @Test
     fun `implementation exception arrives as NatsRemoteException`() = withService {
-        val exception = assertFailsWith<NatsRemoteException> { calc.fail("boom") }
+        val exception = assertFailsWith<NatsRemoteException> { calc.fail(FailRequest("boom")) }
         assertEquals(IllegalStateException::class.java.name, exception.remoteType)
         assertEquals("boom", exception.remoteMessage)
     }
@@ -335,7 +272,7 @@ class ServiceResponderTest {
     @Test
     fun `closing client rejects new registrations and proxies but keeps existing proxies`() = withService {
         val versioned = object : VersionedServiceV1 {
-            override suspend fun ping(message: String) = VersionedPingReplyV1(message, version = 1)
+            override suspend fun ping(request: VersionedPingRequestV1) = VersionedPingReplyV1(request.message, version = 1)
         }
 
         coroutineScope {
@@ -434,7 +371,7 @@ class ServiceResponderTest {
 
         val headers = NatsHeaders.base("external")
             .add(ProtocolHeaders.DEADLINE, (System.currentTimeMillis() - 1_000).toString())
-        connection.publish(method.subject, inbox, headers, method.encodeRequest(arrayOf()))
+        connection.publish(method.subject, inbox, headers, method.encodeRequest(Unit))
 
         assertNull(
             replies.nextMessage(java.time.Duration.ofMillis(500)),
@@ -447,7 +384,7 @@ class ServiceResponderTest {
     @Test
     fun `external protobuf request without deadline is answered in protobuf`() = withService {
         val method = method("mixed")
-        val body = method.encodeRequest(arrayOf(1, 2L, 3.5, true, "panel"))
+        val body = method.encodeRequest(MixedRequest(1, 2L, 3.5, true, "panel"))
 
         val reply = requestReply(method.subject, NatsHeaders.base("external"), body)
 
@@ -459,7 +396,7 @@ class ServiceResponderTest {
     }
 
     @Test
-    fun `undecodable arguments are answered with an error`() = withService {
+    fun `undecodable request is answered with an error`() = withService {
         val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
 
         val reply = requestReply(method("mixed").subject, headers, byteArrayOf(0x7f, 0x01, 0x02))
@@ -482,7 +419,7 @@ class ServiceResponderTest {
     }
 
     @Test
-    fun `truncated arguments are answered with a serialization error`() = withService {
+    fun `truncated request is answered with a serialization error`() = withService {
         val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
 
         // FailRequest.message is field 1: length-delimited, announces 5 bytes that do not follow
@@ -499,7 +436,7 @@ class ServiceResponderTest {
     fun `request without reply subject still runs the implementation`() = withService {
         val method = method("fire")
         NatsConnectionManager.connection()
-            .publish(method.subject, NatsHeaders.base("external"), method.encodeRequest(arrayOf()))
+            .publish(method.subject, NatsHeaders.base("external"), method.encodeRequest(FireRequest()))
 
         withTimeout(5.seconds) { impl.fired.receive() }
     }
@@ -509,7 +446,7 @@ class ServiceResponderTest {
         val method = method("slowFire")
         val headers = NatsHeaders.base("external")
             .add(ProtocolHeaders.DEADLINE, (System.currentTimeMillis() + 1_000).toString())
-        NatsConnectionManager.connection().publish(method.subject, headers, method.encodeRequest(arrayOf()))
+        NatsConnectionManager.connection().publish(method.subject, headers, method.encodeRequest(Unit))
 
         withTimeout(5.seconds) { impl.slowFireDone.await() }
     }
@@ -519,7 +456,7 @@ class ServiceResponderTest {
         val method = method("count")
         val headers = NatsHeaders.base("external")
             .add(ProtocolHeaders.DEADLINE, (System.currentTimeMillis() - 1_000).toString())
-        NatsConnectionManager.connection().publish(method.subject, headers, method.encodeRequest(arrayOf()))
+        NatsConnectionManager.connection().publish(method.subject, headers, method.encodeRequest(Unit))
 
         delay(500.milliseconds)
         assertEquals(0, impl.calls.get())
@@ -554,18 +491,18 @@ class ServiceResponderTest {
     fun `v1 and v2 of one service are served side by side in one client`() = withService {
         val attempts = Channel<Int>(Channel.UNLIMITED)
         client.registerService<VersionedServiceV1>(object : VersionedServiceV1 {
-            override suspend fun ping(message: String) = VersionedPingReplyV1(message, version = 1)
+            override suspend fun ping(request: VersionedPingRequestV1) = VersionedPingReplyV1(request.message, version = 1)
         })
         client.registerService<VersionedServiceV2>(object : VersionedServiceV2 {
-            override suspend fun ping(message: String, attempt: Int): VersionedPingReplyV2 {
-                attempts.send(attempt)
-                return VersionedPingReplyV2(message, version = 2, region = "eu")
+            override suspend fun ping(request: VersionedPingRequestV2): VersionedPingReplyV2 {
+                attempts.send(request.attempt)
+                return VersionedPingReplyV2(request.message, version = 2, region = "eu")
             }
         })
 
-        assertEquals(VersionedPingReplyV1("a", 1), client.service<VersionedServiceV1>().ping("a"))
-        assertEquals(VersionedPingReplyV2("b", 2, "eu"), client.service<VersionedServiceV2>().ping("b"))
-        assertEquals(VersionedPingReplyV2("c", 2, "eu"), client.service<VersionedServiceV2>().ping("c", attempt = 3))
+        assertEquals(VersionedPingReplyV1("a", 1), client.service<VersionedServiceV1>().ping(VersionedPingRequestV1("a")))
+        assertEquals(VersionedPingReplyV2("b", 2, "eu"), client.service<VersionedServiceV2>().ping(VersionedPingRequestV2("b")))
+        assertEquals(VersionedPingReplyV2("c", 2, "eu"), client.service<VersionedServiceV2>().ping(VersionedPingRequestV2("c", attempt = 3)))
         assertEquals(listOf(1, 3), listOf(attempts.receive(), attempts.receive()))
 
         val v1 = client.serviceDescriptor(VersionedServiceV1::class.java).methods.single()

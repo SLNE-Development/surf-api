@@ -10,7 +10,6 @@ import dev.slne.surf.demo.Tag
 import dev.slne.surf.demo.TagSerializer
 import dev.slne.surf.nats.NatsGeneratedApi
 import dev.slne.surf.nats.descriptor.NatsMethodDescriptor
-import dev.slne.surf.nats.descriptor.NatsParameter
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.descriptor.NatsServiceDescriptor
 import dev.slne.surf.nats.descriptor.natsContentEquals
@@ -22,14 +21,12 @@ import dev.slne.surf.nats.types.EmptySerializer
 import dev.slne.surf.nats.types.UuidSerializer
 import java.util.UUID
 import kotlin.Any
-import kotlin.Array
 import kotlin.Boolean
 import kotlin.ByteArray
 import kotlin.Int
 import kotlin.Long
 import kotlin.OptIn
 import kotlin.String
-import kotlin.Suppress
 import kotlin.Unit
 import kotlin.collections.List
 import kotlin.collections.Map
@@ -164,34 +161,20 @@ public data class StoreRequest(
 }
 
 public interface PunishService {
-    public suspend fun findPunishments(
-        player: UUID,
-        limit: Int = 10,
-        flags: Int = 16,
-        ids: List<Int> = emptyList(),
-        filter: FindPunishmentsRequest.Filter? = null,
-        server: String? = null,
-        labels: Map<Int, String> = emptyMap(),
-    ): FindPunishmentsResponse
+    public suspend fun findPunishments(request: FindPunishmentsRequest): FindPunishmentsResponse
 
-    public suspend fun broadcast(message: String)
+    public suspend fun broadcast(request: BroadcastRequest)
 
-    public suspend fun lookup(player: UUID): Answer<LookupReply>
+    public suspend fun lookup(request: LookupRequest): Answer<LookupReply>
 
-    public suspend fun store(
-        id: Long,
-        payloads: List<ByteArray> = emptyList(),
-        tag: Tag,
-        previousTag: Tag? = null,
-    )
+    public suspend fun store(request: StoreRequest)
 
     public suspend fun total(): Count
 
-    public suspend fun ping(): Text
+    public suspend fun ping(request: Ack): Text
 
     public companion object {
         @JvmField
-        @Suppress("UNCHECKED_CAST")
         public val NATS_DESCRIPTOR: NatsServiceDescriptor<PunishService> =
                 NatsServiceDescriptor<PunishService>(
                     protoName = "surf.demo.v1.PunishService",
@@ -203,19 +186,8 @@ public interface PunishService {
                             callTimeoutSeconds = 10,
                             recipients = Recipients.ANY_INSTANCE,
                             resultKind = NatsResultKind.VALUE,
-                            parameters = listOf(
-                                NatsParameter(name = "player", type = UUID::class, nullable = false),
-                                NatsParameter(name = "limit", type = Int::class, nullable = false),
-                                NatsParameter(name = "flags", type = Int::class, nullable = false),
-                                NatsParameter(name = "ids", type = List::class, nullable = false),
-                                NatsParameter(name = "filter", type = FindPunishmentsRequest.Filter::class, nullable = true),
-                                NatsParameter(name = "server", type = String::class, nullable = true),
-                                NatsParameter(name = "labels", type = Map::class, nullable = false),
-                            ),
                             requestSerializer = FindPunishmentsRequest.serializer(),
                             responseSerializer = FindPunishmentsResponse.serializer(),
-                            toRequest = { a -> FindPunishmentsRequest(player = a[0] as UUID, limit = a[1] as Int, flags = a[2] as Int, ids = a[3] as List<Int>, filter = a[4] as FindPunishmentsRequest.Filter?, server = a[5] as String?, labels = a[6] as Map<Int, String>) },
-                            toArguments = { r -> arrayOf<Any?>(r.player, r.limit, r.flags, r.ids, r.filter, r.server, r.labels) },
                         ),
                         NatsMethodDescriptor<BroadcastRequest, Unit>(
                             protoName = "Broadcast",
@@ -224,13 +196,8 @@ public interface PunishService {
                             callTimeoutSeconds = 10,
                             recipients = Recipients.ALL_INSTANCES,
                             resultKind = NatsResultKind.UNIT,
-                            parameters = listOf(
-                                NatsParameter(name = "message", type = String::class, nullable = false),
-                            ),
                             requestSerializer = BroadcastRequest.serializer(),
                             responseSerializer = null,
-                            toRequest = { a -> BroadcastRequest(message = a[0] as String) },
-                            toArguments = { r -> arrayOf<Any?>(r.message) },
                         ),
                         NatsMethodDescriptor<LookupRequest, Answer<LookupReply>>(
                             protoName = "Lookup",
@@ -239,13 +206,8 @@ public interface PunishService {
                             callTimeoutSeconds = 10,
                             recipients = Recipients.ALL_INSTANCES,
                             resultKind = NatsResultKind.ANSWER,
-                            parameters = listOf(
-                                NatsParameter(name = "player", type = UUID::class, nullable = false),
-                            ),
                             requestSerializer = LookupRequest.serializer(),
                             responseSerializer = LookupReply.serializer(),
-                            toRequest = { a -> LookupRequest(player = a[0] as UUID) },
-                            toArguments = { r -> arrayOf<Any?>(r.player) },
                         ),
                         NatsMethodDescriptor<StoreRequest, Unit>(
                             protoName = "Store",
@@ -254,16 +216,8 @@ public interface PunishService {
                             callTimeoutSeconds = 10,
                             recipients = Recipients.ANY_INSTANCE,
                             resultKind = NatsResultKind.UNIT,
-                            parameters = listOf(
-                                NatsParameter(name = "id", type = Long::class, nullable = false),
-                                NatsParameter(name = "payloads", type = List::class, nullable = false),
-                                NatsParameter(name = "tag", type = Tag::class, nullable = false),
-                                NatsParameter(name = "previousTag", type = Tag::class, nullable = true),
-                            ),
                             requestSerializer = StoreRequest.serializer(),
                             responseSerializer = null,
-                            toRequest = { a -> StoreRequest(id = a[0] as Long, payloads = a[1] as List<ByteArray>, tag = a[2] as Tag, previousTag = a[3] as Tag?) },
-                            toArguments = { r -> arrayOf<Any?>(r.id, r.payloads, r.tag, r.previousTag) },
                         ),
                         NatsMethodDescriptor<Unit, Count>(
                             protoName = "Total",
@@ -272,11 +226,8 @@ public interface PunishService {
                             callTimeoutSeconds = 300,
                             recipients = Recipients.ANY_INSTANCE,
                             resultKind = NatsResultKind.VALUE,
-                            parameters = emptyList(),
                             requestSerializer = EmptySerializer,
                             responseSerializer = Count.serializer(),
-                            toRequest = { },
-                            toArguments = { NO_ARGUMENTS },
                         ),
                         NatsMethodDescriptor<Ack, Text>(
                             protoName = "Ping",
@@ -285,17 +236,10 @@ public interface PunishService {
                             callTimeoutSeconds = 10,
                             recipients = Recipients.ANY_INSTANCE,
                             resultKind = NatsResultKind.VALUE,
-                            parameters = emptyList(),
                             requestSerializer = Ack.serializer(),
                             responseSerializer = Text.serializer(),
-                            toRequest = { ACK_INSTANCE },
-                            toArguments = { NO_ARGUMENTS },
                         ),
                     ),
                 )
     }
 }
-
-private val NO_ARGUMENTS: Array<Any?> = emptyArray()
-
-private val ACK_INSTANCE: Ack = Ack()

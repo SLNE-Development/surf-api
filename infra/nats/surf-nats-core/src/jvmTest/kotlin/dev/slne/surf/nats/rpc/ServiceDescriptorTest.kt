@@ -3,7 +3,7 @@ package dev.slne.surf.nats.rpc
 import dev.slne.surf.nats.DuplicateRpcService
 import dev.slne.surf.nats.EmptyService
 import dev.slne.surf.nats.InvalidRpcNameService
-import dev.slne.surf.nats.MismatchedValueClassService
+import dev.slne.surf.nats.MismatchedRequestService
 import dev.slne.surf.nats.MissingMethodService
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.OverloadedService
@@ -12,9 +12,9 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.service
-import dev.slne.surf.nats.test.fixtures.Tag
 import dev.slne.surf.nats.test.proto.v1.CalcService
 import dev.slne.surf.nats.test.proto.v1.FinderService
+import dev.slne.surf.nats.test.proto.v1.InlineRequest
 import dev.slne.surf.nats.test.proto.v1.OrderService
 import dev.slne.surf.nats.test.proto.v1.RolesService
 import dev.slne.surf.nats.test.proto.v1.Text
@@ -23,7 +23,6 @@ import java.lang.reflect.Modifier
 import java.util.*
 import kotlin.coroutines.Continuation
 import kotlin.test.*
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import dev.slne.surf.nats.test.proto.v1.VersionedService as VersionedServiceV1
 import dev.slne.surf.nats.test.proto.v2.VersionedService as VersionedServiceV2
@@ -70,47 +69,25 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `value class parameters resolve the mangled JVM method and their boxing`() {
-        val inline = describe(CalcService::class.java).method("inline")
-
-        assertTrue(inline.method.name.startsWith("inline-"), inline.method.name)
-        assertEquals(
-            listOf(Long::class.javaPrimitiveType, Duration::class.java, String::class.java, String::class.java, Continuation::class.java),
-            inline.method.parameterTypes.toList(),
-        )
-
-        val (duration, maybeDuration, tag, maybeTag) = inline.valueClasses
-        assertEquals(Duration::class.java, duration?.type)
-        assertEquals(Long::class.javaPrimitiveType, duration?.underlying)
-        assertNull(maybeDuration, "Duration? is passed boxed")
-        assertEquals(Tag::class.java, tag?.type)
-        assertEquals(String::class.java, tag?.underlying)
-        assertEquals(Tag::class.java, maybeTag?.type, "Tag? is passed as its underlying String")
-        assertEquals(String::class.java, maybeTag?.underlying)
-    }
-
-    @Test
-    fun `parameters of other types need no boxing`() {
+    fun `methods take the request message or nothing for an Empty request`() {
         val descriptor = describe(CalcService::class.java)
 
-        assertTrue(descriptor.method("mixed").valueClasses.all { it == null })
-        assertTrue(descriptor.method("unsigned").valueClasses.all { it == null })
-        assertEquals("mixed", descriptor.method("mixed").method.name)
-    }
+        val inline = descriptor.method("inline")
+        assertEquals("inline", inline.method.name)
+        assertEquals(listOf(InlineRequest::class.java, Continuation::class.java), inline.method.parameterTypes.toList())
 
-    @Test
-    fun `default parameter bridges are ignored`() {
-        val bridges = CalcService::class.java.declaredMethods.filter { Modifier.isStatic(it.modifiers) && it.isSynthetic }
-        assertTrue(bridges.any { it.name == "unsigned\$default" }, bridges.toString())
-        assertNotNull(Class.forName(CalcService::class.java.name + "\$DefaultImpls"))
-
-        val unsigned = describe(CalcService::class.java).method("unsigned")
-        assertEquals("unsigned", unsigned.method.name)
-        assertFalse(Modifier.isStatic(unsigned.method.modifiers))
+        val health = descriptor.method("health")
+        assertEquals(listOf(Continuation::class.java), health.method.parameterTypes.toList())
 
         val ping = describe(VersionedServiceV2::class.java).methods.single()
         assertEquals("ping", ping.method.name)
-        assertEquals(3, ping.method.parameterCount)
+        assertEquals(2, ping.method.parameterCount)
+    }
+
+    @Test
+    fun `request parameters have no default bridges`() {
+        val statics = CalcService::class.java.declaredMethods.filter { Modifier.isStatic(it.modifiers) }
+        assertTrue(statics.none { it.name.endsWith("\$default") }, statics.toString())
     }
 
     @Test
@@ -222,7 +199,7 @@ class ServiceDescriptorTest {
         }.message.orEmpty()
 
         assertContains(message, "Invalid NATS_DESCRIPTOR of ${MissingMethodService::class.java.name}")
-        assertContains(message, "pong (rpc Pong): no suspend method with 0 parameters")
+        assertContains(message, "pong (rpc Pong): no suspend method pong() for the google.protobuf.Empty request")
     }
 
     @Test
@@ -252,7 +229,8 @@ class ServiceDescriptorTest {
 
         assertContains(message, "Invalid NATS_DESCRIPTOR of ${OverloadedService::class.java.name}")
         assertContains(message, "find (rpc Find): matches more than one method: ")
-        assertContains(message, "find-")
+        assertContains(message, "find(${Text::class.java.name})")
+        assertContains(message, "find(java.lang.String)")
     }
 
     @Test
@@ -275,15 +253,17 @@ class ServiceDescriptorTest {
     }
 
     @Test
-    fun `value class mismatch names the parameter and its declared type`() {
+    fun `methods that differ from the request shape of their rpc are rejected`() {
         val message = assertFailsWith<IllegalArgumentException> {
-            describe(MismatchedValueClassService::class.java)
+            describe(MismatchedRequestService::class.java)
         }.message.orEmpty()
 
         assertContains(
             message,
-            "pause (rpc Pause): parameter 'duration' (${Tag::class.java.name}) has no box-impl/unbox-impl for long",
+            "pause (rpc Pause): no suspend method pause() for the google.protobuf.Empty request, " +
+                    "found pause(${Text::class.java.name})",
         )
-        assertFalse("pause-" in message, "mangled JVM method name in: $message")
+        assertContains(message, "resume (rpc Resume): no suspend method resume(request: surf.nats.test.v1.Text), found resume()")
+        assertContains(message, "count (rpc Count): expected count(request: surf.nats.test.v1.Text), found the primitive parameter int")
     }
 }

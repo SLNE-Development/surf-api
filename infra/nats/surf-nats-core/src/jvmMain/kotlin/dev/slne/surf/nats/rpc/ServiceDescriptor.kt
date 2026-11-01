@@ -1,10 +1,10 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.bytecode.ValueClassParameters
 import dev.slne.surf.nats.descriptor.GeneratedDescriptors
 import dev.slne.surf.nats.descriptor.NatsMethodDescriptor
 import dev.slne.surf.nats.descriptor.NatsResultKind
+import dev.slne.surf.nats.protocol.ProtocolFieldRules
 import dev.slne.surf.nats.protocol.ProtocolResolution
 import dev.slne.surf.nats.protocol.ServiceNames
 import dev.slne.surf.nats.util.isSuspend
@@ -48,7 +48,7 @@ internal class ServiceDescriptor(
             }
             val names = ServiceNames(generated.protoName)
 
-            // Static and synthetic members include the `$default` bridges of default parameter values
+            // Static, synthetic, bridge and default members are not rpc methods
             val candidates = type.methods.filter { m ->
                 !Modifier.isStatic(m.modifiers) && !m.isSynthetic && !m.isBridge && !m.isDefault
             }
@@ -70,9 +70,6 @@ internal class ServiceDescriptor(
                     return@forEachIndexed
                 }
 
-                val valueClasses = ValueClassParameters.of(jvmMethod, method.parameters, label, problems)
-                    ?: return@forEachIndexed
-
                 ServiceNames.methodProblem(names.service, method.protoName)?.let { problem ->
                     problems.add("$label: $problem")
                     return@forEachIndexed
@@ -91,7 +88,6 @@ internal class ServiceDescriptor(
                         index,
                         subject,
                         timeout,
-                        valueClasses,
                         "${type.name}.${method.kotlinName}",
                     )
                 )
@@ -109,33 +105,51 @@ internal class ServiceDescriptor(
             return ServiceDescriptor(type, names, methods)
         }
 
-        // kotlinName, or kotlinName-<hash> when value class parameters mangle the JVM name; Continuation last
+        // The suspend method kotlinName(request: <message>), or kotlinName() for a google.protobuf.Empty request
         private fun resolve(
             candidates: List<Method>,
             method: NatsMethodDescriptor<*, *>,
             label: String,
             problems: MutableList<String>,
         ): Method? {
-            val parameterCount = method.parameters.size + 1
-            val mangledPrefix = method.kotlinName + "-"
-            val matches = candidates.filter { m ->
-                (m.name == method.kotlinName || m.name.startsWith(mangledPrefix)) &&
-                        m.parameterCount == parameterCount &&
-                        m.isSuspend()
+            val emptyRequest = method.requestSerializer.descriptor.serialName == ProtocolFieldRules.EMPTY_TYPE
+            val parameterCount = if (emptyRequest) 1 else 2
+            val named = candidates.filter { m -> m.name == method.kotlinName && m.isSuspend() }
+            val matches = named.filter { m -> m.parameterCount == parameterCount }
+
+            val expected = if (emptyRequest) {
+                "${method.kotlinName}() for the ${ProtocolFieldRules.EMPTY_TYPE} request"
+            } else {
+                "${method.kotlinName}(request: ${method.requestSerializer.descriptor.serialName})"
             }
 
             return when (matches.size) {
-                1 -> matches.single()
+                1 -> {
+                    val match = matches.single()
+                    if (!emptyRequest && match.parameterTypes[0].isPrimitive) {
+                        problems.add("$label: expected $expected, found the primitive parameter ${match.parameterTypes[0]}")
+                        null
+                    } else {
+                        match
+                    }
+                }
+
                 0 -> {
-                    problems.add("$label: no suspend method with ${method.parameters.size} parameters")
+                    val found = if (named.isEmpty()) "" else ", found " + named.joinToString { it.signature() }
+                    problems.add("$label: no suspend method $expected$found")
                     null
                 }
 
                 else -> {
-                    problems.add("$label: matches more than one method: ${matches.joinToString { it.name }}")
+                    problems.add("$label: matches more than one method: ${matches.joinToString { it.signature() }}")
                     null
                 }
             }
+        }
+
+        // name(parameter types without the Continuation)
+        private fun Method.signature(): String {
+            return parameterTypes.dropLast(1).joinToString(prefix = "$name(", postfix = ")") { it.typeName }
         }
     }
 }

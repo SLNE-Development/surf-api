@@ -1,14 +1,12 @@
 package dev.slne.surf.nats
 
 import dev.slne.surf.nats.descriptor.NatsMethodDescriptor
-import dev.slne.surf.nats.descriptor.NatsParameter
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.descriptor.NatsServiceDescriptor
 import dev.slne.surf.nats.rpc.Recipients
-import dev.slne.surf.nats.test.fixtures.Tag
 import dev.slne.surf.nats.test.proto.v1.Text
 import dev.slne.surf.nats.types.EmptySerializer
-import kotlin.time.Duration
+import kotlinx.serialization.KSerializer
 
 // Service interfaces with hand-written descriptors. They stand in for contracts of other modules, which one generator
 // run never sees together, and for descriptors that do not match their interface.
@@ -27,11 +25,8 @@ fun <S : Any> textService(
             callTimeoutSeconds = null,
             recipients = Recipients.ANY_INSTANCE,
             resultKind = NatsResultKind.VALUE,
-            parameters = emptyList(),
             requestSerializer = EmptySerializer,
             responseSerializer = Text.serializer(),
-            toRequest = { },
-            toArguments = { emptyArray() },
         )
     },
 )
@@ -97,29 +92,26 @@ interface DuplicateRpcService {
     }
 }
 
-// find(Tag) compiles to the mangled find-<hash>, so the rpc `find` with one parameter matches both overloads
+// The rpc `find` with a request matches both overloads
 interface OverloadedService {
-    suspend fun find(tag: Tag): Text
+    suspend fun find(request: Text): Text
 
-    suspend fun find(name: String): Text
+    suspend fun find(request: String): Text
 
     companion object {
         @JvmField
         val NATS_DESCRIPTOR: NatsServiceDescriptor<OverloadedService> = NatsServiceDescriptor(
             protoName = "surf.nats.test.v1.OverloadedService",
             methods = listOf(
-                NatsMethodDescriptor<Unit, Text>(
+                NatsMethodDescriptor<Text, Text>(
                     protoName = "Find",
                     kotlinName = "find",
                     persistent = false,
                     callTimeoutSeconds = null,
                     recipients = Recipients.ANY_INSTANCE,
                     resultKind = NatsResultKind.VALUE,
-                    parameters = listOf(NatsParameter("name", String::class, nullable = false)),
-                    requestSerializer = EmptySerializer,
+                    requestSerializer = Text.serializer(),
                     responseSerializer = Text.serializer(),
-                    toRequest = { },
-                    toArguments = { emptyArray() },
                 ),
             ),
         )
@@ -142,11 +134,8 @@ interface InvalidRpcNameService {
                     callTimeoutSeconds = null,
                     recipients = Recipients.ANY_INSTANCE,
                     resultKind = NatsResultKind.VALUE,
-                    parameters = emptyList(),
                     requestSerializer = EmptySerializer,
                     responseSerializer = Text.serializer(),
-                    toRequest = { },
-                    toArguments = { emptyArray() },
                 )
             },
         )
@@ -161,29 +150,36 @@ interface EmptyService {
     }
 }
 
-// The descriptor types the Duration parameter (JVM long, mangled method name) as the String-backed value class Tag
-interface MismatchedValueClassService {
-    suspend fun pause(duration: Duration): Text
+// Each method differs from the request shape its rpc describes: pause takes a request for an Empty rpc, resume takes
+// none for a Text rpc and count takes a primitive
+interface MismatchedRequestService {
+    suspend fun pause(request: Text): Text
+
+    suspend fun resume(): Text
+
+    suspend fun count(request: Int): Text
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<MismatchedValueClassService> = NatsServiceDescriptor(
-            protoName = "surf.nats.test.v1.MismatchedValueClassService",
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<MismatchedRequestService> = NatsServiceDescriptor(
+            protoName = "surf.nats.test.v1.MismatchedRequestService",
             methods = listOf(
-                NatsMethodDescriptor<Unit, Text>(
-                    protoName = "Pause",
-                    kotlinName = "pause",
-                    persistent = false,
-                    callTimeoutSeconds = null,
-                    recipients = Recipients.ANY_INSTANCE,
-                    resultKind = NatsResultKind.VALUE,
-                    parameters = listOf(NatsParameter("duration", Tag::class, nullable = false)),
-                    requestSerializer = EmptySerializer,
-                    responseSerializer = Text.serializer(),
-                    toRequest = { },
-                    toArguments = { emptyArray() },
-                ),
+                textMethod("Pause", "pause", EmptySerializer),
+                textMethod("Resume", "resume", Text.serializer()),
+                textMethod("Count", "count", Text.serializer()),
             ),
         )
     }
 }
+
+private fun <Req : Any> textMethod(protoName: String, kotlinName: String, request: KSerializer<Req>) =
+    NatsMethodDescriptor<Req, Text>(
+        protoName = protoName,
+        kotlinName = kotlinName,
+        persistent = false,
+        callTimeoutSeconds = null,
+        recipients = Recipients.ANY_INSTANCE,
+        resultKind = NatsResultKind.VALUE,
+        requestSerializer = request,
+        responseSerializer = Text.serializer(),
+    )

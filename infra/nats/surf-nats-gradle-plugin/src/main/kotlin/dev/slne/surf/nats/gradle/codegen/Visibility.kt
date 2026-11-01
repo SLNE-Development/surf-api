@@ -7,6 +7,11 @@ import dev.slne.surf.nats.gradle.generator.GeneratedVisibility
 /**
  * Applies `generatedVisibility` to a class, interface or enum declaration; members never get a modifier.
  */
-internal fun TypeSpec.Builder.applyVisibility(visibility: GeneratedVisibility): TypeSpec.Builder = apply {
-    if (visibility == GeneratedVisibility.INTERNAL) addModifiers(KModifier.INTERNAL)
+internal fun TypeSpec.Builder.applyVisibility(
+    visibility: GeneratedVisibility,
+): TypeSpec.Builder = apply {
+    when (visibility) {
+        GeneratedVisibility.PUBLIC -> addModifiers(KModifier.PUBLIC)
+        GeneratedVisibility.INTERNAL -> addModifiers(KModifier.INTERNAL)
+    }
 }

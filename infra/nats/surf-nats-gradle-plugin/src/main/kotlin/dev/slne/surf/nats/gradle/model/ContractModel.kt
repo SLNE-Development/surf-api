@@ -56,14 +56,13 @@ internal class ElementType(
 }
 
 /**
- * One constructor property of a generated message; [parameterType] omits the serialization annotations of [type].
+ * One constructor property of a generated message.
  */
 internal class PropertyModel(
     val name: String,
     val location: Location,
     val protoName: String,
     val type: TypeName,
-    val parameterType: TypeName,
     val kClass: TypeName,
     val nullable: Boolean,
     val default: CodeBlock?,
@@ -94,7 +93,7 @@ internal class MessageShape(val className: ClassName, val properties: List<Prope
 internal class EnumEntry(val kotlinName: String, val number: Int)
 
 internal class EnumModel(val className: ClassName, val protoName: String, val entries: List<EnumEntry>) {
-    val zero: EnumEntry? get() = entries.firstOrNull { it.number == 0 }
+    val zero: EnumEntry? get() = entries.find { it.number == 0 }
 }
 
 /**
@@ -217,7 +216,7 @@ internal class ContractModel(
             return null
         }
         val protoType = field.type ?: return null
-        val nullable = SurfOptions.nullable(field.options, location, problems)
+        val nullable = SurfProtoOptions.nullable(field.options, location, problems)
         val name = KotlinNaming.lowerCamel(field.name)
         val number = AnnotationSpec.builder(KotlinTypes.PROTO_NUMBER).addMember("%L", field.tag).build()
 
@@ -243,7 +242,6 @@ internal class ContractModel(
                 location = location,
                 protoName = field.name,
                 type = MAP.parameterizedBy(key.usageType, value.usageType),
-                parameterType = MAP.parameterizedBy(key.kotlinType, value.kotlinType),
                 kClass = MAP,
                 nullable = false,
                 default = CodeBlock.of("emptyMap()"),
@@ -274,7 +272,6 @@ internal class ContractModel(
                 location = location,
                 protoName = field.name,
                 type = LIST.parameterizedBy(element.usageType),
-                parameterType = LIST.parameterizedBy(element.kotlinType),
                 kClass = LIST,
                 nullable = false,
                 default = CodeBlock.of("emptyList()"),
@@ -298,7 +295,6 @@ internal class ContractModel(
             location = location,
             protoName = field.name,
             type = if (nullable) element.usageType.copy(nullable = true) else element.usageType,
-            parameterType = element.kotlinType.copy(nullable = nullable),
             kClass = element.kotlinType,
             nullable = nullable,
             default = if (nullable) CodeBlock.of("null") else default,
@@ -364,7 +360,7 @@ internal class ContractModel(
         val caseNames = HashMap<String, Field>()
         val cases = oneOf.fields.sortedBy { it.tag }.mapNotNull { field ->
             val location = field.location
-            if (SurfOptions.nullable(field.options, location, problems)) {
+            if (SurfProtoOptions.nullable(field.options, location, problems)) {
                 problems.error(location, "(surf.nats.v1.nullable) is not allowed on oneof field '${field.name}'; the oneof itself is nullable")
             }
             if (field.default != null) problems.error(location, "[default] is not allowed on oneof field '${field.name}'")
@@ -401,7 +397,6 @@ internal class ContractModel(
             location = oneOf.location,
             protoName = oneOf.name,
             type = nullableInterface,
-            parameterType = nullableInterface,
             kClass = interfaceName,
             nullable = true,
             default = CodeBlock.of("null"),

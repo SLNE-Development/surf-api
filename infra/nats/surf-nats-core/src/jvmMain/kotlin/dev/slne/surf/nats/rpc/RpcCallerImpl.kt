@@ -47,16 +47,16 @@ internal class RpcCallerImpl(
         presence?.start(client.replyDispatcher())
     }
 
-    override suspend fun call(index: Int, args: Array<Any?>): Any? {
+    override suspend fun call(index: Int, request: Any): Any? {
         client.checkOpen()
         val method = service.methods[index]
         val timeout = currentCoroutineContext()[NatsTimeoutElement]?.timeout ?: method.timeout
 
         val flow = method.flow
-        if (flow != CallFlow.CORE) return callPersistent(method, flow, args, timeout)
+        if (flow != CallFlow.CORE) return callPersistent(method, flow, request, timeout)
 
         val headers = client.headers()
-        val encoded = method.encodeRequest(args)
+        val encoded = method.encodeRequest(request)
         val body = PayloadStore.offload(headers, encoded, timeout, flow.bucket, stampDeadline = flow.sendsDeadline)
 
         return when (method.recipients) {
@@ -202,7 +202,7 @@ internal class RpcCallerImpl(
     private suspend fun callPersistent(
         method: MethodDescriptor,
         flow: CallFlow,
-        args: Array<Any?>,
+        request: Any,
         timeout: Duration,
     ): Any? {
         if (flow == CallFlow.FIRE) {
@@ -211,7 +211,7 @@ internal class RpcCallerImpl(
 
         val streams = checkNotNull(service.streams)
         val headers = client.headers()
-        val encoded = method.encodeRequest(args)
+        val encoded = method.encodeRequest(request)
 
         val inbox = if (flow.sendsReplyTo) NatsConnectionManager.connection().createInbox() else null
         if (inbox != null) headers.add(ProtocolHeaders.REPLY_TO, inbox)

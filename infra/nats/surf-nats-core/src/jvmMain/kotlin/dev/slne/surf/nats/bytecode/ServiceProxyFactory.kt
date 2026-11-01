@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.bytecode
 
-import com.google.common.primitives.Primitives
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.rpc.MethodDescriptor
 import dev.slne.surf.nats.rpc.RpcCaller
@@ -8,8 +7,6 @@ import dev.slne.surf.nats.rpc.ServiceDescriptor
 import org.jetbrains.annotations.TestOnly
 import java.lang.classfile.ClassBuilder
 import java.lang.classfile.ClassFile
-import java.lang.classfile.CodeBuilder
-import java.lang.classfile.TypeKind
 import java.lang.constant.ClassDesc
 import java.lang.constant.ConstantDescs
 import java.lang.constant.MethodTypeDesc
@@ -24,11 +21,13 @@ internal object ServiceProxyFactory {
     private val CD_RPC_CALLER = ClassDesc.of(RpcCaller::class.java.name)
     private val CD_CONTINUATION = ClassDesc.of(Continuation::class.java.name)
 
-    // call(int, Object[], Continuation): Object
+    private val CD_UNIT = ClassDesc.of(Unit::class.java.name)
+
+    // call(int, Object, Continuation): Object
     private val MTD_CALL = MethodTypeDesc.of(
         ConstantDescs.CD_Object,
         ConstantDescs.CD_int,
-        ConstantDescs.CD_Object.arrayType(),
+        ConstantDescs.CD_Object,
         CD_CONTINUATION
     )
 
@@ -123,16 +122,13 @@ internal object ServiceProxyFactory {
         descriptor: MethodDescriptor
     ) {
         val method = descriptor.method
-        val parameterTypes = method.parameterTypes
-        val argumentTypes = parameterTypes.dropLast(1) // Args without continuation
-        val valueClasses = descriptor.valueClasses
         val methodType = MethodTypeDesc.of(
             method.returnType.describeConstable().orElseThrow(),
-            *parameterTypes.map { it.describeConstable().orElseThrow() }.toTypedArray()
+            *method.parameterTypes.map { it.describeConstable().orElseThrow() }.toTypedArray()
         )
 
         // override interface method
-        // return this.caller.call(index, args[], cont)
+        // return this.caller.call(index, request, cont), with Unit as the request of an Empty rpc
         classBuilder.withMethodBody(
             method.name,
             methodType,
@@ -141,67 +137,19 @@ internal object ServiceProxyFactory {
             // Load RpcCaller from field
             codeBuilder.aload(0).getfield(thisClass, CALLER_FIELD, CD_RPC_CALLER)
             codeBuilder.loadConstant(descriptor.index) // index
-            codeBuilder.loadConstant(argumentTypes.size)
-                .anewarray(ConstantDescs.CD_Object) // Object[] args
 
-            var slot = 1
-            argumentTypes.forEachIndexed { i, parameterType ->
-                val kind = TypeKind.from(parameterType)
-                codeBuilder.dup()
-                    .loadConstant(i)
-                    .loadLocal(kind, slot)
-                val valueClass = valueClasses[i]
-                if (valueClass != null) {
-                    boxValueClass(codeBuilder, valueClass)
-                } else {
-                    box(codeBuilder, parameterType)
-                }
-                codeBuilder.aastore()
-                slot += kind.slotSize()
+            val continuationSlot = if (method.parameterCount == 1) {
+                codeBuilder.getstatic(CD_UNIT, "INSTANCE", CD_UNIT)
+                1
+            } else {
+                codeBuilder.aload(1)
+                2
             }
 
-            codeBuilder.aload(slot)
+            codeBuilder.aload(continuationSlot)
                 .invokeinterface(CD_RPC_CALLER, "call", MTD_CALL)
                 .areturn()
         }
-    }
-
-    // ValueClass.box-impl(underlying), keeping null for a reference underlying type
-    private fun boxValueClass(codeBuilder: CodeBuilder, parameter: ValueClassParameter) {
-        val box = parameter.box
-        val owner = box.declaringClass.describeConstable().orElseThrow()
-        val boxCall = MethodTypeDesc.of(
-            box.returnType.describeConstable().orElseThrow(),
-            parameter.underlying.describeConstable().orElseThrow()
-        )
-
-        if (parameter.underlying.isPrimitive) {
-            codeBuilder.invokestatic(owner, box.name, boxCall)
-            return
-        }
-
-        val boxed = codeBuilder.newLabel()
-        val end = codeBuilder.newLabel()
-        codeBuilder.dup()
-            .ifnonnull(boxed)
-            .pop()
-            .aconst_null()
-            .goto_(end)
-            .labelBinding(boxed)
-            .invokestatic(owner, box.name, boxCall)
-            .labelBinding(end)
-    }
-
-    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-    private fun box(codeBuilder: CodeBuilder, type: Class<*>) {
-        if (!type.isPrimitive) return
-
-        val wrapperDesc = ClassDesc.of(Primitives.wrap(type).name)
-        codeBuilder.invokestatic(
-            wrapperDesc,
-            "valueOf",
-            MethodTypeDesc.of(wrapperDesc, type.describeConstable().orElseThrow())
-        )
     }
 
     @TestOnly

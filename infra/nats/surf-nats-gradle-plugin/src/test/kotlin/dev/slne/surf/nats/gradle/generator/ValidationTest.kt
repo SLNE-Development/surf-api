@@ -468,6 +468,22 @@ class ValidationTest {
     }
 
     @Test
+    fun `rpcs with different request types must still map to distinct Kotlin functions`() {
+        val errors = errors(
+            """
+            service S {
+              rpc Find(A) returns (google.protobuf.Empty);
+              rpc find(B) returns (google.protobuf.Empty);
+            }
+            message A { optional int64 id = 1; }
+            message B { optional string name = 1; }
+            """.trimIndent()
+        )
+        assertLocated(errors, 6, "rpc find maps to the Kotlin function 'find', already used by the rpc at")
+        assertEquals(1, errors.size, errors.joinToString("\n"))
+    }
+
+    @Test
     fun `stream names of services are limited to 255 characters`() {
         // SURF_PERSIST_ (13) + surf_test_v1_ (13) + the service name
         val longest = "S" + "x".repeat(228)

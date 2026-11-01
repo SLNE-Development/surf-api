@@ -12,8 +12,6 @@ import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.descriptor.NatsServiceDescriptor
 import dev.slne.surf.nats.rpc.Recipients
 import dev.slne.surf.nats.types.EmptySerializer
-import kotlin.Any
-import kotlin.Array
 import kotlin.Long
 import kotlin.OptIn
 import kotlin.Unit
@@ -51,15 +49,10 @@ public interface VersionedService {
                             callTimeoutSeconds = null,
                             recipients = Recipients.ANY_INSTANCE,
                             resultKind = NatsResultKind.VALUE,
-                            parameters = emptyList(),
                             requestSerializer = EmptySerializer,
                             responseSerializer = Pong.serializer(),
-                            toRequest = { },
-                            toArguments = { NO_ARGUMENTS },
                         ),
                     ),
                 )
     }
 }
-
-private val NO_ARGUMENTS: Array<Any?> = emptyArray()

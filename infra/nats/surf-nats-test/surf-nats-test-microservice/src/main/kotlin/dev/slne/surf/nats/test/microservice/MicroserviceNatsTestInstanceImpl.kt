@@ -7,6 +7,9 @@ import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.Benchmark
 import dev.slne.surf.nats.test.common.NatsTestInstance
 import dev.slne.surf.nats.test.common.natsClient
+import dev.slne.surf.nats.test.common.proto.v1.BroadcastRequest
+import dev.slne.surf.nats.test.common.proto.v1.EchoRequest
+import dev.slne.surf.nats.test.common.proto.v1.FindPlayerRequest
 import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
 import dev.slne.surf.nats.test.common.proto.v1.PaperTestService
 import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
@@ -32,13 +35,13 @@ class MicroserviceNatsTestInstanceImpl : NatsTestInstance() {
 
         microserviceCommand("find") { args ->
             val (answer, took) = measureTimedValue {
-                paper.findPlayer(args.joinToString(" "))
+                paper.findPlayer(FindPlayerRequest(args.joinToString(" ")))
             }
             sendLine("find -> ${answer.getOrNull()?.info ?: "none"} ($took)")
         }
 
         microserviceCommand("broadcast") { args ->
-            paper.broadcast(args.joinToString(" "))
+            paper.broadcast(BroadcastRequest(args.joinToString(" ")))
             sendLine("broadcast sent")
         }
 
@@ -51,8 +54,8 @@ class MicroserviceNatsTestInstanceImpl : NatsTestInstance() {
             val self = natsClient.service<MicroserviceTestService>()
 
             val call: suspend () -> Unit = when (kind) {
-                "echo" -> ({ self.echo("ping") })
-                else -> ({ paper.findPlayer("nobody") })
+                "echo" -> EchoRequest("ping").let { request -> { self.echo(request) } }
+                else -> FindPlayerRequest("nobody").let { request -> { paper.findPlayer(request) } }
             }
 
             sendLine("bench $kind: warmup $warmup, iterations $iterations, concurrency $concurrency ...")

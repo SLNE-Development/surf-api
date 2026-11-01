@@ -41,7 +41,7 @@ internal class ServiceRegistration(
 ) : NatsRegistration {
 
     private val invokers = descriptor.methods.map {
-        ServiceInvokerFactory.create(implementation, it.method, it.valueClasses)
+        ServiceInvokerFactory.create(implementation, it.method)
     }
 
     private val announcer = descriptor.presenceSubject?.let { subject ->
@@ -189,8 +189,8 @@ internal class ServiceRegistration(
             return failFire(message, e, permanent = isObjectNotFound(e))
         }
 
-        val arguments = try {
-            method.decodeArguments(data, message.header(ProtocolHeaders.CONTENT_TYPE))
+        val request = try {
+            method.decodeRequest(data, message.header(ProtocolHeaders.CONTENT_TYPE))
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
             return failFire(message, e, permanent = false)
@@ -201,7 +201,7 @@ internal class ServiceRegistration(
 
         val completed: Unit? = try {
             withTimeoutOrNull(RpcDefaults.FIRE_MAX_DURATION) {
-                invokers[method.index].call(arguments)
+                invokers[method.index].call(request)
                 Unit
             }
         } catch (e: CancellationException) {
@@ -406,8 +406,8 @@ internal class ServiceRegistration(
     ): Outcome {
         val call = suspend {
             val data = PayloadStore.resolve(message, PayloadBucket.TRANSIENT, deletePayload)
-            val args = method.decodeArguments(data, message.header(ProtocolHeaders.CONTENT_TYPE))
-            Outcome.Completed(invokers[method.index].call(args))
+            val request = method.decodeRequest(data, message.header(ProtocolHeaders.CONTENT_TYPE))
+            Outcome.Completed(invokers[method.index].call(request))
         }
 
         val outcome = try {

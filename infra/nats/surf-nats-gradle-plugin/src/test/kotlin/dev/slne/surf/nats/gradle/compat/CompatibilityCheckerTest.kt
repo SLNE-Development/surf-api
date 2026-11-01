@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CompatibilityCheckerTest {
@@ -551,9 +552,10 @@ class CompatibilityCheckerTest {
             "surf.demo.v1.BanRequest",
             "new field 'moderator' = 2 is numbered below the baseline maximum 3",
             "'reason' moves from position 2 to 3",
-            "the constructor of BanRequest and the parameters of BanService.Ban",
+            "positional arguments of the constructor of BanRequest shift",
             "new fields always get a number above the current maximum",
         )
+        assertFalse("parameters of BanService" in warning, warning)
     }
 
     @Test

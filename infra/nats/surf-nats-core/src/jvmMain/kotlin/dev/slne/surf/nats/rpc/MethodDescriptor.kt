@@ -1,7 +1,6 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.bytecode.ValueClassParameter
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.descriptor.NatsMethodDescriptor
 import dev.slne.surf.nats.descriptor.NatsResultKind
@@ -13,11 +12,10 @@ import kotlin.time.Duration
 @InternalNatsApi
 internal class MethodDescriptor(
     val generated: NatsMethodDescriptor<Any, *>,
-    val method: Method, // interface method, JVM name mangled for value class parameters
+    val method: Method, // interface method: (request, Continuation), or (Continuation) for an Empty request
     val index: Int,
     val subject: String, // surf.rpc|persist.<service>.<rpc>
     val timeout: Duration,
-    val valueClasses: List<ValueClassParameter?>,
     val label: String, // <interface>.<kotlinName>
 ) {
     val kotlinName: String = generated.kotlinName
@@ -31,13 +29,10 @@ internal class MethodDescriptor(
     @Suppress("UNCHECKED_CAST")
     val response: KSerializer<Any>? = generated.responseSerializer as KSerializer<Any>? // null exactly for UNIT
 
-    fun encodeRequest(arguments: Array<Any?>): ByteArray {
-        return NatsCodec.encode(request, generated.toRequest(arguments))
-    }
+    // Unit for an Empty request
+    fun encodeRequest(value: Any): ByteArray = NatsCodec.encode(request, value)
 
-    fun decodeArguments(data: ByteArray, contentType: String?): Array<Any?> {
-        return generated.toArguments(NatsCodec.decode(request, data, contentType))
-    }
+    fun decodeRequest(data: ByteArray, contentType: String?): Any = NatsCodec.decode(request, data, contentType)
 
     // Only for results other than UNIT; ServiceDescriptor.of checks that they have a response serializer
     fun encodeResponse(value: Any): ByteArray = NatsCodec.encode(response!!, value)

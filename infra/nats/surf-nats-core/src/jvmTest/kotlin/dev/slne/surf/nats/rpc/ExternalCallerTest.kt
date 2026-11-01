@@ -12,8 +12,10 @@ import dev.slne.surf.nats.test.proto.v1.EchoRequest
 import dev.slne.surf.nats.test.proto.v1.LateService
 import dev.slne.surf.nats.test.proto.v1.Number
 import dev.slne.surf.nats.test.proto.v1.OwnerReply
+import dev.slne.surf.nats.test.proto.v1.OwnerRequest
 import dev.slne.surf.nats.test.proto.v1.PutRequest
 import dev.slne.surf.nats.test.proto.v1.RolesService
+import dev.slne.surf.nats.test.proto.v1.StoreRequest
 import dev.slne.surf.nats.test.proto.v1.WhitelistRequest
 import io.nats.client.api.StorageType
 import io.nats.client.api.StreamConfiguration
@@ -50,29 +52,29 @@ class ExternalCallerTest {
         val stored = ConcurrentLinkedQueue<Long>()
         val handled = ConcurrentLinkedQueue<Long>()
 
-        override suspend fun whitelist(action: String, userId: Long) {
-            whitelisted.send(action to userId)
+        override suspend fun whitelist(request: WhitelistRequest) {
+            whitelisted.send(request.action to request.userId)
         }
 
-        override suspend fun echo(id: Long): Number = Number(id)
+        override suspend fun echo(request: EchoRequest): Number = Number(request.id)
 
-        override suspend fun owner(player: UUID): OwnerReply = OwnerReply(player)
+        override suspend fun owner(request: OwnerRequest): OwnerReply = OwnerReply(request.player)
 
-        override suspend fun store(id: Long, payload: String?) {
-            stored += id
+        override suspend fun store(request: StoreRequest) {
+            stored += request.id
         }
 
-        override suspend fun handle(id: Long, payload: String?): Number {
-            handled += id
-            return Number(id)
+        override suspend fun handle(request: StoreRequest): Number {
+            handled += request.id
+            return Number(request.id)
         }
     }
 
     class LateImpl : LateService {
         val stored = Channel<Long>(Channel.UNLIMITED)
 
-        override suspend fun put(id: Long) {
-            stored.send(id)
+        override suspend fun put(request: PutRequest) {
+            stored.send(request.id)
         }
     }
 
@@ -243,14 +245,14 @@ class ExternalCallerTest {
         val roles = caller.service<RolesService>()
         val ids = (1L..20L).toList()
 
-        for (id in ids) roles.store(id)
+        for (id in ids) roles.store(StoreRequest(id))
         eventually("every persistent call must be processed") { first.stored.size + second.stored.size >= ids.size }
         eventually("work queue must be drained and acked") {
             messageCount(streams.stream) == 0L &&
                     jsm().getConsumerInfo(streams.stream, streams.durable).numAckPending == 0L
         }
 
-        for (id in ids) assertEquals(Number(id), roles.handle(id))
+        for (id in ids) assertEquals(Number(id), roles.handle(StoreRequest(id)))
 
         assertEquals(ids, (first.stored + second.stored).sorted(), "each persistent call must run exactly once")
         assertEquals(ids, (first.handled + second.handled).sorted(), "each core call must run exactly once")
@@ -272,7 +274,7 @@ class ExternalCallerTest {
         val caller = client()
         val streams = track(caller.serviceDescriptor(RolesService::class.java))
         assertEquals(listOf(streams.durable), jsm().getConsumerNames(streams.stream))
-        assertEquals(Number(1), caller.service<RolesService>().handle(1))
+        assertEquals(Number(1), caller.service<RolesService>().handle(StoreRequest(1)))
     }
 
     @Test
@@ -297,7 +299,7 @@ class ExternalCallerTest {
         val caller = client()
         val streams = track(caller.serviceDescriptor(RolesService::class.java))
         assertEquals(listOf(streams.durable), jsm().getConsumerNames(streams.stream))
-        assertEquals(Number(1), caller.service<RolesService>().handle(1))
+        assertEquals(Number(1), caller.service<RolesService>().handle(StoreRequest(1)))
     }
 
     // ---- core requests from external callers ----
@@ -345,7 +347,7 @@ class ExternalCallerTest {
         assertContentEquals(encoded, reply.data, "OwnerReply has the same layout")
         assertEquals(OwnerReply(uuid), NatsCodec.decode(OwnerReply.serializer(), reply.data, ProtocolHeaders.PROTOBUF_CONTENT_TYPE))
 
-        assertEquals(OwnerReply(uuid), client.service<RolesService>().owner(uuid))
+        assertEquals(OwnerReply(uuid), client.service<RolesService>().owner(OwnerRequest(uuid)))
     }
 
     // ---- foreign streams ----

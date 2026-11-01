@@ -38,7 +38,6 @@ class GeneratedApiMarkerTest {
             NatsEventDescriptor::class.java,
             NatsServiceDescriptor::class.java,
             NatsMethodDescriptor::class.java,
-            NatsParameter::class.java,
         )
         for (type in types) {
             assertGeneratedApi(

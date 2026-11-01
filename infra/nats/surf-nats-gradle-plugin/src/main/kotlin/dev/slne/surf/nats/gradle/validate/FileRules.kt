@@ -6,7 +6,7 @@ import com.squareup.wire.schema.Location
 import com.squareup.wire.schema.MessageType
 import com.squareup.wire.schema.ProtoFile
 import com.squareup.wire.schema.Type
-import dev.slne.surf.nats.gradle.model.SurfOptions
+import dev.slne.surf.nats.gradle.model.SurfProtoOptions
 import dev.slne.surf.nats.protocol.ProtocolFieldRules
 import dev.slne.surf.nats.protocol.ProtocolNaming
 import dev.slne.surf.nats.protocol.ProtocolOptions
@@ -67,21 +67,21 @@ internal class FileRules(private val problems: Problems) {
     private fun nestedExtends(type: Type): List<Extend> = type.nestedExtendList + type.nestedTypes.flatMap(::nestedExtends)
 
     private fun declaresEvent(type: Type): Boolean {
-        return (type is MessageType && SurfOptions.isEvent(type.options)) || type.nestedTypes.any(::declaresEvent)
+        return (type is MessageType && SurfProtoOptions.isEvent(type.options)) || type.nestedTypes.any(::declaresEvent)
     }
 
     private fun usesSurfOptions(file: ProtoFile): Boolean {
         return file.types.any(::usesSurfOptions) ||
                 file.services.any { service ->
-                    SurfOptions.isSet(service.options, SurfOptions.SERVICE) ||
-                            service.rpcs.any { SurfOptions.isSet(it.options, SurfOptions.METHOD) }
+                    SurfProtoOptions.isSet(service.options, SurfProtoOptions.SERVICE) ||
+                            service.rpcs.any { SurfProtoOptions.isSet(it.options, SurfProtoOptions.METHOD) }
                 }
     }
 
     private fun usesSurfOptions(type: Type): Boolean {
         val own = type is MessageType && (
-                SurfOptions.isSet(type.options, SurfOptions.EVENT) ||
-                        type.fieldsAndOneOfFields.any { SurfOptions.isSet(it.options, SurfOptions.NULLABLE) })
+                SurfProtoOptions.isSet(type.options, SurfProtoOptions.EVENT) ||
+                        type.fieldsAndOneOfFields.any { SurfProtoOptions.isSet(it.options, SurfProtoOptions.NULLABLE) })
         return own || type.nestedTypes.any(::usesSurfOptions)
     }
 

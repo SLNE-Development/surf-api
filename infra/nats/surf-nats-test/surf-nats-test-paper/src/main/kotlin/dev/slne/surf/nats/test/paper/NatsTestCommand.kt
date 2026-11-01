@@ -8,8 +8,16 @@ import dev.slne.surf.nats.rpc.getOrNull
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.Benchmark
 import dev.slne.surf.nats.test.common.natsClient
+import dev.slne.surf.nats.test.common.proto.v1.BroadcastRequest
+import dev.slne.surf.nats.test.common.proto.v1.EchoRequest
+import dev.slne.surf.nats.test.common.proto.v1.FailRequest
+import dev.slne.surf.nats.test.common.proto.v1.FindPlayerRequest
 import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
 import dev.slne.surf.nats.test.common.proto.v1.PaperTestService
+import dev.slne.surf.nats.test.common.proto.v1.SizeRequest
+import dev.slne.surf.nats.test.common.proto.v1.StoreRequest
+import dev.slne.surf.nats.test.common.proto.v1.StoredCountRequest
+import dev.slne.surf.nats.test.common.proto.v1.StoredRequest
 import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,29 +43,29 @@ fun registerNatsTestCommand() = commandAPICommand("natstest") {
 
     call("echo", { greedyStringArgument("text") }) { args ->
         val text: String by args
-        microservice.echo(text).text
+        microservice.echo(EchoRequest(text)).text
     }
     call("fail", { greedyStringArgument("message") }) { args ->
         val message: String by args
-        microservice.fail(message).text
+        microservice.fail(FailRequest(message)).text
     }
     call("size", { integerArgument("kilobytes", min = 0) }) { args ->
         val kilobytes: Int by args
-        microservice.size(ByteArray(kilobytes * 1024)).size
+        microservice.size(SizeRequest(ByteArray(kilobytes * 1024))).size
     }
-    call("stored") { microservice.stored().entries }
+    call("stored") { microservice.stored(StoredRequest()).entries }
     call("store", { greedyStringArgument("entry") }) { args ->
         val entry: String by args
-        microservice.store(entry)
+        microservice.store(StoreRequest(entry))
     }
-    call("count") { microservice.storedCount().count }
+    call("count") { microservice.storedCount(StoredCountRequest()).count }
     call("find", { stringArgument("player") }) { args ->
         val player: String by args
-        paper.findPlayer(player).getOrNull()?.info ?: "none"
+        paper.findPlayer(FindPlayerRequest(player)).getOrNull()?.info ?: "none"
     }
     call("broadcast", { greedyStringArgument("message") }) { args ->
         val message: String by args
-        paper.broadcast(message)
+        paper.broadcast(BroadcastRequest(message))
     }
 
     subcommand("bench") {
@@ -71,13 +79,13 @@ fun registerNatsTestCommand() = commandAPICommand("natstest") {
             val iterations = args.getOrDefault("iterations", 2_000) as Int
             val warmup = args.getOrDefault("warmup", 1_000) as Int
             val concurrency = args.getOrDefault("concurrency", 1) as Int
-            val payload = ByteArray((args.getOrDefault("kilobytes", 1) as Int) * 1024)
+            val payload = SizeRequest(ByteArray((args.getOrDefault("kilobytes", 1) as Int) * 1024))
 
             val call: suspend () -> Unit = when (kind) {
-                "echo" -> ({ microservice.echo("ping") })
-                "persistent" -> ({ microservice.storedCount() })
+                "echo" -> EchoRequest("ping").let { request -> { microservice.echo(request) } }
+                "persistent" -> StoredCountRequest().let { request -> { microservice.storedCount(request) } }
                 "payload" -> ({ microservice.size(payload) })
-                else -> ({ paper.findPlayer("nobody") })
+                else -> FindPlayerRequest("nobody").let { request -> { paper.findPlayer(request) } }
             }
 
             sender.reply("bench $kind: warmup $warmup, iterations $iterations, concurrency $concurrency ...")

@@ -174,7 +174,7 @@ Every message becomes a Kotlin `data class`, and every field a property in `lowe
   negative in Kotlin. `sint32` is rejected; use `sint64` or `int32`.
 - `bytes` becomes `ByteArray`. The generated `equals` and `hashCode` compare its content.
 - Constructor parameters follow the field numbers, not the order in the file. Give new fields a number above the
-  current maximum, and call generated constructors and service methods with named arguments.
+  current maximum, and call generated constructors with named arguments.
 
 Field numbers identify fields on the wire. Never change or reuse them. Reserve the numbers and names of deleted
 fields with `reserved`.
@@ -403,20 +403,20 @@ message RenameResponse {
 }
 ```
 
-The plugin generates an interface with one `suspend` method per `rpc`. The fields of the request message become
-the parameters, and the method returns the response message:
+The plugin generates an interface with one `suspend` method per `rpc`. The method takes the request message as its
+only parameter `request` and returns the response message:
 
 ```kotlin
 interface ProfileService {
-    suspend fun findName(playerId: String): FindNameResponse
-    suspend fun rename(playerId: String, name: String): RenameResponse
+    suspend fun findName(request: FindNameRequest): FindNameResponse
+    suspend fun rename(request: RenameRequest): RenameResponse
 }
 ```
 
 A request of type `google.protobuf.Empty` gives a method without parameters, and a response of type
 `google.protobuf.Empty` a method that returns `Unit`; the file then imports `google/protobuf/empty.proto`. An empty
-request message of your own, such as `message ListRequest {}`, also gives a method without parameters, and it can
-gain fields later.
+request message of your own, such as `message ListRequest {}`, stays a parameter (`list(request: ListRequest)`), and
+it can gain fields later.
 
 An instance registers an implementation, and any instance of any application calls it through a generated proxy.
 A call to the `rpc` `FindName` travels on `surf.rpc.surf.profiles.v1.ProfileService.FindName`: the root `surf`, the
@@ -434,8 +434,8 @@ Register the implementation on the instances that serve the calls:
 
 ```kotlin
 object ProfileServiceImpl : ProfileService {
-    override suspend fun findName(playerId: String) = FindNameResponse(repository.findName(playerId))
-    override suspend fun rename(playerId: String, name: String): RenameResponse = repository.rename(playerId, name)
+    override suspend fun findName(request: FindNameRequest) = FindNameResponse(repository.findName(request.playerId))
+    override suspend fun rename(request: RenameRequest): RenameResponse = repository.rename(request.playerId, request.name)
 }
 
 client.registerService<ProfileService>(ProfileServiceImpl)
@@ -445,7 +445,7 @@ Call it from any instance, in this application or another one:
 
 ```kotlin
 val profiles = client.service<ProfileService>()
-val name = profiles.findName(playerId = "alice").name
+val name = profiles.findName(FindNameRequest(playerId = "alice")).name
 ```
 
 `service()` returns the same proxy every time for a given interface, so you can fetch it once and keep it.
@@ -514,12 +514,12 @@ message FindServerResponse {
 
 ```kotlin
 object PlayerServiceImpl : PlayerService {
-    override suspend fun findServer(playerId: String): Answer<FindServerResponse> =
-        if (isOnline(playerId)) Answer.Known(FindServerResponse(serverName)) else Answer.Unknown
+    override suspend fun findServer(request: FindServerRequest): Answer<FindServerResponse> =
+        if (isOnline(request.playerId)) Answer.Known(FindServerResponse(serverName)) else Answer.Unknown
 }
 
 val players = client.service<PlayerService>()
-when (val answer = players.findServer(playerId = "alice")) {
+when (val answer = players.findServer(FindServerRequest(playerId = "alice"))) {
     is Answer.Known -> println("alice is on ${answer.value.server}")
     Answer.Unknown -> println("alice is offline")
 }
@@ -540,7 +540,7 @@ method changes the timeout. `withNatsCallTimeout` overrides it for every call in
 
 ```kotlin
 val name = withNatsCallTimeout(500.milliseconds) {
-    profiles.findName(playerId = "alice")
+    profiles.findName(FindNameRequest(playerId = "alice"))
 }
 ```
 
@@ -573,7 +573,7 @@ Expected outcomes belong in the response, not in exceptions. Model cases such as
 in the response message, like `RenameResponse` above, and reserve exceptions for bugs:
 
 ```kotlin
-when (val result = profiles.rename(playerId = "alice", name = "Alice").result) {
+when (val result = profiles.rename(RenameRequest(playerId = "alice", name = "Alice")).result) {
     is RenameResponse.Result.RenamedTo -> println("renamed to ${result.value}")
     is RenameResponse.Result.TakenBy -> println("name belongs to ${result.value}")
     null -> error("no result")
@@ -682,13 +682,13 @@ the call again, so the implementation must tolerate running twice. `natsPersiste
 implementation which delivery it handles:
 
 ```kotlin
-override suspend fun rename(playerId: String, name: String) {
+override suspend fun rename(request: RenameRequest) {
     val context = natsPersistentContext()
     println("message ${context.messageId}, attempt ${context.deliveryCount}")
 }
 ```
 
-`messageId` stays the same across retries of one call. Two calls with the same arguments get different ids, so
+`messageId` stays the same across retries of one call. Two calls with the same request get different ids, so
 `messageId` cannot detect an operation that a caller sends twice. Use a key from your domain for that, such as an
 operation id that the caller generates and passes as a field of the request.
 
@@ -706,25 +706,25 @@ JVM cannot do that: its calls fail until the service has been registered once.
 
 ## Large payloads
 
-The NATS server limits the size of a message with `max_payload`, 1 MB by default. When the arguments or the result
-of a service call exceed that limit, surf-nats stores them in the NATS object store and sends a reference instead.
-The receiver loads them transparently. surf-nats deletes the objects after use, and objects it does not delete
-expire after the time in the table below. Your code passes ordinary values, for example to a method generated from
-a request with a `bytes data` field:
+The NATS server limits the size of a message with `max_payload`, 1 MB by default. When the request or the result
+of a service call exceeds that limit, surf-nats stores it in the NATS object store and sends a reference instead.
+The receiver loads it transparently. surf-nats deletes the objects after use, and objects it does not delete
+expire after the time in the table below. Your code passes ordinary messages, for example a request with a
+`bytes data` field:
 
 ```kotlin
-suspend fun upload(data: ByteArray)
+suspend fun upload(request: UploadRequest)
 ```
 
 | Bucket                          | Holds                                                                            | Kept for   |
 |---------------------------------|----------------------------------------------------------------------------------|------------|
-| `surf-nats-payloads`            | arguments and results of non-persistent calls and persistent calls with a result | 10 minutes |
-| `surf-nats-persistent-payloads` | arguments of persistent calls without a result                                   | 7 days     |
+| `surf-nats-payloads`            | requests and results of non-persistent calls and persistent calls with a result  | 10 minutes |
+| `surf-nats-persistent-payloads` | requests of persistent calls without a result                                    | 7 days     |
 
 The object store needs JetStream and a `max_payload` of at least 128 KB. Events never use it.
 
 Objects in `surf-nats-payloads` expire after 10 minutes, whatever the timeout of the call. A call with a longer
-timeout therefore fails when its arguments or result need the object store: arguments with an
+timeout therefore fails when its request or result needs the object store: a request with an
 `IllegalArgumentException`, a result with a `NatsRemoteException`. Calls with small payloads are not affected.
 
 ## Threads
@@ -733,8 +733,8 @@ surf-nats runs listeners and service implementations concurrently on `Dispatcher
 Do not block there. Move blocking work to `Dispatchers.IO`:
 
 ```kotlin
-override suspend fun findName(playerId: String) = withContext(Dispatchers.IO) {
-    FindNameResponse(database.findName(playerId))
+override suspend fun findName(request: FindNameRequest) = withContext(Dispatchers.IO) {
+    FindNameResponse(database.findName(request.playerId))
 }
 ```
 
@@ -816,7 +816,7 @@ replies, and dead letters.
 | `@OnRedisEvent`                        | `@NatsListener`                                                                                                                            |
 | `subscribeToEvents(listener)`          | `client.registerListener(listener)`                                                                                                        |
 | `publishEvent(event).await()`          | `client.publish(event)`                                                                                                                    |
-| Request and response packet            | An `rpc` with its own request and response message. The request fields become the parameters of the generated method, which returns the response. |
+| Request and response packet            | An `rpc` with its own request and response message. The generated method takes the request and returns the response.                       |
 | `@RabbitHandler`                       | The implementation of that method                                                                                                          |
 | `sendRequest(packet)`                  | A call on `client.service<T>()`                                                                                                            |
 

@@ -10,6 +10,7 @@ import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.fixtures.Tag
 import dev.slne.surf.nats.test.proto.v1.CalcService
+import dev.slne.surf.nats.test.proto.v1.FireRequest
 import dev.slne.surf.nats.test.proto.v1.Health
 import dev.slne.surf.nats.test.proto.v1.HealthReply
 import dev.slne.surf.nats.test.proto.v1.InlineRequest
@@ -48,7 +49,7 @@ class ServiceProxyTest {
     fun disconnect() = runBlocking { NatsInstance.instance.disable() }
 
     @Test
-    fun `arguments including primitives arrive and the result is decoded`() = withService { client, calc ->
+    fun `request message arrives and the result is decoded`() = withService { client, calc ->
         val method = client.method("mixed")
         val received = AtomicReference<Any>()
 
@@ -56,14 +57,14 @@ class ServiceProxyTest {
             received.set(decodeRequest(method, request))
             reply(client, method, Text("ok"), request)
         }.use {
-            assertEquals(Text("ok"), calc.mixed(1, 2L, 3.5, true, "label"))
+            assertEquals(Text("ok"), calc.mixed(MixedRequest(1, 2L, 3.5, true, "label")))
         }
 
         assertEquals(MixedRequest(1, 2L, 3.5, true, "label"), received.get())
     }
 
     @Test
-    fun `value class arguments are boxed into the request message`() = withService { client, calc ->
+    fun `request with value class fields arrives unchanged`() = withService { client, calc ->
         val method = client.method("inline")
         val received = LinkedBlockingQueue<Any>()
 
@@ -71,8 +72,8 @@ class ServiceProxyTest {
             received.add(decodeRequest(method, request))
             reply(client, method, Text("ok"), request)
         }.use {
-            calc.inline(1.5.seconds, null, Tag("a"), Tag("b"))
-            calc.inline(2.seconds, 3.seconds, Tag("c"), null)
+            calc.inline(InlineRequest(1.5.seconds, null, Tag("a"), Tag("b")))
+            calc.inline(InlineRequest(2.seconds, 3.seconds, Tag("c"), null))
         }
 
         assertEquals(InlineRequest(1.5.seconds, null, Tag("a"), Tag("b")), received.poll(5, TimeUnit.SECONDS))
@@ -80,7 +81,7 @@ class ServiceProxyTest {
     }
 
     @Test
-    fun `omitted default arguments are filled in by the caller`() = withService { client, calc ->
+    fun `omitted request fields keep their defaults`() = withService { client, calc ->
         val unsigned = client.method("unsigned")
         val inline = client.method("inline")
         val received = LinkedBlockingQueue<Any>()
@@ -93,8 +94,8 @@ class ServiceProxyTest {
                 received.add(decodeRequest(inline, request))
                 reply(client, inline, Text("ok"), request)
             }.use {
-                assertEquals(UnsignedReply(1, 2), calc.unsigned(1, 2))
-                assertEquals(Text("ok"), calc.inline(1.seconds, tag = Tag("t")))
+                assertEquals(UnsignedReply(1, 2), calc.unsigned(UnsignedRequest(1, 2)))
+                assertEquals(Text("ok"), calc.inline(InlineRequest(1.seconds, tag = Tag("t"))))
             }
         }
 
@@ -136,7 +137,7 @@ class ServiceProxyTest {
     @Test
     fun `unit method returns after an empty reply`() = withService { client, calc ->
         respond(client, "fire") { request -> NatsConnectionManager.connection().publish(request.replyTo, ByteArray(0)) }.use {
-            calc.fire()
+            calc.fire(FireRequest())
         }
     }
 

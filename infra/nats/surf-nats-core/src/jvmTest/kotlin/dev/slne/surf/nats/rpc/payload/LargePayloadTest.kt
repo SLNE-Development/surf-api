@@ -38,24 +38,24 @@ class LargePayloadTest {
     class BlobImpl : BlobService {
         val calls = AtomicInteger()
 
-        override suspend fun checksum(data: ByteArray): Number {
+        override suspend fun checksum(request: Blob): Number {
             calls.incrementAndGet()
-            return Number(data.checksum())
+            return Number(request.data.checksum())
         }
 
-        override suspend fun create(size: Int): Blob = Blob(blob(size))
+        override suspend fun create(request: CreateRequest): Blob = Blob(blob(request.size))
 
-        override suspend fun echo(data: ByteArray): Blob = Blob(data)
+        override suspend fun echo(request: Blob): Blob = request
     }
 
     class FanoutImpl : BlobFanoutService {
         val received = Channel<ByteArray>(Channel.UNLIMITED)
 
-        override suspend fun push(data: ByteArray) {
-            received.send(data)
+        override suspend fun push(request: Blob) {
+            received.send(request.data)
         }
 
-        override suspend fun find(size: Int): Answer<Blob> = Answer.Known(Blob(blob(size)))
+        override suspend fun find(request: CreateRequest): Answer<Blob> = Answer.Known(Blob(blob(request.size)))
     }
 
     internal class Fixture(val client: NatsClientImpl, val blobs: BlobService, val impl: BlobImpl)
@@ -69,11 +69,11 @@ class LargePayloadTest {
     fun disconnect() = runBlocking { NatsInstance.instance.disable() }
 
     @Test
-    fun `large argument roundtrips and the request object is deleted`() = withService {
+    fun `large request roundtrips and the request object is deleted`() = withService {
         val data = blob(LARGE)
         val before = liveObjects()
 
-        assertEquals(Number(data.checksum()), blobs.checksum(data))
+        assertEquals(Number(data.checksum()), blobs.checksum(Blob(data)))
         assertEquals(before, liveObjects(), "request object must be deleted by the responder")
     }
 
@@ -81,16 +81,16 @@ class LargePayloadTest {
     fun `large result roundtrips and the reply object is deleted`() = withService {
         val before = liveObjects()
 
-        assertContentEquals(blob(LARGE), blobs.create(LARGE).data)
+        assertContentEquals(blob(LARGE), blobs.create(CreateRequest(LARGE)).data)
         assertEquals(before, liveObjects(), "reply object must be deleted by the caller")
     }
 
     @Test
-    fun `large argument and large result in one call`() = withService {
+    fun `large request and large result in one call`() = withService {
         val data = blob(LARGE)
         val before = liveObjects()
 
-        assertEquals(Blob(data), blobs.echo(data))
+        assertEquals(Blob(data), blobs.echo(Blob(data)))
         assertEquals(before, liveObjects())
     }
 
@@ -129,8 +129,8 @@ class LargePayloadTest {
                     // Blob(data) is the field tag, a 3-byte length varint and the data
                     val atThreshold = maxBody - 4
 
-                    client.service<BlobService>().checksum(blob(atThreshold))
-                    client.service<BlobService>().checksum(blob(atThreshold + 1))
+                    client.service<BlobService>().checksum(Blob(blob(atThreshold)))
+                    client.service<BlobService>().checksum(Blob(blob(atThreshold + 1)))
 
                     val inline = requests.receive()
                     assertNull(inline.header(ProtocolHeaders.PAYLOAD_REF))
@@ -177,17 +177,17 @@ class LargePayloadTest {
         val data = blob(LARGE)
         val before = liveObjects()
         try {
-            client.service<BlobFanoutService>().push(data)
+            client.service<BlobFanoutService>().push(Blob(data))
 
             assertContentEquals(data, withTimeout(30.seconds) { impl.received.receive() })
 
             val message = assertNotNull(other.nextMessage(Duration.ofSeconds(30)), "other receiver got nothing")
             val name = assertNotNull(message.headers.getFirst(ProtocolHeaders.PAYLOAD_REF))
-            val arguments = method.decodeArguments(
+            val request = method.decodeRequest(
                 PayloadStore.resolve(message, PayloadBucket.TRANSIENT, delete = false),
                 message.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)
             )
-            assertContentEquals(data, arguments[0] as ByteArray)
+            assertContentEquals(data, (request as Blob).data)
 
             assertEquals(before + name, liveObjects(), "fan-out object must stay until the bucket TTL")
             store().delete(name)
@@ -201,7 +201,7 @@ class LargePayloadTest {
         client.registerService<BlobFanoutService>(FanoutImpl())
         val before = liveObjects()
 
-        val answer = withNatsCallTimeout(30.seconds) { client.service<BlobFanoutService>().find(LARGE) }
+        val answer = withNatsCallTimeout(30.seconds) { client.service<BlobFanoutService>().find(CreateRequest(LARGE)) }
 
         val value = assertIs<Answer.Known<Blob>>(answer).value
         assertContentEquals(blob(LARGE), value.data)
@@ -214,13 +214,13 @@ class LargePayloadTest {
         val tooLong = PayloadBucket.TRANSIENT.ttl + 1.minutes
 
         assertFailsWith<IllegalArgumentException> {
-            withNatsCallTimeout(tooLong) { blobs.checksum(blob(LARGE)) }
+            withNatsCallTimeout(tooLong) { blobs.checksum(Blob(blob(LARGE))) }
         }
         assertEquals(0, impl.calls.get())
         assertEquals(before, liveObjects())
 
         val small = blob(1_000)
-        assertEquals(Number(small.checksum()), withNatsCallTimeout(tooLong) { blobs.checksum(small) })
+        assertEquals(Number(small.checksum()), withNatsCallTimeout(tooLong) { blobs.checksum(Blob(small)) })
     }
 
     @Test
@@ -228,7 +228,7 @@ class LargePayloadTest {
         val before = liveObjects()
 
         val sums = coroutineScope {
-            (1..5).map { i -> async { blobs.checksum(blob(LARGE + i)) } }.awaitAll()
+            (1..5).map { i -> async { blobs.checksum(Blob(blob(LARGE + i))) } }.awaitAll()
         }
 
         assertEquals((1..5).map { Number(blob(LARGE + it).checksum()) }, sums)
@@ -237,7 +237,7 @@ class LargePayloadTest {
 
     @Test
     fun `bucket is created with the payload TTL`() = withService {
-        blobs.checksum(blob(LARGE))
+        blobs.checksum(Blob(blob(LARGE)))
 
         val status = NatsConnectionManager.connection().objectStoreManagement().getStatus(PayloadBucket.TRANSIENT.bucketName)
         assertEquals(PayloadBucket.TRANSIENT.ttl.inWholeSeconds, status.ttl?.toSeconds())
@@ -255,7 +255,7 @@ class LargePayloadTest {
                     client.registerService<BlobService>(impl)
                     val data = blob(LARGE)
 
-                    assertEquals(Number(data.checksum()), client.service<BlobService>().checksum(data))
+                    assertEquals(Number(data.checksum()), client.service<BlobService>().checksum(Blob(data)))
                 }
 
                 val status = NatsConnectionManager.connection().objectStoreManagement()

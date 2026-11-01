@@ -12,7 +12,7 @@ import kotlin.coroutines.CoroutineContext
  * for both persistent fire calls and persistent RPC.
  *
  * @property messageId the message identity, stable across redeliveries of the same message.
- * Separate calls with equal arguments receive different identities. Deduplicate them using a domain key.
+ * Separate calls with equal requests receive different identities. Deduplicate them using a domain key.
  * @property deliveryCount the number of times the message has been delivered, starting at one.
  */
 public class NatsPersistentContext @InternalNatsApi constructor(

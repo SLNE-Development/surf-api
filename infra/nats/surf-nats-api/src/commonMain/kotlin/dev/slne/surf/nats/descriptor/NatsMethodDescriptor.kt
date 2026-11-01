@@ -16,9 +16,6 @@ public class NatsMethodDescriptor<Req : Any, Res> @NatsGeneratedApi constructor(
     public val callTimeoutSeconds: Int?,
     public val recipients: Recipients,
     public val resultKind: NatsResultKind,
-    public val parameters: List<NatsParameter>,
     public val requestSerializer: KSerializer<Req>,
     public val responseSerializer: KSerializer<*>?,
-    public val toRequest: (Array<Any?>) -> Req,
-    public val toArguments: (Req) -> Array<Any?>,
 )

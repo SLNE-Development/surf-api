@@ -6,7 +6,11 @@ import java.io.Serializable
 /**
  * Maps a fully qualified proto message or enum to an existing Kotlin class and its `KSerializer` class.
  */
-data class TypeMapping(val protoType: String, val kotlinClass: String, val serializerClass: String) : Serializable
+data class TypeMapping(
+    val protoType: String,
+    val kotlinClass: String,
+    val serializerClass: String
+) : Serializable
 
 enum class GeneratedVisibility { PUBLIC, INTERNAL }
 

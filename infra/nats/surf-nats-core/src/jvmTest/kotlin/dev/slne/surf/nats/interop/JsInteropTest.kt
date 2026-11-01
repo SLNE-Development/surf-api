@@ -18,6 +18,21 @@ import dev.slne.surf.nats.rpc.Answer
 import dev.slne.surf.nats.rpc.Recipients
 import dev.slne.surf.nats.rpc.RpcDefaults
 import dev.slne.surf.nats.test.proto.v1.Blob
+import dev.slne.surf.nats.test.proto.v1.BroadcastRequest
+import dev.slne.surf.nats.test.proto.v1.CreateRequest
+import dev.slne.surf.nats.test.proto.v1.EchoRequest
+import dev.slne.surf.nats.test.proto.v1.FailRequest
+import dev.slne.surf.nats.test.proto.v1.FindRequest
+import dev.slne.surf.nats.test.proto.v1.FireRequest
+import dev.slne.surf.nats.test.proto.v1.InlineRequest
+import dev.slne.surf.nats.test.proto.v1.LookupRequest
+import dev.slne.surf.nats.test.proto.v1.MixedRequest
+import dev.slne.surf.nats.test.proto.v1.OwnerRequest
+import dev.slne.surf.nats.test.proto.v1.PlaceRequest
+import dev.slne.surf.nats.test.proto.v1.StoreRequest
+import dev.slne.surf.nats.test.proto.v1.TotalRequest
+import dev.slne.surf.nats.test.proto.v1.UnsignedRequest
+import dev.slne.surf.nats.test.proto.v1.WhitelistRequest
 import dev.slne.surf.nats.test.proto.v1.BlobService
 import dev.slne.surf.nats.test.proto.v1.CalcService
 import dev.slne.surf.nats.test.proto.v1.Color
@@ -41,7 +56,6 @@ import dev.slne.surf.nats.test.proto.v1.RolesService
 import dev.slne.surf.nats.test.proto.v1.Text
 import dev.slne.surf.nats.test.proto.v1.UnsignedReply
 import dev.slne.surf.nats.test.proto.v1.WideColorHolder
-import dev.slne.surf.nats.test.fixtures.Tag
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,14 +77,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 import dev.slne.surf.nats.test.proto.v1.VersionedPingReply as V1PingReply
+import dev.slne.surf.nats.test.proto.v1.VersionedPingRequest as V1PingRequest
 import dev.slne.surf.nats.test.proto.v1.VersionedService as V1VersionedService
 import dev.slne.surf.nats.test.proto.v2.VersionedPingReply as V2PingReply
+import dev.slne.surf.nats.test.proto.v2.VersionedPingRequest as V2PingRequest
 import dev.slne.surf.nats.test.proto.v2.VersionedService as V2VersionedService
 
 /**
@@ -101,14 +116,13 @@ class JsInteropTest {
     class CalcImpl : CalcService {
         val fires = AtomicInteger()
 
-        override suspend fun mixed(a: Int, b: Long, factor: Double, flag: Boolean, label: String) =
-            Text("$a|$b|$factor|$flag|$label")
+        override suspend fun mixed(request: MixedRequest) = with(request) { Text("$a|$b|$factor|$flag|$label") }
 
-        override suspend fun fire() {
+        override suspend fun fire(request: FireRequest) {
             fires.incrementAndGet()
         }
 
-        override suspend fun fail(message: String): Text = throw IllegalStateException(message)
+        override suspend fun fail(request: FailRequest): Text = throw IllegalStateException(request.message)
 
         override suspend fun slow(): Text {
             delay(3.seconds)
@@ -120,9 +134,8 @@ class JsInteropTest {
         override suspend fun count(): Count = unused()
         override suspend fun slowFire() = unused()
         override suspend fun gated(): Text = unused()
-        override suspend fun unsigned(id: Long, small: Int, optionalId: Long?): UnsignedReply = unused()
-        override suspend fun inline(duration: Duration, maybeDuration: Duration?, tag: Tag, maybeTag: Tag?): Text =
-            unused()
+        override suspend fun unsigned(request: UnsignedRequest): UnsignedReply = unused()
+        override suspend fun inline(request: InlineRequest): Text = unused()
 
         override suspend fun missing(): Text = unused()
     }
@@ -131,15 +144,15 @@ class JsInteropTest {
         val broadcasts = ConcurrentLinkedQueue<String>()
         val lookups = AtomicInteger()
 
-        override suspend fun find(key: String): Answer<FindReply> {
-            return if (key == instance) Answer.Known(FindReply("from-$instance")) else Answer.Unknown
+        override suspend fun find(request: FindRequest): Answer<FindReply> {
+            return if (request.key == instance) Answer.Known(FindReply("from-$instance")) else Answer.Unknown
         }
 
-        override suspend fun broadcast(message: String) {
-            broadcasts += message
+        override suspend fun broadcast(request: BroadcastRequest) {
+            broadcasts += request.message
         }
 
-        override suspend fun lookup(key: String): FindReply {
+        override suspend fun lookup(request: FindRequest): FindReply {
             lookups.incrementAndGet()
             return FindReply("from-$instance")
         }
@@ -149,63 +162,61 @@ class JsInteropTest {
         val placed = ConcurrentLinkedQueue<Long>()
         val bigSizes = ConcurrentLinkedQueue<Int>()
 
-        override suspend fun place(id: Long) {
-            placed += id
+        override suspend fun place(request: PlaceRequest) {
+            placed += request.id
         }
 
-        override suspend fun total(id: Long): Number = Number(id * 2)
+        override suspend fun total(request: TotalRequest): Number = Number(request.id * 2)
 
-        override suspend fun lookup(id: Long): LookupReply = LookupReply(null)
+        override suspend fun lookup(request: LookupRequest): LookupReply = LookupReply(null)
 
-        override suspend fun big(data: ByteArray) {
+        override suspend fun big(request: Blob) {
+            val data = request.data
             bigSizes += if (data.contentEquals(blob(data.size))) data.size else -1
         }
 
-        override suspend fun echo(data: ByteArray): Blob = Blob(data)
+        override suspend fun echo(request: Blob): Blob = request
 
-        override suspend fun audit(id: Long): Number = throw IllegalStateException("audit $id rejected")
+        override suspend fun audit(request: TotalRequest): Number =
+            throw IllegalStateException("audit ${request.id} rejected")
 
-        override suspend fun paint(
-            color: Color,
-            maybeColor: Color?,
-            colors: List<Color>,
-            colorsByName: Map<String, Color>,
-        ): Unit = throw IllegalStateException("paint rejected")
+        override suspend fun paint(request: ColorHolder): Unit = throw IllegalStateException("paint rejected")
 
         override suspend fun ping(): Text = unused()
     }
 
     class BlobImpl : BlobService {
         // The size when the blob has the blob(size) content, -1 otherwise
-        override suspend fun checksum(data: ByteArray): Number {
+        override suspend fun checksum(request: Blob): Number {
+            val data = request.data
             return Number(if (data.contentEquals(blob(data.size))) data.size.toLong() else -1L)
         }
 
-        override suspend fun create(size: Int): Blob = Blob(blob(size))
+        override suspend fun create(request: CreateRequest): Blob = Blob(blob(request.size))
 
-        override suspend fun echo(data: ByteArray): Blob = Blob(data)
+        override suspend fun echo(request: Blob): Blob = request
     }
 
     class RolesImpl : RolesService {
         val whitelisted = ConcurrentLinkedQueue<Pair<String, Long>>()
 
-        override suspend fun whitelist(action: String, userId: Long) {
-            whitelisted += action to userId
+        override suspend fun whitelist(request: WhitelistRequest) {
+            whitelisted += request.action to request.userId
         }
 
-        override suspend fun echo(id: Long): Number = Number(id)
+        override suspend fun echo(request: EchoRequest): Number = Number(request.id)
 
-        override suspend fun owner(player: UUID): OwnerReply = unused()
-        override suspend fun store(id: Long, payload: String?) = unused()
-        override suspend fun handle(id: Long, payload: String?): Number = unused()
+        override suspend fun owner(request: OwnerRequest): OwnerReply = unused()
+        override suspend fun store(request: StoreRequest) = unused()
+        override suspend fun handle(request: StoreRequest): Number = unused()
     }
 
     class VersionedV1 : V1VersionedService {
-        override suspend fun ping(message: String) = V1PingReply(message, 1)
+        override suspend fun ping(request: V1PingRequest) = V1PingReply(request.message, 1)
     }
 
     class VersionedV2 : V2VersionedService {
-        override suspend fun ping(message: String, attempt: Int) = V2PingReply("$message#$attempt", 2, "eu")
+        override suspend fun ping(request: V2PingRequest) = V2PingReply("${request.message}#${request.attempt}", 2, "eu")
     }
 
     private val received = ConcurrentLinkedQueue<Received>()

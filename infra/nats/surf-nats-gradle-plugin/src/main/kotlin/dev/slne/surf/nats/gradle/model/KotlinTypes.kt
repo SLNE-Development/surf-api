@@ -30,7 +30,6 @@ internal object KotlinTypes {
     val NATS_EVENT_DESCRIPTOR = ClassName(DESCRIPTOR, "NatsEventDescriptor")
     val NATS_SERVICE_DESCRIPTOR = ClassName(DESCRIPTOR, "NatsServiceDescriptor")
     val NATS_METHOD_DESCRIPTOR = ClassName(DESCRIPTOR, "NatsMethodDescriptor")
-    val NATS_PARAMETER = ClassName(DESCRIPTOR, "NatsParameter")
     val NATS_RESULT_KIND = ClassName(DESCRIPTOR, "NatsResultKind")
     val RECIPIENTS = ClassName("dev.slne.surf.nats.rpc", "Recipients")
     val ANSWER = ClassName("dev.slne.surf.nats.rpc", "Answer")

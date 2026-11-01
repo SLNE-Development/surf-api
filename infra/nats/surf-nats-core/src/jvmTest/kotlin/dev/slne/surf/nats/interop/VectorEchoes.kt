@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.interop
 
-import dev.slne.surf.nats.test.proto.v1.Color
 import dev.slne.surf.nats.test.proto.v1.ColorHolder
 import dev.slne.surf.nats.test.proto.v1.InteropDefaults
 import dev.slne.surf.nats.test.proto.v1.InteropEmpty
@@ -14,68 +13,29 @@ import dev.slne.surf.nats.test.proto.v1.InteropRequired
 import dev.slne.surf.nats.test.proto.v1.InteropScalars
 import dev.slne.surf.nats.test.proto.v1.InteropService
 import dev.slne.surf.nats.test.proto.v1.InteropTypes
-import java.time.Instant
-import java.util.*
-import kotlin.time.Duration
 
 internal class VectorEchoes(private val book: VectorBook) : InteropService {
-    override suspend fun echoScalars(
-        unsignedSmall: Int,
-        unsignedLarge: Long,
-        signedLarge: Long,
-        small: Int,
-        large: Long,
-        fixedSmall: Int,
-        ratio: Double,
-        flag: Boolean,
-    ): InteropScalars = book.echo(
-        InteropScalars(unsignedSmall, unsignedLarge, signedLarge, small, large, fixedSmall, ratio, flag)
-    )
+    override suspend fun echoScalars(request: InteropScalars): InteropScalars = book.echo(request)
 
-    override suspend fun echoMaps(signedByName: Map<String, Long>, namesByFixed: Map<Int, String>): InteropMaps =
-        book.echo(InteropMaps(signedByName, namesByFixed))
+    override suspend fun echoMaps(request: InteropMaps): InteropMaps = book.echo(request)
 
-    override suspend fun echoPacked(packedValues: List<Int>, unpackedValues: List<Int>): InteropPacked =
-        book.echo(InteropPacked(packedValues, unpackedValues))
+    override suspend fun echoPacked(request: InteropPacked): InteropPacked = book.echo(request)
 
-    override suspend fun echoColors(
-        color: Color,
-        maybeColor: Color?,
-        colors: List<Color>,
-        colorsByName: Map<String, Color>,
-    ): ColorHolder = book.echo(ColorHolder(color, maybeColor, colors, colorsByName))
+    override suspend fun echoColors(request: ColorHolder): ColorHolder = book.echo(request)
 
-    override suspend fun echoNullables(
-        text: String?,
-        number: Int?,
-        data: ByteArray?,
-        scalars: InteropScalars?,
-        uuid: UUID?,
-        color: Color?,
-    ): InteropNullables = book.echo(InteropNullables(text, number, data, scalars, uuid, color))
+    override suspend fun echoNullables(request: InteropNullables): InteropNullables = book.echo(request)
 
-    override suspend fun echoDefaults(
-        number: Int,
-        text: String,
-        flag: Boolean,
-        ratio: Double,
-        color: Color,
-        data: ByteArray,
-        unsignedSmall: Int,
-    ): InteropDefaults = book.echo(InteropDefaults(number, text, flag, ratio, color, data, unsignedSmall))
+    override suspend fun echoDefaults(request: InteropDefaults): InteropDefaults = book.echo(request)
 
-    override suspend fun echoRequired(name: String, count: Int?): InteropRequired =
-        book.echo(InteropRequired(name, count))
+    override suspend fun echoRequired(request: InteropRequired): InteropRequired = book.echo(request)
 
-    override suspend fun echoTypes(uuid: UUID, timestamp: Instant, duration: Duration): InteropTypes =
-        book.echo(InteropTypes(uuid, timestamp, duration))
+    override suspend fun echoTypes(request: InteropTypes): InteropTypes = book.echo(request)
 
-    override suspend fun echoEmpty(): InteropEmpty = book.echo(InteropEmpty())
+    override suspend fun echoEmpty(request: InteropEmpty): InteropEmpty = book.echo(request)
 
-    override suspend fun echoOneof(value: InteropOneof.Value?): InteropOneof = book.echo(InteropOneof(value))
+    override suspend fun echoOneof(request: InteropOneof): InteropOneof = book.echo(request)
 
-    override suspend fun echoEvolved(name: String, level: Int): InteropEvolved = book.echo(InteropEvolved(name, level))
+    override suspend fun echoEvolved(request: InteropEvolved): InteropEvolved = book.echo(request)
 
-    override suspend fun echoEvolvedV2(name: String, level: Int, nickname: String?, rank: Int): InteropEvolvedV2 =
-        book.echo(InteropEvolvedV2(name, level, nickname, rank))
+    override suspend fun echoEvolvedV2(request: InteropEvolvedV2): InteropEvolvedV2 = book.echo(request)
 }
