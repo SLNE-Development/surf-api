@@ -10,9 +10,14 @@ import com.squareup.wire.schema.OneOf
  *
  * Members are mapped in that order, so problems reported by [field] and [oneof] follow it as well.
  */
-internal fun <T> orderedMembers(type: MessageType, field: (Field) -> T, oneof: (OneOf, number: Int) -> T): List<T> {
+internal fun <T> orderedMembers(
+    type: MessageType,
+    field: (Field) -> T,
+    oneof: (OneOf, number: Int) -> T
+): List<T> {
     val fields = type.declaredFields.map { it.tag to it }
-    val oneofs = type.oneOfs.map { oneOf -> (oneOf.fields.minOfOrNull { it.tag } ?: Int.MAX_VALUE) to oneOf }
+    val oneofs =
+        type.oneOfs.map { oneOf -> (oneOf.fields.minOfOrNull { it.tag } ?: Int.MAX_VALUE) to oneOf }
     return (fields + oneofs).sortedBy { it.first }.map { (number, member) ->
         if (member is Field) field(member) else oneof(member as OneOf, number)
     }

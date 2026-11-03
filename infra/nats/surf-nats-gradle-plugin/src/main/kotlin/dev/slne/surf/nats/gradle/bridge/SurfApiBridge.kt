@@ -5,9 +5,8 @@ import dev.slne.surf.nats.gradle.SurfNatsPluginVersion
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 import org.gradle.api.Project
-import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 
 /**
@@ -25,7 +24,7 @@ internal object SurfApiBridge {
      *
      * The runtime comes from the surf-nats platform plugin, so the dependencies are `compileOnly`.
      */
-    fun addContractDependencies(project: Project, paper: Boolean) {
+    fun Project.addContractDependencies(paper: Boolean) {
         val modules = buildList {
             add("surf-nats-api")
             add("surf-nats-types-common")
@@ -37,37 +36,28 @@ internal object SurfApiBridge {
             JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME
         )
 
-        for (configuration in configurations) {
-            for (module in modules) {
-                project.dependencies {
-                    add(configuration, create("${SurfNatsPluginVersion.GROUP}:$module") {
+        dependencies {
+            for (configuration in configurations) {
+                for (module in modules) {
+                    configuration("${SurfNatsPluginVersion.GROUP}:$module") {
                         version { it.strictly(SurfNatsPluginVersion.VERSION) }
-                    })
+                    }
                 }
-            }
 
-            project.dependencies.add(
-                configuration,
-                "org.jetbrains.kotlinx:kotlinx-serialization-protobuf:${SurfNatsPluginVersion.KOTLINX_SERIALIZATION_VERSION}",
-            )
+                configuration("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:${SurfNatsPluginVersion.KOTLINX_SERIALIZATION_VERSION}")
+            }
         }
     }
 
     /**
      * Declares `surf-nats-paper` as a required bootstrap and server dependency in the `paper-plugin.yml`.
      */
-    fun requirePaperPlugin(project: Project) {
-        val description = project.extensions.getByType(PaperPluginDescription::class.java)
-        val containers = listOf(
-            description.bootstrapDependencies,
-            description.serverDependencies
-        )
-
-        for (dependencies in containers) {
-            dependencies.register(PAPER_PLUGIN) { dependency ->
-                dependency.required = true
-                dependency.joinClasspath = true
-                dependency.load = RelativeLoadOrder.BEFORE
+    fun Project.requirePaperPlugin() = configure<PaperPluginDescription> {
+        listOf(bootstrapDependencies, serverDependencies).forEach { deps ->
+            deps.register(PAPER_PLUGIN) { dep ->
+                dep.required = true
+                dep.joinClasspath = true
+                dep.load = RelativeLoadOrder.BEFORE
             }
         }
     }
@@ -75,9 +65,11 @@ internal object SurfApiBridge {
     /**
      * Declares `surf-nats-velocity` as a required dependency in the `velocity-plugin.json`.
      */
-    fun requireVelocityPlugin(project: Project) {
-        project.extensions.getByType(VelocityPluginFile::class.java)
-            .pluginDependencies
-            .register(VELOCITY_PLUGIN)
+    fun Project.requireVelocityPlugin() {
+        configure<VelocityPluginFile> {
+            pluginDependencies.register(VELOCITY_PLUGIN) { dep ->
+                dep.optional.set(false)
+            }
+        }
     }
 }

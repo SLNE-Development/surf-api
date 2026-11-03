@@ -1,3 +1,4 @@
+
 package dev.slne.surf.nats.gradle.tasks
 
 import org.gradle.api.artifacts.transform.CacheableTransform
@@ -11,9 +12,10 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 
 /**
- * Extracts the `.proto` files a jar or exploded jar directory packs under [ProtoArchives.PREFIX] into a proto root.
+ * Extracts proto files from JAR archives or exploded JAR directories.
  *
- * Archives without packed protos produce no output and drop out of the resolved files.
+ * Only files under [ProtoArchives.PREFIX] are extracted. Archives without
+ * proto files produce no output and are excluded from the resolved artifacts.
  */
 @CacheableTransform
 abstract class ProtoArchiveTransform : TransformAction<TransformParameters.None> {
@@ -23,13 +25,16 @@ abstract class ProtoArchiveTransform : TransformAction<TransformParameters.None>
     abstract val archive: Provider<FileSystemLocation>
 
     override fun transform(outputs: TransformOutputs) {
-        val archive = archive.get().asFile
-        ProtoArchives.extract(archive) { outputs.dir(archive.nameWithoutExtension) }
+        val archiveFile = archive.get().asFile
+
+        ProtoArchives.extract(archiveFile) {
+            outputs.dir(archiveFile.nameWithoutExtension)
+        }
     }
 
     companion object {
         /**
-         * Artifact type of the extracted proto roots.
+         * Artifact type assigned to extracted proto roots.
          */
         const val PROTO_ROOT_TYPE = "surf-nats-proto-root"
     }

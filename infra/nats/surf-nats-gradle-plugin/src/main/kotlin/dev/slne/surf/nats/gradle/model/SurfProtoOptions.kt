@@ -12,33 +12,96 @@ import dev.slne.surf.nats.protocol.ServiceOptions
 import java.math.BigInteger
 
 /**
- * Reads the options of `surf/nats/v1/options.proto`; wire delivers scalars as literal text and messages as maps.
+ * Reads custom Protobuf options defined in `surf/nats/v1/options.proto`.
+ *
+ * Wire provides scalar option values as literal text and message options as maps.
+ * Since Wire already validates values against their Protobuf types, these readers
+ * primarily convert the parsed values into their corresponding protocol models.
+ *
+ * Call timeouts are additionally validated against the Kotlin [Int] range.
+ * Unknown recipients indicate that [RecipientsOption] does not recognize a
+ * constant declared in the Protobuf schema.
  */
 internal object SurfProtoOptions {
-    val EVENT: ProtoMember = ProtoMember.get(Options.MESSAGE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.EVENT))
-    val SERVICE: ProtoMember = ProtoMember.get(Options.SERVICE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.SERVICE))
-    val METHOD: ProtoMember = ProtoMember.get(Options.METHOD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.METHOD))
-    val NULLABLE: ProtoMember = ProtoMember.get(Options.FIELD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.NULLABLE))
 
-    private val SERVICE_OPTIONS = ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.SERVICE_OPTIONS))
-    private val METHOD_OPTIONS = ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.METHOD_OPTIONS))
+    /** Extension identifying the event option on Protobuf messages. */
+    val EVENT: ProtoMember =
+        ProtoMember.get(Options.MESSAGE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.EVENT))
+
+    /** Extension containing NATS service configuration. */
+    val SERVICE: ProtoMember =
+        ProtoMember.get(Options.SERVICE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.SERVICE))
+
+    /** Extension containing NATS RPC method configuration. */
+    val METHOD: ProtoMember =
+        ProtoMember.get(Options.METHOD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.METHOD))
+
+    /** Extension controlling nullable Protobuf fields. */
+    val NULLABLE: ProtoMember =
+        ProtoMember.get(Options.FIELD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.NULLABLE))
+
+    private val SERVICE_OPTIONS =
+        ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.SERVICE_OPTIONS))
+
+    private val METHOD_OPTIONS =
+        ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.METHOD_OPTIONS))
+
     private val INT_MAX: BigInteger = BigInteger.valueOf(Int.MAX_VALUE.toLong())
 
-    fun isSet(options: Options, member: ProtoMember): Boolean = options.get(member) != null
+    /**
+     * Checks whether a Protobuf option has an explicitly assigned value.
+     *
+     * Checks for presence rather than the boolean value of the option.
+     * An explicitly assigned `false` therefore still counts as set.
+     *
+     * @param options the Protobuf options to inspect
+     * @param member the option extension to look up
+     * @return `true` if the option is present, otherwise `false`
+     */
+    fun isSet(options: Options, member: ProtoMember): Boolean =
+        options.get(member) != null
 
     /**
-     * Returns whether the message opts in as an event with `(surf.nats.v1.event) = true`.
+     * Checks whether a Protobuf message is marked as a NATS event.
+     *
+     * Reads the `(surf.nats.v1.event)` option and defaults to `false`
+     * when the option is absent.
+     *
+     * @param options the message's Protobuf options
+     * @return `true` if the event option is enabled
      */
-    fun event(options: Options, location: Location, problems: Problems): Boolean = flag(options, EVENT, location, problems)
+    fun isEvent(options: Options): Boolean = flag(options, EVENT)
 
     /**
-     * Returns [event] without reporting an invalid value, which counts as no event.
+     * Checks whether a Protobuf field is explicitly nullable.
+     *
+     * Reads the `(surf.nats.v1.nullable)` option and defaults to `false`
+     * when the option is absent.
+     *
+     * @param options the field's Protobuf options
+     * @return `true` if the nullable option is enabled
      */
-    fun isEvent(options: Options): Boolean = options.get(EVENT)?.toString()?.toBooleanStrictOrNull() == true
+    fun isNullable(options: Options): Boolean = flag(options, NULLABLE)
 
+    /**
+     * Resolves the NATS configuration declared on a Protobuf service.
+     *
+     * Reads `(surf.nats.v1.service)` and converts its call timeout,
+     * recipients, and persistence settings into [ServiceOptions].
+     *
+     * An absent extension produces an empty [ServiceOptions] instance.
+     * Invalid call timeouts or unknown recipients are reported through
+     * [problems] and treated as unset.
+     *
+     * @param options the service's Protobuf options
+     * @param location the source location used when reporting errors
+     * @param problems the collector receiving option validation errors
+     * @return the parsed service configuration
+     */
     fun service(options: Options, location: Location, problems: Problems): ServiceOptions {
-        val values = messageValue(options, SERVICE) ?: return ServiceOptions()
+        val values = options.get(SERVICE) as? Map<*, *>? ?: return ServiceOptions()
         val reader = Reader(SERVICE_OPTIONS, values, location, problems)
+
         return ServiceOptions(
             callTimeoutSeconds = reader.timeoutSeconds(ProtocolOptions.CALL_TIMEOUT_SECONDS),
             recipients = reader.recipients(ProtocolOptions.RECIPIENTS),
@@ -46,9 +109,25 @@ internal object SurfProtoOptions {
         )
     }
 
+    /**
+     * Resolves the NATS configuration declared on an RPC method.
+     *
+     * Reads `(surf.nats.v1.method)` and converts its persistence,
+     * call timeout, and recipients settings into [MethodOptions].
+     *
+     * An absent extension produces an empty [MethodOptions] instance.
+     * Invalid call timeouts or unknown recipients are reported through
+     * [problems] and treated as unset.
+     *
+     * @param options the method's Protobuf options
+     * @param location the source location used when reporting errors
+     * @param problems the collector receiving option validation errors
+     * @return the parsed method configuration
+     */
     fun method(options: Options, location: Location, problems: Problems): MethodOptions {
-        val values = messageValue(options, METHOD) ?: return MethodOptions()
+        val values = options.get(METHOD) as? Map<*, *>? ?: return MethodOptions()
         val reader = Reader(METHOD_OPTIONS, values, location, problems)
+
         return MethodOptions(
             persistent = reader.boolean(ProtocolOptions.PERSISTENT),
             callTimeoutSeconds = reader.timeoutSeconds(ProtocolOptions.CALL_TIMEOUT_SECONDS),
@@ -56,53 +135,104 @@ internal object SurfProtoOptions {
         )
     }
 
-    fun nullable(options: Options, location: Location, problems: Problems): Boolean = flag(options, NULLABLE, location, problems)
+    /**
+     * Reads a boolean Protobuf option.
+     *
+     * Converts the parsed value using strict boolean parsing and returns
+     * `false` when the option is absent.
+     *
+     * @param options the Protobuf options containing the flag
+     * @param member the boolean option extension to read
+     * @return the configured boolean value, or `false` if absent
+     */
+    private fun flag(options: Options, member: ProtoMember): Boolean =
+        options.get(member)?.toString()?.toBooleanStrict() ?: false
 
-    private fun flag(options: Options, member: ProtoMember, location: Location, problems: Problems): Boolean {
-        val value = options.get(member) ?: return false
-        return parseBoolean(value, "(${member.member})", location, problems) ?: false
-    }
-
-    private fun messageValue(options: Options, member: ProtoMember): Map<*, *>? {
-        return when (val value = options.get(member)) {
-            null -> null
-            is Map<*, *> -> value
-            else -> emptyMap<Any, Any>()
-        }
-    }
-
-    private fun parseBoolean(value: Any, name: String, location: Location, problems: Problems): Boolean? {
-        val result = value.toString().toBooleanStrictOrNull()
-        if (result == null) problems.error(location, "option $name must be true or false, was '$value'")
-        return result
-    }
-
+    /**
+     * Converts fields of a parsed Protobuf option message into protocol values.
+     *
+     * Looks up fields using their fully qualified [ProtoMember] identifiers
+     * and converts the values supplied by Wire.
+     *
+     * Missing fields return `null`. Invalid timeouts and unknown recipients
+     * are reported through the provided problem collector.
+     *
+     * @property type the Protobuf message type containing the option fields
+     * @property values the parsed option fields returned by Wire
+     * @property location the source location used when reporting errors
+     * @property problems the collector receiving conversion errors
+     */
     private class Reader(
         private val type: ProtoType,
         private val values: Map<*, *>,
         private val location: Location,
         private val problems: Problems,
     ) {
-        private fun raw(field: String): Any? = values[ProtoMember.get(type, field)]
 
-        fun boolean(field: String): Boolean? {
-            val value = raw(field) ?: return null
-            return parseBoolean(value, "${type.simpleName}.$field", location, problems)
-        }
+        /**
+         * Looks up a field in the parsed option message.
+         *
+         * @param field the Protobuf field name
+         * @return the raw parsed value, or `null` if absent
+         */
+        private fun raw(field: String): Any? =
+            values[ProtoMember.get(type, field)]
 
+        /**
+         * Reads an optional boolean field.
+         *
+         * Wire has already validated the Protobuf boolean value, so
+         * strict parsing is sufficient.
+         *
+         * @param field the Protobuf field name
+         * @return the boolean value, or `null` if absent
+         */
+        fun boolean(field: String): Boolean? =
+            raw(field)?.toString()?.toBooleanStrict()
+
+        /**
+         * Reads a call timeout expressed in seconds.
+         *
+         * Accepts integer values between zero and [Int.MAX_VALUE],
+         * inclusive. Values outside this range or invalid integer
+         * literals are reported and treated as unset.
+         *
+         * @param field the Protobuf field containing the timeout
+         * @return the timeout in seconds, or `null` if absent or invalid
+         */
         fun timeoutSeconds(field: String): Int? {
             val value = raw(field) ?: return null
             val seconds = DefaultValues.integer(value.toString(), BigInteger.ZERO, INT_MAX)
+
             if (seconds == null) {
-                problems.error(location, "option ${type.simpleName}.$field must be between 0 and ${Int.MAX_VALUE}, was '$value'")
+                problems.error(
+                    location,
+                    "option ${type.simpleName}.$field must be between 0 and ${Int.MAX_VALUE}, was '$value'",
+                )
                 return null
             }
+
             return seconds.toInt()
         }
 
+        /**
+         * Resolves a recipients enum value from a Protobuf option field.
+         *
+         * Wire validates the value against the Protobuf enum definition.
+         * An unknown value therefore indicates that [RecipientsOption]
+         * is out of sync with the constants declared in `options.proto`.
+         *
+         * Unknown values are reported and treated as unset.
+         *
+         * @param field the Protobuf field containing the recipients value
+         * @return the corresponding recipients option, or `null` if absent or unknown
+         */
         fun recipients(field: String): RecipientsOption? {
             val value = raw(field)?.toString() ?: return null
-            val option = RecipientsOption.ofName(value) ?: value.toIntOrNull()?.let(RecipientsOption::ofNumber)
+
+            // Wire accepts exactly the constants of NatsRecipients; this only fails if RecipientsOption lags behind them.
+            val option = RecipientsOption.ofName(value)
+
             if (option == null) {
                 problems.error(
                     location,
@@ -110,6 +240,7 @@ internal object SurfProtoOptions {
                             RecipientsOption.entries.joinToString { it.protoName },
                 )
             }
+
             return option
         }
     }

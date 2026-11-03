@@ -1,3 +1,4 @@
+
 package dev.slne.surf.nats.gradle.tasks
 
 import dev.slne.surf.nats.gradle.generator.GeneratedVisibility
@@ -21,7 +22,10 @@ import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 
 /**
- * Generates the Kotlin contracts of the `.proto` files in [sourceDirectories] into [outputDir].
+ * Generates Kotlin contracts from the proto files in [sourceDirectories].
+ *
+ * Generated sources are written to [outputDir]. The task is skipped when
+ * no source proto files are found.
  */
 @CacheableTask
 abstract class GenerateSurfNatsKotlinTask : ProtoInputsTask() {
@@ -34,7 +38,9 @@ abstract class GenerateSurfNatsKotlinTask : ProtoInputsTask() {
         get() = protoFiles(sourceDirectories)
 
     /**
-     * Platform type mappings the plugin provides; [typeMappings] override them.
+     * Platform type mappings provided by the plugin.
+     *
+     * Custom [typeMappings] take precedence over these defaults.
      */
     @get:Input
     abstract val defaultTypeMappings: ListProperty<TypeMapping>
@@ -50,17 +56,20 @@ abstract class GenerateSurfNatsKotlinTask : ProtoInputsTask() {
 
     @TaskAction
     fun generate() {
-        val input = GeneratorInput(
-            sourceDirs = sourceDirectories.files.toList(),
-            protoPathDirs = protoPath(),
-            typeMappings = typeMappings.get(),
-            visibility = visibility.get(),
-            defaultTypeMappings = defaultTypeMappings.get(),
-        )
+        val input = createGeneratorInput()
+
         try {
             SurfNatsGenerator().generate(input, outputDir.get().asFile)
         } catch (e: SurfNatsGeneratorException) {
             throw GradleException(e.message.orEmpty(), e)
         }
     }
+
+    private fun createGeneratorInput(): GeneratorInput = GeneratorInput(
+        sourceDirs = sourceDirectories.files.toList(),
+        protoPathDirs = protoPath(),
+        typeMappings = typeMappings.get(),
+        visibility = visibility.get(),
+        defaultTypeMappings = defaultTypeMappings.get(),
+    )
 }

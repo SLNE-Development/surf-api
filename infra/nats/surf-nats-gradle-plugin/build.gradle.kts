@@ -62,8 +62,8 @@ dependencies {
     // Applied by the plugin for Kotlin/JVM projects; surf-api projects get it from surf-api as well.
     implementation(libs.kotlin.serialization.plugin)
 
-    compileOnly(gradleKotlinDsl())
     compileOnly(libs.kotlin.gradle.plugin)
+    compileOnly(gradleKotlinDsl())
     compileOnly(libs.kotlin.gradle.api)
     compileOnly(libs.surf.api.gradle.plugin)
 

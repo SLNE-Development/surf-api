@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.gradle.generator
 
+import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.protocol.ProtocolFieldRules
 
 internal object DefaultTypeMappings {
@@ -8,59 +9,47 @@ internal object DefaultTypeMappings {
 
     val common: List<TypeMapping> = listOf(
         TypeMapping(
-            "google.protobuf.Timestamp",
+            ProtoType.TIMESTAMP,
             "java.time.Instant",
-            "$TYPES.TimestampSerializer"
+            "$TYPES.TimestampSerializer",
         ),
         TypeMapping(
-            "google.protobuf.Duration",
+            ProtoType.DURATION,
             "kotlin.time.Duration",
-            "$TYPES.DurationSerializer"
+            "$TYPES.DurationSerializer",
         ),
         TypeMapping(
-            ProtocolFieldRules.EMPTY_TYPE,
+            ProtoType.EMPTY,
             "kotlin.Unit",
-            "$TYPES.EmptySerializer"
+            "$TYPES.EmptySerializer",
         ),
         TypeMapping(
             ProtocolFieldRules.UUID_TYPE,
             "java.util.UUID",
-            "$TYPES.UuidSerializer"
+            "$TYPES.UuidSerializer",
         ),
         TypeMapping(
-            "surf.types.v1.Component",
+            ProtocolFieldRules.COMPONENT_TYPE,
             "net.kyori.adventure.text.Component",
-            "$TYPES.ComponentSerializer"
+            "$TYPES.ComponentSerializer",
         ),
         TypeMapping(
-            "surf.types.v1.Key",
+            ProtocolFieldRules.KEY_TYPE,
             "net.kyori.adventure.key.Key",
-            "$TYPES.KeySerializer"
+            "$TYPES.KeySerializer",
         ),
     )
 
     val paper: List<TypeMapping> = listOf(
         TypeMapping(
-            "surf.types.paper.v1.Location",
+            ProtocolFieldRules.LOCATION_TYPE,
             "org.bukkit.Location",
-            "$PAPER_TYPES.LocationSerializer"
+            "$PAPER_TYPES.LocationSerializer",
         ),
         TypeMapping(
-            "surf.types.paper.v1.ItemStack",
+            ProtocolFieldRules.ITEM_STACK_TYPE,
             "org.bukkit.inventory.ItemStack",
-            "$PAPER_TYPES.ItemStackSerializer"
+            "$PAPER_TYPES.ItemStackSerializer",
         ),
     )
-
-    /**
-     * Returns [defaults] overridden by [overrides] with the same proto type, keyed by proto type.
-     */
-    fun resolve(
-        defaults: List<TypeMapping>,
-        overrides: List<TypeMapping>
-    ): Map<String, TypeMapping> {
-        val result = LinkedHashMap<String, TypeMapping>()
-        for (mapping in defaults + overrides) result[mapping.protoType] = mapping
-        return result
-    }
 }

@@ -398,7 +398,7 @@ class ValidationTest {
             "message Count {}\nservice S {\n  rpc Count(google.protobuf.Empty) returns (Count);\n" +
                     "  rpc Total(google.protobuf.Empty) returns (surf.test.v1.Count);\n}"
         )
-        assertLocated(errors, 6, "rpc Count: protoc resolves the type 'Count' to the rpc 'Count' of this service")
+        assertLocated(errors, 6, "rpc Count: type 'Count' conflicts with RPC 'Count' in the same service")
         assertFalse(errors.any { "rpc Total" in it }, "a package-qualified type is accepted: $errors")
     }
 

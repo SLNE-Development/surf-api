@@ -10,7 +10,7 @@ internal class Problems {
     private val errors = mutableListOf<String>()
 
     fun error(location: Location, message: String) {
-        errors += "$location: $message"
+        error(location.toString(), message)
     }
 
     fun error(source: String, message: String) {

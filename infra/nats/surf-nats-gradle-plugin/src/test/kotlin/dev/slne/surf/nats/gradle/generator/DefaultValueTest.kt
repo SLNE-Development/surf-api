@@ -2,6 +2,7 @@ package dev.slne.surf.nats.gradle.generator
 
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness.Companion.PROTO2
 import com.squareup.wire.schema.Location
+import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.gradle.model.DefaultValues
 import dev.slne.surf.nats.gradle.model.RawDefaults
 import org.junit.jupiter.api.Test
@@ -98,7 +99,7 @@ class DefaultValueTest {
         ],
     )
     fun `the literal parser understands octal integers`(type: String, literal: String, expected: String) {
-        assertEquals(expected, DefaultValues.scalar(type, literal).toString())
+        assertEquals(expected, DefaultValues.scalar(ProtoType.get(type), literal).toString())
     }
 
     @ParameterizedTest(name = "{0} {1} is invalid")
@@ -107,7 +108,7 @@ class DefaultValueTest {
         value = ["int32 | 2147483648", "uint32 | -1", "uint64 | 18446744073709551616", "int32 | 0x", "int32 | 09", "float | 1e40", "bool | yes"],
     )
     fun `the literal parser rejects out-of-range and malformed literals`(type: String, literal: String) {
-        assertNull(DefaultValues.scalar(type, literal))
+        assertNull(DefaultValues.scalar(ProtoType.get(type), literal))
     }
 
     @Test

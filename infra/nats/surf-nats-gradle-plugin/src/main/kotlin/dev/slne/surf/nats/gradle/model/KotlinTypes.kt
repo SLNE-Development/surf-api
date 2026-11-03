@@ -38,6 +38,9 @@ internal object KotlinTypes {
     val CONTENT_HASH_CODE = MemberName(DESCRIPTOR, "natsContentHashCode")
     val CONTENT_TO_STRING = MemberName(DESCRIPTOR, "natsContentToString")
 
-    fun serializableWith(serializer: ClassName): AnnotationSpec =
-        AnnotationSpec.builder(SERIALIZABLE).addMember("with = %T::class", serializer).build()
+    fun serializableWith(serializer: ClassName): AnnotationSpec {
+        return AnnotationSpec.builder(SERIALIZABLE)
+            .addMember("with = %T::class", serializer)
+            .build()
+    }
 }

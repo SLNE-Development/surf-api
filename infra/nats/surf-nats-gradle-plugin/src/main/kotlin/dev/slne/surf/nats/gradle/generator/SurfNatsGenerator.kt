@@ -3,31 +3,44 @@ package dev.slne.surf.nats.gradle.generator
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.wire.schema.EnumType
-import com.squareup.wire.schema.Location
 import com.squareup.wire.schema.ProtoFile
-import com.squareup.wire.schema.Type
+import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.gradle.codegen.ServiceEmitter
 import dev.slne.surf.nats.gradle.codegen.TypeEmitter
-import dev.slne.surf.nats.gradle.model.ContractModel
-import dev.slne.surf.nats.gradle.model.KotlinNaming
+import dev.slne.surf.nats.gradle.model.KotlinTypeResolver
 import dev.slne.surf.nats.gradle.model.KotlinTypes
 import dev.slne.surf.nats.gradle.model.MappedClass
 import dev.slne.surf.nats.gradle.schema.containsProtos
 import dev.slne.surf.nats.gradle.schema.loadSchema
-import dev.slne.surf.nats.gradle.validate.FileFacts
 import dev.slne.surf.nats.gradle.validate.FileRules
 import dev.slne.surf.nats.gradle.validate.Problems
-import dev.slne.surf.nats.protocol.ProtocolFieldRules
+import dev.slne.surf.nats.gradle.validate.kotlinPackage
 import java.io.File
 
 /**
- * Generates Kotlin contracts deterministically from the `.proto` files of [GeneratorInput.sourceDirs].
+ * Generates Kotlin contracts deterministically from Protobuf source files.
+ *
+ * Resolves type mappings, validates the loaded schema, and generates Kotlin
+ * declarations for messages, enums, and services.
+ *
+ * All generation problems are collected before writing output files, ensuring
+ * that validation failures do not modify existing generated sources.
  */
 class SurfNatsGenerator {
 
     /**
-     * Replaces the content of [outputDir], or throws [SurfNatsGeneratorException] without writing when a problem exists.
+     * Generates Kotlin contracts from the configured Protobuf sources.
+     *
+     * Replaces the contents of [outputDir] only after all validation and code
+     * generation steps complete without reported problems.
+     *
+     * If no Protobuf sources exist, the output directory is cleared and an
+     * empty generation result is returned.
+     *
+     * @param input the source directories, type mappings, and generation settings
+     * @param outputDir the directory receiving the generated Kotlin files
+     * @return the generated files, sorted by their normalized paths
+     * @throws SurfNatsGeneratorException if generation problems are reported
      */
     fun generate(input: GeneratorInput, outputDir: File): GenerationResult {
         val problems = Problems()
@@ -40,122 +53,194 @@ class SurfNatsGenerator {
             return GenerationResult(emptyList())
         }
 
-        val loaded = loadSchema(input.sourceDirs, input.protoPathDirs)
-        val model = ContractModel(loaded.schema, mappings, problems)
-        val rules = FileRules(problems)
-        val facts = loaded.sourceFiles.map(rules::check)
-        register(facts, model, problems)
-
-        val typeEmitter = TypeEmitter(model, input.visibility)
-        val serviceEmitter = ServiceEmitter(model, input.visibility)
-        val files = facts.mapNotNull { fileSpec(it, typeEmitter, serviceEmitter) }
+        val files = generateFileSpecs(input, mappings, problems)
         problems.throwIfAny()
 
-        outputDir.deleteRecursively()
-        val written = files.map { spec ->
-            val directory = if (spec.packageName.isEmpty()) outputDir else outputDir.resolve(spec.packageName.replace('.', '/'))
-            directory.mkdirs()
-            directory.resolve("${spec.name}.kt").also { it.writeText(spec.toString(), Charsets.UTF_8) }
-        }
-        return GenerationResult(written.sortedBy { it.invariantSeparatorsPath })
+        return GenerationResult(writeFiles(files, outputDir))
     }
 
-    private fun mappings(input: GeneratorInput, problems: Problems): Map<String, MappedClass> {
-        val empty = ProtocolFieldRules.EMPTY_TYPE
-        if (input.typeMappings.any { it.protoType == empty }) {
-            problems.error("mapType($empty)", "$empty is always kotlin.Unit and cannot be remapped")
+    /**
+     * Loads and validates the Protobuf schema, then generates Kotlin file specifications.
+     *
+     * File-level validation runs before type resolution and code generation.
+     * Generation errors are collected in [problems] without modifying output files.
+     *
+     * @param input the Protobuf sources and generation settings
+     * @param mappings the resolved mappings to existing Kotlin types
+     * @param problems the collector receiving validation and generation errors
+     * @return the generated Kotlin file specifications in source order
+     */
+    private fun generateFileSpecs(
+        input: GeneratorInput,
+        mappings: Map<ProtoType, MappedClass>,
+        problems: Problems,
+    ): List<FileSpec> {
+        val loaded = loadSchema(input.sourceDirs, input.protoPathDirs)
+        val sourceFiles = loaded.sourceFiles
+
+        val rules = FileRules(problems)
+        for (file in sourceFiles) {
+            rules.check(file)
         }
-        val overrides = input.typeMappings.filter { it.protoType != empty }
-        val result = LinkedHashMap<String, MappedClass>()
-        for ((protoType, mapping) in DefaultTypeMappings.resolve(input.defaultTypeMappings, overrides)) {
+
+        val types = KotlinTypeResolver(loaded.schema, sourceFiles, mappings, problems)
+        val typeEmitter = TypeEmitter(types, input.visibility)
+        val serviceEmitter = ServiceEmitter(types, input.visibility)
+
+        return sourceFiles.mapNotNull {
+            fileSpec(it, types, typeEmitter, serviceEmitter)
+        }
+    }
+
+    /**
+     * Resolves explicit type mappings over the platform defaults.
+     *
+     * Later mappings of the same Protobuf type take precedence. Explicit
+     * mappings for `google.protobuf.Empty` are rejected because that type
+     * is always represented by Kotlin Unit.
+     *
+     * Invalid class names are reported and their mappings are omitted.
+     *
+     * @param input the configured explicit and default type mappings
+     * @param problems the collector receiving invalid mapping errors
+     * @return the successfully resolved mappings keyed by Protobuf type
+     */
+    private fun mappings(input: GeneratorInput, problems: Problems): Map<ProtoType, MappedClass> {
+        if (input.typeMappings.any { it.protoType == ProtoType.EMPTY }) {
+            problems.error(
+                "mapType(${ProtoType.EMPTY})",
+                "${ProtoType.EMPTY} is always kotlin.Unit and cannot be remapped"
+            )
+        }
+
+        val effective =
+            (input.defaultTypeMappings + input.typeMappings.filter { it.protoType != ProtoType.EMPTY })
+                .associateBy { it.protoType }
+
+        val result = LinkedHashMap<ProtoType, MappedClass>()
+        for ((protoType, mapping) in effective) {
             val kotlinClass = className(mapping.kotlinClass, protoType, problems) ?: continue
             val serializer = className(mapping.serializerClass, protoType, problems) ?: continue
             result[protoType] = MappedClass(kotlinClass, serializer)
         }
+
         return result
     }
 
-    private fun className(name: String, protoType: String, problems: Problems): ClassName? {
+    /**
+     * Resolves a fully qualified Kotlin class name.
+     *
+     * Reports an invalid mapping when the supplied name cannot be interpreted
+     * as a Kotlin class name.
+     *
+     * @param name the fully qualified Kotlin class name
+     * @param protoType the Protobuf type associated with the mapping
+     * @param problems the collector receiving invalid class name errors
+     * @return the resolved class name, or `null` if the name is invalid
+     */
+    private fun className(name: String, protoType: ProtoType, problems: Problems): ClassName? {
         return try {
             ClassName.bestGuess(name)
         } catch (_: IllegalArgumentException) {
-            problems.error("mapType($protoType)", "'$name' is not a fully qualified Kotlin class name")
+            problems.error(
+                "mapType($protoType)",
+                "'$name' is not a fully qualified Kotlin class name"
+            )
             null
         }
     }
 
-    private fun register(facts: List<FileFacts>, model: ContractModel, problems: Problems) {
-        val classes = HashMap<String, Location>()
-        val files = HashMap<String, Location>()
-        // wire links a full name declared in two files, protoc and buf reject it
-        val fullNames = HashMap<String, Location>()
+    /**
+     * Generates a Kotlin file specification for a Protobuf source file.
+     *
+     * Emits supported message, enum, and service declarations in their
+     * original order. Generated files include the required opt-in annotations
+     * and a comment identifying their Protobuf source.
+     *
+     * @param file the Protobuf source file to process
+     * @param types the resolver for generated and mapped Kotlin types
+     * @param typeEmitter the generator for message and enum declarations
+     * @param serviceEmitter the generator for service declarations
+     * @return the Kotlin file specification, or `null` if no declarations are generated
+     */
+    private fun fileSpec(
+        file: ProtoFile,
+        types: KotlinTypeResolver,
+        typeEmitter: TypeEmitter,
+        serviceEmitter: ServiceEmitter,
+    ): FileSpec? {
+        val typeSpecs = file.types.mapNotNull(typeEmitter::emit)
+        val serviceSpecs = file.services.map(serviceEmitter::emit)
+        if (typeSpecs.isEmpty() && serviceSpecs.isEmpty()) return null
 
-        fun claim(className: ClassName, location: Location) {
-            classes.put(className.canonicalName, location)?.let { previous ->
-                problems.error(location, "Kotlin class ${className.canonicalName} is already generated for $previous")
-            }
-        }
-
-        fun declare(kind: String, fullName: String, location: Location) {
-            fullNames.put(fullName, location)?.let { previous ->
-                problems.error(location, "$kind $fullName: the full name is already declared at $previous")
-            }
-        }
-
-        fun registerType(type: Type, className: ClassName) {
-            declare(if (type is EnumType) "enum" else "message", type.type.toString(), type.location)
-            if (model.isMapped(type.type)) return
-            model.register(type.type, className)
-            claim(className, type.location)
-            for (nested in type.nestedTypes) registerType(nested, className.nestedClass(nested.type.simpleName))
-        }
-
-        for (fact in facts) {
-            val fileKey = "${fact.kotlinPackage}/${fileName(fact.file)}".lowercase()
-            files.put(fileKey, fact.file.location)?.let { previous ->
-                problems.error(
-                    fact.file.location,
-                    "generates ${fileName(fact.file)}.kt in package '${fact.kotlinPackage}', which $previous already generates",
-                )
-            }
-            for (type in fact.file.types) registerType(type, ClassName(fact.kotlinPackage, type.type.simpleName))
-            for (service in fact.file.services) {
-                declare("service", service.type.toString(), service.location)
-                claim(ClassName(fact.kotlinPackage, service.name), service.location)
-            }
-        }
-    }
-
-    private fun fileSpec(facts: FileFacts, typeEmitter: TypeEmitter, serviceEmitter: ServiceEmitter): FileSpec? {
-        val file = facts.file
-        val types = file.types.mapNotNull { type ->
-            typeEmitter.emit(type, ClassName(facts.kotlinPackage, type.type.simpleName))
-        }
-        val services = file.services.map { service ->
-            serviceEmitter.emit(service, ClassName(facts.kotlinPackage, service.name))
-        }
-        if (types.isEmpty() && services.isEmpty()) return null
-
-        return FileSpec.builder(facts.kotlinPackage, fileName(file))
+        return FileSpec.builder(file.kotlinPackage, types.fileName(file))
             .indent("    ")
             .addFileComment("Generated by surf-nats from %L. Do not edit.", file.location.path)
-            .addAnnotation(
-                // OptIn::class may only be used as an annotation
-                AnnotationSpec.builder(ClassName("kotlin", "OptIn"))
-                    .useSiteTarget(AnnotationSpec.UseSiteTarget.FILE)
-                    .addMember("%T::class", KotlinTypes.NATS_GENERATED_API)
-                    .addMember("%T::class", KotlinTypes.EXPERIMENTAL_SERIALIZATION_API)
-                    .build()
-            )
+            .addAnnotation(generatedApiOptIn())
             .apply {
-                types.forEach(::addType)
-                services.forEach(::addType)
+                typeSpecs.forEach(::addType)
+                serviceSpecs.forEach(::addType)
             }
             .build()
     }
 
-    private fun fileName(file: ProtoFile): String {
-        val name = KotlinNaming.upperCamel(file.name()).map { if (it.isLetterOrDigit()) it else '_' }.joinToString("")
-        return name.ifEmpty { "Contracts" }
+    /**
+     * Creates the file-level opt-in annotation required by generated contracts.
+     *
+     * Enables access to the NATS generated API and experimental Kotlin
+     * serialization APIs used by the generated declarations.
+     *
+     * @return the file-targeted Kotlin OptIn annotation
+     */
+    private fun generatedApiOptIn(): AnnotationSpec {
+        return AnnotationSpec.builder(ClassName("kotlin", "OptIn"))
+            .useSiteTarget(AnnotationSpec.UseSiteTarget.FILE)
+            .addMember("%T::class", KotlinTypes.NATS_GENERATED_API)
+            .addMember("%T::class", KotlinTypes.EXPERIMENTAL_SERIALIZATION_API)
+            .build()
+    }
+
+    /**
+     * Replaces the output directory with the generated Kotlin files.
+     *
+     * Files are written in generation order and returned sorted by their
+     * platform-independent paths.
+     *
+     * This method must only be called after generation problems have been
+     * checked to avoid modifying output files when validation fails.
+     *
+     * @param files the generated Kotlin file specifications
+     * @param outputDir the destination directory to replace
+     * @return the written files sorted by normalized path
+     */
+    private fun writeFiles(files: List<FileSpec>, outputDir: File): List<File> {
+        outputDir.deleteRecursively()
+
+        return files.map { writeFile(it, outputDir) }
+            .sortedBy { it.invariantSeparatorsPath }
+    }
+
+    /**
+     * Writes a generated Kotlin file to its package directory.
+     *
+     * Creates the package directory when necessary and writes the rendered
+     * Kotlin source using UTF-8 encoding.
+     *
+     * @param spec the Kotlin file specification to write
+     * @param outputDir the root directory for generated sources
+     * @return the written Kotlin source file
+     */
+    private fun writeFile(spec: FileSpec, outputDir: File): File {
+        val directory = if (spec.packageName.isEmpty()) {
+            outputDir
+        } else {
+            outputDir.resolve(spec.packageName.replace('.', '/'))
+        }
+
+        directory.mkdirs()
+
+        return directory.resolve("${spec.name}.kt").also {
+            it.writeText(spec.toString(), Charsets.UTF_8)
+        }
     }
 }

@@ -16,7 +16,9 @@ service MicroserviceTestService {
   // Returns the size of the data; large data goes through the payload store.
   rpc Size(SizeRequest) returns (SizeResponse);
   // Returns the stored entries.
-  rpc Stored(StoredRequest) returns (StoredResponse);
+  rpc Stored(StoredRequest) returns (StoredResponse) {
+    option (surf.nats.v1.method) = { call_timeout_seconds: 100 };
+  }
   // Stores the entry (JetStream fire).
   rpc Store(StoreRequest) returns (google.protobuf.Empty) {
     option (surf.nats.v1.method) = { persistent: true };

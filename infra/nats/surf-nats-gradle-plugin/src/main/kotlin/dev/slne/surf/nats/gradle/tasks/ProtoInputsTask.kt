@@ -1,3 +1,4 @@
+
 package dev.slne.surf.nats.gradle.tasks
 
 import org.gradle.api.DefaultTask
@@ -12,9 +13,10 @@ import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
 /**
- * The `.proto` sources and the proto path that the surf-nats tasks read.
+ * Provides the proto source directories and import paths shared by surf-nats tasks.
  *
- * Subclasses declare the `.proto` files of [sourceDirectories] as their input via [protoFiles].
+ * Subclasses use [protoFiles] to declare the proto files in [sourceDirectories]
+ * as Gradle task inputs.
  */
 @DisableCachingByDefault(because = "Base class; the concrete surf-nats tasks are cacheable")
 abstract class ProtoInputsTask : DefaultTask() {
@@ -32,16 +34,27 @@ abstract class ProtoInputsTask : DefaultTask() {
         get() = protoFiles(protoPathDirectories)
 
     /**
-     * Proto roots extracted by [ProtoArchiveTransform] from the jars whose packed protos sources may import.
+     * Proto roots extracted from dependency JARs by [ProtoArchiveTransform].
+     *
+     * These roots provide additional proto files that source files may import.
      */
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val protoPathArchives: ConfigurableFileCollection
 
     /**
-     * Returns [protoPathDirectories] followed by [protoPathArchives].
+     * Returns the configured proto-path directories followed by the extracted
+     * proto roots from dependency archives.
      */
-    protected fun protoPath(): List<File> = protoPathDirectories.files.toList() + protoPathArchives.files
+    protected fun protoPath(): List<File> =
+        protoPathDirectories.files.toList() + protoPathArchives.files
 
-    protected fun protoFiles(directories: ConfigurableFileCollection): FileTree = directories.asFileTree.matching { it.include("**/*.proto") }
+    /**
+     * Returns a file tree containing only `.proto` files from [directories].
+     */
+    protected fun protoFiles(directories: ConfigurableFileCollection): FileTree {
+        return directories.asFileTree.matching {
+            it.include("**/*.proto")
+        }
+    }
 }
