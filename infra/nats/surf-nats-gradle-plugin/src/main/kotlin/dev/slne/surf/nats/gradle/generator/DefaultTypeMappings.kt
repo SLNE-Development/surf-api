@@ -24,17 +24,17 @@ internal object DefaultTypeMappings {
             "$TYPES.EmptySerializer",
         ),
         TypeMapping(
-            ProtocolFieldRules.UUID_TYPE,
+            ProtoType.get(ProtocolFieldRules.UUID_TYPE),
             "java.util.UUID",
             "$TYPES.UuidSerializer",
         ),
         TypeMapping(
-            ProtocolFieldRules.COMPONENT_TYPE,
+            ProtoType.get("surf.types.v1.Component"),
             "net.kyori.adventure.text.Component",
             "$TYPES.ComponentSerializer",
         ),
         TypeMapping(
-            ProtocolFieldRules.KEY_TYPE,
+            ProtoType.get("surf.types.v1.Key"),
             "net.kyori.adventure.key.Key",
             "$TYPES.KeySerializer",
         ),
@@ -107,12 +107,12 @@ internal object DefaultTypeMappings {
 
     val paper: List<TypeMapping> = listOf(
         TypeMapping(
-            ProtocolFieldRules.LOCATION_TYPE,
+            ProtoType.get("surf.types.paper.v1.Location"),
             "org.bukkit.Location",
             "$PAPER_TYPES.LocationSerializer",
         ),
         TypeMapping(
-            ProtocolFieldRules.ITEM_STACK_TYPE,
+            ProtoType.get("surf.types.paper.v1.ItemStack"),
             "org.bukkit.inventory.ItemStack",
             "$PAPER_TYPES.ItemStackSerializer",
         ),
