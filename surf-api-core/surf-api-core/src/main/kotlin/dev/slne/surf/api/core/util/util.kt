@@ -22,6 +22,7 @@ import sun.misc.Unsafe
 import java.lang.ref.SoftReference
 import java.lang.ref.WeakReference
 import java.lang.reflect.Field
+import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.util.*
 import java.util.function.BiConsumer
@@ -32,22 +33,40 @@ import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 import kotlin.streams.asSequence
 
-/**
- * Lazily initialized secure random instance.
- *
- * Attempts to use a strong instance via [SecureRandom.getInstanceStrong], falling back to the default
- * implementation if unavailable. Initialization failures are logged but do not prevent fallback.
- */
-val random: SecureRandom by lazy {
-    try {
-        SecureRandom.getInstanceStrong()
-    } catch (e: Exception) {
-        logger().atWarning()
-            .withCause(e)
-            .log("Failed to get strong SecureRandom, falling back to default")
-        SecureRandom()
-    }
+private fun createRandom(): SecureRandom = try {
+    SecureRandom.getInstance("DRBG")
+} catch (_: NoSuchAlgorithmException) {
+    SecureRandom()
 }
+
+private val platformRandom = ThreadLocal.withInitial(::createRandom)
+
+private object VirtualRandomPool {
+    val instances = Array(32) { createRandom() }
+}
+
+
+/**
+ * Returns a secure random generator for the current thread.
+ *
+ * It tries to use the non-blocking `DRBG` algorithm and falls back to the default
+ * `SecureRandom` if unavailable.
+ *
+ * Platform threads use thread-local instances, while virtual threads
+ * share a fixed pool to avoid excessive generator allocations.
+ */
+val random: SecureRandom
+    get() {
+        val thread = Thread.currentThread()
+
+        return if (thread.isVirtual) {
+            val instances = VirtualRandomPool.instances
+            val index = (thread.threadId() and (instances.size - 1).toLong()).toInt()
+            instances[index]
+        } else {
+            platformRandom.get()
+        }
+    }
 
 /**
  * Returns a [FluentLogger] for the enclosing class.
