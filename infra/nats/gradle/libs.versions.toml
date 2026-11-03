@@ -17,6 +17,7 @@ kotlin = "2.4.21"
 wire = "7.1.0"
 kotlinpoet = "2.4.0"
 buildconfig = "6.1.2"
+weaver = "0.3.0"
 
 [libraries]
 jnats = { group = "io.nats", name = "jnats", version.ref = "jnats" }
@@ -29,6 +30,7 @@ surf-api-core = { group = "dev.slne.surf.api", name = "surf-api-core", version.r
 surf-api-standalone = { group = "dev.slne.surf.api", name = "surf-api-standalone", version.ref = "surf-api" }
 kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-protobuf = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 auto-service-annotations = { group = "com.google.auto.service", name = "auto-service-annotations", version.ref = "auto-service-annotations" }
@@ -47,6 +49,7 @@ kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-p
 kotlin-gradle-api = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin-api", version.ref = "kotlin" }
 kotlin-serialization-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
 surf-api-gradle-plugin = { group = "dev.slne.surf.api", name = "surf-api-gradle-plugin", version.ref = "surf-api" }
+weaver-gradle-plugin = { group = "dev.slne.weaver", name = "weaver-gradle-plugin", version.ref = "weaver" }
 
 [bundles]
 log4j = ["log4j-core", "log4j-api", "log4j-slf4j2-impl"]
@@ -55,3 +58,4 @@ log4j = ["log4j-core", "log4j-api", "log4j-slf4j2-impl"]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-js-plain-objects = { id = "org.jetbrains.kotlin.plugin.js-plain-objects", version.ref = "kotlin" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
+weaver = { id = "dev.slne.weaver", version.ref = "weaver" }

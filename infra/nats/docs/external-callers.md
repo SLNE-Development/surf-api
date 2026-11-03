@@ -13,10 +13,13 @@ methods.
 
 ## Before you start
 
-- **Get the contracts.** The jar of a contract module holds its `.proto` files under `META-INF/surf-nats/proto/`.
-  The contracts import `surf/nats/v1/options.proto` and the `surf/types/v1` messages from the jar of
-  `surf-nats-types-common`, and Paper contracts the `surf/types/paper/v1` messages from `surf-nats-types-paper`.
-  Copy all of them into one directory. The `google/protobuf` files come with your Protocol Buffers tooling.
+- **Get the contracts.** Every contract module publishes its `.proto` files to the weaver registry. On Node.js,
+  the weaver CLI fetches them into one directory (see [Fetching the contracts](#fetching-the-contracts)); with any
+  other client, download the artifact from weaver (see its REST API). The contracts import
+  `surf/nats/v1/options.proto` and the `surf/types/v1` messages from the artifact `surf-nats-types-common`, and
+  Paper contracts the `surf/types/paper/v1` messages from `surf-nats-types-paper`. A published contract module lists
+  these artifacts as dependencies, so one fetch brings them along. The `google/protobuf` files come with your
+  Protocol Buffers tooling.
 - **The contract is the address.** Subjects and streams derive from the proto full names of the event message, the
   service, and the `rpc`, for example `surf.roles.v1.RolesService`. Any application can publish and receive any event
   and call any service; no client name is needed. Renaming a message, a service, or an `rpc`, or moving it to another
@@ -78,11 +81,41 @@ on Node.js, depends on `@nats-io/transport-node`, `@nats-io/jetstream`, and `@na
 `@bufbuild/protobuf` 2.16.0 as a peer dependency. It also depends on `@bufbuild/protoplugin` 2.16.0, which pulls in
 TypeScript 5.4.5; only the `protoc-gen-surf-nats` binary loads it, the client does not.
 
+### Fetching the contracts
+
+The weaver CLI `@slne/weaver-cli` needs Node 22 or newer. Add it as a development dependency:
+
+```sh
+npm install --save-dev @slne/weaver-cli
+```
+
+Describe what to fetch in `weaver.json` next to `package.json`:
+
+```json
+{
+  "url": "https://weaver.slne.dev",
+  "repositories": ["proto-releases-public"],
+  "dependencies": ["dev.slne.surf.profiles:profiles-contracts:1.4.0"],
+  "outDir": "./proto"
+}
+```
+
+`dependencies` lists the contract artifacts as `group:name:version`, with exact versions. The CLI also fetches their
+dependencies, including the surf-nats protos. `repositories` is the lookup order. `WEAVER_URL` overrides `url`.
+Private repositories need an API key with read access in `WEAVER_TOKEN`; the public repository needs none.
+
+```sh
+npx weaver fetch
+```
+
+The CLI replaces `outDir` on every fetch, so add it to `.gitignore`. Run `weaver fetch` in a script, for example
+as `postinstall`, so that everyone has the same files. Then generate the schemas from that directory.
+
 ### Schemas and clients
 
 Generate the schemas from the contracts with [buf](https://buf.build/) and `@bufbuild/protoc-gen-es` 2.16.0, and a
 typed client per service with `protoc-gen-surf-nats`, which the package `@slne/surf-nats` ships as a binary. With the
-contracts in `proto/`:
+contracts in `proto/`, the `outDir` above:
 
 ```yaml
 # buf.yaml

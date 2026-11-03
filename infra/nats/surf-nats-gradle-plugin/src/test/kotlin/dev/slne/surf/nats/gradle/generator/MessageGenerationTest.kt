@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.gradle.generator
 
+import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness.Companion.OPTIONS_IMPORT
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness.Companion.PROTO2
 import org.junit.jupiter.api.Test
@@ -271,8 +272,8 @@ class MessageGenerationTest {
             input = {
                 it.input(
                     mappings = listOf(
-                        TypeMapping("surf.test.v1.Tag", "dev.example.Tag", "dev.example.TagSerializer"),
-                        TypeMapping("google.protobuf.Timestamp", "kotlin.time.Instant", "dev.example.InstantSerializer"),
+                        TypeMapping(ProtoType.get("surf.test.v1.Tag"), "dev.example.Tag", "dev.example.TagSerializer"),
+                        TypeMapping(ProtoType.get("google.protobuf.Timestamp"), "kotlin.time.Instant", "dev.example.InstantSerializer"),
                     )
                 )
             },

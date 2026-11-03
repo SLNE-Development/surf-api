@@ -61,6 +61,10 @@ dependencies {
     implementation(libs.kotlinpoet)
     // Applied by the plugin for Kotlin/JVM projects; surf-api projects get it from surf-api as well.
     implementation(libs.kotlin.serialization.plugin)
+    // Applied by the plugin to every project; only the conventions and the wiring come from surf-nats.
+    implementation(libs.weaver.gradle.plugin)
+    // Reads weaver's local module manifests (JSON tree only, no serialization compiler plugin).
+    implementation(libs.kotlinx.serialization.json)
 
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(gradleKotlinDsl())
@@ -70,6 +74,7 @@ dependencies {
     testImplementation(libs.kotlin.gradle.plugin)
     testImplementation(libs.surf.api.gradle.plugin)
     testImplementation(gradleKotlinDsl())
+    testImplementation(gradleTestKit())
     testImplementation(kotlin("test-junit5"))
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

@@ -34,20 +34,20 @@ abstract class ProtoInputsTask : DefaultTask() {
         get() = protoFiles(protoPathDirectories)
 
     /**
-     * Proto roots extracted from dependency JARs by [ProtoArchiveTransform].
+     * Proto root fetched by weaver (`weaver.protosDir`), used for imports only.
      *
-     * These roots provide additional proto files that source files may import.
+     * Empty when the `weaver` configuration declares no dependencies.
      */
     @get:InputFiles
+    @get:IgnoreEmptyDirectories
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val protoPathArchives: ConfigurableFileCollection
+    abstract val weaverProtoPath: ConfigurableFileCollection
 
     /**
-     * Returns the configured proto-path directories followed by the extracted
-     * proto roots from dependency archives.
+     * Returns the configured proto-path directories followed by the weaver proto root.
      */
     protected fun protoPath(): List<File> =
-        protoPathDirectories.files.toList() + protoPathArchives.files
+        protoPathDirectories.files.toList() + weaverProtoPath.files
 
     /**
      * Returns a file tree containing only `.proto` files from [directories].

@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.gradle.schema
 
+import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness.Companion.OPTIONS_IMPORT
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness.Companion.PROTO2
@@ -71,7 +72,7 @@ class SchemaLoadingTest {
             "A.kt",
             harness.input(
                 protoPathDirs = listOf(protoPath),
-                mappings = listOf(TypeMapping("other.v1.Shared", "dev.example.Shared", "dev.example.SharedSerializer")),
+                mappings = listOf(TypeMapping(ProtoType.get("other.v1.Shared"), "dev.example.Shared", "dev.example.SharedSerializer")),
             ),
         )
         assertContainsAll(text, "public val shared: @Serializable(with = SharedSerializer::class) Shared,", ") : NatsEvent {")

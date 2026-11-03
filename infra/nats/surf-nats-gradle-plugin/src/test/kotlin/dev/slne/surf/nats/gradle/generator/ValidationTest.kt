@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.gradle.generator
 
+import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness.Companion.OPTIONS_IMPORT
 import dev.slne.surf.nats.gradle.generator.GeneratorHarness.Companion.PROTO2
 import org.junit.jupiter.api.Test
@@ -378,7 +379,7 @@ class ValidationTest {
         val errors = harness().proto(
             "surf/test/v1/bad.proto",
             "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nmessage Tag { option (surf.nats.v1.event) = true; optional string v = 1; }",
-        ).errors(harness().input(mappings = listOf(TypeMapping("surf.test.v1.Tag", "dev.example.Tag", "dev.example.TagSerializer"))))
+        ).errors(harness().input(mappings = listOf(TypeMapping(ProtoType.get("surf.test.v1.Tag"), "dev.example.Tag", "dev.example.TagSerializer"))))
         assertLocated(errors, 4, "event message surf.test.v1.Tag is mapped by mapType")
     }
 
@@ -580,8 +581,8 @@ class ValidationTest {
         val errors = harness.errors(
             harness.input(
                 mappings = listOf(
-                    TypeMapping("google.protobuf.Empty", "dev.example.Nothing", "dev.example.NothingSerializer"),
-                    TypeMapping("surf.test.v1.Tag", "tag", "dev.example.TagSerializer"),
+                    TypeMapping(ProtoType.get("google.protobuf.Empty"), "dev.example.Nothing", "dev.example.NothingSerializer"),
+                    TypeMapping(ProtoType.get("surf.test.v1.Tag"), "tag", "dev.example.TagSerializer"),
                 )
             )
         )

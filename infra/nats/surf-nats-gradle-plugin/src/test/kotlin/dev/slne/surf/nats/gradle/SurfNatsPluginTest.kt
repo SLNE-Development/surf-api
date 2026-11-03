@@ -1,23 +1,21 @@
 package dev.slne.surf.nats.gradle
 
+import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.api.gradle.generators.pluginfiles.VelocityPluginFile
 import dev.slne.surf.nats.gradle.generator.DefaultTypeMappings
 import dev.slne.surf.nats.gradle.generator.GeneratedVisibility
 import dev.slne.surf.nats.gradle.generator.TypeMapping
 import dev.slne.surf.nats.gradle.tasks.CheckSurfNatsCompatibilityTask
 import dev.slne.surf.nats.gradle.tasks.GenerateSurfNatsKotlinTask
+import dev.slne.weaver.gradle.WeaverExtension
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependency
-import org.gradle.api.attributes.Usage
 import org.gradle.testfixtures.ProjectBuilder
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -52,8 +50,9 @@ class SurfNatsPluginTest {
         assertNotNull(project.extensions.findByName(SurfNatsPlugin.EXTENSION))
         assertNotNull(project.tasks.findByName(SurfNatsPlugin.GENERATE_TASK))
         assertNotNull(project.tasks.findByName(SurfNatsPlugin.CHECK_TASK))
-        assertNotNull(project.configurations.findByName(SurfNatsPlugin.PROTO_PATH_CONFIGURATION))
-        assertNotNull(project.configurations.findByName(SurfNatsPlugin.BASELINE_CONFIGURATION))
+        assertNotNull(project.tasks.findByName(SurfNatsPlugin.STAGE_TASK))
+        assertNotNull(project.tasks.findByName(SurfNatsPlugin.BASELINE_TASK))
+        assertTrue(project.pluginManager.hasPlugin("dev.slne.weaver"))
     }
 
     @Test
@@ -65,7 +64,7 @@ class SurfNatsPluginTest {
         assertFalse(project.surfNats.compatibilityBaseline.isPresent)
         assertEquals(projectDir.resolve("build/generated/surf-nats/kotlin"), project.generate.outputDir.get().asFile)
         assertEquals(DefaultTypeMappings.common, project.generate.defaultTypeMappings.get())
-        assertFalse(project.check.baselineConfigured.get())
+        assertFalse(project.check.active.get())
     }
 
     @Test
@@ -90,7 +89,7 @@ class SurfNatsPluginTest {
             compatibilityCheck.set(false)
         }
         assertEquals(
-            listOf(TypeMapping("surf.demo.v1.Tag", "dev.slne.demo.Tag", "dev.slne.demo.TagSerializer")),
+            listOf(TypeMapping(ProtoType.get("surf.demo.v1.Tag"), "dev.slne.demo.Tag", "dev.slne.demo.TagSerializer")),
             project.generate.typeMappings.get(),
         )
         assertEquals(GeneratedVisibility.INTERNAL, project.generate.visibility.get())
@@ -100,14 +99,22 @@ class SurfNatsPluginTest {
     }
 
     @Test
-    fun `compatibilityBaseline declares the baseline dependency`() {
+    fun `compatibilityBaseline sets the baseline version and activates the check`() {
         val project = project(KOTLIN_JVM, SurfNatsPlugin.ID)
-        project.surfNats.compatibilityBaseline("dev.slne.surf.demo:demo-api:1.2.0")
+        project.surfNats.compatibilityBaseline("1.2.0")
 
-        val baseline = project.configurations.getByName(SurfNatsPlugin.BASELINE_CONFIGURATION)
-        val dependency = baseline.allDependencies.single()
-        assertEquals("dev.slne.surf.demo:demo-api:1.2.0", "${dependency.group}:${dependency.name}:${dependency.version}")
-        assertTrue(project.check.baselineConfigured.get())
+        assertEquals("1.2.0", project.surfNats.compatibilityBaseline.get())
+        assertTrue(project.check.active.get())
+    }
+
+    @Test
+    fun `weaver repositories replace the default lookup repository`() {
+        val project = project(KOTLIN_JVM, SurfNatsPlugin.ID)
+        val weaver = project.extensions.getByType(WeaverExtension::class.java)
+        assertEquals(listOf("proto-releases-public"), weaver.repositories.get())
+
+        weaver.repositories("private-protos")
+        assertEquals(listOf("private-protos"), weaver.repositories.get())
     }
 
     @Test
@@ -132,56 +139,6 @@ class SurfNatsPluginTest {
             )
         }
     }
-
-    @Test
-    fun `plugin configurations resolve JVM runtime jars without substitution of the baseline`() {
-        val project = project(KOTLIN_JVM, SurfNatsPlugin.ID)
-        for (name in listOf(SurfNatsPlugin.PROTO_PATH_CONFIGURATION, SurfNatsPlugin.BASELINE_CONFIGURATION)) {
-            val configuration = project.configurations.getByName(name)
-            assertTrue(configuration.isCanBeResolved, name)
-            assertFalse(configuration.isCanBeConsumed, name)
-            assertFalse(configuration.isTransitive, name)
-            assertEquals(Usage.JAVA_RUNTIME, configuration.attributes.getAttribute(Usage.USAGE_ATTRIBUTE)?.name, name)
-            assertEquals(KotlinPlatformType.jvm, configuration.attributes.getAttribute(KotlinPlatformType.attribute), name)
-        }
-        val baseline = project.configurations.getByName(SurfNatsPlugin.BASELINE_CONFIGURATION)
-        assertFalse(baseline.resolutionStrategy.useGlobalDependencySubstitutionRules.get())
-    }
-
-    @Test
-    fun `proto-path and baseline artifacts resolve to their extracted proto roots`() {
-        val project = project(KOTLIN_JVM, SurfNatsPlugin.ID)
-        val withProtos = jar("contracts.jar", "META-INF/surf-nats/proto/surf/a/v1/a.proto" to "a", "dev/A.class" to "")
-        val withoutProtos = jar("other.jar", "dev/B.class" to "")
-        val exploded = projectDir.resolve("classes").apply {
-            resolve("META-INF/surf-nats/proto/surf/b/v1").mkdirs()
-            resolve("META-INF/surf-nats/proto/surf/b/v1/b.proto").writeText("b")
-        }
-        project.dependencies.add(SurfNatsPlugin.PROTO_PATH_CONFIGURATION, project.files(withProtos, withoutProtos, exploded))
-        project.dependencies.add(SurfNatsPlugin.BASELINE_CONFIGURATION, project.files(withProtos))
-
-        val roots = project.generate.protoPathArchives.files.toList()
-        assertEquals(listOf(listOf("surf/a/v1/a.proto"), listOf("surf/b/v1/b.proto")), roots.map { it.relativeProtos() })
-        assertEquals(roots, project.check.protoPathArchives.files.toList())
-        assertEquals("a", roots.first().resolve("surf/a/v1/a.proto").readText())
-        assertEquals(listOf(listOf("surf/a/v1/a.proto")), project.check.baselineArchives.files.map { it.relativeProtos() })
-        assertEquals(listOf(withProtos), project.check.baselineJars.files.toList())
-    }
-
-    private fun jar(name: String, vararg entries: Pair<String, String>): File {
-        val file = projectDir.resolve(name)
-        ZipOutputStream(file.outputStream()).use { zip ->
-            for ((path, content) in entries) {
-                zip.putNextEntry(ZipEntry(path))
-                zip.write(content.toByteArray())
-                zip.closeEntry()
-            }
-        }
-        return file
-    }
-
-    private fun File.relativeProtos(): List<String> =
-        walkTopDown().filter { it.isFile }.map { it.relativeTo(this).invariantSeparatorsPath }.sorted().toList()
 
     @Test
     fun `rejects Kotlin Multiplatform projects`() {

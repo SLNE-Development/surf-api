@@ -54,12 +54,14 @@ microservices. Next to any surf-api Gradle plugin, it does the following:
 - It adds `compileOnly` dependencies on `surf-nats-api` and the type adapters in `surf-nats-types-common`, plus
   `surf-nats-types-paper` in Paper modules, and on `kotlinx-serialization-protobuf`. At runtime, the surf-nats
   platform plugin provides them.
-- It enables surf-nats in the surf-api Gradle plugin. On Paper and Velocity, this adds the dependency on the
-  surf-nats plugin.
+- It declares the surf-nats platform plugin as a dependency of your plugin: on Paper as a required bootstrap and
+  server dependency in `paper-plugin.yml`, on Velocity in the plugin file.
 - It applies the Kotlin serialization compiler plugin.
+- It applies the weaver Gradle plugin `dev.slne.weaver` and configures it (see
+  [Contract registry](#contract-registry)).
 
-Do not call `withSurfNats()` yourself, and do not register the surf-nats plugin as a dependency yourself. Both fail
-the build. On Minestom, register the dependency in `minestomPluginFile`, which surf-api does not do:
+Applying the plugin is enough. Do not register the surf-nats plugin as a dependency yourself, because the build
+would declare it twice. On Minestom, register the dependency in `minestomPluginFile`, which the plugin does not do:
 
 ```kotlin
 minestomPluginFile {
@@ -152,8 +154,8 @@ import "surf/nats/v1/options.proto";
 
 Keep contracts in a module that both sides use, such as the common module of a plugin and its microservice, but
 not in your public API module. The generated classes are internal to your project: other plugins use your plugin's
-Kotlin API. The jar of the module contains the contracts under `META-INF/surf-nats/proto/`, so applications in
-other languages can read them.
+Kotlin API. The module publishes its contracts to the weaver registry, so other modules and applications in other
+languages can read them (see [Contract registry](#contract-registry)).
 
 The plugin generates the Kotlin sources into `build/generated/surf-nats/kotlin` with the task
 `generateSurfNatsKotlin`. Read the generated signatures there before you write the code that uses them.
@@ -231,12 +233,111 @@ All entries of the `surfNats { }` block are optional:
 | Entry                                     | Effect                                                                                    |
 |-------------------------------------------|-------------------------------------------------------------------------------------------|
 | `protoSourceDirs`                         | Directories with contracts to generate. Default `src/main/proto`.                         |
-| `protoPath.from(...)`                     | Directories with `.proto` files that contracts may import, but that are not generated.    |
-| configuration `surfNatsProtoPath`         | Jars whose `META-INF/surf-nats/proto/` contracts may import.                              |
+| `protoPath.from(...)`                     | Local directories with `.proto` files that contracts may import, but that are not generated. |
 | `mapType(proto, kotlinClass, serializer)` | Maps a proto type to an existing class (see [Types](#types)).                             |
 | `generatedVisibility = INTERNAL`          | Generates `internal` classes, interfaces, and enums. Default `PUBLIC`.                    |
-| `compatibilityBaseline("<coordinates>")`  | The last published artifact of the module, compared by the compatibility check.          |
+| `compatibilityBaseline("<version>")`      | The released version that the compatibility check compares against, for example `"1.4.0"`. Default: the highest weaver release below `project.version`. |
 | `compatibilityCheck = false`              | Turns the compatibility check off.                                                        |
+
+Contracts of other modules and artifacts are not imported through `protoPath` but declared as weaver dependencies
+(see [Imports from other modules](#imports-from-other-modules)). Overrides for the registry go into the `weaver { }`
+block, not into `surfNats { }`.
+
+## Contract registry
+
+surf-nats distributes contracts through [weaver](https://weaver.slne.dev), the proto registry. The plugin applies
+`dev.slne.weaver` and sets these conventions, so a module needs no `weaver { }` block:
+
+| Setting                        | Default                                                       |
+|--------------------------------|---------------------------------------------------------------|
+| `weaver.url`                   | `WEAVER_URL` if set, else `https://weaver.slne.dev`           |
+| `weaver.token`                 | `WEAVER_TOKEN`; optional for reading, required for publishing |
+| `weaver.repositories`          | `proto-releases-public`, searched for dependencies            |
+| `weaver.publishing.repository` | `proto-releases-public`, for releases and snapshots           |
+| `weaver.publishing.group`      | `project.group`                                               |
+| `weaver.publishing.name`       | `rootProject.name`                                            |
+| `weaver.publishing.version`    | `project.version`                                             |
+
+Override any of them in `weaver { }`. A private repository needs the lookup and the publish target:
+
+```kotlin
+weaver {
+    repositories("proto-private")
+    publishing {
+        repository = "proto-private"
+        name = "profiles-contracts"
+    }
+}
+```
+
+The coordinates of a module are `group:name:version`. The plugin checks them against the weaver rules when a module
+publishes, and fails the build if two modules of one build publish the same `group:name`. Set
+`weaver.publishing.name` in one of them. A published release is immutable: publish a changed contract under a new
+version.
+
+### What the plugin does with the contracts
+
+The plugin copies the `.proto` files of `surfNats.protoSourceDirs` into `build/surf-nats/weaver-source`
+(`stageSurfNatsWeaverSource`) and publishes that directory. Weaver compiles the contracts when it receives them and
+rejects a publish that does not compile.
+
+| Task                         | Purpose                                                                                         |
+|------------------------------|-------------------------------------------------------------------------------------------------|
+| `stageSurfNatsWeaverSource`  | Copies the contracts into `build/surf-nats/weaver-source`.                                      |
+| `fetchProtos`                | Downloads the weaver dependencies of the module into `build/weaver/protos`.                     |
+| `fetchSurfNatsBaseline`      | Downloads the previous release of the module into `build/surf-nats/baseline`.                   |
+| `checkSurfNatsCompatibility` | Compares the contracts with the baseline (see [Versioning](#versioning)).                       |
+| `publishProtos`              | Uploads the contracts to weaver.                                                                |
+
+The surf-nats protos (`surf/nats/v1/options.proto` and `surf/types/**`) come with the plugin, so code generation
+works without network access. They are also published to weaver as `dev.slne.surf.nats:surf-nats-types-common` and
+`dev.slne.surf.nats:surf-nats-types-paper`. The plugin adds `surf-nats-types-common`, at its own version, to the
+publish manifest of every module that publishes, and `surf-nats-types-paper` as well in Paper modules
+(`dev.slne.surf.api.gradle.paper-plugin` or `paper-raw`), so the server can resolve the imports. A release of your module cannot depend on a
+snapshot of surf-nats: the server rejects that publish. Use a release of surf-nats for a release of your module.
+
+### Publishing
+
+A module publishes its contracts when it applies `maven-publish` and configures a Maven repository. Then `publish`
+first runs `publishProtos`, which first runs `generateSurfNatsKotlin` and `checkSurfNatsCompatibility`. Every Maven
+publish task runs after `publishProtos`, so a contract that weaver rejects stops the release before the Maven
+upload. `publishProtos` also runs after the `publishProtos` of every `weaver(project(...))` dependency, because
+weaver rejects a dependency it does not know yet. `publishToMavenLocal` does not publish contracts. A module without a Maven repository, such as a test
+module, never publishes contracts and never needs the network.
+
+`publishProtos` reads `WEAVER_TOKEN` and needs a token with write access to the repository.
+
+### Imports from other modules
+
+To import contracts from another module of the same build, or from an artifact in weaver, declare a weaver
+dependency:
+
+```kotlin
+dependencies {
+    weaver(project(":profiles-common"))
+    weaver("dev.slne.surf.punish:surf-punish-contracts:1.2.0")
+}
+```
+
+A project dependency must apply `dev.slne.weaver`; `dev.slne.surf.nats` applies it and stages `protoSourceDirs` as
+`weaver.publishing.source`. The build uses that module's `weaver.publishing.source` directly, without publishing.
+Publishing your module also needs a `weaver.publishing` group, name and version in the other module. A remote dependency needs an exact version; ranges and `+` are not supported. The dependencies
+also appear in the manifest of your published artifact.
+
+Imported files are import-only: the plugin does not generate Kotlin for them, and `fetchProtos` places them in
+`build/weaver/protos`. A field of such a type fails with "neither generated nor mapped" until you map the type with
+`mapType` to a class that your module can see. Copies of the surf-nats protos that arrive through weaver are ignored
+in favor of the bundled ones.
+
+`generateSurfNatsKotlin` and `checkSurfNatsCompatibility` depend on `fetchProtos` only when the module declares at
+least one weaver dependency.
+
+### Offline builds
+
+A module without weaver dependencies builds with `--offline`. Fetching a remote dependency fails fast under
+`--offline` and names the dependencies that need the network. Project dependencies work offline, unless the other
+module itself depends on a remote artifact. Under `--offline`, `fetchSurfNatsBaseline` logs a warning and skips the
+compatibility check.
 
 ## Clients
 
@@ -613,17 +714,20 @@ For an incompatible change, create a new major version: a package `surf.profiles
 can register the implementations of both. Roll out in this order: let the implementations serve both versions,
 move the callers to version 2, then remove version 1.
 
-The task `checkSurfNatsCompatibility` runs with `check` and compares the contracts against the last published
-artifact of the module:
+The task `checkSurfNatsCompatibility` runs with `check` and compares the contracts against the last release of the
+module in weaver, the baseline. `fetchSurfNatsBaseline` picks the highest release below `project.version` in
+`weaver.publishing.repository` and downloads its contracts into `build/surf-nats/baseline`. To compare against a
+specific release instead, set its version:
 
 ```kotlin
 surfNats {
-    compatibilityBaseline("dev.slne.surf.profiles:profiles-common:1.4.0")
+    compatibilityBaseline("1.4.0")
 }
 ```
 
-Without a baseline, the check is skipped. It writes its report to `build/reports/surf-nats/compatibility.txt`. A new
-field with a number below the current maximum is wire-compatible but shifts the Kotlin parameters, so the check
+The check runs for modules that publish to a Maven repository, and for modules that set a baseline. It is skipped
+when the module has no release in weaver yet, and under `--offline` with a warning. It writes its report to
+`build/reports/surf-nats/compatibility.txt`. A new field with a number below the current maximum is wire-compatible but shifts the Kotlin parameters, so the check
 reports it as a warning. The release that removes version 1 reports every element of version 1 as removed and needs
 `compatibilityCheck = false`.
 
@@ -797,16 +901,17 @@ for example with `nats stream rm <stream>`, which removes their durable consumer
 ## External callers
 
 Applications outside the JVM, such as a web panel, can publish and receive events and call services. They read the
-contracts from the jar of the contract module (`META-INF/surf-nats/proto/`) and send Protocol Buffers messages with
-the header `Content-Type: application/protobuf`. They need no client name of the application that serves a
-contract: the contract alone determines the subjects. A persistent method without a result fits commands that need
-no answer. Register a persistent service once before the external application publishes calls.
+contracts from weaver and send Protocol Buffers messages with the header `Content-Type: application/protobuf`. They
+need no client name of the application that serves a contract: the contract alone determines the subjects. A
+persistent method without a result fits commands that need no answer. Register a persistent service once before the
+external application publishes calls.
 
-For Node.js and TypeScript, `surf-nats-core` builds the client `@slne/surf-nats`, which works with
-[protobuf-es](https://github.com/bufbuild/protobuf-es) schemas, and its protoc plugin `protoc-gen-surf-nats`, which
-generates a typed client per service next to the protobuf-es code. [External callers](docs/external-callers.md)
-describes both, with a `buf.gen.yaml` example, and the wire format for other NATS clients: subjects, headers,
-replies, and dead letters.
+A Node.js project fetches the contracts with the weaver CLI `@slne/weaver-cli` (`weaver fetch`) and generates code
+from them with `buf generate`. For Node.js and TypeScript, `surf-nats-core` builds the client `@slne/surf-nats`,
+which works with [protobuf-es](https://github.com/bufbuild/protobuf-es) schemas, and its protoc plugin
+`protoc-gen-surf-nats`, which generates a typed client per service next to the protobuf-es code.
+[External callers](docs/external-callers.md) describes the setup, with `weaver.json` and `buf.gen.yaml` examples,
+and the wire format for other NATS clients: subjects, headers, replies, and dead letters.
 
 ## Migrating from surf-redis and surf-rabbitmq
 
@@ -841,11 +946,11 @@ Points that behave differently:
 
 | Module                    | Contents                                                                                       |
 |---------------------------|------------------------------------------------------------------------------------------------|
-| `surf-nats-gradle-plugin` | The Gradle plugin `dev.slne.surf.nats`: code generation, build checks, compatibility check     |
+| `surf-nats-gradle-plugin` | The Gradle plugin `dev.slne.surf.nats`: code generation, build checks, compatibility check, weaver integration |
 | `surf-nats-api`           | The public API: client, `@NatsListener`, contexts, `Answer`, exceptions, generated-code model  |
 | `surf-nats-core`          | The implementation for the JVM, and the Node.js client `@slne/surf-nats`                       |
-| `surf-nats-types-common`  | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers       |
-| `surf-nats-types-paper`   | The `surf.types.paper.v1` messages and their Paper serializers                                 |
+| `surf-nats-types-common`  | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers; the protos are also published to weaver |
+| `surf-nats-types-paper`   | The `surf.types.paper.v1` messages and their Paper serializers; the protos are also published to weaver |
 | `surf-nats-paper`         | The Paper plugin                                                                               |
 | `surf-nats-velocity`      | The Velocity plugin                                                                            |
 | `surf-nats-minestom`      | The Minestom plugin                                                                            |

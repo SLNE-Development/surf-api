@@ -17,10 +17,9 @@ import org.gradle.api.provider.Property
 abstract class SurfNatsExtension {
 
     /**
-     * Directories containing proto files to generate and package.
+     * Directories containing proto files to generate and publish to weaver.
      *
-     * Defaults to `src/main/proto`. Generated proto files are also packaged
-     * under `META-INF/surf-nats/proto` in the resulting JAR.
+     * Defaults to `src/main/proto`.
      *
      * Use `from(...)` to add directories or `setFrom(...)` to replace them.
      */
@@ -29,8 +28,8 @@ abstract class SurfNatsExtension {
     /**
      * Additional directories containing proto files used for imports.
      *
-     * These files are not generated. Dependencies containing packaged proto
-     * contracts should instead use the `surfNatsProtoPath` configuration.
+     * These files are not generated. Protos of other modules and registry
+     * artifacts come from the `weaver` configuration instead.
      */
     abstract val protoPath: ConfigurableFileCollection
 
@@ -45,12 +44,10 @@ abstract class SurfNatsExtension {
     abstract val generatedVisibility: Property<GeneratedVisibility>
 
     /**
-     * Dependency notation of the previously published artifact used as
-     * the compatibility baseline.
+     * Weaver version of this module's artifact used as the compatibility baseline, such as `1.2.0`.
      *
-     * The `checkSurfNatsCompatibility` task compares the current contracts
-     * against the artifact's `META-INF/surf-nats/proto` files.
-     * Without a configured baseline, the task is skipped.
+     * Defaults to the highest release below `project.version`. Setting it also enables the check for
+     * modules without a publishing repository.
      */
     abstract val compatibilityBaseline: Property<String>
 
@@ -79,9 +76,9 @@ abstract class SurfNatsExtension {
     }
 
     /**
-     * Sets the dependency notation for the compatibility baseline.
+     * Sets the weaver version used as the compatibility baseline.
      */
-    fun compatibilityBaseline(notation: String) {
-        compatibilityBaseline.set(notation)
+    fun compatibilityBaseline(version: String) {
+        compatibilityBaseline.set(version)
     }
 }

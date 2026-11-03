@@ -24,12 +24,12 @@ import java.io.File
 /**
  * Checks whether the current proto sources are compatible with a baseline.
  *
- * Baseline proto files are read from `META-INF/surf-nats/proto` in the
- * configured baseline artifacts.
+ * The baseline is the previous release of this module's weaver artifact, fetched by
+ * [FetchSurfNatsBaselineTask] into [baselineDirectory].
  *
- * The task is skipped when [checkEnabled] is false or no baseline is configured.
- * Compatibility violations fail the task, while warnings are logged and written
- * to [reportFile] without causing a failure.
+ * The task is skipped when [checkEnabled] or [active] is false, or when [baselineVersionFile]
+ * is missing or records [FetchSurfNatsBaselineTask.NO_BASELINE]. Compatibility violations fail the
+ * task, while warnings are logged and written to [reportFile] without causing a failure.
  */
 @CacheableTask
 abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
@@ -40,21 +40,22 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
     val protoSources: FileTree
         get() = protoFiles(sourceDirectories)
 
-    /**
-     * Proto roots extracted from [baselineJars] by [ProtoArchiveTransform].
-     */
     @get:InputFiles
+    @get:IgnoreEmptyDirectories
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val baselineArchives: ConfigurableFileCollection
+    abstract val baselineDirectory: ConfigurableFileCollection
 
     /**
-     * Resolved baseline artifacts, used to identify an empty baseline in errors.
+     * File written by [FetchSurfNatsBaselineTask] with the baseline version or [FetchSurfNatsBaselineTask.NO_BASELINE].
      */
     @get:Internal
-    abstract val baselineJars: ConfigurableFileCollection
+    abstract val baselineVersionFile: RegularFileProperty
 
+    /**
+     * Whether the module is published or has an explicit `surfNats.compatibilityBaseline`.
+     */
     @get:Internal
-    abstract val baselineConfigured: Property<Boolean>
+    abstract val active: Property<Boolean>
 
     @get:Internal
     abstract val checkEnabled: Property<Boolean>
@@ -65,14 +66,15 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
     init {
         onlyIf("surfNats.compatibilityCheck is enabled", CheckEnabled())
         onlyIf(
-            "a compatibility baseline is configured (surfNats.compatibilityBaseline)",
-            BaselineConfigured(),
+            "the module is published or surfNats.compatibilityBaseline is set",
+            Active(),
         )
+        onlyIf("a released compatibility baseline exists in weaver", BaselineAvailable())
     }
 
     @TaskAction
     fun check() {
-        val baselineDirectories = baselineArchives.files.toList()
+        val baselineDirectories = baselineDirectory.files.toList()
         validateBaseline(baselineDirectories)
 
         val result = try {
@@ -94,18 +96,21 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
     }
 
     /**
-     * Ensures that the baseline contains extracted proto roots.
+     * Ensures that the baseline contains proto files.
      */
     private fun validateBaseline(baselineDirectories: List<File>) {
-        if (baselineDirectories.isNotEmpty()) return
-
-        val artifactNames = baselineJars.files.joinToString { it.name }
+        val hasProtos = baselineDirectories.any { directory ->
+            directory.walkTopDown().any { it.isFile && it.extension == "proto" }
+        }
+        if (hasProtos) return
 
         throw GradleException(
-            "The surf-nats compatibility baseline ($artifactNames) contains no " +
-                    "${ProtoArchives.PREFIX}**/*.proto files"
+            "The surf-nats compatibility baseline ${baselineVersion()} contains no .proto files"
         )
     }
+
+    private fun baselineVersion(): String =
+        FetchSurfNatsBaselineTask.readVersion(baselineVersionFile.get().asFile)
 
     /**
      * Writes compatibility violations and warnings to the report file.
@@ -151,8 +156,13 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
             (element as CheckSurfNatsCompatibilityTask).checkEnabled.get()
     }
 
-    private class BaselineConfigured : Spec<Task> {
+    private class Active : Spec<Task> {
         override fun isSatisfiedBy(element: Task): Boolean =
-            (element as CheckSurfNatsCompatibilityTask).baselineConfigured.get()
+            (element as CheckSurfNatsCompatibilityTask).active.get()
+    }
+
+    private class BaselineAvailable : Spec<Task> {
+        override fun isSatisfiedBy(element: Task): Boolean =
+            (element as CheckSurfNatsCompatibilityTask).baselineVersion() != FetchSurfNatsBaselineTask.NO_BASELINE
     }
 }

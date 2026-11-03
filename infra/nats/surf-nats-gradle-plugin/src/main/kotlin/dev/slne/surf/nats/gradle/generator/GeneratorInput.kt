@@ -21,6 +21,29 @@ data class TypeMapping(
     val kotlinClass: String,
     val serializerClass: String
 ) : Serializable {
+
+    /**
+     * Serializes [protoType] by name, because [ProtoType] is not [Serializable] and Gradle fingerprints task inputs
+     * with Java serialization.
+     */
+    @Serial
+    private fun writeReplace(): Any = SerializedTypeMapping(protoType.toString(), kotlinClass, serializerClass)
+
+    private class SerializedTypeMapping(
+        private val protoType: String,
+        private val kotlinClass: String,
+        private val serializerClass: String,
+    ) : Serializable {
+
+        @Serial
+        private fun readResolve(): Any = TypeMapping(ProtoType.get(protoType), kotlinClass, serializerClass)
+
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 1L
+        }
+    }
+
     companion object {
         @Serial
         private const val serialVersionUID: Long = 3952024840026078072L

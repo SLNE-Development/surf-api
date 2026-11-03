@@ -1,4 +1,3 @@
-
 package dev.slne.surf.nats.gradle
 
 import dev.slne.surf.nats.gradle.bridge.SurfApiBridge
@@ -6,32 +5,32 @@ import dev.slne.surf.nats.gradle.generator.DefaultTypeMappings
 import dev.slne.surf.nats.gradle.generator.GeneratedVisibility
 import dev.slne.surf.nats.gradle.generator.TypeMapping
 import dev.slne.surf.nats.gradle.tasks.CheckSurfNatsCompatibilityTask
+import dev.slne.surf.nats.gradle.tasks.FetchSurfNatsBaselineTask
 import dev.slne.surf.nats.gradle.tasks.GenerateSurfNatsKotlinTask
-import dev.slne.surf.nats.gradle.tasks.ProtoArchiveTransform
-import dev.slne.surf.nats.gradle.tasks.ProtoArchives
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.addTypeDependenciesToPublish
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.applyWeaver
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.guardOfflineFetch
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.publishedModule
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.stageWeaverSource
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.validateWeaverCoordinates
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.weaverImportPath
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.wirePublishProtos
+import dev.slne.weaver.gradle.WeaverExtension
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition
-import org.gradle.api.attributes.Bundling
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.LibraryElements
-import org.gradle.api.attributes.Usage
-import org.gradle.api.file.FileCollection
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.language.jvm.tasks.ProcessResources
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 /**
  * Gradle plugin for generating Kotlin contracts from proto files.
  *
- * Supports Kotlin/JVM projects, packages proto sources into the resulting
- * JAR, and optionally checks compatibility with a published baseline.
+ * Supports Kotlin/JVM projects. Applies `dev.slne.weaver` with surf-nats conventions: weaver dependencies are
+ * import paths for code generation, published modules publish their protos to weaver with `publish`, and the
+ * compatibility check compares against the previous weaver release.
  */
 class SurfNatsPlugin : Plugin<Project> {
 
@@ -39,34 +38,24 @@ class SurfNatsPlugin : Plugin<Project> {
         val extension = createExtension()
         val defaultTypeMappings = objects.listProperty(TypeMapping::class.java)
             .value(DefaultTypeMappings.common)
+        val typeModules = objects.listProperty(String::class.java)
+            .value(listOf(TYPES_COMMON_MODULE))
 
-        registerProtoArchiveTransform()
+        val weaver = applyWeaver()
+        stageWeaverSource(extension, weaver, STAGE_TASK, GROUP)
+        guardOfflineFetch()
+        addTypeDependenciesToPublish(typeModules)
+        validateWeaverCoordinates(extension, weaver)
 
-        val protoPath = resolvableJars(
-            PROTO_PATH_CONFIGURATION,
-            "Jars whose surf-nats protos the .proto sources import",
-        )
-        val baseline = createBaselineConfiguration(extension)
+        val active = extension.compatibilityBaseline.map { true }.orElse(publishedModule())
 
-        val generateTask = registerGenerateTask(
-            extension,
-            defaultTypeMappings,
-            protoPath,
-        )
-        val compatibilityTask = registerCompatibilityTask(
-            extension,
-            protoPath,
-            baseline,
-        )
+        val generateTask = registerGenerateTask(extension, weaver, defaultTypeMappings)
+        val baselineTask = registerBaselineTask(extension, weaver, active)
+        val compatibilityTask = registerCompatibilityTask(extension, weaver, baselineTask, active)
+        wirePublishProtos(generateTask, compatibilityTask)
 
-        configureKotlinPlugins(
-            extension,
-            protoPath,
-            baseline,
-            generateTask,
-            compatibilityTask,
-        )
-        configureSurfApiPlugins(defaultTypeMappings)
+        configureKotlinPlugins(generateTask, compatibilityTask)
+        configureSurfApiPlugins(defaultTypeMappings, typeModules)
     }
 
     private fun Project.createExtension(): SurfNatsExtension {
@@ -82,28 +71,10 @@ class SurfNatsPlugin : Plugin<Project> {
         return extension
     }
 
-    private fun Project.createBaselineConfiguration(
-        extension: SurfNatsExtension,
-    ): Configuration {
-        val baseline = resolvableJars(
-            BASELINE_CONFIGURATION,
-            "The published artifact the surf-nats contracts must stay compatible with",
-        )
-
-        baseline.resolutionStrategy.useGlobalDependencySubstitutionRules.set(false)
-        baseline.dependencies.addAllLater(
-            extension.compatibilityBaseline
-                .map { listOf(dependencies.create(it)) }
-                .orElse(emptyList())
-        )
-
-        return baseline
-    }
-
     private fun Project.registerGenerateTask(
         extension: SurfNatsExtension,
+        weaver: WeaverExtension,
         defaultTypeMappings: ListProperty<TypeMapping>,
-        protoPath: Configuration,
     ): TaskProvider<GenerateSurfNatsKotlinTask> =
         tasks.register(GENERATE_TASK, GenerateSurfNatsKotlinTask::class.java) { task ->
             task.group = GROUP
@@ -111,7 +82,7 @@ class SurfNatsPlugin : Plugin<Project> {
 
             task.sourceDirectories.from(extension.protoSourceDirs)
             task.protoPathDirectories.from(extension.protoPath)
-            task.protoPathArchives.from(protoPath.protoRoots())
+            task.weaverProtoPath.from(weaverImportPath(weaver))
 
             task.defaultTypeMappings.set(defaultTypeMappings)
             task.typeMappings.set(extension.typeMappings)
@@ -119,49 +90,60 @@ class SurfNatsPlugin : Plugin<Project> {
             task.outputDir.set(layout.buildDirectory.dir("generated/surf-nats/kotlin"))
         }
 
+    private fun Project.registerBaselineTask(
+        extension: SurfNatsExtension,
+        weaver: WeaverExtension,
+        active: Provider<Boolean>,
+    ): TaskProvider<FetchSurfNatsBaselineTask> =
+        tasks.register(BASELINE_TASK, FetchSurfNatsBaselineTask::class.java) { task ->
+            task.group = GROUP
+            task.description = "Downloads the previous weaver release of this module as the compatibility baseline."
+
+            task.url.set(weaver.url)
+            task.token.set(weaver.token)
+            task.repository.set(weaver.publishing.repository)
+            task.artifactGroup.set(weaver.publishing.group)
+            task.artifactName.set(weaver.publishing.name)
+            task.projectVersion.set(weaver.publishing.version)
+            task.requestedVersion.set(extension.compatibilityBaseline)
+            task.active.set(extension.compatibilityCheck.zip(active) { enabled, needed -> enabled && needed })
+            task.offline.set(gradle.startParameter.isOffline)
+            task.outputDir.set(layout.buildDirectory.dir("surf-nats/baseline/protos"))
+            task.versionFile.set(layout.buildDirectory.file("surf-nats/baseline/version.txt"))
+        }
+
     private fun Project.registerCompatibilityTask(
         extension: SurfNatsExtension,
-        protoPath: Configuration,
-        baseline: Configuration,
+        weaver: WeaverExtension,
+        baselineTask: TaskProvider<FetchSurfNatsBaselineTask>,
+        active: Provider<Boolean>,
     ): TaskProvider<CheckSurfNatsCompatibilityTask> =
         tasks.register(CHECK_TASK, CheckSurfNatsCompatibilityTask::class.java) { task ->
             task.group = LifecycleBasePlugin.VERIFICATION_GROUP
-            task.description =
-                "Checks the surf-nats .proto sources against the compatibility baseline."
+            task.description = "Checks the surf-nats .proto sources against the previous weaver release."
 
             task.sourceDirectories.from(extension.protoSourceDirs)
             task.protoPathDirectories.from(extension.protoPath)
-            task.protoPathArchives.from(protoPath.protoRoots())
+            task.weaverProtoPath.from(weaverImportPath(weaver))
 
-            task.baselineArchives.from(baseline.protoRoots())
-            task.baselineJars.from(baseline)
-            task.baselineConfigured.set(provider { baseline.allDependencies.isNotEmpty() })
+            task.baselineDirectory.from(baselineTask.flatMap { it.outputDir })
+            task.baselineVersionFile.set(baselineTask.flatMap { it.versionFile })
+            task.active.set(active)
             task.checkEnabled.set(extension.compatibilityCheck)
             task.reportFile.set(layout.buildDirectory.file("reports/surf-nats/compatibility.txt"))
         }
 
     private fun Project.configureKotlinPlugins(
-        extension: SurfNatsExtension,
-        protoPath: Configuration,
-        baseline: Configuration,
         generateTask: TaskProvider<GenerateSurfNatsKotlinTask>,
         compatibilityTask: TaskProvider<CheckSurfNatsCompatibilityTask>,
     ) {
         pluginManager.withPlugin(KOTLIN_JVM) {
-            for (configuration in listOf(protoPath, baseline)) {
-                configuration.attributes.attribute(
-                    KotlinPlatformType.attribute,
-                    KotlinPlatformType.jvm,
-                )
-            }
-
             extensions.getByType(KotlinJvmProjectExtension::class.java)
                 .sourceSets.named("main") { sourceSet ->
                     sourceSet.kotlin.srcDir(generateTask.flatMap { it.outputDir })
                 }
 
             pluginManager.apply(KOTLIN_SERIALIZATION)
-            packProtos(extension)
 
             tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
                 it.dependsOn(compatibilityTask)
@@ -177,6 +159,7 @@ class SurfNatsPlugin : Plugin<Project> {
 
     private fun Project.configureSurfApiPlugins(
         defaultTypeMappings: ListProperty<TypeMapping>,
+        typeModules: ListProperty<String>,
     ) {
         var paperTypesAdded = false
 
@@ -187,6 +170,7 @@ class SurfNatsPlugin : Plugin<Project> {
                 if (isPaper && !paperTypesAdded) {
                     paperTypesAdded = true
                     defaultTypeMappings.addAll(DefaultTypeMappings.paper)
+                    typeModules.add(TYPES_PAPER_MODULE)
                 }
 
                 with(SurfApiBridge) {
@@ -208,99 +192,17 @@ class SurfNatsPlugin : Plugin<Project> {
         }
     }
 
-    /**
-     * Registers artifact transforms for JARs, ZIPs, and exploded directories.
-     *
-     * Transformed artifacts expose their packaged proto files as proto roots.
-     */
-    private fun Project.registerProtoArchiveTransform() {
-        val artifactTypes = listOf(
-            ArtifactTypeDefinition.JAR_TYPE,
-            ArtifactTypeDefinition.ZIP_TYPE,
-            ArtifactTypeDefinition.DIRECTORY_TYPE,
-        )
-
-        for (artifactType in artifactTypes) {
-            dependencies.registerTransform(ProtoArchiveTransform::class.java) { spec ->
-                spec.from.attribute(
-                    ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-                    artifactType,
-                )
-                spec.to.attribute(
-                    ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-                    ProtoArchiveTransform.PROTO_ROOT_TYPE,
-                )
-            }
-        }
-    }
-
-    /**
-     * Returns extracted proto roots from resolved artifacts in artifact order.
-     */
-    private fun Configuration.protoRoots(): FileCollection =
-        incoming.artifactView { view ->
-            view.attributes { attributes ->
-                attributes.attribute(
-                    ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-                    ProtoArchiveTransform.PROTO_ROOT_TYPE,
-                )
-            }
-        }.files
-
-    /**
-     * Creates a resolvable, non-transitive configuration for JAR dependencies.
-     */
-    private fun Project.resolvableJars(
-        name: String,
-        description: String,
-    ): Configuration =
-        configurations.create(name) { configuration ->
-            configuration.description = description
-            configuration.isCanBeConsumed = false
-            configuration.isCanBeResolved = true
-            configuration.isTransitive = false
-
-            configuration.attributes { attributes ->
-                attributes.attribute(
-                    Usage.USAGE_ATTRIBUTE,
-                    objects.named(Usage::class.java, Usage.JAVA_RUNTIME),
-                )
-                attributes.attribute(
-                    Category.CATEGORY_ATTRIBUTE,
-                    objects.named(Category::class.java, Category.LIBRARY),
-                )
-                attributes.attribute(
-                    LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-                    objects.named(LibraryElements::class.java, LibraryElements.JAR),
-                )
-                attributes.attribute(
-                    Bundling.BUNDLING_ATTRIBUTE,
-                    objects.named(Bundling::class.java, Bundling.EXTERNAL),
-                )
-            }
-        }
-
-    /**
-     * Includes source proto files under [ProtoArchives.PREFIX] in the JAR.
-     */
-    private fun Project.packProtos(extension: SurfNatsExtension) {
-        tasks.named(JavaPlugin.PROCESS_RESOURCES_TASK_NAME, ProcessResources::class.java) { task ->
-            task.from(extension.protoSourceDirs) { spec ->
-                spec.include("**/*.proto")
-                spec.into(ProtoArchives.PREFIX.removeSuffix("/"))
-            }
-        }
-    }
-
     companion object {
         const val ID = "dev.slne.surf.nats"
         const val EXTENSION = "surfNats"
         const val GENERATE_TASK = "generateSurfNatsKotlin"
         const val CHECK_TASK = "checkSurfNatsCompatibility"
-        const val PROTO_PATH_CONFIGURATION = "surfNatsProtoPath"
-        const val BASELINE_CONFIGURATION = "surfNatsCompatibilityBaseline"
+        const val STAGE_TASK = "stageSurfNatsWeaverSource"
+        const val BASELINE_TASK = "fetchSurfNatsBaseline"
 
         private const val GROUP = "surf-nats"
+        private const val TYPES_COMMON_MODULE = "surf-nats-types-common"
+        private const val TYPES_PAPER_MODULE = "surf-nats-types-paper"
         private const val KOTLIN_JVM = "org.jetbrains.kotlin.jvm"
         private const val KOTLIN_MULTIPLATFORM = "org.jetbrains.kotlin.multiplatform"
         private const val KOTLIN_SERIALIZATION = "org.jetbrains.kotlin.plugin.serialization"

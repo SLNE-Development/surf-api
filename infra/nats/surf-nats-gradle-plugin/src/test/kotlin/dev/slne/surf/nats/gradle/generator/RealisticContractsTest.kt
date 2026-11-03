@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.gradle.generator
 
+import com.squareup.wire.schema.ProtoType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -18,7 +19,7 @@ class RealisticContractsTest {
     lateinit var temp: File
 
     private val sources = File(javaClass.getResource("/realistic")!!.toURI())
-    private val mappings = listOf(TypeMapping("surf.demo.v1.Tag", "dev.slne.surf.demo.Tag", "dev.slne.surf.demo.TagSerializer"))
+    private val mappings = listOf(TypeMapping(ProtoType.get("surf.demo.v1.Tag"), "dev.slne.surf.demo.Tag", "dev.slne.surf.demo.TagSerializer"))
 
     private fun input() =
         GeneratorInput(listOf(sources), emptyList(), mappings, GeneratedVisibility.PUBLIC, defaultTypeMappings = DefaultTypeMappings.common)
