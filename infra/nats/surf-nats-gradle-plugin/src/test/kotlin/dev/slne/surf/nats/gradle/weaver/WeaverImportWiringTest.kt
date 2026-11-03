@@ -137,6 +137,45 @@ internal class WeaverImportWiringTest : TestKitSupport() {
     }
 
     @Test
+    fun `two unpublished project dependencies do not collide on a default coordinate`() {
+        build.settings("a", "c", "b")
+        build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
+        build.script(TestBuild.PLUGIN, project = "a")
+        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { optional string value = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.script(TestBuild.PLUGIN, project = "c")
+        build.proto("surf/c/v1/c.proto", TestBuild.contract("message Label { optional string value = 1; }", pkg = "surf.c.v1"), project = "c")
+        build.script(
+            """
+            ${TestBuild.PLUGIN}
+            ${weaverStub()}
+            dependencies { weaver project(':a'); weaver project(':c') }
+            surfNats {
+                mapType('surf.a.v1.Tag', 'dev.demo.Tag', 'dev.demo.TagSerializer')
+                mapType('surf.c.v1.Label', 'dev.demo.Label', 'dev.demo.LabelSerializer')
+            }
+            """,
+            project = "b",
+        )
+        build.proto(
+            "surf/b/v1/b.proto",
+            """
+            syntax = "proto2";
+            package surf.b.v1;
+            import "surf/a/v1/a.proto";
+            import "surf/c/v1/c.proto";
+            message Holder { optional surf.a.v1.Tag tag = 1; optional surf.c.v1.Label label = 2; }
+            """.trimIndent(),
+            project = "b",
+        )
+
+        build.run("--offline", ":b:generateSurfNatsKotlin")
+
+        assertTrue(build.resolve("b/build/weaver/protos/surf/a/v1/a.proto").isFile)
+        assertTrue(build.resolve("b/build/weaver/protos/surf/c/v1/c.proto").isFile)
+        assertEquals(emptyList(), stub.requests.toList(), "no request must reach the registry")
+    }
+
+    @Test
     fun `without the weaver dependency the same proto fails on its unresolved import`() {
         twoProjects()
         build.script(

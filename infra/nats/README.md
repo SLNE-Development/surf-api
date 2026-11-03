@@ -211,6 +211,19 @@ Use these types instead of primitives where they fit. The plugin maps them to Ko
 | `surf.types.v1.Uuid` (`surf/types/v1/uuid.proto`)                      | `java.util.UUID`                                          |
 | `surf.types.v1.Component` (`surf/types/v1/component.proto`)            | `net.kyori.adventure.text.Component`                      |
 | `surf.types.v1.Key` (`surf/types/v1/key.proto`)                        | `net.kyori.adventure.key.Key`                             |
+| `surf.types.v1.TextColor` (`surf/types/v1/text_color.proto`)           | `net.kyori.adventure.text.format.TextColor`               |
+| `surf.types.v1.ShadowColor` (`surf/types/v1/shadow_color.proto`)       | `net.kyori.adventure.text.format.ShadowColor`             |
+| `surf.types.v1.Sound` (`surf/types/v1/sound.proto`)                    | `net.kyori.adventure.sound.Sound`                         |
+| `surf.types.v1.Title` (`surf/types/v1/title.proto`)                    | `net.kyori.adventure.title.Title`                         |
+| `surf.types.v1.OffsetDateTime` (`surf/types/v1/offset_date_time.proto`) | `java.time.OffsetDateTime`                               |
+| `surf.types.v1.ZonedDateTime` (`surf/types/v1/zoned_date_time.proto`)  | `java.time.ZonedDateTime`                                 |
+| `surf.types.v1.LocalDate` (`surf/types/v1/local_date.proto`)           | `java.time.LocalDate`                                     |
+| `surf.types.v1.LocalTime` (`surf/types/v1/local_time.proto`)           | `java.time.LocalTime`                                     |
+| `surf.types.v1.LocalDateTime` (`surf/types/v1/local_date_time.proto`)  | `java.time.LocalDateTime`                                 |
+| `surf.types.v1.BigDecimal` (`surf/types/v1/big_decimal.proto`)         | `java.math.BigDecimal`                                    |
+| `surf.types.v1.BigInteger` (`surf/types/v1/big_integer.proto`)         | `java.math.BigInteger`                                    |
+| `surf.types.v1.IpAddress` (`surf/types/v1/ip_address.proto`)           | `java.net.InetAddress`                                    |
+| `surf.types.v1.InetSocketAddress` (`surf/types/v1/inet_socket_address.proto`) | `java.net.InetSocketAddress`                       |
 | `surf.types.paper.v1.Location` (`surf/types/paper/v1/location.proto`)  | `org.bukkit.Location`, in Paper modules only              |
 | `surf.types.paper.v1.ItemStack` (`surf/types/paper/v1/item_stack.proto`) | `org.bukkit.inventory.ItemStack`, in Paper modules only |
 
@@ -255,7 +268,7 @@ surf-nats distributes contracts through [weaver](https://weaver.slne.dev), the p
 | `weaver.repositories`          | `proto-releases-public`, searched for dependencies            |
 | `weaver.publishing.repository` | `proto-releases-public`, for releases and snapshots           |
 | `weaver.publishing.group`      | `project.group`                                               |
-| `weaver.publishing.name`       | `rootProject.name`                                            |
+| `weaver.publishing.name`       | `rootProject.name` for published modules, otherwise unset     |
 | `weaver.publishing.version`    | `project.version`                                             |
 
 Override any of them in `weaver { }`. A private repository needs the lookup and the publish target:

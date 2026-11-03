@@ -9,6 +9,7 @@ import dev.slne.surf.nats.gradle.tasks.FetchSurfNatsBaselineTask
 import dev.slne.surf.nats.gradle.tasks.GenerateSurfNatsKotlinTask
 import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.addTypeDependenciesToPublish
 import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.applyWeaver
+import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.baselineName
 import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.guardOfflineFetch
 import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.publishedModule
 import dev.slne.surf.nats.gradle.weaver.WeaverIntegration.stageWeaverSource
@@ -103,7 +104,7 @@ class SurfNatsPlugin : Plugin<Project> {
             task.token.set(weaver.token)
             task.repository.set(weaver.publishing.repository)
             task.artifactGroup.set(weaver.publishing.group)
-            task.artifactName.set(weaver.publishing.name)
+            task.artifactName.set(baselineName(weaver))
             task.projectVersion.set(weaver.publishing.version)
             task.requestedVersion.set(extension.compatibilityBaseline)
             task.active.set(extension.compatibilityCheck.zip(active) { enabled, needed -> enabled && needed })

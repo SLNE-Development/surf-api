@@ -245,6 +245,58 @@ class MessageGenerationTest {
     }
 
     @Test
+    fun `time, number, network and color types map to their JDK and Adventure classes`() {
+        val text = messages(
+            """
+            message A {
+              optional surf.types.v1.OffsetDateTime created = 1;
+              optional surf.types.v1.ZonedDateTime zoned = 2;
+              optional surf.types.v1.LocalDate day = 3;
+              optional surf.types.v1.LocalTime time = 4;
+              optional surf.types.v1.LocalDateTime local = 5;
+              optional surf.types.v1.BigDecimal amount = 6;
+              optional surf.types.v1.BigInteger big = 7;
+              optional surf.types.v1.IpAddress ip = 8;
+              optional surf.types.v1.InetSocketAddress socket = 9;
+              optional surf.types.v1.TextColor color = 10;
+              optional surf.types.v1.ShadowColor shadow = 11;
+              optional surf.types.v1.Sound sound = 12;
+              optional surf.types.v1.Title title = 13;
+            }
+            """,
+            "surf/types/v1/sound.proto", "surf/types/v1/title.proto",
+            "surf/types/v1/offset_date_time.proto", "surf/types/v1/zoned_date_time.proto",
+            "surf/types/v1/local_date.proto", "surf/types/v1/local_time.proto", "surf/types/v1/local_date_time.proto",
+            "surf/types/v1/big_decimal.proto", "surf/types/v1/big_integer.proto",
+            "surf/types/v1/ip_address.proto", "surf/types/v1/inet_socket_address.proto",
+            "surf/types/v1/text_color.proto", "surf/types/v1/shadow_color.proto",
+        )
+        assertContainsAll(
+            text,
+            "public val created: @Serializable(with = OffsetDateTimeSerializer::class) OffsetDateTime,",
+            "public val zoned: @Serializable(with = ZonedDateTimeSerializer::class) ZonedDateTime,",
+            "public val day: @Serializable(with = LocalDateSerializer::class) LocalDate,",
+            "public val time: @Serializable(with = LocalTimeSerializer::class) LocalTime,",
+            "public val local: @Serializable(with = LocalDateTimeSerializer::class) LocalDateTime,",
+            "public val amount: @Serializable(with = BigDecimalSerializer::class) BigDecimal,",
+            "public val big: @Serializable(with = BigIntegerSerializer::class) BigInteger,",
+            "public val ip: @Serializable(with = IpAddressSerializer::class) InetAddress,",
+            "public val socket: @Serializable(with = InetSocketAddressSerializer::class) InetSocketAddress,",
+            "public val color: @Serializable(with = TextColorSerializer::class) TextColor,",
+            "public val shadow: @Serializable(with = ShadowColorSerializer::class) ShadowColor,",
+            "public val sound: @Serializable(with = SoundSerializer::class) Sound,",
+            "public val title: @Serializable(with = TitleSerializer::class) Title,",
+            "import net.kyori.adventure.sound.Sound",
+            "import net.kyori.adventure.title.Title",
+            "import java.time.OffsetDateTime",
+            "import java.math.BigDecimal",
+            "import java.net.InetAddress",
+            "import net.kyori.adventure.text.format.TextColor",
+            "import net.kyori.adventure.text.format.ShadowColor",
+        )
+    }
+
+    @Test
     fun `paper types are mapped only for paper projects`() {
         val text = messages(
             "message A { optional surf.types.paper.v1.Location at = 1; optional surf.types.paper.v1.ItemStack item = 2; }",

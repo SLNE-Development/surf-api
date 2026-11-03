@@ -51,10 +51,28 @@ internal object WeaverIntegration {
         weaver.repositories.convention(listOf(DEFAULT_REPOSITORY))
         weaver.publishing.repository.convention(DEFAULT_REPOSITORY)
         weaver.publishing.group.convention(provider { explicitGroup() })
-        weaver.publishing.name.convention(rootProject.name)
+        weaver.publishing.name.convention(defaultName())
 
         return weaver
     }
+
+    /**
+     * Returns `rootProject.name` for published modules and nothing otherwise.
+     *
+     * Unpublished modules have no coordinate, so their weaver manifests do not collide when one project depends on
+     * several of them through `weaver(project(...))`.
+     */
+    private fun Project.defaultName(): Provider<String> {
+        val rootName = rootProject.name
+        return publishedModule().map { published -> if (published) rootName else null }
+    }
+
+    /**
+     * Returns the artifact name the compatibility baseline is looked up under: `weaver.publishing.name`, or
+     * `rootProject.name` for unpublished modules with an explicit `compatibilityBaseline`.
+     */
+    fun Project.baselineName(weaver: WeaverExtension): Provider<String> =
+        weaver.publishing.name.orElse(rootProject.name)
 
     /**
      * Returns `project.group`, or `null` when it is blank or the default Gradle derives for subprojects

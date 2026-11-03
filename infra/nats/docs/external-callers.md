@@ -287,13 +287,27 @@ surf-nats reads messages with these rules:
   implementations leave such a field unset or drop the list element or map entry instead.
 - Kotlin reads `uint32` and `uint64` as signed `Int` and `Long`. The wire value stays the same.
 
-The shared types have these fields, all of them required except `Location.world`:
+The shared types have these fields, all of them required except `Location.world`, `InetSocketAddress.address`,
+`Sound.seed`, `Title.times` and the fields with a default (`OffsetDateTime.nanos` and every `LocalTime` field default to 0):
 
 | Type                            | Fields                                                                                 |
 |---------------------------------|----------------------------------------------------------------------------------------|
 | `surf.types.v1.Uuid`            | `value`: 16 bytes, the most significant 8 bytes first (big-endian)                     |
 | `surf.types.v1.Component`       | `json`: the JSON that adventure's Gson serializer writes, a string or an object        |
 | `surf.types.v1.Key`             | `value`: the key as `namespace:value`                                                  |
+| `surf.types.v1.TextColor`       | `rgb`: `0xRRGGBB`, 0 to 16,777,215                                                     |
+| `surf.types.v1.ShadowColor`     | `argb`: `0xAARRGGBB` as `fixed32`                                                      |
+| `surf.types.v1.Sound`           | `name` (a `Key`), `source` (`Sound.Source`; unspecified or unknown reads as master), `volume`, `pitch`, `seed` (`nullable`) |
+| `surf.types.v1.Title`           | `title`, `subtitle` (`Component`s), `times` (`Title.Times` with `fade_in`, `stay`, `fade_out` durations, `nullable`) |
+| `surf.types.v1.OffsetDateTime`  | `seconds` since the Unix epoch, `nanos` (0 to 999,999,999), `offset_seconds` from UTC  |
+| `surf.types.v1.ZonedDateTime`   | `date_time` (an `OffsetDateTime`), `zone_id` such as `Europe/Berlin`                   |
+| `surf.types.v1.LocalDate`       | `year`, `month` (1 to 12), `day` (1 to 31)                                             |
+| `surf.types.v1.LocalTime`       | `hour`, `minute`, `second`, `nanos`; the empty message is midnight                     |
+| `surf.types.v1.LocalDateTime`   | `date` (a `LocalDate`), `time` (a `LocalTime`), no offset or zone                      |
+| `surf.types.v1.BigDecimal`      | `value`: Java's `BigDecimal.toString()`, e.g. `12.50` or `1E+3`; keep it a string       |
+| `surf.types.v1.BigInteger`      | `value`: decimal digits with an optional `-`, readable with `BigInt(value)`             |
+| `surf.types.v1.IpAddress`       | `address`: 4 bytes (IPv4) or 16 bytes (IPv6) in network byte order                     |
+| `surf.types.v1.InetSocketAddress` | `address` (an `IpAddress`, `nullable`, unset when unresolved), `host`, `port`        |
 | `surf.types.paper.v1.Location`  | `world` (a `Uuid`, `nullable`), `x`, `y`, `z`, `yaw`, `pitch`                          |
 | `surf.types.paper.v1.ItemStack` | `data`: the bytes of Paper's `ItemStack.serializeAsBytes()`                            |
 

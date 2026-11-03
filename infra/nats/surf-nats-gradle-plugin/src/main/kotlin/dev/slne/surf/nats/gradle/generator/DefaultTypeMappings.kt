@@ -38,6 +38,71 @@ internal object DefaultTypeMappings {
             "net.kyori.adventure.key.Key",
             "$TYPES.KeySerializer",
         ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.TextColor"),
+            "net.kyori.adventure.text.format.TextColor",
+            "$TYPES.TextColorSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.ShadowColor"),
+            "net.kyori.adventure.text.format.ShadowColor",
+            "$TYPES.ShadowColorSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.Sound"),
+            "net.kyori.adventure.sound.Sound",
+            "$TYPES.SoundSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.Title"),
+            "net.kyori.adventure.title.Title",
+            "$TYPES.TitleSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.OffsetDateTime"),
+            "java.time.OffsetDateTime",
+            "$TYPES.OffsetDateTimeSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.ZonedDateTime"),
+            "java.time.ZonedDateTime",
+            "$TYPES.ZonedDateTimeSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.LocalDate"),
+            "java.time.LocalDate",
+            "$TYPES.LocalDateSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.LocalTime"),
+            "java.time.LocalTime",
+            "$TYPES.LocalTimeSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.LocalDateTime"),
+            "java.time.LocalDateTime",
+            "$TYPES.LocalDateTimeSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.BigDecimal"),
+            "java.math.BigDecimal",
+            "$TYPES.BigDecimalSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.BigInteger"),
+            "java.math.BigInteger",
+            "$TYPES.BigIntegerSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.IpAddress"),
+            "java.net.InetAddress",
+            "$TYPES.IpAddressSerializer",
+        ),
+        TypeMapping(
+            ProtoType.get("surf.types.v1.InetSocketAddress"),
+            "java.net.InetSocketAddress",
+            "$TYPES.InetSocketAddressSerializer",
+        ),
     )
 
     val paper: List<TypeMapping> = listOf(

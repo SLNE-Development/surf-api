@@ -28,6 +28,7 @@ internal class WeaverConventionsTest : TestKitSupport() {
         build.script(
             """
             ${TestBuild.PLUGIN}
+            ${TestBuild.PUBLISHING}
             group = 'dev.slne.demo'
             version = '1.2.0-SNAPSHOT'
             $showWeaver
@@ -134,12 +135,13 @@ internal class WeaverConventionsTest : TestKitSupport() {
     }
 
     @Test
-    fun `the weaver name defaults to the root project name in subprojects`() {
+    fun `the weaver name defaults to the root project name in published subprojects`() {
         build.settings("sub", rootName = "demo-root")
         build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
         build.script(
             """
             ${TestBuild.PLUGIN}
+            ${TestBuild.PUBLISHING}
             $showWeaver
             """,
             project = "sub",
@@ -149,6 +151,16 @@ internal class WeaverConventionsTest : TestKitSupport() {
 
         assertEquals("demo-root", shown["name"])
         assertEquals("dev.slne.demo", shown["group"])
+    }
+
+    @Test
+    fun `unpublished modules have no default weaver name`() {
+        build.settings("a", "b", rootName = "demo-root")
+        build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
+        for (project in listOf("a", "b")) build.script("${TestBuild.PLUGIN}\n$showWeaver", project = project)
+
+        assertEquals("null", build.run(":a:show", "-q").shown()["name"])
+        assertEquals("null", build.run(":b:show", "-q").shown()["name"])
     }
 
     @Test
