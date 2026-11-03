@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: surf-api <dev@slne.dev>
+Date: Tue, 3 Nov 2026 10:58:31 +0100
+Subject: [PATCH] Trim the build to the modules surf-api needs
+
+
+diff --git a/build.gradle b/build.gradle
+index 89b8f5e157d3336f8a816742531270a2b86d5f97..ff726e089e46f4e47eb9443f1851537386ba401c 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -34,8 +34,10 @@ subprojects {
+     }
+ 
+     def determinePatchVersion = {
++        // falls back to patch version 0 when no tag is reachable, e.g. in a shallow clone
+         def tagInfo = providers.exec {
+             commandLine 'git', 'describe', '--tags'
++            ignoreExitValue = true
+         }.standardOutput.asText.get().trim()
+ 
+         return tagInfo.contains('-') ? tagInfo.split('-')[1] : 0
+diff --git a/settings.gradle b/settings.gradle
+index 6c3dd0ec1a0f60746ac78be5d925df46c5faefa6..93b7f486620c0fe6247f491cdf06b807824781ab 100644
+--- a/settings.gradle
++++ b/settings.gradle
+@@ -17,34 +17,11 @@ plugins {
+ }
+ 
+ rootProject.name = 'luckperms'
++// surf-api only builds the Minestom platform; the other platforms need toolchains and repositories
++// (Fabric, Forge, Sponge, ...) that are irrelevant here
+ include (
+         'api',
+         'common',
+         'common:loader-utils',
+-        'common:minecraft',
+-        'common:placeholders',
+-        'bukkit',
+-        'bukkit:loader',
+-        'bukkit-legacy',
+-        'bukkit-legacy:loader',
+-        'bungee',
+-        'bungee:loader',
+-        'fabric',
+-        'neoforge',
+-        'neoforge:loader',
+-        'forge',
+-        'forge:loader',
+-        'nukkit',
+-        'nukkit:loader',
+-        'hytale',
+-        'hytale:loader',
+-        'hytale:loader-with-deps',
+-        'sponge',
+-        'sponge:loader',
+-        'sponge:sponge-service',
+-        'sponge:sponge-service-proxy',
+-        'velocity',
+-        'standalone',
+-        'standalone:loader',
+-        'standalone:app'
++        'minestom',
+ )
