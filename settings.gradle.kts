@@ -62,7 +62,7 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
 
     includeBuild(luckPermsDir) {
         dependencySubstitution {
-            substitute(module("club.tesseract:luckperms-minestom")).using(project(":minestom"))
+            substitute(module("me.lucko.luckperms:minestom")).using(project(":minestom"))
         }
     }
 } else {
