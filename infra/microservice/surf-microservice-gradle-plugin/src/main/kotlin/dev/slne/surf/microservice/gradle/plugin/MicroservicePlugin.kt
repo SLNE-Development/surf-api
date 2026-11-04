@@ -2,6 +2,7 @@ package dev.slne.surf.microservice.gradle.plugin
 
 import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import dev.slne.surf.microservice.gradle.generated.Constants
 import dev.slne.surf.microservice.gradle.plugin.rabbit.RabbitModuleSettings
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -163,14 +164,10 @@ private fun Project.configureJavaDockerConventions(
 private fun Project.configureMicroserviceModule(
     module: SurfMicroserviceModule,
 ) {
+    val version = Constants.SURF_MICROSERVICE_VERSION
     dependencies {
-        "compileOnlyApi"(
-            "$MICROSERVICE_GROUP:${module.apiArtifactId}:+"
-        )
-
-        "runtimeOnly"(
-            "$MICROSERVICE_GROUP:${module.runtimeArtifactId}:+"
-        )
+        "compileOnlyApi"("$MICROSERVICE_GROUP:${module.apiArtifactId}:$version")
+        "runtimeOnly"("$MICROSERVICE_GROUP:${module.runtimeArtifactId}:$version")
     }
 
     if (module != SurfMicroserviceModule.MICROSERVICE) {

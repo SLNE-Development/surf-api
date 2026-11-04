@@ -34,7 +34,10 @@ gradlePlugin {
 buildConfig {
     forClass("dev.slne.surf.microservice.gradle.generated", "Constants") {
         buildConfigField("MINECRAFT_VERSION", providers.gradleProperty("mcVersion"))
-        buildConfigField("SURF_MICROSERVICE_VERSION", "+")
+        buildConfigField(
+            "SURF_MICROSERVICE_VERSION",
+            providers.gradleProperty("version").map { "${it.substringBefore('.')}.+" }
+        )
         buildConfigField("SURF_MICROSERVICE_FULL_VERSION", providers.gradleProperty("version"))
     }
 }
