@@ -17,12 +17,15 @@ object SurfApiStandaloneBootstrap {
         SurfStandaloneInstance.bootstrap()
     }
 
-    suspend fun enable() {
+    @OptIn(ExperimentalVersionOverloading::class)
+    suspend fun enable(@IntroducedAt("3.52.0") registerShutdownHook: Boolean = true) {
         SurfStandaloneInstance.onLoad()
         SurfStandaloneInstance.onEnable()
 
-        Runtime.getRuntime()
-            .addShutdownHook(thread(start = false) { runBlocking { shutdown() } })
+        if (registerShutdownHook) {
+            Runtime.getRuntime()
+                .addShutdownHook(thread(start = false) { runBlocking { shutdown() } })
+        }
     }
 
     suspend fun shutdown() {
