@@ -1,5 +1,6 @@
 package dev.slne.surf.database.migration
 
+import dev.slne.surf.api.core.config.type.number.IntOr
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.migration.fixtures.mixedscan.V2_Default
@@ -32,11 +33,11 @@ class FlywayMigrationRunnerTest {
     }
 
     private val mariadb: DataSource = JdbcDataSources.create(
-        ConnectionDetails(databaseType = DatabaseType.MARIADB, host = "localhost", port = 1)
+        ConnectionDetails(databaseType = DatabaseType.MARIADB, host = "localhost", port = IntOr.Default(1))
     )
 
     private fun postgres(schema: String): DataSource = JdbcDataSources.create(
-        ConnectionDetails(databaseType = DatabaseType.POSTGRESQL, schema = schema, host = "localhost", port = 1)
+        ConnectionDetails(databaseType = DatabaseType.POSTGRESQL, schema = schema, host = "localhost", port = IntOr.Default(1))
     )
 
     private fun configure(

@@ -22,8 +22,6 @@ dependencies {
     implementation(libs.bundles.databaseDriver)
     implementation(libs.bundles.migration)
 
-    compileOnly(libs.surf.microservice)
-
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.testcontainers.junit)

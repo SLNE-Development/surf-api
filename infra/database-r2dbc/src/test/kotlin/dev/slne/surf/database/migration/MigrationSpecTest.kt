@@ -23,12 +23,12 @@ class MigrationSpecTest {
     }
 
     @Test
-    fun sqlLocationsGetClasspathPrefix() {
+    fun sqlLocationsAreStoredWithoutClasspathPrefix() {
         val plan = spec {
             sql("db/migrations")
             sql("classpath:db/other")
         }.build("p")
-        assertEquals(listOf("classpath:db/migrations", "classpath:db/other"), plan.sqlLocations)
+        assertEquals(listOf("db/migrations", "db/other"), plan.sqlPaths)
     }
 
     @Test
@@ -84,7 +84,7 @@ class MigrationSpecTest {
             classPackage("a.b")
         }.build("p")
 
-        assertEquals(listOf("classpath:db/migrations"), plan.sqlLocations)
+        assertEquals(listOf("db/migrations"), plan.sqlPaths)
         assertEquals(listOf("a.b"), plan.packages)
     }
 

@@ -1,5 +1,6 @@
 package dev.slne.surf.database.migration
 
+import dev.slne.surf.api.core.config.type.number.IntOr
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.migration.internal.JdbcDataSources
@@ -16,7 +17,7 @@ class JdbcDataSourcesTest {
     fun createsMariaDbDataSource() {
         val ds = JdbcDataSources.create(
             ConnectionDetails(
-                databaseType = DatabaseType.MARIADB, host = "h", port = 1,
+                databaseType = DatabaseType.MARIADB, host = "h", port = IntOr.Default(1),
                 database = "d", username = "u", password = "p"
             )
         )
@@ -28,7 +29,7 @@ class JdbcDataSourcesTest {
     fun createsPostgresDataSourceWithSchema() {
         val ds = JdbcDataSources.create(
             ConnectionDetails(
-                databaseType = DatabaseType.POSTGRESQL, schema = "s", host = "h", port = 1,
+                databaseType = DatabaseType.POSTGRESQL, schema = "s", host = "h", port = IntOr.Default(1),
                 database = "d", username = "u", password = "p"
             )
         )

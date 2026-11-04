@@ -3,7 +3,6 @@ package dev.slne.surf.database
 import dev.slne.surf.api.core.util.getCallerClass
 import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.config.DatabaseType
-import dev.slne.surf.database.health.DatabaseHealthRegistry
 import dev.slne.surf.database.logger.ComponentSqlLogger
 import dev.slne.surf.database.migration.internal.JdbcDataSources
 import io.r2dbc.pool.ConnectionPool
@@ -25,7 +24,6 @@ import org.slf4j.event.Level
 import reactor.netty.resources.LoopResources
 import java.nio.file.Path
 import java.time.Duration.ofMillis
-import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 
 /**
@@ -36,20 +34,10 @@ import javax.sql.DataSource
  */
 class DatabaseApi internal constructor(
     val database: R2dbcDatabase,
-    healthCheckName: String,
     internal val migrationDataSource: DataSource? = null,
     private val releaseResources: () -> Unit = {},
 ) {
-    init {
-        DatabaseHealthRegistry.register(
-            databaseApi = this,
-            name = healthCheckName
-        )
-    }
-
     companion object {
-        private val manualDatabaseSequence = AtomicLong()
-
         /**
          * Creates a [DatabaseApi] using the [DatabaseConfig] located in/relative to [pluginPath].
          *
@@ -136,7 +124,6 @@ class DatabaseApi internal constructor(
                 dialect = dialect,
                 logger = logger,
                 logLevel = logLevel,
-                healthCheckName = poolName,
                 migrationDataSource = migrationDataSource,
                 releaseResources = {
                     try {
@@ -208,7 +195,6 @@ class DatabaseApi internal constructor(
             dialect = dialect,
             logger = logger,
             logLevel = logLevel,
-            healthCheckName = nextManualHealthCheckName(),
             migrationDataSource = migrationDataSource,
             releaseResources = {},
             configCustomizer = configCustomizer
@@ -222,7 +208,6 @@ class DatabaseApi internal constructor(
             dialect: DatabaseDialect,
             logger: ComponentLogger,
             logLevel: Level,
-            healthCheckName: String,
             migrationDataSource: DataSource?,
             releaseResources: () -> Unit,
             configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit
@@ -240,7 +225,6 @@ class DatabaseApi internal constructor(
 
             return DatabaseApi(
                 database = database,
-                healthCheckName = healthCheckName,
                 migrationDataSource = migrationDataSource,
                 releaseResources = releaseResources
             )
@@ -250,10 +234,6 @@ class DatabaseApi internal constructor(
             val caller = getCallerClass(1)
             val callerName = caller?.simpleName ?: "unknown"
             return "j2bdc-pool-$callerName"
-        }
-
-        private fun nextManualHealthCheckName(): String {
-            return "database-${manualDatabaseSequence.incrementAndGet()}"
         }
     }
 
@@ -268,11 +248,7 @@ class DatabaseApi internal constructor(
         try {
             TransactionManager.closeAndUnregister(database)
         } finally {
-            try {
-                DatabaseHealthRegistry.unregister(this)
-            } finally {
-                releaseResources()
-            }
+            releaseResources()
         }
     }
 }

@@ -3,7 +3,6 @@ exposed = "1.6.0"
 r2dbc-mariadb = "1.4.2"
 r2dbc-postgresql = "1.1.3.RELEASE"
 r2dbc-pool = "1.0.2.RELEASE"
-surf-microservice = "2.+"
 flyway = "13.11.1"
 mariadb-jdbc = "3.5.10"
 postgresql-jdbc = "42.7.14"
@@ -20,7 +19,6 @@ exposed-migration-r2dbc = { module = "org.jetbrains.exposed:exposed-migration-r2
 r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "r2dbc-mariadb" }
 r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "r2dbc-postgresql" }
 r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool" }
-surf-microservice = { module = "dev.slne.surf.microservice:surf-microservice-api-microservice", version.ref = "surf-microservice" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }

@@ -1,5 +1,6 @@
 package dev.slne.surf.database.testing
 
+import dev.slne.surf.api.core.config.type.number.IntOr
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
@@ -67,7 +68,7 @@ fun JdbcDatabaseContainer<*>.toDatabaseApi(fresh: Boolean = false): DatabaseApi 
         databaseType = if (isMariaDb) DatabaseType.MARIADB else DatabaseType.POSTGRESQL,
         schema = schema,
         host = host,
-        port = if (isMariaDb) getMappedPort(3306) else getMappedPort(5432),
+        port = IntOr.Default(if (isMariaDb) getMappedPort(3306) else getMappedPort(5432)),
         database = database,
         username = username,
         password = password
@@ -101,7 +102,6 @@ fun JdbcDatabaseContainer<*>.toDatabaseApi(fresh: Boolean = false): DatabaseApi 
         dialect = if (isMariaDb) MariaDBDialect() else PostgreSQLDialect(),
         logger = ComponentLogger.logger("DatabaseApi"),
         logLevel = Level.DEBUG,
-        healthCheckName = "test-$unique",
         migrationDataSource = JdbcDataSources.create(details),
         releaseResources = { pool.dispose() },
         configCustomizer = {}
