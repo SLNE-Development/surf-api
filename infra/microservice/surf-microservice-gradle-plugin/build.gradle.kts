@@ -6,16 +6,43 @@ plugins {
     `kotlin-dsl`
 }
 
+/**
+ * Gradle plugins that TestKit builds may apply next to the plugin under test (surf-api, Shadow, KSP, Kotlin).
+ */
+val surfApiTestPlugins = configurations.dependencyScope("surfApiTestPlugins")
+val surfApiTestPluginClasspath = configurations.resolvable("surfApiTestPluginClasspath") {
+    extendsFrom(surfApiTestPlugins.get())
+    attributes.addAllLater(configurations.runtimeClasspath.get().attributes)
+}
+
 dependencies {
-    implementation("dev.slne.surf.api:surf-api-gradle-plugin:+")
     implementation("com.bmuschko.docker-remote-api:com.bmuschko.docker-remote-api.gradle.plugin:10.0.0")
+
+    // Brings Shadow; only touched inside pluginManager.withPlugin, so the plugin loads without it.
+    compileOnly("dev.slne.surf.api:surf-api-gradle-plugin:+")
+    surfApiTestPlugins("dev.slne.surf.api:surf-api-gradle-plugin:+")
+
+    testImplementation(gradleTestKit())
+    testImplementation(kotlin("test-junit5"))
+}
+
+tasks.test {
+    useJUnitPlatform()
+
+    val surfApiClasspath = surfApiTestPluginClasspath.map { it.incoming.files }
+    inputs.files(surfApiClasspath)
+        .withNormalizer(ClasspathNormalizer::class)
+        .withPropertyName("surfApiTestPluginClasspath")
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        listOf("-Dsurf.microservice.test.surfApiClasspath=${surfApiClasspath.get().asPath}")
+    }
 }
 
 gradlePlugin {
     plugins {
-        create("dev.slne.surf.microservice.gradle.plugin") {
+        create("surfMicroservice") {
             id = "dev.slne.surf.microservice"
-            implementationClass = "dev.slne.surf.microservice.gradle.plugin.MicroservicePlugin"
+            implementationClass = "dev.slne.surf.microservice.gradle.MicroservicePlugin"
         }
     }
 
@@ -33,11 +60,12 @@ gradlePlugin {
 
 buildConfig {
     forClass("dev.slne.surf.microservice.gradle.generated", "Constants") {
-        buildConfigField("MINECRAFT_VERSION", providers.gradleProperty("mcVersion"))
+        useKotlinOutput {
+            internalVisibility = true
+        }
         buildConfigField(
             "SURF_MICROSERVICE_VERSION",
             providers.gradleProperty("version").map { "${it.substringBefore('.')}.+" }
         )
-        buildConfigField("SURF_MICROSERVICE_FULL_VERSION", providers.gradleProperty("version"))
     }
 }

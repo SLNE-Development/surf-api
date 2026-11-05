@@ -17,10 +17,26 @@ allprojects {
 }
 
 subprojects {
+    // TODO(v3 release): remove once surf-api 3.52.0 and surf-database-r2dbc 2.4.0 are published.
+    repositories {
+        mavenLocal {
+            content {
+                includeVersion("dev.slne.surf.api", "surf-api-standalone", "3.52.0")
+                includeVersion("dev.slne.surf.api", "surf-api-core", "3.52.0")
+                includeVersion("dev.slne.surf.api", "surf-api-core-server", "3.52.0")
+                includeVersion("dev.slne.surf.api", "surf-api-shared", "3.52.0")
+                includeVersion("dev.slne.surf.api", "surf-api-shared-public", "3.52.0")
+                includeVersion("dev.slne.surf.api", "surf-api-shared-internal", "3.52.0")
+                includeVersion("dev.slne.surf", "surf-database-r2dbc", "2.4.0")
+            }
+        }
+    }
+
     afterEvaluate {
-        extensions.findByType<KotlinJvmExtension>()?.apply {
+        val usesApi = project.name !in setOf("surf-microservice-processor", "surf-microservice-gradle-plugin")
+        extensions.findByType<KotlinJvmExtension>()?.takeIf { usesApi }?.apply {
             compilerOptions {
-                optIn.add("dev.slne.surf.microservice.api.common.util.InternalMicroserviceApi")
+                optIn.add("dev.slne.surf.microservice.api.InternalMicroserviceApi")
             }
         }
 

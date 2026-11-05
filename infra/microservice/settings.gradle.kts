@@ -13,21 +13,8 @@ plugins {
 
 rootProject.name = "surf-microservice"
 
-// Api
-include("surf-microservice-api:surf-microservice-api-common")
-include("surf-microservice-api:surf-microservice-api-microservice")
-include("surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-common")
-include("surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-paper")
-include("surf-microservice-api:surf-microservice-api-client:surf-microservice-api-client-velocity")
-
-// Core
-include("surf-microservice-core")
-
-// Client
-include("surf-microservice-client:surf-microservice-client-common")
-include("surf-microservice-client:surf-microservice-client-paper")
-include("surf-microservice-client:surf-microservice-client-velocity")
-include("surf-microservice-microservice")
-
-// Gradle Plugin
+include("surf-microservice-api")
+include("surf-microservice-runtime")
+include("surf-microservice-database")
+include("surf-microservice-processor")
 include("surf-microservice-gradle-plugin")
