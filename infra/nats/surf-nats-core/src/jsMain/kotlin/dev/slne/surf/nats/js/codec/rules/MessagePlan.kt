@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.js.codec.rules
 
-import dev.slne.surf.nats.js.descriptor.ProtocolOptionReader
 import dev.slne.surf.nats.js.external.protobuf.DescFieldSingular
 import dev.slne.surf.nats.js.external.protobuf.DescMessage
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
@@ -37,7 +36,7 @@ internal class MessagePlan private constructor(
     }
 
     companion object {
-        private const val PRESENCE_IMPLICIT = 2
+        private const val PRESENCE_LEGACY_REQUIRED = 3
 
         private val plans = WeakMap<DescMessage, MessagePlan>()
 
@@ -90,13 +89,6 @@ internal class MessagePlan private constructor(
             }.toTypedArray()
         }
 
-        private fun isRequired(field: DescFieldSingular): Boolean {
-            return ProtocolFieldRules.isRequired(
-                explicitPresence = field.presence != PRESENCE_IMPLICIT,
-                oneofMember = field.oneof != null,
-                nullable = ProtocolOptionReader.isNullable(field),
-                hasDefault = field.getDefaultValue() != null,
-            )
-        }
+        private fun isRequired(field: DescFieldSingular): Boolean = field.presence == PRESENCE_LEGACY_REQUIRED
     }
 }

@@ -30,27 +30,27 @@ service MicroserviceTestService {
 }
 
 message EchoRequest {
-  optional string text = 1;
+  required string text = 1;
 }
 
 message EchoResponse {
-  optional string text = 1;
+  required string text = 1;
 }
 
 message FailRequest {
-  optional string message = 1;
+  required string message = 1;
 }
 
 message FailResponse {
-  optional string text = 1;
+  required string text = 1;
 }
 
 message SizeRequest {
-  optional bytes data = 1;
+  required bytes data = 1;
 }
 
 message SizeResponse {
-  optional int32 size = 1;
+  required int32 size = 1;
 }
 
 message StoredRequest {
@@ -61,12 +61,12 @@ message StoredResponse {
 }
 
 message StoreRequest {
-  optional string entry = 1;
+  required string entry = 1;
 }
 
 message StoredCountRequest {
 }
 
 message StoredCountResponse {
-  optional int32 count = 1;
+  required int32 count = 1;
 }

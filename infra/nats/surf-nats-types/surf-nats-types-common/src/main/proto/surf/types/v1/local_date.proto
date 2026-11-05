@@ -8,9 +8,9 @@ option java_package = "dev.slne.surf.nats.types.proto";
 // them.
 message LocalDate {
   // Proleptic year, year 0 is 1 BC.
-  optional int32 year = 1;
+  required int32 year = 1;
   // Month of the year, 1 to 12.
-  optional int32 month = 2;
+  required int32 month = 2;
   // Day of the month, 1 to 31.
-  optional int32 day = 3;
+  required int32 day = 3;
 }

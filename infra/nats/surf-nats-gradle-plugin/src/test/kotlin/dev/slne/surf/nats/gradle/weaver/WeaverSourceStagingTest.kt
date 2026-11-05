@@ -36,9 +36,9 @@ internal class WeaverSourceStagingTest : TestKitSupport() {
             surfNats { protoSourceDirs.from('src/extra/proto') }
             """
         )
-        build.proto(CONTRACT_PATH, TestBuild.contract("message Main { optional string a = 1; }"))
+        build.proto(CONTRACT_PATH, TestBuild.contract("message Main { required string a = 1; }"))
         build.file("src/main/proto/README.txt", "not a proto")
-        build.file("src/extra/proto/surf/extra/v1/extra.proto", TestBuild.contract("message Extra { optional string a = 1; }"))
+        build.file("src/extra/proto/surf/extra/v1/extra.proto", TestBuild.contract("message Extra { required string a = 1; }"))
         build.file("src/extra/proto/notes.md", "not a proto")
     }
 

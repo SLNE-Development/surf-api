@@ -4,7 +4,7 @@ syntax = "proto2";
 package surf.natsjs.shadow.v1;
 
 message Promise {
-  optional string value = 1;
+  required string value = 1;
 }
 
 service nats {

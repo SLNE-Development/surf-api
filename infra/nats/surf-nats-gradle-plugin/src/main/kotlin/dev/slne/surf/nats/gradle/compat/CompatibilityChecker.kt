@@ -7,7 +7,6 @@ import dev.slne.surf.nats.gradle.schema.containsProtos
 import dev.slne.surf.nats.gradle.schema.loadSchema
 import dev.slne.surf.nats.gradle.validate.Problems
 import dev.slne.surf.nats.gradle.validate.kotlinPackage
-import dev.slne.surf.nats.protocol.ProtocolFieldRules
 import dev.slne.surf.nats.protocol.ProtocolResolution
 import dev.slne.surf.nats.protocol.ResolvedMethod
 import dev.slne.surf.nats.protocol.ResolvedService
@@ -212,7 +211,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     }
 
     /**
-     * Compares the wire number, type, effective label, nullability, and default of an existing field.
+     * Compares the wire number, type, effective label, and default of an existing field.
      *
      * Comparisons are performed in the same order in which their violations are reported.
      */
@@ -226,7 +225,6 @@ private class Comparison(currentFiles: List<ProtoFile>) {
         diff(after.location, element, "field number", before.tag, after.tag)
         diff(after.location, element, "type", typeName(before.type), typeName(after.type))
         diff(after.location, element, "label", label(baseline, before), label(current, after))
-        diff(after.location, element, "(surf.nats.v1.nullable)", nullable(before), nullable(after))
         compareDefault(before, after, element)
     }
 
@@ -237,8 +235,8 @@ private class Comparison(currentFiles: List<ProtoFile>) {
         changed(
             field.location,
             "$messageName.$fieldName",
-            "new field '$fieldName' = ${field.tag} is non-null without a [default], so readers fail on messages of " +
-                    "senders that do not know it; mark it [(surf.nats.v1.nullable) = true] or give it a [default]",
+            "new field '$fieldName' = ${field.tag} is required, so readers fail on messages of senders that do not " +
+                    "know it; declare it optional or optional with a [default]",
         )
     }
 
@@ -508,7 +506,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     ) {
         val reasons = mutableListOf<String>()
         if (isRequired(field)) {
-            reasons += "it was non-null without a [default], so readers of the baseline fail on messages without it"
+            reasons += "it was required, so readers of the baseline fail on messages without it"
         }
 
         val missingReservations = listOfNotNull(
@@ -688,17 +686,8 @@ private class Comparison(currentFiles: List<ProtoFile>) {
 
     /**
      * Returns whether a reader rejects a message that omits [field].
-     *
-     * Considers field presence, oneof membership, nullability, and an explicit default.
      */
-    private fun isRequired(field: Field): Boolean {
-        return ProtocolFieldRules.isRequired(
-            explicitPresence = field.type?.isMap != true && !field.isRepeated,
-            oneofMember = field.isOneOf,
-            nullable = nullable(field),
-            hasDefault = field.default != null,
-        )
-    }
+    private fun isRequired(field: Field): Boolean = field.label == Field.Label.REQUIRED
 
     /**
      * Returns the effective label of [field], including map and oneof membership.
@@ -714,13 +703,6 @@ private class Comparison(currentFiles: List<ProtoFile>) {
 
         field.label == Field.Label.REQUIRED -> "required"
         else -> "optional"
-    }
-
-    /**
-     * Returns whether [field] enables the custom NATS nullable option.
-     */
-    private fun nullable(field: Field): Boolean {
-        return SurfProtoOptions.isNullable(field.options)
     }
 
     /**

@@ -18,13 +18,13 @@ service PaperTestService {
 }
 
 message FindPlayerRequest {
-  optional string name = 1;
+  required string name = 1;
 }
 
 message FindPlayerResponse {
-  optional string info = 1;
+  required string info = 1;
 }
 
 message BroadcastRequest {
-  optional string message = 1;
+  required string message = 1;
 }

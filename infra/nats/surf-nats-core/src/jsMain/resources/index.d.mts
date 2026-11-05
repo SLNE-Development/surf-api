@@ -86,13 +86,13 @@ export interface NatsRegistration {
  */
 export interface SurfNatsOperations {
     /**
-     * Publishes an event (a message with `option (surf.nats.v1.event) = true`). Required fields are checked
+     * Publishes an event (a message with `option (surf.nats.v1.event) = true`). `required` fields are checked
      * before sending; an init object is converted with `create`.
      */
     publish<D extends DescMessage>(schema: D, message: MessageInitShape<D>, options?: PublishOptions): Promise<void>;
 
     /**
-     * Subscribes to an event. Undecodable events and events without a required field are dropped with a warning.
+     * Subscribes to an event. Undecodable events and events that lack a `required` field are dropped with a warning.
      */
     listen<D extends DescMessage>(
         schema: D,

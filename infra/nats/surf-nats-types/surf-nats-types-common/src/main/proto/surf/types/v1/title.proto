@@ -3,7 +3,6 @@ syntax = "proto2";
 package surf.types.v1;
 
 import "google/protobuf/duration.proto";
-import "surf/nats/v1/options.proto";
 import "surf/types/v1/component.proto";
 
 option java_package = "dev.slne.surf.nats.types.proto";
@@ -12,13 +11,13 @@ option java_package = "dev.slne.surf.nats.types.proto";
 message Title {
   // Adventure Title.Times. fade_in, stay and fade_out are required.
   message Times {
-    optional google.protobuf.Duration fade_in = 1;
-    optional google.protobuf.Duration stay = 2;
-    optional google.protobuf.Duration fade_out = 3;
+    required google.protobuf.Duration fade_in = 1;
+    required google.protobuf.Duration stay = 2;
+    required google.protobuf.Duration fade_out = 3;
   }
 
-  optional Component title = 1;
-  optional Component subtitle = 2;
+  required Component title = 1;
+  required Component subtitle = 2;
   // Unset for the client's default times.
-  optional Times times = 3 [(surf.nats.v1.nullable) = true];
+  optional Times times = 3;
 }

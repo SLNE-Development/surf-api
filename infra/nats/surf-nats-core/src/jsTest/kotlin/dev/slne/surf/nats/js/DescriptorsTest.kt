@@ -1,7 +1,6 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.descriptor.NatsResultKind
-import dev.slne.surf.nats.js.descriptor.ProtocolOptionReader
 import dev.slne.surf.nats.js.event.EventDescriptor
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.external.protobuf.DescService
@@ -12,7 +11,6 @@ import dev.slne.surf.nats.js.fixtures.PlainMessageSchema
 import dev.slne.surf.nats.js.fixtures.PlayerJoinedSchema
 import dev.slne.surf.nats.js.fixtures.PlayerService
 import dev.slne.surf.nats.js.fixtures.RegistryService
-import dev.slne.surf.nats.js.fixtures.RulesSchema
 import dev.slne.surf.nats.js.fixtures.ServerStartedSchema
 import dev.slne.surf.nats.js.fixtures.StreamingService
 import dev.slne.surf.nats.js.rpc.MethodDescriptor
@@ -137,13 +135,5 @@ class DescriptorsTest {
     fun streamingMethodsAreRejectedWithTheirService() {
         val error = assertFailsWith<IllegalArgumentException> { method(StreamingService, "watch") }
         assertTrue(error.message!!.contains("streaming rpcs are not supported"), error.message)
-    }
-
-    @Test
-    fun nullableOption() {
-        val fields = RulesSchema.fields.associateBy { it.localName }
-        assertTrue(ProtocolOptionReader.isNullable(fields.getValue("nullableText")))
-        assertFalse(ProtocolOptionReader.isNullable(fields.getValue("requiredText")))
-        assertFalse(ProtocolOptionReader.isNullable(fields.getValue("defaulted")))
     }
 }

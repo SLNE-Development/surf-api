@@ -20,7 +20,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     private val group = "dev.slne.demo"
     private val name = "demo"
-    private val baseline = "message Player { optional int64 id = 1; }"
+    private val baseline = "message Player { required int64 id = 1; }"
     private val report get() = build.resolve("build/reports/surf-nats/compatibility.txt")
 
     private fun module(current: String, extra: String = "", published: Boolean = true) {
@@ -45,7 +45,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `a changed field number fails the check against the released baseline`() {
-        module("message Player { optional int64 id = 2; }")
+        module("message Player { required int64 id = 2; }")
         serveBaseline()
 
         val result = build.runAndFail("checkSurfNatsCompatibility")
@@ -60,7 +60,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `a compatible change passes the check and is reported as compatible`() {
-        module("message Player { optional int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }")
+        module("message Player { required int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }")
         serveBaseline()
 
         val result = build.run("checkSurfNatsCompatibility")
@@ -71,11 +71,11 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `the check compares against the baseline's own files only`() {
-        module("message Player { optional int64 id = 1; }")
+        module("message Player { required int64 id = 1; }")
         stub.versions(group, name, "1.0.0" to false)
         stub.archive(
             group, name, "1.0.0",
-            TarGz.create(mapOf(CONTRACT_PATH to TestBuild.contract(baseline), "surf/demo/v1/gone.proto" to TestBuild.contract("message Gone { optional int64 id = 1; }"))),
+            TarGz.create(mapOf(CONTRACT_PATH to TestBuild.contract(baseline), "surf/demo/v1/gone.proto" to TestBuild.contract("message Gone { required int64 id = 1; }"))),
         )
 
         val result = build.runAndFail("checkSurfNatsCompatibility")
@@ -86,7 +86,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
     @Test
     fun `an explicit baseline activates the check for an unpublished module`() {
         module(
-            "message Player { optional int64 id = 2; }",
+            "message Player { required int64 id = 2; }",
             extra = "surfNats { compatibilityBaseline('1.0.0') }",
             published = false,
         )
@@ -100,7 +100,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `the check is inactive for an unpublished module without an explicit baseline`() {
-        module("message Player { optional int64 id = 2; }", published = false)
+        module("message Player { required int64 id = 2; }", published = false)
         serveBaseline()
 
         val result = build.run("checkSurfNatsCompatibility")
@@ -112,7 +112,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `the check can be disabled for a published module`() {
-        module("message Player { optional int64 id = 2; }", extra = "surfNats { compatibilityCheck = false }")
+        module("message Player { required int64 id = 2; }", extra = "surfNats { compatibilityCheck = false }")
         serveBaseline()
 
         val result = build.run("checkSurfNatsCompatibility")
@@ -124,7 +124,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `a baseline archive without protos fails the check`() {
-        module("message Player { optional int64 id = 1; }", extra = "surfNats { compatibilityBaseline('1.0.0') }")
+        module("message Player { required int64 id = 1; }", extra = "surfNats { compatibilityBaseline('1.0.0') }")
         stub.archive(group, name, "1.0.0", TarGz.create(mapOf("README.txt" to "no protos")))
 
         val result = build.runAndFail("checkSurfNatsCompatibility")
@@ -134,7 +134,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `an incompatible change stops publishProtos before the upload`() {
-        module("message Player { optional int64 id = 2; }")
+        module("message Player { required int64 id = 2; }")
         serveBaseline()
         stub.acceptPublish(group, name, "1.1.0-SNAPSHOT")
 
@@ -148,7 +148,7 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `a compatible change is published after the check`() {
-        module("message Player { optional int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }")
+        module("message Player { required int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }")
         serveBaseline()
         stub.acceptPublish(group, name, "1.1.0-SNAPSHOT")
 

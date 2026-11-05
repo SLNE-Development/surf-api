@@ -145,13 +145,8 @@ internal class FileRules(private val problems: Problems) {
     }
 
     private fun usesSurfOptions(type: Type): Boolean {
-        val usesOwnOptions = type is MessageType && (
-                SurfProtoOptions.isSet(type.options, SurfProtoOptions.EVENT) ||
-                        type.fieldsAndOneOfFields.any { field ->
-                            SurfProtoOptions.isSet(field.options, SurfProtoOptions.NULLABLE)
-                        }
-                )
-
+        val usesOwnOptions =
+            type is MessageType && SurfProtoOptions.isSet(type.options, SurfProtoOptions.EVENT)
         return usesOwnOptions || type.nestedTypes.any(::usesSurfOptions)
     }
 }

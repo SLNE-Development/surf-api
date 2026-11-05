@@ -6,7 +6,7 @@ package surf.natsjs.invalid.v1;
 import "surf/nats/v1/options.proto";
 
 message NameRequest {
-  optional string name = 1;
+  required string name = 1;
 }
 
 service NamesService {

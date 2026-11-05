@@ -38,7 +38,7 @@ internal class FetchBaselineTest : TestKitSupport() {
             $extra
             """
         )
-        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { optional int64 id = 1; }"))
+        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
     }
 
     private fun serveArchive(version: String, entries: Map<String, String>, sha256: String? = null) {
@@ -47,7 +47,7 @@ internal class FetchBaselineTest : TestKitSupport() {
     }
 
     private fun baselineContract(version: String) =
-        mapOf(CONTRACT_PATH to TestBuild.contract("message Player { optional int64 id = 1; } // baseline $version"))
+        mapOf(CONTRACT_PATH to TestBuild.contract("message Player { required int64 id = 1; } // baseline $version"))
 
     private fun baselineFile(): File = baselineDir.resolve("protos/$CONTRACT_PATH")
 
@@ -226,7 +226,7 @@ internal class FetchBaselineTest : TestKitSupport() {
         assertEquals(setOf(CONTRACT_PATH, "surf/demo/v1/old.proto"), extractedFiles())
 
         // Incompressible and therefore larger than the first archive, so a leftover download file cannot matter.
-        serveArchive("1.1.0", mapOf(CONTRACT_PATH to TestBuild.contract("message Player { optional int64 id = 1; } // $NOISE")))
+        serveArchive("1.1.0", mapOf(CONTRACT_PATH to TestBuild.contract("message Player { required int64 id = 1; } // $NOISE")))
         build.run("fetchSurfNatsBaseline")
 
         assertEquals(setOf(CONTRACT_PATH), extractedFiles())
@@ -236,7 +236,7 @@ internal class FetchBaselineTest : TestKitSupport() {
     fun `a smaller archive downloaded after a larger one is not corrupted by the earlier download`() {
         module()
         stub.versions(group, name, "1.1.0" to false)
-        serveArchive("1.1.0", mapOf(CONTRACT_PATH to TestBuild.contract("message Player { optional int64 id = 1; } // $NOISE")))
+        serveArchive("1.1.0", mapOf(CONTRACT_PATH to TestBuild.contract("message Player { required int64 id = 1; } // $NOISE")))
         build.run("fetchSurfNatsBaseline")
 
         serveArchive("1.1.0", baselineContract("1.1.0"))

@@ -6,28 +6,28 @@ import "google/protobuf/empty.proto";
 import "surf/nats/v1/options.proto";
 
 message FindPlayerRequest {
-  optional string name = 1;
+  required string name = 1;
 }
 
 message FindPlayerResponse {
-  optional string name = 1;
-  optional string server = 2 [(surf.nats.v1.nullable) = true];
+  required string name = 1;
+  optional string server = 2;
 }
 
 message LocateRequest {
-  optional string name = 1;
+  required string name = 1;
 }
 
 message LocateResponse {
-  optional string server = 1;
+  required string server = 1;
 }
 
 message BlobRequest {
-  optional bytes data = 1;
+  required bytes data = 1;
 }
 
 message BlobResponse {
-  optional bytes data = 1;
+  required bytes data = 1;
 }
 
 // Players on the network.
@@ -48,16 +48,16 @@ service PlayerService {
 }
 
 message AuditEntry {
-  optional string action = 1;
-  optional bytes data = 2 [(surf.nats.v1.nullable) = true];
+  required string action = 1;
+  optional bytes data = 2;
 }
 
 message AuditQuery {
-  optional string action = 1;
+  required string action = 1;
 }
 
 message AuditResult {
-  optional int32 count = 1;
+  required int32 count = 1;
 }
 
 service AuditService {

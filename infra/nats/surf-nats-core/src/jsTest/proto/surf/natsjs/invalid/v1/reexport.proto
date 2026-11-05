@@ -6,5 +6,5 @@ package surf.natsjs.invalid.v1;
 import public "surf/nats/v1/options.proto";
 
 message ReexportRequest {
-  optional string name = 1;
+  required string name = 1;
 }

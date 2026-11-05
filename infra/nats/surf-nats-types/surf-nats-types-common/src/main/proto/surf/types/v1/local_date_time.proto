@@ -10,6 +10,6 @@ option java_package = "dev.slne.surf.nats.types.proto";
 // java.time.LocalDateTime, a date-time without offset or zone. date and time are required: a reader rejects a message
 // without them.
 message LocalDateTime {
-  optional LocalDate date = 1;
-  optional LocalTime time = 2;
+  required LocalDate date = 1;
+  required LocalTime time = 2;
 }

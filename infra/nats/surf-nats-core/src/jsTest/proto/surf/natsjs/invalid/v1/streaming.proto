@@ -4,11 +4,11 @@ syntax = "proto2";
 package surf.natsjs.invalid.v1;
 
 message WatchRequest {
-  optional string name = 1;
+  required string name = 1;
 }
 
 message WatchResponse {
-  optional string server = 1;
+  required string server = 1;
 }
 
 service StreamingService {

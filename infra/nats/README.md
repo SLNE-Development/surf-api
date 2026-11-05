@@ -164,10 +164,20 @@ The plugin generates the Kotlin sources into `build/generated/surf-nats/kotlin` 
 
 Every message becomes a Kotlin `data class`, and every field a property in `lowerCamelCase`:
 
-- Declare all fields `optional`. `required` is rejected.
-- A field is non-null in Kotlin. A message that lacks a non-null field fails to decode. Mark a field
-  `[(surf.nats.v1.nullable) = true]` to make it `T? = null`, or give it a `[default = …]`, which becomes its Kotlin
-  default value.
+- The label decides whether a field is nullable in Kotlin:
+
+  | Field                                  | Kotlin                                                   |
+  |----------------------------------------|----------------------------------------------------------|
+  | `required T`                           | `T`, no default; a message that lacks it fails to decode |
+  | `optional T`                           | `T? = null`                                              |
+  | `optional T [default = …]`             | `T` with that default; scalars, strings, and bytes only  |
+  | `optional E` with `E` a generated enum | `E` with the zero value as default (see [Enums](#enums)) |
+
+  This applies to scalars, strings, bytes, messages, and [mapped types](#types). An enum mapped with `mapType`
+  counts as a mapped type, not as a generated enum.
+- The plugin rejects `required` together with `[default]`: the encoder omits a value equal to the default, so
+  readers would reject the message. It rejects `required` and `[default]` on a generated enum field, and `[default]`
+  on a message or mapped-type field.
 - `repeated` becomes `List<T> = emptyList()`, and `map<K, V>` becomes `Map<K, V> = emptyMap()`.
 - A `oneof` becomes a nullable property whose type is a `sealed interface` with one `data class` per case. Each case
   class holds its value in `value`.
@@ -198,6 +208,10 @@ This enum becomes `PunishmentType.UNSPECIFIED`, `PunishmentType.BAN`, and `Punis
 in upper camel case with abbreviations as one word (`HttpStatus`, not `HTTPStatus`). protobuf-es derives a
 different prefix from `HTTPStatus` and would keep the full value names in TypeScript, so the plugin rejects such
 names. A number that the reader does not know decodes to the zero value, also inside lists and maps.
+
+Declare fields of generated enums `optional`. Kotlin makes them non-null with the zero value as default, so the
+zero value means "not set". The plugin rejects `required` and `[default]` on them. An enum mapped with `mapType`
+follows the rules of other mapped types.
 
 ### Types
 
@@ -383,8 +397,8 @@ An event is a message with the option `(surf.nats.v1.event) = true`:
 message NameChanged {
   option (surf.nats.v1.event) = true;
 
-  optional string player_id = 1;
-  optional string name = 2;
+  required string player_id = 1;
+  required string name = 2;
 }
 ```
 
@@ -497,16 +511,16 @@ service ProfileService {
 }
 
 message FindNameRequest {
-  optional string player_id = 1;
+  required string player_id = 1;
 }
 
 message FindNameResponse {
-  optional string name = 1 [(surf.nats.v1.nullable) = true];
+  optional string name = 1;
 }
 
 message RenameRequest {
-  optional string player_id = 1;
-  optional string name = 2;
+  required string player_id = 1;
+  required string name = 2;
 }
 
 message RenameResponse {
@@ -618,11 +632,11 @@ service PlayerService {
 }
 
 message FindServerRequest {
-  optional string player_id = 1;
+  required string player_id = 1;
 }
 
 message FindServerResponse {
-  optional string server = 1;
+  required string server = 1;
 }
 ```
 
@@ -694,7 +708,7 @@ when (val result = profiles.rename(RenameRequest(playerId = "alice", name = "Ali
 }
 ```
 
-A service method cannot return `null`. Use a response message with a `nullable` field instead, like
+A service method cannot return `null`. Use a response message with an `optional` field instead, like
 `FindNameResponse` above.
 
 ### Names
@@ -713,11 +727,12 @@ rename as a removal. Rename only in a new major version (see [Versioning](#versi
 The major version is part of the package (`surf.profiles.v1`) and therefore of every subject, stream, and service
 registration. Within one major version, contracts must stay compatible:
 
-- Compatible: new messages, services, and `rpc`s; new fields that are `nullable` or have a `[default]`, with a
-  number above the current maximum; new enum values, which older readers decode as the zero value; removing a field
-  that was `nullable` or had a `[default]`, if its number and name go into `reserved`.
+- Compatible: new messages, services, and `rpc`s; new `optional` fields, with or without a `[default]`, with a
+  number above the current maximum; new enum values, which older readers decode as the zero value; removing an
+  `optional` field if its number and name go into `reserved`.
 - Incompatible: changing the number, type, or label of a field, even between wire-compatible types such as `int32`
-  and `int64`; a new non-null field without a `[default]`; changing `[default]` or `nullable`; removing or renaming
+  and `int64`, or `required` and `optional`; a new `required` field (declare it `optional`, with a `[default]` if it
+  must not be null); removing a `required` field; adding, removing, or changing a `[default]`; removing or renaming
   a message, enum, enum value, service, or `rpc` without reserving it; changing the zero value of an enum; changing
   the request or response type of an `rpc`; removing `(surf.nats.v1.event) = true` from an event; changing
   `persistent` or `recipients` of a method; moving a type to another Kotlin package; removing a reservation.

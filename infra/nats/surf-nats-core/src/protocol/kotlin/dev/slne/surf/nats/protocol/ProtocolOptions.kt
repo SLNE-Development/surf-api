@@ -10,7 +10,6 @@ internal object ProtocolOptions {
     const val EVENT = "event"
     const val SERVICE = "service"
     const val METHOD = "method"
-    const val NULLABLE = "nullable"
 
     const val SERVICE_OPTIONS = "NatsServiceOptions"
     const val METHOD_OPTIONS = "NatsMethodOptions"

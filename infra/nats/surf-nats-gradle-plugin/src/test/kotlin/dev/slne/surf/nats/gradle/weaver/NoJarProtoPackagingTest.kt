@@ -32,7 +32,7 @@ internal class NoJarProtoPackagingTest : TestKitSupport() {
             plugins { id 'java'; id 'dev.slne.surf.nats' }
             """
         )
-        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { optional int64 id = 1; }"))
+        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
         build.file("src/main/resources/app.properties", "key=value")
 
         build.run("jar")

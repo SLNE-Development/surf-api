@@ -50,7 +50,7 @@ public data class PunishmentCreated(
     @ProtoNumber(1)
     public val player: @Serializable(with = UuidSerializer::class) UUID,
     @ProtoNumber(2)
-    public val type: PunishmentType,
+    public val type: PunishmentType = PunishmentType.UNSPECIFIED,
     @ProtoNumber(3)
     public val createdAt: @Serializable(with = TimestampSerializer::class) Instant,
     @ProtoNumber(4)

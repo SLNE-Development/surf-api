@@ -37,7 +37,3 @@ extend google.protobuf.ServiceOptions {
 extend google.protobuf.MethodOptions {
   optional NatsMethodOptions method = 51002;
 }
-
-extend google.protobuf.FieldOptions {
-  optional bool nullable = 51003;
-}

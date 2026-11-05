@@ -19,12 +19,12 @@ message AlarmRaised {
   option (surf.nats.v1.event) = true;
 
   optional AlarmLevel level = 1;
-  optional string message = 2 [(surf.nats.v1.nullable) = true];
+  optional string message = 2;
   oneof source {
     string server = 3;
     int64 player_id = 4;
   }
-  optional bytes evidence = 5 [(surf.nats.v1.nullable) = true];
+  optional bytes evidence = 5;
 }
 
 service AlarmService {
@@ -34,9 +34,9 @@ service AlarmService {
 
 message RaiseRequest {
   optional AlarmLevel level = 1;
-  optional string message = 2;
+  required string message = 2;
 }
 
 message RaiseReply {
-  optional int64 id = 1;
+  required int64 id = 1;
 }

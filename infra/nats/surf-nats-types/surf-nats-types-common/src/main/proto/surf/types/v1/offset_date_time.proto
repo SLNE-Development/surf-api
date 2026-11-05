@@ -7,9 +7,9 @@ option java_package = "dev.slne.surf.nats.types.proto";
 // java.time.OffsetDateTime. seconds and offset_seconds are required: a reader rejects a message without them.
 message OffsetDateTime {
   // Seconds of the instant since 1970-01-01T00:00:00Z.
-  optional int64 seconds = 1;
+  required int64 seconds = 1;
   // Nanosecond of the second, 0 to 999,999,999.
   optional int32 nanos = 2 [default = 0];
   // UTC offset in seconds, -64,800 to 64,800.
-  optional int32 offset_seconds = 3;
+  required int32 offset_seconds = 3;
 }

@@ -17,5 +17,5 @@ service LateService {
 }
 
 message PutRequest {
-  optional int64 id = 1;
+  required int64 id = 1;
 }

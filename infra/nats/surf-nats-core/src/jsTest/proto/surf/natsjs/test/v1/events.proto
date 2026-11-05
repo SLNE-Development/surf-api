@@ -8,31 +8,31 @@ import "surf/types/v1/uuid.proto";
 message PlayerJoined {
   option (surf.nats.v1.event) = true;
 
-  optional string name = 1;
-  optional surf.types.v1.Uuid id = 2;
-  optional string server = 3 [(surf.nats.v1.nullable) = true];
+  required string name = 1;
+  required surf.types.v1.Uuid id = 2;
+  optional string server = 3;
 }
 
 message ChatMessage {
   option (surf.nats.v1.event) = true;
 
-  optional string text = 1;
+  required string text = 1;
 }
 
 message ServerStarted {
   option (surf.nats.v1.event) = true;
 
-  optional string server = 1;
+  required string server = 1;
 }
 
 // Not an event: no (surf.nats.v1.event) option.
 message PlainMessage {
-  optional string text = 1;
+  required string text = 1;
 }
 
 // Not an event: the option is false.
 message OptedOutMessage {
   option (surf.nats.v1.event) = false;
 
-  optional string text = 1;
+  required string text = 1;
 }

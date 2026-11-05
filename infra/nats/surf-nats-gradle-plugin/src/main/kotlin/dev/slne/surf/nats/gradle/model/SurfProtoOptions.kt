@@ -36,10 +36,6 @@ internal object SurfProtoOptions {
     val METHOD: ProtoMember =
         ProtoMember.get(Options.METHOD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.METHOD))
 
-    /** Extension controlling nullable Protobuf fields. */
-    val NULLABLE: ProtoMember =
-        ProtoMember.get(Options.FIELD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.NULLABLE))
-
     private val SERVICE_OPTIONS =
         ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.SERVICE_OPTIONS))
 
@@ -71,17 +67,6 @@ internal object SurfProtoOptions {
      * @return `true` if the event option is enabled
      */
     fun isEvent(options: Options): Boolean = flag(options, EVENT)
-
-    /**
-     * Checks whether a Protobuf field is explicitly nullable.
-     *
-     * Reads the `(surf.nats.v1.nullable)` option and defaults to `false`
-     * when the option is absent.
-     *
-     * @param options the field's Protobuf options
-     * @return `true` if the nullable option is enabled
-     */
-    fun isNullable(options: Options): Boolean = flag(options, NULLABLE)
 
     /**
      * Resolves the NATS configuration declared on a Protobuf service.

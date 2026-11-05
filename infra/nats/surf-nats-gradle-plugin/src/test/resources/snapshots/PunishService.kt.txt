@@ -89,7 +89,7 @@ public data class FindPunishmentsResponse(
         @ProtoNumber(1)
         public val id: Long,
         @ProtoNumber(2)
-        public val type: PunishmentType,
+        public val type: PunishmentType = PunishmentType.UNSPECIFIED,
         @ProtoNumber(3)
         public val evidence: ByteArray? = null,
     ) {

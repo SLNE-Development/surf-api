@@ -73,7 +73,7 @@ object SoundSerializer : KSerializer<Sound> {
 @SerialName("surf.types.v1.Sound")
 private class SoundProto(
     @ProtoNumber(1) val name: @Serializable(with = KeySerializer::class) Key,
-    @ProtoNumber(2) val source: Int,
+    @ProtoNumber(2) val source: Int = 0,
     @ProtoNumber(3) val volume: Float,
     @ProtoNumber(4) val pitch: Float,
     @ProtoNumber(5) val seed: Long? = null,

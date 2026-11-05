@@ -10,31 +10,31 @@ import "surf/types/v1/uuid.proto";
 message Created {
   option (surf.nats.v1.event) = true;
 
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 message PlayerEvent {
   option (surf.nats.v1.event) = true;
 
-  optional surf.types.v1.Uuid player = 1;
+  required surf.types.v1.Uuid player = 1;
 }
 
 message Balanced {
   option (surf.nats.v1.event) = true;
 
-  optional int32 id = 1;
+  required int32 id = 1;
 }
 
 message QueueShared {
   option (surf.nats.v1.event) = true;
 
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 message BigEvent {
   option (surf.nats.v1.event) = true;
 
-  optional string payload = 1;
+  required string payload = 1;
 }
 
 // Fieldless event.
@@ -46,24 +46,24 @@ message Heartbeat {
 message ProfileUpdated {
   option (surf.nats.v1.event) = true;
 
-  optional surf.types.v1.Uuid player = 1;
-  optional string nickname = 2 [(surf.nats.v1.nullable) = true];
-  optional surf.types.v1.Uuid previous_owner = 3 [(surf.nats.v1.nullable) = true];
+  required surf.types.v1.Uuid player = 1;
+  optional string nickname = 2;
+  optional surf.types.v1.Uuid previous_owner = 3;
 }
 
 message PanelEvent {
   option (surf.nats.v1.event) = true;
 
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 message OriginEvent {
   option (surf.nats.v1.event) = true;
 
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 // Not an event: listener-signature and publish rejection tests.
 message NotAnEvent {
-  optional int64 id = 1;
+  required int64 id = 1;
 }

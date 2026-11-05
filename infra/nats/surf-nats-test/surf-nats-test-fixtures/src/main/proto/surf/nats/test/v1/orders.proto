@@ -33,17 +33,17 @@ service OrderService {
 }
 
 message PlaceRequest {
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 message TotalRequest {
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 message LookupRequest {
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 message LookupReply {
-  optional string value = 1 [(surf.nats.v1.nullable) = true];
+  optional string value = 1;
 }

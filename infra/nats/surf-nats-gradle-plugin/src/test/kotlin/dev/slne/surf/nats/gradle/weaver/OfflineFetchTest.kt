@@ -33,7 +33,7 @@ internal class OfflineFetchTest : TestKitSupport() {
             """,
             project = "a",
         )
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { optional string value = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"), project = "a")
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -99,7 +99,7 @@ internal class OfflineFetchTest : TestKitSupport() {
             """,
             project = "a",
         )
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { optional string value = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"), project = "a")
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -107,7 +107,7 @@ internal class OfflineFetchTest : TestKitSupport() {
             """,
             project = "c",
         )
-        build.proto("surf/c/v1/c.proto", TestBuild.contract("message Code { optional string value = 1; }", pkg = "surf.c.v1"), project = "c")
+        build.proto("surf/c/v1/c.proto", TestBuild.contract("message Code { required string value = 1; }", pkg = "surf.c.v1"), project = "c")
         build.script(
             """
             ${TestBuild.PLUGIN}

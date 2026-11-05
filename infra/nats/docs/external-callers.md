@@ -54,16 +54,16 @@ service RolesService {
 }
 
 message LookupRequest {
-  optional int64 user_id = 1;
+  required int64 user_id = 1;
 }
 
 message LookupResponse {
-  optional string role = 1 [(surf.nats.v1.nullable) = true];
+  optional string role = 1;
 }
 
 message WhitelistRequest {
   optional WhitelistAction action = 1;
-  optional int64 user_id = 2;
+  required int64 user_id = 2;
 }
 
 enum WhitelistAction {
@@ -197,9 +197,8 @@ const registration = await nats.listen(NameChangedSchema, (event, context) => {
 registration.close();
 ```
 
-`publish` checks the message before it sends it: a field without the `nullable` option and without a `[default]`
-must be set, also in nested messages. `publish` returns once it has flushed the connection, or rejects after
-`timeoutMs` (default 5000). Delivery is not guaranteed: instances that are offline miss the event.
+`publish` checks the message before it sends it: every `required` field must be set, also in nested messages.
+`publish` returns once it has flushed the connection, or rejects after `timeoutMs` (default 5000). Delivery is not guaranteed: instances that are offline miss the event.
 
 `listen` delivers every event to this connection by default (`recipients: "ALL_INSTANCES"`). With
 `recipients: "ANY_INSTANCE"`, each event goes to one listener among the connections with your client name.
@@ -237,8 +236,9 @@ The generated methods delegate to `nats.call` and `nats.callAnswer`, which also 
 protoc-gen-es directly, for example `nats.call(RolesService.method.lookup, { userId: 42n })`. `call` handles every
 kind of method except `ALL_INSTANCES` methods with a response message, which need `callAnswer`.
 `timeoutMs` overrides the timeout of the contract (default 5 seconds, persistent 60 seconds). Like `publish`, `call`
-checks the request before it sends it. Fields with the `nullable` option have explicit presence; check them with
-`isFieldSet`.
+checks the request before it sends it. An `optional` field without a `[default]` and of a non-enum type is `null`
+in Kotlin when unset; check it with `isFieldSet`. Kotlin omits fields whose value equals their default or the enum's
+zero value, so presence carries no meaning for those.
 
 A persistent call without a result returns once JetStream has stored the call. The client sends it again with the
 same `Nats-Msg-Id` until JetStream confirms it or the timeout expires; the timeout can be at most two minutes. The
@@ -279,16 +279,18 @@ identifies the message type. An empty body is a valid message with no fields set
 
 surf-nats reads messages with these rules:
 
-- A field without the `nullable` option and without a `[default]` is required. Set it even when its value is zero
-  or empty, because a message that lacks it fails to decode. Leave a `nullable` field unset to send `null`.
+- Set every `required` field, even when its value is zero or empty, because a message that lacks it fails to
+  decode. Leave an `optional` field unset to send `null`. An unset `optional` field with a `[default]` reads as that
+  default, and an unset `optional` enum field reads as the enum's zero value.
 - Unknown fields are ignored, so a newer sender can add fields. Kotlin does not keep them when it encodes a message
   again.
 - An enum number that the reader does not know becomes the zero value, also in lists and maps. Other proto2
   implementations leave such a field unset or drop the list element or map entry instead.
 - Kotlin reads `uint32` and `uint64` as signed `Int` and `Long`. The wire value stays the same.
 
-The shared types have these fields, all of them required except `Location.world`, `InetSocketAddress.address`,
-`Sound.seed`, `Title.times` and the fields with a default (`OffsetDateTime.nanos` and every `LocalTime` field default to 0):
+The shared types have these fields, all of them `required` except `Location.world`, `InetSocketAddress.address`,
+`Sound.seed`, and `Title.times`, which are `optional`, the enum field `Sound.source`, and the fields with a default
+(`OffsetDateTime.nanos` and every `LocalTime` field default to 0):
 
 | Type                            | Fields                                                                                 |
 |---------------------------------|----------------------------------------------------------------------------------------|
@@ -297,8 +299,8 @@ The shared types have these fields, all of them required except `Location.world`
 | `surf.types.v1.Key`             | `value`: the key as `namespace:value`                                                  |
 | `surf.types.v1.TextColor`       | `rgb`: `0xRRGGBB`, 0 to 16,777,215                                                     |
 | `surf.types.v1.ShadowColor`     | `argb`: `0xAARRGGBB` as `fixed32`                                                      |
-| `surf.types.v1.Sound`           | `name` (a `Key`), `source` (`Sound.Source`; unspecified or unknown reads as master), `volume`, `pitch`, `seed` (`nullable`) |
-| `surf.types.v1.Title`           | `title`, `subtitle` (`Component`s), `times` (`Title.Times` with `fade_in`, `stay`, `fade_out` durations, `nullable`) |
+| `surf.types.v1.Sound`           | `name` (a `Key`), `source` (`Sound.Source`; unset, unspecified, or unknown reads as master), `volume`, `pitch`, `seed` (`optional`) |
+| `surf.types.v1.Title`           | `title`, `subtitle` (`Component`s), `times` (`Title.Times` with `fade_in`, `stay`, `fade_out` durations, `optional`) |
 | `surf.types.v1.OffsetDateTime`  | `seconds` since the Unix epoch, `nanos` (0 to 999,999,999), `offset_seconds` from UTC  |
 | `surf.types.v1.ZonedDateTime`   | `date_time` (an `OffsetDateTime`), `zone_id` such as `Europe/Berlin`                   |
 | `surf.types.v1.LocalDate`       | `year`, `month` (1 to 12), `day` (1 to 31)                                             |
@@ -307,8 +309,8 @@ The shared types have these fields, all of them required except `Location.world`
 | `surf.types.v1.BigDecimal`      | `value`: Java's `BigDecimal.toString()`, e.g. `12.50` or `1E+3`; keep it a string       |
 | `surf.types.v1.BigInteger`      | `value`: decimal digits with an optional `-`, readable with `BigInt(value)`             |
 | `surf.types.v1.IpAddress`       | `address`: 4 bytes (IPv4) or 16 bytes (IPv6) in network byte order                     |
-| `surf.types.v1.InetSocketAddress` | `address` (an `IpAddress`, `nullable`, unset when unresolved), `host`, `port`        |
-| `surf.types.paper.v1.Location`  | `world` (a `Uuid`, `nullable`), `x`, `y`, `z`, `yaw`, `pitch`                          |
+| `surf.types.v1.InetSocketAddress` | `address` (an `IpAddress`, `optional`, unset when unresolved), `host`, `port`        |
+| `surf.types.paper.v1.Location`  | `world` (a `Uuid`, `optional`), `x`, `y`, `z`, `yaw`, `pitch`                          |
 | `surf.types.paper.v1.ItemStack` | `data`: the bytes of Paper's `ItemStack.serializeAsBytes()`                            |
 
 ### Subjects

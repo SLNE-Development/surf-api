@@ -34,7 +34,7 @@ class ContractGenerationTest {
             """
             message PlayerHealthChanged {
               option (surf.nats.v1.event) = true;
-              optional double health = 1;
+              required double health = 1;
             }
             """
         )
@@ -56,7 +56,7 @@ class ContractGenerationTest {
             """
             message HTTPServer2Up { option (surf.nats.v1.event) = true; }
             message snake_Event { option (surf.nats.v1.event) = true; }
-            message Outer { message Inner { option (surf.nats.v1.event) = true; optional int32 x = 1; } }
+            message Outer { message Inner { option (surf.nats.v1.event) = true; required int32 x = 1; } }
             """,
             protoPackage = "surf.test_pkg.v3",
         )
@@ -72,13 +72,13 @@ class ContractGenerationTest {
 
     @Test
     fun `messages with the event option set to false are not events`() {
-        val text = contracts("message Plain { option (surf.nats.v1.event) = false; optional int32 x = 1; }")
+        val text = contracts("message Plain { option (surf.nats.v1.event) = false; required int32 x = 1; }")
         assertNotContains(text, "NatsEvent", "NATS_DESCRIPTOR", "companion")
     }
 
     @Test
     fun `messages without the event option are not events`() {
-        val text = contracts("message Plain { optional int32 x = 1; }")
+        val text = contracts("message Plain { required int32 x = 1; }")
         assertNotContains(text, "NatsEvent", "NATS_DESCRIPTOR", "companion")
     }
 
@@ -90,14 +90,14 @@ class ContractGenerationTest {
               rpc FindServer(FindServerRequest) returns (FindServerReply);
             }
             message FindServerRequest {
-              optional string player = 1;
+              required string player = 1;
               optional int32 limit = 2 [default = 5];
-              optional string region = 3 [(surf.nats.v1.nullable) = true];
+              optional string region = 3;
               repeated string tags = 4;
               oneof filter { string name = 5; int64 id = 6; }
-              optional surf.types.v1.Uuid owner = 7;
+              required surf.types.v1.Uuid owner = 7;
             }
-            message FindServerReply { optional string server = 1 [(surf.nats.v1.nullable) = true]; }
+            message FindServerReply { optional string server = 1; }
             """,
             imports = arrayOf("surf/types/v1/uuid.proto"),
         )
@@ -125,20 +125,20 @@ class ContractGenerationTest {
             |service OrderService {
             |  rpc Place(PlaceRequest) returns (PlaceReply);
             |}
-            |message PlaceReply { optional int64 id = 1; }
+            |message PlaceReply { required int64 id = 1; }
             |$request
             """.trimMargin(),
         ).generateFile("Contracts.kt")
 
         val declared = generate(
             "declared",
-            "message PlaceRequest { optional string note = 3; oneof target { string server = 5; int64 player = 4; } " +
-                    "optional int64 id = 1; optional int32 amount = 2 [default = 1]; }",
+            "message PlaceRequest { required string note = 3; oneof target { string server = 5; int64 player = 4; } " +
+                    "required int64 id = 1; optional int32 amount = 2 [default = 1]; }",
         )
         val reordered = generate(
             "reordered",
-            "message PlaceRequest { optional int32 amount = 2 [default = 1]; optional int64 id = 1; " +
-                    "oneof target { int64 player = 4; string server = 5; } optional string note = 3; }",
+            "message PlaceRequest { optional int32 amount = 2 [default = 1]; required int64 id = 1; " +
+                    "oneof target { int64 player = 4; string server = 5; } required string note = 3; }",
         )
         assertEquals(declared, reordered)
         assertContainsAll(declared, "public suspend fun place(request: PlaceRequest): PlaceReply\n")
@@ -152,7 +152,7 @@ class ContractGenerationTest {
               rpc Ping(google.protobuf.Empty) returns (Pong);
               rpc Hello(surf.test.v1.Hello) returns (google.protobuf.Empty);
             }
-            message Pong { optional int64 at = 1; }
+            message Pong { required int64 at = 1; }
             message Hello {}
             """
         )
@@ -190,8 +190,8 @@ class ContractGenerationTest {
               rpc Single(Query) returns (Reply) { option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_ANY_INSTANCE }; }
               rpc Inherit(Query) returns (Reply) { option (surf.nats.v1.method) = { recipients: NATS_RECIPIENTS_UNSPECIFIED }; }
             }
-            message Query { optional int64 id = 1; }
-            message Reply { optional string value = 1 [(surf.nats.v1.nullable) = true]; }
+            message Query { required int64 id = 1; }
+            message Reply { optional string value = 1; }
             """
         )
         assertContainsAll(
@@ -220,7 +220,7 @@ class ContractGenerationTest {
               rpc Slow(google.protobuf.Empty) returns (Order) { option (surf.nats.v1.method) = { call_timeout_seconds: 300 }; }
             }
             service PlainService { rpc Get(google.protobuf.Empty) returns (Order); }
-            message Order { optional int64 id = 1; }
+            message Order { required int64 id = 1; }
             """
         )
         assertContainsAll(
@@ -268,7 +268,7 @@ class ContractGenerationTest {
             service EdgeService {
               rpc Store(Item) returns (google.protobuf.Empty) { option (surf.nats.v1.method) = { persistent: true call_timeout_seconds: 120 }; }
             }
-            message Item { optional int64 id = 1; }
+            message Item { required int64 id = 1; }
             """
         )
         assertContainsAll(text, "callTimeoutSeconds = 120,")
@@ -283,7 +283,7 @@ class ContractGenerationTest {
               rpc Inherit(Item) returns (Item);
               rpc Own(Item) returns (Item) { option (surf.nats.v1.method).call_timeout_seconds = 0X1e; }
             }
-            message Item { optional int64 id = 1; }
+            message Item { required int64 id = 1; }
             """
         )
         assertInOrder(text, "kotlinName = \"inherit\",", "callTimeoutSeconds = 16,", "kotlinName = \"own\",", "callTimeoutSeconds = 30,")
@@ -295,7 +295,7 @@ class ContractGenerationTest {
             "contracts.proto",
             "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nservice EdgeService {\n" +
                     "  rpc Own(Item) returns (Item) { option (surf.nats.v1.method).call_timeout_seconds = 010; }\n}\n" +
-                    "message Item { optional int64 id = 1; }",
+                    "message Item { required int64 id = 1; }",
         ).errors()
         assertError(errors, "contracts.proto:5:", "invalid option value \"010\" for uint32")
     }

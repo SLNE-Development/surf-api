@@ -4,7 +4,7 @@ syntax = "proto2";
 package surf.natsjs.invalid;
 
 message UnversionedRequest {
-  optional string name = 1;
+  required string name = 1;
 }
 
 service UnversionedService {

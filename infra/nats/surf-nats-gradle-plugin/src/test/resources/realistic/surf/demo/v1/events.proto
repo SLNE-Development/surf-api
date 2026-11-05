@@ -15,10 +15,10 @@ import "surf/demo/v1/common.proto";
 message PunishmentCreated {
   option (surf.nats.v1.event) = true;
 
-  optional surf.types.v1.Uuid player = 1;
+  required surf.types.v1.Uuid player = 1;
   optional PunishmentType type = 2;
-  optional google.protobuf.Timestamp created_at = 3;
-  optional google.protobuf.Duration duration = 4 [(surf.nats.v1.nullable) = true];
+  required google.protobuf.Timestamp created_at = 3;
+  optional google.protobuf.Duration duration = 4;
   optional string reason = 5 [default = "none"];
   repeated string tags = 6;
   map<string, int64> counters = 7;
@@ -38,17 +38,17 @@ message ServerStarted {
 message PlayerJoined {
   option (surf.nats.v1.event) = true;
 
-  optional surf.types.v1.Uuid player = 1;
-  optional surf.types.v1.Component display_name = 2 [(surf.nats.v1.nullable) = true];
-  optional surf.types.v1.Key world = 3;
-  optional Location location = 4;
+  required surf.types.v1.Uuid player = 1;
+  optional surf.types.v1.Component display_name = 2;
+  required surf.types.v1.Key world = 3;
+  required Location location = 4;
 
   message Location {
-    optional double x = 1;
-    optional double y = 2;
-    optional double z = 3;
+    required double x = 1;
+    required double y = 2;
+    required double z = 3;
     optional float yaw = 4 [default = 0.5];
-    optional Facing facing = 5 [default = FACING_UNSPECIFIED];
+    optional Facing facing = 5;
 
     enum Facing {
       FACING_UNSPECIFIED = 0;

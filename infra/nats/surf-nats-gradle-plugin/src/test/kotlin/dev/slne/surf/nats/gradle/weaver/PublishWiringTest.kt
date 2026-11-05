@@ -36,7 +36,7 @@ internal class PublishWiringTest : TestKitSupport() {
     }
 
     private fun contract() {
-        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { optional int64 id = 1; }"))
+        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
     }
 
     private fun assertBefore(plan: List<String>, first: String, second: String) {
@@ -201,7 +201,7 @@ internal class PublishWiringTest : TestKitSupport() {
             """,
             project = "a",
         )
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message A { optional int64 id = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto("surf/a/v1/a.proto", TestBuild.contract("message A { required int64 id = 1; }", pkg = "surf.a.v1"), project = "a")
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -211,7 +211,7 @@ internal class PublishWiringTest : TestKitSupport() {
             """,
             project = "b",
         )
-        build.proto("surf/b/v1/b.proto", TestBuild.contract("message B { optional int64 id = 1; }", pkg = "surf.b.v1"), project = "b")
+        build.proto("surf/b/v1/b.proto", TestBuild.contract("message B { required int64 id = 1; }", pkg = "surf.b.v1"), project = "b")
 
         val plan = build.plan("publish", "--parallel")
         assertBefore(plan, ":a:publishProtos", ":b:publishProtos")

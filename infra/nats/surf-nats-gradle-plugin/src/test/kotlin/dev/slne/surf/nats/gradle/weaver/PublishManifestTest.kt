@@ -37,7 +37,7 @@ internal class PublishManifestTest : TestKitSupport() {
             )}
             """
         )
-        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { optional int64 id = 1; }"))
+        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
         stub.acceptPublish("dev.slne.demo", "demo", "1.2.0")
         stub.acceptResolve()
     }

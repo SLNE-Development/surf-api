@@ -225,45 +225,30 @@ internal class TypeEmitter(
     /**
      * Resolves a field to a Kotlin constructor property, choosing its collection or scalar representation.
      *
-     * Required Protobuf fields are unsupported and are reported without generating a property.
-     *
      * @param field the Protobuf field to generate
      * @return the generated property, or `null` when it cannot be generated
      */
     private fun fieldProperty(field: Field): Property? {
-        if (field.label == Field.Label.REQUIRED) {
-            problems.error(
-                field.location,
-                "required field '${field.name}' is not supported; declare it optional (non-null fields without [default] are required)",
-            )
-            return null
-        }
         val protoType = field.type ?: return null
-        val nullable = SurfProtoOptions.isNullable(field.options)
         return when {
-            protoType.isMap -> mapProperty(field, protoType, nullable)
-            field.isRepeated -> listProperty(field, protoType, nullable)
-            else -> singleProperty(field, protoType, nullable)
+            protoType.isMap -> mapProperty(field, protoType)
+            field.isRepeated -> listProperty(field, protoType)
+            else -> singleProperty(field, protoType)
         }
     }
 
     /**
      * Generates a map property after resolving both element types and checking Protobuf encoding compatibility.
      *
-     * Maps cannot declare custom nullability or defaults. Incompatible integer encodings prevent
-     * generation because kotlinx-serialization-protobuf applies one encoding to both elements.
+     * Maps cannot declare defaults. Incompatible integer encodings prevent generation because
+     * kotlinx-serialization-protobuf applies one encoding to both elements.
      *
      * @param field the original map field
      * @param protoType the Protobuf map type
-     * @param nullable whether custom nullability was requested
      * @return the generated map property, or `null` if its types or encoding are unsupported
      */
-    private fun mapProperty(field: Field, protoType: ProtoType, nullable: Boolean): Property? {
+    private fun mapProperty(field: Field, protoType: ProtoType): Property? {
         val location = field.location
-        if (nullable) problems.error(
-            location,
-            "(surf.nats.v1.nullable) is not allowed on map field '${field.name}'"
-        )
         if (field.default != null) problems.error(
             location,
             "[default] is not allowed on map field '${field.name}'"
@@ -307,18 +292,14 @@ internal class TypeEmitter(
     /**
      * Generates a repeated Protobuf field as a Kotlin list.
      *
-     * Custom nullability and defaults are reported as unsupported. Packed encoding is
-     * added only for packable element types; other packed declarations report an error.
+     * Defaults are reported as unsupported. Packed encoding is added only for packable
+     * element types; other packed declarations report an error.
      *
      * @return the generated list property, or `null` if the element type cannot be resolved
      */
-    private fun listProperty(field: Field, protoType: ProtoType, nullable: Boolean): Property? {
+    private fun listProperty(field: Field, protoType: ProtoType): Property? {
         val location = field.location
         val element = types.element(protoType, location) ?: return null
-        if (nullable) problems.error(
-            location,
-            "(surf.nats.v1.nullable) is not allowed on repeated field '${field.name}'"
-        )
         if (field.default != null) problems.error(
             location,
             "[default] is not allowed on repeated field '${field.name}'"
@@ -358,24 +339,26 @@ internal class TypeEmitter(
     /**
      * Generates a scalar or message-valued property, including its default and equality behavior.
      *
-     * Nullable properties use `null` as their default. Non-null properties use their
-     * explicitly declared defaults, if any. Floating-point properties use bitwise
-     * equality when content-aware equality methods are generated.
+     * The proto2 label decides nullability: `required` fields are non-null without a default,
+     * `optional` fields are nullable with a `null` default unless they declare a `[default]`.
+     * Generated enum fields are always optional and non-null, defaulting to their zero value.
+     * Floating-point properties use bitwise equality when content-aware equality methods are generated.
      *
      * @return the property, or `null` if its element type cannot be resolved
      */
-    private fun singleProperty(field: Field, protoType: ProtoType, nullable: Boolean): Property? {
+    private fun singleProperty(field: Field, protoType: ProtoType): Property? {
         val element = types.element(protoType, field.location) ?: return null
-        val default = if (nullable) {
-            if (field.default != null) {
-                problems.error(
-                    field.location,
-                    "'${field.name}' cannot be (surf.nats.v1.nullable) and have a [default]"
-                )
+        val enumType = element.enumType
+        val nullable = enumType == null && field.label != Field.Label.REQUIRED && field.default == null
+        val default = when {
+            enumType != null -> enumDefault(field, element, enumType)
+            field.label == Field.Label.REQUIRED -> {
+                reportDefaultOnRequired(field)
+                null
             }
-            CodeBlock.of("null")
-        } else {
-            defaultValue(field, element)
+
+            nullable -> CodeBlock.of("null")
+            else -> defaultValue(field, element)
         }
         return Property(
             name = KotlinNaming.lowerCamel(field.name),
@@ -400,10 +383,24 @@ internal class TypeEmitter(
     }
 
     /**
-     * Resolves a Protobuf `[default]` literal to the corresponding Kotlin expression.
+     * Reports a `[default]` on a `required` field.
      *
-     * Generated messages and mapped types do not support defaults. Enum, string, byte,
-     * and scalar defaults are delegated to their specific parsers and validators.
+     * The encoder omits values equal to the default, so readers would reject the message as incomplete.
+     */
+    private fun reportDefaultOnRequired(field: Field) {
+        if (field.default == null) return
+        problems.error(
+            field.location,
+            "required field '${field.name}' cannot have a [default]; the encoder omits values equal to the default, " +
+                    "so readers would reject the message (declare it optional)",
+        )
+    }
+
+    /**
+     * Resolves a Protobuf `[default]` literal of a scalar, string, or bytes field to the corresponding Kotlin
+     * expression.
+     *
+     * Generated messages and mapped types do not support defaults.
      *
      * @param field the declaration containing the default literal
      * @param element the resolved type information
@@ -411,7 +408,6 @@ internal class TypeEmitter(
      */
     private fun defaultValue(field: Field, element: ElementType): CodeBlock? {
         val literal = field.default ?: return null
-        val enumType = element.enumType
         return when {
             element.isMapped || element.isMessage -> {
                 problems.error(
@@ -421,7 +417,6 @@ internal class TypeEmitter(
                 null
             }
 
-            enumType != null -> enumDefault(field, element, enumType, literal)
             element.protoType == ProtoType.STRING || element.protoType == ProtoType.BYTES ->
                 rawDefault(field, element, literal)
 
@@ -430,27 +425,30 @@ internal class TypeEmitter(
     }
 
     /**
-     * Resolves a default enum constant, accepting only the enum's zero-valued member.
+     * Resolves the Kotlin default of a generated enum field: the enum's zero-valued entry.
      *
-     * The generated enum's prefix is removed from the Kotlin entry reference.
-     * Enum entry naming is validated separately when the enum itself is generated.
+     * Reports `required` and `[default]` on the field, since the zero value already means "not set". The generated
+     * enum's prefix is removed from the Kotlin entry reference.
+     *
+     * @return the zero entry, or `null` if the enum declares no zero value
      */
-    private fun enumDefault(
-        field: Field,
-        element: ElementType,
-        enumType: EnumType,
-        literal: String
-    ): CodeBlock? {
-        val zero = enumType.constants.firstOrNull { it.tag == 0 }
-        if (zero == null || zero.name != literal) {
+    private fun enumDefault(field: Field, element: ElementType, enumType: EnumType): CodeBlock? {
+        if (field.label == Field.Label.REQUIRED) {
             problems.error(
                 field.location,
-                "enum field '${field.name}' may only default to its zero value${
-                    zero?.let { " ${it.name}" }.orEmpty()
-                }, was $literal",
+                "enum field '${field.name}' cannot be required; declare it optional, its zero value means \"not set\"",
             )
-            return null
         }
+        val zero = enumType.constants.firstOrNull { it.tag == 0 }
+        if (field.default != null) {
+            problems.error(
+                field.location,
+                "[default] is not allowed on enum field '${field.name}'; enum fields default to their zero value${
+                    zero?.let { " ${it.name}" }.orEmpty()
+                }",
+            )
+        }
+        if (zero == null) return null
         return CodeBlock.of(
             "%T.%N",
             element.kotlinType,
@@ -593,12 +591,6 @@ internal class TypeEmitter(
         caseOwners: MutableMap<String, Field>,
     ): TypeSpec? {
         val location = field.location
-        if (SurfProtoOptions.isNullable(field.options)) {
-            problems.error(
-                location,
-                "(surf.nats.v1.nullable) is not allowed on oneof field '${field.name}'; the oneof itself is nullable"
-            )
-        }
         if (field.default != null) problems.error(
             location,
             "[default] is not allowed on oneof field '${field.name}'"

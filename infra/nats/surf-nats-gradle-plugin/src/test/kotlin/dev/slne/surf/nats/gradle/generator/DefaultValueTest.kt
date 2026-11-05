@@ -26,7 +26,6 @@ class DefaultValueTest {
             """
             $PROTO2
             package surf.test.v1;
-            enum Color { COLOR_UNSPECIFIED = 0; COLOR_RED = 1; }
             message Defaults { optional $type value = 1 [default = $literal]; }
             """
         ).generateFile("Defaults.kt")
@@ -66,7 +65,6 @@ class DefaultValueTest {
             "double   | nan                  | Double = Double.NaN",
             "bool     | true                 | Boolean = true",
             "bool     | false                | Boolean = false",
-            "Color    | COLOR_UNSPECIFIED    | Color = Color.UNSPECIFIED",
         ],
     )
     fun `scalar defaults become typed Kotlin literals`(type: String, literal: String, expected: String) {

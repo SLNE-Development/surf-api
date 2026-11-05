@@ -21,19 +21,19 @@ service VersionedJournalService {
 }
 
 message VersionedPingRequest {
-  optional string message = 1;
+  required string message = 1;
   optional int32 attempt = 2 [default = 1];
 }
 
 message VersionedPingReply {
-  optional string message = 1;
-  optional int32 version = 2;
-  optional string region = 3 [(surf.nats.v1.nullable) = true];
+  required string message = 1;
+  required int32 version = 2;
+  optional string region = 3;
 }
 
 message VersionedChanged {
   option (surf.nats.v1.event) = true;
 
-  optional string message = 1;
-  optional int64 revision = 2;
+  required string message = 1;
+  required int64 revision = 2;
 }

@@ -63,8 +63,6 @@ internal object ProtocolOptionReader {
     fun methodTimeoutSeconds(method: DescMethod): Double? =
         read(method, method.parent.file, ProtocolOptions.METHOD).number(ProtocolOptions.CALL_TIMEOUT_SECONDS)
 
-    fun isNullable(field: DescField): Boolean = flag(field, field.parent.file, ProtocolOptions.NULLABLE)
-
     private fun flag(element: AnyDesc, file: DescFile, option: String): Boolean {
         val extension = findExtension(file, option) ?: return false
 

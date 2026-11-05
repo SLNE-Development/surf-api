@@ -10,9 +10,10 @@ import dev.slne.surf.nats.js.external.protobuf.reflect.reflect as reflectMessage
 /**
  * Applies the presence and enum rules of the Kotlin codec to protobuf-es messages.
  *
- * A field is required when it has explicit presence, is no oneof member, has no `(surf.nats.v1.nullable)` option
- * and no proto `[default]`; Kotlin fails to decode a message without it. `google.protobuf.*` messages are not
- * checked. `surf.types.v1.Uuid.value` must be exactly 16 bytes.
+ * A field is required when it has the proto2 label `required`; Kotlin fails to decode a message without it.
+ * protobuf-es checks `required` only when encoding: incoming messages are checked here, and outgoing messages are
+ * checked before encoding so the error names the full field path.
+ * `google.protobuf.*` messages are not checked. `surf.types.v1.Uuid.value` must be exactly 16 bytes.
  *
  * Kotlin decodes unknown numbers of closed enums to the zero entry in every position. protobuf-es keeps them as
  * raw numbers in lists and maps and moves singular values to `$unknown`; incoming messages are rewritten to the

@@ -7,5 +7,5 @@ option java_package = "dev.slne.surf.nats.types.proto";
 // Adventure shadow color. argb is required: a reader rejects a message without it.
 message ShadowColor {
   // 0xAARRGGBB.
-  optional fixed32 argb = 1;
+  required fixed32 argb = 1;
 }

@@ -20,13 +20,13 @@ service FinderService {
 }
 
 message FindRequest {
-  optional string key = 1;
+  required string key = 1;
 }
 
 message FindReply {
-  optional string value = 1 [(surf.nats.v1.nullable) = true];
+  optional string value = 1;
 }
 
 message BroadcastRequest {
-  optional string message = 1;
+  required string message = 1;
 }

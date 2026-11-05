@@ -34,7 +34,7 @@ service PunishService {
 }
 
 message FindPunishmentsRequest {
-  optional surf.types.v1.Uuid player = 1;
+  required surf.types.v1.Uuid player = 1;
   optional int32 limit = 2 [default = 10];
   optional fixed32 flags = 3 [default = 0x10];
   repeated int32 ids = 4 [packed = true];
@@ -42,7 +42,7 @@ message FindPunishmentsRequest {
     PunishmentType type = 5;
     string reason = 6;
   }
-  optional string server = 7 [(surf.nats.v1.nullable) = true];
+  optional string server = 7;
   map<fixed32, string> labels = 8;
 }
 
@@ -50,27 +50,27 @@ message FindPunishmentsResponse {
   repeated Punishment punishments = 1;
 
   message Punishment {
-    optional int64 id = 1;
+    required int64 id = 1;
     optional PunishmentType type = 2;
-    optional bytes evidence = 3 [(surf.nats.v1.nullable) = true];
+    optional bytes evidence = 3;
   }
 }
 
 message BroadcastRequest {
-  optional string message = 1;
+  required string message = 1;
 }
 
 message LookupRequest {
-  optional surf.types.v1.Uuid player = 1;
+  required surf.types.v1.Uuid player = 1;
 }
 
 message LookupReply {
-  optional string server = 1 [(surf.nats.v1.nullable) = true];
+  optional string server = 1;
 }
 
 message StoreRequest {
-  optional int64 id = 1;
+  required int64 id = 1;
   repeated bytes payloads = 2;
-  optional Tag tag = 3;
-  optional Tag previous_tag = 4 [(surf.nats.v1.nullable) = true];
+  required Tag tag = 3;
+  optional Tag previous_tag = 4;
 }

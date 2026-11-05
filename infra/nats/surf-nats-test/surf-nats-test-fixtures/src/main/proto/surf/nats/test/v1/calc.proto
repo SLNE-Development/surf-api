@@ -32,39 +32,39 @@ service CalcService {
 }
 
 message MixedRequest {
-  optional int32 a = 1;
-  optional int64 b = 2;
-  optional double factor = 3;
-  optional bool flag = 4;
-  optional string label = 5;
+  required int32 a = 1;
+  required int64 b = 2;
+  required double factor = 3;
+  required bool flag = 4;
+  required string label = 5;
 }
 
 message HealthReply {
-  optional Health health = 1 [(surf.nats.v1.nullable) = true];
+  optional Health health = 1;
 }
 
 message FireRequest {
 }
 
 message FailRequest {
-  optional string message = 1;
+  required string message = 1;
 }
 
 message UnsignedRequest {
-  optional uint64 id = 1;
-  optional uint32 small = 2;
-  optional uint64 optional_id = 3 [(surf.nats.v1.nullable) = true];
+  required uint64 id = 1;
+  required uint32 small = 2;
+  optional uint64 optional_id = 3;
 }
 
 message UnsignedReply {
-  optional uint64 id = 1;
-  optional uint32 small = 2;
-  optional uint64 optional_id = 3 [(surf.nats.v1.nullable) = true];
+  required uint64 id = 1;
+  required uint32 small = 2;
+  optional uint64 optional_id = 3;
 }
 
 message InlineRequest {
-  optional google.protobuf.Duration duration = 1;
-  optional google.protobuf.Duration maybe_duration = 2 [(surf.nats.v1.nullable) = true];
-  optional Tag tag = 3;
-  optional Tag maybe_tag = 4 [(surf.nats.v1.nullable) = true];
+  required google.protobuf.Duration duration = 1;
+  optional google.protobuf.Duration maybe_duration = 2;
+  required Tag tag = 3;
+  optional Tag maybe_tag = 4;
 }

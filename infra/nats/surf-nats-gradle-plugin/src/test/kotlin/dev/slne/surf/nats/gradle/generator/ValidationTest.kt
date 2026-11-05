@@ -116,7 +116,7 @@ class ValidationTest {
 
     @Test
     fun `wire link errors are reported with their location`() {
-        assertLocated(errors("message A { optional Missing m = 1; }"), 4, "unable to resolve Missing", "in message surf.test.v1.A")
+        assertLocated(errors("message A { required Missing m = 1; }"), 4, "unable to resolve Missing", "in message surf.test.v1.A")
     }
 
     @Test
@@ -127,50 +127,44 @@ class ValidationTest {
     // Messages
 
     @Test
-    fun `required fields are rejected`() {
-        assertLocated(errors("message A {\n  required int32 a = 1;\n}"), 5, "required field 'a' is not supported")
+    fun `required fields must not have a default`() {
+        assertLocated(
+            errors("message A {\n  required int32 a = 1 [default = 5];\n}"),
+            5, "required field 'a' cannot have a [default]",
+        )
+    }
+
+    @Test
+    fun `generated enum fields must not be required`() {
+        assertLocated(
+            errors("enum Color { COLOR_UNSPECIFIED = 0; }\nmessage A {\n  required Color c = 1;\n}"),
+            6, "enum field 'c' cannot be required",
+        )
     }
 
     @Test
     fun `sint32 is rejected`() {
-        assertLocated(errors("message A {\n  optional sint32 a = 1;\n}"), 5, "sint32 is not supported")
+        assertLocated(errors("message A {\n  required sint32 a = 1;\n}"), 5, "sint32 is not supported")
     }
 
     @Test
     fun `Empty is rejected as a field type`() {
-        assertLocated(errors("message A {\n  optional google.protobuf.Empty e = 1;\n}"), 5, "google.protobuf.Empty can only be an rpc request or response")
+        assertLocated(errors("message A {\n  required google.protobuf.Empty e = 1;\n}"), 5, "google.protobuf.Empty can only be an rpc request or response")
     }
 
     @Test
-    fun `nullable is rejected on repeated, map and oneof fields`() {
+    fun `defaults are rejected for generated enum fields`() {
         val errors = errors(
             """
+            enum Color { COLOR_UNSPECIFIED = 0; COLOR_RED = 1; }
             message A {
-              repeated int32 a = 1 [(surf.nats.v1.nullable) = true];
-              map<string, int32> b = 2 [(surf.nats.v1.nullable) = true];
-              oneof c { string d = 3 [(surf.nats.v1.nullable) = true]; }
+              optional Color a = 1 [default = COLOR_UNSPECIFIED];
+              optional Color b = 2 [default = COLOR_RED];
             }
             """.trimIndent()
         )
-        assertLocated(errors, 5, "(surf.nats.v1.nullable) is not allowed on repeated field 'a'")
-        assertLocated(errors, 6, "(surf.nats.v1.nullable) is not allowed on map field 'b'")
-        assertLocated(errors, 7, "(surf.nats.v1.nullable) is not allowed on oneof field 'd'")
-    }
-
-    @Test
-    fun `nullable fields must not have a default`() {
-        assertLocated(
-            errors("message A {\n  optional int32 a = 1 [(surf.nats.v1.nullable) = true, default = 5];\n}"),
-            5, "'a' cannot be (surf.nats.v1.nullable) and have a [default]",
-        )
-    }
-
-    @Test
-    fun `enum defaults must be the zero value`() {
-        assertLocated(
-            errors("enum Color { COLOR_UNSPECIFIED = 0; COLOR_RED = 1; }\nmessage A {\n  optional Color c = 1 [default = COLOR_RED];\n}"),
-            6, "enum field 'c' may only default to its zero value COLOR_UNSPECIFIED, was COLOR_RED",
-        )
+        assertLocated(errors, 6, "[default] is not allowed on enum field 'a'", "zero value COLOR_UNSPECIFIED")
+        assertLocated(errors, 7, "[default] is not allowed on enum field 'b'")
     }
 
     @Test
@@ -221,7 +215,7 @@ class ValidationTest {
 
     @Test
     fun `types that are neither generated nor mapped are rejected`() {
-        val errors = errors("import \"google/protobuf/any.proto\";\nmessage A {\n  optional google.protobuf.Any a = 1;\n}")
+        val errors = errors("import \"google/protobuf/any.proto\";\nmessage A {\n  required google.protobuf.Any a = 1;\n}")
         assertLocated(
             errors, 6,
             "google.protobuf.Any from google/protobuf/any.proto is neither generated nor mapped; add mapType(\"google.protobuf.Any\", ...)",
@@ -230,14 +224,14 @@ class ValidationTest {
 
     @Test
     fun `paper types are unmapped outside paper projects`() {
-        val errors = errors("import \"surf/types/paper/v1/location.proto\";\nmessage A {\n  optional surf.types.paper.v1.Location at = 1;\n}")
+        val errors = errors("import \"surf/types/paper/v1/location.proto\";\nmessage A {\n  required surf.types.paper.v1.Location at = 1;\n}")
         assertLocated(errors, 6, "surf.types.paper.v1.Location from surf/types/paper/v1/location.proto is neither generated nor mapped")
     }
 
     @Test
     fun `lowerCamel property names must be unique`() {
         assertLocated(
-            errors("message A {\n  optional int32 foo_bar = 1;\n  optional int32 fooBar = 2;\n}"),
+            errors("message A {\n  required int32 foo_bar = 1;\n  required int32 fooBar = 2;\n}"),
             6, "'fooBar' maps to the Kotlin property 'fooBar', which 'foo_bar'",
         )
     }
@@ -369,7 +363,7 @@ class ValidationTest {
     @Test
     fun `events must not declare a natsDescriptor field`() {
         assertLocated(
-            errors("message A {\n  option (surf.nats.v1.event) = true;\n  optional int32 nats_descriptor = 1;\n}"),
+            errors("message A {\n  option (surf.nats.v1.event) = true;\n  required int32 nats_descriptor = 1;\n}"),
             6, "event surf.test.v1.A must not have a field named natsDescriptor",
         )
     }
@@ -378,7 +372,7 @@ class ValidationTest {
     fun `mapped events are rejected`() {
         val errors = harness().proto(
             "surf/test/v1/bad.proto",
-            "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nmessage Tag { option (surf.nats.v1.event) = true; optional string v = 1; }",
+            "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nmessage Tag { option (surf.nats.v1.event) = true; required string v = 1; }",
         ).errors(harness().input(mappings = listOf(TypeMapping(ProtoType.get("surf.test.v1.Tag"), "dev.example.Tag", "dev.example.TagSerializer"))))
         assertLocated(errors, 4, "event message surf.test.v1.Tag is mapped by mapType")
     }
@@ -424,7 +418,7 @@ class ValidationTest {
               rpc Stored(google.protobuf.Empty) returns (google.protobuf.Empty) { option (surf.nats.v1.method).persistent = true; }
               rpc Total(google.protobuf.Empty) returns (Reply) { option (surf.nats.v1.method).persistent = true; }
             }
-            message Reply { optional int64 v = 1; }
+            message Reply { required int64 v = 1; }
             """.trimIndent()
         )
         assertLocated(errors, 7, "rpc Stored: the call timeout of a persistent fire method (180s) must not exceed the 120s duplicate window")
@@ -476,8 +470,8 @@ class ValidationTest {
               rpc Find(A) returns (google.protobuf.Empty);
               rpc find(B) returns (google.protobuf.Empty);
             }
-            message A { optional int64 id = 1; }
-            message B { optional string name = 1; }
+            message A { required int64 id = 1; }
+            message B { required string name = 1; }
             """.trimIndent()
         )
         assertLocated(errors, 6, "rpc find maps to the Kotlin function 'find', already used by the rpc at")
@@ -595,8 +589,8 @@ class ValidationTest {
         val errors = errors(
             """
             message A {
-              required int32 a = 1;
-              optional sint32 b = 2;
+              required int32 a = 1 [default = 1];
+              required sint32 b = 2;
             }
             service S { rpc X(stream google.protobuf.Empty) returns (google.protobuf.Empty); }
             """.trimIndent()

@@ -196,15 +196,6 @@ class ProtocolResolutionTest {
     }
 
     @Test
-    fun requiredFieldsHaveExplicitPresenceAndNoFallback() {
-        assertTrue(ProtocolFieldRules.isRequired(explicitPresence = true, oneofMember = false, nullable = false, hasDefault = false))
-        assertFalse(ProtocolFieldRules.isRequired(explicitPresence = false, oneofMember = false, nullable = false, hasDefault = false))
-        assertFalse(ProtocolFieldRules.isRequired(explicitPresence = true, oneofMember = true, nullable = false, hasDefault = false))
-        assertFalse(ProtocolFieldRules.isRequired(explicitPresence = true, oneofMember = false, nullable = true, hasDefault = false))
-        assertFalse(ProtocolFieldRules.isRequired(explicitPresence = true, oneofMember = false, nullable = false, hasDefault = true))
-    }
-
-    @Test
     fun errorMessagesAreCapped() {
         assertEquals("", ProtocolDefaults.errorMessage(null))
         assertEquals("boom", ProtocolDefaults.errorMessage("boom"))

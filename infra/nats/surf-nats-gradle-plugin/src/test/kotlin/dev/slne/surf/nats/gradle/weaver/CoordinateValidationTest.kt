@@ -18,7 +18,7 @@ internal class CoordinateValidationTest : TestKitSupport() {
             $coordinates
             """
         )
-        if (withProtos) build.proto(CONTRACT_PATH, TestBuild.contract("message Player { optional int64 id = 1; }"))
+        if (withProtos) build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
     }
 
     private fun failure(): String = build.runAndFail("help").output
@@ -83,7 +83,7 @@ internal class CoordinateValidationTest : TestKitSupport() {
     fun `an ungrouped published subproject reports the group as not set`() {
         build.settings("sub", rootName = "demo")
         build.script("${TestBuild.PLUGIN}\n${TestBuild.PUBLISHING}\nversion = '1.0.0'", project = "sub")
-        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { optional int64 id = 1; }"), project = "sub")
+        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"), project = "sub")
 
         assertContains(failure(), "weaver.publishing.group is not set")
     }
@@ -123,7 +123,7 @@ internal class CoordinateValidationTest : TestKitSupport() {
         build.settings("a", "b", rootName = "demo")
         build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
         build.script("${TestBuild.PLUGIN}\n${TestBuild.PUBLISHING}", project = "a")
-        build.proto(CONTRACT_PATH, TestBuild.contract("message A { optional int64 id = 1; }"), project = "a")
+        build.proto(CONTRACT_PATH, TestBuild.contract("message A { required int64 id = 1; }"), project = "a")
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -133,7 +133,7 @@ internal class CoordinateValidationTest : TestKitSupport() {
             project = "b",
         )
         if (secondProtos) {
-            build.proto("surf/b/v1/b.proto", TestBuild.contract("message B { optional int64 id = 1; }"), project = "b")
+            build.proto("surf/b/v1/b.proto", TestBuild.contract("message B { required int64 id = 1; }"), project = "b")
         }
     }
 
@@ -162,7 +162,7 @@ internal class CoordinateValidationTest : TestKitSupport() {
             )
             build.proto(
                 "surf/$project/v1/$project.proto",
-                TestBuild.contract("message M { optional int64 id = 1; }"),
+                TestBuild.contract("message M { required int64 id = 1; }"),
                 project = project,
             )
         }

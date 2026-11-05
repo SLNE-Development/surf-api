@@ -23,23 +23,23 @@ service RolesService {
 }
 
 message WhitelistRequest {
-  optional string action = 1;
-  optional int64 user_id = 2;
+  required string action = 1;
+  required int64 user_id = 2;
 }
 
 message EchoRequest {
-  optional int64 id = 1;
+  required int64 id = 1;
 }
 
 message OwnerRequest {
-  optional surf.types.v1.Uuid player = 1;
+  required surf.types.v1.Uuid player = 1;
 }
 
 message OwnerReply {
-  optional surf.types.v1.Uuid owner = 1;
+  required surf.types.v1.Uuid owner = 1;
 }
 
 message StoreRequest {
-  optional int64 id = 1;
-  optional string payload = 2 [(surf.nats.v1.nullable) = true];
+  required int64 id = 1;
+  optional string payload = 2;
 }

@@ -27,7 +27,7 @@ internal class WeaverImportWiringTest : TestKitSupport() {
         build.settings("a", "b")
         build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
         build.script(TestBuild.PLUGIN, project = "a")
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { optional string value = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"), project = "a")
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -42,7 +42,7 @@ internal class WeaverImportWiringTest : TestKitSupport() {
             syntax = "proto2";
             package surf.b.v1;
             import "surf/a/v1/a.proto";
-            message Holder { optional surf.a.v1.Tag tag = 1; }
+            message Holder { required surf.a.v1.Tag tag = 1; }
             """.trimIndent(),
             project = "b",
         )
@@ -141,9 +141,9 @@ internal class WeaverImportWiringTest : TestKitSupport() {
         build.settings("a", "c", "b")
         build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
         build.script(TestBuild.PLUGIN, project = "a")
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { optional string value = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"), project = "a")
         build.script(TestBuild.PLUGIN, project = "c")
-        build.proto("surf/c/v1/c.proto", TestBuild.contract("message Label { optional string value = 1; }", pkg = "surf.c.v1"), project = "c")
+        build.proto("surf/c/v1/c.proto", TestBuild.contract("message Label { required string value = 1; }", pkg = "surf.c.v1"), project = "c")
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -163,7 +163,7 @@ internal class WeaverImportWiringTest : TestKitSupport() {
             package surf.b.v1;
             import "surf/a/v1/a.proto";
             import "surf/c/v1/c.proto";
-            message Holder { optional surf.a.v1.Tag tag = 1; optional surf.c.v1.Label label = 2; }
+            message Holder { required surf.a.v1.Tag tag = 1; required surf.c.v1.Label label = 2; }
             """.trimIndent(),
             project = "b",
         )
@@ -214,7 +214,7 @@ internal class WeaverImportWiringTest : TestKitSupport() {
 
         build.proto(
             "surf/a/v1/a.proto",
-            TestBuild.contract("message Tag { optional string value = 1; }\nmessage Other { optional string value = 1; }", pkg = "surf.a.v1"),
+            TestBuild.contract("message Tag { required string value = 1; }\nmessage Other { required string value = 1; }", pkg = "surf.a.v1"),
             project = "a",
         )
         val result = build.run("--offline", ":b:generateSurfNatsKotlin")

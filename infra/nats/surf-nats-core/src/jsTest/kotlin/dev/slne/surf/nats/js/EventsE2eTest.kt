@@ -36,8 +36,8 @@ class EventsE2eTest {
 
     private val playerJoinedSubject = "surf.evt.surf.natsjs.test.v1.PlayerJoined"
 
-    private fun playerJoined(name: String? = null): PlayerJoined = unsafeJso {
-        if (name != null) this.name = name
+    private fun playerJoined(name: String): PlayerJoined = unsafeJso {
+        this.name = name
         id = unsafeJso<Uuid> { value = bytesOfSize(16) }
     }
 
@@ -245,8 +245,9 @@ class EventsE2eTest {
             ).await()
             val subject = playerJoinedSubject
 
-            // name is required; a missing content type is rejected like on the JVM
-            raw.publish(subject, raw.encode(PlayerJoinedSchema, playerJoined()), raw.jvmHeaders())
+            // an empty payload lacks the required name; protobuf-es refuses to encode it, so publish raw bytes.
+            // A missing content type is rejected like on the JVM.
+            raw.publish(subject, bytes(), raw.jvmHeaders())
             raw.publish(subject, raw.encode(PlayerJoinedSchema, playerJoined("no-content-type")))
             raw.publish(subject, raw.encode(PlayerJoinedSchema, playerJoined("Alex")), raw.jvmHeaders())
 

@@ -29,10 +29,9 @@ import kotlin.test.assertTrue
 
 class MessageRulesTest {
 
-    // Smallest valid Rules: the non-null fields without default.
+    // Smallest valid Rules: only the required fields.
     private fun validInit(): Rules = unsafeJso {
         requiredText = "x"
-        color = 1
     }
 
     private fun inner(init: Inner.() -> Unit): Inner = unsafeJso(init)
@@ -69,15 +68,16 @@ class MessageRulesTest {
     }
 
     @Test
-    fun nullableDefaultAndOneofFieldsAreOptional() {
+    fun optionalDefaultAndOneofFieldsAreNotRequired() {
         assertNull(violationOf(validInit()))
         assertTrue(isSet(create(RulesSchema, validInit()), "requiredText"))
     }
 
     @Test
-    fun enumWithoutDefaultIsRequired() {
-        val violation = violationOf(unsafeJso { requiredText = "x" })
-        assertTrue(violation!!.contains("'color'"), violation)
+    fun optionalGeneratedEnumIsNotRequired() {
+        val message = create(RulesSchema, validInit())
+        assertTrue(!isSet(message, "color"))
+        assertNull(violationOf(validInit()))
     }
 
     @Test
@@ -180,6 +180,7 @@ class MessageRulesTest {
     @Test
     fun knownEnumsAreKept() {
         val init = validInit()
+        init.color = 1
         init.colors = arrayOf(1, 2)
         val decoded = roundTrip(init)
         assertNull(MessageRules.normalizeAndCheck(RulesSchema, decoded))
@@ -191,7 +192,8 @@ class MessageRulesTest {
 
     @Test
     fun decodeRejectsAMissingRequiredField() {
-        val bytes = toBinary(RulesSchema, create(RulesSchema, unsafeJso<Rules> { color = 1 }))
+        // color = 1 (field 13, varint) without required_text; protobuf-es refuses to encode such a message
+        val bytes = bytes(13 shl 3, 1)
         val error = assertFailsWith<IllegalArgumentException> { NatsCodec.decode(RulesSchema, bytes, ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test") }
         assertTrue(error.message!!.contains("'requiredText'"), error.message)
     }

@@ -2,14 +2,14 @@ syntax = "proto2";
 
 package surf.types.v1;
 
-import "surf/nats/v1/options.proto";
 import "surf/types/v1/key.proto";
 
 option java_package = "dev.slne.surf.nats.types.proto";
 
-// Adventure sound. name, source, volume and pitch are required: a reader rejects a message without them.
+// Adventure sound. name, volume and pitch are required: a reader rejects a message without them.
 message Sound {
-  // Adventure Sound.Source. A reader maps SOURCE_UNSPECIFIED and values it does not know to SOURCE_MASTER.
+  // Adventure Sound.Source. A reader maps an unset source, SOURCE_UNSPECIFIED and values it does not know to
+  // SOURCE_MASTER.
   enum Source {
     SOURCE_UNSPECIFIED = 0;
     SOURCE_MASTER = 1;
@@ -26,10 +26,10 @@ message Sound {
   }
 
   // Sound event key, for example "minecraft:entity.experience_orb.pickup".
-  optional Key name = 1;
+  required Key name = 1;
   optional Source source = 2;
-  optional float volume = 3;
-  optional float pitch = 4;
+  required float volume = 3;
+  required float pitch = 4;
   // Unset for a random seed.
-  optional int64 seed = 5 [(surf.nats.v1.nullable) = true];
+  optional int64 seed = 5;
 }

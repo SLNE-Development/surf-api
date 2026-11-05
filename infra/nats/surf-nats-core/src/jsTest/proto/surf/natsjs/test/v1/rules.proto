@@ -3,7 +3,6 @@ syntax = "proto2";
 package surf.natsjs.test.v1;
 
 import "google/protobuf/timestamp.proto";
-import "surf/nats/v1/options.proto";
 import "surf/types/paper/v1/location.proto";
 import "surf/types/v1/uuid.proto";
 
@@ -14,15 +13,15 @@ enum Color {
 }
 
 message Inner {
-  optional string label = 1;
-  optional int32 count = 2 [(surf.nats.v1.nullable) = true];
+  required string label = 1;
+  optional int32 count = 2;
 }
 
 message Rules {
-  optional string required_text = 1;
-  optional string nullable_text = 2 [(surf.nats.v1.nullable) = true];
+  required string required_text = 1;
+  optional string nullable_text = 2;
   optional int32 defaulted = 3 [default = 7];
-  optional Inner inner = 4 [(surf.nats.v1.nullable) = true];
+  optional Inner inner = 4;
   repeated Inner inners = 5;
   map<string, Inner> inner_map = 6;
   oneof choice {
@@ -30,12 +29,12 @@ message Rules {
     Inner inner_choice = 8;
     Color color_choice = 9;
   }
-  optional google.protobuf.Timestamp at = 10 [(surf.nats.v1.nullable) = true];
-  optional surf.types.v1.Uuid uuid = 11 [(surf.nats.v1.nullable) = true];
-  optional surf.types.paper.v1.Location location = 12 [(surf.nats.v1.nullable) = true];
+  optional google.protobuf.Timestamp at = 10;
+  optional surf.types.v1.Uuid uuid = 11;
+  optional surf.types.paper.v1.Location location = 12;
   optional Color color = 13;
-  optional Color nullable_color = 14 [(surf.nats.v1.nullable) = true];
+  optional Color nullable_color = 14;
   repeated Color colors = 15;
   map<string, Color> color_map = 16;
-  optional uint32 big = 17 [(surf.nats.v1.nullable) = true];
+  optional uint32 big = 17;
 }

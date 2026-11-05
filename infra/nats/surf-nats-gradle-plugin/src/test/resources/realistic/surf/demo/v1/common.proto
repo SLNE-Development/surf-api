@@ -13,11 +13,11 @@ enum PunishmentType {
 }
 
 message Text {
-  optional string value = 1;
+  required string value = 1;
 }
 
 message Count {
-  optional int64 value = 1;
+  required int64 value = 1;
 }
 
 // Fieldless acknowledgement.
@@ -26,11 +26,11 @@ message Ack {
 
 // Mapped to a hand-written Kotlin value class by mapType, so no class is generated.
 message Tag {
-  optional string value = 1;
+  required string value = 1;
 }
 
 message Blob {
-  optional bytes data = 1;
+  required bytes data = 1;
   repeated bytes chunks = 2;
   map<string, bytes> parts = 3;
   optional string name = 4 [default = "blob"];

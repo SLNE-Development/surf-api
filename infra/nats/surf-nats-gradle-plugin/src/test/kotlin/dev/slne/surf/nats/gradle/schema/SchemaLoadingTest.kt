@@ -55,7 +55,7 @@ class SchemaLoadingTest {
         val src = temp.resolve("src")
         src.resolve("b/v1/b.proto").apply { parentFile.mkdirs() }.writeText("$PROTO2\npackage b.v1;\nmessage B {}\n")
         src.resolve("a/v1/a.proto").apply { parentFile.mkdirs() }
-            .writeText("$PROTO2\npackage a.v1;\nimport \"surf/types/v1/uuid.proto\";\nmessage A { optional surf.types.v1.Uuid id = 1; }\n")
+            .writeText("$PROTO2\npackage a.v1;\nimport \"surf/types/v1/uuid.proto\";\nmessage A { required surf.types.v1.Uuid id = 1; }\n")
         val loaded = loadSchema(listOf(src), emptyList())
         assertEquals(listOf("a/v1/a.proto", "b/v1/b.proto"), loaded.sourceFiles.map { it.location.path })
         assertTrue(loaded.schema.getType("surf.types.v1.Uuid") != null)
@@ -66,7 +66,7 @@ class SchemaLoadingTest {
         val protoPath = temp.resolve("path")
         protoPath.resolve("surf/nats/v1/options.proto").apply { parentFile.mkdirs() }.writeText("this is not a proto")
         protoPath.resolve("other/v1/shared.proto").apply { parentFile.mkdirs() }
-            .writeText("$PROTO2\npackage other.v1;\nmessage Shared { optional int32 x = 1; }\n")
+            .writeText("$PROTO2\npackage other.v1;\nmessage Shared { required int32 x = 1; }\n")
 
         val harness = GeneratorHarness(temp).proto(
             "surf/test/v1/a.proto",
@@ -77,7 +77,7 @@ class SchemaLoadingTest {
             import "other/v1/shared.proto";
             message A {
               option (surf.nats.v1.event) = true;
-              optional other.v1.Shared shared = 1;
+              required other.v1.Shared shared = 1;
             }
             """,
         )
@@ -95,10 +95,10 @@ class SchemaLoadingTest {
     fun `proto-path types must be mapped to be used`() {
         val protoPath = temp.resolve("path")
         protoPath.resolve("other/v1/shared.proto").apply { parentFile.mkdirs() }
-            .writeText("$PROTO2\npackage other.v1;\nmessage Shared { optional int32 x = 1; }\n")
+            .writeText("$PROTO2\npackage other.v1;\nmessage Shared { required int32 x = 1; }\n")
         val harness = GeneratorHarness(temp).proto(
             "surf/test/v1/a.proto",
-            "$PROTO2\npackage surf.test.v1;\nimport \"other/v1/shared.proto\";\nmessage A { optional other.v1.Shared shared = 1; }",
+            "$PROTO2\npackage surf.test.v1;\nimport \"other/v1/shared.proto\";\nmessage A { required other.v1.Shared shared = 1; }",
         )
         assertError(
             harness.errors(harness.input(protoPathDirs = listOf(protoPath))),
@@ -118,7 +118,7 @@ class SchemaLoadingTest {
     fun `errors in bundled files name the plugin`() {
         val src = temp.resolve("src")
         src.resolve("surf/test/v1/a.proto").apply { parentFile.mkdirs() }
-            .writeText("$PROTO2\npackage surf.test.v1;\nimport \"surf/types/v1/uuid.proto\";\nmessage A { optional surf.types.v1.Uuid.Missing x = 1; }\n")
+            .writeText("$PROTO2\npackage surf.test.v1;\nimport \"surf/types/v1/uuid.proto\";\nmessage A { required surf.types.v1.Uuid.Missing x = 1; }\n")
         val exception = assertThrows<SurfNatsGeneratorException> { loadSchema(listOf(src), emptyList()) }
         assertTrue(exception.errors.none { "surf-nats-protos" in it }, exception.errors.joinToString("\n"))
         assertError(exception.errors, "surf/test/v1/a.proto:4:", "unable to resolve surf.types.v1.Uuid.Missing")

@@ -14,14 +14,14 @@ import "surf/types/v1/uuid.proto";
 
 // uint32/uint64 values >= 2^31 / 2^63 in both directions.
 message InteropScalars {
-  optional uint32 unsigned_small = 1;
-  optional uint64 unsigned_large = 2;
-  optional sint64 signed_large = 3;
-  optional int32 small = 4;
-  optional int64 large = 5;
-  optional fixed32 fixed_small = 6;
-  optional double ratio = 7;
-  optional bool flag = 8;
+  required uint32 unsigned_small = 1;
+  required uint64 unsigned_large = 2;
+  required sint64 signed_large = 3;
+  required int32 small = 4;
+  required int64 large = 5;
+  required fixed32 fixed_small = 6;
+  required double ratio = 7;
+  required bool flag = 8;
 }
 
 message InteropMaps {
@@ -34,14 +34,15 @@ message InteropPacked {
   repeated int32 unpacked_values = 2;
 }
 
-// null versus explicit zero or empty values.
+// null versus explicit zero or empty values. color is a generated enum and therefore non-null: unset reads as
+// COLOR_UNSPECIFIED.
 message InteropNullables {
-  optional string text = 1 [(surf.nats.v1.nullable) = true];
-  optional int32 number = 2 [(surf.nats.v1.nullable) = true];
-  optional bytes data = 3 [(surf.nats.v1.nullable) = true];
-  optional InteropScalars scalars = 4 [(surf.nats.v1.nullable) = true];
-  optional surf.types.v1.Uuid uuid = 5 [(surf.nats.v1.nullable) = true];
-  optional Color color = 6 [(surf.nats.v1.nullable) = true];
+  optional string text = 1;
+  optional int32 number = 2;
+  optional bytes data = 3;
+  optional InteropScalars scalars = 4;
+  optional surf.types.v1.Uuid uuid = 5;
+  optional Color color = 6;
 }
 
 // [default] values elided by the sender and restored by the reader, in both directions.
@@ -50,22 +51,22 @@ message InteropDefaults {
   optional string text = 2 [default = "surf"];
   optional bool flag = 3 [default = true];
   optional double ratio = 4 [default = 1.5];
-  optional Color color = 5 [default = COLOR_UNSPECIFIED];
+  optional Color color = 5;
   optional bytes data = 6 [default = "\001\002"];
   optional uint32 unsigned_small = 7 [default = 4294967295];
 }
 
 // name is required: a TS sender that omits it must fail its validation.
 message InteropRequired {
-  optional string name = 1;
-  optional int32 count = 2 [(surf.nats.v1.nullable) = true];
+  required string name = 1;
+  optional int32 count = 2;
 }
 
 // 16-byte big-endian Uuid, epoch Timestamp (encodes as 0a00 inside its field), negative Duration.
 message InteropTypes {
-  optional surf.types.v1.Uuid uuid = 1;
-  optional google.protobuf.Timestamp timestamp = 2;
-  optional google.protobuf.Duration duration = 3;
+  required surf.types.v1.Uuid uuid = 1;
+  required google.protobuf.Timestamp timestamp = 2;
+  required google.protobuf.Duration duration = 3;
 }
 
 message InteropEmpty {
@@ -83,22 +84,22 @@ message InteropOneof {
 // Schema evolution within one major version: InteropEvolvedV2 is the newer InteropEvolved, with a nullable and a
 // [default] field added at higher numbers. Old and new readers on both runtimes must accept each other's messages.
 message InteropEvolved {
-  optional string name = 1;
-  optional int32 level = 2;
+  required string name = 1;
+  required int32 level = 2;
 }
 
 message InteropEvolvedV2 {
-  optional string name = 1;
-  optional int32 level = 2;
-  optional string nickname = 3 [(surf.nats.v1.nullable) = true];
+  required string name = 1;
+  required int32 level = 2;
+  optional string nickname = 3;
   optional int32 rank = 4 [default = 5];
 }
 
 message InteropEvent {
   option (surf.nats.v1.event) = true;
 
-  optional InteropScalars scalars = 1;
-  optional InteropTypes types = 2 [(surf.nats.v1.nullable) = true];
+  required InteropScalars scalars = 1;
+  optional InteropTypes types = 2;
 }
 
 service InteropService {
@@ -132,5 +133,5 @@ service InteropVectorService {
 }
 
 message InteropVectorRequest {
-  optional string name = 1;
+  required string name = 1;
 }

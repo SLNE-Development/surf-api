@@ -47,16 +47,17 @@ class SoundSerializerTest {
     }
 
     @Test
-    fun `unspecified and unknown sources become master`() {
+    fun `absent, unspecified and unknown sources become master`() {
         val master = Sound.sound(name, Sound.Source.MASTER, 1f, 1f)
 
+        assertEquals(master, decodeHex(SoundSerializer, nameHex + "1d0000803f" + "250000803f"))
         assertEquals(master, decodeHex(SoundSerializer, nameHex + "1000" + "1d0000803f" + "250000803f"))
         assertEquals(master, decodeHex(SoundSerializer, nameHex + "1063" + "1d0000803f" + "250000803f"))
     }
 
     @Test
-    fun `absent fields are missing`() {
-        assertMissingField("surf.types.v1.Sound", "name", "source", "volume", "pitch") {
+    fun `absent required fields are missing`() {
+        assertMissingField("surf.types.v1.Sound", "name", "volume", "pitch") {
             decodeHex(SoundSerializer, "")
         }
     }

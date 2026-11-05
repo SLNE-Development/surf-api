@@ -55,7 +55,7 @@ const ZERO_SCALARS = {
     flag: false,
 };
 
-// What protobuf-es exposes for unset fields with a proto [default]
+// What protobuf-es exposes for unset fields: the proto [default], or the zero entry for the enum field
 const DEFAULTS = {
     number: 7,
     text: "surf",
@@ -66,12 +66,18 @@ const DEFAULTS = {
     unsignedSmall: 4294967295,
 };
 
-// WIDE_COLOR_PURPLE (4) normalised to the zero entry, as Kotlin decodes it
-const UNKNOWN_COLORS_NORMALISED = {
-    color: Color.UNSPECIFIED,
-    maybeColor: Color.UNSPECIFIED,
+// WIDE_COLOR_PURPLE (4) normalised to the zero entry, as Kotlin decodes it. Kotlin elides the singular fields at their
+// zero default, so only the list and the map keep the normalised entries on the wire.
+const UNKNOWN_COLORS_FROM_KOTLIN = {
     colors: [Color.UNSPECIFIED, Color.RED],
     colorsByName: { a: Color.UNSPECIFIED, b: Color.GREEN },
+};
+
+// surf-nats-js sets singular fields of unknown numbers to the zero entry when it normalises a decoded message
+const UNKNOWN_COLORS_NORMALISED = {
+    ...UNKNOWN_COLORS_FROM_KOTLIN,
+    color: Color.UNSPECIFIED,
+    maybeColor: Color.UNSPECIFIED,
 };
 
 function assertUnset(schema, message, label, except = []) {
@@ -113,7 +119,7 @@ const VECTORS = [
         },
         sameBytes: false,
     },
-    // Non-null fields without [default] are on the wire even when zero
+    // Required fields are on the wire even when zero
     { name: "scalars-zero", kind: "scalars", expect: ZERO_SCALARS },
     {
         name: "maps",
@@ -150,13 +156,14 @@ const VECTORS = [
         kind: "colors",
         raw: true,
         expect: UNKNOWN_COLORS_NORMALISED,
+        expectEcho: UNKNOWN_COLORS_FROM_KOTLIN,
         // The re-encoding carries the normalised numbers
         sameBytes: false,
     },
     {
         name: "colors-unknown-from-js",
         kind: "colors",
-        expect: UNKNOWN_COLORS_NORMALISED,
+        expect: UNKNOWN_COLORS_FROM_KOTLIN,
         send: { color: 4, maybeColor: 4, colors: [4, Color.RED], colorsByName: { a: 4, b: Color.GREEN } },
     },
     {
@@ -174,7 +181,6 @@ const VECTORS = [
             data: new Uint8Array(0),
             scalars: ZERO_SCALARS,
             uuid: { value: new Uint8Array(16) },
-            color: Color.UNSPECIFIED,
         },
     },
     {
@@ -222,7 +228,7 @@ const VECTORS = [
         kind: "required",
         expect: { name: "steve" },
         check: async (_, { echoes }) => {
-            // A non-null field omitted by the TS sender fails the local validation, nothing is sent
+            // A required field omitted by the TS sender fails the local validation, nothing is sent
             await assert.rejects(async () => echoes.echoRequired({ count: 1 }), /required field 'name' is not set/);
         },
     },
