@@ -270,6 +270,37 @@ class ServiceResponderTest {
     }
 
     @Test
+    fun `stopAccepting waits for a running request and keeps outgoing calls working`() = withService {
+        NatsClient.create("rpc-responder-${clientCounter++}").use { other ->
+            other.registerService<PingService>(object : PingService {
+                override suspend fun ping() = Text("outgoing")
+            })
+
+            coroutineScope {
+                val call = async { calc.gated() }
+                withTimeout(5.seconds) { impl.gatedStarted.await() }
+
+                val stopping = async(Dispatchers.IO) { client.stopAccepting() }
+                delay(300.milliseconds)
+                assertFalse(stopping.isCompleted, "stopAccepting returned while a request was still being handled")
+
+                impl.gate.complete(Unit)
+                assertEquals(Text("released"), call.await())
+                withTimeout(5.seconds) { stopping.await() }
+            }
+
+            assertFalse(client.isClosed)
+            assertFailsWith<NatsNoRespondersException> { calc.count() }
+            assertFailsWith<IllegalStateException> { client.registerListener(Any()) }
+            assertEquals(Text("outgoing"), client.service<PingService>().ping(), "new proxies call other clients")
+
+            client.close()
+            assertTrue(client.isClosed)
+            assertFailsWith<IllegalStateException> { client.service<PingService>() }
+        }
+    }
+
+    @Test
     fun `closing client rejects new registrations and proxies but keeps existing proxies`() = withService {
         val versioned = object : VersionedServiceV1 {
             override suspend fun ping(request: VersionedPingRequestV1) = VersionedPingReplyV1(request.message, version = 1)

@@ -1,13 +1,11 @@
 package dev.slne.surf.nats.test.microservice
 
-import com.google.auto.service.AutoService
-import dev.slne.surf.microservice.api.microservice.Microservice
+import dev.slne.surf.microservice.api.Microservice
 import dev.slne.surf.nats.test.common.NatsTestInstance
 import java.nio.file.Path
 import kotlin.io.path.Path
 
-
-@AutoService(Microservice::class)
+@Suppress("unused")
 class NatsTestMicroservice : Microservice() {
     override val dataPath: Path = Path("data")
 

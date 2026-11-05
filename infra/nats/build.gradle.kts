@@ -13,7 +13,6 @@ buildscript {
     }
     dependencies {
         classpath("dev.slne.surf.api:surf-api-gradle-plugin:+")
-        classpath("dev.slne.surf.microservice:surf-microservice-gradle-plugin:+")
     }
 }
 
@@ -35,6 +34,17 @@ for (publishTask in listOf("publish", "publishToMavenLocal")) {
 val surfNatsModules = subprojects.filter { it.subprojects.isEmpty() }
 
 subprojects {
+    // TODO(surf-microservice v3 release): remove once surf-microservice 3.0.0 and
+    // surf-database-r2dbc 2.4.0 are published.
+    repositories {
+        mavenLocal {
+            content {
+                includeGroup("dev.slne.surf.microservice")
+                includeVersion("dev.slne.surf", "surf-database-r2dbc", "2.4.0")
+            }
+        }
+    }
+
     tasks.withType<ShadowJar>().configureEach {
         relocate("io.nats", "dev.slne.surf.nats.libs.io.nats")
     }

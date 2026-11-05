@@ -13,6 +13,10 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         mavenCentral()
         maven("https://reposilite.slne.dev/public/") { name = "public" }
+        // TODO(v3 release): remove once surf-microservice 3.0.0 is published.
+        mavenLocal {
+            content { includeGroup("dev.slne.surf.microservice") }
+        }
     }
     versionCatalogs {
         create("libs") {

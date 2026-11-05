@@ -23,7 +23,6 @@ import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
@@ -331,20 +330,7 @@ internal class ServiceRegistration(
             }
         }
 
-        dispatcher?.let { dispatcher ->
-            val drained = try {
-                // jnats unsubscribes and flushes before drain returns, so the lock does not cover the wait
-                NatsConnectionManager.withFlushLock(timeout.toJavaDuration()) { dispatcher.drain(it) }
-                    .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-            } catch (_: InterruptedException) {
-                Thread.currentThread().interrupt()
-                false
-            } catch (e: Exception) {
-                client.logger.warn("Failed to drain service dispatcher", e)
-                false
-            }
-            if (!drained) client.closeDispatcher(dispatcher, "service dispatcher")
-        }
+        dispatcher?.let { client.drainDispatcher(it, timeout, "service dispatcher") }
 
         messageConsumer?.let {
             try {

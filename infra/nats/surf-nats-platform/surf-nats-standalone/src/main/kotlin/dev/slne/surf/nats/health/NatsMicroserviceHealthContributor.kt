@@ -1,9 +1,9 @@
 package dev.slne.surf.nats.health
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.microservice.api.microservice.health.MicroserviceHealthCheckResult
-import dev.slne.surf.microservice.api.microservice.health.MicroserviceHealthContributor
-import dev.slne.surf.microservice.api.microservice.health.MicroserviceHealthStatus
+import dev.slne.surf.microservice.api.health.MicroserviceHealthCheckResult
+import dev.slne.surf.microservice.api.health.MicroserviceHealthContributor
+import dev.slne.surf.microservice.api.health.MicroserviceHealthStatus
 import dev.slne.surf.nats.NatsInstance
 
 @AutoService(MicroserviceHealthContributor::class)

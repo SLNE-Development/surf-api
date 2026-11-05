@@ -6,6 +6,7 @@ import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.internal.NatsClientFactory
 import dev.slne.surf.nats.protocol.ProtocolNaming
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.Blocking
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
@@ -13,14 +14,35 @@ import kotlin.time.Duration.Companion.seconds
 internal class NatsClientFactoryImpl : NatsClientFactory {
     private val clients = ConcurrentHashMap<String, NatsClientImpl>()
 
+    @Volatile
+    private var accepting = true
+
     override fun create(name: String): NatsClient {
         ProtocolNaming.requireClientName(name)
 
         val origin = ClientOrigin.capture()
-        return clients.compute(name) { _, existing ->
+        val client = clients.compute(name) { _, existing ->
             check(existing == null) { "NATS client '$name' already exists" }
             NatsClientImpl(name, origin, onClose = { clients.remove(name, it) })
         }!!
+
+        if (!accepting) {
+            client.stopAccepting()
+        }
+
+        return client
+    }
+
+    /**
+     * Stops inbound work of every open client, see [NatsClientImpl.stopAccepting], and blocks until all drains
+     * complete. Clients created afterwards start without accepting registrations.
+     */
+    @Blocking
+    fun stopAcceptingAll() {
+        accepting = false
+        for (client in clients.values) {
+            client.stopAccepting()
+        }
     }
 
     suspend fun ensureAllClientsClosed() {

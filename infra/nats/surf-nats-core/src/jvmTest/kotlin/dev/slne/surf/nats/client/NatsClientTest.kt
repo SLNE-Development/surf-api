@@ -77,6 +77,18 @@ class NatsClientTest {
     }
 
     @Test
+    fun `clients created after stopAcceptingAll reject registrations`() = runTest {
+        val factory = NatsClientFactoryImpl()
+        factory.stopAcceptingAll()
+
+        factory.create("created-after-stop").use { client ->
+            val rejected = assertFailsWith<IllegalStateException> { client.registerListener(Any()) }
+            assertContains(rejected.message.orEmpty(), "is closing")
+            assertFalse(client.isClosed)
+        }
+    }
+
+    @Test
     fun `close cancels the client scope`() {
         val client = NatsClient.create("scope-cancel") as NatsClientImpl
         val job = client.clientScope.launch { awaitCancellation() }

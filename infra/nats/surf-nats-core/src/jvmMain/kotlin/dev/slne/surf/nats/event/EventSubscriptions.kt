@@ -15,10 +15,20 @@ import io.nats.client.MessageHandler
 import io.nats.client.Subscription
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 @InternalNatsApi
 internal class EventSubscriptions(private val client: NatsClientImpl) {
@@ -36,6 +46,8 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     private val entries = Object2ObjectOpenHashMap<Key, Entry>()
     private var dispatcher: Dispatcher? = null
     private var closed = false
+
+    private val handlerScope = client.clientScope + SupervisorJob(client.clientScope.coroutineContext.job)
 
     fun add(method: ListenerMethod, invoker: ListenerInvoker): Unit = synchronized(lock) {
         check(!closed) { "NatsClient[${client.name}] is closed" }
@@ -87,6 +99,41 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         }
     }
 
+    /**
+     * Stops every subscription after the messages it already received are dispatched, then waits for the running
+     * handlers until [timeout] passes and cancels those still running. Later listeners are rejected, handlers launched
+     * after the drain never run and [close] has nothing left to do.
+     */
+    fun drain(timeout: Duration) {
+        val deadline = TimeSource.Monotonic.markNow() + timeout
+        val draining = synchronized(lock) {
+            if (closed) return
+            closed = true
+            entries.clear()
+            dispatcher.also { dispatcher = null }
+        }
+        draining?.let { client.drainDispatcher(it, timeout, "event dispatcher") }
+        awaitHandlers(deadline, timeout)
+        handlerScope.cancel("Listener handlers of NatsClient[${client.name}] drained")
+    }
+
+    private fun awaitHandlers(deadline: TimeMark, timeout: Duration) {
+        val handlers = handlerScope.coroutineContext.job.children.toList()
+        if (handlers.isEmpty()) return
+        val left = (-deadline.elapsedNow()).coerceAtLeast(Duration.ZERO)
+        val finished = runBlocking {
+            withTimeoutOrNull(left) {
+                handlers.joinAll()
+            } != null
+        }
+
+        if (finished) return
+        client.logger.warn(
+            "${handlers.count { it.isActive }} listener handlers did not finish within the drain timeout of $timeout " +
+                    "and are cancelled"
+        )
+    }
+
     fun close(): Unit = synchronized(lock) {
         if (closed) return
         closed = true
@@ -124,7 +171,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
         for (target in targets) {
             if (fromThisClient && target.ignoreFromThisClient) continue
-            client.clientScope.launch(context) {
+            handlerScope.launch(context) {
                 try {
                     target.invoker.call(event)
                 } catch (e: CancellationException) {

@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.weaver.gradle.plugin)
     // Reads weaver's local module manifests (JSON tree only, no serialization compiler plugin).
     implementation(libs.kotlinx.serialization.json)
+    // Applied by id on surf-api standalone projects; no surf-nats code references its types.
+    runtimeOnly(libs.surf.microservice.gradle.plugin)
 
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(gradleKotlinDsl())

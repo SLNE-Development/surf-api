@@ -21,6 +21,49 @@ class ClientLifecycleTest {
     }
 
     @Test
+    fun stopAcceptingRejectsNewWorkWithoutStartingTheClose() {
+        val lifecycle = ClientLifecycle("surf-test")
+        assertTrue(lifecycle.stopAccepting())
+        assertFalse(lifecycle.stopAccepting())
+
+        assertFailsWith<IllegalStateException> { lifecycle.requireAccepting() }
+        lifecycle.requireCloseNotStarted()
+        assertTrue(lifecycle.beginClose())
+        assertFalse(lifecycle.beginClose())
+        assertEquals(
+            "NatsClient[surf-test] is closing",
+            assertFailsWith<IllegalStateException> { lifecycle.requireCloseNotStarted() }.message,
+        )
+    }
+
+    @Test
+    fun admitBeforeCloseKeepsTheEffectAfterStopAccepting() {
+        val lifecycle = ClientLifecycle("surf-test")
+        lifecycle.stopAccepting()
+        var added = false
+
+        lifecycle.admitBeforeClose(add = { added = true }, undo = { added = false })
+        assertTrue(added)
+    }
+
+    @Test
+    fun admitBeforeCloseUndoesWhenTheCloseStartedDuringAdd() {
+        val lifecycle = ClientLifecycle("surf-test")
+        var added = false
+
+        assertFailsWith<IllegalStateException> {
+            lifecycle.admitBeforeClose(
+                add = {
+                    added = true
+                    lifecycle.beginClose()
+                },
+                undo = { added = false },
+            )
+        }
+        assertFalse(added)
+    }
+
+    @Test
     fun closedRejectsEveryUse() {
         val lifecycle = ClientLifecycle("surf-test")
         lifecycle.beginClose()

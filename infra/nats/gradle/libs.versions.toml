@@ -2,7 +2,9 @@
 jnats = "2.26.4"
 log4j = "2.25.3"
 testcontainers-nats = "1.1.8"
-surf-microservice = "2.+"
+testcontainers = "2.0.5"
+mariadb-jdbc = "3.5.10"
+surf-microservice = "3.+"
 surf-api = "+"
 kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.11.0"
@@ -25,7 +27,10 @@ log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.
 log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j" }
 log4j-slf4j2-impl = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
 testcontainers-nats = { group = "io.github.amadeusitgroup.testcontainers", name = "nats", version.ref = "testcontainers-nats" }
-surf-microservice = { group = "dev.slne.surf.microservice", name = "surf-microservice-api-microservice", version.ref = "surf-microservice" }
+testcontainers-mariadb = { group = "org.testcontainers", name = "testcontainers-mariadb", version.ref = "testcontainers" }
+mariadb-jdbc = { group = "org.mariadb.jdbc", name = "mariadb-java-client", version.ref = "mariadb-jdbc" }
+surf-microservice = { group = "dev.slne.surf.microservice", name = "surf-microservice-api", version.ref = "surf-microservice" }
+surf-microservice-gradle-plugin = { group = "dev.slne.surf.microservice", name = "surf-microservice-gradle-plugin", version.ref = "surf-microservice" }
 surf-api-core = { group = "dev.slne.surf.api", name = "surf-api-core", version.ref = "surf-api" }
 surf-api-standalone = { group = "dev.slne.surf.api", name = "surf-api-standalone", version.ref = "surf-api" }
 kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinx-serialization" }

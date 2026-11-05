@@ -8,6 +8,7 @@ import dev.slne.surf.nats.bytecode.ListenerInvokerFactory
 import dev.slne.surf.nats.bytecode.ServiceProxyFactory
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.NatsHeaders
+import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.descriptor.NatsEvent
 import dev.slne.surf.nats.event.*
@@ -18,8 +19,13 @@ import dev.slne.surf.nats.runtime.AbstractNatsClient
 import io.nats.client.Dispatcher
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Blocking
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
@@ -48,6 +54,12 @@ internal class NatsClientImpl(
 
     private val replyDispatcherLock = Any()
 
+    private val registrationsInProgress = RegistrationsInProgress(lifecycle::requireAccepting)
+
+    private val inboundDrainStarted = AtomicBoolean(false)
+
+    private val inboundDrained = CompletableFuture<Unit>()
+
     @Volatile
     private var replyDispatcher: Dispatcher? = null
 
@@ -72,8 +84,7 @@ internal class NatsClientImpl(
         connection.publish(descriptor.subject, header, data)
     }
 
-    override suspend fun registerListener(listener: Any): NatsRegistration {
-        lifecycle.requireAccepting()
+    override suspend fun registerListener(listener: Any): NatsRegistration = trackRegistration {
         val methods = ListenerMethods.findListenerMethods(listener, this)
         val entries = methods.map { it to ListenerInvokerFactory.create(listener, it.method) }
 
@@ -95,14 +106,13 @@ internal class NatsClientImpl(
             throw e
         }
 
-        return EventListenerRegistration(this, entries).also { registerRegistration(it) }
+        EventListenerRegistration(this, entries).also { registerRegistration(it) }
     }
 
     override suspend fun <S : Any> registerService(
         type: KClass<S>,
         implementation: S
-    ): NatsRegistration {
-        lifecycle.requireAccepting()
+    ): NatsRegistration = trackRegistration {
         require(type.java.isInstance(implementation)) {
             "${implementation.javaClass.name} does not implement ${type.java.name}"
         }
@@ -125,7 +135,16 @@ internal class NatsClientImpl(
         }
 
         registerRegistration(registration)
-        return registration
+        registration
+    }
+
+    private inline fun <T> trackRegistration(register: () -> T): T {
+        registrationsInProgress.enter()
+        try {
+            return register()
+        } finally {
+            registrationsInProgress.exit()
+        }
     }
 
     private fun alreadyRegistered(descriptor: ServiceDescriptor, existing: ServiceRegistration): String {
@@ -146,9 +165,9 @@ internal class NatsClientImpl(
     }
 
     private fun createProxy(type: Class<*>): Any {
-        lifecycle.requireAccepting()
+        lifecycle.requireCloseNotStarted()
         var proxy: Any? = null
-        lifecycle.admit(
+        lifecycle.admitBeforeClose(
             add = {
                 proxy = serviceProxies.computeIfAbsent(type) { serviceType ->
                     val descriptor = serviceDescriptor(serviceType)
@@ -185,10 +204,41 @@ internal class NatsClientImpl(
         }
     }
 
+    /**
+     * Stops inbound work: rejects new registrations, waits for the registrations in progress, closes all registrations
+     * and drains the listener subscriptions. Returns once the handlers that were running have finished or were
+     * cancelled after the drain timeout.
+     *
+     * Publishing, service calls and new service proxies keep working until [close]; the reply and presence
+     * subscriptions of service proxies stay active as well. The steps run in turn, each bounded by `drainTimeout`
+     * except a dispatcher drain, which can take twice that (flush, then wait). The whole call takes at most
+     * `(2 × services + 3) × drainTimeout`: one for registrations in progress, two per service registration and two for
+     * listener handlers.
+     *
+     * Later and concurrent calls, including [close], wait until the first drain finishes. A handler of this client
+     * that calls [close] during the drain blocks until the drain gives up on that handler at its drain timeout.
+     */
+    @Blocking
+    internal fun stopAccepting() {
+        lifecycle.stopAccepting()
+        drainInboundOnce {
+            val timeout = natsConfig.drainTimeout.seconds
+            awaitRegistrationsInProgress(timeout)
+            closeRegistrations()
+            eventSubscriptions.drain(timeout)
+        }
+    }
+
+    /**
+     * Closes the registrations, then the client.
+     *
+     * Without a prior [stopAccepting], running listener handlers are cancelled instead of awaited. A concurrent
+     * [stopAccepting] that already started its drain is awaited first.
+     */
     override fun close() {
         if (!lifecycle.beginClose()) return
         // Running handlers may still publish and call through this client while their registrations drain
-        closeRegistrations()
+        drainInboundOnce { closeRegistrations() }
         lifecycle.markClosed()
         closeReplyDispatcher()
         serviceProxies.clear()
@@ -197,11 +247,49 @@ internal class NatsClientImpl(
         onClose(this)
     }
 
+    @Blocking
+    private inline fun drainInboundOnce(drain: () -> Unit) {
+        if (!inboundDrainStarted.compareAndSet(false, true)) {
+            inboundDrained.join()
+            return
+        }
+
+        try {
+            drain()
+        } finally {
+            inboundDrained.complete(Unit)
+        }
+    }
+
+    private fun awaitRegistrationsInProgress(timeout: Duration) {
+        if (!registrationsInProgress.awaitNone(timeout)) {
+            logger.warn("Registrations still in progress after $timeout are rolled back once they finish subscribing")
+        }
+    }
+
     private fun closeReplyDispatcher() {
         synchronized(replyDispatcherLock) {
             replyDispatcher?.let { closeDispatcher(it, "reply dispatcher") }
             replyDispatcher = null
         }
+    }
+
+    /**
+     * Drains [dispatcher], waiting up to [timeout] for the messages it already received; closes it when the drain
+     * fails or times out.
+     */
+    internal fun drainDispatcher(dispatcher: Dispatcher, timeout: Duration, what: String) {
+        val drained = try {
+            NatsConnectionManager.withFlushLock(timeout.toJavaDuration()) { dispatcher.drain(it) }
+                .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            false
+        } catch (e: Exception) {
+            logger.warn("Failed to drain $what", e)
+            false
+        }
+        if (!drained) closeDispatcher(dispatcher, what)
     }
 
     internal fun closeDispatcher(dispatcher: Dispatcher, what: String) {

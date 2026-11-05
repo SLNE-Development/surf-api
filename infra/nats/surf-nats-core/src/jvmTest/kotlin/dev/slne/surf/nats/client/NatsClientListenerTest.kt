@@ -10,6 +10,7 @@ import dev.slne.surf.nats.event.NatsEventContext
 import dev.slne.surf.nats.event.NatsListener
 import dev.slne.surf.nats.event.natsEventContext
 import dev.slne.surf.nats.event.natsEventContextOrNull
+import dev.slne.surf.nats.eventually
 import dev.slne.surf.nats.everything
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.rpc.Recipients
@@ -24,6 +25,7 @@ import dev.slne.surf.nats.test.proto.v1.PlayerEvent
 import dev.slne.surf.nats.test.proto.v1.ProfileUpdated
 import io.nats.client.JetStreamStatusException
 import io.nats.client.impl.Headers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -67,6 +69,19 @@ class NatsClientListenerTest {
         suspend fun onSuspend(event: Created) {
             yield()
             suspended.received.send(event)
+        }
+    }
+
+    class GatedListener {
+        val started = CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
+        val finished = CompletableDeferred<Unit>()
+
+        @NatsListener
+        suspend fun on(event: Created) {
+            started.complete(Unit)
+            gate.await()
+            finished.complete(Unit)
         }
     }
 
@@ -514,6 +529,91 @@ class NatsClientListenerTest {
     }
 
     @Test
+    fun `client that stopped accepting receives nothing but still publishes`() =
+        withClients("listen-stopped", "listen-stopped-probe") { (stopped, probe) ->
+            val stoppedListener = CreatedListener()
+            val probeListener = CreatedListener()
+            stopped.registerListener(stoppedListener)
+            probe.registerListener(probeListener)
+
+            stopped.stopAccepting()
+            stopped.publish(Created(1))
+
+            assertEquals(Created(1), probeListener.recorder.receiveWithin())
+            stoppedListener.recorder.assertNothingWithin()
+            assertFailsWith<IllegalStateException> { stopped.registerListener(CreatedListener()) }
+
+            stopped.close()
+            assertTrue(stopped.isClosed)
+        }
+
+    @Test
+    fun `stopAccepting waits for a running listener handler`() = withClients("listen-drain") { (client) ->
+        val listener = GatedListener()
+        client.registerListener(listener)
+        client.publish(Created(1))
+        realTime { listener.started.await() }
+
+        val stopping = async(Dispatchers.IO) { client.stopAccepting() }
+        realTime { delay(300.milliseconds) }
+        assertFalse(stopping.isCompleted, "stopAccepting returned while a listener handler was still running")
+
+        listener.gate.complete(Unit)
+        realTime { stopping.await() }
+        assertTrue(listener.finished.isCompleted)
+        assertFalse(client.isClosed)
+    }
+
+    @Test
+    fun `close during a drain returns only after the drain finished`() = withClients("listen-drain-close") { (client) ->
+        val listener = GatedListener()
+        client.registerListener(listener)
+        client.publish(Created(1))
+        realTime { listener.started.await() }
+
+        val stopping = async(Dispatchers.IO) { client.stopAccepting() }
+        awaitStoppedAccepting(client)
+        val closing = async(Dispatchers.IO) { client.close() }
+        realTime { delay(300.milliseconds) }
+        assertFalse(closing.isCompleted, "close returned while stopAccepting was still draining")
+        assertFalse(client.isClosed)
+
+        listener.gate.complete(Unit)
+        realTime {
+            closing.await()
+            stopping.await()
+        }
+        assertTrue(listener.finished.isCompleted)
+        assertTrue(client.isClosed)
+        assertFailsWith<IllegalStateException> { client.publish(Created(2)) }
+    }
+
+    @Test
+    fun `listener handler that closes its client during a drain is released at the drain timeout`() =
+        withClients("listen-drain-self-close") { (client) ->
+            val started = CompletableDeferred<Unit>()
+            val closeNow = CompletableDeferred<Unit>()
+            client.registerListener(object {
+                @NatsListener
+                suspend fun on(event: Created) {
+                    started.complete(Unit)
+                    closeNow.await()
+                    client.close()
+                }
+            })
+            client.publish(Created(1))
+            realTime { started.await() }
+
+            val stopping = async(Dispatchers.IO) { client.stopAccepting() }
+            awaitStoppedAccepting(client)
+            closeNow.complete(Unit)
+
+            // The drain waits for the handler until the default drain timeout of 10 s, the handler waits for the drain
+            withContext(Dispatchers.Default) { withTimeout(20.seconds) { stopping.await() } }
+            eventually("client closed by its handler", timeout = 5.seconds) { client.isClosed }
+        }
+
+    @Test
     fun `closed client no longer receives events`() = runTest {
         val client = NatsClient.create("listen-close-client")
         val listener = CreatedListener()
@@ -695,6 +795,17 @@ class NatsClientListenerTest {
 
     private suspend fun <T> Recorder<T>.receiveWithin(timeout: kotlin.time.Duration = 5.seconds): T {
         return withContext(Dispatchers.Default) { withTimeout(timeout) { received.receive() } }
+    }
+
+    private suspend fun <T> realTime(block: suspend CoroutineScope.() -> T): T =
+        withContext(Dispatchers.Default) { withTimeout(5.seconds, block) }
+
+    private suspend fun awaitStoppedAccepting(client: NatsClientImpl) = realTime {
+        eventually("stopAccepting started") {
+            // Without listener methods nothing is registered: an accepting client fails with IllegalArgumentException
+            val rejected = runCatching { client.registerListener(Any()) }.exceptionOrNull()
+            rejected?.message.orEmpty().endsWith("is closing")
+        }
     }
 
     private suspend fun assertNoSubscriber(subject: String) = withContext(Dispatchers.IO) {

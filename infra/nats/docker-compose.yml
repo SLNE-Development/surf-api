@@ -5,3 +5,12 @@ services:
     ports:
       - "4222:4222" # client
       - "8222:8222" # monitoring
+
+  # Database of surf-nats-test-microservice; matches the defaults of database.yml.
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: "1234"
+      MARIADB_DATABASE: database
+    ports:
+      - "3306:3306"

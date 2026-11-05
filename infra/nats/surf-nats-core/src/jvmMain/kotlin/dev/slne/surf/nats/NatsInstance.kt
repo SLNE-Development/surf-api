@@ -21,6 +21,17 @@ abstract class NatsInstance {
         }
     }
 
+    /**
+     * Drains the registrations of all clients so no new events or requests arrive; publishing and service calls keep
+     * working until [disable].
+     */
+    @MustBeInvokedByOverriders
+    open suspend fun stopAccepting() {
+        withContext(Dispatchers.IO) {
+            NatsClientFactoryImpl.get().stopAcceptingAll()
+        }
+    }
+
     @MustBeInvokedByOverriders
     open suspend fun disable() {
         NatsClientFactoryImpl.get().ensureAllClientsClosed()

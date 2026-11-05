@@ -20,6 +20,8 @@ import dev.slne.weaver.gradle.WeaverExtension
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
@@ -191,6 +193,22 @@ class SurfNatsPlugin : Plugin<Project> {
                 requireVelocityPlugin()
             }
         }
+
+        pluginManager.withPlugin(SURF_API_STANDALONE) {
+            configureMicroservice()
+        }
+    }
+
+    /**
+     * Turns a surf-api standalone project into a microservice: applies the surf-microservice plugin and adds the
+     * NATS runtime at the version of this plugin, which starts through the microservice integration SPI.
+     */
+    private fun Project.configureMicroservice() {
+        pluginManager.apply(MICROSERVICE_PLUGIN)
+
+        val runtime = dependencies.create("${SurfNatsPluginVersion.GROUP}:$STANDALONE_MODULE") as ExternalModuleDependency
+        runtime.version { it.strictly(SurfNatsPluginVersion.VERSION) }
+        dependencies.add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, runtime)
     }
 
     companion object {
@@ -211,6 +229,9 @@ class SurfNatsPlugin : Plugin<Project> {
         private const val SURF_API_PAPER_PLUGIN = "dev.slne.surf.api.gradle.paper-plugin"
         private const val SURF_API_PAPER_RAW = "dev.slne.surf.api.gradle.paper-raw"
         private const val SURF_API_VELOCITY = "dev.slne.surf.api.gradle.velocity"
+        private const val SURF_API_STANDALONE = "dev.slne.surf.api.gradle.standalone"
+        private const val MICROSERVICE_PLUGIN = "dev.slne.surf.microservice"
+        private const val STANDALONE_MODULE = "surf-nats-standalone"
 
         private val SURF_API_PAPER_PLUGINS = setOf(
             SURF_API_PAPER_PLUGIN,
@@ -224,7 +245,7 @@ class SurfNatsPlugin : Plugin<Project> {
             SURF_API_VELOCITY,
             "dev.slne.surf.api.gradle.minestom",
             "dev.slne.surf.api.gradle.minestom-server",
-            "dev.slne.surf.api.gradle.standalone",
+            SURF_API_STANDALONE,
         )
     }
 }

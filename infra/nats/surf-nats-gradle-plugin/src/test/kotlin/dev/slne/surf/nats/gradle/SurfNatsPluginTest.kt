@@ -207,8 +207,37 @@ class SurfNatsPluginTest {
         }
     }
 
+    @Test
+    fun `standalone projects become microservices with the NATS runtime`() {
+        val orders = listOf(
+            arrayOf(SURF_API_STANDALONE, SurfNatsPlugin.ID),
+            arrayOf(SurfNatsPlugin.ID, SURF_API_STANDALONE),
+        )
+        orders.forEachIndexed { index, order ->
+            val project = project(*order, dir = projectDir.resolve(index.toString()))
+            assertTrue(project.pluginManager.hasPlugin(MICROSERVICE), order.joinToString())
+
+            val runtime = project.configurations.getByName("implementation").dependencies
+                .filterIsInstance<ExternalModuleDependency>()
+                .single { it.group == "dev.slne.surf.nats" && it.name == "surf-nats-standalone" }
+            assertEquals(SurfNatsPluginVersion.VERSION, runtime.versionConstraint.strictVersion)
+        }
+    }
+
+    @Test
+    fun `core projects do not become microservices`() {
+        val project = project(SURF_API_CORE, SurfNatsPlugin.ID)
+
+        assertFalse(project.pluginManager.hasPlugin(MICROSERVICE))
+        val runtime = project.configurations.getByName("implementation").dependencies
+            .find { it.group == "dev.slne.surf.nats" && it.name == "surf-nats-standalone" }
+        assertNull(runtime)
+    }
+
     private companion object {
         const val KOTLIN_JVM = "org.jetbrains.kotlin.jvm"
+        const val MICROSERVICE = "dev.slne.surf.microservice"
+        const val SURF_API_STANDALONE = "dev.slne.surf.api.gradle.standalone"
         const val SURF_API_CORE = "dev.slne.surf.api.gradle.core"
         const val SURF_API_PAPER_PLUGIN = "dev.slne.surf.api.gradle.paper-plugin"
         const val SURF_API_PAPER_RAW = "dev.slne.surf.api.gradle.paper-raw"
