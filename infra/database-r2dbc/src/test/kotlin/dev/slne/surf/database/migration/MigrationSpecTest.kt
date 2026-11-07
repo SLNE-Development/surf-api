@@ -32,6 +32,13 @@ class MigrationSpecTest {
     }
 
     @Test
+    fun keepsTheVendorPlaceholderUnresolved() {
+        val plan = spec { sql("classpath:db/${MigrationSpec.VENDOR_PLACEHOLDER}/") }.build("p")
+
+        assertEquals(listOf("db/{vendor}"), plan.sqlPaths)
+    }
+
+    @Test
     fun defaultsBaselineToZero() {
         assertEquals("0", spec().build("p").baselineVersion)
     }

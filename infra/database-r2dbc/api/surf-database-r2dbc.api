@@ -1,6 +1,7 @@
 public final class dev/slne/surf/database/DatabaseApi {
 	public static final field Companion Ldev/slne/surf/database/DatabaseApi$Companion;
 	public final fun getDatabase ()Lorg/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;
+	public final fun getDatabaseType ()Ldev/slne/surf/database/config/DatabaseType;
 	public final fun shutdown ()V
 }
 
@@ -129,6 +130,16 @@ public final class dev/slne/surf/database/columns/time/ZonedDateTimeColumnTypeKt
 	public static final fun zonedDateTime (Lorg/jetbrains/exposed/v1/core/Table;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Column;
 }
 
+public final class dev/slne/surf/database/config/DatabaseType : java/lang/Enum {
+	public static final field MARIADB Ldev/slne/surf/database/config/DatabaseType;
+	public static final field POSTGRESQL Ldev/slne/surf/database/config/DatabaseType;
+	public final fun getDefaultPort ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getVendor ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/database/config/DatabaseType;
+	public static fun values ()[Ldev/slne/surf/database/config/DatabaseType;
+}
+
 public final class dev/slne/surf/database/logger/ComponentSqlLogger : org/jetbrains/exposed/v1/core/SqlLogger {
 	public fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -166,11 +177,16 @@ public final class dev/slne/surf/database/migration/MigrationResult {
 }
 
 public final class dev/slne/surf/database/migration/MigrationSpec {
+	public static final field Companion Ldev/slne/surf/database/migration/MigrationSpec$Companion;
+	public static final field VENDOR_PLACEHOLDER Ljava/lang/String;
 	public final fun baselineVersion (Ljava/lang/String;)V
 	public final fun classLoader (Ljava/lang/ClassLoader;)V
 	public final fun classPackage (Ljava/lang/String;)V
 	public final fun classes ([Ldev/slne/surf/database/migration/SurfMigration;)V
 	public final fun sql ([Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/database/migration/MigrationSpec$Companion {
 }
 
 public abstract class dev/slne/surf/database/migration/SurfMigration {
@@ -180,8 +196,129 @@ public abstract class dev/slne/surf/database/migration/SurfMigration {
 	public final fun getVersion ()Ljava/lang/String;
 }
 
+public final class dev/slne/surf/database/query/AllOfKt {
+	public static final fun allOf ([Lorg/jetbrains/exposed/v1/core/Op;)Lorg/jetbrains/exposed/v1/core/Op;
+	public static final fun allOfOrNull ([Lorg/jetbrains/exposed/v1/core/Op;)Lorg/jetbrains/exposed/v1/core/Op;
+}
+
+public final class dev/slne/surf/database/query/AnyOfKt {
+	public static final fun anyOf ([Lorg/jetbrains/exposed/v1/core/Op;)Lorg/jetbrains/exposed/v1/core/Op;
+	public static final fun anyOfOrNull ([Lorg/jetbrains/exposed/v1/core/Op;)Lorg/jetbrains/exposed/v1/core/Op;
+}
+
+public final class dev/slne/surf/database/query/LikeIgnoringCaseKt {
+	public static final fun containsIgnoringCase (Lorg/jetbrains/exposed/v1/core/Expression;Ljava/lang/String;)Lorg/jetbrains/exposed/v1/core/Op;
+	public static final fun likeIgnoringCase (Lorg/jetbrains/exposed/v1/core/Expression;Lorg/jetbrains/exposed/v1/core/LikePattern;)Lorg/jetbrains/exposed/v1/core/Op;
+}
+
 public final class dev/slne/surf/database/query/SelfReferencingChainKt {
 	public static final fun selfReferencingChain (Lorg/jetbrains/exposed/v1/core/dao/id/IdTable;Lorg/jetbrains/exposed/v1/core/Column;Ljava/lang/Object;I)Lorg/jetbrains/exposed/v1/core/Op;
+}
+
+public final class dev/slne/surf/database/query/TemporalShiftKt {
+	public static final fun minus-HG0u8IE (Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;J)Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;
+	public static final fun minusDays (Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;I)Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;
+	public static final fun plus-HG0u8IE (Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;J)Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;
+	public static final fun plusDays (Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;I)Lorg/jetbrains/exposed/v1/core/ExpressionWithColumnType;
+}
+
+public final class dev/slne/surf/database/query/UnionAllOfKt {
+	public static final fun unionAllOf (Ljava/util/List;)Lorg/jetbrains/exposed/v1/r2dbc/SizedIterable;
+}
+
+public final class dev/slne/surf/database/reliability/ReliabilitySchemaMigrationKt {
+	public static final fun migrateReliabilitySchema (Ldev/slne/surf/database/DatabaseApi;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/database/reliability/operation/AtomicOperationConflictException : java/lang/RuntimeException {
+	public fun <init> (Ldev/slne/surf/database/reliability/operation/OperationKey;)V
+	public final fun getKey ()Ldev/slne/surf/database/reliability/operation/OperationKey;
+}
+
+public final class dev/slne/surf/database/reliability/operation/AtomicOperationInProgressException : java/lang/RuntimeException {
+	public fun <init> (Ldev/slne/surf/database/reliability/operation/OperationKey;Ljava/lang/Throwable;)V
+	public final fun getKey ()Ldev/slne/surf/database/reliability/operation/OperationKey;
+}
+
+public abstract interface class dev/slne/surf/database/reliability/operation/AtomicOperationScope {
+	public abstract fun getKey ()Ldev/slne/surf/database/reliability/operation/OperationKey;
+	public abstract fun getTransaction ()Lorg/jetbrains/exposed/v1/r2dbc/R2dbcTransaction;
+}
+
+public final class dev/slne/surf/database/reliability/operation/AtomicOperations {
+	public static final field Companion Ldev/slne/surf/database/reliability/operation/AtomicOperations$Companion;
+	public static final field DEFAULT_CLEANUP_BATCH_SIZE I
+	public static final field MAX_FINGERPRINT_BYTES I
+	public fun <init> (Ldev/slne/surf/database/DatabaseApi;Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;)V
+	public synthetic fun <init> (Ldev/slne/surf/database/DatabaseApi;Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun deleteExpired (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun deleteExpired$default (Ldev/slne/surf/database/reliability/operation/AtomicOperations;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun execute (Ldev/slne/surf/database/reliability/operation/OperationKey;[BLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/database/reliability/operation/AtomicOperations$Companion {
+}
+
+public final class dev/slne/surf/database/reliability/operation/AtomicOperationsConfig {
+	public static final field Companion Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig$Companion;
+	public static final field DEFAULT_MAX_ATTEMPTS I
+	public fun <init> ()V
+	public synthetic fun <init> (JJILjava/time/Clock;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJILjava/time/Clock;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun component2-UwyO8pc ()J
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/time/Clock;
+	public final fun copy-O4J4VbY (JJILjava/time/Clock;)Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;
+	public static synthetic fun copy-O4J4VbY$default (Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;JJILjava/time/Clock;ILjava/lang/Object;)Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClock ()Ljava/time/Clock;
+	public final fun getLockTimeout-UwyO8pc ()J
+	public final fun getMaxAttempts ()I
+	public final fun getRetention-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/database/reliability/operation/AtomicOperationsConfig$Companion {
+	public final fun getDEFAULT_LOCK_TIMEOUT-UwyO8pc ()J
+	public final fun getDEFAULT_RETENTION-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/database/reliability/operation/OperationKey {
+	public static final field Companion Ldev/slne/surf/database/reliability/operation/OperationKey$Companion;
+	public static final field MAX_IDEMPOTENCY_KEY_LENGTH I
+	public static final field MAX_OPERATION_LENGTH I
+	public static final field MAX_OWNER_LENGTH I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/database/reliability/operation/OperationKey;
+	public static synthetic fun copy$default (Ldev/slne/surf/database/reliability/operation/OperationKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/database/reliability/operation/OperationKey;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIdempotencyKey ()Ljava/lang/String;
+	public final fun getOperation ()Ljava/lang/String;
+	public final fun getOwner ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/database/reliability/operation/OperationKey$Companion {
+}
+
+public final class dev/slne/surf/database/reliability/operation/StoredReply {
+	public static final field Companion Ldev/slne/surf/database/reliability/operation/StoredReply$Companion;
+	public static final field MAX_FORMAT_LENGTH I
+	public fun <init> (Ljava/lang/String;[B)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()[B
+	public final fun getFormat ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/database/reliability/operation/StoredReply$Companion {
 }
 
 public class dev/slne/surf/database/table/AuditableLongIdTable : org/jetbrains/exposed/v1/core/dao/id/ULongIdTable {
@@ -200,6 +337,10 @@ public class dev/slne/surf/database/table/AuditableTable : org/jetbrains/exposed
 	public fun createStatement ()Ljava/util/List;
 	public final fun getCreatedAt ()Lorg/jetbrains/exposed/v1/core/Column;
 	public final fun getUpdatedAt ()Lorg/jetbrains/exposed/v1/core/Column;
+}
+
+public final class dev/slne/surf/database/utils/DuplicateKeyKt {
+	public static final fun isDuplicateKeyViolation (Ljava/lang/Throwable;)Z
 }
 
 public final class dev/slne/surf/database/utils/ExposedR2dbcExceptionUtilsKt {

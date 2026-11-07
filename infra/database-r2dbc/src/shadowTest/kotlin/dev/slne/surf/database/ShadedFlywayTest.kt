@@ -7,6 +7,10 @@ import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.insert
 import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.selectAll
 import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import dev.slne.surf.database.migration.migrate
+import dev.slne.surf.database.reliability.migrateReliabilitySchema
+import dev.slne.surf.database.reliability.operation.AtomicOperations
+import dev.slne.surf.database.reliability.operation.OperationKey
+import dev.slne.surf.database.reliability.operation.StoredReply
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -45,6 +49,7 @@ class ShadedFlywayTest {
 
     companion object {
         private const val POSTGRES_SCHEMA = "smoke_schema"
+        private const val RELIABILITY_SCHEMA = "reliability_schema"
 
         private const val MARIADB_DATABASE = "smoke"
         private const val MARIADB_USER = "smoke"
@@ -69,6 +74,7 @@ class ShadedFlywayTest {
                 started += it
                 // A non-default schema proves the relocated runner still reads PGSimpleDataSource.currentSchema.
                 it.psql("CREATE SCHEMA IF NOT EXISTS $POSTGRES_SCHEMA")
+                it.psql("CREATE SCHEMA IF NOT EXISTS $RELIABILITY_SCHEMA")
             }
         }
 
@@ -179,8 +185,34 @@ class ShadedFlywayTest {
         }
     }
 
+    /**
+     * Runs the library-owned reliability migrations from the shaded jar, whose SQL files are served by the library's
+     * own class loader, then commits one operation and replays its stored reply.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = ["mariadb", "postgres"])
+    fun shadedAtomicOperationsMigrateAndRoundTrip(db: String, @TempDir tempDir: Path) {
+        val configDir = tempDir.resolve("config").createDirectories()
+        configDir.resolve("database.yml").writeText(databaseYml(db, RELIABILITY_SCHEMA))
+
+        val api = DatabaseApi.create(pluginPath = configDir, fileName = "database.yml", poolName = "reliability-$db")
+        try {
+            runBlocking {
+                api.migrateReliabilitySchema()
+                val operations = AtomicOperations(api)
+                val key = OperationKey("shadow-$db", "op", "key")
+                val reply = StoredReply("text/plain", byteArrayOf(3))
+
+                assertEquals(reply, operations.execute(key, byteArrayOf(1)) { reply })
+                assertEquals(reply, operations.execute(key, byteArrayOf(1)) { error("must not run again") })
+            }
+        } finally {
+            api.shutdown()
+        }
+    }
+
     /** The surf config loader maps properties to kebab-case keys (`database-type`, `log-level`, ...). */
-    private fun databaseYml(db: String): String {
+    private fun databaseYml(db: String, postgresSchema: String = POSTGRES_SCHEMA): String {
         val credentials = if (db == "mariadb") {
             """
               database-type: MARIADB
@@ -193,7 +225,7 @@ class ShadedFlywayTest {
         } else {
             """
               database-type: POSTGRESQL
-              schema: $POSTGRES_SCHEMA
+              schema: $postgresSchema
               host: ${postgres.host}
               port: ${postgres.getMappedPort(5432)}
               database: ${postgres.databaseName}

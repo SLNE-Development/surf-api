@@ -1,5 +1,6 @@
 package dev.slne.surf.database.migration
 
+import dev.slne.surf.database.config.DatabaseType
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
 /**
@@ -20,6 +21,10 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
     /**
      * Adds classpath locations that contain `V<version>__<description>.sql` files, for example `db/migrations`. A
      * `classpath:` prefix is optional.
+     *
+     * Every [VENDOR_PLACEHOLDER] in a location is replaced by the [vendor][DatabaseType.vendor] of the migrated
+     * database, so `db/migrations/{vendor}` reads `db/migrations/mariadb` on MariaDB and `db/migrations/postgresql` on
+     * PostgreSQL. A resolved location that does not exist fails `migrate()` like any other missing location.
      */
     fun sql(vararg locations: String) {
         for (location in locations) {
@@ -88,10 +93,15 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
         )
     }
 
-    private companion object {
-        const val CLASSPATH_PREFIX = "classpath:"
-        val NAME_REGEX = Regex("[a-z0-9_]{1,40}")
-        val VERSION_REGEX = Regex("""\d+(\.\d+)*""")
+    companion object {
+        /**
+         * Placeholder in [sql] locations for the [vendor][DatabaseType.vendor] of the migrated database.
+         */
+        const val VENDOR_PLACEHOLDER = "{vendor}"
+
+        private const val CLASSPATH_PREFIX = "classpath:"
+        private val NAME_REGEX = Regex("[a-z0-9_]{1,40}")
+        private val VERSION_REGEX = Regex("""\d+(\.\d+)*""")
     }
 }
 
@@ -99,7 +109,8 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
  * Validated migration settings of one plugin.
  *
  * @property name Migration name as passed to `migrate()`, used in error messages.
- * @property sqlPaths Classpath paths of the SQL locations, without `classpath:` prefix and surrounding slashes.
+ * @property sqlPaths Classpath paths of the SQL locations, without `classpath:` prefix and surrounding slashes. They
+ * may still contain [MigrationSpec.VENDOR_PLACEHOLDER].
  */
 internal data class MigrationPlan(
     val name: String,

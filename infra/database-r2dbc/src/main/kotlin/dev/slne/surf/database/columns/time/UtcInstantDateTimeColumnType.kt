@@ -51,6 +51,15 @@ private fun dateTimeWithFractionFormat(fraction: Int): DateTimeFormatter {
     return DateTimeFormatter.ofPattern(newFormat).withLocale(Locale.ROOT).withZone(ZoneOffset.UTC)
 }
 
+/**
+ * Stores an instant as its UTC wall-clock time.
+ *
+ * The column is created as `timestamp` (PostgreSQL) or `TIMESTAMP(6)` (MariaDB) and also works on `timestamptz` and
+ * `DATETIME(6)` columns. Values are bound as UTC `LocalDateTime`, which the database interprets in the session time
+ * zone, so the connection must run with the session time zone UTC, as every connection of
+ * [DatabaseApi][dev.slne.surf.database.DatabaseApi] does. The JVM default zone only determines the zone or offset of
+ * the values read back, never the instant.
+ */
 abstract class UtcInstantDateTimeColumnType<T : Any> :
     ColumnType<T>(),
     IDateColumnType {
@@ -161,6 +170,13 @@ abstract class UtcInstantDateTimeColumnType<T : Any> :
     }
 }
 
+/**
+ * `CURRENT_TIMESTAMP` as default or expression for an [UtcInstantDateTimeColumnType] column.
+ *
+ * On PostgreSQL it yields the UTC wall-clock time and ignores [includeUpdate]; `AuditableTable` keeps `updated_at`
+ * current with a trigger instead. On MariaDB it relies on the session time zone UTC and appends
+ * `ON UPDATE CURRENT_TIMESTAMP` when [includeUpdate] is set.
+ */
 open class CurrentTimestampBase<T>(
     columnType: IColumnType<T & Any>,
     private val includeUpdate: Boolean = false

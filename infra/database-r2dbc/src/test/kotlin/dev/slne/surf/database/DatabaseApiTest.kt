@@ -1,10 +1,15 @@
 package dev.slne.surf.database
 
+import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.testing.offlineConnectionFactory
 import dev.slne.surf.database.testing.use
 import dev.slne.surf.database.testing.withOfflineDatabaseApi
+import io.r2dbc.spi.IsolationLevel
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import org.jetbrains.exposed.v1.core.vendors.H2Dialect
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
+import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
+import org.jetbrains.exposed.v1.r2dbc.transactions.transactionManager
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mariadb.jdbc.MariaDbDataSource
@@ -15,6 +20,7 @@ import kotlin.io.path.writeText
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -116,6 +122,50 @@ class DatabaseApiTest {
         }
     }
 
+    @Test
+    fun configBasedApiHasTheConfiguredDatabaseType(@TempDir dir: Path) {
+        val api = createFromConfig(
+            dir,
+            """
+            database-type: POSTGRESQL
+            host: db.example
+            """
+        )
+
+        api.use { assertEquals(DatabaseType.POSTGRESQL, it.databaseType) }
+    }
+
+    @Test
+    fun manualApiDerivesTheDatabaseTypeFromTheDialect() {
+        assertEquals(DatabaseType.MARIADB, withOfflineDatabaseApi { it.databaseType })
+        assertEquals(
+            DatabaseType.POSTGRESQL,
+            withOfflineDatabaseApi(dialect = PostgreSQLDialect()) { it.databaseType }
+        )
+    }
+
+    @OptIn(TestOnlyDatabaseApi::class)
+    @Test
+    fun manualApiAcceptsADialectWithoutDatabaseType() {
+        val api = DatabaseApi.create(offlineConnectionFactory(), H2Dialect())
+
+        api.use { assertSame(api.database, it.database) }
+    }
+
+    @Test
+    fun databaseTypeOfADialectWithoutDatabaseTypeFails() {
+        val failure = withOfflineDatabaseApi(dialect = H2Dialect()) { api ->
+            assertFailsWith<IllegalStateException> { api.databaseType }
+        }
+
+        assertContains(failure.message.orEmpty(), "H2")
+    }
+
+    @Test
+    fun vendorIsTheLowercaseTypeName() {
+        assertEquals(listOf("mariadb", "postgresql"), DatabaseType.entries.map { it.vendor })
+    }
+
     @OptIn(TestOnlyDatabaseApi::class)
     @Test
     fun manualApiAcceptsTheConfigCustomizerAsTrailingLambda() {
@@ -153,5 +203,22 @@ class DatabaseApiTest {
         val dataSource = PGSimpleDataSource()
 
         withOfflineDatabaseApi(dataSource) { api -> assertSame(dataSource, api.migrationDataSource) }
+    }
+
+    @Test
+    fun transactionsDefaultToReadCommitted() = withOfflineDatabaseApi { api ->
+        assertEquals(IsolationLevel.READ_COMMITTED, api.database.transactionManager.defaultIsolationLevel)
+    }
+
+    @OptIn(TestOnlyDatabaseApi::class)
+    @Test
+    fun configCustomizerCanOverrideTheIsolationLevel() {
+        val api = DatabaseApi.create(offlineConnectionFactory(), MariaDBDialect()) {
+            defaultR2dbcIsolationLevel = IsolationLevel.SERIALIZABLE
+        }
+
+        api.use {
+            assertEquals(IsolationLevel.SERIALIZABLE, it.database.transactionManager.defaultIsolationLevel)
+        }
     }
 }

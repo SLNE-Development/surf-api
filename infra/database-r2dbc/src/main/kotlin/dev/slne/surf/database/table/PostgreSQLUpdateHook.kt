@@ -49,12 +49,16 @@ internal object PostgreSQLUpdateHook {
             $$ LANGUAGE plpgsql
         """.trimIndent()
 
-        // DROP + CREATE keeps it idempotent across re-runs without requiring PostgreSQL 14's
-        // `CREATE OR REPLACE TRIGGER`.
-        val dropTrigger = "DROP TRIGGER IF EXISTS $triggerName ON $tableIdentity"
+        // No preceding DROP TRIGGER: Exposed runs a table's statements that do not start with
+        // "CREATE " after all others, which would drop the trigger right after creating it. The
+        // statements only run together with CREATE TABLE, so the trigger cannot exist yet.
         val createTrigger = "CREATE TRIGGER $triggerName BEFORE UPDATE ON $tableIdentity " +
                 "FOR EACH ROW EXECUTE FUNCTION $UPDATED_AT_FUNCTION()"
 
-        return statements + createFunction + dropTrigger + createTrigger
+        return buildList {
+            addAll(statements)
+            add(createFunction)
+            add(createTrigger)
+        }
     }
 }

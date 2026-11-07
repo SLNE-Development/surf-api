@@ -89,6 +89,15 @@ class FlywayMigrationIT {
             }
         }
 
+    private fun DatabaseApi.vendors(table: String): List<String> =
+        assertNotNull(migrationDataSource).connection.use { c ->
+            c.createStatement().use { s ->
+                s.executeQuery("SELECT vendor FROM $table ORDER BY id").use { rs ->
+                    buildList { while (rs.next()) add(rs.getString(1)) }
+                }
+            }
+        }
+
     private fun DatabaseApi.script(table: String, version: String): String? =
         assertNotNull(migrationDataSource).connection.use { c ->
             c.prepareStatement("SELECT script FROM $table WHERE version = ?").use { s ->
@@ -245,6 +254,25 @@ class FlywayMigrationIT {
         }
 
         assertContains(assertNotNull(error.message), "migrations/does_not_exist")
+    }
+
+    @ParameterizedTest
+    @MethodSource("databases")
+    fun vendorPlaceholderRunsTheSqlFilesOfTheDatabaseVendor(db: String) = withApi(db) { api ->
+        val result = api.migrate("vendor") { sql("migrations/vendor/{vendor}") }
+
+        assertEquals(1, result.migrationsExecuted)
+        assertEquals(listOf(api.databaseType.vendor), api.vendors("vendor_items"))
+    }
+
+    @Test
+    fun vendorPlaceholderWithoutAFolderForTheVendorFails() = withApi("postgres") { api ->
+        val error = assertFailsWith<IllegalStateException> {
+            api.migrate("vendor_partial") { sql("migrations/vendor_partial/{vendor}") }
+        }
+
+        assertContains(assertNotNull(error.message), "migrations/vendor_partial/postgresql")
+        assertFalse(api.tableExists("partial_items"))
     }
 
     @ParameterizedTest

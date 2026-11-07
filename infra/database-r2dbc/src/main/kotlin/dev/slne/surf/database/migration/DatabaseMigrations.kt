@@ -20,7 +20,8 @@ import java.nio.file.Path
  * database is always disabled.
  *
  * SQL files and scanned classes are resolved through the class loader of the calling plugin, unless
- * [MigrationSpec.classLoader] sets another one.
+ * [MigrationSpec.classLoader] sets another one. [MigrationSpec.VENDOR_PLACEHOLDER] in a SQL location selects the files
+ * of this database's [vendor][DatabaseApi.databaseType].
  *
  * Must not be called inside an open transaction: Flyway uses its own JDBC connection, and on MariaDB the metadata
  * locks of the open transaction can block Flyway's DDL indefinitely.
@@ -32,6 +33,7 @@ import java.nio.file.Path
  * ```
  * databaseApi.migrate("my_plugin") {
  *     sql("db/migrations/my_plugin")
+ *     sql("db/migrations/my_plugin_{vendor}")
  *     classes(V2_Foo)
  *     classPackage("dev.slne.surf.myplugin.migrations")
  * }
@@ -40,8 +42,9 @@ import java.nio.file.Path
  * @param name Plugin name; lowercased, it must match `[a-z0-9_]{1,40}`.
  * @param block Describes the migrations; at least one of `sql`, `classes` or `classPackage` must be given.
  * @throws IllegalArgumentException if [name] or [block] is invalid
- * @throws IllegalStateException if this [DatabaseApi] has no migration data source, a scanned package contains no
- * migration classes, or a migration fails
+ * @throws IllegalStateException if this [DatabaseApi] has no migration data source, a SQL location uses
+ * [MigrationSpec.VENDOR_PLACEHOLDER] without a [databaseType][DatabaseApi.databaseType], a scanned package contains
+ * no migration classes, or a migration fails
  */
 suspend fun DatabaseApi.migrate(name: String, block: MigrationSpec.() -> Unit): MigrationResult {
     val plan = MigrationSpec(block.javaClass.classLoader).apply(block).build(name)

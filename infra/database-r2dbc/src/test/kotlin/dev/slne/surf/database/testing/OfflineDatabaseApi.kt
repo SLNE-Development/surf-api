@@ -4,6 +4,7 @@ import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.TestOnlyDatabaseApi
 import io.r2dbc.spi.ConnectionFactory
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.exposed.v1.core.vendors.DatabaseDialect
 import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.mariadb.r2dbc.MariadbConnectionConfiguration
 import org.mariadb.r2dbc.MariadbConnectionFactory
@@ -32,12 +33,13 @@ fun offlineConnectionFactory(): ConnectionFactory = MariadbConnectionFactory.fro
 @OptIn(TestOnlyDatabaseApi::class)
 fun <T> withOfflineDatabaseApi(
     migrationDataSource: DataSource? = null,
+    dialect: DatabaseDialect = MariaDBDialect(),
     block: suspend (DatabaseApi) -> T
 ): T = runBlocking {
     val api = if (migrationDataSource == null) {
-        DatabaseApi.create(offlineConnectionFactory(), MariaDBDialect())
+        DatabaseApi.create(offlineConnectionFactory(), dialect)
     } else {
-        DatabaseApi.create(offlineConnectionFactory(), MariaDBDialect(), migrationDataSource)
+        DatabaseApi.create(offlineConnectionFactory(), dialect, migrationDataSource)
     }
     api.use { block(it) }
 }

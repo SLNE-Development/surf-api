@@ -1,14 +1,14 @@
 package dev.slne.surf.database
 
 import dev.slne.surf.api.core.util.getCallerClass
+import dev.slne.surf.database.columns.time.internal.UtcSessionTypeMapper
 import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.config.DatabaseType
+import dev.slne.surf.database.config.internal.R2dbcConnectionFactories
 import dev.slne.surf.database.logger.ComponentSqlLogger
 import dev.slne.surf.database.migration.internal.JdbcDataSources
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
-import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.IsolationLevel
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
@@ -17,9 +17,9 @@ import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
 import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
+import org.jetbrains.exposed.v1.r2dbc.mappers.R2dbcRegistryTypeMapping
+import org.jetbrains.exposed.v1.r2dbc.mappers.R2dbcTypeMapping
 import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
-import org.mariadb.r2dbc.MariadbConnectionConfiguration
-import org.mariadb.r2dbc.MariadbConnectionFactory
 import org.slf4j.event.Level
 import reactor.netty.resources.LoopResources
 import java.nio.file.Path
@@ -34,9 +34,28 @@ import javax.sql.DataSource
  */
 class DatabaseApi internal constructor(
     val database: R2dbcDatabase,
+    private val dialect: DatabaseDialect,
     internal val migrationDataSource: DataSource? = null,
     private val releaseResources: () -> Unit = {},
 ) {
+
+    /**
+     * Vendor of [database], derived from its dialect.
+     *
+     * @throws IllegalStateException if the dialect is neither MariaDB nor PostgreSQL, which only an instance from
+     * the manual `create(connectionFactory, dialect, ...)` overloads can have
+     */
+    val databaseType: DatabaseType by lazy {
+        when (dialect) {
+            is MariaDBDialect -> DatabaseType.MARIADB
+            is PostgreSQLDialect -> DatabaseType.POSTGRESQL
+            else -> error(
+                "Dialect ${dialect.javaClass.simpleName} has no DatabaseType, " +
+                        "expected one of ${DatabaseType.entries.joinToString()}"
+            )
+        }
+    }
+
     companion object {
         /**
          * Creates a [DatabaseApi] using the [DatabaseConfig] located in/relative to [pluginPath].
@@ -58,40 +77,13 @@ class DatabaseApi internal constructor(
             val databaseType = config.credentials.databaseType
             val migrationDataSource = JdbcDataSources.create(config.credentials)
             val loopResources = LoopResources.create(
-                "${databaseType.name.lowercase()}-r2dbc-event-loop-$poolName",
+                "${databaseType.vendor}-r2dbc-event-loop-$poolName",
                 1,
                 4,
                 true
             )
 
-            val connectionFactory: ConnectionFactory = when (databaseType) {
-                DatabaseType.MARIADB -> {
-                    val configuration = MariadbConnectionConfiguration.builder()
-                        .host(config.credentials.host)
-                        .port(config.credentials.resolvedPort)
-                        .username(config.credentials.username)
-                        .password(config.credentials.password)
-                        .database(config.credentials.database)
-                        .loopResources(loopResources)
-                        .build()
-
-                    MariadbConnectionFactory.from(configuration)
-                }
-
-                DatabaseType.POSTGRESQL -> {
-                    val configuration = PostgresqlConnectionConfiguration.builder()
-                        .host(config.credentials.host)
-                        .port(config.credentials.resolvedPort)
-                        .username(config.credentials.username)
-                        .password(config.credentials.password)
-                        .database(config.credentials.database)
-                        .schema(config.credentials.schema)
-                        .loopResources(loopResources)
-                        .build()
-
-                    PostgresqlConnectionFactory(configuration)
-                }
-            }
+            val connectionFactory = R2dbcConnectionFactories.create(config.credentials, loopResources)
 
             val poolConfig = ConnectionPoolConfiguration.builder()
                 .connectionFactory(connectionFactory)
@@ -144,6 +136,11 @@ class DatabaseApi internal constructor(
          * special setups where the caller manages the connection factory manually. Prefer
          * [create(Path, String, R2dbcDatabaseConfig.Builder.() -> Unit)] for normal usage.
          *
+         * The time column types, the library's and Exposed's, expect the session time zone UTC, which the config-based
+         * overload sets on all its connections. A caller-built [connectionFactory] must set it too (builder option
+         * `timezone("UTC")` for MariaDB, `timeZone("UTC")` for PostgreSQL); otherwise instants and `CURRENT_TIMESTAMP`
+         * defaults shift by the offset of the session zone.
+         *
          * @param connectionFactory The factory to connect with (e.g., testcontainers, in-memory, custom pool).
          * @param dialect The database dialect to use (e.g., MariaDB, Postgres).
          * @param logger Optional logger for Exposed's SQL logging (defaults to a logger named "DatabaseApi").
@@ -164,7 +161,9 @@ class DatabaseApi internal constructor(
          * [migrationDataSource].
          *
          * Like the overload without a data source, this is mainly intended for tests or special setups; the caller
-         * keeps ownership of [connectionFactory] and [migrationDataSource].
+         * keeps ownership of [connectionFactory] and [migrationDataSource], and must configure the session time zone
+         * UTC on both as described there; SQL migrations otherwise evaluate `CURRENT_TIMESTAMP` and time literals in
+         * another zone than the application.
          *
          * @param connectionFactory The factory to connect with (e.g., testcontainers, in-memory, custom pool).
          * @param dialect The database dialect to use (e.g., MariaDB, Postgres).
@@ -202,6 +201,14 @@ class DatabaseApi internal constructor(
 
         /**
          * Builds the [DatabaseApi]; [releaseResources] runs on [shutdown] after the database is unregistered.
+         *
+         * Transactions default to READ COMMITTED, so they never read uncommitted rows of other transactions; a
+         * [configCustomizer] may set another `defaultR2dbcIsolationLevel`. Exposed applies the level per transaction,
+         * so MariaDB's session variable `@@tx_isolation` does not show it.
+         *
+         * The type mapping registers [UtcSessionTypeMapper] on top of Exposed's defaults. A [configCustomizer]
+         * that replaces `typeMapping` drops it, and Exposed's `timestamp()` columns then convert through the JVM
+         * default zone again.
          */
         internal fun createDatabase(
             connectionFactory: ConnectionFactory,
@@ -216,8 +223,9 @@ class DatabaseApi internal constructor(
                 connectionFactory,
                 R2dbcDatabaseConfig {
                     explicitDialect = dialect
+                    typeMapping = utcTypeMapping()
                     sqlLogger = ComponentSqlLogger(logger, logLevel)
-                    defaultR2dbcIsolationLevel = IsolationLevel.READ_UNCOMMITTED
+                    defaultR2dbcIsolationLevel = IsolationLevel.READ_COMMITTED
 
                     configCustomizer()
                 }
@@ -225,9 +233,16 @@ class DatabaseApi internal constructor(
 
             return DatabaseApi(
                 database = database,
+                dialect = dialect,
                 migrationDataSource = migrationDataSource,
                 releaseResources = releaseResources
             )
+        }
+
+        private fun utcTypeMapping(): R2dbcTypeMapping {
+            val mapping = R2dbcRegistryTypeMapping.default() as R2dbcRegistryTypeMapping
+            mapping.register(UtcSessionTypeMapper)
+            return mapping
         }
 
         private fun generatePoolName(): String {

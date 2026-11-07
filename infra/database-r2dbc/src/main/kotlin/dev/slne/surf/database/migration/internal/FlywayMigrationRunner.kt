@@ -4,6 +4,8 @@ import dev.slne.surf.api.core.util.toMutableObjectList
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.migration.MigrationPlan
 import dev.slne.surf.database.migration.MigrationResult
+import dev.slne.surf.database.migration.MigrationSpec
+import dev.slne.surf.database.migration.MigrationSpec.Companion.VENDOR_PLACEHOLDER
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.FlywayException
@@ -42,11 +44,13 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
     /**
      * Builds the Flyway configuration for [plan].
      *
-     * Only the plan's SQL locations are searched, never Flyway's default `db/migration`. A missing location or a
-     * misnamed SQL file fails the run. On PostgreSQL the history table is kept in the schema of the data source.
+     * Only the plan's SQL locations are searched, never Flyway's default `db/migration`, with
+     * [MigrationSpec.VENDOR_PLACEHOLDER] replaced by the vendor of [api]. A missing location or a misnamed SQL file
+     * fails the run. On PostgreSQL the history table is kept in the schema of the data source.
      *
-     * @throws IllegalStateException if [api] has no migration data source, or a scanned package contains no
-     * migration classes
+     * @throws IllegalStateException if [api] has no migration data source, a location uses
+     * [MigrationSpec.VENDOR_PLACEHOLDER] on a database without [DatabaseApi.databaseType], or a scanned package
+     * contains no migration classes
      */
     fun configure(plan: MigrationPlan): FluentConfiguration {
         val dataSource = checkNotNull(api.migrationDataSource) {
@@ -54,10 +58,11 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
                     "Create it with DatabaseApi.create(pluginPath, ...) or pass a migrationDataSource."
         }
 
-        val configuration = Flyway.configure(MigrationClassLoader(plan.classLoader, plan.sqlPaths))
+        val sqlPaths = resolveVendor(plan)
+        val configuration = Flyway.configure(MigrationClassLoader(plan.classLoader, sqlPaths))
             .dataSource(dataSource)
             .table(plan.historyTable)
-            .locations(*plan.sqlPaths.map { "classpath:$it" }.toTypedArray())
+            .locations(*sqlPaths.map { "classpath:$it" }.toTypedArray())
             .failOnMissingLocations(true)
             .validateMigrationNaming(true)
             .javaMigrations(*javaMigrations(plan).toTypedArray())
@@ -69,6 +74,20 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
         if (!schema.isNullOrBlank()) configuration.defaultSchema(schema)
 
         return configuration
+    }
+
+    private fun resolveVendor(plan: MigrationPlan): List<String> {
+        val vendorPath = plan.sqlPaths.find { VENDOR_PLACEHOLDER in it } ?: return plan.sqlPaths
+        val vendor = try {
+            api.databaseType.vendor
+        } catch (e: IllegalStateException) {
+            throw IllegalStateException(
+                "Migration '${plan.name}' cannot resolve $VENDOR_PLACEHOLDER in sql(\"$vendorPath\"): ${e.message}",
+                e
+            )
+        }
+
+        return plan.sqlPaths.map { it.replace(VENDOR_PLACEHOLDER, vendor) }
     }
 
     /**

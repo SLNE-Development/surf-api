@@ -11,6 +11,10 @@ import dev.slne.surf.database.migration.internal.MigrationClassLoader
 import dev.slne.surf.database.testing.withOfflineDatabaseApi
 import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.FluentConfiguration
+import org.jetbrains.exposed.v1.core.vendors.DatabaseDialect
+import org.jetbrains.exposed.v1.core.vendors.H2Dialect
+import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
+import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.junit.jupiter.api.Test
 import java.sql.Connection
 import javax.sql.DataSource
@@ -43,10 +47,11 @@ class FlywayMigrationRunnerTest {
     private fun configure(
         dataSource: DataSource = mariadb,
         name: String = "plugin_a",
+        dialect: DatabaseDialect = MariaDBDialect(),
         block: MigrationSpec.() -> Unit
     ): FluentConfiguration {
         val plan = MigrationSpec(javaClass.classLoader).apply(block).build(name)
-        return withOfflineDatabaseApi(dataSource) { api -> FlywayMigrationRunner(api).configure(plan) }
+        return withOfflineDatabaseApi(dataSource, dialect) { api -> FlywayMigrationRunner(api).configure(plan) }
     }
 
     @Test
@@ -91,6 +96,55 @@ class FlywayMigrationRunnerTest {
         val configuration = configure { sql("db/one", "classpath:db/two") }
 
         assertEquals(listOf("classpath:db/one", "classpath:db/two"), configuration.locations.map { it.descriptor })
+    }
+
+    @Test
+    fun replacesTheVendorPlaceholderForMariaDb() {
+        val configuration = configure { sql("db/{vendor}", "db/{vendor}_extra") }
+
+        assertEquals(
+            listOf("classpath:db/mariadb", "classpath:db/mariadb_extra"),
+            configuration.locations.map { it.descriptor }
+        )
+    }
+
+    @Test
+    fun replacesTheVendorPlaceholderForPostgres() {
+        val configuration = configure(postgres("public"), dialect = PostgreSQLDialect()) { sql("db/{vendor}") }
+
+        assertEquals(listOf("classpath:db/postgresql"), configuration.locations.map { it.descriptor })
+    }
+
+    @Test
+    fun dialectWithoutDatabaseTypeConfiguresLocationsWithoutPlaceholder() {
+        val configuration = configure(dialect = H2Dialect()) { sql("db/common") }
+
+        assertEquals(listOf("classpath:db/common"), configuration.locations.map { it.descriptor })
+    }
+
+    @Test
+    fun dialectWithoutDatabaseTypeFailsOnTheVendorPlaceholder() {
+        val failure = assertFailsWith<IllegalStateException> {
+            configure(name = "plugin_h2", dialect = H2Dialect()) { sql("db/common", "db/{vendor}") }
+        }
+
+        val message = failure.message.orEmpty()
+        assertContains(message, "plugin_h2")
+        assertContains(message, "db/{vendor}")
+        assertContains(message, "H2")
+    }
+
+    @Test
+    fun resolvedVendorLocationIsReadFromThePluginLoaderOnly() {
+        val emptyPluginLoader = object : ClassLoader(null) {}
+
+        val configuration = configure {
+            sql("migrations/vendor/{vendor}")
+            classLoader(emptyPluginLoader)
+        }
+
+        assertNotNull(javaClass.classLoader.getResource(MARIADB_VENDOR_SQL))
+        assertNull(configuration.classLoader.getResource(MARIADB_VENDOR_SQL))
     }
 
     @Test
@@ -215,5 +269,9 @@ class FlywayMigrationRunnerTest {
         assertFailsWith<IllegalStateException> {
             configure { classPackage("dev.slne.surf.database.migration.fixtures.badscan") }
         }
+    }
+
+    private companion object {
+        const val MARIADB_VENDOR_SQL = "migrations/vendor/mariadb/V1__vendor_items.sql"
     }
 }
