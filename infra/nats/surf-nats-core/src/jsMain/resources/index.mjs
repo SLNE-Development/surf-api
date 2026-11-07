@@ -3,6 +3,7 @@ export {
   connect,
   uuidToString,
   uuidFromString,
+  toPlain,
   NatsRpcError,
   NatsRemoteError,
   NatsNoRespondersError,

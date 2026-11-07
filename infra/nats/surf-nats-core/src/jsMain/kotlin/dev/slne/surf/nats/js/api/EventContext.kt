@@ -9,4 +9,5 @@ import kotlinx.js.JsPlainObject
 external interface EventContext {
     val origin: String?
     val isFromThisClient: Boolean
+    val eventId: String?
 }

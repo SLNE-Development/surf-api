@@ -39,8 +39,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -72,6 +74,9 @@ class NatsPersistentServiceTest {
         @Volatile
         var onTotal: suspend (Long) -> Long = { it * 10 }
 
+        @Volatile
+        var onEcho: suspend () -> Unit = {}
+
         override suspend fun place(request: PlaceRequest) {
             val context = natsPersistentContextOrNull()
             deliveries.send(Delivery(request.id, context))
@@ -91,7 +96,10 @@ class NatsPersistentServiceTest {
             bigReceived.send(request.data)
         }
 
-        override suspend fun echo(request: Blob): Blob = request
+        override suspend fun echo(request: Blob): Blob {
+            onEcho()
+            return request
+        }
 
         override suspend fun audit(request: TotalRequest): Number = Number(request.id)
 
@@ -339,6 +347,35 @@ class NatsPersistentServiceTest {
     }
 
     @Test
+    fun `dead letter replayed to its subject keeps the original message id`() = withClient { client ->
+        RpcDefaults.NAK_BACKOFF = listOf(100.milliseconds)
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val impl = OrderImpl()
+        val failing = AtomicBoolean(true)
+        impl.onPlace = { _, _ -> check(!failing.get()) { "fails until replayed" } }
+        client.registerService<OrderService>(impl)
+
+        client.service<OrderService>().place(PlaceRequest(13))
+        val original = withTimeout(10.seconds) { impl.deliveries.receive() }.context!!.messageId
+        repeat(RpcDefaults.MAX_DELIVER - 1) { withTimeout(10.seconds) { impl.deliveries.receive() } }
+        eventually("dead letter must be stored") { messageCount(streams.dlqStream) == 1L }
+
+        // Replay as an operator would: the stored headers, including the dead-letter Nats-Msg-Id, and the body
+        val dead = jsm().getLastMessage(streams.dlqStream, streams.dlqSubject)
+        val deadHeaders = assertNotNull(dead.headers)
+        assertEquals(original, deadHeaders.getFirst(ProtocolHeaders.MESSAGE_ID))
+        failing.set(false)
+        NatsConnectionManager.connection().jetStream()
+            .publish(deadHeaders.getFirst(ProtocolHeaders.DEAD_SUBJECT), Headers(deadHeaders), dead.data)
+
+        val replayed = withTimeout(10.seconds) { impl.deliveries.receive() }
+        assertEquals(13, replayed.id)
+        assertEquals(original, replayed.context!!.messageId)
+        assertEquals(1, replayed.context.deliveryCount)
+        eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
+    }
+
+    @Test
     fun `fire with a missing non-null field is dead-lettered after one delivery`() = withClient { client ->
         RpcDefaults.NAK_BACKOFF = listOf(1.minutes) // a redelivery would not happen within the test
         val descriptor = client.serviceDescriptor(OrderService::class.java)
@@ -451,6 +488,49 @@ class NatsPersistentServiceTest {
         val context = assertNotNull(impl.totalContexts.tryReceive().getOrNull())
         assertEquals(1, context.deliveryCount)
         eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
+    }
+
+    @Test
+    fun `persistent rpc repeated with an idempotency key gets the stored reply within and after the duplicate window`() =
+        withClient { client ->
+            RuntimeDefaults.dedupeWindow = 1.seconds // provisions the stream with this duplicate window
+            val impl = OrderImpl()
+            val stored = ConcurrentHashMap<String, NatsPersistentReply>()
+            val seenIds = ConcurrentLinkedQueue<String>()
+            client.registerService<OrderService>(impl) { call ->
+                seenIds += call.messageId
+                stored[call.messageId] ?: call.proceed().also { stored[call.messageId] = it }
+            }
+            val orders = client.service<OrderService>()
+            val key = "order-total-${UUID.randomUUID()}"
+
+            suspend fun total() = withNatsIdempotencyKey(key) {
+                withNatsCallTimeout(10.seconds) { orders.total(TotalRequest(3)) }
+            }
+
+            assertEquals(Number(30), total())
+            impl.onTotal = { error("the handler must not run again") }
+            assertEquals(Number(30), total(), "repeat within the duplicate window")
+            delay(1500.milliseconds)
+            assertEquals(Number(30), total(), "repeat after the duplicate window")
+
+            assertEquals(1, impl.totalCalls.get())
+            assertEquals(listOf(key, key, key), seenIds.toList())
+        }
+
+    @Test
+    fun `persistent call with an invalid idempotency key is rejected before publishing`() = withClient { client ->
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val orders = client.service<OrderService>()
+        JetStreamProvisioner.ensureStreams(streams)
+
+        for (key in listOf("", "with space", "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH + 1))) {
+            val error = assertFailsWith<IllegalArgumentException> {
+                withNatsIdempotencyKey(key) { orders.place(PlaceRequest(1)) }
+            }
+            assertTrue(error.message!!.startsWith("Idempotency key"), error.message)
+        }
+        assertEquals(0, messageCount(streams.stream))
     }
 
     @Test
@@ -764,6 +844,36 @@ class NatsPersistentServiceTest {
         val echoed = withNatsCallTimeout(30.seconds) { client.service<OrderService>().echo(Blob(data)) }
         assertContentEquals(data, echoed.data)
         eventually("transient payloads must be deleted") { liveObjects(PayloadBucket.TRANSIENT) == before }
+    }
+
+    @Test
+    fun `persistent rpc whose ack is not confirmed keeps its offloaded payload`() = withClient { client ->
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val handling = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val impl = OrderImpl().apply {
+            onEcho = {
+                handling.complete(Unit)
+                release.await()
+            }
+        }
+        client.registerService<OrderService>(impl)
+        val before = liveObjects(PayloadBucket.TRANSIENT)
+        val data = blob(LARGE)
+
+        val echoed = async { withNatsCallTimeout(30.seconds) { client.service<OrderService>().echo(Blob(data)) } }
+        withTimeout(20.seconds) { handling.await() }
+        // Without its consumer the server cannot confirm the ack of the running handler
+        jsm().deleteConsumer(streams.stream, streams.durable)
+        release.complete(Unit)
+
+        assertContentEquals(data, echoed.await().data)
+        delay(RpcDefaults.ACK_SYNC_TIMEOUT + 1.seconds)
+        assertEquals(
+            1,
+            (liveObjects(PayloadBucket.TRANSIENT) - before).size,
+            "the request payload must stay for a redelivery"
+        )
     }
 
     // ---- helpers ----

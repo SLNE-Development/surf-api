@@ -167,7 +167,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             return
         }
 
-        val context = NatsEventContext(origin, fromThisClient) + name
+        val context = NatsEventContext(origin, fromThisClient, message.header(ProtocolHeaders.EVENT_ID)) + name
 
         for (target in targets) {
             if (fromThisClient && target.ignoreFromThisClient) continue

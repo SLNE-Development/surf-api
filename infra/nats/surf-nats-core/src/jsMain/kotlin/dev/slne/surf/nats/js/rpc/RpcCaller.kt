@@ -2,6 +2,7 @@ package dev.slne.surf.nats.js.rpc
 
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.js.api.Answer
+import dev.slne.surf.nats.js.api.CallOptions
 import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.api.ProtoMessageInit
 import dev.slne.surf.nats.js.client.JsRuntimeDefaults
@@ -50,11 +51,11 @@ internal class RpcCaller(private val client: NatsClientImpl) {
     /**
      * Returns `undefined` for UNIT methods, the decoded response for VALUE methods and an [Answer] for ANSWER methods.
      */
-    suspend fun call(method: MethodDescriptor, request: ProtoMessageInit?, timeoutMs: Int?): Any? {
-        val timeout = positiveTimeoutOrNull(timeoutMs, "Call timeout") ?: method.timeout
+    suspend fun call(method: MethodDescriptor, request: ProtoMessageInit?, options: CallOptions?): Any? {
+        val timeout = positiveTimeoutOrNull(options?.timeoutMs, "Call timeout") ?: method.timeout
 
         val flow = method.flow
-        if (flow != CallFlow.CORE) return callPersistent(method, flow, request, timeout)
+        if (flow != CallFlow.CORE) return callPersistent(method, flow, request, timeout, options?.idempotencyKey)
 
         val headers = client.headers()
         val encoded = method.encodeRequest(request)
@@ -189,14 +190,20 @@ internal class RpcCaller(private val client: NatsClientImpl) {
         flow: CallFlow,
         request: ProtoMessageInit?,
         timeout: Duration,
+        idempotencyKey: String?,
     ): Any? {
         val subject = method.subject
         val stream = method.stream
         if (flow == CallFlow.FIRE) {
             PersistentRules.requireFireTimeout(timeout, RuntimeDefaults.dedupeWindow, method.label)
         }
+        if (idempotencyKey != null) {
+            ProtocolHeaders.idempotencyKeyProblem(idempotencyKey)?.let { throw IllegalArgumentException(it) }
+        }
 
         val headers = client.headers()
+        // The responder's message identity; Nats-Msg-Id stays unique per call, so a repeat is stored again
+        if (idempotencyKey != null) headers.set(ProtocolHeaders.MESSAGE_ID, idempotencyKey)
         val encoded = method.encodeRequest(request)
 
         val inbox = if (flow.sendsReplyTo) createInbox() else null

@@ -15,6 +15,7 @@ internal external interface FacadeConnectOptions {
 internal external fun connect(options: FacadeConnectOptions?): Promise<SurfNatsClient>
 internal external fun uuidToString(uuid: Any?): String
 internal external fun uuidFromString(value: String?): Uuid
+internal external fun toPlain(schema: Any, message: Any): Any
 internal external val NatsRpcError: Any
 internal external val NatsRemoteError: Any
 internal external val NatsNoRespondersError: Any

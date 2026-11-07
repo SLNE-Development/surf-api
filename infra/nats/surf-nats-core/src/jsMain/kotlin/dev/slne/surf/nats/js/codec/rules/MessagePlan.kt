@@ -84,7 +84,7 @@ internal class MessagePlan private constructor(
                     is FieldShape.MessageList -> MessageListStep(shape.field)
                     is FieldShape.EnumMap -> EnumMapStep(shape.field, EnumPlan.of(shape.field.enum))
                     is FieldShape.MessageMap -> MessageMapStep(shape.field)
-                    FieldShape.ScalarListOrMap -> null
+                    is FieldShape.ScalarList, is FieldShape.ScalarMap -> null
                 }
             }.toTypedArray()
         }

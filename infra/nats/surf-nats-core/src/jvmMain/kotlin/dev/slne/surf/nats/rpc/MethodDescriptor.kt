@@ -38,4 +38,16 @@ internal class MethodDescriptor(
     fun encodeResponse(value: Any): ByteArray = NatsCodec.encode(response!!, value)
 
     fun decodeResponse(data: ByteArray, contentType: String?): Any = NatsCodec.decode(response!!, data, contentType)
+
+    /**
+     * Encodes a handler's return [value] in the reply format of [result].
+     */
+    fun encodeReply(value: Any?): NatsPersistentReply = when (result) {
+        NatsResultKind.UNIT -> NatsPersistentReply.empty()
+        NatsResultKind.VALUE -> NatsPersistentReply.value(encodeResponse(value as Any))
+        NatsResultKind.ANSWER -> when (val answer = value as Answer<*>) {
+            is Answer.Known -> NatsPersistentReply.value(encodeResponse(answer.value as Any))
+            Answer.Unknown -> NatsPersistentReply.unknownAnswer()
+        }
+    }
 }

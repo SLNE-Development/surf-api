@@ -2,6 +2,7 @@ package dev.slne.surf.nats.js.client
 
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.js.api.Answer
+import dev.slne.surf.nats.js.api.CallOptions
 import dev.slne.surf.nats.js.api.ListenOptions
 import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.api.ProtoMessageInit
@@ -27,7 +28,9 @@ import dev.slne.surf.nats.js.rpc.MethodDescriptor
 import dev.slne.surf.nats.js.rpc.RpcCaller
 import dev.slne.surf.nats.js.rpc.payload.PayloadStore
 import dev.slne.surf.nats.protocol.ProtocolDefaults
+import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.runtime.AbstractNatsClient
+import dev.slne.surf.nats.runtime.randomId
 import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -66,15 +69,19 @@ internal class NatsClientImpl(
     internal fun headers(): MsgHdrs = NatsHeaders.forOrigin(origin)
 
     /**
-     * Publishes the event and waits for the flush that confirms it; events are never offloaded.
+     * Publishes the event under [eventId], a random UUID if null, and waits for the flush that confirms it; events
+     * are never offloaded.
      */
-    suspend fun publish(schema: DescMessage, event: ProtoMessageInit?, timeoutMs: Int?) {
+    suspend fun publish(schema: DescMessage, event: ProtoMessageInit?, timeoutMs: Int?, eventId: String?) {
         checkOpen()
+        val id = eventId ?: randomId()
+        ProtocolHeaders.eventIdProblem(id)?.let { throw IllegalArgumentException(it) }
         val descriptor = EventDescriptor.of(schema)
         val subject = descriptor.subject
         val timeout = positiveTimeoutOrNull(timeoutMs, "Timeout") ?: ProtocolDefaults.CORE_TIMEOUT_SECONDS.seconds
         val data = NatsCodec.encode(schema, event)
         val header = headers()
+        header.set(ProtocolHeaders.EVENT_ID, id)
 
         requireEventFits(
             descriptor.typeName,
@@ -127,27 +134,27 @@ internal class NatsClientImpl(
     /**
      * Calls every method except `ALL_INSTANCES` methods with a result; returns `undefined` for UNIT methods.
      */
-    suspend fun call(method: DescMethod, request: ProtoMessageInit?, timeoutMs: Int?): ProtoMessage? {
+    suspend fun call(method: DescMethod, request: ProtoMessageInit?, options: CallOptions?): ProtoMessage? {
         checkOpen()
         val descriptor = MethodDescriptor.of(method)
         require(descriptor.result != NatsResultKind.ANSWER) {
             "${descriptor.label} is an ALL_INSTANCES method with a result and returns an Answer: use callAnswer"
         }
 
-        return rpcCaller.call(descriptor, request, timeoutMs).unsafeCast<ProtoMessage?>()
+        return rpcCaller.call(descriptor, request, options).unsafeCast<ProtoMessage?>()
     }
 
     /**
      * Calls an `ALL_INSTANCES` method with a result.
      */
-    suspend fun callAnswer(method: DescMethod, request: ProtoMessageInit?, timeoutMs: Int?): Answer {
+    suspend fun callAnswer(method: DescMethod, request: ProtoMessageInit?, options: CallOptions?): Answer {
         checkOpen()
         val descriptor = MethodDescriptor.of(method)
         require(descriptor.result == NatsResultKind.ANSWER) {
             "${descriptor.label} is not an ALL_INSTANCES method with a result: use call"
         }
 
-        return rpcCaller.call(descriptor, request, timeoutMs).unsafeCast<Answer>()
+        return rpcCaller.call(descriptor, request, options).unsafeCast<Answer>()
     }
 
     override fun closeRegistration(registration: NatsRegistration) = registration.close()

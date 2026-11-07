@@ -1,3 +1,231 @@
 public abstract interface annotation class dev/slne/surf/nats/InternalNatsApi : java/lang/annotation/Annotation {
 }
 
+public abstract interface class dev/slne/surf/nats/NatsClient : java/lang/AutoCloseable {
+	public static final field Factory Ldev/slne/surf/nats/NatsClient$Factory;
+	public abstract fun close ()V
+	public abstract fun getName ()Ljava/lang/String;
+	public abstract fun isClosed ()Z
+	public abstract fun publish (Ldev/slne/surf/nats/descriptor/NatsEvent;)V
+	public abstract fun registerListener (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun registerService (Lkotlin/reflect/KClass;Ljava/lang/Object;Ldev/slne/surf/nats/rpc/NatsPersistentInterceptor;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun registerService (Lkotlin/reflect/KClass;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/nats/NatsClient$Factory {
+	public final fun create (Ljava/lang/String;)Ldev/slne/surf/nats/NatsClient;
+}
+
+public abstract interface annotation class dev/slne/surf/nats/NatsGeneratedApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/nats/NatsRegistration : java/lang/AutoCloseable {
+	public abstract fun close ()V
+	public abstract fun isClosed ()Z
+}
+
+public final class dev/slne/surf/nats/descriptor/ByteArrayContentKt {
+	public static final fun natsContentEquals (Ljava/util/List;Ljava/util/List;)Z
+	public static final fun natsContentEquals (Ljava/util/Map;Ljava/util/Map;)Z
+	public static final fun natsContentEquals ([B[B)Z
+	public static final fun natsContentHashCode (Ljava/util/List;)I
+	public static final fun natsContentHashCode (Ljava/util/Map;)I
+	public static final fun natsContentHashCode ([B)I
+	public static final fun natsContentToString (Ljava/util/List;)Ljava/lang/String;
+	public static final fun natsContentToString (Ljava/util/Map;)Ljava/lang/String;
+	public static final fun natsContentToString ([B)Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/nats/descriptor/NatsEvent {
+	public abstract fun getNatsDescriptor ()Ldev/slne/surf/nats/descriptor/NatsEventDescriptor;
+}
+
+public final class dev/slne/surf/nats/descriptor/NatsEventDescriptor {
+	public fun <init> (Ljava/lang/String;Lkotlinx/serialization/KSerializer;)V
+	public final fun getProtoName ()Ljava/lang/String;
+	public final fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class dev/slne/surf/nats/descriptor/NatsMethodDescriptor {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ZLjava/lang/Integer;Ldev/slne/surf/nats/rpc/Recipients;Ldev/slne/surf/nats/descriptor/NatsResultKind;Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/KSerializer;)V
+	public final fun getCallTimeoutSeconds ()Ljava/lang/Integer;
+	public final fun getKotlinName ()Ljava/lang/String;
+	public final fun getPersistent ()Z
+	public final fun getProtoName ()Ljava/lang/String;
+	public final fun getRecipients ()Ldev/slne/surf/nats/rpc/Recipients;
+	public final fun getRequestSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun getResponseSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun getResultKind ()Ldev/slne/surf/nats/descriptor/NatsResultKind;
+}
+
+public final class dev/slne/surf/nats/descriptor/NatsResultKind : java/lang/Enum {
+	public static final field ANSWER Ldev/slne/surf/nats/descriptor/NatsResultKind;
+	public static final field UNIT Ldev/slne/surf/nats/descriptor/NatsResultKind;
+	public static final field VALUE Ldev/slne/surf/nats/descriptor/NatsResultKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/nats/descriptor/NatsResultKind;
+	public static fun values ()[Ldev/slne/surf/nats/descriptor/NatsResultKind;
+}
+
+public final class dev/slne/surf/nats/descriptor/NatsServiceDescriptor {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun getMethods ()Ljava/util/List;
+	public final fun getProtoName ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/nats/event/NatsEventContext : kotlin/coroutines/AbstractCoroutineContextElement {
+	public static final field Key Ldev/slne/surf/nats/event/NatsEventContext$Key;
+	public final fun getEventId ()Ljava/lang/String;
+	public final fun getOrigin ()Ljava/lang/String;
+	public final fun isFromThisClient ()Z
+}
+
+public final class dev/slne/surf/nats/event/NatsEventContext$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class dev/slne/surf/nats/event/NatsEventContextKt {
+	public static final fun natsEventContext (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun natsEventContextOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/nats/event/NatsEventDeduplicator {
+	public static final field Companion Ldev/slne/surf/nats/event/NatsEventDeduplicator$Companion;
+	public static final field DEFAULT_MAX_ENTRIES I
+	public fun <init> ()V
+	public synthetic fun <init> (IJLkotlin/time/TimeSource;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IJLkotlin/time/TimeSource;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun firstDelivery (Ljava/lang/String;)Z
+	public final fun firstDelivery (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/nats/event/NatsEventDeduplicator$Companion {
+	public final fun getDEFAULT_RETENTION-UwyO8pc ()J
+}
+
+public abstract interface annotation class dev/slne/surf/nats/event/NatsListener : java/lang/annotation/Annotation {
+	public abstract fun ignoreFromThisClient ()Z
+	public abstract fun recipients ()Ldev/slne/surf/nats/rpc/Recipients;
+}
+
+public final class dev/slne/surf/nats/internal/NatsClientFactory$Companion {
+	public final fun getInstance ()Ldev/slne/surf/nats/internal/NatsClientFactory;
+}
+
+public final class dev/slne/surf/nats/internal/NatsIdempotencyKeyElement$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class dev/slne/surf/nats/internal/NatsTimeoutElement$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public abstract interface class dev/slne/surf/nats/rpc/Answer {
+}
+
+public final class dev/slne/surf/nats/rpc/Answer$Known : dev/slne/surf/nats/rpc/Answer {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Ldev/slne/surf/nats/rpc/Answer$Known;
+	public static synthetic fun copy$default (Ldev/slne/surf/nats/rpc/Answer$Known;Ljava/lang/Object;ILjava/lang/Object;)Ldev/slne/surf/nats/rpc/Answer$Known;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/nats/rpc/Answer$Unknown : dev/slne/surf/nats/rpc/Answer {
+	public static final field INSTANCE Ldev/slne/surf/nats/rpc/Answer$Unknown;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/nats/rpc/AnswerKt {
+	public static final fun getOrElse (Ldev/slne/surf/nats/rpc/Answer;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static final fun getOrNull (Ldev/slne/surf/nats/rpc/Answer;)Ljava/lang/Object;
+	public static final fun toAnswer (Ljava/lang/Object;)Ldev/slne/surf/nats/rpc/Answer;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsCallTimeoutException : dev/slne/surf/nats/rpc/NatsRpcException {
+	public final fun getSubject ()Ljava/lang/String;
+	public final fun getTimeout-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/nats/rpc/NatsCallTimeoutKt {
+	public static final fun withNatsCallTimeout-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsIdempotencyKeyKt {
+	public static final fun withNatsIdempotencyKey (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsNoRespondersException : dev/slne/surf/nats/rpc/NatsRpcException {
+	public final fun getSubject ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/nats/rpc/NatsPersistentCall {
+	public abstract fun getDeliveryCount ()J
+	public abstract fun getMessageId ()Ljava/lang/String;
+	public abstract fun getMethodName ()Ljava/lang/String;
+	public abstract fun getRequestFingerprint ()Ljava/lang/String;
+	public abstract fun getServiceName ()Ljava/lang/String;
+	public abstract fun proceed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsPersistentContext : kotlin/coroutines/AbstractCoroutineContextElement {
+	public static final field Key Ldev/slne/surf/nats/rpc/NatsPersistentContext$Key;
+	public final fun getDeliveryCount ()J
+	public final fun getMessageId ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsPersistentContext$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class dev/slne/surf/nats/rpc/NatsPersistentContextKt {
+	public static final fun natsPersistentContext (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun natsPersistentContextOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/nats/rpc/NatsPersistentInterceptor {
+	public abstract fun intercept (Ldev/slne/surf/nats/rpc/NatsPersistentCall;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsPersistentLimits {
+	public static final field INSTANCE Ldev/slne/surf/nats/rpc/NatsPersistentLimits;
+	public final fun getDEAD_LETTER_MAX_AGE-UwyO8pc ()J
+	public final fun getMESSAGE_MAX_AGE-UwyO8pc ()J
+	public final fun getREDELIVERY_HORIZON-UwyO8pc ()J
+}
+
+public final class dev/slne/surf/nats/rpc/NatsPersistentReply {
+	public static final field Companion Ldev/slne/surf/nats/rpc/NatsPersistentReply$Companion;
+	public final fun getBytes ()[B
+	public final fun getFormat ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsPersistentReply$Companion {
+	public final fun error (Ljava/lang/Throwable;)Ldev/slne/surf/nats/rpc/NatsPersistentReply;
+	public final fun restore (Ljava/lang/String;[B)Ldev/slne/surf/nats/rpc/NatsPersistentReply;
+}
+
+public final class dev/slne/surf/nats/rpc/NatsRedeliveryException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/slne/surf/nats/rpc/NatsRemoteException : dev/slne/surf/nats/rpc/NatsRpcException {
+	public final fun getRemoteMessage ()Ljava/lang/String;
+	public final fun getRemoteType ()Ljava/lang/String;
+}
+
+public class dev/slne/surf/nats/rpc/NatsRpcException : java/lang/RuntimeException {
+}
+
+public final class dev/slne/surf/nats/rpc/Recipients : java/lang/Enum {
+	public static final field ALL_INSTANCES Ldev/slne/surf/nats/rpc/Recipients;
+	public static final field ANY_INSTANCE Ldev/slne/surf/nats/rpc/Recipients;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/nats/rpc/Recipients;
+	public static fun values ()[Ldev/slne/surf/nats/rpc/Recipients;
+}
+

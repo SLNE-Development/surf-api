@@ -245,6 +245,17 @@ same `Nats-Msg-Id` until JetStream confirms it or the timeout expires; the timeo
 client creates the object store buckets for [large payloads](#large-payloads) when they are missing, but never a
 stream.
 
+To repeat a persistent call safely after a timeout, pass an `idempotencyKey`: one key per user action, 1 to 128
+visible ASCII characters, and the same request with every repeat. The instance receives the key as the message id of
+the call (`Surf-Message-Id`), so a service that deduplicates by message id runs the action once and answers every
+repeat with the stored result, also within the two-minute duplicate window. Generated clients take the same
+options.
+
+```ts
+const key = `whitelist-${crypto.randomUUID()}`; // keep it for the repeats of this action
+await nats.call(RolesService.method.whitelist, { userId: 42n, action: WhitelistAction.ADD }, { idempotencyKey: key });
+```
+
 Calls reject with these errors:
 
 | Error                   | Cause                                                                                              |
@@ -261,6 +272,25 @@ A request that lacks a required field fails before anything is sent.
 A `surf.types.v1.Uuid` holds 16 bytes. `uuidFromString("0b6f1c2e-6d4f-4d1a-9f0e-2c3b1a7e5d90")` returns such a
 message, and `uuidToString(uuid)` formats a message or its 16 bytes as a lowercase UUID string. Both throw a
 `RangeError` for input of the wrong form.
+
+### Plain data
+
+`toPlain(schema, message)` converts a message into plain data for JSON, superjson or a JSON column, typed as
+`Plain<T>`:
+
+```ts
+const plain = toPlain(FindPlayerResponseSchema, response); // { name: "Steve", server: null }
+```
+
+- `google.protobuf.Timestamp` becomes a `Date`, `surf.types.v1.Uuid` a UUID string and a 64-bit integer a `number`.
+  A 64-bit integer outside ±(2^53 − 1) throws a `RangeError`; one with `jstype = JS_STRING` stays a decimal `string`.
+- A `google/protobuf/wrappers.proto` type becomes its value. `google.protobuf.Struct` becomes a `JsonObject`, `Value`
+  a `JsonValue` and `ListValue` a `JsonValue[]`; a `Value` of kind `null_value` becomes `null`.
+- A field with explicit presence, which is every proto2 field except lists and maps, is `null` while unset instead
+  of its protobuf default. Lists and maps are never `null`.
+- A oneof becomes `{ case, value }`, or `{ case: null, value: null }` while unset.
+- Nested messages, lists and maps are converted the same way; map keys become strings. Enums stay numbers, bytes stay
+  `Uint8Array`, and `$typeName` and `$unknown` are dropped.
 
 ## Wire format
 
@@ -431,6 +461,12 @@ JetStream discards a message whose `Nats-Msg-Id` it has seen within the last two
 stored once. Send repeats within those two minutes. A repeat sent later is stored as a second call, so protect the
 operation with a key of your own if it must not run twice. Use a new `Nats-Msg-Id` for each new call.
 
+To repeat a call that may already have run, for example a persistent call with a result whose reply did not arrive,
+send it with a new `Nats-Msg-Id` and the same `Surf-Message-Id` (1 to 128 visible ASCII characters, one per action).
+The instance takes the identity of the call from `Surf-Message-Id`, so a service that deduplicates by message id
+answers the repeat with the stored result. A repeat with the old `Nats-Msg-Id` would be discarded within the
+two-minute window and never answered.
+
 After the acknowledgement, one instance runs the call. If no instance is running, the call waits until one starts.
 If the method throws, surf-nats retries it several times and then moves the call to the dead-letter stream (see
 [Dead letters](#dead-letters)).
@@ -506,17 +542,20 @@ nats stream view SURF_DLQ_surf_roles_v1_RolesService
 ```
 
 A dead letter keeps the body and all headers of the call except the `Nats-*` headers. It gets its own `Nats-Msg-Id`,
-the dedupe id of the dead-letter publish, and two more headers:
+the dedupe id of the dead-letter publish, and three more headers:
 
-| Header              | Value                                            |
-|---------------------|--------------------------------------------------|
-| `Surf-Dead-Subject` | The subject the call was originally published to |
-| `Surf-Error`        | The exception class that made the call fail      |
+| Header              | Value                                                           |
+|---------------------|-----------------------------------------------------------------|
+| `Surf-Dead-Subject` | The subject the call was originally published to                |
+| `Surf-Error`        | The exception class that made the call fail                     |
+| `Surf-Message-Id`   | The identity of the call, its original `Nats-Msg-Id` by default |
 
 To run the call again, fix the cause and publish the body to the subject in `Surf-Dead-Subject`, as described under
 [Persistent methods without a result](#persistent-methods-without-a-result). Use the original `Content-Type` and a
-new `Nats-Msg-Id`. Do not copy `Surf-Error`, `Surf-Dead-Subject`, or an old `Surf-Deadline` into the new message.
-Keep `Surf-Payload-Ref` if present: its object lives for 7 days from the original call.
+new `Nats-Msg-Id`. Keep `Surf-Message-Id`: the instance takes the identity of the call from it, so a handler that
+deduplicates by message id recognizes the replay. Do not copy `Surf-Error`, `Surf-Dead-Subject`, or an old
+`Surf-Deadline` into the new message. Keep `Surf-Payload-Ref` if present: its object lives for 7 days from the
+original call.
 
 ### Header reference
 
@@ -533,4 +572,6 @@ Keep `Surf-Payload-Ref` if present: its object lives for 7 days from the origina
 | `Surf-Error`          | no          | yes            | Exception class of a failed call. The body holds the message.              |
 | `Surf-Answer`         | no          | yes            | `unknown` for `Answer.Unknown`.                                            |
 | `Surf-Dead-Subject`   | no          | yes            | Original subject of a dead letter.                                         |
+| `Surf-Message-Id`     | yes         | yes            | Identity of a persistent call (idempotency key or replayed identity); takes precedence over `Nats-Msg-Id`. |
+| `Surf-Event-Id`       | yes         | yes            | Identity of an event, equal for every repeat of one event. Optional.       |
 | `Surf-Presence`       | no          | no             | `join`, `beat`, `leave` or `query` on the presence subject. Internal.      |

@@ -3,6 +3,7 @@ package dev.slne.surf.nats
 import dev.slne.surf.nats.descriptor.NatsEvent
 import dev.slne.surf.nats.internal.NatsClientFactory
 import dev.slne.surf.nats.internal.NatsClientName
+import dev.slne.surf.nats.rpc.NatsPersistentInterceptor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Blocking
 import org.jetbrains.annotations.CheckReturnValue
@@ -58,6 +59,7 @@ public interface NatsClient : AutoCloseable {
      * The event must be an instance of a generated event message. Returns once the message has been
      * handed to the connection. Delivery is not guaranteed. Events exceeding the server's payload
      * limit are rejected and are never offloaded. Serialization failures propagate to the caller.
+     * Each call sends a new random event ID.
      *
      * @throws IllegalArgumentException if the event class is not a generated event, its proto name is invalid, or the
      * message is too large.
@@ -100,6 +102,24 @@ public interface NatsClient : AutoCloseable {
      */
     @IgnorableReturnValue
     public suspend fun <S : Any> registerService(type: KClass<S>, implementation: S): NatsRegistration
+
+    /**
+     * Registers an implementation of the generated service interface [type] whose persistent methods run through
+     * [interceptor].
+     *
+     * Behaves like [registerService] without an interceptor, except that every persistent fire call and persistent
+     * RPC of this registration is handled by [NatsPersistentInterceptor.intercept]. Methods that are not persistent
+     * do not use the interceptor.
+     *
+     * @throws IllegalArgumentException if the interface, its methods, or the implementation are invalid.
+     * @throws IllegalStateException if the client is closed or closing, or the service is already registered.
+     */
+    @IgnorableReturnValue
+    public suspend fun <S : Any> registerService(
+        type: KClass<S>,
+        implementation: S,
+        interceptor: NatsPersistentInterceptor,
+    ): NatsRegistration
 
     /**
      * Returns a remote service proxy cached per interface on this client.

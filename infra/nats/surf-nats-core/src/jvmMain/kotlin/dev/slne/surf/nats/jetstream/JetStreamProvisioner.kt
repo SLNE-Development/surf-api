@@ -3,7 +3,7 @@ package dev.slne.surf.nats.jetstream
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.protocol.ServiceNames
-import dev.slne.surf.nats.protocol.ProtocolDefaults
+import dev.slne.surf.nats.rpc.NatsPersistentLimits
 import dev.slne.surf.nats.rpc.RpcDefaults
 import dev.slne.surf.nats.runtime.RuntimeDefaults
 import io.nats.client.Connection
@@ -52,7 +52,7 @@ internal object JetStreamProvisioner {
                         .retentionPolicy(RetentionPolicy.WorkQueue)
                         .storageType(StorageType.File)
                         .allowMessageTtl()
-                        .maxAge(ProtocolDefaults.PERSIST_MAX_AGE.toJavaDuration())
+                        .maxAge(NatsPersistentLimits.MESSAGE_MAX_AGE.toJavaDuration())
                         .duplicateWindow(RuntimeDefaults.dedupeWindow.toJavaDuration())
                         .build()
                 )
@@ -62,7 +62,7 @@ internal object JetStreamProvisioner {
                         .subjects(streams.dlqSubject)
                         .retentionPolicy(RetentionPolicy.Limits)
                         .storageType(StorageType.File)
-                        .maxAge(ProtocolDefaults.PERSIST_MAX_AGE.toJavaDuration())
+                        .maxAge(NatsPersistentLimits.DEAD_LETTER_MAX_AGE.toJavaDuration())
                         .build()
                 )
             }

@@ -1,3 +1,5 @@
+import dev.petuska.npm.publish.task.NodeExecTask
+import dev.petuska.npm.publish.task.NpmPublishTask
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.gradle.api.logging.Logger
@@ -6,6 +8,10 @@ import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.process.ExecOperations
 import java.io.ByteArrayOutputStream
+import java.net.URI
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -15,6 +21,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.kotlin.js.plain.objects)
+    alias(libs.plugins.npm.publish)
     id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
@@ -469,6 +476,61 @@ val jvmInteropTest = tasks.register<Test>("jvmInteropTest") {
 
 tasks.named("check") {
     dependsOn(checkJsConsumerTypes, jvmInteropTest)
+}
+
+// npm package @slne/surf-nats in the weaver registry (npm-releases-public). The package is
+// jsNodeProductionLibraryDistribution with another version: weaver npm versions are immutable, so a snapshot publishes
+// as <base>-SNAPSHOT.<yyyyMMddHHmmss UTC> under the dist-tag snapshot, a release unchanged under latest. The plugin
+// wires the upload into publish; publishToMavenLocal stays npm-free. The timestamp is taken once per configuration;
+// with the configuration cache enabled it would be reused and the republish rejected.
+
+val npmDistribution = tasks.named<Copy>("jsNodeProductionLibraryDistribution")
+val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
+val npmVersion = if (isSnapshot) {
+    val timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    "${project.version}.$timestamp"
+} else {
+    project.version.toString()
+}
+val weaverUrl = providers.environmentVariable("WEAVER_URL").orElse("https://weaver.slne.dev")
+val nodeExecutable = project.the<NodeJsEnvSpec>().executable.map(::File)
+
+npmPublish {
+    // Node as KGP installs it: node.exe and node_modules/npm at the root on Windows, bin/ and lib/ elsewhere. Set
+    // explicitly: the plugin's nodeHome convention calls NodeJsSetupTask.getDestination(), which KGP 2.4 removed.
+    val isWindows = System.getProperty("os.name").startsWith("Windows")
+    nodeHome = layout.dir(nodeExecutable.map { node -> if (isWindows) node.parentFile else node.parentFile.parentFile })
+    nodeBin = layout.file(nodeExecutable)
+    npmBin = layout.file(nodeExecutable.map { node ->
+        val npmCli = "node_modules/npm/bin/npm-cli.js"
+        if (isWindows) node.resolveSibling(npmCli) else node.parentFile.resolveSibling("lib/$npmCli")
+    })
+
+    packages.named("js") {
+        files.setFrom(npmDistribution)
+        packageJsonTemplateFile = layout.file(npmDistribution.map { it.destinationDir.resolve("package.json") })
+        // Set explicitly: the plugin derives both from @slne/surf-nats.mjs, and assembling then fails
+        main = "index.mjs"
+        types = "index.d.mts"
+        packageJson {
+            version = npmVersion
+        }
+    }
+
+    registries {
+        register("weaver") {
+            uri = weaverUrl.map { URI("${it.trimEnd('/')}/npm/npm-releases-public") }
+            authToken = providers.environmentVariable("WEAVER_TOKEN")
+        }
+    }
+}
+
+tasks.withType<NodeExecTask>().configureEach {
+    dependsOn("kotlinNodeJsSetup")
+}
+
+tasks.withType<NpmPublishTask>().configureEach {
+    tag = if (isSnapshot) "snapshot" else "latest"
 }
 
 buildConfig {

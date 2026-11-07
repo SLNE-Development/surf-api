@@ -11,6 +11,8 @@ import dev.slne.surf.nats.js.external.protobuf.DescFieldMessage
 import dev.slne.surf.nats.js.external.protobuf.DescFieldMessageList
 import dev.slne.surf.nats.js.external.protobuf.DescFieldMessageMap
 import dev.slne.surf.nats.js.external.protobuf.DescFieldScalar
+import dev.slne.surf.nats.js.external.protobuf.DescFieldScalarList
+import dev.slne.surf.nats.js.external.protobuf.DescFieldScalarMap
 import dev.slne.surf.nats.js.external.protobuf.DescMessage
 import dev.slne.surf.nats.js.external.protobuf.DescOneof
 import dev.slne.surf.nats.js.external.protobuf.UnknownField
@@ -30,8 +32,10 @@ internal external interface ReflectMessage {
     fun get(field: DescFieldEnum): Int
     fun get(field: DescFieldMessage): ReflectMessage
     fun get(field: DescFieldEnumList): ReflectList<Int>
+    fun get(field: DescFieldScalarList): ReflectList<Any>
     fun get(field: DescFieldMessageList): ReflectList<ReflectMessage>
     fun get(field: DescFieldEnumMap): ReflectMap<Any, Int>
+    fun get(field: DescFieldScalarMap): ReflectMap<Any, Any>
     fun get(field: DescFieldMessageMap): ReflectMap<Any, ReflectMessage>
 
     fun set(field: DescFieldEnum, value: Int)

@@ -5,6 +5,7 @@ import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.descriptor.NatsResultKind
+import dev.slne.surf.nats.internal.NatsIdempotencyKeyElement
 import dev.slne.surf.nats.internal.NatsTimeoutElement
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.protocol.PayloadBucket
@@ -14,11 +15,7 @@ import dev.slne.surf.nats.rpc.payload.PayloadStore
 import dev.slne.surf.nats.runtime.RuntimeDefaults
 import dev.slne.surf.nats.runtime.headerLineBytes
 import dev.slne.surf.nats.runtime.randomId
-import dev.slne.surf.nats.runtime.rpc.AllReply
-import dev.slne.surf.nats.runtime.rpc.CallFlow
-import dev.slne.surf.nats.runtime.rpc.FailureRecorder
-import dev.slne.surf.nats.runtime.rpc.PersistentRules
-import dev.slne.surf.nats.runtime.rpc.classifyAllReply
+import dev.slne.surf.nats.runtime.rpc.*
 import io.nats.client.JetStreamApiException
 import io.nats.client.JetStreamStatusException
 import io.nats.client.Message
@@ -30,7 +27,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.future.await
 import java.io.IOException
-import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
@@ -209,8 +205,15 @@ internal class RpcCallerImpl(
             PersistentRules.requireFireTimeout(timeout, RuntimeDefaults.dedupeWindow, method.label)
         }
 
+        val idempotencyKey = currentCoroutineContext()[NatsIdempotencyKeyElement]?.value
+        if (idempotencyKey != null) {
+            ProtocolHeaders.idempotencyKeyProblem(idempotencyKey)?.let { throw IllegalArgumentException(it) }
+        }
+
         val streams = checkNotNull(service.streams)
         val headers = client.headers()
+        // The responder's message identity; Nats-Msg-Id stays unique per call, so a repeat is stored again
+        if (idempotencyKey != null) headers.put(ProtocolHeaders.MESSAGE_ID, idempotencyKey)
         val encoded = method.encodeRequest(request)
 
         val inbox = if (flow.sendsReplyTo) NatsConnectionManager.connection().createInbox() else null

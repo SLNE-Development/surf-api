@@ -486,6 +486,31 @@ suspend fun onNameChanged(event: NameChanged) {
 `origin` has the form `<client name>@<instance id>`, where the instance id is a random id per JVM. It is `null` for
 events from publishers that do not set it.
 
+### Repeated events
+
+Events travel over core NATS, which delivers each message at most once per subscription and never redelivers it.
+`NatsClient.publish` on the JVM sends every event once under a new random `eventId`, so its events never repeat.
+
+A listener receives one `eventId` twice only when a publisher sends it twice on purpose: a TypeScript client that
+passes the same `eventId` in its publish options, for example to retry a publish whose flush timed out, or an
+application outside surf-nats that sets the same `Surf-Event-Id` header. `NatsEventDeduplicator` remembers delivered
+ids so that a listener acts once on such a repeat:
+
+```kotlin
+object NameListener {
+    private val deduplicator = NatsEventDeduplicator()
+
+    @NatsListener
+    suspend fun onNameChanged(event: NameChanged) {
+        if (!deduplicator.firstDelivery()) return
+        println("${event.playerId} is now ${event.name}")
+    }
+}
+```
+
+It remembers up to 10,000 ids for 7 days by default; both limits are constructor parameters. A repeat that arrives
+after its id was forgotten counts as new, so the limits must cover the time in which publishers repeat events.
+
 ### Subjects
 
 NATS delivers each message by its subject. surf-nats builds the subject of an event from the root `surf`, the kind
@@ -820,9 +845,32 @@ override suspend fun rename(request: RenameRequest) {
 }
 ```
 
-`messageId` stays the same across retries of one call. Two calls with the same request get different ids, so
-`messageId` cannot detect an operation that a caller sends twice. Use a key from your domain for that, such as an
-operation id that the caller generates and passes as a field of the request.
+`messageId` stays the same across retries of one call, and across a replay from the dead-letter stream that keeps the
+`Surf-Message-Id` header. Two calls with the same request get different ids, so by default `messageId` cannot detect
+an operation that a caller sends twice.
+
+### Repeating a call safely
+
+A caller that gets no result, for example after a timeout, cannot tell whether the call ran. To repeat it safely,
+give the action an idempotency key with `withNatsIdempotencyKey`:
+
+```kotlin
+val key = "rename-${UUID.randomUUID()}" // one key per user action, kept for its repeats
+
+val result = withNatsIdempotencyKey(key) {
+    profiles.rename(RenameRequest(playerId = "alice", name = "Alice"))
+}
+```
+
+The key becomes the `messageId` of the call, so every repeat with the same key reaches the instance as the same
+operation. An implementation that deduplicates by `messageId`, such as a transactional service of
+surf-microservice-reliability, runs the action once and answers every repeat with the stored result. Each repeat is
+stored as a new message, so it reaches an instance also within the two-minute duplicate window.
+
+Use a new key for every action and send the same request with every repeat; a transactional service answers a key
+reused with another request with an error. Calls to the same method inside one block count as repeats of one action.
+A key has 1 to 128 visible ASCII characters; core calls ignore it. JavaScript callers pass `idempotencyKey` in the
+call options.
 
 ### Deadlines
 

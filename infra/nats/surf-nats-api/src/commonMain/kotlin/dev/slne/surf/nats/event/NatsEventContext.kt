@@ -14,12 +14,14 @@ import kotlin.coroutines.CoroutineContext
  * JVM, or null if the publisher supplied no origin.
  * @property isFromThisClient whether the event was published by this client in this JVM.
  * Events from other clients in the same JVM are treated as coming from a different client.
+ * @property eventId the identity of the logical event from the `Surf-Event-Id` header, or null if the publisher sent
+ * none. Every surf-nats publisher sends one. A publisher that repeats an event sends it with the same identity, so
+ * listeners can deduplicate by it.
  */
 public class NatsEventContext @InternalNatsApi constructor(
-
     public val origin: String?,
-
     public val isFromThisClient: Boolean,
+    public val eventId: String?,
 ) : AbstractCoroutineContextElement(Key) {
     /**
      * Key for retrieving [NatsEventContext] from a coroutine context.

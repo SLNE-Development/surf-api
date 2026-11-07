@@ -7,6 +7,7 @@ import dev.slne.surf.nats.TEST_UUID
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.event.NatsEventContext
+import dev.slne.surf.nats.event.NatsEventDeduplicator
 import dev.slne.surf.nats.event.NatsListener
 import dev.slne.surf.nats.event.natsEventContext
 import dev.slne.surf.nats.event.natsEventContextOrNull
@@ -242,6 +243,16 @@ class NatsClientListenerTest {
         @NatsListener
         fun on(event: OriginEvent) {
             recorder.received.trySend(event)
+        }
+    }
+
+    class DeduplicatingListener {
+        val recorder = Recorder<OriginEvent>()
+        private val deduplicator = NatsEventDeduplicator()
+
+        @NatsListener
+        suspend fun on(event: OriginEvent) {
+            if (deduplicator.firstDelivery()) recorder.received.send(event)
         }
     }
 
@@ -747,6 +758,33 @@ class NatsClientListenerTest {
     }
 
     @Test
+    fun `event context reports the event id of the publish`() = withClient("listen-event-id") { client ->
+        val listener = ContextListener()
+        client.registerListener(listener)
+
+        client.publish(OriginEvent(1))
+        UUID.fromString(listener.recorder.receiveWithin().second.eventId)
+    }
+
+    @Test
+    fun `listener acts once on an event repeated with its event id`() = withClient("listen-dedupe") { client ->
+        val listener = DeduplicatingListener()
+        client.registerListener(listener)
+
+        val bytes = NatsCodec.encode(OriginEvent.serializer(), OriginEvent(1))
+        val headers = Headers()
+            .add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+            .add(ProtocolHeaders.EVENT_ID, "repeated-1")
+        repeat(2) { NatsConnectionManager.connection().publish("surf.evt.surf.nats.test.v1.OriginEvent", headers, bytes) }
+        client.publish(OriginEvent(2))
+
+        val received = setOf(listener.recorder.receiveWithin(), listener.recorder.receiveWithin())
+        assertEquals(setOf(OriginEvent(1), OriginEvent(2)), received)
+        withContext(Dispatchers.Default) { delay(300.milliseconds) }
+        assertNull(listener.recorder.received.tryReceive().getOrNull(), "the repeat must be skipped")
+    }
+
+    @Test
     fun `event without origin header is foreign`() = withClient("listen-no-origin") { client ->
         val context = ContextListener()
         val ignoring = IgnoreOwnListener()
@@ -760,6 +798,7 @@ class NatsClientListenerTest {
         val (event, eventContext) = context.recorder.receiveWithin()
         assertEquals(OriginEvent(8), event)
         assertNull(eventContext.origin)
+        assertNull(eventContext.eventId)
         assertFalse(eventContext.isFromThisClient)
         assertEquals(OriginEvent(8), ignoring.recorder.receiveWithin())
     }

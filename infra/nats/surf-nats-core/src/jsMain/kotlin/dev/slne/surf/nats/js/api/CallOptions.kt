@@ -8,4 +8,5 @@ import kotlinx.js.JsPlainObject
 @JsPlainObject
 external interface CallOptions {
     val timeoutMs: Int?
+    val idempotencyKey: String?
 }

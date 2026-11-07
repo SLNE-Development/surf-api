@@ -8,4 +8,5 @@ import kotlinx.js.JsPlainObject
 @JsPlainObject
 external interface PublishOptions {
     val timeoutMs: Int?
+    val eventId: String?
 }

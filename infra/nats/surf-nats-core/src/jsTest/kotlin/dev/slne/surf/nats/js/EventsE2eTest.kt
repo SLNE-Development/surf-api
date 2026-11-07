@@ -3,6 +3,7 @@ package dev.slne.surf.nats.js
 import dev.slne.surf.nats.NatsConstants
 import dev.slne.surf.nats.js.api.EventContext
 import dev.slne.surf.nats.js.api.ListenOptions
+import dev.slne.surf.nats.js.api.PublishOptions
 import dev.slne.surf.nats.js.event.NatsRegistration
 import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.fixtures.ChatMessage
@@ -36,6 +37,8 @@ class EventsE2eTest {
 
     private val playerJoinedSubject = "surf.evt.surf.natsjs.test.v1.PlayerJoined"
 
+    private val uuidPattern = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+
     private fun playerJoined(name: String): PlayerJoined = unsafeJso {
         this.name = name
         id = unsafeJso<Uuid> { value = bytesOfSize(16) }
@@ -61,6 +64,33 @@ class EventsE2eTest {
             assertEquals(NatsConstants.VERSION, header(message, ProtocolHeaders.SENDER_VERSION))
             assertTrue(client.origin.startsWith("${client.name}@"))
             assertEquals("Steve", raw.decode(PlayerJoinedSchema, message.data).fields<PlayerJoined>().name)
+        } finally {
+            client.close().await()
+            raw.close()
+        }
+    }
+
+    @Test
+    fun publishSendsAnEventIdThatListenersSee() = e2eTest {
+        val raw = rawNats()
+        val client = TestNats.client(uniqueName("events-id"))
+        try {
+            val received = mutableListOf<Msg>()
+            val contexts = mutableListOf<EventContext>()
+            raw.subscribe(playerJoinedSubject) { received += it }
+            raw.flush()
+            client.listen(PlayerJoinedSchema, { _, context -> contexts.add(context) }, listenOptions()).await()
+
+            client.publish(PlayerJoinedSchema, playerJoined("Steve")).await()
+            client.publish(PlayerJoinedSchema, playerJoined("Alex"), PublishOptions(eventId = "custom-event-1")).await()
+
+            eventually { received.size == 2 && contexts.size == 2 }
+            val generated = header(received[0], ProtocolHeaders.EVENT_ID)
+            assertTrue(uuidPattern.matches(generated.orEmpty()), "generated event ID $generated")
+            assertEquals("custom-event-1", header(received[1], ProtocolHeaders.EVENT_ID))
+            assertEquals(setOf(generated, "custom-event-1"), contexts.map { it.eventId }.toSet())
+
+            assertFails { client.publish(PlayerJoinedSchema, playerJoined("Bob"), PublishOptions(eventId = "a b")).await() }
         } finally {
             client.close().await()
             raw.close()

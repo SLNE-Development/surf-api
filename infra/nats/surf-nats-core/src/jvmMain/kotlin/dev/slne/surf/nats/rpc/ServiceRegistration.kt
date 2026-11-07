@@ -15,6 +15,7 @@ import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
+import dev.slne.surf.nats.protocol.ServiceNames
 import dev.slne.surf.nats.rpc.payload.PayloadStore
 import dev.slne.surf.nats.util.rethrowIfFatal
 import io.nats.client.*
@@ -23,6 +24,7 @@ import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import org.jetbrains.annotations.Blocking
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
@@ -37,6 +39,7 @@ internal class ServiceRegistration(
     private val client: NatsClientImpl,
     val descriptor: ServiceDescriptor,
     implementation: Any,
+    private val interceptor: NatsPersistentInterceptor?,
 ) : NatsRegistration {
 
     private val invokers = descriptor.methods.map {
@@ -64,8 +67,19 @@ internal class ServiceRegistration(
     @Volatile
     private var dispatcher: Dispatcher? = null
 
+    // Guards messageConsumer: a reconnect swaps it while a drain stops and closes it
+    private val consumerLock = Any()
+
     @Volatile
     private var messageConsumer: MessageConsumer? = null
+
+    private val reconnectListener = ConnectionListener { _, event ->
+        if (event == ConnectionListener.Events.RESUBSCRIBED) {
+            scope.launch(Dispatchers.IO + CoroutineName("surf-nats/${client.name}/persist/resume")) {
+                resumeConsumer()
+            }
+        }
+    }
 
     suspend fun subscribe() {
         val connection = NatsConnectionManager.connection()
@@ -89,15 +103,55 @@ internal class ServiceRegistration(
         descriptor.streams?.let { streams ->
             JetStreamProvisioner.ensureStreams(streams)
             withContext(Dispatchers.IO) {
-                val consumer = connection.getStreamContext(streams.stream)
-                    .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(streams.durable))
-                messageConsumer = consumer.consume(dispatcher) { onPersistent(it) }
+                messageConsumer = consume(connection, streams, dispatcher)
             }
+            connection.addConnectionListener(reconnectListener)
         }
 
         announcer?.start(dispatcher)
 
         client.flush()
+    }
+
+    @Blocking
+    private fun consume(connection: Connection, streams: ServiceNames, dispatcher: Dispatcher): MessageConsumer {
+        return connection.getStreamContext(streams.stream)
+            .createOrUpdateConsumer(JetStreamProvisioner.consumerConfig(streams.durable))
+            .consume(dispatcher) { onPersistent(it) }
+    }
+
+    /**
+     * Replaces the message consumer after a reconnect.
+     *
+     * The server forgets the pull requests of a dropped connection, and jnats pulls again only after its heartbeat
+     * alarm, about 45 s later. The old consumer is closed only after the new one pulls; if that fails, the old one
+     * stays and recovers through the alarm.
+     */
+    @Blocking
+    private fun resumeConsumer() {
+        val streams = descriptor.streams ?: return
+        synchronized(consumerLock) {
+            val dispatcher = dispatcher
+            if (!active.get() || dispatcher == null) return
+
+            val resumed = try {
+                consume(NatsConnectionManager.connection(), streams, dispatcher)
+            } catch (e: Exception) {
+                client.logger.warn("Failed to resume consuming ${streams.stream} after a reconnect", e)
+                return
+            }
+            val previous = messageConsumer
+            messageConsumer = resumed
+            closeConsumer(previous)
+        }
+    }
+
+    private fun closeConsumer(consumer: MessageConsumer?) {
+        try {
+            consumer?.close()
+        } catch (e: Exception) {
+            client.logger.warn("Failed to close message consumer", e)
+        }
     }
 
     private fun onRequest(method: MethodDescriptor, message: Message) {
@@ -137,11 +191,9 @@ internal class ServiceRegistration(
             }
             return
         }
-        val meta = message.metaData()
         val context = NatsPersistentContext(
-            messageId = message.header(NatsJetStreamConstants.MSG_ID_HDR)
-                ?: meta.streamSequence().toString(),
-            deliveryCount = meta.deliveredCount(),
+            messageId = message.persistentMessageId(),
+            deliveryCount = message.metaData().deliveredCount(),
         )
 
         val deadline = message.deadlineMillis()
@@ -167,7 +219,7 @@ internal class ServiceRegistration(
             }
             try {
                 if (method.result == NatsResultKind.UNIT) {
-                    handleFire(method, message)
+                    handleFire(method, message, context)
                 } else {
                     handlePersistentRpc(method, message, deadline)
                 }
@@ -177,7 +229,7 @@ internal class ServiceRegistration(
         }
     }
 
-    private suspend fun handleFire(method: MethodDescriptor, message: Message) {
+    private suspend fun handleFire(method: MethodDescriptor, message: Message, context: NatsPersistentContext) {
         val data = try {
             PayloadStore.resolve(message, PayloadBucket.PERSISTENT, delete = false)
         } catch (e: CancellationException) {
@@ -198,10 +250,9 @@ internal class ServiceRegistration(
             return failFire(message, e, permanent = true)
         }
 
-        val completed: Unit? = try {
+        val reply = try {
             withTimeoutOrNull(RpcDefaults.FIRE_MAX_DURATION) {
-                invokers[method.index].call(request)
-                Unit
+                handle(method, context, request, data)
             }
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
@@ -211,12 +262,51 @@ internal class ServiceRegistration(
             return failFire(message, e, permanent = false)
         }
 
-        if (completed == null) {
+        if (reply == null) {
             val error =
                 TimeoutException("Handler did not complete within ${RpcDefaults.FIRE_MAX_DURATION}")
             return failFire(message, error, permanent = false)
         }
 
+        when (reply.kind) {
+            NatsPersistentReply.Kind.EMPTY -> ackThenDeletePayload(message, PayloadBucket.PERSISTENT)
+
+            // A stored failure repeats on every delivery
+            NatsPersistentReply.Kind.ERROR -> {
+                val error = NatsRemoteException(reply.errorType.orEmpty(), reply.errorMessage.orEmpty())
+                failFire(message, error, permanent = true)
+            }
+
+            else -> failFire(message, replyMismatch(method, reply), permanent = true)
+        }
+    }
+
+    /**
+     * Runs the handler of a persistent [method] through the interceptor, if any, and returns its encoded reply.
+     */
+    private suspend fun handle(
+        method: MethodDescriptor,
+        context: NatsPersistentContext,
+        request: Any,
+        requestBytes: ByteArray,
+    ): NatsPersistentReply {
+        val call = PersistentCall(
+            serviceName = descriptor.name,
+            method = method,
+            invoker = invokers[method.index],
+            request = request,
+            requestBytes = requestBytes,
+            messageId = context.messageId,
+            deliveryCount = context.deliveryCount,
+        )
+        return interceptor?.intercept(call) ?: call.proceed()
+    }
+
+    /**
+     * Acknowledges [message] and deletes its offloaded payload only once the server confirmed the ack, so a
+     * redelivery after a lost ack can still resolve the payload.
+     */
+    private suspend fun ackThenDeletePayload(message: Message, bucket: PayloadBucket) {
         if (!PayloadStore.isOffloaded(message)) {
             message.ack()
             return
@@ -236,7 +326,13 @@ internal class ServiceRegistration(
             return
         }
 
-        PayloadStore.delete(message, PayloadBucket.PERSISTENT)
+        PayloadStore.delete(message, bucket)
+    }
+
+    private fun replyMismatch(method: MethodDescriptor, reply: NatsPersistentReply): IllegalStateException {
+        return IllegalStateException(
+            "Reply of format ${reply.format} does not fit the ${method.result} result of ${method.label}"
+        )
     }
 
     private fun isObjectNotFound(e: Throwable): Boolean {
@@ -246,17 +342,32 @@ internal class ServiceRegistration(
 
     private suspend fun failFire(message: Message, e: Throwable, permanent: Boolean) {
         val delivered = message.metaData().deliveredCount()
-        client.logger.error(
-            "Persistent call on ${message.subject} failed (delivery $delivered${if (permanent) ", permanent" else ""})",
-            e
-        )
+        val failure =
+            "Persistent call on ${message.subject} failed (delivery $delivered${if (permanent) ", permanent" else ""})"
+        if (e is NatsRedeliveryException) {
+            client.logger.warn("$failure and requested a redelivery", e)
+        } else {
+            client.logger.error(failure, e)
+        }
         if ((permanent || delivered >= RpcDefaults.MAX_DELIVER) && deadLetter(message, e)) {
             message.term()
         } else {
-            val backoff = RpcDefaults.NAK_BACKOFF[(delivered - 1).toInt()
-                .coerceIn(0, RpcDefaults.NAK_BACKOFF.lastIndex)]
-            message.nakWithDelay(backoff.toJavaDuration())
+            message.nakWithDelay(backoffAfter(delivered).toJavaDuration())
         }
+    }
+
+    private fun backoffAfter(delivered: Long): Duration {
+        return RpcDefaults.NAK_BACKOFF[(delivered - 1).toInt().coerceIn(0, RpcDefaults.NAK_BACKOFF.lastIndex)]
+    }
+
+    /**
+     * Returns the identity of a persistent message: the identity carried over by a dead-letter replay, else the
+     * `Nats-Msg-Id` of the publish, else the stream sequence.
+     */
+    private fun Message.persistentMessageId(): String {
+        return header(ProtocolHeaders.MESSAGE_ID)
+            ?: header(NatsJetStreamConstants.MSG_ID_HDR)
+            ?: metaData().streamSequence().toString()
     }
 
     private suspend fun deadLetter(message: Message, e: Throwable): Boolean {
@@ -264,6 +375,7 @@ internal class ServiceRegistration(
         val headers = Headers(message.headers)
             .put(ProtocolHeaders.ERROR, e.javaClass.name)
             .put(ProtocolHeaders.DEAD_SUBJECT, message.subject)
+            .put(ProtocolHeaders.MESSAGE_ID, message.persistentMessageId())
 
         headers.remove(headers.keySet().filter { it.startsWith("Nats-", ignoreCase = true) })
 
@@ -302,16 +414,45 @@ internal class ServiceRegistration(
             return // Caller has already given up
         }
 
+        if (outcome is Outcome.Failed && outcome.error is NatsRedeliveryException) {
+            if (redeliver(method, message, deadline, outcome.error)) return
+        }
+
         message.header(ProtocolHeaders.REPLY_TO)?.let { replyTo ->
             send(replyTo, replyOf(method, outcome), timeout)
         }
-        message.ack()
+        ackThenDeletePayload(message, PayloadBucket.TRANSIENT)
+    }
 
-        PayloadStore.delete(message, PayloadBucket.TRANSIENT)
+    /**
+     * Naks a persistent RPC [message] whose handling requested a redelivery and returns `true`, or returns `false`
+     * when no redelivery can happen before the deadline, so the caller must be answered with the error.
+     */
+    private fun redeliver(
+        method: MethodDescriptor,
+        message: Message,
+        deadline: Long?,
+        error: NatsRedeliveryException,
+    ): Boolean {
+        val delivered = message.metaData().deliveredCount()
+        val backoff = backoffAfter(delivered)
+        if (delivered >= RpcDefaults.MAX_DELIVER || backoff >= remaining(deadline, method.timeout)) {
+            client.logger.error(
+                "Service method ${method.label} requested a redelivery that cannot happen before its deadline " +
+                        "(delivery $delivered), answering with the error",
+                error
+            )
+            return false
+        }
+
+        client.logger.warn("Service method ${method.label} requested a redelivery (delivery $delivered)", error)
+        message.nakWithDelay(backoff.toJavaDuration())
+        return true
     }
 
     override fun close() {
         if (!active.compareAndSet(true, false)) return
+        removeReconnectListener()
         announcer?.close()
         drain(natsConfig.drainTimeout.seconds)
         scope.cancel("Service registration ${descriptor.type.name} closed")
@@ -322,7 +463,9 @@ internal class ServiceRegistration(
     private fun drain(timeout: Duration) {
         val deadline = TimeSource.Monotonic.markNow() + timeout
 
-        messageConsumer?.let {
+        // A resume running now finishes first; later ones see the registration inactive
+        val consumer = synchronized(consumerLock) { messageConsumer }
+        consumer?.let {
             try {
                 it.stop()
             } catch (e: Exception) {
@@ -332,13 +475,7 @@ internal class ServiceRegistration(
 
         dispatcher?.let { client.drainDispatcher(it, timeout, "service dispatcher") }
 
-        messageConsumer?.let {
-            try {
-                it.close()
-            } catch (e: Exception) {
-                client.logger.warn("Failed to close message consumer", e)
-            }
-        }
+        closeConsumer(consumer)
 
         val handlers = scope.coroutineContext.job.children.toList()
         if (handlers.isEmpty()) return
@@ -353,10 +490,20 @@ internal class ServiceRegistration(
         }
     }
 
+    private fun removeReconnectListener() {
+        if (descriptor.streams == null) return
+        try {
+            NatsConnectionManager.connection().removeConnectionListener(reconnectListener)
+        } catch (e: IllegalStateException) {
+            client.logger.debug("Connection gone before removing the reconnect listener", e)
+        }
+    }
+
     private fun TimeMark.timeLeft(): Duration = (-elapsedNow()).coerceAtLeast(Duration.ZERO)
 
     fun discard() {
         active.set(false)
+        removeReconnectListener()
         scope.cancel("Service registration ${descriptor.type.name} discarded")
     }
 
@@ -378,6 +525,7 @@ internal class ServiceRegistration(
     private sealed interface Outcome {
         sealed interface Finished : Outcome
         class Completed(@JvmField val value: Any?) : Finished
+        class Prepared(@JvmField val reply: NatsPersistentReply) : Finished
         class Failed(@JvmField val error: Throwable) : Finished
         data object TimedOut : Outcome
     }
@@ -393,7 +541,11 @@ internal class ServiceRegistration(
         val call = suspend {
             val data = PayloadStore.resolve(message, PayloadBucket.TRANSIENT, deletePayload)
             val request = method.decodeRequest(data, message.header(ProtocolHeaders.CONTENT_TYPE))
-            Outcome.Completed(invokers[method.index].call(request))
+            if (method.persistent) {
+                Outcome.Prepared(handle(method, natsPersistentContext(), request, data))
+            } else {
+                Outcome.Completed(invokers[method.index].call(request))
+            }
         }
 
         val outcome = try {
@@ -412,7 +564,7 @@ internal class ServiceRegistration(
             Outcome.Failed(e)
         }
 
-        if (outcome is Outcome.Failed) {
+        if (outcome is Outcome.Failed && !(method.persistent && outcome.error is NatsRedeliveryException)) {
             logFailure(method, outcome.error)
         }
 
@@ -423,16 +575,16 @@ internal class ServiceRegistration(
         method: MethodDescriptor,
         outcome: Outcome.Finished,
     ): Reply {
-        return when (outcome) {
-            is Outcome.Completed -> try {
-                encodeResult(method, outcome.value)
-            } catch (e: Throwable) {
-                e.rethrowIfFatal()
-                logFailure(method, e)
-                errorReply(e)
+        return try {
+            when (outcome) {
+                is Outcome.Completed -> wireReply(method, method.encodeReply(outcome.value))
+                is Outcome.Prepared -> wireReply(method, outcome.reply)
+                is Outcome.Failed -> errorReply(outcome.error)
             }
-
-            is Outcome.Failed -> errorReply(outcome.error)
+        } catch (e: Throwable) {
+            e.rethrowIfFatal()
+            logFailure(method, e)
+            errorReply(e)
         }
     }
 
@@ -443,34 +595,37 @@ internal class ServiceRegistration(
         )
     }
 
-    private fun encodeResult(
-        method: MethodDescriptor,
-        value: Any?,
-    ): Reply {
+    /**
+     * Returns the wire form of [reply]; throws [IllegalStateException] when its kind does not fit the result of
+     * [method], such as a stored reply of another method.
+     */
+    private fun wireReply(method: MethodDescriptor, reply: NatsPersistentReply): Reply {
+        val fits = when (reply.kind) {
+            NatsPersistentReply.Kind.EMPTY -> method.result == NatsResultKind.UNIT
+            NatsPersistentReply.Kind.VALUE -> method.result != NatsResultKind.UNIT
+            NatsPersistentReply.Kind.UNKNOWN_ANSWER -> method.result == NatsResultKind.ANSWER
+            NatsPersistentReply.Kind.ERROR -> true
+        }
+        if (!fits) throw replyMismatch(method, reply)
+
         val headers = client.headers()
-        return when (method.result) {
-            NatsResultKind.UNIT -> Reply(headers, NatsHeaders.EMPTY_BODY)
-            NatsResultKind.VALUE -> Reply(headers, method.encodeResponse(value as Any))
+        return when (reply.kind) {
+            NatsPersistentReply.Kind.EMPTY -> Reply(headers, NatsHeaders.EMPTY_BODY)
+            NatsPersistentReply.Kind.VALUE -> Reply(headers, reply.bytes)
+            NatsPersistentReply.Kind.UNKNOWN_ANSWER -> Reply(
+                headers.add(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN),
+                NatsHeaders.EMPTY_BODY
+            )
 
-            NatsResultKind.ANSWER -> when (val answer = value as Answer<*>) {
-                is Answer.Known -> Reply(headers, method.encodeResponse(answer.value as Any))
-
-                Answer.Unknown -> Reply(
-                    headers.add(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN),
-                    NatsHeaders.EMPTY_BODY
-                )
-            }
+            NatsPersistentReply.Kind.ERROR -> errorReply(reply.errorType.orEmpty(), reply.errorMessage)
         }
     }
 
-    private fun errorReply(throwable: Throwable): Reply {
-        val headers = client.headers()
-            .add(ProtocolHeaders.ERROR, throwable.javaClass.name)
+    private fun errorReply(throwable: Throwable): Reply = errorReply(throwable.javaClass.name, throwable.message)
 
-        return Reply(
-            headers,
-            ProtocolDefaults.errorMessage(throwable.message).encodeToByteArray()
-        )
+    private fun errorReply(type: String, message: String?): Reply {
+        val headers = client.headers().add(ProtocolHeaders.ERROR, type)
+        return Reply(headers, ProtocolDefaults.errorMessage(message).encodeToByteArray())
     }
 
     private suspend fun send(replyTo: String, reply: Reply, timeout: Duration) {

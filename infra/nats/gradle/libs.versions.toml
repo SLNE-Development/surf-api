@@ -20,6 +20,7 @@ wire = "7.1.0"
 kotlinpoet = "2.4.0"
 buildconfig = "6.1.2"
 weaver = "0.3.0"
+npm-publish = "3.5.3"
 
 [libraries]
 jnats = { group = "io.nats", name = "jnats", version.ref = "jnats" }
@@ -64,3 +65,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-js-plain-objects = { id = "org.jetbrains.kotlin.plugin.js-plain-objects", version.ref = "kotlin" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 weaver = { id = "dev.slne.weaver", version.ref = "weaver" }
+npm-publish = { id = "dev.petuska.npm.publish", version.ref = "npm-publish" }

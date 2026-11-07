@@ -11,8 +11,11 @@ import kotlin.coroutines.CoroutineContext
  * Accessible from suspending code through [natsPersistentContext] or [natsPersistentContextOrNull]
  * for both persistent fire calls and persistent RPC.
  *
- * @property messageId the message identity, stable across redeliveries of the same message.
- * Separate calls with equal requests receive different identities. Deduplicate them using a domain key.
+ * @property messageId the message identity, stable across redeliveries and dead-letter replays of the same message.
+ * Separate calls receive different identities unless the caller repeats an idempotency key ([withNatsIdempotencyKey],
+ * `CallOptions.idempotencyKey` in JavaScript), which is then the identity of every repeat. Without a key, deduplicate
+ * equal requests using a domain key. The identity is the `Surf-Message-Id` header, which carries the idempotency key
+ * or the identity kept by a replay, otherwise the `Nats-Msg-Id` of the publish.
  * @property deliveryCount the number of times the message has been delivered, starting at one.
  */
 public class NatsPersistentContext @InternalNatsApi constructor(

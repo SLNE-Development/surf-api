@@ -20,6 +20,8 @@ class ProtocolHeadersTest {
         assertEquals("Surf-Payload-Ref", ProtocolHeaders.PAYLOAD_REF)
         assertEquals("Surf-Reply-To", ProtocolHeaders.REPLY_TO)
         assertEquals("Surf-Dead-Subject", ProtocolHeaders.DEAD_SUBJECT)
+        assertEquals("Surf-Event-Id", ProtocolHeaders.EVENT_ID)
+        assertEquals("Surf-Message-Id", ProtocolHeaders.MESSAGE_ID)
         assertEquals("Nats-Msg-Id", ProtocolHeaders.NATS_MSG_ID)
         assertEquals("Nats-TTL", ProtocolHeaders.NATS_TTL)
         assertEquals("Surf-Answer", ProtocolHeaders.ANSWER)
@@ -30,6 +32,26 @@ class ProtocolHeadersTest {
         assertEquals("leave", ProtocolHeaders.PRESENCE_LEAVE)
         assertEquals("query", ProtocolHeaders.PRESENCE_QUERY)
         assertEquals("application/protobuf", ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+    }
+
+    @Test
+    fun eventIdsAreVisibleAsciiOfBoundedLength() {
+        assertNull(ProtocolHeaders.eventIdProblem("0f8fad5b-d9cb-469f-a165-70867728950e"))
+        assertNull(ProtocolHeaders.eventIdProblem("x".repeat(ProtocolHeaders.MAX_EVENT_ID_LENGTH)))
+
+        for (invalid in listOf("", "x".repeat(ProtocolHeaders.MAX_EVENT_ID_LENGTH + 1), "a b", "line\r\n", "ü")) {
+            assertTrue(ProtocolHeaders.eventIdProblem(invalid) != null, "'$invalid' must be rejected")
+        }
+    }
+
+    @Test
+    fun idempotencyKeysAreVisibleAsciiOfBoundedLength() {
+        assertNull(ProtocolHeaders.idempotencyKeyProblem("ban:0f8fad5b-d9cb-469f-a165-70867728950e"))
+        assertNull(ProtocolHeaders.idempotencyKeyProblem("x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH)))
+
+        for (invalid in listOf("", "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH + 1), "a b", "line\r\n", "ü")) {
+            assertTrue(ProtocolHeaders.idempotencyKeyProblem(invalid) != null, "'$invalid' must be rejected")
+        }
     }
 
     @Test

@@ -1,5 +1,6 @@
 package dev.slne.surf.nats.js
 
+import dev.slne.surf.nats.js.api.CallOptions
 import dev.slne.surf.nats.js.client.JsRuntimeDefaults
 import dev.slne.surf.nats.js.error.NatsCallTimeoutError
 import dev.slne.surf.nats.js.error.NatsRpcError
@@ -142,6 +143,63 @@ class PersistentE2eTest {
 
                 assertEquals(1500, assertIs<NatsCallTimeoutError>(call.await()).timeoutMs)
             }
+        } finally {
+            client.close().await()
+            raw.close()
+        }
+    }
+
+    @Test
+    fun aRepeatWithTheIdempotencyKeyIsStoredAgainAndAnswered() = e2eTest {
+        val raw = rawNats()
+        val client = TestNats.client(uniqueName("persist-caller"))
+        val key = "audit-${uniqueName("action")}"
+        try {
+            raw.addPersistentStreams(names)
+            coroutineScope {
+                val lost = async {
+                    assertFails {
+                        client.call(method("query"), entry("ban"), CallOptions(timeoutMs = 1500, idempotencyKey = key))
+                            .await()
+                    }
+                }
+                val first = assertNotNull(raw.nextPersistent(names))
+                assertEquals(key, header(first, ProtocolHeaders.MESSAGE_ID))
+                first.ack() // the reply is lost
+                assertIs<NatsCallTimeoutError>(lost.await())
+
+                // Within the duplicate window of the stream
+                val repeat = async {
+                    client.call(method("query"), entry("ban"), CallOptions(idempotencyKey = key)).await()
+                }
+                val second = assertNotNull(raw.nextPersistent(names), "the repeat must be stored again")
+                assertEquals(key, header(second, ProtocolHeaders.MESSAGE_ID))
+                assertTrue(header(first, ProtocolHeaders.NATS_MSG_ID) != header(second, ProtocolHeaders.NATS_MSG_ID))
+                val replyTo = assertNotNull(header(second, ProtocolHeaders.REPLY_TO))
+                raw.publish(replyTo, raw.encode(AuditResultSchema, unsafeJso<AuditResult> { count = 7 }), raw.jvmHeaders())
+                second.ack()
+
+                assertEquals(7, repeat.await().fields<AuditResult>().count)
+            }
+        } finally {
+            client.close().await()
+            raw.close()
+        }
+    }
+
+    @Test
+    fun invalidIdempotencyKeysAreRejectedBeforePublishing() = e2eTest {
+        val raw = rawNats()
+        val client = TestNats.client(uniqueName("persist-caller"))
+        try {
+            raw.addPersistentStreams(names)
+            for (key in listOf("", "with space", "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH + 1))) {
+                val error = assertFails {
+                    client.call(method("record"), entry("x"), CallOptions(idempotencyKey = key)).await()
+                }
+                assertTrue(error.message!!.startsWith("Idempotency key"), error.message)
+            }
+            assertEquals(0, raw.streamMessages(names.stream))
         } finally {
             client.close().await()
             raw.close()

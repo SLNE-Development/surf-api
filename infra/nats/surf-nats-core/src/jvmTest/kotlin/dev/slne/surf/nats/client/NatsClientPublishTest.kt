@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.time.Duration
+import java.util.UUID
 import kotlin.test.*
 import dev.slne.surf.nats.test.proto.v1.VersionedChanged as VersionedChangedV1
 import dev.slne.surf.nats.test.proto.v2.VersionedChanged as VersionedChangedV2
@@ -44,6 +45,16 @@ class NatsClientPublishTest {
 
         assertContentEquals(byteArrayOf(0x08, 0x2a), message.data)
         assertEquals(event, NatsCodec.decode(Created.serializer(), message.data, contentType))
+    }
+
+    @Test
+    fun `every publish carries a new random event id`() = withClient("publish-event-id") { client ->
+        val first = publishAndReceive(client, "surf.evt.surf.nats.test.v1.Created", Created(1))
+        val second = publishAndReceive(client, "surf.evt.surf.nats.test.v1.Created", Created(1))
+
+        val ids = listOf(first, second).map { assertNotNull(it.headers.getFirst(ProtocolHeaders.EVENT_ID)) }
+        ids.forEach(UUID::fromString)
+        assertNotEquals(ids[0], ids[1])
     }
 
     @Test

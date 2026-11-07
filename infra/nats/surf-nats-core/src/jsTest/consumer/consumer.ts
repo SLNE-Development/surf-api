@@ -8,14 +8,23 @@ import {
     type Answer,
     type EventContext,
     type NatsRegistration,
+    type Plain,
     type SurfNatsClient,
+    toPlain,
     type UuidMessage,
     uuidFromString,
     uuidToString,
 } from "@slne/surf-nats";
 import type { Uuid } from "./gen/surf/types/v1/uuid_pb.js";
-import { create } from "@bufbuild/protobuf";
+import { create, type JsonObject, type JsonValue } from "@bufbuild/protobuf";
+import { ValueSchema } from "@bufbuild/protobuf/wkt";
 import { ChatMessageSchema, PlayerJoinedSchema, ServerStartedSchema } from "./gen/surf/natsjs/test/v1/events_pb.js";
+import {
+    PlainSampleSchema,
+    PlainWellKnownSchema,
+    type PlainSample,
+    type PlainWellKnown,
+} from "./gen/surf/natsjs/test/v1/plain_pb.js";
 import {
     AuditService,
     PlayerService,
@@ -37,6 +46,7 @@ export async function consume(): Promise<void> {
     joinedMessage.id = helperId;
     const playerIdText: string = uuidToString(playerId) + uuidToString(helperId.value);
     await nats.publish(ServerStartedSchema, { server: "lobby-1" }, { timeoutMs: 1000 });
+    await nats.publish(ServerStartedSchema, { server: "lobby-1" }, { eventId: "custom-event-1" });
 
     const registration: NatsRegistration = await nats.listen(
         PlayerJoinedSchema,
@@ -44,7 +54,8 @@ export async function consume(): Promise<void> {
             const name: string = event.name;
             const server: string = event.server;
             const fromSelf: boolean = context.isFromThisClient;
-            log(name, server, fromSelf, context.origin);
+            const eventId: string | null | undefined = context.eventId;
+            log(name, server, fromSelf, context.origin, eventId);
         },
         { recipients: "ALL_INSTANCES", ignoreFromThisClient: true },
     );
@@ -66,7 +77,7 @@ export async function consume(): Promise<void> {
         log(server);
     }
     await nats.call(AuditService.method.record, { action: "ban" });
-    const count: number = (await nats.call(AuditService.method.query, { action: "ban" })).count;
+    const count: number = (await nats.call(AuditService.method.query, { action: "ban" }, { idempotencyKey: "ban-42" })).count;
     log(found.name, kicked, count, playerIdText);
 
     try {
@@ -77,6 +88,50 @@ export async function consume(): Promise<void> {
         if (e instanceof NatsCallTimeoutError) log(e.subject, e.timeoutMs);
         if (e instanceof NatsRpcError) log(e.message);
     }
+
+    const plain: Plain<PlainSample> = toPlain(PlainSampleSchema, create(PlainSampleSchema, { name: "Steve" }));
+    const plainName: string | null = plain.name;
+    const balance: number | null = plain.balance;
+    const createdAt: Date | null = plain.createdAt;
+    const plainId: string | null = plain.id;
+    const history: number[] = plain.history;
+    const scores: { [key: string]: number } = plain.scores;
+    const parentNote: string | null | undefined = plain.nested?.parent?.note;
+    if (plain.target.case === "group") {
+        const groupNote: string | null = plain.target.value.note;
+        log(groupNote);
+    } else if (plain.target.case === "ticket") {
+        const ticket: number = plain.target.value;
+        log(ticket);
+    } else if (plain.target.case === null) {
+        const none: null = plain.target.value;
+        log(none);
+    }
+    log(plainName, balance, createdAt, plainId, history, scores, parentNote);
+
+    const wellKnown: Plain<PlainWellKnown> = toPlain(PlainWellKnownSchema, create(PlainWellKnownSchema));
+    const label: string | null = wellKnown.label;
+    const total: number | null = wellKnown.count;
+    const flag: boolean | null = wellKnown.flag;
+    const blob: Uint8Array | null = wellKnown.blob;
+    const tags: string[] = wellKnown.tags;
+    const limits: { [key: string]: number } = wellKnown.limits;
+    const attributes: JsonObject | null = wellKnown.attributes;
+    const setting: JsonValue = wellKnown.setting;
+    const entries: JsonValue[] | null = wellKnown.entries;
+    const documents: JsonObject[] = wellKnown.documents;
+    const options: { [key: string]: JsonValue } = wellKnown.options;
+    const bigId: string | null = wellKnown.bigId;
+    const bigIds: string[] = wellKnown.bigIds;
+    if (wellKnown.choice.case === "wrapped") {
+        const wrapped: string = wellKnown.choice.value;
+        log(wrapped);
+    } else if (wellKnown.choice.case === "document") {
+        const document: JsonObject = wellKnown.choice.value;
+        log(document);
+    }
+    const value: JsonValue = toPlain(ValueSchema, create(ValueSchema));
+    log(label, total, flag, blob, tags, limits, attributes, setting, entries, documents, options, bigId, bigIds, value);
 
     await nats.close();
 }
@@ -100,7 +155,23 @@ export async function rejected(nats: SurfNatsClient): Promise<void> {
     uuidToString("00112233-4455-6677-8899-aabbccddeeff");
     // @ts-expect-error contracts are addressed by their schema, not by an owning client
     nats.target("surf-punish");
+    // @ts-expect-error an idempotency key is a string
+    await nats.call(AuditService.method.record, { action: "ban" }, { idempotencyKey: 42 });
     // @ts-expect-error the options name no owner
     await nats.call(AuditService.method.record, { action: "ban" }, { owner: "surf-punish" });
-    log(answer);
+    const plain = toPlain(PlainSampleSchema, create(PlainSampleSchema));
+    // @ts-expect-error toPlain drops $typeName
+    log(plain.$typeName);
+    // @ts-expect-error an unset field is null, so the plain value is not a plain string
+    const nickname: string = plain.nickname;
+    // @ts-expect-error a 64-bit integer becomes a number
+    const balance: bigint | null = plain.balance;
+    const wellKnown = toPlain(PlainWellKnownSchema, create(PlainWellKnownSchema));
+    // @ts-expect-error a wrapper becomes its value, not a message
+    const tags: { value: string }[] = wellKnown.tags;
+    // @ts-expect-error an unset Struct field is null
+    const attributes: JsonObject = wellKnown.attributes;
+    // @ts-expect-error a 64-bit integer with jstype = JS_STRING stays a string
+    const bigId: number | null = wellKnown.bigId;
+    log(answer, nickname, balance, tags, attributes, bigId);
 }

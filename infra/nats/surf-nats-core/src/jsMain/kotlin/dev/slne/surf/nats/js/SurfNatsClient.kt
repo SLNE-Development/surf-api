@@ -32,7 +32,7 @@ class SurfNatsClient internal constructor(private val client: NatsClientImpl) {
     val isClosed: Boolean get() = client.isClosed
 
     fun publish(schema: MessageSchema, message: ProtoMessageInit?, options: PublishOptions? = null): Promise<Unit> {
-        return apiScope.promise { client.publish(schema.asDesc(), message, options?.timeoutMs) }
+        return apiScope.promise { client.publish(schema.asDesc(), message, options?.timeoutMs, options?.eventId) }
     }
 
     fun listen(
@@ -44,11 +44,11 @@ class SurfNatsClient internal constructor(private val client: NatsClientImpl) {
     }
 
     fun call(method: MethodSchema, request: ProtoMessageInit?, options: CallOptions? = null): Promise<ProtoMessage?> {
-        return apiScope.promise { client.call(method.asDesc(), request, options?.timeoutMs) }
+        return apiScope.promise { client.call(method.asDesc(), request, options) }
     }
 
     fun callAnswer(method: MethodSchema, request: ProtoMessageInit?, options: CallOptions? = null): Promise<Answer> {
-        return apiScope.promise { client.callAnswer(method.asDesc(), request, options?.timeoutMs) }
+        return apiScope.promise { client.callAnswer(method.asDesc(), request, options) }
     }
 
     fun close(): Promise<Unit> = apiScope.promise { client.close() }

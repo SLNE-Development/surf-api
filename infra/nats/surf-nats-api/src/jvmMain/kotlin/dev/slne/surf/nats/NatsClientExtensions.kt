@@ -1,6 +1,7 @@
 @file:MustUseReturnValues
 package dev.slne.surf.nats
 
+import dev.slne.surf.nats.rpc.NatsPersistentInterceptor
 import org.jetbrains.annotations.CheckReturnValue
 
 /**
@@ -15,4 +16,15 @@ public inline fun <reified S : Any> NatsClient.service(): S = service(S::class)
 @IgnorableReturnValue
 public suspend inline fun <reified S : Any> NatsClient.registerService(implementation: S): NatsRegistration {
     return registerService(S::class, implementation)
+}
+
+/**
+ * Registers [implementation] as service [S] with [interceptor] using [NatsClient.registerService].
+ */
+@IgnorableReturnValue
+public suspend inline fun <reified S : Any> NatsClient.registerService(
+    implementation: S,
+    interceptor: NatsPersistentInterceptor,
+): NatsRegistration {
+    return registerService(S::class, implementation, interceptor)
 }

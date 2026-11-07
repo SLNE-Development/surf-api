@@ -12,10 +12,13 @@ import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.descriptor.NatsEvent
 import dev.slne.surf.nats.event.*
+import dev.slne.surf.nats.protocol.ProtocolHeaders
+import dev.slne.surf.nats.rpc.NatsPersistentInterceptor
 import dev.slne.surf.nats.rpc.RpcCallerImpl
 import dev.slne.surf.nats.rpc.ServiceDescriptor
 import dev.slne.surf.nats.rpc.ServiceRegistration
 import dev.slne.surf.nats.runtime.AbstractNatsClient
+import dev.slne.surf.nats.runtime.randomId
 import io.nats.client.Dispatcher
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
@@ -71,7 +74,7 @@ internal class NatsClientImpl(
         checkOpen()
         val descriptor = eventDescriptor(event.javaClass)
         val data = NatsCodec.encode(descriptor.serializer, event)
-        val header = headers()
+        val header = headers().add(ProtocolHeaders.EVENT_ID, randomId())
         val connection = NatsConnectionManager.connection()
 
         requireEventFits(
@@ -109,9 +112,20 @@ internal class NatsClientImpl(
         EventListenerRegistration(this, entries).also { registerRegistration(it) }
     }
 
+    override suspend fun <S : Any> registerService(type: KClass<S>, implementation: S): NatsRegistration {
+        return register(type, implementation, interceptor = null)
+    }
+
     override suspend fun <S : Any> registerService(
         type: KClass<S>,
-        implementation: S
+        implementation: S,
+        interceptor: NatsPersistentInterceptor,
+    ): NatsRegistration = register(type, implementation, interceptor)
+
+    private suspend fun <S : Any> register(
+        type: KClass<S>,
+        implementation: S,
+        interceptor: NatsPersistentInterceptor?,
     ): NatsRegistration = trackRegistration {
         require(type.java.isInstance(implementation)) {
             "${implementation.javaClass.name} does not implement ${type.java.name}"
@@ -121,7 +135,7 @@ internal class NatsClientImpl(
             error(alreadyRegistered(descriptor, existing))
         }
 
-        val registration = ServiceRegistration(this, descriptor, implementation)
+        val registration = ServiceRegistration(this, descriptor, implementation, interceptor)
         services.putIfAbsent(descriptor.name, registration)?.let { existing ->
             registration.discard()
             error(alreadyRegistered(descriptor, existing))
