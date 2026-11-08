@@ -14,6 +14,8 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "surf-api"
 
+include("surf-api-bom")
+
 include(":surf-api-core:surf-api-core")
 include(":surf-api-core:surf-api-core-server")
 
