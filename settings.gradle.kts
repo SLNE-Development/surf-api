@@ -41,7 +41,7 @@ val declared = mutableSetOf<String>()
  * accessor sitting next to the `api()` configuration in the same dependencies block would be a
  * trap. It also means the published name needs no `archivesName` override.
  */
-fun module(path: String, name: String = artifactName(path)) {
+fun includeModule(path: String, name: String = artifactName(path)) {
     val dir = file(path)
     require(dir.resolve("build.gradle.kts").isFile) { "No build.gradle.kts in $path" }
     require(declared.add(name)) { "Duplicate module name '$name' (path $path)" }
@@ -51,26 +51,26 @@ fun module(path: String, name: String = artifactName(path)) {
 }
 
 /** Includes the `api` and `impl` modules of one domain. */
-fun pair(group: String, domain: String) {
-    module("$group/$domain/api")
-    module("$group/$domain/impl")
+fun includePair(group: String, domain: String) {
+    includeModule("$group/$domain/api")
+    includeModule("$group/$domain/impl")
 }
 
 // foundation
-module("foundation/annotations")
-module("foundation/internal")
+includeModule("foundation/annotations")
+includeModule("foundation/internal")
 
 // common
-pair("common", "core")
+includePair("common", "core")
 
 // platform
-pair("platform", "paper")
-module("platform/paper/nms/api")
+includePair("platform", "paper")
+includeModule("platform/paper/nms/api")
 // NmsVersion lives in the included build and is not on the settings classpath, so the versions
 // stay literal here, as they did before.
-listOf("v1-21-11", "v26-1", "v26-2", "v26-3").forEach { module("platform/paper/nms/$it") }
+listOf("v1-21-11", "v26-1", "v26-2", "v26-3").forEach { includeModule("platform/paper/nms/$it") }
 
-pair("platform", "minestom")
+includePair("platform", "minestom")
 listOf(
     "bootstrap-impl",
     "console-impl",
@@ -79,19 +79,19 @@ listOf(
     "plugins-impl",
     "signed-chat-impl",
     "spark-impl",
-).forEach { module("platform/minestom/$it") }
+).forEach { includeModule("platform/minestom/$it") }
 
-pair("platform", "velocity")
-module("platform/standalone/impl")
+includePair("platform", "velocity")
+includeModule("platform/standalone/impl")
 
 // aggregates — the coordinates downstream projects know
 listOf("core", "paper", "minestom", "minestom-server", "velocity", "standalone")
-    .forEach { module("aggregate/$it") }
+    .forEach { includeModule("aggregate/$it") }
 
 // tooling
-module("tooling/bom")
-module("tooling/gradle-plugin")
-module("tooling/gradle-plugin/processor", name = "surf-api-processor")
+includeModule("tooling/bom")
+includeModule("tooling/gradle-plugin")
+includeModule("tooling/gradle-plugin/processor", name = "surf-api-processor")
 
 includeBuild("vendor/spark-minestom") {
     dependencySubstitution {
@@ -103,7 +103,7 @@ includeBuild("vendor/spark-minestom") {
 // so the LuckPerms feature is only built once it has been created; CI builds require it
 val luckPermsDir = file("vendor/LuckPerms")
 if (luckPermsDir.resolve("settings.gradle").isFile) {
-    module("platform/minestom/luckperms-impl")
+    includeModule("platform/minestom/luckperms-impl")
 
     includeBuild(luckPermsDir) {
         dependencySubstitution {
@@ -122,8 +122,8 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
 }
 
 if (!ci) {
-    module("local/paper-plugin-test")
-    module("local/minestom-example")
-    module("local/minestom-example-plugin")
-    module("tooling/generator")
+    includeModule("local/paper-plugin-test")
+    includeModule("local/minestom-example")
+    includeModule("local/minestom-example-plugin")
+    includeModule("tooling/generator")
 }
