@@ -6,7 +6,6 @@ import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.NamedDomainObjectContainerScope
 import org.gradle.kotlin.dsl.property
-import xyz.jpenilla.runpaper.task.RunServer
 import javax.inject.Inject
 
 open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) :
@@ -17,7 +16,6 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
         objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
     internal val serverDependencies =
         objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
-    internal val runServer = objects.property<Action<RunServer>>()
     internal val foliaSupported = objects.property<Boolean>().convention(true)
     internal val generateLibraryLoader = objects.property<Boolean>().convention(false)
 
@@ -41,11 +39,6 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
     fun serverDependencies(action: Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>) {
         serverDependencies.set(action)
         serverDependencies.finalizeValue()
-    }
-
-    fun runServer(action: Action<RunServer>) {
-        runServer.set(action)
-        runServer.finalizeValue()
     }
 
     fun foliaSupported(foliaSupported: Boolean) {

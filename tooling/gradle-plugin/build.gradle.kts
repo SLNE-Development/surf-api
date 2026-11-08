@@ -35,7 +35,6 @@ val pluginDependencies = listOf(
     libs.kotlin.no.arg,
     libs.kotlin.serialization,
     libs.shadow.gradle.plugin,
-    libs.run.paper.gradle.plugin,
     libs.plugin.yml.paper.gradle.plugin,
     libs.ksp.gradle.plugin,
     libs.gremlin.gradle.plugin,

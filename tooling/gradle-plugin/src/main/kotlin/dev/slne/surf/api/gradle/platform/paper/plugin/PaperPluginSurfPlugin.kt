@@ -16,7 +16,6 @@ import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
-import xyz.jpenilla.runpaper.task.RunServer
 
 internal class PaperPluginSurfPlugin :
     AbstractPaperSurfPlugin<PaperPluginSurfExtension>("paperPlugin") {
@@ -24,7 +23,6 @@ internal class PaperPluginSurfPlugin :
     override val extensionClass = PaperPluginSurfExtension::class.java
 
     private val paperPlugins = listOf(
-        "xyz.jpenilla.run-paper",
         "de.eldoria.plugin-yml.paper"
     )
 
@@ -92,12 +90,6 @@ internal class PaperPluginSurfPlugin :
         tasks {
             withType<GeneratePluginDescription> {
                 useDefaultCentralProxy()
-            }
-
-            withType<RunServer> {
-                minecraftVersion(Constants.MINECRAFT_VERSION)
-
-                extension.runServer.orNull?.execute(this)
             }
         }
     }

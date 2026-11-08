@@ -1,10 +1,8 @@
 import net.minecrell.pluginyml.paper.PaperPluginDescription
-import xyz.jpenilla.runpaper.task.RunServer
 
 plugins {
     `core-convention`
 
-    alias(libs.plugins.run.paper)
     alias(libs.plugins.plugin.yml.paper)
 
     id("io.papermc.paperweight.userdev") apply true
@@ -39,36 +37,6 @@ paper {
             load = PaperPluginDescription.RelativeLoadOrder.BEFORE
             joinClasspath = true
         }
-    }
-}
-
-fun RunServer.configure(folia: Boolean) {
-    dependsOn(":surf-api-paper-impl:shadowJar")
-    pluginJars.from(project(":surf-api-paper-impl").tasks.shadowJar)
-
-    minecraftVersion(findProperty("mcVersion") as String)
-
-    downloadPlugins {
-        hangar("CommandAPI", libs.versions.commandapiplugin.get())
-        modrinth("packetevents", libs.versions.packetevents.plugin.get() + "+spigot")
-
-        if (!folia) {
-            modrinth("luckperms", libs.versions.luckpermsplugin.bukkit.get())
-        } else {
-            url("https://ci.lucko.me/job/LuckPerms-Folia/11/artifact/bukkit/loader/build/libs/LuckPerms-Bukkit-5.5.29.jar")
-        }
-    }
-}
-
-runPaper {
-    folia.registerTask {
-        configure(true)
-    }
-}
-
-tasks {
-    runServer {
-        configure(false)
     }
 }
 

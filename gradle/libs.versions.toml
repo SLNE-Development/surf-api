@@ -94,7 +94,6 @@ minestom-testing = "26_3-SNAPSHOT"
 # Plugin versions
 maven-repo-auth = "3.0.4"
 shadow-gradle-plugin = "9.6.1"
-run-paper-gradle-plugin = "3.1.0"
 dokka = "2.2.0"
 
 [libraries]
@@ -235,13 +234,11 @@ shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", ve
 ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp-version" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp-version" }
 plugin-yml-paper-gradle-plugin = { module = "de.eldoria.plugin-yml.paper:de.eldoria.plugin-yml.paper.gradle.plugin", version.ref = "plugin-yml-paper" }
-run-paper-gradle-plugin = { module = "xyz.jpenilla.run-paper:xyz.jpenilla.run-paper.gradle.plugin", version.ref = "run-paper-gradle-plugin" }
 gremlin-gradle-plugin = { module = "xyz.jpenilla.gremlin-gradle:xyz.jpenilla.gremlin-gradle.gradle.plugin", version.ref = "gremlin" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 
 [plugins]
 plugin-yml-paper = { id = "de.eldoria.plugin-yml.paper", version.ref = "plugin-yml-paper" }
-run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper-gradle-plugin" }
 maven-repo-auth = { id = "org.hibernate.build.maven-repo-auth", version.ref = "maven-repo-auth" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinVersion" }

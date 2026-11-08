@@ -9,9 +9,6 @@
 # Build a single module (Gradle paths are flat and equal the published artifact name)
 ./gradlew :surf-api-paper-impl:build
 
-# Run Paper test server (not available in CI)
-./gradlew :surf-api-paper-plugin-test:runServer
-
 # Publish to local Maven
 ./gradlew publishToMavenLocal
 ```

@@ -40,7 +40,7 @@ val SPAWN = Pos(0.5, 41.0, 0.5)
 /**
  * A Minestom server that uses every feature of the surf api.
  *
- * Run it with `./gradlew :surf-api-minestom:surf-api-minestom-example:runServer` and join
+ * Run it with `./gradlew :surf-api-minestom-example:runServer` and join
  * `localhost:25565`.
  */
 fun main() {

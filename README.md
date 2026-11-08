@@ -216,9 +216,6 @@ class MyFeatureService : SurfComponent {
 
 # Publish to local Maven repository
 ./gradlew publishToMavenLocal
-
-# Run the Paper test server (local only, not available in CI)
-./gradlew :surf-api-paper-plugin-test:runServer
 ```
 
 ---
