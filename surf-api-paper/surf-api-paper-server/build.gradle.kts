@@ -3,7 +3,7 @@ import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 
 
 plugins {
-    `core-convention`
+    id("surf.module-impl")
 
     alias(libs.plugins.plugin.yml.paper)
 //    id("io.papermc.paperweight.userdev") apply true

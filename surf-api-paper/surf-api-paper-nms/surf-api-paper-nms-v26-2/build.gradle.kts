@@ -1,5 +1,5 @@
 plugins {
-    `core-convention`
+    id("surf.module-impl")
     id("io.papermc.paperweight.userdev") apply true
 }
 

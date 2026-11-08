@@ -1,3 +1,7 @@
+// Not an API module: this project re-exports the whole standalone platform surface through `api`
+// and boots the runtime, so it is an aggregate that happens to carry a bootstrap. Phase 2 splits it
+// into an aggregate and an implementation module; until then it keeps the plain core convention,
+// because `surf.module-api` rightly rejects its dependency on surf-api-core-server.
 plugins {
     `core-convention`
     `api-validation`

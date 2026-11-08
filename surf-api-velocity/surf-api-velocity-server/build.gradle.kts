@@ -1,5 +1,5 @@
 plugins {
-    `core-convention`
+    id("surf.module-impl")
     kotlin("kapt")
     id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
