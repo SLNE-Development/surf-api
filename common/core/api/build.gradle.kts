@@ -1,11 +1,13 @@
 plugins {
     id("surf.module-api")
+    `api-validation`
 }
 
 dependencies {
+    api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
     api(libs.adventure.nbt)
-    // Exposed transitively by surf-api-shared-public as well; declared here so the test convention
+    // Exposed transitively by surf-api-annotations as well; declared here so the test convention
     // (testImplementation extendsFrom compileOnlyApi) puts Adventure on the test classpath.
     compileOnlyApi(libs.adventure.api)
     compileOnlyApi(libs.luckperms)

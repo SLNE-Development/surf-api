@@ -1,5 +1,6 @@
 plugins {
     id("surf.module-api")
+    `api-validation`
 }
 
 dependencies {

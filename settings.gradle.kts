@@ -3,7 +3,7 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
     }
-    includeBuild("tooling/generator/nms-module-generator")
+    includeBuild("surf-api-generator/nms-module-generator")
 }
 
 plugins {
@@ -28,8 +28,14 @@ val ci = System.getenv("CI")?.toBoolean() ?: false
  * aggregate/paper         ->  surf-api-paper
  * ```
  */
-fun artifactName(path: String) =
-    path.split('/').drop(1).joinToString("-", prefix = "surf-api-")
+fun artifactName(path: String): String {
+    val segments = path.split('/')
+
+    // A module kept at the repository root already carries its published name as its directory.
+    if (segments.size == 1) return segments.single()
+
+    return segments.drop(1).joinToString("-", prefix = "surf-api-")
+}
 
 val declared = mutableSetOf<String>()
 
@@ -59,6 +65,7 @@ fun includePair(group: String, domain: String) {
 // foundation
 includeModule("foundation/annotations")
 includeModule("foundation/internal")
+includeModule("foundation/registry-keys")
 
 // common
 includePair("common", "core")
@@ -88,6 +95,8 @@ includeModule("platform/standalone/impl")
 listOf("core", "paper", "minestom", "minestom-server", "velocity", "standalone")
     .forEach { includeModule("aggregate/$it") }
 
+// tooling — surf-api-generator stays at the repository root: it is local-only, never published, and
+// carries 3,532 registry data files, so moving it would dominate every structural diff.
 // tooling
 includeModule("tooling/bom")
 includeModule("tooling/gradle-plugin")
@@ -125,5 +134,5 @@ if (!ci) {
     includeModule("local/paper-plugin-test")
     includeModule("local/minestom-example")
     includeModule("local/minestom-example-plugin")
-    includeModule("tooling/generator")
+    includeModule("surf-api-generator")
 }
