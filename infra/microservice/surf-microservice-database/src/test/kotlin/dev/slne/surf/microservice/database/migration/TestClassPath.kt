@@ -1,5 +1,6 @@
 package dev.slne.surf.microservice.database.migration
 
+import dev.slne.surf.database.config.DatabaseType
 import java.net.URLClassLoader
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -12,6 +13,10 @@ class TestClassPath(private val root: Path) {
 
     fun withSqlMigrationDirectory() = apply {
         root.resolve(ConventionalMigrations.SQL_LOCATION).createDirectories()
+    }
+
+    fun withVendorSqlMigrationDirectory(databaseType: DatabaseType) = apply {
+        root.resolve(ConventionalMigrations.SQL_LOCATION).resolve(databaseType.vendor).createDirectories()
     }
 
     fun withListedMigrations(vararg lines: String) = apply {

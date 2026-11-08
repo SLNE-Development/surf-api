@@ -16,5 +16,6 @@ rootProject.name = "surf-microservice"
 include("surf-microservice-api")
 include("surf-microservice-runtime")
 include("surf-microservice-database")
+include("surf-microservice-reliability")
 include("surf-microservice-processor")
 include("surf-microservice-gradle-plugin")

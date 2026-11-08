@@ -20,8 +20,9 @@ private val log = logger()
  * Opens the database of the microservice, migrates it and closes it on shutdown.
  *
  * The configuration comes from `database.yml` in the data path, the pool is named after the service, and the
- * migration history lives in `flyway_schema_history_<service>` with `-` replaced by `_`. A microservice class that
- * implements [DatabaseCustomizer] adjusts these defaults. The database is published through [DatabaseHolder] only
+ * migration history lives in `flyway_schema_history_<service>` with `-` replaced by `_`. SQL migrations come from
+ * `db/migration`, or from `db/migration/<vendor>` (`mariadb`, `postgresql`) once the module has such vendor folders;
+ * see [ConventionalMigrations]. A microservice class that implements [DatabaseCustomizer] adjusts these defaults. The database is published through [DatabaseHolder] only
  * after the migrations succeeded; a failed start closes it again.
  */
 @AutoService(MicroserviceIntegration::class)
@@ -69,7 +70,7 @@ internal class DatabaseIntegration internal constructor(
         customizer: DatabaseCustomizer?,
     ) {
         val classLoader = context.microservice.javaClass.classLoader
-        val conventions = ConventionalMigrations.select(customizer, classLoader)
+        val conventions = ConventionalMigrations.select(customizer, classLoader, api.databaseType)
         if (conventions == null) {
             log.atInfo()
                 .log("No database migrations for %s", context.name)

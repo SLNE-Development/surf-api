@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * [commandEndpoints].
  *
  * Stop order: [commandEndpoints], `stopAccepting` of the integrations descending, [Microservice.onDisable], `stop`
- * of the integrations descending, [spark], [surfApi], [shutdownLogging]. Only started parts are stopped. If [start]
- * failed at any point, `stopAccepting` and `onDisable` are skipped. A failing stop step is logged and the shutdown
- * continues.
+ * of the integrations descending, [spark], [surfApi], [shutdownLogging]. The same order applies after a failed
+ * [start], limited to what started: a step whose start threw counts as not started, and [Microservice.onDisable] runs
+ * only if [Microservice.onBootstrap] returned. A failing stop step is logged and the shutdown continues.
  *
  * [start] and [shutdown] are serialized, so a shutdown requested during [start] waits for it to return or fail.
  * [shutdown] runs once and is not cancellable; later and concurrent calls wait until the first one completes.
@@ -44,7 +44,8 @@ internal class MicroserviceLifecycle(
 
     // Guarded by transitionLock
     private var startAttempted = false
-    private var running = false
+    private var bootstrapped = false
+    private var commandEndpointsStarted = false
     private var microservice: Microservice? = null
     private var integrationContext: RuntimeIntegrationContext? = null
     private val startedComponents = ObjectArrayList<RuntimeComponent>()
@@ -75,8 +76,9 @@ internal class MicroserviceLifecycle(
         startComponent(spark)
         startIntegrations(context)
         microservice.onBootstrap(args)
+        bootstrapped = true
         commandEndpoints.start()
-        running = true
+        commandEndpointsStarted = true
 
         log.atInfo()
             .log("Microservice %s started. Type 'help' for a list of commands.", context.name)
@@ -137,15 +139,17 @@ internal class MicroserviceLifecycle(
     }
 
     private suspend fun stopStarted() {
-        if (running) {
+        if (commandEndpointsStarted) {
             runStopStep("stop the ${commandEndpoints.name}") {
                 commandEndpoints.stop()
             }
+        }
 
-            forEachStartedIntegrationDescending("stop accepting work in") { context ->
-                stopAccepting(context)
-            }
+        forEachStartedIntegrationDescending("stop accepting work in") { context ->
+            stopAccepting(context)
+        }
 
+        if (bootstrapped) {
             runStopStep("disable the microservice") {
                 microservice?.onDisable()
             }

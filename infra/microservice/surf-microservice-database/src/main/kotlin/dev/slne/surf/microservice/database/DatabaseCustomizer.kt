@@ -10,6 +10,10 @@ import dev.slne.surf.database.migration.MigrationSpec
  * Without this interface the database integration uses its defaults: the configuration from `database.yml` in the
  * data path and migrations found by convention (SQL files in `db/migration` and the `SurfMigration` classes of the
  * module). The hooks run at most once, during the start of the database integration and before `onBootstrap`.
+ *
+ * A module that needs different SQL per database vendor puts it in `db/migration/mariadb` and
+ * `db/migration/postgresql`; then only the folder of the configured vendor runs and files directly in `db/migration`
+ * are ignored. Start fails if vendor folders exist but none for the configured vendor.
  */
 interface DatabaseCustomizer {
 

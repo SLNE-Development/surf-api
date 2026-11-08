@@ -17,17 +17,12 @@ allprojects {
 }
 
 subprojects {
-    // TODO(v3 release): remove once surf-api 3.52.0 and surf-database-r2dbc 2.4.0 are published.
+    // TODO(v3 release): remove once surf-database-r2dbc 2.4.0 and surf-nats 1.0.0 are published.
     repositories {
         mavenLocal {
             content {
-                includeVersion("dev.slne.surf.api", "surf-api-standalone", "3.52.0")
-                includeVersion("dev.slne.surf.api", "surf-api-core", "3.52.0")
-                includeVersion("dev.slne.surf.api", "surf-api-core-server", "3.52.0")
-                includeVersion("dev.slne.surf.api", "surf-api-shared", "3.52.0")
-                includeVersion("dev.slne.surf.api", "surf-api-shared-public", "3.52.0")
-                includeVersion("dev.slne.surf.api", "surf-api-shared-internal", "3.52.0")
                 includeVersion("dev.slne.surf", "surf-database-r2dbc", "2.4.0")
+                includeGroup("dev.slne.surf.nats")
             }
         }
     }

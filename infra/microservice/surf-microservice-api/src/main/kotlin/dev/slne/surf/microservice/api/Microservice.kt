@@ -43,7 +43,8 @@ abstract class Microservice {
     /**
      * Called after surf-api and all integrations have started.
      *
-     * An exception aborts the start; the runtime then stops everything that was already started.
+     * An exception aborts the start; the runtime then stops everything that was already started, without calling
+     * [onDisable]. Release whatever this method acquired before it throws.
      */
     open suspend fun onBootstrap(args: List<String>) {
     }
@@ -51,7 +52,8 @@ abstract class Microservice {
     /**
      * Called during shutdown after NATS stopped accepting new requests and before the integrations stop.
      *
-     * Publishing and database access are still possible.
+     * Runs whenever [onBootstrap] returned, also if a later start step failed. Publishing and database access are
+     * still possible.
      */
     open suspend fun onDisable() {
     }

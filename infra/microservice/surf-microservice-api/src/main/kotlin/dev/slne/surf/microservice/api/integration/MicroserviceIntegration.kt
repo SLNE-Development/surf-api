@@ -11,9 +11,9 @@ package dev.slne.surf.microservice.api.integration
  * 2. On shutdown, [stopAccepting] in descending order, before `Microservice.onDisable`.
  * 3. [stop] in descending order, after `Microservice.onDisable`.
  *
- * If a start fails, the runtime stops only the integrations that started, in descending order, and calls neither
- * [stopAccepting] nor `onDisable`. Each call happens at most once per integration and never concurrently with
- * another lifecycle call.
+ * If the start of the microservice fails, the runtime runs [stopAccepting] and [stop] only for the integrations whose
+ * [start] returned; `onDisable` runs only if `Microservice.onBootstrap` returned. Each call happens at most once per
+ * integration and never concurrently with another lifecycle call.
  */
 interface MicroserviceIntegration {
 
@@ -53,5 +53,11 @@ interface MicroserviceIntegration {
          * [order] of the messaging integration (NATS); starts after the database so handlers find it ready.
          */
         const val MESSAGING_ORDER = 200
+
+        /**
+         * [order] of the reliability integration (idempotent handlers and their events); starts after the database
+         * and messaging and stops before them.
+         */
+        const val RELIABILITY_ORDER = 300
     }
 }

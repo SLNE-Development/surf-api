@@ -111,6 +111,115 @@ class MicroservicePluginTest {
     }
 
     @Test
+    fun `reliability is enabled by default with the surf-nats plugin`(info: TestInfo) {
+        val dependencies = reliabilityBuild(info, withNatsPlugin = true).run(SHOW_RESOLVED).resolvedDependencies()
+
+        assertContains(dependencies, "compileClasspath $RELIABILITY:3.+")
+        assertContains(dependencies, "testCompileClasspath $RELIABILITY:3.+ [feature 'test-fixtures']")
+    }
+
+    @Test
+    fun `reliability is enabled by default with surf-nats-standalone declared`(info: TestInfo) {
+        val dependencies = reliabilityBuild(info, DECLARE_NATS).run(SHOW_RESOLVED).resolvedDependencies()
+
+        assertContains(dependencies, "compileClasspath $RELIABILITY:3.+")
+        assertContains(dependencies, "testCompileClasspath $RELIABILITY:3.+ [feature 'test-fixtures']")
+    }
+
+    @Test
+    fun `reliability stays disabled by default without surf-nats`(info: TestInfo) {
+        val dependencies = reliabilityBuild(info).run(SHOW_RESOLVED).resolvedDependencies()
+
+        assertTrue(dependencies.none { RELIABILITY in it }, "$dependencies")
+        assertContains(dependencies, "compileClasspath dev.slne.surf.microservice:surf-microservice-database:3.+")
+    }
+
+    @Test
+    fun `reliability stays disabled by default without the database`(info: TestInfo) {
+        val build = reliabilityBuild(info, "$DECLARE_NATS\nsurfMicroservice { database { enabled = false } }")
+
+        val dependencies = build.run(SHOW_RESOLVED).resolvedDependencies()
+
+        assertTrue(dependencies.none { RELIABILITY in it }, "$dependencies")
+    }
+
+    @Test
+    fun `DSL disables reliability`(info: TestInfo) {
+        val build = reliabilityBuild(info, "$DECLARE_NATS\nsurfMicroservice { reliability { enabled = false } }")
+
+        val dependencies = build.run(SHOW_RESOLVED).resolvedDependencies()
+
+        assertTrue(dependencies.none { RELIABILITY in it }, "$dependencies")
+    }
+
+    @Test
+    fun `Gradle property disables reliability`(info: TestInfo) {
+        val dependencies = reliabilityBuild(info, DECLARE_NATS)
+            .run(SHOW_RESOLVED, "-Psurf.microservice.reliability.enabled=false")
+            .resolvedDependencies()
+
+        assertTrue(dependencies.none { RELIABILITY in it }, "$dependencies")
+    }
+
+    @Test
+    fun `Kotlin DSL enables reliability`(info: TestInfo) {
+        val build = TestBuild.create(info.displayName, withSurfApi = false)
+        build.file(
+            "build.gradle.kts",
+            """
+            plugins {
+                `java-library`
+                id("dev.slne.surf.microservice")
+            }
+            dependencies {
+                implementation("dev.slne.surf.nats:surf-nats-standalone:1.0.0")
+            }
+            surfMicroservice {
+                reliability {
+                    enabled = true
+                }
+            }
+            tasks.register("showReliability") {
+                val enabled = surfMicroservice.reliability.enabled
+                doLast { println("[setting] reliability=" + enabled.get()) }
+            }
+            """,
+        )
+
+        val output = build.run("showReliability").output
+
+        assertContains(output, "[setting] reliability=true")
+    }
+
+    @Test
+    fun `explicitly enabled reliability without surf-nats fails the build`(info: TestInfo) {
+        val build = reliabilityBuild(info, "surfMicroservice { reliability { enabled = true } }")
+
+        val result = build.runAndFail(SHOW_RESOLVED)
+
+        assertContains(result.output, "enables surf-microservice-reliability")
+        assertContains(result.output, "surf-nats is missing. Apply the 'dev.slne.surf.nats' plugin")
+    }
+
+    @Test
+    fun `reliability enabled by Gradle property without the database fails the build`(info: TestInfo) {
+        val build = reliabilityBuild(info, "$DECLARE_NATS\nsurfMicroservice { database { enabled = false } }")
+
+        val result = build.runAndFail(SHOW_RESOLVED, "-Psurf.microservice.reliability.enabled=true")
+
+        assertContains(result.output, "Gradle property 'surf.microservice.reliability.enabled'")
+        assertContains(result.output, "the database integration is disabled")
+    }
+
+    @Test
+    fun `invalid reliability property fails the build`(info: TestInfo) {
+        val result = reliabilityBuild(info, DECLARE_NATS)
+            .runAndFail(SHOW_RESOLVED, "-Psurf.microservice.reliability.enabled=on")
+
+        assertContains(result.output, "'surf.microservice.reliability.enabled' must be 'true' or 'false', was 'on'")
+    }
+
+    @Test
     fun `withSurfDatabaseR2dbc fails once the compile classpath resolves`(info: TestInfo) {
         val build = standaloneBuild(info, "surfStandaloneApi { withSurfDatabaseR2dbc('2.4.0', 'demo.libs.database') }")
 
@@ -290,6 +399,58 @@ class MicroservicePluginTest {
         }
 
     /**
+     * A plain `java-library` project; [withNatsPlugin] applies a no-op plugin with the surf-nats plugin id.
+     */
+    private fun reliabilityBuild(
+        info: TestInfo,
+        configuration: String = "",
+        withNatsPlugin: Boolean = false,
+    ): TestBuild = TestBuild.create(info.displayName, withSurfApi = false).apply {
+        if (withNatsPlugin) fakeNatsPlugin()
+        script(
+            """
+            plugins {
+                id 'java-library'
+                ${if (withNatsPlugin) "id 'dev.slne.surf.nats'" else ""}
+                id 'dev.slne.surf.microservice'
+            }
+            $configuration
+            $SHOW_RESOLVED_TASK
+            """
+        )
+    }
+
+    private fun TestBuild.fakeNatsPlugin() {
+        file(
+            "buildSrc/build.gradle",
+            """
+            plugins { id 'java-gradle-plugin' }
+            gradlePlugin {
+                plugins {
+                    nats {
+                        id = 'dev.slne.surf.nats'
+                        implementationClass = 'FakeNatsPlugin'
+                    }
+                }
+            }
+            """,
+        )
+        file(
+            "buildSrc/src/main/java/FakeNatsPlugin.java",
+            """
+            import org.gradle.api.Plugin;
+            import org.gradle.api.Project;
+
+            public class FakeNatsPlugin implements Plugin<Project> {
+                @Override
+                public void apply(Project project) {
+                }
+            }
+            """,
+        )
+    }
+
+    /**
      * A plain Java project with Shadow whose surf dependencies are dropped, so its jar builds offline.
      */
     private fun shadowBuild(info: TestInfo, configuration: String = ""): TestBuild =
@@ -314,10 +475,35 @@ class MicroservicePluginTest {
     private fun BuildResult.dependencies(): List<String> =
         output.lines().filter { it.startsWith(DEPENDENCY_PREFIX) }.map { it.removePrefix(DEPENDENCY_PREFIX) }
 
+    private fun BuildResult.resolvedDependencies(): List<String> =
+        output.lines().filter { it.startsWith(RESOLVED_PREFIX) }.map { it.removePrefix(RESOLVED_PREFIX) }
+
     private companion object {
         const val SHOW_DEPENDENCIES = "showDependencies"
         const val RESOLVE_COMPILE_CLASSPATH = "resolveCompileClasspath"
         const val DEPENDENCY_PREFIX = "[dependency] "
+        const val SHOW_RESOLVED = "showResolvedDependencies"
+        const val RESOLVED_PREFIX = "[resolved-dependency] "
+        const val RELIABILITY = "dev.slne.surf.microservice:surf-microservice-reliability"
+        const val DECLARE_NATS = "dependencies { implementation 'dev.slne.surf.nats:surf-nats-standalone:1.0.0' }"
+
+        /**
+         * Prints the dependencies of both compile classpaths after their `withDependencies` actions ran, without
+         * resolving the graph; requested capabilities follow in brackets.
+         */
+        const val SHOW_RESOLVED_TASK = """
+            tasks.register('showResolvedDependencies') {
+                doLast {
+                    ['compileClasspath', 'testCompileClasspath'].each { name ->
+                        configurations.getByName(name).incoming.dependencies.each { dependency ->
+                            def capabilities = dependency.capabilitySelectors.collect { it.displayName }
+                            def suffix = capabilities.empty ? '' : " ${'$'}capabilities"
+                            println "[resolved-dependency] ${'$'}name ${'$'}{dependency.group}:${'$'}{dependency.name}:${'$'}{dependency.version}${'$'}suffix"
+                        }
+                    }
+                }
+            }
+        """
 
         /**
          * Prints the declared dependencies without resolving them.

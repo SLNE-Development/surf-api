@@ -91,6 +91,28 @@ class MicroserviceLifecycleTest {
     }
 
     @Test
+    fun `disables the microservice when a step after onBootstrap fails`() = runTest {
+        val lifecycle = lifecycle(endpoints = RecordingComponent("endpoints", failingStep = "endpoints:start"))
+
+        assertFailsWith<IllegalStateException> { lifecycle.start(emptyList()) }
+        lifecycle.shutdown()
+
+        assertTrue("disable" in events)
+        assertFalse("endpoints:stop" in events)
+    }
+
+    @Test
+    fun `does not disable the microservice when onBootstrap fails`() = runTest {
+        val lifecycle = lifecycle(microservice = RecordingMicroservice(failingStep = "bootstrap"))
+
+        assertFailsWith<IllegalStateException> { lifecycle.start(emptyList()) }
+        lifecycle.shutdown()
+
+        assertFalse("disable" in events)
+        assertTrue("integration:database:stopAccepting" in events)
+    }
+
+    @Test
     fun `rejects an invalid service name before starting surf-api`() = runTest {
         val lifecycle = lifecycle(microservice = RecordingMicroservice(name = "Invalid_Name"))
 
@@ -322,27 +344,21 @@ class MicroserviceLifecycleTest {
             ),
             Arguments.of(
                 "integration:nats:start",
-                FULL_START.take(6) + listOf("integration:database:stop", "spark:stop", "surf-api:stop", "logging"),
+                FULL_START.take(6) + listOf(
+                    "integration:database:stopAccepting",
+                    "integration:database:stop",
+                    "spark:stop",
+                    "surf-api:stop",
+                    "logging",
+                ),
             ),
             Arguments.of(
                 "bootstrap",
-                FULL_START.take(7) + listOf(
-                    "integration:nats:stop",
-                    "integration:database:stop",
-                    "spark:stop",
-                    "surf-api:stop",
-                    "logging",
-                ),
+                FULL_START.take(7) + FULL_STOP - listOf("endpoints:stop", "disable"),
             ),
             Arguments.of(
                 "endpoints:start",
-                FULL_START + listOf(
-                    "integration:nats:stop",
-                    "integration:database:stop",
-                    "spark:stop",
-                    "surf-api:stop",
-                    "logging",
-                ),
+                FULL_START + FULL_STOP - "endpoints:stop",
             ),
         )
     }

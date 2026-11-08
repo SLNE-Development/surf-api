@@ -11,10 +11,17 @@ abstract class MicroserviceExtension {
     abstract val database: MicroserviceDatabaseExtension
 
     @get:Nested
+    abstract val reliability: MicroserviceReliabilityExtension
+
+    @get:Nested
     abstract val docker: MicroserviceDockerExtension
 
     fun database(action: Action<in MicroserviceDatabaseExtension>) {
         action.execute(database)
+    }
+
+    fun reliability(action: Action<in MicroserviceReliabilityExtension>) {
+        action.execute(reliability)
     }
 
     fun docker(action: Action<in MicroserviceDockerExtension>) {
