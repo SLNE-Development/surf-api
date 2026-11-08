@@ -11,7 +11,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || startsWith(github.ref, 'refs/heads/version/')
     uses: SLNE-Development/surf-workflows/.github/workflows/build-publish-release-gradle.yml@master
     with:
-      modules: "surf-api-paper-server-*-all.jar;surf-api-velocity-server-*-all.jar;surf-api-standalone-server-*-all.jar"
+      modules: "surf-api-paper-impl-*-all.jar;surf-api-velocity-impl-*-all.jar;surf-api-standalone-impl-*-all.jar"
       check-kotlin-abi: true
       pre-build-command: |
         git -c 'url.https://github.com/.insteadOf=git@github.com:' submodule update --init --recursive

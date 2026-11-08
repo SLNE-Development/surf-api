@@ -1,9 +1,9 @@
-// Not an API module: this project re-exports the whole standalone platform surface through `api`
-// and boots the runtime, so it is an aggregate that happens to carry a bootstrap. Phase 2 splits it
-// into an aggregate and an implementation module; until then it keeps the plain core convention,
-// because `surf.module-api` rightly rejects its dependency on surf-api-core-server.
+// This module boots the standalone runtime and still re-exports the whole platform surface through
+// `api`, which the surf-api-standalone aggregate passes on to consumers. That exported surface is
+// what downstream compiles against, so ABI validation stays on even though the module is an
+// implementation. Separating the bootstrap from the re-export is still open.
 plugins {
-    `core-convention`
+    id("surf.module-impl")
     `api-validation`
 }
 

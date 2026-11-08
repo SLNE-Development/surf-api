@@ -1,6 +1,5 @@
 plugins {
-    `core-convention`
-    `api-validation`
+    id("surf.module-impl")
 }
 
 dependencies {

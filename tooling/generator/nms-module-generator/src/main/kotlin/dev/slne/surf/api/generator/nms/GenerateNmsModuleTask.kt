@@ -49,10 +49,9 @@ abstract class GenerateNmsModuleTask : DefaultTask() {
         logger.lifecycle("Generation complete - {} file(s) written.", generated)
         logger.lifecycle("")
         logger.lifecycle("Next steps:")
+        logger.lifecycle("  1. Add \"{}\" to the NMS version list in settings.gradle.kts,", target.slug)
         logger.lifecycle(
-            "  1. Add \"{}\" to the NMS version list in settings.gradle.kts, which declares it as
-            module(\"{}\") under the project path {}.",
-            target.slug,
+            "     which declares it as module(\"{}\") with the project path {}.",
             target.modulePath,
             target.gradlePath,
         )

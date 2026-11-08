@@ -6,11 +6,11 @@
 # Build everything (includes shadow JARs with relocated deps)
 ./gradlew build shadowJar
 
-# Build a single module
-./gradlew :surf-api-bukkit:surf-api-bukkit-server:build
+# Build a single module (Gradle paths are flat and equal the published artifact name)
+./gradlew :surf-api-paper-impl:build
 
 # Run Paper test server (not available in CI)
-./gradlew :surf-api-bukkit:surf-api-bukkit-plugin-test:runServer
+./gradlew :surf-api-paper-plugin-test:runServer
 
 # Publish to local Maven
 ./gradlew publishToMavenLocal
@@ -21,14 +21,51 @@ CI uses **Java 25 GraalVM**. The Java toolchain version is set in `gradle.proper
 
 ## Architecture
 
-**Multi-platform Minecraft server API** — Kotlin on JVM, targeting Paper/Bukkit, Velocity, and
-Standalone (Hytale is future/placeholder). Every platform follows an **API/Implementation split**:
+**Multi-platform Minecraft server API** — Kotlin on JVM, targeting Paper, Minestom, Velocity, and
+Standalone.
+
+### Module naming
+
+Directories only group modules. The Gradle project path is **flat** and equals the published
+artifact name, which `settings.gradle.kts` derives from the directory by dropping the first segment
+and joining the rest with `-` behind the `surf-api-` prefix:
+
+```
+common/core/api           ->  :surf-api-core-api
+platform/paper/nms/v26-3  ->  :surf-api-paper-nms-v26-3
+aggregate/paper           ->  :surf-api-paper
+```
+
+Every platform follows an **API/implementation split**, carried by the module suffix:
 
 - `-api` modules define public interfaces and extension functions (what consumers depend on)
-- `-server` modules contain implementations (shaded into the final JAR, not published as API)
-- `surf-api-shared` contains cross-platform annotations, the component system, and internal hooks
-- `surf-api-gradle-plugin` provides Gradle plugins (`dev.slne.surf.api.gradle.paper-plugin`, etc.)
-  that downstream projects apply, and contains the KSP symbol processor (`surf-api-processor`)
+- `-impl` modules contain the implementations; they are shaded into the final JAR and are not part
+  of the published API surface. Never expose `-impl` types in public API.
+- a module with neither suffix is an **aggregate**
+
+### Folder groups
+
+- `foundation/` — platform-agnostic basics: `surf-api-annotations` (cross-platform annotations and
+  the component system contracts) and `surf-api-internal` (internal hooks and the
+  `@InternalSurfApi` surface)
+- `common/` — the platform-agnostic core: `surf-api-core-api`, `surf-api-core-impl`
+- `platform/` — one domain per platform: `surf-api-paper-api` / `-impl` plus
+  `surf-api-paper-nms-api` and the versioned `surf-api-paper-nms-v*` modules;
+  `surf-api-minestom-api` / `-impl` plus the per-feature modules
+  `surf-api-minestom-{bootstrap,console,luckperms,npc,player-visibility,plugins,signed-chat,spark}-impl`;
+  `surf-api-velocity-api` / `-impl`; and `surf-api-standalone-impl`
+- `aggregate/` — `surf-api-core`, `surf-api-paper`, `surf-api-minestom`,
+  `surf-api-minestom-server`, `surf-api-velocity`, `surf-api-standalone`. These **carry no code**:
+  each only re-exports the modules of its platform, and they are the coordinates downstream
+  projects depend on.
+- `tooling/` — `surf-api-bom`, `surf-api-gradle-plugin` (provides the Gradle plugins
+  `dev.slne.surf.api.gradle.paper-plugin`, etc. that downstream projects apply) with the KSP
+  symbol processor `surf-api-processor`, and `surf-api-generator`
+- `local/` — never published: `surf-api-paper-plugin-test`, `surf-api-minestom-example`,
+  `surf-api-minestom-example-plugin`
+
+`local/`, `surf-api-generator` and the NMS module generator are skipped when `CI=true`;
+`surf-api-minestom-luckperms-impl` is only included once `vendor/LuckPerms` has been generated.
 
 ### Service Discovery (two mechanisms)
 
@@ -47,19 +84,19 @@ Standalone (Hytale is future/placeholder). Every platform follows an **API/Imple
 ### NMS Bridge Pattern
 
 Platform-specific (NMS) code is abstracted behind bridge interfaces in `-api` with implementations
-in `-server`:
+in `-impl`:
 
 ```kotlin
 // In -api: interface + companion delegation
 @NmsUseWithCaution
-interface SurfBukkitNmsCommonBridge {
+interface SurfPaperNmsCommonBridge {
     fun nextEntityId(): Int
-    companion object : SurfBukkitNmsCommonBridge by requiredService()
+    companion object : SurfPaperNmsCommonBridge by requiredService()
 }
 
-// In -server: implementation registered via ServiceLoader
-@AutoService(SurfBukkitNmsCommonBridge::class)
-class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge { ... }
+// In -impl: implementation registered via ServiceLoader
+@AutoService(SurfPaperNmsCommonBridge::class)
+class SurfPaperNmsCommonBridgeProxy : SurfPaperNmsCommonBridge { ... }
 ```
 
 Bridge implementations call `checkInstantiationByServiceLoader()` in their `init` block.
@@ -76,7 +113,7 @@ Bridge implementations call `checkInstantiationByServiceLoader()` in their `init
   ```
 - **`@InternalSurfApi`** — `@RequiresOptIn` annotation for internal APIs. All subprojects opt in via
   compiler args. Mark new internal APIs with this.
-- **Coroutines** for all async work. Component lifecycle methods are `suspend`. Bukkit uses
+- **Coroutines** for all async work. Component lifecycle methods are `suspend`. Paper uses
   MCCoroutine (Folia-aware) for dispatching.
 - **Extension functions** are the primary API enrichment pattern, organized in files named
   `*-extension.kt` or `*-extensions.kt`.
@@ -96,12 +133,16 @@ log.atWarning().withCause(e).log("Failed to do X for %s", name)
 
 ```
 dev.slne.surf.api                        # root
-dev.slne.surf.api.core.api               # core API interfaces
-dev.slne.surf.api.core.server            # core implementations
-dev.slne.surf.api.paper.api             # bukkit API (extensions, bridges, DSLs)
-dev.slne.surf.api.paper.server          # bukkit implementations
-dev.slne.surf.api.velocity.api / .server # velocity
-dev.slne.surf.api.shared.api             # shared annotations and component system
+dev.slne.surf.api.core.*                 # core API (surf-api-core-api)
+dev.slne.surf.api.core.server.*          # core implementations (surf-api-core-impl)
+dev.slne.surf.api.paper.*                # Paper API (extensions, bridges, DSLs)
+dev.slne.surf.api.paper.server.*         # Paper implementations
+dev.slne.surf.api.paper.nms.common.*     # Paper NMS bridge contracts
+dev.slne.surf.api.minestom.*             # Minestom API and implementations
+dev.slne.surf.api.velocity.* / .server.* # Velocity
+dev.slne.surf.api.standalone.impl.*      # Standalone runtime
+dev.slne.surf.api.shared.api.*           # annotations, component system (surf-api-annotations)
+dev.slne.surf.api.shared.internal.*      # internal hooks (surf-api-internal)
 dev.slne.surf.api.libs.*                 # relocation target for shaded deps
 ```
 
@@ -123,12 +164,12 @@ Publishing triggers on pushes to `version/*` branches.
 
 ## When Making Changes
 
-- **API changes** go in `-api` modules; implementations in `-server` modules. Never expose `-server`
-  types in public API.
+- **API changes** go in `-api` modules; implementations in `-impl` modules. Never expose `-impl`
+  types in public API. Aggregates in `aggregate/` only re-export modules — never add code there.
 - **New components**: annotate with `@ComponentMeta` (or `@Service`/`@Repository`), implement
   `Component`, and declare dependencies with `@DependsOnComponent`, `@DependsOnPlugin`, etc.
 - **New bridges**: define interface in `-api` with companion delegation via `requiredService()`,
-  implement in `-server` with `@AutoService`.
+  implement in `-impl` with `@AutoService`.
 - **New extension functions**: place in a file named `{topic}-extensions.kt` in the appropriate
   `-api` module.
 - **KDoc**: required for all public API members.

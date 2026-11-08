@@ -2,7 +2,7 @@
 
 **Multi-platform plugin API framework** for Minecraft servers — providing modular service
 discovery, lifecycle-managed components, NMS bridge abstractions, and rich DSLs across Paper,
-Velocity, and Standalone platforms.
+Minestom, Velocity, and Standalone platforms.
 
 [![Latest Release](https://img.shields.io/github/v/release/SLNE-Development/surf-api?label=release)](https://github.com/SLNE-Development/surf-api/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
@@ -16,7 +16,8 @@ Velocity, and Standalone platforms.
 
 surf-api is the shared foundation for SLNE's server plugin ecosystem. It provides:
 
-- **Platform-abstracted APIs** for Paper (Bukkit/NMS), Velocity, and Standalone environments
+- **Platform-abstracted APIs** for Paper (Bukkit/NMS), Minestom, Velocity, and Standalone
+  environments
 - **Service discovery** via `ServiceLoader` (`requiredService<T>()`) for singleton bridges
 - **Component system** with compile-time KSP discovery, topological lifecycle ordering, and
   conditional activation
@@ -29,44 +30,81 @@ surf-api is the shared foundation for SLNE's server plugin ecosystem. It provide
 
 ## Module Structure
 
+Directories group the modules; the published name is derived from the directory path by dropping the
+first segment, joining the rest with `-`, and prefixing `surf-api-`. So `common/core/api` publishes
+as `surf-api-core-api` and `aggregate/paper` publishes as `surf-api-paper`. Gradle project paths
+stay flat (`:surf-api-core-api`), which is why the typesafe accessor reads `projects.surfApiCoreApi`.
+
 ```
 surf-api
-├── surf-api-core                  # Platform-agnostic core API & implementation
-│   ├── surf-api-core              # Core API interfaces
-│   └── surf-api-core-server       # Core implementations
+├── foundation/                       # Bottom layer — depends on no other surf-api module
+│   ├── annotations                   # surf-api-annotations: @ComponentMeta & co., the annotation surface
+│   └── internal                      # surf-api-internal: internal utilities, never a public dependency
 │
-├── surf-api-paper                 # Paper/Bukkit platform
-│   ├── surf-api-paper             # Public API (extensions, bridges, DSLs)
-│   ├── surf-api-paper-server      # Implementations (shaded into final JAR)
-│   ├── surf-api-paper-nms
-│   │   ├── surf-api-paper-nms-common     # Shared NMS bridge interfaces
-│   │   ├── surf-api-paper-nms-v1-21-11   # NMS impl for 1.21.11
-│   │   └── surf-api-paper-nms-v26-1      # NMS impl for 26.1
-│   └── surf-api-paper-plugin-test # Local test server (excluded from CI)
+├── common/                           # Platform-agnostic
+│   └── core
+│       ├── api                       # surf-api-core-api: core contracts — services, components, env, DSLs
+│       └── impl                      # surf-api-core-impl: core implementations
 │
-├── surf-api-velocity              # Velocity proxy platform
-│   ├── surf-api-velocity          # Public API
-│   └── surf-api-velocity-server   # Implementations
+├── platform/                         # One group per runtime
+│   ├── paper
+│   │   ├── api                       # surf-api-paper-api: Paper/Bukkit contracts (extensions, bridges, DSLs)
+│   │   ├── impl                      # surf-api-paper-impl: Paper implementations
+│   │   └── nms
+│   │       ├── api                   # surf-api-paper-nms-api: version-independent NMS bridge interfaces
+│   │       ├── v1-21-11              # surf-api-paper-nms-v1-21-11: NMS bridge for 1.21.11
+│   │       ├── v26-1                 # surf-api-paper-nms-v26-1: NMS bridge for 26.1
+│   │       ├── v26-2                 # surf-api-paper-nms-v26-2: NMS bridge for 26.2
+│   │       └── v26-3                 # surf-api-paper-nms-v26-3: NMS bridge for 26.3
+│   ├── minestom
+│   │   ├── api                       # surf-api-minestom-api: Minestom contracts
+│   │   ├── impl                      # surf-api-minestom-impl: Minestom implementations
+│   │   ├── bootstrap-impl            # Server bootstrap
+│   │   ├── console-impl              # Console & command input
+│   │   ├── npc-impl                  # NPCs
+│   │   ├── player-visibility-impl    # Per-player entity visibility
+│   │   ├── plugins-impl              # Plugin loading
+│   │   ├── signed-chat-impl          # Signed chat handling
+│   │   ├── spark-impl                # Spark profiler integration
+│   │   └── luckperms-impl            # LuckPerms integration (needs vendor/LuckPerms)
+│   ├── velocity
+│   │   ├── api                       # surf-api-velocity-api: Velocity proxy contracts
+│   │   └── impl                      # surf-api-velocity-impl: Velocity implementations
+│   └── standalone
+│       └── impl                      # surf-api-standalone-impl: standalone (non-server) runtime
 │
-├── surf-api-standalone            # Standalone (non-server) platform
+├── aggregate/                        # The coordinates downstream projects depend on — no code of their own
+│   ├── core                          # surf-api-core
+│   ├── paper                         # surf-api-paper
+│   ├── minestom                      # surf-api-minestom
+│   ├── minestom-server               # surf-api-minestom-server: for building a runnable Minestom server
+│   ├── velocity                      # surf-api-velocity
+│   └── standalone                    # surf-api-standalone
 │
-├── surf-api-shared                # Cross-platform annotations & component system
-│   ├── surf-api-shared-public     # Public shared annotations (@ComponentMeta, etc.)
-│   └── surf-api-shared-internal   # Internal shared utilities
+├── tooling/
+│   ├── bom                           # surf-api-bom: one version for every module
+│   ├── gradle-plugin                 # surf-api-gradle-plugin: configures downstream projects, shading, KSP
+│   │   └── processor                 # surf-api-processor: KSP processor — discovers @ComponentMeta
+│   └── generator                     # surf-api-generator: NMS module scaffolding (local only)
 │
-├── surf-api-gradle-plugin         # Gradle convention plugins & KSP processor
-│   └── surf-api-processor         # KSP processor — discovers @ComponentMeta at compile time
-│
-└── surf-api-generator             # NMS module scaffolding generator (local only)
+└── local/                            # Never published, excluded from CI
+    ├── paper-plugin-test             # surf-api-paper-plugin-test: Paper test server
+    ├── minestom-example              # surf-api-minestom-example: runnable Minestom example server
+    └── minestom-example-plugin       # surf-api-minestom-example-plugin: example Minestom plugin
 ```
 
-> **API/Implementation split:** `-api` modules define public interfaces consumed by downstream
-> projects. `-server` modules contain implementations that are shaded into the final JAR and never
-> exposed as a public API dependency.
+> **API/implementation split:** `-api` modules declare the contracts downstream projects compile
+> against. They carry ABI validation, and the build fails if one of them depends on an
+> implementation module. `-impl` modules carry the implementations; they are wired in at runtime and
+> shaded into the final JAR, and never reach a consumer's compile classpath. Downstream projects do
+> not name either directly — they depend on the `aggregate/` coordinates (`surf-api-paper` and
+> friends), which hold no code and let the contracts reach the consumer transitively. Importing
+> `surf-api-bom` pins one version for every module, so no transitive path can pull a second version
+> of a sibling module into the graph.
 
 ## Environment Variables
 
-`surf-api-core` provides small, type-safe environment-variable access without a separate schema or
+`surf-api-core-api` provides small, type-safe environment-variable access without a separate schema or
 lookup phase. Direct reads resolve immediately:
 
 ```kotlin
@@ -122,7 +160,7 @@ interface SurfBukkitNmsCommonBridge {
     companion object : SurfBukkitNmsCommonBridge by requiredService()
 }
 
-// In -server: provide the implementation
+// In -impl: provide the implementation
 @AutoService(SurfBukkitNmsCommonBridge::class)
 class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
     init { checkInstantiationByServiceLoader() }
@@ -173,14 +211,14 @@ class MyFeatureService : SurfComponent {
 # Full build (produces shadow JARs with relocated dependencies)
 ./gradlew build shadowJar
 
-# Build a single module
-./gradlew :surf-api-paper:surf-api-paper-server:build
+# Build a single module (project paths are flat, whatever the directory)
+./gradlew :surf-api-paper-impl:build
 
 # Publish to local Maven repository
 ./gradlew publishToMavenLocal
 
 # Run the Paper test server (local only, not available in CI)
-./gradlew :surf-api-paper:surf-api-paper-plugin-test:runServer
+./gradlew :surf-api-paper-plugin-test:runServer
 ```
 
 ---
@@ -258,11 +296,12 @@ All non-platform dependencies are shaded via Shadow and relocated to `dev.slne.s
 
 When making changes:
 
-- **API changes** go in `-api` modules. **Never** expose `-server` types in the public API.
-- **Implementations** go in `-server` modules.
+- **API changes** go in `-api` modules. **Never** expose `-impl` types in the public API —
+  `checkApiBoundary` fails the build if an `-api` module depends on an implementation module.
+- **Implementations** go in `-impl` modules.
 - **New components**: annotate with `@ComponentMeta` / `@Service` / `@Repository` and implement the
   appropriate lifecycle methods.
-- **New NMS bridges**: declare the interface in `-api`, implement in `-server`, register via
+- **New NMS bridges**: declare the interface in `-api`, implement in `-impl`, register via
   `@AutoService`, and call `checkInstantiationByServiceLoader()` in the `init` block.
 - Publishing is automated — push to a `version/*` branch to trigger a release.
 

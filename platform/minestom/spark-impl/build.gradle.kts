@@ -1,6 +1,6 @@
 plugins {
+    id("surf.module-impl")
     `vendor-bundle-convention`
-    `api-validation`
 }
 
 dependencies {
