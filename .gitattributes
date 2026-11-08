@@ -1,0 +1,25 @@
+# Line endings are LF in the repository and in the working tree on every platform. Without this,
+# a checkout on Windows converts text files to CRLF, which makes every pattern-based edit behave
+# differently depending on who runs it.
+* text=auto eol=lf
+
+# Windows needs CRLF to run these.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Patches are applied byte for byte; normalising them would break `./gradlew applyPatches`.
+*.patch -text
+
+# Never inspected or converted as text.
+*.jar binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.nbt binary
+*.dat binary
