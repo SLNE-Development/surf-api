@@ -24,10 +24,6 @@ configurations.named("runtimeOnly") {
     extendsFrom(surfRuntime.get())
 }
 
-tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-    configurations = listOf(surfRuntime.get())
-}
-
 afterEvaluate {
     val sources = the<SourceSetContainer>()
         .flatMap { sourceSet -> sourceSet.allSource.srcDirs }

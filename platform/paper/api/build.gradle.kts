@@ -1,0 +1,26 @@
+plugins {
+    id("surf.module-api")
+}
+
+dependencies {
+    api(projects.surfApiCoreApi)
+    compileOnly(libs.paper.api)
+    compileOnlyApi(libs.packetevents.spigot)
+    compileOnlyApi(libs.commandapi.paper)
+    compileOnlyApi(libs.reflection.remapper)
+    compileOnlyApi(libs.more.persistent.data.types)
+    api(libs.bundles.inventory.framework)
+    api(libs.scoreboard.library.api)
+    api(libs.commandapi.bukkit.kotlin)
+    compileOnlyApi(libs.mccoroutine.folia.api)
+    api(libs.wyck)
+
+    testImplementation(libs.mockbukkit)
+    testImplementation(libs.paper.api)
+}
+
+description = "surf-api-paper-api"
+
+configurations.all {
+    exclude(group = "org.spigotmc", module = "spigot-api")
+}

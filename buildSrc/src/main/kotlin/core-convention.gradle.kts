@@ -30,8 +30,10 @@ repositories {
 
 dependencies {
     compileOnly(libs.auto.service.annotations)
-    if (!project.path.contains("surf-api-shared")) {
-        ksp(project(":surf-api-gradle-plugin:surf-api-processor"))
+    // The processor depends on surf-api-internal for the metadata schema and on surf-api-annotations
+    // for the annotations it looks for, so running it on those two modules would be a cycle.
+    if (project.name !in setOf("surf-api-annotations", "surf-api-internal")) {
+        ksp(project(":surf-api-processor"))
     }
 
     compileOnlyApi("org.jetbrains:annotations:26.1.0")

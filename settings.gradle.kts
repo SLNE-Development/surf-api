@@ -3,7 +3,7 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
     }
-    includeBuild("surf-api-generator/gradle-nms-module-generator")
+    includeBuild("tooling/generator/nms-module-generator")
 }
 
 plugins {
@@ -14,39 +14,84 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "surf-api"
 
-include("surf-api-bom")
+val ci = System.getenv("CI")?.toBoolean() ?: false
 
-include(":surf-api-core:surf-api-core")
-include(":surf-api-core:surf-api-core-server")
+/**
+ * Derives a module's published name from its directory.
+ *
+ * The first path segment only groups modules and is dropped; the rest is joined with `-` and
+ * prefixed with `surf-api-`:
+ *
+ * ```
+ * common/core/api         ->  surf-api-core-api
+ * platform/paper/nms/v26-3 -> surf-api-paper-nms-v26-3
+ * aggregate/paper         ->  surf-api-paper
+ * ```
+ */
+fun artifactName(path: String) =
+    path.split('/').drop(1).joinToString("-", prefix = "surf-api-")
 
-include(":surf-api-paper:surf-api-paper")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-common")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v1-21-11")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-1")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-2")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-3")
-include(":surf-api-paper:surf-api-paper-server")
+val declared = mutableSetOf<String>()
 
-include(":surf-api-velocity:surf-api-velocity")
-include(":surf-api-velocity:surf-api-velocity-server")
+/**
+ * Includes the module at [path] under its published [name].
+ *
+ * The Gradle path stays flat and the directory is attached as `projectDir`, so the typesafe
+ * accessor reads `projects.surfApiCoreApi` rather than `projects.common.core.api` — an `api`
+ * accessor sitting next to the `api()` configuration in the same dependencies block would be a
+ * trap. It also means the published name needs no `archivesName` override.
+ */
+fun module(path: String, name: String = artifactName(path)) {
+    val dir = file(path)
+    require(dir.resolve("build.gradle.kts").isFile) { "No build.gradle.kts in $path" }
+    require(declared.add(name)) { "Duplicate module name '$name' (path $path)" }
 
-include("surf-api-standalone")
-include("surf-api-gradle-plugin")
-include("surf-api-gradle-plugin:surf-api-processor")
+    include(name)
+    project(":$name").projectDir = dir
+}
 
-include("surf-api-shared")
-include("surf-api-shared:surf-api-shared-public")
-include("surf-api-shared:surf-api-shared-internal")
+/** Includes the `api` and `impl` modules of one domain. */
+fun pair(group: String, domain: String) {
+    module("$group/$domain/api")
+    module("$group/$domain/impl")
+}
 
-include(":surf-api-minestom:surf-api-minestom")
-include(":surf-api-minestom:surf-api-minestom-server")
-include(":surf-api-minestom:surf-api-minestom-server-bootstrap")
-include(":surf-api-minestom:surf-api-minestom-server-signed-chat")
-include(":surf-api-minestom:surf-api-minestom-server-npc")
-include(":surf-api-minestom:surf-api-minestom-server-player-visibility")
-include(":surf-api-minestom:surf-api-minestom-server-console")
-include(":surf-api-minestom:surf-api-minestom-server-spark")
-include(":surf-api-minestom:surf-api-minestom-server-plugins")
+// foundation
+module("foundation/annotations")
+module("foundation/internal")
+
+// common
+pair("common", "core")
+
+// platform
+pair("platform", "paper")
+module("platform/paper/nms/api")
+// NmsVersion lives in the included build and is not on the settings classpath, so the versions
+// stay literal here, as they did before.
+listOf("v1-21-11", "v26-1", "v26-2", "v26-3").forEach { module("platform/paper/nms/$it") }
+
+pair("platform", "minestom")
+listOf(
+    "bootstrap-impl",
+    "console-impl",
+    "npc-impl",
+    "player-visibility-impl",
+    "plugins-impl",
+    "signed-chat-impl",
+    "spark-impl",
+).forEach { module("platform/minestom/$it") }
+
+pair("platform", "velocity")
+module("platform/standalone/impl")
+
+// aggregates — the coordinates downstream projects know
+listOf("core", "paper", "minestom", "minestom-server", "velocity", "standalone")
+    .forEach { module("aggregate/$it") }
+
+// tooling
+module("tooling/bom")
+module("tooling/gradle-plugin")
+module("tooling/gradle-plugin/processor", name = "surf-api-processor")
 
 includeBuild("vendor/spark-minestom") {
     dependencySubstitution {
@@ -54,13 +99,11 @@ includeBuild("vendor/spark-minestom") {
     }
 }
 
-val ci = System.getenv("CI")?.toBoolean() ?: false
-
 // vendor/LuckPerms is generated from the LuckPerms-Upstream submodule and the patches next to it,
 // so the LuckPerms feature is only built once it has been created; CI builds require it
 val luckPermsDir = file("vendor/LuckPerms")
 if (luckPermsDir.resolve("settings.gradle").isFile) {
-    include(":surf-api-minestom:surf-api-minestom-server-luckperms")
+    module("platform/minestom/luckperms-impl")
 
     includeBuild(luckPermsDir) {
         dependencySubstitution {
@@ -69,7 +112,7 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
     }
 } else {
     val message = """
-        vendor/LuckPerms is missing, so surf-api-minestom-server-luckperms is not built. Create it with:
+        vendor/LuckPerms is missing, so surf-api-minestom-luckperms-impl is not built. Create it with:
           git submodule update --init --recursive
           cd vendor && ./gradlew applyPatches
         """.trimIndent()
@@ -79,8 +122,8 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
 }
 
 if (!ci) {
-    include(":surf-api-paper:surf-api-paper-plugin-test")
-    include(":surf-api-minestom:surf-api-minestom-example")
-    include(":surf-api-minestom:surf-api-minestom-example-plugin")
-    include("surf-api-generator")
+    module("local/paper-plugin-test")
+    module("local/minestom-example")
+    module("local/minestom-example-plugin")
+    module("tooling/generator")
 }
