@@ -66,6 +66,7 @@ fun includePair(group: String, domain: String) {
 includeModule("foundation/annotations")
 includeModule("foundation/internal")
 includeModule("foundation/registry-keys")
+includePair("foundation", "di")
 
 // common
 includePair("common", "core")

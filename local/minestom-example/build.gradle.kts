@@ -7,7 +7,7 @@ plugins {
 
 description = "surf-api-minestom-example"
 
-val luckPerms = findProject(":surf-api-minestom:surf-api-minestom-server-luckperms")
+val luckPerms = findProject(":surf-api-minestom-luckperms-impl")
 
 dependencies {
     implementation(projects.surfApiMinestomBootstrapImpl)

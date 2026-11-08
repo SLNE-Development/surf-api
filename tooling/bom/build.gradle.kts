@@ -13,12 +13,13 @@ plugins {
 }
 
 /**
- * Modules that `settings.gradle.kts` only includes outside CI, plus the Gradle plugin, which
- * carries a version of its own.
+ * Modules that `settings.gradle.kts` only includes outside CI, plus the Gradle plugin and its KSP
+ * processor, which carry versions of their own.
  */
 val notPublished = setOf(
     "surf-api-bom",
     "surf-api-gradle-plugin",
+    "surf-api-processor",
     "surf-api-generator",
     "surf-api-paper-plugin-test",
     "surf-api-minestom-example",
