@@ -51,7 +51,7 @@ override.
 | Plugin | Apply it to | What it does |
 | --- | --- | --- |
 | `surf.module-api` | a module whose types consumers compile against | `core-convention` + registers `checkApiBoundary` and wires it into `check` |
-| `surf.module-impl` | a module wired in at runtime and shaded into the final jar | `core-convention` + asserts the project name actually marks it as an implementation |
+| `surf.module-impl` | a module wired in at runtime and shaded into the final jar | `core-convention` + registers `checkBeanGraph` and wires it into `check` + asserts the project name actually marks it as an implementation |
 | `surf.aggregate` | a coordinate that only groups other modules | `core-convention` + a `surfRuntime` configuration + fails if the project carries sources |
 
 `surfModuleRole(projectName)` in `buildSrc/src/main/kotlin/SurfModuleRole.kt` classifies by name: an
@@ -89,6 +89,28 @@ It fails the build; `-Psurf.apiBoundary.strict=false` downgrades it to a warning
 When it fires, do not reach for that flag. Either move the type you need into the matching `-api`
 module, or make the consuming module an implementation module. Implementations are wired in at
 runtime, never compiled against.
+
+## checkBeanGraph
+
+Registered by `surf.module-impl` and wired into `check`. KSP writes one bean metadata file per
+module and the container merges them when it starts, so a fault that only exists in the *merged*
+set is invisible to the compile that produced it. This asks the same question at build time, over
+the module's whole runtime classpath:
+
+| Reported | Why it cannot be a false alarm |
+| --- | --- |
+| the same bean class declared by two modules | the container would build it once per definition |
+| two beans marked `@Primary` for one type | the processor catches this within a module, nothing did across modules |
+| a dependency cycle | adding more modules cannot break one |
+
+It deliberately does **not** check that every required parameter has a provider. That is only sound
+for a complete runtime, and a module compiled on its own legitimately depends on a bean a sibling
+contributes - reporting it would train everyone to ignore the task. The container answers that one,
+where the whole set is known.
+
+The container is the authority if the two ever disagree; this task can only ever be weaker than the
+check that guards a start. Source: `buildSrc/src/main/kotlin/CheckBeanGraph.kt`, covered by
+`buildSrc/src/test/kotlin/CheckBeanGraphTest.kt`.
 
 ## Aggregates
 
@@ -147,11 +169,17 @@ Gradle paths are flat, and `./gradlew` runs from the repository root:
 ./gradlew projects                              # every flat path
 ./gradlew :surf-api-paper-impl:build
 ./gradlew :surf-api-core-api:checkApiBoundary
+./gradlew :surf-api-paper-impl:checkBeanGraph   # the merged bean metadata of one runtime
 ./gradlew checkKotlinAbi                        # the ABI gate, as CI runs it
 ./gradlew updateKotlinAbi                       # refresh the dumps, then commit the api/ files
 ./gradlew build shadowJar --parallel --no-scan  # the PR build
 ./gradlew check --parallel --no-scan
+./gradlew -p buildSrc test                      # buildSrc's own tests; `check` above skips them
 ```
+
+`buildSrc` is built for its jar and nothing else, so its tests are not part of `check` and cannot
+be hung off `jar` - the test code compiles against that jar. CI runs them as a step of their own,
+and so should you after touching anything in `buildSrc`.
 
 `platform/minestom/luckperms-impl` is only included once `vendor/LuckPerms` exists; create it with
 `git submodule update --init --recursive` and then `./gradlew applyPatches` from `vendor/`. CI errors
