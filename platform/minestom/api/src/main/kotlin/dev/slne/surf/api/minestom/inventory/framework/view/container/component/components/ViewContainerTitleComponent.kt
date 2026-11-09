@@ -1,7 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.container.component.components
 
 import dev.slne.surf.api.core.inventory.framework.internal.layoutViewText
-import dev.slne.surf.api.core.messages.adventure.text
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
@@ -103,23 +102,4 @@ class ViewContainerTitleComponent(
         result = 31 * result + textAlignment.hashCode()
         return result
     }
-
-    @Deprecated("Binary compatibility", level = DeprecationLevel.HIDDEN)
-    constructor(
-        title: String,
-        font: Key,
-        charSpacing: Int,
-        textAlignment: TextAlignment,
-        charWidths: Map<Int, Int> = emptyMap(),
-    ) : this(
-        title = text(title),
-        font = font,
-        textAlignment = textAlignment,
-        metrics = ViewFontMetrics(
-            charSize = ViewFontMetrics.MENU_CHAR_SIZE,
-            charSpacing = charSpacing,
-            uppercase = true,
-            charWidths = charWidths
-        )
-    )
 }

@@ -41,12 +41,4 @@ enum class PaginationViewRows(val actualRows: ViewRows) {
      * see [PaginatedViewSettings.paginationContentRowCount].
      */
     val contentRows: Int = actualRows.rows - 1
-
-    /** @suppress */
-    @Deprecated(
-        "The content rows depend on the button position now, use PaginatedViewSettings instead",
-        level = DeprecationLevel.HIDDEN
-    )
-    val paginationContentRows: IntRange
-        get() = 1..contentRows
 }
