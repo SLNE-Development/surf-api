@@ -5,6 +5,7 @@ import com.google.gson.JsonElement
 import dev.slne.surf.api.shared.api.reflection.*
 import io.netty.channel.ChannelFuture
 import io.papermc.paper.adventure.ChatProcessor
+import it.unimi.dsi.fastutil.objects.ObjectList
 import net.minecraft.network.chat.*
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.resources.ResourceKey
@@ -60,8 +61,18 @@ interface V26_3NmsReflections {
     @ReflectedField("lastSeenCount")
     fun getLastSeenCountFromMessageValidator(validator: LastSeenMessagesValidator): Int
 
+    /**
+     * The validator's own tracked-message list.
+     *
+     * Declared as fastutil's [ObjectList] rather than [MutableList], because a [VarHandle] is
+     * looked up by the field's *exact* declared type: the server holds this field as
+     * `ObjectList<LastSeenTrackedEntry>`, and asking for `java.util.List` makes the lookup fail
+     * with `NoSuchFieldException` even though every `ObjectList` is a `List`. That failure lands in
+     * the accessor's static initialiser, which resolves every handle at once, so one wrong type
+     * here stops surf-api's whole container from starting.
+     */
     @ReflectedField("trackedMessages")
-    fun getTrackedMessagesFromMessageValidator(validator: LastSeenMessagesValidator): MutableList<LastSeenTrackedEntry?>
+    fun getTrackedMessagesFromMessageValidator(validator: LastSeenMessagesValidator): ObjectList<LastSeenTrackedEntry?>
 
     @ReflectedField("lastPendingMessage")
     fun getLastPendingMessageFromMessageValidator(validator: LastSeenMessagesValidator): MessageSignature?
