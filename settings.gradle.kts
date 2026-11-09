@@ -175,6 +175,11 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
 
 if (!ci) {
     includeModule("local/paper-plugin-test")
+    // The two plugins and the harness of the shared-bean boot test. Local-only on purpose: the
+    // harness downloads a Paper server and boots it, which has no place in a pull request.
+    includeModule("local/paper-shared-bean-provider")
+    includeModule("local/paper-shared-bean-consumer")
+    includeModule("local/paper-shared-bean-test")
     includeModule("local/minestom-example")
     includeModule("local/minestom-example-plugin")
     includeModule("surf-api-generator")
