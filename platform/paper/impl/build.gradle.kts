@@ -21,6 +21,11 @@ dependencies {
     api(projects.surfApiPaperNmsApi)
     compileOnly(libs.paper.api)
 
+    // The server provides Paper's api at runtime, so it is compileOnly -- but a test that stands in
+    // for the server has to load those interfaces, and `compileOnly` does not reach the test
+    // classpath.
+    testImplementation(libs.paper.api)
+
     runtimeOnly(projects.surfApiPaperNmsV12111)
     runtimeOnly(projects.surfApiPaperNmsV261)
     runtimeOnly(projects.surfApiPaperNmsV262)

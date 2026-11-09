@@ -15,6 +15,13 @@ import java.nio.file.Path
  *
  * Passed to the container at construction rather than inherited from, so a test can supply a
  * different one per container.
+ *
+ * **An implementation must answer without resolving a bean.** Every member here is called while a
+ * container is being built — [beanSources] and [classLoader] before a single bean exists — so
+ * anything an answer reaches for that is itself a bean is a request the container cannot serve
+ * yet. That includes reaching one indirectly, through an object whose initialiser resolves one,
+ * which is how this goes wrong in practice: the answer looks like plain platform code and the bean
+ * is two calls down. Use the platform's own api and plain reflection, not surf-api's services.
  */
 @InternalSurfApi
 interface ContainerPlatform {

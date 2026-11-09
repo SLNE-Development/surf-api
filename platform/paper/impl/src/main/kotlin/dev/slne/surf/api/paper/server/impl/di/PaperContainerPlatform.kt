@@ -7,7 +7,6 @@ import dev.slne.surf.api.di.PlatformLogger
 import dev.slne.surf.api.di.condition.ConditionalOnProperty
 import dev.slne.surf.api.di.definition.BeanMetadata
 import dev.slne.surf.api.paper.extensions.pluginManager
-import dev.slne.surf.api.paper.server.reflection.Reflection
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.bukkit.plugin.java.JavaPlugin
@@ -39,15 +38,21 @@ class PaperContainerPlatform : ContainerPlatform {
      * classes, so the root container — which is handed surf-api's own loader — can only ever hold
      * beans declared by surf-api itself.
      *
-     * The loader is read through the reflection proxy because `JavaPlugin.getClassLoader` is
-     * `protected`. `owner.javaClass.classLoader` is not a substitute: it happens to return the same
+     * The loader is read by reflection because `JavaPlugin.getClassLoader` is `protected`, and by
+     * *plain* reflection rather than through surf-api's own proxy service, which is the point worth
+     * remembering: this class answers the container's questions, so it is asked them while the
+     * container is still being built. Anything it reaches for that is itself a bean would be a
+     * request the container cannot serve yet — surf-api's proxy service is a bean, so using it here
+     * stopped the server from starting at all.
+     *
+     * `owner.javaClass.classLoader` is not a substitute either: it happens to return the same
      * object for a plugin's main class, but for any other owner it returns the loader of whichever
      * jar declared that class, which is a different plugin's beans or surf-api's.
      *
      * @throws IllegalStateException if [owner] is not a plugin
      */
     override fun classLoader(owner: Any): ClassLoader =
-        Reflection.JAVA_PLUGIN_PROXY.getClassLoader(pluginOf(owner))
+        GET_CLASS_LOADER.invoke(pluginOf(owner)) as ClassLoader
 
     /**
      * The plugin's own metadata, which on Paper is what its loader already answers with.
@@ -135,6 +140,14 @@ class PaperContainerPlatform : ContainerPlatform {
                 "not a JavaPlugin. The classloader, logger and data folder a container needs all " +
                 "belong to a plugin, so pass the plugin instance itself."
     )
+
+    private companion object {
+
+        /** `JavaPlugin.getClassLoader`, which is `protected`, opened once. */
+        val GET_CLASS_LOADER = JavaPlugin::class.java
+            .getDeclaredMethod("getClassLoader")
+            .apply { isAccessible = true }
+    }
 }
 
 /**
