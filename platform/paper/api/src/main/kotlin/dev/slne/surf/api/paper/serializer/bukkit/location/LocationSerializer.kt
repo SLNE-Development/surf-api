@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.paper.serializer.bukkit.location
 
-import dev.slne.surf.api.core.serializer.java.uuid.JavaUUIDSerializer
+import dev.slne.surf.api.serialization.java.uuid.JavaUUIDSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

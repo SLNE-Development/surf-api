@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.serializer.bukkit.player
 
-import dev.slne.surf.api.core.serializer.java.uuid.JavaUUIDSerializer
+import dev.slne.surf.api.serialization.java.uuid.JavaUUIDSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor

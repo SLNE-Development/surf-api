@@ -73,6 +73,9 @@ includePair("common", "core")
 // Only the api half exists: the shared inventory framework is contracts, settings and components
 // that both platforms compile against, with no runtime wiring of its own.
 includeModule("common/inventory/api")
+// Only the api half exists: the serializers, the serializer modules and the codec extensions are
+// declarations with no runtime wiring, so there is nothing for an impl module to hold.
+includeModule("common/serialization/api")
 
 // platform
 includePair("platform", "paper")

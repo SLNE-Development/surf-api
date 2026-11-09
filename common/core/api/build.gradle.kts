@@ -11,6 +11,10 @@ dependencies {
     // like everything else. Which module exports these IS the sharing decision — one exporter, so
     // the interface a SHARED bean crosses the application boundary as is loaded exactly once.
     api(projects.surfApiDiApi)
+    // The serialization surface was cut out of this module; it is re-exported so that
+    // everything compiling against surf-api-core keeps resolving the serializers it already
+    // used.
+    api(projects.surfApiSerializationApi)
     api(libs.adventure.nbt)
     // Exposed transitively by surf-api-annotations as well; declared here so the test convention
     // (testImplementation extendsFrom compileOnlyApi) puts Adventure on the test classpath.
