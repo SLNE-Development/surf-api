@@ -1,7 +1,8 @@
-// This module boots the standalone runtime and still re-exports the whole platform surface through
+// This module boots the standalone runtime and re-exports the whole platform surface through
 // `api`, which the surf-api-standalone aggregate passes on to consumers. That exported surface is
 // what downstream compiles against, so ABI validation stays on even though the module is an
-// implementation. Separating the bootstrap from the re-export is still open.
+// implementation -- and it is not a loose end: see the comment in aggregate/standalone for why the
+// bootstrap cannot be split off into an api module.
 plugins {
     id("surf.module-impl")
     `api-validation`
