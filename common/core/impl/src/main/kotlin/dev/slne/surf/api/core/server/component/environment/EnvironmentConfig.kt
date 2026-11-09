@@ -1,9 +1,28 @@
 package dev.slne.surf.api.core.server.component.environment
 
 import dev.slne.surf.api.core.server.environment.EnvironmentAccessor
-import dev.slne.surf.api.shared.api.component.requirement.ConditionalOnEnvironment
 
+/**
+ * The environments this process runs in.
+ *
+ * Read once from the environment and cached, because every `@ConditionalOnEnvironment` asks the
+ * same question while a container is being built and the answer cannot change inside one run.
+ */
 object EnvironmentConfig {
+
+    /**
+     * The environment variable that names the environments.
+     *
+     * Several may be named at once as a comma-separated list, for example
+     * `SURF_ENVIRONMENT=development,test`.
+     */
+    const val ENV_PROPERTY_NAME = "SURF_ENVIRONMENT"
+
+    /** What an unset [ENV_PROPERTY_NAME] means. */
+    const val PRODUCTION_ENVIRONMENT = "production"
+
+    /** The environment a developer's own server runs in. */
+    const val DEVELOPMENT_ENVIRONMENT = "development"
 
     @Volatile
     private var cachedEnvironments: List<String>? = null
@@ -13,9 +32,9 @@ object EnvironmentConfig {
         synchronized(this) {
             cachedEnvironments?.let { return it }
 
-            val env = EnvironmentAccessor.getEnv(ConditionalOnEnvironment.ENV_PROPERTY_NAME)
+            val env = EnvironmentAccessor.getEnv(ENV_PROPERTY_NAME)
             val resolvedEnvironments = if (env == null) {
-                listOf(ConditionalOnEnvironment.PRODUCTION_ENVIRONMENT)
+                listOf(PRODUCTION_ENVIRONMENT)
             } else {
                 env.split(",")
                     .map { it.trim() }

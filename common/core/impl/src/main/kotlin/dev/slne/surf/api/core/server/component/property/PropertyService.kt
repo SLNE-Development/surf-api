@@ -3,7 +3,7 @@ package dev.slne.surf.api.core.server.component.property
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.expireAfterAccess
 import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.api.shared.api.component.requirement.ConditionalOnProperty
+import dev.slne.surf.api.di.condition.ConditionalOnProperty
 import org.spongepowered.configurate.CommentedConfigurationNode
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader
