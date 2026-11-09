@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.dialog.search
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.dialog.base
 import dev.slne.surf.api.minestom.dialog.builder.DialogBodyBuilder
 import dev.slne.surf.api.minestom.dialog.builder.DialogInputBuilder

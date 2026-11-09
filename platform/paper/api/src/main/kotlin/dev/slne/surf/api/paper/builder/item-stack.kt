@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.builder
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material

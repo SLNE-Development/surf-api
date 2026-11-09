@@ -44,7 +44,7 @@ public abstract interface class dev/slne/surf/api/inventory/framework/view/conta
 	public abstract fun getPositionalShift ()I
 	public abstract fun getTextureWidth ()I
 	public abstract fun hashCode ()I
-	public abstract fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+	public abstract fun renderComponent (Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;)V
 }
 
 public final class dev/slne/surf/api/inventory/framework/view/container/component/ViewContainerComponent$DefaultImpls {
@@ -62,7 +62,7 @@ public final class dev/slne/surf/api/inventory/framework/view/container/componen
 	public final fun getRow ()I
 	public fun getTextureWidth ()I
 	public fun hashCode ()I
-	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+	public fun renderComponent (Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;)V
 }
 
 public final class dev/slne/surf/api/inventory/framework/view/container/component/components/ViewBlockCellComponent$Companion {

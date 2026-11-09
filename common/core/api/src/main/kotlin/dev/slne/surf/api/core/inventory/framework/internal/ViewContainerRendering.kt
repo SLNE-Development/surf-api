@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.inventory.framework.internal
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 
 /**

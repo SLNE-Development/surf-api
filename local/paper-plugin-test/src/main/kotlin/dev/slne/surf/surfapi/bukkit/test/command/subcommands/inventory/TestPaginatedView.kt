@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory
 
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.paper.builder.displayName
 import dev.slne.surf.api.paper.inventory.framework.dsl.withItem
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.header

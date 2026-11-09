@@ -3,7 +3,7 @@ package dev.slne.surf.api.core.command.exception
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
-import dev.slne.surf.api.core.messages.ComponentMessage
+import dev.slne.surf.api.messages.ComponentMessage
 import net.kyori.adventure.text.Component
 import java.io.Serial
 

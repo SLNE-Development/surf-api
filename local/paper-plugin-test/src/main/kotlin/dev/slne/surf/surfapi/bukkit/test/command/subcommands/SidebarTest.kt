@@ -3,7 +3,7 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.*
-import dev.slne.surf.api.core.messages.Colors
+import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.paper.sidebar.*
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import io.papermc.paper.util.Tick

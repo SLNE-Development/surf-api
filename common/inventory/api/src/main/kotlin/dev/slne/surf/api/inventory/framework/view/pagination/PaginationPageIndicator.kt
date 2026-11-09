@@ -1,7 +1,7 @@
 package dev.slne.surf.api.inventory.framework.view.pagination
 
-import dev.slne.surf.api.core.messages.Colors
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator.Companion.Default
 import net.kyori.adventure.text.Component
 

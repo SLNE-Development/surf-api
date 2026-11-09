@@ -2,7 +2,7 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
-import dev.slne.surf.api.core.messages.adventure.sendText
+import dev.slne.surf.api.messages.adventure.sendText
 
 class ShowItemCommand(name: String) : CommandAPICommand(name) {
     init {

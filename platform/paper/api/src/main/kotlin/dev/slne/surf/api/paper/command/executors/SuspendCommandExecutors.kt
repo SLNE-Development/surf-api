@@ -11,8 +11,8 @@ import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
 import dev.jorel.commandapi.executors.CommandArguments
 import dev.jorel.commandapi.kotlindsl.*
 import dev.jorel.commandapi.wrappers.NativeProxyCommandSender
-import dev.slne.surf.api.core.messages.Colors
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

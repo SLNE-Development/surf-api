@@ -9,6 +9,12 @@ dependencies {
     // module so that the domains still here can be cut out downwards. It is re-exported so that
     // everything compiling against surf-api-core keeps resolving the helpers it already used.
     api(projects.surfApiCommonApi)
+    // The messages domain -- the palette and the prefixes, the SurfComponentBuilder DSL, the
+    // Adventure extensions, ComponentMessage, DefaultFontInfo, SurfMessageBundle, pagination, the
+    // configured MiniMessage instance and the ActionBarService contract -- was cut out of this
+    // module. It is re-exported so that everything compiling against surf-api-core keeps resolving
+    // the text declarations it already used.
+    api(projects.surfApiMessagesApi)
     api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
     // The DI contracts travel with the api, not with the container: a downstream plugin writes

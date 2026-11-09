@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.impl.messages.pagination.suspend
 
-import dev.slne.surf.api.core.messages.pagination.*
+import dev.slne.surf.api.messages.pagination.*
 import dev.slne.surf.api.core.server.impl.messages.pagination.PaginationImpl
 import dev.slne.surf.api.core.server.impl.messages.pagination.PaginationImpl.Companion.pages
 import dev.slne.surf.api.common.util.logger

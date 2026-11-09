@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.icon
 
-import dev.slne.surf.api.core.messages.adventure.key
+import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.inventory.framework.view.icon.ViewIconColor
 import dev.slne.surf.api.inventory.framework.view.icon.ViewIconType
 import dev.slne.surf.api.minestom.builder.ItemDsl

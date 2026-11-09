@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.nms.bridges.packets.player.toast
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.paper.builder.buildItem
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets

@@ -1,10 +1,10 @@
 package dev.slne.surf.api.core.server.impl.actionbar
 
 import dev.slne.surf.api.core.SurfApiCore
-import dev.slne.surf.api.core.actionbar.ActionBarFinishReason
-import dev.slne.surf.api.core.actionbar.ActionBarService
-import dev.slne.surf.api.core.messages.adventure.nameOrNull
-import dev.slne.surf.api.core.messages.adventure.uuidOrNull
+import dev.slne.surf.api.messages.actionbar.ActionBarFinishReason
+import dev.slne.surf.api.messages.actionbar.ActionBarService
+import dev.slne.surf.api.messages.adventure.nameOrNull
+import dev.slne.surf.api.messages.adventure.uuidOrNull
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.di.Service

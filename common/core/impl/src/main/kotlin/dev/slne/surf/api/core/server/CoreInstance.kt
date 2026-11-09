@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server
 
-import dev.slne.surf.api.core.messages.Colors
+import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.core.server.listener.CoreListenerManager
 import dev.slne.surf.api.core.server.util.PlayerSkinFetcher
 import org.jetbrains.annotations.MustBeInvokedByOverriders

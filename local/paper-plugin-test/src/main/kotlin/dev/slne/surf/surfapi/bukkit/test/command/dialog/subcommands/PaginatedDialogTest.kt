@@ -7,7 +7,7 @@ import com.github.shynixn.mccoroutine.folia.scope
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.jorel.commandapi.kotlindsl.subcommand
-import dev.slne.surf.api.core.messages.adventure.buildText
+import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.paper.dialog.base
 import dev.slne.surf.api.paper.dialog.builder.actionButton
 import dev.slne.surf.api.paper.dialog.clearDialogs

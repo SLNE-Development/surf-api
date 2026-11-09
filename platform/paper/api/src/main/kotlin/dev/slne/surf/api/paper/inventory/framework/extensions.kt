@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.paper.inventory.framework
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.paper.builder.buildItem
 import dev.slne.surf.api.paper.builder.displayName
 import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL

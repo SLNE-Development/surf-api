@@ -1,12 +1,12 @@
 package dev.slne.surf.api.core.server.impl.messages.pagination.suspend
 
-import dev.slne.surf.api.core.messages.pagination.PageButton
-import dev.slne.surf.api.core.messages.pagination.Pagination
-import dev.slne.surf.api.core.messages.pagination.SuspendPagination
-import dev.slne.surf.api.core.messages.pagination.SuspendPaginationBuilder
-import dev.slne.surf.api.core.messages.pagination.SuspendPaginationClickEventProvider
-import dev.slne.surf.api.core.messages.pagination.SuspendPaginationRenderer
-import dev.slne.surf.api.core.messages.pagination.SuspendPaginationRowRenderer
+import dev.slne.surf.api.messages.pagination.PageButton
+import dev.slne.surf.api.messages.pagination.Pagination
+import dev.slne.surf.api.messages.pagination.SuspendPagination
+import dev.slne.surf.api.messages.pagination.SuspendPaginationBuilder
+import dev.slne.surf.api.messages.pagination.SuspendPaginationClickEventProvider
+import dev.slne.surf.api.messages.pagination.SuspendPaginationRenderer
+import dev.slne.surf.api.messages.pagination.SuspendPaginationRowRenderer
 import net.kyori.adventure.text.Component
 
 class SuspendPaginationBuilderImpl<T> : SuspendPaginationBuilder<T> {

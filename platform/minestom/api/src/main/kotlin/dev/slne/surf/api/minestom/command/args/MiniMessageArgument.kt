@@ -1,7 +1,7 @@
 package dev.slne.surf.api.minestom.command.args
 
 import dev.slne.surf.api.core.command.builder.CommandExceptionBuilder
-import dev.slne.surf.api.core.minimessage.miniMessage
+import dev.slne.surf.api.messages.minimessage.miniMessage
 import dev.slne.surf.api.minestom.command.CommandAPI
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree

@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.test.command.subcommands.scoreboard;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
-import dev.slne.surf.api.core.messages.Colors;
+import dev.slne.surf.api.messages.Colors;
 import dev.slne.surf.api.paper.scoreboard.SurfAutoUpdatablePlayerScoreboard;
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardBuilder;
 import java.util.ArrayList;

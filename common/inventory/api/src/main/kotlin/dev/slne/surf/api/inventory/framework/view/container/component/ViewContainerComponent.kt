@@ -1,6 +1,6 @@
 package dev.slne.surf.api.inventory.framework.view.container.component
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 
 /**
  * A component that can be added to a [ViewContainer] and rendered as part of the

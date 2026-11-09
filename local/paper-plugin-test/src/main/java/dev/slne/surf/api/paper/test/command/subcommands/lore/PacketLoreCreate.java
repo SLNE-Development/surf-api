@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.test.command.subcommands.lore;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.NamespacedKeyArgument;
-import dev.slne.surf.api.core.messages.Colors;
+import dev.slne.surf.api.messages.Colors;
 import dev.slne.surf.api.paper.packet.SurfPaperPacketApi;
 import dev.slne.surf.surfapi.bukkit.test.PaperPluginMainKt;
 import net.kyori.adventure.text.Component;

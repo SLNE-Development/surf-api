@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.paper.dialog.builder
 
-import dev.slne.surf.api.core.messages.adventure.sendText
+import dev.slne.surf.api.messages.adventure.sendText
 import dev.slne.surf.api.paper.dialog.dialog
 import io.papermc.paper.dialog.DialogResponseView
 import io.papermc.paper.registry.data.dialog.DialogRegistryEntry

@@ -10,7 +10,7 @@ import dev.slne.surf.api.config.type.DurationOrDisabled
 import dev.slne.surf.api.config.type.StringOrDefault
 import dev.slne.surf.api.config.type.number.DoubleOr
 import dev.slne.surf.api.config.type.number.IntOr
-import dev.slne.surf.api.core.minimessage.SurfMiniMessageHolder
+import dev.slne.surf.api.messages.minimessage.SurfMiniMessageHolder
 import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.leangen.geantyref.TypeToken

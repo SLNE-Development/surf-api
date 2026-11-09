@@ -1,7 +1,7 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.container
 
 import dev.slne.surf.api.core.inventory.framework.internal.appendShiftedComponent
-import dev.slne.surf.api.core.messages.adventure.buildText
+import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.inventory.framework.view.util.shift
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults

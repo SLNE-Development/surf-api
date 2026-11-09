@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.scoreboard
 
-import dev.slne.surf.api.core.messages.Colors
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import net.megavex.scoreboardlibrary.api.sidebar.component.SidebarComponent

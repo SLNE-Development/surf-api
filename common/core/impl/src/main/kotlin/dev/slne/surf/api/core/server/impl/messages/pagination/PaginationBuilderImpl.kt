@@ -1,11 +1,11 @@
 package dev.slne.surf.api.core.server.impl.messages.pagination
 
-import dev.slne.surf.api.core.messages.pagination.PageButton
-import dev.slne.surf.api.core.messages.pagination.Pagination
-import dev.slne.surf.api.core.messages.pagination.PaginationBuilder
-import dev.slne.surf.api.core.messages.pagination.PaginationClickEventProvider
-import dev.slne.surf.api.core.messages.pagination.PaginationRenderer
-import dev.slne.surf.api.core.messages.pagination.PaginationRowRenderer
+import dev.slne.surf.api.messages.pagination.PageButton
+import dev.slne.surf.api.messages.pagination.Pagination
+import dev.slne.surf.api.messages.pagination.PaginationBuilder
+import dev.slne.surf.api.messages.pagination.PaginationClickEventProvider
+import dev.slne.surf.api.messages.pagination.PaginationRenderer
+import dev.slne.surf.api.messages.pagination.PaginationRowRenderer
 import net.kyori.adventure.text.Component
 
 open class PaginationBuilderImpl<T> : PaginationBuilder<T> {

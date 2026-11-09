@@ -1,8 +1,8 @@
 package dev.slne.surf.api.paper.nms.common
 
-import dev.slne.surf.api.core.messages.Colors
-import dev.slne.surf.api.core.messages.CommonComponents
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.messages.CommonComponents
+import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import io.netty.channel.Channel

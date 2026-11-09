@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.paper.dialog
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
 import net.kyori.adventure.text.Component
 import org.jetbrains.annotations.Range

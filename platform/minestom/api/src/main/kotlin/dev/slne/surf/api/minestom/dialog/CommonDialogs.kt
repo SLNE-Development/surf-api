@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.dialog
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.dialog.builder.DialogEntryBuilder
 import net.kyori.adventure.text.Component
 import org.jetbrains.annotations.Range

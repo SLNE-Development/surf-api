@@ -1,7 +1,7 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings
 
 import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
-import dev.slne.surf.api.core.messages.adventure.key
+import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.inventory.framework.view.settings.PaginationButtonPosition
 import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows

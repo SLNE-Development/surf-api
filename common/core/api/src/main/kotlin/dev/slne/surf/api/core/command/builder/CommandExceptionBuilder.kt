@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.command.builder
 
-import dev.slne.surf.api.core.messages.Colors
+import dev.slne.surf.api.messages.Colors
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import kotlin.math.max

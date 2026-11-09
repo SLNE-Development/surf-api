@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.rarity
 
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.messages.adventure.text
 import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.format.TextColor
 

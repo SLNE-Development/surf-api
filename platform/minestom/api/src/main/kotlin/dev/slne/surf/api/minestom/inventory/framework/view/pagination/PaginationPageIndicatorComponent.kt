@@ -2,7 +2,7 @@ package dev.slne.surf.api.minestom.inventory.framework.view.pagination
 
 import dev.slne.surf.api.core.inventory.framework.internal.TextAlignmentMath
 import dev.slne.surf.api.core.inventory.framework.internal.layoutViewText
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics

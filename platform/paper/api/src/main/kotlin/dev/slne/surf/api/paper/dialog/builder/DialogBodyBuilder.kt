@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.paper.dialog.builder
 
-import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import io.papermc.paper.registry.data.dialog.body.PlainMessageDialogBody
 import net.kyori.adventure.text.Component

@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.impl.messages.pagination
 
-import dev.slne.surf.api.core.messages.pagination.*
+import dev.slne.surf.api.messages.pagination.*
 import net.kyori.adventure.text.Component
 
 data class PaginationImpl<T>(

@@ -74,6 +74,11 @@ includePair("foundation", "di")
 // declarations with no runtime wiring. It is declared first because it is the one module every
 // other domain of the repository compiles against.
 includeModule("common/common/api")
+// Only the api half exists: the palette, the builder DSL, the Adventure extensions, the pagination
+// contracts, the configured MiniMessage instance and the `ActionBarService` contract are
+// declarations. Their implementations stay in `surf-api-core-impl`, because `ActionBarServiceImpl`
+// resolves players through `SurfApiCore`.
+includeModule("common/messages/api")
 includePair("common", "core")
 // Only the api half exists: the shared inventory framework is contracts, settings and components
 // that both platforms compile against, with no runtime wiring of its own.

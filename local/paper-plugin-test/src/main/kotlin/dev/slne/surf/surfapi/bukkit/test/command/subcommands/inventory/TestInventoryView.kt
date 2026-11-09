@@ -1,8 +1,8 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory
 
-import dev.slne.surf.api.core.messages.Colors
-import dev.slne.surf.api.core.messages.adventure.buildText
-import dev.slne.surf.api.core.messages.adventure.text
+import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.messages.adventure.buildText
+import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.paper.builder.buildItem
 import dev.slne.surf.api.paper.builder.displayName
 import dev.slne.surf.api.paper.dialog.noticeDialog

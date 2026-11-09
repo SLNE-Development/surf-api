@@ -2453,7 +2453,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/container
 	public final fun getText ()Lnet/kyori/adventure/text/Component;
 	public fun getTextureWidth ()I
 	public fun hashCode ()I
-	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+	public fun renderComponent (Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;)V
 }
 
 public final class dev/slne/surf/api/minestom/inventory/framework/view/container/component/components/ViewContainerTitleComponent : dev/slne/surf/api/inventory/framework/view/container/component/ViewContainerComponent {
@@ -2468,7 +2468,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/container
 	public fun getTextureWidth ()I
 	public final fun getTitle ()Lnet/kyori/adventure/text/Component;
 	public fun hashCode ()I
-	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+	public fun renderComponent (Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;)V
 }
 
 public final class dev/slne/surf/api/minestom/inventory/framework/view/container/dsl/ViewContainerDSLKt {

@@ -3,7 +3,7 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.jorel.commandapi.kotlindsl.subcommand
-import dev.slne.surf.api.core.messages.adventure.sendText
+import dev.slne.surf.api.messages.adventure.sendText
 import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.event.TestAsyncEvent
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.listener.TestAsyncEventListener

@@ -4,7 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.arguments.StringArgument
 import dev.jorel.commandapi.kotlindsl.arguments
 import dev.slne.surf.api.core.command.args.awaiting
-import dev.slne.surf.api.core.messages.adventure.sendText
+import dev.slne.surf.api.messages.adventure.sendText
 import dev.slne.surf.api.paper.command.args.SuspendCustomArgument
 import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
 import kotlinx.coroutines.CoroutineScope

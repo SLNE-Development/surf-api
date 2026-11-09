@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.luckperms
 
-import dev.slne.surf.api.core.messages.adventure.uuidOrNull
+import dev.slne.surf.api.messages.adventure.uuidOrNull
 import kotlinx.coroutines.future.await
 import net.kyori.adventure.audience.Audience
 import net.luckperms.api.LuckPerms
