@@ -42,7 +42,10 @@ Kotlin and Java configuration:
   and `javaParameters = true`
 - `JavaCompile` gets UTF-8 and `-parameters`
 - `withSourcesJar()` and `withJavadocJar()`
-- `compileOnly` AutoService annotations plus the `surf-api-processor` KSP processor
+- the `surf-api-processor` KSP processor, added to the `ksp` configuration
+  (`configureSurfProcessor`). It is what writes the module's bean metadata, so without it a
+  `@Service` in a downstream plugin compiles and is then simply absent at runtime - the container
+  builds its graph from that metadata and never scans classes.
 - `gradleApi()` and `gradleTestKit()` are removed from every configuration except `compileOnly`
 
 Dependencies added in `afterEvaluate`:

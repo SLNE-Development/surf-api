@@ -4,8 +4,8 @@ Every path is relative to `platform/paper/api/src/main/kotlin/dev/slne/surf/api/
 implementations to `platform/paper/impl/src/main/kotlin/dev/slne/surf/api/paper/server/impl/`.
 Working examples live in `local/paper-plugin-test/src/main/kotlin/.../command/subcommands/`.
 
-All of these resolve through `requiredService<T>()`, so they only work inside a running server with
-the `surf-paper-api` plugin enabled.
+All of these resolve out of surf-api's root bean container through a `by surfBean<T>()` property,
+so they only work inside a running server with the `surf-paper-api` plugin enabled.
 
 ## `sidebar/` - packet sidebars
 

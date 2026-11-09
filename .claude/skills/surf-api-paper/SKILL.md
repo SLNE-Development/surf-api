@@ -20,9 +20,9 @@ the Via stack and Geyser-Spigot.
 
 Your plugin is a separate jar that compiles against `surf-api-paper` and declares `surf-paper-api`
 as a required dependency loading `BEFORE` it. Nothing of the api works before that plugin is
-enabled: every Paper-only entry point resolves its implementation through
-`requiredService<T>()` (`common/core/api/.../util/service-util.kt`), a `ServiceLoader` lookup
-satisfied by `surf-api-paper-impl`.
+enabled: every Paper-only entry point reads its implementation out of surf-api's root bean
+container through a private `by surfBean<T>()` property, and it is `surf-api-paper-impl` that starts
+that container and supplies the beans.
 
 | Directory | Coordinate | What it is |
 | --- | --- | --- |
@@ -73,23 +73,24 @@ A surf Paper plugin extends mccoroutine's `SuspendingJavaPlugin`, so the three l
 suspending. From `local/paper-plugin-test/src/main/kotlin/.../PaperPluginMain.kt`:
 
 ```kotlin
-import dev.slne.surf.api.paper.server.plugin as surfApi
+import dev.slne.surf.api.di.SurfContainer
 
 @OptIn(InternalSurfApi::class)
 class PaperPluginMain : SuspendingJavaPlugin() {
     override suspend fun onLoadAsync() {
         MyPluginConfig.init()
-        surfApi.containers.startChild(this)
+        SurfContainer.startChild(this)
         TestInventoryView.register()
     }
 
     override suspend fun onEnableAsync() {
+        SurfContainer.enableFor(this)
         SurfApiTestCommand().register()
     }
 
     override suspend fun onDisableAsync() {
         CommandAPI.unregister("surfapitest")
-        surfApi.containers.stop(this)
+        SurfContainer.stopFor(this)
     }
 
     companion object {
@@ -100,13 +101,29 @@ class PaperPluginMain : SuspendingJavaPlugin() {
 val plugin get() = PaperPluginMain.instance
 ```
 
-The order that matters:
+`SurfContainer` lives in `surf-api-di-api` and is `@InternalSurfApi`, which is what the
+`@OptIn(InternalSurfApi::class)` on the class is for. Pass `this` - the plugin instance, not its
+class: that is the owner the container is keyed by and the one Paper is asked about for a
+classloader, a logger and a data directory.
 
-- **`onLoadAsync`** - configuration, `startChild(this)`, inventory view registration, packet
-  listeners. Runs while the server is still loading plugins. `startChild` runs this plugin's beans
-  through `load` and then `enable` before it returns, so both phases are over by `onEnableAsync`.
-- **`onEnableAsync`** - command registration, listeners.
-- **`onDisableAsync`** - `stop(this)`, unregister commands, close sidebars.
+The order that matters, and it is three calls because the platform has three phases:
+
+- **`onLoadAsync`** - configuration, `SurfContainer.startChild(this)`, inventory view registration,
+  packet listeners. Runs while the server is still loading plugins. `startChild` builds this
+  plugin's container below surf-api's root and runs its beans through `load` only.
+- **`onEnableAsync`** - `SurfContainer.enableFor(this)` first, then command registration and
+  listeners. The `enable` phase deliberately lands here, where the rest of the server exists;
+  nothing runs it for you because `startChild` already ran, so skipping this call leaves every
+  bean loaded but never enabled.
+- **`onDisableAsync`** - unregister commands, close sidebars, then `SurfContainer.stopFor(this)`,
+  which runs `disable` in reverse and forgets the container. surf-api's own beans keep running:
+  they belong to the root, which surf-api stops after every plugin.
+
+Beans themselves need no registration call at all - annotate the class `@Service` (or
+`@Repository`, or an own `@BeanMeta` stereotype) and `startChild` finds it through the metadata KSP
+wrote into your jar. `local/paper-plugin-test/src/main/kotlin/.../hook/` is the worked example:
+plain beans, a stereotype chain, and beans guarded by `@ConditionalOnEnvironment`,
+`@ConditionalOnProperty` and an own `BeanCondition`. See **`surf-api-components`**.
 
 A top-level `val plugin get() = ...` is the repository's convention for reaching the plugin instance
 from anywhere; the api itself does the same in `platform/paper/impl/.../PaperMain.kt`.
@@ -122,16 +139,19 @@ registry. `PaperInstance` extends `CoreInstance`
 ## `SurfApiPaper`
 
 `platform/paper/api/.../paper/SurfApiPaper.kt` is the platform object, a `SurfApiCore` with Paper
-additions. It is a companion-delegating interface, so the members are reachable statically:
+additions. Its `companion object` holds one member, `INSTANCE`, which downcasts
+`SurfApiCore.instance` - itself a `by surfBean<SurfApiCore>()` property - so every call goes through
+it:
 
 ```kotlin
-if (SurfApiPaper.isFolia) { /* ... */ }
-SurfApiPaper.sendPlayerToServer(player, "lobby")
-val result = SurfApiPaper.skipTimeSmoothly(world, SkipOperations.NEXT_SUNRISE)
+if (SurfApiPaper.INSTANCE.isFolia) { /* ... */ }
+SurfApiPaper.INSTANCE.sendPlayerToServer(player, "lobby")
+val result = SurfApiPaper.INSTANCE.skipTimeSmoothly(world, SkipOperations.NEXT_SUNRISE)
 ```
 
 `isFolia` and `isCanvasMc` are the platform probes; `skipTimeSmoothly` in its six overloads is the
-`time/` feature.
+`time/` feature. `SurfApiCore.instance` and `SurfConfigApi.instance` spell the member lowercase;
+everywhere else in the api it is `INSTANCE`.
 
 ## What only exists on Paper
 
