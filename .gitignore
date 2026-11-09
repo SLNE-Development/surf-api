@@ -124,7 +124,10 @@ modules.xml
 
 **/run/*
 logs/
-.claude
+# Local Claude Code state stays out of the repository. The skills under .claude/skills are
+# part of it: they carry the project conventions to every machine and every agent.
+.claude/*
+!.claude/skills/
 
 
 # ProjectAtlas runtime state
