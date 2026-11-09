@@ -185,6 +185,19 @@ public final class dev/slne/surf/api/minestom/server/impl/configuration/Configur
 	public static final fun configure (Ldev/slne/surf/api/minestom/server/impl/mixin/duck/ConnectionManagerDuck;Lnet/minestom/server/entity/Player;Z)Z
 }
 
+public final class dev/slne/surf/api/minestom/server/impl/di/MinestomContainerPlatform : dev/slne/surf/api/di/ContainerPlatform {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/ClassLoader;)V
+	public synthetic fun <init> (Ljava/lang/ClassLoader;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun beanSources (Ljava/lang/Object;)Ljava/util/List;
+	public fun classLoader (Ljava/lang/Object;)Ljava/lang/ClassLoader;
+	public fun dataPath (Ljava/lang/Object;)Ljava/nio/file/Path;
+	public fun environments ()Ljava/util/Set;
+	public fun isPluginLoaded (Ljava/lang/String;)Z
+	public fun logger (Ljava/lang/Object;)Ldev/slne/surf/api/di/PlatformLogger;
+	public fun property (Ljava/lang/Object;Ljava/util/List;Ljava/lang/String;)Ljava/lang/String;
+}
+
 public final class dev/slne/surf/api/minestom/server/impl/mixin/InstrumentationGlobalPropertyService : org/spongepowered/asm/service/IGlobalPropertyService {
 	public fun <init> ()V
 	public fun getProperty (Lorg/spongepowered/asm/service/IPropertyKey;)Ljava/lang/Object;
