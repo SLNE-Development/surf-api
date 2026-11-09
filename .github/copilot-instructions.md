@@ -43,8 +43,9 @@ Every platform follows an **API/implementation split**, carried by the module su
 ### Folder groups
 
 - `foundation/` — platform-agnostic basics: `surf-api-annotations` (cross-platform annotations and
-  the component system contracts) and `surf-api-internal` (internal hooks and the
-  `@InternalSurfApi` surface)
+  the `@InternalSurfApi` surface), `surf-api-di-api` / `surf-api-di-impl` (the bean container),
+  `surf-api-registry-keys` (generated vanilla registry keys) and `surf-api-internal` (internal
+  hooks)
 - `common/` — the platform-agnostic core: `surf-api-core-api`, `surf-api-core-impl`
 - `platform/` — one domain per platform: `surf-api-paper-api` / `-impl` plus
   `surf-api-paper-nms-api` and the versioned `surf-api-paper-nms-v*` modules;
@@ -64,19 +65,46 @@ Every platform follows an **API/implementation split**, carried by the module su
 `local/`, `surf-api-generator` and the NMS module generator are skipped when `CI=true`;
 `surf-api-minestom-luckperms-impl` is only included once `vendor/LuckPerms` has been generated.
 
-### Service Discovery (two mechanisms)
+### The bean container
 
-1. **`requiredService<T>()`** — For singleton bridges/APIs. Uses Adventure's
-   `Services.serviceWithFallback()` backed by Java `ServiceLoader`. Implementations register with
-   `@AutoService(InterfaceName::class)`. Used for NMS bridges, platform API singletons, and core
-   services.
+A class becomes a bean by carrying a stereotype — `@Service`, `@Repository`, or an own annotation
+meta-annotated with `@BeanMeta`, all in `dev.slne.surf.api.di`. KSP writes the metadata to
+`META-INF/surf-api/beans/` at compile time and the container builds the graph from it. Dependencies
+are constructor parameters: `T`, `T?`, `List<T>` / `Set<T>` for every candidate, `Lazy<T>` to resolve
+on first access.
 
-2. **Component System** — For lifecycle-managed components. Classes annotated with
-   `@ComponentMeta` (or meta-annotations `@Service`, `@Repository`) are discovered at compile-time
-   by KSP, which writes JSON metadata to `META-INF/surfapi/components/`. At runtime,
-   `ComponentService` loads, topologically sorts by `@Priority` and `@DependsOnComponent`, checks
-   conditions (`@ConditionalOnProperty`, `@DependsOnPlugin`, `@DependsOnClass`, etc.), then calls
-   `suspend fun load()` → `enable()` → `disable()`.
+```kotlin
+@Service
+class ShopService(
+    private val transactions: TransactionApi,
+    private val handlers: List<PriceHandler>,
+)
+```
+
+surf-api owns the root container; every application gets a child of it holding its own beans.
+Resolution walks upwards only, and `Scope.SHARED` is the one way a bean reaches the root and so
+every other application.
+
+A bean with something to open and close implements `dev.slne.surf.api.di.SurfComponent` and gets
+`load`, `enable` and `disable`, each run as its own pass over all beans in dependency order
+(`disable` in reverse). The annotations in `dev.slne.surf.api.di.condition` —
+`@ConditionalOnProperty`, `@ConditionalOnPlugin`, `@ConditionalOnClass`, `@ConditionalOnMissingBean`,
+`@ConditionalOn`, `@DependsOnBean` and the rest — decide whether a bean is created at all.
+
+A plugin starts its own container from the published api, one call per platform phase:
+
+```kotlin
+class MyPlugin : SuspendingJavaPlugin() {
+    override suspend fun onLoadAsync() { SurfContainer.startChild(this) }
+    override suspend fun onEnableAsync() { SurfContainer.enableFor(this) }
+    override suspend fun onDisableAsync() { SurfContainer.stopFor(this) }
+}
+```
+
+Where there is no constructor to inject into — a platform entry point, a `companion object` that
+publishes a service to the rest of an api module — use `by surfBean<T>()`
+(`dev.slne.surf.api.di`, `@InternalSurfApi`). It resolves on first access, which is what keeps class
+load order out of the behaviour.
 
 ### NMS Bridge Pattern
 
@@ -84,19 +112,26 @@ Platform-specific (NMS) code is abstracted behind bridge interfaces in `-api` wi
 in `-impl`:
 
 ```kotlin
-// In -api: interface + companion delegation
+// In -api: the contract, plus the accessor the api module reads through
 @NmsUseWithCaution
 interface SurfPaperNmsCommonBridge {
     fun nextEntityId(): Int
-    companion object : SurfPaperNmsCommonBridge by requiredService()
+
+    companion object {
+        val INSTANCE get() = bridge
+    }
 }
 
-// In -impl: implementation registered via ServiceLoader
-@AutoService(SurfPaperNmsCommonBridge::class)
-class SurfPaperNmsCommonBridgeProxy : SurfPaperNmsCommonBridge { ... }
+private val bridge by surfBean<SurfPaperNmsCommonBridge>()
+
+// In -impl: an ordinary bean
+@NmsUseWithCaution
+@Service
+class SurfPaperNmsCommonBridgeProxy :
+    SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge()
 ```
 
-Bridge implementations call `checkInstantiationByServiceLoader()` in their `init` block.
+Callers go through `SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()`.
 
 ## Key Conventions
 
@@ -110,7 +145,7 @@ Bridge implementations call `checkInstantiationByServiceLoader()` in their `init
   ```
 - **`@InternalSurfApi`** — `@RequiresOptIn` annotation for internal APIs. All subprojects opt in via
   compiler args. Mark new internal APIs with this.
-- **Coroutines** for all async work. Component lifecycle methods are `suspend`. Paper uses
+- **Coroutines** for all async work. Bean lifecycle methods are `suspend`. Paper uses
   MCCoroutine (Folia-aware) for dispatching.
 - **Extension functions** are the primary API enrichment pattern, organized in files named
   `*-extension.kt` or `*-extensions.kt`.
@@ -138,7 +173,8 @@ dev.slne.surf.api.paper.nms.common.*     # Paper NMS bridge contracts
 dev.slne.surf.api.minestom.*             # Minestom API and implementations
 dev.slne.surf.api.velocity.* / .server.* # Velocity
 dev.slne.surf.api.standalone.impl.*      # Standalone runtime
-dev.slne.surf.api.shared.api.*           # annotations, component system (surf-api-annotations)
+dev.slne.surf.api.di.*                   # bean annotations, BeanContainer, SurfContainer (surf-api-di-api)
+dev.slne.surf.api.shared.api.*           # annotations (surf-api-annotations)
 dev.slne.surf.api.shared.internal.*      # internal hooks (surf-api-internal)
 dev.slne.surf.api.libs.*                 # relocation target for shaded deps
 ```
@@ -163,10 +199,11 @@ Publishing triggers on pushes to `version/*` branches.
 
 - **API changes** go in `-api` modules; implementations in `-impl` modules. Never expose `-impl`
   types in public API. Aggregates in `aggregate/` only re-export modules — never add code there.
-- **New components**: annotate with `@ComponentMeta` (or `@Service`/`@Repository`), implement
-  `Component`, and declare dependencies with `@DependsOnComponent`, `@DependsOnPlugin`, etc.
-- **New bridges**: define interface in `-api` with companion delegation via `requiredService()`,
-  implement in `-impl` with `@AutoService`.
+- **New beans**: annotate with `@Service` / `@Repository` / an own `@BeanMeta` stereotype, take
+  dependencies as constructor parameters, implement `SurfComponent` only when the bean has
+  something to open and close, and guard it with a `@ConditionalOn*` annotation if it is optional.
+- **New bridges**: define the interface in `-api` with a `companion object` whose `INSTANCE` reads a
+  private `by surfBean<T>()`, and annotate the `-impl` proxy with `@Service`.
 - **New extension functions**: place in a file named `{topic}-extensions.kt` in the appropriate
   `-api` module.
 - **KDoc**: required for all public API members.
