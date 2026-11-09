@@ -79,9 +79,47 @@ ones your `withXxx()` calls ask for.
 | `surf-api-di-api` | The dependency-injection contracts: `@Service`, `@Repository`, `@Bean`, `Scope`, `SurfComponent`, `BeanPostProcessor`, `BeanContainer`, the conditions. |
 | `surf-api-di-impl` | The container itself. |
 | `surf-api-bom` | A platform BOM listing every published artifact at one version. Prefer importing it over pinning versions one by one. |
-| `surf-api-inventory-api` | The platform-neutral half of the inventory framework — view settings, header geometry, text alignment, the container component base and the DSL markers. Paper and Minestom each carried their own copy; see section 11. |
+| `surf-api-inventory-api` | The platform-neutral half of the inventory framework — view settings, header geometry, text alignment, the container component base and the DSL markers. Paper and Minestom each carried their own copy; see section 12. |
+| `surf-api-common-api` | The shared base `surf-api-core` grew around: `util` (including `logger`), `collection`, `math`, `random`, `font`. Nothing in it names anything else of surf-api's, which is the point — every other domain can depend on it. |
+| `surf-api-serialization-api` | The kotlinx-serialization serializers and codecs: `SurfSerializerModule`, the Adventure serializers, the JDK ones (UUID, dates, IP, numbers) and the SpongePowered math ones. |
+| `surf-api-config-api` | The configuration surface: `SurfConfigApi`, the `SpongeYmlConfigClass` / `SpongeJsonConfigClass` companions, the 24 constraint annotations, the helper types, the managers and the migrations. |
+| `surf-api-config-impl` | The config service behind `surfConfigApi`. |
 
-## 6. fastutil is gone
+**You do not name any of these in a build file.** Every coordinate that carried
+these types before re-exports them, so `surf-api-core`, `surf-api-paper`,
+`surf-api-minestom`, `surf-api-velocity`, `surf-api-standalone` and
+`surf-api-minestom-server` all resolve them unchanged. What *did* change is which
+package a type lives in — section 6.
+
+## 6. `surf-api-core` was cut into domains, so some packages moved
+
+`surf-api-core-api` had grown into a grab bag, and it is being cut domain by domain. The artifacts
+are in section 5 and need no build-file change. The package prefixes do:
+
+| Old package | New package |
+|---|---|
+| `dev.slne.surf.api.core.util.…` | `dev.slne.surf.api.common.util.…` |
+| `dev.slne.surf.api.core.collection.…` | `dev.slne.surf.api.common.collection.…` |
+| `dev.slne.surf.api.core.math.…` | `dev.slne.surf.api.common.math.…` |
+| `dev.slne.surf.api.core.random.…` | `dev.slne.surf.api.common.random.…` |
+| `dev.slne.surf.api.core.font.…` | `dev.slne.surf.api.common.font.…` |
+| `dev.slne.surf.api.core.serializer.…` | `dev.slne.surf.api.serialization.…` |
+| `dev.slne.surf.api.core.config.…` | `dev.slne.surf.api.config.…` |
+| `dev.slne.surf.api.core.server.config.…` | `dev.slne.surf.api.config.impl.…` |
+
+The subpackage and every type name are unchanged — only the prefix is. `logger()`, the single most
+used of these, is now `dev.slne.surf.api.common.util.logger`.
+
+**One type is not a prefix rewrite.** `TransformingObjectSet` declared
+`dev.slne.surf.api.core.api.collection` while sitting in a `collection/` directory — a package that
+matched no directory anywhere. It is now `dev.slne.surf.api.common.collection.TransformingObjectSet`,
+with its directory. Nothing in surf-api used it.
+
+There are no deprecated typealiases in the old packages: an import that names one fails to resolve,
+which is the intended outcome. The compiler lists every one of them, so the migration is "compile,
+follow the unresolved references" — and it is only `import` lines, never a build file.
+
+## 7. fastutil is gone
 
 **This is the change most likely to touch your code.**
 
@@ -132,7 +170,7 @@ published artifact:
 
 [fastutil]: https://fastutil.di.unimi.it/
 
-## 7. `requiredService` has been replaced by a container
+## 8. `requiredService` has been replaced by a container
 
 The service-loader lookup (`requiredService<T>()`) is gone from surf-api's own services, replaced
 by a dependency-injection container that works the way Spring's does: constructor injection,
@@ -211,7 +249,7 @@ outright, so converting them would be work thrown away. They disappear together 
 A separate note will follow for the broker repositories once the container is in place, with the
 actual before-and-after for each.
 
-## 8. The component framework was removed
+## 9. The component framework was removed
 
 **If your plugin has classes implementing `SurfComponent`, this is the change that will cost you
 the most work.** The scanning component framework is gone, in full:
@@ -278,7 +316,7 @@ class MyPlugin : SuspendingJavaPlugin() {
 surf-api's root. Resolution walks upwards only: you see surf-api's beans, surf-api never sees
 yours. `local/paper-plugin-test` is a working example of the whole shape, conditions included.
 
-## 9. `runServer` was removed
+## 10. `runServer` was removed
 
 The `runServer` task is gone, along with the `xyz.jpenilla.run-paper` plugin that used to bring a
 run task in and the `runDirectory` property on `surfMinestomServer { }`. It never worked
@@ -296,7 +334,7 @@ jar manifest, and a manifest agent only applies when the JVM starts on that jar 
 main class off a classpath skips the mixin transformer with no error. If you want a task, write
 one in your own build; it has to be an `Exec`, not a `JavaExec`, for the same reason.
 
-## 10. Hidden binary-compatibility declarations were removed
+## 11. Hidden binary-compatibility declarations were removed
 
 The inventory framework carried `@Deprecated(level = DeprecationLevel.HIDDEN)` overloads and one
 hidden class (`ViewContainerBackHintComponent`); `PacketOperation.kt` carried a hidden non-inline
@@ -309,7 +347,7 @@ been removed.
 If you compile against 4.0.0 you will not notice; a hidden declaration was never visible from
 source.
 
-## 11. The platform-neutral half of the inventory framework moved packages
+## 12. The platform-neutral half of the inventory framework moved packages
 
 Paper and Minestom each carried a full copy of the inventory framework, 61 files per platform.
 21 of those files name no platform type at all, so they now live once in the new
@@ -348,18 +386,21 @@ buttons, `ViewIcon`, the state helpers, the container and its DSL, and the three
 builders. Those keep their `…paper.inventory…` and `…minestom.inventory…` packages, so an import
 of `AbstractSurfView` or `surfView` does not change.
 
-## 12. Checklist for a downstream repository
+## 13. Checklist for a downstream repository
 
 1. Replace any coordinate from table 3; the others keep working.
-2. Remove every fastutil type and every `to*` bridge helper (section 6). Compile.
-3. Check your `@ConfigSerializable` classes for fastutil-typed fields (section 6).
-4. If you depend on an `-api` aggregate and resolve an implementation class at runtime, verify it
+2. Rewrite the moved package prefixes (section 6) — `core.util` → `common.util` and the rest. This
+   is the one that touches the most files, and `logger()` alone will account for most of them. No
+   build file changes.
+3. Remove every fastutil type and every `to*` bridge helper (section 7). Compile.
+4. Check your `@ConfigSerializable` classes for fastutil-typed fields (section 7).
+5. If you depend on an `-api` aggregate and resolve an implementation class at runtime, verify it
    is still on your runtime classpath (the open question in section 2).
-5. Rewrite every inventory import that names one of the types in section 11; the other
+6. Rewrite every inventory import that names one of the types in section 12; the other
    inventory imports are unchanged.
-6. Compile, and add `.INSTANCE` to every call that went through an api type's companion
-   (section 7). The compiler lists them all.
-7. If you published an implementation of a surf-api interface with `@AutoService`, stop expecting
-   surf-api to find it (section 7).
-8. Rewrite every `SurfComponent` as a bean and start your own container from the plugin's three
-   phases (section 8). This is the largest item on the list.
+7. Compile, and add `.INSTANCE` to every call that went through an api type's companion
+   (section 8). The compiler lists them all.
+8. If you published an implementation of a surf-api interface with `@AutoService`, stop expecting
+   surf-api to find it (section 8).
+9. Rewrite every `SurfComponent` as a bean and start your own container from the plugin's three
+   phases (section 9). This is the largest item on the list.
