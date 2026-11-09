@@ -12,6 +12,11 @@ description = "surf-api-paper-plugin-test"
 
 dependencies {
     compileOnlyApi(projects.surfApiPaperApi)
+    // Only for the container host. A plugin starts its own child container through
+    // `PaperMain.containers`, and that lives in the implementation module — surf-api's paper-plugin
+    // declares `has-open-classloader: false`, so a plugin reaches it exactly because it declares
+    // SurfPaperAPI with `joinClasspath = true` below.
+    compileOnly(projects.surfApiPaperImpl)
     compileOnlyApi(libs.commandapi.paper)
 
     paperweight.paperDevBundle(libs.paper.api.get().version)

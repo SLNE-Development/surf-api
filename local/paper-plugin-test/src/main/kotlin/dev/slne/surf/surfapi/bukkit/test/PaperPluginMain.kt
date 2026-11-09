@@ -4,14 +4,15 @@ import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import com.destroystokyo.paper.event.server.ServerTickStartEvent
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import dev.jorel.commandapi.CommandAPI
-import dev.slne.surf.api.core.component.surfComponentApi
 import dev.slne.surf.api.paper.event.listen
 import dev.slne.surf.api.paper.inventory.framework.register
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
+import dev.slne.surf.api.paper.server.plugin as surfApi
 import dev.slne.surf.api.paper.test.command.SurfApiTestCommand
 import dev.slne.surf.api.paper.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.api.paper.test.listener.ChatListener
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.surfapi.bukkit.test.command.dialog.dialogTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testInventoryViewDsl
@@ -22,13 +23,18 @@ import net.minecraft.server.MinecraftServer
 import org.bukkit.inventory.ItemType
 import kotlin.concurrent.thread
 
-@OptIn(NmsUseWithCaution::class)
+@OptIn(NmsUseWithCaution::class, InternalSurfApi::class)
 class PaperPluginMain : SuspendingJavaPlugin() {
     override suspend fun onLoadAsync() {
         ModernTestConfig.init()
         ModernTestConfig.randomise()
 
-        surfComponentApi.load(this)
+        // The plugin's own beans live in a child of surf-api's root container, which is what
+        // every plugin does for itself: the root holds surf-api's beans and only surf-api may start
+        // it. `startChild` runs this plugin's `load` and then its `enable` phase before it returns,
+        // so both have happened by the time the server reaches `onEnableAsync`.
+        surfApi.containers.startChild(this)
+
         SurfPaperPacketListenerApi.INSTANCE.registerListeners(ChatListener())
         TestInventoryView.register()
         testInventoryViewDsl.register()
@@ -43,8 +49,6 @@ class PaperPluginMain : SuspendingJavaPlugin() {
         Reflection::class.java.classLoader // initialize Reflection
 
         MyPluginConfig.init()
-
-        surfComponentApi.enable(this)
 
         fun runAction() {
             for (player in server.onlinePlayers) {
@@ -76,7 +80,10 @@ class PaperPluginMain : SuspendingJavaPlugin() {
 
     override suspend fun onDisableAsync() {
         CommandAPI.unregister("surfapitest")
-        surfComponentApi.disable(this)
+
+        // Disables this plugin's beans in reverse order and forgets the container. surf-api's own
+        // beans are left running: they belong to the root, which surf-api stops after every plugin.
+        surfApi.containers.stop(this)
     }
 
     companion object {
