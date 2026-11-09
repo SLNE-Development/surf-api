@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.inventory.framework.internal
+package dev.slne.surf.api.inventory.framework.internal
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

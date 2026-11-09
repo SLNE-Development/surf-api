@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.pagination
 
-import dev.slne.surf.api.core.inventory.framework.internal.PaginationButtonGlyphs
+import dev.slne.surf.api.inventory.framework.internal.PaginationButtonGlyphs
 import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent

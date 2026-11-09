@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.container.dsl
 
-import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
+import dev.slne.surf.api.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.inventory.framework.view.AbstractSurfViewRef

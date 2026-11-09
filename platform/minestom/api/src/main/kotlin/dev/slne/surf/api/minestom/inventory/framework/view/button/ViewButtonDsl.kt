@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.button
 
-import dev.slne.surf.api.core.inventory.framework.internal.ViewButtonSession
+import dev.slne.surf.api.inventory.framework.internal.ViewButtonSession
 import dev.slne.surf.api.minestom.inventory.framework.view.AbstractSurfViewContext
 import dev.slne.surf.api.minestom.inventory.framework.view.state.lazyState
 import me.devnatan.inventoryframework.context.Context

@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings
 
-import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
+import dev.slne.surf.api.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.inventory.framework.view.settings.PaginationButtonPosition
@@ -49,7 +49,7 @@ object SurfViewSettingsDefaults {
      * The title is rendered like any other vanilla inventory title — plain, in the player's font,
      * at the top of the header. Its horizontal position is computed from the proportional glyph
      * widths of that font, see
-     * [DefaultFontWidths][dev.slne.surf.api.core.inventory.framework.internal.DefaultFontWidths].
+     * [DefaultFontWidths][dev.slne.surf.api.inventory.framework.internal.DefaultFontWidths].
      */
     val DEFAULT_HEADER_FONT = key("minecraft", "default")
 

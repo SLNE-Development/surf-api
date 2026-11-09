@@ -1,7 +1,7 @@
 package dev.slne.surf.api.inventory.framework.view.settings
 
-import dev.slne.surf.api.core.inventory.framework.internal.DefaultFontWidths
-import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
+import dev.slne.surf.api.inventory.framework.internal.DefaultFontWidths
+import dev.slne.surf.api.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignmentOptions
 

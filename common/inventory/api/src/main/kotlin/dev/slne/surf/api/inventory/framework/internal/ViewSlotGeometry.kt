@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.inventory.framework.internal
+package dev.slne.surf.api.inventory.framework.internal
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 

@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view.button
 
-import dev.slne.surf.api.core.inventory.framework.internal.ViewButtonSession
+import dev.slne.surf.api.inventory.framework.internal.ViewButtonSession
 import dev.slne.surf.api.paper.inventory.framework.view.state.StateHandle
 import dev.slne.surf.api.paper.inventory.framework.view.state.get
 import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder

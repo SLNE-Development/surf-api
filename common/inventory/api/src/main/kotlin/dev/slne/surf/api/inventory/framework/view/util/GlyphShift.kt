@@ -1,6 +1,6 @@
 package dev.slne.surf.api.inventory.framework.view.util
 
-import dev.slne.surf.api.core.inventory.framework.internal.ShiftGlyphs
+import dev.slne.surf.api.inventory.framework.internal.ShiftGlyphs
 
 /**
  * Produces the minimal string of shift-glyph characters that sum to the given [amount].

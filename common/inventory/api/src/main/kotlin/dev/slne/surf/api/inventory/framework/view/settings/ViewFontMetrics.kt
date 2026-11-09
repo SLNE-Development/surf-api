@@ -1,6 +1,6 @@
 package dev.slne.surf.api.inventory.framework.view.settings
 
-import dev.slne.surf.api.core.inventory.framework.internal.DefaultFontWidths
+import dev.slne.surf.api.inventory.framework.internal.DefaultFontWidths
 
 /**
  * Metrics of the font a piece of header text is rendered in: how wide its glyphs are, how much

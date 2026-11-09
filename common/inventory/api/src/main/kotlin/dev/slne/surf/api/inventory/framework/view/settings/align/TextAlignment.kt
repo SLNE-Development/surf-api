@@ -1,6 +1,6 @@
 package dev.slne.surf.api.inventory.framework.view.settings.align
 
-import dev.slne.surf.api.core.inventory.framework.internal.TextAlignmentMath
+import dev.slne.surf.api.inventory.framework.internal.TextAlignmentMath
 
 /**
  * Defines the horizontal alignment of title text within the inventory header container area.
