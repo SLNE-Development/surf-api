@@ -183,7 +183,7 @@ open class SurfScoreboardImpl(definition: ScoreboardDefinition) : SurfScoreboard
         SidebarComponent.builder().apply { components.forEach(::addComponent) }.build()
     )
 
-    private fun createSidebar() = SurfScoreboardApi.scoreboardLibrary().createSidebar(maxLines)
+    private fun createSidebar() = SurfScoreboardApi.INSTANCE.scoreboardLibrary().createSidebar(maxLines)
 
     private fun checkEnabled() {
         check(enabled) { "Scoreboard is not enabled. Did you forget to call enable()?" }

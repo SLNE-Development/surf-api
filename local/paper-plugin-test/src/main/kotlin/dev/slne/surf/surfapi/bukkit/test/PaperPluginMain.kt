@@ -29,7 +29,7 @@ class PaperPluginMain : SuspendingJavaPlugin() {
         ModernTestConfig.randomise()
 
         surfComponentApi.load(this)
-        SurfPaperPacketListenerApi.registerListeners(ChatListener())
+        SurfPaperPacketListenerApi.INSTANCE.registerListeners(ChatListener())
         TestInventoryView.register()
         testInventoryViewDsl.register()
         testPaginatedViewDsl.register()

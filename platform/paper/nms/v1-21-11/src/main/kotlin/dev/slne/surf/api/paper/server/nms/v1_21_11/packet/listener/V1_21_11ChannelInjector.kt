@@ -92,7 +92,7 @@ object V1_21_11ChannelInjector : AbstractChannelInjector<V1_21_11ChannelInjector
         fun getConnection(instance: ReadablePlayerCookieConnectionImpl): Connection
 
         companion object {
-            val instance = SurfReflection.createProxy<ReadablePlayerCookieConnectionImplProxy>()
+            val instance = SurfReflection.INSTANCE.createProxy<ReadablePlayerCookieConnectionImplProxy>()
         }
     }
 }

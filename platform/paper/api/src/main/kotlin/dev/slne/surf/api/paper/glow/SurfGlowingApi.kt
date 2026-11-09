@@ -1,6 +1,9 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.glow
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 import org.bukkit.block.Block
@@ -27,9 +30,9 @@ interface SurfGlowingApi {
     fun removeGlowing(block: Block, viewer: Player)
     fun removeGlowing(location: Location, viewer: Player)
 
-    companion object : SurfGlowingApi by api {
+    companion object {
         val INSTANCE get() = api
     }
 }
 
-private val api = requiredService<SurfGlowingApi>()
+private val api by surfBean<SurfGlowingApi>()

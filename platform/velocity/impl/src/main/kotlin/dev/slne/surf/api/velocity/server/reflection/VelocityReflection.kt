@@ -4,5 +4,5 @@ import dev.slne.surf.api.core.reflection.SurfReflection
 import dev.slne.surf.api.core.reflection.createProxy
 
 object VelocityReflection {
-    val EVENT_MANAGER_PROXY = SurfReflection.createProxy<EventManagerProxy>()
+    val EVENT_MANAGER_PROXY = SurfReflection.INSTANCE.createProxy<EventManagerProxy>()
 }

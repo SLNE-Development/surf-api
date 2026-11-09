@@ -1,9 +1,12 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.nms.bridges
 
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.context.CommandContext
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.Deferred
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.nbt.CompoundBinaryTag
@@ -17,10 +20,10 @@ interface SurfPaperNmsCommandArgumentTypesBridge {
     fun signedMessage(): ArgumentType<*>
     fun getSignedMessage(ctx: CommandContext<*>, key: String): Deferred<SignedMessage>
 
-    companion object : SurfPaperNmsCommandArgumentTypesBridge by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsCommandArgumentTypesBridge>()
+private val bridge by surfBean<SurfPaperNmsCommandArgumentTypesBridge>()

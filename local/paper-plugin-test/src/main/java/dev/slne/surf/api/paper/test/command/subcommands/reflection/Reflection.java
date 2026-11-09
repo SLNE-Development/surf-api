@@ -8,7 +8,7 @@ public class Reflection {
     public static final SpigotRestartCommandProxy RESTART_COMMAND;
 
     static {
-        final SurfReflection reflection = SurfReflection.Companion;
+        final SurfReflection reflection = SurfReflection.Companion.getINSTANCE();
 
         RESTART_COMMAND = reflection.createProxy(SpigotRestartCommandProxy.class);
     }

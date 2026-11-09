@@ -1,15 +1,17 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.inventory.framework
 
-import dev.slne.surf.api.core.util.requiredService
-import dev.slne.surf.api.paper.inventory.framework.ViewFrameAccessor.Companion.viewFrame
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import me.devnatan.inventoryframework.ViewFrame
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Service accessor for the inventory-framework [ViewFrame].
  *
- * Implementations of this interface are loaded via the service locator pattern
- * (`requiredService<ViewFrameAccessor>()`). The single instance is available through
+ * The implementation of this interface is published as a bean and resolved from the DI
+ * container (`surfBean<ViewFrameAccessor>()`). The single instance is available through
  * [ViewFrameAccessor.INSTANCE] or the top-level [viewFrame] property.
  *
  * This interface is not intended to be implemented outside the framework itself.
@@ -28,15 +30,15 @@ interface ViewFrameAccessor {
      */
     fun viewFrame(): ViewFrame
 
-    companion object : ViewFrameAccessor by accessor {
+    companion object {
         /**
-         * The singleton [ViewFrameAccessor] instance resolved from the service registry.
+         * The singleton [ViewFrameAccessor] instance resolved from the DI container.
          */
         val INSTANCE get() = accessor
     }
 }
 
-private val accessor = requiredService<ViewFrameAccessor>()
+private val accessor by surfBean<ViewFrameAccessor>()
 
 /**
  * Top-level shortcut to the active [ViewFrame].

@@ -1,10 +1,12 @@
+@file:OptIn(InternalSurfApi::class)
 @file:Suppress("UnstableApiUsage")
 
 package dev.slne.surf.api.paper.nms.bridges.packets.block
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.papermc.paper.math.BlockPosition
 import org.bukkit.block.data.BlockData
 
@@ -20,10 +22,10 @@ interface SurfPaperNmsBlockPackets {
      */
     fun resetBlock(position: BlockPosition): PacketOperation
 
-    companion object : SurfPaperNmsBlockPackets by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsBlockPackets>()
+private val bridge by surfBean<SurfPaperNmsBlockPackets>()

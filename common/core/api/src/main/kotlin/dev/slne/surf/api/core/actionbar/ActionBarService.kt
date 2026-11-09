@@ -1,7 +1,10 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.core.actionbar
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import net.kyori.adventure.audience.Audience
@@ -54,12 +57,12 @@ interface ActionBarService {
         onFinish: ((ActionBarFinishReason) -> Unit)? = null
     ): Job
 
-    companion object : ActionBarService by INSTANCE {
+    companion object {
         val instance get() = INSTANCE
     }
 }
 
-private val INSTANCE = requiredService<ActionBarService>()
+private val INSTANCE by surfBean<ActionBarService>()
 
 /**
  * Sends a repeatedly updated action bar to this [Audience].

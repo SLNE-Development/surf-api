@@ -5,10 +5,8 @@ public abstract interface class dev/slne/surf/api/core/SurfApiCore {
 	public abstract fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
-public final class dev/slne/surf/api/core/SurfApiCore$Companion : dev/slne/surf/api/core/SurfApiCore {
+public final class dev/slne/surf/api/core/SurfApiCore$Companion {
 	public final fun getInstance ()Ldev/slne/surf/api/core/SurfApiCore;
-	public fun getPlayer (Ljava/util/UUID;)Ljava/lang/Object;
-	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
 public final class dev/slne/surf/api/core/actionbar/ActionBarFinishReason : java/lang/Enum {
@@ -27,9 +25,8 @@ public abstract interface class dev/slne/surf/api/core/actionbar/ActionBarServic
 	public static synthetic fun sendActionBar-FragotA$default (Ldev/slne/surf/api/core/actionbar/ActionBarService;Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 }
 
-public final class dev/slne/surf/api/core/actionbar/ActionBarService$Companion : dev/slne/surf/api/core/actionbar/ActionBarService {
+public final class dev/slne/surf/api/core/actionbar/ActionBarService$Companion {
 	public final fun getInstance ()Ldev/slne/surf/api/core/actionbar/ActionBarService;
-	public fun sendActionBar-FragotA (Lkotlinx/coroutines/CoroutineScope;Lnet/kyori/adventure/audience/Audience;JJZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
 }
 
 public final class dev/slne/surf/api/core/actionbar/ActionBarService$DefaultImpls {
@@ -207,17 +204,8 @@ public abstract interface class dev/slne/surf/api/core/config/SurfConfigApi {
 	public abstract fun reloadSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
 }
 
-public final class dev/slne/surf/api/core/config/SurfConfigApi$Companion : dev/slne/surf/api/core/config/SurfConfigApi {
-	public fun createSpongeJsonConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
-	public fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
-	public fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/core/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
-	public fun createSpongeYmlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
-	public fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
-	public fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/core/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
+public final class dev/slne/surf/api/core/config/SurfConfigApi$Companion {
 	public final fun getInstance ()Ldev/slne/surf/api/core/config/SurfConfigApi;
-	public fun getSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
-	public fun getSpongeConfigManagerForConfig (Ljava/lang/Class;)Ldev/slne/surf/api/core/config/manager/SpongeConfigManager;
-	public fun reloadSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/api/core/config/SurfConfigApi$DefaultImpls {
@@ -895,14 +883,8 @@ public abstract interface class dev/slne/surf/api/core/event/SurfEventBus {
 	public abstract fun unregisterListeners (Ljava/lang/Object;)V
 }
 
-public final class dev/slne/surf/api/core/event/SurfEventBus$Companion : dev/slne/surf/api/core/event/SurfEventBus {
-	public fun callAsync (Ldev/slne/surf/api/core/event/SurfAsyncEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun callSync (Ldev/slne/surf/api/core/event/SurfSyncEvent;)Ldev/slne/surf/api/core/event/SurfSyncEvent;
+public final class dev/slne/surf/api/core/event/SurfEventBus$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/core/event/SurfEventBus;
-	public fun registerAsyncHandler (Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function2;)Ljava/lang/Object;
-	public fun registerHandler (Ljava/lang/Class;Ldev/slne/surf/api/core/event/SurfEventPriority;ZLkotlin/jvm/functions/Function1;)Ljava/lang/Object;
-	public fun registerListeners (Ljava/lang/Object;)V
-	public fun unregisterListeners (Ljava/lang/Object;)V
 }
 
 public final class dev/slne/surf/api/core/event/SurfEventBus$DefaultImpls {
@@ -2580,9 +2562,7 @@ public abstract interface class dev/slne/surf/api/core/messages/pagination/Inter
 	public abstract fun createPaginationBuilderSuspend ()Ldev/slne/surf/api/core/messages/pagination/SuspendPaginationBuilder;
 }
 
-public final class dev/slne/surf/api/core/messages/pagination/InternalPaginationBridge$Companion : dev/slne/surf/api/core/messages/pagination/InternalPaginationBridge {
-	public fun createPaginationBuilder ()Ldev/slne/surf/api/core/messages/pagination/PaginationBuilder;
-	public fun createPaginationBuilderSuspend ()Ldev/slne/surf/api/core/messages/pagination/SuspendPaginationBuilder;
+public final class dev/slne/surf/api/core/messages/pagination/InternalPaginationBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/core/messages/pagination/InternalPaginationBridge;
 }
 
@@ -2973,9 +2953,8 @@ public abstract interface class dev/slne/surf/api/core/nbt/InternalNbtBridge {
 	public abstract fun wrapCompoundBinaryTag (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Z)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
 }
 
-public final class dev/slne/surf/api/core/nbt/InternalNbtBridge$Companion : dev/slne/surf/api/core/nbt/InternalNbtBridge {
+public final class dev/slne/surf/api/core/nbt/InternalNbtBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/core/nbt/InternalNbtBridge;
-	public fun wrapCompoundBinaryTag (Lnet/kyori/adventure/nbt/CompoundBinaryTag;Z)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
 }
 
 public final class dev/slne/surf/api/core/nbt/Nbt_extensionKt {
@@ -3104,9 +3083,7 @@ public abstract interface class dev/slne/surf/api/core/reflection/SurfReflection
 	public abstract fun createProxy (Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/lang/Object;
 }
 
-public final class dev/slne/surf/api/core/reflection/SurfReflection$Companion : dev/slne/surf/api/core/reflection/SurfReflection {
-	public fun createProxy (Ljava/lang/Class;)Ljava/lang/Object;
-	public fun createProxy (Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/lang/Object;
+public final class dev/slne/surf/api/core/reflection/SurfReflection$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/core/reflection/SurfReflection;
 }
 

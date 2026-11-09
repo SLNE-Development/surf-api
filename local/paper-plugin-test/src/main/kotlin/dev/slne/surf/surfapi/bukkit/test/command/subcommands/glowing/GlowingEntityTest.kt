@@ -19,9 +19,9 @@ class GlowingEntityTest(name: String) : CommandAPICommand(name) {
             val entity: Entity by args
 
             if (glow) {
-                SurfGlowingApi.makeGlowing(entity, sender, NamedTextColor.RED)
+                SurfGlowingApi.INSTANCE.makeGlowing(entity, sender, NamedTextColor.RED)
             } else {
-                SurfGlowingApi.removeGlowing(entity, sender)
+                SurfGlowingApi.INSTANCE.removeGlowing(entity, sender)
             }
 
             sender.sendMessage(

@@ -1,12 +1,12 @@
 package dev.slne.surf.api.paper.server.impl.sidebar
 
-import com.google.auto.service.AutoService
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.sidebar.*
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.bukkit.plugin.Plugin
 
 @OptIn(InternalSurfApi::class)
-@AutoService(SurfSidebarFactory::class)
+@Service
 class SurfSidebarFactoryImpl : SurfSidebarFactory {
 
     override fun createSidebar(plugin: Plugin, block: SidebarBuilder.() -> Unit): SurfViewerSidebar {

@@ -1,7 +1,7 @@
 package dev.slne.surf.api.standalone.impl
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.api.di.Service
 
-@AutoService(SpongeConfigSerializers::class)
+@Service
 class StandaloneSpongeConfigSerializers : SpongeConfigSerializers()

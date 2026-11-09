@@ -225,7 +225,7 @@ interface SurfScoreboardBuilder {
         )
         @JvmStatic
         fun builder(title: Component): SurfScoreboardBuilder {
-            return SurfScoreboardApi.createScoreboard(title)
+            return SurfScoreboardApi.INSTANCE.createScoreboard(title)
         }
 
         /**

@@ -1,12 +1,15 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.visualizer
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerMultipleLocations
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerSingleLocation
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.bukkit.Location
 import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d
@@ -71,20 +74,20 @@ interface SurfPaperVisualizerApi {
      * Provides a globally accessible singleton instance of `SurfBukkitVisualizerApi`.
      *
      * This companion object allows static access to the `SurfBukkitVisualizerApi` service,
-     * enabling users to retrieve the required visualizer API implementation. The `instance` property
-     * is initialized using the `requiredService` function, ensuring that the service is available
-     * and properly configured. If the service is unavailable, an error is thrown.
+     * enabling users to retrieve the required visualizer API implementation. The `INSTANCE` property
+     * is resolved lazily from the DI container, ensuring that the bean is available
+     * and properly configured. If no bean provides it, an error is thrown.
      *
      * The `SurfBukkitVisualizerApi` interface and its associated features are marked as experimental,
      * and users must opt into this API with caution, as it may be subject to changes in future versions.
      */
-    companion object : SurfPaperVisualizerApi by api {
+    companion object {
         /**
          * Singleton instance of the `SurfBukkitVisualizerApi` service.
          *
          * This property provides access to the required implementation of the `SurfBukkitVisualizerApi` interface.
-         * It is retrieved using the `requiredService` function, which ensures that the service is available.
-         * If the service is not available, an `Error` will be thrown.
+         * It is resolved from the DI container, which ensures that the bean is available.
+         * If no bean provides it, an `Error` will be thrown.
          *
          * The `SurfBukkitVisualizerApi` interface is experimental and provides access to the creation and management
          * of visualizers within the Surf framework in a Bukkit environment. The API is annotated with
@@ -131,4 +134,4 @@ inline fun <reified T : SurfVisualizer> SurfPaperVisualizerApi.getByUid(uid: UUI
  * @see UpdateStrategy
  */
 @ExperimentalVisualizerApi
-private val api = requiredService<SurfPaperVisualizerApi>()
+private val api by surfBean<SurfPaperVisualizerApi>()

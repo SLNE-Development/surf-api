@@ -1,6 +1,5 @@
 package dev.slne.surf.api.core.server.impl.actionbar
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.SurfApiCore
 import dev.slne.surf.api.core.actionbar.ActionBarFinishReason
 import dev.slne.surf.api.core.actionbar.ActionBarService
@@ -8,6 +7,7 @@ import dev.slne.surf.api.core.messages.adventure.nameOrNull
 import dev.slne.surf.api.core.messages.adventure.uuidOrNull
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
 import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.di.Service
 import kotlinx.coroutines.*
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
-@AutoService(ActionBarService::class)
+@Service
 class ActionBarServiceImpl : ActionBarService {
 
     companion object {
@@ -53,7 +53,7 @@ class ActionBarServiceImpl : ActionBarService {
         }
 
         fun shouldAutoCancel(): Boolean {
-            return autoCancelUuid != null && SurfApiCore.getPlayer(autoCancelUuid) == null
+            return autoCancelUuid != null && SurfApiCore.instance.getPlayer(autoCancelUuid) == null
         }
 
         val finishReason = AtomicReference(ActionBarFinishReason.CANCELLED)

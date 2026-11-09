@@ -1,7 +1,10 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.nms.bridges
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.block.data.BlockData
@@ -34,10 +37,10 @@ interface SurfPaperNmsCommonBridge {
 
     fun getServerIp(): InetSocketAddress
 
-    companion object : SurfPaperNmsCommonBridge by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsCommonBridge>()
+private val bridge by surfBean<SurfPaperNmsCommonBridge>()

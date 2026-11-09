@@ -1,20 +1,15 @@
 package dev.slne.surf.api.core.server.config
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.config.JsonConfigFileNamePattern
 import dev.slne.surf.api.core.config.SurfConfigApi
 import dev.slne.surf.api.core.config.YamlConfigFileNamePattern
 import dev.slne.surf.api.core.config.manager.SpongeConfigManager
 import dev.slne.surf.api.core.config.migration.ConfigMigrationBuilder
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
+import dev.slne.surf.api.di.Service
 import java.nio.file.Path
 
-@AutoService(SurfConfigApi::class)
+@Service
 class SurfConfigApiImpl : SurfConfigApi {
-    init {
-        checkInstantiationByServiceLoader()
-    }
-
     override fun <C> createSpongeYmlConfigManager(
         configClass: Class<C>,
         configFolder: Path,

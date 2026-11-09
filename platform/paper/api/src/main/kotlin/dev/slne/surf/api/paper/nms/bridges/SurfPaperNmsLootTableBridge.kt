@@ -1,7 +1,10 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.nms.bridges
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.bukkit.damage.DamageSource
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
@@ -23,10 +26,10 @@ interface SurfPaperNmsLootTableBridge {
         causedByPlayer: Boolean,
     ): Collection<ItemStack>
 
-    companion object : SurfPaperNmsLootTableBridge by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsLootTableBridge>()
+private val bridge by surfBean<SurfPaperNmsLootTableBridge>()

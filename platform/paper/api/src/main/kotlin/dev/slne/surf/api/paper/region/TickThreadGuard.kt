@@ -1,6 +1,9 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.region
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.papermc.paper.math.Position
 import org.bukkit.World
 import org.bukkit.entity.Entity
@@ -19,9 +22,9 @@ interface TickThreadGuard {
 
     fun ensureGlobalTickThread(reason: String)
 
-    companion object : TickThreadGuard by tickThreadGuard {
+    companion object {
         val INSTANCE get() = tickThreadGuard
     }
 }
 
-private val tickThreadGuard = requiredService<TickThreadGuard>()
+private val tickThreadGuard by surfBean<TickThreadGuard>()

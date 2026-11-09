@@ -1,6 +1,9 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.minestom.inventory.framework
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import me.devnatan.inventoryframework.ViewFrame
 import org.jetbrains.annotations.ApiStatus
 
@@ -23,7 +26,7 @@ interface ViewFrameAccessor {
      */
     fun viewFrame(): ViewFrame
 
-    companion object : ViewFrameAccessor by accessor {
+    companion object {
         /**
          * The singleton [ViewFrameAccessor] instance resolved from the service registry.
          */
@@ -31,7 +34,7 @@ interface ViewFrameAccessor {
     }
 }
 
-private val accessor = requiredService<ViewFrameAccessor>()
+private val accessor by surfBean<ViewFrameAccessor>()
 
 /**
  * Top-level shortcut to the active [ViewFrame].

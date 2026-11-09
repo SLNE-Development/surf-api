@@ -1,10 +1,8 @@
 package dev.slne.surf.api.paper.server.impl
 
-import com.google.auto.service.AutoService
 import com.google.common.io.ByteStreams
-import dev.slne.surf.api.core.SurfApiCore
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.SurfApiPaper
 import dev.slne.surf.api.paper.server.hook.SurfBukkitHookManager
 import dev.slne.surf.api.paper.server.plugin
@@ -19,12 +17,8 @@ import org.bukkit.World
 import org.bukkit.entity.Player
 import java.util.*
 
-@AutoService(SurfApiCore::class)
+@Service
 class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
-
-    init {
-        checkInstantiationByServiceLoader()
-    }
 
     fun onEnable() {
         SurfBukkitHookManager.onEnable()

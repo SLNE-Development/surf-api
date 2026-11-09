@@ -1,7 +1,7 @@
 package dev.slne.surf.api.minestom.server.impl
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.api.di.Service
 
-@AutoService(SpongeConfigSerializers::class)
+@Service
 internal class MinestomSpongeConfigSerializer : SpongeConfigSerializers()

@@ -1,15 +1,18 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.velocity
 
 import dev.slne.surf.api.core.SurfApiCore
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import java.util.concurrent.ExecutorService
 
-private val instance = requiredService<SurfApiVelocity>()
+private val instance by surfBean<SurfApiVelocity>()
 
 interface SurfApiVelocity : SurfApiCore {
     val executorService: ExecutorService?
 
-    companion object : SurfApiVelocity by instance {
+    companion object {
         val INSTANCE get() = instance
     }
 }

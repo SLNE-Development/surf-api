@@ -1,9 +1,12 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.packet
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandler
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandlerSimple
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLorePriority
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
 
@@ -193,9 +196,9 @@ interface SurfPaperPacketApi {
      */
     fun unregisterPacketLoreListener(plugin: Plugin)
 
-    companion object : SurfPaperPacketApi by api {
+    companion object {
         val INSTANCE get() = api
     }
 }
 
-private val api = requiredService<SurfPaperPacketApi>()
+private val api by surfBean<SurfPaperPacketApi>()

@@ -4,10 +4,9 @@ import com.destroystokyo.paper.event.brigadier.AsyncPlayerSendCommandsEvent
 import com.destroystokyo.paper.event.player.PlayerConnectionCloseEvent
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.shynixn.mccoroutine.folia.launch
-import com.google.auto.service.AutoService
 import dev.jorel.commandapi.ExecutableCommand
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.command.executors.CoroutineScopeProvider
 import dev.slne.surf.api.paper.command.requirement.SuspendRequirementService
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
@@ -24,12 +23,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
-@AutoService(SuspendRequirementService::class)
+@Service
 class SuspendRequirementServiceImpl : SuspendRequirementService {
-    init {
-        checkInstantiationByServiceLoader()
-    }
-
     companion object {
         private val log = logger()
 

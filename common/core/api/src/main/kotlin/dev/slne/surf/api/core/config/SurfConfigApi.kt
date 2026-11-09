@@ -1,8 +1,11 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.core.config
 
 import dev.slne.surf.api.core.config.manager.SpongeConfigManager
 import dev.slne.surf.api.core.config.migration.ConfigMigrationBuilder
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import java.nio.file.Path
 
 /**
@@ -143,18 +146,29 @@ interface SurfConfigApi {
      */
     fun <C> getSpongeConfigManagerForConfig(configClass: Class<C>): SpongeConfigManager<C>
 
-    companion object : SurfConfigApi by surfConfigApi {
-        /**
-         * Retrieves the singleton instance of [SurfConfigApi].
-         */
-        val instance = surfConfigApi
+    /**
+     * Reaches the one [SurfConfigApi] without delegating to it.
+     *
+     * This companion used to implement the interface by delegation, so that `SurfConfigApi.load`
+     * meant the same as `surfConfigApi.load`. It cannot, now that the implementation is a bean:
+     * delegation stores the delegate in a field, so the companion's initialiser has to resolve the
+     * bean — and this interface's initialiser runs as part of initialising its own implementation,
+     * which the container does while it is building that very bean. The result was a cycle the
+     * container could never answer.
+     *
+     * Reading [instance] through a getter is what breaks it: the initialiser stores nothing and
+     * the lookup happens when someone actually asks.
+     */
+    companion object {
+        /** The one [SurfConfigApi], resolved on first use. */
+        val instance get() = surfConfigApi
     }
 }
 
 /**
  * Retrieves the singleton instance of [SurfConfigApi].
  */
-val surfConfigApi by lazy { requiredService<SurfConfigApi>() }
+val surfConfigApi by surfBean<SurfConfigApi>()
 
 /**
  * Creates a Sponge YAML configuration using a reified type.

@@ -68,7 +68,7 @@ interface FastCompoundBinaryTag : BinaryTagLike {
  * @return A mutable FastCompoundBinaryTag holding this tag's entries
  */
 fun CompoundBinaryTag.fast(synchronize: Boolean = false) =
-    InternalNbtBridge.wrapCompoundBinaryTag(this, synchronize)
+    InternalNbtBridge.INSTANCE.wrapCompoundBinaryTag(this, synchronize)
 
 /**
  * Builds and wraps the result in a mutable FastCompoundBinaryTag.

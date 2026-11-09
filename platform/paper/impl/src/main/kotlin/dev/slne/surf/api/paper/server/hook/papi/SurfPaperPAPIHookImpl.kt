@@ -1,13 +1,13 @@
 package dev.slne.surf.api.paper.server.hook.papi
 
-import com.google.auto.service.AutoService
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.hook.papi.SurfPaperPAPIHook
 import dev.slne.surf.api.paper.hook.papi.expansion.PapiExpansion
 import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolder
 import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolderImpl
 import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolderNOOP
 
-@AutoService(SurfPaperPAPIHook::class)
+@Service
 class SurfPaperPAPIHookImpl : SurfPaperPAPIHook {
     private val expansionHolders = mutableMapOf<String, PAPIPlaceholderHolder>()
     private var loaded = false

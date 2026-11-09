@@ -116,7 +116,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
         edit: (SurfPaperNmsPlayerBridge.PlayerInventoryEdit) -> Unit
     ): Boolean {
         return runCatching {
-            SurfPaperNmsPlayerBridge.editOfflineInventory(target, edit)
+            SurfPaperNmsPlayerBridge.INSTANCE.editOfflineInventory(target, edit)
         }.onFailure { error ->
             sender.sendMessage("editOfflineInventory failed: ${error::class.simpleName}: ${error.message}")
         }.isSuccess

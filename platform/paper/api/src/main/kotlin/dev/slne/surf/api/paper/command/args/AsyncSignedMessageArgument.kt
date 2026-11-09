@@ -33,7 +33,7 @@ import net.kyori.adventure.chat.SignedMessage
 @OptIn(NmsUseWithCaution::class)
 class AsyncSignedMessageArgument(nodeName: String) : Argument<Deferred<SignedMessage>>(
     nodeName,
-    SurfPaperNmsCommandArgumentTypesBridge::signedMessage,
+    SurfPaperNmsCommandArgumentTypesBridge.INSTANCE::signedMessage,
 ) {
     override fun getPrimitiveType(): Class<Deferred<SignedMessage>> {
         return Deferred::class.java as Class<Deferred<SignedMessage>>
@@ -48,7 +48,7 @@ class AsyncSignedMessageArgument(nodeName: String) : Argument<Deferred<SignedMes
         p1: String,
         p2: CommandArguments
     ): Deferred<SignedMessage> {
-        return SurfPaperNmsCommandArgumentTypesBridge.getSignedMessage(p0, p1)
+        return SurfPaperNmsCommandArgumentTypesBridge.INSTANCE.getSignedMessage(p0, p1)
     }
 }
 

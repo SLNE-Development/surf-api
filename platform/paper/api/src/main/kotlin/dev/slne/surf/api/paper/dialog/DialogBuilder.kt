@@ -28,5 +28,5 @@ fun DialogRegistryEntry.Builder.type(block: DialogTypeBuilder.() -> Unit) {
 
 @NmsUseWithCaution
 fun Player.clearDialogs(showEmptyDialogBefore: Boolean = false) {
-    SurfPaperNmsCommonBridge.clearDialogs(this, showEmptyDialogBefore)
+    SurfPaperNmsCommonBridge.INSTANCE.clearDialogs(this, showEmptyDialogBefore)
 }

@@ -3,11 +3,8 @@ public abstract interface class dev/slne/surf/api/velocity/SurfApiVelocity : dev
 	public abstract fun getExecutorService ()Ljava/util/concurrent/ExecutorService;
 }
 
-public final class dev/slne/surf/api/velocity/SurfApiVelocity$Companion : dev/slne/surf/api/velocity/SurfApiVelocity {
-	public fun getExecutorService ()Ljava/util/concurrent/ExecutorService;
+public final class dev/slne/surf/api/velocity/SurfApiVelocity$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/velocity/SurfApiVelocity;
-	public fun getPlayer (Ljava/util/UUID;)Ljava/lang/Object;
-	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
 }
 
 public class dev/slne/surf/api/velocity/api/metrics/Metrics {

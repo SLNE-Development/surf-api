@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.server.config.serializers
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.server.PaperInstance
 import dev.slne.surf.api.paper.server.config.serializers.registry.RegistryValueSerializer
 import io.leangen.geantyref.TypeToken
@@ -30,7 +30,7 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import kotlin.reflect.KClass
 
 @Suppress("UnstableApiUsage")
-@AutoService(SpongeConfigSerializers::class)
+@Service
 class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
 
     override fun registerDefaults(builder: TypeSerializerCollection.Builder) {

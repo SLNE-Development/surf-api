@@ -1,10 +1,12 @@
+@file:OptIn(InternalSurfApi::class)
 @file:Suppress("UnstableApiUsage")
 
 package dev.slne.surf.api.paper.nms.bridges
 
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.papermc.paper.math.FinePosition
 import net.kyori.adventure.nbt.CompoundBinaryTag
 import org.bukkit.World
@@ -33,10 +35,10 @@ interface SurfPaperNmsEntityBridge {
         pitch: Float,
     ): Entity?
 
-    companion object : SurfPaperNmsEntityBridge by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsEntityBridge>()
+private val bridge by surfBean<SurfPaperNmsEntityBridge>()

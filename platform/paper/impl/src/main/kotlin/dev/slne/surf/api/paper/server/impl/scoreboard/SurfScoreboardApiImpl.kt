@@ -2,8 +2,8 @@
 
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardApi
 import dev.slne.surf.api.paper.server.plugin
 import net.kyori.adventure.text.Component
@@ -11,7 +11,7 @@ import net.megavex.scoreboardlibrary.api.ScoreboardLibrary
 import net.megavex.scoreboardlibrary.api.exception.NoPacketAdapterAvailableException
 import net.megavex.scoreboardlibrary.api.noop.NoopScoreboardLibrary
 
-@AutoService(SurfScoreboardApi::class)
+@Service
 class SurfScoreboardApiImpl : SurfScoreboardApi {
     private lateinit var scoreboardLibrary: ScoreboardLibrary
 

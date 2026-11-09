@@ -1,10 +1,12 @@
+@file:OptIn(InternalSurfApi::class)
 @file:Suppress("UnstableApiUsage")
 
 package dev.slne.surf.api.paper.nms.bridges.packets.entity
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
 
@@ -81,10 +83,10 @@ interface SurfPaperNmsSpawnPackets {
         onGround: Boolean = false
     ): PacketOperation
 
-    companion object : SurfPaperNmsSpawnPackets by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsSpawnPackets>()
+private val bridge by surfBean<SurfPaperNmsSpawnPackets>()

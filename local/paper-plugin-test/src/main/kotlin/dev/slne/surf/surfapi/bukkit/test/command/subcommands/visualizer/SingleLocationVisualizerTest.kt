@@ -29,7 +29,7 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
             locationArgument("location", LocationType.BLOCK_POSITION)
             anyExecutor { sender, args ->
                 val location: Location by args
-                val visualizer = SurfPaperVisualizerApi.createSingleLocationVisualizer(location).apply {
+                val visualizer = SurfPaperVisualizerApi.INSTANCE.createSingleLocationVisualizer(location).apply {
                     if (sender is Player) {
                         addViewer(sender)
                     }

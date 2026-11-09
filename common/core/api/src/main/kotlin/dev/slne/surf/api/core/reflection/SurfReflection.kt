@@ -1,6 +1,9 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.core.reflection
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 
 /**
  * Provides a high-level interface for creating dynamic proxies that enable reflective access to classes.
@@ -62,15 +65,15 @@ interface SurfReflection {
      */
     fun <T : Any> createProxy(clazz: Class<T>): T = createProxy(clazz, clazz.classLoader)
 
-    companion object : SurfReflection by surfReflection {
-        val INSTANCE = surfReflection
+    companion object {
+        val INSTANCE get() = surfReflection
     }
 }
 
 /**
  * The singleton instance of the SurfReflection interface.
  */
-private val surfReflection = requiredService<SurfReflection>()
+private val surfReflection by surfBean<SurfReflection>()
 
 /**
  * Creates a dynamic proxy for the reified type parameter.

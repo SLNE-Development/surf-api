@@ -11,19 +11,8 @@ public abstract interface class dev/slne/surf/api/paper/SurfApiPaper : dev/slne/
 	public abstract fun skipTimeSmoothly (Lorg/bukkit/World;Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class dev/slne/surf/api/paper/SurfApiPaper$Companion : dev/slne/surf/api/paper/SurfApiPaper {
+public final class dev/slne/surf/api/paper/SurfApiPaper$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/SurfApiPaper;
-	public fun getPlayer (Ljava/util/UUID;)Ljava/lang/Object;
-	public fun isCanvasMc ()Z
-	public fun isFolia ()Z
-	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
-	public fun sendPlayerToServer (Lorg/bukkit/entity/Player;Ljava/lang/String;)V
-	public fun skipTimeSmoothly (JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun skipTimeSmoothly (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun skipTimeSmoothly (Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun skipTimeSmoothly (Lorg/bukkit/World;JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun skipTimeSmoothly (Lorg/bukkit/World;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun skipTimeSmoothly (Lorg/bukkit/World;Ldev/slne/surf/api/paper/time/SkipOperations$SkipOperation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/api/paper/SurfApiPaper$DefaultImpls {
@@ -849,16 +838,8 @@ public abstract interface class dev/slne/surf/api/paper/glow/SurfGlowingApi {
 	public abstract fun removeGlowing (Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;)V
 }
 
-public final class dev/slne/surf/api/paper/glow/SurfGlowingApi$Companion : dev/slne/surf/api/paper/glow/SurfGlowingApi {
+public final class dev/slne/surf/api/paper/glow/SurfGlowingApi$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/glow/SurfGlowingApi;
-	public fun makeGlowing (ILjava/lang/String;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;B)V
-	public fun makeGlowing (Lorg/bukkit/Location;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
-	public fun makeGlowing (Lorg/bukkit/block/Block;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
-	public fun makeGlowing (Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/format/NamedTextColor;)V
-	public fun removeGlowing (ILorg/bukkit/entity/Player;)V
-	public fun removeGlowing (Lorg/bukkit/Location;Lorg/bukkit/entity/Player;)V
-	public fun removeGlowing (Lorg/bukkit/block/Block;Lorg/bukkit/entity/Player;)V
-	public fun removeGlowing (Lorg/bukkit/entity/Entity;Lorg/bukkit/entity/Player;)V
 }
 
 public final class dev/slne/surf/api/paper/glow/SurfGlowingApi$DefaultImpls {
@@ -872,10 +853,8 @@ public abstract interface class dev/slne/surf/api/paper/hook/papi/SurfPaperPAPIH
 	public abstract fun unregister (Ldev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion;)V
 }
 
-public final class dev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook$Companion : dev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook {
+public final class dev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/hook/papi/SurfPaperPAPIHook;
-	public fun register (Ldev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion;)V
-	public fun unregister (Ldev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion;)V
 }
 
 public class dev/slne/surf/api/paper/hook/papi/expansion/PapiExpansion {
@@ -916,9 +895,8 @@ public abstract interface class dev/slne/surf/api/paper/inventory/framework/View
 	public abstract fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
 }
 
-public final class dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor$Companion : dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor {
+public final class dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/inventory/framework/ViewFrameAccessor;
-	public fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
 }
 
 public final class dev/slne/surf/api/paper/inventory/framework/ViewFrameAccessorKt {
@@ -1646,12 +1624,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/SurfPaperNmsBridge {
 	public abstract fun unregisterServerboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener;)V
 }
 
-public final class dev/slne/surf/api/paper/nms/SurfPaperNmsBridge$Companion : dev/slne/surf/api/paper/nms/SurfPaperNmsBridge {
+public final class dev/slne/surf/api/paper/nms/SurfPaperNmsBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/SurfPaperNmsBridge;
-	public fun registerClientboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsClientboundPacketListener;)V
-	public fun registerServerboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener;)V
-	public fun unregisterClientboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsClientboundPacketListener;)V
-	public fun unregisterServerboundPacketListener (Ldev/slne/surf/api/paper/api/nms/listener/NmsServerboundPacketListener;)V
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge {
@@ -1662,12 +1636,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun signedMessage ()Lcom/mojang/brigadier/arguments/ArgumentType;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge {
-	public fun compoundTag ()Lcom/mojang/brigadier/arguments/ArgumentType;
-	public fun getCompoundTag (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lnet/kyori/adventure/nbt/CompoundBinaryTag;
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommandArgumentTypesBridge;
-	public fun getSignedMessage (Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Lkotlinx/coroutines/Deferred;
-	public fun signedMessage ()Lcom/mojang/brigadier/arguments/ArgumentType;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge {
@@ -1689,22 +1659,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun setVelocitySecret (Ljava/lang/String;)V
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge {
-	public fun addCompostable (Lorg/bukkit/Material;F)V
-	public fun clearDialogs (Lorg/bukkit/entity/Player;Z)V
-	public fun generateNextInventoryId (Lorg/bukkit/entity/Player;)I
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge;
-	public fun getServerIp ()Ljava/net/InetSocketAddress;
-	public fun getStateId (Lorg/bukkit/Material;)I
-	public fun getStateId (Lorg/bukkit/block/data/BlockData;)I
-	public fun getVelocitySecret ()Ljava/lang/String;
-	public fun isVelocityEnabled ()Z
-	public fun nextEntityId ()I
-	public fun nextEntityId (Lorg/bukkit/World;)I
-	public fun removeCompostable (Lorg/bukkit/Material;)V
-	public fun setOnlineMode (Z)V
-	public fun setVelocityEnabled (Z)V
-	public fun setVelocitySecret (Ljava/lang/String;)V
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsCommonBridge$DefaultImpls {
@@ -1720,13 +1676,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun setId (Lorg/bukkit/entity/Entity;I)V
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge {
-	public fun captureVehicleNbt (Lorg/bukkit/entity/Entity;)[B
-	public fun createEntityByNbt (Lorg/bukkit/World;Lorg/bukkit/entity/EntityType;Lio/papermc/paper/math/FinePosition;Lnet/kyori/adventure/nbt/CompoundBinaryTag;)V
-	public fun getById (Lorg/bukkit/World;I)Lorg/bukkit/entity/Entity;
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsEntityBridge;
-	public fun restoreVehicle (Lorg/bukkit/World;[BDDDFF)Lorg/bukkit/entity/Entity;
-	public fun setId (Lorg/bukkit/entity/Entity;I)V
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge {
@@ -1734,8 +1685,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun getCurrentFlags (Lorg/bukkit/entity/Entity;)B
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge {
-	public fun getCurrentFlags (Lorg/bukkit/entity/Entity;)B
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsGlowingBridge;
 }
 
@@ -1745,10 +1695,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun setDefaultMaxStackSize (Lorg/bukkit/inventory/ItemType;I)V
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge {
-	public fun getCreativeSearchItemOrderComparator ()Ljava/util/Comparator;
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsItemBridge;
-	public fun setDefaultMaxStackSize (Lorg/bukkit/inventory/ItemType;I)V
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge {
@@ -1757,10 +1705,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun rollLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Z)Ljava/util/Collection;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge {
-	public fun getDifferentLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Lorg/bukkit/entity/EntityType;Z)Ljava/util/Collection;
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsLootTableBridge;
-	public fun rollLootTable (Lorg/bukkit/entity/LivingEntity;Lorg/bukkit/damage/DamageSource;Z)Ljava/util/Collection;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge {
@@ -1769,10 +1715,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun makeItemStackEntityInvisible (Lorg/bukkit/inventory/ItemStack;Lorg/bukkit/entity/EntityType;)Lorg/bukkit/inventory/ItemStack;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge {
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsNbtBridge;
-	public fun getNbtString (Lorg/bukkit/inventory/ItemStack;Ljava/lang/String;)Ljava/lang/String;
-	public fun makeItemStackEntityInvisible (Lorg/bukkit/inventory/ItemStack;Lorg/bukkit/entity/EntityType;)Lorg/bukkit/inventory/ItemStack;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
@@ -1806,29 +1750,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun withMessageSignatureCacheLock (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge {
-	public fun applyChatSessionSnapshot (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatSessionSnapshot;)V
-	public fun createAdventureChatMessageFromMirror (Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;)Lnet/kyori/adventure/chat/SignedMessage;
-	public fun createChatSessionSnapshot (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatSessionSnapshot;
-	public fun createPlayerChatMessageMirrorFromAdventure (Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/PlayerChatMessageMirror;
-	public fun editOfflineInventory (Lcom/destroystokyo/paper/profile/PlayerProfile;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge;
-	public fun getPaperRawChatType ()Lnet/kyori/adventure/chat/ChatType;
-	public fun getPlayerDataDir ()Ljava/io/File;
-	public fun getRemoteChatSessionData (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;
-	public fun getStatsDataPath ()Ljava/nio/file/Path;
-	public fun increaseNextChatIndex (Lorg/bukkit/entity/Player;)Ljava/lang/Integer;
-	public fun removeAllTrackedEntities (Lorg/bukkit/entity/Player;Z)V
-	public fun removeAllTrackedPlayers (Lorg/bukkit/entity/Player;Z)V
-	public fun resetPlayerChatState (Lorg/bukkit/entity/Player;Ldev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)V
-	public fun restoreAllTrackedEntities (Lorg/bukkit/entity/Player;Z)V
-	public fun restoreAllTrackedPlayers (Lorg/bukkit/entity/Player;Z)V
-	public fun resyncPlayerState (Lorg/bukkit/entity/Player;)V
-	public fun resyncVehicleState (Lorg/bukkit/entity/Player;Z)I
-	public fun runOnChatMessageChain (Lorg/bukkit/entity/Player;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)V
-	public fun sendPlayerChatMessage (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;)V
-	public fun sendSignedMessageWithChangedContent (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/chat/ChatType$Bound;Lnet/kyori/adventure/text/Component;)V
-	public fun withMessageSignatureCacheLock (Lorg/bukkit/entity/Player;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPlayerBridge$DefaultImpls {
@@ -1859,9 +1782,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun findNearestNetherPortal (Lorg/bukkit/World;IIIIIIII)Lorg/bukkit/Location;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge {
-	public fun createNetherPortal (Lorg/bukkit/World;IIIZI)Lorg/bukkit/Location;
-	public fun findNearestNetherPortal (Lorg/bukkit/World;IIIIIIII)Lorg/bukkit/Location;
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsPortalBridge;
 }
 
@@ -1871,10 +1792,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/SurfPaperNms
 	public abstract fun savePlayerStatsToFile (Lorg/bukkit/entity/Player;)V
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$Companion : dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge {
+public final class dev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/SurfPaperNmsStatsBridge;
-	public fun getPlayerStatsAsJson (Lorg/bukkit/entity/Player;)Ljava/lang/String;
-	public fun savePlayerStatsToFile (Lorg/bukkit/entity/Player;)V
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/data/chat/IncomingChatChainMirror {
@@ -2228,8 +2147,7 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/Surf
 	public abstract fun createEmptyPacketOperation ()Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges$Companion : dev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges {
-	public fun createEmptyPacketOperation ()Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+public final class dev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges;
 }
 
@@ -2239,10 +2157,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/bloc
 	public abstract fun updateBlockData (Lio/papermc/paper/math/BlockPosition;Lorg/bukkit/block/data/BlockData;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets {
+public final class dev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/block/SurfPaperNmsBlockPackets;
-	public fun resetBlock (Lio/papermc/paper/math/BlockPosition;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun updateBlockData (Lio/papermc/paper/math/BlockPosition;Lorg/bukkit/block/data/BlockData;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings : dev/slne/surf/api/paper/nms/bridges/packets/entity/DisplaySettings {
@@ -2356,20 +2272,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/enti
 	public fun updateSign (ILio/papermc/paper/math/BlockPosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets {
-	public fun despawn (Ljava/util/List;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun despawn (Ljava/util/Set;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun despawn ([I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets;
-	public fun spawnBlockDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun spawnBlockDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun spawnItemDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/ItemDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun spawnItemDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun spawnTextDisplay (ILio/papermc/paper/math/FinePosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/TextDisplaySettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun spawnTextDisplay (ILio/papermc/paper/math/FinePosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun teleport (ILio/papermc/paper/math/FinePosition;FFLio/papermc/paper/math/FinePosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun updateSign (ILio/papermc/paper/math/BlockPosition;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/SignBlockUpdateSettings;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun updateSign (ILio/papermc/paper/math/BlockPosition;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/packets/entity/SurfPaperNmsSpawnPackets$DefaultImpls {
@@ -2405,9 +2309,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/play
 	public abstract fun sendPlayerChatMessagePacket (Ljava/util/UUID;Lnet/kyori/adventure/text/Component;IILnet/kyori/adventure/chat/SignedMessage$Signature;JLjava/time/Instant;Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/util/Map;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets {
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerChatPackets;
-	public fun sendPlayerChatMessagePacket (Ljava/util/UUID;Lnet/kyori/adventure/text/Component;IILnet/kyori/adventure/chat/SignedMessage$Signature;JLjava/time/Instant;Ljava/lang/String;Lnet/kyori/adventure/text/Component;Ljava/util/Map;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets {
@@ -2420,14 +2323,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/play
 	public abstract fun setInventorySlot (IIILorg/bukkit/inventory/ItemStack;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets {
-	public fun closeInventory (I)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun createNewPlayerInfoUpdate (Ljava/util/UUID;Lcom/destroystokyo/paper/profile/PlayerProfile;ZILorg/bukkit/GameMode;Lnet/kyori/adventure/text/Component;ZILdev/slne/surf/api/paper/nms/bridges/data/chat/RemoteChatSessionData;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerPackets;
-	public fun openInventory (ILorg/bukkit/event/inventory/InventoryType;Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun openSignEditor (Lio/papermc/paper/math/BlockPosition;Z)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun removePlayerInfoUpdate (Ljava/util/List;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public fun setInventorySlot (IIILorg/bukkit/inventory/ItemStack;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets {
@@ -2435,9 +2332,8 @@ public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/play
 	public abstract fun showToast (Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
-public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets$Companion : dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets {
+public final class dev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets;
-	public fun showToast (Ldev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/packets/player/toast/Toast {
@@ -2560,18 +2456,8 @@ public abstract interface class dev/slne/surf/api/paper/packet/SurfPaperPacketAp
 	public abstract fun unregisterPacketLoreListener (Lorg/bukkit/plugin/Plugin;)V
 }
 
-public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion : dev/slne/surf/api/paper/packet/SurfPaperPacketApi {
+public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/SurfPaperPacketApi;
-	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
-	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;S)V
-	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
-	public fun registerPacketLoreListener (Lorg/bukkit/plugin/Plugin;Lorg/bukkit/NamespacedKey;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
-	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;)V
-	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandler;S)V
-	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;)V
-	public fun registerPacketLoreListenerGlobal (Lorg/bukkit/plugin/Plugin;Ldev/slne/surf/api/paper/packet/lore/SurfPaperPacketLoreHandlerSimple;S)V
-	public fun unregisterPacketLoreListener (Lorg/bukkit/NamespacedKey;)V
-	public fun unregisterPacketLoreListener (Lorg/bukkit/plugin/Plugin;)V
 }
 
 public final class dev/slne/surf/api/paper/packet/SurfPaperPacketApi$DefaultImpls {
@@ -2589,10 +2475,8 @@ public abstract interface class dev/slne/surf/api/paper/packet/listener/SurfPape
 	public abstract fun unregisterListeners (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListener;)V
 }
 
-public final class dev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi$Companion : dev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi {
+public final class dev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/packet/listener/SurfPaperPacketListenerApi;
-	public fun registerListeners (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListener;)V
-	public fun unregisterListeners (Ldev/slne/surf/api/paper/packet/listener/listener/PacketListener;)V
 }
 
 public abstract interface class dev/slne/surf/api/paper/packet/listener/listener/PacketListener {
@@ -2646,9 +2530,8 @@ public abstract interface class dev/slne/surf/api/paper/pdc/block/BlockPdcProvid
 	public abstract fun getPdc (Lorg/bukkit/block/Block;)Ldev/slne/surf/api/paper/pdc/block/CustomBlockPersistentDataContainer;
 }
 
-public final class dev/slne/surf/api/paper/pdc/block/BlockPdcProvider$Companion : dev/slne/surf/api/paper/pdc/block/BlockPdcProvider {
+public final class dev/slne/surf/api/paper/pdc/block/BlockPdcProvider$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/pdc/block/BlockPdcProvider;
-	public fun getPdc (Lorg/bukkit/block/Block;)Ldev/slne/surf/api/paper/pdc/block/CustomBlockPersistentDataContainer;
 }
 
 public final class dev/slne/surf/api/paper/pdc/block/BlockPdcProviderKt {
@@ -2677,14 +2560,7 @@ public abstract interface class dev/slne/surf/api/paper/region/TickThreadGuard {
 	public abstract fun ensureTickThread (Lorg/bukkit/entity/Entity;Ljava/lang/String;)V
 }
 
-public final class dev/slne/surf/api/paper/region/TickThreadGuard$Companion : dev/slne/surf/api/paper/region/TickThreadGuard {
-	public fun ensureGlobalTickThread (Ljava/lang/String;)V
-	public fun ensureTickThread (Lorg/bukkit/World;DDLjava/lang/String;)V
-	public fun ensureTickThread (Lorg/bukkit/World;IILjava/lang/String;)V
-	public fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;ILjava/lang/String;)V
-	public fun ensureTickThread (Lorg/bukkit/World;Lio/papermc/paper/math/Position;Ljava/lang/String;)V
-	public fun ensureTickThread (Lorg/bukkit/World;Lorg/bukkit/util/BoundingBox;Ljava/lang/String;)V
-	public fun ensureTickThread (Lorg/bukkit/entity/Entity;Ljava/lang/String;)V
+public final class dev/slne/surf/api/paper/region/TickThreadGuard$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/region/TickThreadGuard;
 }
 
@@ -2718,10 +2594,8 @@ public abstract interface class dev/slne/surf/api/paper/scoreboard/SurfScoreboar
 	public abstract fun scoreboardLibrary ()Lnet/megavex/scoreboardlibrary/api/ScoreboardLibrary;
 }
 
-public final class dev/slne/surf/api/paper/scoreboard/SurfScoreboardApi$Companion : dev/slne/surf/api/paper/scoreboard/SurfScoreboardApi {
-	public fun createScoreboard (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder;
+public final class dev/slne/surf/api/paper/scoreboard/SurfScoreboardApi$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/scoreboard/SurfScoreboardApi;
-	public fun scoreboardLibrary ()Lnet/megavex/scoreboardlibrary/api/ScoreboardLibrary;
 }
 
 public abstract interface class dev/slne/surf/api/paper/scoreboard/SurfScoreboardBuilder {
@@ -3050,11 +2924,7 @@ public abstract interface class dev/slne/surf/api/paper/visualizer/SurfPaperVisu
 	public static fun getINSTANCE ()Ldev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi;
 }
 
-public final class dev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi$Companion : dev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi {
-	public fun createAreaVisualizer-9VgGkz4 (Lorg/bukkit/World;Ldev/slne/surf/api/paper/nms/bridges/packets/entity/BlockDisplaySettings;Ljava/util/Collection;ZJ)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerArea;
-	public fun createMultiLocationVisualizer (Lorg/bukkit/World;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerMultipleLocations;
-	public fun createSingleLocationVisualizer (Lorg/bukkit/Location;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizerSingleLocation;
-	public fun getByUid (Ljava/util/UUID;)Ldev/slne/surf/api/paper/visualizer/visualizer/SurfVisualizer;
+public final class dev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/paper/visualizer/SurfPaperVisualizerApi;
 }
 

@@ -19,7 +19,7 @@ public class SmoothTimeSkip extends CommandAPICommand {
             CompletableFuture<Object> future = FutureKt.future(GlobalScope.INSTANCE,
                     Dispatchers.getIO(),
                     CoroutineStart.DEFAULT,
-                    (coroutineScope, continuation) -> SurfApiPaper.Companion
+                    (coroutineScope, continuation) -> SurfApiPaper.Companion.getINSTANCE()
                             .skipTimeSmoothly(SkipOperations.NEXT_DAY, continuation));
 
             future.thenAccept((result) -> {

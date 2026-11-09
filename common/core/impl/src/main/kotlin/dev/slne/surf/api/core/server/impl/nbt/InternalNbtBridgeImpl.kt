@@ -1,11 +1,11 @@
 package dev.slne.surf.api.core.server.impl.nbt
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.nbt.FastCompoundBinaryTag
 import dev.slne.surf.api.core.nbt.InternalNbtBridge
+import dev.slne.surf.api.di.Service
 import net.kyori.adventure.nbt.CompoundBinaryTag
 
-@AutoService(InternalNbtBridge::class)
+@Service
 class InternalNbtBridgeImpl : InternalNbtBridge {
     override fun wrapCompoundBinaryTag(
         tag: CompoundBinaryTag,

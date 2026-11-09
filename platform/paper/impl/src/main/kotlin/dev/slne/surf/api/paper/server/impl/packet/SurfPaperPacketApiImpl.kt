@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.server.impl.packet
 
-import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.PacketLoreRegistry
@@ -11,13 +10,9 @@ import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
 
 @NmsUseWithCaution
-@AutoService(SurfPaperPacketApi::class)
+@Service
 class SurfPaperPacketApiImpl : SurfPaperPacketApi {
     private val packetLoreRegistry: PacketLoreRegistry = NmsProvider.current.createPacketLoreRegistry()
-
-    init {
-        checkInstantiationByServiceLoader()
-    }
 
     override fun registerPacketLoreListener(
         plugin: Plugin,

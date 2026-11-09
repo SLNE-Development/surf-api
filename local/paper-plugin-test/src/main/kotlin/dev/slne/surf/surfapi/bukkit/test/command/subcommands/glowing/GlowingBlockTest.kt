@@ -23,9 +23,9 @@ class GlowingBlockTest(name: String) : CommandAPICommand(name) {
             val color: NamedTextColor by args
 
             if (glow) {
-                SurfGlowingApi.makeGlowing(location, sender, color)
+                SurfGlowingApi.INSTANCE.makeGlowing(location, sender, color)
             } else {
-                SurfGlowingApi.removeGlowing(location, sender)
+                SurfGlowingApi.INSTANCE.removeGlowing(location, sender)
             }
 
             sender.sendMessage("Block at ${location.blockX}, ${location.blockY}, ${location.blockZ} is now ${if (glow) "glowing" else "not glowing"} with color $color.")

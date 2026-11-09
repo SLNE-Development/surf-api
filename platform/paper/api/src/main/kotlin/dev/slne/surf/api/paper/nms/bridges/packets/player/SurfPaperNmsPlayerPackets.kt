@@ -1,12 +1,14 @@
+@file:OptIn(InternalSurfApi::class)
 @file:Suppress("UnstableApiUsage")
 
 package dev.slne.surf.api.paper.nms.bridges.packets.player
 
 import com.destroystokyo.paper.profile.PlayerProfile
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.papermc.paper.math.BlockPosition
 import net.kyori.adventure.text.Component
 import org.bukkit.GameMode
@@ -38,10 +40,10 @@ interface SurfPaperNmsPlayerPackets {
 
     fun removePlayerInfoUpdate(profileIds: List<UUID>): PacketOperation
 
-    companion object : SurfPaperNmsPlayerPackets by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsPlayerPackets>()
+private val bridge by surfBean<SurfPaperNmsPlayerPackets>()

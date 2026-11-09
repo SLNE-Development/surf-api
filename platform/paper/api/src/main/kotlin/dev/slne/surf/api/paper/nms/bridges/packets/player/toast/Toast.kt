@@ -16,7 +16,7 @@ data class Toast(
 ) {
 
     @NmsUseWithCaution
-    fun createOperation() = SurfPaperNmsPlayerToastPackets.showToast(this)
+    fun createOperation() = SurfPaperNmsPlayerToastPackets.INSTANCE.showToast(this)
 
     companion object {
         inline operator fun invoke(block: Builder.() -> Unit): Toast {

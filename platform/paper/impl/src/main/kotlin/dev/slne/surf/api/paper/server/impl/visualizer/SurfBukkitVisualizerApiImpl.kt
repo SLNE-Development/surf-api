@@ -3,7 +3,7 @@
 package dev.slne.surf.api.paper.server.impl.visualizer
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.auto.service.AutoService
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.api.paper.server.impl.visualizer.visualizer.AbstractSurfVisualizerImpl
 import dev.slne.surf.api.paper.server.impl.visualizer.visualizer.SurfVisualizerAreaImpl
@@ -23,7 +23,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
-@AutoService(SurfPaperVisualizerApi::class)
+@Service
 class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
     private val visualizers = Caffeine.newBuilder()
         .weakValues()

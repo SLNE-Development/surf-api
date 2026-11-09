@@ -1,11 +1,14 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.nms.bridges
 
 import com.destroystokyo.paper.profile.PlayerProfile
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.chat.ChatType
 import net.kyori.adventure.chat.SignedMessage
@@ -108,10 +111,10 @@ interface SurfPaperNmsPlayerBridge {
      */
     fun getStatsDataPath(): Path
 
-    companion object : SurfPaperNmsPlayerBridge by playerBridge {
+    companion object {
         val INSTANCE get() = playerBridge
     }
 }
 
 @NmsUseWithCaution
-private val playerBridge = requiredService<SurfPaperNmsPlayerBridge>()
+private val playerBridge by surfBean<SurfPaperNmsPlayerBridge>()

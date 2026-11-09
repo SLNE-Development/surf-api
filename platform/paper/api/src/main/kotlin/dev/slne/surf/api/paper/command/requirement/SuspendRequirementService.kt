@@ -1,7 +1,9 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.command.requirement
 
 import dev.jorel.commandapi.ExecutableCommand
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.command.executors.CoroutineScopeProvider
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +20,6 @@ interface SuspendRequirementService {
     )
 
     companion object {
-        val instance = requiredService<SuspendRequirementService>()
+        val instance by surfBean<SuspendRequirementService>()
     }
 }

@@ -11,7 +11,7 @@ class SortInvCommand(name: String) : CommandAPICommand(name) {
     init {
         playerExecutor { player, _ ->
             val inv = player.inventory
-            val sorted = inv.contents.apply { sortWith(SurfPaperNmsItemBridge.getCreativeSearchItemOrderComparator()) }
+            val sorted = inv.contents.apply { sortWith(SurfPaperNmsItemBridge.INSTANCE.getCreativeSearchItemOrderComparator()) }
             inv.contents = sorted
         }
     }

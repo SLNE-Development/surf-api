@@ -2218,9 +2218,8 @@ public abstract interface class dev/slne/surf/api/minestom/inventory/framework/V
 	public abstract fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
 }
 
-public final class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor$Companion : dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor {
+public final class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor$Companion {
 	public final fun getINSTANCE ()Ldev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor;
-	public fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
 }
 
 public final class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessorKt {

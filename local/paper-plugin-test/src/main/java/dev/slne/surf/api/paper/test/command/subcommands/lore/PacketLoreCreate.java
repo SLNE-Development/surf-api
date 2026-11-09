@@ -27,7 +27,7 @@ public class PacketLoreCreate extends CommandAPICommand {
 
             KEYS.add(key);
 
-            SurfPaperPacketApi.Companion.registerPacketLoreListener(
+            SurfPaperPacketApi.Companion.getINSTANCE().registerPacketLoreListener(
                     PaperPluginMainKt.getPlugin(),
                     key,
                     (loreToDisplay, pdc, stack) -> {

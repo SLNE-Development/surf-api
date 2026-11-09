@@ -8,11 +8,11 @@ object PlayerAfkStateChangeEventListener {
     private var lastEvent: PlayerAfkStateChangeEvent? = null
 
     fun register() {
-        SurfEventBus.registerListeners(this)
+        SurfEventBus.INSTANCE.registerListeners(this)
     }
 
     fun unregister() {
-        SurfEventBus.unregisterListeners(this)
+        SurfEventBus.INSTANCE.unregisterListeners(this)
     }
 
     fun getLastEvent(): PlayerAfkStateChangeEvent? = lastEvent

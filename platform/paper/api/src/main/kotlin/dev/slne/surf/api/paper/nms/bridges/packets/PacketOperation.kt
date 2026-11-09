@@ -15,7 +15,7 @@ interface PacketOperation {
 
     companion object {
         @OptIn(NmsUseWithCaution::class) // not really nms here
-        fun start(): PacketOperation = SurfPaperNmsPacketBridges.createEmptyPacketOperation()
+        fun start(): PacketOperation = SurfPaperNmsPacketBridges.INSTANCE.createEmptyPacketOperation()
     }
 }
 

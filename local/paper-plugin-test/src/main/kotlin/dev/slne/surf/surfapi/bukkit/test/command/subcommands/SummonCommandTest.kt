@@ -21,7 +21,7 @@ class SummonCommandTest(name: String) : CommandAPICommand(name) {
             val type: EntityType by args
             val nbt: CompoundBinaryTag by args
 
-            SurfPaperNmsEntityBridge.createEntityByNbt(sender.world, type, sender.location, nbt)
+            SurfPaperNmsEntityBridge.INSTANCE.createEntityByNbt(sender.world, type, sender.location, nbt)
         }
     }
 }

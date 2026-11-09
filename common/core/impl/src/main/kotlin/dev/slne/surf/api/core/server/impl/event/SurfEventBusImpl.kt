@@ -1,11 +1,10 @@
 package dev.slne.surf.api.core.server.impl.event
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.event.*
 import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
 import dev.slne.surf.api.core.server.impl.event.invoker.SurfEventInvokerFactory
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -17,12 +16,8 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
 
 @OptIn(InternalInvokerApi::class)
-@AutoService(SurfEventBus::class)
+@Service
 class SurfEventBusImpl : SurfEventBus {
-    init {
-        checkInstantiationByServiceLoader()
-    }
-
     companion object {
         private val log = logger()
     }

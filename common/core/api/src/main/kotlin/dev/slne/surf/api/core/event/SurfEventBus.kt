@@ -1,6 +1,9 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.core.event
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -117,13 +120,13 @@ interface SurfEventBus {
         handler: suspend (T) -> Unit
     ): Any
 
-    companion object : SurfEventBus by bus {
+    companion object {
         /** The singleton [SurfEventBus] instance. */
         val INSTANCE get() = bus
     }
 }
 
-private val bus = requiredService<SurfEventBus>()
+private val bus by surfBean<SurfEventBus>()
 
 /**
  * Registers an inline handler for [SurfSyncEvent]s of type [T] without

@@ -1,16 +1,12 @@
 package dev.slne.surf.api.core.server.impl.reflection
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.reflection.SurfProxy
 import dev.slne.surf.api.core.reflection.SurfReflection
-import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
+import dev.slne.surf.api.di.Service
 import java.lang.reflect.Proxy.newProxyInstance
 
-@AutoService(SurfReflection::class)
+@Service
 class SurfReflectionImpl : SurfReflection {
-    init {
-        checkInstantiationByServiceLoader()
-    }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> createProxy(

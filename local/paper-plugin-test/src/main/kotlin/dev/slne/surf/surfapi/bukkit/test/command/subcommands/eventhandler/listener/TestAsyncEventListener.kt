@@ -11,11 +11,11 @@ object TestAsyncEventListener {
     private var lastHandledTime: Long = 0L
 
     fun register() {
-        SurfEventBus.registerListeners(this)
+        SurfEventBus.INSTANCE.registerListeners(this)
     }
 
     fun unregister() {
-        SurfEventBus.unregisterListeners(this)
+        SurfEventBus.INSTANCE.unregisterListeners(this)
     }
 
     fun getLastEvent(): TestAsyncEvent? = lastEvent

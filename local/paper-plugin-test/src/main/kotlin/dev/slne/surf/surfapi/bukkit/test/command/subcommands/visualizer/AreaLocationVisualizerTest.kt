@@ -31,7 +31,7 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                 val loc3: Location by args
                 val loc4: Location by args
 
-                SurfPaperVisualizerApi.createAreaVisualizer(
+                SurfPaperVisualizerApi.INSTANCE.createAreaVisualizer(
                     sender.world,
                     useHighestYBlock = true,
                     initialSettings = BlockDisplaySettings {

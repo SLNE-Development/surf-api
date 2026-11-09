@@ -65,7 +65,7 @@ class SurfVisualizerMultipleLocationsImpl(
             if (id2point.isEmpty()) return
 
             val allIds = lock.read { id2point.keys.toSet() }
-            val despawn = SurfPaperNmsSpawnPackets.despawn(allIds)
+            val despawn = SurfPaperNmsSpawnPackets.INSTANCE.despawn(allIds)
 
             for (uuid in viewerUuids) {
                 SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(visualizerUuid, uuid)
@@ -105,7 +105,7 @@ class SurfVisualizerMultipleLocationsImpl(
 
             val player = Bukkit.getPlayer(viewerUuid) ?: continue
             player.enterContextIfNeeded {
-                SurfPaperNmsSpawnPackets.despawn(ids).execute(player)
+                SurfPaperNmsSpawnPackets.INSTANCE.despawn(ids).execute(player)
             }
         }
     }
@@ -134,7 +134,7 @@ class SurfVisualizerMultipleLocationsImpl(
 
                         val previouslySent = drainSentToPlayer(viewer)
                         if (!previouslySent.isNullOrEmpty()) {
-                            SurfPaperNmsSpawnPackets.despawn(previouslySent).execute(player)
+                            SurfPaperNmsSpawnPackets.INSTANCE.despawn(previouslySent).execute(player)
                         }
 
                         if (!visualizing.get()) return@enterContextIfNeeded
@@ -202,7 +202,7 @@ class SurfVisualizerMultipleLocationsImpl(
                             writeLocked {
                                 getSentToPlayer(viewer)?.removeAll(idsToRemove)
                             }
-                            SurfPaperNmsSpawnPackets.despawn(idsToRemove).execute(player)
+                            SurfPaperNmsSpawnPackets.INSTANCE.despawn(idsToRemove).execute(player)
                         }
 
                         operation.execute(player)
@@ -217,7 +217,7 @@ class SurfVisualizerMultipleLocationsImpl(
         settings: BlockDisplaySettings,
     ) {
         ensureNotClosed()
-        val id = SurfPaperNmsCommonBridge.nextEntityId()
+        val id = SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()
         val point = VisualPoint(visualLocation, settings)
         put(id, point)
 
@@ -252,7 +252,7 @@ class SurfVisualizerMultipleLocationsImpl(
 
         val toSpawn = mutableMapOf<Int, VisualPoint>()
         for ((loc, setting) in locations) {
-            val id = SurfPaperNmsCommonBridge.nextEntityId()
+            val id = SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()
             val point = VisualPoint(loc, setting)
             put(id, point)
             toSpawn[id] = point
@@ -325,7 +325,7 @@ class SurfVisualizerMultipleLocationsImpl(
 
                 player.enterContextIfNeeded {
                     if (!isActiveVersion(version)) return@enterContextIfNeeded
-                    SurfPaperNmsSpawnPackets.despawn(idsToRemove).execute(player)
+                    SurfPaperNmsSpawnPackets.INSTANCE.despawn(idsToRemove).execute(player)
                 }
             }
         }
@@ -389,21 +389,21 @@ class SurfVisualizerMultipleLocationsImpl(
                 writeLocked {
                     getOrCreateSentToPlayer(player.uniqueId).remove(id)
                 }
-                SurfPaperNmsSpawnPackets.despawn(id).execute(player)
+                SurfPaperNmsSpawnPackets.INSTANCE.despawn(id).execute(player)
             }
         }
     }
 
     private fun spawnPacket(id: Int, point: VisualPoint) =
-        SurfPaperNmsSpawnPackets.spawnBlockDisplay(id, point.pos, point.settings)
+        SurfPaperNmsSpawnPackets.INSTANCE.spawnBlockDisplay(id, point.pos, point.settings)
 
     private fun updatePositionPacket(id: Int, point: VisualPoint) =
-        SurfPaperNmsSpawnPackets.teleport(id, point.pos)
+        SurfPaperNmsSpawnPackets.INSTANCE.teleport(id, point.pos)
 
     override fun onPlayerReceiveChunk(player: Player, chunk: Chunk) {
         ensureNotClosed()
         if (!visualizing.get()) return
-        TickThreadGuard.ensureTickThread(player, "Cannot receive async chunk load for visualizer")
+        TickThreadGuard.INSTANCE.ensureTickThread(player, "Cannot receive async chunk load for visualizer")
 
         val entries = readLocked {
             id2point.toMap()
@@ -433,7 +433,7 @@ class SurfVisualizerMultipleLocationsImpl(
     override fun onPlayerUnloadChunk(player: Player, chunk: Chunk) {
         ensureNotClosed()
         if (!visualizing.get()) return
-        TickThreadGuard.ensureTickThread(player, "Cannot receive async chunk unload for visualizer")
+        TickThreadGuard.INSTANCE.ensureTickThread(player, "Cannot receive async chunk unload for visualizer")
 
         val sentSnapshot = getSentToPlayerSnapshot(player.uniqueId)
         val pointsSnapshot = readLocked { id2point.toMap() }
@@ -452,7 +452,7 @@ class SurfVisualizerMultipleLocationsImpl(
             getSentToPlayer(player.uniqueId)?.removeAll(despawn)
         }
 
-        SurfPaperNmsSpawnPackets.despawn(despawn).execute(player)
+        SurfPaperNmsSpawnPackets.INSTANCE.despawn(despawn).execute(player)
     }
 
     override fun onViewerRemoved(player: Player) {
@@ -462,7 +462,7 @@ class SurfVisualizerMultipleLocationsImpl(
         if (sent.isEmpty()) return
 
         player.enterContextIfNeeded {
-            SurfPaperNmsSpawnPackets.despawn(sent).execute(player)
+            SurfPaperNmsSpawnPackets.INSTANCE.despawn(sent).execute(player)
         }
     }
 

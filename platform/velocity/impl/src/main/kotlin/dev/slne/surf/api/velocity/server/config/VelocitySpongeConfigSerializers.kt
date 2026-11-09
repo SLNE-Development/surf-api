@@ -1,7 +1,7 @@
 package dev.slne.surf.api.velocity.server.config
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.api.core.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.api.di.Service
 
-@AutoService(SpongeConfigSerializers::class)
+@Service
 class VelocitySpongeConfigSerializers : SpongeConfigSerializers()

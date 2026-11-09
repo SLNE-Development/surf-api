@@ -93,7 +93,7 @@ interface SurfApiPaper : SurfApiCore {
      */
     suspend fun skipTimeSmoothly(skipOperation: SkipOperations.SkipOperation): Map<World, TimeSkipResult>
 
-    companion object : SurfApiPaper by SurfApiCore.instance as SurfApiPaper {
+    companion object {
         val INSTANCE get() = SurfApiCore.instance as SurfApiPaper
     }
 }

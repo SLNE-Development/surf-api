@@ -1,3 +1,5 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.core.config.serializer
 
 import dev.slne.surf.api.core.config.constraints.*
@@ -9,7 +11,8 @@ import dev.slne.surf.api.core.config.type.StringOrDefault
 import dev.slne.surf.api.core.config.type.number.DoubleOr
 import dev.slne.surf.api.core.config.type.number.IntOr
 import dev.slne.surf.api.core.minimessage.SurfMiniMessageHolder
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.text.Component
 import org.jetbrains.annotations.MustBeInvokedByOverriders
@@ -24,7 +27,7 @@ import java.util.*
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-val surfSpongeConfigSerializers = requiredService<SpongeConfigSerializers>()
+val surfSpongeConfigSerializers by surfBean<SpongeConfigSerializers>()
 
 /**
  * Serializers for Sponge configurations, including support for Adventure [Component] and other types.

@@ -14,7 +14,7 @@ val packetEvents get() = PacketEvents.getAPI() ?: error("PacketEvents API is not
  * @param uuid the UUID of the player to whom the packet will be sent
  */
 fun PacketWrapper<*>.sendPacket(uuid: UUID) {
-    val player = SurfApiCore.getPlayer(uuid) ?: return
+    val player = SurfApiCore.instance.getPlayer(uuid) ?: return
     sendPacket(player)
 }
 

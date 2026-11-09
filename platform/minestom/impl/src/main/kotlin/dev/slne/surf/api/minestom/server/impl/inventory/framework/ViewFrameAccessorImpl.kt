@@ -1,10 +1,10 @@
 package dev.slne.surf.api.minestom.server.impl.inventory.framework
 
-import com.google.auto.service.AutoService
+import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.minestom.inventory.framework.ViewFrameAccessor
 import me.devnatan.inventoryframework.ViewFrame
 
-@AutoService(ViewFrameAccessor::class)
+@Service
 internal class ViewFrameAccessorImpl : ViewFrameAccessor {
     override fun viewFrame(): ViewFrame = MinestomInventoryLoader.instance.viewFrame
 }

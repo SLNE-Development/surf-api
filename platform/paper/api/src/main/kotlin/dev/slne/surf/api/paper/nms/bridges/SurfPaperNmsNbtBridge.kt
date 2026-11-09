@@ -1,7 +1,10 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.paper.nms.bridges
 
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
 
@@ -23,10 +26,10 @@ interface SurfPaperNmsNbtBridge {
     @Deprecated("Now only uses the nbt in the custom data components (item stacks now use data components, and nbt should not be avoided)")
     fun getNbtString(itemStack: ItemStack, key: String): String
 
-    companion object : SurfPaperNmsNbtBridge by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsNbtBridge>()
+private val bridge by surfBean<SurfPaperNmsNbtBridge>()

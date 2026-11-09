@@ -23,7 +23,7 @@ class BlockGlowingData(
     var color: NamedTextColor,
 ) {
 
-    private val entityId: Int by lazy { SurfPaperNmsCommonBridge.nextEntityId() }
+    private val entityId: Int by lazy { SurfPaperNmsCommonBridge.INSTANCE.nextEntityId() }
     private val uuid: UUID by lazy { UUID.randomUUID() }
     private var initialized = false
 
@@ -63,7 +63,7 @@ class BlockGlowingData(
     }
 
     fun remove() {
-        playerData.player?.let { SurfPaperNmsSpawnPackets.despawn(entityId).execute(it) }
+        playerData.player?.let { SurfPaperNmsSpawnPackets.INSTANCE.despawn(entityId).execute(it) }
         V26_1SurfGlowingApiImpl.removeGlowing(entityId, playerData.uuid)
     }
 

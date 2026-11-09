@@ -23,7 +23,7 @@ import java.util.*
 class SurfVisualizerSingleLocationImpl(
     location: Location
 ) : AbstractSurfVisualizerImpl(), SurfVisualizerSingleLocation {
-    private val entityId = SurfPaperNmsCommonBridge.nextEntityId()
+    private val entityId = SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()
 
     override var location: Location = location
         set(value) {
@@ -51,7 +51,7 @@ class SurfVisualizerSingleLocationImpl(
         private val viewerUuids: MutableSet<UUID>,
     ) : CleanupState() {
         override fun cleanup() {
-            val despawn = SurfPaperNmsSpawnPackets.despawn(entityId)
+            val despawn = SurfPaperNmsSpawnPackets.INSTANCE.despawn(entityId)
             for (uuid in viewerUuids) {
                 SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(uid, uuid)
                 val player = Bukkit.getPlayer(uuid) ?: continue
@@ -145,11 +145,11 @@ class SurfVisualizerSingleLocationImpl(
     }
 
     private fun spawnPacket() =
-        SurfPaperNmsSpawnPackets.spawnBlockDisplay(entityId, location, settings)
+        SurfPaperNmsSpawnPackets.INSTANCE.spawnBlockDisplay(entityId, location, settings)
 
-    private fun despawnPacket() = SurfPaperNmsSpawnPackets.despawn(entityId)
+    private fun despawnPacket() = SurfPaperNmsSpawnPackets.INSTANCE.despawn(entityId)
     private fun updatePositionPacket() =
-        SurfPaperNmsSpawnPackets.teleport(entityId, location, location.yaw, location.pitch)
+        SurfPaperNmsSpawnPackets.INSTANCE.teleport(entityId, location, location.yaw, location.pitch)
 
     override fun toString(): String {
         return "SurfVisualizerSingleLocationImpl(entityId=$entityId, location=$location, settings=$settings)"

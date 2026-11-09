@@ -33,10 +33,10 @@ object PacketApiLoader {
         
         versionPacketListeners = provider.createPacketListeners()
         for (listener in versionPacketListeners) {
-            SurfPaperPacketListenerApi.registerListeners(listener)
+            SurfPaperPacketListenerApi.INSTANCE.registerListeners(listener)
         }
 
-        SurfPaperPacketListenerApi.registerListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
+        SurfPaperPacketListenerApi.INSTANCE.registerListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
 
         AbstractChannelInjector.instance.register()
         PluginDisablePacketLoreListener.register()
@@ -48,11 +48,11 @@ object PacketApiLoader {
 
         packetEvents.terminate()
         for (listener in versionPacketListeners) {
-            SurfPaperPacketListenerApi.unregisterListeners(listener)
+            SurfPaperPacketListenerApi.INSTANCE.unregisterListeners(listener)
         }
         versionPacketListeners = emptyList()
 
-        SurfPaperPacketListenerApi.unregisterListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
+        SurfPaperPacketListenerApi.INSTANCE.unregisterListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
 
         PluginDisablePacketLoreListener.unregister()
         AbstractChannelInjector.instance.unregister()
