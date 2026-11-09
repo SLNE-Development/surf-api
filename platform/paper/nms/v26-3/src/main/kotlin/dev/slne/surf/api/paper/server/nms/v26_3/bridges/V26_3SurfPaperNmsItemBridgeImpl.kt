@@ -131,8 +131,14 @@ class V26_3SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
                     val key = itemType.key.toIdentifier()
                     val item = BuiltInRegistries.ITEM.getValue(key)
 
+                    // asMaterial() is nullable, and a null key could never be reached by a non-null
+
+                    // lookup, so such an item simply has no creative order.
+
                     @Suppress("DEPRECATION")
-                    put(itemType.asMaterial(), itemTypeIndex.getInt(item))
+                    val material = itemType.asMaterial() ?: continue
+
+                    put(material, itemTypeIndex.getInt(item))
                 }
             }
         }

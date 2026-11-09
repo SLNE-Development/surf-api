@@ -114,7 +114,7 @@ open class SidebarBuilderImpl : SidebarBuilder {
         entries.add(SidebarEntry.Animated(animation))
     }
 
-    fun definition() = SidebarDefinition(title, entries.clone(), animations.clone(), maxLines)
+    fun definition() = SidebarDefinition(title, entries.toMutableList(), animations.toMutableList(), maxLines)
 
     companion object {
         const val MAX_LINES = PlayerNmsScoreboard.MAX_LINES

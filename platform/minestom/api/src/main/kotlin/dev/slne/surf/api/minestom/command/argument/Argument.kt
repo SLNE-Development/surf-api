@@ -359,7 +359,7 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
 
     @InternalSurfApi
     internal fun toTreeNode(): ArgumentTreeNode =
-        toTreeNode(Collections.newSetFromMap(IdentityHashMap<Argument<*>, Boolean>()))
+        toTreeNode(Collections.newSetFromMap<Argument<*>>(IdentityHashMap()))
 
     private fun toTreeNode(stack: MutableSet<Argument<*>>): ArgumentTreeNode {
         if (!stack.add(this)) {

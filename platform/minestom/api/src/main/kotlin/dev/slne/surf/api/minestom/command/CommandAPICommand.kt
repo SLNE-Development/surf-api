@@ -135,7 +135,7 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
 
     @InternalSurfApi
     fun toDefinition(): CommandDefinition {
-        val stack = Collections.newSetFromMap(IdentityHashMap<CommandAPICommand, Boolean>())
+        val stack = Collections.newSetFromMap<CommandAPICommand>(IdentityHashMap())
 
         validateCommandLabels(name, aliases)
 
