@@ -150,8 +150,11 @@ val result = SurfApiPaper.INSTANCE.skipTimeSmoothly(world, SkipOperations.NEXT_S
 ```
 
 `isFolia` and `isCanvasMc` are the platform probes; `skipTimeSmoothly` in its six overloads is the
-`time/` feature. `SurfApiCore.instance` and `SurfConfigApi.instance` spell the member lowercase;
-everywhere else in the api it is `INSTANCE`.
+`time/` feature.
+
+The companion member is `INSTANCE` on almost every api type, including `SurfApiPaper` itself. Four
+spell it lowercase - `SurfApiCore.instance`, `SurfConfigApi.instance`, `ActionBarService.instance`
+and `SuspendRequirementService.instance` - so check the interface rather than guessing.
 
 ## What only exists on Paper
 
