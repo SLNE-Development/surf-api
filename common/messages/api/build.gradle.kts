@@ -2,7 +2,14 @@
 // the `SurfComponentBuilder` DSL with its colour helpers, the Adventure extension functions
 // (`buildText`, `sendText`, the audience/pointer/key/title/book/boss-bar/sound/resource-pack DSLs),
 // `ComponentMessage`, `DefaultFontInfo`, `SurfMessageBundle`, the `Pagination`/`SuspendPagination`
-// contracts, the configured MiniMessage instance and the `ActionBarService` contract.
+// contracts, the configured MiniMessage instance, the `ActionBarService` contract and `Rarity`.
+//
+// `Rarity` arrived with the final cut of `surf-api-core-api`. It is a six-value enum whose only
+// content is a display name and a colour and whose only behaviour is `asComponent`, so it is text
+// and nothing else -- which is also how `.claude/skills/surf-api-messages` already described it.
+// `core.command` and `core.luckperms`, which the plan paired it with, became modules of their own
+// downstream of this one: they only borrow text to render an error or to read a viewer's UUID, and
+// the rest of them is CommandAPI, Brigadier and the LuckPerms api.
 //
 // It takes the shape `surf-api-common-api` and `surf-api-serialization-api` have: it names no
 // contract that is still inside `surf-api-core-api`, so `surf-api-core-api` re-exports it with

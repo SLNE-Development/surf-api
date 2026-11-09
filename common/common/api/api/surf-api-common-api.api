@@ -1,3 +1,18 @@
+public final class dev/slne/surf/api/common/algorithms/ConvexHull2D {
+	public static final field INSTANCE Ldev/slne/surf/api/common/algorithms/ConvexHull2D;
+	public final fun ccw (Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;)Z
+	public final fun compute ([Lorg/spongepowered/math/vector/Vectord;)Ljava/util/List;
+}
+
+public final class dev/slne/surf/api/common/algorithms/ConvexHull2DKt {
+	public static final fun convexHull2D ([Lorg/spongepowered/math/vector/Vectord;)Ljava/util/List;
+}
+
+public final class dev/slne/surf/api/common/algorithms/Kahn_topological_sortKt {
+	public static final fun topologicalSort (Ljava/util/Map;)Ljava/util/List;
+	public static final fun topologicalSortSafe (Ljava/util/Map;)Ljava/lang/Object;
+}
+
 public final class dev/slne/surf/api/common/collection/TransformingObjectSet : java/util/Set, kotlin/jvm/internal/markers/KMutableSet {
 	public fun <init> (Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public fun add (Ljava/lang/Object;)Z
@@ -36,6 +51,46 @@ public final class dev/slne/surf/api/common/collection/TransformingSet2ObjectSet
 
 public final class dev/slne/surf/api/common/font/Small_capsKt {
 	public static final fun toSmallCaps (Ljava/lang/CharSequence;)Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/common/invoker/HiddenInvokerUtil {
+	public static fun canAccess (Ljava/lang/Class;Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandles$Lookup;)Z
+	public static fun canAccess (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandles$Lookup;)Z
+	public static fun isSuspendFunction (Ljava/lang/reflect/Method;)Z
+	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/api/common/invoker/InvokerClassData;
+	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/api/common/invoker/InvokerClassData;
+	public static fun loadClassDataWithAutoSuspend (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/api/common/invoker/InvokerClassData;
+	public static fun sneakyThrow (Ljava/lang/Throwable;)V
+}
+
+public final class dev/slne/surf/api/common/invoker/InvokerClassData : java/lang/Record {
+	public fun <init> (Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandle;Ljava/lang/Class;Z)V
+	public final fun equals (Ljava/lang/Object;)Z
+	public final fun hashCode ()I
+	public fun isSuspend ()Z
+	public fun method ()Ljava/lang/reflect/Method;
+	public fun methodHandle ()Ljava/lang/invoke/MethodHandle;
+	public fun payloadClass ()Ljava/lang/Class;
+	public final fun toString ()Ljava/lang/String;
+}
+
+public class dev/slne/surf/api/common/invoker/InvokerFactory {
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;)V
+	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/invoke/MethodHandles$Lookup;)V
+	public fun canAccess (Ljava/lang/Object;Ljava/lang/reflect/Method;)Z
+	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/Object;
+	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;Z)Ljava/lang/Object;
+	public fun getLookup ()Ljava/lang/invoke/MethodHandles$Lookup;
+	public fun getTemplateClassBytes ()[B
+}
+
+public final class dev/slne/surf/api/common/invoker/SuspendInvokerSupport {
+	public static final field INSTANCE Ldev/slne/surf/api/common/invoker/SuspendInvokerSupport;
+	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;)V
+	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun invokeSuspend$default (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun invokeSuspendDirect (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun invokeSuspendDirect$default (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/api/common/math/VoxelLineTracer {

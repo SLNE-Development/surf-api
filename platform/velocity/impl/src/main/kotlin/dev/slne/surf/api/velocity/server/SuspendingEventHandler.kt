@@ -4,7 +4,7 @@ import com.google.common.reflect.TypeToken
 import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.EventTask
 import com.velocitypowered.proxy.event.VelocityEventManager
-import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
+import dev.slne.surf.api.common.invoker.HiddenInvokerUtil
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.api.velocity.server.reflection.VelocityEventManagerReflection
 import java.lang.invoke.MethodHandles

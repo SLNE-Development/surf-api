@@ -1,8 +1,8 @@
 package dev.slne.surf.api.velocity.util
 
 import com.velocitypowered.api.proxy.Player
-import dev.slne.surf.api.core.luckperms.LuckPermsAccess
-import dev.slne.surf.api.core.luckperms.prefix
+import dev.slne.surf.api.luckperms.LuckPermsAccess
+import dev.slne.surf.api.luckperms.prefix
 import dev.slne.surf.api.messages.minimessage.miniMessage
 
 fun Player.getLuckPermsUser() = LuckPermsAccess.getUser(this.uniqueId)

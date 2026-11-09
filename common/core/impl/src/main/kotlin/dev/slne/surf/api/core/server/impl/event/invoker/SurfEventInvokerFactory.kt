@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.impl.event.invoker
 
-import dev.slne.surf.api.core.invoker.InvokerFactory
+import dev.slne.surf.api.common.invoker.InvokerFactory
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import java.lang.invoke.MethodHandles
 

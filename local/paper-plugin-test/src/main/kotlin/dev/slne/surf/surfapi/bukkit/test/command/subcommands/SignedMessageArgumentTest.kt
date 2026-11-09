@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
 import dev.jorel.commandapi.CommandAPICommand
-import dev.slne.surf.api.core.command.args.awaiting
+import dev.slne.surf.api.command.args.awaiting
 import dev.slne.surf.api.paper.command.args.asyncSignedMessageArgument
 import dev.slne.surf.api.paper.command.executors.playerExecutorSuspend
 import dev.slne.surf.api.paper.extensions.server

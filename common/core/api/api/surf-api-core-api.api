@@ -9,54 +9,6 @@ public final class dev/slne/surf/api/core/SurfApiCore$Companion {
 	public final fun getInstance ()Ldev/slne/surf/api/core/SurfApiCore;
 }
 
-public final class dev/slne/surf/api/core/algorithms/ConvexHull2D {
-	public static final field INSTANCE Ldev/slne/surf/api/core/algorithms/ConvexHull2D;
-	public final fun ccw (Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;)Z
-	public final fun compute ([Lorg/spongepowered/math/vector/Vectord;)Ljava/util/List;
-}
-
-public final class dev/slne/surf/api/core/algorithms/ConvexHull2DKt {
-	public static final fun convexHull2D ([Lorg/spongepowered/math/vector/Vectord;)Ljava/util/List;
-}
-
-public final class dev/slne/surf/api/core/algorithms/Kahn_topological_sortKt {
-	public static final fun topologicalSort (Ljava/util/Map;)Ljava/util/List;
-	public static final fun topologicalSortSafe (Ljava/util/Map;)Ljava/lang/Object;
-}
-
-public final class dev/slne/surf/api/core/command/SurfCommandUtil {
-	public static final field INSTANCE Ldev/slne/surf/api/core/command/SurfCommandUtil;
-	public static final fun createException (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/api/core/command/exception/WrapperCommandExceptionComponent;
-	public static final fun failWithBuilder (Ldev/slne/surf/api/core/command/builder/CommandExceptionBuilder;)V
-	public static final fun failWithMessage (Lnet/kyori/adventure/text/ComponentLike;)V
-}
-
-public final class dev/slne/surf/api/core/command/args/SuspendArgumentHelperKt {
-	public static final fun awaiting (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun awaitingOrNull (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
-public class dev/slne/surf/api/core/command/builder/CommandExceptionBuilder {
-	public static final field CONTEXT_AMOUNT I
-	public static final field Companion Ldev/slne/surf/api/core/command/builder/CommandExceptionBuilder$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;I)V
-	public fun build ()Lnet/kyori/adventure/text/Component;
-	public fun build (Lnet/kyori/adventure/text/Component;)Lnet/kyori/adventure/text/Component;
-	protected fun getContext ()Lnet/kyori/adventure/text/Component;
-}
-
-public final class dev/slne/surf/api/core/command/builder/CommandExceptionBuilder$Companion {
-}
-
-public final class dev/slne/surf/api/core/command/exception/WrapperCommandExceptionComponent : dev/jorel/commandapi/exceptions/WrapperCommandSyntaxException {
-	public static final field Companion Ldev/slne/surf/api/core/command/exception/WrapperCommandExceptionComponent$Companion;
-	public fun <init> (Lnet/kyori/adventure/text/Component;)V
-	public fun getMessage ()Ljava/lang/String;
-}
-
-public final class dev/slne/surf/api/core/command/exception/WrapperCommandExceptionComponent$Companion {
-}
-
 public abstract interface class dev/slne/surf/api/core/environment/EnvironmentSource {
 	public abstract fun get (Ljava/lang/String;)Ljava/lang/String;
 }
@@ -315,82 +267,6 @@ public final class dev/slne/surf/api/core/inventory/framework/internal/ViewSlotG
 public final class dev/slne/surf/api/core/inventory/framework/internal/ViewTextLayoutKt {
 	public static final fun layoutViewText (Lnet/kyori/adventure/text/Component;IZLjava/lang/Integer;ZLkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText;
 	public static synthetic fun layoutViewText$default (Lnet/kyori/adventure/text/Component;IZLjava/lang/Integer;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ldev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText;
-}
-
-public final class dev/slne/surf/api/core/invoker/HiddenInvokerUtil {
-	public static fun canAccess (Ljava/lang/Class;Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandles$Lookup;)Z
-	public static fun canAccess (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandles$Lookup;)Z
-	public static fun isSuspendFunction (Ljava/lang/reflect/Method;)Z
-	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/api/core/invoker/InvokerClassData;
-	public static fun loadClassData (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/api/core/invoker/InvokerClassData;
-	public static fun loadClassDataWithAutoSuspend (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/invoke/MethodType;)Ldev/slne/surf/api/core/invoker/InvokerClassData;
-	public static fun sneakyThrow (Ljava/lang/Throwable;)V
-}
-
-public final class dev/slne/surf/api/core/invoker/InvokerClassData : java/lang/Record {
-	public fun <init> (Ljava/lang/reflect/Method;Ljava/lang/invoke/MethodHandle;Ljava/lang/Class;Z)V
-	public final fun equals (Ljava/lang/Object;)Z
-	public final fun hashCode ()I
-	public fun isSuspend ()Z
-	public fun method ()Ljava/lang/reflect/Method;
-	public fun methodHandle ()Ljava/lang/invoke/MethodHandle;
-	public fun payloadClass ()Ljava/lang/Class;
-	public final fun toString ()Ljava/lang/String;
-}
-
-public class dev/slne/surf/api/core/invoker/InvokerFactory {
-	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;)V
-	public fun <init> (Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/invoke/MethodHandles$Lookup;)V
-	public fun canAccess (Ljava/lang/Object;Ljava/lang/reflect/Method;)Z
-	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/Object;
-	public fun create (Ljava/lang/Object;Ljava/lang/reflect/Method;Ljava/lang/Class;Z)Ljava/lang/Object;
-	public fun getLookup ()Ljava/lang/invoke/MethodHandles$Lookup;
-	public fun getTemplateClassBytes ()[B
-}
-
-public final class dev/slne/surf/api/core/invoker/SuspendInvokerSupport {
-	public static final field INSTANCE Ldev/slne/surf/api/core/invoker/SuspendInvokerSupport;
-	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;)V
-	public static final fun invokeSuspend (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun invokeSuspend$default (Lkotlinx/coroutines/CoroutineScope;Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun invokeSuspendDirect (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun invokeSuspendDirect$default (Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-}
-
-public final class dev/slne/surf/api/core/luckperms/LuckPermsAccess {
-	public static final field INSTANCE Ldev/slne/surf/api/core/luckperms/LuckPermsAccess;
-	public final fun getLuckperms ()Lnet/luckperms/api/LuckPerms;
-	public final fun getOrLoadUser (Ljava/util/UUID;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun getUser (Ljava/util/UUID;)Lnet/luckperms/api/model/user/User;
-	public final fun loadUser (Ljava/util/UUID;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
-public final class dev/slne/surf/api/core/luckperms/LuckPermsAccessKt {
-	public static final fun getLuckPermsUser (Lnet/kyori/adventure/audience/Audience;)Lnet/luckperms/api/model/user/User;
-	public static final fun getLuckPermsUserOrNull (Lnet/kyori/adventure/audience/Audience;)Lnet/luckperms/api/model/user/User;
-	public static final fun getMeta (Lnet/luckperms/api/model/user/User;Ljava/lang/String;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
-	public static final fun getMeta (Lnet/luckperms/api/model/user/User;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-	public static final fun getMeta (Lnet/luckperms/api/model/user/User;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
-	public static final fun getMetaValue (Lnet/luckperms/api/model/user/User;Ljava/lang/String;)Ljava/lang/String;
-	public static final fun getPrefix (Lnet/luckperms/api/model/user/User;)Ljava/lang/String;
-	public static final fun getSuffix (Lnet/luckperms/api/model/user/User;)Ljava/lang/String;
-	public static final fun getWeight (Lnet/luckperms/api/model/user/User;)I
-}
-
-public final class dev/slne/surf/api/core/rarity/Rarity : java/lang/Enum, net/kyori/adventure/text/ComponentLike {
-	public static final field COMMON Ldev/slne/surf/api/core/rarity/Rarity;
-	public static final field EPIC Ldev/slne/surf/api/core/rarity/Rarity;
-	public static final field LEGENDARY Ldev/slne/surf/api/core/rarity/Rarity;
-	public static final field MYTHIC Ldev/slne/surf/api/core/rarity/Rarity;
-	public static final field RARE Ldev/slne/surf/api/core/rarity/Rarity;
-	public static final field UNCOMMON Ldev/slne/surf/api/core/rarity/Rarity;
-	public synthetic fun asComponent ()Lnet/kyori/adventure/text/Component;
-	public fun asComponent ()Lnet/kyori/adventure/text/TextComponent;
-	public final fun getColor ()Lnet/kyori/adventure/text/format/TextColor;
-	public final fun getDisplayName ()Lnet/kyori/adventure/text/TextComponent;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/core/rarity/Rarity;
-	public static fun values ()[Ldev/slne/surf/api/core/rarity/Rarity;
 }
 
 public final class dev/slne/surf/api/core/service/PlayerLookupService {

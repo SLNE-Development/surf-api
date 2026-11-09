@@ -4,7 +4,7 @@ package dev.slne.surf.api.paper.server.impl.visualizer.visualizer
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.shynixn.mccoroutine.folia.scope
-import dev.slne.surf.api.core.algorithms.convexHull2D
+import dev.slne.surf.api.common.algorithms.convexHull2D
 import dev.slne.surf.api.common.math.VoxelLineTracer
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.api.paper.server.impl.visualizer.SurfBukkitVisualizerApiImpl

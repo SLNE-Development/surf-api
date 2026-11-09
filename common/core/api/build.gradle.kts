@@ -27,6 +27,13 @@ dependencies {
     // declarations it already used.
     api(projects.surfApiNbtApi)
     api(projects.surfApiReflectionApi)
+    // The commands domain -- SurfCommandUtil, the exception builder, the component-carrying
+    // Brigadier exception and the suspending-argument helpers -- and the LuckPerms domain were cut
+    // out of this module. Both sit downstream of the messages domain, so neither of them could be
+    // re-exported by it; they are re-exported here instead, so that everything compiling against
+    // surf-api-core keeps resolving the declarations it already used.
+    api(projects.surfApiCommandApi)
+    api(projects.surfApiLuckpermsApi)
     api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
     // The DI contracts travel with the api, not with the container: a downstream plugin writes

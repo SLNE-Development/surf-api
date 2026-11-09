@@ -8,7 +8,7 @@ import dev.jorel.commandapi.arguments.Argument
 import dev.jorel.commandapi.arguments.CustomArgument
 import dev.jorel.commandapi.arguments.GreedyStringArgument
 import dev.jorel.commandapi.arguments.TextArgument
-import dev.slne.surf.api.core.command.builder.CommandExceptionBuilder
+import dev.slne.surf.api.command.builder.CommandExceptionBuilder
 import dev.slne.surf.api.messages.minimessage.miniMessage
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.ParsingException

@@ -93,6 +93,15 @@ includeModule("common/nbt/api")
 // rather than part of the nbt one it was planned with, because the two domains share nothing: tags
 // on one side, dynamic proxies for the NMS bridges on the other.
 includeModule("common/reflection/api")
+// Only the api half exists: `SurfCommandUtil`, the exception builder, the component-carrying
+// Brigadier exception and the suspending-argument helpers are declarations. It is its own module
+// rather than part of the messages one it was planned with: it only borrows text to render an
+// error, and the rest of it is CommandAPI and Brigadier.
+includeModule("common/command/api")
+// Only the api half exists: `LuckPermsAccess` and the `User`/`Audience` extensions are
+// declarations. It is its own module rather than part of the messages one it was planned with,
+// because its only text dependency is reading a viewer's UUID.
+includeModule("common/luckperms/api")
 includePair("common", "core")
 // Only the api half exists: the shared inventory framework is contracts, settings and components
 // that both platforms compile against, with no runtime wiring of its own.

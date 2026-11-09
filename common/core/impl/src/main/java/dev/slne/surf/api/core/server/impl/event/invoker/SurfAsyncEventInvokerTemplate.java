@@ -1,8 +1,8 @@
 package dev.slne.surf.api.core.server.impl.event.invoker;
 
 import dev.slne.surf.api.event.SurfAsyncEvent;
-import dev.slne.surf.api.core.invoker.HiddenInvokerUtil;
-import dev.slne.surf.api.core.invoker.InvokerClassData;
+import dev.slne.surf.api.common.invoker.HiddenInvokerUtil;
+import dev.slne.surf.api.common.invoker.InvokerClassData;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.NotNull;

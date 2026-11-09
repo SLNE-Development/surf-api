@@ -6,8 +6,8 @@ package dev.slne.surf.api.paper.util
 import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.regionDispatcher
-import dev.slne.surf.api.core.luckperms.LuckPermsAccess
-import dev.slne.surf.api.core.luckperms.prefix
+import dev.slne.surf.api.luckperms.LuckPermsAccess
+import dev.slne.surf.api.luckperms.prefix
 import dev.slne.surf.api.messages.minimessage.miniMessage
 import dev.slne.surf.api.common.util.getCallerClass
 import dev.slne.surf.api.paper.SurfApiPaper
