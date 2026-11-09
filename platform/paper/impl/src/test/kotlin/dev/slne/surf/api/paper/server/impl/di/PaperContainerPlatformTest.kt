@@ -51,6 +51,22 @@ class PaperContainerPlatformTest {
     }
 
     @Test
+    fun `surf-api's own descriptor keeps its classloader closed`() {
+        // The root container is handed surf-api's own loader, and the only reason it can hold
+        // nothing but surf-api's beans is that this loader cannot reach a downstream plugin's
+        // classes. That is bought by one line in a *generated* descriptor, set from
+        // platform/paper/impl/build.gradle.kts -- so it is worth asserting rather than assuming.
+        val descriptor = checkNotNull(javaClass.getResource("/paper-plugin.yml")) {
+            "surf-api's own paper-plugin.yml is not on the test classpath"
+        }.readText()
+
+        assertTrue(
+            descriptor.lineSequence().any { it.trim() == "has-open-classloader: false" },
+            "the root container's isolation depends on this line:\n$descriptor",
+        )
+    }
+
+    @Test
     fun `an owner that is not a plugin is refused rather than given surf-api's own answers`() {
         val platform = PaperContainerPlatform()
         val failure = runCatching { platform.classLoader("not a plugin") }.exceptionOrNull()
