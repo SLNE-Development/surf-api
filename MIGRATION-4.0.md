@@ -79,7 +79,7 @@ ones your `withXxx()` calls ask for.
 | `surf-api-di-api` | The dependency-injection contracts: `@Service`, `@Repository`, `@Bean`, `Scope`, `SurfComponent`, `BeanPostProcessor`, `BeanContainer`, the conditions. |
 | `surf-api-di-impl` | The container itself. |
 | `surf-api-bom` | A platform BOM listing every published artifact at one version. Prefer importing it over pinning versions one by one. |
-| `surf-api-inventory-api` | The platform-neutral half of the inventory framework — view settings, header geometry, text alignment, the container component base and the DSL markers. Paper and Minestom each carried their own copy; see section 10. |
+| `surf-api-inventory-api` | The platform-neutral half of the inventory framework — view settings, header geometry, text alignment, the container component base and the DSL markers. Paper and Minestom each carried their own copy; see section 11. |
 
 ## 6. fastutil is gone
 
@@ -211,7 +211,74 @@ outright, so converting them would be work thrown away. They disappear together 
 A separate note will follow for the broker repositories once the container is in place, with the
 actual before-and-after for each.
 
-## 8. `runServer` was removed
+## 8. The component framework was removed
+
+**If your plugin has classes implementing `SurfComponent`, this is the change that will cost you
+the most work.** The scanning component framework is gone, in full:
+
+| Removed | Replaced by |
+|---|---|
+| `dev.slne.surf.api.shared.api.component.SurfComponent` | `dev.slne.surf.api.di.SurfComponent` |
+| `…shared.api.component.types.Service` / `.Repository` | `dev.slne.surf.api.di.Service` / `.Repository` |
+| `…shared.api.component.Priority` | `dev.slne.surf.api.di.Priority` |
+| `…shared.api.component.SurfComponentMeta` | `dev.slne.surf.api.di.BeanMeta` |
+| `…shared.api.component.condition.ComponentCondition` | `dev.slne.surf.api.di.condition.BeanCondition` |
+| `…shared.api.component.processor.ComponentPostProcessor` | `dev.slne.surf.api.di.BeanPostProcessor` |
+| `SurfComponentApi`, `surfComponentApi`, `AbstractComponent`, `ComponentService` | the container |
+| `surfComponentApi.load(this)` / `.enable(this)` / `.disable(this)` | `SurfContainer.startChild(this)` / `.enableFor(this)` / `.stopFor(this)` |
+
+The conditions are all in `dev.slne.surf.api.di.condition` now, and several changed name rather
+than just package — the old set said `DependsOn` for two different ideas, and the new one does not:
+
+| Removed | Replaced by |
+|---|---|
+| `ConditionalOn` | `ConditionalOn` (unchanged; takes a `BeanCondition`) |
+| `ConditionalOnProperty`, `ConditionalOnEnvironment` | same names |
+| `ConditionalOnMissingComponent` | `ConditionalOnMissingBean` — **not** the same question; see below |
+| `DependsOnComponent` | `DependsOnBean` |
+| `DependsOnClass` | `ConditionalOnClass` |
+| `DependsOnClassName` | `ConditionalOnClassName` |
+| `DependsOnPlugin` | `ConditionalOnPlugin` |
+| `DependsOnOnePlugin` | `ConditionalOnAnyPlugin` |
+| `ConditionalOnProductionEnvironment`, `ConditionalOnDevelopmentEnvironment` | nothing — write the environment out: `@ConditionalOnEnvironment(environments = ["production"])` |
+
+Most of the remaining work is rewriting imports. Three differences are not renames and need a
+decision:
+
+- **A component declared its dependencies by being found; a bean declares them in its
+  constructor.** That is the point of the change. A component that reached for a collaborator
+  through a service lookup takes it as a constructor parameter instead, and the container orders
+  the graph for you. `T?`, `List<T>`, `Set<T>` and `Lazy<T>` parameters all mean something: see
+  `.claude/skills/surf-api-components/`.
+- **`AbstractComponent` chained the phases**; calling `enable()` would run `load()` first if it had
+  not run. The container does not chain: it runs every bean's `load`, then every bean's `enable`,
+  each in dependency order. That is what makes a two-phase resource work, and it means a bean that
+  relied on the chaining has to put the work in the phase it belongs to.
+- **`@ConditionalOnMissingBean` is spelled like `@ConditionalOnMissingComponent` and asks a
+  different question.** The old one looked at which components had *actually loaded*, in priority
+  order, so it could mean "step in because that one was conditioned out".
+  `@ConditionalOnMissingBean` looks at what is *declared*, the parents' beans included, and is
+  evaluated before anything is built — so it can never hold for a bean declared in the same
+  module. It is for "nobody has provided one of these, so here is a default", which is the case it
+  is good at. A guard that really meant "that one was skipped" has to test the same thing that
+  skipped it.
+
+The plugin lifecycle now follows the server's own phases. Where you called the three
+`surfComponentApi` methods, call:
+
+```kotlin
+class MyPlugin : SuspendingJavaPlugin() {
+    override suspend fun onLoadAsync() { SurfContainer.startChild(this) }
+    override suspend fun onEnableAsync() { SurfContainer.enableFor(this) }
+    override suspend fun onDisableAsync() { SurfContainer.stopFor(this) }
+}
+```
+
+`startChild` reads your plugin's own bean metadata off your own jar and builds a container below
+surf-api's root. Resolution walks upwards only: you see surf-api's beans, surf-api never sees
+yours. `local/paper-plugin-test` is a working example of the whole shape, conditions included.
+
+## 9. `runServer` was removed
 
 The `runServer` task is gone, along with the `xyz.jpenilla.run-paper` plugin that used to bring a
 run task in and the `runDirectory` property on `surfMinestomServer { }`. It never worked
@@ -229,10 +296,12 @@ jar manifest, and a manifest agent only applies when the JVM starts on that jar 
 main class off a classpath skips the mixin transformer with no error. If you want a task, write
 one in your own build; it has to be an `Exec`, not a `JavaExec`, for the same reason.
 
-## 9. Hidden binary-compatibility declarations were removed
+## 10. Hidden binary-compatibility declarations were removed
 
 The inventory framework carried `@Deprecated(level = DeprecationLevel.HIDDEN)` overloads and one
-hidden class (`ViewContainerBackHintComponent`), emitted purely so plugins compiled against an
+hidden class (`ViewContainerBackHintComponent`); `PacketOperation.kt` carried a hidden non-inline
+`PacketOperation(block)`, which is why the inline one was named `PacketOperationInline` on the JVM
+and is now simply `PacketOperation`. All of them were emitted purely so plugins compiled against an
 older surf-api would still link. After the module renames and the descriptor changes above, no
 previously compiled plugin can link against 4.0.0 regardless, so they served nobody and have
 been removed.
@@ -240,7 +309,7 @@ been removed.
 If you compile against 4.0.0 you will not notice; a hidden declaration was never visible from
 source.
 
-## 10. The platform-neutral half of the inventory framework moved packages
+## 11. The platform-neutral half of the inventory framework moved packages
 
 Paper and Minestom each carried a full copy of the inventory framework, 61 files per platform.
 21 of those files name no platform type at all, so they now live once in the new
@@ -279,16 +348,18 @@ buttons, `ViewIcon`, the state helpers, the container and its DSL, and the three
 builders. Those keep their `…paper.inventory…` and `…minestom.inventory…` packages, so an import
 of `AbstractSurfView` or `surfView` does not change.
 
-## 11. Checklist for a downstream repository
+## 12. Checklist for a downstream repository
 
 1. Replace any coordinate from table 3; the others keep working.
 2. Remove every fastutil type and every `to*` bridge helper (section 6). Compile.
 3. Check your `@ConfigSerializable` classes for fastutil-typed fields (section 6).
 4. If you depend on an `-api` aggregate and resolve an implementation class at runtime, verify it
    is still on your runtime classpath (the open question in section 2).
-5. Rewrite every inventory import that names one of the types in section 10; the other
+5. Rewrite every inventory import that names one of the types in section 11; the other
    inventory imports are unchanged.
 6. Compile, and add `.INSTANCE` to every call that went through an api type's companion
    (section 7). The compiler lists them all.
 7. If you published an implementation of a surf-api interface with `@AutoService`, stop expecting
-   surf-api to find it (section 7). The container note will follow with the replacement.
+   surf-api to find it (section 7).
+8. Rewrite every `SurfComponent` as a bean and start your own container from the plugin's three
+   phases (section 8). This is the largest item on the list.
