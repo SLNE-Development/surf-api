@@ -7,14 +7,21 @@ description: Use when touching surf-api configuration or environment variables -
 
 Every claim below comes from `common/config/api/src/main/kotlin/dev/slne/surf/api/config/`,
 `common/config/impl/src/main/kotlin/dev/slne/surf/api/config/impl/` and
-`common/core/api/src/main/kotlin/dev/slne/surf/api/core/environment/`. Read those files when in
+`common/config/api/src/main/kotlin/dev/slne/surf/api/config/environment/`. Read those files when in
 doubt; they are the only source of truth.
 
 Configuration is its own pair of modules, `surf-api-config-api` and `surf-api-config-impl`. You do
 not name them: every published coordinate that carried these types before re-exports them, so a
 build file that depends on `surf-api-core`, `surf-api-paper`, `surf-api-minestom`,
-`surf-api-velocity` or `surf-api-standalone` resolves them unchanged. The environment-variable api
-is *not* part of that pair and stays in `surf-api-core-api` - it shares no type with configs.
+`surf-api-velocity` or `surf-api-standalone` resolves them unchanged.
+
+The environment-variable api lives in the same module, under `config/environment/`. It shares no
+type with the config classes - it reads `System.getenv` with typed delegates - but it is the same
+job from a user's point of view, and a five-file module of its own would not have been a domain.
+Do not confuse it with `EnvironmentConfig` / `EnvironmentAccessor` / `PropertyService` in
+`surf-api-core-impl`: those answer the container's `@ConditionalOnEnvironment` and
+`@ConditionalOnProperty` while a container is being built, they are a different mechanism, and they
+stay where the `ContainerPlatform` implementations can reach them.
 
 ## The library underneath
 
@@ -157,7 +164,7 @@ version is stored under `_config_version`. A file that has no version field coun
 ## Environment variables
 
 Separate API, no schema: `env` (a process-wide `EnvironmentVariables`) in
-`core/environment/`. Direct reads resolve immediately, delegates lazily on first access and take
+`config/environment/`. Direct reads resolve immediately, delegates lazily on first access and take
 the variable name from the property name as written:
 
 ```kotlin

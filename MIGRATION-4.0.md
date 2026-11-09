@@ -124,6 +124,8 @@ are in section 5 and need no build-file change. The package prefixes do:
 | `dev.slne.surf.api.core.rarity.Rarity` | `dev.slne.surf.api.messages.rarity.Rarity` |
 | `dev.slne.surf.api.core.algorithms.…` | `dev.slne.surf.api.common.algorithms.…` |
 | `dev.slne.surf.api.core.invoker.…` | `dev.slne.surf.api.common.invoker.…` |
+| `dev.slne.surf.api.core.environment.…` | `dev.slne.surf.api.config.environment.…` |
+| `dev.slne.surf.api.core.inventory.framework.internal.…` | `dev.slne.surf.api.inventory.framework.internal.…` |
 
 The subpackage and every type name are unchanged — only the prefix is. The two that will account
 for most of the edits are `logger()`, now `dev.slne.surf.api.common.util.logger`, and the text
@@ -134,6 +136,21 @@ and `dev.slne.surf.api.messages`.
 `dev.slne.surf.api.core.api.collection` while sitting in a `collection/` directory — a package that
 matched no directory anywhere. It is now `dev.slne.surf.api.common.collection.TransformingObjectSet`,
 with its directory. Nothing in surf-api used it.
+
+**One move changes what an aggregate resolves, and it is the only one that does.** The ten
+`framework.internal` files went *downstream*, into `surf-api-inventory-api`, so `surf-api-core`,
+`surf-api-velocity` and `surf-api-standalone` no longer carry them — they did before, only because
+the files happened to sit in `surf-api-core-api`. `surf-api-paper`, `surf-api-minestom` and
+`surf-api-minestom-server` still do.
+
+Every one of those ten declarations carries `@InternalSurfApi`, and those three aggregates expose no
+inventory-framework type to use them with, so in practice nothing could have called them without
+opting in to an annotation that says not to. The exception worth naming: `DefaultFontWidths`,
+`ShiftGlyphs` and `TextAlignmentMath` are pure Adventure text measurement with no inventory in
+them, so a Velocity or standalone plugin that opted in could have called `widthInPixels` or
+`appendShiftedComponent` and will now fail to resolve it. The alternative was to re-export the whole
+inventory framework from `surf-api-core-api`, which would have grown core's surface rather than
+preserved it.
 
 There are no deprecated typealiases in the old packages: an import that names one fails to resolve,
 which is the intended outcome. The compiler lists every one of them, so the migration is "compile,
@@ -179,14 +196,20 @@ such a field to the JDK map — `Map<K, V>`, which Configurate has always handle
 
 ### Where fastutil deliberately stays
 
-Five modules keep it on the **compile** classpath only, and it appears in no signature and no
-published artifact:
+Five modules keep it on the **compile** classpath only, and it reaches no published artifact:
 
 - the four `surf-api-paper-nms-v*` modules, for `CreativeOrderComparator`: one map is keyed
   through Paper's own `ItemStackLinkedSet.TYPE_AND_TAG` hash strategy and one through reference
   identity, and the JDK has no equivalent for either.
 - `surf-api-minestom-impl`, because a mixin `@Shadow` of a Minestom field typed
   `Int2ObjectSyncMap` has to name that exact type to match.
+- `surf-api-paper-nms-v26-3` for a second reason: `@ReflectedField` looks a field up through a
+  `VarHandle`, which matches on the field's *exact declared type* and not on assignability. The
+  server holds `LastSeenMessagesValidator.trackedMessages` as `ObjectList`, so declaring the
+  accessor's return type as `MutableList` makes the lookup throw `NoSuchFieldException` — in a
+  static initialiser that resolves every handle at once, which stops surf-api from starting at all.
+  One fastutil type therefore appears in a signature inside that module. It still reaches no
+  published artifact: the NMS version modules are implementation modules with no ABI dump.
 
 [fastutil]: https://fastutil.di.unimi.it/
 

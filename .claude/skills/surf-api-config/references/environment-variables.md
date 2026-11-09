@@ -1,6 +1,6 @@
 # Environment variables
 
-Source: `common/core/api/src/main/kotlin/dev/slne/surf/api/core/environment/` -
+Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/environment/` -
 `EnvironmentVariables.kt`, `EnvironmentVariableDelegate.kt`, `EnvironmentVariableValidation.kt`,
 `EnvironmentVariableException.kt`, `EnvironmentSource.kt`.
 
@@ -9,7 +9,7 @@ This is independent of the config system: no schema, no file, no serializer regi
 ## Entry points
 
 ```kotlin
-import dev.slne.surf.api.core.environment.env
+import dev.slne.surf.api.config.environment.env
 ```
 
 `env` is a top-level `@JvmField val` holding `EnvironmentVariables.system`, which reads

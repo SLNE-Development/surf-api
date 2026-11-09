@@ -68,7 +68,7 @@ surf-api
 │   ├── inventory
 │   │   └── api                       # surf-api-inventory-api: the platform-neutral half of the inventory framework
 │   └── core
-│       ├── api                       # surf-api-core-api: SurfApiCore itself, and the coordinate re-exporting the domains above
+│       ├── api                       # surf-api-core-api: SurfApiCore itself, and the coordinate re-exporting the domains above (3 files)
 │       └── impl                      # surf-api-core-impl: core implementations
 │
 ├── platform/                         # One group per runtime
