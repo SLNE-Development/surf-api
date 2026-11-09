@@ -1,8 +1,6 @@
 package dev.slne.surf.api.minestom.dialog.builder
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import net.minestom.server.dialog.DialogBody
 import net.minestom.server.item.ItemStack
@@ -13,7 +11,7 @@ import org.jetbrains.annotations.Range
  * Collects the body elements of a dialog.
  */
 class DialogBodyBuilder {
-    private val bodies = mutableObjectListOf<DialogBody>()
+    private val bodies = mutableListOf<DialogBody>()
 
     fun plain(block: PlainDialogMessageBuilder.() -> Unit) {
         bodies.add(PlainDialogMessageBuilder().apply(block).build())
@@ -41,7 +39,7 @@ class DialogBodyBuilder {
         bodies.add(ItemDialogMessageBuilder().apply(block).build())
     }
 
-    internal fun build(): ObjectList<DialogBody> = bodies
+    internal fun build(): MutableList<DialogBody> = bodies
 
     class PlainDialogMessageBuilder {
         var message: Component? = null
@@ -140,5 +138,5 @@ class DialogBodyBuilder {
     }
 }
 
-fun dialogBody(block: DialogBodyBuilder.() -> Unit): ObjectList<DialogBody> =
+fun dialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> =
     DialogBodyBuilder().apply(block).build()

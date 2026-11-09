@@ -3,10 +3,7 @@ package dev.slne.surf.api.core.server.impl.messages.pagination.suspend
 import dev.slne.surf.api.core.messages.pagination.*
 import dev.slne.surf.api.core.server.impl.messages.pagination.PaginationImpl
 import dev.slne.surf.api.core.server.impl.messages.pagination.PaginationImpl.Companion.pages
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import dev.slne.surf.api.core.util.objectListOf
 import kotlinx.coroutines.*
 import net.kyori.adventure.text.Component
 
@@ -41,16 +38,16 @@ data class SuspendPaginationImpl<T>(
         page: Int
     ): List<Component> = withContext(renderContext) {
         if (content.isEmpty()) {
-            return@withContext renderer.run { objectListOf(renderEmpty()) }
+            return@withContext renderer.run { listOf(renderEmpty()) }
         }
 
         val pages = pages(resultsPerPage, content.size)
 
         if (page !in 1..pages) {
-            return@withContext renderer.run { objectListOf(renderUnknownPage(page, pages)) }
+            return@withContext renderer.run { listOf(renderUnknownPage(page, pages)) }
         }
 
-        val results = mutableObjectListOf<Deferred<Collection<Component>>>()
+        val results = mutableListOf<Deferred<Collection<Component>>>()
         coroutineScope {
             results.add(async {
                 listOf(renderer.run {
@@ -106,9 +103,9 @@ data class SuspendPaginationImpl<T>(
             })
         }
 
-        val finalResults = mutableObjectListOf<Component>()
+        val finalResults = mutableListOf<Component>()
         results.forEach { finalResults.addAll(it.await()) }
 
-        finalResults.freeze()
+        finalResults
     }
 }

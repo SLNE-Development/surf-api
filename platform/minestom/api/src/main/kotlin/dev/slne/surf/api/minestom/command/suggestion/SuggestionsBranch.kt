@@ -8,9 +8,6 @@ package dev.slne.surf.api.minestom.command.suggestion
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.executor.CommandArguments
 import dev.slne.surf.api.minestom.command.executor.ParsedArgument
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import net.minestom.server.command.CommandSender
 
@@ -28,8 +25,8 @@ import net.minestom.server.command.CommandSender
 class SuggestionsBranch private constructor(
     suggestions: List<ArgumentSuggestions?>,
 ) {
-    private val suggestions = ObjectImmutableList(suggestions)
-    private val branches = ObjectArrayList<SuggestionsBranch>()
+    private val suggestions = suggestions.toList()
+    private val branches = mutableListOf<SuggestionsBranch>()
 
     /**
      * Adds [branches] as alternative continuations after this branch's own positions.
@@ -54,7 +51,7 @@ class SuggestionsBranch private constructor(
     ): ArgumentSuggestions? = traverse(
         mode = TraversalMode.NEXT,
         sender = sender,
-        rawArguments = ObjectList.of(*previousRaw),
+        rawArguments = listOf(*previousRaw),
         processed = emptyList(),
     ).provider
 
@@ -71,7 +68,7 @@ class SuggestionsBranch private constructor(
         traverse(
             mode = TraversalMode.ENFORCE,
             sender = sender,
-            rawArguments = ObjectList.of(*previousRaw),
+            rawArguments = listOf(*previousRaw),
             processed = emptyList(),
         )
     }
@@ -88,11 +85,11 @@ class SuggestionsBranch private constructor(
         rawArguments: List<String>,
         processed: List<String>,
     ): TraversalResult {
-        if (suggestions.isEmpty && branches.isEmpty) {
+        if (suggestions.isEmpty() && branches.isEmpty()) {
             return TraversalResult(null)
         }
 
-        val currentProcessed = ObjectArrayList(processed)
+        val currentProcessed = processed.toMutableList()
         for (provider in suggestions) {
             if (currentProcessed.size == rawArguments.size) {
                 if (mode == TraversalMode.NEXT) {
@@ -116,7 +113,7 @@ class SuggestionsBranch private constructor(
                 val info = suggestionInfo(sender, currentProcessed, "")
                 if (provider.suggest(info).none { it.suggestion == candidate }) {
                     val message =
-                        if (currentProcessed.isEmpty) "Unknown command" else "Unknown argument"
+                        if (currentProcessed.isEmpty()) "Unknown command" else "Unknown argument"
                     throw syntax(message, rawArguments, currentProcessed)
                 }
             }
@@ -124,12 +121,12 @@ class SuggestionsBranch private constructor(
             currentProcessed += candidate
         }
 
-        if (branches.isEmpty) {
+        if (branches.isEmpty()) {
             return TraversalResult(null)
         }
 
-        val successes = ObjectArrayList<TraversalResult>()
-        val failures = ObjectArrayList<CommandSyntaxException>()
+        val successes = mutableListOf<TraversalResult>()
+        val failures = mutableListOf<CommandSyntaxException>()
 
         for (branch in branches) {
             try {
@@ -139,7 +136,7 @@ class SuggestionsBranch private constructor(
             }
         }
 
-        if (successes.isEmpty) {
+        if (successes.isEmpty()) {
             throw failures.maxByOrNull { it.cursor ?: -1 }
                 ?: syntax("Unknown argument", rawArguments, currentProcessed)
         }
@@ -152,7 +149,7 @@ class SuggestionsBranch private constructor(
             return successes.single()
         }
 
-        val providers = successes.mapNotNullTo(ObjectArrayList(successes.size), TraversalResult::provider)
+        val providers = successes.mapNotNull(TraversalResult::provider)
 
         return when (providers.size) {
             0 -> TraversalResult(null)
@@ -166,7 +163,7 @@ class SuggestionsBranch private constructor(
         processed: List<String>,
         currentArgument: String,
     ): SuggestionInfo {
-        val parsed = processed.mapIndexedTo(ObjectArrayList(processed.size)) { index, raw ->
+        val parsed = processed.mapIndexed { index, raw ->
             ParsedArgument(index.toString(), raw, raw, present = true)
         }
 
@@ -205,6 +202,6 @@ class SuggestionsBranch private constructor(
          * A `null` entry marks a position without suggestions that accepts any value.
          */
         fun suggest(vararg suggestions: ArgumentSuggestions?): SuggestionsBranch =
-            SuggestionsBranch(ObjectList.of(*suggestions))
+            SuggestionsBranch(listOf(*suggestions))
     }
 }

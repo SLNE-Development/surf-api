@@ -4,9 +4,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.asLoadingCache
 import dev.slne.surf.api.core.server.component.environment.EnvironmentConfig
 import dev.slne.surf.api.core.server.component.property.PropertyService
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import dev.slne.surf.api.core.util.mutableObjectSetOf
 import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.api.shared.api.component.SurfComponent
 import dev.slne.surf.api.shared.api.component.condition.ComponentCondition
@@ -97,7 +94,7 @@ abstract class ComponentService {
         val classLoader = getClassloader(owner)
 
         val sortedComponentMetas = ComponentSorting.topologicalSort(meta.components)
-        val loadedComponents = mutableObjectListOf<ComponentEntry>()
+        val loadedComponents = mutableListOf<ComponentEntry>()
         for (meta in sortedComponentMetas) {
             val component = instantiateComponentIfValid(owner, loadedComponents, meta, classLoader)
             if (component != null) {
@@ -200,26 +197,26 @@ abstract class ComponentService {
         classLoader: ClassLoader
     ): ComponentEntry? {
         val logger = getLogger(owner)
-        val missingDependencies = mutableObject2ObjectMapOf<String, MutableSet<String>>()
+        val missingDependencies = mutableMapOf<String, MutableSet<String>>()
         for (classDependency in componentMeta.classDependencies) {
             try {
                 Class.forName(classDependency, false, classLoader)
             } catch (_: ClassNotFoundException) {
-                missingDependencies.computeIfAbsent("Class") { mutableObjectSetOf() }
+                missingDependencies.computeIfAbsent("Class") { mutableSetOf() }
                     .add(classDependency)
             }
         }
 
         for (pluginDependencyId in componentMeta.pluginDependencies) {
             if (!isPluginLoaded(pluginDependencyId)) {
-                missingDependencies.computeIfAbsent("Plugin") { mutableObjectSetOf() }
+                missingDependencies.computeIfAbsent("Plugin") { mutableSetOf() }
                     .add(pluginDependencyId)
             }
         }
 
         for (pluginDependenciesIds in componentMeta.pluginOneDependencies) {
             if (pluginDependenciesIds.none { isPluginLoaded(it) }) {
-                missingDependencies.computeIfAbsent("Plugin (one of)") { mutableObjectSetOf() }
+                missingDependencies.computeIfAbsent("Plugin (one of)") { mutableSetOf() }
                     .add(pluginDependenciesIds.joinToString("|"))
             }
         }
@@ -231,7 +228,7 @@ abstract class ComponentService {
                 className == componentDependency
             }
             if (!isLoaded) {
-                missingDependencies.computeIfAbsent("Component") { mutableObjectSetOf() }
+                missingDependencies.computeIfAbsent("Component") { mutableSetOf() }
                     .add(componentDependency)
             }
         }

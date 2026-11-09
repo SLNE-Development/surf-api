@@ -1,7 +1,6 @@
 package dev.slne.surf.api.core.messages.adventure
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectSetOf
 import net.kyori.adventure.bossbar.BossBar
 import net.kyori.adventure.text.Component
 
@@ -106,7 +105,7 @@ class BossBarBuilder {
      * }
      * ```
      */
-    var flags = mutableObjectSetOf<BossBar.Flag>(3)
+    var flags = mutableSetOf<BossBar.Flag>()
 
     /**
      * Sets the name (title) of the boss bar using a component builder.
@@ -137,7 +136,7 @@ class BossBarBuilder {
      * ```
      */
     fun flags(vararg flags: BossBar.Flag) {
-        this.flags = mutableObjectSetOf(*flags)
+        this.flags = mutableSetOf(*flags)
     }
 
     /**

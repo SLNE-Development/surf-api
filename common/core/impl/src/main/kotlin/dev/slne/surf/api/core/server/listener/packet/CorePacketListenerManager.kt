@@ -2,10 +2,9 @@ package dev.slne.surf.api.core.server.listener.packet
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.event.PacketListenerCommon
-import dev.slne.surf.api.core.util.objectSetOf
 
 object CorePacketListenerManager {
-    private val listeners = objectSetOf<PacketListenerCommon>()
+    private val listeners = setOf<PacketListenerCommon>()
 
     fun registerListeners() {
         listeners.forEach { register(it) }

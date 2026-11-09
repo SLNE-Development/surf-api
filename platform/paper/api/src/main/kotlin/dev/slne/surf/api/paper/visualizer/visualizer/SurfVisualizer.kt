@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.visualizer.visualizer
 
-import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.bukkit.block.BlockType
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.UnmodifiableView
@@ -55,7 +54,7 @@ interface SurfVisualizer : AutoCloseable {
     val viewerUuids: @UnmodifiableView Set<UUID>
 
     @Deprecated("Use viewerUuids instead", ReplaceWith("viewerUuids"))
-    val viewers: @UnmodifiableView ObjectSet<Player>
+    val viewers: @UnmodifiableView Set<Player>
 
     /**
      * Adds a specified player to the list of viewers for this visualizer.

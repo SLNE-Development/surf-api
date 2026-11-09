@@ -1,7 +1,6 @@
 package dev.slne.surf.api.minestom.dialog.builder
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import net.minestom.server.dialog.DialogAfterAction
 import net.minestom.server.dialog.DialogBody
@@ -17,8 +16,8 @@ class DialogBaseBuilder {
     var canCloseWithEscape: Boolean = true
     var pause: Boolean = false
     var afterAction: DialogAfterAction = DialogAfterAction.CLOSE
-    private var body: ObjectList<DialogBody>? = null
-    private var inputs: ObjectList<DialogInput>? = null
+    private var body: MutableList<DialogBody>? = null
+    private var inputs: MutableList<DialogInput>? = null
 
     fun title(title: Component) {
         this.title = title
@@ -89,8 +88,8 @@ class DialogBaseBuilder {
             canCloseWithEscape,
             pause,
             afterAction,
-            body ?: ObjectList.of(),
-            inputs ?: ObjectList.of()
+            body ?: emptyList(),
+            inputs ?: emptyList()
         )
     }
 }

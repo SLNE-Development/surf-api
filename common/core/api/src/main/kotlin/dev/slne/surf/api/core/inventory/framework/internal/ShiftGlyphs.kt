@@ -1,9 +1,7 @@
 package dev.slne.surf.api.core.inventory.framework.internal
 
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import glm_.func.common.abs
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 /**
  * Shared shift-glyph table and decomposition algorithm behind the per-platform
@@ -96,8 +94,7 @@ object ShiftGlyphs {
             const val MAX_GLYPH_AMOUNT = 512
 
             /** lookup table mapping from [amount] to [ShiftGlyph]. */
-            private val index =
-                entries.associateByTo(Int2ObjectOpenHashMap()) { it.amount }.freeze()
+            private val index = entries.associateBy { it.amount }
 
             /**
              * Returns the [ShiftGlyph] whose [ShiftGlyph.amount] equals [amount],

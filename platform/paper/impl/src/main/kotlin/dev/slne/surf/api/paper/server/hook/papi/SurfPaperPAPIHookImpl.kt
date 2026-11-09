@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.server.hook.papi
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.paper.hook.papi.SurfPaperPAPIHook
 import dev.slne.surf.api.paper.hook.papi.expansion.PapiExpansion
 import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolder
@@ -10,7 +9,7 @@ import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolderNOOP
 
 @AutoService(SurfPaperPAPIHook::class)
 class SurfPaperPAPIHookImpl : SurfPaperPAPIHook {
-    private val expansionHolders = mutableObject2ObjectMapOf<String, PAPIPlaceholderHolder>()
+    private val expansionHolders = mutableMapOf<String, PAPIPlaceholderHolder>()
     private var loaded = false
 
     override fun register(expansion: PapiExpansion) {

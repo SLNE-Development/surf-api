@@ -6,7 +6,6 @@ import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import io.papermc.paper.registry.data.dialog.DialogBase
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import io.papermc.paper.registry.data.dialog.input.DialogInput
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 
 class DialogBaseBuilder {
@@ -14,8 +13,8 @@ class DialogBaseBuilder {
     var externalTitle: Component? = null
     var canCloseWithEscape: Boolean? = null
     var afterAction: DialogBase.DialogAfterAction? = null
-    private var body: ObjectList<DialogBody>? = null
-    private var inputs: ObjectList<DialogInput>? = null
+    private var body: MutableList<DialogBody>? = null
+    private var inputs: MutableList<DialogInput>? = null
 
     fun title(title: Component) {
         this.title = title

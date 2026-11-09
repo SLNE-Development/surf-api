@@ -1,9 +1,6 @@
 package dev.slne.surf.api.minestom.command.executor
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -17,11 +14,7 @@ data class ParsedArgument(
 class CommandArguments private constructor(
     private val ordered: List<ParsedArgument>,
 ) {
-    private val named = Object2ObjectOpenHashMap<String, ParsedArgument>(ordered.size).apply {
-        ordered.forEach { argument ->
-            put(argument.name, argument)
-        }
-    }
+    private val named = ordered.associateBy { argument -> argument.name }
 
     inline fun <reified T> get(name: String): T = typed(name, T::class, nullable = null is T) as T
 
@@ -32,16 +25,8 @@ class CommandArguments private constructor(
 
     fun getRaw(index: Int): String? = ordered.getOrNull(index)?.raw
 
-    fun rawArguments(): List<String> {
-        val rawArguments = ObjectArrayList<String>(ordered.size)
-
-        ordered.forEach { argument ->
-            if (argument.present) {
-                argument.raw?.let(rawArguments::add)
-            }
-        }
-
-        return rawArguments
+    fun rawArguments(): List<String> = ordered.mapNotNull { argument ->
+        argument.raw.takeIf { argument.present }
     }
 
     operator fun get(index: Int): Any? = ordered[index].value
@@ -73,8 +58,8 @@ class CommandArguments private constructor(
     companion object {
         @InternalSurfApi
         fun of(arguments: List<ParsedArgument>): CommandArguments {
-            val copy = ObjectArrayList(arguments)
-            val names = ObjectOpenHashSet<String>(copy.size)
+            val copy = arguments.toList()
+            val names = mutableSetOf<String>()
 
             copy.forEach { argument ->
                 require(names.add(argument.name)) {

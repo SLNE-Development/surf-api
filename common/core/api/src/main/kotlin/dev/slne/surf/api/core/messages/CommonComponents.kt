@@ -12,7 +12,6 @@ import dev.slne.surf.api.core.messages.adventure.appendText
 import dev.slne.surf.api.core.messages.adventure.clickOpensUrl
 import dev.slne.surf.api.core.messages.adventure.text
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import net.kyori.adventure.text.TextComponent
@@ -549,7 +548,7 @@ object CommonComponents {
     ): Component {
         val joinConfig = JoinConfiguration.builder().separator(Component.text(", ", SPACER)).build()
 
-        return Component.join(joinConfig, collection.mapTo(mutableObjectListOf(), formatter))
+        return Component.join(joinConfig, collection.mapTo(mutableListOf(), formatter))
     }
 
     /**
@@ -591,7 +590,7 @@ object CommonComponents {
 
         return firstPrefix.append(
             Component.join(
-                joinConfig, collection.mapTo(mutableObjectListOf(), formatter)
+                joinConfig, collection.mapTo(mutableListOf(), formatter)
             )
         )
     }
@@ -639,7 +638,7 @@ object CommonComponents {
         return firstPrefix.append(
             Component.join(
                 joinConfig,
-                map.mapTo(mutableObjectListOf()) { (key, value) ->
+                map.mapTo(mutableListOf()) { (key, value) ->
                     buildText0 {
                         append(keyFormatter(key).colorIfAbsent(VARIABLE_KEY))
                         append(keyValueSeparator)

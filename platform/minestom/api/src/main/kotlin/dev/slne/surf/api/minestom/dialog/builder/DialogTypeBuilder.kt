@@ -1,7 +1,5 @@
 package dev.slne.surf.api.minestom.dialog.builder
 
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import net.minestom.server.dialog.Dialog
 import net.minestom.server.dialog.DialogActionButton
 import net.minestom.server.dialog.DialogMetadata
@@ -115,7 +113,7 @@ class DialogTypeBuilder {
      */
     class DialogListTypeBuilder {
         /** Keeps the order the dialogs were added in, which is the order the client shows them in. */
-        private val dialogs = ObjectLinkedOpenHashSet<Dialog>()
+        private val dialogs = mutableSetOf<Dialog>()
         var exitAction: DialogActionButton? = null
         var columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int = DEFAULT_COLUMNS
         var buttonWidth: @Range(from = 1, to = 1024) Int = DEFAULT_BUTTON_WIDTH
@@ -216,7 +214,7 @@ class DialogTypeBuilder {
     }
 
     class DialogMultiActionTypeBuilder {
-        private val actions = mutableObjectListOf<DialogActionButton>()
+        private val actions = mutableListOf<DialogActionButton>()
         var exitAction: DialogActionButton? = null
         var columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int = DEFAULT_COLUMNS
 

@@ -8,8 +8,6 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.minestom.server.MinecraftServer
@@ -78,7 +76,7 @@ internal class EntitySelectorParser(
         builder: SuggestionsBuilder,
     ): CompletableFuture<Suggestions> {
         val players = MinecraftServer.getConnectionManager().onlinePlayers
-        val values = ObjectArrayList<String>(ENTITY_SELECTORS.size)
+        val values = mutableListOf<String>()
 
         val prefix = builder.remaining
         players.forEach { player ->
@@ -96,9 +94,9 @@ internal class EntitySelectorParser(
     }
 
     private companion object {
-        val SINGLE_SELECTORS: ObjectList<String> = ObjectList.of("@n", "@p", "@r", "@s")
-        val PLAYER_SELECTORS: ObjectList<String> = ObjectList.of("@p", "@r", "@a", "@s")
-        val ENTITY_SELECTORS: ObjectList<String> = ObjectList.of("@p", "@r", "@a", "@e", "@n", "@s")
+        val SINGLE_SELECTORS: List<String> = listOf("@n", "@p", "@r", "@s")
+        val PLAYER_SELECTORS: List<String> = listOf("@p", "@r", "@a", "@s")
+        val ENTITY_SELECTORS: List<String> = listOf("@p", "@r", "@a", "@e", "@n", "@s")
     }
 }
 

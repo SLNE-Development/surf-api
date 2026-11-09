@@ -7,9 +7,6 @@ import com.mojang.serialization.MapLike
 import com.mojang.serialization.RecordBuilder
 import dev.slne.surf.api.core.nbt.asCollection
 import dev.slne.surf.api.core.nbt.isCollectionTag
-import it.unimi.dsi.fastutil.bytes.ByteArrayList
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.longs.LongArrayList
 import net.kyori.adventure.nbt.*
 import java.nio.ByteBuffer
 import java.util.function.BiConsumer
@@ -350,7 +347,7 @@ object NbtOps : DynamicOps<BinaryTag> {
     }
 
     class ByteListCollector(values: ByteArray) : ListCollector {
-        private val values = ByteArrayList(values)
+        private val values = values.toMutableList()
 
         override val result: BinaryTag
             get() = ByteArrayBinaryTag.byteArrayBinaryTag(*values.toByteArray())
@@ -360,13 +357,13 @@ object NbtOps : DynamicOps<BinaryTag> {
                 values.add(tag.value())
                 return this
             } else {
-                return GenericListCollector(this.values).accept(tag)
+                return GenericListCollector(this.values.toByteArray()).accept(tag)
             }
         }
     }
 
     class IntListCollector(values: IntArray) : ListCollector {
-        private val values = IntArrayList(values)
+        private val values = values.toMutableList()
 
         override val result: BinaryTag
             get() = IntArrayBinaryTag.intArrayBinaryTag(*values.toIntArray())
@@ -376,13 +373,13 @@ object NbtOps : DynamicOps<BinaryTag> {
                 values.add(tag.value())
                 return this
             } else {
-                return GenericListCollector(this.values).accept(tag)
+                return GenericListCollector(this.values.toIntArray()).accept(tag)
             }
         }
     }
 
     class LongListCollector(values: LongArray) : ListCollector {
-        private val values = LongArrayList(values)
+        private val values = values.toMutableList()
 
         override val result: BinaryTag
             get() = LongArrayBinaryTag.longArrayBinaryTag(*values.toLongArray())
@@ -392,7 +389,7 @@ object NbtOps : DynamicOps<BinaryTag> {
                 values.add(tag.value())
                 return this
             } else {
-                return GenericListCollector(this.values).accept(tag)
+                return GenericListCollector(this.values.toLongArray()).accept(tag)
             }
         }
     }
@@ -409,21 +406,21 @@ object NbtOps : DynamicOps<BinaryTag> {
             }
         }
 
-        constructor(list: IntArrayList) {
-            list.intIterator().forEachRemaining { i ->
-                resultBuilder.add(IntBinaryTag.intBinaryTag(i))
+        constructor(values: IntArray) {
+            for (value in values) {
+                resultBuilder.add(IntBinaryTag.intBinaryTag(value))
             }
         }
 
-        constructor(list: ByteArrayList) {
-            list.iterator().forEachRemaining { b: Byte ->
-                resultBuilder.add(ByteBinaryTag.byteBinaryTag(b))
+        constructor(values: ByteArray) {
+            for (value in values) {
+                resultBuilder.add(ByteBinaryTag.byteBinaryTag(value))
             }
         }
 
-        constructor(list: LongArrayList) {
-            list.iterator().forEachRemaining { l ->
-                resultBuilder.add(LongBinaryTag.longBinaryTag(l))
+        constructor(values: LongArray) {
+            for (value in values) {
+                resultBuilder.add(LongBinaryTag.longBinaryTag(value))
             }
         }
 

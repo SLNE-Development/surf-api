@@ -1,13 +1,11 @@
 package dev.slne.surf.api.core.config.migration
 
 import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
-import it.unimi.dsi.fastutil.objects.ObjectList
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.NodePath
 import org.spongepowered.configurate.transformation.ConfigurationTransformation
+import java.util.TreeMap
 
 /**
  * Collects [ConfigMigration] instances keyed by target version and builds
@@ -37,7 +35,7 @@ import org.spongepowered.configurate.transformation.ConfigurationTransformation
  */
 class ConfigMigrationBuilder {
 
-    private val migrations = Int2ObjectRBTreeMap<ObjectList<ConfigMigration>>()
+    private val migrations = TreeMap<Int, MutableList<ConfigMigration>>()
     private var versionKeyPath: Array<out Any> = arrayOf(DEFAULT_VERSION_KEY)
 
     /**
@@ -54,7 +52,7 @@ class ConfigMigrationBuilder {
      */
     fun migration(version: Int, migration: ConfigMigration): ConfigMigrationBuilder {
         require(version >= 0) { "Migration version must be >= 0, was $version" }
-        migrations.computeIfAbsent(version) { mutableObjectListOf() }.add(migration)
+        migrations.computeIfAbsent(version) { mutableListOf() }.add(migration)
         return this
     }
 
@@ -101,7 +99,7 @@ class ConfigMigrationBuilder {
     /**
      * Returns the highest registered version, or `-1` if no migrations are registered.
      */
-    fun latestVersion(): Int = if (migrations.isEmpty()) -1 else migrations.lastIntKey()
+    fun latestVersion(): Int = if (migrations.isEmpty()) -1 else migrations.lastKey()
 
     /**
      * Builds a Configurate [ConfigurationTransformation.Versioned] from the
@@ -115,10 +113,7 @@ class ConfigMigrationBuilder {
         val builder = ConfigurationTransformation.versionedBuilder()
             .versionKey(*versionKeyPath)
 
-        migrations.int2ObjectEntrySet().iterator().forEachRemaining { entry ->
-            val version = entry.intKey
-            val migrationList = entry.value
-
+        for ((version, migrationList) in migrations) {
             val transformation = ConfigurationTransformation.builder().apply {
                 addAction(NodePath.path()) { _, node ->
                     for (migration in migrationList) {

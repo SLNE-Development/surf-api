@@ -6,8 +6,6 @@ import dev.slne.surf.api.core.reflection.Static;
 import dev.slne.surf.api.core.server.impl.reflection.reflection.ProxyCreationException;
 import dev.slne.surf.api.core.server.impl.reflection.reflection.ProxyInvocationException;
 import dev.slne.surf.api.core.util.SurfUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -18,6 +16,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +33,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     private final Class<T> proxyClass;
     private final Class<?> proxiedClass;
-    private final Object2ObjectMap<Method, @Nullable Invokable> cache;
+    private final Map<Method, @Nullable Invokable> cache;
     private final Map<Method, MethodHandle> defaultCache = new ConcurrentHashMap<>();
 
     public SurfInvocationHandlerJava(Class<T> proxyClass, Class<?> proxiedClass) {
@@ -86,13 +85,13 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
         return args == null ? handle.invokeExact() : handle.invokeExact(args);
     }
 
-    private Object2ObjectMap<Method, Invokable> buildCache() {
+    private Map<Method, Invokable> buildCache() {
         return Arrays.stream(proxyClass.getDeclaredMethods())
             .filter(m -> !m.isSynthetic())
             .filter(m -> !m.isDefault())
             .filter(m -> !isEqualsHashOrToStringMethod(m))
             .collect(Collectors.toMap(Function.identity(), this::createInvokable, (e1, e2) -> e1,
-                Object2ObjectOpenHashMap::new));
+                HashMap::new));
     }
 
     private Invokable createInvokable(final Method method) {

@@ -1,14 +1,11 @@
 package dev.slne.surf.api.minestom.command
 
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import it.unimi.dsi.fastutil.objects.ObjectSets
-
 class RegisteredCommand(
     val name: String,
     aliases: Collection<String> = emptySet(),
     val namespace: String? = null,
 ) {
-    val aliases: Set<String> = ObjectSets.unmodifiable(ObjectLinkedOpenHashSet(aliases))
+    val aliases: Set<String> = aliases.toSet()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

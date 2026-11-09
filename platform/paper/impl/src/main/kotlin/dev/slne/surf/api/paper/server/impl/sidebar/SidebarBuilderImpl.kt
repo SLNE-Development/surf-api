@@ -5,7 +5,6 @@ import dev.slne.surf.api.paper.sidebar.AutoUpdatingSidebarBuilder
 import dev.slne.surf.api.paper.sidebar.SidebarBuilder
 import dev.slne.surf.api.paper.sidebar.SidebarLine
 import io.papermc.paper.util.Tick
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.minimessage.MiniMessage
@@ -56,8 +55,8 @@ class SidebarDefinition(
 
 open class SidebarBuilderImpl : SidebarBuilder {
     private var title: SidebarTitle = SidebarTitle.Static(Component.empty())
-    private val entries = ObjectArrayList<SidebarEntry>()
-    private val animations = ObjectArrayList<FrameAnimation>()
+    private val entries = mutableListOf<SidebarEntry>()
+    private val animations = mutableListOf<FrameAnimation>()
 
     override var maxLines: Int = MAX_LINES
         set(value) {
@@ -127,7 +126,7 @@ open class SidebarBuilderImpl : SidebarBuilder {
         ): List<Component> {
             val step = 1f / 20f
             val textPlaceholder = Placeholder.component("text", text)
-            val frames = ObjectArrayList<Component>()
+            val frames = mutableListOf<Component>()
 
             // Animation from left to right
             var phase = -1f

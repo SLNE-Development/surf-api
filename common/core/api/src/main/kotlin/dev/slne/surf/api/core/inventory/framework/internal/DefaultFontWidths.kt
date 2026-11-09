@@ -1,10 +1,6 @@
 package dev.slne.surf.api.core.inventory.framework.internal
 
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntMaps
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 
@@ -62,7 +58,7 @@ object DefaultFontWidths {
      * Suitable as the `charWidths` argument of [TextAlignmentMath.textWidth] when [DEFAULT_ADVANCE]
      * is passed as its `charSize` and `0` as its `charSpacing`.
      */
-    val advances: Int2IntMap = Int2IntOpenHashMap(1100).apply {
+    val advances: Map<Int, Int> = buildMap(1100) {
         // Measured off the vanilla font sheets (ascii.png, accented.png, nonlatin_european.png):
         // advance = width of the drawn pixels plus the one pixel the renderer adds after a glyph.
         // The space is the exception - it carries no pixels and comes from the space provider.
@@ -71,7 +67,7 @@ object DefaultFontWidths {
         for ((advance, glyphs) in ADVANCES_BY_WIDTH) {
             for (glyph in glyphs) put(glyph.code, advance)
         }
-    }.freeze()
+    }
 
     /**
      * Returns the advance of [codePoint] in the vanilla font.
@@ -85,13 +81,9 @@ object DefaultFontWidths {
     fun charWidth(
         codePoint: Int,
         bold: Boolean = false,
-        overrides: Int2IntMap = Int2IntMaps.EMPTY_MAP,
+        overrides: Map<Int, Int> = emptyMap(),
     ): Int {
-        val advance = when {
-            overrides.containsKey(codePoint) -> overrides.get(codePoint)
-            advances.containsKey(codePoint) -> advances.get(codePoint)
-            else -> DEFAULT_ADVANCE
-        }
+        val advance = overrides[codePoint] ?: advances[codePoint] ?: DEFAULT_ADVANCE
 
         return advance + if (bold) BOLD_EXTRA_ADVANCE else 0
     }
@@ -110,7 +102,7 @@ object DefaultFontWidths {
     fun textWidth(
         text: String,
         bold: Boolean = false,
-        overrides: Int2IntMap = Int2IntMaps.EMPTY_MAP,
+        overrides: Map<Int, Int> = emptyMap(),
     ): Int {
         var width = 0
         var index = 0
@@ -137,7 +129,7 @@ object DefaultFontWidths {
     fun componentWidth(
         component: Component,
         bold: Boolean = false,
-        overrides: Int2IntMap = Int2IntMaps.EMPTY_MAP,
+        overrides: Map<Int, Int> = emptyMap(),
     ): Int = layoutViewText(
         component = component,
         charSpacing = 0,

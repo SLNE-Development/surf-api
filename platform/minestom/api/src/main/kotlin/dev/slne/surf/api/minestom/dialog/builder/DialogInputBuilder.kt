@@ -1,8 +1,6 @@
 package dev.slne.surf.api.minestom.dialog.builder
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import net.minestom.server.dialog.DialogInput
 import org.jetbrains.annotations.Range
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.Range
  * payload once the dialog is submitted.
  */
 class DialogInputBuilder {
-    private val inputs = mutableObjectListOf<DialogInput>()
+    private val inputs = mutableListOf<DialogInput>()
 
     fun input(input: DialogInput) {
         inputs.add(input)
@@ -57,7 +55,7 @@ class DialogInputBuilder {
         input(SingleOptionInputBuilder(key).apply(block).build())
     }
 
-    internal fun build(): ObjectList<DialogInput> = inputs
+    internal fun build(): MutableList<DialogInput> = inputs
 
     /**
      * The shared state of every input control: a key and a label.
@@ -194,7 +192,7 @@ class DialogInputBuilder {
     class SingleOptionInputBuilder(key: String) : InputBuilder(key) {
         var width: @Range(from = 1, to = 1024) Int = DialogInput.DEFAULT_WIDTH
         var labelVisible: Boolean = true
-        private val options = mutableObjectListOf<DialogInput.SingleOption.Option>()
+        private val options = mutableListOf<DialogInput.SingleOption.Option>()
 
         fun width(width: @Range(from = 1, to = 1024) Int) {
             this.width = width
@@ -224,5 +222,5 @@ class DialogInputBuilder {
     }
 }
 
-fun dialogInput(block: DialogInputBuilder.() -> Unit): ObjectList<DialogInput> =
+fun dialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> =
     DialogInputBuilder().apply(block).build()

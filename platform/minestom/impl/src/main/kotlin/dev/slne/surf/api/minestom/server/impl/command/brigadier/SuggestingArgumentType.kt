@@ -17,7 +17,6 @@ import dev.slne.surf.api.minestom.command.suggestion.SuggestionFilter
 import dev.slne.surf.api.minestom.command.suggestion.SuggestionInfo
 import dev.slne.surf.api.minestom.coroutine.minestomAsyncScope
 import dev.slne.surf.api.minestom.server.impl.command.includesBuiltIns
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
@@ -134,7 +133,7 @@ internal class SuggestingArgumentType(
      * Nodes without a parsed value, such as literals, are omitted.
      */
     private fun <S> previousArguments(context: CommandContext<S>): CommandArguments {
-        val parsed = ObjectArrayList<ParsedArgument>()
+        val parsed = mutableListOf<ParsedArgument>()
 
         context.nodes.forEach { parsedNode ->
             val node = parsedNode.node as? ArgumentCommandNode<*, *> ?: return@forEach

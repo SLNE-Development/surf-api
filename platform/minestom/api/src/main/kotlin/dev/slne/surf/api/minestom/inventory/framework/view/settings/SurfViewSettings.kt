@@ -1,7 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings
 
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.align.TextAlignment
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.format.TextColor
 
@@ -41,7 +40,7 @@ sealed interface SurfViewSettings {
     val rowFontMetrics: ViewFontMetrics
     val headerGeometry: ViewHeaderGeometry
     val backgroundGlyph: Boolean
-    val rowFonts: Int2ObjectMap<Key>
+    val rowFonts: Map<Int, Key>
     val cancelOnClick: Boolean
     val cancelOnDrag: Boolean
     val cancelOnDrop: Boolean

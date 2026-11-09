@@ -7,15 +7,12 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
-import it.unimi.dsi.fastutil.ints.IntSet
 
 @NmsUseWithCaution
 interface SurfPaperNmsSpawnPackets {
 
-    fun despawn(entityIds: IntList): PacketOperation
-    fun despawn(entityIds: IntSet): PacketOperation = despawn(IntArrayList(entityIds))
+    fun despawn(entityIds: List<Int>): PacketOperation
+    fun despawn(entityIds: Set<Int>): PacketOperation = despawn(entityIds.toList())
     fun despawn(vararg entityId: Int): PacketOperation
 
     fun spawnItemDisplay(

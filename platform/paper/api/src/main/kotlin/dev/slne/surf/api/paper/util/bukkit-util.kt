@@ -10,12 +10,9 @@ import dev.slne.surf.api.core.luckperms.LuckPermsAccess
 import dev.slne.surf.api.core.luckperms.prefix
 import dev.slne.surf.api.core.minimessage.miniMessage
 import dev.slne.surf.api.core.util.getCallerClass
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.paper.SurfApiPaper
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.Position
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet
-import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Semaphore
@@ -264,8 +261,8 @@ fun ChunkSnapshot.getHighestBlockYAtBlockCoordinates(
  * @param world The world to query.
  * @return A list of vectors containing the original x/z and the computed highest y value.
  */
-suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<Vector3i> {
-    val chunkKeys = LongOpenHashSet(size / 4 + 1)
+suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector3i> {
+    val chunkKeys = HashSet<Long>(size / 4 + 1)
     for (point in this) {
         val key = Chunk.getChunkKey(point.x() shr 4, point.z() shr 4)
         chunkKeys.add(key)
@@ -275,9 +272,7 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
     coroutineScope {
         val semaphore =
             Semaphore(16) // Limit concurrent chunk loads to prevent overwhelming the server
-        val iterator = chunkKeys.iterator()
-        while (iterator.hasNext()) {
-            val key = iterator.nextLong()
+        for (key in chunkKeys) {
             launch {
                 semaphore.withPermit {
                     val chunk = world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
@@ -296,7 +291,7 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): ObjectList<
         }
     }
 
-    val result = mutableObjectListOf<Vector3i>(size)
+    val result = ArrayList<Vector3i>(size)
     for (point in this) {
         val key = Chunk.getChunkKey(point.x() shr 4, point.z() shr 4)
         val snapshot = snapshots[key] ?: error("ChunkSnapshot for key $key not found")

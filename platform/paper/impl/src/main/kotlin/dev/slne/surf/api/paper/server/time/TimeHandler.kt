@@ -2,8 +2,6 @@ package dev.slne.surf.api.paper.server.time
 
 import com.github.shynixn.mccoroutine.folia.globalRegionDispatcher
 import com.github.shynixn.mccoroutine.folia.ticks
-import dev.slne.surf.api.core.util.mutableObjectSetOf
-import dev.slne.surf.api.core.util.synchronize
 import dev.slne.surf.api.paper.server.plugin
 import dev.slne.surf.api.paper.time.TimeSkipResult
 import kotlinx.coroutines.delay
@@ -13,7 +11,7 @@ import java.util.*
 
 object TimeHandler {
     const val DEFAULT_SKIP_AMOUNT: Long = 100L
-    private val skippingWorlds = mutableObjectSetOf<UUID>().synchronize()
+    private val skippingWorlds: MutableSet<UUID> = Collections.synchronizedSet(mutableSetOf())
 
     @Suppress("DEPRECATION")
     suspend fun skipTimeSmoothly(world: World, timeToAdd: Long, duration: Long): TimeSkipResult {

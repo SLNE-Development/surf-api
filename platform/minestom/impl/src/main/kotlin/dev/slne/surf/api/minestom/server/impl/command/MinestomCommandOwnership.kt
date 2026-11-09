@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.server.impl.command
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -22,7 +21,7 @@ internal class MinestomCommandOwnership {
     }
 
     internal fun claim(names: Collection<String>, registration: CompiledRegistration) {
-        val claimed = ObjectArrayList<String>(names.size)
+        val claimed = ArrayList<String>(names.size)
         try {
             names.forEach { rawName ->
                 val name = normalize(rawName)

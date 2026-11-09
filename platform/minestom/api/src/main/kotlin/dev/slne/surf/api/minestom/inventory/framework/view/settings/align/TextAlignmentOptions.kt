@@ -1,8 +1,5 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings.align
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntMaps
-
 /**
  * Encapsulates the geometric parameters of the inventory title container area
  * used by [TextAlignment.calculateShift] and [TextAlignment.calculateTextWidth].
@@ -25,5 +22,5 @@ data class TextAlignmentOptions(
     val containerWidth: Int,
     val charSize: Int,
     val charSpacing: Int,
-    val charWidths: Int2IntMap = Int2IntMaps.EMPTY_MAP
+    val charWidths: Map<Int, Int> = emptyMap()
 )

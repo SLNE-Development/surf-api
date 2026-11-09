@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.pagination
 
-import dev.slne.surf.api.core.util.toMutableObjectList
 import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.minestom.inventory.framework.view.PaginatedSurfViewContext
 import me.devnatan.inventoryframework.component.MinestomItemComponentBuilder
@@ -50,26 +49,26 @@ inline fun <T> pagination(block: @InventoryFrameworkDSL PaginationDslBuilder<T>.
         val stateBuilder: PaginationStateBuilder<Context, MinestomItemComponentBuilder, T> =
             when (sourceType) {
                 is PaginationSourceType.Static ->
-                    view.buildPaginationState(sourceType.provider().toMutableObjectList())
+                    view.buildPaginationState(sourceType.provider().toMutableList())
 
                 is PaginationSourceType.Computed ->
                     view.buildComputedPaginationState { c ->
-                        sourceType.provider(c).toMutableObjectList()
+                        sourceType.provider(c).toMutableList()
                     }
 
                 is PaginationSourceType.ComputedAsync ->
                     view.buildComputedAsyncPaginationState { c ->
-                        sourceType.provider(c).thenApply { it.toMutableObjectList() }
+                        sourceType.provider(c).thenApply { it.toMutableList() }
                     }
 
                 is PaginationSourceType.Lazy ->
                     view.buildLazyPaginationState { c ->
-                        sourceType.provider(c).toMutableObjectList()
+                        sourceType.provider(c).toMutableList()
                     }
 
                 is PaginationSourceType.LazyAsync ->
                     view.buildLazyAsyncPaginationState { c ->
-                        sourceType.provider(c).thenApply { it.toMutableObjectList() }
+                        sourceType.provider(c).thenApply { it.toMutableList() }
                     }
             }
 

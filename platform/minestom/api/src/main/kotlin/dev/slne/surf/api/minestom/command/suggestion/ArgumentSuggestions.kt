@@ -6,9 +6,6 @@
 package dev.slne.surf.api.minestom.command.suggestion
 
 import dev.slne.surf.api.minestom.command.exception.CommandSyntaxException
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList
-import it.unimi.dsi.fastutil.objects.ObjectList
 import kotlinx.coroutines.*
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 
@@ -42,16 +39,14 @@ fun interface ArgumentSuggestions {
         /**
          * Returns a provider that suggests the fixed [values].
          */
-        fun strings(vararg values: String): ArgumentSuggestions = strings(ObjectList.of(*values))
+        fun strings(vararg values: String): ArgumentSuggestions = strings(listOf(*values))
 
         /**
          * Returns a provider that suggests the fixed [values].
          */
         fun strings(values: Collection<String>): ArgumentSuggestions {
-            val copy = ObjectImmutableList(values)
-            return ArgumentSuggestions {
-                copy.mapTo(ObjectArrayList(copy.size), ::withoutTooltip)
-            }
+            val copy = values.toList()
+            return ArgumentSuggestions { copy.map(::withoutTooltip) }
         }
 
         /**
@@ -59,8 +54,7 @@ fun interface ArgumentSuggestions {
          */
         fun strings(provider: (SuggestionInfo) -> Collection<String>): ArgumentSuggestions {
             return ArgumentSuggestions { info ->
-                val provided = provider(info)
-                provided.mapTo(ObjectArrayList(provided.size), ::withoutTooltip)
+                provider(info).map(::withoutTooltip)
             }
         }
 
@@ -77,8 +71,7 @@ fun interface ArgumentSuggestions {
          */
         fun stringsAsync(provider: suspend (SuggestionInfo) -> Collection<String>): ArgumentSuggestions {
             return ArgumentSuggestions { info ->
-                val provided = provider(info)
-                provided.mapTo(ObjectArrayList(provided.size), ::withoutTooltip)
+                provider(info).map(::withoutTooltip)
             }
         }
 
@@ -92,13 +85,13 @@ fun interface ArgumentSuggestions {
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
         fun stringsWithTooltips(vararg values: StringTooltip): ArgumentSuggestions =
-            stringsWithTooltips(ObjectList.of(*values))
+            stringsWithTooltips(listOf(*values))
 
         /**
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
         fun stringsWithTooltips(values: Collection<StringTooltip>): ArgumentSuggestions {
-            val copy = ObjectImmutableList(values)
+            val copy = values.toList()
             return ArgumentSuggestions { copy }
         }
 
@@ -106,7 +99,7 @@ fun interface ArgumentSuggestions {
          * Returns a provider that suggests the entries [provider] returns for each request.
          */
         fun stringsWithTooltips(provider: (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
-            return ArgumentSuggestions { info -> ObjectImmutableList(provider(info)) }
+            return ArgumentSuggestions { info -> provider(info).toList() }
         }
 
         /**
@@ -120,7 +113,7 @@ fun interface ArgumentSuggestions {
          * request.
          */
         fun stringsWithTooltipsAsync(provider: suspend (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
-            return ArgumentSuggestions { info -> ObjectImmutableList(provider(info)) }
+            return ArgumentSuggestions { info -> provider(info).toList() }
         }
 
         /**
@@ -138,7 +131,7 @@ fun interface ArgumentSuggestions {
                 override val filterPolicy = SuggestionFilter.NONE
 
                 override suspend fun suggest(info: SuggestionInfo): List<StringTooltip> {
-                    return ObjectImmutableList(provider(info))
+                    return provider(info).toList()
                 }
             }
         }
@@ -152,12 +145,10 @@ fun interface ArgumentSuggestions {
          * the others; cancellation propagates.
          */
         fun merge(vararg providers: ArgumentSuggestions): ArgumentSuggestions {
-            val copy = ObjectImmutableList(providers)
+            val copy = providers.toList()
             return ArgumentSuggestions { info ->
                 coroutineScope {
-                    copy.mapTo(ObjectArrayList(copy.size)) { provider ->
-                        async { suggestOrEmpty(provider, info) }
-                    }
+                    copy.map { provider -> async { suggestOrEmpty(provider, info) } }
                         .awaitAll()
                         .flatten()
                 }
@@ -178,7 +169,7 @@ fun interface ArgumentSuggestions {
                 null
             }
 
-            next?.suggest(info)?.let(::ObjectImmutableList).orEmpty()
+            next?.suggest(info)?.toList().orEmpty()
         }
 
         private suspend fun suggestOrEmpty(

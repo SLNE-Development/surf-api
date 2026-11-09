@@ -7,8 +7,6 @@ import dev.slne.surf.api.minestom.command.internal.CommandAPIPlatform
 import dev.slne.surf.api.minestom.coroutine.minestomAsyncScope
 import dev.slne.surf.api.minestom.server.impl.command.brigadier.BrigadierCommandTree
 import dev.slne.surf.api.minestom.server.impl.command.brigadier.DeclareCommandsMerger
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import net.minestom.server.command.CommandManager
 import net.minestom.server.command.CommandSender
@@ -38,7 +36,7 @@ internal class MinestomCommandAPIPlatform(
 ) : CommandAPIPlatform, AutoCloseable {
 
     private val lock = ReentrantLock()
-    private val registrations = ObjectOpenHashSet<CompiledRegistration>()
+    private val registrations = mutableSetOf<CompiledRegistration>()
     private val merger = DeclareCommandsMerger(tree)
 
     private var closed = false
@@ -122,7 +120,7 @@ internal class MinestomCommandAPIPlatform(
         installed.compareAndSet(this, null)
 
         var failure: Throwable? = null
-        val registrationsSnapshot = ObjectArrayList(registrations)
+        val registrationsSnapshot = registrations.toList()
         registrationsSnapshot.forEach { compiled ->
             try {
                 detach(compiled)

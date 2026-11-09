@@ -1,7 +1,6 @@
 package dev.slne.surf.api.core.messages.bundle
 
 import dev.slne.surf.api.core.messages.BundlePath
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
@@ -255,7 +254,7 @@ class SurfMessageBundle @JvmOverloads constructor(
         URLClassLoader(arrayOf(dataFolder.toUri().toURL())).use { classLoader ->
             dataFolder.walk(PathWalkOption.FOLLOW_LINKS)
                 .filter { it.name.startsWith(prefix) }
-                .mapNotNullTo(mutableObjectListOf()) {
+                .mapNotNullTo(mutableListOf()) {
                     val fileName = it.name
                     val local = fileName.getLocale(defaultLocale)
                     runCatching {
@@ -287,7 +286,7 @@ class SurfMessageBundle @JvmOverloads constructor(
                         classLoader,
                     )
                 }.getOrNull()
-            }.toCollection(mutableObjectListOf())
+            }.toCollection(mutableListOf())
 
     /**
      * Checks if a resource bundle is available for the given base name and locale.

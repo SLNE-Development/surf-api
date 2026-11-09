@@ -1,16 +1,15 @@
 package dev.slne.surf.api.core.random
 
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap
 import kotlinx.coroutines.flow.Flow
 import org.apache.commons.math3.distribution.EnumeratedDistribution
 import org.apache.commons.math3.random.Well19937c
 import org.apache.commons.math3.util.Pair
+import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.random.RandomGenerator
 
 internal class RandomSelectorImpl<E>(
     randomGenerator: org.apache.commons.math3.random.RandomGenerator?,
-    elements: List<Object2DoubleMap.Entry<E>>
+    elements: List<Map.Entry<E, Double>>
 ) : RandomSelector<E> {
     private val distribution: EnumeratedDistribution<E>
     private val random = randomGenerator ?: Well19937c()
@@ -18,7 +17,7 @@ internal class RandomSelectorImpl<E>(
     init {
         require(elements.isNotEmpty()) { "RandomSelector must have at least one element." }
 
-        val pmf = elements.map { Pair.create(it.key, it.doubleValue) }
+        val pmf = elements.map { Pair.create(it.key, it.value) }
         distribution = EnumeratedDistribution(random, pmf)
     }
 
@@ -95,7 +94,7 @@ internal class RandomSelectorImpl<E>(
             iterable: Iterable<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator?
         ): RandomSelectorImpl<E> {
-            val elements = iterable.map { Object2DoubleMap.entry(it, 1.0) }
+            val elements = iterable.map { SimpleImmutableEntry(it, 1.0) }
             return RandomSelectorImpl(randomGenerator, elements)
         }
 
@@ -108,7 +107,7 @@ internal class RandomSelectorImpl<E>(
                 val weight = weighter(element)
                 require(weight > 0) { "Weight must be greater than 0, got $weight for element $element." }
                 require(weight.isFinite()) { "Weight must be finite, got $weight for element $element." }
-                Object2DoubleMap.entry(element, weight)
+                SimpleImmutableEntry(element, weight)
             }
 
             return RandomSelectorImpl(randomGenerator, elements)
@@ -119,13 +118,13 @@ internal class RandomSelectorImpl<E>(
             weighter: Weighter<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator?
         ): RandomSelectorImpl<E> {
-            val elements = mutableObjectListOf<Object2DoubleMap.Entry<E>>()
+            val elements = mutableListOf<Map.Entry<E, Double>>()
 
             flow.collect { element ->
                 val weight = weighter(element)
                 require(weight > 0) { "Weight must be greater than 0, got $weight for element $element." }
                 require(weight.isFinite()) { "Weight must be finite, got $weight for element $element." }
-                elements.add(Object2DoubleMap.entry(element, weight))
+                elements.add(SimpleImmutableEntry(element, weight))
             }
 
             return RandomSelectorImpl(randomGenerator, elements)

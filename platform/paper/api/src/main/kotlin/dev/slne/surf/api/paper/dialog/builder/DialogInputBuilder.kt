@@ -3,16 +3,14 @@
 package dev.slne.surf.api.paper.dialog.builder
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import io.papermc.paper.registry.data.dialog.input.DialogInput
 import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput.OptionEntry
 import io.papermc.paper.registry.data.dialog.input.TextDialogInput.MultilineOptions
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import org.jetbrains.annotations.Range
 
 class DialogInputBuilder {
-    private val inputs = mutableObjectListOf<DialogInput>()
+    private val inputs = mutableListOf<DialogInput>()
 
     fun text(key: String, block: TextDialogInput.() -> Unit): DialogInput {
         val input = TextDialogInput(key).apply(block).build()
@@ -93,7 +91,7 @@ class DialogInputBuilder {
         inputs.add(input)
     }
 
-    internal fun build(): ObjectList<DialogInput> {
+    internal fun build(): MutableList<DialogInput> {
         return inputs
     }
 
@@ -250,7 +248,7 @@ class DialogInputBuilder {
 
     class SingleOptionDialogInput(private val key: String) {
         var label: Component? = null
-        val entries = mutableObjectListOf<OptionEntry>()
+        val entries = mutableListOf<OptionEntry>()
         var width: @Range(from = 1, to = 1024) Int? = null
         var labelVisible: Boolean? = null
 
@@ -296,8 +294,8 @@ class DialogInputBuilder {
 
 }
 
-fun DialogInput(block: DialogInputBuilder.() -> Unit): ObjectList<DialogInput> =
+fun DialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> =
     DialogInputBuilder().apply(block).build()
 
-fun dialogInput(block: DialogInputBuilder.() -> Unit): ObjectList<DialogInput> =
+fun dialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> =
     DialogInputBuilder().apply(block).build()

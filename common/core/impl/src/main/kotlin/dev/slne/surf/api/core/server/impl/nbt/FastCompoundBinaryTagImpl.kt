@@ -1,17 +1,15 @@
 package dev.slne.surf.api.core.server.impl.nbt
 
 import dev.slne.surf.api.core.nbt.FastCompoundBinaryTag
-import dev.slne.surf.api.core.util.freeze
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
-import dev.slne.surf.api.core.util.synchronize
 import net.kyori.adventure.nbt.*
+import java.util.Collections
 import java.util.function.Consumer
 import java.util.stream.Stream
 
 class FastCompoundBinaryTagImpl(synchronize: Boolean) : FastCompoundBinaryTag {
 
-    private val tags = mutableObject2ObjectMapOf<String, BinaryTag>().let {
-        if (synchronize) it.synchronize() else it
+    private val tags: MutableMap<String, BinaryTag> = HashMap<String, BinaryTag>().let {
+        if (synchronize) Collections.synchronizedMap(it) else it
     }
 
     override fun contains(key: String): Boolean {
@@ -23,7 +21,7 @@ class FastCompoundBinaryTagImpl(synchronize: Boolean) : FastCompoundBinaryTag {
         return type.test(tag.type())
     }
 
-    override fun keySet() = tags.keys.freeze()
+    override fun keySet(): Set<String> = tags.keys
     override fun get(key: String) = tags[key]
     override fun size() = tags.size
     override fun isEmpty() = tags.isEmpty()
@@ -131,12 +129,15 @@ class FastCompoundBinaryTagImpl(synchronize: Boolean) : FastCompoundBinaryTag {
         return tag.value()
     }
 
-    override fun stream(): Stream<Map.Entry<String, BinaryTag>> = tags.entries.stream()
+    override fun stream(): Stream<Map.Entry<String, BinaryTag>> {
+        val entries: Set<Map.Entry<String, BinaryTag>> = tags.entries
+        return entries.stream()
+    }
 
-    override fun iterator() = tags.object2ObjectEntrySet().iterator()
+    override fun iterator(): Iterator<Map.Entry<String, BinaryTag>> = tags.entries.iterator()
 
     override fun forEach(action: Consumer<in MutableMap.MutableEntry<String, out BinaryTag>>) {
-        tags.object2ObjectEntrySet().forEach(action)
+        tags.entries.forEach(action)
     }
 
     override fun asBinaryTag(): CompoundBinaryTag {

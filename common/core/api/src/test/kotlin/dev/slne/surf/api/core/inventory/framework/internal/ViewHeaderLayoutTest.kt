@@ -1,6 +1,5 @@
 package dev.slne.surf.api.core.inventory.framework.internal
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.TranslatableComponent
@@ -61,7 +60,7 @@ class ViewHeaderLayoutTest {
 
     @Test
     fun `overrides win over the built-in table`() {
-        val overrides = Int2IntOpenHashMap(1).apply { put('i'.code, 9) }
+        val overrides = mapOf('i'.code to 9)
 
         assertEquals(9, DefaultFontWidths.charWidth('i'.code, overrides = overrides))
         assertEquals(18, DefaultFontWidths.textWidth("ii", overrides = overrides))

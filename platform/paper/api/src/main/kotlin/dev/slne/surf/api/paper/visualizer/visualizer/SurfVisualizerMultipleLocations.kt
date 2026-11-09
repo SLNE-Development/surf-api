@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.visualizer.visualizer
 
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
-import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.jetbrains.annotations.UnmodifiableView
 import org.spongepowered.math.vector.Vector3d
 
@@ -25,7 +24,7 @@ interface SurfVisualizerMultipleLocations : SurfVisualizer {
      *
      * Part of the experimental `SurfVisualizerMultipleLocations` API, which is subject to change.
      */
-    val visualLocations: @UnmodifiableView ObjectSet<Vector3d>
+    val visualLocations: @UnmodifiableView Set<Vector3d>
 
     /**
      * Adds a visual location to the visualizer with optional display settings configuration.

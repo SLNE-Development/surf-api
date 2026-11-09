@@ -7,7 +7,6 @@ import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
 import dev.slne.surf.api.paper.sidebar.*
 import dev.slne.surf.api.paper.util.forEachPlayer
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import net.kyori.adventure.text.Component
@@ -217,7 +216,7 @@ abstract class SurfSidebarImpl(
 
         private suspend fun renderLines(): List<SidebarLine> {
             val maxLines = definition.maxLines
-            val lines = ObjectArrayList<SidebarLine>(maxLines)
+            val lines = ArrayList<SidebarLine>(maxLines)
             for (entry in definition.entries) {
                 if (lines.size == maxLines) break
 

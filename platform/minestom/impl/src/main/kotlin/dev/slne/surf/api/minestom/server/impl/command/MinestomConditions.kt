@@ -2,8 +2,6 @@ package dev.slne.surf.api.minestom.server.impl.command
 
 import dev.slne.surf.api.minestom.command.CommandPath
 import dev.slne.surf.api.minestom.permission.hasPermission
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import net.minestom.server.command.CommandSender
 
 internal data class AccumulatedConditions(
@@ -14,7 +12,7 @@ internal data class AccumulatedConditions(
 internal class MinestomConditions {
     fun commonForPaths(paths: List<CommandPath>): AccumulatedConditions {
         val first = paths.firstOrNull() ?: return AccumulatedConditions()
-        val permissions = ObjectLinkedOpenHashSet<String>(first.permissions.size)
+        val permissions = LinkedHashSet<String>(first.permissions.size)
 
         first.permissions.forEach { permission ->
             if (paths.all { path -> permission in path.permissions }) {
@@ -22,7 +20,7 @@ internal class MinestomConditions {
             }
         }
 
-        val requirements = ObjectArrayList<(CommandSender) -> Boolean>(first.requirements.size)
+        val requirements = ArrayList<(CommandSender) -> Boolean>(first.requirements.size)
         first.requirements.forEach { requirement ->
             if (
                 paths.all { path ->

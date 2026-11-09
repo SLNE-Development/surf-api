@@ -1,14 +1,11 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings.builder
 
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.paper.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewHeaderGeometry
 import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.format.TextColor
 
@@ -170,7 +167,7 @@ sealed class SurfViewSettingsBuilder {
      * The fonts that render header text on a slot row, keyed by one-based row number.
      * Defaults to [SurfViewSettingsDefaults.DEFAULT_ROW_FONTS].
      */
-    var rowFonts: Int2ObjectMap<Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS
+    var rowFonts: Map<Int, Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS
         private set
 
     /**
@@ -180,7 +177,7 @@ sealed class SurfViewSettingsBuilder {
      *
      * @param fonts the fonts to use, keyed by one-based row number
      */
-    fun rowFonts(fonts: Int2ObjectMap<Key>) {
+    fun rowFonts(fonts: Map<Int, Key>) {
         this.rowFonts = fonts
     }
 
@@ -194,9 +191,7 @@ sealed class SurfViewSettingsBuilder {
      * @param font the Adventure [Key] of the font ascended onto that row
      */
     fun rowFont(row: Int, font: Key) {
-        val fonts = Int2ObjectOpenHashMap<Key>(rowFonts)
-        fonts.put(row, font)
-        this.rowFonts = fonts.freeze()
+        this.rowFonts = rowFonts + (row to font)
     }
 
     /**

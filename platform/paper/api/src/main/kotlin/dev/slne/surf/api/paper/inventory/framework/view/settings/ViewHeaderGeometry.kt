@@ -4,7 +4,6 @@ import dev.slne.surf.api.core.inventory.framework.internal.DefaultFontWidths
 import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
 import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignmentOptions
-import it.unimi.dsi.fastutil.ints.Int2IntMap
 
 /**
  * Pixel geometry of the inventory header: how wide the inventory is and where its slot grid starts.
@@ -78,7 +77,7 @@ data class ViewHeaderGeometry(
      * @param charSpacing extra spacing inserted between adjacent glyphs
      */
     fun titleOptions(
-        charWidths: Int2IntMap = DefaultFontWidths.advances,
+        charWidths: Map<Int, Int> = DefaultFontWidths.advances,
         charSize: Int = DefaultFontWidths.DEFAULT_ADVANCE,
         charSpacing: Int = 0,
     ): TextAlignmentOptions = TextAlignmentOptions(
@@ -101,7 +100,7 @@ data class ViewHeaderGeometry(
      */
     fun columnSpanOptions(
         columns: IntRange,
-        charWidths: Int2IntMap = DefaultFontWidths.advances,
+        charWidths: Map<Int, Int> = DefaultFontWidths.advances,
         charSize: Int = DefaultFontWidths.DEFAULT_ADVANCE,
         charSpacing: Int = 0,
     ): TextAlignmentOptions {

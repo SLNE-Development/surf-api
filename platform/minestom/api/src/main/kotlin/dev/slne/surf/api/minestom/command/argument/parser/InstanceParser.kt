@@ -7,8 +7,6 @@ import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.minestom.server.MinecraftServer
 import net.minestom.server.instance.Instance
 import java.util.concurrent.CompletableFuture
@@ -45,13 +43,12 @@ internal object InstanceParser : ArgumentType<Instance> {
         builder: SuggestionsBuilder,
     ): CompletableFuture<Suggestions> {
         val instances = MinecraftServer.getInstanceManager().instances
-        val dimensionCounts = Object2IntOpenHashMap<String>()
-        instances.forEach { instance -> dimensionCounts.addTo(instance.dimensionName, 1) }
+        val dimensionCounts = instances.groupingBy { instance -> instance.dimensionName }.eachCount()
 
-        val values = ObjectArrayList<String>(instances.size * 2)
+        val values = mutableListOf<String>()
         instances.forEach { instance -> values += instance.uuid.toString() }
         instances.forEach { instance ->
-            if (dimensionCounts.getInt(instance.dimensionName) == 1) {
+            if (dimensionCounts[instance.dimensionName] == 1) {
                 values += instance.dimensionName
             }
         }

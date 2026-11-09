@@ -9,7 +9,6 @@ import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import dev.slne.surf.api.minestom.command.argument.parser.FixedSetParser
-import it.unimi.dsi.fastutil.objects.ObjectList
 
 /**
  * A single word, as read by Brigadier's `StringArgumentType.word()`: letters, digits and
@@ -79,7 +78,7 @@ class LiteralArgument(
  * character Brigadier does not read in an unquoted word, or is duplicated
  */
 class MultiLiteralArgument(nodeName: String, vararg literals: String) : Argument<String>(nodeName) {
-    private val literals: List<String> = ObjectList.of(*literals)
+    private val literals: List<String> = listOf(*literals)
     override val kind = ArgumentKind.MultiLiteral(this.literals)
     override val rawType: ArgumentType<String> = FixedSetParser(this.literals.associateWith { it })
 

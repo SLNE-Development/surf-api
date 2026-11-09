@@ -2,7 +2,6 @@ package dev.slne.surf.api.paper.sidebar
 
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.entity.Player
@@ -228,7 +227,7 @@ interface SidebarBuilder {
  */
 @SidebarDsl
 class SidebarLinesBuilder internal constructor() {
-    private val lines = ObjectArrayList<SidebarLine>()
+    private val lines = mutableListOf<SidebarLine>()
 
     /**
      * Adds [line] to the collected sidebar lines.

@@ -15,7 +15,6 @@ import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
 import dev.slne.surf.api.minestom.command.suggestion.ArgumentSuggestions
 import dev.slne.surf.api.minestom.command.suggestion.SafeSuggestions
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import it.unimi.dsi.fastutil.objects.*
 import net.minestom.server.command.CommandSender
 import net.minestom.server.utils.Range
 import java.time.Duration
@@ -229,11 +228,11 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
 
     private var optional = false
     private var defaultValue: ((CommandSender) -> T)? = null
-    private val permissions = ObjectLinkedOpenHashSet<String>()
-    private val requirements = ObjectArrayList<(CommandSender) -> KBoolean>()
+    private val permissions = mutableSetOf<String>()
+    private val requirements = mutableListOf<(CommandSender) -> KBoolean>()
     private var suggestions: SuggestionMode<T> = SuggestionMode.BuiltIns
-    private val executors = ObjectArrayList<ExecutorDefinition>()
-    private val children = ObjectArrayList<Argument<*>>()
+    private val executors = mutableListOf<ExecutorDefinition>()
+    private val children = mutableListOf<Argument<*>>()
 
     init {
         require(nodeName.isNotBlank()) { "Argument node name must not be blank" }
@@ -359,7 +358,8 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
     }
 
     @InternalSurfApi
-    internal fun toTreeNode(): ArgumentTreeNode = toTreeNode(ReferenceOpenHashSet())
+    internal fun toTreeNode(): ArgumentTreeNode =
+        toTreeNode(Collections.newSetFromMap(IdentityHashMap<Argument<*>, Boolean>()))
 
     private fun toTreeNode(stack: MutableSet<Argument<*>>): ArgumentTreeNode {
         if (!stack.add(this)) {
@@ -368,10 +368,8 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
         try {
             return ArgumentTreeNode(
                 argument = toDefinition(),
-                executors = ObjectLists.unmodifiable(ObjectArrayList(executors)),
-                children = ObjectLists.unmodifiable(children.mapTo(ObjectArrayList(children.size)) { child ->
-                    child.toTreeNode(stack)
-                }),
+                executors = executors.toList(),
+                children = children.map { child -> child.toTreeNode(stack) },
             )
         } finally {
             stack.remove(this)
@@ -384,8 +382,8 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
         kind = kind,
         optional = optional,
         defaultValue = defaultValue,
-        permissions = ObjectSets.unmodifiable(ObjectLinkedOpenHashSet(permissions)),
-        requirements = ObjectLists.unmodifiable(ObjectArrayList(requirements)),
+        permissions = permissions.toSet(),
+        requirements = requirements.toList(),
         suggestions = suggestions,
         greedy = greedy,
         rawType = rawType,

@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.builder
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
@@ -80,7 +79,7 @@ fun ItemStack.buildLore(block: @ItemDsl LoreBuilder.() -> Unit) {
 
 @ItemDsl
 class LoreBuilder {
-    private val lore = mutableObjectListOf<Component>()
+    private val lore = mutableListOf<Component>()
 
     fun line(block: @ItemDsl SurfComponentBuilder.() -> Unit) {
         lore.add(SurfComponentBuilder().apply(block).build())

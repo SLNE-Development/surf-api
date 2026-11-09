@@ -16,7 +16,6 @@ dependencies {
     compileOnlyApi(libs.spongepowered.math)
     compileOnlyApi(libs.okhttp)
     api(libs.okhttp.kotlin)
-    compileOnlyApi(libs.fastutil)
     compileOnlyApi(libs.commandapi.core)
     compileOnlyApi(libs.brigadier)
     api(libs.configurate.yaml)
@@ -37,7 +36,6 @@ dependencies {
     compileOnlyApi(libs.gson)
     compileOnlyApi(libs.commons.lang3)
     compileOnlyApi(libs.commons.text)
-    compileOnlyApi(libs.fastutil)
 
     api(libs.bundles.ktor.client)
 

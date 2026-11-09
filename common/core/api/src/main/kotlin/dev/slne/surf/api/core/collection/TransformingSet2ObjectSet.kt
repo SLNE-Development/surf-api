@@ -1,14 +1,12 @@
 package dev.slne.surf.api.core.collection
 
-import it.unimi.dsi.fastutil.objects.ObjectIterator
-import it.unimi.dsi.fastutil.objects.ObjectSet
-
+@Suppress("UNCHECKED_CAST")
 class TransformingSet2ObjectSet<O, M>(
     private val fromSet: MutableSet<O>,
     private val toTransformer: (O) -> M?,
     private val fromTransformer: (M) -> O?,
-) : ObjectSet<M> {
-    override fun iterator() = object : ObjectIterator<M> {
+) : MutableSet<M> {
+    override fun iterator() = object : MutableIterator<M> {
         private val iterator = fromSet.iterator()
         private var nextValue: M? = null
         private var nextComputed: Boolean = false
@@ -59,7 +57,7 @@ class TransformingSet2ObjectSet<O, M>(
     override fun clear() = fromSet.clear()
     override val size: Int get() = fromSet.size
     override fun isEmpty() = fromSet.isEmpty()
-    override fun contains(element: M) = fromSet.contains(transformFrom(element))
+    override fun contains(element: M) = fromSet.contains(transformFrom(element) as O)
     override fun containsAll(elements: Collection<M>) =
         fromSet.containsAll(elements.mapNotNull(::transformFrom))
 

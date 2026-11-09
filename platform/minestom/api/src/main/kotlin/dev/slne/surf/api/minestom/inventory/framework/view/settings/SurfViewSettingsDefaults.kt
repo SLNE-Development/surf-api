@@ -2,13 +2,10 @@ package dev.slne.surf.api.minestom.inventory.framework.view.settings
 
 import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.core.messages.adventure.key
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.minestom.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults.DEFAULT_HEADER_FONT
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults.rowFont
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.align.TextAlignment
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.format.TextColor
@@ -161,10 +158,6 @@ object SurfViewSettingsDefaults {
      * Default [SurfViewSettings.rowFonts]: the [rowFont] of every slot row a chest inventory can
      * have, keyed by its one-based row number.
      */
-    val DEFAULT_ROW_FONTS: Int2ObjectMap<Key> =
-        Int2ObjectOpenHashMap<Key>(ViewSlotGeometry.MAX_ROWS).apply {
-            for (row in 1..ViewSlotGeometry.MAX_ROWS) {
-                put(row, rowFont(row))
-            }
-        }.freeze()
+    val DEFAULT_ROW_FONTS: Map<Int, Key> =
+        (1..ViewSlotGeometry.MAX_ROWS).associateWith { row -> rowFont(row) }
 }

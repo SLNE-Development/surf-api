@@ -2,8 +2,6 @@
 
 package dev.slne.surf.api.paper.dialog.builder
 
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import dev.slne.surf.api.core.util.mutableObjectSetOf
 import io.papermc.paper.dialog.Dialog
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
@@ -90,7 +88,7 @@ class DialogTypeBuilder {
         var exitAction: ActionButton? = null
         var columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int? = null
         var buttonWidth: @Range(from = 1, to = 1024) Int? = null
-        private val dialogs = mutableObjectSetOf<Dialog>()
+        private val dialogs = mutableSetOf<Dialog>()
 
         fun exitAction(exitAction: ActionButton) {
             this.exitAction = exitAction
@@ -175,7 +173,7 @@ class DialogTypeBuilder {
     }
 
     class DialogMultiActionTypeBuilder {
-        private val actions = mutableObjectListOf<ActionButton>()
+        private val actions = mutableListOf<ActionButton>()
         var exitAction: ActionButton? = null
         var columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int? = null
 

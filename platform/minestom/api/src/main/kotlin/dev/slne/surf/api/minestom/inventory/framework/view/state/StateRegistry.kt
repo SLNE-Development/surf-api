@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.state
 
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.context.Context
 import java.util.function.Function
@@ -26,7 +25,7 @@ class StateRegistry @PublishedApi internal constructor() {
     internal val deferredStates = mutableListOf<DeferredState<*>>()
 
     @PublishedApi
-    internal val resolvedStates = mutableObjectListOf<Any>()
+    internal val resolvedStates = mutableListOf<Any>()
 
     @PublishedApi
     internal var nextIndex = 0
@@ -41,7 +40,7 @@ class StateRegistry @PublishedApi internal constructor() {
      */
     @PublishedApi
     internal fun <S> register(deferred: DeferredState<S>): Int {
-        require(resolvedStates.isEmpty) { "Cannot register new states after resolution has begun" }
+        require(resolvedStates.isEmpty()) { "Cannot register new states after resolution has begun" }
         deferredStates.add(deferred)
         return nextIndex++
     }
@@ -81,6 +80,5 @@ class StateRegistry @PublishedApi internal constructor() {
         }
 
         deferredStates.clear()
-        resolvedStates.trim()
     }
 }

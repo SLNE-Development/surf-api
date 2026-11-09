@@ -1,9 +1,5 @@
 package dev.slne.surf.api.core.algorithms
 
-import dev.slne.surf.api.core.util.emptyObjectList
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import dev.slne.surf.api.core.util.toMutableObjectList
-import it.unimi.dsi.fastutil.objects.ObjectList
 import org.spongepowered.math.vector.Vector2d
 import org.spongepowered.math.vector.Vector3d
 import org.spongepowered.math.vector.Vector4d
@@ -14,9 +10,8 @@ import org.spongepowered.math.vector.Vectord
  * @see <a href="https://en.wikipedia.org/wiki/Convex_hull">Wikipedia</a>
  */
 object ConvexHull2D {
-    //  val sorted = list.sortedWith(compareBy<Vec2> { it.x }.thenBy { it.z }).toMutableObjectList()
-    fun <V : Vectord> compute(points: Array<V>): ObjectList<V> {
-        if (points.isEmpty()) return emptyObjectList()
+    fun <V : Vectord> compute(points: Array<V>): List<V> {
+        if (points.isEmpty()) return emptyList()
         val points = points.sortedWith(Comparator<V> { a, b ->
             val x = a.x().compareTo(b.x())
             if (x == 0) {
@@ -24,13 +19,13 @@ object ConvexHull2D {
             } else {
                 x
             }
-        }).toMutableObjectList()
-        val hull = mutableObjectListOf<V>()
+        }).toMutableList()
+        val hull = mutableListOf<V>()
 
         // lower hull
         for (point in points) {
             while (hull.size >= 2 && !ccw(hull[hull.size - 2], hull.last(), point)) {
-                hull.removeLast()
+                hull.removeAt(hull.lastIndex)
             }
             hull.add(point)
         }
@@ -40,13 +35,13 @@ object ConvexHull2D {
         for (i in points.size - 2 downTo 0) {
             val point = points[i]
             while (hull.size >= lowerSize && !ccw(hull[hull.size - 2], hull.last(), point)) {
-                hull.removeLast()
+                hull.removeAt(hull.lastIndex)
             }
             hull.add(point)
         }
 
         // Remove the last point because it is the same as the first one
-        hull.removeLast()
+        hull.removeAt(hull.lastIndex)
         return hull
     }
 

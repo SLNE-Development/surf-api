@@ -14,11 +14,6 @@ import dev.slne.surf.api.paper.util.isChunkVisible
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerMultipleLocations
 import dev.slne.surf.api.paper.visualizer.visualizer.UpdateStrategy
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import it.unimi.dsi.fastutil.ints.IntSet
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
 import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.World
@@ -39,17 +34,15 @@ class SurfVisualizerMultipleLocationsImpl(
 
     fun getWorldIfPresent(): World? = worldReference.get()
 
-    private val id2point = mutableInt2ObjectMapOf<VisualPoint>()
-    private val point2Id = mutableObject2IntMapOf<VisualPoint>().apply {
-        defaultReturnValue(Int.MIN_VALUE)
-    }
+    private val id2point = mutableMapOf<Int, VisualPoint>()
+    private val point2Id = mutableMapOf<VisualPoint, Int>()
 
-    private val sentToPlayers = mutableObject2ObjectMapOf<UUID, IntSet>()
+    private val sentToPlayers = mutableMapOf<UUID, MutableSet<Int>>()
 
     private val lock = ReentrantReadWriteLock()
 
-    override val visualLocations
-        get() = readLocked { id2point.mapTo(mutableObjectSetOf(id2point.size)) { it.value.location } }.freeze()
+    override val visualLocations: Set<Vector3d>
+        get() = readLocked { id2point.values.mapTo(mutableSetOf()) { it.location } }
 
     private inline fun <R> readLocked(block: () -> R): R = lock.read(block)
     private inline fun <R> writeLocked(block: () -> R): R = lock.write(block)
@@ -63,15 +56,15 @@ class SurfVisualizerMultipleLocationsImpl(
 
     private class MultiLocationCleanupState(
         private val visualizerUuid: UUID,
-        private val id2point: Int2ObjectMap<VisualPoint>,
+        private val id2point: MutableMap<Int, VisualPoint>,
         private val viewerUuids: MutableSet<UUID>,
-        private val sentToPlayers: Object2ObjectMap<UUID, IntSet>,
+        private val sentToPlayers: MutableMap<UUID, MutableSet<Int>>,
         private val lock: ReentrantReadWriteLock,
     ) : CleanupState() {
         override fun cleanup() {
             if (id2point.isEmpty()) return
 
-            val allIds = lock.read { IntOpenHashSet(id2point.keys) }
+            val allIds = lock.read { id2point.keys.toSet() }
             val despawn = SurfPaperNmsSpawnPackets.despawn(allIds)
 
             for (uuid in viewerUuids) {
@@ -103,7 +96,7 @@ class SurfVisualizerMultipleLocationsImpl(
     override fun stopVisualizingInternal() {
         val sentByViewer = writeLocked {
             viewerUuids.associateWith { viewerUuid ->
-                IntOpenHashSet(sentToPlayers.remove(viewerUuid) ?: IntOpenHashSet())
+                sentToPlayers.remove(viewerUuid)?.toSet() ?: emptySet()
             }
         }
 
@@ -125,7 +118,7 @@ class SurfVisualizerMultipleLocationsImpl(
         when (strategy) {
             UpdateStrategy.ALL -> {
                 val pointsSnapshot = readLocked {
-                    Int2ObjectOpenHashMap(id2point)
+                    id2point.toMap()
                 }
 
                 val version = currentStateVersion()
@@ -146,12 +139,10 @@ class SurfVisualizerMultipleLocationsImpl(
 
                         if (!visualizing.get()) return@enterContextIfNeeded
 
-                        val idsToMarkSent = mutableIntSetOf()
+                        val idsToMarkSent = mutableSetOf<Int>()
                         val spawn = PacketOperation.start()
 
-                        pointsSnapshot.int2ObjectEntrySet().fastForEach { entry ->
-                            val id = entry.intKey
-                            val point = entry.value
+                        for ((id, point) in pointsSnapshot) {
                             if (player.isChunkVisible(
                                     world,
                                     point.chunkX,
@@ -186,14 +177,12 @@ class SurfVisualizerMultipleLocationsImpl(
                         if (!visualizing.get()) return@enterContextIfNeeded
 
                         val sentSnapshot = getSentToPlayerSnapshot(viewer)
-                        val pointsSnapshot = readLocked { Int2ObjectOpenHashMap(id2point) }
+                        val pointsSnapshot = readLocked { id2point.toMap() }
 
                         val operation = PacketOperation.start()
-                        val idsToRemove = mutableIntSetOf()
+                        val idsToRemove = mutableSetOf<Int>()
 
-                        val iterator = sentSnapshot.iterator()
-                        while (iterator.hasNext()) {
-                            val id = iterator.nextInt()
+                        for (id in sentSnapshot) {
                             val point = pointsSnapshot[id]
 
                             if (point == null) {
@@ -261,7 +250,7 @@ class SurfVisualizerMultipleLocationsImpl(
             return
         }
 
-        val toSpawn = mutableInt2ObjectMapOf<VisualPoint>()
+        val toSpawn = mutableMapOf<Int, VisualPoint>()
         for ((loc, setting) in locations) {
             val id = SurfPaperNmsCommonBridge.nextEntityId()
             val point = VisualPoint(loc, setting)
@@ -280,13 +269,10 @@ class SurfVisualizerMultipleLocationsImpl(
             player.enterContextIfNeeded {
                 if (!isActiveVersion(version)) return@enterContextIfNeeded
                 if (!visualizing.get()) return@enterContextIfNeeded
-                val idsToAdd = mutableIntSetOf()
+                val idsToAdd = mutableSetOf<Int>()
                 val spawnOperation = PacketOperation.start()
 
-                toSpawn.int2ObjectEntrySet().fastForEach { entry ->
-                    val id = entry.intKey
-                    val point = entry.value
-
+                for ((id, point) in toSpawn) {
                     if (player.isChunkVisible(world, point.chunkX, point.chunkZ)) {
                         idsToAdd.add(id)
                         spawnOperation + spawnPacket(id, point)
@@ -325,7 +311,7 @@ class SurfVisualizerMultipleLocationsImpl(
     override fun clearVisualLocations() {
         ensureNotClosed()
         val idsToRemove = readLocked {
-            IntOpenHashSet(id2point.keys)
+            id2point.keys.toSet()
         }
 
         val version = currentStateVersion()
@@ -354,14 +340,10 @@ class SurfVisualizerMultipleLocationsImpl(
 
     private fun remove(location: Vector3d): Pair<Int, VisualPoint>? = writeLocked {
         val point = point2Id.keys.find { it.location == location } ?: return null
-        val id = point2Id.removeInt(point)
+        val id = point2Id.remove(point) ?: return null
 
-        if (id != Int.MIN_VALUE) {
-            id2point.remove(id)
-            return id to point
-        }
-
-        return null
+        id2point.remove(id)
+        return id to point
     }
 
     private fun clear() = writeLocked {
@@ -370,16 +352,16 @@ class SurfVisualizerMultipleLocationsImpl(
         sentToPlayers.clear()
     }
 
-    private fun getSentToPlayer(uuid: UUID): IntSet? = readLocked {
+    private fun getSentToPlayer(uuid: UUID): MutableSet<Int>? = readLocked {
         sentToPlayers[uuid]
     }
 
-    private fun getOrCreateSentToPlayer(uuid: UUID): IntSet = writeLocked {
-        sentToPlayers.computeIfAbsent(uuid) { mutableIntSetOf() }
+    private fun getOrCreateSentToPlayer(uuid: UUID): MutableSet<Int> = writeLocked {
+        sentToPlayers.computeIfAbsent(uuid) { mutableSetOf() }
     }
 
-    private fun getSentToPlayerSnapshot(uuid: UUID) = readLocked {
-        sentToPlayers[uuid]?.let { IntOpenHashSet(it) } ?: IntOpenHashSet()
+    private fun getSentToPlayerSnapshot(uuid: UUID): Set<Int> = readLocked {
+        sentToPlayers[uuid]?.toSet() ?: emptySet()
     }
 
     private fun drainSentToPlayer(uuid: UUID) = writeLocked {
@@ -424,18 +406,16 @@ class SurfVisualizerMultipleLocationsImpl(
         TickThreadGuard.ensureTickThread(player, "Cannot receive async chunk load for visualizer")
 
         val entries = readLocked {
-            Int2ObjectOpenHashMap(id2point)
+            id2point.toMap()
         }
 
         val spawnOperation = PacketOperation.start()
-        val idsToAdd = mutableIntSetOf()
+        val idsToAdd = mutableSetOf<Int>()
         val sent = getSentToPlayerSnapshot(player.uniqueId)
 
-        entries.int2ObjectEntrySet().fastForEach { entry ->
-            val id = entry.intKey
-            val point = entry.value
-            if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) return@fastForEach
-            if (sent.contains(id)) return@fastForEach
+        for ((id, point) in entries) {
+            if (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z) continue
+            if (sent.contains(id)) continue
 
             spawnOperation + spawnPacket(id, point)
             idsToAdd.add(id)
@@ -456,12 +436,10 @@ class SurfVisualizerMultipleLocationsImpl(
         TickThreadGuard.ensureTickThread(player, "Cannot receive async chunk unload for visualizer")
 
         val sentSnapshot = getSentToPlayerSnapshot(player.uniqueId)
-        val pointsSnapshot = readLocked { Int2ObjectOpenHashMap(id2point) }
-        val despawn = mutableIntSetOf()
+        val pointsSnapshot = readLocked { id2point.toMap() }
+        val despawn = mutableSetOf<Int>()
 
-        val iterator = sentSnapshot.iterator()
-        while (iterator.hasNext()) {
-            val id = iterator.nextInt()
+        for (id in sentSnapshot) {
             val point = pointsSnapshot[id]
             if (point != null && (world != chunk.world || point.chunkX != chunk.x || point.chunkZ != chunk.z)) {
                 continue

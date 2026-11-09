@@ -1,9 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings
 
 import dev.slne.surf.api.core.inventory.framework.internal.DefaultFontWidths
-import dev.slne.surf.api.core.util.int2IntMapOf
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntMaps
 
 /**
  * Metrics of the font a piece of header text is rendered in: how wide its glyphs are, how much
@@ -42,7 +39,7 @@ data class ViewFontMetrics(
     val charSpacing: Int = 0,
     val uppercase: Boolean = false,
     val spaceAsShift: Boolean = false,
-    val charWidths: Int2IntMap = Int2IntMaps.EMPTY_MAP,
+    val charWidths: Map<Int, Int> = emptyMap(),
 ) {
     /**
      * Pixels a space advances when it is rendered as a shift glyph, or `null` when the font draws
@@ -57,8 +54,7 @@ data class ViewFontMetrics(
      * @param bold whether the glyph is rendered bold, which widens it by one pixel
      */
     fun advance(codePoint: Int, bold: Boolean = false): Int {
-        val advance =
-            if (charWidths.containsKey(codePoint)) charWidths.get(codePoint) else charSize
+        val advance = charWidths[codePoint] ?: charSize
 
         return advance + if (bold) DefaultFontWidths.BOLD_EXTRA_ADVANCE else 0
     }
@@ -94,7 +90,7 @@ data class ViewFontMetrics(
             charSpacing = MENU_CHAR_SPACING,
             uppercase = true,
             spaceAsShift = true,
-            charWidths = int2IntMapOf(' '.code to MENU_SPACE_SIZE)
+            charWidths = mapOf(' '.code to MENU_SPACE_SIZE)
         )
 
         /** Pixel advance of one glyph cell in the resource-pack menu font. */

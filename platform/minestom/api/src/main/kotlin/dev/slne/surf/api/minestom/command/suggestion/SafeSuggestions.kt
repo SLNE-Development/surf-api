@@ -5,10 +5,6 @@
  */
 package dev.slne.surf.api.minestom.command.suggestion
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList
-import it.unimi.dsi.fastutil.objects.ObjectList
-
 /**
  * Supplies suggestions as values of the argument's own type [T].
  *
@@ -34,16 +30,14 @@ fun interface SafeSuggestions<T> {
         /**
          * Returns a provider that suggests the fixed [values].
          */
-        fun <T> suggest(vararg values: T): SafeSuggestions<T> = suggest(ObjectList.of(*values))
+        fun <T> suggest(vararg values: T): SafeSuggestions<T> = suggest(listOf(*values))
 
         /**
          * Returns a provider that suggests the fixed [values].
          */
         fun <T> suggest(values: Collection<T>): SafeSuggestions<T> {
-            val copy = ObjectImmutableList(values)
-            return SafeSuggestions {
-                copy.mapTo(ObjectArrayList(copy.size), ::withoutTooltip)
-            }
+            val copy = values.toList()
+            return SafeSuggestions { copy.map(::withoutTooltip) }
         }
 
         /**
@@ -51,8 +45,7 @@ fun interface SafeSuggestions<T> {
          */
         fun <T> suggest(provider: (SuggestionInfo) -> Collection<T>): SafeSuggestions<T> {
             return SafeSuggestions { info ->
-                val provided = provider(info)
-                provided.mapTo(ObjectArrayList(provided.size), ::withoutTooltip)
+                provider(info).map(::withoutTooltip)
             }
         }
 
@@ -68,8 +61,7 @@ fun interface SafeSuggestions<T> {
          */
         fun <T> suggestAsync(provider: suspend (SuggestionInfo) -> Collection<T>): SafeSuggestions<T> {
             return SafeSuggestions { info ->
-                val provided = provider(info)
-                provided.mapTo(ObjectArrayList(provided.size), ::withoutTooltip)
+                provider(info).map(::withoutTooltip)
             }
         }
 
@@ -83,13 +75,13 @@ fun interface SafeSuggestions<T> {
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
         fun <T> tooltips(vararg values: Tooltip<T>): SafeSuggestions<T> =
-            tooltips(ObjectList.of(*values))
+            tooltips(listOf(*values))
 
         /**
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
         fun <T> tooltips(values: Collection<Tooltip<T>>): SafeSuggestions<T> {
-            val copy = ObjectImmutableList(values)
+            val copy = values.toList()
             return SafeSuggestions { copy }
         }
 
@@ -97,7 +89,7 @@ fun interface SafeSuggestions<T> {
          * Returns a provider that suggests the entries [provider] returns for each request.
          */
         fun <T> tooltips(provider: (SuggestionInfo) -> Collection<Tooltip<T>>): SafeSuggestions<T> {
-            return SafeSuggestions { info -> ObjectImmutableList(provider(info)) }
+            return SafeSuggestions { info -> provider(info).toList() }
         }
 
         /**
@@ -111,7 +103,7 @@ fun interface SafeSuggestions<T> {
          * request.
          */
         fun <T> tooltipsAsync(provider: suspend (SuggestionInfo) -> Collection<Tooltip<T>>): SafeSuggestions<T> =
-            SafeSuggestions { info -> ObjectImmutableList(provider(info)) }
+            SafeSuggestions { info -> provider(info).toList() }
 
         /**
          * Alias of [tooltipsAsync].

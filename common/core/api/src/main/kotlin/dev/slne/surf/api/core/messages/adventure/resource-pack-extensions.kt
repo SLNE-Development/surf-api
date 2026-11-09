@@ -1,7 +1,6 @@
 package dev.slne.surf.api.core.messages.adventure
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.coroutineScope
@@ -206,7 +205,7 @@ inline fun ResourcePackRequest.Builder.prompt(block: @ResourcePackDsl SurfCompon
 @ResourcePackDsl
 class ResourcePackRequestInfoBuilder {
     @PublishedApi
-    internal val infos = mutableObjectListOf<ResourcePackInfo>()
+    internal val infos = mutableListOf<ResourcePackInfo>()
 
 
     /**

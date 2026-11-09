@@ -1,14 +1,14 @@
 package dev.slne.surf.api.paper.server.util.registry;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 
 @NonExtendable
 public class Registry<K, V> implements Frozable<Registry<K, V>> {
 
-    private Object2ObjectMap<K, V> registry = new Object2ObjectOpenHashMap<>();
+    private Map<K, V> registry = new HashMap<>();
     private boolean frozen = false;
 
     public Registry<K, V> register(K key, V value) {
@@ -16,7 +16,7 @@ public class Registry<K, V> implements Frozable<Registry<K, V>> {
         return this;
     }
 
-    public Registry<K, V> registerAll(Object2ObjectMap<K, V> map) {
+    public Registry<K, V> registerAll(Map<K, V> map) {
         registry.putAll(map);
         return this;
     }
@@ -43,7 +43,7 @@ public class Registry<K, V> implements Frozable<Registry<K, V>> {
                 frozable.freeze();
             }
         });
-        registry = Object2ObjectMaps.unmodifiable(registry);
+        registry = Collections.unmodifiableMap(registry);
         frozen = true;
 
         return this;

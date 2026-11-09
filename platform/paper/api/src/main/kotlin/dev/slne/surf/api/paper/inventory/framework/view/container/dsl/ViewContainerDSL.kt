@@ -12,8 +12,6 @@ import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewHeaderGeometry
 import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewRows
 import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
-import it.unimi.dsi.fastutil.ints.IntCollection
-import it.unimi.dsi.fastutil.ints.IntLists
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -471,7 +469,7 @@ fun blockRow(
 context(context: ViewContainerModificationContext)
 fun blockRow(
     @ViewRows.Companion.Rows row: Int,
-    exemptColumns: IntCollection = IntLists.EMPTY_LIST,
+    exemptColumns: Collection<Int> = emptyList(),
     geometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
 ) {
     for (x in 0 until ViewSlotGeometry.COLUMNS) {
@@ -512,7 +510,7 @@ fun blockColumn(
 context(context: ViewContainerModificationContext)
 fun blockColumn(
     column: Int,
-    exemptRows: IntCollection = IntLists.EMPTY_LIST,
+    exemptRows: Collection<Int> = emptyList(),
     @ViewRows.Companion.Rows rows: Int = ViewSlotGeometry.MAX_ROWS,
     geometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
 ) {
@@ -528,7 +526,7 @@ fun blockColumn(
  * ```kotlin
  * containerDefaults {
  *     // every slot of a 5-row view is blocked, except the one in the middle
- *     blockAllSlots(ViewRows.FIVE, intSetOf(22))
+ *     blockAllSlots(ViewRows.FIVE, setOf(22))
  * }
  * ```
  *
@@ -539,7 +537,7 @@ fun blockColumn(
 context(context: ViewContainerModificationContext)
 fun blockAllSlots(
     rows: ViewRows,
-    exemptSlots: IntCollection = IntLists.EMPTY_LIST,
+    exemptSlots: Collection<Int> = emptyList(),
     geometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
 ) {
     blockAllSlots(rows.rows, exemptSlots, geometry)
@@ -555,7 +553,7 @@ fun blockAllSlots(
 context(context: ViewContainerModificationContext)
 fun blockAllSlots(
     @ViewRows.Companion.Rows rows: Int,
-    exemptSlots: IntCollection = IntLists.EMPTY_LIST,
+    exemptSlots: Collection<Int> = emptyList(),
     geometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
 ) {
     for (slot in 0 until rows * ViewSlotGeometry.COLUMNS) {
@@ -632,7 +630,7 @@ fun blockRow(@ViewRows.Companion.Rows row: Int, exemptColumns: IntArray) {
 context(context: ViewContainerModificationContext)
 fun blockRow(
     @ViewRows.Companion.Rows row: Int,
-    exemptColumns: IntCollection = IntLists.EMPTY_LIST,
+    exemptColumns: Collection<Int> = emptyList(),
 ) {
     blockRow(row, exemptColumns, SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY)
 }
@@ -660,7 +658,7 @@ fun blockColumn(column: Int, exemptRows: IntArray) {
     DeprecationLevel.HIDDEN
 )
 context(context: ViewContainerModificationContext)
-fun blockColumn(column: Int, exemptRows: IntCollection = IntLists.EMPTY_LIST) {
+fun blockColumn(column: Int, exemptRows: Collection<Int> = emptyList()) {
     blockColumn(
         column = column,
         exemptRows = exemptRows,

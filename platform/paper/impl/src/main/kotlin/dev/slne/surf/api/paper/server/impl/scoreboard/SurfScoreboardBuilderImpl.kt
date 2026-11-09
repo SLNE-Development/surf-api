@@ -2,7 +2,6 @@
 
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardBuilder
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -16,9 +15,9 @@ import java.util.function.Function
 import java.util.function.Supplier
 
 class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBuilder {
-    private val lines = mutableObjectListOf<ScoreboardLine>()
-    private val snapshots = mutableObjectListOf<LineSnapshot<*>>()
-    private val animations = mutableObjectListOf<SidebarAnimation<Component>>()
+    private val lines = mutableListOf<ScoreboardLine>()
+    private val snapshots = mutableListOf<LineSnapshot<*>>()
+    private val animations = mutableListOf<SidebarAnimation<Component>>()
     private var maxLines = SurfScoreboardBuilder.DEFAULT_MAX_LINES
 
     override fun maxLines(maxLines: Int) = apply {
@@ -76,7 +75,7 @@ class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBu
         ): SidebarAnimation<Component> {
             val step = 1f / 20f
             val textPlaceholder = Placeholder.component("text", component)
-            val frames = mutableObjectListOf<Component>()
+            val frames = mutableListOf<Component>()
 
             // Animation from left to right
             var phase = -1f

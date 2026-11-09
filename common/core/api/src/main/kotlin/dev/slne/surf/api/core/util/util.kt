@@ -6,15 +6,6 @@ package dev.slne.surf.api.core.util
 
 import com.google.common.flogger.FluentLogger
 import com.google.common.flogger.LoggingApi
-import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap
-import it.unimi.dsi.fastutil.bytes.Byte2ObjectMaps
-import it.unimi.dsi.fastutil.bytes.Byte2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -505,103 +496,83 @@ private fun processFinalField(field: Field, putOperation: (Unsafe, Long) -> Unit
 }
 
 /**
- * Creates an unmodifiable map from enum constants to their string IDs.
+ * Creates a read-only map from enum constants to their string IDs.
  *
  * @param enumClass The enum class.
  * @param idMapper Function mapping each enum constant to its string ID.
- * @return Unmodifiable map from string IDs to enum constants.
+ * @return Read-only map from string IDs to enum constants.
  */
 fun <T : Enum<T>> byStringIdMap(
     enumClass: Class<T>,
     idMapper: (T) -> String,
-): Object2ObjectMap<String, T> = Object2ObjectMaps.unmodifiable(
-    Object2ObjectOpenHashMap(
-        enumClass.enumConstants.associateBy(idMapper)
-    )
-)
+): Map<String, T> = enumClass.enumConstants.associateBy(idMapper)
 
 /**
- * Creates an unmodifiable map from enum constants to their integer IDs.
+ * Creates a read-only map from enum constants to their integer IDs.
  *
  * @param enumClass The enum class.
  * @param idMapper Function mapping each enum constant to its integer ID.
- * @return Unmodifiable map from integer IDs to enum constants.
+ * @return Read-only map from integer IDs to enum constants.
  */
 fun <T : Enum<T>> byIdMap(
     enumClass: Class<T>,
     idMapper: ToIntFunction<T>,
-): Int2ObjectMap<T> {
+): Map<Int, T> {
     return byIdMap(idMapper, enumClass.enumConstants)
 }
 
 /**
- * Creates an unmodifiable map from values to their integer IDs.
+ * Creates a read-only map from values to their integer IDs.
  *
  * @param idMapper Function mapping each value to its integer ID.
  * @param values Array of values to map.
- * @return Unmodifiable map from integer IDs to values.
+ * @return Read-only map from integer IDs to values.
  */
 fun <T> byIdMap(
     idMapper: ToIntFunction<T>,
     values: Array<T>,
-): Int2ObjectMap<T> {
-    return Int2ObjectMaps.unmodifiable(
-        Int2ObjectOpenHashMap(
-            values.associateBy({ idMapper.applyAsInt(it) }, { it })
-        )
-    )
+): Map<Int, T> {
+    return values.associateBy { idMapper.applyAsInt(it) }
 }
 
 /**
- * Creates an unmodifiable map from values to their integer IDs.
+ * Creates a read-only map from values to their integer IDs.
  *
  * @param idMapper Function mapping each value to its integer ID.
  * @param values Array of values to map.
- * @return Unmodifiable map from integer IDs to values.
+ * @return Read-only map from integer IDs to values.
  */
 fun <T> byIdMap(
     idMapper: (T) -> Int,
     values: Array<T>,
-): Int2ObjectMap<T> {
-    return Int2ObjectMaps.unmodifiable(
-        Int2ObjectOpenHashMap(
-            values.associateBy(idMapper)
-        )
-    )
+): Map<Int, T> {
+    return values.associateBy(idMapper)
 }
 
 /**
- * Creates an unmodifiable map from values to their byte IDs.
+ * Creates a read-only map from values to their byte IDs.
  *
  * @param values Array of values to map.
  * @param idMapper Function mapping each value to its byte ID.
- * @return Unmodifiable map from byte IDs to values.
+ * @return Read-only map from byte IDs to values.
  */
 fun <T> byByteIdMap(
     values: Array<T>,
     idMapper: (T) -> Byte,
-): Byte2ObjectMap<T> {
-    return Byte2ObjectMaps.unmodifiable(
-        Byte2ObjectOpenHashMap(
-            values.associateBy(idMapper)
-        )
-    )
+): Map<Byte, T> {
+    return values.associateBy(idMapper)
 }
 
 /**
- * Creates an unmodifiable map from enum constants to computed values.
+ * Creates a read-only map from enum constants to computed values.
  *
  * @param valueMapper Function mapping each enum constant to its associated value.
- * @return Unmodifiable map from enum constants to their values.
+ * @return Read-only map from enum constants to their values.
  */
 inline fun <reified T : Enum<T>> byEnumMap(
     valueMapper: (T) -> Any,
-): Object2ObjectMap<T, Any> {
-    return Object2ObjectMaps.unmodifiable(
-        Object2ObjectOpenHashMap(
-            T::class.java.enumConstants.associateWith(valueMapper)
-        )
-    )
+): Map<T, Any> {
+    return T::class.java.enumConstants.associateWith(valueMapper)
 }
 
 /**

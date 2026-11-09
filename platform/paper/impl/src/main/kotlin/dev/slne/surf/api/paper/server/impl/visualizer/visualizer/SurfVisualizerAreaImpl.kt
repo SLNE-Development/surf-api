@@ -6,8 +6,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.shynixn.mccoroutine.folia.scope
 import dev.slne.surf.api.core.algorithms.convexHull2D
 import dev.slne.surf.api.core.math.VoxelLineTracer
-import dev.slne.surf.api.core.util.mutableLongSetOf
-import dev.slne.surf.api.core.util.toObjectSet
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.api.paper.server.impl.visualizer.SurfBukkitVisualizerApiImpl
 import dev.slne.surf.api.paper.server.plugin
@@ -18,7 +16,6 @@ import dev.slne.surf.api.paper.util.isChunkVisible
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -45,7 +42,7 @@ class SurfVisualizerAreaImpl(
 ) : SurfVisualizer by delegate, SurfVisualizerArea {
 
     private val corners = ConcurrentHashMap.newKeySet<Vector3d>(initialEdges.size)
-    override val cornerLocations get() = corners.toObjectSet()
+    override val cornerLocations: Set<Vector3d> get() = corners.toSet()
     private val computationChannel = Channel<Unit>(Channel.CONFLATED)
 
     private val scope = CoroutineScope(
@@ -138,7 +135,7 @@ class SurfVisualizerAreaImpl(
 
     private suspend fun recompute() {
         if (delegate.isClosed()) return
-        val cornersSnapshot = ObjectLinkedOpenHashSet(corners)
+        val cornersSnapshot = LinkedHashSet(corners)
         val settingsSnapshot = settings.clone()
 
         // Clear all previous state
@@ -154,7 +151,7 @@ class SurfVisualizerAreaImpl(
 
         // Compute 2D hull and edge points (cheap, no chunk loading)
         val hull = cornersSnapshot.convexHull2D()
-        val edgePoints = ObjectLinkedOpenHashSet<Vector3d>()
+        val edgePoints = LinkedHashSet<Vector3d>()
 
         for (i in hull.indices) {
             edgePoints += VoxelLineTracer.trace(
@@ -210,7 +207,7 @@ class SurfVisualizerAreaImpl(
         val world = delegate.world
 
         // Collect chunk keys that any viewer can see
-        val visibleKeys = mutableLongSetOf()
+        val visibleKeys = mutableSetOf<Long>()
         for (viewerUuid in delegate.viewerUuids) {
             val player = Bukkit.getPlayer(viewerUuid) ?: continue
             for (chunkKey in pendingByChunk.keys) {
@@ -222,9 +219,7 @@ class SurfVisualizerAreaImpl(
             }
         }
 
-        val iterator = visibleKeys.iterator()
-        while (iterator.hasNext()) {
-            val chunkKey = iterator.nextLong()
+        for (chunkKey in visibleKeys) {
             currentCoroutineContext().ensureActive()
             resolveChunk(chunkKey, settingsSnapshot)
         }

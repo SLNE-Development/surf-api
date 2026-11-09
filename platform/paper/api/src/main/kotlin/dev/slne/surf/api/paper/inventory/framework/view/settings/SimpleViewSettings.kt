@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings
 
 import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.format.TextColor
 
@@ -38,7 +37,7 @@ data class SimpleViewSettings(
     @IntroducedAt("3.43.0") override val rowFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
     @IntroducedAt("3.43.0") override val headerGeometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
     @IntroducedAt("3.43.0") override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
-    @IntroducedAt("3.43.0") override val rowFonts: Int2ObjectMap<Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
+    @IntroducedAt("3.43.0") override val rowFonts: Map<Int, Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
     override val cancelOnClick: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_CLICK,
     override val cancelOnDrag: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DRAG,
     override val cancelOnDrop: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DROP,

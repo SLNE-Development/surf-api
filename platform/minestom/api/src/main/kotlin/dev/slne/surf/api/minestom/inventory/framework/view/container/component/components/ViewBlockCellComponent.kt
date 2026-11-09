@@ -3,10 +3,8 @@ package dev.slne.surf.api.minestom.inventory.framework.view.container.component.
 import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewHeaderGeometry
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 /**
  * A [ViewContainerComponent] that renders a single inventory cell block overlay at the given
@@ -132,7 +130,7 @@ class ViewBlockCellComponent(
         SIX('ꐶ', 6);
 
         companion object {
-            private val index = entries.associateByTo(Int2ObjectOpenHashMap(6)) { it.row }.freeze()
+            private val index = entries.associateBy { it.row }
 
             /**
              * Returns the [BlockRow] for the given one-based [row] number, or `null` if not found.

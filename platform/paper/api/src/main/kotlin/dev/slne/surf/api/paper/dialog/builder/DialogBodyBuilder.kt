@@ -3,17 +3,15 @@
 package dev.slne.surf.api.paper.dialog.builder
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import io.papermc.paper.registry.data.dialog.body.PlainMessageDialogBody
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.kyori.adventure.text.Component
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemType
 import org.jetbrains.annotations.Range
 
 class DialogBodyBuilder {
-    private val bodies = mutableObjectListOf<DialogBody>()
+    private val bodies = mutableListOf<DialogBody>()
 
     fun plain(block: PlainDialogMessageBuilder.() -> Unit) {
         val builder = PlainDialogMessageBuilder().apply(block)
@@ -49,7 +47,7 @@ class DialogBodyBuilder {
         bodies.add(builder.build())
     }
 
-    internal fun build(): ObjectList<DialogBody> = bodies
+    internal fun build(): MutableList<DialogBody> = bodies
 
     class PlainDialogMessageBuilder {
         var message: Component? = null
@@ -151,8 +149,8 @@ class DialogBodyBuilder {
     }
 }
 
-fun DialogBody(block: DialogBodyBuilder.() -> Unit): ObjectList<DialogBody> =
+fun DialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> =
     DialogBodyBuilder().apply(block).build()
 
-fun dialogBody(block: DialogBodyBuilder.() -> Unit): ObjectList<DialogBody> =
+fun dialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> =
     DialogBodyBuilder().apply(block).build()

@@ -8,8 +8,6 @@ import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSett
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewHeaderGeometry
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.align.TextAlignment
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntMaps
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -112,7 +110,7 @@ class ViewContainerTitleComponent(
         font: Key,
         charSpacing: Int,
         textAlignment: TextAlignment,
-        charWidths: Int2IntMap = Int2IntMaps.EMPTY_MAP,
+        charWidths: Map<Int, Int> = emptyMap(),
     ) : this(
         title = text(title),
         font = font,

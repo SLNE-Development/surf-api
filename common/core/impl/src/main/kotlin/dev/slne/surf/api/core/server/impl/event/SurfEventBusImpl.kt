@@ -7,7 +7,6 @@ import dev.slne.surf.api.core.server.impl.event.invoker.SurfEventInvokerFactory
 import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.lang.reflect.Method
@@ -178,7 +177,7 @@ class SurfEventBusImpl : SurfEventBus {
     private fun buildMatchingHandlers(
         concreteType: Class<out SurfEvent>
     ): Array<SurfEventHandlerEntry> {
-        val result = ObjectArrayList<SurfEventHandlerEntry>()
+        val result = mutableListOf<SurfEventHandlerEntry>()
 
         for ((registeredType, byPriority) in handlers) {
             if (!registeredType.isAssignableFrom(concreteType)) continue
@@ -190,7 +189,7 @@ class SurfEventBusImpl : SurfEventBus {
             }
         }
 
-        if (result.isEmpty) return emptyHandlers
+        if (result.isEmpty()) return emptyHandlers
 
         result.sortWith(
             compareBy<SurfEventHandlerEntry> { it.priority.ordinal }
@@ -261,7 +260,7 @@ class SurfEventBusImpl : SurfEventBus {
      * after validating their signature.
      */
     private fun collectHandlerMethods(type: Class<*>): List<HandlerMethod> {
-        val out = ObjectArrayList<HandlerMethod>()
+        val out = mutableListOf<HandlerMethod>()
         var current: Class<*>? = type
         while (current != null && current != Any::class.java) {
             for (method in current.declaredMethods) {

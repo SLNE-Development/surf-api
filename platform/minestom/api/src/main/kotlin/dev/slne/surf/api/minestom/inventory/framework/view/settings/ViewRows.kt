@@ -1,7 +1,5 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings
 
-import dev.slne.surf.api.core.util.freeze
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.intellij.lang.annotations.MagicConstant
 
 /**
@@ -50,7 +48,7 @@ enum class ViewRows(val glyph: Char) {
         @MagicConstant(intValues = [1, 2, 3, 4, 5, 6])
         annotation class Rows
 
-        private val index = entries.associateByTo(Int2ObjectOpenHashMap()) { it.rows }.freeze()
+        private val index = entries.associateBy { it.rows }
 
         /**
          * Returns the [ViewRows] for the given [rows] count, or `null` if not in the range 1..6.
@@ -58,7 +56,7 @@ enum class ViewRows(val glyph: Char) {
          * @param rows the row count to look up (1..6)
          * @return the matching [ViewRows], or `null`
          */
-        fun byRowsOrNull(@Rows rows: Int): ViewRows? = index.get(rows)
+        fun byRowsOrNull(@Rows rows: Int): ViewRows? = index[rows]
 
         /**
          * Returns the [ViewRows] for the given [rows] count.

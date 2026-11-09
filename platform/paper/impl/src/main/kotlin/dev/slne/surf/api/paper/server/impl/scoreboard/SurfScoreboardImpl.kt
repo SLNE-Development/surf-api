@@ -2,7 +2,6 @@
 
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboard
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardApi
@@ -39,7 +38,7 @@ open class SurfScoreboardImpl(definition: ScoreboardDefinition) : SurfScoreboard
 
     private var enabled: Boolean = false
     private var sharedSidebar: Sidebar? = null
-    private val viewerBoards = mutableObject2ObjectMapOf<UUID, ViewerBoard>()
+    private val viewerBoards = mutableMapOf<UUID, ViewerBoard>()
 
     override fun addViewer(viewer: Player) {
         lock.withLock {

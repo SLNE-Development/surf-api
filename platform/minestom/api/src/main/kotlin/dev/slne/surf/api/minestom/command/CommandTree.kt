@@ -10,8 +10,6 @@ import dev.slne.surf.api.minestom.command.exception.CommandValidationException
 import dev.slne.surf.api.minestom.command.executor.CommandExecutable
 import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import net.minestom.server.command.CommandSender
 
 /**
@@ -24,15 +22,15 @@ import net.minestom.server.command.CommandSender
  * @property name label of the command; letters, digits, `.`, `_` and `-` only
  */
 class CommandTree(val name: String) : CommandExecutable<CommandTree> {
-    private val aliases = ObjectArrayList<String>()
-    private val permissions = ObjectLinkedOpenHashSet<String>()
-    private val requirements = ObjectArrayList<(CommandSender) -> Boolean>()
-    private val arguments = ObjectArrayList<Argument<*>>()
-    private val executors = ObjectArrayList<ExecutorDefinition>()
+    private val aliases = mutableListOf<String>()
+    private val permissions = mutableSetOf<String>()
+    private val requirements = mutableListOf<(CommandSender) -> Boolean>()
+    private val arguments = mutableListOf<Argument<*>>()
+    private val executors = mutableListOf<ExecutorDefinition>()
 
     private var shortDescription: String? = null
-    private val fullDescription = ObjectArrayList<String>()
-    private val usage = ObjectArrayList<String>()
+    private val fullDescription = mutableListOf<String>()
+    private val usage = mutableListOf<String>()
     private var help: String? = null
 
     fun withAliases(vararg aliases: String): CommandTree = apply {
@@ -99,7 +97,7 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
     fun toDefinition(): CommandDefinition {
         validateCommandLabels(name, aliases)
 
-        val output = ObjectArrayList<CommandPath>()
+        val output = mutableListOf<CommandPath>()
         val rootPermissions = immutableSet(permissions)
         val rootRequirements = immutableList(requirements)
 

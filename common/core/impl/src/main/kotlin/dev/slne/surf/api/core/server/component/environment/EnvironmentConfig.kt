@@ -2,27 +2,24 @@ package dev.slne.surf.api.core.server.component.environment
 
 import dev.slne.surf.api.core.server.environment.EnvironmentAccessor
 import dev.slne.surf.api.shared.api.component.requirement.ConditionalOnEnvironment
-import it.unimi.dsi.fastutil.objects.ObjectList
 
 object EnvironmentConfig {
 
     @Volatile
-    private var cachedEnvironments: ObjectList<String>? = null
+    private var cachedEnvironments: List<String>? = null
 
-    fun getEnvironments(): ObjectList<String> {
+    fun getEnvironments(): List<String> {
         cachedEnvironments?.let { return it }
         synchronized(this) {
             cachedEnvironments?.let { return it }
 
             val env = EnvironmentAccessor.getEnv(ConditionalOnEnvironment.ENV_PROPERTY_NAME)
             val resolvedEnvironments = if (env == null) {
-                ObjectList.of(ConditionalOnEnvironment.PRODUCTION_ENVIRONMENT)
+                listOf(ConditionalOnEnvironment.PRODUCTION_ENVIRONMENT)
             } else {
                 env.split(",")
                     .map { it.trim() }
                     .filter { it.isNotEmpty() }
-                    .toTypedArray()
-                    .let { ObjectList.of(*it) }
             }
 
             cachedEnvironments = resolvedEnvironments

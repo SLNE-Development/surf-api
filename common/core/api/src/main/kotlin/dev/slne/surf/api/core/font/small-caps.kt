@@ -1,14 +1,12 @@
 package dev.slne.surf.api.core.font
 
-import dev.slne.surf.api.core.util.char2CharMapOf
-
 /**
  * A character mapping table from lowercase ASCII letters and digits to their Unicode small caps equivalents.
  *
  * Maps lowercase letters a-z to their corresponding small caps characters (ᴀ-ᴢ) and preserves digits 0-9.
  * Some letters like 's' and 'x' map to themselves as they lack distinct small caps Unicode characters.
  */
-private val smallCapsMap = char2CharMapOf(
+private val smallCapsMap = mapOf(
     'a' to 'ᴀ', 'b' to 'ʙ', 'c' to 'ᴄ', 'd' to 'ᴅ', 'e' to 'ᴇ', 'f' to 'ғ',
     'g' to 'ɢ', 'h' to 'ʜ', 'i' to 'ɪ', 'j' to 'ᴊ', 'k' to 'ᴋ', 'l' to 'ʟ',
     'm' to 'ᴍ', 'n' to 'ɴ', 'o' to 'ᴏ', 'p' to 'ᴘ', 'q' to 'ǫ', 'r' to 'ʀ',
@@ -31,7 +29,7 @@ fun CharSequence.toSmallCaps(): String {
     val chars = CharArray(length)
     for (i in indices) {
         val c = this[i]
-        chars[i] = smallCapsMap.getOrDefault(c.lowercaseChar(), c)
+        chars[i] = smallCapsMap[c.lowercaseChar()] ?: c
     }
     return String(chars)
 }

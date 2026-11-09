@@ -7,7 +7,6 @@ import com.mojang.brigadier.tree.ArgumentCommandNode
 import dev.slne.surf.api.minestom.server.impl.command.brigadier.SignedMessageArgumentType
 import dev.slne.surf.api.minestom.server.impl.command.brigadier.SuggestingArgumentType
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import net.kyori.adventure.chat.SignedMessage
 import net.minestom.server.command.CommandSender
 import net.minestom.server.crypto.ArgumentSignatures
@@ -91,7 +90,7 @@ internal fun signableArgumentsOf(
     parse: ParseResults<CommandSender>,
 ): Map<String, String> {
     val input = parse.reader.string
-    val values = Object2ObjectLinkedOpenHashMap<String, String>()
+    val values = LinkedHashMap<String, String>()
 
     var context: CommandContextBuilder<CommandSender>? = parse.context
     while (context != null) {

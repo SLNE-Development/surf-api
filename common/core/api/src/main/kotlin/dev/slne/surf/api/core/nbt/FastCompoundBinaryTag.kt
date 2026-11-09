@@ -1,15 +1,12 @@
 package dev.slne.surf.api.core.nbt
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
-import it.unimi.dsi.fastutil.objects.ObjectIterator
-import it.unimi.dsi.fastutil.objects.ObjectSet
 import net.kyori.adventure.nbt.*
 import org.jetbrains.annotations.UnmodifiableView
 import java.util.function.Consumer
 import java.util.stream.Stream
 
 /**
- * A mutable, high-performance replacement for CompoundBinaryTag backed by fastutil collections.
+ * A mutable, high-performance replacement for CompoundBinaryTag.
  *
  * This interface mirrors the CompoundBinaryTag API but cannot extend it since CompoundBinaryTag
  * became sealed in Adventure 5.1.1. All operations (put, remove, etc.) mutate the tag directly,
@@ -22,7 +19,7 @@ interface FastCompoundBinaryTag : BinaryTagLike {
     fun contains(key: String): Boolean
     fun contains(key: String, type: BinaryTagType<*>): Boolean
 
-    fun keySet(): @UnmodifiableView ObjectSet<String>
+    fun keySet(): @UnmodifiableView Set<String>
 
     fun get(key: String): BinaryTag?
     fun size(): Int
@@ -58,7 +55,7 @@ interface FastCompoundBinaryTag : BinaryTagLike {
     fun getLongArray(key: String, defaultValue: LongArray?): LongArray?
 
     fun stream(): Stream<Map.Entry<String, BinaryTag>>
-    fun iterator(): ObjectIterator<Object2ObjectMap.Entry<String, BinaryTag>>
+    fun iterator(): Iterator<Map.Entry<String, BinaryTag>>
     fun forEach(action: Consumer<in MutableMap.MutableEntry<String, out BinaryTag>>)
 
     override fun asBinaryTag(): CompoundBinaryTag
@@ -68,7 +65,7 @@ interface FastCompoundBinaryTag : BinaryTagLike {
  * Wraps this CompoundBinaryTag in a mutable FastCompoundBinaryTag for improved performance.
  *
  * @param synchronize If true, wraps the underlying map with synchronization for thread-safe access
- * @return A mutable FastCompoundBinaryTag backed by fastutil collections
+ * @return A mutable FastCompoundBinaryTag holding this tag's entries
  */
 fun CompoundBinaryTag.fast(synchronize: Boolean = false) =
     InternalNbtBridge.wrapCompoundBinaryTag(this, synchronize)
@@ -77,6 +74,6 @@ fun CompoundBinaryTag.fast(synchronize: Boolean = false) =
  * Builds and wraps the result in a mutable FastCompoundBinaryTag.
  *
  * @param synchronize If true, wraps the underlying map with synchronization for thread-safe access
- * @return A mutable FastCompoundBinaryTag backed by fastutil collections
+ * @return A mutable FastCompoundBinaryTag holding the built tag's entries
  */
 fun CompoundBinaryTag.Builder.buildFast(synchronize: Boolean = false) = build().fast(synchronize)

@@ -17,8 +17,6 @@ import dev.slne.surf.api.minestom.command.executor.*
 import dev.slne.surf.api.minestom.coroutine.minestomAsyncScope
 import dev.slne.surf.api.minestom.server.impl.command.AccumulatedConditions
 import dev.slne.surf.api.minestom.server.impl.command.MinestomConditions
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
@@ -71,7 +69,7 @@ internal class BrigadierCommandTree(
         val registered: List<Pair<List<String>, CommandDefinition>>,
     )
 
-    private val entries = Object2ObjectLinkedOpenHashMap<String, Entry>()
+    private val entries = LinkedHashMap<String, Entry>()
 
     /**
      * The snapshot of the current command set, or `null` when a change has not been built yet.
@@ -92,7 +90,7 @@ internal class BrigadierCommandTree(
      * same [key].
      */
     fun register(key: String, labels: Collection<String>, definition: CommandDefinition) {
-        val labelList = ObjectArrayList(labels)
+        val labelList = labels.toList()
         val nodes = labelList.map { label -> literalFor(label, definition).build() }
 
         synchronized(entries) {
@@ -268,7 +266,7 @@ internal class BrigadierCommandTree(
         path: CommandPath,
         depth: Int,
     ): CommandArguments {
-        val parsedNames = ObjectArrayList<String>(context.nodes.size)
+        val parsedNames = ArrayList<String>(context.nodes.size)
         context.nodes.forEach { parsed ->
             val node = parsed.node
             if (node is ArgumentCommandNode<*, *>) parsedNames += node.name
@@ -276,7 +274,7 @@ internal class BrigadierCommandTree(
 
         val valued = path.arguments.filter { argument -> argument.kind !is ArgumentKind.Literal }
         return CommandArguments.of(
-            valued.mapTo(ObjectArrayList(valued.size)) { definition ->
+            valued.mapTo(ArrayList(valued.size)) { definition ->
                 val name = definition.nodeName
                 val index = path.arguments.indexOf(definition)
                 val present = index < depth && name in parsedNames

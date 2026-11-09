@@ -5,7 +5,6 @@ import com.google.common.io.ByteStreams
 import dev.slne.surf.api.core.SurfApiCore
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
 import dev.slne.surf.api.core.util.checkInstantiationByServiceLoader
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.paper.SurfApiPaper
 import dev.slne.surf.api.paper.server.hook.SurfBukkitHookManager
 import dev.slne.surf.api.paper.server.plugin
@@ -73,11 +72,11 @@ class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
 
     override suspend fun skipTimeSmoothly(timeToAdd: Long) = coroutineScope {
         val worlds = Bukkit.getWorlds()
-        worlds.associateWithTo(mutableObject2ObjectMapOf(worlds.size)) {
+        worlds.associateWith {
             async {
                 skipTimeSmoothly(it, timeToAdd)
             }
-        }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
+        }.mapValues { (_, def) -> def.await() }
     }
 
     override suspend fun skipTimeSmoothly(
@@ -85,21 +84,21 @@ class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
         duration: Long,
     ) = coroutineScope {
         val worlds = Bukkit.getWorlds()
-        worlds.associateWithTo(mutableObject2ObjectMapOf(worlds.size)) {
+        worlds.associateWith {
             async {
                 skipTimeSmoothly(it, timeToAdd, duration)
             }
-        }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
+        }.mapValues { (_, def) -> def.await() }
     }
 
     override suspend fun skipTimeSmoothly(
         skipOperation: SkipOperations.SkipOperation,
     ) = coroutineScope {
         val worlds = Bukkit.getWorlds()
-        worlds.associateWithTo(mutableObject2ObjectMapOf(worlds.size)) {
+        worlds.associateWith {
             async {
                 skipTimeSmoothly(it, skipOperation)
             }
-        }.mapValuesTo(mutableObject2ObjectMapOf(worlds.size)) { (_, def) -> def.await() }
+        }.mapValues { (_, def) -> def.await() }
     }
 }

@@ -5,8 +5,6 @@ import dev.slne.surf.api.minestom.command.RegisteredCommand
 import dev.slne.surf.api.minestom.command.argument.ArgumentKind
 import dev.slne.surf.api.minestom.command.argument.SuggestionMode
 import dev.slne.surf.api.minestom.command.exception.CommandValidationException
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import java.util.*
 
 /**
@@ -32,8 +30,8 @@ internal class MinestomCommandCompiler {
     fun compile(definition: CommandDefinition, namespace: String?): CompiledRegistration {
         validateSuggestionModes(definition)
 
-        val names = ObjectLinkedOpenHashSet<String>()
-        val baseNames = ObjectArrayList<String>(definition.aliases.size + 1)
+        val names = LinkedHashSet<String>()
+        val baseNames = ArrayList<String>(definition.aliases.size + 1)
 
         baseNames += normalize(definition.name)
         definition.aliases.forEach { alias -> baseNames += normalize(alias) }

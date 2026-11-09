@@ -11,7 +11,6 @@ import dev.slne.surf.api.paper.server.impl.visualizer.SurfBukkitVisualizerApiImp
 import dev.slne.surf.api.paper.server.plugin
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizer
-import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.entity.Player
@@ -32,7 +31,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     override val viewerUuids: MutableSet<UUID> = Collections.unmodifiableSet(internalViewerUuids)
 
     @Deprecated("Use viewerUuids instead", replaceWith = ReplaceWith("viewerUuids"))
-    override val viewers: ObjectSet<Player> =
+    override val viewers: Set<Player> =
         TransformingSet2ObjectSet(viewerUuids, Bukkit::getPlayer, Player::getUniqueId)
 
     override val uid: UUID = UUID.randomUUID()

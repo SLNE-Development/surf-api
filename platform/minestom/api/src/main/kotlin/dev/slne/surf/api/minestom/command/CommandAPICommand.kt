@@ -11,7 +11,6 @@ import dev.slne.surf.api.minestom.command.executor.CommandExecutable
 import dev.slne.surf.api.minestom.command.executor.ExecutorDefinition
 import dev.slne.surf.api.minestom.command.executor.ExecutorType
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import it.unimi.dsi.fastutil.objects.*
 import net.minestom.server.command.CommandSender
 import java.util.*
 
@@ -43,16 +42,16 @@ data class CommandPath(
  * @property name label of the command; letters, digits, `.`, `_` and `-` only
  */
 class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand> {
-    private val aliases = ObjectArrayList<String>()
-    private val permissions = ObjectLinkedOpenHashSet<String>()
-    private val requirements = ObjectArrayList<(CommandSender) -> Boolean>()
-    private val arguments = ObjectArrayList<Argument<*>>()
-    private val subcommands = ObjectArrayList<CommandAPICommand>()
-    private val executors = ObjectArrayList<ExecutorDefinition>()
+    private val aliases = mutableListOf<String>()
+    private val permissions = mutableSetOf<String>()
+    private val requirements = mutableListOf<(CommandSender) -> Boolean>()
+    private val arguments = mutableListOf<Argument<*>>()
+    private val subcommands = mutableListOf<CommandAPICommand>()
+    private val executors = mutableListOf<ExecutorDefinition>()
 
     private var shortDescription: String? = null
-    private val fullDescription = ObjectArrayList<String>()
-    private val usage = ObjectArrayList<String>()
+    private val fullDescription = mutableListOf<String>()
+    private val usage = mutableListOf<String>()
     private var help: String? = null
 
     fun withAliases(vararg aliases: String): CommandAPICommand = apply {
@@ -136,27 +135,27 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
 
     @InternalSurfApi
     fun toDefinition(): CommandDefinition {
-        val stack = ReferenceOpenHashSet<CommandAPICommand>()
+        val stack = Collections.newSetFromMap(IdentityHashMap<CommandAPICommand, Boolean>())
 
         validateCommandLabels(name, aliases)
 
-        val output = ObjectArrayList<CommandPath>()
+        val output = mutableListOf<CommandPath>()
         val rootPermissions = immutableSet(permissions)
         val rootRequirements = immutableList(requirements)
 
-        if (arguments.isEmpty && executors.isNotEmpty()) {
+        if (arguments.isEmpty() && executors.isNotEmpty()) {
             output += commandPath(emptyList(), executors, rootPermissions, rootRequirements)
         }
 
-        val subcommandNodes = ObjectArrayList<ArgumentTreeNode>()
+        val subcommandNodes = mutableListOf<ArgumentTreeNode>()
         subcommands.forEach { subcommand ->
             subcommandNodes.addAll(subcommand.toSubcommandNodes(stack))
         }
 
-        val rootNodes = if (arguments.isEmpty) {
+        val rootNodes = if (arguments.isEmpty()) {
             subcommandNodes
         } else {
-            val argumentNodes = ObjectArrayList<ArgumentTreeNode>(arguments.size)
+            val argumentNodes = mutableListOf<ArgumentTreeNode>()
             arguments.forEach { argument ->
                 argumentNodes += argument.toTreeNode()
             }
@@ -203,15 +202,15 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         try {
             validateCommandLabels(name, aliases)
 
-            val nestedSubcommands = ObjectArrayList<ArgumentTreeNode>()
+            val nestedSubcommands = mutableListOf<ArgumentTreeNode>()
             subcommands.forEach { subcommand ->
                 nestedSubcommands.addAll(subcommand.toSubcommandNodes(stack))
             }
 
-            val body = if (arguments.isEmpty) {
+            val body = if (arguments.isEmpty()) {
                 emptyList()
             } else {
-                val argumentNodes = ObjectArrayList<ArgumentTreeNode>(arguments.size)
+                val argumentNodes = mutableListOf<ArgumentTreeNode>()
                 arguments.forEach { argument ->
                     argumentNodes += argument.toTreeNode()
                 }
@@ -219,7 +218,7 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
                 linearNodes(argumentNodes, executors, nestedSubcommands)
             }
 
-            val result = ObjectArrayList<ArgumentTreeNode>(aliases.size + 1)
+            val result = mutableListOf<ArgumentTreeNode>()
             result += createSubcommandNode(
                 label = name,
                 nestedSubcommands = nestedSubcommands,
@@ -234,7 +233,7 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
                 )
             }
 
-            return ObjectLists.unmodifiable(result)
+            return result
         } finally {
             stack.remove(this)
         }
@@ -246,8 +245,8 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         body: List<ArgumentTreeNode>,
     ): ArgumentTreeNode = ArgumentTreeNode(
         argument = subcommandLiteral(label),
-        executors = if (arguments.isEmpty) immutableList(executors) else emptyList(),
-        children = if (arguments.isEmpty) nestedSubcommands else body,
+        executors = if (arguments.isEmpty()) immutableList(executors) else emptyList(),
+        children = if (arguments.isEmpty()) nestedSubcommands else body,
         permissions = immutableSet(permissions),
         requirements = immutableList(requirements),
     )
@@ -267,7 +266,7 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
 internal fun validateCommandLabels(name: String, aliases: Collection<String>) {
     validateCommandLabel(name, "name")
 
-    val normalized = ObjectOpenHashSet<String>(aliases.size + 1)
+    val normalized = mutableSetOf<String>()
     normalized += name.lowercase(Locale.ROOT)
 
     aliases.forEach { alias ->
@@ -296,9 +295,7 @@ internal fun linearNodes(
     for (index in arguments.indices.reversed()) {
         val node = arguments[index]
         val executors = if (index == arguments.lastIndex) {
-            val combined = ObjectArrayList<ExecutorDefinition>(
-                node.executors.size + terminalExecutors.size,
-            )
+            val combined = mutableListOf<ExecutorDefinition>()
 
             combined.addAll(node.executors)
             combined.addAll(terminalExecutors)
@@ -308,14 +305,12 @@ internal fun linearNodes(
             node.executors
         }
 
-        val children = ObjectArrayList<ArgumentTreeNode>(
-            node.children.size + suffix.size,
-        )
+        val children = mutableListOf<ArgumentTreeNode>()
 
         children.addAll(node.children)
         children.addAll(suffix)
 
-        suffix = ObjectLists.singleton(
+        suffix = listOf(
             node.copy(
                 executors = executors,
                 children = immutableList(children),
@@ -332,19 +327,15 @@ internal fun flatten(
     node: ArgumentTreeNode,
     output: MutableList<CommandPath>,
 ) {
-    val path = ObjectArrayList<ArgumentDefinition<*>>(prefix.size + 1)
+    val path = mutableListOf<ArgumentDefinition<*>>()
     path.addAll(prefix)
     path += node.argument
 
-    val permissions = ObjectLinkedOpenHashSet<String>(
-        inheritedPermissions.size + node.permissions.size,
-    )
+    val permissions = mutableSetOf<String>()
     permissions.addAll(inheritedPermissions)
     permissions.addAll(node.permissions)
 
-    val requirements = ObjectArrayList<(CommandSender) -> Boolean>(
-        inheritedRequirements.size + node.requirements.size,
-    )
+    val requirements = mutableListOf<(CommandSender) -> Boolean>()
     requirements.addAll(inheritedRequirements)
     requirements.addAll(node.requirements)
 
@@ -380,7 +371,7 @@ internal fun validateAndFreezePaths(
     }
 
     paths.forEach { path ->
-        val names = ObjectOpenHashSet<String>(path.arguments.size)
+        val names = mutableSetOf<String>()
         path.arguments.forEach { argument ->
             if (argument.kind !is ArgumentKind.Literal && !names.add(argument.nodeName)) {
                 throw CommandValidationException(
@@ -403,7 +394,7 @@ internal fun validateAndFreezePaths(
             throw CommandValidationException("Greedy arguments must be terminal")
         }
 
-        val executorTypes = ObjectOpenHashSet<ExecutorType>(path.executors.size)
+        val executorTypes = mutableSetOf<ExecutorType>()
         path.executors.forEach { executor ->
             if (!executorTypes.add(executor.type)) {
                 throw CommandValidationException(
@@ -472,7 +463,7 @@ private class PathNode(
     private val parent: PathNode? = null,
     private val name: String? = null,
 ) {
-    val children = Object2ObjectOpenHashMap<String, PathNode>()
+    val children = mutableMapOf<String, PathNode>()
     private var executes = false
 
     fun claimExecutor(commandName: String) {
@@ -486,14 +477,14 @@ private class PathNode(
     }
 
     fun describe(): String {
-        val names = ObjectArrayList<String>()
+        val names = mutableListOf<String>()
         var node: PathNode? = this
         while (node?.name != null) {
             names += node.name
             node = node.parent
         }
         names.reverse()
-        return if (names.isEmpty) "<command>" else names.joinToString(" ")
+        return if (names.isEmpty()) "<command>" else names.joinToString(" ")
     }
 }
 
@@ -511,12 +502,10 @@ private fun commandPath(
 
 internal fun <T> immutableList(
     values: Collection<T>,
-): List<T> = ObjectImmutableList(values)
+): List<T> = values.toList()
 
 internal fun <T> immutableSet(
     values: Collection<T>,
-): Set<T> = ObjectSets.unmodifiable(
-    ObjectLinkedOpenHashSet(values),
-)
+): Set<T> = values.toSet()
 
 private val COMMAND_NAME_PATTERN = Regex("""[\p{L}\p{N}_.-]+""")

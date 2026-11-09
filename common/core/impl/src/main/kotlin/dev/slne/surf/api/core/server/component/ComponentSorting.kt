@@ -3,7 +3,6 @@ package dev.slne.surf.api.core.server.component
 import com.google.common.collect.Maps
 import com.google.common.graph.Graph
 import com.google.common.graph.GraphBuilder
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.shared.internal.hook.PluginComponentMeta
 import java.util.*
 
@@ -42,7 +41,7 @@ object ComponentSorting {
             }
         }
 
-        val sortedComponents = mutableObjectListOf<PluginComponentMeta.Component>()
+        val sortedComponents = mutableListOf<PluginComponentMeta.Component>()
         val marks = mutableMapOf<PluginComponentMeta.Component, Mark>()
 
         for (node in graph.nodes()) {

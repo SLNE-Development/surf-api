@@ -22,9 +22,7 @@ class ConditionEvaluatorTest {
 
     @Test
     fun `a bean without conditions is accepted`() = runTest {
-        val decision = evaluator().evaluate(bean(BeanConditions()), nothingProvided)
-
-        assertAccepted(decision)
+        assertAccepted(evaluator().evaluate(bean(BeanConditions()), nothingProvided))
     }
 
     @Test
@@ -46,7 +44,8 @@ class ConditionEvaluatorTest {
 
     @Test
     fun `every missing class is named, not only the first`() = runTest {
-        val conditions = BeanConditions(classNames = listOf(ABSENT_CLASS, "java.util.UUID", "also.Absent"))
+        val conditions =
+            BeanConditions(classNames = listOf(ABSENT_CLASS, "java.util.UUID", "also.Absent"))
 
         val reason = rejection(evaluator().evaluate(bean(conditions), nothingProvided))
 
@@ -57,28 +56,36 @@ class ConditionEvaluatorTest {
     @Test
     fun `all required plugins have to be loaded`() = runTest {
         val conditions = BeanConditions(pluginIds = listOf("luckperms", "vault"))
-        val evaluator = evaluator(plugins = setOf("luckperms"))
 
-        val reason = rejection(evaluator.evaluate(bean(conditions), nothingProvided))
+        val reason = rejection(
+            evaluator(plugins = setOf("luckperms")).evaluate(bean(conditions), nothingProvided)
+        )
 
         assertContains(reason, "vault")
-        assertFalse(reason.contains("luckperms"), "the loaded plugin must not be reported as missing")
+        assertFalse(
+            reason.contains("luckperms"),
+            "a loaded plugin must not be reported as missing",
+        )
     }
 
     @Test
     fun `required plugins are accepted once all of them are loaded`() = runTest {
         val conditions = BeanConditions(pluginIds = listOf("luckperms", "vault"))
-        val evaluator = evaluator(plugins = setOf("vault", "luckperms"))
 
-        assertAccepted(evaluator.evaluate(bean(conditions), nothingProvided))
+        assertAccepted(
+            evaluator(plugins = setOf("vault", "luckperms"))
+                .evaluate(bean(conditions), nothingProvided)
+        )
     }
 
     @Test
     fun `one loaded plugin satisfies a whole group`() = runTest {
         val conditions = BeanConditions(anyPluginIds = listOf(listOf("luckperms", "permissionsex")))
-        val evaluator = evaluator(plugins = setOf("permissionsex"))
 
-        assertAccepted(evaluator.evaluate(bean(conditions), nothingProvided))
+        assertAccepted(
+            evaluator(plugins = setOf("permissionsex"))
+                .evaluate(bean(conditions), nothingProvided)
+        )
     }
 
     @Test
@@ -86,9 +93,10 @@ class ConditionEvaluatorTest {
         val conditions = BeanConditions(
             anyPluginIds = listOf(listOf("luckperms", "permissionsex"), listOf("vault")),
         )
-        val evaluator = evaluator(plugins = setOf("luckperms"))
 
-        val reason = rejection(evaluator.evaluate(bean(conditions), nothingProvided))
+        val reason = rejection(
+            evaluator(plugins = setOf("luckperms")).evaluate(bean(conditions), nothingProvided)
+        )
 
         assertContains(reason, "vault")
     }
@@ -117,7 +125,7 @@ class ConditionEvaluatorTest {
         val reason = rejection(evaluator().evaluate(bean(conditions), nothingProvided))
 
         assertContains(reason, Explodes::class.java.name)
-        assertContains(reason, "the file system is on fire")
+        assertContains(reason, EXPLOSION)
     }
 
     @Test
@@ -139,9 +147,11 @@ class ConditionEvaluatorTest {
     @Test
     fun `environment matching ignores case`() = runTest {
         val conditions = BeanConditions(environments = listOf(listOf("production")))
-        val evaluator = evaluator(environments = setOf("PRODUCTION"))
 
-        assertAccepted(evaluator.evaluate(bean(conditions), nothingProvided))
+        assertAccepted(
+            evaluator(environments = setOf("PRODUCTION"))
+                .evaluate(bean(conditions), nothingProvided)
+        )
     }
 
     @Test
@@ -173,32 +183,30 @@ class ConditionEvaluatorTest {
 
     @Test
     fun `a missing bean condition rejects when another bean provides the type`() = runTest {
-        val conditions = BeanConditions(missingBeans = listOf("dev.slne.Storage"))
+        val conditions = BeanConditions(missingBeans = listOf(STORAGE))
 
-        val reason = rejection(
-            evaluator().evaluate(bean(conditions)) { it == "dev.slne.Storage" }
-        )
+        val reason = rejection(evaluator().evaluate(bean(conditions)) { it == STORAGE })
 
-        assertContains(reason, "dev.slne.Storage")
+        assertContains(reason, STORAGE)
     }
 
     @Test
     fun `a missing bean condition is accepted when nothing provides the type`() = runTest {
-        val conditions = BeanConditions(missingBeans = listOf("dev.slne.Storage"))
+        val conditions = BeanConditions(missingBeans = listOf(STORAGE))
 
         assertAccepted(evaluator().evaluate(bean(conditions), nothingProvided))
     }
 
     @Test
     fun `an absent property counts as matching when matchIfMissing is set`() = runTest {
-        val conditions = propertyConditions(matchIfMissing = true)
+        val conditions = propertyOn(havingValue = "true", matchIfMissing = true)
 
         assertAccepted(evaluator().evaluate(bean(conditions), nothingProvided))
     }
 
     @Test
     fun `an absent property rejects when matchIfMissing is not set`() = runTest {
-        val conditions = propertyConditions(havingValue = "true", matchIfMissing = false)
+        val conditions = propertyOn(havingValue = "true", matchIfMissing = false)
 
         val reason = rejection(evaluator().evaluate(bean(conditions), nothingProvided))
 
@@ -208,18 +216,22 @@ class ConditionEvaluatorTest {
 
     @Test
     fun `an empty havingValue only requires the property to be set`() = runTest {
-        val conditions = propertyConditions(havingValue = "")
-        val evaluator = evaluator(properties = mapOf("feature.enabled" to "whatever"))
+        val conditions = propertyOn(havingValue = "")
 
-        assertAccepted(evaluator.evaluate(bean(conditions), nothingProvided))
+        assertAccepted(
+            evaluator(properties = mapOf("feature.enabled" to "whatever"))
+                .evaluate(bean(conditions), nothingProvided)
+        )
     }
 
     @Test
     fun `a property holding a different value rejects and names both values`() = runTest {
-        val conditions = propertyConditions(havingValue = "true")
-        val evaluator = evaluator(properties = mapOf("feature.enabled" to "false"))
+        val conditions = propertyOn(havingValue = "true")
 
-        val reason = rejection(evaluator.evaluate(bean(conditions), nothingProvided))
+        val reason = rejection(
+            evaluator(properties = mapOf("feature.enabled" to "false"))
+                .evaluate(bean(conditions), nothingProvided)
+        )
 
         assertContains(reason, "feature.enabled")
         assertContains(reason, "'false'")
@@ -228,18 +240,22 @@ class ConditionEvaluatorTest {
 
     @Test
     fun `a property value matches ignoring case`() = runTest {
-        val conditions = propertyConditions(havingValue = "true")
-        val evaluator = evaluator(properties = mapOf("feature.enabled" to "TRUE"))
+        val conditions = propertyOn(havingValue = "true")
 
-        assertAccepted(evaluator.evaluate(bean(conditions), nothingProvided))
+        assertAccepted(
+            evaluator(properties = mapOf("feature.enabled" to "TRUE"))
+                .evaluate(bean(conditions), nothingProvided)
+        )
     }
 
     @Test
     fun `a property is read from the file the condition names`() = runTest {
-        val conditions = propertyConditions(havingValue = "true", file = "storage.yml")
-        val evaluator = evaluator(properties = mapOf("storage.yml/feature.enabled" to "true"))
+        val conditions = propertyOn(havingValue = "true", file = "storage.yml")
 
-        assertAccepted(evaluator.evaluate(bean(conditions), nothingProvided))
+        assertAccepted(
+            evaluator(properties = mapOf("storage.yml/feature.enabled" to "true"))
+                .evaluate(bean(conditions), nothingProvided)
+        )
 
         val reason = rejection(
             evaluator(properties = mapOf("feature.enabled" to "true"))
@@ -257,7 +273,7 @@ class ConditionEvaluatorTest {
     }
 
     @Test
-    fun `the first failing family decides and the rest is never run`() = runTest {
+    fun `the first failing family decides and nothing after it is run`() = runTest {
         val conditions = BeanConditions(
             classNames = listOf(ABSENT_CLASS),
             customConditions = listOf(Explodes::class.java.name),
@@ -267,22 +283,22 @@ class ConditionEvaluatorTest {
 
         assertContains(reason, ABSENT_CLASS)
         assertFalse(
-            reason.contains("the file system is on fire"),
-            "a condition after the failing family must not be run",
+            reason.contains(EXPLOSION),
+            "a condition behind a failing family must not be run",
         )
     }
 
-    // -- helpers ---------------------------------------------------------------------------------
+    // -- fixtures --------------------------------------------------------------------------------
 
-    /** A definition that carries nothing but [conditions], which is all the evaluator looks at. */
+    /** A definition carrying nothing but [conditions], which is all the evaluator looks at. */
     private fun bean(conditions: BeanConditions) = BeanDefinition(
         className = BEAN_CLASS,
         provides = listOf(BEAN_CLASS),
         conditions = conditions,
     )
 
-    /** One property condition on `feature.enabled`, the one knob every property test turns. */
-    private fun propertyConditions(
+    /** One condition on `feature.enabled`, the single knob every property test turns. */
+    private fun propertyOn(
         havingValue: String = "",
         matchIfMissing: Boolean = false,
         file: String = "",
@@ -301,22 +317,18 @@ class ConditionEvaluatorTest {
      * An evaluator over a platform that answers exactly what the test states.
      *
      * The platform is written out rather than mocked: it has five methods, and a hand-written one
-     * makes the test state the whole world the bean is judged against.
+     * makes the test spell out the whole world the bean is judged against.
      */
     private fun evaluator(
         plugins: Set<String> = emptySet(),
         environments: Set<String> = emptySet(),
         properties: Map<String, String> = emptyMap(),
-    ): ConditionEvaluator {
-        val platform = FakePlatform(plugins, environments)
-
-        return ConditionEvaluator(
-            platform = platform,
-            owner = OWNER,
-            container = FakeContainer,
-            propertyReader = FakeProperties(properties),
-        )
-    }
+    ) = ConditionEvaluator(
+        platform = FakePlatform(plugins, environments),
+        owner = OWNER,
+        container = FakeContainer,
+        propertyReader = FakeProperties(properties),
+    )
 
     private fun assertAccepted(decision: Decision) {
         assertTrue(decision.accepted, "expected acceptance but got: ${decision.reason}")
@@ -328,6 +340,99 @@ class ConditionEvaluatorTest {
 
         return assertNotNull(decision.reason, "a rejection has to carry a reason")
     }
+
+    /** Answers the five platform questions from what a test put in. */
+    private class FakePlatform(
+        private val loadedPlugins: Set<String>,
+        private val activeEnvironments: Set<String>,
+    ) : ContainerPlatform {
+
+        override fun classLoader(owner: Any): ClassLoader = FakePlatform::class.java.classLoader
+
+        override fun isPluginLoaded(pluginId: String) = pluginId in loadedPlugins
+
+        override fun logger(owner: Any): PlatformLogger = SilentLogger
+
+        override fun dataPath(owner: Any): Path = DATA_PATH
+
+        override fun environments(): Set<String> = activeEnvironments
+    }
+
+    /** The evaluator reports through its decisions, so nothing is expected on the logger. */
+    private object SilentLogger : PlatformLogger {
+        override fun info(message: String) = Unit
+        override fun warn(message: String) = Unit
+        override fun error(message: String, throwable: Throwable?) = Unit
+        override fun debug(message: String) = Unit
+    }
+
+    /**
+     * A container that holds nothing.
+     *
+     * A condition runs before the beans it decides about exist, so the only things it can
+     * legitimately read here are the container's identity and its owner.
+     */
+    private object FakeContainer : BeanContainer {
+
+        override val parent: BeanContainer? get() = null
+
+        override val owner: Any get() = OWNER
+
+        override fun <T : Any> beanOrNull(type: KClass<T>, qualifier: String?): T? = null
+
+        override fun <T : Any> bean(type: KClass<T>, qualifier: String?): T =
+            error("no bean provides $type in this test")
+
+        override fun <T : Any> beansOfType(type: KClass<T>): List<T> = emptyList()
+
+        override fun <T : Any> lazyBean(type: KClass<T>, qualifier: String?): Lazy<T> =
+            lazy { bean(type, qualifier) }
+    }
+
+    /**
+     * Serves property values from a map, so no test needs a file on disk.
+     *
+     * A key is `a.b.c` for the default file and `file/a.b.c` for a named one, which is also what
+     * checks that the file named by the condition reaches the reader.
+     */
+    private class FakeProperties(private val values: Map<String, String>) : PropertyReader {
+
+        override fun read(dataPath: Path, key: List<String>, file: String): String? {
+            assertEquals(DATA_PATH, dataPath, "the platform's data path has to reach the reader")
+
+            val path = key.joinToString(".")
+
+            return values[if (file.isEmpty()) path else "$file/$path"]
+        }
+    }
+
+    /** Holds, so the bean it guards is created. */
+    private class AlwaysHolds : BeanCondition {
+        override suspend fun evaluate(context: BeanConditionContext) = true
+    }
+
+    /** Never holds, so the bean it guards is skipped. */
+    private class NeverHolds : BeanCondition {
+        override suspend fun evaluate(context: BeanConditionContext) = false
+    }
+
+    /** Fails instead of answering, which must cost only the bean it guards. */
+    private class Explodes : BeanCondition {
+        override suspend fun evaluate(context: BeanConditionContext): Boolean = error(EXPLOSION)
+    }
+
+    /**
+     * Holds only if the context describes the bean the condition was asked about.
+     *
+     * Written as an `object` on purpose: a stateless condition is natural to declare this way, and
+     * it is the one shape whose constructor is private.
+     */
+    private object InspectsContext : BeanCondition {
+        override suspend fun evaluate(context: BeanConditionContext) =
+            context.beanClassName == BEAN_CLASS &&
+                    context.owner === OWNER &&
+                    context.container === FakeContainer
+    }
 }
 
 /** A class name nothing on the test classpath answers to. */
@@ -336,105 +441,17 @@ private const val ABSENT_CLASS = "dev.slne.surf.api.di.NotOnTheClasspath"
 /** The bean every test judges. */
 private const val BEAN_CLASS = "dev.slne.surf.api.di.internal.TestBean"
 
-/** The application the container belongs to; identity is all the conditions check. */
+/** The type the `missingBeans` tests fight over. */
+private const val STORAGE = "dev.slne.surf.api.di.internal.Storage"
+
+/** What a failing condition throws, looked for in the rejection reason. */
+private const val EXPLOSION = "the file system is on fire"
+
+/** The application the container belongs to; identity is all a condition checks. */
 private val OWNER = Any()
 
 /** Where the fake platform keeps configuration, handed to the property reader unchanged. */
 private val DATA_PATH: Path = Path.of("build", "test-data")
 
-/** No bean provides anything, which is the common case for `missingBeans`. */
+/** Nothing is provided, which is the uninteresting case for `missingBeans`. */
 private val nothingProvided: (String) -> Boolean = { false }
-
-/** Answers the five platform questions from what a test put in. */
-private class FakePlatform(
-    private val plugins: Set<String>,
-    private val environments: Set<String>,
-) : ContainerPlatform {
-
-    override fun classLoader(owner: Any): ClassLoader = FakePlatform::class.java.classLoader
-
-    override fun isPluginLoaded(pluginId: String) = pluginId in plugins
-
-    override fun logger(owner: Any): PlatformLogger = SilentLogger
-
-    override fun dataPath(owner: Any): Path = DATA_PATH
-
-    override fun environments(): Set<String> = environments
-}
-
-/** The evaluator reports through its decisions, so nothing is expected on the logger. */
-private object SilentLogger : PlatformLogger {
-    override fun info(message: String) = Unit
-    override fun warn(message: String) = Unit
-    override fun error(message: String, throwable: Throwable?) = Unit
-    override fun debug(message: String) = Unit
-}
-
-/**
- * A container that holds nothing.
- *
- * Conditions run before the beans they decide about exist, so the only thing a condition can
- * legitimately read here is the container's identity and its owner.
- */
-private object FakeContainer : BeanContainer {
-
-    override val parent: BeanContainer? get() = null
-
-    override val owner get() = OWNER
-
-    override fun <T : Any> beanOrNull(type: KClass<T>, qualifier: String?): T? = null
-
-    override fun <T : Any> bean(type: KClass<T>, qualifier: String?): T =
-        error("no bean provides $type in this test")
-
-    override fun <T : Any> beansOfType(type: KClass<T>): List<T> = emptyList()
-
-    override fun <T : Any> lazyBean(type: KClass<T>, qualifier: String?): Lazy<T> =
-        lazy { bean(type, qualifier) }
-}
-
-/**
- * Serves property values from a map, so no test needs a file on disk.
- *
- * A key is `a.b.c` for the default file and `file/a.b.c` for a named one, which also checks that the
- * file from the condition reaches the reader.
- */
-private class FakeProperties(private val values: Map<String, String>) : PropertyReader {
-
-    override fun read(dataPath: Path, key: List<String>, file: String): String? {
-        assertEquals(DATA_PATH, dataPath, "the reader has to be given the platform's data path")
-
-        val path = key.joinToString(".")
-
-        return values[if (file.isEmpty()) path else "$file/$path"]
-    }
-}
-
-/** Holds, so the bean it guards is created. */
-private class AlwaysHolds : BeanCondition {
-    override suspend fun evaluate(context: BeanConditionContext) = true
-}
-
-/** Never holds, so the bean it guards is skipped. */
-private class NeverHolds : BeanCondition {
-    override suspend fun evaluate(context: BeanConditionContext) = false
-}
-
-/** Fails instead of answering, which must cost only the bean it guards. */
-private class Explodes : BeanCondition {
-    override suspend fun evaluate(context: BeanConditionContext): Boolean =
-        error("the file system is on fire")
-}
-
-/**
- * Holds only if the context describes the bean it was asked about.
- *
- * Declared as an `object` on purpose: a stateless condition is natural to write this way, and it is
- * the one shape whose constructor is private.
- */
-private object InspectsContext : BeanCondition {
-    override suspend fun evaluate(context: BeanConditionContext) =
-        context.beanClassName == BEAN_CLASS &&
-                context.owner === OWNER &&
-                context.container === FakeContainer
-}

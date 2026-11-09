@@ -1,9 +1,6 @@
 package dev.slne.surf.api.core.server.impl.messages.pagination
 
 import dev.slne.surf.api.core.messages.pagination.*
-import dev.slne.surf.api.core.util.freeze
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import dev.slne.surf.api.core.util.objectListOf
 import net.kyori.adventure.text.Component
 
 data class PaginationImpl<T>(
@@ -25,16 +22,16 @@ data class PaginationImpl<T>(
         page: Int,
     ): List<Component> {
         if (content.isEmpty()) {
-            return objectListOf(renderer.renderEmpty())
+            return listOf(renderer.renderEmpty())
         }
 
         val pages = pages(resultsPerPage, content.size)
 
         if (page !in 1..pages) {
-            return objectListOf(renderer.renderUnknownPage(page, pages))
+            return listOf(renderer.renderUnknownPage(page, pages))
         }
 
-        val results = mutableObjectListOf<Component>()
+        val results = mutableListOf<Component>()
         results.add(renderer.renderHeader(width, indent, title, page, pages))
 
         forEachPageEntry(content, resultsPerPage, page) { value, index ->
@@ -64,7 +61,7 @@ data class PaginationImpl<T>(
             ) { page -> clickEventProvider.getCallback(page, this, content) }
         )
 
-        return results.freeze()
+        return results
     }
 
     companion object {

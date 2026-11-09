@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.visualizer.visualizer
 
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
-import it.unimi.dsi.fastutil.objects.ObjectSet
 import org.jetbrains.annotations.Unmodifiable
 import org.spongepowered.math.vector.Vector3d
 
@@ -27,7 +26,7 @@ interface SurfVisualizerArea : SurfVisualizer {
      *
      * This property is part of the experimental API and may be subject to changes in the future.
      */
-    val cornerLocations: @Unmodifiable ObjectSet<Vector3d>
+    val cornerLocations: @Unmodifiable Set<Vector3d>
 
     /**
      * Adds a location to the set of corner locations in the visualizer area.

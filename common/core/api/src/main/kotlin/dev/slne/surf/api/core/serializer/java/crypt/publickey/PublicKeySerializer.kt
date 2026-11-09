@@ -1,6 +1,5 @@
 package dev.slne.surf.api.core.serializer.java.crypt.publickey
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -16,8 +15,8 @@ typealias SerializablePublicKey = @Serializable(with = PublicKeySerializer::clas
 
 object PublicKeySerializer : KSerializer<PublicKey> {
     // KeyFactory is not thread-safe, so we cache them per thread
-    private val keyFactoryCache: ThreadLocal<Object2ObjectOpenHashMap<String, KeyFactory>> =
-        ThreadLocal.withInitial { Object2ObjectOpenHashMap(4) }
+    private val keyFactoryCache: ThreadLocal<MutableMap<String, KeyFactory>> =
+        ThreadLocal.withInitial { HashMap(4) }
 
     override val descriptor = buildClassSerialDescriptor("surf.api.java.crypt.PublicKey") {
         element<String>("algorithm")

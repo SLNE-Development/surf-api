@@ -4,8 +4,6 @@ import dev.slne.surf.api.minestom.command.CommandDefinition
 import dev.slne.surf.api.minestom.command.argument.ArgumentDefinition
 import dev.slne.surf.api.minestom.command.argument.ArgumentKind
 import dev.slne.surf.api.minestom.server.impl.command.MinestomConditions
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.minestom.server.command.CommandSender
 import net.minestom.server.network.packet.server.play.DeclareCommandsPacket
 
@@ -37,8 +35,8 @@ internal class DeclareCommandsMerger(
             treeFor(definition, sender)?.let { branches -> labels to branches }
         }
 
-        val nodes = original.nodes().mapTo(ObjectArrayList(), ::copyOf)
-        val extraRootChildren = IntArrayList()
+        val nodes = original.nodes().mapTo(mutableListOf(), ::copyOf)
+        val extraRootChildren = mutableListOf<Int>()
 
         // The removed nodes stay in the array, unreachable from the root.
         val owned = registered.flatMapTo(HashSet()) { (labels, _) -> labels }

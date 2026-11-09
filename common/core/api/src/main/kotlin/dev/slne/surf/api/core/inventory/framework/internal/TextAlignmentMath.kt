@@ -1,8 +1,6 @@
 package dev.slne.surf.api.core.inventory.framework.internal
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntMaps
 
 /**
  * Shared pixel math behind the per-platform `TextAlignment` enums.
@@ -29,8 +27,8 @@ object TextAlignmentMath {
     fun charWidth(
         codePoint: Int,
         charSize: Int,
-        charWidths: Int2IntMap = Int2IntMaps.EMPTY_MAP,
-    ): Int = if (charWidths.containsKey(codePoint)) charWidths.get(codePoint) else charSize
+        charWidths: Map<Int, Int> = emptyMap(),
+    ): Int = charWidths[codePoint] ?: charSize
 
     /**
      * Computes the total rendered pixel width of [text].
@@ -51,7 +49,7 @@ object TextAlignmentMath {
         text: String,
         charSize: Int,
         charSpacing: Int,
-        charWidths: Int2IntMap = Int2IntMaps.EMPTY_MAP,
+        charWidths: Map<Int, Int> = emptyMap(),
     ): Int {
         val glyphs = text.codePointCount(0, text.length)
         if (glyphs == 0) return 0
