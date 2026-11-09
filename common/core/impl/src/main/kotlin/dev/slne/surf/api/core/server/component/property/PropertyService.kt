@@ -2,7 +2,6 @@ package dev.slne.surf.api.core.server.component.property
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.expireAfterAccess
-import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.di.condition.ConditionalOnProperty
 import org.spongepowered.configurate.CommentedConfigurationNode
 import org.spongepowered.configurate.ConfigurationNode
@@ -27,9 +26,14 @@ import kotlin.time.Duration.Companion.minutes
  * database:
  *   host: localhost
  * ```
+ *
+ * **An absent file and an unreadable one are different answers.** No file, or a path that is not a
+ * regular file, means the property is not set, and a condition is entitled to fall back to its
+ * default. A file that exists and cannot be parsed throws, because the container asks this to
+ * decide whether a bean is created at all: treating a broken file as "not set" would start the
+ * server with guarded features on whichever side their defaults happen to be, and say nothing.
  */
 object PropertyService {
-    private val log = logger()
 
     private val propertyCache = Caffeine.newBuilder()
         .expireAfterAccess(30.minutes)
@@ -85,15 +89,25 @@ object PropertyService {
                 return@get CommentedConfigurationNode.root()
             }
 
+            // Deliberately not caught. A file that is there but cannot be read is not the same
+            // thing as a property that is not set, and returning an empty node makes them
+            // identical -- after which `@ConditionalOnProperty`'s `matchIfMissing` decides, and a
+            // server starts with every guarded feature on the wrong side of its default and
+            // nothing in the log to say why. The cache stores nothing for a failed load, so fixing
+            // the file and retrying works.
             try {
                 YamlConfigurationLoader.builder()
                     .path(propertiesPath)
                     .build()
                     .load()
-            } catch (e: Exception) {
-                log.atWarning()
-                    .log("Failed to load properties file: %s", propertiesPath.toAbsolutePath(), e)
-                CommentedConfigurationNode.root()
+            } catch (cause: Exception) {
+                throw IllegalStateException(
+                    "Cannot read ${propertiesPath.toAbsolutePath()}. The file is there, so it is " +
+                            "not being treated as an unset property: that would let a condition " +
+                            "fall back to its default and start the server in a state nobody " +
+                            "asked for. Fix the file.",
+                    cause,
+                )
             }
         }
     }
