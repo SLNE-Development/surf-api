@@ -82,7 +82,9 @@ fun <Impl : ExecutableCommand<Impl, CommandSender>> ExecutableCommand<Impl, Comm
 )
 ```
 
-Delegates to the `SuspendRequirementService` (`@InternalSurfApi`, looked up with `requiredService`).
+Delegates to the `SuspendRequirementService` (`@InternalSurfApi`, whose
+`companion object { val instance by surfBean<SuspendRequirementService>() }` resolves the
+`@Service` implementation in `platform/paper/impl/.../command/`).
 Read its KDoc before using it: the suspending predicate is refreshed **asynchronously when the
 command tree is sent to the player**, and the *cached* result is what the CommandAPI requirement
 checks at execution time. `Player.updateCommands()` forces a refresh. So treat it as command

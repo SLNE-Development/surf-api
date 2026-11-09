@@ -167,8 +167,9 @@ suspending events such as `AsyncPlayerChatEvent`. Details: `references/platform-
 - **Async handlers inherit the publisher's coroutine context.** `callAsync` calls `ensureActive()`
   before each handler, so cancelling the publishing coroutine stops the remaining handlers
   mid-dispatch. A `CancellationException` thrown by a handler itself is only logged.
-- **No impl, no bus.** `SurfEventBus` resolves through `requiredService` at class-init time, so a
-  missing `-impl` module fails with `ServiceConfigurationError` on first touch.
+- **No impl, no bus.** `SurfEventBus.INSTANCE` reads a private `by surfBean<SurfEventBus>()`, which
+  resolves on first access, so a missing `-impl` module - or a touch before surf-api has started -
+  fails there with `No bean provides dev.slne.surf.api.core.event.SurfEventBus ...`.
 
 Dispatch internals, the hidden-class invokers and the exact exception and cancellation semantics:
 `references/dispatch-and-invokers.md`. Registering a listener as a bean: the `surf-api-components`

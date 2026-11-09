@@ -91,7 +91,7 @@ Registering the same class twice replaces the earlier manager.
 
 ## Serializers
 
-`surfSpongeConfigSerializers` (a `SpongeConfigSerializers`, resolved by ServiceLoader) is asked for
+`surfSpongeConfigSerializers` (a `SpongeConfigSerializers` bean) is asked for
 its module once per config manager, at construction. Out of the box it covers Adventure
 `Component` (MiniMessage), `Key`, `TextColor`, enums, `UUID`, `Regex`, `Pattern`, `URI`, `URL`,
 `Path`, `File`, `LinkedList`, maps (fault-tolerant) and the surf helper types. Each platform adds

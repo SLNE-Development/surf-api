@@ -38,9 +38,9 @@ player.sendActionBar(
 ```
 
 `textComputation` is a `SurfComponentBuilder.() -> Unit`; the service-level `computation` is a plain
-`() -> Component`. The service itself is a ServiceLoader singleton
-(`ActionBarService.instance`, `requiredService<ActionBarService>()`), reachable from common code with
-no container.
+`() -> Component`. The service itself is a bean: `ActionBarService.instance` reads a private
+`by surfBean<ActionBarService>()`, satisfied by the `@Service` `ActionBarServiceImpl` in
+`surf-api-core-impl`, so it is reachable from common code on every platform.
 
 ### What it guarantees
 
