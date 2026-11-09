@@ -19,20 +19,19 @@ private val NMS_VERSION_MODULE = Regex("-nms-v[0-9]")
 /**
  * Classifies a subproject by its name.
  *
- * Implementation modules are recognised by four name shapes, because the layout currently uses
- * more than one spelling for the same role:
+ * Implementation modules are recognised by three name shapes:
  *
- * - `-impl`, the target spelling
- * - `-server`, used by the platform implementations and the Minestom feature modules
- * - `-internal`, used by `surf-api-shared-internal`
+ * - `-impl`, which every platform and domain implementation uses
+ * - `-internal`, used by `surf-api-internal`, whose contents are a contract between the KSP
+ *   processor and the container rather than something a consumer writes against
  * - `-nms-v<digit>`, used by the versioned NMS bridges
  *
- * Everything else counts as an API module. Aggregates are never derived from the name; they are
- * declared by applying the `surf.aggregate` plugin.
+ * Everything else counts as an API module. Aggregates are never derived from the name — they are
+ * declared by applying the `surf.aggregate` plugin — which matters because `surf-api-minestom-server`
+ * is an aggregate whose name would otherwise read as an implementation.
  */
 fun surfModuleRole(projectName: String): SurfModuleRole = when {
     projectName.endsWith("-impl") -> SurfModuleRole.IMPL
-    projectName.contains("-server") -> SurfModuleRole.IMPL
     projectName.endsWith("-internal") -> SurfModuleRole.IMPL
     NMS_VERSION_MODULE.containsMatchIn(projectName) -> SurfModuleRole.IMPL
     else -> SurfModuleRole.API

@@ -39,8 +39,9 @@ abstract class CheckApiBoundary : DefaultTask() {
             appendLine("${modulePath.get()} is an API module but depends on implementation modules:")
             found.forEach { appendLine("  - $it") }
             append(
-                "An API module may only depend on other API modules. Implementations are wired in " +
-                        "by the aggregator through the surfRuntime configuration."
+                "An API module may only depend on other API modules. Move the dependency to the " +
+                        "matching implementation module, or move the type the API needs into an " +
+                        "API module of its own."
             )
         }
 

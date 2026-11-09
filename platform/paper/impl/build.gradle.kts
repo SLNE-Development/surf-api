@@ -36,7 +36,6 @@ dependencies {
     implementation(libs.dazzleconf)
     implementation(libs.spongepowered.math)
     implementation(libs.okhttp)
-    implementation(libs.fastutil)
     implementation(libs.reflection.remapper)
     implementation(libs.more.persistent.data.types)
     implementation(libs.flogger)

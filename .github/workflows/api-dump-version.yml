@@ -99,18 +99,16 @@ jobs:
           version_file=gradle.properties
           current_version=$(grep -E '^version=' "$version_file" | cut -d= -f2)
           
-          IFS='.-' read -r major minor patch lib_major lib_minor lib_patch <<<"$current_version"
+          if ! [[ "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "version=$current_version is not major.minor.patch, so it cannot be bumped automatically." >&2
+            echo "Set the version in gradle.properties yourself in this pull request." >&2
+            exit 1
+          fi
 
-          for value in "$major" "$minor" "$patch" "$lib_major" "$lib_minor" "$lib_patch"; do
-            if ! [[ "$value" =~ ^[0-9]+$ ]]; then
-              echo "Invalid numeric version component: $value" >&2
-              exit 1
-            fi
-          done
-          
-          lib_minor=$((10#$lib_minor + 1))
-          lib_patch=0
-          
-          new_version="$major.$minor.$patch-$lib_major.$lib_minor.$lib_patch"
+          major="${BASH_REMATCH[1]}"
+          minor="${BASH_REMATCH[2]}"
+
+          # A change to the published ABI is at least a minor release.
+          new_version="$major.$((10#$minor + 1)).0"
           echo "Bumping version: $current_version → $new_version"
           sed -i "s/^version=.*/version=$new_version/" "$version_file"
