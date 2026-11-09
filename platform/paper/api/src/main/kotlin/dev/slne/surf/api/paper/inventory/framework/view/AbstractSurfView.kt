@@ -1,5 +1,8 @@
 package dev.slne.surf.api.paper.inventory.framework.view
 
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.inventory.framework.view.util.shift
 import dev.slne.surf.api.paper.inventory.framework.modifyConfig
 import dev.slne.surf.api.paper.inventory.framework.view.container.ViewContainer
 import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerGlyphComponent
@@ -9,7 +12,6 @@ import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.addChild
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.removeChildrenOfType
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings
-import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.ViewType

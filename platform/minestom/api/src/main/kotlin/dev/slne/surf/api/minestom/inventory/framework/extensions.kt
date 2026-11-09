@@ -4,7 +4,7 @@ package dev.slne.surf.api.minestom.inventory.framework
 
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.builder.buildItem
-import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.context.OpenContext

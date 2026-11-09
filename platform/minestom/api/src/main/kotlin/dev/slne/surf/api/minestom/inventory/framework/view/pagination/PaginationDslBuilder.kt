@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.pagination
 
-import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import me.devnatan.inventoryframework.component.MinestomItemComponentBuilder

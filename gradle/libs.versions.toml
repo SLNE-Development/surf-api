@@ -192,6 +192,7 @@ configurate-yaml = { module = "dev.slne.forks.configurate:configurate-yaml", ver
 configurate-jackson = { module = "dev.slne.forks.configurate:configurate-jackson", version.ref = "configurate" }
 configurate-kotlin = { module = "dev.slne.forks.configurate:configurate-extra-kotlin", version.ref = "configurate" }
 more-persistent-data-types = { module = "com.jeff-media:MorePersistentDataTypes", version.ref = "more-persistent-data-types" }
+inventory-framework-api = { module = "dev.slne.forks.inventoryframework:inventory-framework-api", version.ref = "inventory-framework" }
 inventory-framework-platform-paper = { module = "dev.slne.forks.inventoryframework:inventory-framework-platform-paper", version.ref = "inventory-framework" }
 inventory-framework-platform-bukkit = { module = "dev.slne.forks.inventoryframework:inventory-framework-platform-bukkit", version.ref = "inventory-framework" }
 inventory-framework-platform-minestom = { module = "dev.slne.forks.inventoryframework:inventory-framework-platform-minestom", version.ref = "inventory-framework" }

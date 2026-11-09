@@ -2,7 +2,7 @@ package dev.slne.surf.api.minestom.inventory.framework.dsl
 
 import dev.slne.surf.api.minestom.builder.ItemDsl
 import dev.slne.surf.api.minestom.builder.buildItem
-import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import me.devnatan.inventoryframework.component.MinestomItemComponentBuilder
 import me.devnatan.inventoryframework.context.SlotClickContext
 import me.devnatan.inventoryframework.context.SlotContext

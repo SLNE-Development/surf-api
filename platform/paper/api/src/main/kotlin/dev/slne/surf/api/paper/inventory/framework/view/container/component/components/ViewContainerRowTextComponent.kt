@@ -3,11 +3,11 @@ package dev.slne.surf.api.paper.inventory.framework.view.container.component.com
 import dev.slne.surf.api.core.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.core.inventory.framework.internal.layoutViewText
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
-import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewFontMetrics
-import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewHeaderGeometry
-import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
+import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
+import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor

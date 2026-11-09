@@ -13,8 +13,8 @@ import dev.slne.surf.api.paper.inventory.framework.view.*
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.blockAllSlots
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.header
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.rowText
-import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewRows
-import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import dev.slne.surf.api.paper.inventory.framework.view.state.get
 import dev.slne.surf.api.paper.inventory.framework.view.state.increment
 import dev.slne.surf.api.paper.inventory.framework.view.state.mutableState

@@ -20,7 +20,7 @@ import java.util.function.Supplier
  *
  * @param S the concrete IF state type that will be created
  * @see StateRegistry
- * @see dev.slne.surf.api.paper.api.inventory.framework.view.state.StateDsl
+ * @see dev.slne.surf.api.paper.inventory.framework.view.state.state
  */
 @PublishedApi
 internal sealed interface DeferredState<S> {

@@ -70,6 +70,9 @@ includePair("foundation", "di")
 
 // common
 includePair("common", "core")
+// Only the api half exists: the shared inventory framework is contracts, settings and components
+// that both platforms compile against, with no runtime wiring of its own.
+includeModule("common/inventory/api")
 
 // platform
 includePair("platform", "paper")

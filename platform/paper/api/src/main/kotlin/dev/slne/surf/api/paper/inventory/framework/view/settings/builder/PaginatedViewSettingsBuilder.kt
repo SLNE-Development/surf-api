@@ -1,11 +1,11 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings.builder
 
-import dev.slne.surf.api.paper.inventory.framework.view.InventoryFrameworkDSL
-import dev.slne.surf.api.paper.inventory.framework.view.pagination.PaginationPageIndicator
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings
-import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginationButtonPosition
-import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginationEmptyRows
-import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginationViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationButtonPosition
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import net.kyori.adventure.sound.Sound
 
@@ -18,7 +18,7 @@ import net.kyori.adventure.sound.Sound
  * - [paginationButtonPosition] — controls whether the prev/next buttons are at the top or bottom
  *
  * Create instances via [paginatedViewSettings] or the `settings { }` DSL function in a
- * [paginatedSurfView][dev.slne.surf.api.paper.api.inventory.framework.view.paginatedSurfView] block.
+ * [paginatedSurfView][dev.slne.surf.api.paper.inventory.framework.view.paginatedSurfView] block.
  *
  * ```kotlin
  * paginatedSurfView("Items") {

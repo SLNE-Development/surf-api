@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view
 
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.ViewContainerModificationContext
 import dev.slne.surf.api.paper.inventory.framework.view.pagination.AbstractPaginatedSurfView
 import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings
@@ -88,7 +89,7 @@ abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @Published
  * Created internally by [surfView] and populated by the `settings { }` DSL function.
  *
  * @see surfView
- * @see dev.slne.surf.api.paper.api.inventory.framework.view.settings.SimpleViewSettings
+ * @see dev.slne.surf.api.paper.inventory.framework.view.settings.SimpleViewSettings
  */
 @InventoryFrameworkDSL
 class SurfViewContext @PublishedApi internal constructor() :
@@ -109,7 +110,7 @@ class SurfViewContext @PublishedApi internal constructor() :
  * and `pagination` DSL functions.
  *
  * @see paginatedSurfView
- * @see dev.slne.surf.api.paper.api.inventory.framework.view.settings.PaginatedViewSettings
+ * @see dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings
  */
 @InventoryFrameworkDSL
 class PaginatedSurfViewContext @PublishedApi internal constructor() :
@@ -140,7 +141,7 @@ class PaginatedSurfViewContext @PublishedApi internal constructor() :
     /**
      * Returns the registered pagination state builder factory.
      *
-     * @throws IllegalStateException if no pagination has been configured via [pagination][dev.slne.surf.api.paper.api.inventory.framework.view.pagination.pagination]
+     * @throws IllegalStateException if no pagination has been configured via [pagination][dev.slne.surf.api.paper.inventory.framework.view.pagination.pagination]
      */
     fun getRegisteredPaginationStateBuilder(): (AbstractPaginatedSurfView) -> PaginationStateBuilder<Context, BukkitItemComponentBuilder, *> {
         check(paginationStateBuilder != null) {

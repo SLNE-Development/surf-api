@@ -3,8 +3,8 @@ package dev.slne.surf.api.paper.inventory.framework.view.pagination
 import dev.slne.surf.api.core.inventory.framework.internal.PaginationButtonGlyphs
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.ViewContainerComponent
-import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewHeaderGeometry
+import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
 import me.devnatan.inventoryframework.component.Pagination
 
 /**

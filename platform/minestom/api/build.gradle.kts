@@ -8,6 +8,7 @@ dependencies {
         exclude(libs.commandapi.core)
         exclude(libs.brigadier)
     }
+    api(projects.surfApiInventoryApi)
 
     compileOnlyApi(libs.minestom.server)
     api(libs.minestom.brigadier)

@@ -1,7 +1,13 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings
 
-import dev.slne.surf.api.paper.inventory.framework.view.pagination.PaginationPageIndicator
-import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationButtonPosition
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
+import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.format.TextColor

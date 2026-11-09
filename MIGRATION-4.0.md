@@ -79,6 +79,7 @@ ones your `withXxx()` calls ask for.
 | `surf-api-di-api` | The dependency-injection contracts: `@Service`, `@Repository`, `@Bean`, `Scope`, `SurfComponent`, `BeanPostProcessor`, `BeanContainer`, the conditions. |
 | `surf-api-di-impl` | The container itself. |
 | `surf-api-bom` | A platform BOM listing every published artifact at one version. Prefer importing it over pinning versions one by one. |
+| `surf-api-inventory-api` | The platform-neutral half of the inventory framework — view settings, header geometry, text alignment, the container component base and the DSL markers. Paper and Minestom each carried their own copy; see section 10. |
 
 ## 6. fastutil is gone
 
@@ -190,11 +191,52 @@ been removed.
 If you compile against 4.0.0 you will not notice; a hidden declaration was never visible from
 source.
 
-## 10. Checklist for a downstream repository
+## 10. The platform-neutral half of the inventory framework moved packages
+
+Paper and Minestom each carried a full copy of the inventory framework, 61 files per platform.
+21 of those files name no platform type at all, so they now live once in the new
+`surf-api-inventory-api` artifact under a package of their own:
+
+| Old package | New package |
+|---|---|
+| `dev.slne.surf.api.paper.inventory.framework.…` | `dev.slne.surf.api.inventory.framework.…` |
+| `dev.slne.surf.api.minestom.inventory.framework.…` | `dev.slne.surf.api.inventory.framework.…` |
+
+The subpackage and the type names are unchanged — only the prefix is, and the platform segment is
+gone. These are the declarations that moved:
+
+- `framework.dsl`: the `IFContext` / `IFConfinedContext` / `IFOpenContext` / `IFCloseContext` /
+  `IFSlotClickContext` extensions (`cancel`, `openForPlayer`, `openForEveryone`), `LayoutBuilder`
+  and `ViewConfigBuilder.layout`
+- `framework.view`: `InventoryFrameworkDSL`
+- `framework.view.container.component`: `ViewContainerComponent`, `ViewBlockCellComponent`
+- `framework.view.icon`: `ViewIconColor`, `ViewIconType`
+- `framework.view.pagination`: `PaginationPageIndicator`
+- `framework.view.settings`: `ViewRows`, `ViewFontMetrics`, `ViewHeaderGeometry`,
+  `PaginationViewRows`, `PaginationEmptyRows`, `PaginationButtonPosition`
+- `framework.view.settings.align`: `TextAlignment`, `TextAlignmentOptions`
+- `framework.view.util`: `GlyphShift`, `shift`
+
+**There are no deprecated typealiases in the old packages.** An import of one of the names above
+from `dev.slne.surf.api.paper.inventory` or `dev.slne.surf.api.minestom.inventory` fails to
+resolve; change the import. The aggregates cover an artifact rename, not a package move, so
+`surf-api-paper` and `surf-api-minestom` keep resolving and still export every one of these types
+— you only edit `import` lines, never your build file.
+
+Everything else stayed where it was, per platform, because it names a platform type: the views
+themselves (`AbstractSurfView`, `AbstractPaginatedSurfView`, the DSL builders and contexts), the
+buttons, `ViewIcon`, the state helpers, the container and its DSL, and the three settings types
+(`SurfViewSettings`, `SimpleViewSettings`, `PaginatedViewSettings`) with their defaults and
+builders. Those keep their `…paper.inventory…` and `…minestom.inventory…` packages, so an import
+of `AbstractSurfView` or `surfView` does not change.
+
+## 11. Checklist for a downstream repository
 
 1. Replace any coordinate from table 3; the others keep working.
 2. Remove every fastutil type and every `to*` bridge helper (section 6). Compile.
 3. Check your `@ConfigSerializable` classes for fastutil-typed fields (section 6).
 4. If you depend on an `-api` aggregate and resolve an implementation class at runtime, verify it
    is still on your runtime classpath (the open question in section 2).
-5. Leave `requiredService` alone for now. The container note will follow.
+5. Rewrite every inventory import that names one of the types in section 10; the other
+   inventory imports are unchanged.
+6. Leave `requiredService` alone for now. The container note will follow.

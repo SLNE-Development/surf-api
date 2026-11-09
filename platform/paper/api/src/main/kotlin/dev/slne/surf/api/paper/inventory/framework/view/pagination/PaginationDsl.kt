@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
-import dev.slne.surf.api.paper.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.paper.inventory.framework.view.PaginatedSurfViewContext
 import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder
 import me.devnatan.inventoryframework.component.PaginationStateBuilder

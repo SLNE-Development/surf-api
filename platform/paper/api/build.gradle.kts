@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     api(projects.surfApiCoreApi)
+    api(projects.surfApiInventoryApi)
     compileOnly(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.commandapi.paper)

@@ -1,11 +1,11 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings.builder
 
-import dev.slne.surf.api.paper.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
-import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewFontMetrics
-import dev.slne.surf.api.paper.inventory.framework.view.settings.ViewHeaderGeometry
-import dev.slne.surf.api.paper.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
+import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
+import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.format.TextColor
 

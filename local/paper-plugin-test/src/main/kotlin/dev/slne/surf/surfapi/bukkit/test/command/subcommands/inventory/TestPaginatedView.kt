@@ -9,8 +9,8 @@ import dev.slne.surf.api.paper.inventory.framework.view.layoutTarget
 import dev.slne.surf.api.paper.inventory.framework.view.paginatedSurfView
 import dev.slne.surf.api.paper.inventory.framework.view.pagination.pagination
 import dev.slne.surf.api.paper.inventory.framework.view.settings
-import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginationEmptyRows
-import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginationViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
 import org.bukkit.inventory.ItemType
 
 /** Genug Einträge für mehrere Seiten, damit die Navigations-Buttons beide Zustände zeigen. */

@@ -1,9 +1,9 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings.builder
 
-import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
-import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
 
 /**
  * DSL builder for [SimpleViewSettings].
@@ -12,7 +12,7 @@ import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewRows
  * inventory rows displayed in the view.
  *
  * Create instances via [simpleViewSettings] or the `settings { }` DSL function in a
- * [surfView][dev.slne.surf.api.minestom.api.inventory.framework.view.surfView] block.
+ * [surfView][dev.slne.surf.api.minestom.inventory.framework.view.surfView] block.
  *
  * ```kotlin
  * surfView("My View") {

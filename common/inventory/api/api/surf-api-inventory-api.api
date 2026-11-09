@@ -1,0 +1,316 @@
+public final class dev/slne/surf/api/inventory/framework/dsl/ClickContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFSlotClickContext;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/dsl/CloseContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFCloseContext;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/dsl/IFConfinedContextDSLKt {
+	public static final fun openForPlayer (Lme/devnatan/inventoryframework/context/IFConfinedContext;Lme/devnatan/inventoryframework/RootView;)V
+	public static final fun openForPlayer (Lme/devnatan/inventoryframework/context/IFConfinedContext;Lme/devnatan/inventoryframework/RootView;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/dsl/IFContextDSLKt {
+	public static final fun openForEveryone (Lme/devnatan/inventoryframework/context/IFContext;Lme/devnatan/inventoryframework/RootView;)V
+	public static final fun openForEveryone (Lme/devnatan/inventoryframework/context/IFContext;Lme/devnatan/inventoryframework/RootView;Ljava/lang/Object;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/dsl/LayoutBuilder {
+	public fun <init> ()V
+	public final fun border (C)V
+	public final fun build ()[Ljava/lang/String;
+	public final fun empty ()V
+	public final fun fill (C)V
+	public final fun getRows ()Ljava/util/List;
+	public final fun row (Ljava/lang/String;)V
+	public final fun unaryPlus (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/dsl/OpenContextDSLKt {
+	public static final fun cancel (Lme/devnatan/inventoryframework/context/IFOpenContext;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/dsl/ViewConfigBuilderDSLKt {
+	public static final fun layout (Lme/devnatan/inventoryframework/ViewConfigBuilder;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface annotation class dev/slne/surf/api/inventory/framework/view/InventoryFrameworkDSL : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/api/inventory/framework/view/container/component/ViewContainerComponent {
+	public abstract fun equals (Ljava/lang/Object;)Z
+	public fun getHasExactWidth ()Z
+	public abstract fun getPositionalShift ()I
+	public abstract fun getTextureWidth ()I
+	public abstract fun hashCode ()I
+	public abstract fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/container/component/ViewContainerComponent$DefaultImpls {
+	public static fun getHasExactWidth (Ldev/slne/surf/api/inventory/framework/view/container/component/ViewContainerComponent;)Z
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/container/component/components/ViewBlockCellComponent : dev/slne/surf/api/inventory/framework/view/container/component/ViewContainerComponent {
+	public static final field Companion Ldev/slne/surf/api/inventory/framework/view/container/component/components/ViewBlockCellComponent$Companion;
+	public fun <init> (IILdev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;)V
+	public synthetic fun <init> (IILdev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColumn ()I
+	public fun getHasExactWidth ()Z
+	public fun getPositionalShift ()I
+	public final fun getRow ()I
+	public fun getTextureWidth ()I
+	public fun hashCode ()I
+	public fun renderComponent (Ldev/slne/surf/api/core/messages/builder/SurfComponentBuilder;)V
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/container/component/components/ViewBlockCellComponent$Companion {
+	public final fun forSlot (ILdev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;)Ldev/slne/surf/api/inventory/framework/view/container/component/components/ViewBlockCellComponent;
+	public static synthetic fun forSlot$default (Ldev/slne/surf/api/inventory/framework/view/container/component/components/ViewBlockCellComponent$Companion;ILdev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ILjava/lang/Object;)Ldev/slne/surf/api/inventory/framework/view/container/component/components/ViewBlockCellComponent;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/icon/ViewIconColor : java/lang/Enum {
+	public static final field BLUE Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field GREEN Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field RED Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field WHITE Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconColor;
+	public static final field YELLOW Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconColor;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconColor;
+	public static fun values ()[Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconColor;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/icon/ViewIconType : java/lang/Enum {
+	public static final field ARROW_DOWN Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_LEFT Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_NEXT Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_PREVIOUS Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_RIGHT Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field ARROW_UP Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field BELL Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field CHECK Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field CIRCLE Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field COG Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field CROSS Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field EQUALS Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field EXCLAMATION_MARK Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field HOME Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field MENU Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field MINUS Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field PLUS Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field QUESTION_MARK Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field RELOAD Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field SEARCH Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static final field USERS Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public final fun getConfigName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+	public static fun values ()[Ldev/slne/surf/api/inventory/framework/view/icon/ViewIconType;
+}
+
+public abstract interface class dev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator {
+	public static final field Companion Ldev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator$Companion;
+	public abstract fun render (II)Lnet/kyori/adventure/text/Component;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator$Companion {
+	public final fun getDefault ()Ldev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition : java/lang/Enum {
+	public static final field BOTTOM Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;
+	public static final field TOP Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;
+	public static fun values ()[Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows : java/lang/Enum {
+	public static final field Companion Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows$Companion;
+	public static final field NONE Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+	public static final field ONE Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+	public static final field THREE Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+	public static final field TWO Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRows ()I
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+	public static fun values ()[Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows$Companion {
+	public final fun byRows (I)Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+	public final fun byRowsOrNull (I)Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows : java/lang/Enum {
+	public static final field FIVE Ldev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;
+	public static final field FOUR Ldev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;
+	public static final field ONE Ldev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;
+	public static final field THREE Ldev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;
+	public static final field TWO Ldev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;
+	public final fun getActualRows ()Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public final fun getContentRows ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;
+	public static fun values ()[Ldev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics {
+	public static final field Companion Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics$Companion;
+	public static final field MENU_CHAR_SIZE I
+	public static final field MENU_CHAR_SPACING I
+	public static final field MENU_SPACE_SIZE I
+	public fun <init> ()V
+	public fun <init> (IIZZLjava/util/Map;)V
+	public synthetic fun <init> (IIZZLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun advance (IZ)I
+	public static synthetic fun advance$default (Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;IZILjava/lang/Object;)I
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (IIZZLjava/util/Map;)Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;IIZZLjava/util/Map;ILjava/lang/Object;)Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharSize ()I
+	public final fun getCharSpacing ()I
+	public final fun getCharWidths ()Ljava/util/Map;
+	public final fun getSpaceAsShift ()Z
+	public final fun getSpaceShift ()Ljava/lang/Integer;
+	public final fun getUppercase ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics$Companion {
+	public final fun getSURF_MENU ()Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;
+	public final fun getVANILLA ()Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;
+	public final fun getVANILLA_ROW ()Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry {
+	public static final field Companion Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry$Companion;
+	public static final field DEFAULT_ROW_TEXT_PADDING I
+	public static final field DEFAULT_SLOT_GLYPH_INSET I
+	public static final field DEFAULT_SLOT_ORIGIN_X I
+	public static final field DEFAULT_TITLE_LEFT_SHIFT I
+	public static final field DEFAULT_TITLE_PADDING I
+	public static final field DEFAULT_TITLE_WIDTH I
+	public fun <init> ()V
+	public fun <init> (IIIIIII)V
+	public synthetic fun <init> (IIIIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun columnShift (I)I
+	public final fun columnSpanOptions (Lkotlin/ranges/IntRange;Ljava/util/Map;II)Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public static synthetic fun columnSpanOptions$default (Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;Lkotlin/ranges/IntRange;Ljava/util/Map;IIILjava/lang/Object;)Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun component7 ()I
+	public final fun copy (IIIIIII)Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;IIIIIIIILjava/lang/Object;)Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRowTextPadding ()I
+	public final fun getSlotAreaWidth ()I
+	public final fun getSlotGlyphInset ()I
+	public final fun getSlotOriginX ()I
+	public final fun getSlotSize ()I
+	public final fun getTitleLeftShift ()I
+	public final fun getTitlePadding ()I
+	public final fun getTitleWidth ()I
+	public fun hashCode ()I
+	public final fun slotGlyphShift (I)I
+	public final fun titleOptions (Ljava/util/Map;II)Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public static synthetic fun titleOptions$default (Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;Ljava/util/Map;IIILjava/lang/Object;)Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry$Companion {
+	public final fun getDEFAULT ()Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/ViewRows : java/lang/Enum {
+	public static final field Companion Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows$Companion;
+	public static final field FIVE Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public static final field FOUR Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public static final field ONE Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public static final field SIX Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public static final field THREE Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public static final field TWO Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getGlyph ()C
+	public final fun getRows ()I
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public static fun values ()[Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/ViewRows$Companion {
+	public final fun byRows (I)Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+	public final fun byRowsOrNull (I)Ldev/slne/surf/api/inventory/framework/view/settings/ViewRows;
+}
+
+public abstract interface annotation class dev/slne/surf/api/inventory/framework/view/settings/ViewRows$Companion$Rows : java/lang/annotation/Annotation {
+}
+
+public abstract class dev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment : java/lang/Enum {
+	public static final field CENTER Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;
+	public static final field Companion Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment$Companion;
+	public static final field LEFT Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;
+	public static final field RIGHT Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;
+	public abstract fun calculateShift (ILdev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;)I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;
+	public static fun values ()[Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment$Companion {
+	public final fun calculateTextWidth (Ljava/lang/String;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;)I
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions {
+	public fun <init> (IIIIILjava/util/Map;)V
+	public synthetic fun <init> (IIIIILjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()Ljava/util/Map;
+	public final fun copy (IIIIILjava/util/Map;)Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;IIIIILjava/util/Map;ILjava/lang/Object;)Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignmentOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharSize ()I
+	public final fun getCharSpacing ()I
+	public final fun getCharWidths ()Ljava/util/Map;
+	public final fun getContainerWidth ()I
+	public final fun getLeftShift ()I
+	public final fun getPadding ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/util/GlyphShift {
+	public static final synthetic fun box-impl (I)Ldev/slne/surf/api/inventory/framework/view/util/GlyphShift;
+	public static fun constructor-impl (I)I
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (ILjava/lang/Object;)Z
+	public static final fun equals-impl0 (II)Z
+	public final fun getAmount ()I
+	public fun hashCode ()I
+	public static fun hashCode-impl (I)I
+	public static final fun renderGlyphs-impl (I)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (I)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()I
+}
+
+public final class dev/slne/surf/api/inventory/framework/view/util/GlyphShiftKt {
+	public static final fun shift (I)Ljava/lang/String;
+}
+

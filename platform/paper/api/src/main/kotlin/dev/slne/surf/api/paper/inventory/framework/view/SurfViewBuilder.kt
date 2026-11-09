@@ -1,5 +1,7 @@
 package dev.slne.surf.api.paper.inventory.framework.view
 
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
 import dev.slne.surf.api.paper.inventory.framework.view.pagination.AbstractPaginatedSurfView
 
 /**
@@ -70,7 +72,7 @@ inline fun surfView(header: String, block: context (SurfViewContext) () -> Unit)
  * @param block DSL configuration block with [PaginatedSurfViewContext] as its context receiver
  * @return the fully configured [AbstractPaginatedSurfView]
  * @see surfView
- * @see dev.slne.surf.api.paper.api.inventory.framework.view.pagination.AbstractPaginatedSurfView
+ * @see dev.slne.surf.api.paper.inventory.framework.view.pagination.AbstractPaginatedSurfView
  */
 inline fun paginatedSurfView(
     header: String,

@@ -1,6 +1,8 @@
 package dev.slne.surf.api.paper.inventory.framework.view.icon
 
 import dev.slne.surf.api.core.messages.adventure.key
+import dev.slne.surf.api.inventory.framework.view.icon.ViewIconColor
+import dev.slne.surf.api.inventory.framework.view.icon.ViewIconType
 import dev.slne.surf.api.paper.builder.buildItem
 import io.papermc.paper.datacomponent.DataComponentTypes
 import org.bukkit.inventory.ItemStack

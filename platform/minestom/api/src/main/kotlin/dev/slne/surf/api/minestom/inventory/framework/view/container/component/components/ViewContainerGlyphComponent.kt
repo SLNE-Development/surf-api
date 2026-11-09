@@ -2,8 +2,9 @@ package dev.slne.surf.api.minestom.inventory.framework.view.container.component.
 
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
-import dev.slne.surf.api.minestom.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.util.shift
 
 /**
  * A [ViewContainerComponent] that renders the inventory background glyph for the given [rows].

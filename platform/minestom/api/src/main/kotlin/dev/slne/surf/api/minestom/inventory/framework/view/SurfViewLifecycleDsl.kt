@@ -1,5 +1,8 @@
 package dev.slne.surf.api.minestom.inventory.framework.view
 
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
 import dev.slne.surf.api.minestom.inventory.framework.view.container.dsl.ViewContainerModificationContext
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.builder.PaginatedViewSettingsBuilder
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.builder.SimpleViewSettingsBuilder

@@ -1,9 +1,11 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.button
 
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.icon.ViewIconColor
+import dev.slne.surf.api.inventory.framework.view.icon.ViewIconType
 import dev.slne.surf.api.minestom.builder.ItemDsl
 import dev.slne.surf.api.minestom.builder.ItemDslMarker
 import dev.slne.surf.api.minestom.builder.buildItem
-import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
 import me.devnatan.inventoryframework.context.CloseContext
 import me.devnatan.inventoryframework.context.SlotClickContext
 import me.devnatan.inventoryframework.context.SlotRenderContext

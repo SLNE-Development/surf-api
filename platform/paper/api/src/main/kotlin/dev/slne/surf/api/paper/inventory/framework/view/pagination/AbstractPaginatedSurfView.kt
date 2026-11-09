@@ -37,10 +37,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * The initial pagination glyph is updated asynchronously one tick after the pagination state
  * first resolves (via [InitialPaginationStateWatcher]) to work around Folia scheduling constraints.
  *
- * Subclasses are not created directly — use [paginatedSurfView][dev.slne.surf.api.paper.api.inventory.framework.view.paginatedSurfView] instead.
+ * Subclasses are not created directly — use [paginatedSurfView][dev.slne.surf.api.paper.inventory.framework.view.paginatedSurfView] instead.
  *
  * @param header the plain-text title rendered in the inventory header
- * @see dev.slne.surf.api.paper.api.inventory.framework.view.paginatedSurfView
+ * @see dev.slne.surf.api.paper.inventory.framework.view.paginatedSurfView
  * @see PaginatedViewSettings
  */
 @Suppress("UnstableApiUsage")

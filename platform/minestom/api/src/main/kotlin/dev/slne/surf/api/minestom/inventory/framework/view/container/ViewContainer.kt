@@ -2,10 +2,11 @@ package dev.slne.surf.api.minestom.inventory.framework.view.container
 
 import dev.slne.surf.api.core.inventory.framework.internal.appendShiftedComponent
 import dev.slne.surf.api.core.messages.adventure.buildText
-import dev.slne.surf.api.minestom.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
+import dev.slne.surf.api.inventory.framework.view.util.shift
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
-import net.kyori.adventure.text.Component
 import java.util.concurrent.CopyOnWriteArrayList
+import net.kyori.adventure.text.Component
 
 /**
  * An ordered, thread-safe collection of [ViewContainerComponent]s that compose the

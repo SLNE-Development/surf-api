@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
 import com.github.shynixn.mccoroutine.folia.scope
-import dev.slne.surf.api.paper.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder

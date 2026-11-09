@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.minestom.inventory.framework.dsl
 
-import dev.slne.surf.api.minestom.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import me.devnatan.inventoryframework.component.MinestomItemComponentBuilder
 import me.devnatan.inventoryframework.context.RenderContext
 
@@ -44,8 +44,8 @@ inline fun RenderContext.slot(
  * ```
  *
  * @receiver the [RenderContext] to configure
- * @param row the zero-based row index
- * @param column the zero-based column index
+ * @param row the one-based row index; `0` is treated as row `1`
+ * @param column the one-based column index; `0` is treated as column `1`
  * @param block configuration block applied to the [MinestomItemComponentBuilder]
  */
 inline fun RenderContext.slot(
