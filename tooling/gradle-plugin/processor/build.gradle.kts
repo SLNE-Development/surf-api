@@ -18,7 +18,6 @@ version = buildString {
 
 dependencies {
     implementation(libs.ksp.api)
-    implementation(libs.auto.service.annotations)
     api(projects.surfApiInternal)
 
     // The container's annotations and the bean metadata schema the bean processor writes.

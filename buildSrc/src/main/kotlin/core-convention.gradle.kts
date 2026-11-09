@@ -29,7 +29,6 @@ repositories {
 }
 
 dependencies {
-    compileOnly(libs.auto.service.annotations)
     // The processor depends on the modules that declare what it looks for and the schema it writes,
     // so running it on those would be a cycle.
     if (project.name !in setOf("surf-api-annotations", "surf-api-internal", "surf-api-di-api")) {
@@ -37,11 +36,6 @@ dependencies {
     }
 
     compileOnlyApi("org.jetbrains:annotations:26.1.0")
-}
-
-ksp {
-    arg("autoserviceKsp.verbose", "true")
-    arg("autoserviceKsp.verify", "true")
 }
 
 extensions.configure<KotlinJvmProjectExtension> {

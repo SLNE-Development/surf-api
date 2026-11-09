@@ -134,7 +134,6 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.paper.api", libs.paper.api.get().toString())
     inputs.property("libs.canvas.api", libs.canvas.api.get().toString())
     inputs.property("libs.velocity.api", libs.velocity.api.get().toString())
-    inputs.property("libs.auto.service.annotations", libs.auto.service.annotations.get().toString())
     inputs.property("libs.versions.commandapiplugin", libs.versions.commandapiplugin.get())
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
     inputs.property(
@@ -176,8 +175,7 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val CANVAS_API = "${libs.canvas.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
-            |    const val AUTO_SERVICE_ANNOTATIONS = "${libs.auto.service.annotations.get()}"
-            |    const val AUTO_SERVICE = "${generator.group}:${generator.name}:${generator.version}"
+            |    const val SURF_PROCESSOR = "${generator.group}:${generator.name}:${generator.version}"
             |
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"

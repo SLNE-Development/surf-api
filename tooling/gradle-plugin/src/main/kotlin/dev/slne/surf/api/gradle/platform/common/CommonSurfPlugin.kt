@@ -219,7 +219,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies.remove(project.dependencies.gradleTestKit())
         }
 
-        configureAutoService()
+        configureSurfProcessor()
         configureKotlin()
         configure0()
     }
@@ -238,9 +238,14 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         }
     }
 
-    private fun Project.configureAutoService() = dependencies {
-        add(COMPILE_ONLY, Constants.AUTO_SERVICE_ANNOTATIONS)
-        add("ksp", Constants.AUTO_SERVICE)
+    /**
+     * Runs surf-api's KSP processor on the project, which is what writes its bean metadata.
+     *
+     * Without it a `@Service` in a downstream plugin compiles and is then absent at runtime, since
+     * the container builds its graph from the generated metadata and never scans classes.
+     */
+    private fun Project.configureSurfProcessor() = dependencies {
+        add("ksp", Constants.SURF_PROCESSOR)
     }
 
     protected open fun Project.configure0() {
