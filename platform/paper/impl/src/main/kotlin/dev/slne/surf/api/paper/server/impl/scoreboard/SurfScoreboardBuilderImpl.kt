@@ -2,10 +2,10 @@
 
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
+import dev.slne.surf.api.messages.minimessage.miniMessage
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardBuilder
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
-import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.megavex.scoreboardlibrary.api.sidebar.component.SidebarComponent
 import net.megavex.scoreboardlibrary.api.sidebar.component.animation.CollectionSidebarAnimation
@@ -81,7 +81,7 @@ class SurfScoreboardBuilderImpl(private val title: Component) : SurfScoreboardBu
             var phase = -1f
             while (phase < 1) {
                 frames.add(
-                    MiniMessage.miniMessage().deserialize(
+                    miniMessage.deserialize(
                         "<gradient:$firstHex:$secondHex:$phase><text></gradient>",
                         textPlaceholder
                     )

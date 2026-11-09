@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.impl.sidebar
 
+import dev.slne.surf.api.messages.minimessage.miniMessage
 import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
 import dev.slne.surf.api.paper.sidebar.AutoUpdatingSidebarBuilder
 import dev.slne.surf.api.paper.sidebar.SidebarBuilder
@@ -7,7 +8,6 @@ import dev.slne.surf.api.paper.sidebar.SidebarLine
 import io.papermc.paper.util.Tick
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
-import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.entity.Player
 import java.util.concurrent.atomic.AtomicInteger
@@ -132,7 +132,7 @@ open class SidebarBuilderImpl : SidebarBuilder {
             var phase = -1f
             while (phase < 1) {
                 frames.add(
-                    MiniMessage.miniMessage().deserialize(
+                    miniMessage.deserialize(
                         "<gradient:$firstHex:$secondHex:$phase><text></gradient>",
                         textPlaceholder
                     )

@@ -16,12 +16,17 @@ import net.kyori.adventure.text.minimessage.tag.Tag
  * color theming throughout the application. All custom tags are registered at initialization and
  * map to predefined colors from [Colors].
  *
+ * The tags below are *added* to MiniMessage's standard set, so everything vanilla MiniMessage
+ * understands still works. Use this instance rather than `MiniMessage.miniMessage()` everywhere:
+ * the vanilla one has none of these tags, so they are rendered as literal text.
+ *
  * ## Available Custom Tags
  *
  * ### Color Tags
  * - `<primary>` - Primary theme color
  * - `<secondary>` - Secondary theme color
  * - `<info>` - Information message color
+ * - `<note>` - Note color
  * - `<success>` - Success message color
  * - `<warning>` - Warning message color
  * - `<error>` - Error message color
@@ -30,6 +35,10 @@ import net.kyori.adventure.text.minimessage.tag.Tag
  * - `<spacer>` - Spacer color
  * - `<dark_spacer>` - Dark spacer color
  * - `<prefix_color>` - Prefix text color
+ *
+ * ### Text Tag
+ * - `<small>` - Renders its content in small caps. Case is not preserved; see
+ *   [dev.slne.surf.api.common.font.toSmallCaps].
  *
  * ### Prefix Tag
  * The `<prefix>` tag is a self-closing tag that inserts a predefined prefix component.

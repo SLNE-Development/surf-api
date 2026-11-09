@@ -9,8 +9,8 @@ import dev.jorel.commandapi.arguments.Argument
 import dev.jorel.commandapi.arguments.CommandAPIArgumentType
 import dev.jorel.commandapi.executors.CommandArguments
 import dev.slne.surf.api.command.builder.CommandExceptionBuilder
+import dev.slne.surf.api.messages.minimessage.miniMessage
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.ParsingException
 
 open class MiniMessageArgument(nodeName: String) :
@@ -31,7 +31,7 @@ open class MiniMessageArgument(nodeName: String) :
         val raw = StringArgumentType.getString(cmdCtx, key)
 
         try {
-            return MiniMessage.miniMessage().deserialize(raw)
+            return miniMessage.deserialize(raw)
         } catch (e: ParsingException) {
             throw SimpleCommandExceptionType(
                 VelocityBrigadierMessage.tooltip(

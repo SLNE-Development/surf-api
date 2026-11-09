@@ -20,10 +20,15 @@ private val smallCapsMap = mapOf(
  * Converts this character sequence to small caps formatting.
  *
  * Small caps are Unicode characters that resemble uppercase letters but are approximately
- * the height of lowercase letters. This function transforms lowercase letters (a-z) to their
- * small caps equivalents while leaving uppercase letters, digits, and other characters unchanged.
+ * the height of lowercase letters.
  *
- * @return A new string with lowercase letters converted to small caps Unicode characters.
+ * **Case is not preserved.** Every letter is lowercased before it is looked up, so `A` and `a`
+ * both come out as `ᴀ` — the result reads as uniform small caps rather than as small caps with
+ * real capitals standing above them. That is deliberate for a label, and worth knowing before
+ * passing a name or a sentence through it. Digits stay as they are, and anything with no small
+ * caps form is left alone.
+ *
+ * @return A new string with every letter converted to its small caps Unicode character.
  */
 fun CharSequence.toSmallCaps(): String {
     val chars = CharArray(length)
