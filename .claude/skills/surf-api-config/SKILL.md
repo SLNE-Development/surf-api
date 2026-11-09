@@ -5,10 +5,16 @@ description: Use when touching surf-api configuration or environment variables -
 
 # surf-api configuration and environment variables
 
-Every claim below comes from `common/core/api/src/main/kotlin/dev/slne/surf/api/core/config/`,
-`common/core/api/src/main/kotlin/dev/slne/surf/api/core/environment/` and
-`common/core/impl/src/main/kotlin/dev/slne/surf/api/core/server/config/`. Read those files when in
+Every claim below comes from `common/config/api/src/main/kotlin/dev/slne/surf/api/config/`,
+`common/config/impl/src/main/kotlin/dev/slne/surf/api/config/impl/` and
+`common/core/api/src/main/kotlin/dev/slne/surf/api/core/environment/`. Read those files when in
 doubt; they are the only source of truth.
+
+Configuration is its own pair of modules, `surf-api-config-api` and `surf-api-config-impl`. You do
+not name them: every published coordinate that carried these types before re-exports them, so a
+build file that depends on `surf-api-core`, `surf-api-paper`, `surf-api-minestom`,
+`surf-api-velocity` or `surf-api-standalone` resolves them unchanged. The environment-variable api
+is *not* part of that pair and stays in `surf-api-core-api` - it shares no type with configs.
 
 ## The library underneath
 
@@ -193,7 +199,7 @@ missing/blank/unparsable behaviour: `references/environment-variables.md`.
   `SerializationConfigException`. None of them are declared in Kotlin signatures.
 - **No impl on the classpath, no config.** `surfConfigApi` and `surfSpongeConfigSerializers` are
   `by surfBean<T>()` properties, so without the platform's `-impl` module the first read fails with
-  `No bean provides dev.slne.surf.api.core.config.SurfConfigApi in the container for ...`.
+  `No bean provides dev.slne.surf.api.config.SurfConfigApi in the container for ...`.
 
 Build setup for a module that uses configs: `surf-api-build`. Injecting a config into a bean:
 `surf-api-components`.

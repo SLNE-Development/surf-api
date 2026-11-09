@@ -239,7 +239,7 @@ out. Do not build on that call until it is fixed.
 
 ## Storage
 
-`core/serializer/adventure/` holds kotlinx-serialization serializers for `Component`, `TextColor`,
+`surf-api-serialization-api`'s `adventure/` holds kotlinx-serialization serializers for `Component`, `TextColor`,
 `TextDecoration`, `ShadowColor`, `Key`, `Book`, `BossBar`, `Sound`, `Sound.Stop`, `Title` and
 `ResourcePackInfo`. `AdventureComponentSerializer` encodes
 `GsonComponentSerializer.gson().serialize(value.compact())` - version-independent JSON, the right

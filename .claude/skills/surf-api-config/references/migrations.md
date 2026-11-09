@@ -1,6 +1,6 @@
 # Config migrations
 
-Source: `common/core/api/src/main/kotlin/dev/slne/surf/api/core/config/migration/` and
+Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/migration/` and
 `.../config/manager/SpongeConfigManager.kt`.
 
 ## The pieces

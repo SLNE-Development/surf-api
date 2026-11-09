@@ -1,6 +1,6 @@
 # Config constraints and helper types
 
-Source: `common/core/api/src/main/kotlin/dev/slne/surf/api/core/config/constraints/` and
+Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/constraints/` and
 `.../config/type/`.
 
 ## Constraints

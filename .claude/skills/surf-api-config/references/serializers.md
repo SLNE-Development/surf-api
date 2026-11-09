@@ -1,6 +1,6 @@
 # The config serializer registry
 
-Source: `common/core/api/src/main/kotlin/dev/slne/surf/api/core/config/serializer/`,
+Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/serializer/`,
 `platform/*/impl/.../config/serializers/`.
 
 ## How the registry is assembled
@@ -144,7 +144,7 @@ data class Config(
 
 ## Not this registry
 
-`common/core/api/src/main/kotlin/dev/slne/surf/api/core/serializer/` is a **different** thing: those
+`common/serialization/api/src/main/kotlin/dev/slne/surf/api/serialization/` is a **different** thing: those
 are `kotlinx.serialization` `KSerializer`s collected in `SurfSerializerModule` (`adventure`,
 `spongePoweredMath`, … modules), used for network payloads and persistence, not for config files.
 Typealiases such as `SerializableUUID` belong to that set. Registering one there does not make a
