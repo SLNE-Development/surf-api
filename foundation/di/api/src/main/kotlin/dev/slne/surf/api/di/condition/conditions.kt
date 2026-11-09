@@ -51,7 +51,8 @@ annotation class ConditionalOn(val condition: KClass<out BeanCondition>)
  * [key] is the path to the value, segment by segment. With [havingValue] set, the value has to equal
  * it, ignoring case; without it, the property only has to be present. [matchIfMissing] decides what
  * an absent property means, which is how a feature defaults to on or off. [file] names the
- * configuration file relative to the application's data directory; empty means the default one.
+ * configuration file relative to the application's data directory; empty means
+ * [DEFAULT_PROPERTIES_FILE].
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
@@ -61,7 +62,19 @@ annotation class ConditionalOnProperty(
     val havingValue: String = "",
     val matchIfMissing: Boolean = false,
     val file: String = "",
-)
+) {
+    companion object {
+
+        /**
+         * The file a blank [file] means.
+         *
+         * It lives here because this annotation is what gives a blank file a meaning. A platform
+         * resolving [file] reads it from here, so the default is stated once rather than agreed on
+         * by two modules.
+         */
+        const val DEFAULT_PROPERTIES_FILE = "properties.yml"
+    }
+}
 
 /**
  * Creates the bean only if the process runs in one of [environments].

@@ -17,6 +17,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import java.net.URL
+import dev.slne.surf.api.di.definition.BeanMetadata
 
 class ConditionEvaluatorTest {
 
@@ -348,6 +350,21 @@ class ConditionEvaluatorTest {
     ) : ContainerPlatform {
 
         override fun classLoader(owner: Any): ClassLoader = FakePlatform::class.java.classLoader
+
+
+        /**
+
+         * The owner's own metadata, which for these loaders is what `getResources` returns: every
+
+         * loader in this file overrides it for this one name so a case controls exactly which
+
+         * files a container sees.
+
+         */
+
+        override fun beanSources(owner: Any): List<URL> =
+
+            classLoader(owner).getResources(BeanMetadata.DIRECTORY).toList()
 
         override fun isPluginLoaded(pluginId: String) = pluginId in loadedPlugins
 

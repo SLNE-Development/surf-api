@@ -1,6 +1,7 @@
 package dev.slne.surf.api.di
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import java.net.URL
 import java.nio.file.Path
 
 /**
@@ -19,13 +20,35 @@ import java.nio.file.Path
 interface ContainerPlatform {
 
     /**
-     * The classloader whose `META-INF/surf-api/beans` files make up the container's beans, and
-     * which loads their classes.
+     * The classloader that loads this application's bean classes.
      *
      * On a platform that isolates applications from each other this is that application's own
-     * loader, which is exactly why two applications get two containers.
+     * loader, which is exactly why two applications get two containers. It is asked to *load* a
+     * class, so it may and should delegate upwards: a bean's constructor parameter is usually a
+     * type from surf-api or the platform.
+     *
+     * Which beans an application has is a separate question, answered by [beanSources]. They are
+     * separate because the obvious implementation of the second one in terms of the first is wrong
+     * on at least one platform — see that member.
      */
     fun classLoader(owner: Any): ClassLoader
+
+    /**
+     * The locations this application's own bean metadata is read from.
+     *
+     * Every `META-INF/surf-api/beans` file under one of these URLs belongs to [owner], and nothing
+     * else does. A platform must answer this deliberately rather than by delegating to
+     * [classLoader], because `ClassLoader.getResources` is parent-first **and additive**: it
+     * returns the parents' matches as well as its own. Where surf-api sits above an application on
+     * the classpath, that would hand the application surf-api's own bean metadata, and its
+     * container would declare every surf-api bean a second time — a second instance of each
+     * singleton, with its own `load`, `enable` and `disable`, and nothing to say so, because
+     * duplicate detection only looks within one container.
+     *
+     * A loader that owns its entries can answer with `URLClassLoader.findResources`, which searches
+     * its own entries only. A platform whose loader is already own-only may use `getResources`.
+     */
+    fun beanSources(owner: Any): List<URL>
 
     /** Whether the platform has a plugin with [pluginId] loaded. */
     fun isPluginLoaded(pluginId: String): Boolean

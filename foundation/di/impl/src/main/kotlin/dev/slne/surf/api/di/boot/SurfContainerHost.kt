@@ -2,6 +2,7 @@ package dev.slne.surf.api.di.boot
 
 import dev.slne.surf.api.di.BeanContainer
 import dev.slne.surf.api.di.ContainerPlatform
+import dev.slne.surf.api.di.PlatformLogger
 import dev.slne.surf.api.di.definition.BeanDefinition
 import dev.slne.surf.api.di.internal.BeanContainerImpl
 import dev.slne.surf.api.di.internal.BeanMetadataLoader
@@ -178,7 +179,7 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
             propertyReader = { _, key, file -> platform.property(owner, key, file) },
         )
 
-        val accepted = accept(declared, parent, evaluator, platform.logger(owner)::debug)
+        val accepted = accept(declared, parent, evaluator, platform.logger(owner))
 
         val container = BeanContainerImpl(
             owner = owner,
@@ -204,7 +205,7 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
         declared: List<BeanDefinition>,
         parent: BeanContainerImpl?,
         evaluator: ConditionEvaluator,
-        report: (String) -> Unit,
+        logger: PlatformLogger,
     ): List<BeanDefinition> {
         val providersByType = buildMap<String, MutableSet<String>> {
             declared.forEach { definition ->
@@ -216,7 +217,9 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
             }
         }
 
-        return declared.filter { definition ->
+        val skipped = mutableListOf<String>()
+
+        val accepted = declared.filter { definition ->
             val ownIds = definition.providers().map { it.id }.toSet()
 
             val decision = evaluator.evaluate(definition) { type ->
@@ -227,11 +230,26 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
             when (decision) {
                 is Decision.Accepted -> true
                 is Decision.Rejected -> {
-                    report("Skipping ${definition.className}: ${decision.reason}")
+                    logger.debug("Skipping ${definition.className}: ${decision.reason}")
+                    skipped += definition.className
                     false
                 }
             }
         }
+
+        // The reason belongs at debug — most skips are an optional integration doing exactly what it
+        // was told. The count does not: a bean that quietly is not there is the hardest failure to
+        // find, and debug logging is off on a normal server, so without this line the only symptom
+        // would be an unsatisfied parameter somewhere else entirely.
+        if (skipped.isNotEmpty()) {
+            logger.info(
+                "${skipped.size} of ${declared.size} beans were skipped because a condition did " +
+                        "not hold: ${skipped.sorted().joinToString()}. Enable debug logging for " +
+                        "the reason behind each one."
+            )
+        }
+
+        return accepted
     }
 }
 

@@ -54,21 +54,25 @@ import java.util.jar.JarFile
 internal class BeanMetadataLoader(private val platform: ContainerPlatform) {
 
     /**
-     * Reads and merges every metadata file on [owner]'s classpath.
+     * Reads and merges every metadata file [owner] owns.
      *
-     * Sources are visited in classloader order and the files within one source in name order, so
-     * the merged list is the same on every run of the same classpath and a duplicate always reports
-     * the same pair of sources.
+     * The locations come from [ContainerPlatform.beanSources] rather than from the owner's
+     * classloader. A classloader's `getResources` also returns its parents' matches, which on a
+     * platform where surf-api sits above an application would make that application's container
+     * declare surf-api's beans as well as its own.
+     *
+     * Sources are visited in the order the platform gives them and the files within one source in
+     * name order, so the merged list is the same on every run of the same classpath and a duplicate
+     * always reports the same pair of sources.
      *
      * @throws BeanMetadataException if a source cannot be walked, a file cannot be parsed, or two
      * sources define the same bean class.
      */
     fun load(owner: Any): BeanMetadata {
-        val classLoader = platform.classLoader(owner)
         val logger = platform.logger(owner)
         val merge = Merge()
 
-        for (url in classLoader.getResources(BeanMetadata.DIRECTORY)) {
+        for (url in platform.beanSources(owner)) {
             logger.debug("Reading bean metadata from $url")
 
             when (url.protocol) {

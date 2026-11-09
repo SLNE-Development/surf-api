@@ -4,6 +4,7 @@ import dev.slne.surf.api.di.ContainerPlatform
 import dev.slne.surf.api.di.PlatformLogger
 import dev.slne.surf.api.di.definition.BeanMetadata
 import org.junit.jupiter.api.io.TempDir
+import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -194,6 +195,21 @@ private fun BeanMetadata.classNames() = beans.map { it.className }
 private class FixedClassLoaderPlatform(private val classLoader: ClassLoader) : ContainerPlatform {
 
     override fun classLoader(owner: Any): ClassLoader = classLoader
+
+
+    /**
+
+     * The owner's own metadata, which for these loaders is what `getResources` returns: every
+
+     * loader in this file overrides it for this one name so a case controls exactly which
+
+     * files a container sees.
+
+     */
+
+    override fun beanSources(owner: Any): List<URL> =
+
+        classLoader(owner).getResources(BeanMetadata.DIRECTORY).toList()
 
     override fun isPluginLoaded(pluginId: String) = false
 

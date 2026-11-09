@@ -529,6 +529,16 @@ private class FakePlatform(
         "$owner was never registered with the fixture, so it has no metadata"
     }
 
+    /**
+     * The owner's own metadata.
+     *
+     * Every loader in this file overrides `getResources` for this one name and answers from its own
+     * entry only, so a case controls exactly which files a container sees — which is also the
+     * property a real platform has to provide for itself.
+     */
+    override fun beanSources(owner: Any): List<URL> =
+        classLoader(owner).getResources(BeanMetadata.DIRECTORY).toList()
+
     override fun isPluginLoaded(pluginId: String) = false
 
     override fun logger(owner: Any): PlatformLogger = logger
@@ -568,28 +578,36 @@ private class MetadataClassLoader(private val root: Path) :
  */
 private class RecordingLogger : PlatformLogger {
 
-    private val lines = mutableListOf<String>()
+    private val lines = mutableListOf<Pair<String, String>>()
 
     override fun info(message: String) {
-        lines += message
+        lines += "info" to message
     }
 
     override fun warn(message: String) {
-        lines += message
+        lines += "warn" to message
     }
 
     override fun error(message: String, throwable: Throwable?) {
-        lines += if (throwable == null) message else "$message $throwable"
+        lines += "error" to if (throwable == null) message else "$message $throwable"
     }
 
     override fun debug(message: String) {
-        lines += message
+        lines += "debug" to message
     }
 
-    /** The single line mentioning [needle], which is how a case reads what the host reported. */
-    fun lineMentioning(needle: String): String = assertNotNull(
-        lines.singleOrNull { needle in it },
-        "expected exactly one logged line mentioning $needle, but logged: $lines",
+    /**
+     * The single [level] line mentioning [needle], which is how a case reads what the host
+     * reported.
+     *
+     * The level is part of the question because the host says the same thing twice at two levels:
+     * the reason a bean was skipped at `debug`, and a count of what was skipped at `info`, so that
+     * a server with debug logging off still shows that something is missing. A case that did not
+     * name a level would match both.
+     */
+    fun lineMentioning(needle: String, level: String = "debug"): String = assertNotNull(
+        lines.singleOrNull { (at, line) -> at == level && needle in line }?.second,
+        "expected exactly one $level line mentioning $needle, but logged: $lines",
     )
 }
 
