@@ -748,7 +748,7 @@ public abstract class dev/slne/surf/api/paper/event/SingleListener : org/bukkit/
 	public abstract fun onEvent (Lorg/bukkit/event/Event;)V
 }
 
-public final class dev/slne/surf/api/paper/event/common/PlayerAfkStateChangeEvent : dev/slne/surf/api/core/event/SurfSyncEvent {
+public final class dev/slne/surf/api/paper/event/common/PlayerAfkStateChangeEvent : dev/slne/surf/api/event/SurfSyncEvent {
 	public fun <init> (Ljava/util/UUID;ZZ)V
 	public final fun component1 ()Ljava/util/UUID;
 	public final fun component2 ()Z
@@ -763,7 +763,7 @@ public final class dev/slne/surf/api/paper/event/common/PlayerAfkStateChangeEven
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class dev/slne/surf/api/paper/event/common/connection/PlayerJoinMessageEvent : dev/slne/surf/api/core/event/SurfSyncEvent, dev/slne/surf/api/core/event/SurfCancellableEvent {
+public final class dev/slne/surf/api/paper/event/common/connection/PlayerJoinMessageEvent : dev/slne/surf/api/event/SurfSyncEvent, dev/slne/surf/api/event/SurfCancellableEvent {
 	public fun <init> (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;)V
 	public fun cancel ()V
 	public final fun component1 ()Lorg/bukkit/entity/Player;
@@ -780,7 +780,7 @@ public final class dev/slne/surf/api/paper/event/common/connection/PlayerJoinMes
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class dev/slne/surf/api/paper/event/common/connection/PlayerQuitMessageEvent : dev/slne/surf/api/core/event/SurfSyncEvent, dev/slne/surf/api/core/event/SurfCancellableEvent {
+public final class dev/slne/surf/api/paper/event/common/connection/PlayerQuitMessageEvent : dev/slne/surf/api/event/SurfSyncEvent, dev/slne/surf/api/event/SurfCancellableEvent {
 	public fun <init> (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;)V
 	public fun cancel ()V
 	public final fun component1 ()Lorg/bukkit/entity/Player;
@@ -797,7 +797,7 @@ public final class dev/slne/surf/api/paper/event/common/connection/PlayerQuitMes
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class dev/slne/surf/api/paper/event/common/death/PlayerDeathMessageEvent : dev/slne/surf/api/core/event/SurfSyncEvent, dev/slne/surf/api/core/event/SurfCancellableEvent {
+public final class dev/slne/surf/api/paper/event/common/death/PlayerDeathMessageEvent : dev/slne/surf/api/event/SurfSyncEvent, dev/slne/surf/api/event/SurfCancellableEvent {
 	public fun <init> (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/text/Component;Lorg/bukkit/event/entity/EntityDamageEvent$DamageCause;)V
 	public fun cancel ()V
 	public final fun component1 ()Lorg/bukkit/entity/Player;

@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.event.common.connection
 
-import dev.slne.surf.api.core.event.SurfCancellableEvent
-import dev.slne.surf.api.core.event.SurfSyncEvent
+import dev.slne.surf.api.event.SurfCancellableEvent
+import dev.slne.surf.api.event.SurfSyncEvent
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 

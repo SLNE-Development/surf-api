@@ -1,6 +1,6 @@
 @file:OptIn(InternalSurfApi::class)
 
-package dev.slne.surf.api.core.event
+package dev.slne.surf.api.event
 
 import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.shared.api.util.InternalSurfApi

@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.event
 
-import dev.slne.surf.api.core.event.SurfAsyncEvent
+import dev.slne.surf.api.event.SurfAsyncEvent
 import java.util.*
 
 /**

@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.impl.event.invoker;
 
-import dev.slne.surf.api.core.event.SurfSyncEvent;
+import dev.slne.surf.api.event.SurfSyncEvent;
 import dev.slne.surf.api.core.invoker.HiddenInvokerUtil;
 import dev.slne.surf.api.core.invoker.InvokerClassData;
 import org.jetbrains.annotations.NotNull;

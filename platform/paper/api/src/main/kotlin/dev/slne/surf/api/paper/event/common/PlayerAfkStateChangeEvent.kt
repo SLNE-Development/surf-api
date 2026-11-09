@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.event.common
 
-import dev.slne.surf.api.core.event.SurfSyncEvent
+import dev.slne.surf.api.event.SurfSyncEvent
 import java.util.*
 
 /**

@@ -79,6 +79,11 @@ includeModule("common/common/api")
 // declarations. Their implementations stay in `surf-api-core-impl`, because `ActionBarServiceImpl`
 // resolves players through `SurfApiCore`.
 includeModule("common/messages/api")
+// Only the api half exists: the `SurfEvent` hierarchy, the `@SurfEventHandler` annotation, the
+// priorities and the `SurfEventBus` contract are declarations. `SurfEventBusImpl` and its
+// hidden-class invoker templates stay in `surf-api-core-impl`; nothing compiles against them, so a
+// module of their own would buy no boundary.
+includeModule("common/event/api")
 includePair("common", "core")
 // Only the api half exists: the shared inventory framework is contracts, settings and components
 // that both platforms compile against, with no runtime wiring of its own.

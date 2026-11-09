@@ -1,10 +1,9 @@
-package dev.slne.surf.api.core.event
-
+package dev.slne.surf.api.event
 
 /**
- *  Base class for synchronous surf events dispatched on the calling thread.
+ * Base class for asynchronous surf events dispatched via coroutines.
  */
-abstract class SurfSyncEvent : SurfEvent {
+abstract class SurfAsyncEvent : SurfEvent {
 
     /**
      * Dispatches the event for handling and determines its resulting state.
@@ -15,8 +14,8 @@ abstract class SurfSyncEvent : SurfEvent {
      * @return true if the event is successfully handled and not canceled, or if the event
      *         is not cancellable; false if the event is cancellable and has been canceled.
      */
-    fun call(): Boolean {
-        SurfEventBus.INSTANCE.callSync(this)
+    suspend fun call(): Boolean {
+        SurfEventBus.INSTANCE.callAsync(this)
         return if (this is SurfCancellableEvent) {
             !isCancelled
         } else {

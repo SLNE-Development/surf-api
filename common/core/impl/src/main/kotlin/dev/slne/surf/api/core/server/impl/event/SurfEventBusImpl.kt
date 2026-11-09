@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.impl.event
 
-import dev.slne.surf.api.core.event.*
+import dev.slne.surf.api.event.*
 import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
 import dev.slne.surf.api.core.server.impl.event.invoker.SurfEventInvokerFactory
 import dev.slne.surf.api.common.util.logger

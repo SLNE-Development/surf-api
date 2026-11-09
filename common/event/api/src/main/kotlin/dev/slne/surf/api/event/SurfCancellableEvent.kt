@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.event
+package dev.slne.surf.api.event
 
 /**
  * Mixin interface for events that can be canceled by a listener.

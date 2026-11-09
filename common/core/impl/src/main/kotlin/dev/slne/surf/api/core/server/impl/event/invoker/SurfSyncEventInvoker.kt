@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.impl.event.invoker
 
-import dev.slne.surf.api.core.event.SurfSyncEvent
+import dev.slne.surf.api.event.SurfSyncEvent
 
 fun interface SurfSyncEventInvoker {
 

@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.listener
 
-import dev.slne.surf.api.core.event.SurfEventBus
-import dev.slne.surf.api.core.event.SurfEventHandler
+import dev.slne.surf.api.event.SurfEventBus
+import dev.slne.surf.api.event.SurfEventHandler
 import dev.slne.surf.api.paper.event.common.PlayerAfkStateChangeEvent
 
 object PlayerAfkStateChangeEventListener {

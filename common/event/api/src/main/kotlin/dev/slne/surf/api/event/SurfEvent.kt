@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.event
+package dev.slne.surf.api.event
 
 /**
  *  Marker interface for all surf events.

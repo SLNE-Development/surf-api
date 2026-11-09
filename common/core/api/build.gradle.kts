@@ -15,6 +15,11 @@ dependencies {
     // module. It is re-exported so that everything compiling against surf-api-core keeps resolving
     // the text declarations it already used.
     api(projects.surfApiMessagesApi)
+    // The event domain -- the SurfEvent hierarchy, the @SurfEventHandler annotation, the
+    // priorities and the SurfEventBus contract -- was cut out of this module. It is re-exported so
+    // that everything compiling against surf-api-core keeps resolving the event declarations it
+    // already used.
+    api(projects.surfApiEventApi)
     api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
     // The DI contracts travel with the api, not with the container: a downstream plugin writes

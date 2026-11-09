@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.event
+package dev.slne.surf.api.event
 
 /**
  * Marks a method as an event handler that will be invoked by [SurfEventBus]
