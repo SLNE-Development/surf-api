@@ -112,9 +112,9 @@ The order that matters, and it is three calls because the platform has three pha
   packet listeners. Runs while the server is still loading plugins. `startChild` builds this
   plugin's container below surf-api's root and runs its beans through `load` only.
 - **`onEnableAsync`** - `SurfContainer.enableFor(this)` first, then command registration and
-  listeners. The `enable` phase deliberately lands here, where the rest of the server exists;
-  nothing runs it for you because `startChild` already ran, so skipping this call leaves every
-  bean loaded but never enabled.
+  listeners. The `enable` phase deliberately lands here, where the rest of the server exists. The
+  phases are not chained, so leaving this call out leaves every bean loaded and never enabled, with
+  nothing to say so.
 - **`onDisableAsync`** - unregister commands, close sidebars, then `SurfContainer.stopFor(this)`,
   which runs `disable` in reverse and forgets the container. surf-api's own beans keep running:
   they belong to the root, which surf-api stops after every plugin.
