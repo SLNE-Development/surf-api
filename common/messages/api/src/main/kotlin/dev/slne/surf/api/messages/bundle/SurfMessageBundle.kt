@@ -101,7 +101,7 @@ class SurfMessageBundle @JvmOverloads constructor(
 
         // update the resource bundles
         // Step 1: Copy all bundled resource bundles that aren't in the data folder
-        copyMissingBundles(dataFolderResourceBundles, dataFolderResourceBundles)
+        copyMissingBundles(bundledResourceBundles, dataFolderResourceBundles)
 
         // Step 2: Add all missing keys to the data folder resource and update them
         updateResourceBundles(bundledResourceBundles, dataFolderResourceBundles)
