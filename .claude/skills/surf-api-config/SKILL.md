@@ -191,9 +191,9 @@ missing/blank/unparsable behaviour: `references/environment-variables.md`.
 - **Save failures are unchecked.** `save()` and `reloadFromFile()` wrap `ConfigurateException` in
   `UncheckedIOException`; load failures throw `LoadConfigException` or
   `SerializationConfigException`. None of them are declared in Kotlin signatures.
-- **No impl on the classpath, no config.** `surfConfigApi` and `surfSpongeConfigSerializers` go
-  through `requiredService`, which throws `ServiceConfigurationError` when the `-impl` module is
-  missing.
+- **No impl on the classpath, no config.** `surfConfigApi` and `surfSpongeConfigSerializers` are
+  `by surfBean<T>()` properties, so without the platform's `-impl` module the first read fails with
+  `No bean provides dev.slne.surf.api.core.config.SurfConfigApi in the container for ...`.
 
 Build setup for a module that uses configs: `surf-api-build`. Injecting a config into a bean:
 `surf-api-components`.

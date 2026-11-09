@@ -5,9 +5,8 @@ Source: `common/core/api/src/main/kotlin/dev/slne/surf/api/core/config/serialize
 
 ## How the registry is assembled
 
-`surfSpongeConfigSerializers` is a `SpongeConfigSerializers`, obtained through
-`requiredService<SpongeConfigSerializers>()` - exactly one implementation per platform, registered
-with `@AutoService(SpongeConfigSerializers::class)`:
+`surfSpongeConfigSerializers` is a `SpongeConfigSerializers`, a top-level
+`by surfBean<SpongeConfigSerializers>()` property - exactly one `@Service` subclass per platform:
 
 | Platform | Class |
 | --- | --- |
@@ -121,9 +120,10 @@ views through `classSerializers` and `typeTokenSerializers`.
 ### Inside surf-api, platform-wide
 
 Subclass `SpongeConfigSerializers`, override `registerDefaults` (it is
-`@MustBeInvokedByOverriders` - call `super.registerDefaults(builder)` first) and expose it with
-`@AutoService(SpongeConfigSerializers::class)`. Only one implementation can win per platform, so
-this is for the platform module, not for a feature.
+`@MustBeInvokedByOverriders` - call `super.registerDefaults(builder)` first) and annotate the
+subclass `@Service`. Only one implementation can win per platform, so this is for the platform
+module, not for a feature - a second `SpongeConfigSerializers` bean in the same container fails
+resolution with "is provided by several beans".
 
 ## Map type annotations
 
