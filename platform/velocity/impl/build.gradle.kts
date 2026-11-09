@@ -12,7 +12,6 @@ dependencies {
     api(libs.commons.lang3)
     api(libs.commons.text)
     api(libs.okhttp)
-    api(libs.fastutil)
     api(libs.flogger)
     api(libs.commons.math4.core)
     api(libs.commons.math3)
@@ -25,7 +24,6 @@ dependencies {
 tasks {
     shadowJar {
         val relocationPrefix = project.findProperty("relocationPrefix") as String
-        relocate("it.unimi.dsi.fastutil", "$relocationPrefix.fastutil")
     }
 }
 

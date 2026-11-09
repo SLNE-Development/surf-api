@@ -139,6 +139,5 @@ internal fun dev.slne.surf.api.gradle.platform.common.CommonSurfPlugin<*>.applyM
     applyRelocation("com.mojang.serialization", "mojang.serialization")
     applyRelocation("com.mojang.datafixers", "mojang.datafixers")
     applyRelocation("net.kyori.adventure.nbt", "kyori.nbt", listOf("net.kyori.adventure.nbt.api.**"))
-    applyRelocation("it.unimi.dsi.fastutil", "fastutil")
     applyRelocation("me.devnatan.inventoryframework", "devnatan.inventoryframework")
 }

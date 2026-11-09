@@ -18,10 +18,6 @@ internal class VelocitySurfPlugin :
         "velocity-plugin.json"
     ) {
 
-    init {
-        "it.unimi.dsi.fastutil" relocatesTo "fastutil"
-    }
-
     override val extensionClass = VelocitySurfExtension::class.java
     override val dtoSerializer = VelocityPluginFileDto.serializer()
 

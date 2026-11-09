@@ -61,7 +61,6 @@ internal class MinestomServerSurfPlugin :
 
     init {
         // The core relocations (mojang, adventure nbt, configurate) come from the base class
-        "it.unimi.dsi.fastutil" relocatesTo "fastutil"
         "me.devnatan.inventoryframework" relocatesTo "devnatan.inventoryframework"
     }
 
