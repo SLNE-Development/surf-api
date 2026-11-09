@@ -1,7 +1,7 @@
 package dev.slne.surf.api.core.server.impl.reflection
 
-import dev.slne.surf.api.core.reflection.SurfProxy
-import dev.slne.surf.api.core.reflection.SurfReflection
+import dev.slne.surf.api.reflection.SurfProxy
+import dev.slne.surf.api.reflection.SurfReflection
 import dev.slne.surf.api.di.Service
 import java.lang.reflect.Proxy.newProxyInstance
 

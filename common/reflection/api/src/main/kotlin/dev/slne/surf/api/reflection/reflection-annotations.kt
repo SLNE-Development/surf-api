@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.reflection
+package dev.slne.surf.api.reflection
 
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass

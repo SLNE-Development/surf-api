@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.impl.nbt
 
-import dev.slne.surf.api.core.nbt.FastCompoundBinaryTag
+import dev.slne.surf.api.nbt.FastCompoundBinaryTag
 import net.kyori.adventure.nbt.*
 import java.util.Collections
 import java.util.function.Consumer

@@ -20,6 +20,13 @@ dependencies {
     // that everything compiling against surf-api-core keeps resolving the event declarations it
     // already used.
     api(projects.surfApiEventApi)
+    // The nbt domain -- the binary-tag views, the FastCompoundBinaryTag contract, the
+    // InternalNbtBridge, the tag extensions and NbtOps -- and the reflection domain -- the
+    // SurfReflection contract and the @SurfProxy annotations -- were cut out of this module. Both
+    // are re-exported so that everything compiling against surf-api-core keeps resolving the
+    // declarations it already used.
+    api(projects.surfApiNbtApi)
+    api(projects.surfApiReflectionApi)
     api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
     // The DI contracts travel with the api, not with the container: a downstream plugin writes

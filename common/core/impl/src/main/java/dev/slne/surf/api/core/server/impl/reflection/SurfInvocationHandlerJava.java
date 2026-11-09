@@ -1,8 +1,8 @@
 package dev.slne.surf.api.core.server.impl.reflection;
 
-import dev.slne.surf.api.core.reflection.Field.Type;
-import dev.slne.surf.api.core.reflection.Name;
-import dev.slne.surf.api.core.reflection.Static;
+import dev.slne.surf.api.reflection.Field.Type;
+import dev.slne.surf.api.reflection.Name;
+import dev.slne.surf.api.reflection.Static;
 import dev.slne.surf.api.core.server.impl.reflection.reflection.ProxyCreationException;
 import dev.slne.surf.api.core.server.impl.reflection.reflection.ProxyInvocationException;
 import dev.slne.surf.api.common.util.SurfUtil;
@@ -96,10 +96,10 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     private Invokable createInvokable(final Method method) {
         final var fieldAnnotation = method.getDeclaredAnnotation(
-            dev.slne.surf.api.core.reflection.Field.class);
+            dev.slne.surf.api.reflection.Field.class);
         final var staticAnnotation = method.getDeclaredAnnotation(Static.class);
         final var constructorAnnotation = method.getDeclaredAnnotation(
-            dev.slne.surf.api.core.reflection.Constructor.class);
+            dev.slne.surf.api.reflection.Constructor.class);
         final var nameAnnotation = method.getDeclaredAnnotation(Name.class);
 
         validateAnnotationCombination(method, fieldAnnotation, staticAnnotation,
@@ -140,7 +140,7 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     private Invokable createFieldInvokable(
         final Method method,
-        final dev.slne.surf.api.core.reflection.Field fieldAnnotation,
+        final dev.slne.surf.api.reflection.Field fieldAnnotation,
         final @Nullable Static staticAnnotation,
         final @Nullable Name nameAnnotation,
         final MethodHandles.Lookup privateLookup
@@ -168,9 +168,9 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     private static void validateAnnotationCombination(
         final Method method,
-        final dev.slne.surf.api.core.reflection.@Nullable Field fieldAnnotation,
+        final dev.slne.surf.api.reflection.@Nullable Field fieldAnnotation,
         final @Nullable Static staticAnnotation,
-        final dev.slne.surf.api.core.reflection.@Nullable Constructor constructorAnnotation
+        final dev.slne.surf.api.reflection.@Nullable Constructor constructorAnnotation
     ) {
         int annotationCount = 0;
         if (fieldAnnotation != null) {
@@ -459,9 +459,9 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
     private static String getMethodName(
         final Method method,
         final @Nullable Name nameAnnotation,
-        final dev.slne.surf.api.core.reflection.@Nullable Field fieldAnnotation,
+        final dev.slne.surf.api.reflection.@Nullable Field fieldAnnotation,
         final @Nullable Static staticAnnotation,
-        final dev.slne.surf.api.core.reflection.@Nullable Constructor constructorAnnotation
+        final dev.slne.surf.api.reflection.@Nullable Constructor constructorAnnotation
     ) {
         if (nameAnnotation != null && !nameAnnotation.value().isBlank()) {
             return nameAnnotation.value();

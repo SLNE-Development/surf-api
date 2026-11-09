@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.test.command.subcommands.reflection;
 
 
-import dev.slne.surf.api.core.reflection.SurfReflection;
+import dev.slne.surf.api.reflection.SurfReflection;
 
 public class Reflection {
 

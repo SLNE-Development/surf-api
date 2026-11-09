@@ -1,12 +1,12 @@
-package dev.slne.surf.api.core.serializer
+package dev.slne.surf.api.nbt.serializer
 
 import com.mojang.datafixers.util.Pair
 import com.mojang.serialization.DataResult
 import com.mojang.serialization.DynamicOps
 import com.mojang.serialization.MapLike
 import com.mojang.serialization.RecordBuilder
-import dev.slne.surf.api.core.nbt.asCollection
-import dev.slne.surf.api.core.nbt.isCollectionTag
+import dev.slne.surf.api.nbt.asCollection
+import dev.slne.surf.api.nbt.isCollectionTag
 import net.kyori.adventure.nbt.*
 import java.nio.ByteBuffer
 import java.util.function.BiConsumer
@@ -15,10 +15,10 @@ import java.util.stream.IntStream
 import java.util.stream.LongStream
 import java.util.stream.Stream
 
-// The rest of this package moved to surf-api-serialization-api. This file stayed behind
-// because it reads dev.slne.surf.api.core.nbt, which belongs to a later cut: taking it along
-// would make the serialization module depend on surf-api-core-api, and surf-api-core-api
-// re-exports the serialization module, so the two would form a cycle.
+// The rest of this package moved to surf-api-serialization-api. This file could not follow it:
+// it reads dev.slne.surf.api.nbt, so the serialization module would have had to depend on
+// surf-api-core-api, which re-exports it -- a cycle. It travels with the nbt domain instead,
+// which is what the two tag functions it calls belong to.
 object NbtOps : DynamicOps<BinaryTag> {
 
     override fun empty() = EndBinaryTag.endBinaryTag()

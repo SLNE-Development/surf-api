@@ -1,9 +1,9 @@
 package dev.slne.surf.api.paper.server.nms.v26_2.packet.listener
 
-import dev.slne.surf.api.core.reflection.Field
-import dev.slne.surf.api.core.reflection.SurfProxy
-import dev.slne.surf.api.core.reflection.SurfReflection
-import dev.slne.surf.api.core.reflection.createProxy
+import dev.slne.surf.api.reflection.Field
+import dev.slne.surf.api.reflection.SurfProxy
+import dev.slne.surf.api.reflection.SurfReflection
+import dev.slne.surf.api.reflection.createProxy
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.nms.common.AbstractChannelInjector
 import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms

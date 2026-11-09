@@ -1,0 +1,44 @@
+public abstract interface annotation class dev/slne/surf/api/reflection/Constructor : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dev/slne/surf/api/reflection/Field : java/lang/annotation/Annotation {
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun overrideFinal ()Z
+	public abstract fun type ()Ldev/slne/surf/api/reflection/Field$Type;
+}
+
+public final class dev/slne/surf/api/reflection/Field$Type : java/lang/Enum {
+	public static final field GETTER Ldev/slne/surf/api/reflection/Field$Type;
+	public static final field SETTER Ldev/slne/surf/api/reflection/Field$Type;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/reflection/Field$Type;
+	public static fun values ()[Ldev/slne/surf/api/reflection/Field$Type;
+}
+
+public abstract interface annotation class dev/slne/surf/api/reflection/Name : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/reflection/Static : java/lang/annotation/Annotation {
+	public abstract fun name ()Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/reflection/SurfProxy : java/lang/annotation/Annotation {
+	public abstract fun qualifiedName ()Ljava/lang/String;
+	public abstract fun value ()Ljava/lang/Class;
+}
+
+public abstract interface class dev/slne/surf/api/reflection/SurfReflection {
+	public static final field Companion Ldev/slne/surf/api/reflection/SurfReflection$Companion;
+	public fun createProxy (Ljava/lang/Class;)Ljava/lang/Object;
+	public abstract fun createProxy (Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/reflection/SurfReflection$Companion {
+	public final fun getINSTANCE ()Ldev/slne/surf/api/reflection/SurfReflection;
+}
+
+public final class dev/slne/surf/api/reflection/SurfReflection$DefaultImpls {
+	public static fun createProxy (Ldev/slne/surf/api/reflection/SurfReflection;Ljava/lang/Class;)Ljava/lang/Object;
+}
+

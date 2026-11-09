@@ -84,6 +84,15 @@ includeModule("common/messages/api")
 // hidden-class invoker templates stay in `surf-api-core-impl`; nothing compiles against them, so a
 // module of their own would buy no boundary.
 includeModule("common/event/api")
+// Only the api half exists: the binary-tag views, the `FastCompoundBinaryTag` contract, the
+// `InternalNbtBridge` and `NbtOps` are declarations. `InternalNbtBridgeImpl` stays in
+// `surf-api-core-impl`.
+includeModule("common/nbt/api")
+// Only the api half exists: the `SurfReflection` contract and the `@SurfProxy` annotation family
+// are declarations, and `SurfReflectionImpl` stays in `surf-api-core-impl`. It is its own module
+// rather than part of the nbt one it was planned with, because the two domains share nothing: tags
+// on one side, dynamic proxies for the NMS bridges on the other.
+includeModule("common/reflection/api")
 includePair("common", "core")
 // Only the api half exists: the shared inventory framework is contracts, settings and components
 // that both platforms compile against, with no runtime wiring of its own.

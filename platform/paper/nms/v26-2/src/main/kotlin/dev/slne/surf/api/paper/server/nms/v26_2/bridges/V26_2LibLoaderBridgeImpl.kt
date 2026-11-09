@@ -1,10 +1,10 @@
 package dev.slne.surf.api.paper.server.nms.v26_2.bridges
 
-import dev.slne.surf.api.core.reflection.Field
-import dev.slne.surf.api.core.reflection.Field.Type
-import dev.slne.surf.api.core.reflection.SurfProxy
-import dev.slne.surf.api.core.reflection.SurfReflection
-import dev.slne.surf.api.core.reflection.createProxy
+import dev.slne.surf.api.reflection.Field
+import dev.slne.surf.api.reflection.Field.Type
+import dev.slne.surf.api.reflection.SurfProxy
+import dev.slne.surf.api.reflection.SurfReflection
+import dev.slne.surf.api.reflection.createProxy
 import dev.slne.surf.api.common.util.setFinalField
 import dev.slne.surf.api.paper.nms.common.LibLoaderBridge
 import dev.slne.surf.api.paper.server.nms.v26_2.extensions.commodore

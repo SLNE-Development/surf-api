@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.nbt
+package dev.slne.surf.api.nbt
 
 import net.kyori.adventure.nbt.*
 import java.util.*
