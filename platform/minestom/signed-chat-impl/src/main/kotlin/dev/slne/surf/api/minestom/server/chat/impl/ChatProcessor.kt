@@ -4,7 +4,6 @@ import dev.slne.surf.api.minestom.chat.AsyncPlayerChatEvent
 import dev.slne.surf.api.minestom.chat.ChatRenderer
 import dev.slne.surf.api.minestom.extension.ConnectionManager
 import dev.slne.surf.api.minestom.server.chat.impl.signature.PlayerChatMessage
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import net.kyori.adventure.audience.Audience
@@ -40,7 +39,7 @@ internal class ChatProcessor(
 
     suspend fun process() {
         val players = ConnectionManager.onlinePlayers
-        val viewers = ObjectLinkedOpenHashSet<Audience>(players.size + 1).apply {
+        val viewers = LinkedHashSet<Audience>(players.size + 1).apply {
             addAll(players)
             add(Audiences.console())
         }

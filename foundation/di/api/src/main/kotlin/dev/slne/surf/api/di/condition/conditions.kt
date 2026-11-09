@@ -6,9 +6,11 @@ import kotlin.reflect.KClass
 /**
  * Decides at startup whether a bean is created at all.
  *
- * A bean whose condition does not hold is skipped: it is never constructed, never injected, and an
- * injection point that requires it fails with a message naming the condition. That is deliberate —
- * a missing bean is a configuration error, not something to paper over.
+ * A bean whose condition does not hold is skipped: it is never constructed and never injected, and
+ * an injection point that requires it then fails for want of a provider. That is deliberate — a
+ * missing bean is a configuration error, not something to paper over. The failure names the
+ * consumer and the type it wanted, so check the skipped beans when a type that should obviously
+ * exist does not.
  *
  * Implementations need a constructor the container can call with no arguments; a condition runs
  * before the beans it decides about exist, so it cannot inject them. Use [BeanConditionContext] to

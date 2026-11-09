@@ -25,9 +25,10 @@ enum class Scope {
     /**
      * A new instance for every injection point.
      *
-     * The container creates the bean, injects it and forgets it: nothing is cached and
-     * [SurfComponent] lifecycle methods are not called, because the container does not keep the
-     * instance long enough to shut it down.
+     * The container creates the bean, injects it and forgets it. Nothing is cached, no
+     * [SurfComponent] lifecycle method is called, and no [BeanPostProcessor] sees it — all three
+     * follow from the same thing: the container does not keep the instance, so it could neither shut
+     * it down nor unregister it again.
      */
     PROTOTYPE,
 }

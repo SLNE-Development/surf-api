@@ -64,11 +64,11 @@ internal class BeanContainerImpl(
 
         // Post processors first and separately: they must see every other bean, so they cannot be
         // processed themselves, and they must exist before the first bean passes through the chain.
+        // `ordered` already uses priority as its tiebreak within the graph's constraints, so taking
+        // the processors in that order is their chain order.
         ordered.filter { it.definition.postProcessor }.forEach { provider ->
-            val processor = create(provider)
-            processors += processor as BeanPostProcessor
+            processors += create(provider) as BeanPostProcessor
         }
-        processors.sortBy { it.priorityOf() }
 
         ordered.filterNot { it.definition.postProcessor }.forEach { provider ->
             if (provider.scope == Scope.PROTOTYPE) return@forEach
@@ -158,9 +158,6 @@ internal class BeanContainerImpl(
         is FactoryProvider -> factory.params
     }
 
-    private fun BeanPostProcessor.priorityOf() =
-        index.providers.find { it.definition.className == this::class.java.name }?.priority ?: 0
-
     override fun resolveByName(type: String, qualifier: String?): Any? =
         index.resolveSingle(pointFor(type, qualifier))?.let(::instanceOf)
             ?: parentImpl?.resolveByName(type, qualifier)
@@ -177,7 +174,7 @@ internal class BeanContainerImpl(
         resolveByName(type.java.name, qualifier) as T?
 
     override fun <T : Any> bean(type: KClass<T>, qualifier: String?): T =
-        requireNotNull(beanOrNull(type, qualifier)) {
+        checkNotNull(beanOrNull(type, qualifier)) {
             buildString {
                 append("No bean provides ").append(type.java.name)
                 qualifier?.let { append(" with qualifier '").append(it).append('\'') }

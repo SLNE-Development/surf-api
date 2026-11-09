@@ -180,7 +180,7 @@ class BeanContainerImplTest {
         val container = container(emptyList(), instantiator())
         container.start()
 
-        val failure = assertFailsWith<IllegalArgumentException> { container.bean(Probe::class) }
+        val failure = assertFailsWith<IllegalStateException> { container.bean(Probe::class) }
 
         assertTrue(failure.message!!.contains(Probe::class.java.name), failure.message)
     }

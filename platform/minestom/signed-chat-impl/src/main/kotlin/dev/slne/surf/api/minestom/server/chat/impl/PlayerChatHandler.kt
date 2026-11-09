@@ -6,7 +6,6 @@ import dev.slne.surf.api.minestom.server.chat.impl.PlayerChatHandler.Companion.M
 import dev.slne.surf.api.minestom.server.chat.impl.signature.*
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.command.signableCommandArguments
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.Component.translatable
 import net.kyori.adventure.text.format.NamedTextColor
@@ -271,7 +270,7 @@ internal class PlayerChatHandler(
     ): Map<String, PlayerChatMessage> {
         val entries = packet.signatures().entries()
         val values = signableCommandArguments(player, packet.message())
-        val signedArguments = Object2ObjectOpenHashMap<String, PlayerChatMessage>(values.size)
+        val signedArguments = mutableMapOf<String, PlayerChatMessage>()
 
         if (entries.isEmpty()) {
             values.forEach { (name, value) ->

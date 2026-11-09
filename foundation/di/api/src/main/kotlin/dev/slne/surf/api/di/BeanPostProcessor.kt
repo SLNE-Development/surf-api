@@ -1,7 +1,10 @@
 package dev.slne.surf.api.di
 
 /**
- * Sees every bean the container creates, right after it has been constructed and injected.
+ * Sees every bean the container keeps, right after it has been constructed and injected.
+ *
+ * "Keeps" excludes a [Scope.PROTOTYPE] bean: the container does not hold it, so it could never call
+ * [beforeDestruction] to undo whatever [afterInitialization] did.
  *
  * This is how a bean gets registered somewhere without anything having to collect it: the processor
  * inspects the bean — its methods, its supertypes, its annotations — and acts on what it finds.

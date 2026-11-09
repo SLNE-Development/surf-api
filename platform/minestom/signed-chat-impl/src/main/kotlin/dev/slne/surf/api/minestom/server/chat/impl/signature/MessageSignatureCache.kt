@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.server.chat.impl.signature
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import net.minestom.server.crypto.MessageSignature
 
 
@@ -52,7 +51,7 @@ internal class MessageSignatureCache(capacity: Int = DEFAULT_CAPACITY) {
     }
 
     private fun push(queue: ArrayDeque<Entry>) {
-        val newEntries = ObjectOpenHashSet(queue)
+        val newEntries = queue.toSet()
 
         var index = 0
         while (queue.isNotEmpty() && index < entries.size) {

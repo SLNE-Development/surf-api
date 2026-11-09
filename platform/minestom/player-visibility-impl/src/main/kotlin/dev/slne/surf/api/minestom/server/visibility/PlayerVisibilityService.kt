@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.server.visibility
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import net.minestom.server.MinecraftServer
 import net.minestom.server.entity.AutomaticPlayerVisibility
 import net.minestom.server.entity.Player
@@ -30,7 +29,7 @@ internal class PlayerVisibilityService(
         retentionDistanceFactor = settings.retentionDistanceFactor,
     )
 
-    private val candidateIds = IntOpenHashSet()
+    private val candidateIds = mutableSetOf<Int>()
 
     private var task: Task? = null
     private var phase = 0

@@ -41,10 +41,12 @@ interface BeanContainer {
     fun <T : Any> bean(type: KClass<T>, qualifier: String? = null): T
 
     /**
-     * Returns every bean providing [type], in dependency order.
+     * Returns every bean providing [type], ordered by `@Priority` and then by class name, with this
+     * container's own beans before the ones it inherits.
      *
      * Empty when there is none; this is a collection, not a lookup, so an empty result is an answer
-     * rather than a failure.
+     * rather than a failure. The order is stable across runs, which is what a registrar that cares
+     * about registration order depends on.
      */
     fun <T : Any> beansOfType(type: KClass<T>): List<T>
 

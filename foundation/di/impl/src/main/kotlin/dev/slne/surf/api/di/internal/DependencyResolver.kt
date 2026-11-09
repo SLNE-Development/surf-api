@@ -51,6 +51,13 @@ internal class DependencyResolver(
      * @throws UnsatisfiedDependencyException if a required parameter has no candidate
      */
     fun resolve(point: InjectionPoint, consumer: String): Any? = when {
+        // Resolving a collection lazily is not expressible, and silently dropping the laziness
+        // would be worse than refusing it.
+        point.collection != null && point.lazy -> error(
+            "$consumer declares a parameter that is both a collection and lazy (${point.type}). " +
+                    "Take either Lazy<T> or List<T>, not Lazy<List<T>>."
+        )
+
         point.collection != null -> resolveCollection(point)
         point.lazy -> lazy { resolveSingle(point.copy(lazy = false), consumer) }
         else -> resolveSingle(point, consumer)

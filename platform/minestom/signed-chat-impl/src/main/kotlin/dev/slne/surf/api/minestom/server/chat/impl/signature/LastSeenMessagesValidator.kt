@@ -1,6 +1,5 @@
 package dev.slne.surf.api.minestom.server.chat.impl.signature
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.minestom.server.crypto.MessageSignature
 import java.io.Serial
 
@@ -8,9 +7,7 @@ internal class LastSeenMessagesValidator(
     private val lastSeenCount: Int = LastSeenMessages.LAST_SEEN_MESSAGES_MAX_LENGTH
 ) {
 
-    private val trackedMessages = ObjectArrayList<LastSeenTrackedEntry?>().apply {
-        repeat(lastSeenCount) { add(null) }
-    }
+    private val trackedMessages = MutableList<LastSeenTrackedEntry?>(lastSeenCount) { null }
 
     private var lastPendingMessage: MessageSignature? = null
 
@@ -31,13 +28,13 @@ internal class LastSeenMessagesValidator(
             )
         }
 
-        trackedMessages.removeElements(0, offset)
+        trackedMessages.subList(0, offset).clear()
     }
 
     fun applyUpdate(update: LastSeenMessages.Update): LastSeenMessages {
         applyOffset(update.offset)
 
-        val lastSeenEntries = ObjectArrayList<MessageSignature>(update.acknowledged.cardinality())
+        val lastSeenEntries = ArrayList<MessageSignature>(update.acknowledged.cardinality())
         val ackLength = update.acknowledged.length()
         if (ackLength > lastSeenCount) {
             throw ValidationException(
