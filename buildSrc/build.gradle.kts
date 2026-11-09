@@ -10,6 +10,10 @@ repositories {
 // decide whether a build passes, so they get the same treatment as the code they guard.
 tasks.test { useJUnitPlatform() }
 
+// The main build asks buildSrc for its jar and nothing else, so `test` never runs as part of it,
+// and hanging it off `jar` is a cycle -- the test code compiles against that jar. CI therefore
+// runs `gradlew -p buildSrc test` as its own step; without it these tests would guard nothing.
+
 dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter)

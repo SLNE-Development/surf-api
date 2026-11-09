@@ -62,6 +62,12 @@ jobs:
       - name: Run checks with Gradle
         run: ./gradlew check --parallel --no-scan
 
+      # buildSrc is built for its jar and nothing else, so its own tests are not part of `check`
+      # above -- and they cannot be, since the test code compiles against that jar. They cover the
+      # build's own checks, so they get a step of their own.
+      - name: Run buildSrc tests with Gradle
+        run: ./gradlew -p buildSrc test --no-scan
+
       - name: Collect JAR file list
         id: find_jars
         run: |
