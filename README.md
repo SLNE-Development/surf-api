@@ -50,13 +50,25 @@ surf-api
 │   │   └── api                       # surf-api-common-api: the shared base — util, logger, collections, math, random, font
 │   ├── serialization
 │   │   └── api                       # surf-api-serialization-api: kotlinx-serialization serializers and codecs
+│   ├── messages
+│   │   └── api                       # surf-api-messages-api: text — Colors, builders, MiniMessage, pagination, action bar
 │   ├── config
 │   │   ├── api                       # surf-api-config-api: config classes, constraints, managers, migrations
 │   │   └── impl                      # surf-api-config-impl: the config service
+│   ├── event
+│   │   └── api                       # surf-api-event-api: SurfEventBus and the event contracts
+│   ├── nbt
+│   │   └── api                       # surf-api-nbt-api: Adventure binary tags and NbtOps
+│   ├── reflection
+│   │   └── api                       # surf-api-reflection-api: SurfReflection and the @SurfProxy annotations
+│   ├── command
+│   │   └── api                       # surf-api-command-api: what the three platforms' command layers share
+│   ├── luckperms
+│   │   └── api                       # surf-api-luckperms-api: the LuckPerms lookup helpers
 │   ├── inventory
 │   │   └── api                       # surf-api-inventory-api: the platform-neutral half of the inventory framework
 │   └── core
-│       ├── api                       # surf-api-core-api: what is not yet its own domain — messages, events, NBT, commands
+│       ├── api                       # surf-api-core-api: SurfApiCore itself, and the coordinate re-exporting the domains above
 │       └── impl                      # surf-api-core-impl: core implementations
 │
 ├── platform/                         # One group per runtime
@@ -274,12 +286,18 @@ log.atWarning().withCause(e).log("Failed to load bean %s", name)
 
 ```
 dev.slne.surf.api                      # Root
-dev.slne.surf.api.common               # The shared base: util, logger, collections, math, random, font
+dev.slne.surf.api.common               # The shared base: util, logger, collections, math, random, font, algorithms
 dev.slne.surf.api.serialization        # kotlinx-serialization serializers and codecs
+dev.slne.surf.api.messages             # Text: Colors, builders, MiniMessage, pagination, action bar, Rarity
 dev.slne.surf.api.config               # Config classes, constraints, managers, migrations
 dev.slne.surf.api.config.impl          # The config service
+dev.slne.surf.api.event                # SurfEventBus and the event contracts
+dev.slne.surf.api.nbt                  # Adventure binary tags and NbtOps
+dev.slne.surf.api.reflection           # SurfReflection and the @SurfProxy annotations
+dev.slne.surf.api.command              # What the three platforms' command layers share
+dev.slne.surf.api.luckperms            # The LuckPerms lookup helpers
 dev.slne.surf.api.inventory            # The platform-neutral half of the inventory framework
-dev.slne.surf.api.core                 # What is not yet its own domain: messages, events, NBT, commands
+dev.slne.surf.api.core                 # SurfApiCore itself; the coordinate re-exporting the domains above
 dev.slne.surf.api.core.server          # Core implementations
 dev.slne.surf.api.paper                # Paper API (extensions, bridges, DSLs)
 dev.slne.surf.api.paper.server         # Paper implementations

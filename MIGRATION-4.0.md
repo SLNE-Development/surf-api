@@ -84,7 +84,12 @@ ones your `withXxx()` calls ask for.
 | `surf-api-serialization-api` | The kotlinx-serialization serializers and codecs: `SurfSerializerModule`, the Adventure serializers, the JDK ones (UUID, dates, IP, numbers) and the SpongePowered math ones. |
 | `surf-api-config-api` | The configuration surface: `SurfConfigApi`, the `SpongeYmlConfigClass` / `SpongeJsonConfigClass` companions, the 24 constraint annotations, the helper types, the managers and the migrations. |
 | `surf-api-config-impl` | The config service behind `surfConfigApi`. |
-| `surf-api-messages-api` | The text surface: `Colors`, `CommonComponents`, `ComponentMessage`, the `buildText` / `sendText` builders, the colour palettes, the message bundles, pagination, the configured MiniMessage instance and the action bar. |
+| `surf-api-messages-api` | The text surface: `Colors`, `CommonComponents`, `ComponentMessage`, the `buildText` / `sendText` builders, the colour palettes, the message bundles, pagination, the configured MiniMessage instance, the action bar and `Rarity`. |
+| `surf-api-event-api` | `SurfEventBus` and the event contracts — `SurfEvent`, `SurfSyncEvent`, `SurfAsyncEvent`, `SurfCancellableEvent`, `@SurfEventHandler`, `SurfEventPriority`. |
+| `surf-api-nbt-api` | The Adventure binary-tag surface: `CollectionBinaryTag`, `FastCompoundBinaryTag`, `InternalNbtBridge` and `NbtOps`. |
+| `surf-api-reflection-api` | `SurfReflection` and the `@SurfProxy` annotations. Split from nbt deliberately: they share not one import, and a consumer of the NMS layer should not need a tag module to get a dynamic proxy. |
+| `surf-api-command-api` | What all three platforms' command layers share: `SurfCommandUtil`, `CommandExceptionBuilder`, `WrapperCommandExceptionComponent`, `SuspendArgumentHelper`. Its own module rather than part of messages, so that a plugin pulling in the colour palette does not also get CommandAPI on its compile classpath. |
+| `surf-api-luckperms-api` | The LuckPerms lookup helpers. Its own module for the same reason. |
 
 **You do not name any of these in a build file.** Every coordinate that carried
 these types before re-exports them, so `surf-api-core`, `surf-api-paper`,
@@ -110,6 +115,15 @@ are in section 5 and need no build-file change. The package prefixes do:
 | `dev.slne.surf.api.core.actionbar.…` | `dev.slne.surf.api.messages.actionbar.…` |
 | `dev.slne.surf.api.core.config.…` | `dev.slne.surf.api.config.…` |
 | `dev.slne.surf.api.core.server.config.…` | `dev.slne.surf.api.config.impl.…` |
+| `dev.slne.surf.api.core.event.…` | `dev.slne.surf.api.event.…` |
+| `dev.slne.surf.api.core.nbt.…` | `dev.slne.surf.api.nbt.…` |
+| `dev.slne.surf.api.core.serializer.NbtOps` | `dev.slne.surf.api.nbt.serializer.NbtOps` |
+| `dev.slne.surf.api.core.reflection.…` | `dev.slne.surf.api.reflection.…` |
+| `dev.slne.surf.api.core.command.…` | `dev.slne.surf.api.command.…` |
+| `dev.slne.surf.api.core.luckperms.…` | `dev.slne.surf.api.luckperms.…` |
+| `dev.slne.surf.api.core.rarity.Rarity` | `dev.slne.surf.api.messages.rarity.Rarity` |
+| `dev.slne.surf.api.core.algorithms.…` | `dev.slne.surf.api.common.algorithms.…` |
+| `dev.slne.surf.api.core.invoker.…` | `dev.slne.surf.api.common.invoker.…` |
 
 The subpackage and every type name are unchanged — only the prefix is. The two that will account
 for most of the edits are `logger()`, now `dev.slne.surf.api.common.util.logger`, and the text
