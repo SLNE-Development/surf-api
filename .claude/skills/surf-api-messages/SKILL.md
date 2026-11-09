@@ -194,7 +194,7 @@ scoreboard consumers of this layer.
 
 ## Small caps, glyphs and fonts
 
-- `CharSequence.toSmallCaps()` in `core/font/` maps every letter to the Unicode small-caps block via
+- `CharSequence.toSmallCaps()` in `surf-api-common-api`'s `font/` maps every letter to the Unicode small-caps block via
   `lowercaseChar()` - so uppercase is folded in too and capitalisation is lost, whatever its KDoc
   claims. Digits, punctuation and non-Latin characters pass through; `s` and `x` have no small-caps
   code point and stay as themselves, so mixed text looks slightly uneven. This is **not** a font: it

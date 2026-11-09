@@ -88,7 +88,7 @@ gradient tag is standard, so the Surf instance parses those strings identically.
 ## Small caps
 
 ```kotlin
-import dev.slne.surf.api.core.font.toSmallCaps
+import dev.slne.surf.api.common.font.toSmallCaps
 
 "Server neu gestartet".toSmallCaps()   // "sᴇʀᴠᴇʀ ɴᴇᴜ ɢᴇsᴛᴀʀᴛᴇᴛ"
 ```

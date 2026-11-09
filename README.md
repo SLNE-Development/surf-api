@@ -45,9 +45,18 @@ surf-api
 │   ├── registry-keys                 # surf-api-registry-keys: generated vanilla registry key constants
 │   └── internal                      # surf-api-internal: internal utilities, never a public dependency
 │
-├── common/                           # Platform-agnostic
+├── common/                           # Platform-agnostic, cut by domain
+│   ├── common
+│   │   └── api                       # surf-api-common-api: the shared base — util, logger, collections, math, random, font
+│   ├── serialization
+│   │   └── api                       # surf-api-serialization-api: kotlinx-serialization serializers and codecs
+│   ├── config
+│   │   ├── api                       # surf-api-config-api: config classes, constraints, managers, migrations
+│   │   └── impl                      # surf-api-config-impl: the config service
+│   ├── inventory
+│   │   └── api                       # surf-api-inventory-api: the platform-neutral half of the inventory framework
 │   └── core
-│       ├── api                       # surf-api-core-api: core contracts — services, config, env, DSLs
+│       ├── api                       # surf-api-core-api: what is not yet its own domain — messages, events, NBT, commands
 │       └── impl                      # surf-api-core-impl: core implementations
 │
 ├── platform/                         # One group per runtime
@@ -265,12 +274,20 @@ log.atWarning().withCause(e).log("Failed to load bean %s", name)
 
 ```
 dev.slne.surf.api                      # Root
-dev.slne.surf.api.core.api             # Core API interfaces
+dev.slne.surf.api.common               # The shared base: util, logger, collections, math, random, font
+dev.slne.surf.api.serialization        # kotlinx-serialization serializers and codecs
+dev.slne.surf.api.config               # Config classes, constraints, managers, migrations
+dev.slne.surf.api.config.impl          # The config service
+dev.slne.surf.api.inventory            # The platform-neutral half of the inventory framework
+dev.slne.surf.api.core                 # What is not yet its own domain: messages, events, NBT, commands
 dev.slne.surf.api.core.server          # Core implementations
-dev.slne.surf.api.paper.api            # Paper API (extensions, bridges, DSLs)
+dev.slne.surf.api.paper                # Paper API (extensions, bridges, DSLs)
 dev.slne.surf.api.paper.server         # Paper implementations
-dev.slne.surf.api.velocity.api         # Velocity API
+dev.slne.surf.api.minestom             # Minestom API
+dev.slne.surf.api.minestom.server      # Minestom implementations
+dev.slne.surf.api.velocity             # Velocity API
 dev.slne.surf.api.velocity.server      # Velocity implementations
+dev.slne.surf.api.standalone           # The standalone bootstrap
 dev.slne.surf.api.di                   # Bean annotations, BeanContainer, SurfContainer
 dev.slne.surf.api.shared.api           # Shared annotations (@InternalSurfApi & co.)
 dev.slne.surf.api.libs.*               # Relocation target for all shaded dependencies
