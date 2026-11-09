@@ -7,7 +7,7 @@ import dev.slne.surf.api.config.manager.SpongeConfigManager.Companion.yaml
 import dev.slne.surf.api.config.migration.ConfigMigration
 import dev.slne.surf.api.config.migration.ConfigMigrationBuilder
 import dev.slne.surf.api.config.serializer.surfSpongeConfigSerializers
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import io.leangen.geantyref.GenericTypeReflector
 import org.spongepowered.configurate.CommentedConfigurationNodeIntermediary
 import org.spongepowered.configurate.ConfigurateException

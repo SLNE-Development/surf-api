@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.api.collection
+package dev.slne.surf.api.common.collection
 
 /**
  * A specialized implementation of [MutableSet] that transforms elements between two types, `O` and `M`, using

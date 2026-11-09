@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalVersionOverloading::class)
 
-package dev.slne.surf.api.core.util
+package dev.slne.surf.api.common.util
 
 import kotlinx.coroutines.*
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger

@@ -1,6 +1,6 @@
 package dev.slne.surf.api.config.migration
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.NodePath

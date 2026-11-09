@@ -2,7 +2,7 @@
 @file:JvmName("SurfUtil")
 @file:Suppress("removal", "DEPRECATION")
 
-package dev.slne.surf.api.core.util
+package dev.slne.surf.api.common.util
 
 import com.google.common.flogger.FluentLogger
 import com.google.common.flogger.LoggingApi

@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.font
+package dev.slne.surf.api.common.font
 
 /**
  * A character mapping table from lowercase ASCII letters and digits to their Unicode small caps equivalents.

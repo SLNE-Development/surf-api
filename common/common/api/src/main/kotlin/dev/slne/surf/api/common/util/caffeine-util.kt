@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.util
+package dev.slne.surf.api.common.util
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalListener

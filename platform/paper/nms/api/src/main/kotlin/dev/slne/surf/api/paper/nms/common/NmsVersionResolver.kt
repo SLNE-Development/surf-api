@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.nms.common
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
 import org.bukkit.Bukkit
 

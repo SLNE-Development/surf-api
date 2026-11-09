@@ -6,7 +6,7 @@ import dev.slne.surf.api.core.actionbar.ActionBarService
 import dev.slne.surf.api.core.messages.adventure.nameOrNull
 import dev.slne.surf.api.core.messages.adventure.uuidOrNull
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.di.Service
 import kotlinx.coroutines.*
 import net.kyori.adventure.audience.Audience

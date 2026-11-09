@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.random
+package dev.slne.surf.api.common.random
 
 import kotlinx.coroutines.flow.Flow
 import org.apache.commons.math3.distribution.EnumeratedDistribution

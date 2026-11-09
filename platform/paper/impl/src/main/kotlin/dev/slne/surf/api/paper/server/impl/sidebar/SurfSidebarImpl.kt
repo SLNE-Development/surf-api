@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.server.impl.sidebar
 
-import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.api.core.util.runAtFixedRate
+import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.common.util.runAtFixedRate
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard

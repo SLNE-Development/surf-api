@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.nms.common
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.*

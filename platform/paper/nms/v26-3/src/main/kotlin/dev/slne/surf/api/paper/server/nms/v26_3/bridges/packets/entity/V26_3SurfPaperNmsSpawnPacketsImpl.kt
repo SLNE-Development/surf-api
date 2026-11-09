@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v26_3.bridges.packets.entity
 
 import com.google.common.flogger.StackSize
 import com.mojang.math.Transformation
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.*
 import dev.slne.surf.api.paper.server.nms.v26_3.bridges.packets.V26_3PacketOperationImpl

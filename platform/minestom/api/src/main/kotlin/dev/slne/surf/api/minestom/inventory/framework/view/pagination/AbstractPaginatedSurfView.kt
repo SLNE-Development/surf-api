@@ -1,6 +1,6 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.pagination
 
-import dev.slne.surf.api.core.util.prepend
+import dev.slne.surf.api.common.util.prepend
 import dev.slne.surf.api.minestom.inventory.framework.view.AbstractSurfView
 import dev.slne.surf.api.minestom.inventory.framework.view.container.dsl.ViewContainerModificationContext
 import dev.slne.surf.api.minestom.inventory.framework.view.container.dsl.addChild

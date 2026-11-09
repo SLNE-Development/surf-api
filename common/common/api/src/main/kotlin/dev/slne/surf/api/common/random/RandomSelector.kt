@@ -1,6 +1,6 @@
-package dev.slne.surf.api.core.random
+package dev.slne.surf.api.common.random
 
-import dev.slne.surf.api.core.random.RandomSelector.Companion.fromWeightedIterable
+import dev.slne.surf.api.common.random.RandomSelector.Companion.fromWeightedIterable
 import kotlinx.coroutines.flow.Flow
 import java.util.random.RandomGenerator
 

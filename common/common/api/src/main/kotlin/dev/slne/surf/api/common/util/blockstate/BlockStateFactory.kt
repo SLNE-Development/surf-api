@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.util.blockstate
+package dev.slne.surf.api.common.util.blockstate
 
 import com.github.retrooper.packetevents.protocol.world.BlockFace
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState

@@ -1,6 +1,6 @@
 package dev.slne.surf.surfapi.bukkit.test.hook
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.di.SurfComponent
 import dev.slne.surf.api.di.condition.ConditionalOn

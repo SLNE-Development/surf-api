@@ -69,6 +69,11 @@ includeModule("foundation/registry-keys")
 includePair("foundation", "di")
 
 // common
+// Only the api half exists: the shared base -- `logger` and the rest of `util`, the transforming
+// set views, the voxel line tracer, the weighted random selector and the small caps table -- is
+// declarations with no runtime wiring. It is declared first because it is the one module every
+// other domain of the repository compiles against.
+includeModule("common/common/api")
 includePair("common", "core")
 // Only the api half exists: the shared inventory framework is contracts, settings and components
 // that both platforms compile against, with no runtime wiring of its own.

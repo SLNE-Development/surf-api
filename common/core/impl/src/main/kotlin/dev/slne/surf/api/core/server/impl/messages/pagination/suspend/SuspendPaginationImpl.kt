@@ -3,7 +3,7 @@ package dev.slne.surf.api.core.server.impl.messages.pagination.suspend
 import dev.slne.surf.api.core.messages.pagination.*
 import dev.slne.surf.api.core.server.impl.messages.pagination.PaginationImpl
 import dev.slne.surf.api.core.server.impl.messages.pagination.PaginationImpl.Companion.pages
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import kotlinx.coroutines.*
 import net.kyori.adventure.text.Component
 

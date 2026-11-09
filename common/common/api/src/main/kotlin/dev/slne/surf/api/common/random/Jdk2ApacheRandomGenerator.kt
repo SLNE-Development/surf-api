@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.random
+package dev.slne.surf.api.common.random
 
 import org.apache.commons.math3.random.RandomGenerator
 import org.apache.commons.math3.random.RandomGeneratorFactory

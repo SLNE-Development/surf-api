@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.minimessage
 
-import dev.slne.surf.api.core.font.toSmallCaps
+import dev.slne.surf.api.common.font.toSmallCaps
 import dev.slne.surf.api.core.messages.Colors
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent

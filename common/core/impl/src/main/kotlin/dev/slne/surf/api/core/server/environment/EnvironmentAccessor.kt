@@ -1,6 +1,6 @@
 package dev.slne.surf.api.core.server.environment
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import java.io.File
 
 object EnvironmentAccessor {

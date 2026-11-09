@@ -5,8 +5,8 @@ package dev.slne.surf.api.paper.server.impl.visualizer.visualizer
 
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
-import dev.slne.surf.api.core.collection.TransformingSet2ObjectSet
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.collection.TransformingSet2ObjectSet
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.server.impl.visualizer.SurfBukkitVisualizerApiImpl
 import dev.slne.surf.api.paper.server.plugin
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi

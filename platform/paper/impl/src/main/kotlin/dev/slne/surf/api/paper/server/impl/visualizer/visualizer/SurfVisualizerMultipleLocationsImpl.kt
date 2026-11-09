@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.paper.server.impl.visualizer.visualizer
 
-import dev.slne.surf.api.core.util.*
+import dev.slne.surf.api.common.util.*
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation

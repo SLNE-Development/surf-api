@@ -2,8 +2,8 @@
 
 package dev.slne.surf.api.paper.server.libs
 
-import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.api.core.util.toEnumeration
+import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.common.util.toEnumeration
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.server.plugin

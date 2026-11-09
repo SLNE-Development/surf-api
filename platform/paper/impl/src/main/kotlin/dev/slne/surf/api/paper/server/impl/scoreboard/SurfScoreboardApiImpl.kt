@@ -2,7 +2,7 @@
 
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.scoreboard.SurfScoreboardApi
 import dev.slne.surf.api.paper.server.plugin

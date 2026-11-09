@@ -5,7 +5,7 @@ import dev.slne.surf.api.core.reflection.Name;
 import dev.slne.surf.api.core.reflection.Static;
 import dev.slne.surf.api.core.server.impl.reflection.reflection.ProxyCreationException;
 import dev.slne.surf.api.core.server.impl.reflection.reflection.ProxyInvocationException;
-import dev.slne.surf.api.core.util.SurfUtil;
+import dev.slne.surf.api.common.util.SurfUtil;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;

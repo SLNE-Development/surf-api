@@ -9,7 +9,7 @@ import com.github.shynixn.mccoroutine.folia.regionDispatcher
 import dev.slne.surf.api.core.luckperms.LuckPermsAccess
 import dev.slne.surf.api.core.luckperms.prefix
 import dev.slne.surf.api.core.minimessage.miniMessage
-import dev.slne.surf.api.core.util.getCallerClass
+import dev.slne.surf.api.common.util.getCallerClass
 import dev.slne.surf.api.paper.SurfApiPaper
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.Position

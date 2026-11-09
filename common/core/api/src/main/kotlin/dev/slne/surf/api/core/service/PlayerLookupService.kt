@@ -3,7 +3,7 @@ package dev.slne.surf.api.core.service
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
 import com.sksamuel.aedile.core.asLoadingCache
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.okhttp.*

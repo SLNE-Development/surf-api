@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.math
+package dev.slne.surf.api.common.math
 
 import org.spongepowered.math.vector.Vector3d
 import kotlin.math.abs

@@ -3,7 +3,7 @@
 package dev.slne.surf.api.paper.server.impl.scoreboard
 
 import com.github.shynixn.mccoroutine.folia.scope
-import dev.slne.surf.api.core.util.runAtFixedRate
+import dev.slne.surf.api.common.util.runAtFixedRate
 import dev.slne.surf.api.paper.scoreboard.SurfAutoUpdatableScoreboard
 import dev.slne.surf.api.paper.server.plugin
 import io.papermc.paper.util.Tick

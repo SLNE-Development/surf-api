@@ -1,7 +1,7 @@
-package dev.slne.surf.api.core.util
+package dev.slne.surf.api.common.util
 
-import dev.slne.surf.api.core.util.SurfTypeParameterMatcher.Companion.find
-import dev.slne.surf.api.core.util.SurfTypeParameterMatcher.Companion.get
+import dev.slne.surf.api.common.util.SurfTypeParameterMatcher.Companion.find
+import dev.slne.surf.api.common.util.SurfTypeParameterMatcher.Companion.get
 import java.lang.reflect.Array
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType

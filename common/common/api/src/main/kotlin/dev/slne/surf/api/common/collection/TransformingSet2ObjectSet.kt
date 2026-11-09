@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.collection
+package dev.slne.surf.api.common.collection
 
 @Suppress("UNCHECKED_CAST")
 class TransformingSet2ObjectSet<O, M>(

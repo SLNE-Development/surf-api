@@ -5,7 +5,7 @@ import dev.slne.surf.api.core.reflection.Field.Type
 import dev.slne.surf.api.core.reflection.SurfProxy
 import dev.slne.surf.api.core.reflection.SurfReflection
 import dev.slne.surf.api.core.reflection.createProxy
-import dev.slne.surf.api.core.util.setFinalField
+import dev.slne.surf.api.common.util.setFinalField
 import dev.slne.surf.api.paper.nms.common.LibLoaderBridge
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.commodore
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.craftServer

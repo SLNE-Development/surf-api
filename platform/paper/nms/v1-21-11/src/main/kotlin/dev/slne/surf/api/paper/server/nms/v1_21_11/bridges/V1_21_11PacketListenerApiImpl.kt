@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.InternalPacketListenerApiBridge
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener

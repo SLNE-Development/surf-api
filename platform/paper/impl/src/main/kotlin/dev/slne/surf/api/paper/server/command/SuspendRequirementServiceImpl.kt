@@ -5,7 +5,7 @@ import com.destroystokyo.paper.event.player.PlayerConnectionCloseEvent
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.shynixn.mccoroutine.folia.launch
 import dev.jorel.commandapi.ExecutableCommand
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.command.executors.CoroutineScopeProvider
 import dev.slne.surf.api.paper.command.requirement.SuspendRequirementService

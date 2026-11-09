@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.random
+package dev.slne.surf.api.common.random
 
 /**
  * A type alias for functions that compute the weight of an element for weighted random selection.

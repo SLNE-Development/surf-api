@@ -1,7 +1,7 @@
 package dev.slne.surf.api.paper.server.nms.v26_3.bridges
 
 import com.google.common.flogger.StackSize
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.api.nms.listener.NmsClientboundPacketListener
 import dev.slne.surf.api.paper.api.nms.listener.NmsServerboundPacketListener
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution

@@ -4,6 +4,11 @@ plugins {
 }
 
 dependencies {
+    // The shared base -- `logger` and the rest of `util`, the collection views, the voxel line
+    // tracer, the weighted random selector and the small caps table -- was cut out of this
+    // module so that the domains still here can be cut out downwards. It is re-exported so that
+    // everything compiling against surf-api-core keeps resolving the helpers it already used.
+    api(projects.surfApiCommonApi)
     api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
     // The DI contracts travel with the api, not with the container: a downstream plugin writes
