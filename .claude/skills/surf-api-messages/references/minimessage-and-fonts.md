@@ -5,7 +5,7 @@
 ## The configured instance
 
 ```kotlin
-import dev.slne.surf.api.core.minimessage.miniMessage
+import dev.slne.surf.api.messages.minimessage.miniMessage
 
 val component = miniMessage.deserialize("<prefix:success><success>Fertig!")
 val string = miniMessage.serialize(component)
@@ -82,7 +82,7 @@ gradient-frame helpers in `platform/paper/impl/.../scoreboard/SurfScoreboardBuil
 `"<gradient:$firstHex:$secondHex:$phase><text></gradient>"` with a `Placeholder.component("text", …)`,
 and by `platform/velocity/api/.../command/args/MiniMessageArgument.kt`. Those three are the known
 inconsistency: everything else in the repository goes through the Surf instance. When touching them,
-switch to `dev.slne.surf.api.core.minimessage.miniMessage` unless there is a reason not to - the
+switch to `dev.slne.surf.api.messages.minimessage.miniMessage` unless there is a reason not to - the
 gradient tag is standard, so the Surf instance parses those strings identically.
 
 ## Small caps

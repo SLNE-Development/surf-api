@@ -84,6 +84,7 @@ ones your `withXxx()` calls ask for.
 | `surf-api-serialization-api` | The kotlinx-serialization serializers and codecs: `SurfSerializerModule`, the Adventure serializers, the JDK ones (UUID, dates, IP, numbers) and the SpongePowered math ones. |
 | `surf-api-config-api` | The configuration surface: `SurfConfigApi`, the `SpongeYmlConfigClass` / `SpongeJsonConfigClass` companions, the 24 constraint annotations, the helper types, the managers and the migrations. |
 | `surf-api-config-impl` | The config service behind `surfConfigApi`. |
+| `surf-api-messages-api` | The text surface: `Colors`, `CommonComponents`, `ComponentMessage`, the `buildText` / `sendText` builders, the colour palettes, the message bundles, pagination, the configured MiniMessage instance and the action bar. |
 
 **You do not name any of these in a build file.** Every coordinate that carried
 these types before re-exports them, so `surf-api-core`, `surf-api-paper`,
@@ -104,11 +105,16 @@ are in section 5 and need no build-file change. The package prefixes do:
 | `dev.slne.surf.api.core.random.…` | `dev.slne.surf.api.common.random.…` |
 | `dev.slne.surf.api.core.font.…` | `dev.slne.surf.api.common.font.…` |
 | `dev.slne.surf.api.core.serializer.…` | `dev.slne.surf.api.serialization.…` |
+| `dev.slne.surf.api.core.messages.…` | `dev.slne.surf.api.messages.…` |
+| `dev.slne.surf.api.core.minimessage.…` | `dev.slne.surf.api.messages.minimessage.…` |
+| `dev.slne.surf.api.core.actionbar.…` | `dev.slne.surf.api.messages.actionbar.…` |
 | `dev.slne.surf.api.core.config.…` | `dev.slne.surf.api.config.…` |
 | `dev.slne.surf.api.core.server.config.…` | `dev.slne.surf.api.config.impl.…` |
 
-The subpackage and every type name are unchanged — only the prefix is. `logger()`, the single most
-used of these, is now `dev.slne.surf.api.common.util.logger`.
+The subpackage and every type name are unchanged — only the prefix is. The two that will account
+for most of the edits are `logger()`, now `dev.slne.surf.api.common.util.logger`, and the text
+builders `buildText` / `sendText` with `Colors`, now under `dev.slne.surf.api.messages.adventure`
+and `dev.slne.surf.api.messages`.
 
 **One type is not a prefix rewrite.** `TransformingObjectSet` declared
 `dev.slne.surf.api.core.api.collection` while sitting in a `collection/` directory — a package that

@@ -5,9 +5,15 @@ description: Use when producing player-facing text in surf-api - building a chat
 
 # surf-api messages and text
 
-Every claim below comes from `common/core/api/src/main/kotlin/dev/slne/surf/api/core/`
-(`messages/`, `minimessage/`, `actionbar/`, `font/`, `rarity/`) and its `common/core/impl`
-counterpart. Read those files when in doubt; they are the only source of truth.
+Every claim below comes from `common/messages/api/src/main/kotlin/dev/slne/surf/api/messages/`
+(`adventure/`, `builder/`, `bundle/`, `pagination/`, `minimessage/`, `actionbar/`),
+`common/common/api/.../common/font/`, `common/core/api/.../core/rarity/` and the implementations
+under `common/core/impl`. Read those files when in doubt; they are the only source of truth.
+
+Text is its own module, `surf-api-messages-api`. You do not name it: every published coordinate
+that carried these types re-exports it, so a build file depending on `surf-api-core`,
+`surf-api-paper`, `surf-api-minestom`, `surf-api-velocity` or `surf-api-standalone` resolves them
+unchanged.
 
 ## "Component" means two different things here
 
@@ -17,7 +23,7 @@ counterpart. Read those files when in doubt; they are the only source of truth.
   (`load`/`enable`/`disable`) a bean implements when it has to start and stop. Nothing to do with
   text. The `surf-api-components` skill covers it; do not explain it from here.
 
-The package `foundation/di/` is the lifecycle one. Text lives in `core/messages/`.
+The package `foundation/di/` is the lifecycle one. Text lives in `surf-api-messages-api`.
 
 ## Build text with `buildText`, send it with `sendText`
 
@@ -25,9 +31,9 @@ The package `foundation/di/` is the lifecycle one. Text lives in `core/messages/
 the palette, the prefixes, collection and time formatting, click helpers. Two entry points:
 
 ```kotlin
-import dev.slne.surf.api.core.messages.CommonComponents
-import dev.slne.surf.api.core.messages.adventure.buildText
-import dev.slne.surf.api.core.messages.adventure.sendText
+import dev.slne.surf.api.messages.CommonComponents
+import dev.slne.surf.api.messages.adventure.buildText
+import dev.slne.surf.api.messages.adventure.sendText
 
 // build a TextComponent
 val line = buildText {
@@ -95,7 +101,7 @@ serializers: `references/component-builder.md`.
 
 ## MiniMessage: one configured instance
 
-`dev.slne.surf.api.core.minimessage.miniMessage` - a top-level `val` delegating to
+`dev.slne.surf.api.messages.minimessage.miniMessage` - a top-level `val` delegating to
 `SurfMiniMessageHolder.miniMessage()`. It is the **standard tag set plus** these:
 
 | Tag | Effect |
@@ -226,7 +232,7 @@ carries no weight and does not implement `Weighted` - it is unused in the reposi
 | `error("...")` inside a builder block | resolves to the ERROR-coloured text helper, **not** `kotlin.error`. It appends text and returns normally. Use `throw IllegalStateException(...)` to fail inside a builder |
 | building text off the main thread | safe - Adventure components are immutable and the builder is local. **Reading game state** while building is not. `SuspendPagination` renders on `Dispatchers.Default`, sidebar renderers run on a background dispatcher: switch with `withContext(plugin.entityDispatcher(viewer))` before touching the world |
 | `miniMessage.deserialize(playerInput)` | gives that player `<click:run_command>` and `<hover>`. Permission-gate it or pass the text as a `Placeholder.component` |
-| the wrong MiniMessage instance | `MiniMessage.miniMessage()` has no `<primary>`, `<prefix>` or `<small>`; `dev.slne.surf.api.core.minimessage.miniMessage` has them |
+| the wrong MiniMessage instance | `MiniMessage.miniMessage()` has no `<primary>`, `<prefix>` or `<small>`; `dev.slne.surf.api.messages.minimessage.miniMessage` has them |
 | platform-specific serialization | `GsonComponentSerializer.gson()` (used by `ComponentMessage` and the kotlinx `AdventureComponentSerializer`) is portable. `Component.toNms()` is `PaperAdventure.asVanilla` and only exists inside a Paper NMS version module - see `surf-api-nms`. `PlainTextComponentSerializer` via `Component.plain()` loses all styling, so never round-trip through it |
 | `joinToComponentNewLine` / `Map.joinToComponent` | prepend a newline **and** the line prefix before the *first* entry too, so the result starts on its own line |
 | `appendTime` / `CommonComponents.formatTime` | German words, and omits any unit whose value is 0 - a 2-hour duration renders `2 Stunden`, not `0 Tage : 2 Stunden` |
