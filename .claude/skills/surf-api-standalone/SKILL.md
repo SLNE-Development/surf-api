@@ -98,9 +98,9 @@ fails - it only ever exists as the `ServiceLoader` instance behind `SurfApiCore.
 `surf-api-core-impl`, which `surf-api-standalone-impl` depends on at `api` scope:
 
 - configuration - Configurate with the standalone `SpongeConfigSerializers`
-  (`StandaloneSpongeConfigSerializers`, also an `@AutoService`) → **`surf-api-config`**
+  (`StandaloneSpongeConfigSerializers`, itself a `@Service` bean) → **`surf-api-config`**
 - messages, component building, MiniMessage, `Colors`, pagination → **`surf-api-messages`**
-- the bean container and `surfComponentApi` → **`surf-api-components`**
+- the bean container → **`surf-api-components`**
 - the surf event bus → **`surf-api-events`**
 - `SurfReflection`, the algorithms, collections, math and random helpers
 - the Adventure stack (api, MiniMessage, the gson/legacy/plain/ansi serializers, the slf4j

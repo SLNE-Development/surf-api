@@ -145,7 +145,7 @@ Platform-independent, or with a skill of their own:
 - messages, `Colors`, MiniMessage → **`surf-api-messages`**
 - Configurate config classes and serializers → **`surf-api-config`**
 - the surf event bus → **`surf-api-events`**
-- beans and `surfComponentApi` → **`surf-api-components`**
+- beans and the bean container → **`surf-api-components`**
 - module layout, Gradle paths and coordinates → **`surf-api-build`**
 
 Minestom has no NMS layer - `surf-api-nms` is Paper only.

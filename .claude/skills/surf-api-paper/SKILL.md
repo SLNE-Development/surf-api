@@ -73,21 +73,23 @@ A surf Paper plugin extends mccoroutine's `SuspendingJavaPlugin`, so the three l
 suspending. From `local/paper-plugin-test/src/main/kotlin/.../PaperPluginMain.kt`:
 
 ```kotlin
+import dev.slne.surf.api.paper.server.plugin as surfApi
+
+@OptIn(InternalSurfApi::class)
 class PaperPluginMain : SuspendingJavaPlugin() {
     override suspend fun onLoadAsync() {
         MyPluginConfig.init()
-        surfComponentApi.load(this)
+        surfApi.containers.startChild(this)
         TestInventoryView.register()
     }
 
     override suspend fun onEnableAsync() {
         SurfApiTestCommand().register()
-        surfComponentApi.enable(this)
     }
 
     override suspend fun onDisableAsync() {
         CommandAPI.unregister("surfapitest")
-        surfComponentApi.disable(this)
+        surfApi.containers.stop(this)
     }
 
     companion object {
@@ -100,10 +102,11 @@ val plugin get() = PaperPluginMain.instance
 
 The order that matters:
 
-- **`onLoadAsync`** - configuration, `surfComponentApi.load(this)`, inventory view registration,
-  packet listeners. Runs while the server is still loading plugins.
-- **`onEnableAsync`** - command registration, `surfComponentApi.enable(this)`, listeners.
-- **`onDisableAsync`** - `surfComponentApi.disable(this)`, unregister commands, close sidebars.
+- **`onLoadAsync`** - configuration, `startChild(this)`, inventory view registration, packet
+  listeners. Runs while the server is still loading plugins. `startChild` runs this plugin's beans
+  through `load` and then `enable` before it returns, so both phases are over by `onEnableAsync`.
+- **`onEnableAsync`** - command registration, listeners.
+- **`onDisableAsync`** - `stop(this)`, unregister commands, close sidebars.
 
 A top-level `val plugin get() = ...` is the repository's convention for reaching the plugin instance
 from anywhere; the api itself does the same in `platform/paper/impl/.../PaperMain.kt`.
@@ -164,6 +167,6 @@ Paper packages:
 - messages, components and `Colors` → **`surf-api-messages`**
 - `serializer/`, Configurate config classes → **`surf-api-config`**
 - `event/`, `listen<T>` → **`surf-api-events`**
-- `surfComponentApi`, beans, `@Service` → **`surf-api-components`**
+- the bean container, `@Service`, `SurfComponent` → **`surf-api-components`**
 - `nms/` and the version bridges → **`surf-api-nms`**
 - module layout, Gradle paths, `surf.module-*` plugins → **`surf-api-build`**

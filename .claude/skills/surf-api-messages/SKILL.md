@@ -13,12 +13,11 @@ counterpart. Read those files when in doubt; they are the only source of truth.
 
 - **Adventure's `net.kyori.adventure.text.Component`** - an immutable text object. That is what this
   skill is about. When this file says *text component*, it means this.
-- **`dev.slne.surf.api.shared.api.component.SurfComponent`** plus
-  `dev.slne.surf.api.core.component.SurfComponentApi` and `AbstractComponent` - the dependency
-  injection **lifecycle** interface (`load`/`enable`/`disable`). Nothing to do with text. The
-  `surf-api-components` skill covers it; do not explain it from here.
+- **`dev.slne.surf.api.di.SurfComponent`** - the bean **lifecycle** interface
+  (`load`/`enable`/`disable`) a bean implements when it has to start and stop. Nothing to do with
+  text. The `surf-api-components` skill covers it; do not explain it from here.
 
-The package `core/component/` is the lifecycle one. Text lives in `core/messages/`.
+The package `foundation/di/` is the lifecycle one. Text lives in `core/messages/`.
 
 ## Build text with `buildText`, send it with `sendText`
 
