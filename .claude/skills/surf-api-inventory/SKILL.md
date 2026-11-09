@@ -7,8 +7,13 @@ description: Use when building or fixing a surf-api inventory menu - writing a s
 
 Every claim below comes from
 `platform/paper/api/src/main/kotlin/dev/slne/surf/api/paper/inventory/framework/` and
-`common/core/api/src/main/kotlin/dev/slne/surf/api/core/inventory/framework/internal/`. Read those
-files when in doubt; they are the only source of truth.
+`common/inventory/api/src/main/kotlin/dev/slne/surf/api/inventory/framework/`. Read those files
+when in doubt; they are the only source of truth.
+
+The platform-neutral half is `surf-api-inventory-api`, which `surf-api-paper`, `surf-api-minestom`
+and `surf-api-minestom-server` re-export. `surf-api-core`, `surf-api-velocity` and
+`surf-api-standalone` do **not** carry it — there is no inventory on a proxy or in a plain JVM, and
+nothing in those aggregates exposes a framework type to use it with.
 
 The framework is a Kotlin layer on top of the **InventoryFramework** fork
 (`dev.slne.forks.inventoryframework`, package `me.devnatan.inventoryframework`). IF supplies
