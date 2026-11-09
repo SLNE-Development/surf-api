@@ -60,10 +60,11 @@ object SurfContainer {
      *
      * The two cases look the same from here and are not the same mistake. Asking before surf-api
      * has started is an ordering problem in the caller. Asking *while* a container is being built
-     * is a cycle: the container is instantiating a bean class, and initialising that class ran a
-     * static initialiser that asked for a bean — most often a `companion object : Foo by someBean`
-     * in the very interface the bean implements, because that form has to read the bean to store
-     * it. Nothing can satisfy that request, so the message names the shape instead of the symptom.
+     * is a cycle, and it has turned up in two shapes, so the message names both: a
+     * `companion object : Foo by someBean` in the very interface the bean implements, which has to
+     * read the bean in order to store it; and a [ContainerPlatform] member whose answer reaches a
+     * bean, which is worse because its members are the earliest callers of all — they run before a
+     * single bean exists.
      */
     private fun unreachable(): String {
         val owner = access.starting
@@ -72,12 +73,15 @@ object SurfContainer {
                     "Lazy, so it is resolved when it is used rather than when the class is loaded."
 
         return "A bean was asked for while the container for $owner was still being built, which " +
-                "nothing can answer: the container is part-way through creating its beans. This " +
-                "happens when initialising a bean's class runs a static initialiser that asks " +
-                "for a bean — in Kotlin, typically `companion object : Foo by someBean`, which " +
-                "has to read the bean to store it, in the same interface the bean implements. " +
-                "Hold the bean lazily instead (`val instance by surfBean<Foo>()` inside the " +
-                "companion), so the initialiser stores the lookup rather than performing it."
+                "nothing can answer: the container is part-way through creating its beans. Two " +
+                "things cause this. Either initialising a bean's class ran a static initialiser " +
+                "that asked for a bean — in Kotlin, typically `companion object : Foo by " +
+                "someBean` in the interface the bean implements, which has to read the bean to " +
+                "store it; hold it lazily instead, so the initialiser stores the lookup rather " +
+                "than performing it. Or a ContainerPlatform member answered with something that " +
+                "is itself a bean, directly or through an object whose initialiser resolves one; " +
+                "a platform has to answer with the platform's own api and plain reflection, " +
+                "because it is asked before any bean exists."
     }
 
     /** The process-wide container, or `null` while surf-api is still loading. */
