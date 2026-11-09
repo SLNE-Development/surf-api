@@ -5,6 +5,7 @@ import dev.slne.surf.api.di.BeanPostProcessor
 import dev.slne.surf.api.di.Scope
 import dev.slne.surf.api.di.SurfComponent
 import dev.slne.surf.api.di.definition.BeanDefinition
+import dev.slne.surf.api.di.definition.InjectionPoint
 import kotlin.reflect.KClass
 
 /**
@@ -19,6 +20,11 @@ import kotlin.reflect.KClass
  * declared it. A [Scope.SHARED] bean lives in the root container, which is what lets one connection
  * serve every application in the process. A [Scope.PROTOTYPE] bean is never cached, and therefore
  * never takes part in the lifecycle — the container does not keep it long enough to shut it down.
+ *
+ * A shared bean belongs to the root in every respect, not only in the instance cache: the root's
+ * post processors wrap it, the root's lifecycle list shuts it down, and this container's own
+ * teardown leaves it alone. Otherwise the first application to stop would disable a bean the others
+ * are still using, and the root would go on handing out the disabled instance.
  */
 internal class BeanContainerImpl(
     override val owner: Any,
@@ -44,6 +50,25 @@ internal class BeanContainerImpl(
 
     private var started = false
 
+    /**
+     * Shared components this container introduced into an already-running root.
+     *
+     * The root's own phase passes are over by then, so these have to be driven here. Kept apart
+     * from [lifecycle] because the root, not this container, shuts them down again.
+     */
+    private val adoptedShared = mutableListOf<SurfComponent>()
+
+    /**
+     * Provider ids that have already been through the post processor chain.
+     *
+     * A bean is created either in its own turn in the ordering or earlier, as someone else's
+     * dependency, and either way it has to be post-processed exactly once. For a shared bean the
+     * set that counts is the root's: the second application to declare it finds the instance
+     * already built, and running the chain again would wrap a wrapper and leave the first
+     * application holding an object the root no longer knows about.
+     */
+    private val processed = mutableSetOf<String>()
+
     /** The container that holds [Scope.SHARED] instances for the whole process. */
     private val root: BeanContainerImpl get() = parentImpl?.root ?: this
 
@@ -54,10 +79,12 @@ internal class BeanContainerImpl(
      * work: a connection can be opened in `load` while the beans registering against it are still
      * being set up, and only be frozen in `enable`, once every `load` has run.
      *
-     * @throws IllegalStateException if called twice, or if a bean cannot be created
+     * @throws IllegalStateException if called twice, if a shared bean depends on something only this
+     * container provides, or if a bean cannot be created
      */
     suspend fun start() {
         check(!started) { "The container for $owner has already been started." }
+        checkSharedDependencies()
         started = true
 
         val ordered = BeanGraph.order(index) { type -> parentImpl?.provides(type) == true }
@@ -72,8 +99,14 @@ internal class BeanContainerImpl(
 
         ordered.filterNot { it.definition.postProcessor }.forEach { provider ->
             if (provider.scope == Scope.PROTOTYPE) return@forEach
+            if (!processedFor(provider).add(provider.id)) return@forEach
             process(provider, create(provider))
         }
+
+        // A shared bean joins a root whose phases have already run, so it gets them here — and
+        // before this container's own beans, which may already hold it.
+        adoptedShared.forEach { it.load() }
+        adoptedShared.forEach { it.enable() }
 
         lifecycle.forEach { it.load() }
         lifecycle.forEach { it.enable() }
@@ -86,6 +119,9 @@ internal class BeanContainerImpl(
      * Reverse order means a bean is torn down before what it depends on, so a client closes before
      * its connection. A failing `disable` is reported and does not stop the rest: a half-shut-down
      * process is worse than a logged failure.
+     *
+     * Shared beans are not touched. They live in the root's caches and lists, so they are shut down
+     * exactly once, when the root stops.
      */
     suspend fun stop(onFailure: (String, Throwable) -> Unit) {
         if (!started) return
@@ -105,7 +141,47 @@ internal class BeanContainerImpl(
                 .onFailure { onFailure(component::class.qualifiedName ?: "a bean", it) }
         }
 
+        adoptedShared.clear()
         started = false
+    }
+
+    /**
+     * Refuses a shared bean that could not survive this container.
+     *
+     * A shared instance outlives the application that declared it, so everything it holds has to
+     * outlive it too: either the root provides the dependency, or the dependency is itself shared.
+     * A shared bean holding this container's own singleton would keep a dead object reachable for
+     * every other application in the process, and nothing downstream could tell.
+     *
+     * Only required single dependencies are checked. A nullable parameter accepts absence, and a
+     * collection parameter deliberately gathers what is there at the time, so neither says anything
+     * about lifetime.
+     */
+    private fun checkSharedDependencies() {
+        if (parentImpl == null) return
+
+        index.providers
+            .filter { it.scope == Scope.SHARED }
+            .forEach { provider ->
+                provider.argumentPoints()
+                    .filter { !it.optional && it.collection == null }
+                    .forEach { point -> checkSharedDependency(provider, point) }
+            }
+    }
+
+    private fun checkSharedDependency(provider: BeanProvider, point: InjectionPoint) {
+        // Asking the index the same question the resolver will ask keeps the check exact: a type
+        // this container does not answer for falls through to the parent, and a type it does answer
+        // for is the provider that would really be injected, whatever else also provides it.
+        val own = runCatching { index.resolveSingle(point) }.getOrNull() ?: return
+        if (own.scope == Scope.SHARED) return
+
+        error(
+            "${provider.id} is SHARED, so it outlives the container for $owner, but it needs " +
+                    "${point.type}, which that container provides as ${own.scope}. Give ${own.id} " +
+                    "Scope.SHARED as well, move it into the root, or make ${provider.id} a " +
+                    "SINGLETON so that both end at the same time."
+        )
     }
 
     /**
@@ -114,16 +190,23 @@ internal class BeanContainerImpl(
      * A processor is allowed to hand back a different object — a wrapper, a proxy — and from then on
      * that object is the bean. Both the instance cache and the lifecycle list have to follow, or a
      * later lookup would return the original while the lifecycle drove the replacement.
+     *
+     * A shared bean passes through the root's chain, since the root is where it will live.
      */
     private suspend fun process(provider: BeanProvider, bean: Any): Any {
         var current = bean
-        processors.forEach { current = it.afterInitialization(current, provider.id) }
+        processorsFor(provider).forEach { current = it.afterInitialization(current, provider.id) }
 
         if (current === bean) return current
 
         cacheFor(provider)[provider.id] = current
-        (bean as? SurfComponent)?.let { lifecycle.remove(it) }
-        (current as? SurfComponent)?.let { lifecycle += it }
+        (bean as? SurfComponent)?.let { lifecycleFor(provider).remove(it) }
+        (current as? SurfComponent)?.let { lifecycleFor(provider) += it }
+
+        if (provider.scope == Scope.SHARED && root !== this) {
+            (bean as? SurfComponent)?.let { adoptedShared.remove(it) }
+            (current as? SurfComponent)?.let { adoptedShared += it }
+        }
 
         return current
     }
@@ -138,7 +221,10 @@ internal class BeanContainerImpl(
 
         if (provider.scope != Scope.PROTOTYPE) {
             cache[provider.id] = bean
-            (bean as? SurfComponent)?.let { lifecycle += it }
+            (bean as? SurfComponent)?.let { component ->
+                lifecycleFor(provider) += component
+                if (provider.scope == Scope.SHARED && root !== this) adoptedShared += component
+            }
         }
 
         return bean
@@ -154,6 +240,15 @@ internal class BeanContainerImpl(
 
     private fun cacheFor(provider: BeanProvider) =
         if (provider.scope == Scope.SHARED) root.instances else instances
+
+    private fun lifecycleFor(provider: BeanProvider) =
+        if (provider.scope == Scope.SHARED) root.lifecycle else lifecycle
+
+    private fun processorsFor(provider: BeanProvider) =
+        if (provider.scope == Scope.SHARED) root.processors else processors
+
+    private fun processedFor(provider: BeanProvider) =
+        if (provider.scope == Scope.SHARED) root.processed else processed
 
     /** A factory's own parameters; its declaring bean is handled separately. */
     private fun BeanProvider.argumentPoints() = when (this) {
@@ -195,5 +290,5 @@ internal class BeanContainerImpl(
         lazy { bean(type, qualifier) }
 
     private fun pointFor(type: String, qualifier: String?) =
-        dev.slne.surf.api.di.definition.InjectionPoint(type = type, qualifier = qualifier)
+        InjectionPoint(type = type, qualifier = qualifier)
 }

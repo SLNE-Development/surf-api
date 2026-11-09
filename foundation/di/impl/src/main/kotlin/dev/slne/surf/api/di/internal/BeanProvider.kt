@@ -69,9 +69,11 @@ internal data class FactoryProvider(
     override val primary get() = factory.primary
     override val priority get() = factory.priority
     // A factory's scope may say it takes the declaring bean's, which is resolved here so nothing
-    // downstream ever meets Scope.INHERIT.
+    // downstream ever meets Scope.INHERIT. It resolves through the declaring class's provider
+    // rather than through the definition, because a definition can itself still say INHERIT and
+    // only that provider knows what an unstated scope falls back to.
     override val scope
-        get() = factory.scope.takeUnless { it == Scope.INHERIT } ?: definition.scope
+        get() = factory.scope.takeUnless { it == Scope.INHERIT } ?: ClassProvider(definition).scope
     override val dependencies
         get() = listOf(InjectionPoint(type = definition.className)) + factory.params
 }

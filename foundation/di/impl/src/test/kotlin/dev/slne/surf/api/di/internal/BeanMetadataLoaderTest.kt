@@ -202,6 +202,8 @@ private class FixedClassLoaderPlatform(private val classLoader: ClassLoader) : C
     override fun dataPath(owner: Any): Path = Paths.get("")
 
     override fun environments(): Set<String> = emptySet()
+
+    override fun property(owner: Any, key: List<String>, file: String): String? = null
 }
 
 /** Swallows the loader's diagnostics; the cases assert on results and failures, not on log lines. */

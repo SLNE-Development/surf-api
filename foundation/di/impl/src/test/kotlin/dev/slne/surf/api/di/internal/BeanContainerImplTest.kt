@@ -219,8 +219,10 @@ class BeanContainerImplTest {
         assertNotSame(container.bean(Probe::class), container.bean(Probe::class))
     }
 
+    // --- shared scope -----------------------------------------------------------------------
+
     @Test
-    fun `a shared bean is the same instance in two sibling containers`() = runTest {
+    fun `a shared bean declared by a child is cached in the root`() = runTest {
         val shared = definition(
             "Connection",
             provides = listOf("Connection", Probe::class.java.name),
@@ -239,6 +241,314 @@ class BeanContainerImplTest {
 
         assertSame(first.bean(Probe::class), second.bean(Probe::class))
         assertEquals(1, created)
+    }
+
+    @Test
+    fun `stopping a child does not disable a shared bean`() = runTest {
+        val log = mutableListOf<String>()
+        val shared = definition("Connection", scope = Scope.SHARED, lifecycle = true)
+        val factory = instantiator("Connection" to { Phases("connection", log) })
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+
+        val first = container(listOf(shared), factory, parent = root, owner = "first")
+        val second = container(listOf(shared), factory, parent = root, owner = "second")
+        first.start()
+        second.start()
+
+        first.stop { _, _ -> }
+
+        assertTrue(log.none { it.startsWith("disable:") }, log.toString())
+
+        second.stop { _, _ -> }
+        root.stop { _, _ -> }
+
+        assertEquals(1, log.count { it == "disable:connection" }, log.toString())
+    }
+
+    @Test
+    fun `a shared bean goes through the root's post processors, not the child's`() = runTest {
+        val rootLog = mutableListOf<String>()
+        val childLog = mutableListOf<String>()
+        val factory = instantiator(
+            "RootObserver" to { Observer(rootLog) },
+            "ChildObserver" to { Observer(childLog) },
+            "Connection" to { Probe("connection") },
+            "LocalCache" to { Probe("local") },
+        )
+
+        val root = container(
+            listOf(definition("RootObserver", postProcessor = true)),
+            factory,
+            owner = "root",
+        )
+        root.start()
+
+        val child = container(
+            listOf(
+                definition("ChildObserver", postProcessor = true),
+                definition("Connection", scope = Scope.SHARED),
+                definition("LocalCache"),
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+        child.start()
+
+        assertEquals(listOf("after:Connection"), rootLog)
+        assertEquals(listOf("after:LocalCache"), childLog)
+    }
+
+    @Test
+    fun `a shared bean joining a started root is loaded and enabled before the child's own beans`() =
+        runTest {
+            val log = mutableListOf<String>()
+            val factory = instantiator(
+                "Connection" to { Phases("connection", log) },
+                "LocalCache" to { Phases("local", log) },
+            )
+
+            val root = container(emptyList(), factory, owner = "root")
+            root.start()
+
+            val child = container(
+                listOf(
+                    definition("Connection", scope = Scope.SHARED, lifecycle = true),
+                    definition("LocalCache", lifecycle = true),
+                ),
+                factory,
+                parent = root,
+                owner = "child",
+            )
+            child.start()
+
+            assertEquals(
+                listOf(
+                    "load:connection", "enable:connection",
+                    "load:local", "enable:local",
+                ),
+                log,
+            )
+        }
+
+    @Test
+    fun `a shared bean needing a child-local singleton fails and names both beans`() = runTest {
+        val factory = instantiator(
+            "SharedConnection" to { args -> Probe("shared", args) },
+            "LocalCache" to { Probe("local") },
+        )
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+
+        val child = container(
+            listOf(
+                definition(
+                    "SharedConnection",
+                    scope = Scope.SHARED,
+                    needs = listOf(needs("LocalCache")),
+                ),
+                definition("LocalCache"),
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+
+        val failure = assertFailsWith<IllegalStateException> { child.start() }
+
+        assertTrue(failure.message!!.contains("SharedConnection"), failure.message)
+        assertTrue(failure.message!!.contains("LocalCache"), failure.message)
+    }
+
+    @Test
+    fun `a shared bean needing another shared bean starts`() = runTest {
+        val factory = instantiator(
+            "SharedConnection" to { args -> Probe("shared", args) },
+            "SharedPool" to { Probe("pool") },
+        )
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+
+        val child = container(
+            listOf(
+                definition(
+                    "SharedConnection",
+                    provides = probeTypes("SharedConnection"),
+                    scope = Scope.SHARED,
+                    needs = listOf(needs("SharedPool")),
+                ),
+                definition("SharedPool", scope = Scope.SHARED),
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+        child.start()
+
+        val shared = child.beansOfType(Probe::class).single { it.label == "shared" }
+        assertEquals("pool", (shared.arguments.single() as Probe).label)
+    }
+
+    @Test
+    fun `a shared bean needing a bean the root provides starts`() = runTest {
+        val platform = Probe("platform")
+        val factory = instantiator(
+            "Platform" to { platform },
+            "SharedConnection" to { args -> Probe("shared", args) },
+        )
+
+        val root = container(listOf(definition("Platform")), factory, owner = "root")
+        root.start()
+
+        val child = container(
+            listOf(
+                definition(
+                    "SharedConnection",
+                    provides = probeTypes("SharedConnection"),
+                    scope = Scope.SHARED,
+                    needs = listOf(needs("Platform")),
+                ),
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+        child.start()
+
+        val shared = child.beansOfType(Probe::class).single { it.label == "shared" }
+        assertSame(platform, shared.arguments.single())
+    }
+
+    @Test
+    fun `an optional parameter on a child-local type does not stop a shared bean`() = runTest {
+        val local = Probe("local")
+        val factory = instantiator(
+            "SharedConnection" to { args -> Probe("shared", args) },
+            "LocalCache" to { local },
+        )
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+
+        val child = container(
+            listOf(
+                definition(
+                    "SharedConnection",
+                    provides = probeTypes("SharedConnection"),
+                    scope = Scope.SHARED,
+                    needs = listOf(needsOptional("LocalCache")),
+                ),
+                definition("LocalCache"),
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+        child.start()
+
+        val shared = child.beansOfType(Probe::class).single { it.label == "shared" }
+        assertSame(local, shared.arguments.single())
+    }
+
+    @Test
+    fun `a collection parameter of a child-local type does not stop a shared bean`() = runTest {
+        val handler = Probe("handler")
+        val factory = instantiator(
+            "SharedConnection" to { args -> Probe("shared", args) },
+            "LocalHandler" to { handler },
+        )
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+
+        val child = container(
+            listOf(
+                definition(
+                    "SharedConnection",
+                    provides = probeTypes("SharedConnection"),
+                    scope = Scope.SHARED,
+                    needs = listOf(needsAll("Handler")),
+                ),
+                definition("LocalHandler", provides = listOf("LocalHandler", "Handler")),
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+        child.start()
+
+        val shared = child.beansOfType(Probe::class).single { it.label == "shared" }
+        assertEquals(listOf(handler), shared.arguments.single())
+    }
+
+    @Test
+    fun `a shared bean in the root may depend on a singleton in the root`() = runTest {
+        val local = Probe("local")
+        val root = container(
+            listOf(
+                definition(
+                    "SharedConnection",
+                    provides = probeTypes("SharedConnection"),
+                    scope = Scope.SHARED,
+                    needs = listOf(needs("LocalCache")),
+                ),
+                definition("LocalCache"),
+            ),
+            instantiator(
+                "LocalCache" to { local },
+                "SharedConnection" to { args -> Probe("shared", args) },
+            ),
+            owner = "root",
+        )
+
+        root.start()
+
+        val shared = root.beansOfType(Probe::class).single { it.label == "shared" }
+        assertSame(local, shared.arguments.single())
+    }
+
+    @Test
+    fun `a replaced shared bean is what the root caches and what the root shuts down`() = runTest {
+        val log = mutableListOf<String>()
+        val replacement = Phases("replacement", log)
+        val factory = instantiator(
+            "Replacer" to { Replacer(replacement) },
+            "Connection" to { Probe("replaced") },
+        )
+
+        val root = container(
+            listOf(definition("Replacer", postProcessor = true)),
+            factory,
+            owner = "root",
+        )
+        root.start()
+
+        val child = container(
+            listOf(
+                definition(
+                    "Connection",
+                    provides = listOf("Connection", SurfComponent::class.java.name),
+                    scope = Scope.SHARED,
+                )
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+        child.start()
+
+        assertSame(replacement, child.bean(SurfComponent::class))
+        assertEquals(listOf("load:replacement", "enable:replacement"), log)
+
+        child.stop { _, _ -> }
+        assertTrue(log.none { it.startsWith("disable:") }, log.toString())
+
+        root.stop { _, _ -> }
+        assertEquals(listOf("disable:replacement"), log.drop(2))
     }
 
     // --- hierarchy --------------------------------------------------------------------------

@@ -4,11 +4,11 @@ import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import java.nio.file.Path
 
 /**
- * The four things the container cannot work out for itself and has to ask the platform.
+ * Everything the container cannot work out for itself and has to ask the platform.
  *
  * The container is plain JVM logic: it resolves types, orders a graph and drives a lifecycle. Where
- * the bean classes are loaded from, whether a plugin is present, where to log and where
- * configuration lives are all platform questions, and they are the only ones. A platform
+ * the bean classes are loaded from, whether a plugin is present, where to log, where configuration
+ * lives and what it says are all platform questions, and they are the only ones. A platform
  * contributes an implementation of this interface and the rest of the container runs unchanged —
  * which is also what lets the tests drive it without a server.
  *
@@ -38,6 +38,19 @@ interface ContainerPlatform {
 
     /** The environments the process runs in, for `@ConditionalOnEnvironment`. */
     fun environments(): Set<String>
+
+    /**
+     * Returns the configuration value at [key], or `null` when it is not set.
+     *
+     * The container never opens a file itself. Configuration formats, their caching and their
+     * defaults belong to the platform, and keeping the access behind one function is what lets the
+     * condition evaluator be tested without a data directory on disk.
+     *
+     * @param owner the application whose configuration is read
+     * @param key path to the value, segment by segment
+     * @param file configuration file relative to [dataPath]; empty means the application's default
+     */
+    fun property(owner: Any, key: List<String>, file: String): String?
 }
 
 /**

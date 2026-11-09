@@ -341,7 +341,7 @@ class ConditionEvaluatorTest {
         return assertNotNull(decision.reason, "a rejection has to carry a reason")
     }
 
-    /** Answers the five platform questions from what a test put in. */
+    /** Answers the platform's questions from what a test put in. */
     private class FakePlatform(
         private val loadedPlugins: Set<String>,
         private val activeEnvironments: Set<String>,
@@ -356,6 +356,9 @@ class ConditionEvaluatorTest {
         override fun dataPath(owner: Any): Path = DATA_PATH
 
         override fun environments(): Set<String> = activeEnvironments
+
+        // The evaluator is handed a PropertyReader of its own, so nothing reaches this one.
+        override fun property(owner: Any, key: List<String>, file: String): String? = null
     }
 
     /** The evaluator reports through its decisions, so nothing is expected on the logger. */
