@@ -24,10 +24,10 @@ core-convention  ->  publish-convention, java-toolchain-convention, test-convent
   `snapshot=true`.
 - Repositories: Maven Central and `https://reposilite.slne.dev/public`. The root `build.gradle.kts`
   adds PaperMC, the Minestom snapshot repository and `repo.wyck.dev` to `allprojects`.
-- `compileOnly(libs.auto.service.annotations)`, `compileOnlyApi("org.jetbrains:annotations:...")`.
-- `ksp(project(":surf-api-processor"))` for every module **except** `surf-api-annotations` and
-  `surf-api-internal`: the processor depends on `surf-api-internal` for the metadata schema and on
-  `surf-api-annotations` for the annotations it looks for, so running it on those two would be a
+- `compileOnlyApi("org.jetbrains:annotations:...")`.
+- `ksp(project(":surf-api-processor"))` for every module **except** `surf-api-annotations`,
+  `surf-api-internal` and `surf-api-di-api`: the processor depends on those three for the
+  annotations it looks for and the metadata schema it writes, so running it on them would be a
   cycle.
 - `-Xjsr305=strict`, sources jar for everyone, javadoc jar for everyone except
   `surf-api-paper-plugin-test`.
