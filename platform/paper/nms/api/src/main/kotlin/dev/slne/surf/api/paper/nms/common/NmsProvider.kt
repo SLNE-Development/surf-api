@@ -179,8 +179,13 @@ interface NmsProvider {
                 } ?: run {
                     log.atWarning()
                         .log("No exact match for NmsProvider version %s, using fallback", version.versionPrefix)
-                    val fallback = metas.maxByOrNull { it.version.versionPrefix }
+
+                    // Newest by number. `maxByOrNull { it.version.versionPrefix }` reads like this
+                    // and is not: with 26.10 on the classpath it answers 26.3, because '3' > '1'.
+                    val fallback = NmsVersion.NEWEST_FIRST
+                        .firstNotNullOfOrNull { newest -> metas.find { it.version == newest } }
                         ?: error("No NmsProvider implementations found")
+
                     log.atWarning().log("Selected fallback NmsProvider: %s", fallback.version.versionPrefix)
                     fallback
                 }

@@ -15,16 +15,15 @@ object NmsVersionResolver {
      */
     val current: NmsVersion by lazy {
         val mcVersion = Bukkit.getMinecraftVersion()
-        val matched = NmsVersion.entries.firstOrNull { mcVersion.startsWith(it.versionPrefix) }
-        if (matched != null) {
-            matched
-        } else {
-            val fallback = NmsVersion.entries.maxByOrNull { it.versionPrefix } ?: error("No NMS versions defined!")
+
+        NmsVersion.matching(mcVersion) ?: NmsVersion.NEWEST.also { fallback ->
             log.atWarning().log(
-                "There is no matching nms version, using fallback NMS version: %s",
-                fallback.name
+                "No NMS bindings for Minecraft %s, falling back to the newest surf-api has: %s. " +
+                        "Anything that reads a field or calls a method that moved since then will " +
+                        "fail at the point it is used, not here.",
+                mcVersion,
+                fallback.versionPrefix,
             )
-            fallback
         }
     }
 }
