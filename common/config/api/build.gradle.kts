@@ -2,23 +2,38 @@
 // `SpongeConfigClass` companions, `SurfConfigApi`, the versioned migrations, the ~25 constraint
 // annotations, the three-state helper types and the `TypeSerializer`s that read and write them.
 //
-// Unlike `surf-api-serialization-api`, this module depends on `surf-api-core-api` rather than being
-// re-exported by it: `SpongeConfigSerializers.ComponentSerializer` reads MiniMessage through
-// `SurfMiniMessageHolder`, and `SpongeConfigManager` and `ConfigMigrationBuilder` log through
-// `core.util.logger`. Both live in surf-api-core-api, so the configuration domain sits downstream of
-// it the way `surf-api-inventory-api` does, and the aggregates and the platform api modules export
+// This module used to carry a blanket `api(projects.surfApiCoreApi)` for two declarations:
+// `common.util.logger`, which `SpongeConfigManager` and `ConfigMigrationBuilder` log through, and
+// `SurfMiniMessageHolder`, which `SpongeConfigSerializers.ComponentSerializer` reads MiniMessage
+// through. Both have since been cut out of `surf-api-core-api` into `surf-api-common-api` and
+// `surf-api-messages-api`, so nothing the configuration domain compiles against is left in core and
+// the dependency is narrowed to those two modules. The configuration domain still sits downstream of
+// them -- it names their declarations, so it cannot be re-exported the way
+// `surf-api-serialization-api` is -- and the aggregates and the platform api modules keep exporting
 // it on to consumers.
 //
-// There is deliberately nothing else here: everything the configuration domain compiles against was
-// already on surf-api-core-api's api and compileOnlyApi surface, so inheriting that surface keeps
-// the compile classpath of these files exactly what it was before the move.
+// The library declarations below are the ones these files name and used to inherit from
+// `surf-api-core-api`'s own surface, each in the configuration core declared it in, so the compile
+// classpath of the configuration domain is what it was while the blanket dependency stood.
 plugins {
     id("surf.module-api")
     `api-validation`
 }
 
 dependencies {
-    api(projects.surfApiCoreApi)
+    // `SpongeConfigManager` and `ConfigMigrationBuilder` log through `common.util.logger`.
+    api(projects.surfApiCommonApi)
+    // `SpongeConfigSerializers.ComponentSerializer` reads MiniMessage through
+    // `SurfMiniMessageHolder`, and the Adventure artifacts the serializers compile against arrive
+    // with it.
+    api(projects.surfApiMessagesApi)
+    // `SurfConfigApi` is resolved with `surfBean`, and its implementation is a `@Service`.
+    api(projects.surfApiDiApi)
+
+    api(libs.configurate.yaml)
+    api(libs.configurate.jackson)
+    api(libs.configurate.kotlin)
+    compileOnlyApi(libs.commons.lang3)
 }
 
 description = "surf-api-config-api"

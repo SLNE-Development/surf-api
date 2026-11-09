@@ -5,8 +5,8 @@ plugins {
 
 dependencies {
     api(projects.surfApiCoreApi)
-    // The configuration domain was cut out of surf-api-core-api and sits downstream of it, so the
-    // re-export happens here instead: a consumer of surf-api-core keeps resolving the config
+    // The configuration domain was cut out of surf-api-core-api and is not re-exported by it, so
+    // the re-export happens here instead: a consumer of surf-api-core keeps resolving the config
     // contracts, the constraint annotations and the helper types unchanged.
     api(projects.surfApiConfigApi)
 }

@@ -6,7 +6,7 @@ plugins {
 dependencies {
     api(projects.surfApiCoreApi)
     api(projects.surfApiInventoryApi)
-    // The configuration domain sits downstream of surf-api-core-api, so a consumer of
+    // The configuration domain is no longer re-exported by surf-api-core-api, so a consumer of
     // surf-api-paper reaches the config contracts through here, the way it reaches the
     // shared inventory framework.
     api(projects.surfApiConfigApi)
