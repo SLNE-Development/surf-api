@@ -21,6 +21,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -232,6 +233,60 @@ class SurfContainerHostTest {
             )
         }
 
+    // --- a start that fails ---------------------------------------------------------------------
+
+    @Test
+    fun `a root whose beans fail to build is not published, and the retry succeeds`(
+        @TempDir temp: Path,
+    ) = runTest {
+        val fixture = Fixture(temp)
+        val api = fixture.owner("surf-api", listOf(definitionOf(Unbuildable::class)))
+
+        val failure = assertFails { fixture.host.startRoot(api) }
+
+        assertContains(messagesOf(failure), CONSTRUCTION_FAILURE)
+        assertNull(fixture.host.root, "a container whose beans failed must not become the root")
+        assertNull(fixture.host.containerOf(api))
+
+        fixture.serve(
+            api,
+            listOf(
+                definitionOf(Standalone::class),
+                definitionOf(RootComponent::class, lifecycle = true),
+            ),
+        )
+
+        val root = fixture.host.startRoot(api)
+
+        assertSame(root, fixture.host.root, "the failed attempt did not use up the one root")
+        assertSame(root, fixture.host.containerOf(api))
+        assertNotNull(root.beanOrNull(Standalone::class))
+        assertEquals(listOf("root load", "root enable"), phases)
+    }
+
+    @Test
+    fun `a child whose beans fail to build leaves no entry, and the retry succeeds`(
+        @TempDir temp: Path,
+    ) = runTest {
+        val fixture = Fixture(temp)
+        val api = fixture.owner("surf-api")
+        val plugin = fixture.owner("plugin", listOf(definitionOf(Unbuildable::class)))
+
+        fixture.host.startRoot(api)
+
+        val failure = assertFails { fixture.host.startChild(plugin) }
+
+        assertContains(messagesOf(failure), CONSTRUCTION_FAILURE)
+        assertNull(fixture.host.containerOf(plugin), "a failed child must not be handed out")
+
+        fixture.serve(plugin, listOf(definitionOf(ChildComponent::class, lifecycle = true)))
+
+        val child = fixture.host.startChild(plugin)
+
+        assertSame(child, fixture.host.containerOf(plugin), "the owner was free to start again")
+        assertEquals(listOf("child load", "child enable"), phases)
+    }
+
     // --- stopping -------------------------------------------------------------------------------
 
     @Test
@@ -259,6 +314,103 @@ class SurfContainerHostTest {
                 listOf("child load", "child enable", "child disable", "child load", "child enable"),
                 phases,
             )
+        }
+
+    @Test
+    fun `stopping the root while a child runs is refused and tears nothing down`(
+        @TempDir temp: Path,
+    ) = runTest {
+        val fixture = Fixture(temp)
+        val api = fixture.owner(
+            "surf-api",
+            listOf(
+                definitionOf(Standalone::class),
+                definitionOf(RootComponent::class, lifecycle = true),
+            ),
+        )
+        val plugin = fixture.owner(
+            "plugin",
+            listOf(definitionOf(ChildComponent::class, lifecycle = true)),
+        )
+
+        val root = fixture.host.startRoot(api)
+        val child = fixture.host.startChild(plugin)
+
+        val failure = assertFailsWith<IllegalStateException> { fixture.host.stop(api) }
+        val message = failure.message.orEmpty()
+
+        assertContains(message, "plugin")
+        assertContains(message, "stopAll")
+
+        // The check has to come before anything is torn down: a guard that fires after the fact
+        // would leave the process in the state it was refusing to produce.
+        assertEquals(
+            emptyList<String>(),
+            phases.filter { it.endsWith("disable") },
+            "a refused stop must not disable anything",
+        )
+        assertSame(root, fixture.host.root)
+        assertSame(root, fixture.host.containerOf(api))
+        assertSame(child, fixture.host.containerOf(plugin))
+        assertNotNull(root.beanOrNull(Standalone::class), "the root still answers")
+        assertNotNull(child.beanOrNull(ChildComponent::class), "so does the child")
+    }
+
+    @Test
+    fun `the root can be stopped once its last child is gone`(@TempDir temp: Path) = runTest {
+        val fixture = Fixture(temp)
+        val api = fixture.owner("surf-api", listOf(definitionOf(RootComponent::class, lifecycle = true)))
+        val plugin = fixture.owner(
+            "plugin",
+            listOf(definitionOf(ChildComponent::class, lifecycle = true)),
+        )
+
+        fixture.host.startRoot(api)
+        fixture.host.startChild(plugin)
+
+        fixture.host.stop(plugin)
+        fixture.host.stop(api)
+
+        assertEquals(listOf("child disable", "root disable"), phases.filter { it.endsWith("disable") })
+        assertNull(fixture.host.root)
+        assertNull(fixture.host.containerOf(api))
+    }
+
+    @Test
+    fun `stopAll stops the siblings youngest first and the root last`(@TempDir temp: Path) =
+        runTest {
+            val fixture = Fixture(temp)
+            val api = fixture.owner(
+                "surf-api",
+                listOf(definitionOf(RootComponent::class, lifecycle = true)),
+            )
+            val first = fixture.owner(
+                "first-plugin",
+                listOf(definitionOf(FirstChildComponent::class, lifecycle = true)),
+            )
+            val second = fixture.owner(
+                "second-plugin",
+                listOf(definitionOf(SecondChildComponent::class, lifecycle = true)),
+            )
+            val third = fixture.owner(
+                "third-plugin",
+                listOf(definitionOf(ThirdChildComponent::class, lifecycle = true)),
+            )
+
+            fixture.host.startRoot(api)
+            fixture.host.startChild(first)
+            fixture.host.startChild(second)
+            fixture.host.startChild(third)
+
+            fixture.host.stopAll()
+
+            assertEquals(
+                listOf("third disable", "second disable", "first disable", "root disable"),
+                phases.filter { it.endsWith("disable") },
+                "the last application started is the one most likely to hold the others",
+            )
+            assertNull(fixture.host.root)
+            listOf(api, first, second, third).forEach { assertNull(fixture.host.containerOf(it)) }
         }
 
     @Test
@@ -332,8 +484,25 @@ private class Fixture(private val temp: Path) {
      */
     fun owner(name: String, vararg files: List<BeanDefinition>): Any {
         val owner = Owner(name)
-        val root = temp.resolve(name)
-        val directory = Files.createDirectories(root.resolve(BeanMetadata.DIRECTORY))
+
+        classLoaders[owner] = MetadataClassLoader(temp.resolve(name))
+        serve(owner, *files)
+
+        return owner
+    }
+
+    /**
+     * Replaces what [owner]'s classpath carries.
+     *
+     * This is how a case gives a retry a working set of beans: the owner is the same object the
+     * platform is asked about, and the host reads the directory again on every build.
+     */
+    fun serve(owner: Any, vararg files: List<BeanDefinition>) {
+        val directory = Files.createDirectories(
+            temp.resolve(owner.toString()).resolve(BeanMetadata.DIRECTORY)
+        )
+
+        Files.newDirectoryStream(directory).use { existing -> existing.forEach(Files::delete) }
 
         files.forEachIndexed { index, beans ->
             Files.writeString(
@@ -341,10 +510,6 @@ private class Fixture(private val temp: Path) {
                 BeanMetadata.json.encodeToString(BeanMetadata.serializer(), BeanMetadata(beans)),
             )
         }
-
-        classLoaders[owner] = MetadataClassLoader(root)
-
-        return owner
     }
 }
 
@@ -446,11 +611,23 @@ private fun definitionOf(
 /** An injection point taking the one bean providing [type]. */
 private fun pointTo(type: KClass<*>) = InjectionPoint(type = type.java.name)
 
+/**
+ * A failure and its causes as one string.
+ *
+ * A constructor that throws reaches the caller through reflection, which is free to wrap it, so a
+ * case asks whether the original failure is anywhere in the chain rather than guessing the shape.
+ */
+private fun messagesOf(failure: Throwable): String =
+    generateSequence(failure) { it.cause.takeIf { cause -> cause !== it } }.joinToString()
+
 /** The phases the lifecycle beans ran, in order; cleared before every case. */
 private val phases = mutableListOf<String>()
 
 /** A class name nothing on the test classpath answers to. */
 private const val ABSENT_CLASS = "does.not.Exist"
+
+/** What [Unbuildable] throws, looked for in the failure a start hands back. */
+private const val CONSTRUCTION_FAILURE = "this bean cannot be built"
 
 /** Where the fake platform would keep configuration; nothing here reads a file. */
 private val DATA_PATH: Path = Path.of("build", "test-data")
@@ -475,37 +652,49 @@ internal class DefaultStorage : Storage
 /** The implementation that is meant to take over from [DefaultStorage]. */
 internal class RealStorage : Storage
 
-/** A root-owned component that records its phases. */
-internal class RootComponent : SurfComponent {
+/** A bean whose construction fails, so a case can watch what a failed start leaves behind. */
+internal class Unbuildable {
 
-    override suspend fun load() {
-        phases += "root load"
-    }
-
-    override suspend fun enable() {
-        phases += "root enable"
-    }
-
-    override suspend fun disable() {
-        phases += "root disable"
+    init {
+        error(CONSTRUCTION_FAILURE)
     }
 }
 
-/** A child-owned component that records its phases. */
-internal class ChildComponent : SurfComponent {
+/**
+ * Records every phase it runs under its own label.
+ *
+ * Teardown order is only readable if the beans can be told apart, and two containers holding the
+ * same class hold two indistinguishable instances — hence one subclass per place a case puts one.
+ */
+internal abstract class PhaseRecorder(private val label: String) : SurfComponent {
 
     override suspend fun load() {
-        phases += "child load"
+        phases += "$label load"
     }
 
     override suspend fun enable() {
-        phases += "child enable"
+        phases += "$label enable"
     }
 
     override suspend fun disable() {
-        phases += "child disable"
+        phases += "$label disable"
     }
 }
+
+/** The root's component. */
+internal class RootComponent : PhaseRecorder("root")
+
+/** The component of the single child in the cases that have one. */
+internal class ChildComponent : PhaseRecorder("child")
+
+/** The oldest of the three siblings, and therefore the last to be stopped. */
+internal class FirstChildComponent : PhaseRecorder("first")
+
+/** The middle sibling. */
+internal class SecondChildComponent : PhaseRecorder("second")
+
+/** The youngest sibling, and therefore the first to be stopped. */
+internal class ThirdChildComponent : PhaseRecorder("third")
 
 /**
  * Asks the container for a bean while deciding, which is the one thing a condition may not do.

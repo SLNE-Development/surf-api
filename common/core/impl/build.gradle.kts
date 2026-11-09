@@ -5,6 +5,8 @@ plugins {
 dependencies {
     api(projects.surfApiInternal)
     api(projects.surfApiCoreApi)
+    // The container runs where the implementation runs.
+    api(projects.surfApiDiImpl)
     compileOnly(libs.packetevents.netty.common)
     api(libs.bytebuddy)
 }

@@ -6,6 +6,11 @@ plugins {
 dependencies {
     api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
+    // The DI contracts travel with the api, not with the container: a downstream plugin writes
+    // @Service and takes a BeanContainer at its entry point, and it compiles against surf-api-core
+    // like everything else. Which module exports these IS the sharing decision — one exporter, so
+    // the interface a SHARED bean crosses the application boundary as is loaded exactly once.
+    api(projects.surfApiDiApi)
     api(libs.adventure.nbt)
     // Exposed transitively by surf-api-annotations as well; declared here so the test convention
     // (testImplementation extendsFrom compileOnlyApi) puts Adventure on the test classpath.
