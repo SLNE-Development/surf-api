@@ -36,6 +36,10 @@ class PaperMain : SuspendingJavaPlugin() {
     }
 
     override suspend fun onEnableAsync() {
+        // The container's enable phase belongs here rather than in onLoadAsync: a bean's `enable`
+        // is the first point at which the rest of the server is there to talk to.
+        containers.enable(this)
+
         PaperInstance.onEnable()
         SurfScoreboardApiImpl.INSTANCE.onEnable()
     }

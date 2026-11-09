@@ -43,6 +43,10 @@ object SurfApiStandaloneBootstrap {
 
     @OptIn(ExperimentalVersionOverloading::class)
     suspend fun enable(@IntroducedAt("3.52.0") registerShutdownHook: Boolean = true) {
+        // A standalone process has no second phase of its own, so the container's enable runs
+        // here, where the embedder asked to be enabled.
+        containers.enable(SurfStandaloneInstance)
+
         SurfStandaloneInstance.onLoad()
         SurfStandaloneInstance.onEnable()
 

@@ -70,6 +70,11 @@ class VelocityMain @Inject constructor(
     @Subscribe
     suspend fun onProxyInitialization(unused: ProxyInitializeEvent) {
         bstats = metricsFactory.make(this, 29466)
+
+        // The proxy's own enable phase, and so the container's: a bean's `enable` is the first
+        // point at which the rest of the proxy is there to talk to.
+        containers.enable(this)
+
         onEnable()
     }
 

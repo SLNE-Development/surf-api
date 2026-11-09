@@ -6,6 +6,7 @@ import dev.slne.surf.api.di.SurfComponent
 import dev.slne.surf.api.di.definition.BeanDefinition
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotSame
@@ -302,7 +303,7 @@ class BeanContainerImplTest {
     }
 
     @Test
-    fun `a shared bean joining a started root is loaded and enabled before the child's own beans`() =
+    fun `a shared bean joining a started root is fully up before the child's own beans load`() =
         runTest {
             val log = mutableListOf<String>()
             val factory = instantiator(
@@ -324,11 +325,19 @@ class BeanContainerImplTest {
             )
             child.start()
 
+            // The shared bean is the root's state from the moment it joins, so `start` brings it
+            // fully up rather than leaving it half-started until the enable phase of whichever
+            // application happened to introduce it. The child's *own* bean follows the ordinary
+            // rule and waits for that phase.
             assertEquals(
-                listOf(
-                    "load:connection", "enable:connection",
-                    "load:local", "enable:local",
-                ),
+                listOf("load:connection", "enable:connection", "load:local"),
+                log,
+            )
+
+            child.enable()
+
+            assertEquals(
+                listOf("load:connection", "enable:connection", "load:local", "enable:local"),
                 log,
             )
         }
@@ -607,6 +616,53 @@ class BeanContainerImplTest {
     // --- lifecycle --------------------------------------------------------------------------
 
     @Test
+    fun `start runs load and stops there`() = runTest {
+        val log = mutableListOf<String>()
+        val container = container(
+            listOf(definition("Only", lifecycle = true)),
+            instantiator("Only" to { Phases("only", log) }),
+        )
+
+        container.start()
+
+        // The split is the whole point: `enable` has to land in the platform's enable phase, which
+        // is the first moment the rest of the server exists. A container that enabled here would
+        // put every bean's enable inside the platform's *load* phase.
+        assertEquals(listOf("load:only"), log)
+
+        container.enable()
+
+        assertEquals(listOf("load:only", "enable:only"), log)
+    }
+
+    @Test
+    fun `enabling twice is refused and names the owner`() = runTest {
+        val container = container(emptyList(), instantiator(), owner = "the-plugin")
+
+        container.start()
+        container.enable()
+
+        val failure = assertFailsWith<IllegalStateException> { container.enable() }
+
+        assertContains(failure.message.orEmpty(), "the-plugin")
+    }
+
+    @Test
+    fun `enable does nothing for a container that never started`() = runTest {
+        val log = mutableListOf<String>()
+        val container = container(
+            listOf(definition("Only", lifecycle = true)),
+            instantiator("Only" to { Phases("only", log) }),
+        )
+
+        // A platform that gave up after a failed start still reaches its enable phase, and failing
+        // again there would bury the failure that mattered.
+        container.enable()
+
+        assertTrue(log.isEmpty(), log.toString())
+    }
+
+    @Test
     fun `every load runs before any enable, and disable runs in reverse`() = runTest {
         val log = mutableListOf<String>()
         val container = container(
@@ -621,6 +677,7 @@ class BeanContainerImplTest {
         )
 
         container.start()
+        container.enable()
         container.stop { _, _ -> }
 
         assertEquals(

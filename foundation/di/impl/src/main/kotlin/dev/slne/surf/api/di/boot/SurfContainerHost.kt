@@ -128,6 +128,21 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
     }
 
     /**
+     * Runs the `enable` phase of [owner]'s container.
+     *
+     * Separate from [startRoot] and [startChild] because every platform surf-api runs on has two
+     * phases, and the second one is the first moment the rest of the server exists. A platform
+     * calls this from its own enable phase; an embedder with one phase calls it right after the
+     * start.
+     *
+     * Silently does nothing for an owner with no container, which is what lets a platform call it
+     * unconditionally from a phase that also runs after a failed start.
+     */
+    suspend fun enable(owner: Any) {
+        containers[owner]?.enable()
+    }
+
+    /**
      * Runs [build] with [owner] named as the application currently being built.
      *
      * The name is cleared on the way out whether the build succeeded or threw, so a failed start

@@ -36,6 +36,26 @@ class SurfContainerAccess : ContainerAccess {
 
     override val starting: Any? get() = installed?.starting
 
+    override suspend fun startChild(owner: Any): BeanContainer = host().startChild(owner)
+
+    override suspend fun enable(owner: Any) = host().enable(owner)
+
+    override suspend fun stop(owner: Any) = host().stop(owner)
+
+    /**
+     * The installed host, or a failure naming what is missing.
+     *
+     * The read-only members answer `null` when nothing is installed, because "there is no
+     * container" is a legitimate answer to a question. Building one is not a question: an
+     * application asking for its container before surf-api has started has an ordering problem,
+     * and handing back silence would turn it into an application with no beans and no explanation.
+     */
+    private fun host(): SurfContainerHost = checkNotNull(installed) {
+        "surf-api has not started yet, so there is no container hierarchy to add to. An " +
+                "application builds its container from its own load phase, which runs after " +
+                "surf-api's."
+    }
+
     @InternalSurfApi
     companion object {
 

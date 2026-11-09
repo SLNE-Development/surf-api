@@ -151,6 +151,10 @@ internal class SurfMinestomRuntime private constructor(
     }
 
     private fun enable() {
+        // The server's own enable phase, and so the container's: a bean's `enable` is the first
+        // point at which the features and the rest of the server are there to talk to.
+        runBlocking { containers.enable(this@SurfMinestomRuntime) }
+
         runBlocking { instance.onEnable() }
         reportFailedMixins()
 

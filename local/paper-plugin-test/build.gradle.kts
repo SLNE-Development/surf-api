@@ -16,7 +16,6 @@ dependencies {
     // `PaperMain.containers`, and that lives in the implementation module — surf-api's paper-plugin
     // declares `has-open-classloader: false`, so a plugin reaches it exactly because it declares
     // SurfPaperAPI with `joinClasspath = true` below.
-    compileOnly(projects.surfApiPaperImpl)
     compileOnlyApi(libs.commandapi.paper)
 
     paperweight.paperDevBundle(libs.paper.api.get().version)

@@ -62,6 +62,13 @@ class SurfContainerHostTest {
             val root = fixture.host.startRoot(api)
 
             assertNotNull(root.beanOrNull(Standalone::class), "the root's beans are built")
+
+            // startRoot runs `load` only; `enable` is a second call, so a bean's enable lands in
+            // the platform's own enable phase rather than in its load phase.
+            assertEquals(listOf("root load"), phases)
+
+            fixture.host.enable(api)
+
             assertEquals(listOf("root load", "root enable"), phases)
             assertSame(root, fixture.host.root)
             assertSame(api, root.owner)
@@ -257,6 +264,7 @@ class SurfContainerHostTest {
         )
 
         val root = fixture.host.startRoot(api)
+        fixture.host.enable(api)
 
         assertSame(root, fixture.host.root, "the failed attempt did not use up the one root")
         assertSame(root, fixture.host.containerOf(api))
@@ -282,6 +290,7 @@ class SurfContainerHostTest {
         fixture.serve(plugin, listOf(definitionOf(ChildComponent::class, lifecycle = true)))
 
         val child = fixture.host.startChild(plugin)
+        fixture.host.enable(plugin)
 
         assertSame(child, fixture.host.containerOf(plugin), "the owner was free to start again")
         assertEquals(listOf("child load", "child enable"), phases)
@@ -301,12 +310,14 @@ class SurfContainerHostTest {
 
             fixture.host.startRoot(api)
             val first = fixture.host.startChild(plugin)
+            fixture.host.enable(plugin)
 
             fixture.host.stop(plugin)
 
             assertNull(fixture.host.containerOf(plugin))
 
             val second = fixture.host.startChild(plugin)
+            fixture.host.enable(plugin)
 
             assertNotSame(first, second, "the owner gets a fresh container")
             assertSame(second, fixture.host.containerOf(plugin))

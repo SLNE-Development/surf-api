@@ -225,6 +225,50 @@ class SurfContainerSeamTest {
     // --- which container answers ----------------------------------------------------------------
 
     @Test
+    fun `an application builds its container through the published api`(@TempDir temp: Path) =
+        runTest {
+            val fixture = SeamFixture(temp)
+            val api = fixture.owner("surf-api", listOf(definition(Greeter::class.java.name)))
+            val plugin = fixture.owner(
+                "plugin",
+                listOf(definition(LoudGreeter::class.java.name, provides = listOf(LoudGreeter::class.java.name))),
+            )
+
+            install(fixture.host)
+            fixture.host.startRoot(api)
+
+            // The path a plugin actually takes. It compiles against the api modules only, so
+            // everything it needs has to be reachable from `SurfContainer` — reaching the host
+            // itself would mean depending on an implementation module.
+            val child = SurfContainer.startChild(plugin)
+
+            assertSame(child, SurfContainer.of(plugin))
+            assertEquals("HELLO", child.bean(LoudGreeter::class).greet())
+            assertEquals(
+                "hello",
+                child.bean(Greeter::class).greet(),
+                "resolution walks upwards, so the plugin sees surf-api's beans",
+            )
+
+            SurfContainer.enableFor(plugin)
+            SurfContainer.stopFor(plugin)
+
+            assertNull(SurfContainer.of(plugin), "stopping forgets the container")
+        }
+
+    @Test
+    fun `startChild before surf-api has started says so instead of answering with nothing`() =
+        runTest {
+            // A read may answer null -- "there is no container" is a legitimate answer. Building
+            // one is not a question, so silence here would leave an application with no beans and
+            // no explanation.
+            val failure = assertFailsWith<IllegalStateException> { SurfContainer.startChild(OWNER) }
+
+            assertContains(failure.message.orEmpty(), "has not started yet")
+            assertContains(failure.message.orEmpty(), "load phase")
+        }
+
+    @Test
     fun `of names the container an application was given`(@TempDir temp: Path) = runTest {
         val fixture = SeamFixture(temp)
         val api = fixture.owner("surf-api", listOf(definition(Greeter::class.java.name)))
@@ -300,6 +344,11 @@ private class SecondEagerGreeter : Greeter() {
 
 /** Read during the eager companions' initialisation, which is the whole point. */
 private val eagerlyResolved: Greeter by surfBean<Greeter>()
+
+/** An owner no fixture registered, for the cases that must fail before a classpath is read. */
+private val OWNER = object {
+    override fun toString() = "an-application"
+}
 
 /** The types a `Greeter` subclass provides, which is how the real metadata would describe it. */
 private fun greeterTypes(className: String) = listOf(className, Greeter::class.java.name)

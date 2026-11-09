@@ -85,6 +85,40 @@ object SurfContainer {
 
     /** The container belonging to [owner], or `null` if that application has none. */
     fun of(owner: Any): BeanContainer? = access.of(owner)
+
+    /**
+     * Builds [owner]'s own container below the root and runs its beans through `load`.
+     *
+     * This is how an application gets a container: a plugin calls it from its load phase with
+     * itself as the owner, and surf-api reads that application's bean metadata off its own
+     * classpath entry. Resolution walks upwards only, so the application sees surf-api's beans and
+     * surf-api never sees the application's.
+     *
+     * `enable` is [enableFor]'s job, so that a bean's `enable` lands in the platform's enable phase
+     * rather than its load phase — by which time the rest of the server is there.
+     *
+     * ```kotlin
+     * class MyPlugin : SuspendingJavaPlugin() {
+     *     override suspend fun onLoadAsync() { SurfContainer.startChild(this) }
+     *     override suspend fun onEnableAsync() { SurfContainer.enableFor(this) }
+     *     override suspend fun onDisableAsync() { SurfContainer.stopFor(this) }
+     * }
+     * ```
+     *
+     * @throws IllegalStateException if [owner] already has a container, or if its beans cannot be
+     * built — a misdeclared bean is a startup failure, not something to carry on past
+     */
+    suspend fun startChild(owner: Any): BeanContainer = access.startChild(owner)
+
+    /** Runs the `enable` phase of [owner]'s container; does nothing if it has none. */
+    suspend fun enableFor(owner: Any) = access.enable(owner)
+
+    /**
+     * Stops [owner]'s container and forgets it, so the same owner could be started again.
+     *
+     * Shared beans are left running: they belong to the root and are shut down with it.
+     */
+    suspend fun stopFor(owner: Any) = access.stop(owner)
 }
 
 /**
@@ -110,6 +144,15 @@ interface ContainerAccess {
      * tell loses the better message and nothing else.
      */
     val starting: Any? get() = null
+
+    /** Builds [owner]'s container below the root and runs `load`. */
+    suspend fun startChild(owner: Any): BeanContainer
+
+    /** Runs the `enable` phase of [owner]'s container. */
+    suspend fun enable(owner: Any)
+
+    /** Stops [owner]'s container and forgets it. */
+    suspend fun stop(owner: Any)
 }
 
 /**

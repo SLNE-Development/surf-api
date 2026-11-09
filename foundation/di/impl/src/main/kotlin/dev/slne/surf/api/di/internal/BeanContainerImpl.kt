@@ -50,6 +50,8 @@ internal class BeanContainerImpl(
 
     private var started = false
 
+    private var enabled = false
+
     /**
      * Shared components this container introduced into an already-running root.
      *
@@ -73,11 +75,18 @@ internal class BeanContainerImpl(
     private val root: BeanContainerImpl get() = parentImpl?.root ?: this
 
     /**
-     * Creates every bean, runs the post processors and drives `load` and `enable`.
+     * Creates every bean, runs the post processors and drives `load`.
      *
-     * The phases are separate passes in dependency order, which is what makes a two-phase resource
-     * work: a connection can be opened in `load` while the beans registering against it are still
-     * being set up, and only be frozen in `enable`, once every `load` has run.
+     * `enable` is [enable]'s job, deliberately. Every platform surf-api runs on has two phases of
+     * its own — Paper's `onLoad` and `onEnable`, Velocity's construction and `ProxyInitializeEvent`
+     * — and they exist because the second one is the first moment the rest of the server is there.
+     * A container that ran both passes in one call would put every bean's `enable` inside the
+     * platform's *load* phase, where another plugin's api is not up yet. So the container's phases
+     * line up with the platform's, and an embedder with only one phase calls both in a row.
+     *
+     * The passes are separate and each is in dependency order, which is what makes a two-phase
+     * resource work: a connection can be opened in `load` while the beans registering against it
+     * are still being set up, and only be frozen in `enable`, once every `load` has run.
      *
      * @throws IllegalStateException if called twice, if a shared bean depends on something only this
      * container provides, or if a bean cannot be created
@@ -103,12 +112,34 @@ internal class BeanContainerImpl(
             process(provider, create(provider))
         }
 
-        // A shared bean joins a root whose phases have already run, so it gets them here — and
-        // before this container's own beans, which may already hold it.
+        // A shared bean joins a root whose phases have already run, so it gets both of them here,
+        // and before this container's own beans, which may already hold it. Both, not just `load`,
+        // because the bean is the root's state from now on: it outlives this container and serves
+        // every other application in the process, so leaving it half-started until this
+        // container's own enable phase would make the root's contents depend on the timing of
+        // whichever application happened to introduce it — and on that application remembering to
+        // enable at all.
         adoptedShared.forEach { it.load() }
         adoptedShared.forEach { it.enable() }
 
         lifecycle.forEach { it.load() }
+    }
+
+    /**
+     * Drives `enable`, in the same order `load` ran.
+     *
+     * Separate from [start] so the pass lands in the platform's own enable phase; see there. Doing
+     * nothing when the container was never started is deliberate: a platform that stops after a
+     * failed start still reaches its enable phase, and failing a second time there would bury the
+     * failure that mattered.
+     *
+     * @throws IllegalStateException if called twice
+     */
+    suspend fun enable() {
+        if (!started) return
+        check(!enabled) { "The container for $owner has already been enabled." }
+        enabled = true
+
         lifecycle.forEach { it.enable() }
     }
 

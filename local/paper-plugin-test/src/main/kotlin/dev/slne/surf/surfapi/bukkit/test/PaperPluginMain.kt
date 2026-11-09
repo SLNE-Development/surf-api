@@ -8,7 +8,7 @@ import dev.slne.surf.api.paper.event.listen
 import dev.slne.surf.api.paper.inventory.framework.register
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
-import dev.slne.surf.api.paper.server.plugin as surfApi
+import dev.slne.surf.api.di.SurfContainer
 import dev.slne.surf.api.paper.test.command.SurfApiTestCommand
 import dev.slne.surf.api.paper.test.command.subcommands.reflection.Reflection
 import dev.slne.surf.api.paper.test.listener.ChatListener
@@ -30,10 +30,9 @@ class PaperPluginMain : SuspendingJavaPlugin() {
         ModernTestConfig.randomise()
 
         // The plugin's own beans live in a child of surf-api's root container, which is what
-        // every plugin does for itself: the root holds surf-api's beans and only surf-api may start
-        // it. `startChild` runs this plugin's `load` and then its `enable` phase before it returns,
-        // so both have happened by the time the server reaches `onEnableAsync`.
-        surfApi.containers.startChild(this)
+        // every plugin does for itself: the root holds surf-api's beans and only surf-api may
+        // start it. The phases follow the server's own, so `enable` happens in onEnableAsync.
+        SurfContainer.startChild(this)
 
         SurfPaperPacketListenerApi.INSTANCE.registerListeners(ChatListener())
         TestInventoryView.register()
@@ -44,6 +43,8 @@ class PaperPluginMain : SuspendingJavaPlugin() {
     }
 
     override suspend fun onEnableAsync() {
+        SurfContainer.enableFor(this)
+
         SurfApiTestCommand().register()
         dialogTestCommand()
         Reflection::class.java.classLoader // initialize Reflection
@@ -83,7 +84,7 @@ class PaperPluginMain : SuspendingJavaPlugin() {
 
         // Disables this plugin's beans in reverse order and forgets the container. surf-api's own
         // beans are left running: they belong to the root, which surf-api stops after every plugin.
-        surfApi.containers.stop(this)
+        SurfContainer.stopFor(this)
     }
 
     companion object {
