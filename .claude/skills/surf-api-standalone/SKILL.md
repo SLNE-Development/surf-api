@@ -13,16 +13,18 @@ Sources: `platform/standalone/impl/`, `aggregate/standalone/`,
 
 Most of surf-api lives in `surf-api-core-api` and needs no Minecraft server: configuration,
 messages and Adventure components, the bean container, the event bus, serializers, reflection, the
-math and random helpers. But every one of those entry points resolves its implementation through
-`requiredService<T>()` (`common/core/api/.../util/service-util.kt`), a `ServiceLoader` lookup, and
-on Paper, Minestom and Velocity the implementation is supplied by the platform plugin. Without a
-platform there is nothing to find and the lookup fails.
+math and random helpers. But every one of those entry points reads its implementation out of the
+bean container - `SurfApiCore.instance`, `surfConfigApi`, `SurfEventBus.INSTANCE` are all
+`by surfBean<T>()` properties - and on Paper, Minestom and Velocity it is the platform plugin that
+starts the root container and supplies the beans. Without a platform there is no container, and the
+first read fails with `No bean provides ...`.
 
-`surf-api-standalone` *is* that missing platform: a minimal implementation of `SurfApiCore` plus the
-`CoreInstance` lifecycle, for a JVM process that is not a server. Two uses:
+`surf-api-standalone` *is* that missing platform: it starts surf-api's root container, publishes a
+minimal `SurfApiCore` bean and runs the `CoreInstance` lifecycle, for a JVM process that is not a
+server. Two uses:
 
 1. **A plain JVM service** - a daemon, a worker, an HTTP backend, a CLI - that wants surf-api's
-   config, messages, components and event bus.
+   config, messages, beans and event bus.
 2. **Tests.** `CoreSurfPlugin` adds `dev.slne.surf.api:surf-api-standalone:+` to `testRuntimeOnly`
    of every project using `dev.slne.surf.api.gradle.core` as long as testing is enabled, so core
    tests get a resolvable api without a server. `CoreSurfPluginTest` asserts exactly that, and the
@@ -49,7 +51,7 @@ suspend fun main() {
     SurfApiStandaloneBootstrap.bootstrap()
     SurfApiStandaloneBootstrap.enable()
 
-    // the api is ready here: configs, messages, components, the event bus
+    // the api is ready here: configs, messages, beans, the event bus
 
     // only when you did not want the shutdown hook:
     // SurfApiStandaloneBootstrap.shutdown()
@@ -58,12 +60,21 @@ suspend fun main() {
 
 | Function | What it does |
 | --- | --- |
-| `bootstrap()` | installs a `NoopPacketEvents` as the PacketEvents api, then `load()`s and `init()`s it, and runs `SurfStandaloneInstance.bootstrap()` |
-| `enable(registerShutdownHook: Boolean = true)` | runs `SurfStandaloneInstance.onLoad()` and `onEnable()`, and - unless told otherwise - registers a JVM shutdown hook that calls `shutdown()` in `runBlocking` |
-| `shutdown()` | runs `SurfStandaloneInstance.onDisable()` and terminates PacketEvents. Guarded by an `AtomicBoolean`, so it runs once no matter how it is reached |
+| `bootstrap()` | clears the shutdown latch, installs a `NoopPacketEvents` as the PacketEvents api and `load()`s and `init()`s it, starts the root container (`SurfContainerHost.startRoot(SurfStandaloneInstance)`) and installs it with `SurfContainerAccess.install`, then runs `SurfStandaloneInstance.bootstrap()` |
+| `enable(registerShutdownHook: Boolean = true)` | runs the container's `enable` phase, then `SurfStandaloneInstance.onLoad()` and `onEnable()`, and - unless told otherwise - registers a JVM shutdown hook that calls `shutdown()` in `runBlocking` |
+| `shutdown()` | runs `SurfStandaloneInstance.onDisable()`, then `stopAll()` and `SurfContainerAccess.uninstall`, then terminates PacketEvents. Guarded by an `AtomicBoolean`, so it runs once no matter how it is reached |
 
-Call `bootstrap()` before `enable()`: the `CoreInstance.bootstrap()` step initialises
-`PlayerSkinFetcher` and `Colors`, and `isBootstrapping()` stays true until `onLoad()` clears it.
+Call `bootstrap()` before `enable()`: it is what makes the api resolvable at all, since the
+container has to exist before the first `surfBean` read; the `CoreInstance.bootstrap()` step
+initialises `PlayerSkinFetcher` and `Colors`, and `isBootstrapping()` stays true until `onLoad()`
+clears it.
+
+**One root and no children.** A standalone process has a single classloader, so the embedding
+application's beans and surf-api's sit on one classpath and in one container - the root. Do not call
+`SurfContainer.startChild`; annotating your own classes `@Service` is enough, and the container
+picks them up from the same `META-INF/surf-api/beans/` merge. Container shutdown comes *after*
+`onDisable`, so a bean holding a connection is still answering while everything that might write to
+it shuts down.
 
 `SurfStandaloneInstance` is nothing but `object SurfStandaloneInstance : CoreInstance()` - the
 whole lifecycle is the one in `common/core/impl/.../core/server/CoreInstance.kt`, whose
@@ -78,8 +89,8 @@ callers compiled against an older api.
 
 ## What works and what does not
 
-`SurfStandaloneApiImpl` (`.../standalone/impl/SurfStandaloneApiImpl.kt`) is registered with
-`@AutoService(SurfApiCore::class)` and is deliberately thin:
+`SurfStandaloneApiImpl` (`.../standalone/impl/SurfStandaloneApiImpl.kt`) is a `@Service` bean
+extending `SurfApiCoreImpl`, and is deliberately thin:
 
 | Member | Standalone behaviour |
 | --- | --- |
@@ -90,9 +101,6 @@ callers compiled against an older api.
 It also declares `dataFolder = Path.of("api-data")` (relative to the working directory), but that
 property is on the implementation class only, not on `SurfApiCore`, so reaching it means casting
 `SurfApiCore.instance`.
-
-It also calls `checkInstantiationByServiceLoader()` in its `init`, so constructing it directly
-fails - it only ever exists as the `ServiceLoader` instance behind `SurfApiCore.instance`.
 
 **Available**, because it is all platform-independent and the implementations ship in
 `surf-api-core-impl`, which `surf-api-standalone-impl` depends on at `api` scope:
@@ -117,9 +125,13 @@ fails - it only ever exists as the `ServiceLoader` instance behind `SurfApiCore.
   `surf-api-core-impl` dependency, so there is no command framework here
 - PacketEvents is only a `NoopPacketEvents` - the surface exists, nothing is sent or received
 - `sendPlayerToServer`, `getPlayer`, `isPlayer` as listed above
+- `@ConditionalOnPlugin` / `@ConditionalOnAnyPlugin`: `StandaloneContainerPlatform.isPluginLoaded`
+  always returns `false`, so a bean guarded that way is never created here. Use
+  `@ConditionalOnProperty` or `@ConditionalOnEnvironment` for a switch a standalone process can
+  actually flip - `environments()` goes through `EnvironmentConfig`, which also reads a `.env` file
 
-A component or bean written against the core api works unchanged in standalone; one that touches a
-platform type does not. That is the line to check when deciding whether code belongs in
+A bean written against the core api works unchanged in standalone; one that touches a platform
+type does not. That is the line to check when deciding whether code belongs in
 `common/core` or in a platform module - see **`surf-api-build`**.
 
 ## Setting a project up
@@ -136,8 +148,8 @@ surfStandaloneApi {
 
 `StandaloneSurfPlugin` is `AbstractCoreSurfPlugin<StandaloneSurfExtension>("standalone",
 SurfApiPlatform.STANDALONE)` and `StandaloneSurfExtension` adds nothing to `CoreSurfExtension`, so
-the whole configuration is the shared one: the plugins, repositories, Kotlin and Java setup,
-AutoService/KSP wiring, relocations and the `testing { }` block described in
+the whole configuration is the shared one: the plugins, repositories, Kotlin and Java setup, the
+KSP processor, relocations and the `testing { }` block described in
 `surf-api-paper/references/project-setup.md`.
 
 The one standalone-specific detail is the scope. `SurfApiPlatform.STANDALONE` declares
