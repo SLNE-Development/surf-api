@@ -2138,8 +2138,7 @@ public final class dev/slne/surf/api/paper/nms/bridges/packets/PacketOperation$D
 }
 
 public final class dev/slne/surf/api/paper/nms/bridges/packets/PacketOperationKt {
-	public static final synthetic fun PacketOperation (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
-	public static final fun PacketOperationInline (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
+	public static final fun PacketOperation (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/nms/bridges/packets/PacketOperation;
 }
 
 public abstract interface class dev/slne/surf/api/paper/nms/bridges/packets/SurfPaperNmsPacketBridges {

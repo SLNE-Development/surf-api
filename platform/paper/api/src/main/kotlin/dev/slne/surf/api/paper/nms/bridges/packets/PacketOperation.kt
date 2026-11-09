@@ -19,19 +19,15 @@ interface PacketOperation {
     }
 }
 
+/**
+ * Builds a packet operation by configuring an empty one.
+ *
+ * ```kotlin
+ * PacketOperation { add(SurfPaperNmsSpawnPackets.INSTANCE.despawn(ids)) }.execute(player)
+ * ```
+ */
 @OptIn(ExperimentalContracts::class)
-@JvmName("PacketOperationInline")
 inline fun PacketOperation(block: PacketOperation.() -> Unit): PacketOperation {
-    contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
-    }
-
-    return PacketOperation.start().apply(block)
-}
-
-@Deprecated(message = "Use the inline version instead", level = DeprecationLevel.HIDDEN)
-@OptIn(ExperimentalContracts::class)
-fun PacketOperation(block: PacketOperation.() -> Unit): PacketOperation {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
